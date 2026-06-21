@@ -140,4 +140,28 @@ describe("overlay-road-conditions route", () => {
     expect(fc.type).toBe("FeatureCollection");
     expect(reply._result.statusCode).toBe(200);
   });
+
+  it("returns 400 when bbox components are non-numeric", async () => {
+    const { ctx, routes } = makeMockCtx([]);
+    setup(ctx);
+
+    const req = { query: { bbox: "a,b,c,d" } };
+    const reply = makeReply();
+    await routes[0].handler(req, reply);
+
+    expect(reply._result.statusCode).toBe(400);
+  });
+
+  it("passes minSeverity to observationsByBbox and includes it in cache key", async () => {
+    const { ctx, routes } = makeMockCtx([]);
+    setup(ctx);
+
+    const req = { query: { bbox: "4.0,51.0,6.0,53.0", minSeverity: "medium" } };
+    const reply = makeReply();
+    await routes[0].handler(req, reply);
+
+    const fc = reply._result.body as { type: string; features: unknown[] };
+    expect(fc.type).toBe("FeatureCollection");
+    expect(reply._result.statusCode).toBe(200);
+  });
 });

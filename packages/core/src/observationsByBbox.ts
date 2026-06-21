@@ -1,5 +1,6 @@
 import type { FeatureCollection, Feature, Geometry } from "geojson";
 import type { Sql } from "postgres";
+import { severityRank } from "./severity.js";
 
 export interface ObservationsByBboxOpts {
   domain: string;
@@ -30,15 +31,17 @@ interface ObservationRow {
  * issues a single parameterised PostGIS query and maps the rows into Features.
  *
  * @param sql   postgres-js tagged-template client from the caller (no runtime postgres import here)
- * @param opts  domain, bbox [west, south, east, north], optional type filter
+ * @param opts  domain, bbox [west, south, east, north], optional type/severity filters
  */
 export async function observationsByBbox(
   sql: Sql,
   opts: ObservationsByBboxOpts,
 ): Promise<FeatureCollection> {
-  const { domain, bbox, types } = opts;
+  const { domain, bbox, types, minSeverity } = opts;
   const [west, south, east, north] = bbox;
-  const typesFilter = types && types.length > 0 ? types : null;
+
+  const hasTypes = Array.isArray(types) && types.length > 0;
+  const minRank = minSeverity != null ? severityRank(minSeverity) : null;
 
   const rows = await sql<ObservationRow[]>`
     SELECT
@@ -51,7 +54,8 @@ export async function observationsByBbox(
       domain = ${domain}
       AND geom && ST_MakeEnvelope(${west}, ${south}, ${east}, ${north}, 4326)
       AND status = 'active'
-      AND (${typesFilter}::text[] IS NULL OR type = ANY(${typesFilter}::text[]))
+      ${hasTypes ? sql`AND type = ANY(${types!})` : sql``}
+      ${minRank !== null ? sql`AND (CASE severity WHEN 'critical' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 WHEN 'low' THEN 1 ELSE 0 END) >= ${minRank}` : sql``}
     ORDER BY severity DESC NULLS LAST
     LIMIT 2000
   `;

@@ -54,6 +54,26 @@ export interface DeriveImpact {
  *   minor lane impact (fraction ≤ 1/3) → low
  *   no signal → unknown
  */
+/**
+ * Map a canonical severity string to a numeric rank for threshold filtering.
+ * Returns 0 for unknown/none/null so unranked observations are excluded when
+ * a minSeverity filter is active.
+ */
+export function severityRank(severity: string | null | undefined): number {
+  switch (severity) {
+    case "critical":
+      return 4;
+    case "high":
+      return 3;
+    case "medium":
+      return 2;
+    case "low":
+      return 1;
+    default:
+      return 0;
+  }
+}
+
 export function deriveSeverity(impact: DeriveImpact): Severity {
   if (impact.roadState === "closed") {
     return "high";

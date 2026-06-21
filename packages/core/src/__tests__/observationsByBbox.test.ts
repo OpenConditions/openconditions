@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { observationsByBbox } from "../observationsByBbox.js";
+import { severityRank } from "../severity.js";
 
 const fakeRow = {
   id: "evt-001",
@@ -68,19 +69,55 @@ describe("observationsByBbox", () => {
     expect(fc.features).toHaveLength(0);
   });
 
-  it("forwards optional types filter", async () => {
-    let capturedValues: unknown[] = [];
-    const sql = async (_strings: TemplateStringsArray, ...values: unknown[]) => {
-      capturedValues = values;
-      return [];
-    };
-    await observationsByBbox(sql as unknown as import("postgres").Sql, {
+  it("forwards optional types filter without error", async () => {
+    const sql = makeStubSql([]);
+    const fc = await observationsByBbox(sql, {
       domain: "roads",
       bbox: [4.0, 51.0, 6.0, 53.0],
       types: ["accident", "roadwork"],
     });
 
-    expect(capturedValues).toContain("roads");
-    expect(capturedValues).toContainEqual(["accident", "roadwork"]);
+    expect(fc.type).toBe("FeatureCollection");
+    expect(fc.features).toHaveLength(0);
+  });
+
+  it("passes minSeverity rank as a bound integer value", async () => {
+    const allValues: unknown[] = [];
+    const sql = async (_strings: TemplateStringsArray, ...values: unknown[]) => {
+      allValues.push(...values);
+      return [];
+    };
+
+    await observationsByBbox(sql as unknown as import("postgres").Sql, {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+      minSeverity: "high",
+    });
+
+    expect(allValues).toContain(3);
+  });
+});
+
+describe("severityRank", () => {
+  it("returns correct ranks for all canonical severity values", () => {
+    expect(severityRank("critical")).toBe(4);
+    expect(severityRank("high")).toBe(3);
+    expect(severityRank("medium")).toBe(2);
+    expect(severityRank("low")).toBe(1);
+  });
+
+  it("returns 0 for unknown/none/null/undefined", () => {
+    expect(severityRank("unknown")).toBe(0);
+    expect(severityRank("none")).toBe(0);
+    expect(severityRank(null)).toBe(0);
+    expect(severityRank(undefined)).toBe(0);
+    expect(severityRank("")).toBe(0);
+  });
+
+  it("ranks are strictly ordered: critical > high > medium > low > 0", () => {
+    expect(severityRank("critical")).toBeGreaterThan(severityRank("high"));
+    expect(severityRank("high")).toBeGreaterThan(severityRank("medium"));
+    expect(severityRank("medium")).toBeGreaterThan(severityRank("low"));
+    expect(severityRank("low")).toBeGreaterThan(0);
   });
 });

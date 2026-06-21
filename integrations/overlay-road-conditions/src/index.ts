@@ -1,13 +1,7 @@
 import { observationsByBbox } from "@openconditions/core";
 import type { IntegrationContext } from "./types.js";
 
-type DataSource = {
-  sourceId: string;
-  attribution?: string;
-  [key: string]: unknown;
-};
-
-const attribution: { sources: DataSource[] } = { sources: [] };
+// Attribution for this integration is wired in the monorepo via the manifest dataSources.
 
 function parseBbox(raw: string | undefined): [number, number, number, number] | null {
   if (!raw) return null;
@@ -22,8 +16,6 @@ function bboxKey(bbox: [number, number, number, number]): string {
 }
 
 export function setup(ctx: IntegrationContext): void {
-  attribution.sources = (ctx.manifest.dataSources as DataSource[] | undefined) ?? [];
-
   ctx.registerRoute("GET", "/observations", async (req, reply) => {
     const domain = req.query["domain"] ?? "roads";
     const bbox = parseBbox(req.query["bbox"]);
@@ -38,10 +30,17 @@ export function setup(ctx: IntegrationContext): void {
       .map((t) => t.trim())
       .filter(Boolean);
 
-    const cacheKey = `conditions:query:${domain}:${bboxKey(bbox)}:${types.join("+")}`;
+    const minSeverity = req.query["minSeverity"] || undefined;
+
+    const cacheKey = `conditions:query:${domain}:${bboxKey(bbox)}:${types.join("+")}:${minSeverity ?? ""}`;
 
     const fc = await ctx.cache.withCache(cacheKey, 90, () =>
-      observationsByBbox(ctx.db, { domain, bbox, types: types.length > 0 ? types : undefined }),
+      observationsByBbox(ctx.db, {
+        domain,
+        bbox,
+        types: types.length > 0 ? types : undefined,
+        minSeverity,
+      }),
     );
 
     reply.header("Cache-Control", "public, max-age=90, s-maxage=90");
