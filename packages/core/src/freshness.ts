@@ -5,7 +5,7 @@ export interface FreshnessResult {
 
 /**
  * Returns true when the data is older than windowSec seconds relative to now.
- * Mirrors the isStale convention from OpenMapX's ParkingFacility/EV freshness checks.
+ * Stale when age ≥ windowSec (boundary-inclusive).
  */
 export function isStale(
   dataUpdatedAt: string,

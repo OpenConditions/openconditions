@@ -68,4 +68,12 @@ describe("deriveSeverity", () => {
   it('returns unknown when no signal provided', () => {
     expect(deriveSeverity({})).toBe("unknown");
   });
+
+  it('returns medium when roadState is some_lanes_closed', () => {
+    expect(deriveSeverity({ roadState: "some_lanes_closed" })).toBe("medium");
+  });
+
+  it('returns unknown when roadState is open', () => {
+    expect(deriveSeverity({ roadState: "open" })).toBe("unknown");
+  });
 });

@@ -2,7 +2,7 @@ import type { Severity, SourceFormat } from "./model.js";
 
 export interface NormalisedSeverity {
   severity: Severity;
-  severitySource: "declared" | "derived";
+  severitySource: "declared";
 }
 
 const OPEN511_MAP: Record<string, Severity> = {
