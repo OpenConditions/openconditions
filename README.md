@@ -28,7 +28,7 @@ checkout (e.g. `…/openmapx/docs/plans/conditions/2-road/1-incidents-overlay.md
   Valhalla service.
 - **Model:** two-axis `Observation` → `ConditionEvent` | `Measurement`, one generic `conditions.observations`
   PostGIS table.
-- **Packages/services:** `@openconditions/{core,roads,openlr,…}` (npm, prebuilt) + `ghcr.io/openmapx/openconditions-ingest`.
+- **Packages/services:** `@openconditions/{core,roads,openlr,…}` (npm, prebuilt) + `ghcr.io/openconditions/ingest`.
 - **Licensing:** AGPL-3.0 server / Apache-2.0 libraries / ODbL-or-CC-BY-SA data.
 - **Domain:** openconditions.org.
 
