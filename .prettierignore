@@ -5,3 +5,4 @@ coverage/
 .turbo/
 *.tsbuildinfo
 pnpm-lock.yaml
+.superpowers/
