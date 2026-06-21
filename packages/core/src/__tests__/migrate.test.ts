@@ -7,9 +7,7 @@ describe("MIGRATION_SQL", () => {
   });
 
   it("creates the observations table", () => {
-    expect(MIGRATION_SQL).toContain(
-      "CREATE TABLE IF NOT EXISTS conditions.observations"
-    );
+    expect(MIGRATION_SQL).toContain("CREATE TABLE IF NOT EXISTS conditions.observations");
   });
 
   it("includes the kind column", () => {

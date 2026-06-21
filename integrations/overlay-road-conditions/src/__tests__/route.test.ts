@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { setup } from "../index.js";
-import type { IntegrationContext } from "../types.js";
+import type { IntegrationContext, RouteHandler } from "../types.js";
 
 const fakeRow = {
   id: "evt-001",
@@ -24,9 +24,9 @@ function makeStubSql(rows: unknown[]) {
 
 function makeMockCtx(sqlRows: unknown[]): {
   ctx: IntegrationContext;
-  routes: Array<{ method: string; path: string; handler: Function }>;
+  routes: Array<{ method: string; path: string; handler: RouteHandler }>;
 } {
-  const routes: Array<{ method: string; path: string; handler: Function }> = [];
+  const routes: Array<{ method: string; path: string; handler: RouteHandler }> = [];
 
   const ctx: IntegrationContext = {
     db: makeStubSql(sqlRows) as IntegrationContext["db"],

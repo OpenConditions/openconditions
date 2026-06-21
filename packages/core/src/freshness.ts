@@ -7,11 +7,7 @@ export interface FreshnessResult {
  * Returns true when the data is older than windowSec seconds relative to now.
  * Stale when age ≥ windowSec (boundary-inclusive).
  */
-export function isStale(
-  dataUpdatedAt: string,
-  windowSec: number,
-  now: Date = new Date(),
-): boolean {
+export function isStale(dataUpdatedAt: string, windowSec: number, now: Date = new Date()): boolean {
   const updatedMs = new Date(dataUpdatedAt).getTime();
   const ageMs = now.getTime() - updatedMs;
   return ageMs >= windowSec * 1000;
@@ -23,7 +19,7 @@ export function isStale(
 export function freshnessNow(
   dataUpdatedAt: string,
   windowSec: number,
-  now: Date = new Date(),
+  now: Date = new Date()
 ): FreshnessResult {
   const updatedMs = new Date(dataUpdatedAt).getTime();
   const ageMs = now.getTime() - updatedMs;

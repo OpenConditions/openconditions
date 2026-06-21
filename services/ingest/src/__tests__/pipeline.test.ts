@@ -10,7 +10,7 @@ import type { DomainFeedSource } from "../pipeline/run.js";
 
 const NDW_FIXTURE_PATH = path.resolve(
   import.meta.dirname,
-  "../../../../packages/roads/src/__tests__/fixtures/ndw/actueel_beeld.xml",
+  "../../../../packages/roads/src/__tests__/fixtures/ndw/actueel_beeld.xml"
 );
 
 const ndwFeed: DomainFeedSource = {

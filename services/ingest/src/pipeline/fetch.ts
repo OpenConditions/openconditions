@@ -26,10 +26,7 @@ async function fetchOne(url: string, fetchFn: typeof fetch): Promise<Buffer> {
  * `src.url` may be a static string, a string array, or a function that
  * receives `process.env` and returns a string.
  */
-export async function fetchAll(
-  src: FeedSource,
-  fetchFn: typeof fetch,
-): Promise<Buffer[]> {
+export async function fetchAll(src: FeedSource, fetchFn: typeof fetch): Promise<Buffer[]> {
   const urlOrFn = src.url;
 
   if (typeof urlOrFn === "function") {

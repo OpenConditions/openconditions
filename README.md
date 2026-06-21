@@ -4,7 +4,8 @@
 > OpenStreetMap's static map: road incidents / roadworks / closures / hazards / congestion now; transit
 > occupancy, place busyness, and a crowd-sourced reporting layer later.
 >
-> **Status: design complete, implementation not started.**
+> **Status: v0 validation slice implemented (NDW DATEX II → conditions.observations → GeoJSON overlay;
+> build / typecheck / test green). Only NDW is wired; dedup, additional feeds, and release are deferred.**
 
 ## Plans
 
@@ -12,7 +13,7 @@ The full design + phased implementation plans live in the **OpenMapX monorepo** 
 (`github.com/OpenMapX/openmapx`) — they are a local, gitignored working artifact there and are **not duplicated
 into this repo**. Entrypoint + dispatch hub: `docs/plans/conditions/README.md`. Four layers, read top-to-bottom:
 
-- `0-strategy/` — positioning, roadmap, governance/legal/funding (the *why & how we run it*)
+- `0-strategy/` — positioning, roadmap, governance/legal/funding (the _why & how we run it_)
 - `1-foundations/` — the spec, architecture, and canonical schema (read before coding)
 - `2-road/` — the road domain: incidents overlay → navigation/TTS → OpenLR/routing (build first)
 - `3-commons/` — crowd reporting, federation, publishing emitters, privacy/probe

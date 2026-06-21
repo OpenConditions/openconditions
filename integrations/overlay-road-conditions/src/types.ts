@@ -20,7 +20,10 @@ export interface MinimalReply {
   send(body: unknown): this;
 }
 
-export type RouteHandler = (req: MinimalRequest, reply: MinimalReply) => Promise<MinimalReply | void>;
+export type RouteHandler = (
+  req: MinimalRequest,
+  reply: MinimalReply
+) => Promise<MinimalReply | void>;
 
 export interface IntegrationContext {
   db: Sql;

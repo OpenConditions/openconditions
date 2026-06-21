@@ -52,7 +52,7 @@ function multilingual(node: unknown, lang: string): string | undefined {
   if (values) {
     const valueNodes = xmlNodeToArray(values["value"]).filter(isXmlObject);
     const match = valueNodes.find(
-      (v) => getXmlAttribute(v, "lang") === lang || getXmlAttribute(v, "lang")?.startsWith(lang),
+      (v) => getXmlAttribute(v, "lang") === lang || getXmlAttribute(v, "lang")?.startsWith(lang)
     );
     if (match) return text(match);
     const first = valueNodes[0];
@@ -89,9 +89,7 @@ function defaultHeadline(type: string): string {
 }
 
 function resolveLocation(rec: XmlObject): Point | null {
-  const locRef =
-    getXmlChild(rec, "locationReference") ??
-    getXmlChild(rec, "groupOfLocations");
+  const locRef = getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations");
 
   if (!locRef) return null;
 
@@ -123,10 +121,7 @@ function directionOf(rec: XmlObject): string | undefined {
     if (bearing) return bearing;
   }
 
-  const alertCDir = getXmlChild(
-    getXmlChild(locRef, "alertCPoint"),
-    "alertCDirection",
-  );
+  const alertCDir = getXmlChild(getXmlChild(locRef, "alertCPoint"), "alertCDirection");
   return text(alertCDir?.["alertCDirectionCoded"]);
 }
 
@@ -137,12 +132,12 @@ function roadsOf(rec: XmlObject): import("./model.js").RoadRef[] {
   const roadName =
     text(
       getXmlChild(locRef, "roadName") ??
-        getXmlChild(getXmlChild(locRef, "pointLocation"), "roadName"),
+        getXmlChild(getXmlChild(locRef, "pointLocation"), "roadName")
     ) ?? undefined;
   const roadRef =
     text(
       getXmlChild(locRef, "roadNumber") ??
-        getXmlChild(getXmlChild(locRef, "pointLocation"), "roadNumber"),
+        getXmlChild(getXmlChild(locRef, "pointLocation"), "roadNumber")
     ) ?? undefined;
 
   if (roadName || roadRef) {
@@ -207,24 +202,19 @@ function listSituationRecords(doc: XmlObject): SituationRecord[] {
   let publication: XmlObject | undefined;
 
   const msgContainer =
-    getXmlChild(root, "messageContainer") ??
-    getXmlChild(root, "mc:messageContainer");
+    getXmlChild(root, "messageContainer") ?? getXmlChild(root, "mc:messageContainer");
 
   if (msgContainer) {
     publication =
-      getXmlChild(msgContainer, "payload") ??
-      getXmlChild(msgContainer, "payloadPublication");
+      getXmlChild(msgContainer, "payload") ?? getXmlChild(msgContainer, "payloadPublication");
   }
 
   if (!publication) {
-    const logicalModel =
-      getXmlChild(root, "D2LogicalModel") ??
-      getXmlChild(root, "d2LogicalModel");
+    const logicalModel = getXmlChild(root, "D2LogicalModel") ?? getXmlChild(root, "d2LogicalModel");
 
     if (logicalModel) {
       publication =
-        getXmlChild(logicalModel, "payload") ??
-        getXmlChild(logicalModel, "payloadPublication");
+        getXmlChild(logicalModel, "payload") ?? getXmlChild(logicalModel, "payloadPublication");
 
       if (!publication) {
         for (const [key, value] of Object.entries(logicalModel)) {
@@ -246,7 +236,11 @@ function listSituationRecords(doc: XmlObject): SituationRecord[] {
     for (const [key, value] of Object.entries(root)) {
       if (key.startsWith("@_")) continue;
       const stripped = stripXmlNamespace(key);
-      if (stripped.endsWith("Publication") || stripped === "payload" || stripped === "payloadPublication") {
+      if (
+        stripped.endsWith("Publication") ||
+        stripped === "payload" ||
+        stripped === "payloadPublication"
+      ) {
         const candidate = xmlNodeToArray(value).find(isXmlObject);
         if (candidate && ("situation" in candidate || "publicationTime" in candidate)) {
           publication = candidate;
@@ -261,7 +255,10 @@ function listSituationRecords(doc: XmlObject): SituationRecord[] {
   const situations = getXmlChildren(publication, "situation");
   return situations.flatMap((sit) => {
     const sitSeverity = text(sit["overallSeverity"]) ?? "";
-    return getXmlChildren(sit, "situationRecord").map((rec) => ({ rec, situationSeverity: sitSeverity }));
+    return getXmlChildren(sit, "situationRecord").map((rec) => ({
+      rec,
+      situationSeverity: sitSeverity,
+    }));
   });
 }
 
@@ -270,15 +267,11 @@ function listSituationRecords(doc: XmlObject): SituationRecord[] {
  * an array of RoadEvent observations. Records without coordinate geometry
  * (Alert-C/OpenLR-only) are skipped; Phase 2 will decode those.
  */
-export function parseDatexSituations(
-  input: string | Buffer,
-  src: SourceDescriptor,
-): RoadEvent[] {
+export function parseDatexSituations(input: string | Buffer, src: SourceDescriptor): RoadEvent[] {
   const doc = parseXmlDocument(input, {
     removeNSPrefix: true,
     ignoreAttributes: false,
-    isArray: (n) =>
-      n === "situation" || n === "situationRecord" || n === "value",
+    isArray: (n) => n === "situation" || n === "situationRecord" || n === "value",
   });
 
   const records = listSituationRecords(doc);
@@ -300,10 +293,7 @@ export function parseDatexSituations(
     const timeSpec = getXmlChild(validity, "validityTimeSpecification");
 
     const severity =
-      situationSeverity ||
-      text(rec["overallSeverity"]) ||
-      text(rec["severity"]) ||
-      "";
+      situationSeverity || text(rec["overallSeverity"]) || text(rec["severity"]) || "";
 
     const publicComment = getXmlChild(rec, "generalPublicComment");
     const fallbackComment = getXmlChild(rec, "comment");
@@ -330,9 +320,7 @@ export function parseDatexSituations(
         multilingual(fallbackComment, "en") ??
         defaultHeadline(type),
       description:
-        multilingual(publicComment, "en") ??
-        multilingual(fallbackComment, "en") ??
-        undefined,
+        multilingual(publicComment, "en") ?? multilingual(fallbackComment, "en") ?? undefined,
       validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
       validTo: text(timeSpec?.["overallEndTime"]) ?? null,
       externalRefs: collectRefs(rec),
@@ -352,7 +340,7 @@ export function parseDatexSituations(
 
   if (skippedAlertCOnly > 0) {
     console.debug(
-      `[datex] skipped ${skippedAlertCOnly} record(s) with no coordinate geometry (Alert-C/OpenLR only; Phase 2 deferred)`,
+      `[datex] skipped ${skippedAlertCOnly} record(s) with no coordinate geometry (Alert-C/OpenLR only; Phase 2 deferred)`
     );
   }
 

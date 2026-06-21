@@ -9,11 +9,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      include: [
-        "packages/*/src/**",
-        "services/*/src/**",
-        "integrations/*/src/**",
-      ],
+      include: ["packages/*/src/**", "services/*/src/**", "integrations/*/src/**"],
       exclude: [
         "**/node_modules/**",
         "**/*.test.ts",
@@ -29,11 +25,7 @@ export default defineConfig({
           name: "node",
           environment: "node",
           globals: true,
-          include: [
-            "packages/**/*.test.ts",
-            "services/**/*.test.ts",
-            "integrations/**/*.test.ts",
-          ],
+          include: ["packages/**/*.test.ts", "services/**/*.test.ts", "integrations/**/*.test.ts"],
           exclude: ["**/node_modules/**"],
         },
       },

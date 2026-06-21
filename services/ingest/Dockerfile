@@ -1,3 +1,5 @@
+# Placeholder — a proper multi-stage build with published @openconditions/* packages and a
+# pinned distroless runtime image is deferred to the release/image-build task.
 FROM node:24-alpine AS base
 WORKDIR /app
 

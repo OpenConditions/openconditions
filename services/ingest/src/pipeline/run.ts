@@ -35,10 +35,7 @@ export interface DomainFeedSource extends FeedSource {
  * existing rows for this source are left intact (last-good behavior).
  * The error is logged and the function returns {count:0, durationMs}.
  */
-export async function runSource(
-  src: DomainFeedSource,
-  deps: RunDeps,
-): Promise<RunResult> {
+export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<RunResult> {
   const start = Date.now();
 
   let buffers: Buffer[];

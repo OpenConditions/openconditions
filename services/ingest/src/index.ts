@@ -3,12 +3,14 @@ import { MIGRATION_SQL } from "@openconditions/core";
 import { sql } from "./db.js";
 import { startScheduler } from "./scheduler.js";
 
-const PORT = parseInt(process.env["PORT"] || "3010", 10);
+const PORT = parseInt(process.env["PORT"] || "4100", 10);
 const HOST = process.env["HOST"] || "0.0.0.0";
 
 async function boot() {
   console.info("[ingest] applying database migrations…");
-  for (const statement of MIGRATION_SQL.split(";").map((s) => s.trim()).filter(Boolean)) {
+  for (const statement of MIGRATION_SQL.split(";")
+    .map((s) => s.trim())
+    .filter(Boolean)) {
     await sql.unsafe(statement);
   }
   console.info("[ingest] migrations applied");

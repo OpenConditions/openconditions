@@ -79,13 +79,7 @@ export interface RoadFlow extends Measurement {
   domain: "roads";
   metric: "flow";
   geometry: LineStringGeometry;
-  los:
-    | "free_flow"
-    | "heavy"
-    | "queuing"
-    | "stationary"
-    | "blocked"
-    | "unknown";
+  los: "free_flow" | "heavy" | "queuing" | "stationary" | "blocked" | "unknown";
   speedKph?: number;
   freeFlowKph?: number;
   speedRatio?: number;

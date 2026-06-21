@@ -41,6 +41,9 @@ jobs:
           restore-keys: |
             turbo-${{ runner.os }}-
 
+      - name: Lint
+        run: pnpm lint
+
       - name: Typecheck
         run: pnpm typecheck
 

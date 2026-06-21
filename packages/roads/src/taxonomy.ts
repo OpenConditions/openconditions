@@ -15,7 +15,11 @@ const FALLBACK: TypeMapping = { type: "other", category: "conditions", isPlanned
 export const TYPE_CROSSWALK: Record<string, TypeMapping> = {
   accident: { type: "accident", category: "incident", isPlanned: false },
   vehicleobstruction: { type: "broken_down_vehicle", category: "incident", isPlanned: false },
-  roadorcarriagewayorlanemanagement: { type: "lane_closure", category: "incident", isPlanned: false },
+  roadorcarriagewayorlanemanagement: {
+    type: "lane_closure",
+    category: "incident",
+    isPlanned: false,
+  },
   reroutingmanagement: { type: "detour", category: "conditions", isPlanned: false },
   speedmanagement: { type: "speed_restriction", category: "conditions", isPlanned: false },
   generalobstruction: { type: "obstruction", category: "incident", isPlanned: false },
@@ -43,10 +47,7 @@ export const TYPE_CROSSWALK: Record<string, TypeMapping> = {
  * Tolerates namespace prefixes (e.g. "sit:Accident") and is case-insensitive.
  * Unknown types fall through to { type:"other", category:"conditions", isPlanned:false }.
  */
-export function mapSourceType(
-  _format: string,
-  code: string,
-): TypeMapping {
+export function mapSourceType(_format: string, code: string): TypeMapping {
   const colonIdx = code.indexOf(":");
   const bare = colonIdx >= 0 ? code.slice(colonIdx + 1) : code;
   const key = bare.toLowerCase();

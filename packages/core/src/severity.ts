@@ -28,7 +28,7 @@ const DATEX2_MAP: Record<string, Severity> = {
  */
 export function normaliseSeverity(
   raw: string,
-  opts: { format: SourceFormat | string },
+  opts: { format: SourceFormat | string }
 ): NormalisedSeverity {
   let severity: Severity = "unknown";
 
@@ -90,10 +90,7 @@ export function deriveSeverity(impact: DeriveImpact): Severity {
     }
   }
 
-  if (
-    impact.roadState === "some_lanes_closed" ||
-    impact.roadState === "single_lane_alternating"
-  ) {
+  if (impact.roadState === "some_lanes_closed" || impact.roadState === "single_lane_alternating") {
     return "medium";
   }
 

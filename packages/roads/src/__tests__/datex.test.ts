@@ -3,10 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseDatexSituations } from "../datex.js";
 
-const NDW_FIXTURE_PATH = join(
-  import.meta.dirname,
-  "fixtures/ndw/actueel_beeld.xml",
-);
+const NDW_FIXTURE_PATH = join(import.meta.dirname, "fixtures/ndw/actueel_beeld.xml");
 
 const NDW_SOURCE = {
   id: "ndw",

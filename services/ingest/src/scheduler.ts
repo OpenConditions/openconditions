@@ -44,7 +44,7 @@ export function startScheduler(sql: Sql): () => void {
       });
 
       console.info(
-        `[scheduler] registered ${domainName}/${src.id} every ${feed.cadenceSec}s (${cronExpr})`,
+        `[scheduler] registered ${domainName}/${src.id} every ${feed.cadenceSec}s (${cronExpr})`
       );
       jobs.push(job);
     }

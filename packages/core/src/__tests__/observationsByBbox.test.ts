@@ -14,7 +14,10 @@ const fakeRow = {
   attributes: { roads: ["A2"] },
   valid_to: "2026-06-22T10:00:00Z",
   geojson: JSON.stringify({ type: "Point", coordinates: [5.1234, 52.5678] }),
-  origin: { kind: "feed", attribution: { provider: "NDW", license: "CC0-1.0", url: "https://www.ndw.nu" } },
+  origin: {
+    kind: "feed",
+    attribution: { provider: "NDW", license: "CC0-1.0", url: "https://www.ndw.nu" },
+  },
   is_stale: false,
 };
 
@@ -95,6 +98,24 @@ describe("observationsByBbox", () => {
     });
 
     expect(allValues).toContain(3);
+  });
+
+  it("ORDER BY uses the severity CASE rank expression, not the raw text column", async () => {
+    const capturedStrings: string[] = [];
+    const sql = async (strings: TemplateStringsArray, ...values: unknown[]) => {
+      capturedStrings.push(...strings);
+      void values;
+      return [];
+    };
+
+    await observationsByBbox(sql as unknown as import("postgres").Sql, {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+    });
+
+    const fullQuery = capturedStrings.join("");
+    expect(fullQuery).toMatch(/ORDER BY.*CASE severity/s);
+    expect(fullQuery).not.toMatch(/ORDER BY severity/s);
   });
 });
 

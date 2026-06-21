@@ -78,10 +78,7 @@ function toRow(obs: Observation) {
  * explicit column list. Geometry is written via
  * `ST_SetSRID(ST_GeomFromGeoJSON(...), 4326)`.
  */
-export async function insertRows(
-  tx: TransactionSql,
-  batch: Observation[],
-): Promise<void> {
+export async function insertRows(tx: TransactionSql, batch: Observation[]): Promise<void> {
   for (const obs of batch) {
     const r = toRow(obs);
     await tx`
@@ -116,11 +113,7 @@ export async function insertRows(
  * existing rows for that source then bulk-inserts the fresh set in one
  * transaction. Either the full swap completes or nothing changes.
  */
-export async function atomicSwap(
-  sql: Sql,
-  sourceId: string,
-  fresh: Observation[],
-): Promise<void> {
+export async function atomicSwap(sql: Sql, sourceId: string, fresh: Observation[]): Promise<void> {
   await sql.begin(async (tx) => {
     await tx`DELETE FROM conditions.observations WHERE source = ${sourceId}`;
     for (const batch of chunk(fresh, CHUNK_SIZE)) {

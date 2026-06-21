@@ -40,7 +40,7 @@ export function setup(ctx: IntegrationContext): void {
         bbox,
         types: types.length > 0 ? types : undefined,
         minSeverity,
-      }),
+      })
     );
 
     reply.header("Cache-Control", "public, max-age=90, s-maxage=90");

@@ -35,7 +35,7 @@ interface ObservationRow {
  */
 export async function observationsByBbox(
   sql: Sql,
-  opts: ObservationsByBboxOpts,
+  opts: ObservationsByBboxOpts
 ): Promise<FeatureCollection> {
   const { domain, bbox, types, minSeverity } = opts;
   const [west, south, east, north] = bbox;
@@ -56,7 +56,7 @@ export async function observationsByBbox(
       AND status = 'active'
       ${hasTypes ? sql`AND type = ANY(${types!})` : sql``}
       ${minRank !== null ? sql`AND (CASE severity WHEN 'critical' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 WHEN 'low' THEN 1 ELSE 0 END) >= ${minRank}` : sql``}
-    ORDER BY severity DESC NULLS LAST
+    ORDER BY (CASE severity WHEN 'critical' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 WHEN 'low' THEN 1 ELSE 0 END) DESC
     LIMIT 2000
   `;
 
