@@ -67,12 +67,12 @@ describe("pipeline — happy path", () => {
     expect(result.count).toBeGreaterThan(0);
     console.info(`[test] inserted ${result.count} rows`);
 
-    const rows = await sql<{ domain: string; source: string }[]>`
-      SELECT domain, source FROM conditions.observations LIMIT 10
+    const wrongRows = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count
+      FROM conditions.observations
+      WHERE domain <> 'roads' OR source <> 'ndw'
     `;
-    expect(rows.length).toBeGreaterThan(0);
-    expect(rows.every((r) => r.domain === "roads")).toBe(true);
-    expect(rows.every((r) => r.source === "ndw")).toBe(true);
+    expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
   }, 60_000);
 
   it("all inserted geometries are valid PostGIS geometries", async () => {

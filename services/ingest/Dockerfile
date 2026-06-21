@@ -3,20 +3,20 @@ WORKDIR /app
 
 RUN npm install -g pnpm@11
 
-FROM base AS deps
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --prod --frozen-lockfile 2>/dev/null || pnpm install --prod
-
 FROM base AS build
-COPY --from=deps /app/node_modules ./node_modules
+COPY package.json ./
 COPY . .
-RUN pnpm build
+RUN pnpm install --frozen-lockfile && pnpm build
 
 FROM node:24-alpine AS runtime
 WORKDIR /app
 
+RUN npm install -g pnpm@11
+
+COPY package.json ./
+RUN pnpm add --prod fastify postgres croner
+
 COPY --from=build /app/dist ./dist
-COPY --from=deps /app/node_modules ./node_modules
 
 ENV NODE_ENV=production
 

@@ -7,7 +7,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outDir: "dist",
-  external: ["@openconditions/core", "@openconditions/roads"],
-  noExternal: [],
+  external: ["fastify", "postgres", "croner"],
+  noExternal: [/^@openconditions\//, "fast-xml-parser", "drizzle-orm"],
   bundle: true,
 });
