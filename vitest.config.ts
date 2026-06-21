@@ -12,7 +12,7 @@ export default defineConfig({
       include: [
         "packages/*/src/**",
         "services/*/src/**",
-        "integrations/**",
+        "integrations/*/src/**",
       ],
       exclude: [
         "**/node_modules/**",
