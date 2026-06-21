@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnp.*
+.yarn/*
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+.turbo/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test / coverage
+coverage/
+.vitest/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Captured feed fixtures that are large/binary (keep small text fixtures in git)
+fixtures/**/*.gz
+
+# Local planning docs — kept on disk, NOT committed (mirrors OpenMapX convention)
+docs/plans/
+plans/
