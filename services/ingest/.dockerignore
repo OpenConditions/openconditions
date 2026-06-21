@@ -1,0 +1,7 @@
+node_modules
+dist
+src
+tsup.config.ts
+tsconfig.json
+*.test.ts
+**/__tests__
