@@ -20,11 +20,7 @@ type ValidityStatus = "active" | "inactive" | "archived" | "cancelled";
 function validityStatusToStatus(raw: string | undefined): ValidityStatus {
   if (!raw) return "active";
   const lower = raw.toLowerCase();
-  if (
-    lower === "active" ||
-    lower === "definedbyvaliditytimespec" ||
-    lower === "definedByValidityTimeSpec"
-  ) {
+  if (lower === "active" || lower === "definedbyvaliditytimespec") {
     return "active";
   }
   if (lower === "suspended" || lower === "inactive") return "inactive";
@@ -200,7 +196,12 @@ function collectRefs(rec: XmlObject): RoadEvent["externalRefs"] {
   return Object.keys(refs).length > 0 ? refs : undefined;
 }
 
-function listSituationRecords(doc: XmlObject): XmlObject[] {
+interface SituationRecord {
+  rec: XmlObject;
+  situationSeverity: string;
+}
+
+function listSituationRecords(doc: XmlObject): SituationRecord[] {
   const root = doc;
 
   let publication: XmlObject | undefined;
@@ -258,7 +259,10 @@ function listSituationRecords(doc: XmlObject): XmlObject[] {
   if (!publication) return [];
 
   const situations = getXmlChildren(publication, "situation");
-  return situations.flatMap((sit) => getXmlChildren(sit, "situationRecord"));
+  return situations.flatMap((sit) => {
+    const sitSeverity = text(sit["overallSeverity"]) ?? "";
+    return getXmlChildren(sit, "situationRecord").map((rec) => ({ rec, situationSeverity: sitSeverity }));
+  });
 }
 
 /**
@@ -281,7 +285,7 @@ export function parseDatexSituations(
   const out: RoadEvent[] = [];
   let skippedAlertCOnly = 0;
 
-  for (const rec of records) {
+  for (const { rec, situationSeverity } of records) {
     const geometry = resolveLocation(rec);
     if (!geometry) {
       skippedAlertCOnly++;
@@ -295,7 +299,14 @@ export function parseDatexSituations(
     const validityStatus = text(validity["validityStatus"]);
     const timeSpec = getXmlChild(validity, "validityTimeSpecification");
 
-    const severity = text(rec["overallSeverity"]) ?? text(rec["severity"]) ?? "";
+    const severity =
+      situationSeverity ||
+      text(rec["overallSeverity"]) ||
+      text(rec["severity"]) ||
+      "";
+
+    const publicComment = getXmlChild(rec, "generalPublicComment");
+    const fallbackComment = getXmlChild(rec, "comment");
 
     out.push({
       id: `${src.id}:${recId(rec)}`,
@@ -315,10 +326,13 @@ export function parseDatexSituations(
       roadState: roadStateOf(rec),
       lanesAffected: lanesOf(rec),
       headline:
-        multilingual(getXmlChild(rec, "generalPublicComment"), "en") ??
-        multilingual(getXmlChild(rec, "comment"), "en") ??
+        multilingual(publicComment, "en") ??
+        multilingual(fallbackComment, "en") ??
         defaultHeadline(type),
-      description: multilingual(getXmlChild(rec, "generalPublicComment"), "nl") ?? undefined,
+      description:
+        multilingual(publicComment, "en") ??
+        multilingual(fallbackComment, "en") ??
+        undefined,
       validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
       validTo: text(timeSpec?.["overallEndTime"]) ?? null,
       externalRefs: collectRefs(rec),

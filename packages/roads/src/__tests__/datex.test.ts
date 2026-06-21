@@ -63,6 +63,14 @@ describe("parseDatexSituations — NDW actueel_beeld.xml fixture", () => {
     expect(events.every((ev) => ev.kind === "event")).toBe(true);
     expect(events.every((ev) => ev.isStale === false)).toBe(true);
   });
+
+  it("reads situation-level overallSeverity so at least one event has severity !== 'unknown'", () => {
+    const xml = readFileSync(NDW_FIXTURE_PATH);
+    const events = parseDatexSituations(xml, NDW_SOURCE);
+
+    const nonUnknown = events.filter((ev) => ev.severity !== "unknown");
+    expect(nonUnknown.length).toBeGreaterThan(0);
+  });
 });
 
 describe("parseDatexSituations — v2/v3 root tolerance", () => {
