@@ -1,7 +1,7 @@
 {
-  "name": "@openconditions/core",
-  "version": "0.1.0",
-  "description": "Generic two-axis canonical model, severity, and freshness helpers for OpenConditions",
+  "name": "@openconditions/overlay-road-conditions",
+  "version": "1.0.0",
+  "description": "Road-conditions map overlay integration — serves conditions.observations as GeoJSON",
   "license": "Apache-2.0",
   "type": "module",
   "exports": {
@@ -22,14 +22,14 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
+  "dependencies": {
+    "@openconditions/core": "workspace:*"
+  },
   "devDependencies": {
     "@types/geojson": "^7946.0.14",
     "postgres": "^3.4.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^3.0.0"
-  },
-  "dependencies": {
-    "drizzle-orm": "^0.45.2"
   }
 }

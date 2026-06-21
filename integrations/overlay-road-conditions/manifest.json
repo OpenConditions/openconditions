@@ -1,0 +1,68 @@
+{
+  "id": "overlay-road-conditions",
+  "version": "1.0.0",
+  "domains": ["map-overlay"],
+  "quality": "community-verified",
+  "frontend": {
+    "mapLayer": true,
+    "legend": true,
+    "panel": true,
+    "layerSelector": {
+      "group": "map-details",
+      "labelKey": "trafficIncidents",
+      "icon": "warning"
+    }
+  },
+  "backend": {
+    "routes": true
+  },
+  "requires": [
+    { "service": "openconditions-ingest" }
+  ],
+  "healthCheck": {
+    "type": "http",
+    "url": "http://openconditions-ingest:4100/status"
+  },
+  "dataSources": [
+    {
+      "sourceId": "ndw",
+      "name": "NDW (Netherlands)",
+      "url": "https://www.ndw.nu",
+      "license": "CC0-1.0",
+      "attribution": "Data: © NDW / Rijkswaterstaat",
+      "commercialUse": "yes",
+      "providerCountry": "NL",
+      "providerPrivacyUrl": "https://www.ndw.nu/privacy"
+    },
+    {
+      "sourceId": "autobahn-de",
+      "name": "Autobahn GmbH",
+      "url": "https://verkehr.autobahn.de",
+      "license": "dl-de/by-2-0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "commercialUse": "yes",
+      "providerCountry": "DE",
+      "providerPrivacyUrl": "https://www.autobahn.de/datenschutz"
+    },
+    {
+      "sourceId": "digitraffic-fi",
+      "name": "Fintraffic Digitraffic",
+      "url": "https://www.digitraffic.fi",
+      "license": "CC-BY-4.0",
+      "attribution": "Data: Fintraffic / Digitraffic",
+      "commercialUse": "yes",
+      "providerCountry": "FI",
+      "providerPrivacyUrl": "https://www.fintraffic.fi/en/fintraffic/data-protection"
+    },
+    {
+      "sourceId": "drivebc",
+      "name": "DriveBC (Open511)",
+      "url": "https://www.drivebc.ca",
+      "license": "OGL-BC",
+      "attribution": "Contains information licensed under the Open Government Licence – British Columbia",
+      "commercialUse": "yes",
+      "providerCountry": "CA",
+      "providerPrivacyUrl": "https://www2.gov.bc.ca/gov/content/home/privacy"
+    }
+  ]
+}

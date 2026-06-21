@@ -42,6 +42,28 @@ importers:
         specifier: ^3.0.0
         version: 3.2.6(@types/node@24.13.2)(tsx@4.22.4)(yaml@2.9.0)
 
+  integrations/overlay-road-conditions:
+    dependencies:
+      '@openconditions/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+    devDependencies:
+      '@types/geojson':
+        specifier: ^7946.0.14
+        version: 7946.0.16
+      postgres:
+        specifier: ^3.4.0
+        version: 3.4.9
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(postcss@8.5.15)(tsx@4.22.4)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@24.13.2)(tsx@4.22.4)(yaml@2.9.0)
+
   packages/core:
     dependencies:
       drizzle-orm:
@@ -51,6 +73,9 @@ importers:
       '@types/geojson':
         specifier: ^7946.0.14
         version: 7946.0.16
+      postgres:
+        specifier: ^3.4.0
+        version: 3.4.9
       tsup:
         specifier: ^8.0.0
         version: 8.5.1(postcss@8.5.15)(tsx@4.22.4)(typescript@5.9.3)(yaml@2.9.0)
