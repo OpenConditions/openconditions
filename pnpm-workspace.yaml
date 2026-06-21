@@ -1,0 +1,7 @@
+packages:
+  - "packages/*"
+  - "services/*"
+  - "integrations/*"
+
+allowBuilds:
+  esbuild: true
