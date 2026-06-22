@@ -1,7 +1,7 @@
 {
-  "name": "@openconditions/overlay-road-conditions",
+  "name": "@openconditions/road-conditions-openconditions",
   "version": "1.0.0",
-  "description": "Road-conditions map overlay integration — serves conditions.observations as GeoJSON",
+  "description": "OpenMapX road-conditions provider — exposes conditions.observations as RoadConditionEvents",
   "license": "Apache-2.0",
   "type": "module",
   "exports": {

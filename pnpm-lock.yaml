@@ -42,7 +42,7 @@ importers:
         specifier: ^3.0.0
         version: 3.2.6(@types/node@24.13.2)(tsx@4.22.4)(yaml@2.9.0)
 
-  integrations/overlay-road-conditions:
+  integrations/road-conditions-openconditions:
     dependencies:
       '@openconditions/core':
         specifier: workspace:*
