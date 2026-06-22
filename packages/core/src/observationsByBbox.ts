@@ -59,6 +59,10 @@ export async function observationsByBbox(
     "domain = $1",
     "geom && ST_MakeEnvelope($2, $3, $4, $5, 4326)",
     "status = 'active'",
+    // Never serve a condition past its validity/expiry, even if a stale row is
+    // still present (e.g. between sweeps, or from a source that stopped polling).
+    "(valid_to IS NULL OR valid_to > now())",
+    "(expires_at IS NULL OR expires_at > now())",
   ];
 
   if (Array.isArray(types) && types.length > 0) {

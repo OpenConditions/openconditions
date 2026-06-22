@@ -3,8 +3,17 @@ import type postgres from "postgres";
 import { DOMAIN_REGISTRY } from "./domains.js";
 import { runSource } from "./pipeline/run.js";
 import type { DomainFeedSource } from "./pipeline/run.js";
+import { sweepStaleObservations } from "./pipeline/sweep.js";
 
 type Sql = postgres.Sql;
+
+/** How often the stale-observation sweep runs. */
+const SWEEP_CRON = "*/5 * * * *";
+/**
+ * Rows whose `fetched_at` is older than this are swept as orphans. Far larger
+ * than the slowest feed cadence (300s) so a healthy source is never removed.
+ */
+const ORPHAN_MAX_AGE_SEC = 3600;
 
 function cadenceToCron(cadenceSec: number): string {
   if (cadenceSec < 60) return `*/${cadenceSec} * * * * *`;
@@ -49,6 +58,24 @@ export function startScheduler(sql: Sql): () => void {
       jobs.push(job);
     }
   }
+
+  // Periodic cleanup: remove expired conditions + orphaned rows from sources
+  // that stopped polling (the per-source atomic swap only cleans live feeds).
+  let sweeping = false;
+  const sweepJob = new Cron(SWEEP_CRON, { catch: true }, async () => {
+    if (sweeping) return;
+    sweeping = true;
+    try {
+      const { deleted } = await sweepStaleObservations(sql, { maxAgeSec: ORPHAN_MAX_AGE_SEC });
+      if (deleted > 0) console.info(`[scheduler] sweep removed ${deleted} stale observation(s)`);
+    } catch (err) {
+      console.error("[scheduler] sweep failed", err);
+    } finally {
+      sweeping = false;
+    }
+  });
+  console.info(`[scheduler] registered stale-observation sweep (${SWEEP_CRON})`);
+  jobs.push(sweepJob);
 
   return () => {
     for (const job of jobs) {

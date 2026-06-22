@@ -119,6 +119,19 @@ describe("observationsByBbox", () => {
     expect(capturedParams).toContain(3);
   });
 
+  it("filters out conditions past their validity/expiry window", async () => {
+    let capturedQuery = "";
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
+    expect(capturedQuery).toMatch(/valid_to IS NULL OR valid_to > now\(\)/);
+    expect(capturedQuery).toMatch(/expires_at IS NULL OR expires_at > now\(\)/);
+  });
+
   it("ORDER BY uses the severity CASE rank expression, not the raw text column", async () => {
     let capturedQuery = "";
     const db: QueryRunner = {
