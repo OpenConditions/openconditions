@@ -18,7 +18,18 @@ export interface FeedSource {
   id: string;
   name: string;
   format: SourceFormat;
-  url: string | ((env: Record<string, string | undefined>) => string) | string[];
+  /**
+   * The feed's URL(s). Optional when `discover` is set (the URL set is then
+   * resolved dynamically at fetch time). When both are present, `discover` wins.
+   */
+  url?: string | ((env: Record<string, string | undefined>) => string) | string[];
+  /**
+   * Resolves the concrete URL set to fetch at request time (e.g. enumerate
+   * every motorway, or pull a feed registry). The ingest service fans the
+   * returned URLs out with bounded concurrency and per-URL tolerance, so one
+   * failing sub-feed never wipes the source.
+   */
+  discover?: (fetchFn: typeof fetch) => Promise<string[]>;
   auth?: {
     kind: "none" | "query-key" | "header-key" | "token";
     envVar?: string;
