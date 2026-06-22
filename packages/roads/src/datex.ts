@@ -1,6 +1,7 @@
 import { normaliseSeverity } from "@openconditions/core";
 import type { Point } from "geojson";
 import type { RoadEvent } from "./model.js";
+import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 import {
@@ -344,5 +345,5 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
     );
   }
 
-  return out;
+  return dedupeRoadEvents(out);
 }
