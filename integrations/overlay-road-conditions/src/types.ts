@@ -1,13 +1,14 @@
-import type { Sql } from "postgres";
-
 /**
  * Minimal shim for the integration context.
  *
- * The real IntegrationContext comes from @openmapx/integration-framework (unpublished).
- * When this package is wired into the OpenMapX monorepo the `import type` here is
- * replaced by the real import and this file is removed.
+ * The real IntegrationContext comes from @openmapx/integration-framework — host-injected
+ * at runtime, and re-exported for build-time by the published @openmapx/extension-sdk.
+ * When wired into the OpenMapX monorepo, swap this file for that import.
  *
- * monorepo-wired: swap types.ts for @openmapx/integration-framework IntegrationContext
+ * `db` mirrors OpenMapX's `DatabaseClient` exactly (positional-parameter `execute`), and is
+ * present only when the manifest declares `requires: [{ service: "postgis" }]`.
+ *
+ * monorepo-wired: swap types.ts for the @openmapx/extension-sdk IntegrationContext
  */
 
 export interface MinimalRequest {
@@ -25,8 +26,13 @@ export type RouteHandler = (
   reply: MinimalReply
 ) => Promise<MinimalReply | void>;
 
+/** Matches OpenMapX `IntegrationContext.db` (DatabaseClient). */
+export interface DatabaseClient {
+  execute<T = unknown>(query: string, params?: unknown[]): Promise<T>;
+}
+
 export interface IntegrationContext {
-  db: Sql;
+  db?: DatabaseClient;
   cache: {
     withCache<T>(key: string, ttlSec: number, fn: () => Promise<T>): Promise<T>;
   };

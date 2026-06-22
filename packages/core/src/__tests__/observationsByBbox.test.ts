@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { observationsByBbox } from "../observationsByBbox.js";
+import { observationsByBbox, type QueryRunner } from "../observationsByBbox.js";
 import { severityRank } from "../severity.js";
 
 const fakeRow = {
@@ -21,15 +21,18 @@ const fakeRow = {
   is_stale: false,
 };
 
-function makeStubSql(rows: unknown[]) {
-  const stub = async (_strings: TemplateStringsArray, ..._values: unknown[]) => rows;
-  return stub as unknown as import("postgres").Sql;
+// Stub the OpenMapX `ctx.db` (DatabaseClient) interface: execute(query, params) → rows.
+function makeStubDb(rows: unknown[]): QueryRunner {
+  return {
+    async execute<T = unknown>(_query: string, _params?: unknown[]): Promise<T> {
+      return rows as T;
+    },
+  };
 }
 
 describe("observationsByBbox", () => {
   it("maps database rows to a GeoJSON FeatureCollection", async () => {
-    const sql = makeStubSql([fakeRow]);
-    const fc = await observationsByBbox(sql, {
+    const fc = await observationsByBbox(makeStubDb([fakeRow]), {
       domain: "roads",
       bbox: [4.0, 51.0, 6.0, 53.0],
     });
@@ -47,14 +50,12 @@ describe("observationsByBbox", () => {
   });
 
   it("includes origin.attribution on the feature properties", async () => {
-    const sql = makeStubSql([fakeRow]);
-    const fc = await observationsByBbox(sql, {
+    const fc = await observationsByBbox(makeStubDb([fakeRow]), {
       domain: "roads",
       bbox: [4.0, 51.0, 6.0, 53.0],
     });
 
-    const feat = fc.features[0];
-    expect(feat.properties?.attribution).toEqual({
+    expect(fc.features[0].properties?.attribution).toEqual({
       provider: "NDW",
       license: "CC0-1.0",
       url: "https://www.ndw.nu",
@@ -62,8 +63,7 @@ describe("observationsByBbox", () => {
   });
 
   it("returns an empty FeatureCollection when no rows match", async () => {
-    const sql = makeStubSql([]);
-    const fc = await observationsByBbox(sql, {
+    const fc = await observationsByBbox(makeStubDb([]), {
       domain: "roads",
       bbox: [4.0, 51.0, 6.0, 53.0],
     });
@@ -72,50 +72,64 @@ describe("observationsByBbox", () => {
     expect(fc.features).toHaveLength(0);
   });
 
-  it("forwards optional types filter without error", async () => {
-    const sql = makeStubSql([]);
-    const fc = await observationsByBbox(sql, {
-      domain: "roads",
-      bbox: [4.0, 51.0, 6.0, 53.0],
-      types: ["accident", "roadwork"],
-    });
-
-    expect(fc.type).toBe("FeatureCollection");
-    expect(fc.features).toHaveLength(0);
-  });
-
-  it("passes minSeverity rank as a bound integer value", async () => {
-    const allValues: unknown[] = [];
-    const sql = async (_strings: TemplateStringsArray, ...values: unknown[]) => {
-      allValues.push(...values);
-      return [];
+  it("passes domain + bbox as positional bind parameters ($1..$5)", async () => {
+    let capturedParams: unknown[] = [];
+    const db: QueryRunner = {
+      async execute<T = unknown>(_q: string, p?: unknown[]): Promise<T> {
+        capturedParams = p ?? [];
+        return [] as T;
+      },
     };
+    await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
+    expect(capturedParams).toEqual(["roads", 4.0, 51.0, 6.0, 53.0]);
+  });
 
-    await observationsByBbox(sql as unknown as import("postgres").Sql, {
+  it("appends a typed array param for the types filter", async () => {
+    let capturedQuery = "";
+    let capturedParams: unknown[] = [];
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        capturedParams = p ?? [];
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+      types: ["accident", "roadworks"],
+    });
+    expect(capturedQuery).toMatch(/type = ANY\(\$6::text\[\]\)/);
+    expect(capturedParams[5]).toEqual(["accident", "roadworks"]);
+  });
+
+  it("passes minSeverity as a bound integer rank", async () => {
+    let capturedParams: unknown[] = [];
+    const db: QueryRunner = {
+      async execute<T = unknown>(_q: string, p?: unknown[]): Promise<T> {
+        capturedParams = p ?? [];
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, {
       domain: "roads",
       bbox: [4.0, 51.0, 6.0, 53.0],
       minSeverity: "high",
     });
-
-    expect(allValues).toContain(3);
+    expect(capturedParams).toContain(3);
   });
 
   it("ORDER BY uses the severity CASE rank expression, not the raw text column", async () => {
-    const capturedStrings: string[] = [];
-    const sql = async (strings: TemplateStringsArray, ...values: unknown[]) => {
-      capturedStrings.push(...strings);
-      void values;
-      return [];
+    let capturedQuery = "";
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        return [] as T;
+      },
     };
-
-    await observationsByBbox(sql as unknown as import("postgres").Sql, {
-      domain: "roads",
-      bbox: [4.0, 51.0, 6.0, 53.0],
-    });
-
-    const fullQuery = capturedStrings.join("");
-    expect(fullQuery).toMatch(/ORDER BY.*CASE severity/s);
-    expect(fullQuery).not.toMatch(/ORDER BY severity/s);
+    await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
+    expect(capturedQuery).toMatch(/ORDER BY.*CASE severity/s);
+    expect(capturedQuery).not.toMatch(/ORDER BY severity\b/);
   });
 });
 

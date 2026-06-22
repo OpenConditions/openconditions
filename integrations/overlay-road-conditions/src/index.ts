@@ -32,10 +32,18 @@ export function setup(ctx: IntegrationContext): void {
 
     const minSeverity = req.query["minSeverity"] || undefined;
 
+    const db = ctx.db;
+    if (!db) {
+      reply
+        .status(503)
+        .send({ error: "conditions database unavailable (integration must require postgis)" });
+      return reply;
+    }
+
     const cacheKey = `conditions:query:${domain}:${bboxKey(bbox)}:${types.join("+")}:${minSeverity ?? ""}`;
 
     const fc = await ctx.cache.withCache(cacheKey, 90, () =>
-      observationsByBbox(ctx.db, {
+      observationsByBbox(db, {
         domain,
         bbox,
         types: types.length > 0 ? types : undefined,

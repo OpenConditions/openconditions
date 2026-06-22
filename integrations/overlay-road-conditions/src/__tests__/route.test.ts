@@ -18,8 +18,12 @@ const fakeRow = {
   is_stale: false,
 };
 
-function makeStubSql(rows: unknown[]) {
-  return async (_strings: TemplateStringsArray, ..._values: unknown[]) => rows;
+function makeStubDb(rows: unknown[]) {
+  return {
+    async execute<T = unknown>(_query: string, _params?: unknown[]): Promise<T> {
+      return rows as T;
+    },
+  };
 }
 
 function makeMockCtx(sqlRows: unknown[]): {
@@ -29,7 +33,7 @@ function makeMockCtx(sqlRows: unknown[]): {
   const routes: Array<{ method: string; path: string; handler: RouteHandler }> = [];
 
   const ctx: IntegrationContext = {
-    db: makeStubSql(sqlRows) as IntegrationContext["db"],
+    db: makeStubDb(sqlRows),
     cache: {
       async withCache<T>(_key: string, _ttl: number, fn: () => Promise<T>): Promise<T> {
         return fn();
