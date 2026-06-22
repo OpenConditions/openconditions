@@ -8,3 +8,4 @@ export * from "./open511.js";
 export * from "./wzdx.js";
 export * from "./feeds.js";
 export * from "./dedupe.js";
+export * from "./discover.js";

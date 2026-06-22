@@ -1,0 +1,92 @@
+[
+  {
+    "feedname": "alpha-dot",
+    "state": "alpha",
+    "issuingorganization": "Alpha DOT",
+    "active": true,
+    "format": "geojson",
+    "version": "4",
+    "url": { "url": "https://alpha.example/api/wzdx" }
+  },
+  {
+    "feedname": "bravo-dot",
+    "state": "bravo",
+    "issuingorganization": "Bravo DOT",
+    "active": true,
+    "format": "geojson",
+    "version": "4.2",
+    "url": { "url": "https://bravo.example/api/wzdx?apiKey=" }
+  },
+  {
+    "feedname": "charlie-dot",
+    "state": "charlie",
+    "issuingorganization": "Charlie DOT",
+    "active": true,
+    "format": "geojson",
+    "version": "4.1",
+    "url": { "url": "https://charlie.example/api/wzdx" }
+  },
+  {
+    "feedname": "delta-json",
+    "state": "delta",
+    "issuingorganization": "Delta DOT",
+    "active": true,
+    "format": "json",
+    "version": "4",
+    "url": { "url": "https://delta.example/api/json" }
+  },
+  {
+    "feedname": "echo-inactive",
+    "state": "echo",
+    "issuingorganization": "Echo DOT",
+    "active": false,
+    "format": "geojson",
+    "version": "4",
+    "url": { "url": "https://echo.example/api/wzdx" }
+  },
+  {
+    "feedname": "foxtrot-cwz",
+    "state": "foxtrot",
+    "issuingorganization": "Foxtrot DOT",
+    "active": true,
+    "format": "geojson",
+    "version": "CWZ 1.0",
+    "url": { "url": "https://foxtrot.example/api/cwz" }
+  },
+  {
+    "feedname": "golf-v3",
+    "state": "golf",
+    "issuingorganization": "Golf DOT",
+    "active": true,
+    "format": "geojson",
+    "version": "3.1",
+    "url": { "url": "https://golf.example/api/v3" }
+  },
+  {
+    "feedname": "hotel-plainurl",
+    "state": "hotel",
+    "issuingorganization": "Hotel DOT",
+    "active": true,
+    "format": "geojson",
+    "version": "4",
+    "url": "https://hotel.example/api/wzdx-string"
+  },
+  {
+    "feedname": "alpha-dot-duplicate",
+    "state": "alpha",
+    "issuingorganization": "Alpha DOT",
+    "active": true,
+    "format": "geojson",
+    "version": "4",
+    "url": { "url": "https://alpha.example/api/wzdx" }
+  },
+  {
+    "feedname": "india-stringactive",
+    "state": "india",
+    "issuingorganization": "India DOT",
+    "active": "true",
+    "format": "geojson",
+    "version": "4",
+    "url": { "url": "https://india.example/api/wzdx" }
+  }
+]
