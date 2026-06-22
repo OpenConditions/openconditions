@@ -1,0 +1,364 @@
+{
+  "type": "FeatureCollection",
+  "dataUpdatedTime": "2026-06-22T18:29:21Z",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [22.06278, 60.620919],
+            [22.062854, 60.620906],
+            [22.062867, 60.620904],
+            [22.062952, 60.620891]
+          ]
+        ]
+      },
+      "properties": {
+        "situationId": "GUID50465894",
+        "situationType": "TRAFFIC_ANNOUNCEMENT",
+        "trafficAnnouncementType": "GENERAL",
+        "version": 13,
+        "releaseTime": "2026-06-15T21:09:17.051Z",
+        "versionTime": "2026-06-15T21:09:16.841Z",
+        "announcements": [
+          {
+            "language": "FI",
+            "title": "Tie 12421, eli Vastalahdentie, Nousiainen. Liikennetiedote. ",
+            "location": {
+              "countryCode": 6,
+              "locationTableNumber": 17,
+              "locationTableVersion": "1.11.45",
+              "description": "Tie 12421, eli Vastalahdentie, Nousiainen.\nTarkempi paikka: Paikasta Kaitaraistentien risteys 200 m, suuntaan Repolanristi."
+            },
+            "locationDetails": {
+              "roadAddressLocation": {
+                "primaryPoint": {
+                  "municipality": "Nousiainen",
+                  "province": "Varsinais-Suomi",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 12421,
+                    "roadSection": 1,
+                    "distance": 278
+                  },
+                  "roadName": "Vastalahdentie",
+                  "alertCLocation": {
+                    "locationCode": 24355,
+                    "name": "Kaitaraistentien risteys",
+                    "distance": 238
+                  }
+                },
+                "secondaryPoint": {
+                  "municipality": "Nousiainen",
+                  "province": "Varsinais-Suomi",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 12421,
+                    "roadSection": 1,
+                    "distance": 288
+                  },
+                  "roadName": "Vastalahdentie",
+                  "alertCLocation": {
+                    "locationCode": 24357,
+                    "name": "Repolanristi",
+                    "distance": 771
+                  }
+                },
+                "direction": "BOTH"
+              }
+            },
+            "features": [
+              {
+                "name": "Tie on suljettu liikenteeltä"
+              },
+              {
+                "name": "Tapahtumapaikalla on käytössä kiertotie"
+              }
+            ],
+            "roadWorkPhases": [],
+            "comment": "Siltatyö. \nKiertotie maanteiden 12421, 12419, 2010 ja 12414 kautta.\n",
+            "timeAndDuration": {
+              "startTime": "2026-06-16T03:00:00Z",
+              "endTime": "2026-07-04T17:00:00Z"
+            },
+            "additionalInformation": "Liikenne- ja kelitiedot verkossa: https://liikennetilanne.fintraffic.fi/",
+            "sender": "Fintraffic Tieliikennekeskus Turku"
+          }
+        ],
+        "contact": {
+          "phone": "02002100",
+          "email": "turku.liikennekeskus@fintraffic.fi"
+        },
+        "dataUpdatedTime": "2026-06-15T21:09:41Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [27.849869, 61.554876]
+      },
+      "properties": {
+        "situationId": "GUID50465931",
+        "situationType": "TRAFFIC_ANNOUNCEMENT",
+        "trafficAnnouncementType": "GENERAL",
+        "version": 1,
+        "releaseTime": "2026-06-15T10:27:26.930Z",
+        "versionTime": "2026-06-15T10:27:26.913Z",
+        "announcements": [
+          {
+            "language": "FI",
+            "title": "Tie 15147, eli Hirvensalon tie, Mikkeli. Liikennetiedote. ",
+            "location": {
+              "countryCode": 6,
+              "locationTableNumber": 17,
+              "locationTableVersion": "1.11.45",
+              "description": "Tie 15147, eli Hirvensalon tie, Mikkeli.\nTarkempi paikka: Kuparovirran lossi."
+            },
+            "locationDetails": {
+              "roadAddressLocation": {
+                "primaryPoint": {
+                  "municipality": "Mikkeli",
+                  "province": "Etelä-Savo",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 15147,
+                    "roadSection": 2,
+                    "distance": 0
+                  },
+                  "roadName": "Hirvensalon tie",
+                  "alertCLocation": {
+                    "locationCode": 28355,
+                    "name": "Kuparovirran lossi",
+                    "distance": 0
+                  }
+                },
+                "direction": "UNKNOWN"
+              }
+            },
+            "features": [
+              {
+                "name": "Lautan kantavuus on muuttunut"
+              }
+            ],
+            "roadWorkPhases": [],
+            "comment": "Käytössä 44 tonnin lossi. Ajoneuvon max pituus 25 m",
+            "timeAndDuration": {
+              "startTime": "2026-06-15T10:30:00Z"
+            },
+            "additionalInformation": "Liikenne- ja kelitiedot verkossa: https://liikennetilanne.fintraffic.fi/",
+            "sender": "Fintraffic Tieliikennekeskus Tampere"
+          }
+        ],
+        "contact": {
+          "phone": "02002100",
+          "email": "tampere.liikennekeskus@fintraffic.fi"
+        },
+        "dataUpdatedTime": "2026-06-15T10:27:51Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.659191, 60.216145]
+      },
+      "properties": {
+        "situationId": "GUID50466272",
+        "situationType": "ROAD_WORK",
+        "trafficAnnouncementType": null,
+        "version": 1,
+        "releaseTime": "2026-06-22T18:29:13.497Z",
+        "versionTime": "2026-06-22T18:29:13.489Z",
+        "announcements": [
+          {
+            "language": "FI",
+            "title": "Tie 1, Espoo. Tietyö. ",
+            "location": {
+              "countryCode": 6,
+              "locationTableNumber": 17,
+              "locationTableVersion": "1.11.45",
+              "description": "Tie 1 välillä Helsinki - Turku, Espoo.\nTarkempi paikka: Lommilan liittymä."
+            },
+            "locationDetails": {
+              "roadAddressLocation": {
+                "primaryPoint": {
+                  "municipality": "Espoo",
+                  "province": "Uusimaa",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 1,
+                    "roadSection": 5,
+                    "distance": 5921
+                  },
+                  "alertCLocation": {
+                    "locationCode": 41795,
+                    "name": "Lommilan liittymä",
+                    "distance": 0
+                  }
+                },
+                "direction": "POS",
+                "directionDescription": "Helsinki"
+              }
+            },
+            "features": [
+              {
+                "name": "Ajokaista suljettu liikenteeltä"
+              }
+            ],
+            "roadWorkPhases": [
+              {
+                "id": "GUID50469034",
+                "location": {
+                  "countryCode": 6,
+                  "locationTableNumber": 17,
+                  "locationTableVersion": "1.11.45",
+                  "description": "Tie 1 välillä Helsinki - Turku, Espoo.\nTarkempi paikka: Lommilan liittymä."
+                },
+                "locationDetails": {
+                  "roadAddressLocation": {
+                    "primaryPoint": {
+                      "municipality": "Espoo",
+                      "province": "Uusimaa",
+                      "country": "Suomi",
+                      "roadAddress": {
+                        "road": 1,
+                        "roadSection": 5,
+                        "distance": 5921
+                      },
+                      "alertCLocation": {
+                        "locationCode": 41795,
+                        "name": "Lommilan liittymä",
+                        "distance": 0
+                      }
+                    },
+                    "direction": "POS",
+                    "directionDescription": "Helsinki"
+                  }
+                },
+                "workingHours": [],
+                "timeAndDuration": {
+                  "startTime": "2026-06-22T18:30:00Z",
+                  "endTime": "2026-06-22T20:30:00Z"
+                },
+                "workTypes": [
+                  {
+                    "type": "MAINTENANCE",
+                    "description": "Kunnossapito- ja hoitotyö"
+                  }
+                ],
+                "restrictions": [
+                  {
+                    "type": "SINGLE_LANE_CLOSED",
+                    "restriction": {
+                      "name": "Yksi ajokaista suljettu"
+                    }
+                  }
+                ],
+                "restrictionsLiftable": false,
+                "severity": "HIGHEST",
+                "slowTrafficTimes": [],
+                "queuingTrafficTimes": []
+              }
+            ],
+            "timeAndDuration": {
+              "startTime": "2026-06-22T18:30:00Z",
+              "endTime": "2026-06-22T20:30:00Z"
+            },
+            "additionalInformation": "Liikenne- ja kelitiedot verkossa: https://liikennetilanne.fintraffic.fi/",
+            "sender": "Fintraffic Tieliikennekeskus Helsinki"
+          }
+        ],
+        "contact": {
+          "phone": "02002100",
+          "email": "helsinki.liikennekeskus@fintraffic.fi"
+        },
+        "dataUpdatedTime": "2026-06-22T18:29:21Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [25.013, 60.167]
+      },
+      "properties": {
+        "situationId": "GUID_FIXTURE_ACCIDENT",
+        "situationType": "TRAFFIC_ANNOUNCEMENT",
+        "trafficAnnouncementType": "ACCIDENT_REPORT",
+        "version": 1,
+        "releaseTime": "2026-06-22T10:00:00.000Z",
+        "versionTime": "2026-06-22T10:00:00.000Z",
+        "announcements": [
+          {
+            "language": "FI",
+            "title": "Valtatie 1, Helsinki. Liikenneonnettomuus. ",
+            "location": {
+              "countryCode": 6,
+              "locationTableNumber": 17,
+              "locationTableVersion": "1.11.45",
+              "description": "Valtatie 1, Helsinki."
+            },
+            "locationDetails": {
+              "roadAddressLocation": {
+                "primaryPoint": {
+                  "municipality": "Helsinki",
+                  "province": "Uusimaa",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 1,
+                    "roadSection": 1,
+                    "distance": 100
+                  },
+                  "roadName": "Valtatie 1"
+                },
+                "direction": "POS"
+              }
+            },
+            "features": [
+              {
+                "name": "Onnettomuus"
+              }
+            ],
+            "roadWorkPhases": [],
+            "comment": "Liikenneonnettomuus. Poliisi paikalla.",
+            "timeAndDuration": {
+              "startTime": "2026-06-22T09:45:00Z",
+              "endTime": "2026-06-22T12:00:00Z"
+            },
+            "sender": "Fintraffic Tieliikennekeskus Helsinki"
+          }
+        ],
+        "contact": {
+          "phone": "02002100",
+          "email": "helsinki.liikennekeskus@fintraffic.fi"
+        },
+        "dataUpdatedTime": "2026-06-22T10:00:00Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "situationId": "GUID_FIXTURE_NOGEO",
+        "situationType": "TRAFFIC_ANNOUNCEMENT",
+        "trafficAnnouncementType": "GENERAL",
+        "version": 1,
+        "releaseTime": "2026-06-22T10:00:00.000Z",
+        "versionTime": "2026-06-22T10:00:00.000Z",
+        "announcements": [
+          {
+            "language": "FI",
+            "title": "No geometry test feature",
+            "timeAndDuration": {
+              "startTime": "2026-06-22T10:00:00Z"
+            }
+          }
+        ],
+        "dataUpdatedTime": "2026-06-22T10:00:00Z"
+      }
+    }
+  ]
+}

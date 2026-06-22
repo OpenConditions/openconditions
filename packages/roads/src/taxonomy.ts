@@ -53,6 +53,13 @@ export const TYPE_CROSSWALK: Record<string, TypeMapping> = {
   warning: { type: "hazard", category: "conditions", isPlanned: false },
   closure: { type: "road_closure", category: "incident", isPlanned: false },
   roadworks: { type: "roadworks", category: "planned", isPlanned: true },
+
+  road_work: { type: "roadworks", category: "planned", isPlanned: true },
+  weight_restriction: { type: "dimension_restriction", category: "conditions", isPlanned: false },
+  exempted_transport: { type: "authority", category: "incident", isPlanned: false },
+  accident_report: { type: "accident", category: "incident", isPlanned: false },
+  preliminary_accident_report: { type: "accident", category: "incident", isPlanned: false },
+  general: { type: "hazard", category: "conditions", isPlanned: false },
 };
 
 /**

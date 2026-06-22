@@ -1,0 +1,205 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { parseDigitraffic } from "../digitraffic.js";
+import { mapSourceType } from "../taxonomy.js";
+
+const FIXTURE_PATH = join(import.meta.dirname, "fixtures/digitraffic/messages.json");
+
+const DIGITRAFFIC_SOURCE = {
+  id: "digitraffic-fi",
+  attribution: "Fintraffic / digitraffic.fi",
+  country: "FI",
+  license: "CC-BY-4.0",
+  licenseUrl: "https://www.digitraffic.fi/en/road-traffic/#license",
+} as const;
+
+describe("parseDigitraffic — fixture", () => {
+  it("parses at least one RoadEvent", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    expect(events.length).toBeGreaterThan(0);
+  });
+
+  it("emits sourceFormat:'digitraffic-json' on every event", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    expect(events.every((ev) => ev.sourceFormat === "digitraffic-json")).toBe(true);
+  });
+
+  it("emits domain:'roads' on every event", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    expect(events.every((ev) => ev.domain === "roads")).toBe(true);
+  });
+
+  it("emits kind:'event' on every event", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    expect(events.every((ev) => ev.kind === "event")).toBe(true);
+  });
+
+  it("includes geometry on every emitted event", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    for (const ev of events) {
+      expect(ev.geometry).toBeDefined();
+      expect(ev.geometry.type).toMatch(
+        /^(Point|LineString|Polygon|MultiPoint|MultiLineString|MultiPolygon)$/
+      );
+    }
+  });
+
+  it("maps ROAD_WORK feature to type:'roadworks' with isPlanned:true", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    const rw = events.find((ev) => ev.type === "roadworks");
+    expect(rw).toBeDefined();
+    expect(rw!.isPlanned).toBe(true);
+  });
+
+  it("maps ACCIDENT_REPORT feature to type:'accident'", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    const acc = events.find((ev) => ev.id.includes("GUID_FIXTURE_ACCIDENT"));
+    expect(acc).toBeDefined();
+    expect(acc!.type).toBe("accident");
+  });
+
+  it("skips geometry-less features and does not include them in output", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    const noGeo = events.find((ev) => ev.id.includes("GUID_FIXTURE_NOGEO"));
+    expect(noGeo).toBeUndefined();
+  });
+
+  it("prefixes event id with source id", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    expect(events.every((ev) => ev.id.startsWith("digitraffic-fi:"))).toBe(true);
+  });
+
+  it("sets headline from announcements[0].title", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    const acc = events.find((ev) => ev.id.includes("GUID_FIXTURE_ACCIDENT"));
+    expect(acc).toBeDefined();
+    expect(acc!.headline).toContain("Liikenneonnettomuus");
+  });
+
+  it("sets validFrom from timeAndDuration.startTime", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    const acc = events.find((ev) => ev.id.includes("GUID_FIXTURE_ACCIDENT"));
+    expect(acc).toBeDefined();
+    expect(acc!.validFrom).toBe("2026-06-22T09:45:00Z");
+  });
+
+  it("sets validTo from timeAndDuration.endTime when present", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    const acc = events.find((ev) => ev.id.includes("GUID_FIXTURE_ACCIDENT"));
+    expect(acc).toBeDefined();
+    expect(acc!.validTo).toBe("2026-06-22T12:00:00Z");
+  });
+
+  it("sets validTo to null when endTime is absent", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    const noEnd = events.find((ev) => ev.id.includes("GUID50465931"));
+    expect(noEnd).toBeDefined();
+    expect(noEnd!.validTo).toBeNull();
+  });
+
+  it("sets severitySource:'derived' on every event", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    expect(events.every((ev) => ev.severitySource === "derived")).toBe(true);
+  });
+
+  it("carries license from source descriptor via origin", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
+    for (const ev of events) {
+      expect(ev.origin.kind).toBe("feed");
+      if (ev.origin.kind === "feed") {
+        expect(ev.origin.attribution.license).toBe("CC-BY-4.0");
+      }
+    }
+  });
+
+  it("accepts a pre-parsed object as well as a JSON string", () => {
+    const obj = JSON.parse(readFileSync(FIXTURE_PATH, "utf8"));
+    const events = parseDigitraffic(obj, DIGITRAFFIC_SOURCE);
+    expect(events.length).toBeGreaterThan(0);
+  });
+
+  it("never throws on empty features array", () => {
+    expect(() =>
+      parseDigitraffic({ type: "FeatureCollection", features: [] }, DIGITRAFFIC_SOURCE)
+    ).not.toThrow();
+    expect(
+      parseDigitraffic({ type: "FeatureCollection", features: [] }, DIGITRAFFIC_SOURCE)
+    ).toEqual([]);
+  });
+
+  it("never throws on invalid JSON string", () => {
+    expect(() => parseDigitraffic("not-valid-json", DIGITRAFFIC_SOURCE)).not.toThrow();
+    expect(parseDigitraffic("not-valid-json", DIGITRAFFIC_SOURCE)).toEqual([]);
+  });
+
+  it("never throws on missing features key", () => {
+    expect(() => parseDigitraffic({ type: "FeatureCollection" }, DIGITRAFFIC_SOURCE)).not.toThrow();
+    expect(parseDigitraffic({ type: "FeatureCollection" }, DIGITRAFFIC_SOURCE)).toEqual([]);
+  });
+});
+
+describe("mapSourceType — digitraffic branch", () => {
+  it("maps ROAD_WORK to roadworks/planned/isPlanned:true", () => {
+    expect(mapSourceType("digitraffic", "ROAD_WORK")).toEqual({
+      type: "roadworks",
+      category: "planned",
+      isPlanned: true,
+    });
+  });
+
+  it("maps WEIGHT_RESTRICTION to dimension_restriction", () => {
+    expect(mapSourceType("digitraffic", "WEIGHT_RESTRICTION")).toEqual({
+      type: "dimension_restriction",
+      category: "conditions",
+      isPlanned: false,
+    });
+  });
+
+  it("maps EXEMPTED_TRANSPORT to authority", () => {
+    expect(mapSourceType("digitraffic", "EXEMPTED_TRANSPORT")).toEqual({
+      type: "authority",
+      category: "incident",
+      isPlanned: false,
+    });
+  });
+
+  it("maps ACCIDENT_REPORT to accident", () => {
+    expect(mapSourceType("digitraffic", "ACCIDENT_REPORT")).toEqual({
+      type: "accident",
+      category: "incident",
+      isPlanned: false,
+    });
+  });
+
+  it("maps PRELIMINARY_ACCIDENT_REPORT to accident", () => {
+    expect(mapSourceType("digitraffic", "PRELIMINARY_ACCIDENT_REPORT")).toEqual({
+      type: "accident",
+      category: "incident",
+      isPlanned: false,
+    });
+  });
+
+  it("maps unknown Digitraffic code to other", () => {
+    expect(mapSourceType("digitraffic", "SOMETHING_UNKNOWN")).toEqual({
+      type: "other",
+      category: "conditions",
+      isPlanned: false,
+    });
+  });
+});
