@@ -132,6 +132,20 @@ describe("observationsByBbox", () => {
     expect(capturedQuery).toMatch(/expires_at IS NULL OR expires_at > now\(\)/);
   });
 
+  it("derives is_stale from stale_after at query time (not the stored column)", async () => {
+    let capturedQuery = "";
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
+    expect(capturedQuery).toMatch(
+      /\(stale_after IS NOT NULL AND stale_after < now\(\)\) AS is_stale/
+    );
+  });
+
   it("ORDER BY uses the severity CASE rank expression, not the raw text column", async () => {
     let capturedQuery = "";
     const db: QueryRunner = {

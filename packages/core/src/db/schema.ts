@@ -52,4 +52,6 @@ export const observations = conditionsSchema.table("observations", {
   fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
   expiresAt: timestamp("expires_at", { withTimezone: true }),
   isStale: boolean("is_stale").notNull().default(false),
+  // fetched_at + freshness window; read derives is_stale as now() > stale_after.
+  staleAfter: timestamp("stale_after", { withTimezone: true }),
 });

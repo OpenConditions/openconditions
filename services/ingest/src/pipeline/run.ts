@@ -49,7 +49,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   const items = buffers.flatMap((b) => parseFor(src, b));
   const fresh = items;
 
-  await atomicSwap(deps.sql, src.id, fresh);
+  await atomicSwap(deps.sql, src.id, fresh, src.freshnessWindowSec);
 
   const durationMs = Date.now() - start;
   console.info(`[ingest] ${src.id}: inserted ${fresh.length} rows in ${durationMs}ms`);

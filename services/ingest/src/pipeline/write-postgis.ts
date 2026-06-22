@@ -78,9 +78,19 @@ function toRow(obs: Observation) {
  * explicit column list. Geometry is written via
  * `ST_SetSRID(ST_GeomFromGeoJSON(...), 4326)`.
  */
-export async function insertRows(tx: TransactionSql, batch: Observation[]): Promise<void> {
+export async function insertRows(
+  tx: TransactionSql,
+  batch: Observation[],
+  freshnessWindowSec?: number
+): Promise<void> {
   for (const obs of batch) {
     const r = toRow(obs);
+    // The moment this last-good row becomes stale: when it was fetched plus the
+    // source's freshness window. Derived at read; NULL when no window is given.
+    const staleAfter =
+      freshnessWindowSec != null
+        ? new Date(Date.parse(r.fetched_at) + freshnessWindowSec * 1000).toISOString()
+        : null;
     await tx`
       INSERT INTO conditions.observations (
         id, source, source_format, domain, kind,
@@ -91,7 +101,7 @@ export async function insertRows(tx: TransactionSql, batch: Observation[]): Prom
         subject, attributes,
         valid_from, valid_to, schedule,
         confidence, is_forecast, related_ids,
-        origin, data_updated_at, fetched_at, expires_at, is_stale
+        origin, data_updated_at, fetched_at, expires_at, is_stale, stale_after
       ) VALUES (
         ${r.id}, ${r.source}, ${r.source_format}, ${r.domain}, ${r.kind},
         ${r.type}, ${r.subtype}, ${r.category}, ${r.severity}, ${r.severity_source},
@@ -101,7 +111,7 @@ export async function insertRows(tx: TransactionSql, batch: Observation[]): Prom
         ${r.subject ? tx.json(r.subject as AnyJson) : null}, ${r.attributes ? tx.json(r.attributes as AnyJson) : null},
         ${r.valid_from}, ${r.valid_to}, ${r.schedule ? tx.json(r.schedule as AnyJson) : null},
         ${r.confidence}, ${r.is_forecast}, ${r.related_ids ? tx.json(r.related_ids as AnyJson) : null},
-        ${tx.json(r.origin as AnyJson)}, ${r.data_updated_at}, ${r.fetched_at}, ${r.expires_at}, ${r.is_stale}
+        ${tx.json(r.origin as AnyJson)}, ${r.data_updated_at}, ${r.fetched_at}, ${r.expires_at}, ${r.is_stale}, ${staleAfter}
       )
       ON CONFLICT (id) DO NOTHING
     `;
@@ -113,11 +123,16 @@ export async function insertRows(tx: TransactionSql, batch: Observation[]): Prom
  * existing rows for that source then bulk-inserts the fresh set in one
  * transaction. Either the full swap completes or nothing changes.
  */
-export async function atomicSwap(sql: Sql, sourceId: string, fresh: Observation[]): Promise<void> {
+export async function atomicSwap(
+  sql: Sql,
+  sourceId: string,
+  fresh: Observation[],
+  freshnessWindowSec?: number
+): Promise<void> {
   await sql.begin(async (tx) => {
     await tx`DELETE FROM conditions.observations WHERE source = ${sourceId}`;
     for (const batch of chunk(fresh, CHUNK_SIZE)) {
-      await insertRows(tx, batch);
+      await insertRows(tx, batch, freshnessWindowSec);
     }
   });
 }

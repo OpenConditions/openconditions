@@ -79,7 +79,8 @@ export async function observationsByBbox(
       id, source, domain, kind, type, severity,
       headline, description, attributes, valid_to,
       ST_AsGeoJSON(geom) AS geojson,
-      origin, is_stale
+      origin,
+      (stale_after IS NOT NULL AND stale_after < now()) AS is_stale
     FROM conditions.observations
     WHERE ${clauses.join(" AND ")}
     ORDER BY ${SEVERITY_RANK_SQL} DESC

@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
-import { MIGRATION_SQL } from "@openconditions/core";
+import { MIGRATION_SQL, observationsByBbox, type QueryRunner } from "@openconditions/core";
 import { sweepStaleObservations } from "../pipeline/sweep.js";
 
 let sql: postgres.Sql;
@@ -9,18 +9,33 @@ let containerStop: () => Promise<unknown>;
 
 const HOUR_MS = 3600_000;
 
+/** Adapt postgres-js to the QueryRunner (`execute`) interface observationsByBbox expects. */
+function runner(): QueryRunner {
+  return {
+    async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
+      const rows = p ? await sql.unsafe(q, p as never[]) : await sql.unsafe(q);
+      return rows as T;
+    },
+  };
+}
+
 async function insertRow(
   id: string,
-  opts: { fetchedAt: Date; validTo?: Date | null; expiresAt?: Date | null }
+  opts: {
+    fetchedAt: Date;
+    validTo?: Date | null;
+    expiresAt?: Date | null;
+    staleAfter?: Date | null;
+  }
 ): Promise<void> {
   await sql`
     INSERT INTO conditions.observations
       (id, source, source_format, domain, kind, type, severity, headline,
-       geom, origin, data_updated_at, fetched_at, valid_to, expires_at)
+       geom, origin, data_updated_at, fetched_at, valid_to, expires_at, stale_after)
     VALUES (${id}, 'sweeptest', 'seed', 'roads', 'event', 'accident', 'high', ${id},
        ST_SetSRID(ST_GeomFromGeoJSON('{"type":"Point","coordinates":[13.4,52.5]}'), 4326),
        ${sql.json({ kind: "feed", attribution: { provider: "test" } })},
-       now(), ${opts.fetchedAt}, ${opts.validTo ?? null}, ${opts.expiresAt ?? null})`;
+       now(), ${opts.fetchedAt}, ${opts.validTo ?? null}, ${opts.expiresAt ?? null}, ${opts.staleAfter ?? null})`;
 }
 
 beforeAll(async () => {
@@ -75,5 +90,20 @@ describe("sweepStaleObservations", () => {
   it("returns 0 when nothing is stale", async () => {
     const result = await sweepStaleObservations(sql, { maxAgeSec: 3600 });
     expect(result.deleted).toBe(0);
+  }, 30_000);
+});
+
+describe("observationsByBbox is_stale derivation", () => {
+  it("flags rows whose stale_after has passed, but not fresh / no-window rows", async () => {
+    const now = new Date();
+    await insertRow("st-fresh", { fetchedAt: now, staleAfter: new Date(now.getTime() + HOUR_MS) });
+    await insertRow("st-stale", { fetchedAt: now, staleAfter: new Date(now.getTime() - HOUR_MS) });
+    await insertRow("st-nowin", { fetchedAt: now, staleAfter: null });
+
+    const fc = await observationsByBbox(runner(), { domain: "roads", bbox: [13, 52, 14, 53] });
+    const byId = new Map(fc.features.map((f) => [f.properties?.id, f.properties?.is_stale]));
+    expect(byId.get("st-fresh")).toBe(false);
+    expect(byId.get("st-stale")).toBe(true);
+    expect(byId.get("st-nowin")).toBe(false);
   }, 30_000);
 });

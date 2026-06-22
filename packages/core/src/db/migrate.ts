@@ -43,8 +43,12 @@ CREATE TABLE IF NOT EXISTS conditions.observations (
   data_updated_at TIMESTAMPTZ NOT NULL,
   fetched_at      TIMESTAMPTZ NOT NULL,
   expires_at      TIMESTAMPTZ,
-  is_stale        BOOLEAN NOT NULL DEFAULT FALSE
+  is_stale        BOOLEAN NOT NULL DEFAULT FALSE,
+  -- fetched_at + the source's freshness window: when last-good data goes
+  -- stale. Derived at read time as now() greater than stale_after, NULL = never.
+  stale_after     TIMESTAMPTZ
 );
+ALTER TABLE conditions.observations ADD COLUMN IF NOT EXISTS stale_after TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS idx_conditions_obs_geom     ON conditions.observations USING GIST (geom);
 CREATE INDEX IF NOT EXISTS idx_conditions_obs_domain   ON conditions.observations (domain);
 CREATE INDEX IF NOT EXISTS idx_conditions_obs_dom_type ON conditions.observations (domain, type);
