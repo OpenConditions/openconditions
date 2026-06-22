@@ -112,6 +112,16 @@
       "commercialUse": "yes",
       "providerCountry": "CA",
       "providerPrivacyUrl": "https://www2.gov.bc.ca/gov/content/home/privacy"
+    },
+    {
+      "sourceId": "wzdx",
+      "name": "Work Zone Data Exchange (WZDx)",
+      "url": "https://www.transportation.gov/av/data/wzdx",
+      "license": "Mixed (per publishing agency)",
+      "attribution": "Work-zone data via the <a href=\"https://www.transportation.gov/av/data/wzdx\" target=\"_blank\" rel=\"noopener noreferrer\">USDOT Work Zone Data Exchange</a>, aggregated from participating US state and local transportation agencies.",
+      "commercialUse": "conditional",
+      "providerCountry": "US",
+      "providerPrivacyUrl": "https://www.transportation.gov/privacy"
     }
   ]
 }
