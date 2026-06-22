@@ -47,19 +47,23 @@ describe("FEED_SOURCES", () => {
     expect(feed!.enabledByDefault).toBe(true);
   });
 
-  it("includes autobahn-de with format autobahn-json and license dl-de/by-2-0", () => {
+  it("includes autobahn-de discovering all motorways (no static url)", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "autobahn-de");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("autobahn-json");
     expect(feed!.license).toBe("dl-de/by-2-0");
     expect(feed!.enabledByDefault).toBe(true);
+    expect(typeof feed!.discover).toBe("function");
+    expect(feed!.url).toBeUndefined();
   });
 
-  it("includes wzdx with format wzdx and enabledByDefault:false", () => {
+  it("includes wzdx enabled, discovering the feed registry (no static url)", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "wzdx");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("wzdx");
-    expect(feed!.enabledByDefault).toBe(false);
+    expect(feed!.enabledByDefault).toBe(true);
+    expect(typeof feed!.discover).toBe("function");
+    expect(feed!.url).toBeUndefined();
   });
 });
 

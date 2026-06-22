@@ -4,6 +4,7 @@ import { parseOpen511 } from "./open511.js";
 import { parseWzdx } from "./wzdx.js";
 import { parseAutobahn } from "./autobahn.js";
 import { parseDigitraffic } from "./digitraffic.js";
+import { discoverAutobahnRoads, discoverWzdxFeeds } from "./discover.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -99,19 +100,7 @@ export const FEED_SOURCES: FeedSource[] = [
     id: "autobahn-de",
     name: "Autobahn GmbH (Germany)",
     format: "autobahn-json",
-    // Curated set of major autobahns; dynamic enumeration of the full road list is a follow-up.
-    url: [
-      "https://verkehr.autobahn.de/o/autobahn/A1/services/warning",
-      "https://verkehr.autobahn.de/o/autobahn/A2/services/warning",
-      "https://verkehr.autobahn.de/o/autobahn/A3/services/warning",
-      "https://verkehr.autobahn.de/o/autobahn/A4/services/warning",
-      "https://verkehr.autobahn.de/o/autobahn/A5/services/warning",
-      "https://verkehr.autobahn.de/o/autobahn/A6/services/warning",
-      "https://verkehr.autobahn.de/o/autobahn/A7/services/warning",
-      "https://verkehr.autobahn.de/o/autobahn/A8/services/warning",
-      "https://verkehr.autobahn.de/o/autobahn/A9/services/warning",
-      "https://verkehr.autobahn.de/o/autobahn/A10/services/warning",
-    ],
+    discover: discoverAutobahnRoads,
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "dl-de/by-2-0",
@@ -124,15 +113,14 @@ export const FEED_SOURCES: FeedSource[] = [
     id: "wzdx",
     name: "WZDx (United States)",
     format: "wzdx",
-    // WZDx registry-driven expansion (one registry pull → N sub-feeds) is a follow-up; the parser is ready.
-    url: [],
+    discover: discoverWzdxFeeds,
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "CC0-1.0",
     attribution: "WZDx publishers",
     country: "US",
     privacyUrl: "https://www.transportation.gov/privacy",
-    enabledByDefault: false,
+    enabledByDefault: true,
   },
 ];
 
