@@ -1,2 +1,2 @@
-export { MIGRATION_SQL } from "./migrate.js";
+export { runMigrations } from "./migrate.js";
 export { observations } from "./schema.js";

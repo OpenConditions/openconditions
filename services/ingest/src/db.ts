@@ -1,10 +1,14 @@
 import postgres from "postgres";
 
-const DATABASE_URL = process.env["DATABASE_URL"];
+const url = process.env["DATABASE_URL"];
 
-if (!DATABASE_URL) {
+if (!url) {
   throw new Error("DATABASE_URL environment variable is required");
 }
+
+/** The validated connection string (used both for the app pool and, by
+ * runMigrations, for its own short-lived migration connection). */
+export const DATABASE_URL: string = url;
 
 /**
  * Shared postgres-js client. The ingest service opens a single pool

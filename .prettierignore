@@ -6,3 +6,5 @@ coverage/
 *.tsbuildinfo
 pnpm-lock.yaml
 .superpowers/
+# drizzle-kit generated migrations + snapshots (never hand-edited)
+**/drizzle/

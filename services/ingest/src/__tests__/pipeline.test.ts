@@ -3,7 +3,7 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
-import { MIGRATION_SQL } from "@openconditions/core";
+import { runMigrations } from "@openconditions/core";
 import { FEED_SOURCES } from "@openconditions/roads";
 import { runSource } from "../pipeline/run.js";
 import type { DomainFeedSource } from "../pipeline/run.js";
@@ -46,13 +46,10 @@ beforeAll(async () => {
 
   const host = container.getHost();
   const port = container.getMappedPort(5432);
-  sql = postgres(`postgres://oc:oc@${host}:${port}/conditions_test`, { max: 3 });
+  const url = `postgres://oc:oc@${host}:${port}/conditions_test`;
+  sql = postgres(url, { max: 3 });
 
-  for (const statement of MIGRATION_SQL.split(";")
-    .map((s) => s.trim())
-    .filter(Boolean)) {
-    await sql.unsafe(statement);
-  }
+  await runMigrations(url);
 }, 120_000);
 
 afterAll(async () => {

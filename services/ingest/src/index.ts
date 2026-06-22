@@ -1,6 +1,6 @@
 import Fastify from "fastify";
-import { MIGRATION_SQL } from "@openconditions/core";
-import { sql } from "./db.js";
+import { runMigrations } from "@openconditions/core";
+import { DATABASE_URL, sql } from "./db.js";
 import { registerPublishRoutes } from "./publish-routes.js";
 import { startScheduler } from "./scheduler.js";
 
@@ -9,11 +9,7 @@ const HOST = process.env["HOST"] || "0.0.0.0";
 
 async function boot() {
   console.info("[ingest] applying database migrations…");
-  for (const statement of MIGRATION_SQL.split(";")
-    .map((s) => s.trim())
-    .filter(Boolean)) {
-    await sql.unsafe(statement);
-  }
+  await runMigrations(DATABASE_URL);
   console.info("[ingest] migrations applied");
 
   const app = Fastify({ logger: true });

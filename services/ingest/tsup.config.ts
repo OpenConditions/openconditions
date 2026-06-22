@@ -1,4 +1,14 @@
+import { cp, rm } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "tsup";
+
+// @openconditions/core is inlined into this bundle (noExternal), so its
+// drizzle-kit migrations folder no longer travels with it. runMigrations()
+// reads those files at runtime, so copy them next to the bundle entry
+// (dist/drizzle); core resolves `./drizzle` there. Lives inside dist/ so it
+// rides the existing turbo `dist/**` output cache and the Docker `COPY dist`.
+const coreDrizzle = fileURLToPath(new URL("../../packages/core/drizzle", import.meta.url));
+const bundledDrizzle = fileURLToPath(new URL("./dist/drizzle", import.meta.url));
 
 export default defineConfig({
   entry: ["src/index.ts"],
@@ -10,4 +20,8 @@ export default defineConfig({
   external: ["fastify", "postgres", "croner"],
   noExternal: [/^@openconditions\//, "fast-xml-parser", "drizzle-orm"],
   bundle: true,
+  async onSuccess() {
+    await rm(bundledDrizzle, { recursive: true, force: true });
+    await cp(coreDrizzle, bundledDrizzle, { recursive: true });
+  },
 });

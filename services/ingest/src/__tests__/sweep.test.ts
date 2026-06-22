@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
-import { MIGRATION_SQL, observationsByBbox, type QueryRunner } from "@openconditions/core";
+import { runMigrations, observationsByBbox, type QueryRunner } from "@openconditions/core";
 import { sweepStaleObservations } from "../pipeline/sweep.js";
 
 let sql: postgres.Sql;
@@ -49,17 +49,9 @@ beforeAll(async () => {
     .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
     .start();
   containerStop = () => container.stop();
-  sql = postgres(
-    `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`,
-    {
-      max: 3,
-    }
-  );
-  for (const statement of MIGRATION_SQL.split(";")
-    .map((s) => s.trim())
-    .filter(Boolean)) {
-    await sql.unsafe(statement);
-  }
+  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
+  sql = postgres(url, { max: 3 });
+  await runMigrations(url);
 }, 120_000);
 
 afterAll(async () => {
