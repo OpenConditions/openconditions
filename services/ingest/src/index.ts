@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import { MIGRATION_SQL } from "@openconditions/core";
 import { sql } from "./db.js";
+import { registerPublishRoutes } from "./publish-routes.js";
 import { startScheduler } from "./scheduler.js";
 
 const PORT = parseInt(process.env["PORT"] || "4100", 10);
@@ -20,6 +21,8 @@ async function boot() {
   app.get("/status", async (_req, reply) => {
     return reply.send({ status: "ok", service: "openconditions-ingest" });
   });
+
+  registerPublishRoutes(app, sql);
 
   const stopScheduler = startScheduler(sql);
 
