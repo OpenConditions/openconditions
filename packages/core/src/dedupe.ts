@@ -53,8 +53,8 @@ function representativePoint(geometry: Geometry): [number, number] {
     return [lng, lat];
   }
   if (geometry.type === "MultiPolygon") {
-    const all = (geometry.coordinates as [number, number][][][]).flatMap(
-      (poly) => (poly[0] ?? []).slice(0, -1),
+    const all = (geometry.coordinates as [number, number][][][]).flatMap((poly) =>
+      (poly[0] ?? []).slice(0, -1)
     );
     const lng = all.reduce((s, c) => s + c[0]!, 0) / all.length;
     const lat = all.reduce((s, c) => s + c[1]!, 0) / all.length;
@@ -158,7 +158,7 @@ export function dedupeObservations(
   opts?: {
     mergeDistanceM?: number;
     sameType?: (a: Observation, b: Observation) => boolean;
-  },
+  }
 ): Observation[] {
   const n = items.length;
   if (n === 0) return [];
