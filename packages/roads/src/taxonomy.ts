@@ -49,6 +49,10 @@ export const TYPE_CROSSWALK: Record<string, TypeMapping> = {
 
   "work-zone": { type: "roadworks", category: "planned", isPlanned: true },
   detour: { type: "detour", category: "conditions", isPlanned: false },
+
+  warning: { type: "hazard", category: "conditions", isPlanned: false },
+  closure: { type: "road_closure", category: "incident", isPlanned: false },
+  roadworks: { type: "roadworks", category: "planned", isPlanned: true },
 };
 
 /**

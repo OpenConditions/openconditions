@@ -1,0 +1,88 @@
+{
+  "warning": [
+    {
+      "identifier": "INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0",
+      "icon": "101",
+      "isBlocked": "false",
+      "future": false,
+      "extent": "49.01998136247241,8.470950176945351,49.07308170005476,8.510950938553124",
+      "point": "49.01998136247241,8.470950176945351",
+      "startLcPosition": "61",
+      "display_type": "WARNING",
+      "subtitle": " Karlsruhe -> Heidelberg",
+      "title": "A5 | Karlsruhe-Nord - Bruchsal",
+      "startTimestamp": "2026-06-22T18:23:00Z",
+      "delayTimeValue": "18",
+      "abnormalTrafficType": "QUEUING_TRAFFIC",
+      "coordinate": {
+        "lat": 49.01998136247241,
+        "long": 8.470950176945351
+      },
+      "description": [
+        "Beginn: 22.06.26 um 20:23 Uhr",
+        "",
+        "Angespannte Verkehrslage, seit 22.06.2026, 18:23",
+        "A5: Karlsruhe -> Heidelberg, zwischen 0.5 km hinter AS Karlsruhe-Nord und 9.3 km vor AS Bruchsal",
+        "",
+        "Ereignismeldung:",
+        "- Im Stillstand",
+        "- Reisezeitverlust: 18 Minuten (zunehmend)"
+      ],
+      "routeRecommendation": [],
+      "footer": [],
+      "lorryParkingFeatureIcons": [],
+      "source": "inrix",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [8.470950177, 49.019981362],
+          [8.4718613, 49.020852701],
+          [8.510950939, 49.0730817]
+        ]
+      }
+    },
+    {
+      "identifier": "EVA--vi-blk.2026-06-22_10-00-00-000.de1",
+      "icon": "102",
+      "isBlocked": "true",
+      "future": false,
+      "extent": "51.0,9.0,51.01,9.01",
+      "point": "51.0,9.0",
+      "startLcPosition": "10",
+      "display_type": "WARNING",
+      "subtitle": " Frankfurt -> Kassel",
+      "title": "A5 | Friedberg - Bad Homburg",
+      "startTimestamp": "20.06.2026 10:00",
+      "coordinate": {
+        "lat": 51.0,
+        "long": 9.0
+      },
+      "description": [
+        "Vollsperrung",
+        "",
+        "A5: Frankfurt -> Kassel, zwischen Friedberg und Bad Homburg",
+        " ",
+        "Ereignisnummer: EVA--vi-blk.001"
+      ],
+      "routeRecommendation": [],
+      "footer": [],
+      "lorryParkingFeatureIcons": [],
+      "source": "eva"
+    },
+    {
+      "identifier": "EVA--vi-nogeo.2026-06-22_11-00-00-000.de2",
+      "icon": "101",
+      "isBlocked": "false",
+      "future": false,
+      "extent": "",
+      "point": "",
+      "startLcPosition": "0",
+      "display_type": "WARNING",
+      "subtitle": "",
+      "title": "A5 | Unknown location",
+      "startTimestamp": null,
+      "source": "eva",
+      "description": ["Keine Koordinaten vorhanden"]
+    }
+  ]
+}

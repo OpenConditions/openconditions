@@ -1,0 +1,214 @@
+import { deriveSeverity } from "@openconditions/core";
+import type { GeoJsonGeometry } from "@openconditions/core";
+import type { RoadEvent } from "./model.js";
+import { dedupeRoadEvents } from "./dedupe.js";
+import { mapSourceType } from "./taxonomy.js";
+import type { SourceDescriptor } from "./types.js";
+
+interface AutobahnCoordinate {
+  lat?: unknown;
+  long?: unknown;
+}
+
+interface AutobahnGeometry {
+  type?: string;
+  coordinates?: unknown;
+}
+
+interface AutobahnItem {
+  identifier?: unknown;
+  id?: unknown;
+  title?: unknown;
+  subtitle?: unknown;
+  description?: unknown;
+  isBlocked?: unknown;
+  startTimestamp?: unknown;
+  coordinate?: AutobahnCoordinate;
+  geometry?: AutobahnGeometry;
+  delayTimeValue?: unknown;
+  averageSpeed?: unknown;
+  abnormalTrafficType?: unknown;
+  [key: string]: unknown;
+}
+
+interface AutobahnPayload {
+  [service: string]: AutobahnItem[] | undefined;
+}
+
+function parseGeometry(item: AutobahnItem): GeoJsonGeometry | null {
+  const geo = item.geometry;
+  if (geo && typeof geo === "object" && typeof geo.type === "string" && geo.coordinates != null) {
+    return geo as unknown as GeoJsonGeometry;
+  }
+
+  const coord = item.coordinate;
+  if (coord && typeof coord === "object") {
+    const lat = Number(coord.lat);
+    const lon = Number(coord.long);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      return { type: "Point", coordinates: [lon, lat] };
+    }
+  }
+
+  return null;
+}
+
+function hasFlowFields(item: AutobahnItem): boolean {
+  return (
+    item.delayTimeValue != null || item.averageSpeed != null || item.abnormalTrafficType != null
+  );
+}
+
+function coerceTimestamp(raw: unknown): string | null {
+  if (raw == null) return null;
+  if (typeof raw !== "string") return null;
+  if (raw.trim() === "") return null;
+
+  const d = new Date(raw);
+  if (!isNaN(d.getTime())) {
+    return d.toISOString();
+  }
+
+  const german = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (german) {
+    const [, day, month, year, hour, minute, second = "00"] = german;
+    const fullYear = year && year.length === 2 ? `20${year}` : (year ?? "");
+    const iso = `${fullYear}-${(month ?? "").padStart(2, "0")}-${(day ?? "").padStart(2, "0")}T${(hour ?? "").padStart(2, "0")}:${(minute ?? "").padStart(2, "0")}:${second.padStart(2, "0")}`;
+    const d2 = new Date(iso);
+    return isNaN(d2.getTime()) ? null : d2.toISOString();
+  }
+
+  return null;
+}
+
+function joinDescription(raw: unknown): string | undefined {
+  if (!Array.isArray(raw)) {
+    return typeof raw === "string" && raw ? raw : undefined;
+  }
+  const parts = (raw as unknown[]).filter(
+    (s): s is string => typeof s === "string" && s.trim() !== ""
+  );
+  return parts.length > 0 ? parts.join("\n") : undefined;
+}
+
+/**
+ * Parse an Autobahn GmbH JSON feed and return an array of RoadEvent observations.
+ * Items lacking any usable geometry are skipped. The result is deduped before return.
+ *
+ * Format gotchas handled:
+ * - coordinate key is `long` (not `lng`/`lon`)
+ * - `isBlocked` is a string ("true"/"false")
+ * - `description` is a string array
+ * - `startTimestamp` may be null or a German-locale date string
+ * - flow fields signal congestion type
+ */
+export function parseAutobahn(
+  json: string | object,
+  src: SourceDescriptor,
+  service: "warning" | "closure" | "roadworks"
+): RoadEvent[] {
+  let payload: AutobahnPayload;
+  try {
+    payload = (typeof json === "string" ? JSON.parse(json) : json) as AutobahnPayload;
+  } catch (err) {
+    console.warn("[autobahn] failed to parse JSON input:", err);
+    return [];
+  }
+
+  const items = payload[service];
+  if (!Array.isArray(items) || items.length === 0) return [];
+
+  const out: RoadEvent[] = [];
+  let skippedNoGeometry = 0;
+  let localCounter = 0;
+
+  for (const item of items) {
+    try {
+      const geometry = parseGeometry(item);
+      if (!geometry) {
+        skippedNoGeometry++;
+        console.debug(
+          `[autobahn] skipped item with no usable geometry: ${String(item.identifier ?? item.id ?? "unknown")}`
+        );
+        continue;
+      }
+
+      localCounter++;
+      const rawId =
+        typeof item.identifier === "string"
+          ? item.identifier
+          : typeof item.id === "string"
+            ? item.id
+            : `autobahn-${localCounter}`;
+
+      const isFlow = hasFlowFields(item);
+
+      let type: RoadEvent["type"];
+      let category: RoadEvent["category"];
+      let isPlanned: boolean;
+
+      if (isFlow) {
+        type = "congestion";
+        category = "conditions";
+        isPlanned = false;
+      } else {
+        const mapped = mapSourceType("autobahn", service);
+        type = mapped.type;
+        category = mapped.category;
+        isPlanned = mapped.isPlanned;
+      }
+
+      const roadState: RoadEvent["roadState"] = item.isBlocked === "true" ? "closed" : undefined;
+
+      const severity = deriveSeverity({ roadState });
+
+      const title = typeof item.title === "string" ? item.title : undefined;
+      const subtitle = typeof item.subtitle === "string" ? item.subtitle.trim() : undefined;
+      const headline = title ?? subtitle ?? type;
+
+      const description = joinDescription(item.description);
+
+      const validFrom = coerceTimestamp(item.startTimestamp);
+
+      out.push({
+        id: `${src.id}:${rawId}`,
+        source: src.id,
+        sourceFormat: "autobahn-json",
+        domain: "roads",
+        kind: "event",
+        type,
+        category,
+        isPlanned,
+        severity,
+        severitySource: "derived",
+        status: "active",
+        geometry,
+        roads: [],
+        roadState,
+        headline,
+        description,
+        validFrom,
+        validTo: null,
+        origin: {
+          kind: "feed",
+          attribution: {
+            provider: src.attribution,
+            license: src.license,
+            url: src.licenseUrl,
+          },
+        },
+        dataUpdatedAt: validFrom ?? new Date().toISOString(),
+        fetchedAt: new Date().toISOString(),
+        isStale: false,
+      });
+    } catch (err) {
+      console.warn("[autobahn] skipped malformed item:", item?.identifier ?? item?.id, err);
+    }
+  }
+
+  if (skippedNoGeometry > 0) {
+    console.debug(`[autobahn] skipped ${skippedNoGeometry} item(s) with no usable geometry`);
+  }
+
+  return dedupeRoadEvents(out);
+}
