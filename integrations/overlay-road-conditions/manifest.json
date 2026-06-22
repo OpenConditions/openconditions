@@ -27,10 +27,14 @@
             "circle-color": [
               "match",
               ["get", "severity"],
-              "critical", "#7e0023",
-              "high", "#cc0033",
-              "medium", "#ff9933",
-              "low", "#ffde33",
+              "critical",
+              "#7e0023",
+              "high",
+              "#cc0033",
+              "medium",
+              "#ff9933",
+              "low",
+              "#ffde33",
               "#8a8a8a"
             ],
             "circle-opacity": 0.85,
