@@ -10,7 +10,7 @@ const FALLBACK: TypeMapping = { type: "other", category: "conditions", isPlanned
 
 /**
  * Cross-walk from normalized source-format class names to canonical RoadEventType.
- * Keys are lower-cased, namespace-stripped DATEX II class names.
+ * Keys are lower-cased, namespace-stripped class names (DATEX II and Open511).
  */
 export const TYPE_CROSSWALK: Record<string, TypeMapping> = {
   accident: { type: "accident", category: "incident", isPlanned: false },
@@ -40,6 +40,12 @@ export const TYPE_CROSSWALK: Record<string, TypeMapping> = {
   securityincident: { type: "security", category: "incident", isPlanned: false },
   dimensionrestriction: { type: "dimension_restriction", category: "conditions", isPlanned: false },
   contraflow: { type: "contraflow", category: "conditions", isPlanned: false },
+
+  construction: { type: "roadworks", category: "planned", isPlanned: true },
+  incident: { type: "accident", category: "incident", isPlanned: false },
+  special_event: { type: "public_event", category: "planned", isPlanned: true },
+  weather_condition: { type: "weather", category: "conditions", isPlanned: false },
+  road_condition: { type: "road_condition", category: "conditions", isPlanned: false },
 };
 
 /**

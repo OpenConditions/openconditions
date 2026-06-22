@@ -1,0 +1,181 @@
+{
+  "events": [
+    {
+      "jurisdiction_url": "https://api.open511.gov.bc.ca/jurisdiction",
+      "url": "https://api.open511.gov.bc.ca/events/drivebc.ca/DBC-90617",
+      "id": "drivebc.ca/DBC-90617",
+      "headline": "CONSTRUCTION",
+      "status": "ACTIVE",
+      "created": "2026-04-29T11:34:20-07:00",
+      "updated": "2026-04-29T11:34:20-07:00",
+      "description": "Coalmont Rd.. Bridge construction at Thynne Bridge. Until Thu Oct 1. 14 km north west of Tulameen, BC. Watch for signage and personnel. Expect minor delays. Last updated Wed Apr 29 at 11:34 AM PDT. (DBC-90617)",
+      "+ivr_message": "Coalmont Rd.. Bridge construction at Thynne Bridge. Until Thursday, October 1. 14 km north west of Tulameen, BC. Watch for signage and personnel. Expect minor delays. Last updated Wednesday, April 29 at 11:34 AM.",
+      "+linear_reference_km": -1,
+      "schedule": {
+        "intervals": ["2026-04-29T18:34/2026-10-02T06:59"]
+      },
+      "event_type": "CONSTRUCTION",
+      "event_subtypes": ["ROAD_CONSTRUCTION"],
+      "severity": "MINOR",
+      "geography": {
+        "type": "Point",
+        "coordinates": [-120.779441, 49.664635]
+      },
+      "roads": [
+        {
+          "name": "Other Roads",
+          "from": "at Thynne Bridge",
+          "direction": "NONE"
+        }
+      ],
+      "areas": [
+        {
+          "url": "http://www.geonames.org/8630138",
+          "name": "Okanagan-Shuswap District",
+          "id": "drivebc.ca/5"
+        }
+      ]
+    },
+    {
+      "jurisdiction_url": "https://api.open511.gov.bc.ca/jurisdiction",
+      "url": "https://api.open511.gov.bc.ca/events/drivebc.ca/DBC-81533",
+      "id": "drivebc.ca/DBC-81533",
+      "headline": "CONSTRUCTION",
+      "status": "ACTIVE",
+      "created": "2025-09-12T20:13:16-07:00",
+      "updated": "2026-02-02T10:31:18-08:00",
+      "description": "Highway 99, southbound. Utility work between Exit 26 and Exit 20 for 4.7 km (Delta). Until Sat Nov 7 at 11:45 PM PST. Last updated Mon Feb 2 at 10:31 AM PST. (DBC-81533)",
+      "+ivr_message": "Highway 99, southbound. Utility work between Exit 26 and Exit 20 for 4.7 km (Delta). Until Saturday, November 7 at 11:45 PM. Last updated Monday, February 2 at 10:31 AM.",
+      "+linear_reference_km": 20.63,
+      "schedule": {
+        "intervals": ["2025-09-17T07:00/2026-11-08T07:45"]
+      },
+      "event_type": "CONSTRUCTION",
+      "event_subtypes": ["ROAD_MAINTENANCE"],
+      "severity": "MINOR",
+      "geography": {
+        "type": "LineString",
+        "coordinates": [
+          [-122.963112, 49.090598],
+          [-122.963126, 49.090598],
+          [-122.979427, 49.090562],
+          [-123.000453, 49.090559],
+          [-123.001842, 49.090648],
+          [-123.003566, 49.090922],
+          [-123.014233, 49.092998],
+          [-123.019085, 49.093942],
+          [-123.023082, 49.09472],
+          [-123.024136, 49.094925],
+          [-123.026296, 49.095345],
+          [-123.026387, 49.095363],
+          [-123.026551, 49.095394]
+        ]
+      },
+      "roads": [
+        {
+          "name": "Highway 99",
+          "from": "Exit 26",
+          "to": "Exit 20",
+          "direction": "S"
+        }
+      ],
+      "areas": [
+        {
+          "url": "http://www.geonames.org/8630136",
+          "name": "Lower Mainland District",
+          "id": "drivebc.ca/1"
+        }
+      ]
+    },
+    {
+      "jurisdiction_url": "https://api.open511.gov.bc.ca/jurisdiction",
+      "url": "https://api.open511.gov.bc.ca/events/drivebc.ca/DBC-71712",
+      "id": "drivebc.ca/DBC-71712",
+      "headline": "INCIDENT",
+      "status": "ACTIVE",
+      "created": "2025-01-07T12:16:34-08:00",
+      "updated": "2026-02-02T10:29:58-08:00",
+      "description": "Upper Arrow Lake Ferry. Departure delayed between Shelter Bay and Galena Bay. From 8:45 AM to 11:00 AM PST on Wednesday. Departure delayed every Wednesday for fueling purposes. Next update time Tue Jun 30 at 10:00 AM PST. Last updated Mon Feb 2 at 10:29 AM PST. (DBC-71712)",
+      "+ivr_message": "Upper Arrow Lake Ferry. Departure delayed between Shelter Bay and Galena Bay. From 8:45 AM to 11:00 AM on Wednesday. Departure delayed every Wednesday for fueling purposes. Next update time Tuesday, June 30 at 10:00 AM. Last updated Monday, February 2 at 10:29 AM.",
+      "+linear_reference_km": -1,
+      "schedule": {
+        "recurring_schedules": [
+          {
+            "days": [3],
+            "start_date": "2025-01-07",
+            "daily_start_time": "08:45",
+            "end_date": "2026-06-22",
+            "daily_end_time": "11:00"
+          }
+        ]
+      },
+      "event_type": "INCIDENT",
+      "event_subtypes": ["ALMOST_IMPASSABLE"],
+      "severity": "MINOR",
+      "geography": {
+        "type": "Point",
+        "coordinates": [-117.92884, 50.634871]
+      },
+      "roads": [
+        {
+          "name": "Upper Arrow Lake Ferry",
+          "from": "Shelter Bay",
+          "to": "Galena Bay",
+          "direction": "NONE"
+        }
+      ],
+      "areas": [
+        {
+          "url": "http://www.geonames.org/8630135",
+          "name": "Rocky Mountain District",
+          "id": "drivebc.ca/3"
+        }
+      ]
+    },
+    {
+      "jurisdiction_url": "https://api.open511.gov.bc.ca/jurisdiction",
+      "url": "https://api.open511.gov.bc.ca/events/drivebc.ca/DBC-90606",
+      "id": "drivebc.ca/DBC-90606",
+      "headline": "SPECIAL_EVENT",
+      "status": "ACTIVE",
+      "created": "2026-04-29T08:59:36-07:00",
+      "updated": "2026-04-29T09:00:12-07:00",
+      "description": "Highway 1 (TransCanada Highway), in both directions. Special event planned between Davis Rd and Buller St for 0.5 km (Ladysmith). Starting Sun Aug 2 at 8:00 PM PDT until Mon Aug 3. Right lane will be closed in both directions. Expect delays. Watch for traffic control personnel. Ladysmith Days Fireworks. Last updated Wed Apr 29 at 9:00 AM PDT. (DBC-90606)",
+      "+ivr_message": "Highway 1 (TransCanada Highway), in both directions. Special event planned between Davis Rd and Buller St for 0.5 km (Ladysmith). Starting Sunday, August 2 at 8:00 PM until Monday, August 3. Right lane will be closed in both directions. Expect delays. Watch for traffic control personnel. Ladysmith Days Fireworks. Last updated Wednesday, April 29 at 9:00 AM.",
+      "+linear_reference_km": 90.58,
+      "schedule": {
+        "intervals": ["2026-08-03T03:00/2026-08-04T06:59"]
+      },
+      "event_type": "SPECIAL_EVENT",
+      "event_subtypes": ["PLANNED_EVENT"],
+      "severity": "MINOR",
+      "geography": {
+        "type": "LineString",
+        "coordinates": [
+          [-123.812954, 48.992218],
+          [-123.813912, 48.992862],
+          [-123.814462, 48.993231],
+          [-123.814902, 48.993527],
+          [-123.815883, 48.994199],
+          [-123.816863, 48.994872],
+          [-123.816919, 48.994911]
+        ]
+      },
+      "roads": [
+        {
+          "name": "Highway 1",
+          "from": "Davis Rd",
+          "to": "Buller St",
+          "direction": "BOTH"
+        }
+      ],
+      "areas": [
+        {
+          "url": "http://www.geonames.org/8630140",
+          "name": "Vancouver Island District",
+          "id": "drivebc.ca/2"
+        }
+      ]
+    }
+  ]
+}
