@@ -112,10 +112,11 @@ function parseRoads(coreDetails: WzdxCoreDetails): RoadRef[] {
  * array of RoadEvent observations. Features lacking geometry are skipped.
  * Severity is always derived from vehicle_impact and lane data.
  */
-export function parseWzdx(geojson: string | object, src: SourceDescriptor): RoadEvent[] {
+export function parseWzdx(geojson: string | Buffer | object, src: SourceDescriptor): RoadEvent[] {
   let feed: WzdxFeed;
   try {
-    feed = (typeof geojson === "string" ? JSON.parse(geojson) : geojson) as WzdxFeed;
+    const str = Buffer.isBuffer(geojson) ? geojson.toString("utf8") : geojson;
+    feed = (typeof str === "string" ? JSON.parse(str) : str) as WzdxFeed;
   } catch (err) {
     console.warn("[wzdx] failed to parse JSON input:", err);
     return [];

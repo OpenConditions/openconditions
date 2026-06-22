@@ -99,10 +99,11 @@ function open511Status(raw: string | undefined): "active" | "inactive" | "archiv
  * Events with no usable geometry are skipped. Extension fields (prefixed with
  * "+") are collected into externalRefs. The result is deduped before return.
  */
-export function parseOpen511(json: string | object, src: SourceDescriptor): RoadEvent[] {
+export function parseOpen511(json: string | Buffer | object, src: SourceDescriptor): RoadEvent[] {
   let payload: Open511Payload;
   try {
-    payload = (typeof json === "string" ? JSON.parse(json) : json) as Open511Payload;
+    const str = Buffer.isBuffer(json) ? json.toString("utf8") : json;
+    payload = (typeof str === "string" ? JSON.parse(str) : str) as Open511Payload;
   } catch (err) {
     console.warn("[open511] failed to parse JSON input:", err);
     return [];

@@ -1,5 +1,9 @@
 import type { SourceFormat } from "@openconditions/core";
 import { parseDatexSituations } from "./datex.js";
+import { parseOpen511 } from "./open511.js";
+import { parseWzdx } from "./wzdx.js";
+import { parseAutobahn } from "./autobahn.js";
+import { parseDigitraffic } from "./digitraffic.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -32,9 +36,7 @@ export interface FeedSource {
 }
 
 /**
- * All registered feed sources. Only NDW is included in this initial slice;
- * additional feeds (Autobahn, Digitraffic, DriveBC, WZDx) are added as their
- * parsers land.
+ * All registered feed sources.
  */
 export const FEED_SOURCES: FeedSource[] = [
   {
@@ -52,16 +54,89 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.ndw.nu/privacy",
     enabledByDefault: true,
   },
+  {
+    id: "drivebc",
+    name: "DriveBC (British Columbia)",
+    format: "open511",
+    url: "https://api.open511.gov.bc.ca/events?format=json",
+    cadenceSec: 120,
+    freshnessWindowSec: 600,
+    license: "OGL-BC",
+    attribution:
+      "Contains information licensed under the Open Government Licence – British Columbia",
+    country: "CA",
+    privacyUrl: "https://www2.gov.bc.ca/gov/content/home/privacy",
+    enabledByDefault: true,
+  },
+  {
+    id: "digitraffic-fi",
+    name: "Digitraffic (Finland)",
+    format: "digitraffic-json",
+    url: [
+      "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=TRAFFIC_ANNOUNCEMENT",
+      "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=ROAD_WORK",
+    ],
+    cadenceSec: 120,
+    freshnessWindowSec: 600,
+    license: "CC-BY-4.0",
+    attribution: "Fintraffic / Digitraffic",
+    country: "FI",
+    privacyUrl: "https://www.fintraffic.fi/en/fintraffic/data-protection",
+    enabledByDefault: true,
+  },
+  {
+    id: "autobahn-de",
+    name: "Autobahn GmbH (Germany)",
+    format: "autobahn-json",
+    // Curated set of major autobahns; dynamic enumeration of the full road list is a follow-up.
+    url: [
+      "https://verkehr.autobahn.de/o/autobahn/A1/services/warning",
+      "https://verkehr.autobahn.de/o/autobahn/A2/services/warning",
+      "https://verkehr.autobahn.de/o/autobahn/A3/services/warning",
+      "https://verkehr.autobahn.de/o/autobahn/A4/services/warning",
+      "https://verkehr.autobahn.de/o/autobahn/A5/services/warning",
+      "https://verkehr.autobahn.de/o/autobahn/A6/services/warning",
+      "https://verkehr.autobahn.de/o/autobahn/A7/services/warning",
+      "https://verkehr.autobahn.de/o/autobahn/A8/services/warning",
+      "https://verkehr.autobahn.de/o/autobahn/A9/services/warning",
+      "https://verkehr.autobahn.de/o/autobahn/A10/services/warning",
+    ],
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "dl-de/by-2-0",
+    attribution: "Quelle: Die Autobahn GmbH des Bundes",
+    country: "DE",
+    privacyUrl: "https://www.autobahn.de/datenschutz",
+    enabledByDefault: true,
+  },
+  {
+    id: "wzdx",
+    name: "WZDx (United States)",
+    format: "wzdx",
+    // WZDx registry-driven expansion (one registry pull → N sub-feeds) is a follow-up; the parser is ready.
+    url: [],
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC0-1.0",
+    attribution: "WZDx publishers",
+    country: "US",
+    privacyUrl: "https://www.transportation.gov/privacy",
+    enabledByDefault: false,
+  },
 ];
 
 type ParserFn = typeof parseDatexSituations;
 
 /**
  * Returns the parser function for a given source format.
- * Throws for any format not yet supported in this slice.
+ * Throws for any format not yet supported.
  */
 export function parserFor(format: SourceFormat): ParserFn {
   if (format === "datex2") return parseDatexSituations;
+  if (format === "open511") return parseOpen511;
+  if (format === "wzdx") return parseWzdx;
+  if (format === "autobahn-json") return parseAutobahn;
+  if (format === "digitraffic-json") return parseDigitraffic;
   throw new Error(`No parser registered for format: ${format}`);
 }
 

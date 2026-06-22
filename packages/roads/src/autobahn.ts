@@ -102,20 +102,34 @@ function joinDescription(raw: unknown): string | undefined {
  * - `startTimestamp` may be null or a German-locale date string
  * - flow fields signal congestion type
  */
+const AUTOBAHN_SERVICES = ["warning", "closure", "roadworks"] as const;
+type AutobahnService = (typeof AUTOBAHN_SERVICES)[number];
+
+function detectService(payload: AutobahnPayload): AutobahnService | undefined {
+  for (const key of AUTOBAHN_SERVICES) {
+    if (Array.isArray(payload[key])) return key;
+  }
+  return undefined;
+}
+
 export function parseAutobahn(
-  json: string | object,
+  json: string | Buffer | object,
   src: SourceDescriptor,
-  service: "warning" | "closure" | "roadworks"
+  service?: "warning" | "closure" | "roadworks"
 ): RoadEvent[] {
   let payload: AutobahnPayload;
   try {
-    payload = (typeof json === "string" ? JSON.parse(json) : json) as AutobahnPayload;
+    const str = Buffer.isBuffer(json) ? json.toString("utf8") : json;
+    payload = (typeof str === "string" ? JSON.parse(str) : str) as AutobahnPayload;
   } catch (err) {
     console.warn("[autobahn] failed to parse JSON input:", err);
     return [];
   }
 
-  const items = payload[service];
+  const resolvedService = service ?? detectService(payload);
+  if (!resolvedService) return [];
+
+  const items = payload[resolvedService];
   if (!Array.isArray(items) || items.length === 0) return [];
 
   const out: RoadEvent[] = [];
@@ -152,7 +166,7 @@ export function parseAutobahn(
         category = "conditions";
         isPlanned = false;
       } else {
-        const mapped = mapSourceType("autobahn", service);
+        const mapped = mapSourceType("autobahn", resolvedService);
         type = mapped.type;
         category = mapped.category;
         isPlanned = mapped.isPlanned;

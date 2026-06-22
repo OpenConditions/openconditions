@@ -53,12 +53,14 @@ function firstAnnouncement(announcements: unknown): DigitrafficAnnouncement | nu
  * return an array of RoadEvent observations. Features lacking geometry are
  * skipped. The result is deduped before return.
  */
-export function parseDigitraffic(geojson: string | object, src: SourceDescriptor): RoadEvent[] {
+export function parseDigitraffic(
+  geojson: string | Buffer | object,
+  src: SourceDescriptor
+): RoadEvent[] {
   let payload: DigitrafficFeatureCollection;
   try {
-    payload = (
-      typeof geojson === "string" ? JSON.parse(geojson) : geojson
-    ) as DigitrafficFeatureCollection;
+    const str = Buffer.isBuffer(geojson) ? geojson.toString("utf8") : geojson;
+    payload = (typeof str === "string" ? JSON.parse(str) : str) as DigitrafficFeatureCollection;
   } catch (err) {
     console.warn("[digitraffic] failed to parse JSON input:", err);
     return [];

@@ -13,8 +13,18 @@ const NDW_FIXTURE_PATH = path.resolve(
   "../../../../packages/roads/src/__tests__/fixtures/ndw/actueel_beeld.xml"
 );
 
+const DRIVEBC_FIXTURE_PATH = path.resolve(
+  import.meta.dirname,
+  "../../../../packages/roads/src/__tests__/fixtures/drivebc/events.json"
+);
+
 const ndwFeed: DomainFeedSource = {
   ...FEED_SOURCES.find((f) => f.id === "ndw")!,
+  domain: "roads",
+};
+
+const drivebcFeed: DomainFeedSource = {
+  ...FEED_SOURCES.find((f) => f.id === "drivebc")!,
   domain: "roads",
 };
 
@@ -124,5 +134,40 @@ describe("pipeline — feed downtime", () => {
     `;
     const countAfter = parseInt(afterCount[0]!.count, 10);
     expect(countAfter).toBe(countBefore);
+  }, 30_000);
+});
+
+describe("pipeline — open511 (DriveBC)", () => {
+  it("inserts rows from the DriveBC fixture with source='drivebc' and domain='roads'", async () => {
+    const jsonPayload = readFileSync(DRIVEBC_FIXTURE_PATH);
+
+    const fakeFetch = async (_url: string | URL | Request): Promise<Response> => {
+      return new Response(jsonPayload, { status: 200 });
+    };
+
+    const result = await runSource(drivebcFeed, {
+      sql,
+      fetch: fakeFetch as typeof fetch,
+      now: () => new Date().toISOString(),
+    });
+
+    expect(result.count).toBeGreaterThan(0);
+    console.info(`[test] drivebc: inserted ${result.count} rows`);
+
+    const wrongRows = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count
+      FROM conditions.observations
+      WHERE source = 'drivebc' AND (domain <> 'roads')
+    `;
+    expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
+  }, 60_000);
+
+  it("all DriveBC geometries are valid PostGIS geometries", async () => {
+    const invalid = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count
+      FROM conditions.observations
+      WHERE source = 'drivebc' AND NOT ST_IsValid(geom)
+    `;
+    expect(parseInt(invalid[0]!.count, 10)).toBe(0);
   }, 30_000);
 });
