@@ -3,5 +3,6 @@ export * from "./taxonomy.js";
 export * from "./types.js";
 export * from "./datex.js";
 export * from "./open511.js";
+export * from "./wzdx.js";
 export * from "./feeds.js";
 export * from "./dedupe.js";
