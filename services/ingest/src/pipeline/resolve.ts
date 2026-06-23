@@ -64,11 +64,9 @@ export async function resolveOpenLr(
 
   if (client === null) {
     dropped += needsResolve.length;
-    if (needsResolve.length > 0) {
-      console.warn(
-        `[resolve] dropped ${needsResolve.length} OpenLR observation(s): OPENLR_RESOLVER_URL not set`
-      );
-    }
+    console.warn(
+      `[resolve] dropped ${needsResolve.length} OpenLR observation(s): OPENLR_RESOLVER_URL not set`
+    );
     return { resolved: out, dropped };
   }
 

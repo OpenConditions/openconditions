@@ -1,7 +1,7 @@
 import { Cron } from "croner";
 import type postgres from "postgres";
 import { DOMAIN_REGISTRY } from "./domains.js";
-import { runSource } from "./pipeline/run.js";
+import { createOpenlrClient, runSource } from "./pipeline/run.js";
 import type { DomainFeedSource } from "./pipeline/run.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
 
@@ -28,6 +28,7 @@ function cadenceToCron(cadenceSec: number): string {
  */
 export function startScheduler(sql: Sql): () => void {
   const jobs: Cron[] = [];
+  const openlrClient = createOpenlrClient();
 
   for (const [domainName, plugin] of Object.entries(DOMAIN_REGISTRY)) {
     const enabled = plugin.feeds.filter((f) => f.enabledByDefault);
@@ -44,7 +45,7 @@ export function startScheduler(sql: Sql): () => void {
         }
         running = true;
         try {
-          await runSource(src, { sql, fetch, now: () => new Date().toISOString() });
+          await runSource(src, { sql, fetch, now: () => new Date().toISOString(), openlrClient });
         } catch (err) {
           console.error(`[scheduler] ${src.id}: unexpected error`, err);
         } finally {
