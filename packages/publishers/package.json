@@ -24,7 +24,8 @@
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
-    "fast-xml-parser": "^5.8.0"
+    "fast-xml-parser": "^5.8.0",
+    "gtfs-realtime-bindings": "^2.0.0"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.14",
