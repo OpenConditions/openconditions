@@ -1,66 +1,86 @@
-import type { ConditionEvent, Measurement, Observation } from "@openconditions/core";
-import type { Feature, FeatureCollection } from "geojson";
-import { type FeedInfo, isEvent, roadFields } from "./types.js";
+import type { Observation } from "@openconditions/core";
+import type { BBox, Feature, FeatureCollection } from "geojson";
+import { type FeedInfo } from "./types.js";
 
 /** A FeatureCollection plus the optional `feed_info` foreign member (RFC 7946 §6.1). */
 export type ConditionsFeatureCollection = FeatureCollection & { feed_info?: FeedInfo };
 
-function properties(o: Observation): Record<string, unknown> {
-  const rf = roadFields(o);
+export interface GeoJsonOptions {
+  /** Include the verbatim `sourceRaw` passthrough in properties (off by default — it's large). */
+  includeRaw?: boolean;
+}
+
+/**
+ * GeoJSON `properties` is an arbitrary JSON object (RFC 7946 §3.2), so the whole
+ * observation (minus geometry) is carried losslessly. `sourceRaw` is dropped
+ * unless requested. Attribution is also flattened to convenience keys.
+ */
+function properties(o: Observation, includeRaw: boolean): Record<string, unknown> {
   const att = o.origin.attribution;
-  const base: Record<string, unknown> = {
-    id: o.id,
-    source: o.source,
-    domain: o.domain,
-    kind: o.kind,
-    status: o.status,
-    validFrom: o.validFrom ?? null,
-    validTo: o.validTo ?? null,
-    dataUpdatedAt: o.dataUpdatedAt,
-    isStale: o.isStale,
+  const { geometry: _geometry, ...rest } = o as Observation & { geometry: unknown };
+  if (!includeRaw) delete (rest as Record<string, unknown>)["sourceRaw"];
+  return {
+    ...rest,
     provider: att.provider,
     license: att.license,
     attributionUrl: att.url ?? null,
   };
-  if (isEvent(o)) {
-    const e = o as ConditionEvent;
-    base.type = e.type;
-    base.category = e.category;
-    base.severity = e.severity;
-    base.headline = e.headline;
-    base.description = e.description ?? null;
-    if (rf.roadState) base.roadState = rf.roadState;
-    if (rf.roads) base.roads = rf.roads;
-    if (rf.direction) base.direction = rf.direction;
-  } else {
-    const m = o as Measurement;
-    base.metric = m.metric;
-    base.value = m.value ?? null;
-    base.unit = m.unit ?? null;
+}
+
+/** Bounding box [minLon, minLat, maxLon, maxLat] over all feature geometries (RFC 7946 §5). */
+function computeBbox(features: Feature[]): BBox | undefined {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let found = false;
+  const visit = (c: unknown): void => {
+    if (!Array.isArray(c)) return;
+    if (typeof c[0] === "number" && typeof c[1] === "number") {
+      found = true;
+      minX = Math.min(minX, c[0]);
+      minY = Math.min(minY, c[1]);
+      maxX = Math.max(maxX, c[0]);
+      maxY = Math.max(maxY, c[1]);
+      return;
+    }
+    for (const x of c) visit(x);
+  };
+  for (const f of features) {
+    const g = f.geometry as { coordinates?: unknown; geometries?: unknown[] } | null;
+    if (!g) continue;
+    if (Array.isArray(g.geometries)) {
+      for (const sub of g.geometries) visit((sub as { coordinates?: unknown }).coordinates);
+    } else {
+      visit(g.coordinates);
+    }
   }
-  return base;
+  return found ? [minX, minY, maxX, maxY] : undefined;
 }
 
 /**
  * Projects observations to a GeoJSON FeatureCollection (RFC 7946) — the
- * universal baseline emitter. Feed-level attribution/license travel as the
- * `feed_info` foreign member (and should also be set as HTTP headers).
+ * universal, lossless baseline emitter. Every model field travels in `properties`
+ * (sourceRaw gated by `opts.includeRaw`); feed-level attribution/license travel
+ * as the `feed_info` foreign member (and should also be set as HTTP headers).
  */
 export function observationsToGeoJSON(
   obs: Observation[],
-  info: FeedInfo = {}
+  info: FeedInfo = {},
+  opts: GeoJsonOptions = {}
 ): ConditionsFeatureCollection {
-  const fc: ConditionsFeatureCollection = {
-    type: "FeatureCollection",
-    features: obs.map(
-      (o): Feature => ({
-        type: "Feature",
-        id: o.id,
-        geometry: o.geometry,
-        properties: properties(o),
-      })
-    ),
-  };
+  const includeRaw = opts.includeRaw ?? false;
+  const features = obs.map(
+    (o): Feature => ({
+      type: "Feature",
+      id: o.id,
+      geometry: o.geometry,
+      properties: properties(o, includeRaw),
+    })
+  );
+  const fc: ConditionsFeatureCollection = { type: "FeatureCollection", features };
+  const bbox = computeBbox(features);
+  if (bbox) fc.bbox = bbox;
   if (Object.keys(info).length > 0) fc.feed_info = info;
   return fc;
 }

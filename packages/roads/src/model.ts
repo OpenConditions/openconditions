@@ -85,7 +85,7 @@ export interface RoadEvent extends ConditionEvent {
   };
   /** The original provider record, verbatim — a lossless passthrough so no
    * source field is ever dropped, even if not (yet) mapped to a typed field.
-   * Persisted under `attributes.source`. */
+   * Persisted under `attributes.sourceRaw`. */
   sourceRaw?: Record<string, unknown>;
 }
 
@@ -128,7 +128,9 @@ export function roadAttributes(ev: RoadEvent): Record<string, unknown> {
   if (ev.workZoneType != null) attrs["workZoneType"] = ev.workZoneType;
   if (ev.regions != null && ev.regions.length > 0) attrs["regions"] = ev.regions;
   if (ev.externalRefs != null) attrs["externalRefs"] = ev.externalRefs;
-  if (ev.sourceRaw != null) attrs["source"] = ev.sourceRaw;
+  // Keyed "sourceRaw" (not "source") so it never clobbers the top-level
+  // Observation.source when readObservations spreads attributes back.
+  if (ev.sourceRaw != null) attrs["sourceRaw"] = ev.sourceRaw;
 
   return attrs;
 }

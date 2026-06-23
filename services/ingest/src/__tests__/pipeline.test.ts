@@ -194,6 +194,7 @@ describe("store round-trip — typed columns + attributes JSONB", () => {
       workZoneType: "moving",
       speedLimitKph: 50,
       regions: ["Berlin"],
+      sourceRaw: { provider_field: "verbatim" },
       origin: { kind: "feed", attribution: { provider: "X", license: "CC0-1.0" } },
       dataUpdatedAt: "2026-06-23T10:00:00Z",
       fetchedAt: "2026-06-23T10:00:00Z",
@@ -215,6 +216,8 @@ describe("store round-trip — typed columns + attributes JSONB", () => {
     expect(got!.workZoneType).toBe("moving");
     expect(got!.speedLimitKph).toBe(50);
     expect(got!.regions).toEqual(["Berlin"]);
+    expect(got!.source).toBe("rt"); // feed id NOT clobbered by sourceRaw
+    expect(got!.sourceRaw).toEqual({ provider_field: "verbatim" }); // verbatim passthrough survives
   }, 30_000);
 
   it("persists a RoadFlow measurement (metric/value columns + flow attributes)", async () => {

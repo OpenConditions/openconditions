@@ -62,11 +62,13 @@ export function registerPublishRoutes(app: FastifyInstance, sql: Sql): void {
   const info = (): FeedInfo => ({ ...FEED_BASE, timestamp: new Date().toISOString() });
 
   app.get("/observations.geojson", async (req, reply) => {
-    const obs = await read(req.query as Record<string, string | undefined>);
+    const q = req.query as Record<string, string | undefined>;
+    const obs = await read(q);
     if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
     reply.header("Content-Type", "application/geo+json");
     reply.header("Cache-Control", "public, max-age=90");
-    return reply.send(observationsToGeoJSON(obs, info()));
+    // ?raw=1 includes the verbatim sourceRaw passthrough (larger payload).
+    return reply.send(observationsToGeoJSON(obs, info(), { includeRaw: q.raw === "1" }));
   });
 
   app.get("/observations.jsonld", async (req, reply) => {

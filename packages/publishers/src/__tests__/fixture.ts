@@ -2,9 +2,31 @@ import type { ConditionEvent, Measurement } from "@openconditions/core";
 import type { Geometry } from "geojson";
 
 type RoadFields = {
+  isPlanned?: boolean;
   roadState?: "open" | "some_lanes_closed" | "single_lane_alternating" | "closed";
   direction?: string;
-  roads?: { name: string; ref?: string; roadClass?: string; direction?: string }[];
+  roads?: {
+    name: string;
+    ref?: string;
+    roadClass?: string;
+    direction?: string;
+    from?: string;
+    to?: string;
+    milepostFrom?: number;
+    milepostTo?: number;
+  }[];
+  lanesAffected?: { total?: number; closed?: number; vehicleImpact?: string };
+  speedLimitKph?: number;
+  restrictions?: { type: string; value?: number; unit?: string }[];
+  vehiclesAffected?: string[];
+  detour?: string;
+  delaySeconds?: number;
+  queueLengthMeters?: number;
+  workersPresent?: boolean;
+  workZoneType?: "static" | "moving" | "area";
+  regions?: string[];
+  externalRefs?: { tmc?: { country: string; table: number; code: number } };
+  sourceRaw?: Record<string, unknown>;
 };
 
 export function roadEvent(
