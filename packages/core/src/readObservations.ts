@@ -19,6 +19,7 @@ interface Row {
   severity_source: string | null;
   headline: string | null;
   description: string | null;
+  label: string | null;
   metric: string | null;
   value: number | null;
   level: string | null;
@@ -61,6 +62,7 @@ function rowToObservation(row: Row): Observation {
     isStale: row.is_stale,
     origin: row.origin,
     ...(row.subject ? { subject: row.subject } : {}),
+    ...(row.label != null ? { label: row.label } : {}),
   };
   const specific =
     row.kind === "measurement"
@@ -118,7 +120,7 @@ export async function readObservations(
   const query = `
     SELECT
       id, source, source_format, domain, kind, type, subtype, category,
-      severity, severity_source, headline, description,
+      severity, severity_source, headline, description, label,
       metric, value, level, unit, aggregation,
       status, valid_from, valid_to, data_updated_at, fetched_at, expires_at,
       attributes, subject, origin,

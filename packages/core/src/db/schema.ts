@@ -40,6 +40,7 @@ export const observations = conditionsSchema.table(
     severitySource: text("severity_source"),
     headline: text("headline"),
     description: text("description"),
+    label: text("label"),
 
     metric: text("metric"),
     value: doublePrecision("value"),

@@ -50,6 +50,7 @@ function toRow(obs: Observation) {
     severity_source: condEvent.severitySource ?? null,
     headline: condEvent.headline ?? null,
     description: condEvent.description ?? null,
+    label: obs.label ?? null,
     metric: null as string | null,
     value: null as number | null,
     level: null as string | null,
@@ -95,7 +96,7 @@ export async function insertRows(
       INSERT INTO conditions.observations (
         id, source, source_format, domain, kind,
         type, subtype, category, severity, severity_source,
-        headline, description,
+        headline, description, label,
         metric, value, level, unit, aggregation,
         status, geom,
         subject, attributes,
@@ -105,7 +106,7 @@ export async function insertRows(
       ) VALUES (
         ${r.id}, ${r.source}, ${r.source_format}, ${r.domain}, ${r.kind},
         ${r.type}, ${r.subtype}, ${r.category}, ${r.severity}, ${r.severity_source},
-        ${r.headline}, ${r.description},
+        ${r.headline}, ${r.description}, ${r.label},
         ${r.metric}, ${r.value}, ${r.level}, ${r.unit}, ${r.aggregation},
         ${r.status}, ST_SetSRID(ST_GeomFromGeoJSON(${r.geometry_json}), 4326),
         ${r.subject ? tx.json(r.subject as AnyJson) : null}, ${r.attributes ? tx.json(r.attributes as AnyJson) : null},

@@ -3,8 +3,10 @@ import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
-import { runMigrations } from "@openconditions/core";
+import { readObservations, runMigrations } from "@openconditions/core";
 import { FEED_SOURCES } from "@openconditions/roads";
+import type { RoadEvent } from "@openconditions/roads";
+import { atomicSwap } from "../pipeline/write-postgis.js";
 import { runSource } from "../pipeline/run.js";
 import type { DomainFeedSource } from "../pipeline/run.js";
 
@@ -166,5 +168,52 @@ describe("pipeline — open511 (DriveBC)", () => {
       WHERE source = 'drivebc' AND NOT ST_IsValid(geom)
     `;
     expect(parseInt(invalid[0]!.count, 10)).toBe(0);
+  }, 30_000);
+});
+
+describe("store round-trip — typed columns + attributes JSONB", () => {
+  it("persists label (column) and road-specific fields (attributes) and reads them back", async () => {
+    const ev: RoadEvent = {
+      id: "rt:1",
+      source: "rt",
+      sourceFormat: "wzdx",
+      domain: "roads",
+      kind: "event",
+      type: "roadworks",
+      category: "planned",
+      isPlanned: true,
+      severity: "low",
+      severitySource: "derived",
+      headline: "Roadworks",
+      label: "Big Dig",
+      geometry: { type: "Point", coordinates: [13.4, 52.5] },
+      status: "active",
+      roads: [{ name: "A2" }],
+      roadState: "some_lanes_closed",
+      workersPresent: true,
+      workZoneType: "moving",
+      speedLimitKph: 50,
+      regions: ["Berlin"],
+      origin: { kind: "feed", attribution: { provider: "X", license: "CC0-1.0" } },
+      dataUpdatedAt: "2026-06-23T10:00:00Z",
+      fetchedAt: "2026-06-23T10:00:00Z",
+      isStale: false,
+    };
+    await atomicSwap(sql, "rt", [ev]);
+
+    const db = {
+      async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
+        return (p ? await sql.unsafe(q, p as never[]) : await sql.unsafe(q)) as T;
+      },
+    };
+    const out = await readObservations(db, { domain: "roads", bbox: [13, 52, 14, 53] });
+    const got = out.find((o) => o.id === "rt:1") as RoadEvent | undefined;
+    expect(got).toBeDefined();
+    expect(got!.label).toBe("Big Dig"); // dedicated column
+    expect(got!.roadState).toBe("some_lanes_closed"); // attributes JSONB
+    expect(got!.workersPresent).toBe(true);
+    expect(got!.workZoneType).toBe("moving");
+    expect(got!.speedLimitKph).toBe(50);
+    expect(got!.regions).toEqual(["Berlin"]);
   }, 30_000);
 });
