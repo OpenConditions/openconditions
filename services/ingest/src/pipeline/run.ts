@@ -1,7 +1,10 @@
 import type postgres from "postgres";
 import type { FeedSource } from "@openconditions/roads";
+import type { MapMatchClient } from "@openconditions/openlr";
+import { createResolverClient } from "@openconditions/openlr";
 import { fetchAll } from "./fetch.js";
 import { parseFor } from "./parse.js";
+import { resolveOpenLr } from "./resolve.js";
 import { atomicSwap } from "./write-postgis.js";
 
 type Sql = postgres.Sql;
@@ -15,6 +18,7 @@ export interface RunDeps {
   sql: Sql;
   fetch: typeof fetch;
   now: () => string;
+  openlrClient?: MapMatchClient | null;
 }
 
 /**
@@ -26,10 +30,21 @@ export interface DomainFeedSource extends FeedSource {
 }
 
 /**
+ * Creates a map-match client from OPENLR_RESOLVER_URL if the env var is set.
+ * Returns null when the variable is absent or empty.
+ */
+export function createOpenlrClient(): MapMatchClient | null {
+  const url = process.env["OPENLR_RESOLVER_URL"] || undefined;
+  if (!url) return null;
+  return createResolverClient(url);
+}
+
+/**
  * Runs the full ingest pipeline for one feed source:
  *   1. Fetch all URLs for the source (gunzip transparently).
  *   2. Parse each buffer via the domain plugin.
- *   3. Atomically swap the `conditions.observations` rows for this source.
+ *   3. Resolve any OpenLR-only observations via the map-match service.
+ *   4. Atomically swap the `conditions.observations` rows for this source.
  *
  * Feed-downtime safety: if fetching throws, the swap is never opened and
  * existing rows for this source are left intact (last-good behavior).
@@ -46,12 +61,15 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     return { count: 0, durationMs: Date.now() - start };
   }
 
-  const items = buffers.flatMap((b) => parseFor(src, b));
-  const fresh = items;
+  const parsed = buffers.flatMap((b) => parseFor(src, b));
+  const { resolved, dropped } = await resolveOpenLr(parsed, deps.openlrClient ?? null);
 
-  await atomicSwap(deps.sql, src.id, fresh, src.freshnessWindowSec);
+  await atomicSwap(deps.sql, src.id, resolved, src.freshnessWindowSec);
 
   const durationMs = Date.now() - start;
-  console.info(`[ingest] ${src.id}: inserted ${fresh.length} rows in ${durationMs}ms`);
-  return { count: fresh.length, durationMs };
+  const dropNote = dropped > 0 ? ` (${dropped} dropped — no geometry)` : "";
+  console.info(
+    `[ingest] ${src.id}: inserted ${resolved.length} rows in ${durationMs}ms${dropNote}`
+  );
+  return { count: resolved.length, durationMs };
 }

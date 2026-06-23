@@ -39,6 +39,7 @@ export interface FeedSource {
   cadenceSec: number;
   freshnessWindowSec: number;
   gzip?: boolean;
+  openlrResolver?: boolean;
   license: string;
   licenseUrl?: string;
   attribution: string;

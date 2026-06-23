@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
+    "@openconditions/openlr": "workspace:*",
     "@openconditions/publishers": "workspace:*",
     "@openconditions/roads": "workspace:*",
     "croner": "^10.0.1",

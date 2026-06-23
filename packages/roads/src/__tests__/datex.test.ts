@@ -295,3 +295,75 @@ describe("parseDatexSituations — deeper field extraction", () => {
     expect(ev!.externalRefs?.tmc?.country).toBe("8");
   });
 });
+
+describe("parseDatexSituations — OpenLR unresolved markers", () => {
+  it("emits an unresolved marker when a record has openlrBinary but no coordinate", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3">
+  <payload xsi:type="SituationPublication">
+    <situation id="S_OLR">
+      <situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="R_OLR" version="1">
+        <situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        <locationReference xsi:type="OpenlrPointAlongLine">
+          <openlrBinary>ABcDefGHiJkL==</openlrBinary>
+        </locationReference>
+      </situationRecord>
+    </situation>
+  </payload>
+</messageContainer>`;
+
+    const events = parseDatexSituations(xml, NDW_SOURCE);
+    expect(events).toHaveLength(1);
+    expect(events[0]!.externalRefs?.openlr).toBe("ABcDefGHiJkL==");
+    expect(events[0]!.geometry).toBeUndefined();
+  });
+
+  it("does NOT emit an unresolved marker when a record has neither coordinates nor openlrBinary", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3">
+  <payload xsi:type="SituationPublication">
+    <situation id="S_NONE">
+      <situationRecord xsi:type="Accident" id="R_NONE" version="1">
+        <situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        <locationReference xsi:type="AlertCPoint">
+          <alertCPoint><alertCLocationCountryCode>8</alertCLocationCountryCode></alertCPoint>
+        </locationReference>
+      </situationRecord>
+    </situation>
+  </payload>
+</messageContainer>`;
+
+    const events = parseDatexSituations(xml, NDW_SOURCE);
+    expect(events).toHaveLength(0);
+  });
+
+  it("does NOT regress coordinate-bearing records — they still get geometry", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3">
+  <payload xsi:type="SituationPublication">
+    <situation id="S_COORD">
+      <situationRecord xsi:type="Accident" id="R_COORD" version="1">
+        <situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        <locationReference xsi:type="PointLocation">
+          <pointByCoordinates>
+            <pointCoordinates>
+              <latitude>52.0</latitude>
+              <longitude>4.5</longitude>
+            </pointCoordinates>
+          </pointByCoordinates>
+        </locationReference>
+      </situationRecord>
+    </situation>
+  </payload>
+</messageContainer>`;
+
+    const events = parseDatexSituations(xml, NDW_SOURCE);
+    expect(events).toHaveLength(1);
+    expect(events[0]!.geometry).toBeDefined();
+    expect(events[0]!.geometry?.type).toBe("Point");
+    expect(events[0]!.externalRefs?.openlr).toBeUndefined();
+  });
+});

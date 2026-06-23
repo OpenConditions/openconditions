@@ -341,6 +341,24 @@ function leafNumber(rec: XmlObject, name: string): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+/**
+ * Extracts an OpenLR base64 string from the record's locationReference, if
+ * present. Tries several common element names used by DATEX II v2 and v3.
+ */
+function collectOpenLr(rec: XmlObject): string | undefined {
+  const locRef = getXmlChild(rec, "locationReference");
+
+  if (locRef) {
+    const candidates = ["openlrBinary", "base64", "openLRBinary"];
+    for (const name of candidates) {
+      const val = getXmlChildText(locRef, name);
+      if (val) return val;
+    }
+  }
+
+  return getXmlChildText(rec, "openlrBinary") ?? undefined;
+}
+
 function collectRefs(rec: XmlObject): RoadEvent["externalRefs"] {
   const locRef = getXmlChild(rec, "locationReference");
   if (!locRef) return undefined;
@@ -450,7 +468,9 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
 
   for (const { rec, situationSeverity } of records) {
     const geometry = resolveGeometry(rec);
-    if (!geometry) {
+    const openlr = !geometry ? collectOpenLr(rec) : undefined;
+
+    if (!geometry && !openlr) {
       skippedAlertCOnly++;
       continue;
     }
@@ -488,7 +508,7 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
       ...severityFields,
       confidence: confidenceOf(rec),
       status: validityStatusToStatus(validityStatus),
-      geometry,
+      geometry: (geometry ?? undefined) as Geometry,
       direction: directionOf(rec),
       roads: roadsOf(rec),
       roadState: roadStateOf(rec),
@@ -509,7 +529,7 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
         multilingual(publicComment, "en") ?? multilingual(fallbackComment, "en") ?? undefined,
       validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
       validTo: text(timeSpec?.["overallEndTime"]) ?? null,
-      externalRefs: collectRefs(rec),
+      externalRefs: openlr ? { ...collectRefs(rec), openlr } : collectRefs(rec),
       origin: {
         kind: "feed",
         attribution: {
@@ -526,9 +546,14 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
 
   if (skippedAlertCOnly > 0) {
     console.debug(
-      `[datex] skipped ${skippedAlertCOnly} record(s) with no coordinate geometry (Alert-C/OpenLR only; Phase 2 deferred)`
+      `[datex] skipped ${skippedAlertCOnly} record(s) with no coordinate geometry (Alert-C only)`
     );
   }
 
-  return dedupeRoadEvents(out);
+  // Unresolved OpenLR markers (no geometry yet) must bypass dedupe, which
+  // requires a coordinate to compute merge distance. They are emitted as-is
+  // and will be resolved to geometry by the ingest resolve stage.
+  const withGeom = out.filter((ev) => ev.geometry != null);
+  const noGeom = out.filter((ev) => ev.geometry == null);
+  return [...dedupeRoadEvents(withGeom), ...noGeom];
 }
