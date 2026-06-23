@@ -120,11 +120,22 @@ function toEntity(ev: ConditionEvent): GtfsRealtimeBindings.transit_realtime.IFe
   const period = activePeriod(ev);
   if (period) alert.activePeriod = period;
   const header = translated(ev.headline);
-  if (header) alert.headerText = header;
+  if (header) {
+    alert.headerText = header;
+    alert.ttsHeaderText = header; // plain text, safe to speak verbatim
+  }
   const description = translated(ev.description);
-  if (description) alert.descriptionText = description;
+  if (description) {
+    alert.descriptionText = description;
+    alert.ttsDescriptionText = description;
+  }
   const url = translated(ev.origin.attribution.url);
   if (url) alert.url = url;
+  // Free-text refinements of the coarse cause/effect enums.
+  const causeDetail = translated(ev.subtype);
+  if (causeDetail) alert.causeDetail = causeDetail;
+  const effectDetail = translated((ev as { detour?: string }).detour);
+  if (effectDetail) alert.effectDetail = effectDetail;
   return { id: ev.id, alert };
 }
 

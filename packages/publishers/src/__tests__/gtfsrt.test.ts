@@ -125,3 +125,24 @@ describe("observationsToGtfsRtAlerts", () => {
     expect(num(period.end)).toBe(Math.floor(Date.parse("2026-06-23T12:00:00Z") / 1000));
   });
 });
+
+describe("observationsToGtfsRtAlerts — extended Alert fields", () => {
+  it("emits tts text + cause/effect detail", () => {
+    const feed = decode(
+      observationsToGtfsRtAlerts([
+        roadEvent({
+          type: "road_closure",
+          headline: "A2 closed",
+          description: "Closed until noon",
+          subtype: "roadMaintenance",
+          detour: "Use A4",
+        }),
+      ])
+    );
+    const alert = feed.entity[0]!.alert!;
+    expect(alert.ttsHeaderText?.translation?.[0]?.text).toBe("A2 closed");
+    expect(alert.ttsDescriptionText?.translation?.[0]?.text).toBe("Closed until noon");
+    expect(alert.causeDetail?.translation?.[0]?.text).toBe("roadMaintenance");
+    expect(alert.effectDetail?.translation?.[0]?.text).toBe("Use A4");
+  });
+});
