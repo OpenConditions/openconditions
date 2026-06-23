@@ -109,6 +109,17 @@ export function getXmlChild(node: unknown, key: string): XmlObject | undefined {
   return isXmlObject(child) ? child : undefined;
 }
 
+/**
+ * Text of a child element regardless of whether it parsed as a string (leaf
+ * `<x>v</x>`) or an object (`<x a="1">v</x>` → `{ "#text": "v" }`). Use this for
+ * leaf-value reads — `getXmlChild` returns undefined for string children, so
+ * `xmlText(getXmlChild(...))` silently drops plain-text leaves.
+ */
+export function getXmlChildText(node: unknown, key: string): string | undefined {
+  if (!isXmlObject(node)) return undefined;
+  return xmlText(node[key]);
+}
+
 export function getXmlChildren(node: unknown, key: string): XmlObject[] {
   if (!isXmlObject(node)) return [];
   return xmlNodeToArray(node[key]).filter(isXmlObject);

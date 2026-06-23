@@ -1,5 +1,5 @@
 import { normaliseSeverity } from "@openconditions/core";
-import type { Point } from "geojson";
+import type { Geometry } from "geojson";
 import type { RoadEvent } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
@@ -7,6 +7,7 @@ import type { SourceDescriptor } from "./types.js";
 import {
   getXmlAttribute,
   getXmlChild,
+  getXmlChildText,
   getXmlChildren,
   isXmlObject,
   parseXmlDocument,
@@ -89,26 +90,76 @@ function defaultHeadline(type: string): string {
   return labels[type] ?? "Traffic information";
 }
 
-function resolveLocation(rec: XmlObject): Point | null {
-  const locRef = getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations");
+/** GML `posList` / `pos` are "lat lon [lat lon ...]" under srsName "WGS 84";
+ * GeoJSON wants [lon, lat]. Returns finite [lon,lat] pairs only. */
+function parseLatLonList(raw: string | undefined): [number, number][] {
+  if (!raw) return [];
+  const nums = raw.trim().split(/\s+/).map(Number);
+  const out: [number, number][] = [];
+  for (let i = 0; i + 1 < nums.length; i += 2) {
+    const lat = nums[i]!;
+    const lon = nums[i + 1]!;
+    if (Number.isFinite(lat) && Number.isFinite(lon)) out.push([lon, lat]);
+  }
+  return out;
+}
 
+/**
+ * Resolve a situationRecord's geometry by walking its location subtree for any
+ * coordinate-bearing element — DATEX nests these at varying depths and shapes:
+ *  - `pointByCoordinates > pointCoordinates` (latitude/longitude) → Point
+ *  - GML `gmlPoint > pos` → Point; `gmlLineString > posList` → LineString
+ *  - `ItineraryByIndexedLocations` → many `location`s, each with its own GML
+ * Multiple lines → MultiLineString; multiple points → MultiPoint. Records with
+ * no coordinate geometry (Alert-C/TMC only) return null (decoded in Phase 2).
+ */
+function resolveGeometry(rec: XmlObject): Geometry | null {
+  const locRef = getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations");
   if (!locRef) return null;
 
-  const pointByCoords =
-    getXmlChild(locRef, "pointByCoordinates") ??
-    getXmlChild(getXmlChild(locRef, "pointLocation"), "pointByCoordinates");
+  const lines: [number, number][][] = [];
+  const points: [number, number][] = [];
 
-  if (pointByCoords) {
-    const coords = getXmlChild(pointByCoords, "pointCoordinates");
-    if (coords) {
-      const lat = parseFloat(text(coords["latitude"]) ?? "");
-      const lon = parseFloat(text(coords["longitude"]) ?? "");
-      if (!isNaN(lat) && !isNaN(lon)) {
-        return { type: "Point", coordinates: [lon, lat] };
+  const visit = (node: unknown): void => {
+    if (Array.isArray(node)) {
+      node.forEach(visit);
+      return;
+    }
+    if (!isXmlObject(node)) return;
+    for (const [key, value] of Object.entries(node)) {
+      if (key.startsWith("@_")) continue;
+      switch (stripXmlNamespace(key)) {
+        case "posList":
+          for (const node of xmlNodeToArray(value)) {
+            const coords = parseLatLonList(xmlText(node));
+            if (coords.length >= 2) lines.push(coords);
+            else if (coords.length === 1) points.push(coords[0]!);
+          }
+          break;
+        case "pos":
+          for (const node of xmlNodeToArray(value)) {
+            const coords = parseLatLonList(xmlText(node));
+            if (coords[0]) points.push(coords[0]);
+          }
+          break;
+        case "pointCoordinates":
+          for (const node of xmlNodeToArray(value)) {
+            const lat = Number(getXmlChildText(node, "latitude"));
+            const lon = Number(getXmlChildText(node, "longitude"));
+            if (Number.isFinite(lat) && Number.isFinite(lon)) points.push([lon, lat]);
+          }
+          break;
+        default:
+          visit(value);
       }
     }
-  }
+  };
+  visit(locRef);
 
+  if (lines.length === 1) return { type: "LineString", coordinates: lines[0]! };
+  if (lines.length > 1) return { type: "MultiLineString", coordinates: lines };
+  if (points.length === 1) return { type: "Point", coordinates: points[0]! };
+  if (points.length > 1) return { type: "MultiPoint", coordinates: points };
   return null;
 }
 
@@ -129,17 +180,14 @@ function directionOf(rec: XmlObject): string | undefined {
 function roadsOf(rec: XmlObject): import("./model.js").RoadRef[] {
   const locRef = getXmlChild(rec, "locationReference");
   if (!locRef) return [];
+  const pointLoc = getXmlChild(locRef, "pointLocation");
 
+  // roadName/roadNumber may be a plain leaf or a multilingual object.
   const roadName =
-    text(
-      getXmlChild(locRef, "roadName") ??
-        getXmlChild(getXmlChild(locRef, "pointLocation"), "roadName")
-    ) ?? undefined;
-  const roadRef =
-    text(
-      getXmlChild(locRef, "roadNumber") ??
-        getXmlChild(getXmlChild(locRef, "pointLocation"), "roadNumber")
-    ) ?? undefined;
+    getXmlChildText(locRef, "roadName") ??
+    multilingual(getXmlChild(locRef, "roadName"), "en") ??
+    getXmlChildText(pointLoc, "roadName");
+  const roadRef = getXmlChildText(locRef, "roadNumber") ?? getXmlChildText(pointLoc, "roadNumber");
 
   if (roadName || roadRef) {
     return [{ name: roadName ?? roadRef ?? "", ref: roadRef }];
@@ -149,21 +197,34 @@ function roadsOf(rec: XmlObject): import("./model.js").RoadRef[] {
 }
 
 function roadStateOf(rec: XmlObject): RoadEvent["roadState"] | undefined {
-  const mgmt = getXmlChild(rec, "roadOrCarriagewayOrLaneManagementType");
-  if (!mgmt) return undefined;
-
-  const raw = text(mgmt)?.toLowerCase();
-  if (raw?.includes("closed")) return "closed";
-  if (raw?.includes("singlelane") || raw?.includes("alternating")) return "single_lane_alternating";
-  if (raw?.includes("lane")) return "some_lanes_closed";
+  // A leaf-text enum (e.g. "carriagewayClosures", "laneClosures", "contraflow").
+  const raw = getXmlChildText(rec, "roadOrCarriagewayOrLaneManagementType")?.toLowerCase();
+  if (!raw) return undefined;
+  if (raw.includes("contraflow") || raw.includes("alternat")) return "single_lane_alternating";
+  if (raw.includes("carriageway") && raw.includes("clos")) return "closed";
+  if (raw.includes("roadclos")) return "closed";
+  if (raw.includes("lane") && raw.includes("clos")) return "some_lanes_closed";
+  if (raw.includes("clos")) return "closed";
   return undefined;
 }
 
 function lanesOf(rec: XmlObject): RoadEvent["lanesAffected"] | undefined {
-  const numberOfLanes = text(rec["numberOfLanesRestricted"]);
-  if (!numberOfLanes) return undefined;
-  const closed = parseInt(numberOfLanes, 10);
-  return isNaN(closed) ? undefined : { closed };
+  // Lane counts live under <impact> in v3 (older feeds put them on the record).
+  const impact = getXmlChild(rec, "impact");
+  const restricted =
+    getXmlChildText(impact, "numberOfLanesRestricted") ??
+    getXmlChildText(rec, "numberOfLanesRestricted");
+  if (restricted == null) return undefined;
+  const closed = parseInt(restricted, 10);
+  if (Number.isNaN(closed)) return undefined;
+
+  const operationalRaw =
+    getXmlChildText(impact, "numberOfOperationalLanes") ??
+    getXmlChildText(rec, "numberOfOperationalLanes");
+  const operational = operationalRaw != null ? parseInt(operationalRaw, 10) : NaN;
+  const lanes: NonNullable<RoadEvent["lanesAffected"]> = { closed };
+  if (!Number.isNaN(operational)) lanes.total = closed + operational;
+  return lanes;
 }
 
 function collectRefs(rec: XmlObject): RoadEvent["externalRefs"] {
@@ -280,7 +341,7 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
   let skippedAlertCOnly = 0;
 
   for (const { rec, situationSeverity } of records) {
-    const geometry = resolveLocation(rec);
+    const geometry = resolveGeometry(rec);
     if (!geometry) {
       skippedAlertCOnly++;
       continue;

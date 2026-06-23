@@ -141,3 +141,104 @@ describe("parseDatexSituations — v2/v3 root tolerance", () => {
     expect(events[0]!.geometry.type).toBe("Point");
   });
 });
+
+/** Wrap one situationRecord body in a minimal DATEX II v3 document. */
+function v3Record(inner: string): string {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3">
+  <payload xsi:type="SituationPublication">
+    <situation id="S">
+      <situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="R" version="1">
+        <situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        ${inner}
+      </situationRecord>
+    </situation>
+  </payload>
+</messageContainer>`;
+}
+
+const POINT_LOC = `<locationReference xsi:type="PointLocation"><pointByCoordinates><pointCoordinates><latitude>52</latitude><longitude>13</longitude></pointCoordinates></pointByCoordinates></locationReference>`;
+
+describe("parseDatexSituations — GML geometry", () => {
+  it("reads a gmlLineString/posList as a LineString (lat-lon → [lon,lat])", () => {
+    const xml = v3Record(
+      `<locationReference xsi:type="LinearLocation"><gmlLineString srsName="WGS 84"><posList>52.0 13.0 52.1 13.1 52.2 13.2</posList></gmlLineString></locationReference>`
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [13.0, 52.0],
+        [13.1, 52.1],
+        [13.2, 52.2],
+      ],
+    });
+  });
+
+  it("reads an ItineraryByIndexedLocations of line segments as a MultiLineString", () => {
+    const xml = v3Record(
+      `<locationReference xsi:type="ItineraryByIndexedLocations">` +
+        `<locationContainedInItinerary index="0"><location xsi:type="LinearLocation"><gmlLineString><posList>52.0 13.0 52.1 13.1</posList></gmlLineString></location></locationContainedInItinerary>` +
+        `<locationContainedInItinerary index="1"><location xsi:type="LinearLocation"><gmlLineString><posList>52.2 13.2 52.3 13.3</posList></gmlLineString></location></locationContainedInItinerary>` +
+        `</locationReference>`
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.geometry.type).toBe("MultiLineString");
+    expect(ev!.geometry).toEqual({
+      type: "MultiLineString",
+      coordinates: [
+        [
+          [13.0, 52.0],
+          [13.1, 52.1],
+        ],
+        [
+          [13.2, 52.2],
+          [13.3, 52.3],
+        ],
+      ],
+    });
+  });
+});
+
+describe("parseDatexSituations — road management details", () => {
+  it("reads roadState from the (leaf-text) management type", () => {
+    const closed = parseDatexSituations(
+      v3Record(
+        `<roadOrCarriagewayOrLaneManagementType>carriagewayClosures</roadOrCarriagewayOrLaneManagementType>${POINT_LOC}`
+      ),
+      NDW_SOURCE
+    );
+    expect(closed[0]!.roadState).toBe("closed");
+
+    const lanes = parseDatexSituations(
+      v3Record(
+        `<roadOrCarriagewayOrLaneManagementType>laneClosures</roadOrCarriagewayOrLaneManagementType>${POINT_LOC}`
+      ),
+      NDW_SOURCE
+    );
+    expect(lanes[0]!.roadState).toBe("some_lanes_closed");
+  });
+
+  it("reads lanesAffected from the nested <impact> element", () => {
+    const [ev] = parseDatexSituations(
+      v3Record(
+        `<impact><numberOfLanesRestricted>2</numberOfLanesRestricted><numberOfOperationalLanes>1</numberOfOperationalLanes></impact>${POINT_LOC}`
+      ),
+      NDW_SOURCE
+    );
+    expect(ev!.lanesAffected?.closed).toBe(2);
+  });
+});
+
+describe("parseDatexSituations — NDW real-feed coverage", () => {
+  it("extracts most records incl. line geometries, road states and lane info", () => {
+    const events = parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
+    expect(events.length).toBeGreaterThan(400); // was ~206 (points only)
+    expect(
+      events.some((e) => e.geometry.type === "LineString" || e.geometry.type === "MultiLineString")
+    ).toBe(true);
+    expect(events.some((e) => e.roadState != null)).toBe(true);
+    expect(events.some((e) => e.lanesAffected != null)).toBe(true);
+  });
+});
