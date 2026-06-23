@@ -271,3 +271,27 @@ describe("mapSourceType — autobahn branch", () => {
     });
   });
 });
+
+describe("parseAutobahn — road extraction from title", () => {
+  it("extracts the autobahn designation from the title into roads[]", () => {
+    const events = parseAutobahn(readFileSync(FIXTURE_PATH, "utf8"), AUTOBAHN_SOURCE, "warning");
+    const withRoad = events.find((e) => e.roads.length > 0);
+    expect(withRoad).toBeDefined();
+    expect(withRoad!.roads[0]!.ref).toMatch(/^A\d/);
+  });
+
+  it("parses the road from a synthetic 'A3 | segment' title", () => {
+    const json = JSON.stringify({
+      warning: [
+        {
+          identifier: "w1",
+          title: "A3 | Köln-Ost - Leverkusen",
+          subtitle: "Köln -> Leverkusen",
+          coordinate: { lat: "50.9", long: "7.0" },
+        },
+      ],
+    });
+    const [ev] = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
+    expect(ev!.roads[0]).toEqual({ name: "A3", ref: "A3" });
+  });
+});

@@ -10,6 +10,7 @@ interface Open511Road {
   from?: string;
   to?: string;
   direction?: string;
+  state?: string;
 }
 
 interface Open511Schedule {
@@ -67,6 +68,44 @@ function parseRoads(roads: Open511Road[] | undefined): RoadRef[] {
     if (r.direction != null) ref.direction = r.direction;
     return ref;
   });
+}
+
+/** Open511 road `state` enum → canonical roadState (worst across all roads). */
+function open511RoadState(state: string | undefined): RoadEvent["roadState"] | undefined {
+  switch (state?.toUpperCase()) {
+    case "CLOSED":
+    case "ALL_LANES_CLOSED":
+      return "closed";
+    case "SOME_LANES_CLOSED":
+      return "some_lanes_closed";
+    case "SINGLE_LANE_ALTERNATING":
+      return "single_lane_alternating";
+    case "ALL_LANES_OPEN":
+      return "open";
+    default:
+      return undefined;
+  }
+}
+
+const ROAD_STATE_SEVERITY: NonNullable<RoadEvent["roadState"]>[] = [
+  "open",
+  "single_lane_alternating",
+  "some_lanes_closed",
+  "closed",
+];
+
+function roadStateFromRoads(roads: Open511Road[] | undefined): RoadEvent["roadState"] | undefined {
+  let worst: RoadEvent["roadState"] | undefined;
+  for (const r of roads ?? []) {
+    const s = open511RoadState(r.state);
+    if (
+      s &&
+      (worst == null || ROAD_STATE_SEVERITY.indexOf(s) > ROAD_STATE_SEVERITY.indexOf(worst))
+    ) {
+      worst = s;
+    }
+  }
+  return worst;
 }
 
 function collectExtensionFields(ev: Open511Event): Record<string, unknown> | undefined {
@@ -152,6 +191,7 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
         status: open511Status(ev.status),
         geometry: geometry as GeoJsonGeometry,
         roads: parseRoads(ev.roads),
+        roadState: roadStateFromRoads(ev.roads),
         headline: typeof ev.headline === "string" && ev.headline ? ev.headline : type,
         description: typeof ev.description === "string" ? ev.description : undefined,
         validFrom,

@@ -1,6 +1,6 @@
 import { deriveSeverity } from "@openconditions/core";
 import type { GeoJsonGeometry } from "@openconditions/core";
-import type { RoadEvent } from "./model.js";
+import type { RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
@@ -51,6 +51,16 @@ function parseGeometry(item: AutobahnItem): GeoJsonGeometry | null {
   }
 
   return null;
+}
+
+/** Autobahn titles lead with the road designation, e.g.
+ * "A5 | Karlsruhe-Nord - Bruchsal" (Bundesstraßen use "B<n>"). */
+function roadsFromTitle(title: string | undefined): RoadRef[] {
+  const head = title?.split("|")[0]?.trim() ?? "";
+  const m = head.match(/^([AB])\s?(\d+\w*)/i);
+  if (!m) return [];
+  const ref = `${m[1]!.toUpperCase()}${m[2]}`;
+  return [{ name: ref, ref }];
 }
 
 function hasFlowFields(item: AutobahnItem): boolean {
@@ -197,7 +207,8 @@ export function parseAutobahn(
         severitySource: "derived",
         status: "active",
         geometry,
-        roads: [],
+        roads: roadsFromTitle(title),
+        ...(subtitle ? { direction: subtitle } : {}),
         roadState,
         headline,
         description,

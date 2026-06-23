@@ -1,6 +1,6 @@
 import { deriveSeverity } from "@openconditions/core";
 import type { GeoJsonGeometry } from "@openconditions/core";
-import type { RoadEvent } from "./model.js";
+import type { RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
@@ -46,6 +46,25 @@ function firstAnnouncement(announcements: unknown): DigitrafficAnnouncement | nu
   if (!Array.isArray(announcements) || announcements.length === 0) return null;
   const first = announcements[0];
   return first && typeof first === "object" ? (first as DigitrafficAnnouncement) : null;
+}
+
+interface DigitrafficPrimaryPoint {
+  roadName?: unknown;
+  roadAddress?: { road?: unknown };
+}
+
+/** Road name + number live deep under the announcement's location details. */
+function roadsFromAnnouncement(ann: DigitrafficAnnouncement | null): RoadRef[] {
+  const details = ann?.["locationDetails"] as
+    | { roadAddressLocation?: { primaryPoint?: DigitrafficPrimaryPoint } }
+    | undefined;
+  const primary = details?.roadAddressLocation?.primaryPoint;
+  if (!primary) return [];
+  const name = coerceString(primary.roadName);
+  const road = primary.roadAddress?.road;
+  const ref = typeof road === "number" ? String(road) : coerceString(road);
+  if (!name && !ref) return [];
+  return [{ name: name ?? ref!, ...(ref ? { ref } : {}) }];
 }
 
 /**
@@ -126,7 +145,7 @@ export function parseDigitraffic(
         severitySource: "derived",
         status: "active",
         geometry: geometry as GeoJsonGeometry,
-        roads: [],
+        roads: roadsFromAnnouncement(ann),
         headline,
         validFrom,
         validTo,

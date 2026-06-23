@@ -224,3 +224,27 @@ describe("mapSourceType — open511 branch", () => {
     });
   });
 });
+
+describe("parseOpen511 — road state", () => {
+  const event = (state: string) =>
+    JSON.stringify({
+      events: [
+        {
+          id: "e1",
+          event_type: "INCIDENT",
+          geography: { type: "Point", coordinates: [-123, 49] },
+          roads: [{ name: "Hwy 1", state }],
+        },
+      ],
+    });
+
+  it("maps Open511 roads[].state to roadState", () => {
+    expect(parseOpen511(event("ALL_LANES_CLOSED"), DRIVEBC_SOURCE)[0]!.roadState).toBe("closed");
+    expect(parseOpen511(event("SOME_LANES_CLOSED"), DRIVEBC_SOURCE)[0]!.roadState).toBe(
+      "some_lanes_closed"
+    );
+    expect(parseOpen511(event("SINGLE_LANE_ALTERNATING"), DRIVEBC_SOURCE)[0]!.roadState).toBe(
+      "single_lane_alternating"
+    );
+  });
+});

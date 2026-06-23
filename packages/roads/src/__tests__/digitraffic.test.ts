@@ -203,3 +203,13 @@ describe("mapSourceType — digitraffic branch", () => {
     });
   });
 });
+
+describe("parseDigitraffic — road extraction", () => {
+  it("extracts road name and number from announcement locationDetails", () => {
+    const events = parseDigitraffic(readFileSync(FIXTURE_PATH, "utf8"), DIGITRAFFIC_SOURCE);
+    const withRoad = events.find((e) => e.roads.length > 0);
+    expect(withRoad).toBeDefined();
+    expect(withRoad!.roads[0]!.name).toBeTruthy();
+    expect(withRoad!.roads[0]!.ref).toBeTruthy();
+  });
+});
