@@ -64,17 +64,27 @@ export function decodeOpenLrBinary(base64: string): OpenLrLocation {
     throw new Error("OpenLR line location must have at least two LRPs");
   }
 
-  const points: LrpPoint[] = rawPoints.map((p, i) => ({
-    sequenceNumber: i + 1,
-    longitude: p.getLongitudeDeg(),
-    latitude: p.getLatitudeDeg(),
-    frc: p.getFRC() ?? 7,
-    fow: p.getFOW() ?? 0,
-    lfrcnp: p.getLfrc(),
-    bearing: p.getBearing(),
-    distanceToNext: p.getDistanceToNext(),
-    isLast: p.isLastLRP(),
-  }));
+  const points: LrpPoint[] = rawPoints.map((p, i) => {
+    const frc = p.getFRC();
+    const fow = p.getFOW();
+    if (frc == null) {
+      throw new Error(`OpenLR LRP ${i + 1}: FRC is missing — binary data may be corrupt`);
+    }
+    if (fow == null) {
+      throw new Error(`OpenLR LRP ${i + 1}: FOW is missing — binary data may be corrupt`);
+    }
+    return {
+      sequenceNumber: i + 1,
+      longitude: p.getLongitudeDeg(),
+      latitude: p.getLatitudeDeg(),
+      frc,
+      fow,
+      lfrcnp: p.getLfrc(),
+      bearing: p.getBearing(),
+      distanceToNext: p.getDistanceToNext(),
+      isLast: p.isLastLRP(),
+    };
+  });
 
   const totalLength = points.reduce((sum, p) => sum + p.distanceToNext, 0);
   const positiveOffset = offsets ? offsets.getPositiveOffset(totalLength) : 0;
