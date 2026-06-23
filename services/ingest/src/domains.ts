@@ -3,9 +3,10 @@ import {
   parserFor,
   feedToSourceDescriptor,
   roadAttributes,
+  roadFlowAttributes,
 } from "@openconditions/roads";
 import type { FeedSource } from "@openconditions/roads";
-import type { RoadEvent } from "@openconditions/roads";
+import type { RoadEvent, RoadFlow } from "@openconditions/roads";
 import type { Observation } from "@openconditions/core";
 
 /**
@@ -30,7 +31,10 @@ export const DOMAIN_REGISTRY: Record<string, DomainPlugin> = {
   roads: {
     feeds: FEED_SOURCES,
     parserFor,
-    attributes: (obs) => roadAttributes(obs as RoadEvent),
+    attributes: (obs) =>
+      obs.kind === "measurement"
+        ? roadFlowAttributes(obs as RoadFlow)
+        : roadAttributes(obs as RoadEvent),
   },
 };
 

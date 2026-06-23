@@ -132,3 +132,18 @@ export function roadAttributes(ev: RoadEvent): Record<string, unknown> {
 
   return attrs;
 }
+
+/**
+ * Map flow-specific fields from a RoadFlow measurement into a plain object for
+ * the store's `attributes` JSONB column (the measurement counterpart to
+ * roadAttributes; metric/value/level/unit/aggregation go to typed columns).
+ */
+export function roadFlowAttributes(flow: RoadFlow): Record<string, unknown> {
+  const attrs: Record<string, unknown> = { los: flow.los };
+  if (flow.speedKph != null) attrs["speedKph"] = flow.speedKph;
+  if (flow.freeFlowKph != null) attrs["freeFlowKph"] = flow.freeFlowKph;
+  if (flow.speedRatio != null) attrs["speedRatio"] = flow.speedRatio;
+  if (flow.delaySeconds != null) attrs["delaySeconds"] = flow.delaySeconds;
+  if (flow.jamFactor != null) attrs["jamFactor"] = flow.jamFactor;
+  return attrs;
+}

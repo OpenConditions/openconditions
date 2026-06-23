@@ -5,7 +5,7 @@ import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { readObservations, runMigrations } from "@openconditions/core";
 import { FEED_SOURCES } from "@openconditions/roads";
-import type { RoadEvent } from "@openconditions/roads";
+import type { RoadEvent, RoadFlow } from "@openconditions/roads";
 import { atomicSwap } from "../pipeline/write-postgis.js";
 import { runSource } from "../pipeline/run.js";
 import type { DomainFeedSource } from "../pipeline/run.js";
@@ -215,5 +215,55 @@ describe("store round-trip — typed columns + attributes JSONB", () => {
     expect(got!.workZoneType).toBe("moving");
     expect(got!.speedLimitKph).toBe(50);
     expect(got!.regions).toEqual(["Berlin"]);
+  }, 30_000);
+
+  it("persists a RoadFlow measurement (metric/value columns + flow attributes)", async () => {
+    const flow: RoadFlow = {
+      id: "flow:1",
+      source: "rtflow",
+      sourceFormat: "native",
+      domain: "roads",
+      kind: "measurement",
+      metric: "flow",
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          [13.4, 52.5],
+          [13.5, 52.6],
+        ],
+      },
+      los: "heavy",
+      speedKph: 40,
+      freeFlowKph: 100,
+      speedRatio: 0.4,
+      delaySeconds: 120,
+      jamFactor: 6,
+      value: 1200,
+      unit: "veh/h",
+      aggregation: "live",
+      status: "active",
+      origin: { kind: "feed", attribution: { provider: "X", license: "CC0-1.0" } },
+      dataUpdatedAt: "2026-06-23T10:00:00Z",
+      fetchedAt: "2026-06-23T10:00:00Z",
+      isStale: false,
+    };
+    await atomicSwap(sql, "rtflow", [flow]);
+
+    const db = {
+      async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
+        return (p ? await sql.unsafe(q, p as never[]) : await sql.unsafe(q)) as T;
+      },
+    };
+    const out = await readObservations(db, { domain: "roads", bbox: [13, 52, 14, 53] });
+    const got = out.find((o) => o.id === "flow:1") as RoadFlow | undefined;
+    expect(got).toBeDefined();
+    expect(got!.kind).toBe("measurement");
+    expect(got!.metric).toBe("flow"); // typed columns
+    expect(got!.value).toBe(1200);
+    expect(got!.unit).toBe("veh/h");
+    expect(got!.aggregation).toBe("live");
+    expect(got!.los).toBe("heavy"); // attributes JSONB
+    expect(got!.speedKph).toBe(40);
+    expect(got!.delaySeconds).toBe(120);
   }, 30_000);
 });

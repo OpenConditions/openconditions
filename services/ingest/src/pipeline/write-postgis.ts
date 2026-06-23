@@ -36,6 +36,14 @@ function toRow(obs: Observation) {
     headline?: string;
     description?: string;
   };
+  // Measurement axis (e.g. RoadFlow) — populated when kind === "measurement".
+  const measurement = obs as Observation & {
+    metric?: string;
+    value?: number;
+    level?: string;
+    unit?: string;
+    aggregation?: string;
+  };
 
   return {
     id: obs.id,
@@ -51,11 +59,11 @@ function toRow(obs: Observation) {
     headline: condEvent.headline ?? null,
     description: condEvent.description ?? null,
     label: obs.label ?? null,
-    metric: null as string | null,
-    value: null as number | null,
-    level: null as string | null,
-    unit: null as string | null,
-    aggregation: null as string | null,
+    metric: measurement.metric ?? null,
+    value: measurement.value ?? null,
+    level: measurement.level ?? null,
+    unit: measurement.unit ?? null,
+    aggregation: measurement.aggregation ?? null,
     status: obs.status,
     geometry_json: JSON.stringify(obs.geometry),
     subject: obs.subject ? obs.subject : null,
