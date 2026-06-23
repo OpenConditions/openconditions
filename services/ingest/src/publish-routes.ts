@@ -1,5 +1,6 @@
 import { type ConditionEvent, readObservations } from "@openconditions/core";
 import {
+  observationsToDatexSituations,
   type FeedInfo,
   observationsToGeoJSON,
   observationsToGtfsRtAlerts,
@@ -84,5 +85,14 @@ export function registerPublishRoutes(app: FastifyInstance, sql: Sql): void {
     reply.header("Content-Type", "application/x-protobuf");
     reply.header("Cache-Control", "public, max-age=90");
     return reply.send(Buffer.from(pb));
+  });
+
+  app.get("/datex2/situations.xml", async (req, reply) => {
+    const obs = await read(req.query as Record<string, string | undefined>);
+    if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
+    const events = obs.filter((o): o is ConditionEvent => o.kind === "event");
+    reply.header("Content-Type", "application/xml; charset=utf-8");
+    reply.header("Cache-Control", "public, max-age=90");
+    return reply.send(observationsToDatexSituations(events, info()));
   });
 }

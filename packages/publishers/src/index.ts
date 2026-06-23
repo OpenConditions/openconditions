@@ -4,3 +4,4 @@ export * from "./geojson.js";
 export * from "./traff.js";
 export * from "./jsonld.js";
 export * from "./gtfsrt.js";
+export * from "./datex.js";
