@@ -1,6 +1,6 @@
 import { deriveSeverity } from "@openconditions/core";
-import type { GeoJsonGeometry } from "@openconditions/core";
-import type { RoadEvent, RoadRef } from "./model.js";
+import type { GeoJsonGeometry, Severity } from "@openconditions/core";
+import type { Restriction, RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
@@ -51,6 +51,82 @@ function firstAnnouncement(announcements: unknown): DigitrafficAnnouncement | nu
 interface DigitrafficPrimaryPoint {
   roadName?: unknown;
   roadAddress?: { road?: unknown };
+}
+
+interface DtWorkType {
+  type?: unknown;
+}
+
+interface DtRestriction {
+  type?: unknown;
+}
+
+interface DtRoadWorkPhase {
+  severity?: unknown;
+  workTypes?: DtWorkType[];
+  restrictions?: DtRestriction[];
+}
+
+function roadWorkPhases(ann: DigitrafficAnnouncement | null): DtRoadWorkPhase[] {
+  const phases = ann?.["roadWorkPhases"];
+  return Array.isArray(phases) ? (phases as DtRoadWorkPhase[]) : [];
+}
+
+const DT_SEVERITY_ORDER: Severity[] = ["low", "medium", "high", "critical"];
+
+function mapDtSeverity(raw: unknown): Severity | undefined {
+  switch (typeof raw === "string" ? raw.toUpperCase() : "") {
+    case "LOW":
+      return "low";
+    case "HIGH":
+      return "high";
+    case "HIGHEST":
+      return "critical";
+    default:
+      return undefined;
+  }
+}
+
+/** Worst severity across the announcement's road-work phases. */
+function severityFromPhases(ann: DigitrafficAnnouncement | null): Severity | undefined {
+  let worst: Severity | undefined;
+  for (const p of roadWorkPhases(ann)) {
+    const s = mapDtSeverity(p.severity);
+    if (s && (worst == null || DT_SEVERITY_ORDER.indexOf(s) > DT_SEVERITY_ORDER.indexOf(worst))) {
+      worst = s;
+    }
+  }
+  return worst;
+}
+
+function subtypeFromAnnouncement(ann: DigitrafficAnnouncement | null): string | undefined {
+  const wt = roadWorkPhases(ann)[0]?.workTypes;
+  if (Array.isArray(wt) && typeof wt[0]?.type === "string") return wt[0].type;
+  const features = ann?.["features"];
+  const first = Array.isArray(features) ? (features[0] as { name?: unknown }) : undefined;
+  return typeof first?.name === "string" ? first.name : undefined;
+}
+
+function restrictionsFromPhases(ann: DigitrafficAnnouncement | null): Restriction[] | undefined {
+  const out: Restriction[] = [];
+  for (const p of roadWorkPhases(ann)) {
+    for (const r of p.restrictions ?? []) {
+      if (typeof r?.type === "string") out.push({ type: r.type });
+    }
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+function directionFromAnnouncement(ann: DigitrafficAnnouncement | null): string | undefined {
+  const ral = (
+    ann?.["locationDetails"] as
+      | { roadAddressLocation?: { direction?: unknown; directionDescription?: unknown } }
+      | undefined
+  )?.roadAddressLocation;
+  const desc = coerceString(ral?.directionDescription);
+  if (desc) return desc;
+  const dir = coerceString(ral?.direction);
+  return dir && dir.toUpperCase() !== "UNKNOWN" ? dir : undefined;
 }
 
 /** Road name + number live deep under the announcement's location details. */
@@ -124,7 +200,8 @@ export function parseDigitraffic(
       const validFrom = coerceString(ann?.timeAndDuration?.startTime) ?? null;
       const validTo = coerceString(ann?.timeAndDuration?.endTime) ?? null;
 
-      const severity = deriveSeverity({});
+      const phaseSeverity = severityFromPhases(ann);
+      const severity = phaseSeverity ?? deriveSeverity({});
 
       const dataUpdatedAt =
         coerceString(props.dataUpdatedTime) ??
@@ -138,17 +215,21 @@ export function parseDigitraffic(
         domain: "roads",
         kind: "event",
         type,
-        subtype: codeForMapping || undefined,
+        subtype: subtypeFromAnnouncement(ann) ?? (codeForMapping || undefined),
         category,
         isPlanned,
         severity,
-        severitySource: "derived",
+        severitySource: phaseSeverity ? "declared" : "derived",
         status: "active",
         geometry: geometry as GeoJsonGeometry,
+        direction: directionFromAnnouncement(ann),
         roads: roadsFromAnnouncement(ann),
+        restrictions: restrictionsFromPhases(ann),
         headline,
+        description: coerceString(ann?.["comment"]) ?? undefined,
         validFrom,
         validTo,
+        sourceRaw: props as Record<string, unknown>,
         origin: {
           kind: "feed",
           attribution: {

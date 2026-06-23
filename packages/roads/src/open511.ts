@@ -1,5 +1,5 @@
 import { normaliseSeverity } from "@openconditions/core";
-import type { GeoJsonGeometry } from "@openconditions/core";
+import type { GeoJsonGeometry, RecurringWindow } from "@openconditions/core";
 import type { RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
@@ -13,8 +13,15 @@ interface Open511Road {
   state?: string;
 }
 
+interface Open511RecurringSchedule {
+  days?: number[];
+  daily_start_time?: string;
+  daily_end_time?: string;
+}
+
 interface Open511Schedule {
   intervals?: string[];
+  recurring_schedules?: Open511RecurringSchedule[];
 }
 
 interface Open511Event {
@@ -23,13 +30,36 @@ interface Open511Event {
   headline?: string;
   description?: string;
   event_type?: string;
-  event_subtypes?: string[];
+  event_subtypes?: unknown;
   severity?: string;
   geography?: GeoJsonGeometry;
   roads?: Open511Road[];
   schedule?: Open511Schedule;
   updated?: string;
   [key: string]: unknown;
+}
+
+/** Open511 recurring_schedules → canonical RecurringWindow[]. */
+function parseRecurring(schedule: Open511Schedule | undefined): RecurringWindow[] | undefined {
+  const rs = schedule?.recurring_schedules;
+  if (!Array.isArray(rs) || rs.length === 0) return undefined;
+  const out = rs.map((r) => {
+    const w: RecurringWindow = {};
+    if (Array.isArray(r.days)) {
+      const days = r.days.filter((d): d is number => typeof d === "number");
+      if (days.length > 0) w.dayOfWeek = days;
+    }
+    if (typeof r.daily_start_time === "string") w.timeStart = r.daily_start_time;
+    if (typeof r.daily_end_time === "string") w.timeEnd = r.daily_end_time;
+    return w;
+  });
+  return out.length > 0 ? out : undefined;
+}
+
+function firstSubtype(event_subtypes: unknown): string | undefined {
+  return Array.isArray(event_subtypes) && typeof event_subtypes[0] === "string"
+    ? event_subtypes[0]
+    : undefined;
 }
 
 interface Open511Payload {
@@ -184,7 +214,7 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
         domain: "roads",
         kind: "event",
         type,
-        subtype: eventType || undefined,
+        subtype: firstSubtype(ev.event_subtypes) ?? eventType ?? undefined,
         category,
         isPlanned,
         ...normaliseSeverity(severityRaw, { format: "open511" }),
@@ -194,9 +224,11 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
         roadState: roadStateFromRoads(ev.roads),
         headline: typeof ev.headline === "string" && ev.headline ? ev.headline : type,
         description: typeof ev.description === "string" ? ev.description : undefined,
+        schedule: parseRecurring(ev.schedule),
         validFrom,
         validTo,
         externalRefs,
+        sourceRaw: ev as Record<string, unknown>,
         origin: {
           kind: "feed",
           attribution: {

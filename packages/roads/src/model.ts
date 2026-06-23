@@ -73,6 +73,10 @@ export interface RoadEvent extends ConditionEvent {
     };
     linear?: unknown;
   };
+  /** The original provider record, verbatim — a lossless passthrough so no
+   * source field is ever dropped, even if not (yet) mapped to a typed field.
+   * Persisted under `attributes.source`. */
+  sourceRaw?: Record<string, unknown>;
 }
 
 export interface RoadFlow extends Measurement {
@@ -109,6 +113,7 @@ export function roadAttributes(ev: RoadEvent): Record<string, unknown> {
   }
   if (ev.detour != null) attrs["detour"] = ev.detour;
   if (ev.externalRefs != null) attrs["externalRefs"] = ev.externalRefs;
+  if (ev.sourceRaw != null) attrs["source"] = ev.sourceRaw;
 
   return attrs;
 }

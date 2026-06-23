@@ -295,3 +295,23 @@ describe("parseAutobahn — road extraction from title", () => {
     expect(ev!.roads[0]).toEqual({ name: "A3", ref: "A3" });
   });
 });
+
+describe("parseAutobahn — extended fields", () => {
+  it("maps routeRecommendation→detour, future→isForecast, and preserves the raw item", () => {
+    const json = JSON.stringify({
+      warning: [
+        {
+          identifier: "w9",
+          title: "A8 | München-Ost",
+          future: true,
+          routeRecommendation: ["Use A99"],
+          coordinate: { lat: "48.1", long: "11.5" },
+        },
+      ],
+    });
+    const [ev] = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
+    expect(ev!.detour).toBe("Use A99");
+    expect(ev!.isForecast).toBe(true);
+    expect(ev!.sourceRaw?.["identifier"]).toBe("w9");
+  });
+});

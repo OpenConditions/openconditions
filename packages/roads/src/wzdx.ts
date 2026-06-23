@@ -1,6 +1,6 @@
 import { deriveSeverity } from "@openconditions/core";
 import type { GeoJsonGeometry } from "@openconditions/core";
-import type { LaneStatus, RoadEvent, RoadRef } from "./model.js";
+import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
@@ -8,6 +8,11 @@ import type { SourceDescriptor } from "./types.js";
 interface WzdxLane {
   order?: number;
   status?: string;
+  type?: string;
+}
+
+interface WzdxRelatedEvent {
+  id?: string;
   type?: string;
 }
 
@@ -19,6 +24,13 @@ interface WzdxCoreDetails {
   description?: string;
   update_date?: string;
   id?: string;
+  related_road_events?: WzdxRelatedEvent[];
+}
+
+interface WzdxRestriction {
+  type?: string;
+  value?: number;
+  unit?: string;
 }
 
 interface WzdxProperties {
@@ -29,6 +41,10 @@ interface WzdxProperties {
   lanes?: WzdxLane[];
   beginning_milepost?: number;
   ending_milepost?: number;
+  beginning_cross_street?: string;
+  ending_cross_street?: string;
+  reduced_speed_limit_kph?: number;
+  restrictions?: WzdxRestriction[];
   [key: string]: unknown;
 }
 
@@ -96,15 +112,40 @@ function vehicleImpactToRoadState(
   }
 }
 
-function parseRoads(coreDetails: WzdxCoreDetails): RoadRef[] {
+function parseRoads(coreDetails: WzdxCoreDetails, props: WzdxProperties): RoadRef[] {
   const names = coreDetails.road_names ?? [];
   if (names.length === 0) return [];
 
   return names.map((name) => {
     const ref: RoadRef = { name };
     if (coreDetails.direction != null) ref.direction = coreDetails.direction;
+    if (typeof props.beginning_cross_street === "string") ref.from = props.beginning_cross_street;
+    if (typeof props.ending_cross_street === "string") ref.to = props.ending_cross_street;
+    if (typeof props.beginning_milepost === "number") ref.milepostFrom = props.beginning_milepost;
+    if (typeof props.ending_milepost === "number") ref.milepostTo = props.ending_milepost;
     return ref;
   });
+}
+
+function parseRestrictions(raw: WzdxRestriction[] | undefined): Restriction[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const out: Restriction[] = [];
+  for (const r of raw) {
+    if (r && typeof r.type === "string") {
+      const item: Restriction = { type: r.type };
+      if (typeof r.value === "number") item.value = r.value;
+      if (typeof r.unit === "string") item.unit = r.unit;
+      out.push(item);
+    }
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+function relatedIdsOf(coreDetails: WzdxCoreDetails): string[] | undefined {
+  const ids = (coreDetails.related_road_events ?? [])
+    .map((r) => r?.id)
+    .filter((id): id is string => typeof id === "string");
+  return ids.length > 0 ? ids : undefined;
 }
 
 /**
@@ -176,7 +217,7 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
       const dataSourceId = coreDetails.data_source_id;
       const featureId = dataSourceId != null ? `${dataSourceId}:${rawId}` : rawId;
 
-      const roads = parseRoads(coreDetails);
+      const roads = parseRoads(coreDetails, props);
 
       out.push({
         id: `${src.id}:${featureId}`,
@@ -196,6 +237,13 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
         roads,
         roadState: derivedRoadState,
         lanesAffected,
+        speedLimitKph:
+          typeof props.reduced_speed_limit_kph === "number"
+            ? props.reduced_speed_limit_kph
+            : undefined,
+        restrictions: parseRestrictions(props.restrictions),
+        relatedIds: relatedIdsOf(coreDetails),
+        sourceRaw: props as Record<string, unknown>,
         headline:
           typeof coreDetails.description === "string" && coreDetails.description
             ? coreDetails.description

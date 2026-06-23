@@ -64,7 +64,7 @@ describe("parseOpen511 — DriveBC fixture", () => {
     const events = parseOpen511(json, DRIVEBC_SOURCE);
 
     const incident = events.find((ev) => {
-      const raw = (ev as { subtype?: string }).subtype;
+      const raw = (ev.sourceRaw as { event_type?: string } | undefined)?.event_type;
       return ev.isPlanned === false && raw === "INCIDENT";
     });
     expect(incident).toBeDefined();
@@ -246,5 +246,29 @@ describe("parseOpen511 — road state", () => {
     expect(parseOpen511(event("SINGLE_LANE_ALTERNATING"), DRIVEBC_SOURCE)[0]!.roadState).toBe(
       "single_lane_alternating"
     );
+  });
+});
+
+describe("parseOpen511 — extended fields", () => {
+  it("maps recurring_schedules→schedule, event_subtypes→subtype, and preserves the raw event", () => {
+    const json = JSON.stringify({
+      events: [
+        {
+          id: "e1",
+          event_type: "CONSTRUCTION",
+          event_subtypes: ["ROAD_CONSTRUCTION"],
+          geography: { type: "Point", coordinates: [-123, 49] },
+          schedule: {
+            recurring_schedules: [
+              { days: [1, 2, 3], daily_start_time: "08:00", daily_end_time: "17:00" },
+            ],
+          },
+        },
+      ],
+    });
+    const [ev] = parseOpen511(json, DRIVEBC_SOURCE);
+    expect(ev!.subtype).toBe("ROAD_CONSTRUCTION");
+    expect(ev!.schedule).toEqual([{ dayOfWeek: [1, 2, 3], timeStart: "08:00", timeEnd: "17:00" }]);
+    expect(ev!.sourceRaw?.["event_type"]).toBe("CONSTRUCTION");
   });
 });

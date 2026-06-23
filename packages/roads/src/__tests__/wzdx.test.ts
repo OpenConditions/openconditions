@@ -306,3 +306,48 @@ describe("mapSourceType — wzdx branch", () => {
     });
   });
 });
+
+describe("parseWzdx — extended fields", () => {
+  it("maps speed limit, restrictions, milepost/cross-street, related events, and raw", () => {
+    const feed = {
+      type: "FeatureCollection",
+      features: [
+        {
+          id: "f1",
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: [
+              [-100, 40],
+              [-100.1, 40.1],
+            ],
+          },
+          properties: {
+            core_details: {
+              event_type: "work-zone",
+              road_names: ["I-5"],
+              direction: "northbound",
+              related_road_events: [{ id: "evt-2", type: "work-zone" }],
+            },
+            reduced_speed_limit_kph: 50,
+            restrictions: [{ type: "reduced-width", value: 3, unit: "meters" }],
+            beginning_milepost: 10,
+            ending_milepost: 12,
+            beginning_cross_street: "Main St",
+            ending_cross_street: "Oak Ave",
+            start_date: "2026-01-01T00:00:00Z",
+          },
+        },
+      ],
+    };
+    const [ev] = parseWzdx(JSON.stringify(feed), WZDX_SOURCE);
+    expect(ev!.speedLimitKph).toBe(50);
+    expect(ev!.restrictions).toEqual([{ type: "reduced-width", value: 3, unit: "meters" }]);
+    expect(ev!.roads[0]!.milepostFrom).toBe(10);
+    expect(ev!.roads[0]!.milepostTo).toBe(12);
+    expect(ev!.roads[0]!.from).toBe("Main St");
+    expect(ev!.roads[0]!.to).toBe("Oak Ave");
+    expect(ev!.relatedIds).toEqual(["evt-2"]);
+    expect(ev!.sourceRaw?.["reduced_speed_limit_kph"]).toBe(50);
+  });
+});

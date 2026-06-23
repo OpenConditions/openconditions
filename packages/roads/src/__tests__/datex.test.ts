@@ -242,3 +242,31 @@ describe("parseDatexSituations — NDW real-feed coverage", () => {
     expect(events.some((e) => e.lanesAffected != null)).toBe(true);
   });
 });
+
+describe("parseDatexSituations — extended field extraction", () => {
+  it("maps causeType to subtype and temporarySpeedLimit to speedLimitKph", () => {
+    const xml = v3Record(
+      `<cause><causeType>roadMaintenance</causeType></cause><temporarySpeedLimit>60</temporarySpeedLimit>${POINT_LOC}`
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.subtype).toBe("roadMaintenance");
+    expect(ev!.speedLimitKph).toBe(60);
+  });
+
+  it("maps rerouting description to detour and creation reference to relatedIds", () => {
+    const xml = v3Record(
+      `<situationRecordCreationReference>PARENT_1</situationRecordCreationReference><reroutingItineraryDescription>Use A4</reroutingItineraryDescription>${POINT_LOC}`
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.detour).toBe("Use A4");
+    expect(ev!.relatedIds).toEqual(["PARENT_1"]);
+  });
+
+  it("maps probabilityOfOccurrence to confidence and preserves the raw record", () => {
+    const xml = v3Record(`<probabilityOfOccurrence>probable</probabilityOfOccurrence>${POINT_LOC}`);
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.confidence).toBe("likely");
+    expect(ev!.sourceRaw).toBeDefined();
+    expect(ev!.sourceRaw?.["probabilityOfOccurrence"]).toBe("probable");
+  });
+});

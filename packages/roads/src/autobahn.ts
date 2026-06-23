@@ -63,6 +63,16 @@ function roadsFromTitle(title: string | undefined): RoadRef[] {
   return [{ name: ref, ref }];
 }
 
+/** routeRecommendation is a string or array of recommended-alternative strings. */
+function detourFromRecommendation(raw: unknown): string | undefined {
+  if (typeof raw === "string" && raw.trim() !== "") return raw.trim();
+  if (Array.isArray(raw)) {
+    const parts = raw.filter((x): x is string => typeof x === "string" && x.trim() !== "");
+    return parts.length > 0 ? parts.join("; ") : undefined;
+  }
+  return undefined;
+}
+
 function hasFlowFields(item: AutobahnItem): boolean {
   return (
     item.delayTimeValue != null || item.averageSpeed != null || item.abnormalTrafficType != null
@@ -210,6 +220,9 @@ export function parseAutobahn(
         roads: roadsFromTitle(title),
         ...(subtitle ? { direction: subtitle } : {}),
         roadState,
+        detour: detourFromRecommendation(item.routeRecommendation),
+        isForecast: item.future === true,
+        sourceRaw: item as Record<string, unknown>,
         headline,
         description,
         validFrom,

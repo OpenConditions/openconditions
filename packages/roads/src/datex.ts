@@ -1,4 +1,5 @@
 import { normaliseSeverity } from "@openconditions/core";
+import type { Confidence } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import type { RoadEvent } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
@@ -227,6 +228,50 @@ function lanesOf(rec: XmlObject): RoadEvent["lanesAffected"] | undefined {
   return lanes;
 }
 
+/** Source cause/obstruction subtype (e.g. "roadMaintenance", "brokenDownVehicle"). */
+function causeOf(rec: XmlObject): string | undefined {
+  return (
+    getXmlChildText(getXmlChild(rec, "cause"), "causeType") ??
+    getXmlChildText(rec, "vehicleObstructionType")
+  );
+}
+
+function speedLimitOf(rec: XmlObject): number | undefined {
+  const raw = getXmlChildText(rec, "temporarySpeedLimit");
+  if (raw == null) return undefined;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function detourOf(rec: XmlObject): string | undefined {
+  const node = getXmlChild(rec, "reroutingItineraryDescription");
+  return (
+    multilingual(node, "en") ??
+    getXmlChildText(rec, "reroutingItineraryDescription") ??
+    getXmlChildText(rec, "reroutingManagementType")
+  );
+}
+
+function relatedRefsOf(rec: XmlObject): string[] | undefined {
+  const ref = getXmlChildText(rec, "situationRecordCreationReference");
+  return ref ? [ref] : undefined;
+}
+
+function confidenceOf(rec: XmlObject): Confidence | undefined {
+  switch (getXmlChildText(rec, "probabilityOfOccurrence")?.toLowerCase()) {
+    case "certain":
+      return "observed";
+    case "probable":
+      return "likely";
+    case "riskof":
+      return "possible";
+    case "improbable":
+      return "unknown";
+    default:
+      return undefined;
+  }
+}
+
 function collectRefs(rec: XmlObject): RoadEvent["externalRefs"] {
   const locRef = getXmlChild(rec, "locationReference");
   if (!locRef) return undefined;
@@ -367,16 +412,21 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
       domain: "roads",
       kind: "event",
       type,
-      subtype: recType || undefined,
+      subtype: causeOf(rec) ?? recType ?? undefined,
       category,
       isPlanned,
       ...normaliseSeverity(severity, { format: "datex2" }),
+      confidence: confidenceOf(rec),
       status: validityStatusToStatus(validityStatus),
       geometry,
       direction: directionOf(rec),
       roads: roadsOf(rec),
       roadState: roadStateOf(rec),
       lanesAffected: lanesOf(rec),
+      speedLimitKph: speedLimitOf(rec),
+      detour: detourOf(rec),
+      relatedIds: relatedRefsOf(rec),
+      sourceRaw: rec,
       headline:
         multilingual(publicComment, "en") ??
         multilingual(fallbackComment, "en") ??

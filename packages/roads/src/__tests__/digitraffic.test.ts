@@ -111,10 +111,16 @@ describe("parseDigitraffic — fixture", () => {
     expect(noEnd!.validTo).toBeNull();
   });
 
-  it("sets severitySource:'derived' on every event", () => {
+  it("declares severity when a road-work phase carries it, derives it otherwise", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
-    expect(events.every((ev) => ev.severitySource === "derived")).toBe(true);
+    expect(
+      events.every((ev) => ev.severitySource === "declared" || ev.severitySource === "derived")
+    ).toBe(true);
+    // the fixture's road-work phase has an explicit HIGHEST severity → declared/critical
+    expect(
+      events.some((ev) => ev.severitySource === "declared" && ev.severity === "critical")
+    ).toBe(true);
   });
 
   it("carries license from source descriptor via origin", () => {
@@ -211,5 +217,51 @@ describe("parseDigitraffic — road extraction", () => {
     expect(withRoad).toBeDefined();
     expect(withRoad!.roads[0]!.name).toBeTruthy();
     expect(withRoad!.roads[0]!.ref).toBeTruthy();
+  });
+});
+
+describe("parseDigitraffic — extended fields", () => {
+  it("maps roadWorkPhases severity, workTypes→subtype, restrictions, comment, direction, raw", () => {
+    const fc = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [24, 60] },
+          properties: {
+            situationId: "s1",
+            situationType: "ROAD_WORK",
+            announcements: [
+              {
+                title: "Roadwork",
+                comment: "Bridge work",
+                locationDetails: {
+                  roadAddressLocation: {
+                    direction: "POS",
+                    directionDescription: "Helsinki",
+                    primaryPoint: { roadName: "Vt 4", roadAddress: { road: 4 } },
+                  },
+                },
+                roadWorkPhases: [
+                  {
+                    severity: "HIGHEST",
+                    workTypes: [{ type: "MAINTENANCE" }],
+                    restrictions: [{ type: "SINGLE_LANE_CLOSED", restriction: { name: "x" } }],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE);
+    expect(ev!.severity).toBe("critical");
+    expect(ev!.subtype).toBe("MAINTENANCE");
+    expect(ev!.restrictions).toEqual([{ type: "SINGLE_LANE_CLOSED" }]);
+    expect(ev!.description).toBe("Bridge work");
+    expect(ev!.direction).toBe("Helsinki");
+    expect(ev!.roads[0]!.name).toBe("Vt 4");
+    expect(ev!.sourceRaw?.["situationId"]).toBe("s1");
   });
 });
