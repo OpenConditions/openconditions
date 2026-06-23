@@ -1,6 +1,6 @@
 import { XMLParser } from "fast-xml-parser";
 import { describe, expect, it } from "vitest";
-import { observationsToTraff, toTraffEventCode } from "../traff.js";
+import { observationsToTraff, traffEvents } from "../traff.js";
 import { roadEvent } from "./fixture.js";
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
@@ -9,36 +9,40 @@ function parse(xml: string) {
   return parser.parse(xml);
 }
 
-describe("toTraffEventCode", () => {
-  it("maps conditions to confirmed routing-relevant Navit/TraFF codes", () => {
-    expect(toTraffEventCode(roadEvent({ type: "road_closure" }))).toEqual({
-      cls: "RESTRICTION",
-      type: "RESTRICTION_CLOSED",
-    });
-    expect(toTraffEventCode(roadEvent({ type: "accident", roadState: "closed" }))).toEqual({
-      cls: "RESTRICTION",
-      type: "RESTRICTION_CLOSED",
-    });
-    expect(toTraffEventCode(roadEvent({ type: "lane_closure" }))).toEqual({
-      cls: "RESTRICTION",
-      type: "RESTRICTION_LANE_CLOSED",
-    });
-    expect(toTraffEventCode(roadEvent({ type: "congestion", category: "conditions" }))).toEqual({
-      cls: "CONGESTION",
-      type: "CONGESTION_TRAFFIC_CONGESTION",
-    });
-    expect(toTraffEventCode(roadEvent({ type: "roadworks", category: "planned" }))).toEqual({
-      cls: "RESTRICTION",
-      type: "RESTRICTION_REDUCED_LANES",
-    });
-    expect(toTraffEventCode(roadEvent({ type: "accident" }))).toEqual({
-      cls: "RESTRICTION",
-      type: "RESTRICTION_BLOCKED",
-    });
-    expect(toTraffEventCode(roadEvent({ type: "contraflow", category: "conditions" }))).toEqual({
-      cls: "RESTRICTION",
-      type: "RESTRICTION_CONTRAFLOW",
-    });
+const types = (codes: { cls: string; type: string }[]) => codes.map((c) => c.type);
+
+describe("traffEvents", () => {
+  it("maps each condition to its semantic primary event", () => {
+    expect(types(traffEvents(roadEvent({ type: "road_closure" })))).toEqual(["RESTRICTION_CLOSED"]);
+    expect(types(traffEvents(roadEvent({ type: "lane_closure" })))).toEqual([
+      "RESTRICTION_LANE_CLOSED",
+    ]);
+    expect(types(traffEvents(roadEvent({ type: "roadworks", category: "planned" })))).toEqual([
+      "CONSTRUCTION_ROADWORKS",
+    ]);
+    expect(types(traffEvents(roadEvent({ type: "accident" })))).toEqual(["INCIDENT_ACCIDENT"]);
+    expect(types(traffEvents(roadEvent({ type: "congestion", category: "conditions" })))).toEqual([
+      "CONGESTION_TRAFFIC_CONGESTION",
+    ]);
+    expect(types(traffEvents(roadEvent({ type: "hazard", category: "conditions" })))).toEqual([
+      "HAZARD_HAZARD",
+    ]);
+    expect(types(traffEvents(roadEvent({ type: "authority" })))).toEqual(["AUTHORITY_CHECKPOINT"]);
+  });
+
+  it("adds a RESTRICTION effect event when the road state restricts traffic", () => {
+    const codes = traffEvents(roadEvent({ type: "accident", roadState: "closed" }));
+    expect(types(codes)).toEqual(["INCIDENT_ACCIDENT", "RESTRICTION_CLOSED"]);
+  });
+
+  it("maps dimension_restriction to the matching RESTRICTION_MAX_* code", () => {
+    expect(
+      types(
+        traffEvents(
+          roadEvent({ type: "dimension_restriction", restrictions: [{ type: "height", value: 4 }] })
+        )
+      )
+    ).toEqual(["RESTRICTION_MAX_HEIGHT"]);
   });
 });
 
@@ -69,22 +73,54 @@ describe("observationsToTraff", () => {
     expect(at).toBe("+52.5 +13.4");
   });
 
-  it("writes a LineString as <from>/<to> using first/last vertices", () => {
+  it("writes a LineString as <from>/<to> with junction_name + distance, directionality", () => {
     const xml = observationsToTraff([
       roadEvent({
         geometry: {
           type: "LineString",
           coordinates: [
             [13.0, 52.0],
-            [13.1, 52.1],
             [13.2, 52.2],
           ],
         },
+        roads: [{ name: "A2", from: "Exit 1", to: "Exit 5", milepostFrom: 10, milepostTo: 25 }],
       }),
     ]);
     const loc = parse(xml).feed.message.location;
-    expect(loc.from).toBe("+52 +13");
-    expect(loc.to).toBe("+52.2 +13.2");
+    expect(loc["@_directionality"]).toBe("ONE_DIRECTION");
+    expect(loc.from["#text"]).toBe("+52 +13");
+    expect(loc.from["@_junction_name"]).toBe("Exit 1");
+    expect(loc.from["@_distance"]).toBe("10"); // attribute values are strings on the wire
+    expect(loc.to["@_junction_name"]).toBe("Exit 5");
+  });
+
+  it("emits urgency, speed/length and a diversion supplementary_info", () => {
+    const xml = observationsToTraff([
+      roadEvent({
+        type: "congestion",
+        category: "conditions",
+        severity: "critical",
+        speedLimitKph: 50,
+        queueLengthMeters: 1200,
+        detour: "Use A4",
+      }),
+    ]);
+    const msg = parse(xml).feed.message;
+    expect(msg["@_urgency"]).toBe("X_URGENT");
+    expect(msg.events.event["@_speed"]).toBe("50");
+    expect(msg.events.event["@_length"]).toBe("1200");
+    expect(msg.events.event.supplementary_info["@_class"]).toBe("DIVERSION");
+    expect(msg.events.event.supplementary_info["@_type"]).toBe("S_DIVERSION_IN_OPERATION");
+  });
+
+  it("emits two <event>s for a cause + restriction effect", () => {
+    const xml = observationsToTraff([roadEvent({ type: "accident", roadState: "closed" })]);
+    const events = parse(xml).feed.message.events.event;
+    expect(Array.isArray(events)).toBe(true);
+    expect(events.map((e: { "@_type": string }) => e["@_type"])).toEqual([
+      "INCIDENT_ACCIDENT",
+      "RESTRICTION_CLOSED",
+    ]);
   });
 
   it("sets expiration_time from expiresAt and emits one message per event", () => {
