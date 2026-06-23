@@ -8,3 +8,5 @@ pnpm-lock.yaml
 .superpowers/
 # drizzle-kit generated migrations + snapshots (never hand-edited)
 **/drizzle/
+# Python services are not formatted by Prettier (they own their own tooling)
+services/openlr-resolver/

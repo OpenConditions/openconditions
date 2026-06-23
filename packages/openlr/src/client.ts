@@ -44,9 +44,7 @@ export function createResolverClient(baseUrl: string): MapMatchClient {
       }
 
       if (!res.ok) {
-        throw new Error(
-          `openlr-resolver responded with ${res.status} ${res.statusText}`,
-        );
+        throw new Error(`openlr-resolver responded with ${res.status} ${res.statusText}`);
       }
 
       const body = (await res.json()) as ResolveSuccessBody;

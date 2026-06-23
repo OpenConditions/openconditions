@@ -35,3 +35,9 @@ fixtures/**/*.gz
 # Local planning docs — kept on disk, NOT committed (mirrors OpenMapX convention)
 docs/plans/
 plans/
+
+# Python virtualenvs and caches (the openlr-resolver service is Python)
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/

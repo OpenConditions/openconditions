@@ -52,9 +52,7 @@ export function decodeOpenLrBinary(base64: string): OpenLrLocation {
   }
 
   if (raw.getLocationType() !== LocationType.LINE_LOCATION) {
-    throw new Error(
-      `Unsupported OpenLR location type: ${LocationType[raw.getLocationType()]}`,
-    );
+    throw new Error(`Unsupported OpenLR location type: ${LocationType[raw.getLocationType()]}`);
   }
 
   const rawPoints = raw.getLocationReferencePoints();

@@ -1,0 +1,35 @@
+# Copyright the OpenConditions authors.
+# SPDX-License-Identifier: Apache-2.0
+
+[project]
+name = "openconditions-openlr-resolver"
+version = "0.1.0"
+description = "OpenLR -> OSM map-matching resolver service for OpenConditions"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+dependencies = [
+    "fastapi==0.115.14",
+    "uvicorn[standard]==0.34.3",
+    "openlr==1.0.1",
+    "openlr-dereferencer==1.2.0",
+    "shapely==2.1.2",
+    "geographiclib==2.1",
+    "psycopg[binary]==3.2.13",
+    "psycopg-pool==3.2.8",
+    "osmium==4.3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.4.2",
+    "httpx==0.28.1",
+]
+
+[tool.setuptools]
+packages = ["app", "app.maps"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"

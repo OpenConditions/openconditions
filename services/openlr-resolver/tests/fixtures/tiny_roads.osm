@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Hand-authored minimal OSM extract for graph-build tests.
+     Two roads: a two-segment secondary road (A-B-C, bidirectional) and an
+     unrelated one-way residential street, plus a footway that must be skipped. -->
+<osm version="0.6" generator="openconditions-fixture">
+  <node id="1" lon="8.0000" lat="50.0000"/>
+  <node id="2" lon="8.0027" lat="50.0000"/>
+  <node id="3" lon="8.0054" lat="50.0000"/>
+  <node id="4" lon="4.9000" lat="52.3700"/>
+  <node id="5" lon="4.9030" lat="52.3700"/>
+  <node id="6" lon="9.0000" lat="48.0000"/>
+  <node id="7" lon="9.0010" lat="48.0000"/>
+  <way id="100">
+    <nd ref="1"/>
+    <nd ref="2"/>
+    <nd ref="3"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="name" v="Test Secondary"/>
+  </way>
+  <way id="200">
+    <nd ref="4"/>
+    <nd ref="5"/>
+    <tag k="highway" v="residential"/>
+    <tag k="oneway" v="yes"/>
+  </way>
+  <way id="300">
+    <nd ref="6"/>
+    <nd ref="7"/>
+    <tag k="highway" v="footway"/>
+  </way>
+</osm>
