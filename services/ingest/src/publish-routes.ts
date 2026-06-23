@@ -1,6 +1,10 @@
 import { type ConditionEvent, readObservations } from "@openconditions/core";
 import {
+  diffObservations,
+  matchesTypeFilter,
   observationsToDatexSituations,
+  parseTypeFilter,
+  sseFrame,
   type FeedInfo,
   observationsToGeoJSON,
   observationsToGtfsRtAlerts,
@@ -12,6 +16,9 @@ import type postgres from "postgres";
 
 type Sql = postgres.Sql;
 type BBox = [number, number, number, number];
+
+/** How often the SSE stream re-polls the store for changes + heartbeats. */
+const STREAM_POLL_MS = 15_000;
 
 const FEED_BASE: Omit<FeedInfo, "timestamp"> = {
   attribution: "OpenConditions",
@@ -39,8 +46,10 @@ function runner(sql: Sql) {
 /**
  * Public emitter endpoints — read-only projections of conditions.observations
  * into standard wire formats so the wider ecosystem can consume OpenConditions:
- *   GET /observations.geojson  · GET /observations.jsonld  · GET /traff.xml
- * All bbox-filterable (?bbox=west,south,east,north[&domain=roads]).
+ *   GET /observations.geojson · /observations.jsonld · /traff.xml ·
+ *       /gtfs-rt/alerts.pb · /datex2/situations.xml · /stream (SSE)
+ * All bbox-filterable (?bbox=west,south,east,north[&domain=roads]); /stream also
+ * takes an optional comma-separated &type= filter and pushes live deltas.
  */
 export function registerPublishRoutes(app: FastifyInstance, sql: Sql): void {
   const db = runner(sql);
@@ -94,5 +103,49 @@ export function registerPublishRoutes(app: FastifyInstance, sql: Sql): void {
     reply.header("Content-Type", "application/xml; charset=utf-8");
     reply.header("Cache-Control", "public, max-age=90");
     return reply.send(observationsToDatexSituations(events, info()));
+  });
+
+  app.get("/stream", (req, reply) => {
+    const q = req.query as Record<string, string | undefined>;
+    const bbox = parseBbox(q.bbox);
+    if (!bbox) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
+    const domain = q.domain ?? "roads";
+    const types = parseTypeFilter(q.type);
+
+    reply.hijack();
+    reply.raw.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
+    });
+
+    let prev = new Map<string, string>();
+    const tick = async () => {
+      try {
+        const obs = (await readObservations(db, { domain, bbox })).filter((o) =>
+          matchesTypeFilter(o, types)
+        );
+        const { changed, removed, next } = diffObservations(prev, obs);
+        prev = next;
+        for (const o of changed) {
+          reply.raw.write(sseFrame({ event: "condition", id: o.id, data: o }));
+        }
+        for (const id of removed) {
+          reply.raw.write(sseFrame({ event: "remove", data: { id } }));
+        }
+      } catch (err) {
+        req.log.error(err, "[stream] poll failed");
+      }
+    };
+
+    void tick(); // initial snapshot
+    const poll = setInterval(() => void tick(), STREAM_POLL_MS);
+    const heartbeat = setInterval(() => reply.raw.write(": ping\n\n"), STREAM_POLL_MS);
+    req.raw.on("close", () => {
+      clearInterval(poll);
+      clearInterval(heartbeat);
+    });
+    return reply;
   });
 }
