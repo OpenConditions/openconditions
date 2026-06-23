@@ -1,6 +1,6 @@
 import type { ConditionEvent, Severity } from "@openconditions/core";
 import { XMLBuilder } from "fast-xml-parser";
-import { type FeedInfo, roadFields } from "./types.js";
+import { type FeedInfo, type RoadFields, roadFields } from "./types.js";
 
 /**
  * DATEX II v3 SituationPublication emitter — lets EU NAPs and road authorities
@@ -63,6 +63,63 @@ function toValidityStatus(status: ConditionEvent["status"]): string {
   return status === "active" ? "active" : "suspended";
 }
 
+/** Map canonical confidence → DATEX probabilityOfOccurrence (round-trips via the reader). */
+function confidenceToProbability(ev: ConditionEvent): string {
+  switch (ev.confidence) {
+    case "observed":
+      return "certain";
+    case "likely":
+      return "probable";
+    case "possible":
+      return "riskOf";
+    case "unknown":
+      return "improbable";
+    default:
+      return ev.isForecast ? "riskOf" : "certain";
+  }
+}
+
+/** <sit:cause xsi:type="sit:CauseType"> from the event subtype. */
+function buildCause(ev: ConditionEvent): Record<string, unknown> | undefined {
+  if (!ev.subtype) return undefined;
+  return { "@_xsi:type": "sit:CauseType", "sit:causeType": ev.subtype };
+}
+
+/** <sit:impact> with lane counts + delay. */
+function buildImpact(rf: RoadFields): Record<string, unknown> | undefined {
+  const impact: Record<string, unknown> = {};
+  const la = rf.lanesAffected;
+  if (la?.closed != null) impact["sit:numberOfLanesRestricted"] = la.closed;
+  if (la?.total != null && la.closed != null) {
+    impact["sit:numberOfOperationalLanes"] = la.total - la.closed;
+  }
+  if (rf.delaySeconds != null) {
+    impact["sit:delays"] = { "sit:delayTimeValue": rf.delaySeconds };
+  }
+  return Object.keys(impact).length > 0 ? impact : undefined;
+}
+
+/** <sit:forVehiclesWithCharacteristicsOf> from vehiclesAffected + dimension restrictions. */
+function buildForVehicles(rf: RoadFields): Record<string, unknown> | undefined {
+  const chars: Record<string, unknown> = {};
+  const vt = rf.vehiclesAffected ?? [];
+  if (vt.length > 0) chars["sit:vehicleType"] = vt.length === 1 ? vt[0] : vt;
+  const dim = (type: string, el: string) => {
+    const r = (rf.restrictions ?? []).find((x) => x.type === type && x.value != null);
+    if (r)
+      chars[el] = {
+        "sit:comparisonOperator": "greaterThan",
+        [`sit:${type === "weight" ? "grossVehicleWeight" : "vehicle" + type[0]!.toUpperCase() + type.slice(1)}`]:
+          r.value,
+      };
+  };
+  dim("height", "sit:heightCharacteristic");
+  dim("width", "sit:widthCharacteristic");
+  dim("length", "sit:lengthCharacteristic");
+  dim("weight", "sit:grossVehicleWeightCharacteristic");
+  return Object.keys(chars).length > 0 ? { "sit:vehicleCharacteristics": chars } : undefined;
+}
+
 /** A DATEX management-type value (text our reader maps back to a road state). */
 function managementType(ev: ConditionEvent): string | undefined {
   if (toDatexRecordType(ev) !== "RoadOrCarriagewayOrLaneManagement") return undefined;
@@ -95,7 +152,8 @@ function representativePoint(geometry: ConditionEvent["geometry"]): [number, num
 }
 
 function buildLocation(ev: ConditionEvent): Record<string, unknown> {
-  const road = roadFields(ev).roads?.[0];
+  const rf = roadFields(ev);
+  const road = rf.roads?.[0];
   const pt = representativePoint(ev.geometry);
   const loc: Record<string, unknown> = { "@_xsi:type": "loc:PointLocation" };
   if (road?.name) loc["loc:roadName"] = road.name;
@@ -103,6 +161,17 @@ function buildLocation(ev: ConditionEvent): Record<string, unknown> {
   if (pt) {
     loc["loc:pointByCoordinates"] = {
       "loc:pointCoordinates": { "loc:latitude": pt[1], "loc:longitude": pt[0] },
+    };
+  }
+  const tmc = rf.externalRefs?.tmc;
+  if (tmc) {
+    loc["loc:alertCPoint"] = {
+      "@_xsi:type": "loc:AlertCMethod4Point",
+      "loc:alertCLocationCountryCode": tmc.country,
+      "loc:alertCLocationTableNumber": tmc.table,
+      "loc:alertCMethod4PrimaryPointLocation": {
+        "loc:alertCLocation": { "loc:specificLocation": tmc.code },
+      },
     };
   }
   return loc;
@@ -121,16 +190,21 @@ function buildValidity(ev: ConditionEvent): Record<string, unknown> {
 
 function buildRecord(ev: ConditionEvent): Record<string, unknown> {
   const time = ev.dataUpdatedAt ?? ev.fetchedAt;
+  const rf = roadFields(ev);
   const rec: Record<string, unknown> = {
     "@_xsi:type": `sit:${toDatexRecordType(ev)}`,
     "@_id": ev.id,
     "@_version": "1",
     "sit:situationRecordCreationTime": time,
     "sit:situationRecordVersionTime": time,
-    "sit:probabilityOfOccurrence": ev.isForecast ? "riskOf" : "certain",
+    "sit:probabilityOfOccurrence": confidenceToProbability(ev),
     "sit:severity": toDatexSeverity(ev.severity),
     "sit:validity": buildValidity(ev),
   };
+  const impact = buildImpact(rf);
+  if (impact) rec["sit:impact"] = impact;
+  const cause = buildCause(ev);
+  if (cause) rec["sit:cause"] = cause;
   if (ev.headline) {
     rec["sit:generalPublicComment"] = {
       "com:comment": { "com:values": { "com:value": { "@_lang": "en", "#text": ev.headline } } },
@@ -138,6 +212,11 @@ function buildRecord(ev: ConditionEvent): Record<string, unknown> {
   }
   const mgmt = managementType(ev);
   if (mgmt) rec["sit:roadOrCarriagewayOrLaneManagementType"] = mgmt;
+  if (rf.speedLimitKph != null) rec["sit:temporarySpeedLimit"] = rf.speedLimitKph;
+  if (rf.detour) rec["sit:reroutingItineraryDescription"] = rf.detour;
+  if (rf.queueLengthMeters != null) rec["sit:queueLength"] = rf.queueLengthMeters;
+  const forVehicles = buildForVehicles(rf);
+  if (forVehicles) rec["sit:forVehiclesWithCharacteristicsOf"] = forVehicles;
   rec["sit:locationReference"] = buildLocation(ev);
   return rec;
 }

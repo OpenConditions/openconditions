@@ -51,4 +51,37 @@ describe("DATEX II round-trip through the ingest parser", () => {
     expect(ev!.type).toBe("lane_closure"); // DATEX models closures as management records
     expect(ev!.roadState).toBe("closed");
   });
+
+  it("round-trips cause, impact, speed, detour, vehicles, queue, TMC and confidence", () => {
+    const xml = observationsToDatexSituations([
+      roadEvent({
+        id: "ndw:rt3",
+        type: "roadworks",
+        subtype: "roadMaintenance",
+        confidence: "likely",
+        lanesAffected: { total: 3, closed: 1 },
+        delaySeconds: 600,
+        speedLimitKph: 50,
+        detour: "Use A4",
+        vehiclesAffected: ["lorry"],
+        restrictions: [{ type: "height", value: 4.5, unit: "m" }],
+        queueLengthMeters: 1200,
+        externalRefs: { tmc: { country: "8", table: 6.13, code: 7324 } },
+        roads: [{ name: "A2" }],
+      }),
+    ]);
+    const [ev] = parseDatexSituations(xml, SRC);
+    expect(ev).toBeDefined();
+    expect(ev!.subtype).toBe("roadMaintenance"); // cause>causeType
+    expect(ev!.lanesAffected?.closed).toBe(1);
+    expect(ev!.lanesAffected?.total).toBe(3);
+    expect(ev!.delaySeconds).toBe(600);
+    expect(ev!.speedLimitKph).toBe(50);
+    expect(ev!.detour).toBe("Use A4");
+    expect(ev!.vehiclesAffected).toContain("lorry");
+    expect(ev!.restrictions).toContainEqual({ type: "height", value: 4.5, unit: "m" });
+    expect(ev!.queueLengthMeters).toBe(1200);
+    expect(ev!.externalRefs?.tmc?.code).toBe(7324);
+    expect(ev!.confidence).toBe("likely");
+  });
 });
