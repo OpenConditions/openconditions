@@ -1,0 +1,35 @@
+{
+  "name": "@openconditions/openlr",
+  "version": "0.1.0",
+  "description": "OpenLR binary decode and resolver client for OpenConditions",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@openconditions/core": "workspace:*",
+    "openlr-js": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.14",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}

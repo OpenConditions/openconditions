@@ -89,6 +89,28 @@ importers:
         specifier: ^3.0.0
         version: 3.2.6(@types/node@24.13.2)(tsx@4.22.4)(yaml@2.9.0)
 
+  packages/openlr:
+    dependencies:
+      '@openconditions/core':
+        specifier: workspace:*
+        version: link:../core
+      openlr-js:
+        specifier: ^3.3.0
+        version: 3.3.0
+    devDependencies:
+      '@types/geojson':
+        specifier: ^7946.0.14
+        version: 7946.0.16
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(postcss@8.5.15)(tsx@4.22.4)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@24.13.2)(tsx@4.22.4)(yaml@2.9.0)
+
   packages/publishers:
     dependencies:
       '@openconditions/core':
@@ -2216,6 +2238,10 @@ packages:
 
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
+
+  openlr-js@3.3.0:
+    resolution: {integrity: sha512-4IkLLCpSYSIC2xiuBZAnwDAkN/v3w8jnlJ58c9pUouf7GeCKhJbmmeiDXpIb7GtDfjmRGHTFDzTJNB7QmzYPGw==}
+    engines: {node: '>=18'}
 
   optionator@0.8.3:
     resolution: {integrity: sha512-+IW9pACdk3XWmmTXG8m3upGUJst5XRGzxMRjXzAuJ1XnIFNvfhjjIuYkDvysnPQ7qzqVzLt78BCruntqRhWQbA==}
@@ -4603,6 +4629,10 @@ snapshots:
   once@1.4.0:
     dependencies:
       wrappy: 1.0.2
+
+  openlr-js@3.3.0:
+    dependencies:
+      buffer: 6.0.3
 
   optionator@0.8.3:
     dependencies:
