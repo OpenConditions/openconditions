@@ -11,12 +11,20 @@ interface Open511Road {
   to?: string;
   direction?: string;
   state?: string;
+  lanes_open?: number;
+  lanes_closed?: number;
+}
+
+interface Open511Area {
+  name?: string;
 }
 
 interface Open511RecurringSchedule {
   days?: number[];
   daily_start_time?: string;
   daily_end_time?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 interface Open511Schedule {
@@ -34,6 +42,8 @@ interface Open511Event {
   severity?: string;
   geography?: GeoJsonGeometry;
   roads?: Open511Road[];
+  areas?: Open511Area[];
+  grouped_events?: unknown;
   schedule?: Open511Schedule;
   updated?: string;
   [key: string]: unknown;
@@ -51,6 +61,8 @@ function parseRecurring(schedule: Open511Schedule | undefined): RecurringWindow[
     }
     if (typeof r.daily_start_time === "string") w.timeStart = r.daily_start_time;
     if (typeof r.daily_end_time === "string") w.timeEnd = r.daily_end_time;
+    if (typeof r.start_date === "string") w.dateStart = r.start_date;
+    if (typeof r.end_date === "string") w.dateEnd = r.end_date;
     return w;
   });
   return out.length > 0 ? out : undefined;
@@ -60,6 +72,48 @@ function firstSubtype(event_subtypes: unknown): string | undefined {
   return Array.isArray(event_subtypes) && typeof event_subtypes[0] === "string"
     ? event_subtypes[0]
     : undefined;
+}
+
+/** Single event-level direction when all roads agree (ignoring NONE/empty). */
+function directionFromRoads(roads: Open511Road[] | undefined): string | undefined {
+  const dirs = new Set(
+    (roads ?? [])
+      .map((r) => r.direction)
+      .filter((d): d is string => typeof d === "string" && d !== "" && d.toUpperCase() !== "NONE")
+  );
+  return dirs.size === 1 ? [...dirs][0] : undefined;
+}
+
+function lanesFromRoads(roads: Open511Road[] | undefined): RoadEvent["lanesAffected"] | undefined {
+  let closed = 0;
+  let open = 0;
+  let has = false;
+  for (const r of roads ?? []) {
+    if (typeof r.lanes_closed === "number") {
+      closed += r.lanes_closed;
+      has = true;
+    }
+    if (typeof r.lanes_open === "number") {
+      open += r.lanes_open;
+      has = true;
+    }
+  }
+  if (!has) return undefined;
+  const total = closed + open;
+  return { closed, ...(total > 0 ? { total } : {}) };
+}
+
+function regionsFromAreas(areas: Open511Area[] | undefined): string[] | undefined {
+  const names = (areas ?? [])
+    .map((a) => a?.name)
+    .filter((n): n is string => typeof n === "string" && n !== "");
+  return names.length > 0 ? names : undefined;
+}
+
+function groupedRelatedIds(grouped: unknown): string[] | undefined {
+  if (!Array.isArray(grouped)) return undefined;
+  const ids = grouped.filter((g): g is string => typeof g === "string");
+  return ids.length > 0 ? ids : undefined;
 }
 
 interface Open511Payload {
@@ -220,8 +274,12 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
         ...normaliseSeverity(severityRaw, { format: "open511" }),
         status: open511Status(ev.status),
         geometry: geometry as GeoJsonGeometry,
+        direction: directionFromRoads(ev.roads),
         roads: parseRoads(ev.roads),
         roadState: roadStateFromRoads(ev.roads),
+        lanesAffected: lanesFromRoads(ev.roads),
+        regions: regionsFromAreas(ev.areas),
+        relatedIds: groupedRelatedIds(ev.grouped_events),
         headline: typeof ev.headline === "string" && ev.headline ? ev.headline : type,
         description: typeof ev.description === "string" ? ev.description : undefined,
         schedule: parseRecurring(ev.schedule),

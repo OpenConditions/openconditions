@@ -272,3 +272,29 @@ describe("parseOpen511 — extended fields", () => {
     expect(ev!.sourceRaw?.["event_type"]).toBe("CONSTRUCTION");
   });
 });
+
+describe("parseOpen511 — deeper field extraction", () => {
+  it("maps recurring date range and regions from the DriveBC fixture", () => {
+    const events = parseOpen511(readFileSync(FIXTURE_PATH, "utf8"), DRIVEBC_SOURCE);
+    expect(events.some((e) => e.schedule?.some((w) => w.dateStart != null))).toBe(true);
+    expect(events.some((e) => (e.regions?.length ?? 0) > 0)).toBe(true);
+  });
+
+  it("maps lanes_open/closed→lanesAffected, direction, grouped_events→relatedIds (synthetic)", () => {
+    const json = JSON.stringify({
+      events: [
+        {
+          id: "e1",
+          event_type: "INCIDENT",
+          geography: { type: "Point", coordinates: [-123, 49] },
+          roads: [{ name: "Hwy 1", direction: "N", lanes_open: 1, lanes_closed: 2 }],
+          grouped_events: ["https://x/events/9"],
+        },
+      ],
+    });
+    const [ev] = parseOpen511(json, DRIVEBC_SOURCE);
+    expect(ev!.lanesAffected).toEqual({ closed: 2, total: 3 });
+    expect(ev!.direction).toBe("N");
+    expect(ev!.relatedIds).toEqual(["https://x/events/9"]);
+  });
+});

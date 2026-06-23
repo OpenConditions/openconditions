@@ -37,6 +37,7 @@ export interface LaneStatus {
   index: number;
   status: "open" | "closed" | "alternating";
   type?: string;
+  restrictions?: Restriction[];
 }
 
 export interface Restriction {
@@ -62,6 +63,15 @@ export interface RoadEvent extends ConditionEvent {
   restrictions?: Restriction[];
   vehiclesAffected?: string[];
   detour?: string;
+  /** Quantified impact, when the source gives it. */
+  delaySeconds?: number;
+  queueLengthMeters?: number;
+  /** WZDx: are workers present in the zone. */
+  workersPresent?: boolean;
+  /** WZDx work-zone kind. */
+  workZoneType?: "static" | "moving" | "area";
+  /** Administrative areas the condition sits in (municipality/province/district). */
+  regions?: string[];
   externalRefs?: {
     openlr?: string;
     tmc?: {
@@ -112,6 +122,11 @@ export function roadAttributes(ev: RoadEvent): Record<string, unknown> {
     attrs["vehiclesAffected"] = ev.vehiclesAffected;
   }
   if (ev.detour != null) attrs["detour"] = ev.detour;
+  if (ev.delaySeconds != null) attrs["delaySeconds"] = ev.delaySeconds;
+  if (ev.queueLengthMeters != null) attrs["queueLengthMeters"] = ev.queueLengthMeters;
+  if (ev.workersPresent != null) attrs["workersPresent"] = ev.workersPresent;
+  if (ev.workZoneType != null) attrs["workZoneType"] = ev.workZoneType;
+  if (ev.regions != null && ev.regions.length > 0) attrs["regions"] = ev.regions;
   if (ev.externalRefs != null) attrs["externalRefs"] = ev.externalRefs;
   if (ev.sourceRaw != null) attrs["source"] = ev.sourceRaw;
 

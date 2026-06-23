@@ -270,3 +270,28 @@ describe("parseDatexSituations — extended field extraction", () => {
     expect(ev!.sourceRaw?.["probabilityOfOccurrence"]).toBe("probable");
   });
 });
+
+describe("parseDatexSituations — deeper field extraction", () => {
+  it("maps vehicles, height restriction, lane total, delay, safety severity, alertC TMC", () => {
+    const xml = v3Record(
+      `<impact><numberOfLanesRestricted>1</numberOfLanesRestricted><delays><delayTimeValue>600</delayTimeValue></delays></impact>` +
+        `<supplementaryPositionalDescription><carriageway><originalNumberOfLanes>3</originalNumberOfLanes></carriageway></supplementaryPositionalDescription>` +
+        `<safetyRelatedMessage>true</safetyRelatedMessage>` +
+        `<obstructingVehicle><vehicleCharacteristics><vehicleType>lorry</vehicleType></vehicleCharacteristics></obstructingVehicle>` +
+        `<forVehiclesWithCharacteristicsOf><vehicleCharacteristics><heightCharacteristic><comparisonOperator>greaterThan</comparisonOperator><vehicleHeight>4.5</vehicleHeight></heightCharacteristic></vehicleCharacteristics></forVehiclesWithCharacteristicsOf>` +
+        `<locationReference xsi:type="ItineraryByIndexedLocations"><locationContainedInItinerary><location>` +
+        `<alertCLinear><alertCLocationCountryCode>8</alertCLocationCountryCode><alertCLocationTableNumber>6.13</alertCLocationTableNumber>` +
+        `<alertCMethod4PrimaryPointLocation><alertCLocation><specificLocation>7324</specificLocation></alertCLocation></alertCMethod4PrimaryPointLocation></alertCLinear>` +
+        `<gmlLineString><posList>52 13 52.1 13.1</posList></gmlLineString></location></locationContainedInItinerary></locationReference>`
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.vehiclesAffected).toContain("lorry");
+    expect(ev!.restrictions).toContainEqual({ type: "height", value: 4.5, unit: "m" });
+    expect(ev!.lanesAffected?.total).toBe(3);
+    expect(ev!.lanesAffected?.closed).toBe(1);
+    expect(ev!.delaySeconds).toBe(600);
+    expect(ev!.severity).toBe("medium"); // bumped: safetyRelatedMessage + no declared severity
+    expect(ev!.externalRefs?.tmc?.code).toBe(7324);
+    expect(ev!.externalRefs?.tmc?.country).toBe("8");
+  });
+});

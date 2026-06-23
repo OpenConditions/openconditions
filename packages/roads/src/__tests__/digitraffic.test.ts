@@ -265,3 +265,52 @@ describe("parseDigitraffic — extended fields", () => {
     expect(ev!.sourceRaw?.["situationId"]).toBe("s1");
   });
 });
+
+describe("parseDigitraffic — deeper field extraction", () => {
+  it("maps restriction value/unit, speed limit, roadState, schedule, secondaryPoint, description", () => {
+    const fc = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [24, 60] },
+          properties: {
+            situationId: "s2",
+            situationType: "ROAD_WORK",
+            announcements: [
+              {
+                title: "RW",
+                location: { description: "Tie 3 between A and B" },
+                locationDetails: {
+                  roadAddressLocation: {
+                    primaryPoint: { roadName: "Vt 3", roadAddress: { road: 3 } },
+                    secondaryPoint: { roadName: "Vt 3 end", roadAddress: { road: 3 } },
+                  },
+                },
+                roadWorkPhases: [
+                  {
+                    severity: "LOW",
+                    restrictions: [
+                      { type: "SPEED_LIMIT", restriction: { quantity: 50, unit: "km/h" } },
+                      { type: "SINGLE_LANE_CLOSED", restriction: { name: "x" } },
+                    ],
+                    workingHours: [
+                      { weekday: "MONDAY", startTime: "07:00:00", endTime: "17:00:00" },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE);
+    expect(ev!.restrictions).toContainEqual({ type: "SPEED_LIMIT", value: 50, unit: "km/h" });
+    expect(ev!.speedLimitKph).toBe(50);
+    expect(ev!.roadState).toBe("some_lanes_closed");
+    expect(ev!.schedule).toEqual([{ dayOfWeek: [1], timeStart: "07:00:00", timeEnd: "17:00:00" }]);
+    expect(ev!.roads[0]!.to).toBe("Vt 3 end");
+    expect(ev!.description).toBe("Tie 3 between A and B");
+  });
+});

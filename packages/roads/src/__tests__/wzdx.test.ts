@@ -351,3 +351,55 @@ describe("parseWzdx — extended fields", () => {
     expect(ev!.sourceRaw?.["reduced_speed_limit_kph"]).toBe(50);
   });
 });
+
+describe("parseWzdx — deeper field extraction", () => {
+  it("maps types_of_work→subtype, worker_presence, work_zone_type, event_status→status, name→label, per-lane restrictions, creation_date", () => {
+    const feed = {
+      type: "FeatureCollection",
+      features: [
+        {
+          id: "f1",
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: [
+              [-100, 40],
+              [-100.1, 40.1],
+            ],
+          },
+          properties: {
+            core_details: {
+              event_type: "work-zone",
+              road_names: ["I-10"],
+              name: "Big Dig",
+              creation_date: "2026-01-01T00:00:00Z",
+            },
+            types_of_work: [{ type_name: "surface-work" }],
+            worker_presence: { are_workers_present: true },
+            work_zone_type: "moving",
+            event_status: "completed",
+            start_date: "2026-01-01T00:00:00Z",
+            lanes: [
+              {
+                order: 1,
+                status: "closed",
+                type: "general",
+                restrictions: [{ type: "reduced-width", value: 3, unit: "meters" }],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseWzdx(JSON.stringify(feed), WZDX_SOURCE);
+    expect(ev!.subtype).toBe("surface-work");
+    expect(ev!.workersPresent).toBe(true);
+    expect(ev!.workZoneType).toBe("moving");
+    expect(ev!.status).toBe("archived");
+    expect(ev!.label).toBe("Big Dig");
+    expect(ev!.dataUpdatedAt).toBe("2026-01-01T00:00:00Z");
+    expect(ev!.lanesAffected?.lanes?.[0]?.restrictions).toEqual([
+      { type: "reduced-width", value: 3, unit: "meters" },
+    ]);
+  });
+});

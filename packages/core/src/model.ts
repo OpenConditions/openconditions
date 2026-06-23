@@ -30,6 +30,9 @@ export interface RecurringWindow {
   dayOfWeek?: number[];
   timeStart?: string;
   timeEnd?: string;
+  /** Date the recurrence applies from/until (ISO date), when bounded. */
+  dateStart?: string;
+  dateEnd?: string;
 }
 
 export interface SubjectRef {

@@ -1,5 +1,5 @@
 import { deriveSeverity } from "@openconditions/core";
-import type { GeoJsonGeometry, Severity } from "@openconditions/core";
+import type { GeoJsonGeometry, RecurringWindow, Severity } from "@openconditions/core";
 import type { Restriction, RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
@@ -59,12 +59,91 @@ interface DtWorkType {
 
 interface DtRestriction {
   type?: unknown;
+  restriction?: { quantity?: unknown; unit?: unknown };
+}
+
+interface DtWorkingHour {
+  weekday?: unknown;
+  startTime?: unknown;
+  endTime?: unknown;
 }
 
 interface DtRoadWorkPhase {
   severity?: unknown;
   workTypes?: DtWorkType[];
   restrictions?: DtRestriction[];
+  workingHours?: DtWorkingHour[];
+}
+
+const WEEKDAY: Record<string, number> = {
+  MONDAY: 1,
+  TUESDAY: 2,
+  WEDNESDAY: 3,
+  THURSDAY: 4,
+  FRIDAY: 5,
+  SATURDAY: 6,
+  SUNDAY: 7,
+};
+
+// Restriction-type groupings → canonical roadState (worst wins).
+const DT_CLOSED = new Set([
+  "ROAD_CLOSED",
+  "INTERMITTENT_SHORT_TERM_CLOSURE",
+  "SINGLE_CARRIAGEWAY_CLOSED",
+]);
+const DT_SOME = new Set(["SINGLE_LANE_CLOSED", "MULTIPLE_LANES_CLOSED", "NARROW_LANES"]);
+const DT_ALT = new Set(["SINGLE_ALTERNATE_LINE_TRAFFIC", "TRAFFIC_LIGHTS"]);
+
+function restrictionTypes(ann: DigitrafficAnnouncement | null): Set<string> {
+  const types = new Set<string>();
+  for (const p of roadWorkPhases(ann)) {
+    for (const r of p.restrictions ?? []) {
+      if (typeof r?.type === "string") types.add(r.type);
+    }
+  }
+  return types;
+}
+
+function roadStateFromPhases(
+  ann: DigitrafficAnnouncement | null
+): RoadEvent["roadState"] | undefined {
+  const t = restrictionTypes(ann);
+  if ([...t].some((x) => DT_CLOSED.has(x))) return "closed";
+  if ([...t].some((x) => DT_SOME.has(x))) return "some_lanes_closed";
+  if ([...t].some((x) => DT_ALT.has(x))) return "single_lane_alternating";
+  return undefined;
+}
+
+function speedLimitFromPhases(ann: DigitrafficAnnouncement | null): number | undefined {
+  let min: number | undefined;
+  for (const p of roadWorkPhases(ann)) {
+    for (const r of p.restrictions ?? []) {
+      if (r?.type === "SPEED_LIMIT" && typeof r.restriction?.quantity === "number") {
+        min = min == null ? r.restriction.quantity : Math.min(min, r.restriction.quantity);
+      }
+    }
+  }
+  return min;
+}
+
+function scheduleFromPhases(ann: DigitrafficAnnouncement | null): RecurringWindow[] | undefined {
+  const out: RecurringWindow[] = [];
+  for (const p of roadWorkPhases(ann)) {
+    for (const wh of p.workingHours ?? []) {
+      const w: RecurringWindow = {};
+      const day = typeof wh.weekday === "string" ? WEEKDAY[wh.weekday.toUpperCase()] : undefined;
+      if (day) w.dayOfWeek = [day];
+      if (typeof wh.startTime === "string") w.timeStart = wh.startTime;
+      if (typeof wh.endTime === "string") w.timeEnd = wh.endTime;
+      if (w.dayOfWeek || w.timeStart || w.timeEnd) out.push(w);
+    }
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+function locationDescription(ann: DigitrafficAnnouncement | null): string | undefined {
+  const loc = ann?.["location"] as { description?: unknown } | undefined;
+  return coerceString(loc?.description) ?? undefined;
 }
 
 function roadWorkPhases(ann: DigitrafficAnnouncement | null): DtRoadWorkPhase[] {
@@ -111,7 +190,11 @@ function restrictionsFromPhases(ann: DigitrafficAnnouncement | null): Restrictio
   const out: Restriction[] = [];
   for (const p of roadWorkPhases(ann)) {
     for (const r of p.restrictions ?? []) {
-      if (typeof r?.type === "string") out.push({ type: r.type });
+      if (typeof r?.type !== "string") continue;
+      const item: Restriction = { type: r.type };
+      if (typeof r.restriction?.quantity === "number") item.value = r.restriction.quantity;
+      if (typeof r.restriction?.unit === "string") item.unit = r.restriction.unit;
+      out.push(item);
     }
   }
   return out.length > 0 ? out : undefined;
@@ -131,16 +214,27 @@ function directionFromAnnouncement(ann: DigitrafficAnnouncement | null): string 
 
 /** Road name + number live deep under the announcement's location details. */
 function roadsFromAnnouncement(ann: DigitrafficAnnouncement | null): RoadRef[] {
-  const details = ann?.["locationDetails"] as
-    | { roadAddressLocation?: { primaryPoint?: DigitrafficPrimaryPoint } }
-    | undefined;
-  const primary = details?.roadAddressLocation?.primaryPoint;
+  const ral = (
+    ann?.["locationDetails"] as
+      | {
+          roadAddressLocation?: {
+            primaryPoint?: DigitrafficPrimaryPoint;
+            secondaryPoint?: DigitrafficPrimaryPoint;
+          };
+        }
+      | undefined
+  )?.roadAddressLocation;
+  const primary = ral?.primaryPoint;
   if (!primary) return [];
   const name = coerceString(primary.roadName);
   const road = primary.roadAddress?.road;
   const ref = typeof road === "number" ? String(road) : coerceString(road);
   if (!name && !ref) return [];
-  return [{ name: name ?? ref!, ...(ref ? { ref } : {}) }];
+  const roadRef: RoadRef = { name: name ?? ref!, ...(ref ? { ref } : {}) };
+  // secondaryPoint marks the end of the affected segment.
+  const to = coerceString(ral?.secondaryPoint?.roadName);
+  if (to) roadRef.to = to;
+  return [roadRef];
 }
 
 /**
@@ -224,9 +318,12 @@ export function parseDigitraffic(
         geometry: geometry as GeoJsonGeometry,
         direction: directionFromAnnouncement(ann),
         roads: roadsFromAnnouncement(ann),
+        roadState: roadStateFromPhases(ann),
+        speedLimitKph: speedLimitFromPhases(ann),
         restrictions: restrictionsFromPhases(ann),
+        schedule: scheduleFromPhases(ann),
         headline,
-        description: coerceString(ann?.["comment"]) ?? undefined,
+        description: coerceString(ann?.["comment"]) ?? locationDescription(ann),
         validFrom,
         validTo,
         sourceRaw: props as Record<string, unknown>,

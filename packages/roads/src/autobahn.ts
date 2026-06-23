@@ -1,6 +1,6 @@
 import { deriveSeverity } from "@openconditions/core";
 import type { GeoJsonGeometry } from "@openconditions/core";
-import type { RoadEvent, RoadRef } from "./model.js";
+import type { LaneStatus, RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
@@ -61,6 +61,30 @@ function roadsFromTitle(title: string | undefined): RoadRef[] {
   if (!m) return [];
   const ref = `${m[1]!.toUpperCase()}${m[2]}`;
   return [{ name: ref, ref }];
+}
+
+/** The Autobahn lane diagram (impact.symbols) → lane statuses; CLOSED/ARROW/
+ * BREAKDOWN are lanes, BORDER/SEPARATE are dividers (ignored). */
+function laneSymbolsToLanes(symbols: unknown): {
+  lanes: LaneStatus[];
+  closed: number;
+  total: number;
+} {
+  const LANE = new Set(["CLOSED", "ARROW_UP", "ARROW_DOWN", "BREAKDOWN_LANE"]);
+  const lanes: LaneStatus[] = [];
+  let closed = 0;
+  if (Array.isArray(symbols)) {
+    for (const s of symbols) {
+      if (typeof s !== "string" || !LANE.has(s)) continue;
+      if (s === "CLOSED") closed++;
+      lanes.push({
+        index: lanes.length + 1,
+        status: s === "CLOSED" ? "closed" : "open",
+        ...(s === "BREAKDOWN_LANE" ? { type: "breakdown" } : {}),
+      });
+    }
+  }
+  return { lanes, closed, total: lanes.length };
 }
 
 /** routeRecommendation is a string or array of recommended-alternative strings. */
@@ -192,9 +216,20 @@ export function parseAutobahn(
         isPlanned = mapped.isPlanned;
       }
 
-      const roadState: RoadEvent["roadState"] = item.isBlocked === "true" ? "closed" : undefined;
+      const impact =
+        item.impact && typeof item.impact === "object"
+          ? (item.impact as { lower?: unknown; upper?: unknown; symbols?: unknown })
+          : undefined;
+      const { lanes, closed, total } = laneSymbolsToLanes(impact?.symbols);
+      // The lane diagram is the real lane signal (isBlocked is uniformly "false").
+      const symbolRoadState: RoadEvent["roadState"] | undefined =
+        total > 0 && closed > 0 ? (closed < total ? "some_lanes_closed" : "closed") : undefined;
+      const roadState: RoadEvent["roadState"] =
+        item.isBlocked === "true" ? "closed" : symbolRoadState;
+      const lanesAffected: RoadEvent["lanesAffected"] =
+        total > 0 ? { total, closed, lanes } : undefined;
 
-      const severity = deriveSeverity({ roadState });
+      const severity = deriveSeverity({ roadState, lanesAffected });
 
       const title = typeof item.title === "string" ? item.title : undefined;
       const subtitle = typeof item.subtitle === "string" ? item.subtitle.trim() : undefined;
@@ -204,6 +239,12 @@ export function parseAutobahn(
 
       const validFrom = coerceTimestamp(item.startTimestamp);
 
+      const roads = roadsFromTitle(title);
+      if (roads[0]) {
+        if (typeof impact?.lower === "string") roads[0].from = impact.lower;
+        if (typeof impact?.upper === "string") roads[0].to = impact.upper;
+      }
+
       out.push({
         id: `${src.id}:${rawId}`,
         source: src.id,
@@ -211,15 +252,17 @@ export function parseAutobahn(
         domain: "roads",
         kind: "event",
         type,
+        subtype: typeof item.display_type === "string" ? item.display_type : undefined,
         category,
         isPlanned,
         severity,
         severitySource: "derived",
         status: "active",
         geometry,
-        roads: roadsFromTitle(title),
+        roads,
         ...(subtitle ? { direction: subtitle } : {}),
         roadState,
+        lanesAffected,
         detour: detourFromRecommendation(item.routeRecommendation),
         isForecast: item.future === true,
         sourceRaw: item as Record<string, unknown>,

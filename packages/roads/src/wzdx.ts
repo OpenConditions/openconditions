@@ -9,6 +9,15 @@ interface WzdxLane {
   order?: number;
   status?: string;
   type?: string;
+  restrictions?: WzdxRestriction[];
+}
+
+interface WzdxTypeOfWork {
+  type_name?: string;
+}
+
+interface WzdxWorkerPresence {
+  are_workers_present?: boolean;
 }
 
 interface WzdxRelatedEvent {
@@ -22,6 +31,8 @@ interface WzdxCoreDetails {
   road_names?: string[];
   direction?: string;
   description?: string;
+  name?: string;
+  creation_date?: string;
   update_date?: string;
   id?: string;
   related_road_events?: WzdxRelatedEvent[];
@@ -45,6 +56,10 @@ interface WzdxProperties {
   ending_cross_street?: string;
   reduced_speed_limit_kph?: number;
   restrictions?: WzdxRestriction[];
+  types_of_work?: WzdxTypeOfWork[];
+  worker_presence?: WzdxWorkerPresence;
+  work_zone_type?: string;
+  event_status?: string;
   [key: string]: unknown;
 }
 
@@ -85,14 +100,31 @@ function parseLanes(rawLanes: WzdxLane[] | undefined): {
       status = "alternating";
     }
 
+    const laneRestrictions = parseRestrictions(lane.restrictions);
     laneStatuses.push({
       index: lane.order ?? total,
       status,
       ...(lane.type != null ? { type: lane.type } : {}),
+      ...(laneRestrictions ? { restrictions: laneRestrictions } : {}),
     });
   }
 
   return { laneStatuses, closed, total };
+}
+
+function workZoneTypeOf(raw: unknown): RoadEvent["workZoneType"] | undefined {
+  return raw === "static" || raw === "moving" || raw === "area" ? raw : undefined;
+}
+
+function statusFromEventStatus(raw: string | undefined): RoadEvent["status"] {
+  switch (raw) {
+    case "completed":
+      return "archived";
+    case "cancelled":
+      return "cancelled";
+    default:
+      return "active";
+  }
 }
 
 function vehicleImpactToRoadState(
@@ -226,12 +258,14 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
         domain: "roads",
         kind: "event",
         type,
-        subtype: eventType || undefined,
+        subtype: props.types_of_work?.[0]?.type_name ?? (eventType || undefined),
         category,
         isPlanned,
         severity,
         severitySource: "derived",
-        status: "active",
+        status: statusFromEventStatus(
+          typeof props.event_status === "string" ? props.event_status : undefined
+        ),
         geometry: geometry as GeoJsonGeometry,
         direction: typeof coreDetails.direction === "string" ? coreDetails.direction : undefined,
         roads,
@@ -242,6 +276,11 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
             ? props.reduced_speed_limit_kph
             : undefined,
         restrictions: parseRestrictions(props.restrictions),
+        workersPresent: props.worker_presence?.are_workers_present === true ? true : undefined,
+        workZoneType: workZoneTypeOf(props.work_zone_type),
+        ...(typeof coreDetails.name === "string" && coreDetails.name
+          ? { label: coreDetails.name }
+          : {}),
         relatedIds: relatedIdsOf(coreDetails),
         sourceRaw: props as Record<string, unknown>,
         headline:
@@ -262,9 +301,9 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
           },
         },
         dataUpdatedAt:
-          typeof coreDetails.update_date === "string" && coreDetails.update_date
-            ? coreDetails.update_date
-            : new Date().toISOString(),
+          (typeof coreDetails.update_date === "string" && coreDetails.update_date) ||
+          (typeof coreDetails.creation_date === "string" && coreDetails.creation_date) ||
+          new Date().toISOString(),
         fetchedAt: new Date().toISOString(),
         isStale: false,
       });

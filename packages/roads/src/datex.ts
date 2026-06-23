@@ -1,7 +1,7 @@
 import { normaliseSeverity } from "@openconditions/core";
 import type { Confidence } from "@openconditions/core";
 import type { Geometry } from "geojson";
-import type { RoadEvent } from "./model.js";
+import type { Restriction, RoadEvent } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
@@ -210,22 +210,28 @@ function roadStateOf(rec: XmlObject): RoadEvent["roadState"] | undefined {
 }
 
 function lanesOf(rec: XmlObject): RoadEvent["lanesAffected"] | undefined {
-  // Lane counts live under <impact> in v3 (older feeds put them on the record).
+  // Lane counts live under <impact> in v3 (older feeds put them on the record);
+  // the true lane total is the carriageway's originalNumberOfLanes when present.
   const impact = getXmlChild(rec, "impact");
-  const restricted =
+  const restrictedRaw =
     getXmlChildText(impact, "numberOfLanesRestricted") ??
     getXmlChildText(rec, "numberOfLanesRestricted");
-  if (restricted == null) return undefined;
-  const closed = parseInt(restricted, 10);
-  if (Number.isNaN(closed)) return undefined;
+  const original = leafNumber(rec, "originalNumberOfLanes");
+  const closed = restrictedRaw != null ? parseInt(restrictedRaw, 10) : NaN;
+  if (Number.isNaN(closed) && original == null) return undefined;
 
-  const operationalRaw =
-    getXmlChildText(impact, "numberOfOperationalLanes") ??
-    getXmlChildText(rec, "numberOfOperationalLanes");
-  const operational = operationalRaw != null ? parseInt(operationalRaw, 10) : NaN;
-  const lanes: NonNullable<RoadEvent["lanesAffected"]> = { closed };
-  if (!Number.isNaN(operational)) lanes.total = closed + operational;
-  return lanes;
+  const lanes: NonNullable<RoadEvent["lanesAffected"]> = {};
+  if (!Number.isNaN(closed)) lanes.closed = closed;
+  if (original != null) {
+    lanes.total = original;
+  } else {
+    const operationalRaw =
+      getXmlChildText(impact, "numberOfOperationalLanes") ??
+      getXmlChildText(rec, "numberOfOperationalLanes");
+    const operational = operationalRaw != null ? parseInt(operationalRaw, 10) : NaN;
+    if (!Number.isNaN(operational) && !Number.isNaN(closed)) lanes.total = closed + operational;
+  }
+  return lanes.closed != null || lanes.total != null ? lanes : undefined;
 }
 
 /** Source cause/obstruction subtype (e.g. "roadMaintenance", "brokenDownVehicle"). */
@@ -272,30 +278,87 @@ function confidenceOf(rec: XmlObject): Confidence | undefined {
   }
 }
 
+/** First descendant element (anywhere in the subtree) with the given local name. */
+function findFirst(node: unknown, localName: string): XmlObject | undefined {
+  if (Array.isArray(node)) {
+    for (const x of node) {
+      const f = findFirst(x, localName);
+      if (f) return f;
+    }
+    return undefined;
+  }
+  if (!isXmlObject(node)) return undefined;
+  for (const [key, value] of Object.entries(node)) {
+    if (key.startsWith("@_")) continue;
+    if (stripXmlNamespace(key) === localName && isXmlObject(value)) return value;
+    const f = findFirst(value, localName);
+    if (f) return f;
+  }
+  return undefined;
+}
+
+/** All leaf text values (anywhere in the subtree) of elements with the given local name. */
+function collectLeaf(node: unknown, localName: string, out: string[] = []): string[] {
+  if (Array.isArray(node)) {
+    for (const x of node) collectLeaf(x, localName, out);
+    return out;
+  }
+  if (!isXmlObject(node)) return out;
+  for (const [key, value] of Object.entries(node)) {
+    if (key.startsWith("@_")) continue;
+    if (stripXmlNamespace(key) === localName) {
+      const t = xmlText(value);
+      if (t) out.push(t);
+    }
+    collectLeaf(value, localName, out);
+  }
+  return out;
+}
+
+function vehiclesAffectedOf(rec: XmlObject): string[] | undefined {
+  const set = new Set([...collectLeaf(rec, "vehicleType"), ...collectLeaf(rec, "vehicleUsage")]);
+  return set.size > 0 ? [...set] : undefined;
+}
+
+/** Dimension/weight restrictions (vehicleHeight/Width/Length, gross weight). */
+function dimensionRestrictionsOf(rec: XmlObject): Restriction[] | undefined {
+  const out: Restriction[] = [];
+  const dim = (name: string, type: string, unit: string) => {
+    const raw = collectLeaf(rec, name)[0];
+    const n = raw != null ? Number(raw) : NaN;
+    if (Number.isFinite(n)) out.push({ type, value: n, unit });
+  };
+  dim("vehicleHeight", "height", "m");
+  dim("vehicleWidth", "width", "m");
+  dim("vehicleLength", "length", "m");
+  dim("grossVehicleWeight", "weight", "kg");
+  return out.length > 0 ? out : undefined;
+}
+
+function leafNumber(rec: XmlObject, name: string): number | undefined {
+  const raw = collectLeaf(rec, name)[0];
+  const n = raw != null ? Number(raw) : NaN;
+  return Number.isFinite(n) ? n : undefined;
+}
+
 function collectRefs(rec: XmlObject): RoadEvent["externalRefs"] {
   const locRef = getXmlChild(rec, "locationReference");
   if (!locRef) return undefined;
 
-  const refs: NonNullable<RoadEvent["externalRefs"]> = {};
+  // alertCPoint (point location) or, nested in an itinerary, alertCLinear.
+  const alertC = findFirst(locRef, "alertCPoint") ?? findFirst(locRef, "alertCLinear");
+  if (!alertC) return undefined;
 
-  const alertCPoint = getXmlChild(locRef, "alertCPoint");
-  if (alertCPoint) {
-    const primary =
-      getXmlChild(alertCPoint, "alertCMethod4PrimaryPointLocation") ??
-      getXmlChild(alertCPoint, "alertCMethod2PrimaryPointLocation");
-    const country = text(alertCPoint["alertCLocationCountryCode"]);
-    const table = text(alertCPoint["alertCLocationTableNumber"]);
-    const code = text(getXmlChild(primary, "alertCLocation")?.["specificLocation"]);
-    if (country && table && code) {
-      refs.tmc = {
-        country,
-        table: parseFloat(table),
-        code: parseInt(code, 10),
-      };
-    }
+  const primary =
+    findFirst(alertC, "alertCMethod4PrimaryPointLocation") ??
+    findFirst(alertC, "alertCMethod2PrimaryPointLocation");
+  const country = getXmlChildText(alertC, "alertCLocationCountryCode");
+  const table = getXmlChildText(alertC, "alertCLocationTableNumber");
+  const code = getXmlChildText(getXmlChild(primary, "alertCLocation"), "specificLocation");
+  if (country && table && code) {
+    return { tmc: { country, table: parseFloat(table), code: parseInt(code, 10) } };
   }
-
-  return Object.keys(refs).length > 0 ? refs : undefined;
+  return undefined;
 }
 
 interface SituationRecord {
@@ -401,6 +464,13 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
 
     const severity =
       situationSeverity || text(rec["overallSeverity"]) || text(rec["severity"]) || "";
+    const normalised = normaliseSeverity(severity, { format: "datex2" });
+    // A safety-related message with no declared severity is at least medium.
+    const safetyRelated = getXmlChildText(rec, "safetyRelatedMessage") === "true";
+    const severityFields =
+      normalised.severity === "unknown" && safetyRelated
+        ? { severity: "medium" as const, severitySource: "derived" as const }
+        : normalised;
 
     const publicComment = getXmlChild(rec, "generalPublicComment");
     const fallbackComment = getXmlChild(rec, "comment");
@@ -415,7 +485,7 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
       subtype: causeOf(rec) ?? recType ?? undefined,
       category,
       isPlanned,
-      ...normaliseSeverity(severity, { format: "datex2" }),
+      ...severityFields,
       confidence: confidenceOf(rec),
       status: validityStatusToStatus(validityStatus),
       geometry,
@@ -424,7 +494,11 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
       roadState: roadStateOf(rec),
       lanesAffected: lanesOf(rec),
       speedLimitKph: speedLimitOf(rec),
+      restrictions: dimensionRestrictionsOf(rec),
+      vehiclesAffected: vehiclesAffectedOf(rec),
       detour: detourOf(rec),
+      delaySeconds: leafNumber(rec, "delayTimeValue"),
+      queueLengthMeters: leafNumber(rec, "queueLength"),
       relatedIds: relatedRefsOf(rec),
       sourceRaw: rec,
       headline:
