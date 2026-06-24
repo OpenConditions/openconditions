@@ -1,25 +1,98 @@
-# Placeholder — a proper multi-stage build with published @openconditions/* packages and a
-# pinned distroless runtime image is deferred to the release/image-build task.
-FROM node:24-alpine AS base
+# syntax=docker/dockerfile:1.7
+#
+# OpenConditions ingest service image.
+#
+# IMPORTANT: the build context MUST be the repo root — this Dockerfile reaches
+# outside its own directory for the workspace manifests + lockfile and the
+# @openconditions/* source it bundles. Build from the repo root:
+#
+#   docker build -t openconditions-ingest -f services/ingest/Dockerfile .
+#
+# The release workflow (.github/workflows/release.yml) builds it with `context: .`
+# for the same reason.
+#
+# Runtime is a single esbuild bundle: tsup inlines @openconditions/* + drizzle-orm
+# (see services/ingest/tsup.config.ts) and copies the migrations to dist/drizzle,
+# so only fastify, postgres and croner remain as external runtime dependencies.
+
+FROM node:24-alpine@sha256:fb71d01345f11b708a3553c66e7c74074f2d506400ea81973343d915cb64eef0 AS base
+# Read the pnpm version from the repo root package.json so lockfile resolution
+# stays reproducible across local and CI Docker builds.
+COPY package.json /tmp/package.json
+RUN corepack enable && corepack prepare $(node -e "console.log(require('/tmp/package.json').packageManager)") --activate
+ENV HUSKY=0
+
+# Production runtime dependencies only (fastify, postgres, croner — everything
+# else is bundled into dist).
+FROM base AS prod-deps
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/core/package.json packages/core/
+COPY packages/roads/package.json packages/roads/
+COPY packages/publishers/package.json packages/publishers/
+COPY packages/openlr/package.json packages/openlr/
+COPY services/ingest/package.json services/ingest/
+RUN pnpm install --filter @openconditions/ingest... --frozen-lockfile --prod --ignore-scripts
+
+# Build the bundle (needs dev deps + the workspace package sources, which tsup
+# resolves through each package's built dist — turbo builds them in order).
+FROM base AS builder
+WORKDIR /app
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY packages/core/package.json packages/core/
+COPY packages/roads/package.json packages/roads/
+COPY packages/publishers/package.json packages/publishers/
+COPY packages/openlr/package.json packages/openlr/
+COPY services/ingest/package.json services/ingest/
+RUN pnpm install --filter @openconditions/ingest... --frozen-lockfile --ignore-scripts
+
+COPY tsconfig.base.json turbo.json ./
+COPY packages/core/ packages/core/
+COPY packages/roads/ packages/roads/
+COPY packages/publishers/ packages/publishers/
+COPY packages/openlr/ packages/openlr/
+COPY services/ingest/ services/ingest/
+# `...` builds the ingest's workspace dependencies first (topological), so tsup
+# can inline their freshly built dist into the bundle.
+RUN pnpm --filter @openconditions/ingest... build
+
+# Production image.
+FROM node:24-alpine@sha256:fb71d01345f11b708a3553c66e7c74074f2d506400ea81973343d915cb64eef0 AS runner
 WORKDIR /app
 
-RUN npm install -g pnpm@11
-
-FROM base AS build
-COPY package.json ./
-COPY . .
-RUN pnpm install --frozen-lockfile && pnpm build
-
-FROM node:24-alpine AS runtime
-WORKDIR /app
-
-RUN npm install -g pnpm@11
-
-COPY package.json ./
-RUN pnpm add --prod fastify postgres croner
-
-COPY --from=build /app/dist ./dist
+# curl backs the http healthcheck; the OpenMapX compose renderer falls back to
+# busybox wget, but curl keeps a plain `docker run` healthcheck working too.
+RUN apk add --no-cache curl
 
 ENV NODE_ENV=production
+ENV PORT=4100
+ENV HOST=0.0.0.0
+# Bounds the V8 heap; the largest job (streaming the ~360 MB NDW site table)
+# runs comfortably under this. Operators can override via the service env.
+ENV NODE_OPTIONS=--max-old-space-size=512
+
+# Runtime externals (fastify, postgres, croner) resolved from the workspace
+# node_modules; everything else is inlined in dist.
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=prod-deps /app/services/ingest/node_modules ./services/ingest/node_modules
+COPY --from=builder /app/services/ingest/dist ./services/ingest/dist
+COPY services/ingest/package.json ./services/ingest/
+
+# Run as a dedicated non-root user. The service only reads its own bundle and
+# talks to PostGIS over the network — it writes nothing to the filesystem.
+RUN addgroup --system --gid 1001 ingest \
+    && adduser --system --uid 1001 --ingroup ingest ingest \
+    && chown -R ingest:ingest /app
+USER ingest:ingest
+
+WORKDIR /app/services/ingest
+EXPOSE 4100
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -fsS "http://localhost:${PORT}/status" -o /dev/null || exit 1
+
+LABEL org.opencontainers.image.title="OpenConditions ingest" \
+      org.opencontainers.image.description="Fetch → parse → atomic PostGIS swap for road-condition observations." \
+      org.opencontainers.image.source="https://github.com/openconditions/openconditions" \
+      org.opencontainers.image.licenses="AGPL-3.0-or-later"
 
 CMD ["node", "dist/index.js"]

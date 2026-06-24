@@ -1,0 +1,48 @@
+{
+  "id": "openconditions-ingest",
+  "name": "OpenConditions Ingest",
+  "version": "0.1.0",
+  "description": "Fetches open road-condition feeds (NDW, Autobahn, Digitraffic, DriveBC, WZDx), normalises them to the canonical model, and writes them to the shared PostGIS `conditions` schema for the road-conditions provider integration to read. Also serves public, rate-limited emitter feeds (GeoJSON, TraFF, DATEX II, GTFS-RT, JSON-LD, Valhalla exclusions, SSE).",
+  "author": "OpenConditions",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://openconditions.org",
+  "documentation": "https://github.com/openconditions/openconditions",
+  "quality": "community-verified",
+  "container": {
+    "image": "ghcr.io/openconditions/ingest",
+    "tag": "latest",
+    "expose": [4100],
+    "networkAliases": ["openconditions-ingest"],
+    "environment": {
+      "PORT": "4100",
+      "HOST": "0.0.0.0",
+      "DATABASE_URL": "postgresql://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgis:5432/openmapx",
+      "OPENLR_RESOLVER_URL": "${OPENLR_RESOLVER_URL:-}",
+      "RATE_LIMIT_MAX": "${OPENCONDITIONS_RATE_LIMIT_MAX:-120}",
+      "RATE_LIMIT_WINDOW_MS": "${OPENCONDITIONS_RATE_LIMIT_WINDOW_MS:-60000}",
+      "TRUST_PROXY_HOPS": "${TRUST_PROXY_HOPS:-1}"
+    },
+    "memory": "1g",
+    "restart": "unless-stopped",
+    "dependsOn": [{ "service": "postgis", "condition": "service_healthy" }],
+    "healthcheck": {
+      "type": "http",
+      "path": "/status",
+      "port": 4100,
+      "interval": "30s",
+      "timeout": "5s",
+      "retries": 5,
+      "startPeriod": "30s"
+    }
+  },
+  "provides": ["openconditions/road-conditions-data"],
+  "ownsSchema": "conditions",
+  "exposure": {
+    "proxy": {
+      "enabled": true,
+      "pathPrefix": "/openconditions",
+      "stripPrefix": true
+    }
+  },
+  "ui": { "category": "data" }
+}

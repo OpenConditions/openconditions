@@ -1,7 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
-import { runMigrations, observationsByBbox, type QueryRunner } from "@openconditions/core";
+import { observationsByBbox, type QueryRunner } from "@openconditions/core";
+import { runMigrations } from "@openconditions/core/server";
 import { sweepStaleObservations } from "../pipeline/sweep.js";
 
 let sql: postgres.Sql;
