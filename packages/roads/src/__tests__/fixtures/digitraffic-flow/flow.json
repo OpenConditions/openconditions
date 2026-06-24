@@ -73,6 +73,29 @@
     },
     {
       "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [25.04, 60.27],
+          [25.045, 60.272],
+          [25.05, 60.274]
+        ]
+      },
+      "properties": {
+        "id": "DT_FLOW_QUEUING",
+        "name": "Vt 5 — queuing traffic",
+        "roadNumber": 5,
+        "roadSection": 1,
+        "direction": "increasing",
+        "measuredTime": "2026-06-24T10:00:00Z",
+        "averageSpeed": 18.0,
+        "freeFlowSpeed": 100.0,
+        "congestionLevel": "QUEUING",
+        "jamFactor": 7.5
+      }
+    },
+    {
+      "type": "Feature",
       "geometry": null,
       "properties": {
         "id": "DT_FLOW_NOGEO",

@@ -203,6 +203,25 @@ describe("parseDigitrafficFlow — derived congestion events", () => {
     const congestion = events.find((e) => e.id.includes("DT_FLOW_STATIONARY"))!;
     expect(congestion.geometry).toEqual(flow.geometry);
   });
+
+  it("emits a derived congestion RoadEvent with severity:'high' for los:'queuing'", () => {
+    const json = readFileSync(DT_FLOW_FIXTURE, "utf8");
+    const { flows, events } = parseDigitrafficFlow(json, DT_SOURCE);
+    const flow = flows.find((f) => f.id.includes("DT_FLOW_QUEUING"));
+    expect(flow).toBeDefined();
+    expect(flow!.los).toBe("queuing");
+    const congestion = events.find((e) => e.id.includes("DT_FLOW_QUEUING"));
+    expect(congestion).toBeDefined();
+    expect(congestion!.type).toBe("congestion");
+    expect(congestion!.severity).toBe("high");
+  });
+
+  it("does NOT emit a derived congestion event for los:'free_flow' or los:'heavy' (negative guard)", () => {
+    const json = readFileSync(DT_FLOW_FIXTURE, "utf8");
+    const { events } = parseDigitrafficFlow(json, DT_SOURCE);
+    expect(events.find((e) => e.id.includes("DT_FLOW_FREE"))).toBeUndefined();
+    expect(events.find((e) => e.id.includes("DT_FLOW_HEAVY"))).toBeUndefined();
+  });
 });
 
 describe("parseDatexMeasuredData — fixture", () => {

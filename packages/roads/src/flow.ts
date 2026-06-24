@@ -204,10 +204,10 @@ export function parseDigitrafficFlow(
 function mapDatexTrafficStatus(raw: string | undefined): LosValue {
   if (!raw) return "unknown";
   const lower = raw.toLowerCase().trim();
-  if (lower === "freeflow" || lower === "free_flow" || lower === "normalTraffic".toLowerCase()) {
+  if (lower === "freeflow" || lower === "free_flow" || lower === "normaltraffic") {
     return "free_flow";
   }
-  if (lower === "heavy" || lower === "heavy_traffic" || lower === "slowTraffic".toLowerCase()) {
+  if (lower === "heavy" || lower === "heavy_traffic" || lower === "slowtraffic") {
     return "heavy";
   }
   if (lower === "queuing") return "queuing";
@@ -219,14 +219,13 @@ function mapDatexTrafficStatus(raw: string | undefined): LosValue {
 function extractDatexSpeed(node: unknown): number | undefined {
   if (!isXmlObject(node)) return undefined;
 
-  const speedNode = getXmlChild(node, "averageVehicleSpeed") ?? getXmlChild(node, "speed");
-
+  const speedNode = getXmlChild(node, "averageVehicleSpeed");
   if (!speedNode) return undefined;
 
   const dataError = xmlText(speedNode["dataError"]);
   if (dataError === "true") return undefined;
 
-  const speedRaw = xmlText(speedNode["speed"]) ?? xmlText(speedNode);
+  const speedRaw = xmlText(speedNode["speed"]);
   const n = speedRaw != null ? Number(speedRaw) : NaN;
   return Number.isFinite(n) && n >= 0 ? n : undefined;
 }
@@ -235,7 +234,7 @@ function extractDatexFreeFlowSpeed(node: unknown): number | undefined {
   if (!isXmlObject(node)) return undefined;
   const ffNode = getXmlChild(node, "freeFlowSpeed");
   if (!ffNode) return undefined;
-  const raw = xmlText(ffNode["speed"]) ?? xmlText(ffNode);
+  const raw = xmlText(ffNode["speed"]);
   const n = raw != null ? Number(raw) : NaN;
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
