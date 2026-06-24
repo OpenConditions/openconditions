@@ -5,6 +5,7 @@ import { createResolverClient } from "@openconditions/openlr";
 import { fetchAll } from "./fetch.js";
 import { parseFor } from "./parse.js";
 import { resolveOpenLr } from "./resolve.js";
+import { loadSiteTable } from "./site-table.js";
 import { atomicSwap } from "./write-postgis.js";
 
 type Sql = postgres.Sql;
@@ -61,7 +62,13 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     return { count: 0, durationMs: Date.now() - start };
   }
 
-  const parsed = buffers.flatMap((b) => parseFor(src, b));
+  // Load the companion site table (cached, tolerant of failure) so flow feeds
+  // that key measurements by site id can resolve geometry. Absent/failed loads
+  // simply leave measurements without external geometry (those sites are then
+  // skipped) rather than failing the run.
+  const siteMap = src.siteTable ? await loadSiteTable(src, deps.fetch) : undefined;
+
+  const parsed = buffers.flatMap((b) => parseFor(src, b, siteMap));
   // resolveOpenLr narrows the union: items without geometry (UnresolvedRoadEvent)
   // are resolved to real geometry or dropped — resolved[] always has geometry.
   const { resolved, dropped } = await resolveOpenLr(parsed, deps.openlrClient ?? null);

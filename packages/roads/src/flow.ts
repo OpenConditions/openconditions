@@ -9,7 +9,7 @@
  * tracked separately in routing-improvements.md §8/§9.
  * conditions.observations is the data foundation that pipeline will consume.
  */
-import type { LineString } from "geojson";
+import type { LineString, Point } from "geojson";
 import type { Severity } from "@openconditions/core";
 import type { RoadEvent, RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
@@ -22,11 +22,17 @@ import {
   xmlNodeToArray,
   xmlText,
 } from "./xml.js";
+import type { XmlObject } from "./xml.js";
 
 export type FlowParseResult = {
   flows: RoadFlow[];
   events: RoadEvent[];
 };
+
+/** Geometry shapes a flow measurement can carry (point sensors or segments). */
+type FlowGeometry = Point | LineString;
+
+export type { FlowGeometry };
 
 type LosValue = RoadFlow["los"];
 
@@ -252,7 +258,7 @@ function extractDatexFreeFlowSpeed(node: unknown): number | undefined {
   return Number.isFinite(n) && n > 0 ? n : undefined;
 }
 
-function resolveLineStringFromLocRef(locRef: unknown): LineString | null {
+export function resolveLineStringFromLocRef(locRef: unknown): LineString | null {
   if (!isXmlObject(locRef)) return null;
 
   const visit = (node: unknown): [number, number][] | null => {
@@ -300,8 +306,10 @@ function resolveLineStringFromLocRef(locRef: unknown): LineString | null {
  * on each measuredValue; this map lets measurements fall back to the site's
  * geometry when no inline locationReference is present.
  */
-function buildSiteGeometryMap(root: ReturnType<typeof parseXmlDocument>): Map<string, LineString> {
-  const map = new Map<string, LineString>();
+function buildSiteGeometryMap(
+  root: ReturnType<typeof parseXmlDocument>
+): Map<string, FlowGeometry> {
+  const map = new Map<string, FlowGeometry>();
 
   const visitSiteTable = (node: unknown): void => {
     if (!isXmlObject(node)) return;
@@ -341,19 +349,81 @@ function buildSiteGeometryMap(root: ReturnType<typeof parseXmlDocument>): Map<st
 }
 
 /**
- * Parse a DATEX II MeasuredDataPublication (or similarly structured
- * ElaboratedData) XML document into RoadFlow measurements. Only site
- * measurements that carry a LineString (posList) geometry are emitted;
- * point-only records are skipped. A derived congestion RoadEvent is emitted
- * for every segment with los >= queuing.
+ * Reads a single measuredValue's `basicData`/`basicDataValue` payload for a
+ * representative average speed. Returns the speed plus the
+ * `numberOfInputValuesUsed` weight so the caller can pick the best-supported
+ * sample per site, and any `trafficStatus`/`freeFlowSpeed` carried alongside.
  *
- * Geometry is resolved first from an inline locationReference on the
- * measuredValue, and falls back to a measurementSiteTable entry keyed by the
- * site's id — the layout used by feeds that separate site geometry from data.
+ * Handles two real shapes: NDW's `<basicData xsi:type="TrafficSpeed">` with the
+ * vehicle count as an `averageVehicleSpeed` attribute, and the older
+ * `<basicDataValue>`/`<trafficStatus>` layout. A speed <= 0 (NDW's -1 no-data
+ * sentinel) yields a null speed.
+ */
+function firstDataNode(node: XmlObject): XmlObject | undefined {
+  return (
+    getXmlChild(node, "basicData") ??
+    getXmlChild(node, "basicDataValue") ??
+    getXmlChild(node, "elaboratedDataValue")
+  );
+}
+
+function readMeasuredSpeedSample(mv: XmlObject): {
+  speedKph?: number;
+  inputCount: number;
+  trafficStatus?: string;
+  freeFlowKph?: number;
+} {
+  // The basicData may sit directly on the outer measuredValue (older feeds) or
+  // one level down inside a nested `measuredValue` (the real NDW layout, where
+  // the inner element parses to an array because measuredValue is array-marked).
+  let dataNode = firstDataNode(mv);
+  if (!dataNode) {
+    for (const inner of xmlNodeToArray(mv["measuredValue"])) {
+      if (!isXmlObject(inner)) continue;
+      dataNode = firstDataNode(inner);
+      if (dataNode) break;
+    }
+  }
+  if (!dataNode) return { inputCount: 0 };
+
+  const speedNode = getXmlChild(dataNode, "averageVehicleSpeed");
+  const inputRaw = speedNode?.["@_numberOfInputValuesUsed"];
+  const inputCount = inputRaw != null ? Number(xmlText(inputRaw) ?? inputRaw) : 0;
+
+  const speedKph = extractDatexSpeed(dataNode);
+  const trafficStatus = xmlText(dataNode["trafficStatus"]);
+  const freeFlowKph = extractDatexFreeFlowSpeed(dataNode);
+
+  return {
+    ...(speedKph != null ? { speedKph } : {}),
+    inputCount: Number.isFinite(inputCount) ? inputCount : 0,
+    ...(trafficStatus != null ? { trafficStatus } : {}),
+    ...(freeFlowKph != null ? { freeFlowKph } : {}),
+  };
+}
+
+/**
+ * Parse a DATEX II MeasuredDataPublication into RoadFlow measurements, one per
+ * measurement site. The representative average speed for a site is the
+ * `TrafficSpeed`/`averageVehicleSpeed` sample with the highest
+ * `numberOfInputValuesUsed`, ignoring no-data samples (speed <= 0).
+ *
+ * Geometry is resolved by priority: an inline `locationReference` on a
+ * measuredValue, then an inline `measurementSiteTable` entry, then the external
+ * `siteMap` keyed by `measurementSiteReference id` (the NDW layout, where the
+ * site geometry lives in a separate site-table document). Sites with no
+ * resolvable geometry or no valid speed are skipped.
+ *
+ * `los` is left "unknown" unless the source carries a `trafficStatus` or a
+ * free-flow baseline to compare against: absolute speed alone is not a reliable
+ * congestion signal (it is road-class–dependent). No derived congestion event
+ * is emitted while los is "unknown" — only feeds that supply a status/baseline
+ * (so los reaches queuing or worse) produce one.
  */
 export function parseDatexMeasuredData(
   input: string | Buffer,
-  src: SourceDescriptor
+  src: SourceDescriptor,
+  siteMap?: Map<string, FlowGeometry>
 ): FlowParseResult {
   let doc: ReturnType<typeof parseXmlDocument>;
   try {
@@ -397,63 +467,80 @@ export function parseDatexMeasuredData(
 
       const measuredValues = getXmlChildren(siteM, "measuredValue");
 
+      let geom: FlowGeometry | null = null;
+      // The best speed sample is the one with the highest input-value count
+      // (most-supported reading), ignoring no-data samples. trafficStatus and a
+      // free-flow baseline are captured even from speed-less samples so a
+      // status-only feed still yields a level-of-service.
+      let best: ReturnType<typeof readMeasuredSpeedSample> | null = null;
+      let trafficStatus: string | undefined;
+      let freeFlowKph: number | undefined;
+
       for (const mv of measuredValues) {
-        const locRef = getXmlChild(mv, "locationReference");
-        const geom = locRef
-          ? resolveLineStringFromLocRef(locRef)
-          : (siteGeometryMap.get(siteId) ?? null);
-        if (!geom) continue;
-
-        const basicDataValue =
-          getXmlChild(mv, "basicDataValue") ?? getXmlChild(mv, "elaboratedDataValue");
-        if (!basicDataValue) continue;
-
-        const trafficStatusRaw = xmlText(basicDataValue["trafficStatus"]);
-        const speedKph = extractDatexSpeed(basicDataValue);
-        const freeFlowKph = extractDatexFreeFlowSpeed(basicDataValue);
-
-        let los: LosValue = mapDatexTrafficStatus(trafficStatusRaw);
-        if (los === "unknown" && speedKph != null && freeFlowKph != null && freeFlowKph > 0) {
-          const ratio = speedKph / freeFlowKph;
-          if (ratio >= 0.85) los = "free_flow";
-          else if (ratio >= 0.5) los = "heavy";
-          else if (ratio >= 0.15) los = "queuing";
-          else los = "stationary";
+        if (geom == null) {
+          const locRef = getXmlChild(mv, "locationReference");
+          geom = locRef ? resolveLineStringFromLocRef(locRef) : null;
         }
 
-        const speedRatio =
-          speedKph != null && freeFlowKph != null && freeFlowKph > 0
-            ? speedKph / freeFlowKph
-            : undefined;
-
-        const mvIndex = xmlText(mv["@_index"]) ?? String(flows.length + 1);
-        const flowId = `${src.id}:${siteId}:${mvIndex}`;
-
-        const flow: RoadFlow = {
-          id: flowId,
-          source: src.id,
-          sourceFormat: "datex2",
-          domain: "roads",
-          kind: "measurement",
-          metric: "flow",
-          aggregation: "live",
-          status: "active",
-          geometry: geom,
-          los,
-          ...(speedKph != null ? { speedKph } : {}),
-          ...(freeFlowKph != null ? { freeFlowKph } : {}),
-          ...(speedRatio != null ? { speedRatio } : {}),
-          origin,
-          dataUpdatedAt: measuredAt,
-          fetchedAt: now,
-          isStale: false,
-        };
-
-        flows.push(flow);
-
-        if (QUEUING_LOS.has(los)) {
-          events.push(derivedCongestionEvent(flow, src, siteId));
+        const sample = readMeasuredSpeedSample(mv);
+        trafficStatus ??= sample.trafficStatus;
+        freeFlowKph ??= sample.freeFlowKph;
+        if (sample.speedKph == null) continue;
+        if (best == null || sample.inputCount > best.inputCount) {
+          best = sample;
         }
+      }
+
+      if (geom == null) {
+        geom = siteGeometryMap.get(siteId) ?? siteMap?.get(siteId) ?? null;
+      }
+
+      const speedKph = best?.speedKph;
+
+      let los: LosValue = mapDatexTrafficStatus(trafficStatus);
+      if (los === "unknown" && speedKph != null && freeFlowKph != null && freeFlowKph > 0) {
+        const ratio = speedKph / freeFlowKph;
+        if (ratio >= 0.85) los = "free_flow";
+        else if (ratio >= 0.5) los = "heavy";
+        else if (ratio >= 0.15) los = "queuing";
+        else los = "stationary";
+      }
+
+      // Skip sites with no geometry, or with neither a valid speed nor a
+      // resolvable level-of-service (a flow row with nothing to say).
+      if (!geom || (speedKph == null && los === "unknown")) continue;
+
+      const speedRatio =
+        speedKph != null && freeFlowKph != null && freeFlowKph > 0
+          ? speedKph / freeFlowKph
+          : undefined;
+
+      const flow: RoadFlow = {
+        id: `${src.id}:${siteId}`,
+        source: src.id,
+        sourceFormat: "datex2",
+        domain: "roads",
+        kind: "measurement",
+        metric: "flow",
+        ...(speedKph != null ? { value: speedKph, unit: "km/h" } : {}),
+        level: los,
+        aggregation: "live",
+        status: "active",
+        geometry: geom,
+        los,
+        ...(speedKph != null ? { speedKph } : {}),
+        ...(freeFlowKph != null ? { freeFlowKph } : {}),
+        ...(speedRatio != null ? { speedRatio } : {}),
+        origin,
+        dataUpdatedAt: measuredAt,
+        fetchedAt: now,
+        isStale: false,
+      };
+
+      flows.push(flow);
+
+      if (QUEUING_LOS.has(los)) {
+        events.push(derivedCongestionEvent(flow, src, siteId));
       }
     } catch (err) {
       console.warn("[datex-flow] skipped malformed siteMeasurements:", err);
@@ -463,36 +550,25 @@ export function parseDatexMeasuredData(
   return { flows, events };
 }
 
-function findMeasuredPublication(root: ReturnType<typeof parseXmlDocument>) {
-  const candidates = [root];
-
-  const logicalModel = getXmlChild(root, "D2LogicalModel") ?? getXmlChild(root, "d2LogicalModel");
-  if (logicalModel) candidates.push(logicalModel);
-
-  const msgContainer =
-    getXmlChild(root, "messageContainer") ?? getXmlChild(root, "mc:messageContainer");
-  if (msgContainer) {
-    const payload =
-      getXmlChild(msgContainer, "payload") ?? getXmlChild(msgContainer, "payloadPublication");
-    if (payload) candidates.push(payload);
-  }
-
-  for (const candidate of candidates) {
-    if (!isXmlObject(candidate)) continue;
-    for (const [key, value] of Object.entries(candidate)) {
-      if (key.startsWith("@_")) continue;
-      const local = stripXmlNamespace(key);
-      if (local === "payloadPublication" || local === "payload") {
-        const pub = xmlNodeToArray(value).find(isXmlObject);
-        if (pub && "siteMeasurements" in pub) return pub;
-      }
-      if (local.endsWith("Publication") || local.endsWith("Data")) {
-        const pub = xmlNodeToArray(value).find(isXmlObject);
-        if (pub && "siteMeasurements" in pub) return pub;
-      }
+/**
+ * Find the publication object that carries `siteMeasurements`, descending
+ * through whatever envelope wraps it (SOAP Envelope/Body, d2LogicalModel,
+ * messageContainer/payload). Returns the first node containing siteMeasurements.
+ */
+function findMeasuredPublication(root: unknown): XmlObject | null {
+  if (Array.isArray(root)) {
+    for (const item of root) {
+      const found = findMeasuredPublication(item);
+      if (found) return found;
     }
-    if ("siteMeasurements" in candidate) return candidate;
+    return null;
   }
-
+  if (!isXmlObject(root)) return null;
+  if ("siteMeasurements" in root) return root;
+  for (const [key, value] of Object.entries(root)) {
+    if (key.startsWith("@_")) continue;
+    const found = findMeasuredPublication(value);
+    if (found) return found;
+  }
   return null;
 }

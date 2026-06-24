@@ -1,4 +1,9 @@
-import type { ConditionEvent, LineStringGeometry, Measurement } from "@openconditions/core";
+import type {
+  ConditionEvent,
+  LineStringGeometry,
+  Measurement,
+  PointGeometry,
+} from "@openconditions/core";
 
 export type RoadEventType =
   | "accident"
@@ -92,7 +97,7 @@ export interface RoadEvent extends ConditionEvent {
 export interface RoadFlow extends Measurement {
   domain: "roads";
   metric: "flow";
-  geometry: LineStringGeometry;
+  geometry: PointGeometry | LineStringGeometry;
   los: "free_flow" | "heavy" | "queuing" | "stationary" | "blocked" | "unknown";
   speedKph?: number;
   freeFlowKph?: number;

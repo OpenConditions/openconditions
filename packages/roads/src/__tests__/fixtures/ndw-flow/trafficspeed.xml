@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/">
+  <SOAP:Body>
+    <d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" modelBaseVersion="2"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <payloadPublication xsi:type="MeasuredDataPublication" lang="nl">
+        <publicationTime>2026-06-24T10:10:00.000Z</publicationTime>
+        <measurementSiteTableReference id="NDW01_MT" version="1715" targetClass="MeasurementSiteTable"/>
+        <siteMeasurements>
+          <measurementSiteReference id="PZH01_MST_0065_00" version="12" targetClass="MeasurementSiteRecord"/>
+          <measurementTimeDefault>2026-06-24T10:09:00Z</measurementTimeDefault>
+          <measuredValue index="1">
+            <measuredValue>
+              <basicData xsi:type="TrafficFlow">
+                <vehicleFlow><vehicleFlowRate>1260</vehicleFlowRate></vehicleFlow>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+          <measuredValue index="7">
+            <measuredValue>
+              <basicData xsi:type="TrafficSpeed">
+                <averageVehicleSpeed numberOfInputValuesUsed="0"><speed>-1</speed></averageVehicleSpeed>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+          <measuredValue index="8">
+            <measuredValue>
+              <basicData xsi:type="TrafficSpeed">
+                <averageVehicleSpeed numberOfInputValuesUsed="17" standardDeviation="5.61"><speed>64</speed></averageVehicleSpeed>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+          <measuredValue index="9">
+            <measuredValue>
+              <basicData xsi:type="TrafficSpeed">
+                <averageVehicleSpeed numberOfInputValuesUsed="1"><speed>51</speed></averageVehicleSpeed>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+        </siteMeasurements>
+        <siteMeasurements>
+          <measurementSiteReference id="PZH01_MST_0029-00" version="13" targetClass="MeasurementSiteRecord"/>
+          <measurementTimeDefault>2026-06-24T10:09:00Z</measurementTimeDefault>
+          <measuredValue index="8">
+            <measuredValue>
+              <basicData xsi:type="TrafficSpeed">
+                <averageVehicleSpeed numberOfInputValuesUsed="8" standardDeviation="9.01"><speed>66</speed></averageVehicleSpeed>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+        </siteMeasurements>
+        <siteMeasurements>
+          <measurementSiteReference id="PZH01_MST_ALLNODATA_00" version="3" targetClass="MeasurementSiteRecord"/>
+          <measurementTimeDefault>2026-06-24T10:09:00Z</measurementTimeDefault>
+          <measuredValue index="7">
+            <measuredValue>
+              <basicData xsi:type="TrafficSpeed">
+                <averageVehicleSpeed numberOfInputValuesUsed="0"><speed>-1</speed></averageVehicleSpeed>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+          <measuredValue index="8">
+            <measuredValue>
+              <basicData xsi:type="TrafficSpeed">
+                <averageVehicleSpeed numberOfInputValuesUsed="0"><speed>-1</speed></averageVehicleSpeed>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+        </siteMeasurements>
+        <siteMeasurements>
+          <measurementSiteReference id="PZH01_MST_MISSING_00" version="1" targetClass="MeasurementSiteRecord"/>
+          <measurementTimeDefault>2026-06-24T10:09:00Z</measurementTimeDefault>
+          <measuredValue index="8">
+            <measuredValue>
+              <basicData xsi:type="TrafficSpeed">
+                <averageVehicleSpeed numberOfInputValuesUsed="12"><speed>40</speed></averageVehicleSpeed>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+        </siteMeasurements>
+      </payloadPublication>
+    </d2LogicalModel>
+  </SOAP:Body>
+</SOAP:Envelope>

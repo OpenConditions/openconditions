@@ -31,6 +31,24 @@ describe("FEED_SOURCES", () => {
     expect(ndw.license).toBe("CC0-1.0");
   });
 
+  it("includes an ndw-flow entry that produces flow with a companion site table", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "ndw-flow");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.produces).toBe("flow");
+    expect(feed!.gzip).toBe(true);
+    expect(feed!.enabledByDefault).toBe(true);
+    expect(feed!.siteTable).toEqual({
+      url: "https://opendata.ndw.nu/measurement.xml.gz",
+      gzip: true,
+    });
+    expect(feed!.url).toBe("https://opendata.ndw.nu/trafficspeed.xml.gz");
+  });
+
+  it("no longer registers the dead digitraffic-fi-flow feed", () => {
+    expect(FEED_SOURCES.find((f) => f.id === "digitraffic-fi-flow")).toBeUndefined();
+  });
+
   it("includes drivebc with format open511 and license OGL-BC", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "drivebc");
     expect(feed).toBeDefined();

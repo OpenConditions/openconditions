@@ -1,4 +1,5 @@
 import type { SourceFormat } from "@openconditions/core";
+import type { SiteGeometry } from "./siteTable.js";
 import { parseDatexSituations } from "./datex.js";
 import { parseOpen511 } from "./open511.js";
 import { parseWzdx } from "./wzdx.js";
@@ -44,6 +45,13 @@ export interface FeedSource {
    * failing sub-feed never wipes the source.
    */
   discover?: (fetchFn: typeof fetch) => Promise<string[]>;
+  /**
+   * A companion DATEX II MeasurementSiteTablePublication that supplies the
+   * geometry for measurement sites keyed only by id in the data feed (the NDW
+   * layout). The ingest service fetches and caches it, then joins it into the
+   * flow parser. Only meaningful for `produces: "flow"` datex2 feeds.
+   */
+  siteTable?: { url: string; gzip?: boolean };
   auth?: {
     kind: "none" | "query-key" | "header-key" | "token";
     envVar?: string;
@@ -145,32 +153,34 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
-    // Separate source id from "digitraffic-fi" (events) so that atomicSwap
-    // stays source-id–scoped and the two feeds never clobber each other's rows.
-    id: "digitraffic-fi-flow",
-    name: "Digitraffic traffic flow (Finland)",
-    format: "digitraffic-json",
+    // Separate source id from "ndw" (events) so that atomicSwap stays
+    // source-id–scoped and the two NDW feeds never clobber each other's rows.
+    // The trafficspeed feed carries measurements keyed by site id only; the
+    // companion measurement.xml.gz site table supplies each site's geometry.
+    id: "ndw-flow",
+    name: "NDW traffic speed (Netherlands)",
+    format: "datex2",
     produces: "flow",
-    // The /traffic-datex2/flow-data path strongly suggests this endpoint
-    // returns DATEX II XML (MeasuredDataPublication), not Digitraffic GeoJSON.
-    // This feed is disabled by default and has NOT been verified. Before
-    // enabling: fetch the endpoint, confirm the Content-Type and payload shape,
-    // and switch `format` to "datex2" if it is DATEX II XML (which routes to
-    // parseDatexMeasuredData). Leaving it as "digitraffic-json" while disabled
-    // preserves existing behaviour but would parse incorrectly if activated.
-    url: "https://tie.digitraffic.fi/api/traffic-message/v1/traffic-datex2/flow-data",
+    url: "https://opendata.ndw.nu/trafficspeed.xml.gz",
+    gzip: true,
+    siteTable: { url: "https://opendata.ndw.nu/measurement.xml.gz", gzip: true },
     cadenceSec: 60,
     freshnessWindowSec: 300,
-    license: "CC-BY-4.0",
-    attribution: "Fintraffic / Digitraffic",
-    country: "FI",
-    privacyUrl: "https://www.fintraffic.fi/en/fintraffic/data-protection",
-    enabledByDefault: false,
+    license: "CC0-1.0",
+    licenseUrl: "https://www.ndw.nu",
+    attribution: "NDW / Rijkswaterstaat",
+    country: "NL",
+    privacyUrl: "https://www.ndw.nu/privacy",
+    enabledByDefault: true,
   },
 ];
 
 type ParserFn = typeof parseDatexSituations;
-type FlowParserFn = (input: string | Buffer, src: SourceDescriptor) => FlowParseResult;
+type FlowParserFn = (
+  input: string | Buffer,
+  src: SourceDescriptor,
+  siteMap?: Map<string, SiteGeometry>
+) => FlowParseResult;
 
 /**
  * Returns the parser function for a given source format.

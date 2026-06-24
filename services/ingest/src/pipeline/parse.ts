@@ -1,5 +1,5 @@
 import type { Observation } from "@openconditions/core";
-import type { FeedSource, UnresolvedRoadEvent } from "@openconditions/roads";
+import type { FeedSource, SiteGeometry, UnresolvedRoadEvent } from "@openconditions/roads";
 import { flowParserFor } from "@openconditions/roads";
 import { feedToSourceDescriptor } from "../domains.js";
 import { DOMAIN_REGISTRY } from "../domains.js";
@@ -12,6 +12,8 @@ import { DOMAIN_REGISTRY } from "../domains.js";
  * parser (e.g. parseDigitrafficFlow or parseDatexMeasuredData). Both the
  * RoadFlow measurements and the derived congestion RoadEvents returned by the
  * flow parser are flattened so the rest of the pipeline treats them uniformly.
+ * `siteMap`, when supplied, gives the flow parser external geometry keyed by
+ * measurement-site id (the NDW site-table join).
  *
  * The return type is `(Observation | UnresolvedRoadEvent)[]` because some
  * parsers (currently datex2) emit OpenLR-only records without geometry. These
@@ -20,7 +22,8 @@ import { DOMAIN_REGISTRY } from "../domains.js";
  */
 export function parseFor(
   src: FeedSource & { domain: string },
-  buf: Buffer
+  buf: Buffer,
+  siteMap?: Map<string, SiteGeometry>
 ): (Observation | UnresolvedRoadEvent)[] {
   const plugin = DOMAIN_REGISTRY[src.domain];
   if (!plugin) {
@@ -30,7 +33,7 @@ export function parseFor(
   if (src.produces === "flow") {
     const flowParserFn = flowParserFor(src.format);
     const descriptor = feedToSourceDescriptor(src);
-    const { flows, events } = flowParserFn(buf, descriptor);
+    const { flows, events } = flowParserFn(buf, descriptor, siteMap);
     return [...flows, ...events] as Observation[];
   }
 

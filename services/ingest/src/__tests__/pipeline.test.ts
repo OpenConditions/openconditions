@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
@@ -9,6 +10,7 @@ import type { RoadEvent, RoadFlow } from "@openconditions/roads";
 import { atomicSwap } from "../pipeline/write-postgis.js";
 import { runSource } from "../pipeline/run.js";
 import type { DomainFeedSource } from "../pipeline/run.js";
+import { clearSiteTableCache } from "../pipeline/site-table.js";
 
 const NDW_FIXTURE_PATH = path.resolve(
   import.meta.dirname,
@@ -20,9 +22,14 @@ const DRIVEBC_FIXTURE_PATH = path.resolve(
   "../../../../packages/roads/src/__tests__/fixtures/drivebc/events.json"
 );
 
-const DT_FLOW_FIXTURE_PATH = path.resolve(
+const NDW_FLOW_SPEED_FIXTURE_PATH = path.resolve(
   import.meta.dirname,
-  "../../../../packages/roads/src/__tests__/fixtures/digitraffic-flow/flow.json"
+  "../../../../packages/roads/src/__tests__/fixtures/ndw-flow/trafficspeed.xml"
+);
+
+const NDW_FLOW_SITE_TABLE_FIXTURE_PATH = path.resolve(
+  import.meta.dirname,
+  "../../../../packages/roads/src/__tests__/fixtures/ndw-flow/measurement_site_table.xml"
 );
 
 const ndwFeed: DomainFeedSource = {
@@ -35,8 +42,8 @@ const drivebcFeed: DomainFeedSource = {
   domain: "roads",
 };
 
-const digitrafficFlowFeed: DomainFeedSource = {
-  ...FEED_SOURCES.find((f) => f.id === "digitraffic-fi-flow")!,
+const ndwFlowFeed: DomainFeedSource = {
+  ...FEED_SOURCES.find((f) => f.id === "ndw-flow")!,
   domain: "roads",
 };
 
@@ -284,41 +291,52 @@ describe("store round-trip — typed columns + attributes JSONB", () => {
   }, 30_000);
 });
 
-describe("flow feed — e2e pipeline", () => {
-  it("runSource with produces:'flow' writes both RoadFlow measurements and derived congestion events", async () => {
-    const jsonPayload = readFileSync(DT_FLOW_FIXTURE_PATH);
+describe("flow feed — e2e pipeline (NDW site-table join)", () => {
+  // A fetch stub that serves the trafficspeed measurements for the data URL and
+  // the site table for the companion site-table URL, gzipping both since the
+  // feed declares gzip. The site-table cache is cleared first so the stub is hit.
+  const speedPayload = readFileSync(NDW_FLOW_SPEED_FIXTURE_PATH);
+  const sitePayload = readFileSync(NDW_FLOW_SITE_TABLE_FIXTURE_PATH);
 
-    const fakeFetch = async (_url: string | URL | Request): Promise<Response> => {
-      return new Response(jsonPayload, { status: 200 });
-    };
+  const fakeFetch = async (url: string | URL | Request): Promise<Response> => {
+    const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+    const body = href.includes("measurement.xml.gz")
+      ? gzipSync(sitePayload)
+      : gzipSync(speedPayload);
+    return new Response(body, { status: 200 });
+  };
 
-    const result = await runSource(digitrafficFlowFeed, {
+  it("runSource joins the site table and writes RoadFlow measurements with real geometry", async () => {
+    clearSiteTableCache();
+
+    const result = await runSource(ndwFlowFeed, {
       sql,
       fetch: fakeFetch as typeof fetch,
       now: () => new Date().toISOString(),
     });
 
     expect(result.count).toBeGreaterThan(0);
-    console.info(`[test] digitraffic-fi-flow: inserted ${result.count} rows`);
+    console.info(`[test] ndw-flow: inserted ${result.count} rows`);
 
-    const allRows = await sql<{ id: string; kind: string; source: string }[]>`
+    const rows = await sql<{ id: string; kind: string; source: string }[]>`
       SELECT id, kind, source
       FROM conditions.observations
-      WHERE source = 'digitraffic-fi-flow'
+      WHERE source = 'ndw-flow'
     `;
 
-    const measurements = allRows.filter((r) => r.kind === "measurement");
-    const events = allRows.filter((r) => r.kind === "event");
-
-    expect(measurements.length).toBeGreaterThan(0);
-    expect(events.length).toBeGreaterThan(0);
+    const measurements = rows.filter((r) => r.kind === "measurement");
+    // Two sites resolve (Point + LineString); two are skipped (no-data, missing).
+    expect(measurements.length).toBe(2);
+    // los is unknown for NDW (no baseline), so no derived congestion events.
+    const events = rows.filter((r) => r.kind === "event");
+    expect(events.length).toBe(0);
   }, 60_000);
 
-  it("flow rows use 'roads' domain and 'digitraffic-fi-flow' source", async () => {
+  it("flow rows use 'roads' domain and 'ndw-flow' source", async () => {
     const wrongRows = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
       FROM conditions.observations
-      WHERE source = 'digitraffic-fi-flow' AND (domain <> 'roads')
+      WHERE source = 'ndw-flow' AND (domain <> 'roads')
     `;
     expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
   }, 30_000);
@@ -327,28 +345,32 @@ describe("flow feed — e2e pipeline", () => {
     const invalid = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
       FROM conditions.observations
-      WHERE source = 'digitraffic-fi-flow' AND NOT ST_IsValid(geom)
+      WHERE source = 'ndw-flow' AND NOT ST_IsValid(geom)
     `;
     expect(parseInt(invalid[0]!.count, 10)).toBe(0);
   }, 30_000);
 
-  it("flow measurements have metric='flow' in the metric column", async () => {
-    const rows = await sql<{ metric: string | null }[]>`
-      SELECT metric
+  it("writes a real Point geometry resolved from the site table", async () => {
+    const rows = await sql<{ gtype: string; lon: number; lat: number }[]>`
+      SELECT ST_GeometryType(geom) AS gtype, ST_X(geom) AS lon, ST_Y(geom) AS lat
       FROM conditions.observations
-      WHERE source = 'digitraffic-fi-flow' AND kind = 'measurement'
+      WHERE id = 'ndw-flow:PZH01_MST_0065_00'
     `;
-    expect(rows.length).toBeGreaterThan(0);
-    expect(rows.every((r) => r.metric === "flow")).toBe(true);
+    expect(rows.length).toBe(1);
+    expect(rows[0]!.gtype).toBe("ST_Point");
+    expect(rows[0]!.lon).toBeCloseTo(4.536069, 5);
+    expect(rows[0]!.lat).toBeCloseTo(52.0235558, 5);
   }, 30_000);
 
-  it("derived congestion events have type='congestion' in attributes", async () => {
-    const rows = await sql<{ type: string | null }[]>`
-      SELECT type
+  it("flow measurements have metric='flow' and the live speed value", async () => {
+    const rows = await sql<{ metric: string | null; value: string | null }[]>`
+      SELECT metric, value::text AS value
       FROM conditions.observations
-      WHERE source = 'digitraffic-fi-flow' AND kind = 'event'
+      WHERE source = 'ndw-flow' AND kind = 'measurement'
     `;
-    expect(rows.length).toBeGreaterThan(0);
-    expect(rows.every((r) => r.type === "congestion")).toBe(true);
+    expect(rows.length).toBe(2);
+    expect(rows.every((r) => r.metric === "flow")).toBe(true);
+    const best = rows.find((r) => r.value != null && Number(r.value) === 64);
+    expect(best).toBeDefined();
   }, 30_000);
 });

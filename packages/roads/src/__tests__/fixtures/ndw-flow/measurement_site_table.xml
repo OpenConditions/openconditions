@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/">
+  <SOAP:Body>
+    <d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" modelBaseVersion="2"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <payloadPublication xsi:type="MeasurementSiteTablePublication" lang="nl">
+        <publicationTime>2026-06-24T11:00:00.000Z</publicationTime>
+        <measurementSiteTable id="NDW01_MT" version="1716">
+          <measurementSiteRecord id="PZH01_MST_0065_00" version="12">
+            <measurementSiteName>
+              <values><value lang="nl">N211 hmp 6.5 Re</value></values>
+            </measurementSiteName>
+            <measurementSiteNumberOfLanes>1</measurementSiteNumberOfLanes>
+            <measurementSide>northBound</measurementSide>
+            <measurementSiteLocation xsi:type="Point">
+              <locationForDisplay>
+                <latitude>52.0235558</latitude>
+                <longitude>4.536069</longitude>
+              </locationForDisplay>
+            </measurementSiteLocation>
+          </measurementSiteRecord>
+          <measurementSiteRecord id="PZH01_MST_0029-00" version="13">
+            <measurementSiteName>
+              <values><value lang="nl">N206 hmp 2.9 Li</value></values>
+            </measurementSiteName>
+            <measurementSiteNumberOfLanes>1</measurementSiteNumberOfLanes>
+            <measurementSide>southBound</measurementSide>
+            <measurementSiteLocation xsi:type="ItineraryByIndexedLocations">
+              <locationContainedInItinerary index="0">
+                <location xsi:type="Linear">
+                  <locationForDisplay>
+                    <latitude>52.00828</latitude>
+                    <longitude>4.675735</longitude>
+                  </locationForDisplay>
+                  <linearExtension>
+                    <linearByCoordinatesExtension>
+                      <linearCoordinatesStartPoint>
+                        <pointCoordinates>
+                          <latitude>52.0090</latitude>
+                          <longitude>4.6750</longitude>
+                        </pointCoordinates>
+                      </linearCoordinatesStartPoint>
+                      <linearCoordinatesEndPoint>
+                        <pointCoordinates>
+                          <latitude>52.0076</latitude>
+                          <longitude>4.6765</longitude>
+                        </pointCoordinates>
+                      </linearCoordinatesEndPoint>
+                    </linearByCoordinatesExtension>
+                  </linearExtension>
+                </location>
+              </locationContainedInItinerary>
+            </measurementSiteLocation>
+          </measurementSiteRecord>
+          <measurementSiteRecord id="PZH01_MST_NOLOC_00" version="1">
+            <measurementSiteName>
+              <values><value lang="nl">No location record</value></values>
+            </measurementSiteName>
+            <measurementSiteNumberOfLanes>1</measurementSiteNumberOfLanes>
+          </measurementSiteRecord>
+        </measurementSiteTable>
+      </payloadPublication>
+    </d2LogicalModel>
+  </SOAP:Body>
+</SOAP:Envelope>
