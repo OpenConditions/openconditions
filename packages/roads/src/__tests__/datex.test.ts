@@ -236,7 +236,9 @@ describe("parseDatexSituations — NDW real-feed coverage", () => {
     const events = parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
     expect(events.length).toBeGreaterThan(400); // was ~206 (points only)
     expect(
-      events.some((e) => e.geometry?.type === "LineString" || e.geometry?.type === "MultiLineString")
+      events.some(
+        (e) => e.geometry?.type === "LineString" || e.geometry?.type === "MultiLineString"
+      )
     ).toBe(true);
     expect(events.some((e) => e.roadState != null)).toBe(true);
     expect(events.some((e) => e.lanesAffected != null)).toBe(true);
