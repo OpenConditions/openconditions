@@ -5,4 +5,5 @@ export * from "./traff.js";
 export * from "./jsonld.js";
 export * from "./gtfsrt.js";
 export * from "./datex.js";
+export * from "./valhalla.js";
 export * from "./sse.js";

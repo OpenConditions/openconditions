@@ -1,6 +1,7 @@
 import { type ConditionEvent, readObservations } from "@openconditions/core";
 import {
   diffObservations,
+  eventsToExclusions,
   matchesTypeFilter,
   observationsToDatexSituations,
   parseTypeFilter,
@@ -47,7 +48,8 @@ function runner(sql: Sql) {
  * Public emitter endpoints — read-only projections of conditions.observations
  * into standard wire formats so the wider ecosystem can consume OpenConditions:
  *   GET /observations.geojson · /observations.jsonld · /traff.xml ·
- *       /gtfs-rt/alerts.pb · /datex2/situations.xml · /stream (SSE)
+ *       /gtfs-rt/alerts.pb · /datex2/situations.xml ·
+ *       /valhalla/exclusions.json · /stream (SSE)
  * All bbox-filterable (?bbox=west,south,east,north[&domain=roads]); /stream also
  * takes an optional comma-separated &type= filter and pushes live deltas.
  */
@@ -105,6 +107,14 @@ export function registerPublishRoutes(app: FastifyInstance, sql: Sql): void {
     reply.header("Content-Type", "application/xml; charset=utf-8");
     reply.header("Cache-Control", "public, max-age=90");
     return reply.send(observationsToDatexSituations(events, info()));
+  });
+
+  app.get("/valhalla/exclusions.json", async (req, reply) => {
+    const obs = await read(req.query as Record<string, string | undefined>);
+    if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
+    reply.header("Content-Type", "application/json");
+    reply.header("Cache-Control", "public, max-age=90");
+    return reply.send(eventsToExclusions(obs));
   });
 
   app.get("/stream", (req, reply) => {
