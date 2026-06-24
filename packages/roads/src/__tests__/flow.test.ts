@@ -320,3 +320,164 @@ describe("regression — existing event parsers untouched", () => {
     expect(events.every((e) => e.domain === "roads")).toBe(true);
   });
 });
+
+describe("parseDigitrafficFlow — MultiLineString geometry", () => {
+  const multiLineFeature = {
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        geometry: {
+          type: "MultiLineString",
+          coordinates: [
+            [
+              [25.0, 60.2],
+              [25.01, 60.21],
+            ],
+            [
+              [25.02, 60.22],
+              [25.03, 60.23],
+            ],
+          ],
+        },
+        properties: {
+          id: "DT_MULTI_QUEUING",
+          congestionLevel: "QUEUING",
+          averageSpeed: 18.0,
+          freeFlowSpeed: 100.0,
+          measuredTime: "2026-06-24T10:00:00Z",
+        },
+      },
+    ],
+  };
+
+  it("accepts MultiLineString geometry and emits one RoadFlow per member line", () => {
+    const { flows } = parseDigitrafficFlow(multiLineFeature, DT_SOURCE);
+    expect(flows).toHaveLength(2);
+    expect(flows.every((f) => f.geometry.type === "LineString")).toBe(true);
+  });
+
+  it("all member-line flows share the same los and source id", () => {
+    const { flows } = parseDigitrafficFlow(multiLineFeature, DT_SOURCE);
+    expect(flows.every((f) => f.los === "queuing")).toBe(true);
+    expect(flows.every((f) => f.source === "digitraffic-fi")).toBe(true);
+  });
+
+  it("emits a derived congestion event for each member-line when los >= queuing", () => {
+    const { events } = parseDigitrafficFlow(multiLineFeature, DT_SOURCE);
+    expect(events).toHaveLength(2);
+    expect(events.every((e) => e.type === "congestion")).toBe(true);
+  });
+
+  it("member-line flow ids are disambiguated with a line index suffix", () => {
+    const { flows } = parseDigitrafficFlow(multiLineFeature, DT_SOURCE);
+    expect(flows[0]!.id).toBe("digitraffic-fi:DT_MULTI_QUEUING:0");
+    expect(flows[1]!.id).toBe("digitraffic-fi:DT_MULTI_QUEUING:1");
+  });
+
+  it("each member-line geometry carries its own coordinates", () => {
+    const { flows } = parseDigitrafficFlow(multiLineFeature, DT_SOURCE);
+    expect(flows[0]!.geometry.coordinates).toEqual([
+      [25.0, 60.2],
+      [25.01, 60.21],
+    ]);
+    expect(flows[1]!.geometry.coordinates).toEqual([
+      [25.02, 60.22],
+      [25.03, 60.23],
+    ]);
+  });
+});
+
+describe("parseDatexMeasuredData — site-table geometry fallback", () => {
+  const siteTableXml = `<?xml version="1.0" encoding="UTF-8"?>
+<D2LogicalModel modelBaseVersion="2">
+  <measurementSiteTable id="MST-001" version="1">
+    <measurementSite id="NL-SITE-A" version="1">
+      <measurementSiteLocation>
+        <gmlLineString srsName="WGS 84">
+          <gml:posList xmlns:gml="http://www.opengis.net/gml">
+            52.3700 4.8950 52.3720 4.8990
+          </gml:posList>
+        </gmlLineString>
+      </measurementSiteLocation>
+    </measurementSite>
+  </measurementSiteTable>
+  <payloadPublication xsi:type="MeasuredDataPublication"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <publicationTime>2026-06-24T10:00:00Z</publicationTime>
+    <siteMeasurements>
+      <measurementSiteReference id="NL-SITE-A" version="1"/>
+      <measurementTimeDefault>2026-06-24T10:00:00Z</measurementTimeDefault>
+      <measuredValue index="1">
+        <basicDataValue xsi:type="TrafficStatus">
+          <trafficStatus>queuing</trafficStatus>
+          <averageVehicleSpeed>
+            <dataError>false</dataError>
+            <speed>22.0</speed>
+          </averageVehicleSpeed>
+        </basicDataValue>
+      </measuredValue>
+    </siteMeasurements>
+  </payloadPublication>
+</D2LogicalModel>`;
+
+  it("resolves geometry from measurementSiteTable when measuredValue has no locationReference", () => {
+    const { flows } = parseDatexMeasuredData(Buffer.from(siteTableXml), NDW_SOURCE);
+    expect(flows).toHaveLength(1);
+    expect(flows[0]!.geometry.type).toBe("LineString");
+  });
+
+  it("correctly maps the site-table geometry coordinates", () => {
+    const { flows } = parseDatexMeasuredData(Buffer.from(siteTableXml), NDW_SOURCE);
+    const coords = flows[0]!.geometry.coordinates;
+    expect(coords[0]).toEqual([4.895, 52.37]);
+    expect(coords[1]).toEqual([4.899, 52.372]);
+  });
+
+  it("emits a derived congestion event when site-table geometry is resolved and los >= queuing", () => {
+    const { events } = parseDatexMeasuredData(Buffer.from(siteTableXml), NDW_SOURCE);
+    expect(events).toHaveLength(1);
+    expect(events[0]!.type).toBe("congestion");
+    expect(events[0]!.severity).toBe("high");
+  });
+
+  it("uses inline locationReference first, ignoring site-table when both are present", () => {
+    const bothXml = `<?xml version="1.0" encoding="UTF-8"?>
+<D2LogicalModel modelBaseVersion="2">
+  <measurementSiteTable id="MST-001" version="1">
+    <measurementSite id="NL-SITE-B" version="1">
+      <measurementSiteLocation>
+        <gmlLineString srsName="WGS 84">
+          <gml:posList xmlns:gml="http://www.opengis.net/gml">
+            99.0 99.0 99.1 99.1
+          </gml:posList>
+        </gmlLineString>
+      </measurementSiteLocation>
+    </measurementSite>
+  </measurementSiteTable>
+  <payloadPublication xsi:type="MeasuredDataPublication"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <publicationTime>2026-06-24T10:00:00Z</publicationTime>
+    <siteMeasurements>
+      <measurementSiteReference id="NL-SITE-B" version="1"/>
+      <measurementTimeDefault>2026-06-24T10:00:00Z</measurementTimeDefault>
+      <measuredValue index="1">
+        <basicDataValue xsi:type="TrafficStatus">
+          <trafficStatus>heavy</trafficStatus>
+        </basicDataValue>
+        <locationReference>
+          <gmlLineString srsName="WGS 84">
+            <gml:posList xmlns:gml="http://www.opengis.net/gml">
+              52.3500 4.8700 52.3520 4.8720
+            </gml:posList>
+          </gmlLineString>
+        </locationReference>
+      </measuredValue>
+    </siteMeasurements>
+  </payloadPublication>
+</D2LogicalModel>`;
+    const { flows } = parseDatexMeasuredData(Buffer.from(bothXml), NDW_SOURCE);
+    expect(flows).toHaveLength(1);
+    expect(flows[0]!.geometry.coordinates[0]).toEqual([4.87, 52.35]);
+  });
+});

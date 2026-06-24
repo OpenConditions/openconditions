@@ -20,6 +20,11 @@ const DRIVEBC_FIXTURE_PATH = path.resolve(
   "../../../../packages/roads/src/__tests__/fixtures/drivebc/events.json"
 );
 
+const DT_FLOW_FIXTURE_PATH = path.resolve(
+  import.meta.dirname,
+  "../../../../packages/roads/src/__tests__/fixtures/digitraffic-flow/flow.json"
+);
+
 const ndwFeed: DomainFeedSource = {
   ...FEED_SOURCES.find((f) => f.id === "ndw")!,
   domain: "roads",
@@ -27,6 +32,11 @@ const ndwFeed: DomainFeedSource = {
 
 const drivebcFeed: DomainFeedSource = {
   ...FEED_SOURCES.find((f) => f.id === "drivebc")!,
+  domain: "roads",
+};
+
+const digitrafficFlowFeed: DomainFeedSource = {
+  ...FEED_SOURCES.find((f) => f.id === "digitraffic-fi-flow")!,
   domain: "roads",
 };
 
@@ -221,6 +231,9 @@ describe("store round-trip — typed columns + attributes JSONB", () => {
   }, 30_000);
 
   it("persists a RoadFlow measurement (metric/value columns + flow attributes)", async () => {
+    // NOTE: this is just the direct atomicSwap round-trip; the full flow-feed
+    // e2e test (parseFor dispatch → DB) lives in the "flow feed — e2e pipeline"
+    // suite below.
     const flow: RoadFlow = {
       id: "flow:1",
       source: "rtflow",
@@ -268,5 +281,74 @@ describe("store round-trip — typed columns + attributes JSONB", () => {
     expect(got!.los).toBe("heavy"); // attributes JSONB
     expect(got!.speedKph).toBe(40);
     expect(got!.delaySeconds).toBe(120);
+  }, 30_000);
+});
+
+describe("flow feed — e2e pipeline", () => {
+  it("runSource with produces:'flow' writes both RoadFlow measurements and derived congestion events", async () => {
+    const jsonPayload = readFileSync(DT_FLOW_FIXTURE_PATH);
+
+    const fakeFetch = async (_url: string | URL | Request): Promise<Response> => {
+      return new Response(jsonPayload, { status: 200 });
+    };
+
+    const result = await runSource(digitrafficFlowFeed, {
+      sql,
+      fetch: fakeFetch as typeof fetch,
+      now: () => new Date().toISOString(),
+    });
+
+    expect(result.count).toBeGreaterThan(0);
+    console.info(`[test] digitraffic-fi-flow: inserted ${result.count} rows`);
+
+    const allRows = await sql<{ id: string; kind: string; source: string }[]>`
+      SELECT id, kind, source
+      FROM conditions.observations
+      WHERE source = 'digitraffic-fi-flow'
+    `;
+
+    const measurements = allRows.filter((r) => r.kind === "measurement");
+    const events = allRows.filter((r) => r.kind === "event");
+
+    expect(measurements.length).toBeGreaterThan(0);
+    expect(events.length).toBeGreaterThan(0);
+  }, 60_000);
+
+  it("flow rows use 'roads' domain and 'digitraffic-fi-flow' source", async () => {
+    const wrongRows = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count
+      FROM conditions.observations
+      WHERE source = 'digitraffic-fi-flow' AND (domain <> 'roads')
+    `;
+    expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
+  }, 30_000);
+
+  it("all flow geometries are valid PostGIS geometries", async () => {
+    const invalid = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count
+      FROM conditions.observations
+      WHERE source = 'digitraffic-fi-flow' AND NOT ST_IsValid(geom)
+    `;
+    expect(parseInt(invalid[0]!.count, 10)).toBe(0);
+  }, 30_000);
+
+  it("flow measurements have metric='flow' in the metric column", async () => {
+    const rows = await sql<{ metric: string | null }[]>`
+      SELECT metric
+      FROM conditions.observations
+      WHERE source = 'digitraffic-fi-flow' AND kind = 'measurement'
+    `;
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.metric === "flow")).toBe(true);
+  }, 30_000);
+
+  it("derived congestion events have type='congestion' in attributes", async () => {
+    const rows = await sql<{ type: string | null }[]>`
+      SELECT type
+      FROM conditions.observations
+      WHERE source = 'digitraffic-fi-flow' AND kind = 'event'
+    `;
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((r) => r.type === "congestion")).toBe(true);
   }, 30_000);
 });

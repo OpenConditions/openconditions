@@ -4,6 +4,8 @@ import { parseOpen511 } from "./open511.js";
 import { parseWzdx } from "./wzdx.js";
 import { parseAutobahn } from "./autobahn.js";
 import { parseDigitraffic } from "./digitraffic.js";
+import { parseDigitrafficFlow, parseDatexMeasuredData } from "./flow.js";
+import type { FlowParseResult } from "./flow.js";
 import { discoverAutobahnRoads, discoverWzdxFeeds } from "./discover.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -19,6 +21,17 @@ export interface FeedSource {
   id: string;
   name: string;
   format: SourceFormat;
+  /**
+   * Declares what this feed produces:
+   *   "events" (default) — the parser returns Observation[] directly (RoadEvent etc.)
+   *   "flow"             — the parser returns FlowParseResult; both the RoadFlow
+   *                        measurements and the derived congestion RoadEvents are
+   *                        flattened into the pipeline's Observation[] output.
+   *
+   * Each flow feed must carry its own unique `id` so atomicSwap (which is
+   * source-id–scoped) never collides with an event feed from the same provider.
+   */
+  produces?: "events" | "flow";
   /**
    * The feed's URL(s). Optional when `discover` is set (the URL set is then
    * resolved dynamically at fetch time). When both are present, `discover` wins.
@@ -123,9 +136,27 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.transportation.gov/privacy",
     enabledByDefault: true,
   },
+  {
+    // Separate source id from "digitraffic-fi" (events) so that atomicSwap
+    // stays source-id–scoped and the two feeds never clobber each other's rows.
+    id: "digitraffic-fi-flow",
+    name: "Digitraffic traffic flow (Finland)",
+    format: "digitraffic-json",
+    produces: "flow",
+    // Digitraffic traffic-flow GeoJSON endpoint (different from the situation-messages endpoint).
+    url: "https://tie.digitraffic.fi/api/traffic-message/v1/traffic-datex2/flow-data",
+    cadenceSec: 60,
+    freshnessWindowSec: 300,
+    license: "CC-BY-4.0",
+    attribution: "Fintraffic / Digitraffic",
+    country: "FI",
+    privacyUrl: "https://www.fintraffic.fi/en/fintraffic/data-protection",
+    enabledByDefault: false,
+  },
 ];
 
 type ParserFn = typeof parseDatexSituations;
+type FlowParserFn = (input: string | Buffer, src: SourceDescriptor) => FlowParseResult;
 
 /**
  * Returns the parser function for a given source format.
@@ -138,6 +169,16 @@ export function parserFor(format: SourceFormat): ParserFn {
   if (format === "autobahn-json") return parseAutobahn;
   if (format === "digitraffic-json") return parseDigitraffic;
   throw new Error(`No parser registered for format: ${format}`);
+}
+
+/**
+ * Returns the flow parser function for a given source format.
+ * Throws when no flow parser is registered for the format.
+ */
+export function flowParserFor(format: SourceFormat): FlowParserFn {
+  if (format === "digitraffic-json") return parseDigitrafficFlow;
+  if (format === "datex2") return parseDatexMeasuredData;
+  throw new Error(`No flow parser registered for format: ${format}`);
 }
 
 /**

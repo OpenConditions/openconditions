@@ -133,19 +133,14 @@ export function parseDigitrafficFlow(
       const feature = rawFeature as Record<string, unknown>;
       const geometry = feature["geometry"] as Record<string, unknown> | null | undefined;
 
-      if (
-        !geometry ||
-        typeof geometry !== "object" ||
-        geometry["type"] !== "LineString" ||
-        !Array.isArray(geometry["coordinates"])
-      ) {
+      if (!geometry || typeof geometry !== "object" || !Array.isArray(geometry["coordinates"])) {
         continue;
       }
 
-      const geom: LineString = {
-        type: "LineString",
-        coordinates: geometry["coordinates"] as [number, number][],
-      };
+      const geomType = geometry["type"];
+      if (geomType !== "LineString" && geomType !== "MultiLineString") {
+        continue;
+      }
 
       const props = (feature["properties"] ?? {}) as Record<string, unknown>;
       const featureId = typeof props["id"] === "string" ? props["id"] : `flow-${flows.length + 1}`;
@@ -166,33 +161,51 @@ export function parseDigitrafficFlow(
 
       const measuredAt = typeof props["measuredTime"] === "string" ? props["measuredTime"] : now;
 
-      const flow: RoadFlow = {
-        id: `${src.id}:${featureId}`,
-        source: src.id,
-        sourceFormat: "digitraffic-json",
-        domain: "roads",
-        kind: "measurement",
-        metric: "flow",
-        aggregation: "live",
-        status: "active",
-        geometry: geom,
-        los,
-        ...(avgSpeed != null ? { speedKph: avgSpeed } : {}),
-        ...(freeFlowSpeed != null ? { freeFlowKph: freeFlowSpeed } : {}),
-        ...(speedRatio != null ? { speedRatio } : {}),
-        ...(delaySeconds != null ? { delaySeconds } : {}),
-        ...(jamFactor != null ? { jamFactor } : {}),
-        origin,
-        dataUpdatedAt: measuredAt,
-        fetchedAt: now,
-        isStale: false,
-      };
+      // For MultiLineString, emit one RoadFlow per member line so each
+      // observation carries a plain LineString geometry (model constraint).
+      const lineStrings: LineString[] =
+        geomType === "MultiLineString"
+          ? (geometry["coordinates"] as [number, number][][]).map((ring) => ({
+              type: "LineString",
+              coordinates: ring,
+            }))
+          : [
+              {
+                type: "LineString",
+                coordinates: geometry["coordinates"] as [number, number][],
+              } satisfies LineString,
+            ];
 
-      flows.push(flow);
+      lineStrings.forEach((geom, lineIndex) => {
+        const lineId = lineStrings.length > 1 ? `${featureId}:${lineIndex}` : featureId;
+        const flow: RoadFlow = {
+          id: `${src.id}:${lineId}`,
+          source: src.id,
+          sourceFormat: "digitraffic-json",
+          domain: "roads",
+          kind: "measurement",
+          metric: "flow",
+          aggregation: "live",
+          status: "active",
+          geometry: geom,
+          los,
+          ...(avgSpeed != null ? { speedKph: avgSpeed } : {}),
+          ...(freeFlowSpeed != null ? { freeFlowKph: freeFlowSpeed } : {}),
+          ...(speedRatio != null ? { speedRatio } : {}),
+          ...(delaySeconds != null ? { delaySeconds } : {}),
+          ...(jamFactor != null ? { jamFactor } : {}),
+          origin,
+          dataUpdatedAt: measuredAt,
+          fetchedAt: now,
+          isStale: false,
+        };
 
-      if (QUEUING_LOS.has(los)) {
-        events.push(derivedCongestionEvent(flow, src, featureId));
-      }
+        flows.push(flow);
+
+        if (QUEUING_LOS.has(los)) {
+          events.push(derivedCongestionEvent(flow, src, lineId));
+        }
+      });
     } catch (err) {
       console.warn("[digitraffic-flow] skipped malformed feature:", err);
     }
@@ -282,11 +295,61 @@ function resolveLineStringFromLocRef(locRef: unknown): LineString | null {
 }
 
 /**
+ * Builds an id→LineString map from a DATEX II measurementSiteTable element.
+ * Many real-world feeds place geometry on the site record rather than inline
+ * on each measuredValue; this map lets measurements fall back to the site's
+ * geometry when no inline locationReference is present.
+ */
+function buildSiteGeometryMap(root: ReturnType<typeof parseXmlDocument>): Map<string, LineString> {
+  const map = new Map<string, LineString>();
+
+  const visitSiteTable = (node: unknown): void => {
+    if (!isXmlObject(node)) return;
+    for (const [key, value] of Object.entries(node)) {
+      if (key.startsWith("@_")) continue;
+      const local = stripXmlNamespace(key);
+      if (local === "measurementSiteTable") {
+        for (const tableNode of xmlNodeToArray(value)) {
+          if (!isXmlObject(tableNode)) continue;
+          for (const [k2, v2] of Object.entries(tableNode)) {
+            if (k2.startsWith("@_")) continue;
+            const local2 = stripXmlNamespace(k2);
+            if (local2 === "measurementSite") {
+              for (const site of xmlNodeToArray(v2)) {
+                if (!isXmlObject(site)) continue;
+                const siteId =
+                  (site["@_id"] as string | undefined) ??
+                  (site["@_targetClass"] as string | undefined);
+                if (!siteId) continue;
+                const locRef = getXmlChild(site, "measurementSiteLocation");
+                if (locRef) {
+                  const geom = resolveLineStringFromLocRef(locRef);
+                  if (geom) map.set(siteId, geom);
+                }
+              }
+            }
+          }
+        }
+      } else {
+        visitSiteTable(value);
+      }
+    }
+  };
+
+  visitSiteTable(root);
+  return map;
+}
+
+/**
  * Parse a DATEX II MeasuredDataPublication (or similarly structured
  * ElaboratedData) XML document into RoadFlow measurements. Only site
  * measurements that carry a LineString (posList) geometry are emitted;
  * point-only records are skipped. A derived congestion RoadEvent is emitted
  * for every segment with los >= queuing.
+ *
+ * Geometry is resolved first from an inline locationReference on the
+ * measuredValue, and falls back to a measurementSiteTable entry keyed by the
+ * site's id — the layout used by feeds that separate site geometry from data.
  */
 export function parseDatexMeasuredData(
   input: string | Buffer,
@@ -297,7 +360,11 @@ export function parseDatexMeasuredData(
     doc = parseXmlDocument(input, {
       removeNSPrefix: true,
       ignoreAttributes: false,
-      isArray: (n) => n === "siteMeasurements" || n === "measuredValue" || n === "value",
+      isArray: (n) =>
+        n === "siteMeasurements" ||
+        n === "measuredValue" ||
+        n === "value" ||
+        n === "measurementSite",
     });
   } catch (err) {
     console.warn("[datex-flow] failed to parse XML:", err);
@@ -309,6 +376,8 @@ export function parseDatexMeasuredData(
   const events: RoadEvent[] = [];
   const now = new Date().toISOString();
   const origin = makeOrigin(src);
+
+  const siteGeometryMap = buildSiteGeometryMap(root);
 
   const publication = findMeasuredPublication(root);
   if (!publication) return { flows: [], events: [] };
@@ -330,9 +399,9 @@ export function parseDatexMeasuredData(
 
       for (const mv of measuredValues) {
         const locRef = getXmlChild(mv, "locationReference");
-        if (!locRef) continue;
-
-        const geom = resolveLineStringFromLocRef(locRef);
+        const geom = locRef
+          ? resolveLineStringFromLocRef(locRef)
+          : (siteGeometryMap.get(siteId) ?? null);
         if (!geom) continue;
 
         const basicDataValue =
