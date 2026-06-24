@@ -67,6 +67,9 @@ function densify(coords: [number, number][], maxSpacing: number, cap: number): [
   const stride = out.length / cap;
   const sampled: [number, number][] = [];
   for (let i = 0; i < cap; i++) sampled.push(out[Math.floor(i * stride)]!);
+  // The strided loop never lands on the final index, so force the terminal
+  // endpoint into the last slot — a closure's far end must stay excluded.
+  sampled[sampled.length - 1] = out[out.length - 1]!;
   return sampled;
 }
 

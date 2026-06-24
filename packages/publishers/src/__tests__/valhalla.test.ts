@@ -58,6 +58,27 @@ describe("eventsToExclusions", () => {
     expect(loose.exclude_locations.length).toBeLessThan(tight.exclude_locations.length);
   });
 
+  it("downsamples a long line to maxPointsPerClosure but keeps both endpoints", () => {
+    const ex = eventsToExclusions(
+      [
+        roadEvent({
+          type: "road_closure",
+          geometry: {
+            type: "LineString",
+            coordinates: [
+              [13.4, 52.5],
+              [13.6, 52.5], // ~13.5 km → hundreds of 45 m samples, capped to 5
+            ],
+          },
+        }),
+      ],
+      { maxPointsPerClosure: 5 }
+    );
+    expect(ex.exclude_locations).toHaveLength(5);
+    expect(ex.exclude_locations[0]).toEqual({ lon: 13.4, lat: 52.5 });
+    expect(ex.exclude_locations.at(-1)).toEqual({ lon: 13.6, lat: 52.5 });
+  });
+
   it("maps a Polygon to an exterior ring of [lon, lat] pairs (GeoJSON order)", () => {
     const ring: [number, number][] = [
       [4.0, 52.0],
