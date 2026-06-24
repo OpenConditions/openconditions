@@ -1,16 +1,17 @@
 import { defineConfig } from "tsup";
 
+// Builds the OpenMapX community-integration artifact layout: the host loads the
+// backend bundle from `dist/backend/index.mjs` and calls its `setup(ctx)`. The
+// only runtime dependency (@openconditions/core) is inlined (noExternal) so the
+// installed artifact needs no node_modules — esbuild tree-shakes core down to
+// the one helper this provider uses (observationsByBbox + severity).
 export default defineConfig({
-  entry: ["src/index.ts"],
-  format: ["esm", "cjs"],
-  dts: true,
-  sourcemap: true,
-  clean: true,
+  entry: { "backend/index": "src/index.ts" },
+  format: ["esm"],
+  outExtension: () => ({ js: ".mjs" }),
   outDir: "dist",
-  // The installed artifact runs inside the OpenMapX host with no access to this
-  // workspace, so the only runtime dependency (@openconditions/core) is inlined
-  // rather than left as a bare import. esbuild tree-shakes core down to the one
-  // helper this provider uses (observationsByBbox + severity), keeping the
-  // bundle small and free of postgres/drizzle.
+  dts: false,
+  sourcemap: false,
+  clean: true,
   noExternal: [/^@openconditions\//],
 });

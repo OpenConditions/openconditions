@@ -41,9 +41,14 @@ jobs:
         run: pnpm build
 
       - name: Publish (prebuilt dist, public scope)
-        run: pnpm --filter "@openconditions/core" --filter "@openconditions/roads" publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "NPM_TOKEN not set — skipping npm publish (images + integration artifact still publish)."
+            exit 0
+          fi
+          pnpm --filter "@openconditions/core" --filter "@openconditions/roads" publish --access public --no-git-checks
 
   publish-image:
     name: build + push ghcr.io/openconditions/ingest
@@ -116,3 +121,50 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+  publish-integration:
+    name: publish road-conditions-openconditions artifact
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      TURBO_TELEMETRY_DISABLED: 1
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build the integration backend bundle
+        run: pnpm --filter "@openconditions/road-conditions-openconditions..." build
+
+      # The OpenMapX installer wants manifest.json at the tar root + the prebuilt
+      # dist/backend/index.mjs and no node_modules; the sha256 is over the tarball.
+      - name: Package the artifact
+        id: pack
+        run: |
+          dir=integrations/road-conditions-openconditions
+          out=road-conditions-openconditions.tar.gz
+          tar -czf "$out" -C "$dir" manifest.json dist/backend/index.mjs LICENSE
+          sha=$(sha256sum "$out" | cut -d' ' -f1)
+          echo "$sha" > "$out.sha256"
+          echo "sha256=$sha" >> "$GITHUB_OUTPUT"
+          echo "Artifact sha256: $sha"
+
+      - name: Attach to the GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ github.ref_name }}" --verify-tag \
+            --title "${{ github.ref_name }}" \
+            --notes "OpenConditions ${{ github.ref_name }} — road-conditions-openconditions artifact sha256: ${{ steps.pack.outputs.sha256 }}" \
+            || echo "release already exists"
+          gh release upload "${{ github.ref_name }}" \
+            road-conditions-openconditions.tar.gz road-conditions-openconditions.tar.gz.sha256 --clobber
