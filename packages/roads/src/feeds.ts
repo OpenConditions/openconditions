@@ -50,6 +50,11 @@ export interface FeedSource {
    * geometry for measurement sites keyed only by id in the data feed (the NDW
    * layout). The ingest service fetches and caches it, then joins it into the
    * flow parser. Only meaningful for `produces: "flow"` datex2 feeds.
+   *
+   * Set `gzip: true` when the URL serves a gzip-compressed body (e.g. an
+   * `.xml.gz` file). The streaming site-table loader honours this flag and does
+   * NOT magic-byte-sniff the response, so a gzipped body without `gzip: true`
+   * would stream corrupt bytes into the parser (yielding an empty map).
    */
   siteTable?: { url: string; gzip?: boolean };
   auth?: {
