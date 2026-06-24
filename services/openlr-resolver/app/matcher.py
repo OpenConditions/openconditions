@@ -19,9 +19,10 @@ and ends at the wrong points.
 
 This module works around the engine bug by:
 
-1. Capturing the full set of matched lines through the ``on_route_success``
-   observer callback (one call per LRP-to-LRP segment, fired before offsets
-   are applied).
+1. Reading the accepted path from ``LineLocation.lines`` (returned by the
+   ``decode()`` call), which contains only the edges the engine committed to
+   after passing the DNP length check — no ghost segments from explored-but-
+   rejected candidate routes.
 2. Concatenating those line geometries into one shapely ``LineString``.
 3. Computing the true total geodesic path length.
 4. Applying the correct positive/negative offsets in metres
@@ -44,7 +45,6 @@ from openlr import LineLocationReference, LocationReferencePoint
 from openlr_dereferencer import Config, DEFAULT_CONFIG, decode
 from openlr_dereferencer.decoding.candidate import Candidate
 from openlr_dereferencer.decoding.error import LRDecodeError
-from openlr_dereferencer.decoding.routes import Route
 from openlr_dereferencer.maps import Line, MapReader
 from openlr_dereferencer.maps.wgs84 import line_string_length
 from openlr_dereferencer.observer import DecoderObserver
@@ -66,19 +66,14 @@ class MatchResult:
 
 @dataclass
 class _ScoreObserver(DecoderObserver):
-    """Records best candidate scores and the matched lines for each LRP segment.
+    """Records the best candidate score seen per LRP.
 
     The decoder rates every candidate line for an LRP; the highest of those
     scores is the strongest evidence that the LRP was placed on the right road.
     Averaging the per-LRP bests yields a single confidence for the whole match.
-
-    ``matched_paths`` accumulates the raw line sequences reported by
-    ``on_route_success`` (one entry per LRP-to-LRP segment), preserving them
-    before the engine's offset-trimming step consumes them.
     """
 
     best_scores: dict[LocationReferencePoint, float] = field(default_factory=dict)
-    matched_paths: list[list[Line]] = field(default_factory=list)
 
     def on_candidates_found(
         self, lrp: LocationReferencePoint, candidates: Sequence[Candidate]
@@ -88,16 +83,6 @@ class _ScoreObserver(DecoderObserver):
         best = max(c.score for c in candidates)
         prior = self.best_scores.get(lrp, 0.0)
         self.best_scores[lrp] = max(prior, best)
-
-    def on_route_success(
-        self,
-        from_lrp: LocationReferencePoint,
-        to_lrp: LocationReferencePoint,
-        from_line: Line,
-        to_line: Line,
-        path: Route,
-    ) -> None:
-        self.matched_paths.append(path.lines)
 
     def on_route_fail(self, *args: Any, **kwargs: Any) -> None:
         pass
@@ -113,20 +98,19 @@ def _confidence(observer: _ScoreObserver) -> float:
     return round(sum(scores) / len(scores), 4)
 
 
-def _join_line_geometries(segments: list[list[Line]]) -> LineString:
-    """Concatenate the geometries of all matched lines into one ``LineString``.
+def _join_line_geometries(lines: list[Line]) -> LineString:
+    """Concatenate the geometries of the accepted matched lines into one ``LineString``.
 
-    Duplicate junction nodes (where one segment ends and the next begins)
+    Duplicate junction nodes (where one line ends and the next begins)
     are deduplicated so the result has no repeated coordinate.
     """
     coords: list[tuple[float, float]] = []
-    for seg in segments:
-        for line in seg:
-            line_coords = list(line.geometry.coords)
-            if coords and line_coords and coords[-1] == line_coords[0]:
-                coords.extend(line_coords[1:])
-            else:
-                coords.extend(line_coords)
+    for line in lines:
+        line_coords = list(line.geometry.coords)
+        if coords and line_coords and coords[-1] == line_coords[0]:
+            coords.extend(line_coords[1:])
+        else:
+            coords.extend(line_coords)
     return LineString(coords)
 
 
@@ -181,6 +165,10 @@ def match(
     TOTAL matched path length rather than only the first or last segment length,
     correcting the ``openlr-dereferencer`` engine's ``build_line_location`` bug.
 
+    The polyline is built from ``LineLocation.lines`` — the set of edges the
+    engine committed to after all DNP checks passed — so ghost segments from
+    explored-but-rejected candidate routes are never included.
+
     Raises ``NoMatchError`` when the decoder cannot find a consistent path.
     """
 
@@ -190,10 +178,11 @@ def match(
     except LRDecodeError as exc:
         raise NoMatchError(str(exc)) from exc
 
-    if not observer.matched_paths:
+    accepted_lines: list[Line] = location.lines
+    if not accepted_lines:
         raise NoMatchError("Decoder produced no matched path segments")
 
-    full_line = _join_line_geometries(observer.matched_paths)
+    full_line = _join_line_geometries(accepted_lines)
     total_len = line_string_length(full_line)
 
     p_off_m = reference.poffs * total_len
