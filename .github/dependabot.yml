@@ -44,6 +44,10 @@ updates:
     labels: [dependencies, ci]
     commit-message:
       prefix: ci
+    ignore:
+      # Pinned fork that provides the Node 24 runtime; the upstream 2.6.1 tag
+      # regresses the runtime, so update this action by hand, not via Dependabot.
+      - dependency-name: "OpenMapX/cla-assistant-action"
 
   - package-ecosystem: pip
     directory: "/services/openlr-resolver"
@@ -57,6 +61,11 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    groups:
+      # The dormant resolver's deps arrive as one PR instead of one-per-package.
+      python-deps:
+        patterns:
+          - "*"
 
   - package-ecosystem: docker
     # Cover every Dockerfile so the digest-pinned base images get bumped (a
@@ -74,3 +83,10 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    ignore:
+      # Stay on the pinned LTS base images (Node 24 / Python 3.12 == CI); bump a
+      # base-image major deliberately, not via Dependabot.
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "python"
+        update-types: ["version-update:semver-major"]
