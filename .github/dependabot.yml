@@ -89,4 +89,6 @@ updates:
       - dependency-name: "node"
         update-types: ["version-update:semver-major"]
       - dependency-name: "python"
-        update-types: ["version-update:semver-major"]
+        # Python 3.12→3.14 is a "minor" bump in semver terms; ignore minor too so
+        # the base stays on 3.12 (== the CI test runtime) until bumped on purpose.
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
