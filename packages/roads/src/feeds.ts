@@ -143,7 +143,13 @@ export const FEED_SOURCES: FeedSource[] = [
     name: "Digitraffic traffic flow (Finland)",
     format: "digitraffic-json",
     produces: "flow",
-    // Digitraffic traffic-flow GeoJSON endpoint (different from the situation-messages endpoint).
+    // The /traffic-datex2/flow-data path strongly suggests this endpoint
+    // returns DATEX II XML (MeasuredDataPublication), not Digitraffic GeoJSON.
+    // This feed is disabled by default and has NOT been verified. Before
+    // enabling: fetch the endpoint, confirm the Content-Type and payload shape,
+    // and switch `format` to "datex2" if it is DATEX II XML (which routes to
+    // parseDatexMeasuredData). Leaving it as "digitraffic-json" while disabled
+    // preserves existing behaviour but would parse incorrectly if activated.
     url: "https://tie.digitraffic.fi/api/traffic-message/v1/traffic-datex2/flow-data",
     cadenceSec: 60,
     freshnessWindowSec: 300,

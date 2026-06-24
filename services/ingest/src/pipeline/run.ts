@@ -62,6 +62,8 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   }
 
   const parsed = buffers.flatMap((b) => parseFor(src, b));
+  // resolveOpenLr narrows the union: items without geometry (UnresolvedRoadEvent)
+  // are resolved to real geometry or dropped — resolved[] always has geometry.
   const { resolved, dropped } = await resolveOpenLr(parsed, deps.openlrClient ?? null);
 
   await atomicSwap(deps.sql, src.id, resolved, src.freshnessWindowSec);

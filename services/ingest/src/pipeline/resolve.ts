@@ -1,5 +1,6 @@
 import type { GeoJsonGeometry, Observation } from "@openconditions/core";
 import type { MapMatchClient } from "@openconditions/openlr";
+import type { UnresolvedRoadEvent } from "@openconditions/roads";
 import { decodeOpenLrBinary } from "@openconditions/openlr";
 
 /** Max cached resolutions — oldest entries are evicted when full. */
@@ -20,37 +21,36 @@ function cacheSet(key: string, value: GeoJsonGeometry): void {
 /** Max concurrent resolver calls in flight at once. */
 const RESOLVE_CONCURRENCY = 8;
 
-type MaybeObservation = Observation & { externalRefs?: { openlr?: string } };
-
 /**
  * Resolves any observations that carry an OpenLR reference but no geometry.
  *
  * - Observations that already have geometry pass through unchanged.
- * - Observations with `externalRefs.openlr` and no geometry are resolved via
- *   the map-match client; on success the resolved geometry is applied; on
- *   failure (null return or thrown error) the observation is dropped and the
- *   dropped counter is incremented.
- * - When `client` is null (OPENLR_RESOLVER_URL unset) observations without
- *   geometry are dropped silently.
+ * - UnresolvedRoadEvent items (geometry absent, externalRefs.openlr set) are
+ *   resolved via the map-match client; on success the resolved geometry is
+ *   applied, yielding a full Observation; on failure (null return or thrown
+ *   error) the item is dropped and the dropped counter is incremented.
+ * - When `client` is null (OPENLR_RESOLVER_URL unset) unresolved items are
+ *   dropped silently.
  *
- * Returns the filtered+resolved array and the count of dropped events.
+ * Returns the filtered+resolved array (real geometry only) and the count of
+ * dropped events. After this stage every item in `resolved` has a geometry
+ * field — UnresolvedRoadEvent never reaches write-postgis.
  */
 export async function resolveOpenLr(
-  items: Observation[],
+  items: (Observation | UnresolvedRoadEvent)[],
   client: MapMatchClient | null
 ): Promise<{ resolved: Observation[]; dropped: number }> {
   const out: Observation[] = [];
   let dropped = 0;
 
   const passThrough: Observation[] = [];
-  const needsResolve: MaybeObservation[] = [];
+  const needsResolve: UnresolvedRoadEvent[] = [];
 
   for (const item of items) {
-    const obs = item as MaybeObservation;
-    if (obs.geometry != null) {
-      passThrough.push(item);
-    } else if (obs.externalRefs?.openlr) {
-      needsResolve.push(obs);
+    if (item.geometry != null) {
+      passThrough.push(item as Observation);
+    } else if ((item as UnresolvedRoadEvent).externalRefs?.openlr) {
+      needsResolve.push(item as UnresolvedRoadEvent);
     } else {
       dropped++;
     }

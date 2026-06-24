@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "RoadEvent model, DATEX II SituationPublication parser, and taxonomy for OpenConditions roads domain",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
   "type": "module",
   "exports": {
     ".": {

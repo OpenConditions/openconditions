@@ -48,6 +48,9 @@ export function createResolverClient(baseUrl: string): MapMatchClient {
       }
 
       const body = (await res.json()) as ResolveSuccessBody;
+      if (body.geometry == null) {
+        throw new Error("openlr-resolver returned a 200 response with no geometry field");
+      }
       return body.geometry;
     },
   };

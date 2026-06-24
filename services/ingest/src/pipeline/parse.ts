@@ -1,5 +1,5 @@
 import type { Observation } from "@openconditions/core";
-import type { FeedSource } from "@openconditions/roads";
+import type { FeedSource, UnresolvedRoadEvent } from "@openconditions/roads";
 import { flowParserFor } from "@openconditions/roads";
 import { feedToSourceDescriptor } from "../domains.js";
 import { DOMAIN_REGISTRY } from "../domains.js";
@@ -11,13 +11,17 @@ import { DOMAIN_REGISTRY } from "../domains.js";
  * When `src.produces === "flow"` the feed is routed to the matching flow
  * parser (e.g. parseDigitrafficFlow or parseDatexMeasuredData). Both the
  * RoadFlow measurements and the derived congestion RoadEvents returned by the
- * flow parser are flattened into a single Observation[] so the rest of the
- * pipeline treats them uniformly.
+ * flow parser are flattened so the rest of the pipeline treats them uniformly.
  *
- * Returns the parsed observations (typed as `Observation[]` for
- * domain-agnostic pipeline use; domain-specific callers may narrow further).
+ * The return type is `(Observation | UnresolvedRoadEvent)[]` because some
+ * parsers (currently datex2) emit OpenLR-only records without geometry. These
+ * are narrowed to real Observation (geometry guaranteed) by resolveOpenLr
+ * before reaching write-postgis.
  */
-export function parseFor(src: FeedSource & { domain: string }, buf: Buffer): Observation[] {
+export function parseFor(
+  src: FeedSource & { domain: string },
+  buf: Buffer
+): (Observation | UnresolvedRoadEvent)[] {
   const plugin = DOMAIN_REGISTRY[src.domain];
   if (!plugin) {
     throw new Error(`No domain plugin registered for domain: ${src.domain}`);
@@ -32,5 +36,5 @@ export function parseFor(src: FeedSource & { domain: string }, buf: Buffer): Obs
 
   const parserFn = plugin.parserFor(src.format);
   const descriptor = feedToSourceDescriptor(src);
-  return parserFn(buf, descriptor) as Observation[];
+  return parserFn(buf, descriptor) as (Observation | UnresolvedRoadEvent)[];
 }

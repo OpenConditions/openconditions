@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Generic two-axis canonical model, severity, and freshness helpers for OpenConditions",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
   "type": "module",
   "exports": {
     ".": {

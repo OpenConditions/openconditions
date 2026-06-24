@@ -20,7 +20,7 @@ describe("parseDatexSituations — NDW actueel_beeld.xml fixture", () => {
 
     expect(events.length).toBeGreaterThan(0);
 
-    const pointEvent = events.find((ev) => ev.geometry.type === "Point");
+    const pointEvent = events.find((ev) => ev.geometry?.type === "Point");
     expect(pointEvent).toBeDefined();
   });
 
@@ -103,7 +103,7 @@ describe("parseDatexSituations — v2/v3 root tolerance", () => {
     const events = parseDatexSituations(xml, NDW_SOURCE);
     expect(events.length).toBeGreaterThanOrEqual(1);
     expect(events[0]!.type).toBe("accident");
-    expect(events[0]!.geometry.type).toBe("Point");
+    expect(events[0]!.geometry?.type).toBe("Point");
   });
 
   it("handles DATEX II v3 messageContainer/payload root", () => {
@@ -138,7 +138,7 @@ describe("parseDatexSituations — v2/v3 root tolerance", () => {
     const events = parseDatexSituations(xml, NDW_SOURCE);
     expect(events.length).toBeGreaterThanOrEqual(1);
     expect(events[0]!.type).toBe("lane_closure");
-    expect(events[0]!.geometry.type).toBe("Point");
+    expect(events[0]!.geometry?.type).toBe("Point");
   });
 });
 
@@ -184,7 +184,7 @@ describe("parseDatexSituations — GML geometry", () => {
         `</locationReference>`
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
-    expect(ev!.geometry.type).toBe("MultiLineString");
+    expect(ev!.geometry?.type).toBe("MultiLineString");
     expect(ev!.geometry).toEqual({
       type: "MultiLineString",
       coordinates: [
@@ -236,7 +236,7 @@ describe("parseDatexSituations — NDW real-feed coverage", () => {
     const events = parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
     expect(events.length).toBeGreaterThan(400); // was ~206 (points only)
     expect(
-      events.some((e) => e.geometry.type === "LineString" || e.geometry.type === "MultiLineString")
+      events.some((e) => e.geometry?.type === "LineString" || e.geometry?.type === "MultiLineString")
     ).toBe(true);
     expect(events.some((e) => e.roadState != null)).toBe(true);
     expect(events.some((e) => e.lanesAffected != null)).toBe(true);

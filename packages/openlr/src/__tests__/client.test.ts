@@ -112,4 +112,18 @@ describe("createResolverClient", () => {
     const client = createResolverClient("https://resolver.example.com");
     await expect(client.resolve(DUMMY_LOCATION)).rejects.toThrow("500");
   });
+
+  it("throws when a 200 response body is missing the geometry field", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      statusText: "OK",
+      json: async () => ({ confidence: 0.9 }),
+    });
+
+    const client = createResolverClient("https://resolver.example.com");
+    await expect(client.resolve(DUMMY_LOCATION)).rejects.toThrow(
+      "openlr-resolver returned a 200 response with no geometry field"
+    );
+  });
 });

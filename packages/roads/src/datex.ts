@@ -1,7 +1,7 @@
 import { normaliseSeverity } from "@openconditions/core";
 import type { Confidence } from "@openconditions/core";
 import type { Geometry } from "geojson";
-import type { Restriction, RoadEvent } from "./model.js";
+import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
@@ -452,10 +452,21 @@ function listSituationRecords(doc: XmlObject): SituationRecord[] {
 
 /**
  * Parse a DATEX II SituationPublication XML document (v2 or v3) and return
- * an array of RoadEvent observations. Records without coordinate geometry
- * (Alert-C/OpenLR-only) are skipped; Phase 2 will decode those.
+ * an array of RoadEvent or UnresolvedRoadEvent observations.
+ *
+ * Records with coordinate geometry are returned as RoadEvent (geometry
+ * present). Records with an OpenLR binary location but no coordinate geometry
+ * are returned as UnresolvedRoadEvent (geometry absent, externalRefs.openlr
+ * set); the ingest resolve stage will either fill geometry or drop them.
+ * Records with neither geometry nor OpenLR are skipped entirely.
+ *
+ * Unresolved markers bypass deduplication (which requires coordinate geometry)
+ * and are appended after the deduped set.
  */
-export function parseDatexSituations(input: string | Buffer, src: SourceDescriptor): RoadEvent[] {
+export function parseDatexSituations(
+  input: string | Buffer,
+  src: SourceDescriptor
+): (RoadEvent | UnresolvedRoadEvent)[] {
   const doc = parseXmlDocument(input, {
     removeNSPrefix: true,
     ignoreAttributes: false,
@@ -463,7 +474,8 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
   });
 
   const records = listSituationRecords(doc);
-  const out: RoadEvent[] = [];
+  const withGeom: RoadEvent[] = [];
+  const unresolved: UnresolvedRoadEvent[] = [];
   let skippedAlertCOnly = 0;
 
   for (const { rec, situationSeverity } of records) {
@@ -495,12 +507,12 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
     const publicComment = getXmlChild(rec, "generalPublicComment");
     const fallbackComment = getXmlChild(rec, "comment");
 
-    out.push({
+    const shared = {
       id: `${src.id}:${recId(rec)}`,
       source: src.id,
-      sourceFormat: "datex2",
-      domain: "roads",
-      kind: "event",
+      sourceFormat: "datex2" as const,
+      domain: "roads" as const,
+      kind: "event" as const,
       type,
       subtype: causeOf(rec) ?? recType ?? undefined,
       category,
@@ -508,7 +520,6 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
       ...severityFields,
       confidence: confidenceOf(rec),
       status: validityStatusToStatus(validityStatus),
-      geometry: (geometry ?? undefined) as Geometry,
       direction: directionOf(rec),
       roads: roadsOf(rec),
       roadState: roadStateOf(rec),
@@ -529,9 +540,8 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
         multilingual(publicComment, "en") ?? multilingual(fallbackComment, "en") ?? undefined,
       validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
       validTo: text(timeSpec?.["overallEndTime"]) ?? null,
-      externalRefs: openlr ? { ...collectRefs(rec), openlr } : collectRefs(rec),
       origin: {
-        kind: "feed",
+        kind: "feed" as const,
         attribution: {
           provider: src.attribution,
           license: src.license,
@@ -541,7 +551,22 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
       dataUpdatedAt: text(rec["situationRecordVersionTime"]) ?? new Date().toISOString(),
       fetchedAt: new Date().toISOString(),
       isStale: false,
-    });
+    };
+
+    if (geometry) {
+      withGeom.push({
+        ...shared,
+        geometry,
+        externalRefs: collectRefs(rec),
+      });
+    } else {
+      // openlr is defined here because we checked !geometry && !openlr above.
+      unresolved.push({
+        ...shared,
+        geometry: undefined,
+        externalRefs: { ...collectRefs(rec), openlr: openlr! },
+      });
+    }
   }
 
   if (skippedAlertCOnly > 0) {
@@ -551,9 +576,7 @@ export function parseDatexSituations(input: string | Buffer, src: SourceDescript
   }
 
   // Unresolved OpenLR markers (no geometry yet) must bypass dedupe, which
-  // requires a coordinate to compute merge distance. They are emitted as-is
-  // and will be resolved to geometry by the ingest resolve stage.
-  const withGeom = out.filter((ev) => ev.geometry != null);
-  const noGeom = out.filter((ev) => ev.geometry == null);
-  return [...dedupeRoadEvents(withGeom), ...noGeom];
+  // requires a coordinate to compute merge distance. They are appended after
+  // the deduped set and resolved to geometry by the ingest resolve stage.
+  return [...dedupeRoadEvents(withGeom), ...unresolved];
 }

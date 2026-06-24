@@ -102,6 +102,21 @@ export interface RoadFlow extends Measurement {
 }
 
 /**
+ * A RoadEvent that carries an OpenLR reference but whose geometry has not yet
+ * been resolved. Emitted by the DATEX II parser when a situationRecord has an
+ * OpenLR binary location but no coordinate geometry. The ingest resolve stage
+ * either promotes it to a full RoadEvent (by filling in geometry) or drops it.
+ *
+ * Using `geometry?: undefined` (rather than a cast) ensures TypeScript catches
+ * any code that treats an UnresolvedRoadEvent as having real geometry without
+ * first narrowing on the presence of the geometry field.
+ */
+export type UnresolvedRoadEvent = Omit<RoadEvent, "geometry"> & {
+  geometry?: undefined;
+  externalRefs: NonNullable<RoadEvent["externalRefs"]> & { openlr: string };
+};
+
+/**
  * Map road-specific fields from a RoadEvent into a plain object for
  * the store's `attributes` JSONB column.
  */

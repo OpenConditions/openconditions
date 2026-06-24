@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Outbound emitters (GeoJSON, TraFF, JSON-LD) — pure projections from the OpenConditions canonical model to standard wire formats",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
   "type": "module",
   "exports": {
     ".": {
