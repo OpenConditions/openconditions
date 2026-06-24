@@ -52,6 +52,14 @@ export interface FeedSource {
   cadenceSec: number;
   freshnessWindowSec: number;
   gzip?: boolean;
+  /**
+   * Marks a reference-only feed whose records carry OpenLR but no coordinate, so
+   * the ingest resolve stage map-matches them via the openlr-resolver service.
+   * No current feed sets this: the open feeds we ingest carry coordinates or
+   * Alert-C/TMC, not OpenLR (which is largely a commercial-feed scheme). The
+   * resolver is ready infrastructure awaiting such a source — see
+   * services/openlr-resolver/README.md "Status".
+   */
   openlrResolver?: boolean;
   license: string;
   licenseUrl?: string;

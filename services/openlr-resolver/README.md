@@ -11,6 +11,33 @@ The service is built in Python on top of
 (the binary codec and location datatypes). It runs as a standalone Docker
 sidecar, separate from the TypeScript monorepo.
 
+## Status: complete but dormant (no live OpenLR source yet)
+
+The resolver, the `@openconditions/openlr` decoder, and the ingest resolve stage
+are implemented and tested — but **nothing currently feeds them**, because none
+of the ingested open feeds carry OpenLR references:
+
+- **NDW** (`actueel_beeld`) uses **Alert-C / TMC** (`alertCLinear`, `alertCPoint`)
+  plus WGS84 coordinates (`pointByCoordinates`) — **zero** OpenLR elements.
+- Autobahn, Digitraffic, DriveBC and WZDx are coordinate/GeoJSON-based.
+
+OpenLR-only location referencing is largely a commercial-feed (TomTom/HERE)
+convention; open government feeds publish coordinates or TMC. So the resolver is
+ready infrastructure waiting on a source. To activate it:
+
+1. **Add a reference-only / OpenLR-carrying feed** to `@openconditions/roads`'
+   `FEED_SOURCES` (set `openlrResolver: true`), set `OPENLR_RESOLVER_URL` on the
+   ingest service, and load a real OSM graph (see [Building the graph](#building-the-graph)).
+   The ingest resolve stage then fills geometry for those records automatically.
+2. Or use it for **edge precision** when a feed carries *both* a coordinate and
+   an OpenLR linear (prefer the resolved line for closures) — no current feed does.
+
+The realistic future unlock for **NDW** specifically is **Alert-C / TMC**
+decoding, which is a *different* path (a licensed TMC location-code database, not
+OpenLR) and is deferred by design — see the spec's location-referencing notes.
+Until a source exists, this service intentionally has no enabled feed and runs
+against fixtures only in CI.
+
 ## Wire contract
 
 ### `POST /resolve`
