@@ -1,0 +1,98 @@
+name: 🐛 Bug report
+description: Report a defect in OpenConditions
+title: "[Bug]: "
+labels: [bug, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please fill out as much as you can —
+        incomplete reports are slower to act on and may be closed.
+
+        - 🔒 **Security issue?** Do **not** file it here — see [SECURITY.md](https://github.com/openconditions/openconditions/blob/main/SECURITY.md).
+        - ❓ **Question or idea?** Please use [Discussions](https://github.com/openconditions/openconditions/discussions) instead.
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before you start
+      options:
+        - label: I searched [existing issues](https://github.com/openconditions/openconditions/issues?q=is%3Aissue) and this isn't a duplicate.
+          required: true
+        - label: I'm on the latest `main` or the most recent release (older versions aren't patched).
+          required: true
+        - label: This is a bug in OpenConditions itself, not in an upstream feed or a third-party API.
+          required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear, concise description of the bug — what you expected and what actually occurred.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Configure feed source '...'
+        2. Run the ingest / call the emitter '...'
+        3. See error
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected component
+      description: Which part of OpenConditions? Pick the closest.
+      options:
+        - Ingest service (services/ingest)
+        - OpenLR resolver (services/openlr-resolver)
+        - "@openconditions/core"
+        - "@openconditions/roads"
+        - "@openconditions/publishers"
+        - "@openconditions/openlr"
+        - OpenMapX integration (integrations/road-conditions-openconditions)
+        - Documentation
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: feed-source
+    attributes:
+      label: Specific feed source / package id
+      description: If the component above is a feed source or package, name it.
+      placeholder: "roads/open511-bc, publishers/datex2, …"
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      description: Tag, release, or short SHA from `git rev-parse --short HEAD`.
+    validations:
+      required: true
+  - type: input
+    id: last-working
+    attributes:
+      label: Last working version
+      description: If this used to work, the last version/commit where it did (helps us bisect). Leave blank if unknown.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Required for ingest/resolver reports. Tell us how you run it and which feeds are configured.
+      placeholder: |
+        OS: macOS 15.0 / Ubuntu 24.04
+        Node: 24.x
+        pnpm: 11.x
+        Python: 3.12 (if a resolver issue)
+        Docker: 27.x (if running the containers)
+        Feeds configured: ndw, open511-bc, wzdx-us, …
+        PostGIS: version / where it runs
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs and/or screenshots
+      description: |
+        Paste relevant log output (ingest logs, resolver logs, API errors) or attach screenshots.
+        **Redact secrets, tokens, and `.env` values.**
+      render: shell

@@ -1,0 +1,16 @@
+# Funding links shown on the repo's "Sponsor" button.
+# https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
+#
+# Each key maps to one platform; values are your account/slug there. A button
+# only appears for platforms you've actually set up, so unused keys can stay
+# commented out. `github` requires GitHub Sponsors to be enabled for the account.
+
+github: [Medformatik]
+# patreon: openconditions
+# open_collective: openconditions
+# ko_fi: openconditions
+# liberapay: openconditions
+# buy_me_a_coffee: openconditions
+# tidelift: npm/@openconditions/core
+# polar: openconditions
+# custom: ["https://openconditions.org/donate"]

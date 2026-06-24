@@ -1,0 +1,4 @@
+# Full test suite before anything leaves the machine. The ingest pipeline/sweep
+# suites use testcontainers and need Docker; skip them with SKIP_TESTCONTAINERS=1
+# if the daemon isn't running.
+pnpm test

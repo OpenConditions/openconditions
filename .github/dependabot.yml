@@ -1,0 +1,76 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 10
+    versioning-strategy: increase-if-necessary
+    labels: [dependencies]
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      eslint-and-formatters:
+        patterns:
+          - "eslint*"
+          - "prettier*"
+      typescript-toolchain:
+        patterns:
+          - "typescript"
+          - "@types/*"
+          - "tsx"
+          - "tsup"
+      turbo:
+        patterns:
+          - "turbo"
+      test-toolchain:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "testcontainers"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    labels: [dependencies, ci]
+    commit-message:
+      prefix: ci
+
+  - package-ecosystem: pip
+    directory: "/services/openlr-resolver"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    labels: [dependencies, python]
+    commit-message:
+      prefix: chore
+      include: scope
+
+  - package-ecosystem: docker
+    # Cover every Dockerfile so the digest-pinned base images get bumped (a
+    # frozen digest only stays secure if something keeps it current).
+    directories:
+      - "/services/ingest"
+      - "/services/openlr-resolver"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    labels: [dependencies, docker]
+    commit-message:
+      prefix: chore
+      include: scope

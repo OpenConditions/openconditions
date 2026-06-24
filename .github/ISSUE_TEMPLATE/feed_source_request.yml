@@ -1,0 +1,82 @@
+name: 🛰️ New feed source
+description: Request (or propose to build) support for a new live-conditions feed source
+title: "[Feed]: "
+labels: [enhancement, feed-source, needs-triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        OpenConditions turns public open-data feeds (road incidents, roadworks, closures, hazards,
+        congestion) into canonical observations. Use this form to request a new feed source, or to
+        propose building it yourself.
+
+        Helpful background: a feed source is a parser plus a `FeedSource` entry in
+        [`@openconditions/roads`](https://github.com/openconditions/openconditions/tree/main/packages/roads).
+  - type: input
+    id: feed-name
+    attributes:
+      label: Feed name
+      placeholder: "e.g. NDW (Netherlands), DriveBC Open511, US Work Zone Data Exchange"
+    validations:
+      required: true
+  - type: input
+    id: coverage
+    attributes:
+      label: Country / region
+      description: Which country or region does this feed cover?
+      placeholder: "e.g. Netherlands, British Columbia (CA), United States"
+    validations:
+      required: true
+  - type: input
+    id: portal-url
+    attributes:
+      label: Open-data portal URL
+      description: Link to the feed endpoint or the open-data portal page describing it.
+      placeholder: "https://…"
+    validations:
+      required: true
+  - type: dropdown
+    id: format
+    attributes:
+      label: Data format
+      description: What wire format does the feed publish?
+      options:
+        - DATEX II
+        - Open511
+        - WZDx (Work Zone Data Exchange)
+        - GeoJSON
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: license
+    attributes:
+      label: Data license & attribution
+      description: |
+        **Important.** OpenConditions is built on open data and tracks attribution per source. What
+        license or terms of use govern this feed, and what attribution does it require? Link the
+        license if you can.
+      placeholder: "e.g. CC-BY-4.0 (requires '© …'), public domain, proprietary ToS at …"
+    validations:
+      required: true
+  - type: dropdown
+    id: api-key
+    attributes:
+      label: Does it require an API key?
+      options:
+        - "No — fully open, no key required"
+        - "Yes — free API key / registration required"
+        - "Yes — paid / metered API key required"
+        - Unknown
+    validations:
+      required: true
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Would you like to build it?
+      options:
+        - "Yes — I'd like to open a PR"
+        - "Maybe, with some guidance"
+        - "No — just requesting"
+    validations:
+      required: true

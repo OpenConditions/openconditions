@@ -10,14 +10,18 @@
     "format": "prettier --write .",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --passWithNoTests --coverage"
+    "test:coverage": "vitest run --passWithNoTests --coverage",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.1.0",
+    "@commitlint/config-conventional": "^21.1.0",
     "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitest/coverage-v8": "^3.0.0",
     "eslint": "^9.0.0",
+    "husky": "^9.1.7",
     "prettier": "^3.0.0",
     "tsup": "^8.0.0",
     "turbo": "^2.0.0",
