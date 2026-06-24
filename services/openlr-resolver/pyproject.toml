@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "Apache-2.0" }
 dependencies = [
-    "fastapi==0.115.14",
+    "fastapi==0.138.0",
     "uvicorn[standard]==0.34.3",
     "openlr==1.0.1",
     "openlr-dereferencer==1.2.0",
