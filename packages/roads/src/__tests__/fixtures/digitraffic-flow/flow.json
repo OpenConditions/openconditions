@@ -1,0 +1,84 @@
+{
+  "type": "FeatureCollection",
+  "dataUpdatedTime": "2026-06-24T10:00:00Z",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [24.9355, 60.1699],
+          [24.938, 60.1712],
+          [24.9405, 60.1725]
+        ]
+      },
+      "properties": {
+        "id": "DT_FLOW_FREE",
+        "name": "Vt 1 Kehä I — free flow",
+        "roadNumber": 1,
+        "roadSection": 3,
+        "direction": "increasing",
+        "measuredTime": "2026-06-24T10:00:00Z",
+        "averageSpeed": 95.2,
+        "freeFlowSpeed": 100.0,
+        "congestionLevel": "FREE_FLOW",
+        "jamFactor": 0.1
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [25.01, 60.25],
+          [25.015, 60.252]
+        ]
+      },
+      "properties": {
+        "id": "DT_FLOW_HEAVY",
+        "name": "Vt 3 — heavy traffic",
+        "roadNumber": 3,
+        "roadSection": 5,
+        "direction": "decreasing",
+        "measuredTime": "2026-06-24T10:00:00Z",
+        "averageSpeed": 52.0,
+        "freeFlowSpeed": 100.0,
+        "congestionLevel": "HEAVY",
+        "jamFactor": 5.0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [25.02, 60.26],
+          [25.025, 60.262],
+          [25.03, 60.264]
+        ]
+      },
+      "properties": {
+        "id": "DT_FLOW_STATIONARY",
+        "name": "Vt 4 — stationary queue",
+        "roadNumber": 4,
+        "roadSection": 2,
+        "direction": "increasing",
+        "measuredTime": "2026-06-24T09:55:00Z",
+        "averageSpeed": 3.5,
+        "freeFlowSpeed": 80.0,
+        "congestionLevel": "STATIONARY",
+        "delaySeconds": 420,
+        "jamFactor": 9.8
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "id": "DT_FLOW_NOGEO",
+        "congestionLevel": "FREE_FLOW",
+        "averageSpeed": 80.0
+      }
+    }
+  ]
+}
