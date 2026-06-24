@@ -33,3 +33,12 @@ packages = ["app", "app.maps"]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra"
+
+[tool.ruff]
+line-length = 105
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+# E402: module-level import not at top of file — intentional in test_postgis_reader.py
+# where imports follow a try/except docker-availability guard.
+ignore = ["E402"]
