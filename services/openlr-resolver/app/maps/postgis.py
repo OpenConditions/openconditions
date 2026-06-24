@@ -17,6 +17,13 @@ what OpenLR matching requires.
 
 Spatial proximity queries use ``geography`` casts so radii are in metres,
 matching the units the decoder works in.
+
+Row caches: ``PostgisMapReader`` holds a per-request ``dict`` keyed by
+``line_id``/``node_id``. The first access fetches the full row from the
+database; subsequent accesses within the same reader lifetime are served from
+memory without a second round-trip. Since each HTTP request creates a fresh
+reader, the caches are bounded by the number of distinct lines/nodes touched
+during one match — typically a few dozen even for long paths.
 """
 
 from __future__ import annotations
@@ -117,10 +124,19 @@ class PostgisNode(AbstractNode):
 
 
 class PostgisMapReader(MapReader):
-    """A `MapReader` over the PostGIS road graph."""
+    """A `MapReader` over the PostGIS road graph.
+
+    ``_line_cache`` and ``_node_cache`` store full database rows by id so that
+    the repeated property accesses the decoder makes for each matched line/node
+    — ``start_node``, ``end_node``, ``frc``, ``fow``, ``geometry``, etc. — all
+    come from memory after the first fetch. This eliminates the N+1 round-trips
+    that occurred when each property issued its own single-column SELECT.
+    """
 
     def __init__(self, pool: ConnectionPool) -> None:
         self._pool = pool
+        self._line_cache: dict[int, tuple] = {}
+        self._node_cache: dict[int, tuple[float, float]] = {}
 
     def query(self, sql: str, params: tuple = ()) -> list[tuple]:
         with self._pool.connection() as conn:
@@ -129,23 +145,27 @@ class PostgisMapReader(MapReader):
                 return cur.fetchall()
 
     def line_row(self, line_id: int) -> tuple:
-        rows = self.query(
-            f"SELECT start_node, end_node, frc, fow, geom "
-            f"FROM {_LINES} WHERE line_id = %s",
-            (line_id,),
-        )
-        if not rows:
-            raise KeyError(f"line {line_id} not found")
-        return rows[0]
+        if line_id not in self._line_cache:
+            rows = self.query(
+                f"SELECT start_node, end_node, frc, fow, geom "
+                f"FROM {_LINES} WHERE line_id = %s",
+                (line_id,),
+            )
+            if not rows:
+                raise KeyError(f"line {line_id} not found")
+            self._line_cache[line_id] = rows[0]
+        return self._line_cache[line_id]
 
     def node_coords(self, node_id: int) -> tuple[float, float]:
-        rows = self.query(
-            f"SELECT ST_X(geom), ST_Y(geom) FROM {_NODES} WHERE node_id = %s",
-            (node_id,),
-        )
-        if not rows:
-            raise KeyError(f"node {node_id} not found")
-        return rows[0]
+        if node_id not in self._node_cache:
+            rows = self.query(
+                f"SELECT ST_X(geom), ST_Y(geom) FROM {_NODES} WHERE node_id = %s",
+                (node_id,),
+            )
+            if not rows:
+                raise KeyError(f"node {node_id} not found")
+            self._node_cache[node_id] = rows[0]
+        return self._node_cache[node_id]
 
     def get_line(self, line_id: Hashable) -> PostgisLine:
         return PostgisLine(self, int(line_id))
@@ -197,6 +217,18 @@ def _get_pool() -> ConnectionPool:
             raise RuntimeError("DATABASE_URL environment variable is required")
         _pool = ConnectionPool(url, min_size=1, max_size=5, open=True)
     return _pool
+
+
+def close_pool() -> None:
+    """Close the process-wide connection pool, if one was opened.
+
+    Called from the FastAPI lifespan shutdown hook so that connections are
+    released cleanly when the process exits.
+    """
+    global _pool
+    if _pool is not None:
+        _pool.close()
+        _pool = None
 
 
 def get_reader() -> PostgisMapReader:

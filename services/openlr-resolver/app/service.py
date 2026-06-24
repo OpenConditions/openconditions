@@ -7,18 +7,32 @@ The HTTP layer is intentionally thin: it validates the request, builds an
 `openlr` reference, delegates to `matcher.match`, and shapes the response. The
 `MapReader` is provided through a FastAPI dependency so the engine can run
 against the PostGIS graph in production and an injected graph under test.
+
+The lifespan context manager closes the process-wide PostGIS connection pool on
+shutdown. Opening the pool is still lazy (deferred to the first `/resolve`
+request) so the service starts cleanly and serves `/health` even when
+``DATABASE_URL`` is unset.
 """
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 
 from .matcher import NoMatchError, match
-from .maps.postgis import get_reader
+from .maps.postgis import close_pool, get_reader
 from .models import ResolveRequest, ResolveResponse
 from .reference import decode_base64, location_to_reference
 
-app = FastAPI(title="openlr-resolver", version="0.1.0")
+
+@asynccontextmanager
+async def _lifespan(application: FastAPI):
+    yield
+    close_pool()
+
+
+app = FastAPI(title="openlr-resolver", version="0.1.0", lifespan=_lifespan)
 
 
 def reader_provider():
