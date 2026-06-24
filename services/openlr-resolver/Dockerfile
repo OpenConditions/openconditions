@@ -7,7 +7,7 @@
 # PostGIS. Currently dormant — no open feed in the ingest carries OpenLR — so the
 # service is published for completeness and activates when an OpenLR-bearing feed
 # is configured. See README.md.
-FROM python:3.12-slim AS base
+FROM python:3.14-slim AS base
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
