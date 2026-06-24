@@ -5,27 +5,46 @@ import type {
   PointGeometry,
 } from "@openconditions/core";
 
-export type RoadEventType =
-  | "accident"
-  | "congestion"
-  | "roadworks"
-  | "lane_closure"
-  | "road_closure"
-  | "contraflow"
-  | "detour"
-  | "hazard"
-  | "weather"
-  | "road_condition"
-  | "obstruction"
-  | "broken_down_vehicle"
-  | "public_event"
-  | "authority"
-  | "speed_restriction"
-  | "dimension_restriction"
-  | "equipment_fault"
-  | "security"
-  | "transit_disruption"
-  | "other";
+/**
+ * The canonical set of road-event types — the single source of truth.
+ *
+ * Declared as a runtime tuple (not just a TS union) so the full set is
+ * iterable at runtime: validating an inbound `type` string, asserting the
+ * taxonomy crosswalk only targets known types, and driving consumer UIs
+ * (legends, per-type icons) all read from this one list. `RoadEventType` is
+ * derived from it, so the compile-time type and the runtime list cannot drift.
+ */
+export const ROAD_EVENT_TYPES = [
+  "accident",
+  "congestion",
+  "roadworks",
+  "lane_closure",
+  "road_closure",
+  "contraflow",
+  "detour",
+  "hazard",
+  "weather",
+  "road_condition",
+  "obstruction",
+  "broken_down_vehicle",
+  "public_event",
+  "authority",
+  "speed_restriction",
+  "dimension_restriction",
+  "equipment_fault",
+  "security",
+  "transit_disruption",
+  "other",
+] as const;
+
+export type RoadEventType = (typeof ROAD_EVENT_TYPES)[number];
+
+const ROAD_EVENT_TYPE_SET: ReadonlySet<string> = new Set(ROAD_EVENT_TYPES);
+
+/** Runtime guard: is `value` one of the canonical {@link RoadEventType} values? */
+export function isRoadEventType(value: unknown): value is RoadEventType {
+  return typeof value === "string" && ROAD_EVENT_TYPE_SET.has(value);
+}
 
 export interface RoadRef {
   name: string;
