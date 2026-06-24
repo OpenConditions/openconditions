@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseDigitrafficFlow, parseDatexMeasuredData } from "../flow.js";
-import { parseDatexSiteTable } from "../siteTable.js";
+import { createSiteTableParser, parseDatexSiteTable } from "../siteTable.js";
 import type { SiteGeometry } from "../siteTable.js";
 import { parseDigitraffic } from "../digitraffic.js";
 import { parseDatexSituations } from "../datex.js";
@@ -520,6 +520,101 @@ describe("parseDatexSiteTable — fixture", () => {
   it("never throws on empty XML", () => {
     expect(() => parseDatexSiteTable(Buffer.from("<d2LogicalModel/>"))).not.toThrow();
     expect(parseDatexSiteTable(Buffer.from("<d2LogicalModel/>")).size).toBe(0);
+  });
+
+  it("tolerates malformed/truncated XML, returning what resolved before the break", () => {
+    const xml = readFileSync(NDW_SITE_TABLE_FIXTURE, "utf8");
+    // Truncate after the first record fully closes but mid-second-record.
+    const cut = xml.indexOf("PZH01_MST_0029-00");
+    const truncated = xml.slice(0, cut);
+    let map: Map<string, SiteGeometry> = new Map();
+    expect(() => {
+      map = parseDatexSiteTable(truncated);
+    }).not.toThrow();
+    // The first record had already closed, so its geometry survives.
+    expect(map.get("PZH01_MST_0065_00")?.type).toBe("Point");
+  });
+});
+
+describe("createSiteTableParser — streaming state machine", () => {
+  it("produces the same map whether fed whole or in many mid-element chunks", () => {
+    const xml = readFileSync(NDW_SITE_TABLE_FIXTURE, "utf8");
+    const whole = parseDatexSiteTable(xml);
+
+    // Feed the document in tiny fixed-size chunks so element boundaries,
+    // attributes (e.g. the record `id`), and lat/lon text values are split
+    // across writes — the chunk-boundary stress the streaming parser must
+    // survive when gunzip hands it arbitrary slices.
+    const parser = createSiteTableParser();
+    const CHUNK = 7;
+    for (let i = 0; i < xml.length; i += CHUNK) {
+      parser.write(xml.slice(i, i + CHUNK));
+    }
+    const chunked = parser.close();
+
+    expect(chunked.size).toBe(whole.size);
+    for (const [id, geom] of whole) {
+      expect(chunked.get(id)).toEqual(geom);
+    }
+  });
+
+  it("resolves a Point record split mid-coordinate across two writes", () => {
+    const parser = createSiteTableParser();
+    const doc = `<measurementSiteTable><measurementSiteRecord id="S1">
+      <measurementSiteLocation xsi:type="Point">
+        <locationForDisplay><latitude>52.012</latitude><longitude>4.5</longitude></locationForDisplay>
+      </measurementSiteLocation></measurementSiteRecord></measurementSiteTable>`;
+    const split = doc.indexOf("52.0") + 2; // split inside the latitude value
+    parser.write(doc.slice(0, split));
+    parser.write(doc.slice(split));
+    const map = parser.close();
+    expect(map.get("S1")).toEqual({ type: "Point", coordinates: [4.5, 52.012] });
+  });
+
+  it("resolves a Linear record from start/end coordinate pair", () => {
+    const parser = createSiteTableParser();
+    parser.write(`<measurementSiteRecord id="L1"><measurementSiteLocation>`);
+    parser.write(`<linearCoordinatesStartPoint><pointCoordinates>`);
+    parser.write(`<latitude>52.10</latitude><longitude>4.10</longitude>`);
+    parser.write(`</pointCoordinates></linearCoordinatesStartPoint>`);
+    parser.write(`<linearCoordinatesEndPoint><pointCoordinates>`);
+    parser.write(`<latitude>52.20</latitude><longitude>4.20</longitude>`);
+    parser.write(`</pointCoordinates></linearCoordinatesEndPoint>`);
+    parser.write(`</measurementSiteLocation></measurementSiteRecord>`);
+    const map = parser.close();
+    expect(map.get("L1")).toEqual({
+      type: "LineString",
+      coordinates: [
+        [4.1, 52.1],
+        [4.2, 52.2],
+      ],
+    });
+  });
+
+  it("prefers a posList LineString over a coordinate pair and display point", () => {
+    const parser = createSiteTableParser();
+    parser.write(
+      `<measurementSiteRecord id="P1"><measurementSiteLocation>` +
+        `<locationForDisplay><latitude>9</latitude><longitude>9</longitude></locationForDisplay>` +
+        `<gml:posList>52.0 4.0 52.1 4.1</gml:posList>` +
+        `</measurementSiteLocation></measurementSiteRecord>`
+    );
+    const map = parser.close();
+    expect(map.get("P1")).toEqual({
+      type: "LineString",
+      coordinates: [
+        [4.0, 52.0],
+        [4.1, 52.1],
+      ],
+    });
+  });
+
+  it("skips a record with no resolvable location", () => {
+    const parser = createSiteTableParser();
+    parser.write(
+      `<measurementSiteRecord id="N1"><measurementSiteName>x</measurementSiteName></measurementSiteRecord>`
+    );
+    expect(parser.close().has("N1")).toBe(false);
   });
 });
 

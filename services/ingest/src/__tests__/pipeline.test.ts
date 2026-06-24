@@ -373,4 +373,40 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     const best = rows.find((r) => r.value != null && Number(r.value) === 64);
     expect(best).toBeDefined();
   }, 30_000);
+
+  it("preserves last-good rows on a cold site-table failure (no atomicSwap to empty)", async () => {
+    // Existing ndw-flow rows from the successful runs above.
+    const beforeCount = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw-flow'
+    `;
+    const countBefore = parseInt(beforeCount[0]!.count, 10);
+    expect(countBefore).toBeGreaterThan(0);
+
+    // Clear the cache so there is NO cached site map — the failure is cold.
+    clearSiteTableCache();
+
+    // Measurements still fetch fine, but the site table fails outright. Without
+    // the cold-failure guard this would parse measurements with no geometry,
+    // yield [], and atomicSwap an empty set — deleting all ndw-flow rows.
+    const partialFetch = async (url: string | URL | Request): Promise<Response> => {
+      const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+      if (href.includes("measurement.xml.gz")) {
+        return new Response("nope", { status: 503 });
+      }
+      return new Response(gzipSync(speedPayload), { status: 200 });
+    };
+
+    const result = await runSource(ndwFlowFeed, {
+      sql,
+      fetch: partialFetch as typeof fetch,
+      now: () => new Date().toISOString(),
+    });
+
+    expect(result.count).toBe(0);
+
+    const afterCount = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw-flow'
+    `;
+    expect(parseInt(afterCount[0]!.count, 10)).toBe(countBefore);
+  }, 60_000);
 });

@@ -1,11 +1,13 @@
+import { Readable } from "node:stream";
 import type postgres from "postgres";
-import type { FeedSource } from "@openconditions/roads";
+import type { FeedSource, SiteGeometry } from "@openconditions/roads";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
 import { fetchAll } from "./fetch.js";
 import { parseFor } from "./parse.js";
 import { resolveOpenLr } from "./resolve.js";
 import { loadSiteTable } from "./site-table.js";
+import type { SiteTableStreamFactory } from "./site-table.js";
 import { atomicSwap } from "./write-postgis.js";
 
 type Sql = postgres.Sql;
@@ -28,6 +30,24 @@ export interface RunDeps {
  */
 export interface DomainFeedSource extends FeedSource {
   domain: string;
+}
+
+/**
+ * Builds a streaming site-table source from the run's `fetch` so a custom fetch
+ * (tests, instrumented clients) still drives the loader, while the body is
+ * consumed as a stream — the large site table is never buffered whole.
+ */
+function streamFactoryFromFetch(fetchFn: typeof fetch): SiteTableStreamFactory {
+  return async (url: string): Promise<Readable> => {
+    const res = await fetchFn(url);
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} fetching ${url}`);
+    }
+    if (!res.body) {
+      throw new Error(`empty body fetching ${url}`);
+    }
+    return Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]);
+  };
 }
 
 /**
@@ -63,10 +83,21 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   }
 
   // Load the companion site table (cached, tolerant of failure) so flow feeds
-  // that key measurements by site id can resolve geometry. Absent/failed loads
-  // simply leave measurements without external geometry (those sites are then
-  // skipped) rather than failing the run.
-  const siteMap = src.siteTable ? await loadSiteTable(src, deps.fetch) : undefined;
+  // that key measurements by site id can resolve geometry.
+  let siteMap: Map<string, SiteGeometry> | undefined;
+  if (src.siteTable) {
+    siteMap = await loadSiteTable(src, streamFactoryFromFetch(deps.fetch));
+    // A COLD site-table failure (no map ever built, not even stale) means every
+    // measurement would lose its geometry and be skipped — parsing on would
+    // hand atomicSwap an empty set, deleting all existing last-good rows. Treat
+    // this like a fetch failure: skip the swap and preserve last-good.
+    if (siteMap === undefined) {
+      console.warn(
+        `[ingest] ${src.id}: site-table cold failure — skipping swap, preserving last-good rows`
+      );
+      return { count: 0, durationMs: Date.now() - start };
+    }
+  }
 
   const parsed = buffers.flatMap((b) => parseFor(src, b, siteMap));
   // resolveOpenLr narrows the union: items without geometry (UnresolvedRoadEvent)

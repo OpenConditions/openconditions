@@ -428,6 +428,10 @@ export function parseDatexMeasuredData(
   let doc: ReturnType<typeof parseXmlDocument>;
   try {
     doc = parseXmlDocument(input, {
+      // The recurring (~60 s) trafficspeed feed is ~50 MB; re-validating it on
+      // every run is wasted CPU on the hot path. The entity-bomb guard in
+      // parseXmlDocument still runs regardless of `validate`.
+      validate: false,
       removeNSPrefix: true,
       ignoreAttributes: false,
       isArray: (n) =>
