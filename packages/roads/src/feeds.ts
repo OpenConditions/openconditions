@@ -318,6 +318,42 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.nzta.govt.nz/privacy-policy/",
     enabledByDefault: true,
   },
+  {
+    // Berlin roadworks + closures (VIZ Berlin), GeoJSON (WGS84), dl-de/by-2-0,
+    // no key. City/non-motorway — complements the federal Autobahn feed.
+    id: "berlin-de",
+    name: "VIZ Berlin roadworks & closures",
+    format: "geojson",
+    url: "https://api.viz.berlin.de/daten/baustellen_sperrungen_viz.json",
+    geojson: {
+      idField: "id",
+      typeField: "subtype",
+      typeMap: {
+        Baustelle: "roadworks",
+        Bauarbeiten: "roadworks",
+        Sperrung: "road_closure",
+        Störung: "obstruction",
+      },
+      defaultType: "other",
+      headlineField: "content",
+      roadField: "street",
+      severityField: "severity",
+      severityMap: {
+        Vollsperrung: "high",
+        Fahrtrichtungssperrung: "medium",
+        "keine Sperrung": "low",
+      },
+      updatedField: "tstore",
+    },
+    cadenceSec: 600,
+    freshnessWindowSec: 1800,
+    license: "dl-de/by-2-0",
+    licenseUrl: "https://daten.berlin.de/",
+    attribution: "Verkehrsinformationszentrale Berlin (VIZ)",
+    country: "DE",
+    privacyUrl: "https://www.berlin.de/datenschutzerklaerung/",
+    enabledByDefault: true,
+  },
 ];
 
 type ParserFn = typeof parseDatexSituations;

@@ -133,6 +133,15 @@ describe("FEED_SOURCES", () => {
     expect(feed!.enabledByDefault).toBe(true);
   });
 
+  it("includes berlin-de (Berlin VIZ) as an open GeoJSON feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "berlin-de");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("geojson");
+    expect(feed!.license).toBe("dl-de/by-2-0");
+    expect(feed!.country).toBe("DE");
+    expect(feed!.enabledByDefault).toBe(true);
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

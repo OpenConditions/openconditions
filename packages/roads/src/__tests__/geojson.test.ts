@@ -109,6 +109,34 @@ describe("parseGeoJson", () => {
     expect(out[0]!.type).toBe("other");
   });
 
+  it("accepts a GeometryCollection feature (Berlin VIZ mixes Point+LineString)", () => {
+    const out = parseGeoJson(
+      fc([
+        {
+          type: "Feature",
+          geometry: {
+            type: "GeometryCollection",
+            geometries: [
+              { type: "Point", coordinates: [13.3, 52.5] },
+              {
+                type: "LineString",
+                coordinates: [
+                  [13.3, 52.5],
+                  [13.31, 52.51],
+                ],
+              },
+            ],
+          },
+          properties: { id: "g1", category: "roadworks" },
+        },
+      ]),
+      SRC
+    );
+    expect(out).toHaveLength(1);
+    expect(out[0]!.geometry!.type).toBe("GeometryCollection");
+    expect(out[0]!.type).toBe("roadworks");
+  });
+
   it("returns [] for malformed JSON or a non-FeatureCollection", () => {
     expect(parseGeoJson("not json", SRC)).toEqual([]);
     expect(parseGeoJson(JSON.stringify({ type: "Feature" }), SRC)).toEqual([]);
@@ -146,5 +174,19 @@ describe("parseGeoJson — NZTA Road Events fixture (real wired mapping)", () =>
     // The source vocabulary maps through the per-feed typeMap (no raw "Crash" leak).
     expect(events.every((e) => e.type !== ("Crash" as unknown))).toBe(true);
     expect(events[0]!.sourceFormat).toBe("geojson");
+  });
+});
+
+describe("parseGeoJson — Berlin VIZ fixture (GeometryCollection + German vocab)", () => {
+  it("parses mixed GeometryCollection/Point features via the registered berlin-de mapping", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "berlin-de")!;
+    const xml = readFileSync(join(import.meta.dirname, "fixtures/berlin-de/baustellen.geojson"));
+    const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
+    expect(events.length).toBeGreaterThan(0);
+    expect(events.every((e) => e.geometry != null)).toBe(true);
+    // German subtype vocab maps via the per-feed typeMap (not all "other").
+    expect(events.some((e) => e.type === "roadworks" || e.type === "road_closure")).toBe(true);
+    // At least one GeometryCollection survived (the bug fix).
+    expect(events.some((e) => e.geometry?.type === "GeometryCollection")).toBe(true);
   });
 });

@@ -1,0 +1,250 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "8/2025",
+        "lms_id": "LMS-BR/r_LMS-BR/373434_LMS-BR/72",
+        "tstore": "2026-06-10T12:37:04.557822Z",
+        "objectState": "modified",
+        "subtype": "Baustelle",
+        "icon": "baustelle",
+        "severity": "keine Sperrung",
+        "direction": "Beidseitig",
+        "street": "Wolfensteindamm (Steglitz)",
+        "section": "in beiden Richtungen Schloßstraße/Aus- u. Einfahrt A103 und Neuchateller Straße",
+        "total_lanes": null,
+        "closed_lanes": null,
+        "content": "Bauarbeiten, Fahrbahn auf einen Fahrstreifen verengt",
+        "validity": { "from": "2025-07-23T07:00", "to": "2026-07-30T17:00" }
+      },
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          { "type": "Point", "coordinates": [13.318904591788835, 52.45210087026612] },
+          {
+            "type": "LineString",
+            "coordinates": [
+              [13.31892604156763, 52.45407498328484],
+              [13.319247788249806, 52.45355204805477],
+              [13.319548085153189, 52.4532121368253],
+              [13.319633884268443, 52.45288529663044],
+              [13.319548085153189, 52.45255845400994],
+              [13.319226338471012, 52.45221853511149],
+              [13.318883142010003, 52.45208779637499],
+              [13.316352068110094, 52.450884981789244],
+              [13.315901622754998, 52.450715016209784],
+              [13.315622775630446, 52.450531975621445]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "105/2025",
+        "lms_id": "LMS-BR/r_LMS-BR/379984_LMS-BR/72",
+        "tstore": "2026-04-13T17:06:28.973436Z",
+        "objectState": "modified",
+        "subtype": "Baustelle",
+        "icon": "baustelle",
+        "severity": "keine Sperrung",
+        "direction": "Einseitig",
+        "street": "Heidestraße (Moabit)",
+        "section": "Richtung Fennstraße in Höhe Hedwig-Porschütz-Straße",
+        "content": "Hochbau, Fahrbahn auf einen Fahrstreifen verengt",
+        "validity": { "from": "2025-08-15T12:00", "to": "2027-07-30T12:00" }
+      },
+      "geometry": { "type": "Point", "coordinates": [13.365007638931276, 52.5338856515462] }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "8/2025",
+        "lms_id": "LMS-BR/r_LMS-BR/373434_LMS-BR/72",
+        "tstore": "2026-06-10T12:37:04.557822Z",
+        "objectState": "modified",
+        "subtype": "Baustelle",
+        "icon": "baustelle",
+        "severity": "keine Sperrung",
+        "direction": "Beidseitig",
+        "street": "Wolfensteindamm (Steglitz)",
+        "section": "in beiden Richtungen Schloßstraße/Aus- u. Einfahrt A103 und Neuchateller Straße",
+        "total_lanes": null,
+        "closed_lanes": null,
+        "content": "Bauarbeiten, Fahrbahn auf einen Fahrstreifen verengt",
+        "validity": { "from": "2025-07-23T07:00", "to": "2026-07-30T17:00" }
+      },
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          { "type": "Point", "coordinates": [13.318904591788835, 52.45210087026612] },
+          {
+            "type": "LineString",
+            "coordinates": [
+              [13.31892604156763, 52.45407498328484],
+              [13.319247788249806, 52.45355204805477],
+              [13.319548085153189, 52.4532121368253],
+              [13.319633884268443, 52.45288529663044],
+              [13.319548085153189, 52.45255845400994],
+              [13.319226338471012, 52.45221853511149],
+              [13.318883142010003, 52.45208779637499],
+              [13.316352068110094, 52.450884981789244],
+              [13.315901622754998, 52.450715016209784],
+              [13.315622775630446, 52.450531975621445]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "17/2025",
+        "lms_id": "LMS-BR/r_LMS-BR/406326_LMS-BR/72",
+        "tstore": "2026-06-23T15:52:40.501621Z",
+        "objectState": "modified",
+        "subtype": "Sperrung",
+        "icon": "sperrung",
+        "severity": "Vollsperrung",
+        "direction": "Beidseitig",
+        "street": "Schiffbauerdamm (Mitte)",
+        "section": "in beiden Richtungen zwischen Luisenstraße und Albrechtstraße",
+        "total_lanes": 2,
+        "closed_lanes": 2,
+        "content": "Leitungsbau, Vollsperrung für Kfz-Verkehr. Im Anschluss folgen weitere Arbeiten",
+        "validity": { "from": "2025-07-09T07:00", "to": "2026-10-28T17:00" }
+      },
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          { "type": "Point", "coordinates": [13.381610512733461, 52.51978875830303] },
+          {
+            "type": "LineString",
+            "coordinates": [
+              [13.38013529777527, 52.51975611648391],
+              [13.381868004798891, 52.51979528666397],
+              [13.384593129158022, 52.52063417296989],
+              [13.385252952575685, 52.52099975265203]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "30/2025",
+        "lms_id": "LMS-BR/r_LMS-BR/376498_LMS-BR/72",
+        "tstore": "2026-04-13T17:04:06.091886Z",
+        "objectState": "modified",
+        "subtype": "Sperrung",
+        "icon": "sperrung",
+        "severity": "Fahrtrichtungssperrung",
+        "direction": "Einseitig",
+        "street": "Goltzstraße (Lichtenrade)",
+        "section": "Richtung Wolziger Zeile zwischen Bahnofstraße und Briesinger Straße",
+        "content": "Umleitungsstrecke für gesperrte Bahnhofstraße, Fahrtrichtung gesperrt, Briesingstraße Richtung Bahnhofstraße gesperrt",
+        "validity": { "from": "2025-07-16T07:00", "to": "2026-12-31T17:00" }
+      },
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          { "type": "Point", "coordinates": [13.408003284924323, 52.386615180646366] },
+          {
+            "type": "LineString",
+            "coordinates": [
+              [13.40047333361912, 52.383236551974804],
+              [13.399786940697098, 52.38424480331075],
+              [13.398628652641188, 52.38651001129213]
+            ]
+          },
+          {
+            "type": "LineString",
+            "coordinates": [
+              [13.40807835915016, 52.386647913935846],
+              [13.400506587229184, 52.383191144518165]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "44/2025",
+        "lms_id": null,
+        "tstore": "2026-06-09T14:24:41.596338Z",
+        "objectState": "modified",
+        "subtype": "Sperrung",
+        "icon": "sperrung",
+        "severity": "Fahrtrichtungssperrung",
+        "direction": "Einseitig",
+        "street": "A117",
+        "section": "stadtauswärts zwsichen AD Treptow und AS Waltersdorf",
+        "total_lanes": null,
+        "closed_lanes": null,
+        "content": "Bau der AS Hubertus, Fahrtrichtung gesperrt",
+        "validity": { "from": "2025-07-24T08:00", "to": "2026-08-21T17:00" }
+      },
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          { "type": "Point", "coordinates": [13.554468154907228, 52.40220940824191] },
+          {
+            "type": "LineString",
+            "coordinates": [
+              [13.556421692095283, 52.405721137256606],
+              [13.555220504481786, 52.40535468144709],
+              [13.55449121200214, 52.405407032463394],
+              [13.55359032129199, 52.40551173430963],
+              [13.552603631466587, 52.405380856963006],
+              [13.552088836775072, 52.404935871080134],
+              [13.552088836775072, 52.404438528605304],
+              [13.55268943058184, 52.40367941612338],
+              [13.55337582350386, 52.40297264448472],
+              [13.553933517753002, 52.40244910263778],
+              [13.5547486093479, 52.401925554578206],
+              [13.556121395191902, 52.40090461799293],
+              [13.557279683247808, 52.400014551438545],
+              [13.55818057395796, 52.39901974992422],
+              [13.559093683506173, 52.39791809211689],
+              [13.559951674658699, 52.396923243337284],
+              [13.560938364484064, 52.39608545854776],
+              [13.562053752982346, 52.39511675005767],
+              [13.563598137056893, 52.394095655927195],
+              [13.564413228651748, 52.39328400014995],
+              [13.565013822458518, 52.39231523016582],
+              [13.564928023343267, 52.39121551954973],
+              [13.564627726439882, 52.38993248919978],
+              [13.564327429536498, 52.38901601611582],
+              [13.563941333517862, 52.38817808121579],
+              [13.562396949443356, 52.37922165851199],
+              [13.561882154751842, 52.377257287804824],
+              [13.56153895829083, 52.37631435882629],
+              [13.560423569792547, 52.37442844046782],
+              [13.559265281736677, 52.372830585505376],
+              [13.558321491468899, 52.371651802988474],
+              [13.556605509163889, 52.369975258108326],
+              [13.55536142199273, 52.36900597657019],
+              [13.554589229955457, 52.368062871415646]
+            ]
+          },
+          {
+            "type": "LineString",
+            "coordinates": [
+              [13.550726943693682, 52.40200130181311],
+              [13.551928131307218, 52.40252484897381],
+              [13.552786122459743, 52.40257720334819],
+              [13.553772812285107, 52.402393962766084],
+              [13.554587903880007, 52.40189659163545],
+              [13.555102698571522, 52.4016871705346]
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

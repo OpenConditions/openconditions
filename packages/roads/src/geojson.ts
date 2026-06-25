@@ -102,7 +102,14 @@ export function parseGeoJson(input: string | Buffer, src: SourceDescriptor): Roa
 
   features.forEach((feature, index) => {
     const geometry = feature.geometry;
-    if (!geometry || !geometry.type || !("coordinates" in geometry)) return;
+    // Accept any geometry that carries shape: coordinates, or a
+    // GeometryCollection's nested geometries (Berlin VIZ mixes Point+LineString).
+    const hasShape =
+      geometry &&
+      geometry.type &&
+      ("coordinates" in geometry ||
+        (geometry.type === "GeometryCollection" && "geometries" in geometry));
+    if (!hasShape) return;
     const props = (feature.properties ?? {}) as Record<string, unknown>;
 
     const rawType = str(get(props, mapping.typeField));
