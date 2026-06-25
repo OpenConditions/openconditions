@@ -4,7 +4,38 @@ import type {
   Measurement,
   MultiLineStringGeometry,
   PointGeometry,
+  Severity,
 } from "@openconditions/core";
+
+/**
+ * Declarative field mapping for the generic GeoJSON parser. A feed serving a
+ * plain GeoJSON FeatureCollection (or an Esri ArcGIS `f=geojson` export) is
+ * ingested by naming which `properties` keys carry each field — so a new such
+ * source is a config entry, not new code. Geometry is taken verbatim from each
+ * feature (GeoJSON is WGS84 by RFC 7946). Field names may be dotted paths into
+ * nested `properties`. Unmapped type strings route through the shared taxonomy
+ * crosswalk; extend that (not a per-source map) for new vocabularies.
+ */
+export interface GeoJsonMapping {
+  /** properties key for the feature's stable id (falls back to the feed index). */
+  idField?: string;
+  /** properties key whose value is mapped to a RoadEventType via the crosswalk. */
+  typeField?: string;
+  /** type to use when the feed has no per-feature type (e.g. a closures-only feed). */
+  defaultType?: RoadEventType;
+  /** properties key for the human headline/title. */
+  headlineField?: string;
+  /** properties key for the longer description. */
+  descriptionField?: string;
+  /** properties key for a severity string, mapped through {@link GeoJsonMapping.severityMap}. */
+  severityField?: string;
+  /** maps a feed's severity values to the canonical Severity scale. */
+  severityMap?: Record<string, Severity>;
+  /** properties key for the road name/ref. */
+  roadField?: string;
+  /** properties key for a last-updated ISO timestamp. */
+  updatedField?: string;
+}
 
 /**
  * The canonical set of road-event types — the single source of truth.

@@ -27,6 +27,7 @@ export type SourceFormat =
   | "datex2"
   | "open511"
   | "wzdx"
+  | "geojson"
   | "traff"
   | "autobahn-json"
   | "digitraffic-json"

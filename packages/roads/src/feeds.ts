@@ -1,6 +1,8 @@
 import type { SourceFormat } from "@openconditions/core";
+import type { GeoJsonMapping } from "./model.js";
 import type { SiteGeometry } from "./siteTable.js";
 import { parseDatexSituations } from "./datex.js";
+import { parseGeoJson } from "./geojson.js";
 import { parseOpen511 } from "./open511.js";
 import { parseWzdx } from "./wzdx.js";
 import { parseAutobahn } from "./autobahn.js";
@@ -92,6 +94,8 @@ export interface FeedSource {
    * required env vars are absent. Omit (or `none`) for open, keyless feeds.
    */
   auth?: FeedAuth;
+  /** Field mapping for `format: "geojson"` feeds (passed to the generic reader). */
+  geojson?: GeoJsonMapping;
   bbox?: [number, number, number, number];
   cadenceSec: number;
   freshnessWindowSec: number;
@@ -294,6 +298,7 @@ export function parserFor(format: SourceFormat): ParserFn {
   if (format === "datex2") return parseDatexSituations;
   if (format === "open511") return parseOpen511;
   if (format === "wzdx") return parseWzdx;
+  if (format === "geojson") return parseGeoJson;
   if (format === "autobahn-json") return parseAutobahn;
   if (format === "digitraffic-json") return parseDigitraffic;
   throw new Error(`No parser registered for format: ${format}`);
@@ -320,5 +325,6 @@ export function feedToSourceDescriptor(feed: FeedSource): SourceDescriptor {
     country: feed.country,
     license: feed.license,
     licenseUrl: feed.licenseUrl,
+    ...(feed.geojson ? { geojson: feed.geojson } : {}),
   };
 }

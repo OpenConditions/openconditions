@@ -55,6 +55,7 @@ export const TYPE_CROSSWALK: Record<string, TypeMapping> = {
   roadworks: { type: "roadworks", category: "planned", isPlanned: true },
 
   road_work: { type: "roadworks", category: "planned", isPlanned: true },
+  crash: { type: "accident", category: "incident", isPlanned: false },
   weight_restriction: { type: "dimension_restriction", category: "conditions", isPlanned: false },
   exempted_transport: { type: "authority", category: "incident", isPlanned: false },
   accident_report: { type: "accident", category: "incident", isPlanned: false },

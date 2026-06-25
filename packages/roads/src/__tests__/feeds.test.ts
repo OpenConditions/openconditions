@@ -6,6 +6,7 @@ import { parseOpen511 } from "../open511.js";
 import { parseWzdx } from "../wzdx.js";
 import { parseAutobahn } from "../autobahn.js";
 import { parseDigitraffic } from "../digitraffic.js";
+import { parseGeoJson } from "../geojson.js";
 import { FEED_SOURCES, feedToSourceDescriptor, parserFor } from "../feeds.js";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
@@ -140,6 +141,10 @@ describe("parserFor", () => {
 
   it("returns parseWzdx for wzdx", () => {
     expect(parserFor("wzdx")).toBe(parseWzdx);
+  });
+
+  it("returns parseGeoJson for geojson", () => {
+    expect(parserFor("geojson")).toBe(parseGeoJson);
   });
 
   it("returns parseAutobahn for autobahn-json", () => {
