@@ -112,6 +112,17 @@ describe("FEED_SOURCES", () => {
     expect(feed!.enabledByDefault).toBe(true);
   });
 
+  it("includes hc-hr (Croatia) as a Basic-auth DATEX II feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "hc-hr");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.auth).toEqual({
+      kind: "basic",
+      userEnvVar: "HC_HR_USERNAME",
+      passEnvVar: "HC_HR_PASSWORD",
+    });
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

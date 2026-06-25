@@ -259,6 +259,24 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.bison-fute.gouv.fr/",
     enabledByDefault: true,
   },
+  {
+    // Croatia state-road roadworks (Hrvatske ceste). DATEX II v2, open licence,
+    // but the live B2B endpoint is HTTP-Basic gated — set HC_HR_USERNAME /
+    // HC_HR_PASSWORD to activate (the scheduler skips it until both are present).
+    id: "hc-hr",
+    name: "Hrvatske ceste roadworks (Croatia)",
+    format: "datex2",
+    url: "https://b2b.promet-info.hr/dc/b2b.hc.roadworks.datex",
+    auth: { kind: "basic", userEnvVar: "HC_HR_USERNAME", passEnvVar: "HC_HR_PASSWORD" },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "OD-HR",
+    licenseUrl: "https://data.gov.hr/otvorena-dozvola",
+    attribution: "Hrvatske ceste",
+    country: "HR",
+    privacyUrl: "https://www.hrvatske-ceste.hr/",
+    enabledByDefault: true,
+  },
 ];
 
 type ParserFn = typeof parseDatexSituations;
