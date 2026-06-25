@@ -181,6 +181,14 @@ describe("FEED_SOURCES", () => {
     expect(feed!.country).toBe("PL");
   });
 
+  it("includes vegvesen-no (Norway) as a Basic-auth DATEX II feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "vegvesen-no");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.auth?.kind).toBe("basic");
+    expect(feed!.country).toBe("NO");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

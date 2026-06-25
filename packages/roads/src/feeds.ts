@@ -433,6 +433,25 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
+    // Norway — Statens vegvesen DATEX II v3 (nationwide). NLOD (commercial OK).
+    // Endpoint confirmed live (HTTP 401 without auth); free account → Basic auth.
+    // Set NO_VEGVESEN_USERNAME / NO_VEGVESEN_PASSWORD to activate.
+    id: "vegvesen-no",
+    name: "Statens vegvesen (Norway)",
+    format: "datex2",
+    url: "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetSituation/pullSnapshotData",
+    auth: { kind: "basic", userEnvVar: "NO_VEGVESEN_USERNAME", passEnvVar: "NO_VEGVESEN_PASSWORD" },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "NLOD-2.0",
+    licenseUrl: "https://data.norge.no/nlod/en/2.0",
+    attribution: "Statens vegvesen",
+    country: "NO",
+    privacyUrl:
+      "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
+    enabledByDefault: true,
+  },
+  {
     // Poland GDDKiA road obstructions (utrudnienia). Proprietary XML, WGS84
     // points, CC0 — no key.
     id: "gddkia-pl",
