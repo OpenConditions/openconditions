@@ -88,28 +88,62 @@ function defaultHeadline(type: RoadEventType): string {
     : type.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 }
 
+const WEB_MERCATOR_R = 6_378_137;
+
+/** Web Mercator (EPSG:3857) [x,y] metres → WGS84 [lon,lat] (closed form, no deps). */
+function mercToWgs84([x, y]: [number, number]): [number, number] {
+  const lon = (x / WEB_MERCATOR_R) * (180 / Math.PI);
+  const lat = (2 * Math.atan(Math.exp(y / WEB_MERCATOR_R)) - Math.PI / 2) * (180 / Math.PI);
+  return [lon, lat];
+}
+
+/** True when a GeoJSON `crs` member declares Web Mercator (some WFS/ArcGIS exports). */
+function isWebMercator(crs: unknown): boolean {
+  const name = (crs as { properties?: { name?: unknown } })?.properties?.name;
+  return typeof name === "string" && /(?:^|[:/])(3857|900913|102100)\b/.test(name);
+}
+
+/** Recursively remap every coordinate pair of a geometry through `fn`. */
+function remapCoords(geometry: Geometry, fn: (p: [number, number]) => [number, number]): Geometry {
+  if (geometry.type === "GeometryCollection") {
+    return { ...geometry, geometries: geometry.geometries.map((g) => remapCoords(g, fn)) };
+  }
+  const walk = (c: unknown): unknown =>
+    Array.isArray(c) && typeof c[0] === "number" && typeof c[1] === "number"
+      ? fn([c[0], c[1]])
+      : Array.isArray(c)
+        ? c.map(walk)
+        : c;
+  return {
+    ...geometry,
+    coordinates: walk((geometry as { coordinates: unknown }).coordinates),
+  } as Geometry;
+}
+
 export function parseGeoJson(input: string | Buffer, src: SourceDescriptor): RoadEvent[] {
   const text = typeof input === "string" ? input : input.toString("utf8");
-  let fc: { features?: unknown };
+  let fc: { features?: unknown; crs?: unknown };
   try {
-    fc = JSON.parse(text) as { features?: unknown };
+    fc = JSON.parse(text) as { features?: unknown; crs?: unknown };
   } catch {
     return [];
   }
   const features = Array.isArray(fc.features) ? (fc.features as Feature[]) : [];
   const mapping = src.geojson ?? {};
+  const mercator = isWebMercator(fc.crs);
   const out: RoadEvent[] = [];
 
   features.forEach((feature, index) => {
-    const geometry = feature.geometry;
+    const rawGeometry = feature.geometry;
     // Accept any geometry that carries shape: coordinates, or a
     // GeometryCollection's nested geometries (Berlin VIZ mixes Point+LineString).
     const hasShape =
-      geometry &&
-      geometry.type &&
-      ("coordinates" in geometry ||
-        (geometry.type === "GeometryCollection" && "geometries" in geometry));
+      rawGeometry &&
+      rawGeometry.type &&
+      ("coordinates" in rawGeometry ||
+        (rawGeometry.type === "GeometryCollection" && "geometries" in rawGeometry));
     if (!hasShape) return;
+    const geometry = mercator ? remapCoords(rawGeometry, mercToWgs84) : rawGeometry;
     const props = (feature.properties ?? {}) as Record<string, unknown>;
 
     const rawType = str(get(props, mapping.typeField));

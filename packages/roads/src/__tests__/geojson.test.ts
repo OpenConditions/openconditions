@@ -137,6 +137,30 @@ describe("parseGeoJson", () => {
     expect(out[0]!.type).toBe("roadworks");
   });
 
+  it("reprojects EPSG:3857 (Web Mercator) coordinates to WGS84", () => {
+    const out = parseGeoJson(
+      JSON.stringify({
+        type: "FeatureCollection",
+        crs: { type: "name", properties: { name: "urn:ogc:def:crs:EPSG::3857" } },
+        features: [
+          {
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [-8338879.6, 5772014.3] },
+            properties: { id: "m1", category: "roadworks" },
+          },
+        ],
+      }),
+      SRC
+    );
+    const g = out[0]!.geometry;
+    if (!g || g.type !== "Point") throw new Error("expected Point");
+    // ~Québec: lon ≈ -74.9, lat ≈ 45.9 (not the raw metre values).
+    expect(g.coordinates[0]!).toBeGreaterThan(-80);
+    expect(g.coordinates[0]!).toBeLessThan(-70);
+    expect(g.coordinates[1]!).toBeGreaterThan(44);
+    expect(g.coordinates[1]!).toBeLessThan(48);
+  });
+
   it("returns [] for malformed JSON or a non-FeatureCollection", () => {
     expect(parseGeoJson("not json", SRC)).toEqual([]);
     expect(parseGeoJson(JSON.stringify({ type: "Feature" }), SRC)).toEqual([]);
@@ -188,5 +212,24 @@ describe("parseGeoJson — Berlin VIZ fixture (GeometryCollection + German vocab
     expect(events.some((e) => e.type === "roadworks" || e.type === "road_closure")).toBe(true);
     // At least one GeometryCollection survived (the bug fix).
     expect(events.some((e) => e.geometry?.type === "GeometryCollection")).toBe(true);
+  });
+});
+
+describe("parseGeoJson — MTQ Québec fixture (EPSG:3857 reprojection)", () => {
+  it("reprojects the WFS Web-Mercator output to WGS84 via the registered mtq-qc mapping", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "mtq-qc")!;
+    const xml = readFileSync(join(import.meta.dirname, "fixtures/mtq-qc/chantiers.geojson"));
+    const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
+    expect(events.length).toBeGreaterThan(0);
+    expect(events.every((e) => e.type === "roadworks")).toBe(true);
+    // Coordinates land in Québec lon/lat, not raw 3857 metres.
+    const ls = events.find((e) => e.geometry?.type === "LineString")!;
+    const g = ls.geometry;
+    if (!g || g.type !== "LineString") throw new Error("expected LineString");
+    const [lon, lat] = g.coordinates[0]!;
+    expect(lon!).toBeGreaterThan(-80);
+    expect(lon!).toBeLessThan(-57);
+    expect(lat!).toBeGreaterThan(44);
+    expect(lat!).toBeLessThan(63);
   });
 });

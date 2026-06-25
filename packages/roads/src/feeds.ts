@@ -407,6 +407,30 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
     enabledByDefault: true,
   },
+  {
+    // Québec roadworks (MTQ chantiers), WFS→GeoJSON. Served in EPSG:3857 — the
+    // reader reprojects to WGS84. CC-BY 4.0, no key.
+    id: "mtq-qc",
+    name: "MTQ roadworks (Québec)",
+    format: "geojson",
+    url: "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:chantiers_mtmdet&outputformat=geojson",
+    geojson: {
+      idField: "identifiant",
+      defaultType: "roadworks",
+      headlineField: "identificationDesTravaux",
+      descriptionField: "descriptionFrancais",
+      roadField: "routeAutoroute",
+      updatedField: "miseAJour",
+    },
+    cadenceSec: 600,
+    freshnessWindowSec: 1800,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://www.donneesquebec.ca/",
+    attribution: "Ministère des Transports du Québec (MTQ)",
+    country: "CA",
+    privacyUrl: "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
+    enabledByDefault: true,
+  },
 ];
 
 type ParserFn = typeof parseDatexSituations;

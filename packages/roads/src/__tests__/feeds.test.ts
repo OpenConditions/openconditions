@@ -164,6 +164,14 @@ describe("FEED_SOURCES", () => {
     });
   });
 
+  it("includes mtq-qc (Québec) as an open GeoJSON feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "mtq-qc");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("geojson");
+    expect(feed!.license).toBe("CC-BY-4.0");
+    expect(feed!.geojson?.defaultType).toBe("roadworks");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
