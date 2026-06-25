@@ -459,7 +459,16 @@ interface SituationRecord {
 }
 
 function listSituationRecords(doc: XmlObject): SituationRecord[] {
-  const root = doc;
+  let root = doc;
+
+  // Some national access points (e.g. France DIR / Bison Futé) wrap the DATEX
+  // document in a SOAP envelope. Unwrap it (namespace prefixes are already
+  // stripped) so the publication lookup below sees the d2LogicalModel directly.
+  const envelope = getXmlChild(root, "Envelope");
+  if (envelope) {
+    const body = getXmlChild(envelope, "Body");
+    if (body) root = body;
+  }
 
   let publication: XmlObject | undefined;
 

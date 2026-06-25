@@ -103,6 +103,15 @@ describe("FEED_SOURCES", () => {
     expect(feed!.enabledByDefault).toBe(true);
   });
 
+  it("includes dir-fr (France DIR) as an open DATEX II feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "dir-fr");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.license).toBe("etalab-2.0");
+    expect(feed!.country).toBe("FR");
+    expect(feed!.enabledByDefault).toBe(true);
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

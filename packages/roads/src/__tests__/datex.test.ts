@@ -481,3 +481,29 @@ describe("parseDatexSituations — DGT (Spain) DATEX II v3 fixture", () => {
     expect([...types].some((t) => t !== "other")).toBe(true);
   });
 });
+
+const DIR_FR_FIXTURE_PATH = join(import.meta.dirname, "fixtures/dir-fr/situations.xml");
+
+const DIR_FR_SOURCE = {
+  id: "dir-fr",
+  attribution: "DIR / Bison Futé",
+  country: "FR",
+  license: "etalab-2.0",
+} as const;
+
+describe("parseDatexSituations — France DIR (SOAP-wrapped DATEX II v2)", () => {
+  it("unwraps the SOAP envelope and extracts RoadEvents with geometry", () => {
+    const events = parseDatexSituations(readFileSync(DIR_FR_FIXTURE_PATH), DIR_FR_SOURCE);
+    expect(events.length).toBeGreaterThan(0);
+    expect(events.every((ev) => ev.geometry != null)).toBe(true);
+    // WGS84 sanity: a French coordinate (lon ~ -5..9, lat ~ 41..51).
+    const pt = events.find((ev) => ev.geometry?.type === "Point")!;
+    const geom = pt.geometry;
+    if (!geom || geom.type !== "Point") throw new Error("expected a Point geometry");
+    const [lon, lat] = geom.coordinates;
+    expect(lon!).toBeGreaterThan(-6);
+    expect(lon!).toBeLessThan(10);
+    expect(lat!).toBeGreaterThan(41);
+    expect(lat!).toBeLessThan(52);
+  });
+});

@@ -242,6 +242,23 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.mobidata-bw.de/pages/datenschutz",
     enabledByDefault: true,
   },
+  {
+    // France national roads (DIR / Bison Futé). DATEX II v2 incidents, wrapped in
+    // a SOAP envelope (unwrapped by the parser). The resource URL is HTTPS and
+    // 302-redirects to the upstream file. Open (Licence Ouverte 2.0), no key.
+    id: "dir-fr",
+    name: "DIR / Bison Futé (France national roads)",
+    format: "datex2",
+    url: "https://transport.data.gouv.fr/resources/79174/download",
+    cadenceSec: 600,
+    freshnessWindowSec: 1800,
+    license: "etalab-2.0",
+    licenseUrl: "https://www.etalab.gouv.fr/licence-ouverte-open-licence",
+    attribution: "DIR / Bison Futé",
+    country: "FR",
+    privacyUrl: "https://www.bison-fute.gouv.fr/",
+    enabledByDefault: true,
+  },
 ];
 
 type ParserFn = typeof parseDatexSituations;
