@@ -3,6 +3,7 @@ import type { GeoJsonMapping } from "./model.js";
 import type { SiteGeometry } from "./siteTable.js";
 import { parseDatexSituations } from "./datex.js";
 import { parseGeoJson } from "./geojson.js";
+import { parseFlatJson } from "./flatjson.js";
 import { parseIbi511 } from "./ibi511.js";
 import { parseGddkia } from "./gddkia.js";
 import { parseLtaIncidents } from "./lta.js";
@@ -665,6 +666,34 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
+    // Thailand — Longdo / iTIC traffic events (flat JSON array). CC-BY, no key.
+    // Parsed by the generic flat-JSON reader (point from lon/lat fields). type
+    // codes are numeric — only 3=accident confirmed; verify the rest.
+    id: "longdo-th",
+    name: "Longdo Traffic Events (Thailand)",
+    format: "flatjson",
+    url: "https://event.longdo.com/feed/json",
+    geojson: {
+      lonField: "longitude",
+      latField: "latitude",
+      idField: "eid",
+      typeField: "type",
+      typeMap: { "3": "accident" },
+      defaultType: "other",
+      headlineField: "title_en",
+      descriptionField: "description_en",
+      updatedField: "start",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://www.longdo.com/",
+    attribution: "Longdo Traffic / iTIC Foundation",
+    country: "TH",
+    privacyUrl: "https://map.longdo.com/",
+    enabledByDefault: true,
+  },
+  {
     // Poland GDDKiA road obstructions (utrudnienia). Proprietary XML, WGS84
     // points, CC0 — no key.
     id: "gddkia-pl",
@@ -701,6 +730,7 @@ export function parserFor(format: SourceFormat): ParserFn {
   if (format === "ibi511-json") return parseIbi511 as ParserFn;
   if (format === "lta-json") return parseLtaIncidents as ParserFn;
   if (format === "gddkia-xml") return parseGddkia;
+  if (format === "flatjson") return parseFlatJson as ParserFn;
   if (format === "autobahn-json") return parseAutobahn;
   if (format === "digitraffic-json") return parseDigitraffic;
   throw new Error(`No parser registered for format: ${format}`);

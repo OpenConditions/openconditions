@@ -31,6 +31,7 @@ export type SourceFormat =
   | "ibi511-json"
   | "lta-json"
   | "gddkia-xml"
+  | "flatjson"
   | "traff"
   | "autobahn-json"
   | "digitraffic-json"

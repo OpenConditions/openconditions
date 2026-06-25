@@ -10,6 +10,7 @@ import { parseGeoJson } from "../geojson.js";
 import { parseIbi511 } from "../ibi511.js";
 import { parseLtaIncidents } from "../lta.js";
 import { parseGddkia } from "../gddkia.js";
+import { parseFlatJson } from "../flatjson.js";
 import { FEED_SOURCES, feedToSourceDescriptor, parserFor } from "../feeds.js";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
@@ -242,6 +243,17 @@ describe("FEED_SOURCES", () => {
     expect(feed!.format).toBe("geojson");
     expect(feed!.auth?.kind).toBe("header-key");
     expect(Array.isArray(feed!.url)).toBe(true);
+  });
+
+  it("includes longdo-th (Thailand) as a flatjson feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "longdo-th");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("flatjson");
+    expect(feed!.geojson?.lonField).toBe("longitude");
+  });
+
+  it("returns parseFlatJson for flatjson", () => {
+    expect(parserFor("flatjson")).toBe(parseFlatJson);
   });
 
   it("registers unique feed ids", () => {

@@ -1,4 +1,4 @@
-import type { Severity } from "@openconditions/core";
+import type { Severity, SourceFormat } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { GeoJsonMapping, RoadEvent, RoadEventType } from "./model.js";
@@ -123,8 +123,22 @@ export function parseGeoJson(input: string | Buffer, src: SourceDescriptor): Roa
     return [];
   }
   const features = Array.isArray(fc.features) ? (fc.features as Feature[]) : [];
+  return featuresToRoadEvents(features, crsName(fc.crs), src, "geojson");
+}
+
+/**
+ * Map an array of (GeoJSON or pseudo) features to RoadEvents via the feed's
+ * GeoJsonMapping. Shared by the GeoJSON reader and the flat-JSON reader (which
+ * passes records as `{ geometry: null, properties }` and relies on
+ * lonField/latField for geometry). `format` is stamped as the sourceFormat.
+ */
+export function featuresToRoadEvents(
+  features: Feature[],
+  collectionCrs: string | undefined,
+  src: SourceDescriptor,
+  format: SourceFormat
+): RoadEvent[] {
   const mapping = src.geojson ?? {};
-  const collectionCrs = crsName(fc.crs);
   const out: RoadEvent[] = [];
 
   features.forEach((feature, index) => {
@@ -168,7 +182,7 @@ export function parseGeoJson(input: string | Buffer, src: SourceDescriptor): Roa
     out.push({
       id: `${src.id}:${localId}`,
       source: src.id,
-      sourceFormat: "geojson",
+      sourceFormat: format,
       domain: "roads",
       kind: "event",
       type,
