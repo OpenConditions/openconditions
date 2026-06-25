@@ -42,6 +42,12 @@ export interface GeoJsonMapping {
   /** properties key for a last-updated ISO timestamp. */
   updatedField?: string;
   /**
+   * For `format: "flatjson"` — dotted path to the records array within the JSON
+   * response (e.g. "value" for LTA-style `{value:[…]}`). Omit when the response
+   * is a bare array. Combine with lonField/latField for geometry.
+   */
+  arrayPath?: string;
+  /**
    * When both are set, build Point geometry from these WGS84 lon/lat property
    * values instead of the feature's `geometry`. Use when a feed's geometry is in
    * a national grid (not WGS84/Web-Mercator) but it also exposes lon/lat columns

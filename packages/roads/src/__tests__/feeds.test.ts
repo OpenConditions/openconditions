@@ -286,6 +286,63 @@ describe("FEED_SOURCES", () => {
     expect(feed!.requiredEnv).toContain("BA_CLIENT_ID");
   });
 
+  it("includes nationalhighways-gb (England) as a header-key DATEX II feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "nationalhighways-gb");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.auth).toEqual({
+      kind: "header-key",
+      header: "Ocp-Apim-Subscription-Key",
+      envVar: "NH_API_KEY",
+    });
+    expect(feed!.country).toBe("GB");
+  });
+
+  it("includes vejdirektoratet-dk (Denmark) as a query-key DATEX II feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "vejdirektoratet-dk");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.auth?.kind).toBe("query-key");
+    expect(feed!.license).toBe("CC-BY-4.0");
+    expect(feed!.country).toBe("DK");
+  });
+
+  it("includes asfinag-at (Austria) as a Basic-auth DATEX II feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "asfinag-at");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.auth?.kind).toBe("basic");
+    expect(feed!.country).toBe("AT");
+  });
+
+  it("includes tarktee-ee (Estonia) as a query-key DATEX II feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "tarktee-ee");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.auth?.kind).toBe("query-key");
+    expect(feed!.country).toBe("EE");
+  });
+
+  it("includes tdx-tw (Taiwan) as an oauth2 flatjson feed with PositionLon/Lat", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "tdx-tw");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("flatjson");
+    expect(feed!.auth?.kind).toBe("oauth2-client-credentials");
+    expect(feed!.geojson?.lonField).toBe("PositionLon");
+    expect(feed!.geojson?.latField).toBe("PositionLat");
+    expect(feed!.country).toBe("TW");
+  });
+
+  it("includes its-kr (South Korea) as a query-key flatjson feed with coordX/coordY", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "its-kr");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("flatjson");
+    expect(feed!.auth?.kind).toBe("query-key");
+    expect(feed!.geojson?.lonField).toBe("coordX");
+    expect(feed!.geojson?.latField).toBe("coordY");
+    expect(feed!.country).toBe("KR");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

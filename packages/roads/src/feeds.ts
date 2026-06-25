@@ -791,6 +791,152 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.gov.pl/web/gddkia",
     enabledByDefault: true,
   },
+  {
+    // England — National Highways NTIS "Road and Lane Closures" v2.0 DATEX II
+    // (since 2025 it also publishes closures from unplanned events). OGL-UK-3.0
+    // (commercial OK). Subscribe free on the developer portal for an APIM
+    // subscription key → set NH_API_KEY. Host + Ocp-Apim-Subscription-Key header
+    // are the standard NTIS APIM ones; confirm the exact product path against the
+    // subscription's Postman collection when keyed.
+    id: "nationalhighways-gb",
+    name: "National Highways NTIS (England)",
+    format: "datex2",
+    url: "https://api.data.nationalhighways.co.uk/roads/v2.0/closures",
+    auth: { kind: "header-key", header: "Ocp-Apim-Subscription-Key", envVar: "NH_API_KEY" },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "OGL-UK-3.0",
+    licenseUrl: "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    attribution: "Contains National Highways data © Crown copyright and database right",
+    country: "GB",
+    privacyUrl: "https://nationalhighways.co.uk/privacy-notice/",
+    enabledByDefault: true,
+  },
+  {
+    // Denmark — Vejdirektoratet "Traffic Events and Roadworks" DATEX II, served
+    // through the national data exchanger. CC-BY-4.0 (commercial OK). Free API key
+    // from nap.vd.dk → set DK_VD_API_KEY. The base host is the NAP data service;
+    // confirm the exact feed path and whether the key is a query param or header
+    // when keyed.
+    id: "vejdirektoratet-dk",
+    name: "Vejdirektoratet (Denmark)",
+    format: "datex2",
+    url: "https://data.vd-nap.dk/api/datex2/traffic-events",
+    auth: { kind: "query-key", param: "api-key", envVar: "DK_VD_API_KEY" },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://nap.vd.dk/",
+    attribution: "Vejdirektoratet (Danish Road Directorate)",
+    country: "DK",
+    privacyUrl: "https://www.vejdirektoratet.dk/",
+    enabledByDefault: true,
+  },
+  {
+    // Austria — ASFINAG "Verkehrsmeldungen zu ungeplanten und sicherheitsrelevanten
+    // Ereignissen" (unplanned/safety events) DATEX II, published via Mobilitydata
+    // Austria. CC-BY-4.0 (commercial OK). Register at contentportal.asfinag.at →
+    // set AT_ASFINAG_USERNAME / AT_ASFINAG_PASSWORD (the ASFINAG content portal
+    // uses HTTP Basic). Confirm the exact resource URL and auth scheme when keyed.
+    id: "asfinag-at",
+    name: "ASFINAG events (Austria)",
+    format: "datex2",
+    url: "https://contentportal.asfinag.at/datex2/v3/unplanned-events",
+    auth: { kind: "basic", userEnvVar: "AT_ASFINAG_USERNAME", passEnvVar: "AT_ASFINAG_PASSWORD" },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://www.mobilitydata.gv.at/en/data",
+    attribution: "ASFINAG",
+    country: "AT",
+    privacyUrl: "https://www.asfinag.at/datenschutz/",
+    enabledByDefault: true,
+  },
+  {
+    // Estonia — Transpordiamet "Tark Tee" (Smart Road) DATEX II gateway (traffic
+    // safety + restriction datasets). Estonian open data, CC-BY-4.0 (commercial
+    // OK). Register at tarktee.mnt.ee for an API key → set EE_TARKTEE_API_KEY.
+    // Confirm the exact dataset path and auth param when keyed.
+    id: "tarktee-ee",
+    name: "Tark Tee (Estonia)",
+    format: "datex2",
+    url: "https://tarktee.mnt.ee/api/datex2/situation",
+    auth: { kind: "query-key", param: "apiKey", envVar: "EE_TARKTEE_API_KEY" },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://andmed.eesti.ee/information-holders/transpordiamet",
+    attribution: "Transpordiamet (Estonian Transport Administration)",
+    country: "EE",
+    privacyUrl: "https://www.transpordiamet.ee/en",
+    enabledByDefault: true,
+  },
+  {
+    // Taiwan — TDX (Transport Data eXchange) road traffic live news. OGDL
+    // (政府資料開放授權條款, commercial OK). OAuth2 client-credentials — register at
+    // tdx.transportdata.tw, set TDX_CLIENT_ID / TDX_CLIENT_SECRET. The highway
+    // live-news object wraps records under "Newses" with WGS84 PositionLon/
+    // PositionLat. Verify the array path + field names against a live token; if the
+    // News object lacks coordinates, point this at a section/VD endpoint that
+    // carries PositionLat/Lon.
+    id: "tdx-tw",
+    name: "TDX road traffic (Taiwan)",
+    format: "flatjson",
+    url: "https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/Live/News/Highway?%24format=JSON",
+    auth: {
+      kind: "oauth2-client-credentials",
+      tokenUrl: "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token",
+      clientIdEnvVar: "TDX_CLIENT_ID",
+      clientSecretEnvVar: "TDX_CLIENT_SECRET",
+    },
+    geojson: {
+      arrayPath: "Newses",
+      lonField: "PositionLon",
+      latField: "PositionLat",
+      idField: "NewsID",
+      headlineField: "Title",
+      descriptionField: "Description",
+      updatedField: "UpdateTime",
+      defaultType: "other",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "OGDL-TW-1.0",
+    licenseUrl: "https://data.gov.tw/license",
+    attribution: "Ministry of Transportation and Communications (TDX), Taiwan",
+    country: "TW",
+    privacyUrl: "https://tdx.transportdata.tw/",
+    enabledByDefault: true,
+  },
+  {
+    // South Korea — National ITS Center event API (its.go.kr open data). KOGL
+    // Type 1 (commercial OK with attribution). Free service key from its.go.kr →
+    // set KR_ITS_API_KEY. Events carry WGS84 coordX/coordY (lon/lat) under
+    // body.items. Verify the array path + field names against a live key.
+    id: "its-kr",
+    name: "National ITS events (South Korea)",
+    format: "flatjson",
+    url: "https://openapi.its.go.kr/api/NEvent?type=all&eventType=all&getType=json",
+    auth: { kind: "query-key", param: "apiKey", envVar: "KR_ITS_API_KEY" },
+    geojson: {
+      arrayPath: "body.items",
+      lonField: "coordX",
+      latField: "coordY",
+      idField: "linkId",
+      typeField: "eventType",
+      headlineField: "message",
+      updatedField: "startDate",
+      defaultType: "other",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "KOGL-Type-1",
+    licenseUrl: "https://www.kogl.or.kr/info/license.do",
+    attribution: "National Transport Information Center (ITS), Republic of Korea",
+    country: "KR",
+    privacyUrl: "https://www.its.go.kr/",
+    enabledByDefault: true,
+  },
 ];
 
 type ParserFn = typeof parseDatexSituations;
