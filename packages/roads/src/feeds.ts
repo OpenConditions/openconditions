@@ -281,6 +281,43 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.hrvatske-ceste.hr/",
     enabledByDefault: true,
   },
+  {
+    // New Zealand state-highway road events (NZTA Waka Kotahi), served as ArcGIS
+    // GeoJSON (WGS84). Open (CC-BY 4.0), no key. Parsed by the generic reader.
+    id: "nzta-nz",
+    name: "NZTA Road Events (New Zealand)",
+    format: "geojson",
+    url: "https://opendata-nzta.opendata.arcgis.com/datasets/NZTA::road-events.geojson",
+    geojson: {
+      idField: "eventId",
+      typeField: "eventDescription",
+      typeMap: {
+        Crash: "accident",
+        Breakdown: "broken_down_vehicle",
+        Slip: "hazard",
+        Maintenance: "roadworks",
+        "Pavement Repairs": "roadworks",
+        "Bridge Repairs": "roadworks",
+        Resurfacing: "roadworks",
+        "Road Construction": "roadworks",
+        Services: "roadworks",
+      },
+      defaultType: "other",
+      headlineField: "eventDescription",
+      descriptionField: "eventComments",
+      severityField: "impact",
+      severityMap: { "Road Closed": "high", Delays: "medium", Caution: "low" },
+      updatedField: "eventModified",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://opendata-nzta.opendata.arcgis.com/",
+    attribution: "NZ Transport Agency Waka Kotahi",
+    country: "NZ",
+    privacyUrl: "https://www.nzta.govt.nz/privacy-policy/",
+    enabledByDefault: true,
+  },
 ];
 
 type ParserFn = typeof parseDatexSituations;

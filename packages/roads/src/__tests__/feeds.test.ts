@@ -124,6 +124,15 @@ describe("FEED_SOURCES", () => {
     });
   });
 
+  it("includes nzta-nz (New Zealand) as an open GeoJSON feed with a mapping", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "nzta-nz");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("geojson");
+    expect(feed!.license).toBe("CC-BY-4.0");
+    expect(feed!.geojson?.typeField).toBe("eventDescription");
+    expect(feed!.enabledByDefault).toBe(true);
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

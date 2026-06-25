@@ -59,6 +59,9 @@ function str(v: unknown): string | undefined {
 
 function resolveType(rawType: string | undefined, mapping: GeoJsonMapping): TypeMapping {
   if (rawType) {
+    // Source-specific overrides win over the shared crosswalk.
+    const override = mapping.typeMap?.[rawType] ?? mapping.typeMap?.[rawType.toLowerCase()];
+    if (override) return mappingForType(override);
     const tm = mapSourceType("geojson", rawType);
     if (tm.type !== "other") return tm;
   }

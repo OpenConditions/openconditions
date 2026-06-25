@@ -1,4 +1,7 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { FEED_SOURCES, feedToSourceDescriptor } from "../feeds.js";
 import { parseGeoJson } from "../geojson.js";
 import type { SourceDescriptor } from "../types.js";
 
@@ -124,5 +127,24 @@ describe("parseGeoJson", () => {
     );
     const out = parseGeoJson(buf, { ...SRC, geojson: { typeField: "meta.kind" } });
     expect(out[0]!.type).toBe("roadworks");
+  });
+});
+
+describe("parseGeoJson — NZTA Road Events fixture (real wired mapping)", () => {
+  it("parses the live ArcGIS GeoJSON via the registered nzta-nz mapping", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "nzta-nz")!;
+    const xml = readFileSync(join(import.meta.dirname, "fixtures/nzta-nz/road-events.geojson"));
+    const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
+    expect(events.length).toBeGreaterThan(0);
+    expect(events.every((e) => e.geometry != null)).toBe(true);
+    // WGS84 NZ coordinates (lon ~166..179, lat ~ -47..-34).
+    const pt = events.find((e) => e.geometry?.type === "Point")!;
+    const g = pt.geometry;
+    if (!g || g.type !== "Point") throw new Error("expected Point");
+    expect(g.coordinates[0]!).toBeGreaterThan(160);
+    expect(g.coordinates[1]!).toBeLessThan(-30);
+    // The source vocabulary maps through the per-feed typeMap (no raw "Crash" leak).
+    expect(events.every((e) => e.type !== ("Crash" as unknown))).toBe(true);
+    expect(events[0]!.sourceFormat).toBe("geojson");
   });
 });

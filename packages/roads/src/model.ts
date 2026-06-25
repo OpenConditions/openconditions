@@ -19,8 +19,14 @@ import type {
 export interface GeoJsonMapping {
   /** properties key for the feature's stable id (falls back to the feed index). */
   idField?: string;
-  /** properties key whose value is mapped to a RoadEventType via the crosswalk. */
+  /** properties key whose value is mapped to a RoadEventType. */
   typeField?: string;
+  /**
+   * Source-specific value → RoadEventType overrides for this feed's own
+   * vocabulary (checked before the shared crosswalk). Keeps a feed's idiosyncratic
+   * type strings out of the global taxonomy. Keys are matched case-insensitively.
+   */
+  typeMap?: Record<string, RoadEventType>;
   /** type to use when the feed has no per-feature type (e.g. a closures-only feed). */
   defaultType?: RoadEventType;
   /** properties key for the human headline/title. */
