@@ -236,6 +236,14 @@ describe("FEED_SOURCES", () => {
     expect(feed!.license).toBe("CC-BY-4.0");
   });
 
+  it("includes livetraffic-nsw (NSW) as a header-key GeoJSON feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "livetraffic-nsw");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("geojson");
+    expect(feed!.auth?.kind).toBe("header-key");
+    expect(Array.isArray(feed!.url)).toBe(true);
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

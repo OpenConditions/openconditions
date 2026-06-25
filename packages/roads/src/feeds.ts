@@ -546,6 +546,51 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
+    // New South Wales — Live Traffic Hazards (TfNSW Open Data), GeoJSON across
+    // the hazard categories. CC-BY (commercial OK). Needs a free API key sent as
+    // `Authorization: apikey <key>` → set NSW_TRANSPORT_API_KEY. Mapping is
+    // best-effort from the docs; verify field names against a live response.
+    id: "livetraffic-nsw",
+    name: "Live Traffic NSW (New South Wales)",
+    format: "geojson",
+    url: [
+      "https://api.transport.nsw.gov.au/v1/live/hazards/incident/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/roadwork/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/flood/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/fire/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/majorevent/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/alpine/open",
+    ],
+    auth: {
+      kind: "header-key",
+      header: "Authorization",
+      envVar: "NSW_TRANSPORT_API_KEY",
+      valuePrefix: "apikey ",
+    },
+    geojson: {
+      typeField: "mainCategory",
+      typeMap: {
+        Incident: "accident",
+        "Road Work": "roadworks",
+        Flooding: "weather",
+        Fire: "hazard",
+        "Major Event": "public_event",
+        Alpine: "weather",
+      },
+      defaultType: "other",
+      headlineField: "headline",
+      descriptionField: "otherAdvice",
+    },
+    cadenceSec: 180,
+    freshnessWindowSec: 600,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://opendata.transport.nsw.gov.au/dataset/live-traffic-hazards",
+    attribution: "Transport for NSW",
+    country: "AU",
+    privacyUrl: "https://www.transport.nsw.gov.au/privacy-statement",
+    enabledByDefault: true,
+  },
+  {
     // South Australia — Traffic SA roadworks/incidents (ArcGIS MapServer, both
     // layers). f=geojson returns WGS84. CC-BY, no key.
     id: "trafficsa-au",
