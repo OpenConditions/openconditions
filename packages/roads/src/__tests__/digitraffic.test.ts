@@ -314,3 +314,364 @@ describe("parseDigitraffic — deeper field extraction", () => {
     expect(ev!.description).toBe("Tie 3 between A and B");
   });
 });
+
+describe("parseDigitraffic — regions", () => {
+  it("collects distinct municipality/province from primary and secondary points", () => {
+    const events = parseDigitraffic(readFileSync(FIXTURE_PATH, "utf8"), DIGITRAFFIC_SOURCE);
+    const ev = events.find((e) => e.id.includes("GUID50465894"));
+    expect(ev).toBeDefined();
+    expect(ev!.regions).toBeDefined();
+    expect(ev!.regions).toContain("Nousiainen");
+    expect(ev!.regions).toContain("Varsinais-Suomi");
+    // primary and secondary points repeat the same municipality/province → deduped
+    expect(ev!.regions!.filter((r) => r === "Nousiainen")).toHaveLength(1);
+  });
+
+  it("includes areaLocation area names in regions", () => {
+    const fc = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [24, 60] },
+          properties: {
+            situationId: "area1",
+            situationType: "ROAD_WORK",
+            announcements: [
+              {
+                title: "RW",
+                locationDetails: {
+                  areaLocation: {
+                    areas: [{ name: "Uusimaa" }, { name: "Pirkanmaa" }, { name: "Uusimaa" }],
+                  },
+                },
+                roadWorkPhases: [],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE);
+    expect(ev!.regions).toEqual(["Uusimaa", "Pirkanmaa"]);
+  });
+
+  it("leaves regions unset when no administrative areas are present", () => {
+    const fc = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [24, 60] },
+          properties: {
+            situationId: "noregions",
+            situationType: "ROAD_WORK",
+            announcements: [
+              {
+                title: "RW",
+                locationDetails: {
+                  roadAddressLocation: {
+                    primaryPoint: { roadName: "Vt 9", roadAddress: { road: 9 } },
+                  },
+                },
+                roadWorkPhases: [],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE);
+    expect(ev!.regions).toBeUndefined();
+  });
+});
+
+describe("parseDigitraffic — description from phase comments", () => {
+  it("appends roadWorkPhases[].comment to the announcement comment", () => {
+    const fc = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [24, 60] },
+          properties: {
+            situationId: "pc1",
+            situationType: "ROAD_WORK",
+            announcements: [
+              {
+                title: "RW",
+                comment: "Tietyö käynnissä.",
+                locationDetails: {
+                  roadAddressLocation: {
+                    primaryPoint: { roadName: "Vt 5", roadAddress: { road: 5 } },
+                  },
+                },
+                roadWorkPhases: [
+                  { comment: "Vaihe 1: kaista suljettu." },
+                  { comment: "Vaihe 2: nopeusrajoitus." },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE);
+    expect(ev!.description).toContain("Tietyö käynnissä.");
+    expect(ev!.description).toContain("Vaihe 1: kaista suljettu.");
+    expect(ev!.description).toContain("Vaihe 2: nopeusrajoitus.");
+  });
+
+  it("dedupes a phase comment identical to the announcement comment", () => {
+    const fc = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [24, 60] },
+          properties: {
+            situationId: "pc2",
+            situationType: "ROAD_WORK",
+            announcements: [
+              {
+                title: "RW",
+                comment: "Sama teksti.",
+                roadWorkPhases: [{ comment: "Sama teksti." }],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE);
+    expect(ev!.description).toBe("Sama teksti.");
+  });
+
+  it("uses only phase comments when the announcement has no comment", () => {
+    const fc = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [24, 60] },
+          properties: {
+            situationId: "pc3",
+            situationType: "ROAD_WORK",
+            announcements: [
+              {
+                title: "RW",
+                location: { description: "loc fallback" },
+                roadWorkPhases: [{ comment: "Pelkkä vaihekommentti." }],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE);
+    expect(ev!.description).toBe("Pelkkä vaihekommentti.");
+  });
+});
+
+describe("parseDigitraffic — TMC / Alert-C external reference", () => {
+  it("sets externalRefs.tmc from countryCode + locationTableNumber + alertC locationCode", () => {
+    const events = parseDigitraffic(readFileSync(FIXTURE_PATH, "utf8"), DIGITRAFFIC_SOURCE);
+    const ev = events.find((e) => e.id.includes("GUID50465894"));
+    expect(ev).toBeDefined();
+    expect(ev!.externalRefs?.tmc).toEqual({ country: "6", table: 17, code: 24355 });
+  });
+
+  it("omits tmc but keeps an alertc-fi external ref when no country code is present", () => {
+    const fc = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [24, 60] },
+          properties: {
+            situationId: "noctry",
+            situationType: "ROAD_WORK",
+            announcements: [
+              {
+                title: "RW",
+                location: {
+                  locationTableNumber: 17,
+                },
+                locationDetails: {
+                  roadAddressLocation: {
+                    primaryPoint: {
+                      roadName: "Vt 7",
+                      roadAddress: { road: 7 },
+                      alertCLocation: { locationCode: 12345 },
+                    },
+                  },
+                },
+                roadWorkPhases: [],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE);
+    expect(ev!.externalRefs?.tmc).toBeUndefined();
+    expect(ev!.externalRefs?.external).toEqual({ system: "alertc-fi", code: "12345" });
+  });
+
+  it("leaves externalRefs unset when neither country nor location code is present", () => {
+    const fc = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [24, 60] },
+          properties: {
+            situationId: "noref",
+            situationType: "ROAD_WORK",
+            announcements: [
+              {
+                title: "RW",
+                location: { description: "no codes" },
+                roadWorkPhases: [],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE);
+    expect(ev!.externalRefs).toBeUndefined();
+  });
+});
+
+describe("parseDigitraffic — per-restriction validity window", () => {
+  it("carries restriction.timeAndDuration onto that Restriction's validFrom/validTo", () => {
+    const fc = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [24, 60] },
+          properties: {
+            situationId: "win1",
+            situationType: "ROAD_WORK",
+            announcements: [
+              {
+                title: "RW",
+                roadWorkPhases: [
+                  {
+                    restrictions: [
+                      {
+                        type: "SPEED_LIMIT",
+                        restriction: {
+                          quantity: 60,
+                          unit: "km/h",
+                          timeAndDuration: {
+                            startTime: "2026-07-01T06:00:00Z",
+                            endTime: "2026-07-01T18:00:00Z",
+                          },
+                        },
+                      },
+                      {
+                        type: "SINGLE_LANE_CLOSED",
+                        restriction: { name: "no window" },
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE);
+    expect(ev!.restrictions).toContainEqual({
+      type: "SPEED_LIMIT",
+      value: 60,
+      unit: "km/h",
+      validFrom: "2026-07-01T06:00:00Z",
+      validTo: "2026-07-01T18:00:00Z",
+    });
+    expect(ev!.restrictions).toContainEqual({ type: "SINGLE_LANE_CLOSED" });
+  });
+});
+
+describe("parseDigitraffic — phase-less feature fallback", () => {
+  it("derives speedLimitKph from a Nopeusrajoitus announcement feature", () => {
+    const fc = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [24, 60] },
+          properties: {
+            situationId: "pl1",
+            situationType: "TRAFFIC_ANNOUNCEMENT",
+            trafficAnnouncementType: "GENERAL",
+            announcements: [
+              {
+                title: "TA",
+                features: [{ name: "Nopeusrajoitus", quantity: 40, unit: "km/h" }],
+                roadWorkPhases: [],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE);
+    expect(ev!.speedLimitKph).toBe(40);
+  });
+
+  it("derives dimension restrictions from width/height/length/mass features", () => {
+    const fc = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [24, 60] },
+          properties: {
+            situationId: "pl2",
+            situationType: "TRAFFIC_ANNOUNCEMENT",
+            trafficAnnouncementType: "GENERAL",
+            announcements: [
+              {
+                title: "TA",
+                features: [
+                  { name: "Ajoneuvon suurin sallittu leveys", quantity: 3.5, unit: "m" },
+                  { name: "Ajoneuvon suurin sallittu korkeus", quantity: 4.2, unit: "m" },
+                  { name: "Ajoneuvon suurin sallittu pituus", quantity: 25, unit: "m" },
+                  { name: "Ajoneuvon suurin sallittu massa", quantity: 44, unit: "t" },
+                ],
+                roadWorkPhases: [],
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const [ev] = parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE);
+    expect(ev!.restrictions).toContainEqual({ type: "width", value: 3.5, unit: "m" });
+    expect(ev!.restrictions).toContainEqual({ type: "height", value: 4.2, unit: "m" });
+    expect(ev!.restrictions).toContainEqual({ type: "length", value: 25, unit: "m" });
+    expect(ev!.restrictions).toContainEqual({ type: "weight", value: 44, unit: "t" });
+  });
+
+  it("does not derive feature-based restrictions when roadWorkPhases are present", () => {
+    const events = parseDigitraffic(readFileSync(FIXTURE_PATH, "utf8"), DIGITRAFFIC_SOURCE);
+    const rw = events.find((e) => e.id.includes("GUID50466272"));
+    expect(rw).toBeDefined();
+    // phase-based restriction only; no dimension restriction synthesised
+    expect(rw!.restrictions).toEqual([{ type: "SINGLE_LANE_CLOSED" }]);
+  });
+
+  it("leaves speed/restrictions unset when phase-less features carry no structured data", () => {
+    const events = parseDigitraffic(readFileSync(FIXTURE_PATH, "utf8"), DIGITRAFFIC_SOURCE);
+    // the accident fixture has phase-less features without quantities → nothing to derive
+    const acc = events.find((e) => e.id.includes("GUID_FIXTURE_ACCIDENT"));
+    expect(acc).toBeDefined();
+    expect(acc!.speedLimitKph).toBeUndefined();
+    expect(acc!.restrictions).toBeUndefined();
+  });
+});

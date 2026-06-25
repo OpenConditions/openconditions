@@ -298,3 +298,179 @@ describe("parseOpen511 — deeper field extraction", () => {
     expect(ev!.relatedIds).toEqual(["https://x/events/9"]);
   });
 });
+
+describe("parseOpen511 — GeoNames external reference", () => {
+  it("extracts externalRefs.external from a geonames.org area url (synthetic)", () => {
+    const json = JSON.stringify({
+      events: [
+        {
+          id: "e1",
+          event_type: "INCIDENT",
+          geography: { type: "Point", coordinates: [-123, 49] },
+          areas: [{ url: "https://geonames.org/8630138", name: "Okanagan" }],
+        },
+      ],
+    });
+    const [ev] = parseOpen511(json, DRIVEBC_SOURCE);
+    expect(ev!.externalRefs?.external).toEqual({ system: "geonames", code: "8630138" });
+  });
+
+  it("handles www.geonames.org urls and keeps regions from area names (synthetic)", () => {
+    const json = JSON.stringify({
+      events: [
+        {
+          id: "e1",
+          event_type: "INCIDENT",
+          geography: { type: "Point", coordinates: [-123, 49] },
+          areas: [{ url: "http://www.geonames.org/8630136", name: "Lower Mainland District" }],
+        },
+      ],
+    });
+    const [ev] = parseOpen511(json, DRIVEBC_SOURCE);
+    expect(ev!.externalRefs?.external).toEqual({ system: "geonames", code: "8630136" });
+    expect(ev!.regions).toEqual(["Lower Mainland District"]);
+  });
+
+  it("uses the first geonames area url when several areas are present (synthetic)", () => {
+    const json = JSON.stringify({
+      events: [
+        {
+          id: "e1",
+          event_type: "INCIDENT",
+          geography: { type: "Point", coordinates: [-123, 49] },
+          areas: [
+            { name: "No url here" },
+            { url: "https://example.com/not-geonames", name: "Other" },
+            { url: "https://www.geonames.org/12345", name: "First geonames" },
+            { url: "https://geonames.org/67890", name: "Second geonames" },
+          ],
+        },
+      ],
+    });
+    const [ev] = parseOpen511(json, DRIVEBC_SOURCE);
+    expect(ev!.externalRefs?.external).toEqual({ system: "geonames", code: "12345" });
+  });
+
+  it("leaves externalRefs.external unset when no geonames area url is present (synthetic)", () => {
+    const json = JSON.stringify({
+      events: [
+        {
+          id: "e1",
+          event_type: "INCIDENT",
+          geography: { type: "Point", coordinates: [-123, 49] },
+          areas: [{ url: "https://example.com/region/1", name: "Somewhere" }],
+        },
+      ],
+    });
+    const [ev] = parseOpen511(json, DRIVEBC_SOURCE);
+    expect(ev!.externalRefs?.external).toBeUndefined();
+  });
+
+  it("merges external with linear extension fields without clobbering (synthetic)", () => {
+    const json = JSON.stringify({
+      events: [
+        {
+          id: "e1",
+          event_type: "INCIDENT",
+          geography: { type: "Point", coordinates: [-123, 49] },
+          areas: [{ url: "https://geonames.org/8630138", name: "Okanagan" }],
+          "+ivr_message": "hello",
+        },
+      ],
+    });
+    const [ev] = parseOpen511(json, DRIVEBC_SOURCE);
+    expect(ev!.externalRefs?.external).toEqual({ system: "geonames", code: "8630138" });
+    const linear = ev!.externalRefs?.linear as Record<string, unknown> | undefined;
+    expect(linear?.["+ivr_message"]).toBe("hello");
+  });
+
+  it("extracts geonames external refs from the DriveBC fixture", () => {
+    const events = parseOpen511(readFileSync(FIXTURE_PATH, "utf8"), DRIVEBC_SOURCE);
+    const withExternal = events.filter((e) => e.externalRefs?.external != null);
+    expect(withExternal.length).toBeGreaterThan(0);
+    for (const ev of withExternal) {
+      expect(ev.externalRefs!.external!.system).toBe("geonames");
+      expect(ev.externalRefs!.external!.code).toMatch(/^\d+$/);
+    }
+  });
+});
+
+describe("parseOpen511 — milepost from linear reference", () => {
+  const eventWithLinearKm = (linearKm: unknown) =>
+    JSON.stringify({
+      events: [
+        {
+          id: "e1",
+          event_type: "INCIDENT",
+          geography: { type: "Point", coordinates: [-123, 49] },
+          roads: [{ name: "Hwy 1" }],
+          "+linear_reference_km": linearKm,
+        },
+      ],
+    });
+
+  it("sets roads[0].milepostFrom from +linear_reference_km (synthetic)", () => {
+    const [ev] = parseOpen511(eventWithLinearKm(20.63), DRIVEBC_SOURCE);
+    expect(ev!.roads[0]!.milepostFrom).toBe(20.63);
+  });
+
+  it("treats -1 as a no-reference sentinel and leaves milepostFrom unset (synthetic)", () => {
+    const [ev] = parseOpen511(eventWithLinearKm(-1), DRIVEBC_SOURCE);
+    expect(ev!.roads[0]!.milepostFrom).toBeUndefined();
+  });
+
+  it("treats 0 as a no-reference sentinel and leaves milepostFrom unset (synthetic)", () => {
+    const [ev] = parseOpen511(eventWithLinearKm(0), DRIVEBC_SOURCE);
+    expect(ev!.roads[0]!.milepostFrom).toBeUndefined();
+  });
+
+  it("ignores non-finite +linear_reference_km values (synthetic)", () => {
+    const [a] = parseOpen511(eventWithLinearKm("nope"), DRIVEBC_SOURCE);
+    expect(a!.roads[0]!.milepostFrom).toBeUndefined();
+    const [b] = parseOpen511(eventWithLinearKm(null), DRIVEBC_SOURCE);
+    expect(b!.roads[0]!.milepostFrom).toBeUndefined();
+  });
+
+  it("does not throw when +linear_reference_km is set but there is no road (synthetic)", () => {
+    const json = JSON.stringify({
+      events: [
+        {
+          id: "e1",
+          event_type: "INCIDENT",
+          geography: { type: "Point", coordinates: [-123, 49] },
+          roads: [],
+          "+linear_reference_km": 12.5,
+        },
+      ],
+    });
+    expect(() => parseOpen511(json, DRIVEBC_SOURCE)).not.toThrow();
+    const [ev] = parseOpen511(json, DRIVEBC_SOURCE);
+    expect(ev!.roads).toEqual([]);
+  });
+
+  it("sets milepostFrom only on the first road when several are present (synthetic)", () => {
+    const json = JSON.stringify({
+      events: [
+        {
+          id: "e1",
+          event_type: "INCIDENT",
+          geography: { type: "Point", coordinates: [-123, 49] },
+          roads: [{ name: "Hwy 1" }, { name: "Hwy 5" }],
+          "+linear_reference_km": 33.3,
+        },
+      ],
+    });
+    const [ev] = parseOpen511(json, DRIVEBC_SOURCE);
+    expect(ev!.roads[0]!.milepostFrom).toBe(33.3);
+    expect(ev!.roads[1]!.milepostFrom).toBeUndefined();
+  });
+
+  it("extracts milepostFrom from the DriveBC fixture events that carry a real reference", () => {
+    const events = parseOpen511(readFileSync(FIXTURE_PATH, "utf8"), DRIVEBC_SOURCE);
+    const withMilepost = events.filter((e) => e.roads[0]?.milepostFrom != null);
+    expect(withMilepost.length).toBeGreaterThan(0);
+    for (const ev of withMilepost) {
+      expect(ev.roads[0]!.milepostFrom!).toBeGreaterThan(0);
+    }
+  });
+});

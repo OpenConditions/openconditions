@@ -315,3 +315,186 @@ describe("parseAutobahn — extended fields", () => {
     expect(ev!.sourceRaw?.["identifier"]).toBe("w9");
   });
 });
+
+describe("parseAutobahn — delaySeconds from congestion delayTimeValue", () => {
+  it("converts the minute-valued delayTimeValue to delaySeconds on the congestion path", () => {
+    const events = parseAutobahn(readFileSync(FIXTURE_PATH, "utf8"), AUTOBAHN_SOURCE, "warning");
+    const flowItem = events.find((ev) =>
+      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0")
+    );
+    expect(flowItem).toBeDefined();
+    expect(flowItem!.type).toBe("congestion");
+    expect(flowItem!.delaySeconds).toBe(18 * 60);
+  });
+
+  it("leaves delaySeconds undefined when delayTimeValue is absent", () => {
+    const feed = {
+      warning: [
+        {
+          identifier: "no-delay",
+          title: "A1 | Test",
+          averageSpeed: "20",
+          coordinate: { lat: 50.0, long: 7.0 },
+          description: ["Stau"],
+        },
+      ],
+    };
+    const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "warning");
+    expect(ev!.type).toBe("congestion");
+    expect(ev!.delaySeconds).toBeUndefined();
+  });
+
+  it("ignores non-finite or non-positive delayTimeValue", () => {
+    const feed = {
+      warning: [
+        {
+          identifier: "bad-delay",
+          title: "A1 | Test",
+          delayTimeValue: "n/a",
+          coordinate: { lat: 50.0, long: 7.0 },
+          description: ["Stau"],
+        },
+        {
+          identifier: "zero-delay",
+          title: "A2 | Test",
+          delayTimeValue: "0",
+          coordinate: { lat: 51.0, long: 8.0 },
+          description: ["Stau"],
+        },
+      ],
+    };
+    const events = parseAutobahn(feed, AUTOBAHN_SOURCE, "warning");
+    const bad = events.find((ev) => ev.id.includes("bad-delay"));
+    const zero = events.find((ev) => ev.id.includes("zero-delay"));
+    expect(bad!.delaySeconds).toBeUndefined();
+    expect(zero!.delaySeconds).toBeUndefined();
+  });
+});
+
+describe("parseAutobahn — validTo from prose end time", () => {
+  it("parses 'Ende: DD.MM.YY um HH:MM Uhr' from the description into validTo (ISO)", () => {
+    const feed = {
+      warning: [
+        {
+          identifier: "ende-test",
+          title: "A4 | Köln - Aachen",
+          coordinate: { lat: 50.8, long: 6.5 },
+          description: [
+            "Baustelle",
+            "Beginn: 22.06.26 um 08:00 Uhr",
+            "Ende: 06.07.26 um 05:00 Uhr",
+          ],
+        },
+      ],
+    };
+    const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "warning");
+    expect(ev!.validTo).toBe(new Date("2026-07-06T05:00:00").toISOString());
+  });
+
+  it("leaves validTo null when no end-time prose is present", () => {
+    const feed = {
+      warning: [
+        {
+          identifier: "no-ende",
+          title: "A4 | Köln - Aachen",
+          coordinate: { lat: 50.8, long: 6.5 },
+          description: ["Baustelle", "Beginn: 22.06.26 um 08:00 Uhr"],
+        },
+      ],
+    };
+    const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "warning");
+    expect(ev!.validTo).toBeNull();
+  });
+});
+
+describe("parseAutobahn — restrictions from prose", () => {
+  it("parses 'Durchfahrtsbreite: N m' into a width restriction (dot decimal)", () => {
+    const feed = {
+      warning: [
+        {
+          identifier: "width-dot",
+          title: "A4 | Köln - Aachen",
+          coordinate: { lat: 50.8, long: 6.5 },
+          description: ["Baustelle", "Durchfahrtsbreite: 3.25 m"],
+        },
+      ],
+    };
+    const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "warning");
+    expect(ev!.restrictions).toEqual([{ type: "width", value: 3.25, unit: "m" }]);
+  });
+
+  it("parses width with a comma decimal", () => {
+    const feed = {
+      warning: [
+        {
+          identifier: "width-comma",
+          title: "A4 | Köln - Aachen",
+          coordinate: { lat: 50.8, long: 6.5 },
+          description: ["Durchfahrtsbreite: 2,75 m"],
+        },
+      ],
+    };
+    const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "warning");
+    expect(ev!.restrictions).toEqual([{ type: "width", value: 2.75, unit: "m" }]);
+  });
+
+  it("parses 'Durchfahrtshöhe' (and the 'Durchfahrtshoehe' spelling) into a height restriction", () => {
+    const umlaut = {
+      warning: [
+        {
+          identifier: "height-umlaut",
+          title: "A4 | Köln - Aachen",
+          coordinate: { lat: 50.8, long: 6.5 },
+          description: ["Durchfahrtshöhe: 3,8 m"],
+        },
+      ],
+    };
+    const ascii = {
+      warning: [
+        {
+          identifier: "height-ascii",
+          title: "A4 | Köln - Aachen",
+          coordinate: { lat: 50.8, long: 6.5 },
+          description: ["Durchfahrtshoehe: 4.0 m"],
+        },
+      ],
+    };
+    const [umlautEv] = parseAutobahn(umlaut, AUTOBAHN_SOURCE, "warning");
+    const [asciiEv] = parseAutobahn(ascii, AUTOBAHN_SOURCE, "warning");
+    expect(umlautEv!.restrictions).toEqual([{ type: "height", value: 3.8, unit: "m" }]);
+    expect(asciiEv!.restrictions).toEqual([{ type: "height", value: 4.0, unit: "m" }]);
+  });
+
+  it("emits both width and height restrictions when both are present", () => {
+    const feed = {
+      warning: [
+        {
+          identifier: "width-and-height",
+          title: "A4 | Köln - Aachen",
+          coordinate: { lat: 50.8, long: 6.5 },
+          description: ["Durchfahrtsbreite: 3.0 m", "Durchfahrtshöhe: 3,5 m"],
+        },
+      ],
+    };
+    const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "warning");
+    expect(ev!.restrictions).toEqual([
+      { type: "width", value: 3.0, unit: "m" },
+      { type: "height", value: 3.5, unit: "m" },
+    ]);
+  });
+
+  it("leaves restrictions undefined when no dimension prose is present", () => {
+    const feed = {
+      warning: [
+        {
+          identifier: "no-restriction",
+          title: "A4 | Köln - Aachen",
+          coordinate: { lat: 50.8, long: 6.5 },
+          description: ["Baustelle"],
+        },
+      ],
+    };
+    const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "warning");
+    expect(ev!.restrictions).toBeUndefined();
+  });
+});

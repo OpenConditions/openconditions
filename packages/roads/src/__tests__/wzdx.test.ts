@@ -352,6 +352,179 @@ describe("parseWzdx — extended fields", () => {
   });
 });
 
+describe("parseWzdx — relatedEvents (relationship type)", () => {
+  it("maps related_road_events[] into relatedEvents with id and type", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseWzdx(json, WZDX_SOURCE);
+
+    const detour = events.find((ev) => ev.subtype === "detour");
+    expect(detour).toBeDefined();
+    expect(detour!.relatedEvents).toEqual([
+      { id: "a15f7570-b7e6-4367-8ad9-3a462eea65dd", type: "related-work-zone" },
+      { id: "4d151e7d-11d8-4b99-a192-51e189da0de7", type: "next-in-sequence" },
+    ]);
+  });
+
+  it("keeps the bare relatedIds alongside relatedEvents", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseWzdx(json, WZDX_SOURCE);
+
+    const detour = events.find((ev) => ev.subtype === "detour");
+    expect(detour).toBeDefined();
+    expect(detour!.relatedIds).toEqual([
+      "a15f7570-b7e6-4367-8ad9-3a462eea65dd",
+      "4d151e7d-11d8-4b99-a192-51e189da0de7",
+    ]);
+  });
+
+  it("includes entries with an id but no relationship type", () => {
+    const feed = {
+      type: "FeatureCollection",
+      features: [
+        {
+          id: "f1",
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [-100, 40] },
+          properties: {
+            core_details: {
+              event_type: "work-zone",
+              road_names: ["I-5"],
+              related_road_events: [{ id: "evt-2" }, { id: "evt-3", type: "first-occurrence" }],
+            },
+          },
+        },
+      ],
+    };
+    const [ev] = parseWzdx(JSON.stringify(feed), WZDX_SOURCE);
+    expect(ev!.relatedEvents).toEqual([{ id: "evt-2" }, { id: "evt-3", type: "first-occurrence" }]);
+  });
+
+  it("leaves relatedEvents unset when there are no related_road_events", () => {
+    const feed = {
+      type: "FeatureCollection",
+      features: [
+        {
+          id: "f1",
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [-100, 40] },
+          properties: {
+            core_details: { event_type: "work-zone", road_names: ["I-5"] },
+          },
+        },
+      ],
+    };
+    const [ev] = parseWzdx(JSON.stringify(feed), WZDX_SOURCE);
+    expect(ev!.relatedEvents).toBeUndefined();
+  });
+});
+
+describe("parseWzdx — confidence from date verification", () => {
+  it("sets confidence:'observed' when is_start_date_verified is true", () => {
+    const json = readFileSync(FIXTURE_PATH, "utf8");
+    const events = parseWzdx(json, WZDX_SOURCE);
+
+    const detour = events.find((ev) => ev.subtype === "detour");
+    expect(detour).toBeDefined();
+    expect(detour!.confidence).toBe("observed");
+  });
+
+  it("sets confidence:'observed' when start_date_accuracy is 'verified'", () => {
+    const feed = {
+      type: "FeatureCollection",
+      features: [
+        {
+          id: "f1",
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [-100, 40] },
+          properties: {
+            core_details: { event_type: "work-zone", road_names: ["I-5"] },
+            start_date_accuracy: "verified",
+          },
+        },
+      ],
+    };
+    const [ev] = parseWzdx(JSON.stringify(feed), WZDX_SOURCE);
+    expect(ev!.confidence).toBe("observed");
+  });
+
+  it("sets confidence:'likely' when start_date_accuracy is 'estimated'", () => {
+    const feed = {
+      type: "FeatureCollection",
+      features: [
+        {
+          id: "f1",
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [-100, 40] },
+          properties: {
+            core_details: { event_type: "work-zone", road_names: ["I-5"] },
+            start_date_accuracy: "estimated",
+          },
+        },
+      ],
+    };
+    const [ev] = parseWzdx(JSON.stringify(feed), WZDX_SOURCE);
+    expect(ev!.confidence).toBe("likely");
+  });
+
+  it("sets confidence:'possible' when worker_presence.confidence is 'low' and no date signal", () => {
+    const feed = {
+      type: "FeatureCollection",
+      features: [
+        {
+          id: "f1",
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [-100, 40] },
+          properties: {
+            core_details: { event_type: "work-zone", road_names: ["I-5"] },
+            worker_presence: { are_workers_present: true, confidence: "low" },
+          },
+        },
+      ],
+    };
+    const [ev] = parseWzdx(JSON.stringify(feed), WZDX_SOURCE);
+    expect(ev!.confidence).toBe("possible");
+  });
+
+  it("prefers the date-accuracy signal over worker_presence confidence", () => {
+    const feed = {
+      type: "FeatureCollection",
+      features: [
+        {
+          id: "f1",
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [-100, 40] },
+          properties: {
+            core_details: { event_type: "work-zone", road_names: ["I-5"] },
+            start_date_accuracy: "estimated",
+            worker_presence: { are_workers_present: true, confidence: "low" },
+          },
+        },
+      ],
+    };
+    const [ev] = parseWzdx(JSON.stringify(feed), WZDX_SOURCE);
+    expect(ev!.confidence).toBe("likely");
+  });
+
+  it("leaves confidence unset when no verification signal is present", () => {
+    const feed = {
+      type: "FeatureCollection",
+      features: [
+        {
+          id: "f1",
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [-100, 40] },
+          properties: {
+            core_details: { event_type: "work-zone", road_names: ["I-5"] },
+            is_start_date_verified: false,
+          },
+        },
+      ],
+    };
+    const [ev] = parseWzdx(JSON.stringify(feed), WZDX_SOURCE);
+    expect(ev!.confidence).toBeUndefined();
+  });
+});
+
 describe("parseWzdx — deeper field extraction", () => {
   it("maps types_of_work→subtype, worker_presence, work_zone_type, event_status→status, name→label, per-lane restrictions, creation_date", () => {
     const feed = {

@@ -69,6 +69,11 @@ export interface Restriction {
   type: string;
   value?: number;
   unit?: string;
+  /** Validity window for this specific restriction, when the source scopes it
+   * to a sub-period of the event (e.g. a digitraffic roadwork-phase restriction
+   * active only on certain dates). */
+  validFrom?: string;
+  validTo?: string;
 }
 
 export interface RoadEvent extends ConditionEvent {
@@ -100,6 +105,10 @@ export interface RoadEvent extends ConditionEvent {
   workZoneType?: "static" | "moving" | "area";
   /** Administrative areas the condition sits in (municipality/province/district). */
   regions?: string[];
+  /** Related events with their relationship kind (e.g. WZDx `related_road_events`:
+   * next-occurrence / first-occurrence / related-work-zone). `relatedIds` keeps
+   * the bare ids; this preserves the relationship type alongside each id. */
+  relatedEvents?: { id: string; type?: string }[];
   externalRefs?: {
     openlr?: string;
     tmc?: {
@@ -175,6 +184,9 @@ export function roadAttributes(ev: RoadEvent): Record<string, unknown> {
   if (ev.workersPresent != null) attrs["workersPresent"] = ev.workersPresent;
   if (ev.workZoneType != null) attrs["workZoneType"] = ev.workZoneType;
   if (ev.regions != null && ev.regions.length > 0) attrs["regions"] = ev.regions;
+  if (ev.relatedEvents != null && ev.relatedEvents.length > 0) {
+    attrs["relatedEvents"] = ev.relatedEvents;
+  }
   if (ev.externalRefs != null) attrs["externalRefs"] = ev.externalRefs;
   // Keyed "sourceRaw" (not "source") so it never clobbers the top-level
   // Observation.source when readObservations spreads attributes back.

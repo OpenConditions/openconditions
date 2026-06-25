@@ -59,7 +59,11 @@ interface DtWorkType {
 
 interface DtRestriction {
   type?: unknown;
-  restriction?: { quantity?: unknown; unit?: unknown };
+  restriction?: {
+    quantity?: unknown;
+    unit?: unknown;
+    timeAndDuration?: DigitrafficTimeAndDuration;
+  };
 }
 
 interface DtWorkingHour {
@@ -73,6 +77,7 @@ interface DtRoadWorkPhase {
   workTypes?: DtWorkType[];
   restrictions?: DtRestriction[];
   workingHours?: DtWorkingHour[];
+  comment?: unknown;
 }
 
 const WEEKDAY: Record<string, number> = {
@@ -194,8 +199,66 @@ function restrictionsFromPhases(ann: DigitrafficAnnouncement | null): Restrictio
       const item: Restriction = { type: r.type };
       if (typeof r.restriction?.quantity === "number") item.value = r.restriction.quantity;
       if (typeof r.restriction?.unit === "string") item.unit = r.restriction.unit;
+      const from = coerceString(r.restriction?.timeAndDuration?.startTime);
+      const to = coerceString(r.restriction?.timeAndDuration?.endTime);
+      if (from) item.validFrom = from;
+      if (to) item.validTo = to;
       out.push(item);
     }
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+// Finnish announcement-feature names → canonical dimension-restriction types.
+const FEATURE_DIMENSION_TYPE: { match: string; type: string }[] = [
+  { match: "leveys", type: "width" },
+  { match: "korkeus", type: "height" },
+  { match: "pituus", type: "length" },
+  { match: "massa", type: "weight" },
+];
+
+interface DtAnnFeature {
+  name?: unknown;
+  quantity?: unknown;
+  unit?: unknown;
+}
+
+function announcementFeatures(ann: DigitrafficAnnouncement | null): DtAnnFeature[] {
+  const features = ann?.["features"];
+  return Array.isArray(features) ? (features as DtAnnFeature[]) : [];
+}
+
+/**
+ * Announcements without road-work phases (e.g. TRAFFIC_ANNOUNCEMENT records)
+ * carry their structured restriction/speed data in `features[]` as
+ * `{ name, quantity, unit }`. Derive a canonical speed limit from a Finnish
+ * "Nopeusrajoitus" feature only when there are no phases to read it from.
+ */
+function speedLimitFromFeatures(ann: DigitrafficAnnouncement | null): number | undefined {
+  if (roadWorkPhases(ann).length > 0) return undefined;
+  for (const f of announcementFeatures(ann)) {
+    const name = coerceString(f.name);
+    if (name && name.toLowerCase().includes("nopeusrajoitus") && typeof f.quantity === "number") {
+      return f.quantity;
+    }
+  }
+  return undefined;
+}
+
+/** Dimension restrictions derived from phase-less announcement features. */
+function restrictionsFromFeatures(ann: DigitrafficAnnouncement | null): Restriction[] | undefined {
+  if (roadWorkPhases(ann).length > 0) return undefined;
+  const out: Restriction[] = [];
+  for (const f of announcementFeatures(ann)) {
+    const name = coerceString(f.name);
+    if (!name || typeof f.quantity !== "number") continue;
+    const lower = name.toLowerCase();
+    const dim = FEATURE_DIMENSION_TYPE.find((d) => lower.includes(d.match));
+    if (!dim) continue;
+    const item: Restriction = { type: dim.type, value: f.quantity };
+    const unit = coerceString(f.unit);
+    if (unit) item.unit = unit;
+    out.push(item);
   }
   return out.length > 0 ? out : undefined;
 }
@@ -235,6 +298,95 @@ function roadsFromAnnouncement(ann: DigitrafficAnnouncement | null): RoadRef[] {
   const to = coerceString(ral?.secondaryPoint?.roadName);
   if (to) roadRef.to = to;
   return [roadRef];
+}
+
+interface DtAdminPoint {
+  municipality?: unknown;
+  province?: unknown;
+}
+
+/** Distinct administrative areas (municipality/province + areaLocation names). */
+function regionsFromAnnouncement(ann: DigitrafficAnnouncement | null): string[] | undefined {
+  const locationDetails = ann?.["locationDetails"] as
+    | {
+        roadAddressLocation?: {
+          primaryPoint?: DtAdminPoint;
+          secondaryPoint?: DtAdminPoint;
+        };
+        areaLocation?: { areas?: { name?: unknown }[] };
+      }
+    | undefined;
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const add = (v: unknown) => {
+    const s = coerceString(v);
+    if (s && !seen.has(s)) {
+      seen.add(s);
+      out.push(s);
+    }
+  };
+  const ral = locationDetails?.roadAddressLocation;
+  add(ral?.primaryPoint?.municipality);
+  add(ral?.primaryPoint?.province);
+  add(ral?.secondaryPoint?.municipality);
+  add(ral?.secondaryPoint?.province);
+  for (const area of locationDetails?.areaLocation?.areas ?? []) {
+    add(area?.name);
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+/** Announcement comment plus any substantive road-work-phase comments. */
+function descriptionFromAnnouncement(ann: DigitrafficAnnouncement | null): string | undefined {
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  const add = (v: unknown) => {
+    const s = coerceString(v);
+    if (s && !seen.has(s)) {
+      seen.add(s);
+      parts.push(s);
+    }
+  };
+  add(ann?.["comment"]);
+  for (const p of roadWorkPhases(ann)) {
+    add(p.comment);
+  }
+  if (parts.length > 0) return parts.join("\n");
+  return locationDescription(ann);
+}
+
+interface DtLocation {
+  countryCode?: unknown;
+  locationTableNumber?: unknown;
+}
+
+/**
+ * Alert-C / TMC reference from the announcement's `location` block. Set
+ * `tmc = { country, table, code }` only when the feed carries an Alert-C
+ * country code; otherwise fall back to a provider-scoped `external` ref so the
+ * location code is preserved without fabricating a country.
+ */
+function externalRefsFromAnnouncement(
+  ann: DigitrafficAnnouncement | null
+): RoadEvent["externalRefs"] {
+  const location = ann?.["location"] as DtLocation | undefined;
+  const ral = (
+    ann?.["locationDetails"] as
+      | { roadAddressLocation?: { primaryPoint?: { alertCLocation?: { locationCode?: unknown } } } }
+      | undefined
+  )?.roadAddressLocation;
+  const codeNum = ral?.primaryPoint?.alertCLocation?.locationCode;
+  if (typeof codeNum !== "number") return undefined;
+
+  const country =
+    typeof location?.countryCode === "number" ? String(location.countryCode) : undefined;
+  const table =
+    typeof location?.locationTableNumber === "number" ? location.locationTableNumber : undefined;
+
+  if (country && table != null) {
+    return { tmc: { country, table, code: codeNum } };
+  }
+  return { external: { system: "alertc-fi", code: String(codeNum) } };
 }
 
 /**
@@ -297,6 +449,9 @@ export function parseDigitraffic(
       const phaseSeverity = severityFromPhases(ann);
       const severity = phaseSeverity ?? deriveSeverity({});
 
+      const restrictions = restrictionsFromPhases(ann) ?? restrictionsFromFeatures(ann);
+      const speedLimitKph = speedLimitFromPhases(ann) ?? speedLimitFromFeatures(ann);
+
       const dataUpdatedAt =
         coerceString(props.dataUpdatedTime) ??
         coerceString(props.releaseTime) ??
@@ -319,11 +474,13 @@ export function parseDigitraffic(
         direction: directionFromAnnouncement(ann),
         roads: roadsFromAnnouncement(ann),
         roadState: roadStateFromPhases(ann),
-        speedLimitKph: speedLimitFromPhases(ann),
-        restrictions: restrictionsFromPhases(ann),
+        speedLimitKph,
+        restrictions,
+        regions: regionsFromAnnouncement(ann),
+        externalRefs: externalRefsFromAnnouncement(ann),
         schedule: scheduleFromPhases(ann),
         headline,
-        description: coerceString(ann?.["comment"]) ?? locationDescription(ann),
+        description: descriptionFromAnnouncement(ann),
         validFrom,
         validTo,
         sourceRaw: props as Record<string, unknown>,

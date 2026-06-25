@@ -17,6 +17,7 @@ interface Open511Road {
 
 interface Open511Area {
   name?: string;
+  url?: string;
 }
 
 interface Open511RecurringSchedule {
@@ -108,6 +109,32 @@ function regionsFromAreas(areas: Open511Area[] | undefined): string[] | undefine
     .map((a) => a?.name)
     .filter((n): n is string => typeof n === "string" && n !== "");
   return names.length > 0 ? names : undefined;
+}
+
+/**
+ * Open511 areas[].url is often a stable GeoNames feature page
+ * (e.g. https://www.geonames.org/8630138). Pull the numeric id from the first
+ * such area into a portable external reference.
+ */
+function geonamesExternalFromAreas(
+  areas: Open511Area[] | undefined
+): { system: string; code: string } | undefined {
+  for (const a of areas ?? []) {
+    const url = a?.url;
+    if (typeof url !== "string") continue;
+    const match = url.match(/(?:^|\/\/)(?:www\.)?geonames\.org\/(\d+)/i);
+    if (match) return { system: "geonames", code: match[1]! };
+  }
+  return undefined;
+}
+
+/** Open511 `+linear_reference_km` → km milepost; -1/0 are no-reference sentinels. */
+function milepostFromLinearReference(
+  extensionFields: Record<string, unknown> | undefined
+): number | undefined {
+  const raw = extensionFields?.["+linear_reference_km"];
+  if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return undefined;
+  return raw;
 }
 
 function groupedRelatedIds(grouped: unknown): string[] | undefined {
@@ -257,9 +284,20 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
       const eventLocalId = localId(rawId);
 
       const extensionFields = collectExtensionFields(ev);
-      const externalRefs: RoadEvent["externalRefs"] = extensionFields
-        ? ({ linear: extensionFields } as RoadEvent["externalRefs"])
-        : undefined;
+      const geonamesExternal = geonamesExternalFromAreas(ev.areas);
+      const externalRefs: RoadEvent["externalRefs"] | undefined =
+        extensionFields || geonamesExternal
+          ? {
+              ...(extensionFields ? { linear: extensionFields } : {}),
+              ...(geonamesExternal ? { external: geonamesExternal } : {}),
+            }
+          : undefined;
+
+      const roads = parseRoads(ev.roads);
+      const milepostFrom = milepostFromLinearReference(extensionFields);
+      if (milepostFrom != null && roads.length > 0) {
+        roads[0]!.milepostFrom = milepostFrom;
+      }
 
       out.push({
         id: `${src.id}:${eventLocalId}`,
@@ -275,7 +313,7 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
         status: open511Status(ev.status),
         geometry: geometry as GeoJsonGeometry,
         direction: directionFromRoads(ev.roads),
-        roads: parseRoads(ev.roads),
+        roads,
         roadState: roadStateFromRoads(ev.roads),
         lanesAffected: lanesFromRoads(ev.roads),
         regions: regionsFromAreas(ev.areas),

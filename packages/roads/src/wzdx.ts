@@ -1,5 +1,6 @@
 import { deriveSeverity } from "@openconditions/core";
 import type { GeoJsonGeometry } from "@openconditions/core";
+import type { Confidence } from "@openconditions/core";
 import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
@@ -18,6 +19,7 @@ interface WzdxTypeOfWork {
 
 interface WzdxWorkerPresence {
   are_workers_present?: boolean;
+  confidence?: string;
 }
 
 interface WzdxRelatedEvent {
@@ -49,6 +51,8 @@ interface WzdxProperties {
   vehicle_impact?: string;
   start_date?: string;
   end_date?: string;
+  is_start_date_verified?: boolean;
+  start_date_accuracy?: string;
   lanes?: WzdxLane[];
   beginning_milepost?: number;
   ending_milepost?: number;
@@ -180,6 +184,36 @@ function relatedIdsOf(coreDetails: WzdxCoreDetails): string[] | undefined {
   return ids.length > 0 ? ids : undefined;
 }
 
+function relatedEventsOf(
+  coreDetails: WzdxCoreDetails
+): { id: string; type?: string }[] | undefined {
+  const events = (coreDetails.related_road_events ?? [])
+    .filter((r): r is WzdxRelatedEvent => !!r && typeof r.id === "string")
+    .map((r) => ({
+      id: r.id as string,
+      ...(typeof r.type === "string" ? { type: r.type } : {}),
+    }));
+  return events.length > 0 ? events : undefined;
+}
+
+/**
+ * Derive a confidence from WZDx date-verification signals. The verified/estimated
+ * date accuracy is the primary signal (a directly observed vs. inferred event);
+ * worker-presence "low" is a weaker fallback when no date signal is present.
+ */
+function confidenceFrom(props: WzdxProperties): Confidence | undefined {
+  if (props.is_start_date_verified === true || props.start_date_accuracy === "verified") {
+    return "observed";
+  }
+  if (props.start_date_accuracy === "estimated") {
+    return "likely";
+  }
+  if (props.worker_presence?.confidence === "low") {
+    return "possible";
+  }
+  return undefined;
+}
+
 /**
  * Parse a WZDx v4.x WorkZoneFeed (GeoJSON FeatureCollection) and return an
  * array of RoadEvent observations. Features lacking geometry are skipped.
@@ -282,6 +316,8 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
           ? { label: coreDetails.name }
           : {}),
         relatedIds: relatedIdsOf(coreDetails),
+        relatedEvents: relatedEventsOf(coreDetails),
+        confidence: confidenceFrom(props),
         sourceRaw: props as Record<string, unknown>,
         headline:
           typeof coreDetails.description === "string" && coreDetails.description

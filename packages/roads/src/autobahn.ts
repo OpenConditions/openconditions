@@ -1,6 +1,6 @@
 import { deriveSeverity } from "@openconditions/core";
 import type { GeoJsonGeometry } from "@openconditions/core";
-import type { LaneStatus, RoadEvent, RoadRef } from "./model.js";
+import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
@@ -135,6 +135,43 @@ function joinDescription(raw: unknown): string | undefined {
   return parts.length > 0 ? parts.join("\n") : undefined;
 }
 
+/** The feed has no structured end time; it is embedded in the prose as
+ * "Ende: DD.MM.YY um HH:MM Uhr" (two-digit year). Coerced via the shared
+ * German-date helper, which reads the parts as DD.MM.YY — the bare
+ * `new Date()` would misread an unambiguous string like "06.07.26" as MM.DD. */
+function endTimeFromDescription(description: string | undefined): string | null {
+  if (!description) return null;
+  const m = description.match(
+    /Ende:\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+um\s+(\d{1,2}):(\d{2})\s*Uhr/i
+  );
+  if (!m) return null;
+  const [, day, month, year, hour, minute] = m;
+  const fullYear = year && year.length === 2 ? `20${year}` : (year ?? "");
+  const iso = `${fullYear}-${(month ?? "").padStart(2, "0")}-${(day ?? "").padStart(2, "0")}T${(hour ?? "").padStart(2, "0")}:${(minute ?? "").padStart(2, "0")}:00`;
+  const d = new Date(iso);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/** Dimension restrictions live in the prose, e.g. "Durchfahrtsbreite: 3.25 m"
+ * (width) and "Durchfahrtshöhe"/"Durchfahrtshoehe" (height, rare). Decimals may
+ * use a comma or a dot. */
+function restrictionsFromDescription(description: string | undefined): Restriction[] {
+  if (!description) return [];
+  const restrictions: Restriction[] = [];
+  const dims: [string, RegExp][] = [
+    ["width", /Durchfahrtsbreite:\s*([\d.,]+)\s*m/i],
+    ["height", /Durchfahrtsh(?:ö|oe)he:\s*([\d.,]+)\s*m/i],
+  ];
+  for (const [type, re] of dims) {
+    const m = description.match(re);
+    if (!m?.[1]) continue;
+    const value = Number(m[1].replace(",", "."));
+    if (!Number.isFinite(value)) continue;
+    restrictions.push({ type, value, unit: "m" });
+  }
+  return restrictions;
+}
+
 /**
  * Parse an Autobahn GmbH JSON feed and return an array of RoadEvent observations.
  * Items lacking any usable geometry are skipped. The result is deduped before return.
@@ -204,11 +241,16 @@ export function parseAutobahn(
       let type: RoadEvent["type"];
       let category: RoadEvent["category"];
       let isPlanned: boolean;
+      let delaySeconds: number | undefined;
 
       if (isFlow) {
         type = "congestion";
         category = "conditions";
         isPlanned = false;
+        const delayMinutes = Number(item.delayTimeValue);
+        if (Number.isFinite(delayMinutes) && delayMinutes > 0) {
+          delaySeconds = delayMinutes * 60;
+        }
       } else {
         const mapped = mapSourceType("autobahn", resolvedService);
         type = mapped.type;
@@ -238,6 +280,8 @@ export function parseAutobahn(
       const description = joinDescription(item.description);
 
       const validFrom = coerceTimestamp(item.startTimestamp);
+      const validTo = endTimeFromDescription(description);
+      const restrictions = restrictionsFromDescription(description);
 
       const roads = roadsFromTitle(title);
       if (roads[0]) {
@@ -263,13 +307,15 @@ export function parseAutobahn(
         ...(subtitle ? { direction: subtitle } : {}),
         roadState,
         lanesAffected,
+        ...(delaySeconds != null ? { delaySeconds } : {}),
+        ...(restrictions.length > 0 ? { restrictions } : {}),
         detour: detourFromRecommendation(item.routeRecommendation),
         isForecast: item.future === true,
         sourceRaw: item as Record<string, unknown>,
         headline,
         description,
         validFrom,
-        validTo: null,
+        validTo,
         origin: {
           kind: "feed",
           attribution: {
