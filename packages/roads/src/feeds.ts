@@ -3,6 +3,7 @@ import type { GeoJsonMapping } from "./model.js";
 import type { SiteGeometry } from "./siteTable.js";
 import { parseDatexSituations } from "./datex.js";
 import { parseGeoJson } from "./geojson.js";
+import { parseIbi511 } from "./ibi511.js";
 import { parseOpen511 } from "./open511.js";
 import { parseWzdx } from "./wzdx.js";
 import { parseAutobahn } from "./autobahn.js";
@@ -354,6 +355,40 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.berlin.de/datenschutzerklaerung/",
     enabledByDefault: true,
   },
+  {
+    // Ontario 511 (iPeloton/IBI511 platform). Open Government Licence – Ontario
+    // (commercial OK). Needs a free API key → set ON_511_API_KEY to activate.
+    id: "on-511",
+    name: "Ontario 511 (Canada)",
+    format: "ibi511-json",
+    url: "https://511on.ca/api/v2/get/event?format=json",
+    auth: { kind: "query-key", param: "key", envVar: "ON_511_API_KEY" },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "OGL-ON",
+    licenseUrl: "https://www.ontario.ca/page/open-government-licence-ontario",
+    attribution: "Contains information licensed under the Open Government Licence – Ontario",
+    country: "CA",
+    privacyUrl: "https://www.ontario.ca/page/privacy-statement",
+    enabledByDefault: true,
+  },
+  {
+    // 511NY (iPeloton/IBI511 platform). Its Developer Access Agreement permits
+    // commercial redistribution. Needs a free API key → set NY_511_API_KEY.
+    id: "ny-511",
+    name: "511NY (New York)",
+    format: "ibi511-json",
+    url: "https://511ny.org/api/v2/get/event?format=json",
+    auth: { kind: "query-key", param: "key", envVar: "NY_511_API_KEY" },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "511NY-DAA",
+    licenseUrl: "https://511ny.org/developers/daa",
+    attribution: "Powered by 511NY",
+    country: "US",
+    privacyUrl: "https://511ny.org/privacy",
+    enabledByDefault: true,
+  },
 ];
 
 type ParserFn = typeof parseDatexSituations;
@@ -372,6 +407,7 @@ export function parserFor(format: SourceFormat): ParserFn {
   if (format === "open511") return parseOpen511;
   if (format === "wzdx") return parseWzdx;
   if (format === "geojson") return parseGeoJson;
+  if (format === "ibi511-json") return parseIbi511 as ParserFn;
   if (format === "autobahn-json") return parseAutobahn;
   if (format === "digitraffic-json") return parseDigitraffic;
   throw new Error(`No parser registered for format: ${format}`);

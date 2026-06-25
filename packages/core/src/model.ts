@@ -28,6 +28,7 @@ export type SourceFormat =
   | "open511"
   | "wzdx"
   | "geojson"
+  | "ibi511-json"
   | "traff"
   | "autobahn-json"
   | "digitraffic-json"

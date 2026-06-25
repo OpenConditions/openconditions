@@ -7,6 +7,7 @@ import { parseWzdx } from "../wzdx.js";
 import { parseAutobahn } from "../autobahn.js";
 import { parseDigitraffic } from "../digitraffic.js";
 import { parseGeoJson } from "../geojson.js";
+import { parseIbi511 } from "../ibi511.js";
 import { FEED_SOURCES, feedToSourceDescriptor, parserFor } from "../feeds.js";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
@@ -142,6 +143,15 @@ describe("FEED_SOURCES", () => {
     expect(feed!.enabledByDefault).toBe(true);
   });
 
+  it("includes the iPeloton/IBI511 fleet (Ontario + 511NY) as query-key feeds", () => {
+    for (const id of ["on-511", "ny-511"]) {
+      const feed = FEED_SOURCES.find((f) => f.id === id);
+      expect(feed, id).toBeDefined();
+      expect(feed!.format).toBe("ibi511-json");
+      expect(feed!.auth?.kind).toBe("query-key");
+    }
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -163,6 +173,10 @@ describe("parserFor", () => {
 
   it("returns parseGeoJson for geojson", () => {
     expect(parserFor("geojson")).toBe(parseGeoJson);
+  });
+
+  it("returns parseIbi511 for ibi511-json", () => {
+    expect(parserFor("ibi511-json")).toBe(parseIbi511);
   });
 
   it("returns parseAutobahn for autobahn-json", () => {
