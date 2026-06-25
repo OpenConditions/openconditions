@@ -841,18 +841,23 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
-    // Denmark — Vejdirektoratet "Traffic Events and Roadworks" DATEX II, served
-    // through the national data exchanger. CC-BY-4.0 (commercial OK). Free API key
-    // from nap.vd.dk → set DK_VD_API_KEY. The base host is the NAP data service;
-    // confirm the exact feed path and whether the key is a query param or header
-    // when keyed.
+    // Denmark — Vejdirektoratet "Traffic Events and Road Works" DATEX II, served
+    // through the national data exchanger (NAP). CC-BY-4.0 (commercial OK). Free
+    // API key from nap.vd.dk → set DK_VD_API_KEY. Subscribe to the SNAPSHOT
+    // dataset (#416, du-portal-ui.dataudveksler.app.vd.dk/data/416/overview): one
+    // DATEX II XML file with all current events + roadworks, refreshed every
+    // 10 min — NOT the "changes" dataset (#415), which is AMQP-only and can't be
+    // HTTP-polled. The base host is the NAP data service; replace this URL with
+    // the snapshot file URL issued on subscription and confirm whether the key is
+    // a query param or header (set gzip:true if the file is served gzipped).
     id: "vejdirektoratet-dk",
     name: "Vejdirektoratet (Denmark)",
     format: "datex2",
     url: "https://data.vd-nap.dk/api/datex2/traffic-events",
     auth: { kind: "query-key", param: "api-key", envVar: "DK_VD_API_KEY" },
-    cadenceSec: 300,
-    freshnessWindowSec: 900,
+    // Snapshot refreshes every 10 min upstream; no point polling faster.
+    cadenceSec: 600,
+    freshnessWindowSec: 1800,
     license: "CC-BY-4.0",
     licenseUrl: "https://nap.vd.dk/",
     attribution: "Vejdirektoratet (Danish Road Directorate)",
