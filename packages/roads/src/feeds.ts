@@ -723,6 +723,31 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
+    // Buenos Aires — road closures ("cortes de tránsito"), GeoJSON via the city
+    // transit API. CC-BY-2.5-AR. Auth is client_id + client_secret query params
+    // (a url function injects them from env); gated via requiredEnv. Geometry
+    // comes straight from the features; verify the property field names when keyed.
+    id: "ba-cortes-ar",
+    name: "Buenos Aires road closures (cortes)",
+    format: "geojson",
+    url: (env) =>
+      `https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=${env["BA_CLIENT_ID"] ?? ""}&client_secret=${env["BA_CLIENT_SECRET"] ?? ""}`,
+    requiredEnv: ["BA_CLIENT_ID", "BA_CLIENT_SECRET"],
+    geojson: {
+      defaultType: "road_closure",
+      headlineField: "nombre",
+      descriptionField: "descripcion",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-2.5-AR",
+    licenseUrl: "https://data.buenosaires.gob.ar/",
+    attribution: "Gobierno de la Ciudad de Buenos Aires",
+    country: "AR",
+    privacyUrl: "https://www.buenosaires.gob.ar/politicas-de-privacidad",
+    enabledByDefault: true,
+  },
+  {
     // Thailand — Longdo / iTIC traffic events (flat JSON array). CC-BY, no key.
     // Parsed by the generic flat-JSON reader (point from lon/lat fields). type
     // codes are numeric — only 3=accident confirmed; verify the rest.

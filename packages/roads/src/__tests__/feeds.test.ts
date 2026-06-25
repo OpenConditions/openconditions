@@ -278,6 +278,14 @@ describe("FEED_SOURCES", () => {
     expect(typeof feed!.body).toBe("function");
   });
 
+  it("includes ba-cortes-ar (Buenos Aires) as a url-fn geojson feed gated by requiredEnv", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "ba-cortes-ar");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("geojson");
+    expect(typeof feed!.url).toBe("function");
+    expect(feed!.requiredEnv).toContain("BA_CLIENT_ID");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
