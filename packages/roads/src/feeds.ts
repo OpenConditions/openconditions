@@ -950,14 +950,22 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
-    // South Korea — National ITS Center event API (its.go.kr open data). KOGL
-    // Type 1 (commercial OK with attribution). Free service key from its.go.kr →
-    // set KR_ITS_API_KEY. Events carry WGS84 coordX/coordY (lon/lat) under
-    // body.items. Verify the array path + field names against a live key.
+    // South Korea — National ITS Center incident API (돌발정보 / eventInfo).
+    // KOGL Type 1 (commercial OK with attribution). Sign-up: register at
+    // www.its.go.kr → My Page → 인증키 신청 (request auth key); the open-data list
+    // is at its.go.kr/opendata/opendataList. Set KR_ITS_API_KEY.
+    // Endpoint pattern confirmed from the published CCTV sample: host
+    // openapi.its.go.kr on port :9443, path /eventInfo, with apiKey + type +
+    // getType + a REQUIRED bounding box (minX/maxX/minY/maxY) — here a nationwide
+    // KR box. ⚠ GEO-BLOCKED: openapi.its.go.kr is restricted to Korean IPs (every
+    // connection from EU/US times out), so this very likely will NOT fetch from a
+    // European host even with a valid key — it needs a Korean egress/proxy. The
+    // response array path + coord field names (coordX/coordY) are best-effort and
+    // unverifiable from here; confirm from within KR once reachable + keyed.
     id: "its-kr",
     name: "National ITS events (South Korea)",
     format: "flatjson",
-    url: "https://openapi.its.go.kr/api/NEvent?type=all&eventType=all&getType=json",
+    url: "https://openapi.its.go.kr:9443/eventInfo?type=all&eventType=all&getType=json&minX=124&maxX=132&minY=33&maxY=43",
     auth: { kind: "query-key", param: "apiKey", envVar: "KR_ITS_API_KEY" },
     geojson: {
       arrayPath: "body.items",
