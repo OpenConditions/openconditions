@@ -379,12 +379,12 @@ export const FEED_SOURCES: FeedSource[] = [
   },
   {
     // Ontario 511 (iPeloton/IBI511 platform). Open Government Licence – Ontario
-    // (commercial OK). Needs a free API key → set ON_511_API_KEY to activate.
+    // (commercial OK). The public get/event endpoint is keyless — verified live
+    // (HTTP 200, full event set, no key) and the API docs declare no auth.
     id: "on-511",
     name: "Ontario 511 (Canada)",
     format: "ibi511-json",
     url: "https://511on.ca/api/v2/get/event?format=json",
-    auth: { kind: "query-key", param: "key", envVar: "ON_511_API_KEY" },
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "OGL-ON",

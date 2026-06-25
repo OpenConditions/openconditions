@@ -147,13 +147,24 @@ describe("FEED_SOURCES", () => {
     expect(feed!.enabledByDefault).toBe(true);
   });
 
-  it("includes the iPeloton/IBI511 fleet (Ontario + 511NY) as query-key feeds", () => {
-    for (const id of ["on-511", "ny-511"]) {
-      const feed = FEED_SOURCES.find((f) => f.id === id);
-      expect(feed, id).toBeDefined();
-      expect(feed!.format).toBe("ibi511-json");
-      expect(feed!.auth?.kind).toBe("query-key");
-    }
+  it("includes on-511 (Ontario) as a keyless ibi511-json feed", () => {
+    // The 511on.ca get/event endpoint is open — verified live (HTTP 200, full
+    // event set) and the API docs declare no authentication.
+    const feed = FEED_SOURCES.find((f) => f.id === "on-511");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("ibi511-json");
+    expect(feed!.auth).toBeUndefined();
+    expect(feed!.requiredEnv).toBeUndefined();
+    expect(feed!.enabledByDefault).toBe(true);
+  });
+
+  it("includes ny-511 (511NY) as a query-key ibi511-json feed", () => {
+    // The 511ny.org /api/v2/get/event path requires a key (returns "Invalid Key"
+    // without one), unlike Ontario's open endpoint.
+    const feed = FEED_SOURCES.find((f) => f.id === "ny-511");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("ibi511-json");
+    expect(feed!.auth?.kind).toBe("query-key");
   });
 
   it("includes lta-sg (Singapore) as a header-key lta-json feed", () => {
