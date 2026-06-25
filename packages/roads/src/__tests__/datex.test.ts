@@ -449,3 +449,35 @@ ${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
     });
   });
 });
+
+const DGT_FIXTURE_PATH = join(import.meta.dirname, "fixtures/dgt-es/situations.xml");
+
+const DGT_SOURCE = {
+  id: "dgt-es",
+  attribution: "Dirección General de Tráfico (DGT)",
+  country: "ES",
+  license: "CC-BY-4.0",
+} as const;
+
+describe("parseDatexSituations — DGT (Spain) DATEX II v3 fixture", () => {
+  it("parses the namespaced v3 SituationPublication into RoadEvents with geometry", () => {
+    const events = parseDatexSituations(readFileSync(DGT_FIXTURE_PATH), DGT_SOURCE);
+    expect(events.length).toBeGreaterThan(0);
+    // Every parsed record carries coordinate geometry (v3 layout resolved).
+    expect(events.every((ev) => ev.geometry != null)).toBe(true);
+  });
+
+  it("carries source attribution + datex2 format through from the v3 feed", () => {
+    const [ev] = parseDatexSituations(readFileSync(DGT_FIXTURE_PATH), DGT_SOURCE);
+    expect(ev!.sourceFormat).toBe("datex2");
+    expect(ev!.source).toBe("dgt-es");
+    expect(ev!.origin.attribution.license).toBe("CC-BY-4.0");
+  });
+
+  it("maps v3 situationRecord types to the canonical taxonomy", () => {
+    const events = parseDatexSituations(readFileSync(DGT_FIXTURE_PATH), DGT_SOURCE);
+    const types = new Set(events.map((ev) => ev.type));
+    // The fixture's records resolve to known road-event types (not all 'other').
+    expect([...types].some((t) => t !== "other")).toBe(true);
+  });
+});

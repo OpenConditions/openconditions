@@ -83,6 +83,30 @@ describe("FEED_SOURCES", () => {
     expect(typeof feed!.discover).toBe("function");
     expect(feed!.url).toBeUndefined();
   });
+
+  it("includes dgt-es (Spain) as an open DATEX II feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "dgt-es");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.license).toBe("CC-BY-4.0");
+    expect(feed!.country).toBe("ES");
+    expect(typeof feed!.url).toBe("string");
+    expect(feed!.enabledByDefault).toBe(true);
+  });
+
+  it("includes svzbw-de (Baden-Württemberg roadworks) as an open DATEX II feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "svzbw-de");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.license).toBe("dl-de/by-2-0");
+    expect(feed!.country).toBe("DE");
+    expect(feed!.enabledByDefault).toBe(true);
+  });
+
+  it("registers unique feed ids", () => {
+    const ids = FEED_SOURCES.map((f) => f.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
 });
 
 describe("parserFor", () => {

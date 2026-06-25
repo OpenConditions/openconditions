@@ -178,6 +178,39 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.ndw.nu/privacy",
     enabledByDefault: true,
   },
+  {
+    // Spain's national DGT incidents feed (DATEX II v3 SituationPublication).
+    // Open, no key. Nationwide incidents/closures/roadworks/weather.
+    id: "dgt-es",
+    name: "DGT (Spain)",
+    format: "datex2",
+    url: "https://nap.dgt.es/datex2/v3/dgt/SituationPublication/datex2_v36.xml",
+    cadenceSec: 120,
+    freshnessWindowSec: 600,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://nap.dgt.es",
+    attribution: "Dirección General de Tráfico (DGT)",
+    country: "ES",
+    privacyUrl: "https://www.dgt.es/protecciondedatos/",
+    enabledByDefault: true,
+  },
+  {
+    // MobiData BW roadworks (DATEX II v2). Covers Bundes-/Landes-/Kreisstraßen —
+    // complements the federal Autobahn feed (which excludes roadworks), so there
+    // is no motorway overlap to dedupe. Open (dl-de/by-2-0), no key.
+    id: "svzbw-de",
+    name: "MobiData BW roadworks (Baden-Württemberg)",
+    format: "datex2",
+    url: "https://api.mobidata-bw.de/datasets/traffic/roadworks/roadworks_svzbw.datex2.xml",
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "dl-de/by-2-0",
+    licenseUrl: "https://www.mobidata-bw.de",
+    attribution: "MobiData BW / Ministerium für Verkehr Baden-Württemberg (SVZ-BW)",
+    country: "DE",
+    privacyUrl: "https://www.mobidata-bw.de/pages/datenschutz",
+    enabledByDefault: true,
+  },
 ];
 
 type ParserFn = typeof parseDatexSituations;
