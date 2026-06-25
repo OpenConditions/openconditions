@@ -8,3 +8,9 @@ allowBuilds:
   esbuild: true
   protobufjs: false
   ssh2: false
+
+# Force the patched esbuild across the (dev-only) build toolchain — tsup,
+# vite/vitest and the legacy drizzle-kit esbuild-kit pull vulnerable 0.18/0.27
+# lines (GHSA-67mh / GHSA-g7r4).
+overrides:
+  esbuild: "^0.28.1"
