@@ -292,6 +292,94 @@ describe("store round-trip — typed columns + attributes JSONB", () => {
   }, 30_000);
 });
 
+describe("atomicSwap — bulk insert at volume", () => {
+  it("inserts many rows correctly across chunk boundaries", async () => {
+    const COUNT = 1500; // spans multiple insert chunks
+    const flows: RoadFlow[] = Array.from({ length: COUNT }, (_, i) => ({
+      id: `bulk:${i}`,
+      source: "bulk",
+      sourceFormat: "native",
+      domain: "roads",
+      kind: "measurement",
+      metric: "flow",
+      geometry: { type: "Point", coordinates: [4.0 + i * 1e-4, 52.0] },
+      los: i % 2 === 0 ? "free_flow" : "heavy",
+      speedKph: 30 + (i % 70),
+      value: 30 + (i % 70),
+      unit: "km/h",
+      aggregation: "live",
+      status: "active",
+      origin: { kind: "feed", attribution: { provider: "Bulk", license: "CC0-1.0" } },
+      dataUpdatedAt: "2026-06-24T10:00:00Z",
+      fetchedAt: "2026-06-24T10:00:00Z",
+      isStale: false,
+    }));
+
+    await atomicSwap(sql, "bulk", flows, 300);
+
+    const counted = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'bulk'
+    `;
+    expect(parseInt(counted[0]!.count, 10)).toBe(COUNT);
+
+    // Typed columns, JSONB attributes, geometry and the derived stale_after all
+    // survive the bulk path for a spot-checked row.
+    const one = await sql<
+      {
+        metric: string | null;
+        value: string | null;
+        gtype: string;
+        los: unknown;
+        stale: string | null;
+      }[]
+    >`
+      SELECT metric, value::text AS value, ST_GeometryType(geom) AS gtype,
+             attributes->>'los' AS los, stale_after::text AS stale
+      FROM conditions.observations WHERE id = 'bulk:1000'
+    `;
+    expect(one.length).toBe(1);
+    expect(one[0]!.metric).toBe("flow");
+    expect(Number(one[0]!.value)).toBe(30 + (1000 % 70));
+    expect(one[0]!.gtype).toBe("ST_Point");
+    expect(one[0]!.los).toBe("free_flow");
+    expect(one[0]!.stale).not.toBeNull();
+
+    const invalid = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations
+      WHERE source = 'bulk' AND NOT ST_IsValid(geom)
+    `;
+    expect(parseInt(invalid[0]!.count, 10)).toBe(0);
+  }, 60_000);
+
+  it("replaces the row set on a second swap (delete-all + insert)", async () => {
+    const flows: RoadFlow[] = [
+      {
+        id: "bulk:new",
+        source: "bulk",
+        sourceFormat: "native",
+        domain: "roads",
+        kind: "measurement",
+        metric: "flow",
+        geometry: { type: "Point", coordinates: [5.0, 52.0] },
+        los: "heavy",
+        aggregation: "live",
+        status: "active",
+        origin: { kind: "feed", attribution: { provider: "Bulk", license: "CC0-1.0" } },
+        dataUpdatedAt: "2026-06-24T11:00:00Z",
+        fetchedAt: "2026-06-24T11:00:00Z",
+        isStale: false,
+      },
+    ];
+    await atomicSwap(sql, "bulk", flows, 300);
+
+    const rows = await sql<{ id: string }[]>`
+      SELECT id FROM conditions.observations WHERE source = 'bulk'
+    `;
+    expect(rows.length).toBe(1);
+    expect(rows[0]!.id).toBe("bulk:new");
+  }, 30_000);
+});
+
 describe("flow feed — e2e pipeline (NDW site-table join)", () => {
   // A fetch stub that serves the trafficspeed measurements for the data URL and
   // the site table for the companion site-table URL, gzipping both since the

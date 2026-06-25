@@ -103,6 +103,37 @@ describe("observationsByBbox", () => {
     expect(capturedParams[5]).toEqual(["accident", "roadworks"]);
   });
 
+  it("appends a kind filter clause + bound param when kind is given", async () => {
+    let capturedQuery = "";
+    let capturedParams: unknown[] = [];
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        capturedParams = p ?? [];
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+      kind: "event",
+    });
+    expect(capturedQuery).toMatch(/kind = \$6/);
+    expect(capturedParams[5]).toBe("event");
+  });
+
+  it("omits the kind clause when no kind is given", async () => {
+    let capturedQuery = "";
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
+    expect(capturedQuery).not.toMatch(/kind =/);
+  });
+
   it("passes minSeverity as a bound integer rank", async () => {
     let capturedParams: unknown[] = [];
     const db: QueryRunner = {

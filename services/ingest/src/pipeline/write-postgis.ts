@@ -8,7 +8,10 @@ type TransactionSql = postgres.TransactionSql;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyJson = any;
 
-const CHUNK_SIZE = 500;
+// Rows per bulk INSERT. Each chunk is one round-trip (a single
+// jsonb_to_recordset INSERT), so a large flow feed of ~20k rows is ~20 statements
+// rather than ~20k. Bounded so the JSON parameter for one statement stays small.
+const CHUNK_SIZE = 1000;
 
 function chunk<T>(arr: T[], size: number): T[][] {
   const out: T[][] = [];
@@ -83,16 +86,20 @@ function toRow(obs: Observation) {
 }
 
 /**
- * Inserts a batch of observations into `conditions.observations` using an
- * explicit column list. Geometry is written via
- * `ST_SetSRID(ST_GeomFromGeoJSON(...), 4326)`.
+ * Bulk-inserts a batch of observations into `conditions.observations` in a single
+ * statement. The whole batch is passed as one JSONB parameter and expanded
+ * server-side with `jsonb_to_recordset`; geometry is converted per row via
+ * `ST_SetSRID(ST_GeomFromGeoJSON(...), 4326)`. This keeps a large flow feed
+ * (~20k rows/cycle) to one round-trip per chunk instead of one per row.
  */
 export async function insertRows(
   tx: TransactionSql,
   batch: Observation[],
   freshnessWindowSec?: number
 ): Promise<void> {
-  for (const obs of batch) {
+  if (batch.length === 0) return;
+
+  const rows = batch.map((obs) => {
     const r = toRow(obs);
     // The moment this last-good row becomes stale: when it was fetched plus the
     // source's freshness window. Derived at read; NULL when no window is given.
@@ -100,31 +107,45 @@ export async function insertRows(
       freshnessWindowSec != null
         ? new Date(Date.parse(r.fetched_at) + freshnessWindowSec * 1000).toISOString()
         : null;
-    await tx`
-      INSERT INTO conditions.observations (
-        id, source, source_format, domain, kind,
-        type, subtype, category, severity, severity_source,
-        headline, description, label,
-        metric, value, level, unit, aggregation,
-        status, geom,
-        subject, attributes,
-        valid_from, valid_to, schedule,
-        confidence, is_forecast, related_ids,
-        origin, data_updated_at, fetched_at, expires_at, is_stale, stale_after
-      ) VALUES (
-        ${r.id}, ${r.source}, ${r.source_format}, ${r.domain}, ${r.kind},
-        ${r.type}, ${r.subtype}, ${r.category}, ${r.severity}, ${r.severity_source},
-        ${r.headline}, ${r.description}, ${r.label},
-        ${r.metric}, ${r.value}, ${r.level}, ${r.unit}, ${r.aggregation},
-        ${r.status}, ST_SetSRID(ST_GeomFromGeoJSON(${r.geometry_json}), 4326),
-        ${r.subject ? tx.json(r.subject as AnyJson) : null}, ${r.attributes ? tx.json(r.attributes as AnyJson) : null},
-        ${r.valid_from}, ${r.valid_to}, ${r.schedule ? tx.json(r.schedule as AnyJson) : null},
-        ${r.confidence}, ${r.is_forecast}, ${r.related_ids ? tx.json(r.related_ids as AnyJson) : null},
-        ${tx.json(r.origin as AnyJson)}, ${r.data_updated_at}, ${r.fetched_at}, ${r.expires_at}, ${r.is_stale}, ${staleAfter}
-      )
-      ON CONFLICT (id) DO NOTHING
-    `;
-  }
+    return { ...r, stale_after: staleAfter };
+  });
+
+  await tx`
+    INSERT INTO conditions.observations (
+      id, source, source_format, domain, kind,
+      type, subtype, category, severity, severity_source,
+      headline, description, label,
+      metric, value, level, unit, aggregation,
+      status, geom,
+      subject, attributes,
+      valid_from, valid_to, schedule,
+      confidence, is_forecast, related_ids,
+      origin, data_updated_at, fetched_at, expires_at, is_stale, stale_after
+    )
+    SELECT
+      id, source, source_format, domain, kind,
+      type, subtype, category, severity, severity_source,
+      headline, description, label,
+      metric, value, level, unit, aggregation,
+      status, ST_SetSRID(ST_GeomFromGeoJSON(geometry_json), 4326),
+      subject, attributes,
+      valid_from, valid_to, schedule,
+      confidence, is_forecast, related_ids,
+      origin, data_updated_at, fetched_at, expires_at, is_stale, stale_after
+    FROM jsonb_to_recordset(${tx.json(rows as AnyJson)}::jsonb) AS t(
+      id text, source text, source_format text, domain text, kind text,
+      type text, subtype text, category text, severity text, severity_source text,
+      headline text, description text, label text,
+      metric text, value double precision, level text, unit text, aggregation text,
+      status text, geometry_json text,
+      subject jsonb, attributes jsonb,
+      valid_from timestamptz, valid_to timestamptz, schedule jsonb,
+      confidence text, is_forecast boolean, related_ids jsonb,
+      origin jsonb, data_updated_at timestamptz, fetched_at timestamptz,
+      expires_at timestamptz, is_stale boolean, stale_after timestamptz
+    )
+    ON CONFLICT (id) DO NOTHING
+  `;
 }
 
 /**

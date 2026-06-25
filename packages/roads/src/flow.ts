@@ -72,7 +72,7 @@ function derivedCongestionEvent(
   };
 }
 
-function makeOrigin(src: SourceDescriptor) {
+export function makeOrigin(src: SourceDescriptor) {
   return {
     kind: "feed" as const,
     attribution: {
@@ -402,6 +402,78 @@ function readMeasuredSpeedSample(mv: XmlObject): {
   };
 }
 
+/** The per-site fields a MeasuredData parser extracts before building a flow. */
+export interface MeasuredSiteFields {
+  siteId: string;
+  measuredAt: string;
+  geom: FlowGeometry | null;
+  speedKph?: number;
+  trafficStatus?: string;
+  freeFlowKph?: number;
+}
+
+/**
+ * Builds the RoadFlow (and any derived congestion RoadEvent) for one measurement
+ * site from the fields a parser extracted, applying the shared level-of-service,
+ * speed-ratio and skip rules. Returns null when the site has no resolvable
+ * geometry, or carries neither a valid speed nor a resolvable level-of-service.
+ *
+ * Shared by the buffered DOM parser ({@link parseDatexMeasuredData}) and the
+ * streaming parser ({@link createMeasuredDataParser}) so both emit identical
+ * observations regardless of how the document was read.
+ */
+export function buildMeasuredSiteFlow(
+  fields: MeasuredSiteFields,
+  src: SourceDescriptor,
+  origin: RoadFlow["origin"],
+  now: string
+): { flow: RoadFlow; event?: RoadEvent } | null {
+  const { siteId, measuredAt, geom, speedKph, trafficStatus, freeFlowKph } = fields;
+
+  let los: LosValue = mapDatexTrafficStatus(trafficStatus);
+  if (los === "unknown" && speedKph != null && freeFlowKph != null && freeFlowKph > 0) {
+    const ratio = speedKph / freeFlowKph;
+    if (ratio >= 0.85) los = "free_flow";
+    else if (ratio >= 0.5) los = "heavy";
+    else if (ratio >= 0.15) los = "queuing";
+    else los = "stationary";
+  }
+
+  // Skip sites with no geometry, or with neither a valid speed nor a resolvable
+  // level-of-service (a flow row with nothing to say).
+  if (!geom || (speedKph == null && los === "unknown")) return null;
+
+  const speedRatio =
+    speedKph != null && freeFlowKph != null && freeFlowKph > 0 ? speedKph / freeFlowKph : undefined;
+
+  const flow: RoadFlow = {
+    id: `${src.id}:${siteId}`,
+    source: src.id,
+    sourceFormat: "datex2",
+    domain: "roads",
+    kind: "measurement",
+    metric: "flow",
+    ...(speedKph != null ? { value: speedKph, unit: "km/h" } : {}),
+    level: los,
+    aggregation: "live",
+    status: "active",
+    geometry: geom,
+    los,
+    ...(speedKph != null ? { speedKph } : {}),
+    ...(freeFlowKph != null ? { freeFlowKph } : {}),
+    ...(speedRatio != null ? { speedRatio } : {}),
+    origin,
+    dataUpdatedAt: measuredAt,
+    fetchedAt: now,
+    isStale: false,
+  };
+
+  if (QUEUING_LOS.has(los)) {
+    return { flow, event: derivedCongestionEvent(flow, src, siteId) };
+  }
+  return { flow };
+}
+
 /**
  * Parse a DATEX II MeasuredDataPublication into RoadFlow measurements, one per
  * measurement site. The representative average speed for a site is the
@@ -499,52 +571,22 @@ export function parseDatexMeasuredData(
         geom = siteGeometryMap.get(siteId) ?? siteMap?.get(siteId) ?? null;
       }
 
-      const speedKph = best?.speedKph;
-
-      let los: LosValue = mapDatexTrafficStatus(trafficStatus);
-      if (los === "unknown" && speedKph != null && freeFlowKph != null && freeFlowKph > 0) {
-        const ratio = speedKph / freeFlowKph;
-        if (ratio >= 0.85) los = "free_flow";
-        else if (ratio >= 0.5) los = "heavy";
-        else if (ratio >= 0.15) los = "queuing";
-        else los = "stationary";
-      }
-
-      // Skip sites with no geometry, or with neither a valid speed nor a
-      // resolvable level-of-service (a flow row with nothing to say).
-      if (!geom || (speedKph == null && los === "unknown")) continue;
-
-      const speedRatio =
-        speedKph != null && freeFlowKph != null && freeFlowKph > 0
-          ? speedKph / freeFlowKph
-          : undefined;
-
-      const flow: RoadFlow = {
-        id: `${src.id}:${siteId}`,
-        source: src.id,
-        sourceFormat: "datex2",
-        domain: "roads",
-        kind: "measurement",
-        metric: "flow",
-        ...(speedKph != null ? { value: speedKph, unit: "km/h" } : {}),
-        level: los,
-        aggregation: "live",
-        status: "active",
-        geometry: geom,
-        los,
-        ...(speedKph != null ? { speedKph } : {}),
-        ...(freeFlowKph != null ? { freeFlowKph } : {}),
-        ...(speedRatio != null ? { speedRatio } : {}),
+      const built = buildMeasuredSiteFlow(
+        {
+          siteId,
+          measuredAt,
+          geom,
+          ...(best?.speedKph != null ? { speedKph: best.speedKph } : {}),
+          ...(trafficStatus != null ? { trafficStatus } : {}),
+          ...(freeFlowKph != null ? { freeFlowKph } : {}),
+        },
+        src,
         origin,
-        dataUpdatedAt: measuredAt,
-        fetchedAt: now,
-        isStale: false,
-      };
-
-      flows.push(flow);
-
-      if (QUEUING_LOS.has(los)) {
-        events.push(derivedCongestionEvent(flow, src, siteId));
+        now
+      );
+      if (built) {
+        flows.push(built.flow);
+        if (built.event) events.push(built.event);
       }
     } catch (err) {
       console.warn("[datex-flow] skipped malformed siteMeasurements:", err);

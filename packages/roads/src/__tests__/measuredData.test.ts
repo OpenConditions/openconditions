@@ -1,0 +1,161 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { parseDatexMeasuredData } from "../flow.js";
+import type { FlowGeometry, FlowParseResult } from "../flow.js";
+import { createMeasuredDataParser } from "../measuredData.js";
+import { parseDatexSiteTable } from "../siteTable.js";
+import type { RoadEvent, RoadFlow } from "../model.js";
+
+type SiteMap = Map<string, FlowGeometry>;
+
+const DATEX_FLOW_FIXTURE = join(
+  import.meta.dirname,
+  "fixtures/datex-measured-data/measured_data.xml"
+);
+const NDW_TRAFFICSPEED_FIXTURE = join(import.meta.dirname, "fixtures/ndw-flow/trafficspeed.xml");
+const NDW_SITE_TABLE_FIXTURE = join(
+  import.meta.dirname,
+  "fixtures/ndw-flow/measurement_site_table.xml"
+);
+
+const NDW_SOURCE = {
+  id: "ndw-flow",
+  attribution: "NDW / Rijkswaterstaat",
+  country: "NL",
+  license: "CC0-1.0",
+  licenseUrl: "https://www.ndw.nu",
+} as const;
+
+/** Compare flows by their meaningful fields (everything but the non-deterministic
+ * `fetchedAt` wall clock), independent of array order. */
+function flowKey(f: RoadFlow): string {
+  return JSON.stringify({
+    id: f.id,
+    los: f.los,
+    speedKph: f.speedKph ?? null,
+    freeFlowKph: f.freeFlowKph ?? null,
+    value: f.value ?? null,
+    metric: f.metric,
+    kind: f.kind,
+    geometry: f.geometry,
+  });
+}
+
+function eventKey(e: RoadEvent): string {
+  return JSON.stringify({ id: e.id, type: e.type, severity: e.severity, geometry: e.geometry });
+}
+
+function sortedFlowKeys(r: FlowParseResult): string[] {
+  return r.flows.map(flowKey).sort();
+}
+function sortedEventKeys(r: FlowParseResult): string[] {
+  return r.events.map(eventKey).sort();
+}
+
+function streamWhole(xml: string, siteMap?: SiteMap): FlowParseResult {
+  const parser = createMeasuredDataParser(NDW_SOURCE, siteMap, () => "2026-06-24T10:10:00.000Z");
+  parser.write(xml);
+  return parser.close();
+}
+
+function streamChunked(xml: string, chunkSize: number, siteMap?: SiteMap): FlowParseResult {
+  const parser = createMeasuredDataParser(NDW_SOURCE, siteMap, () => "2026-06-24T10:10:00.000Z");
+  for (let i = 0; i < xml.length; i += chunkSize) {
+    parser.write(xml.slice(i, i + chunkSize));
+  }
+  return parser.close();
+}
+
+describe("createMeasuredDataParser — equivalence with the DOM parser", () => {
+  it("matches parseDatexMeasuredData on the inline-geometry fixture", () => {
+    const xml = readFileSync(DATEX_FLOW_FIXTURE, "utf8");
+    const dom = parseDatexMeasuredData(xml, NDW_SOURCE);
+    const streamed = streamWhole(xml);
+
+    expect(streamed.flows.length).toBe(dom.flows.length);
+    expect(streamed.flows.length).toBeGreaterThan(0);
+    expect(sortedFlowKeys(streamed)).toEqual(sortedFlowKeys(dom));
+    expect(sortedEventKeys(streamed)).toEqual(sortedEventKeys(dom));
+  });
+
+  it("matches parseDatexMeasuredData on the NDW trafficspeed feed with a site-table join", () => {
+    const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE, "utf8");
+    const siteMap = parseDatexSiteTable(readFileSync(NDW_SITE_TABLE_FIXTURE));
+
+    const dom = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap);
+    const streamed = streamWhole(xml, siteMap);
+
+    // Two sites resolve geometry from the table; the others are no-data/missing.
+    expect(streamed.flows.length).toBe(dom.flows.length);
+    expect(streamed.flows.length).toBe(2);
+    expect(sortedFlowKeys(streamed)).toEqual(sortedFlowKeys(dom));
+  });
+
+  it("picks the highest-input-count speed sample (64), ignoring the -1 no-data sentinel", () => {
+    const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE, "utf8");
+    const siteMap = parseDatexSiteTable(readFileSync(NDW_SITE_TABLE_FIXTURE));
+    const streamed = streamWhole(xml, siteMap);
+    const best = streamed.flows.find((f) => f.id === "ndw-flow:PZH01_MST_0065_00");
+    expect(best).toBeDefined();
+    expect(best!.speedKph).toBe(64);
+  });
+});
+
+describe("createMeasuredDataParser — chunk independence", () => {
+  it("produces identical output whether fed whole or split mid-element", () => {
+    const xml = readFileSync(DATEX_FLOW_FIXTURE, "utf8");
+    const whole = streamWhole(xml);
+    for (const size of [1, 7, 64, 500]) {
+      const chunked = streamChunked(xml, size);
+      expect(sortedFlowKeys(chunked)).toEqual(sortedFlowKeys(whole));
+      expect(sortedEventKeys(chunked)).toEqual(sortedEventKeys(whole));
+    }
+  });
+});
+
+describe("createMeasuredDataParser — derived congestion + los mapping", () => {
+  it("derives a congestion event for a stationary site (matching the DOM parser)", () => {
+    const xml = readFileSync(DATEX_FLOW_FIXTURE, "utf8");
+    const streamed = streamWhole(xml);
+    const stationary = streamed.flows.find((f) => f.id.includes("NL-MS-003"));
+    expect(stationary?.los).toBe("stationary");
+    const congestion = streamed.events.find((e) => e.id.includes("NL-MS-003"));
+    expect(congestion?.type).toBe("congestion");
+  });
+
+  it("maps an inline trafficStatus 'heavy' to los 'heavy'", () => {
+    const xml = readFileSync(DATEX_FLOW_FIXTURE, "utf8");
+    const streamed = streamWhole(xml);
+    const heavy = streamed.flows.find((f) => f.id.includes("NL-MS-002"));
+    expect(heavy?.los).toBe("heavy");
+  });
+});
+
+describe("createMeasuredDataParser — robustness", () => {
+  it("returns empty results for an empty publication", () => {
+    const parser = createMeasuredDataParser(
+      NDW_SOURCE,
+      undefined,
+      () => "2026-06-24T10:10:00.000Z"
+    );
+    parser.write("<D2LogicalModel/>");
+    const out = parser.close();
+    expect(out.flows).toEqual([]);
+    expect(out.events).toEqual([]);
+  });
+
+  it("tolerates malformed/truncated XML, returning what resolved before the break", () => {
+    const xml = readFileSync(DATEX_FLOW_FIXTURE, "utf8");
+    const truncated = xml.slice(0, Math.floor(xml.length * 0.6));
+    const parser = createMeasuredDataParser(
+      NDW_SOURCE,
+      undefined,
+      () => "2026-06-24T10:10:00.000Z"
+    );
+    expect(() => {
+      parser.write(truncated);
+      parser.close();
+    }).not.toThrow();
+  });
+});

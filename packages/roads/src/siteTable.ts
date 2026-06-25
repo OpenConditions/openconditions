@@ -21,7 +21,7 @@
  */
 import type { LineString, Point } from "geojson";
 import { SaxesParser } from "saxes";
-import { stripXmlNamespace } from "./xml.js";
+import { flattenString, stripXmlNamespace } from "./xml.js";
 
 /** Geometry shapes a measurement site can resolve to. */
 export type SiteGeometry = Point | LineString;
@@ -180,7 +180,10 @@ export function createSiteTableParser(): SiteTableParser {
 
     if (local === "measurementSiteRecord") {
       const attrs = tag.attributes as Record<string, string>;
-      record = freshRecord(attrs["id"]);
+      // Flatten the id: it becomes a long-lived Map key, and a sliced-string key
+      // would pin the whole input chunk it came from (see flattenString).
+      const id = attrs["id"];
+      record = freshRecord(id != null ? flattenString(id) : undefined);
       endpoint = null;
       textTarget = null;
       textBuffer = "";

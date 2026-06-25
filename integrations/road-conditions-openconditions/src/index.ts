@@ -21,6 +21,10 @@ export function setup(ctx: IntegrationContext): void {
       const fc = await observationsByBbox(db, {
         domain: "roads",
         bbox,
+        // Incidents only: the shared store also holds high-frequency traffic-flow
+        // `measurement` rows (tens of thousands NL-wide). Derived congestion is
+        // emitted as kind 'event', so it is still included.
+        kind: "event",
         types: opts?.types,
         minSeverity: opts?.minSeverity,
       });

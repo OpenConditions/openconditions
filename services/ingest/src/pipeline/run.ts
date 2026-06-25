@@ -1,9 +1,11 @@
 import { Readable } from "node:stream";
 import type postgres from "postgres";
-import type { FeedSource, SiteGeometry } from "@openconditions/roads";
+import type { Observation } from "@openconditions/core";
+import type { FeedSource, SiteGeometry, UnresolvedRoadEvent } from "@openconditions/roads";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
 import { fetchAll } from "./fetch.js";
+import { isStreamingFlowFeed, streamMeasuredData } from "./measured-data.js";
 import { parseFor } from "./parse.js";
 import { resolveOpenLr } from "./resolve.js";
 import { loadSiteTable } from "./site-table.js";
@@ -74,16 +76,9 @@ export function createOpenlrClient(): MapMatchClient | null {
 export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<RunResult> {
   const start = Date.now();
 
-  let buffers: Buffer[];
-  try {
-    buffers = await fetchAll(src, deps.fetch);
-  } catch (err) {
-    console.error(`[ingest] fetch failed for source ${src.id}:`, err);
-    return { count: 0, durationMs: Date.now() - start };
-  }
-
   // Load the companion site table (cached, tolerant of failure) so flow feeds
-  // that key measurements by site id can resolve geometry.
+  // that key measurements by site id can resolve geometry. Loaded before the feed
+  // fetch so the streaming flow path has the join map ready.
   let siteMap: Map<string, SiteGeometry> | undefined;
   if (src.siteTable) {
     siteMap = await loadSiteTable(src, streamFactoryFromFetch(deps.fetch));
@@ -99,7 +94,27 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     }
   }
 
-  const parsed = buffers.flatMap((b) => parseFor(src, b, siteMap));
+  let parsed: (Observation | UnresolvedRoadEvent)[];
+  if (isStreamingFlowFeed(src)) {
+    // Large DATEX flow feed: stream fetch → gunzip → SAX so the ~50 MB document
+    // is never buffered or DOM-parsed (the memory-cap OOM this path replaces).
+    try {
+      parsed = await streamMeasuredData(src, streamFactoryFromFetch(deps.fetch), siteMap, deps.now);
+    } catch (err) {
+      console.error(`[ingest] stream failed for source ${src.id}:`, err);
+      return { count: 0, durationMs: Date.now() - start };
+    }
+  } else {
+    let buffers: Buffer[];
+    try {
+      buffers = await fetchAll(src, deps.fetch);
+    } catch (err) {
+      console.error(`[ingest] fetch failed for source ${src.id}:`, err);
+      return { count: 0, durationMs: Date.now() - start };
+    }
+    parsed = buffers.flatMap((b) => parseFor(src, b, siteMap));
+  }
+
   // resolveOpenLr narrows the union: items without geometry (UnresolvedRoadEvent)
   // are resolved to real geometry or dropped — resolved[] always has geometry.
   const { resolved, dropped } = await resolveOpenLr(parsed, deps.openlrClient ?? null);

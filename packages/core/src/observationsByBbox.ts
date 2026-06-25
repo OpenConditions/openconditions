@@ -16,6 +16,13 @@ export interface ObservationsByBboxOpts {
   bbox: [number, number, number, number];
   types?: string[];
   minSeverity?: string;
+  /**
+   * Restrict to one observation kind (e.g. `"event"`). The store mixes incident
+   * events with high-frequency `"measurement"` rows (traffic-flow speeds); an
+   * incident overlay passes `"event"` so it never serves the (potentially tens
+   * of thousands of) flow measurements.
+   */
+  kind?: string;
 }
 
 interface ObservationRow {
@@ -51,7 +58,7 @@ export async function observationsByBbox(
   db: QueryRunner,
   opts: ObservationsByBboxOpts
 ): Promise<FeatureCollection> {
-  const { domain, bbox, types, minSeverity } = opts;
+  const { domain, bbox, types, minSeverity, kind } = opts;
   const [west, south, east, north] = bbox;
 
   const params: unknown[] = [domain, west, south, east, north];
@@ -64,6 +71,11 @@ export async function observationsByBbox(
     "(valid_to IS NULL OR valid_to > now())",
     "(expires_at IS NULL OR expires_at > now())",
   ];
+
+  if (kind != null) {
+    params.push(kind);
+    clauses.push(`kind = $${params.length}`);
+  }
 
   if (Array.isArray(types) && types.length > 0) {
     params.push(types);

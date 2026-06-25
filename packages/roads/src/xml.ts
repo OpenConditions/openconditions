@@ -48,6 +48,22 @@ export function stripXmlNamespace(name: string): string {
   return idx >= 0 ? name.slice(idx + 1) : name;
 }
 
+/**
+ * Returns a flat, independent copy of a string.
+ *
+ * Streaming SAX parsers (saxes) hand back attribute/text values as substrings of
+ * the current input chunk. V8 represents those as "sliced strings" that keep the
+ * entire backing chunk (tens of KB) alive for as long as the slice is reachable.
+ * When such a value is retained long-term — e.g. a measurement-site id used as a
+ * Map key or baked into a feature id — it pins every chunk it came from, bloating
+ * a 97k-entry site-table map from ~40 MB to ~380 MB. Round-tripping through a
+ * Buffer forces a fresh, standalone allocation that holds nothing but its own
+ * bytes. Use this on any short string kept past the chunk that produced it.
+ */
+export function flattenString(s: string): string {
+  return Buffer.from(s, "utf8").toString("utf8");
+}
+
 export function parseXmlDocument(
   content: string | Buffer,
   options: XmlParseOptions = {}
