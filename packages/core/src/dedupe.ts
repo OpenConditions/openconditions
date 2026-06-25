@@ -65,9 +65,13 @@ function jaccardOverlap(a: string, b: string): number {
   return union === 0 ? 0 : intersect / union;
 }
 
-function labelsCompatible(a: Observation, b: Observation): boolean {
-  const la = a.label?.trim();
-  const lb = b.label?.trim();
+function labelsCompatible(
+  a: Observation,
+  b: Observation,
+  textOf: (o: Observation) => string | undefined
+): boolean {
+  const la = textOf(a)?.trim();
+  const lb = textOf(b)?.trim();
   if (!la || !lb) return true;
   return jaccardOverlap(la, lb) >= LABEL_JACCARD_MIN;
 }
@@ -90,6 +94,14 @@ export function dedupeObservations(
   opts?: {
     mergeDistanceM?: number;
     sameType?: (a: Observation, b: Observation) => boolean;
+    /**
+     * The text used for the label-similarity guard (Jaccard ≥ 0.5 before two
+     * same-type, co-located items merge). Defaults to `label`, but callers whose
+     * items carry their text elsewhere should point this at that field — road
+     * events, for instance, populate `headline`, not `label`, so without this the
+     * guard is a no-op and distinct works at one coordinate over-merge.
+     */
+    textOf?: (o: Observation) => string | undefined;
   }
 ): Observation[] {
   const n = items.length;
@@ -97,6 +109,7 @@ export function dedupeObservations(
 
   const mergeDistanceM = opts?.mergeDistanceM ?? MERGE_DISTANCE_M_DEFAULT;
   const sameType = opts?.sameType ?? (() => true);
+  const textOf = opts?.textOf ?? ((o: Observation) => o.label);
 
   const pts = items.map((item) => representativePoint(item.geometry));
 
@@ -112,7 +125,7 @@ export function dedupeObservations(
     if (!sameType(items[i]!, items[j]!)) return false;
     const d = haversineMeters(pts[i]!, pts[j]!);
     if (d > mergeDistanceM) return false;
-    if (!labelsCompatible(items[i]!, items[j]!)) return false;
+    if (!labelsCompatible(items[i]!, items[j]!, textOf)) return false;
     return true;
   }
 

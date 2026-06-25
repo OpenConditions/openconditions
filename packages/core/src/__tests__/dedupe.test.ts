@@ -96,6 +96,24 @@ describe("dedupeObservations", () => {
     expect(result).toHaveLength(2);
   });
 
+  it("keys text compatibility on the textOf accessor when provided (e.g. headline)", () => {
+    // Same point + same type, but the comparable text lives on a non-label field.
+    // With the default (label) guard they merge — labels are absent, which is a
+    // pass. With textOf pointed at the populated field, dissimilar text must keep
+    // them separate.
+    const a = makeObs({ lng: 4.9, lat: 52.3, label: undefined });
+    const b = makeObs({ lng: 4.9, lat: 52.3, label: undefined });
+    (a as Observation & { headline: string }).headline = "resurfacing northbound lane";
+    (b as Observation & { headline: string }).headline =
+      "bridge joint replacement ramp closure detour";
+
+    expect(dedupeObservations([a, b])).toHaveLength(1);
+    const split = dedupeObservations([a, b], {
+      textOf: (o) => (o as Observation & { headline?: string }).headline,
+    });
+    expect(split).toHaveLength(2);
+  });
+
   it("returns empty array for empty input", () => {
     expect(dedupeObservations([])).toEqual([]);
   });

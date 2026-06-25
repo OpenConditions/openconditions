@@ -47,4 +47,34 @@ describe("dedupeRoadEvents", () => {
     const result = dedupeRoadEvents([a, b]);
     expect(result).toHaveLength(2);
   });
+
+  it("keeps same-type events at the same coords with dissimilar headlines separate", () => {
+    // Road events carry their text in `headline` (not `label`), so the within-
+    // source text guard must compare headlines — otherwise two unrelated works
+    // reported at the same coordinate wrongly collapse into one.
+    const a = makeRoadEvent({
+      lng: 4.9,
+      lat: 52.3,
+      type: "roadworks",
+      headline: "Resurfacing northbound lane between Tempo Road and Clearwater",
+    });
+    const b = makeRoadEvent({
+      lng: 4.9,
+      lat: 52.3,
+      type: "roadworks",
+      headline: "Bridge joint replacement southbound ramp closure detour",
+    });
+
+    const result = dedupeRoadEvents([a, b]);
+    expect(result).toHaveLength(2);
+  });
+
+  it("still merges genuine duplicates with near-identical headlines", () => {
+    const headline = "Daily construction on HWY 17 eastbound between Terrace and Schreiber";
+    const a = makeRoadEvent({ lng: 4.9, lat: 52.3, type: "roadworks", headline });
+    const b = makeRoadEvent({ lng: 4.9, lat: 52.3, type: "roadworks", headline });
+
+    const result = dedupeRoadEvents([a, b]);
+    expect(result).toHaveLength(1);
+  });
 });
