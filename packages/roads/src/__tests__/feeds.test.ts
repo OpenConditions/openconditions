@@ -256,6 +256,14 @@ describe("FEED_SOURCES", () => {
     expect(parserFor("flatjson")).toBe(parseFlatJson);
   });
 
+  it("includes nap-si (Slovenia) as a credential-gated DATEX II feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "nap-si");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.auth).toBeDefined();
+    expect(feed!.country).toBe("SI");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

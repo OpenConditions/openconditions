@@ -528,6 +528,27 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
+    // Slovenia — NAP/NCUP DATEX II (DARS + DRSI). Endpoint confirmed live
+    // (HTTP 403 without auth). CC-BY-SA (commercial OK; ShareAlike applies to
+    // re-emitted data). Auth is credential-gated — research indicates OAuth2;
+    // verify the exact scheme/token URL when access is granted. Scaffolded with
+    // Basic as a placeholder; set NAP_SI_USERNAME / NAP_SI_PASSWORD (or switch
+    // this `auth` to oauth2-client-credentials once the token URL is known).
+    id: "nap-si",
+    name: "NAP Slovenia (promet.si)",
+    format: "datex2",
+    url: "https://b2b.nap.si/data/b2b.datex2.xml",
+    auth: { kind: "basic", userEnvVar: "NAP_SI_USERNAME", passEnvVar: "NAP_SI_PASSWORD" },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-SA-4.0",
+    licenseUrl: "https://nap.si/",
+    attribution: "DARS / DRSI (NAP Slovenia)",
+    country: "SI",
+    privacyUrl: "https://nap.si/",
+    enabledByDefault: true,
+  },
+  {
     // Norway — Statens vegvesen DATEX II v3 (nationwide). NLOD (commercial OK).
     // Endpoint confirmed live (HTTP 401 without auth); free account → Basic auth.
     // Set NO_VEGVESEN_USERNAME / NO_VEGVESEN_PASSWORD to activate.
