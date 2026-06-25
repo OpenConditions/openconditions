@@ -507,3 +507,19 @@ describe("parseDatexSituations — France DIR (SOAP-wrapped DATEX II v2)", () =>
     expect(lat!).toBeLessThan(52);
   });
 });
+
+const CITA_LU_FIXTURE_PATH = join(import.meta.dirname, "fixtures/cita-lu/situations.xml");
+
+describe("parseDatexSituations — CITA (Luxembourg) DATEX II v3.6 fixture", () => {
+  it("parses the v3.6 SituationPublication into RoadEvents with WGS84 geometry", () => {
+    const events = parseDatexSituations(readFileSync(CITA_LU_FIXTURE_PATH), {
+      id: "cita-lu",
+      attribution: "CITA (Luxembourg)",
+      country: "LU",
+      license: "CC0-1.0",
+    });
+    expect(events.length).toBeGreaterThan(0);
+    expect(events.every((ev) => ev.geometry != null)).toBe(true);
+    expect(events[0]!.sourceFormat).toBe("datex2");
+  });
+});

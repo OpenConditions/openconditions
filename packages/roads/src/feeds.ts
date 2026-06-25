@@ -433,6 +433,21 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
+    // Luxembourg — CITA traffic events (DATEX II v3.6). CC0, no key.
+    id: "cita-lu",
+    name: "CITA (Luxembourg)",
+    format: "datex2",
+    url: "https://cita.lu/info_trafic/datex/situationrecord36",
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC0-1.0",
+    licenseUrl: "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/",
+    attribution: "CITA (Luxembourg)",
+    country: "LU",
+    privacyUrl: "https://data.public.lu/en/pages/legal_notice/",
+    enabledByDefault: true,
+  },
+  {
     // Iceland — Vegagerðin road-condition point incidents (GeoServer WFS). The
     // geometry is EPSG:3057 (Icelandic grid) but each feature carries WGS84 X/Y
     // properties, so the reader builds points from those. Open, no key.

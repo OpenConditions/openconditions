@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<d2:payload xsi:type="sit:SituationPublication" lang="fr" modelBaseVersion="3" xmlns:com="http://datex2.eu/schema/3/common" xmlns:loc="http://datex2.eu/schema/3/locationReferencing" xmlns:d2="http://datex2.eu/schema/3/d2Payload" xmlns:sit="http://datex2.eu/schema/3/situation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <com:feedDescription>
+        <com:values>
+            <com:value lang="en">Active and planned events on Luxembourg highways</com:value>
+        </com:values>
+    </com:feedDescription>
+    <com:publicationTime>2026-06-25T20:00:02+02:00</com:publicationTime>
+    <com:publicationCreator>
+        <com:country>LU</com:country>
+        <com:nationalIdentifier>PCH</com:nationalIdentifier>
+    </com:publicationCreator>
+    <sit:situation id="234860">
+        <sit:headerInformation>
+            <com:confidentiality>noRestriction</com:confidentiality>
+            <com:informationStatus>real</com:informationStatus>
+        </sit:headerInformation>
+        <sit:situationRecord xsi:type="sit:MaintenanceWorks" id="234860-1" version="3">
+            <sit:situationRecordCreationTime>2026-06-25T19:59:41+02:00</sit:situationRecordCreationTime>
+            <sit:situationRecordVersionTime>2026-06-25T19:59:48+02:00</sit:situationRecordVersionTime>
+            <sit:probabilityOfOccurrence>certain</sit:probabilityOfOccurrence>
+            <sit:safetyRelatedMessage>true</sit:safetyRelatedMessage>
+            <sit:validity>
+                <com:validityStatus>definedByValidityTimeSpec</com:validityStatus>
+                <com:validityTimeSpecification>
+                    <com:overallStartTime>2026-06-25T19:59:41+02:00</com:overallStartTime>
+                </com:validityTimeSpecification>
+            </sit:validity>
+            <sit:impact>
+                <sit:numberOfLanesRestricted>0</sit:numberOfLanesRestricted>
+                <sit:numberOfOperationalLanes>2</sit:numberOfOperationalLanes>
+            </sit:impact>
+            <sit:locationReference xsi:type="loc:LocationGroupByList">
+                <loc:locationContainedInGroup xsi:type="loc:LinearLocation">
+                    <loc:supplementaryPositionalDescription>
+                        <loc:lengthAffected>3790.0</loc:lengthAffected>
+                        <loc:locationDescription>
+                            <com:values>
+                                <com:value lang="fr">Section courante</com:value>
+                            </com:values>
+                        </loc:locationDescription>
+                        <loc:carriageway>
+                            <loc:carriageway>mainCarriageway</loc:carriageway>
+                        </loc:carriageway>
+                        <loc:roadInformation>
+                            <loc:roadDestination>Collectrice du Sud, vers Schengen</loc:roadDestination>
+                            <loc:roadName>A13</loc:roadName>
+                        </loc:roadInformation>
+                    </loc:supplementaryPositionalDescription>
+                    <loc:gmlLineString srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                        <loc:posList>49.5171 6.247943 49.517983 6.25149 49.518415 6.253423 49.518618 6.254468 49.518801 6.255494 49.519061 6.257201 49.519307 6.259392 49.519454 6.26134 49.519517 6.263409 49.519523 6.264638 49.519468 6.266611 49.519406 6.26767 49.519302 6.268986 49.519186 6.270104 49.518971 6.271756 49.518728 6.273242 49.518357 6.275119 49.518061 6.276408 49.517612 6.278184 49.515566 6.285476 49.514862 6.287927 49.514349 6.289647 49.513991 6.290761 49.513192 6.293064 49.512691 6.294325 49.512156 6.295569 49.511371 6.297116</loc:posList>
+                    </loc:gmlLineString>
+                </loc:locationContainedInGroup>
+                <loc:locationContainedInGroup xsi:type="loc:PointLocation">
+                    <loc:pointByCoordinates>
+                        <loc:bearing>76</loc:bearing>
+                        <loc:pointCoordinates>
+                            <loc:latitude>49.5171</loc:latitude>
+                            <loc:longitude>6.247943</loc:longitude>
+                        </loc:pointCoordinates>
+                    </loc:pointByCoordinates>
+                </loc:locationContainedInGroup>
+            </sit:locationReference>
+            <sit:roadMaintenanceType>maintenanceWork</sit:roadMaintenanceType>
+        </sit:situationRecord>
+        <sit:situationRecord xsi:type="sit:MaintenanceWorks" id="234860-2" version="3">
+            <sit:situationRecordCreationTime>2026-06-25T19:59:41+02:00</sit:situationRecordCreationTime>
+            <sit:situationRecordVersionTime>2026-06-25T19:59:48+02:00</sit:situationRecordVersionTime>
+            <sit:probabilityOfOccurrence>certain</sit:probabilityOfOccurrence>
+            <sit:safetyRelatedMessage>true</sit:safetyRelatedMessage>
+            <sit:validity>
+                <com:validityStatus>definedByValidityTimeSpec</com:validityStatus>
+                <com:validityTimeSpecification>
+                    <com:overallStartTime>2026-06-25T19:59:41+02:00</com:overallStartTime>
+                </com:validityTimeSpecification>
+            </sit:validity>
+            <sit:impact>
+                <sit:numberOfLanesRestricted>0</sit:numberOfLanesRestricted>
+                <sit:numberOfOperationalLanes>2</sit:numberOfOperationalLanes>
+            </sit:impact>
+            <sit:locationReference xsi:type="loc:LocationGroupByList">
+                <loc:locationContainedInGroup xsi:type="loc:LinearLocation">
+                    <loc:supplementaryPositionalDescription>
+                        <loc:lengthAffected>3790.0</loc:lengthAffected>
+                        <loc:locationDescription>
+                            <com:values>
+                                <com:value lang="fr">Section courante</com:value>
+                            </com:values>
+                        </loc:locationDescription>
+                        <loc:carriageway>
+                            <loc:carriageway>mainCarriageway</loc:carriageway>
+                        </loc:carriageway>
+                        <loc:roadInformation>
+                            <loc:roadDestination>Collectrice du Sud, vers Petange</loc:roadDestination>
+                            <loc:roadName>A13</loc:roadName>
+                        </loc:roadInformation>
+                    </loc:supplementaryPositionalDescription>
+                    <loc:gmlLineString srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                        <loc:posList>49.511455 6.297128 49.51193 6.296192 49.512453 6.295051 49.513023 6.293661 49.51349 6.292416 49.514043 6.290788 49.514421 6.289612 49.515398 6.286275 49.517698 6.278099 49.518103 6.276474 49.518408 6.275146 49.518619 6.274133 49.518779 6.27327 49.51903 6.271743 49.519281 6.269764 49.51943 6.268082 49.519519 6.266666 49.519578 6.264749 49.519576 6.263602 49.519543 6.262222 49.519503 6.261327 49.519366 6.259391 49.519241 6.258163 49.519109 6.257134 49.518973 6.25619 49.518669 6.254428 49.518345 6.252833 49.518035 6.251463 49.517156 6.247929</loc:posList>
+                    </loc:gmlLineString>
+                </loc:locationContainedInGroup>
+                <loc:locationContainedInGroup xsi:type="loc:PointLocation">
+                    <loc:pointByCoordinates>
+                        <loc:bearing>297</loc:bearing>
+                        <loc:pointCoordinates>
+                            <loc:latitude>49.511456</loc:latitude>
+                            <loc:longitude>6.297128</loc:longitude>
+                        </loc:pointCoordinates>
+                    </loc:pointByCoordinates>
+                </loc:locationContainedInGroup>
+            </sit:locationReference>
+            <sit:roadMaintenanceType>maintenanceWork</sit:roadMaintenanceType>
+        </sit:situationRecord>
+    </sit:situation>
+    <sit:situation id="234859">
+        <sit:headerInformation>
+            <com:confidentiality>noRestriction</com:confidentiality>
+            <com:informationStatus>real</com:informationStatus>
+        </sit:headerInformation>
+        <sit:situationRecord xsi:type="sit:MaintenanceWorks" id="234859-1" version="3">
+            <sit:situationRecordCreationTime>2026-06-25T19:46:37+02:00</sit:situationRecordCreationTime>
+            <sit:situationRecordVersionTime>2026-06-25T19:59:07+02:00</sit:situationRecordVersionTime>
+            <sit:probabilityOfOccurrence>certain</sit:probabilityOfOccurrence>
+            <sit:safetyRelatedMessage>true</sit:safetyRelatedMessage>
+            <sit:validity>
+                <com:validityStatus>definedByValidityTimeSpec</com:validityStatus>
+                <com:validityTimeSpecification>
+                    <com:overallStartTime>2026-06-25T19:46:37+02:00</com:overallStartTime>
+                </com:validityTimeSpecification>
+            </sit:validity>
+            <sit:impact>
+                <sit:numberOfLanesRestricted>2</sit:numberOfLanesRestricted>
+                <sit:numberOfOperationalLanes>0</sit:numberOfOperationalLanes>
+            </sit:impact>
+            <sit:locationReference xsi:type="loc:LocationGroupByList">
+                <loc:locationContainedInGroup xsi:type="loc:LinearLocation">
+                    <loc:supplementaryPositionalDescription>
+                        <loc:lengthAffected>8688.0</loc:lengthAffected>
+                        <loc:locationDescription>
+                            <com:values>
+                                <com:value lang="fr">Section courante</com:value>
+                            </com:values>
+                        </loc:locationDescription>
+                        <loc:carriageway>
+                            <loc:carriageway>mainCarriageway</loc:carriageway>
+                            <loc:originalNumberOfLanes>2</loc:originalNumberOfLanes>
+                            <loc:lane>
+                                <loc:laneNumber>2</loc:laneNumber>
+                                <loc:laneUsage>leftLane</loc:laneUsage>
+                            </loc:lane>
+                            <loc:lane>
+                                <loc:laneNumber>1</loc:laneNumber>
+                                <loc:laneUsage>rightLane</loc:laneUsage>
+                            </loc:lane>
+                            <loc:lane>
+                                <loc:laneUsage>hardShoulder</loc:laneUsage>
+                            </loc:lane>
+                        </loc:carriageway>
+                        <loc:roadInformation>
+                            <loc:roadDestination>Autoroute du Nord, vers Nord</loc:roadDestination>
+                            <loc:roadName>A7</loc:roadName>
+                        </loc:roadInformation>
+                    </loc:supplementaryPositionalDescription>
+                    <loc:gmlLineString srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                        <loc:posList>49.650575 6.185904 49.65104 6.185694 49.65158 6.185388 49.651885 6.185182 49.652269 6.18488 49.652764 6.184428 49.65301 6.184172 49.65363 6.183438 49.654084 6.182828 49.654331 6.182465 49.663682 6.166273 49.664247 6.165249 49.665496 6.162868 49.665798 6.162355 49.666152 6.161844 49.666485 6.161422 49.666786 6.161093 49.667089 6.160796 49.667458 6.160478 49.66775 6.160262 49.668188 6.159975 49.668527 6.15979 49.669054 6.159557 49.669502 6.159411 49.670135 6.159278 49.670726 6.159214 49.677402 6.158869 49.67804 6.158861 49.678562 6.158875 49.679341 6.15897 49.679635 6.159028 49.680132 6.159156 49.680493 6.159274 49.681112 6.159511 49.681485 6.15967 49.687481 6.162422 49.688596 6.162913 49.689112 6.163106 49.689578 6.163315 49.689953 6.163456 49.690259 6.16357 49.691124 6.163828 49.693128 6.164136 49.694934 6.163844 49.698012 6.162544 49.700628 6.160666 49.701932 6.15931 49.702456 6.158655 49.70379 6.156922 49.70481 6.155004 49.705642 6.152896 49.706373 6.15047 49.706986 6.148176 49.707318 6.146376 49.707386 6.144383 49.707359 6.142886 49.707264 6.141452 49.706748 6.138023 49.706511 6.136216 49.706376 6.134817 49.706304 6.133505</loc:posList>
+                    </loc:gmlLineString>
+                </loc:locationContainedInGroup>
+                <loc:locationContainedInGroup xsi:type="loc:PointLocation">
+                    <loc:pointByCoordinates>
+                        <loc:bearing>336</loc:bearing>
+                        <loc:pointCoordinates>
+                            <loc:latitude>49.650574</loc:latitude>
+                            <loc:longitude>6.185904</loc:longitude>
+                        </loc:pointCoordinates>
+                    </loc:pointByCoordinates>
+                </loc:locationContainedInGroup>
+            </sit:locationReference>
+            <sit:roadMaintenanceType>maintenanceWork</sit:roadMaintenanceType>
+        </sit:situationRecord>
+    </sit:situation>
+    <sit:situation id="234858">
+        <sit:headerInformation>
+            <com:confidentiality>noRestriction</com:confidentiality>
+            <com:informationStatus>real</com:informationStatus>
+        </sit:headerInformation>
+        <sit:situationRecord xsi:type="sit:MaintenanceWorks" id="234858-2" version="3">
+            <sit:situationRecordCreationTime>2026-06-25T19:35:38+02:00</sit:situationRecordCreationTime>
+            <sit:situationRecordVersionTime>2026-06-25T19:35:44+02:00</sit:situationRecordVersionTime>
+            <sit:probabilityOfOccurrence>certain</sit:probabilityOfOccurrence>
+            <sit:safetyRelatedMessage>true</sit:safetyRelatedMessage>
+            <sit:validity>
+                <com:validityStatus>definedByValidityTimeSpec</com:validityStatus>
+                <com:validityTimeSpecification>
+                    <com:overallStartTime>2026-06-25T19:35:38+02:00</com:overallStartTime>
+                </com:validityTimeSpecification>
+            </sit:validity>
+            <sit:impact>
+                <sit:numberOfLanesRestricted>1</sit:numberOfLanesRestricted>
+                <sit:numberOfOperationalLanes>1</sit:numberOfOperationalLanes>
+            </sit:impact>
+            <sit:locationReference xsi:type="loc:LocationGroupByList">
+                <loc:locationContainedInGroup xsi:type="loc:LinearLocation">
+                    <loc:supplementaryPositionalDescription>
+                        <loc:lengthAffected>1900.0</loc:lengthAffected>
+                        <loc:locationDescription>
+                            <com:values>
+                                <com:value lang="fr">Section courante</com:value>
+                            </com:values>
+                        </loc:locationDescription>
+                        <loc:carriageway>
+                            <loc:carriageway>mainCarriageway</loc:carriageway>
+                            <loc:originalNumberOfLanes>2</loc:originalNumberOfLanes>
+                            <loc:lane>
+                                <loc:laneNumber>1</loc:laneNumber>
+                                <loc:laneUsage>rightLane</loc:laneUsage>
+                            </loc:lane>
+                        </loc:carriageway>
+                        <loc:roadInformation>
+                            <loc:roadDestination>Autoroute du Nord, vers Grunewald</loc:roadDestination>
+                            <loc:roadName>A7</loc:roadName>
+                        </loc:roadInformation>
+                    </loc:supplementaryPositionalDescription>
+                    <loc:gmlLineString srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                        <loc:posList>49.688952 6.162875 49.687909 6.162509 49.686755 6.16203 49.683556 6.160574 49.68215 6.15989 49.681425 6.159562 49.680615 6.159244 49.680131 6.159091 49.679847 6.159018 49.679446 6.158934 49.679008 6.158872 49.678316 6.158821 49.677849 6.158815 49.676384 6.158871 49.672224 6.159085</loc:posList>
+                    </loc:gmlLineString>
+                </loc:locationContainedInGroup>
+                <loc:locationContainedInGroup xsi:type="loc:PointLocation">
+                    <loc:pointByCoordinates>
+                        <loc:bearing>198</loc:bearing>
+                        <loc:pointCoordinates>
+                            <loc:latitude>49.688953</loc:latitude>
+                            <loc:longitude>6.162875</loc:longitude>
+                        </loc:pointCoordinates>
+                    </loc:pointByCoordinates>
+                </loc:locationContainedInGroup>
+            </sit:locationReference>
+            <sit:roadMaintenanceType>maintenanceWork</sit:roadMaintenanceType>
+        </sit:situationRecord>
+    </sit:situation>
+    <sit:situation id="234857">
+        <sit:headerInformation>
+            <com:confidentiality>noRestriction</com:confidentiality>
+            <com:informationStatus>real</com:informationStatus>
+        </sit:headerInformation>
+        <sit:situationRecord xsi:type="sit:Accident" id="234857-1" version="5">
+            <sit:situationRecordCreationTime>2026-06-25T19:11:12+02:00</sit:situationRecordCreationTime>
+            <sit:situationRecordVersionTime>2026-06-25T19:33:53+02:00</sit:situationRecordVersionTime>
+            <sit:probabilityOfOccurrence>certain</sit:probabilityOfOccurrence>
+            <sit:safetyRelatedMessage>true</sit:safetyRelatedMessage>
+            <sit:validity>
+                <com:validityStatus>definedByValidityTimeSpec</com:validityStatus>
+                <com:validityTimeSpecification>
+                    <com:overallStartTime>2026-06-25T19:11:12+02:00</com:overallStartTime>
+                </com:validityTimeSpecification>
+            </sit:validity>
+            <sit:impact>
+                <sit:numberOfLanesRestricted>1</sit:numberOfLanesRestricted>
+                <sit:numberOfOperationalLanes>1</sit:numberOfOperationalLanes>
+            </sit:impact>
+            <sit:locationReference xsi:type="loc:LocationGroupByList">
+                <loc:locationContainedInGroup xsi:type="loc:LinearLocation">
+                    <loc:supplementaryPositionalDescription>
+                        <loc:lengthAffected>11.0</loc:lengthAffected>
+                        <loc:locationDescription>
+                            <com:values>
+                                <com:value lang="fr">Section courante</com:value>
+                            </com:values>
+                        </loc:locationDescription>
+                        <loc:carriageway>
+                            <loc:carriageway>mainCarriageway</loc:carriageway>
+                            <loc:originalNumberOfLanes>2</loc:originalNumberOfLanes>
+                            <loc:lane>
+                                <loc:laneNumber>2</loc:laneNumber>
+                                <loc:laneUsage>leftLane</loc:laneUsage>
+                            </loc:lane>
+                            <loc:lane>
+                                <loc:laneUsage>hardShoulder</loc:laneUsage>
+                            </loc:lane>
+                        </loc:carriageway>
+                        <loc:roadInformation>
+                            <loc:roadDestination>Autoroute de Thionville, vers Metz</loc:roadDestination>
+                            <loc:roadName>A3</loc:roadName>
+                        </loc:roadInformation>
+                    </loc:supplementaryPositionalDescription>
+                    <loc:gmlLineString srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                        <loc:posList>49.501924 6.115807 49.501836 6.115837</loc:posList>
+                    </loc:gmlLineString>
+                </loc:locationContainedInGroup>
+                <loc:locationContainedInGroup xsi:type="loc:PointLocation">
+                    <loc:pointByCoordinates>
+                        <loc:bearing>161</loc:bearing>
+                        <loc:pointCoordinates>
+                            <loc:latitude>49.501923</loc:latitude>
+                            <loc:longitude>6.115807</loc:longitude>
+                        </loc:pointCoordinates>
+                    </loc:pointByCoordinates>
+                </loc:locationContainedInGroup>
+            </sit:locationReference>
+            <sit:trafficConstrictionType>lanesBlocked</sit:trafficConstrictionType>
+            <sit:accidentType>accident</sit:accidentType>
+            <sit:totalNumberOfVehiclesInvolved>2</sit:totalNumberOfVehiclesInvolved>
+            <sit:groupOfVehiclesInvolved>
+                <com:numberOfVehicles>1</com:numberOfVehicles>
+                <com:vehicleStatus>damaged</com:vehicleStatus>
+                <com:vehicleCharacteristics>
+                    <com:vehicleType>car</com:vehicleType>
+                </com:vehicleCharacteristics>
+            </sit:groupOfVehiclesInvolved>
+            <sit:groupOfVehiclesInvolved>
+                <com:numberOfVehicles>1</com:numberOfVehicles>
+                <com:vehicleStatus>damaged</com:vehicleStatus>
+                <com:vehicleCharacteristics>
+                    <com:vehicleType>motorcycle</com:vehicleType>
+                </com:vehicleCharacteristics>
+            </sit:groupOfVehiclesInvolved>
+        </sit:situationRecord>
+    </sit:situation>
+    <sit:situation id="234810">
+        <sit:headerInformation>
+            <com:confidentiality>noRestriction</com:confidentiality>
+            <com:informationStatus>real</com:informationStatus>
+        </sit:headerInformation>
+        <sit:situationRecord xsi:type="sit:EquipmentOrSystemFault" id="234810-1" version="4">
+            <sit:situationRecordCreationTime>2026-06-24T12:43:53+02:00</sit:situationRecordCreationTime>
+            <sit:situationRecordVersionTime>2026-06-25T14:16:47+02:00</sit:situationRecordVersionTime>
+            <sit:probabilityOfOccurrence>certain</sit:probabilityOfOccurrence>
+            <sit:safetyRelatedMessage>true</sit:safetyRelatedMessage>
+            <sit:validity>
+                <com:validityStatus>definedByValidityTimeSpec</com:validityStatus>
+                <com:validityTimeSpecification>
+                    <com:overallStartTime>2026-06-24T10:07:00+02:00</com:overallStartTime>
+                </com:validityTimeSpecification>
+            </sit:validity>
+            <sit:impact>
+                <sit:numberOfLanesRestricted>0</sit:numberOfLanesRestricted>
+                <sit:numberOfOperationalLanes>2</sit:numberOfOperationalLanes>
+            </sit:impact>
+            <sit:locationReference xsi:type="loc:LocationGroupByList">
+                <loc:locationContainedInGroup xsi:type="loc:LinearLocation">
+                    <loc:supplementaryPositionalDescription>
+                        <loc:lengthAffected>500.0</loc:lengthAffected>
+                        <loc:locationDescription>
+                            <com:values>
+                                <com:value lang="fr">Section courante</com:value>
+                            </com:values>
+                        </loc:locationDescription>
+                        <loc:carriageway>
+                            <loc:carriageway>mainCarriageway</loc:carriageway>
+                        </loc:carriageway>
+                        <loc:roadInformation>
+                            <loc:roadDestination>Tunnel Stafelter en direction de Friedhof</loc:roadDestination>
+                            <loc:roadName>A7</loc:roadName>
+                        </loc:roadInformation>
+                    </loc:supplementaryPositionalDescription>
+                    <loc:gmlLineString srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                        <loc:posList>49.659458 6.173588 49.662446 6.168415</loc:posList>
+                    </loc:gmlLineString>
+                </loc:locationContainedInGroup>
+                <loc:locationContainedInGroup xsi:type="loc:PointLocation">
+                    <loc:pointByCoordinates>
+                        <loc:bearing>300</loc:bearing>
+                        <loc:pointCoordinates>
+                            <loc:latitude>49.65946</loc:latitude>
+                            <loc:longitude>6.173588</loc:longitude>
+                        </loc:pointCoordinates>
+                    </loc:pointByCoordinates>
+                </loc:locationContainedInGroup>
+            </sit:locationReference>
+            <sit:equipmentOrSystemFaultType>notWorking</sit:equipmentOrSystemFaultType>
+            <sit:faultyEquipmentOrSystemType>other</sit:faultyEquipmentOrSystemType>
+        </sit:situationRecord>
+        <sit:situationRecord xsi:type="sit:EquipmentOrSystemFault" id="234810-2" version="4">
+            <sit:situationRecordCreationTime>2026-06-24T12:43:53+02:00</sit:situationRecordCreationTime>
+            <sit:situationRecordVersionTime>2026-06-25T14:16:47+02:00</sit:situationRecordVersionTime>
+            <sit:probabilityOfOccurrence>certain</sit:probabilityOfOccurrence>
+            <sit:safetyRelatedMessage>true</sit:safetyRelatedMessage>
+            <sit:validity>
+                <com:validityStatus>definedByValidityTimeSpec</com:validityStatus>
+                <com:validityTimeSpecification>
+                    <com:overallStartTime>2026-06-24T10:07:00+02:00</com:overallStartTime>
+                </com:validityTimeSpecification>
+            </sit:validity>
+            <sit:impact>
+                <sit:numberOfLanesRestricted>0</sit:numberOfLanesRestricted>
+                <sit:numberOfOperationalLanes>2</sit:numberOfOperationalLanes>
+            </sit:impact>
+            <sit:locationReference xsi:type="loc:LocationGroupByList">
+                <loc:locationContainedInGroup xsi:type="loc:LinearLocation">
+                    <loc:supplementaryPositionalDescription>
+                        <loc:lengthAffected>500.0</loc:lengthAffected>
+                        <loc:locationDescription>
+                            <com:values>
+                                <com:value lang="fr">Section courante</com:value>
+                            </com:values>
+                        </loc:locationDescription>
+                        <loc:carriageway>
+                            <loc:carriageway>mainCarriageway</loc:carriageway>
+                        </loc:carriageway>
+                        <loc:roadInformation>
+                            <loc:roadDestination>Tunnel Stafelter en direction de Grunewald</loc:roadDestination>
+                            <loc:roadName>A7</loc:roadName>
+                        </loc:roadInformation>
+                    </loc:supplementaryPositionalDescription>
+                    <loc:gmlLineString srsDimension="2" srsName="urn:ogc:def:crs:EPSG::4326">
+                        <loc:posList>49.662379 6.16827 49.659387 6.173439</loc:posList>
+                    </loc:gmlLineString>
+                </loc:locationContainedInGroup>
+                <loc:locationContainedInGroup xsi:type="loc:PointLocation">
+                    <loc:pointByCoordinates>
+                        <loc:bearing>120</loc:bearing>
+                        <loc:pointCoordinates>
+                            <loc:latitude>49.66238</loc:latitude>
+                            <loc:longitude>6.16827</loc:longitude>
+                        </loc:pointCoordinates>
+                    </loc:pointByCoordinates>
+                </loc:locationContainedInGroup>
+            </sit:locationReference>
+            <sit:equipmentOrSystemFaultType>notWorking</sit:equipmentOrSystemFaultType>
+            <sit:faultyEquipmentOrSystemType>other</sit:faultyEquipmentOrSystemType>
+        </sit:situationRecord>
+    </sit:situation>
+</d2:payload>

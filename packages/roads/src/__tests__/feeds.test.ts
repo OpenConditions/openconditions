@@ -205,6 +205,14 @@ describe("FEED_SOURCES", () => {
     expect(feed!.license).toBe("CC-BY-4.0");
   });
 
+  it("includes cita-lu (Luxembourg) as a CC0 DATEX II feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "cita-lu");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.license).toBe("CC0-1.0");
+    expect(feed!.country).toBe("LU");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
