@@ -47,6 +47,15 @@ describe("hasCredentials", () => {
       hasCredentials({ auth: { kind: "basic", userEnvVar: "U", passEnvVar: "P" } }, { U: "u" })
     ).toBe(false);
   });
+
+  it("also gates on requiredEnv (e.g. a key embedded in a POST body)", () => {
+    expect(hasCredentials({ requiredEnv: ["K"] }, {})).toBe(false);
+    expect(hasCredentials({ requiredEnv: ["K"] }, { K: "x" })).toBe(true);
+    // both auth and requiredEnv must be satisfied
+    expect(
+      hasCredentials({ auth: { kind: "bearer", envVar: "T" }, requiredEnv: ["K"] }, { T: "t" })
+    ).toBe(false);
+  });
 });
 
 describe("makeAuthorizedFetch", () => {

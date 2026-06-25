@@ -11,14 +11,26 @@ function isGzip(buf: Buffer): boolean {
   return buf.length >= 2 && buf[0] === GZIP_MAGIC_0 && buf[1] === GZIP_MAGIC_1;
 }
 
-async function fetchOne(url: string, fetchFn: typeof fetch): Promise<Buffer> {
-  const res = await fetchFn(url);
+async function fetchOne(url: string, fetchFn: typeof fetch, init?: RequestInit): Promise<Buffer> {
+  const res = await fetchFn(url, init);
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} fetching ${url}`);
   }
   const arrayBuf = await res.arrayBuffer();
   const raw = Buffer.from(arrayBuf);
   return isGzip(raw) ? gunzipSync(raw) : raw;
+}
+
+/** Build the RequestInit for a feed: POST + body + headers when configured. */
+function requestInit(src: FeedSource): RequestInit | undefined {
+  if (src.method !== "POST") {
+    return src.requestHeaders ? { headers: src.requestHeaders } : undefined;
+  }
+  return {
+    method: "POST",
+    body: src.body ? src.body(process.env as Record<string, string | undefined>) : undefined,
+    headers: src.requestHeaders,
+  };
 }
 
 /**
@@ -79,14 +91,16 @@ export async function fetchAll(src: FeedSource, fetchFn: typeof fetch): Promise<
     throw new Error(`feed ${src.id} has neither url nor discover`);
   }
 
+  const init = requestInit(src);
+
   if (typeof urlOrFn === "function") {
     const resolved = urlOrFn(process.env as Record<string, string | undefined>);
-    return [await fetchOne(resolved, fetchFn)];
+    return [await fetchOne(resolved, fetchFn, init)];
   }
 
   if (Array.isArray(urlOrFn)) {
-    return Promise.all(urlOrFn.map((u) => fetchOne(u, fetchFn)));
+    return Promise.all(urlOrFn.map((u) => fetchOne(u, fetchFn, init)));
   }
 
-  return [await fetchOne(urlOrFn, fetchFn)];
+  return [await fetchOne(urlOrFn, fetchFn, init)];
 }

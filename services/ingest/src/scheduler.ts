@@ -38,8 +38,9 @@ export function startScheduler(sql: Sql): () => void {
       // A feed that declares credentials it doesn't have configured is skipped
       // (not an error) — it activates automatically once its env vars are set.
       if (!hasCredentials(feed)) {
+        const needed = [...requiredEnvVars(feed.auth), ...(feed.requiredEnv ?? [])];
         console.warn(
-          `[scheduler] ${domainName}/${feed.id}: skipped — set ${requiredEnvVars(feed.auth).join(", ")} to enable`
+          `[scheduler] ${domainName}/${feed.id}: skipped — set ${needed.join(", ")} to enable`
         );
         continue;
       }

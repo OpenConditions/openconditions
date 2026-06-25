@@ -32,6 +32,7 @@ export type SourceFormat =
   | "lta-json"
   | "gddkia-xml"
   | "flatjson"
+  | "trafikverket-json"
   | "traff"
   | "autobahn-json"
   | "digitraffic-json"

@@ -11,6 +11,7 @@ import { parseIbi511 } from "../ibi511.js";
 import { parseLtaIncidents } from "../lta.js";
 import { parseGddkia } from "../gddkia.js";
 import { parseFlatJson } from "../flatjson.js";
+import { parseTrafikverket } from "../trafikverket.js";
 import { FEED_SOURCES, feedToSourceDescriptor, parserFor } from "../feeds.js";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
@@ -256,12 +257,25 @@ describe("FEED_SOURCES", () => {
     expect(parserFor("flatjson")).toBe(parseFlatJson);
   });
 
+  it("returns parseTrafikverket for trafikverket-json", () => {
+    expect(parserFor("trafikverket-json")).toBe(parseTrafikverket);
+  });
+
   it("includes nap-si (Slovenia) as a credential-gated DATEX II feed", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "nap-si");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth).toBeDefined();
     expect(feed!.country).toBe("SI");
+  });
+
+  it("includes trafikverket-se (Sweden) as a POST CC0 feed gated by requiredEnv", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "trafikverket-se");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("trafikverket-json");
+    expect(feed!.method).toBe("POST");
+    expect(feed!.requiredEnv).toContain("TRAFIKVERKET_API_KEY");
+    expect(typeof feed!.body).toBe("function");
   });
 
   it("registers unique feed ids", () => {

@@ -4,6 +4,7 @@ import type { SiteGeometry } from "./siteTable.js";
 import { parseDatexSituations } from "./datex.js";
 import { parseGeoJson } from "./geojson.js";
 import { parseFlatJson } from "./flatjson.js";
+import { parseTrafikverket } from "./trafikverket.js";
 import { parseIbi511 } from "./ibi511.js";
 import { parseGddkia } from "./gddkia.js";
 import { parseLtaIncidents } from "./lta.js";
@@ -98,6 +99,17 @@ export interface FeedSource {
    * required env vars are absent. Omit (or `none`) for open, keyless feeds.
    */
   auth?: FeedAuth;
+  /** HTTP method — default GET. Set "POST" for query-style APIs (e.g. Sweden Trafikverket). */
+  method?: "GET" | "POST";
+  /** Request body for a POST feed. A function so it can embed credentials from env. */
+  body?: (env: Record<string, string | undefined>) => string;
+  /** Extra request headers (e.g. a Content-Type for the POST body). */
+  requestHeaders?: Record<string, string>;
+  /**
+   * Env vars the feed needs that the `auth` config doesn't cover (e.g. an API key
+   * embedded in `body`). The scheduler gates on these in addition to `auth`.
+   */
+  requiredEnv?: string[];
   /** Field mapping for `format: "geojson"` feeds (passed to the generic reader). */
   geojson?: GeoJsonMapping;
   bbox?: [number, number, number, number];
@@ -528,6 +540,30 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
+    // Sweden — Trafikverket "Situation" API (POST JSON query; CC0). The API key
+    // is embedded in the XML request body, so it's gated via requiredEnv (set
+    // TRAFIKVERKET_API_KEY). Built from the documented schema; verify against a
+    // live keyed response.
+    id: "trafikverket-se",
+    name: "Trafikverket (Sweden)",
+    format: "trafikverket-json",
+    url: "https://api.trafikinfo.trafikverket.se/v2/data.json",
+    method: "POST",
+    requestHeaders: { "Content-Type": "text/xml" },
+    body: (env) =>
+      `<REQUEST><LOGIN authenticationkey="${env["TRAFIKVERKET_API_KEY"] ?? ""}"/>` +
+      `<QUERY objecttype="Situation" schemaversion="1.5" limit="1000"><FILTER/></QUERY></REQUEST>`,
+    requiredEnv: ["TRAFIKVERKET_API_KEY"],
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC0-1.0",
+    licenseUrl: "https://api.trafikinfo.trafikverket.se/",
+    attribution: "Trafikverket",
+    country: "SE",
+    privacyUrl: "https://www.trafikverket.se/integritetspolicy/",
+    enabledByDefault: true,
+  },
+  {
     // Slovenia — NAP/NCUP DATEX II (DARS + DRSI). Endpoint confirmed live
     // (HTTP 403 without auth). CC-BY-SA (commercial OK; ShareAlike applies to
     // re-emitted data). Auth is credential-gated — research indicates OAuth2;
@@ -752,6 +788,7 @@ export function parserFor(format: SourceFormat): ParserFn {
   if (format === "lta-json") return parseLtaIncidents as ParserFn;
   if (format === "gddkia-xml") return parseGddkia;
   if (format === "flatjson") return parseFlatJson as ParserFn;
+  if (format === "trafikverket-json") return parseTrafikverket as ParserFn;
   if (format === "autobahn-json") return parseAutobahn;
   if (format === "digitraffic-json") return parseDigitraffic;
   throw new Error(`No parser registered for format: ${format}`);

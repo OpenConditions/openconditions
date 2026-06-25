@@ -27,9 +27,15 @@ export function requiredEnvVars(auth: FeedAuth | undefined): string[] {
   }
 }
 
-/** True when the feed needs no credentials, or all its required env vars are set. */
-export function hasCredentials(src: Pick<FeedSource, "auth">, env: Env = process.env): boolean {
-  return requiredEnvVars(src.auth).every((k) => {
+/** True when the feed needs no credentials, or all its required env vars are set.
+ * Covers both `auth`-derived vars and any extra `requiredEnv` (e.g. a key the
+ * feed embeds in its POST body). */
+export function hasCredentials(
+  src: Pick<FeedSource, "auth" | "requiredEnv">,
+  env: Env = process.env
+): boolean {
+  const required = [...requiredEnvVars(src.auth), ...(src.requiredEnv ?? [])];
+  return required.every((k) => {
     const v = env[k];
     return typeof v === "string" && v.length > 0;
   });
