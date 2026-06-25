@@ -1,0 +1,263 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "geometry": {
+        "type": "Point",
+        "crs": { "type": "name", "properties": { "name": "EPSG:3812" } },
+        "coordinates": [648008.25588407, 669870.036804775]
+      },
+      "properties": {
+        "fid": 1,
+        "datex_codes": "RWK",
+        "type_fr": "Travaux ",
+        "type_nl": "wegenwerken",
+        "location_fr": "Boulevard Poincaré",
+        "location_nl": "Poincarélaan",
+        "direction_fr": "PTE DE HAL",
+        "direction_nl": "HALLEPOORT",
+        "road_type_fr": "Street",
+        "road_type_nl": "Street",
+        "importance": "1",
+        "consequences_fr": "Une ou plusieurs bandes fermées",
+        "consequences_nl": "Een of meerdere afgesloten rijstroken",
+        "impacted_lanes": null,
+        "start_time": "2023-06-16T09:21:00",
+        "end_time": "2026-12-31T23:59:00",
+        "last_update": "2025-04-15T18:42:00",
+        "last_layer_update": "2026-06-25T20:07:30.208858",
+        "is_active": true,
+        "zone_fr": null,
+        "zone_nl": null,
+        "orientation": "Unknown"
+      },
+      "links": [
+        {
+          "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items/1/",
+          "rel": "self",
+          "type": "application/geo+json",
+          "title": "Feature 1"
+        },
+        {
+          "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/",
+          "rel": "collection",
+          "type": "application/json",
+          "title": "Parent collection"
+        }
+      ]
+    },
+    {
+      "type": "Feature",
+      "id": 2,
+      "geometry": {
+        "type": "Point",
+        "crs": { "type": "name", "properties": { "name": "EPSG:3812" } },
+        "coordinates": [648499.823092099, 672029.160649206]
+      },
+      "properties": {
+        "fid": 2,
+        "datex_codes": "RWK",
+        "type_fr": "Travaux ",
+        "type_nl": "wegenwerken",
+        "location_fr": "Square Sainctelette",
+        "location_nl": "Sainctelettesquare",
+        "direction_fr": "Indéfini",
+        "direction_nl": "Onbekend",
+        "road_type_fr": "Street",
+        "road_type_nl": "Street",
+        "importance": "4",
+        "consequences_fr": "Bandes rétrécies",
+        "consequences_nl": "Versmalde rijstroken",
+        "impacted_lanes": null,
+        "start_time": "2024-05-24T13:27:00",
+        "end_time": "2027-01-01T00:27:00",
+        "last_update": "2025-05-02T11:51:00",
+        "last_layer_update": "2026-06-25T20:07:30.208858",
+        "is_active": true,
+        "zone_fr": null,
+        "zone_nl": null,
+        "orientation": "Unknown"
+      },
+      "links": [
+        {
+          "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items/2/",
+          "rel": "self",
+          "type": "application/geo+json",
+          "title": "Feature 2"
+        },
+        {
+          "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/",
+          "rel": "collection",
+          "type": "application/json",
+          "title": "Parent collection"
+        }
+      ]
+    },
+    {
+      "type": "Feature",
+      "id": 3,
+      "geometry": {
+        "type": "Point",
+        "crs": { "type": "name", "properties": { "name": "EPSG:3812" } },
+        "coordinates": [648382.715689957, 672035.742060548]
+      },
+      "properties": {
+        "fid": 3,
+        "datex_codes": "RWK",
+        "type_fr": "Travaux ",
+        "type_nl": "wegenwerken",
+        "location_fr": "Place Sainctelette",
+        "location_nl": "Saincteletteplaats",
+        "direction_fr": "BASILIQUE",
+        "direction_nl": "BASILIEK",
+        "road_type_fr": "Street",
+        "road_type_nl": "Street",
+        "importance": "1",
+        "consequences_fr": "Une ou plusieurs bandes fermées",
+        "consequences_nl": "Een of meerdere afgesloten rijstroken",
+        "impacted_lanes": "1|0|0",
+        "start_time": "2025-03-27T10:12:00",
+        "end_time": "2027-01-01T17:00:00",
+        "last_update": "2025-03-27T10:13:00",
+        "last_layer_update": "2026-06-25T20:07:30.208858",
+        "is_active": true,
+        "zone_fr": null,
+        "zone_nl": null,
+        "orientation": " 211.00"
+      },
+      "links": [
+        {
+          "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items/3/",
+          "rel": "self",
+          "type": "application/geo+json",
+          "title": "Feature 3"
+        },
+        {
+          "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/",
+          "rel": "collection",
+          "type": "application/json",
+          "title": "Parent collection"
+        }
+      ]
+    },
+    {
+      "type": "Feature",
+      "id": 4,
+      "geometry": {
+        "type": "Point",
+        "crs": { "type": "name", "properties": { "name": "EPSG:3812" } },
+        "coordinates": [651959.05328322, 673945.713389126]
+      },
+      "properties": {
+        "fid": 4,
+        "datex_codes": "RWK",
+        "type_fr": "Travaux ",
+        "type_nl": "wegenwerken",
+        "location_fr": "Rue Edouard Stuckens",
+        "location_nl": "Edward Stuckensstraat",
+        "direction_fr": "Ouest",
+        "direction_nl": "Ouest",
+        "road_type_fr": "Street",
+        "road_type_nl": "Street",
+        "importance": "1",
+        "consequences_fr": "Bandes rétrécies",
+        "consequences_nl": "Versmalde rijstroken",
+        "impacted_lanes": "0",
+        "start_time": "2025-05-21T00:00:00",
+        "end_time": "2026-06-30T23:59:00",
+        "last_update": "2025-05-20T23:59:00",
+        "last_layer_update": "2026-06-25T20:07:30.208858",
+        "is_active": true,
+        "zone_fr": null,
+        "zone_nl": null,
+        "orientation": " 258.00"
+      },
+      "links": [
+        {
+          "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items/4/",
+          "rel": "self",
+          "type": "application/geo+json",
+          "title": "Feature 4"
+        },
+        {
+          "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/",
+          "rel": "collection",
+          "type": "application/json",
+          "title": "Parent collection"
+        }
+      ]
+    },
+    {
+      "type": "Feature",
+      "id": 5,
+      "geometry": {
+        "type": "Point",
+        "crs": { "type": "name", "properties": { "name": "EPSG:3812" } },
+        "coordinates": [646533.116985189, 665319.019509237]
+      },
+      "properties": {
+        "fid": 5,
+        "datex_codes": "RWK",
+        "type_fr": "Travaux ",
+        "type_nl": "wegenwerken",
+        "location_fr": "Chaussée de Neerstalle",
+        "location_nl": "Neerstallesteenweg",
+        "direction_fr": "Nord-Ouest",
+        "direction_nl": "Nord-Ouest",
+        "road_type_fr": "Street",
+        "road_type_nl": "Street",
+        "importance": "3",
+        "consequences_fr": "Les deux directions fermées",
+        "consequences_nl": "Beide rijrichtingen afgesloten",
+        "impacted_lanes": "1",
+        "start_time": "2025-04-03T18:42:00",
+        "end_time": "2026-12-31T23:59:00",
+        "last_update": "2025-04-03T18:43:00",
+        "last_layer_update": "2026-06-25T20:07:30.208858",
+        "is_active": true,
+        "zone_fr": null,
+        "zone_nl": null,
+        "orientation": " 335.00"
+      },
+      "links": [
+        {
+          "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items/5/",
+          "rel": "self",
+          "type": "application/geo+json",
+          "title": "Feature 5"
+        },
+        {
+          "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/",
+          "rel": "collection",
+          "type": "application/json",
+          "title": "Parent collection"
+        }
+      ]
+    }
+  ],
+  "links": [
+    {
+      "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items/?f=json&limit=200",
+      "rel": "self",
+      "type": "application/geo+json",
+      "title": "This document"
+    },
+    {
+      "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/",
+      "rel": "collection",
+      "type": "application/json",
+      "title": "Parent collection"
+    },
+    {
+      "href": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items/?f=json&limit=200&offset=200",
+      "rel": "next",
+      "type": "application/geo+json",
+      "title": "Next page"
+    }
+  ],
+  "timeStamp": "2026-06-25T18:07:36.076290Z",
+  "numberMatched": 255,
+  "numberReturned": 200
+}

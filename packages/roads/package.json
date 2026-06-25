@@ -29,10 +29,12 @@
   "dependencies": {
     "@openconditions/core": "workspace:*",
     "fast-xml-parser": "^5.8.0",
+    "proj4": "^2.20.9",
     "saxes": "^6.0.0"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.14",
+    "@types/proj4": "^2.19.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^3.0.0"

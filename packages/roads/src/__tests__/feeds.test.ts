@@ -213,6 +213,14 @@ describe("FEED_SOURCES", () => {
     expect(feed!.country).toBe("LU");
   });
 
+  it("includes brussels-be as a CC0 GeoJSON feed (EPSG:3812 reprojected)", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "brussels-be");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("geojson");
+    expect(feed!.license).toBe("CC0-1.0");
+    expect(feed!.country).toBe("BE");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

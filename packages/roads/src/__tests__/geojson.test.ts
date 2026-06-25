@@ -253,6 +253,25 @@ describe("parseGeoJson — MTQ Québec fixture (EPSG:3857 reprojection)", () => 
   });
 });
 
+describe("parseGeoJson — Brussels fixture (per-geometry EPSG:3812 reprojection)", () => {
+  it("reprojects Lambert-2008 per-geometry coords to WGS84 via the registered mapping", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "brussels-be")!;
+    const xml = readFileSync(
+      join(import.meta.dirname, "fixtures/brussels-be/traffic_events.geojson")
+    );
+    const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
+    expect(events.length).toBeGreaterThan(0);
+    const g = events[0]!.geometry;
+    if (!g || g.type !== "Point") throw new Error("expected Point");
+    // Brussels WGS84, and the stale per-geometry crs member is dropped.
+    expect(g.coordinates[0]!).toBeGreaterThan(3.9);
+    expect(g.coordinates[0]!).toBeLessThan(4.6);
+    expect(g.coordinates[1]!).toBeGreaterThan(50.7);
+    expect(g.coordinates[1]!).toBeLessThan(51);
+    expect("crs" in g).toBe(false);
+  });
+});
+
 describe("parseGeoJson — Vegagerðin Iceland fixture (lon/lat from properties)", () => {
   it("uses the WGS84 X/Y fields, not the EPSG:3057 geometry, via the registered mapping", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "vegagerdin-is")!;

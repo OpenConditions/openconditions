@@ -433,6 +433,34 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
+    // Brussels — Bruxelles Mobilité traffic events (OGC API Features → GeoJSON).
+    // Geometry is EPSG:3812 (Belgian Lambert 2008, per-geometry crs) → reader
+    // reprojects to WGS84 via proj4. CC0, no key.
+    id: "brussels-be",
+    name: "Bruxelles Mobilité traffic events",
+    format: "geojson",
+    url: "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items?f=json&limit=1000",
+    geojson: {
+      idField: "fid",
+      typeField: "datex_codes",
+      typeMap: { RWK: "roadworks", EMR: "public_event", ACC: "accident", JAM: "congestion" },
+      defaultType: "other",
+      headlineField: "consequences_fr",
+      roadField: "location_fr",
+      severityField: "importance",
+      severityMap: { "0": "low", "1": "low", "2": "medium", "3": "high", "4": "critical" },
+      updatedField: "last_update",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC0-1.0",
+    licenseUrl: "https://data.mobility.brussels/",
+    attribution: "Bruxelles Mobilité / Brussel Mobiliteit",
+    country: "BE",
+    privacyUrl: "https://mobilite-mobiliteit.brussels/en/privacy",
+    enabledByDefault: true,
+  },
+  {
     // Luxembourg — CITA traffic events (DATEX II v3.6). CC0, no key.
     id: "cita-lu",
     name: "CITA (Luxembourg)",

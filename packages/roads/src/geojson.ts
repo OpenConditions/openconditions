@@ -2,6 +2,7 @@ import type { Severity } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { GeoJsonMapping, RoadEvent, RoadEventType } from "./model.js";
+import { reprojectorFor } from "./reproject.js";
 import { mapSourceType, type TypeMapping } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -88,25 +89,18 @@ function defaultHeadline(type: RoadEventType): string {
     : type.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 }
 
-const WEB_MERCATOR_R = 6_378_137;
-
-/** Web Mercator (EPSG:3857) [x,y] metres → WGS84 [lon,lat] (closed form, no deps). */
-function mercToWgs84([x, y]: [number, number]): [number, number] {
-  const lon = (x / WEB_MERCATOR_R) * (180 / Math.PI);
-  const lat = (2 * Math.atan(Math.exp(y / WEB_MERCATOR_R)) - Math.PI / 2) * (180 / Math.PI);
-  return [lon, lat];
-}
-
-/** True when a GeoJSON `crs` member declares Web Mercator (some WFS/ArcGIS exports). */
-function isWebMercator(crs: unknown): boolean {
+/** The CRS name on a geometry or FeatureCollection `crs` member, if any. */
+function crsName(crs: unknown): string | undefined {
   const name = (crs as { properties?: { name?: unknown } })?.properties?.name;
-  return typeof name === "string" && /(?:^|[:/])(3857|900913|102100)\b/.test(name);
+  return typeof name === "string" ? name : undefined;
 }
 
-/** Recursively remap every coordinate pair of a geometry through `fn`. */
+/** Recursively remap every coordinate pair of a geometry through `fn`, dropping
+ * any now-stale `crs` member (coords become WGS84). */
 function remapCoords(geometry: Geometry, fn: (p: [number, number]) => [number, number]): Geometry {
-  if (geometry.type === "GeometryCollection") {
-    return { ...geometry, geometries: geometry.geometries.map((g) => remapCoords(g, fn)) };
+  const { crs: _crs, ...geom } = geometry as Geometry & { crs?: unknown };
+  if (geom.type === "GeometryCollection") {
+    return { ...geom, geometries: geom.geometries.map((g) => remapCoords(g, fn)) };
   }
   const walk = (c: unknown): unknown =>
     Array.isArray(c) && typeof c[0] === "number" && typeof c[1] === "number"
@@ -115,8 +109,8 @@ function remapCoords(geometry: Geometry, fn: (p: [number, number]) => [number, n
         ? c.map(walk)
         : c;
   return {
-    ...geometry,
-    coordinates: walk((geometry as { coordinates: unknown }).coordinates),
+    ...geom,
+    coordinates: walk((geom as { coordinates: unknown }).coordinates),
   } as Geometry;
 }
 
@@ -130,7 +124,7 @@ export function parseGeoJson(input: string | Buffer, src: SourceDescriptor): Roa
   }
   const features = Array.isArray(fc.features) ? (fc.features as Feature[]) : [];
   const mapping = src.geojson ?? {};
-  const mercator = isWebMercator(fc.crs);
+  const collectionCrs = crsName(fc.crs);
   const out: RoadEvent[] = [];
 
   features.forEach((feature, index) => {
@@ -156,7 +150,12 @@ export function parseGeoJson(input: string | Buffer, src: SourceDescriptor): Roa
         ("coordinates" in rawGeometry ||
           (rawGeometry.type === "GeometryCollection" && "geometries" in rawGeometry));
       if (!hasShape) return;
-      geometry = mercator ? remapCoords(rawGeometry, mercToWgs84) : rawGeometry;
+      // CRS may be declared on the collection (ArcGIS/WFS) or per-geometry
+      // (Brussels OGC API). Reproject to WGS84 when it's a known projected grid.
+      const reproject = reprojectorFor(
+        crsName((rawGeometry as { crs?: unknown }).crs) ?? collectionCrs
+      );
+      geometry = reproject ? remapCoords(rawGeometry, reproject) : rawGeometry;
     }
 
     const rawType = str(get(props, mapping.typeField));
