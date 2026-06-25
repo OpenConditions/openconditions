@@ -32,6 +32,10 @@ interface Row {
   data_updated_at: string | Date;
   fetched_at: string | Date;
   expires_at: string | Date | null;
+  schedule: Observation["schedule"] | null;
+  confidence: string | null;
+  is_forecast: boolean | null;
+  related_ids: string[] | null;
   attributes: Record<string, unknown> | null;
   subject: Observation["subject"] | null;
   origin: Provenance;
@@ -63,6 +67,10 @@ function rowToObservation(row: Row): Observation {
     origin: row.origin,
     ...(row.subject ? { subject: row.subject } : {}),
     ...(row.label != null ? { label: row.label } : {}),
+    ...(row.schedule ? { schedule: row.schedule } : {}),
+    ...(row.confidence != null ? { confidence: row.confidence as Observation["confidence"] } : {}),
+    ...(row.is_forecast != null ? { isForecast: row.is_forecast } : {}),
+    ...(row.related_ids ? { relatedIds: row.related_ids } : {}),
   };
   const specific =
     row.kind === "measurement"
@@ -123,6 +131,7 @@ export async function readObservations(
       severity, severity_source, headline, description, label,
       metric, value, level, unit, aggregation,
       status, valid_from, valid_to, data_updated_at, fetched_at, expires_at,
+      schedule, confidence, is_forecast, related_ids,
       attributes, subject, origin,
       ST_AsGeoJSON(geom) AS geojson,
       (stale_after IS NOT NULL AND stale_after < now()) AS is_stale

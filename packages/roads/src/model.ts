@@ -2,6 +2,7 @@ import type {
   ConditionEvent,
   LineStringGeometry,
   Measurement,
+  MultiLineStringGeometry,
   PointGeometry,
 } from "@openconditions/core";
 
@@ -87,6 +88,9 @@ export interface RoadEvent extends ConditionEvent {
   restrictions?: Restriction[];
   vehiclesAffected?: string[];
   detour?: string;
+  /** Diversion/alternative-route geometry, when the source provides one
+   * (DATEX `alternativeRoute`); the `detour` string is its prose counterpart. */
+  detourGeometry?: LineStringGeometry | MultiLineStringGeometry;
   /** Quantified impact, when the source gives it. */
   delaySeconds?: number;
   queueLengthMeters?: number;
@@ -105,6 +109,10 @@ export interface RoadEvent extends ConditionEvent {
       direction?: number;
       extent?: number;
     };
+    /** A provider-specific external location code (e.g. NDW's RIS-index, the
+     * Dutch road-register reference) — the closest thing some feeds give to a
+     * road identity, decodable only against that provider's network dataset. */
+    external?: { system: string; code: string };
     linear?: unknown;
   };
   /** The original provider record, verbatim — a lossless passthrough so no
@@ -161,6 +169,7 @@ export function roadAttributes(ev: RoadEvent): Record<string, unknown> {
     attrs["vehiclesAffected"] = ev.vehiclesAffected;
   }
   if (ev.detour != null) attrs["detour"] = ev.detour;
+  if (ev.detourGeometry != null) attrs["detourGeometry"] = ev.detourGeometry;
   if (ev.delaySeconds != null) attrs["delaySeconds"] = ev.delaySeconds;
   if (ev.queueLengthMeters != null) attrs["queueLengthMeters"] = ev.queueLengthMeters;
   if (ev.workersPresent != null) attrs["workersPresent"] = ev.workersPresent;

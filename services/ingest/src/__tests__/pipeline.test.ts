@@ -212,6 +212,18 @@ describe("store round-trip — typed columns + attributes JSONB", () => {
       workZoneType: "moving",
       speedLimitKph: 50,
       regions: ["Berlin"],
+      detourGeometry: {
+        type: "LineString",
+        coordinates: [
+          [13.4, 52.5],
+          [13.42, 52.51],
+        ],
+      },
+      schedule: [{ dateStart: "2026-06-10T06:00:00Z", dateEnd: "2026-06-10T18:00:00Z" }],
+      externalRefs: { external: { system: "RIS-index", code: "NL123" } },
+      confidence: "likely",
+      isForecast: true,
+      relatedIds: ["parent-1", "parent-2"],
       sourceRaw: { provider_field: "verbatim" },
       origin: { kind: "feed", attribution: { provider: "X", license: "CC0-1.0" } },
       dataUpdatedAt: "2026-06-23T10:00:00Z",
@@ -234,6 +246,20 @@ describe("store round-trip — typed columns + attributes JSONB", () => {
     expect(got!.workZoneType).toBe("moving");
     expect(got!.speedLimitKph).toBe(50);
     expect(got!.regions).toEqual(["Berlin"]);
+    expect(got!.detourGeometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [13.4, 52.5],
+        [13.42, 52.51],
+      ],
+    });
+    expect(got!.schedule).toEqual([
+      { dateStart: "2026-06-10T06:00:00Z", dateEnd: "2026-06-10T18:00:00Z" },
+    ]);
+    expect(got!.externalRefs?.external).toEqual({ system: "RIS-index", code: "NL123" });
+    expect(got!.confidence).toBe("likely"); // typed column, was dropped on read
+    expect(got!.isForecast).toBe(true);
+    expect(got!.relatedIds).toEqual(["parent-1", "parent-2"]);
     expect(got!.source).toBe("rt"); // feed id NOT clobbered by sourceRaw
     expect(got!.sourceRaw).toEqual({ provider_field: "verbatim" }); // verbatim passthrough survives
   }, 30_000);

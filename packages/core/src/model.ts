@@ -1,7 +1,8 @@
-import type { Geometry, LineString, Point } from "geojson";
+import type { Geometry, LineString, MultiLineString, Point } from "geojson";
 
 export type GeoJsonGeometry = Geometry;
 export type LineStringGeometry = LineString;
+export type MultiLineStringGeometry = MultiLineString;
 export type PointGeometry = Point;
 
 export interface Attribution {

@@ -369,3 +369,83 @@ describe("parseDatexSituations — OpenLR unresolved markers", () => {
     expect(events[0]!.externalRefs?.openlr).toBeUndefined();
   });
 });
+
+describe("parseDatexSituations — full v3 field extraction", () => {
+  it("keeps causeType as the subtype when a cause is present", () => {
+    const xml = v3Record(
+      `<cause><causeType>roadMaintenance</causeType></cause><accidentType>multiVehicleAccident</accidentType>${POINT_LOC}`
+    );
+    expect(parseDatexSituations(xml, NDW_SOURCE)[0]!.subtype).toBe("roadMaintenance");
+  });
+
+  it("falls back to the record's specific sub-type when there is no cause", () => {
+    const cases: [string, string][] = [
+      ["generalNetworkManagementType", "bridgeSwingInOperation"],
+      ["abnormalTrafficType", "slowTraffic"],
+      ["accidentType", "multiVehicleAccident"],
+      ["obstructionType", "objectOnTheRoad"],
+      ["speedManagementType", "speedRestrictionInOperation"],
+    ];
+    for (const [el, val] of cases) {
+      const xml = v3Record(`<${el}>${val}</${el}>${POINT_LOC}`);
+      expect(parseDatexSituations(xml, NDW_SOURCE)[0]!.subtype).toBe(val);
+    }
+  });
+
+  it("extracts the alternativeRoute diversion polyline as detourGeometry", () => {
+    const xml = v3Record(
+      `<reroutingItineraryDescription>Follow signs</reroutingItineraryDescription>` +
+        `<alternativeRoute xsi:type="ItineraryByIndexedLocations"><locationContainedInItinerary index="0">` +
+        `<location xsi:type="LinearLocation"><gmlLineString srsName="WGS 84"><posList>52.0 13.0 52.1 13.1</posList></gmlLineString></location>` +
+        `</locationContainedInItinerary></alternativeRoute>${POINT_LOC}`
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.detour).toBe("Follow signs");
+    expect(ev!.detourGeometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [13.0, 52.0],
+        [13.1, 52.1],
+      ],
+    });
+  });
+
+  it("extracts validPeriod windows into schedule, keeping overall start/end", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3"><payload xsi:type="SituationPublication"><situation id="S"><situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="R" version="1">
+<situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
+<validity><validityStatus>definedByValidityTimeSpec</validityStatus><validityTimeSpecification>
+<overallStartTime>2026-06-01T00:00:00Z</overallStartTime><overallEndTime>2026-07-01T00:00:00Z</overallEndTime>
+<validPeriod><startOfPeriod>2026-06-10T06:00:00Z</startOfPeriod><endOfPeriod>2026-06-10T18:00:00Z</endOfPeriod></validPeriod>
+</validityTimeSpecification></validity>
+${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.validFrom).toBe("2026-06-01T00:00:00Z");
+    expect(ev!.validTo).toBe("2026-07-01T00:00:00Z");
+    expect(ev!.schedule).toEqual([
+      { dateStart: "2026-06-10T06:00:00Z", dateEnd: "2026-06-10T18:00:00Z" },
+    ]);
+  });
+
+  it("uses causeDescription as a headline fallback when there is no public comment", () => {
+    const xml = v3Record(
+      `<cause><causeDescription><values><value lang="en">Roadworks ahead</value></values></causeDescription></cause>${POINT_LOC}`
+    );
+    expect(parseDatexSituations(xml, NDW_SOURCE)[0]!.headline).toBe("Roadworks ahead");
+  });
+
+  it("extracts the external location reference (NDW RIS-index)", () => {
+    const xml = v3Record(
+      `<locationReference xsi:type="PointLocation">` +
+        `<externalReferencing><externalReferencingSystem>RIS-index</externalReferencingSystem>` +
+        `<externalLocationCode>NLUTC0226A0578000005</externalLocationCode></externalReferencing>` +
+        `<pointByCoordinates><pointCoordinates><latitude>52</latitude><longitude>13</longitude></pointCoordinates></pointByCoordinates>` +
+        `</locationReference>`
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.externalRefs?.external).toEqual({
+      system: "RIS-index",
+      code: "NLUTC0226A0578000005",
+    });
+  });
+});

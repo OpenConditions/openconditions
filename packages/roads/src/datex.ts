@@ -1,5 +1,5 @@
 import { normaliseSeverity } from "@openconditions/core";
-import type { Confidence } from "@openconditions/core";
+import type { Confidence, RecurringWindow } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
@@ -115,7 +115,14 @@ function parseLatLonList(raw: string | undefined): [number, number][] {
  * no coordinate geometry (Alert-C/TMC only) return null (decoded in Phase 2).
  */
 function resolveGeometry(rec: XmlObject): Geometry | null {
-  const locRef = getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations");
+  return resolveGeometryFrom(
+    getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations")
+  );
+}
+
+/** Walk a location subtree (locationReference, groupOfLocations, alternativeRoute,
+ * …) for any coordinate-bearing element and assemble a GeoJSON geometry. */
+function resolveGeometryFrom(locRef: XmlObject | undefined): Geometry | null {
   if (!locRef) return null;
 
   const lines: [number, number][][] = [];
@@ -162,6 +169,38 @@ function resolveGeometry(rec: XmlObject): Geometry | null {
   if (points.length === 1) return { type: "Point", coordinates: points[0]! };
   if (points.length > 1) return { type: "MultiPoint", coordinates: points };
   return null;
+}
+
+/** The diversion route geometry from an `alternativeRoute`, when it is linear. */
+function detourGeometryOf(rec: XmlObject): RoadEvent["detourGeometry"] {
+  const g = resolveGeometryFrom(getXmlChild(rec, "alternativeRoute"));
+  return g && (g.type === "LineString" || g.type === "MultiLineString") ? g : undefined;
+}
+
+/**
+ * validPeriod windows → schedule: each bounded date range (startOfPeriod /
+ * endOfPeriod) plus the daily time window (recurringTimePeriodOfDay) when the
+ * source supplies one. The overall start/end stay on validFrom/validTo.
+ */
+function scheduleOf(timeSpec: XmlObject | undefined): RecurringWindow[] | undefined {
+  if (!timeSpec) return undefined;
+  const out: RecurringWindow[] = [];
+  for (const vp of getXmlChildren(timeSpec, "validPeriod")) {
+    const win: RecurringWindow = {};
+    const ds = getXmlChildText(vp, "startOfPeriod");
+    const de = getXmlChildText(vp, "endOfPeriod");
+    if (ds) win.dateStart = ds;
+    if (de) win.dateEnd = de;
+    const tod = getXmlChild(vp, "recurringTimePeriodOfDay");
+    if (tod) {
+      const ts = getXmlChildText(tod, "startTimeOfPeriod");
+      const te = getXmlChildText(tod, "endTimeOfPeriod");
+      if (ts) win.timeStart = ts;
+      if (te) win.timeEnd = te;
+    }
+    if (Object.keys(win).length > 0) out.push(win);
+  }
+  return out.length > 0 ? out : undefined;
 }
 
 function directionOf(rec: XmlObject): string | undefined {
@@ -234,12 +273,31 @@ function lanesOf(rec: XmlObject): RoadEvent["lanesAffected"] | undefined {
   return lanes.closed != null || lanes.total != null ? lanes : undefined;
 }
 
-/** Source cause/obstruction subtype (e.g. "roadMaintenance", "brokenDownVehicle"). */
-function causeOf(rec: XmlObject): string | undefined {
+/**
+ * The most specific source sub-classification for the record. The cause's
+ * causeType wins when present (e.g. "roadMaintenance"); otherwise the record's
+ * own typed discriminator is used — each DATEX situationRecord subclass carries
+ * its own (accidentType, obstructionType, generalNetworkManagementType for
+ * movable-bridge openings, abnormalTrafficType for congestion detail,
+ * speedManagementType, …). Without this, those records fell back to the generic
+ * record class name and lost their specific kind.
+ */
+function subtypeOf(rec: XmlObject): string | undefined {
   return (
     getXmlChildText(getXmlChild(rec, "cause"), "causeType") ??
-    getXmlChildText(rec, "vehicleObstructionType")
+    getXmlChildText(rec, "accidentType") ??
+    getXmlChildText(rec, "obstructionType") ??
+    getXmlChildText(rec, "environmentalObstructionType") ??
+    getXmlChildText(rec, "vehicleObstructionType") ??
+    getXmlChildText(rec, "generalNetworkManagementType") ??
+    getXmlChildText(rec, "abnormalTrafficType") ??
+    getXmlChildText(rec, "speedManagementType")
   );
+}
+
+/** Human cause text (DATEX `cause/causeDescription`), a multilingual block. */
+function causeDescriptionOf(rec: XmlObject): string | undefined {
+  return multilingual(getXmlChild(getXmlChild(rec, "cause"), "causeDescription"), "en");
 }
 
 function speedLimitOf(rec: XmlObject): number | undefined {
@@ -359,7 +417,8 @@ function collectOpenLr(rec: XmlObject): string | undefined {
   return getXmlChildText(rec, "openlrBinary") ?? undefined;
 }
 
-function collectRefs(rec: XmlObject): RoadEvent["externalRefs"] {
+/** Alert-C/TMC reference (country + table + primary specific-location code). */
+function tmcOf(rec: XmlObject): NonNullable<RoadEvent["externalRefs"]>["tmc"] | undefined {
   const locRef = getXmlChild(rec, "locationReference");
   if (!locRef) return undefined;
 
@@ -374,9 +433,24 @@ function collectRefs(rec: XmlObject): RoadEvent["externalRefs"] {
   const table = getXmlChildText(alertC, "alertCLocationTableNumber");
   const code = getXmlChildText(getXmlChild(primary, "alertCLocation"), "specificLocation");
   if (country && table && code) {
-    return { tmc: { country, table: parseFloat(table), code: parseInt(code, 10) } };
+    return { country, table: parseFloat(table), code: parseInt(code, 10) };
   }
   return undefined;
+}
+
+/** Provider external location code (NDW's `externalReferencing`, e.g. RIS-index). */
+function externalLocationOf(rec: XmlObject): { system: string; code: string } | undefined {
+  const er = getXmlChild(getXmlChild(rec, "locationReference"), "externalReferencing");
+  const system = getXmlChildText(er, "externalReferencingSystem");
+  const code = getXmlChildText(er, "externalLocationCode");
+  return system && code ? { system, code } : undefined;
+}
+
+function externalRefsOf(rec: XmlObject): RoadEvent["externalRefs"] {
+  const tmc = tmcOf(rec);
+  const external = externalLocationOf(rec);
+  if (!tmc && !external) return undefined;
+  return { ...(tmc ? { tmc } : {}), ...(external ? { external } : {}) };
 }
 
 interface SituationRecord {
@@ -506,6 +580,7 @@ export function parseDatexSituations(
 
     const publicComment = getXmlChild(rec, "generalPublicComment");
     const fallbackComment = getXmlChild(rec, "comment");
+    const causeDesc = causeDescriptionOf(rec);
 
     const shared = {
       id: `${src.id}:${recId(rec)}`,
@@ -514,7 +589,7 @@ export function parseDatexSituations(
       domain: "roads" as const,
       kind: "event" as const,
       type,
-      subtype: causeOf(rec) ?? recType ?? undefined,
+      subtype: subtypeOf(rec) ?? recType ?? undefined,
       category,
       isPlanned,
       ...severityFields,
@@ -528,6 +603,7 @@ export function parseDatexSituations(
       restrictions: dimensionRestrictionsOf(rec),
       vehiclesAffected: vehiclesAffectedOf(rec),
       detour: detourOf(rec),
+      detourGeometry: detourGeometryOf(rec),
       delaySeconds: leafNumber(rec, "delayTimeValue"),
       queueLengthMeters: leafNumber(rec, "queueLength"),
       relatedIds: relatedRefsOf(rec),
@@ -535,9 +611,14 @@ export function parseDatexSituations(
       headline:
         multilingual(publicComment, "en") ??
         multilingual(fallbackComment, "en") ??
+        causeDesc ??
         defaultHeadline(type),
       description:
-        multilingual(publicComment, "en") ?? multilingual(fallbackComment, "en") ?? undefined,
+        multilingual(publicComment, "en") ??
+        multilingual(fallbackComment, "en") ??
+        causeDesc ??
+        undefined,
+      schedule: scheduleOf(timeSpec),
       validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
       validTo: text(timeSpec?.["overallEndTime"]) ?? null,
       origin: {
@@ -557,14 +638,14 @@ export function parseDatexSituations(
       withGeom.push({
         ...shared,
         geometry,
-        externalRefs: collectRefs(rec),
+        externalRefs: externalRefsOf(rec),
       });
     } else {
       // openlr is defined here because we checked !geometry && !openlr above.
       unresolved.push({
         ...shared,
         geometry: undefined,
-        externalRefs: { ...collectRefs(rec), openlr: openlr! },
+        externalRefs: { ...externalRefsOf(rec), openlr: openlr! },
       });
     }
   }
