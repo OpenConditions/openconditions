@@ -546,6 +546,45 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
+    // South Australia — Traffic SA roadworks/incidents (ArcGIS MapServer, both
+    // layers). f=geojson returns WGS84. CC-BY, no key.
+    id: "trafficsa-au",
+    name: "Traffic SA (South Australia)",
+    format: "geojson",
+    url: [
+      "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",
+      "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/1/query?where=1%3D1&outFields=*&f=geojson",
+    ],
+    geojson: {
+      idField: "ROADWORKS_AND_INCIDENTS_ID",
+      typeField: "REC_TYPE",
+      typeMap: {
+        ROADWORKS: "roadworks",
+        "24HR ROADWORKS": "roadworks",
+        "EMERGENCY WATERWORKS": "roadworks",
+        "SIGNAL FAULT": "equipment_fault",
+        INCIDENT: "obstruction",
+        COLLISION: "accident",
+        CRASH: "accident",
+        FLOODING: "weather",
+        EVENT: "public_event",
+        "ROAD CLOSURE": "road_closure",
+        HAZARD: "hazard",
+      },
+      defaultType: "other",
+      headlineField: "DESCRIPTION",
+      roadField: "ROAD_NO",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+    attribution: "Department for Infrastructure and Transport (South Australia)",
+    country: "AU",
+    privacyUrl: "https://www.dit.sa.gov.au/footer/privacy",
+    enabledByDefault: true,
+  },
+  {
     // Queensland QLDTraffic — statewide hazards/crashes/congestion/flooding/
     // roadworks as GeoJSON. CC-BY 4.0 (commercial OK). Needs a free API key →
     // set QLD_TRAFFIC_API_KEY. Mapping is best-effort from the documented schema;

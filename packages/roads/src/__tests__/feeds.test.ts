@@ -228,6 +228,14 @@ describe("FEED_SOURCES", () => {
     expect(feed!.country).toBe("BE");
   });
 
+  it("includes trafficsa-au (South Australia) as a CC-BY GeoJSON feed (2 layers)", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "trafficsa-au");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("geojson");
+    expect(Array.isArray(feed!.url)).toBe(true);
+    expect(feed!.license).toBe("CC-BY-4.0");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

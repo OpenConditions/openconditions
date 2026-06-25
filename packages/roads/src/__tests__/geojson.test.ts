@@ -289,3 +289,19 @@ describe("parseGeoJson — Vegagerðin Iceland fixture (lon/lat from properties)
     expect(g.coordinates[1]!).toBeLessThan(67);
   });
 });
+
+describe("parseGeoJson — Traffic SA fixture (ArcGIS f=geojson, real mapping)", () => {
+  it("parses South Australia incidents/roadworks via the registered trafficsa-au mapping", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "trafficsa-au")!;
+    const xml = readFileSync(join(import.meta.dirname, "fixtures/trafficsa-au/events.geojson"));
+    const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
+    expect(events.length).toBeGreaterThan(0);
+    const g = events[0]!.geometry;
+    if (!g || g.type !== "Point") throw new Error("expected Point");
+    // South Australia WGS84 bbox.
+    expect(g.coordinates[0]!).toBeGreaterThan(129);
+    expect(g.coordinates[0]!).toBeLessThan(141);
+    expect(g.coordinates[1]!).toBeLessThan(-26);
+    expect(events.some((e) => e.type === "roadworks")).toBe(true);
+  });
+});
