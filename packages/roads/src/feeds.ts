@@ -866,15 +866,23 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
-    // Austria — ASFINAG "Verkehrsmeldungen zu ungeplanten und sicherheitsrelevanten
-    // Ereignissen" (unplanned/safety events) DATEX II, published via Mobilitydata
-    // Austria. CC-BY-4.0 (commercial OK). Register at contentportal.asfinag.at →
-    // set AT_ASFINAG_USERNAME / AT_ASFINAG_PASSWORD (the ASFINAG content portal
-    // uses HTTP Basic). Confirm the exact resource URL and auth scheme when keyed.
+    // Austria — ASFINAG traffic messages (DATEX II), published via Mobilitydata
+    // Austria / the ASFINAG content portal. CC-BY-4.0 (commercial OK). Subscribe
+    // to BOTH event records for full coverage — the parser merges them under one
+    // source: "Verkehrsmeldungen zu ungeplanten und sicherheitsrelevanten
+    // Ereignissen" (unplanned/safety: accidents, closures, hazards) AND
+    // "Verkehrsmeldungen zu geplanten Ereignissen" (planned: roadworks, planned
+    // closures), which the unplanned feed excludes. (The Reisezeiten travel-time
+    // record is flow data for a future flow feed, not events.) Register at
+    // contentportal.asfinag.at → set AT_ASFINAG_USERNAME / AT_ASFINAG_PASSWORD
+    // (HTTP Basic). Replace these URLs with the issued resource URLs when keyed.
     id: "asfinag-at",
     name: "ASFINAG events (Austria)",
     format: "datex2",
-    url: "https://contentportal.asfinag.at/datex2/v3/unplanned-events",
+    url: [
+      "https://contentportal.asfinag.at/datex2/v3/unplanned-events",
+      "https://contentportal.asfinag.at/datex2/v3/planned-events",
+    ],
     auth: { kind: "basic", userEnvVar: "AT_ASFINAG_USERNAME", passEnvVar: "AT_ASFINAG_PASSWORD" },
     cadenceSec: 300,
     freshnessWindowSec: 900,

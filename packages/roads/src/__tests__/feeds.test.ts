@@ -330,12 +330,15 @@ describe("FEED_SOURCES", () => {
     expect(feed!.country).toBe("DK");
   });
 
-  it("includes asfinag-at (Austria) as a Basic-auth DATEX II feed", () => {
+  it("includes asfinag-at (Austria) as a Basic-auth DATEX II feed covering planned + unplanned events", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "asfinag-at");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth?.kind).toBe("basic");
     expect(feed!.country).toBe("AT");
+    // Both event records (planned roadworks + unplanned/safety) under one source.
+    expect(Array.isArray(feed!.url)).toBe(true);
+    expect((feed!.url as string[]).length).toBe(2);
   });
 
   it("includes tarktee-ee (Estonia) as a query-key DATEX II feed", () => {
