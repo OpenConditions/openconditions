@@ -29,6 +29,7 @@ export type SourceFormat =
   | "wzdx"
   | "geojson"
   | "ibi511-json"
+  | "lta-json"
   | "traff"
   | "autobahn-json"
   | "digitraffic-json"

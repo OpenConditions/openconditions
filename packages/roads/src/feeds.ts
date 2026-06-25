@@ -4,6 +4,7 @@ import type { SiteGeometry } from "./siteTable.js";
 import { parseDatexSituations } from "./datex.js";
 import { parseGeoJson } from "./geojson.js";
 import { parseIbi511 } from "./ibi511.js";
+import { parseLtaIncidents } from "./lta.js";
 import { parseOpen511 } from "./open511.js";
 import { parseWzdx } from "./wzdx.js";
 import { parseAutobahn } from "./autobahn.js";
@@ -389,6 +390,23 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://511ny.org/privacy",
     enabledByDefault: true,
   },
+  {
+    // Singapore LTA DataMall traffic incidents. Singapore Open Data Licence
+    // (commercial OK). header-key auth (AccountKey) → set LTA_ACCOUNT_KEY.
+    id: "lta-sg",
+    name: "LTA DataMall Traffic Incidents (Singapore)",
+    format: "lta-json",
+    url: "https://datamall2.mytransport.sg/ltaodataservice/TrafficIncidents",
+    auth: { kind: "header-key", header: "AccountKey", envVar: "LTA_ACCOUNT_KEY" },
+    cadenceSec: 120,
+    freshnessWindowSec: 600,
+    license: "Singapore-ODL-1.0",
+    licenseUrl: "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html",
+    attribution: "Land Transport Authority (Singapore)",
+    country: "SG",
+    privacyUrl: "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
+    enabledByDefault: true,
+  },
 ];
 
 type ParserFn = typeof parseDatexSituations;
@@ -408,6 +426,7 @@ export function parserFor(format: SourceFormat): ParserFn {
   if (format === "wzdx") return parseWzdx;
   if (format === "geojson") return parseGeoJson;
   if (format === "ibi511-json") return parseIbi511 as ParserFn;
+  if (format === "lta-json") return parseLtaIncidents as ParserFn;
   if (format === "autobahn-json") return parseAutobahn;
   if (format === "digitraffic-json") return parseDigitraffic;
   throw new Error(`No parser registered for format: ${format}`);

@@ -8,6 +8,7 @@ import { parseAutobahn } from "../autobahn.js";
 import { parseDigitraffic } from "../digitraffic.js";
 import { parseGeoJson } from "../geojson.js";
 import { parseIbi511 } from "../ibi511.js";
+import { parseLtaIncidents } from "../lta.js";
 import { FEED_SOURCES, feedToSourceDescriptor, parserFor } from "../feeds.js";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
@@ -152,6 +153,17 @@ describe("FEED_SOURCES", () => {
     }
   });
 
+  it("includes lta-sg (Singapore) as a header-key lta-json feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "lta-sg");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("lta-json");
+    expect(feed!.auth).toEqual({
+      kind: "header-key",
+      header: "AccountKey",
+      envVar: "LTA_ACCOUNT_KEY",
+    });
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -177,6 +189,10 @@ describe("parserFor", () => {
 
   it("returns parseIbi511 for ibi511-json", () => {
     expect(parserFor("ibi511-json")).toBe(parseIbi511);
+  });
+
+  it("returns parseLtaIncidents for lta-json", () => {
+    expect(parserFor("lta-json")).toBe(parseLtaIncidents);
   });
 
   it("returns parseAutobahn for autobahn-json", () => {
