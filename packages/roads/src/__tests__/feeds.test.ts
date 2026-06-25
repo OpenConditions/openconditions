@@ -197,6 +197,14 @@ describe("FEED_SOURCES", () => {
     expect(feed!.geojson?.latField).toBe("Y");
   });
 
+  it("includes qld-traffic (Queensland) as a query-key GeoJSON feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "qld-traffic");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("geojson");
+    expect(feed!.auth?.kind).toBe("query-key");
+    expect(feed!.license).toBe("CC-BY-4.0");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

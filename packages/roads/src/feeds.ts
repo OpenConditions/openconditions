@@ -486,6 +486,41 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
+    // Queensland QLDTraffic — statewide hazards/crashes/congestion/flooding/
+    // roadworks as GeoJSON. CC-BY 4.0 (commercial OK). Needs a free API key →
+    // set QLD_TRAFFIC_API_KEY. Mapping is best-effort from the documented schema;
+    // verify field names against a live response once the key is available.
+    id: "qld-traffic",
+    name: "QLDTraffic (Queensland)",
+    format: "geojson",
+    url: "https://api.qldtraffic.qld.gov.au/v2/events",
+    auth: { kind: "query-key", param: "apikey", envVar: "QLD_TRAFFIC_API_KEY" },
+    geojson: {
+      idField: "id",
+      typeField: "event_type",
+      typeMap: {
+        Crash: "accident",
+        Hazard: "hazard",
+        Congestion: "congestion",
+        Flooding: "weather",
+        Roadworks: "roadworks",
+        "Special Event": "public_event",
+      },
+      defaultType: "other",
+      headlineField: "description",
+      descriptionField: "description",
+      roadField: "road_summary.road_name",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://www.qldtraffic.qld.gov.au/",
+    attribution: "State of Queensland (Department of Transport and Main Roads)",
+    country: "AU",
+    privacyUrl: "https://www.qld.gov.au/legal/privacy",
+    enabledByDefault: true,
+  },
+  {
     // Poland GDDKiA road obstructions (utrudnienia). Proprietary XML, WGS84
     // points, CC0 — no key.
     id: "gddkia-pl",
