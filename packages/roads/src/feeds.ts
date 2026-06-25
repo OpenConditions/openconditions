@@ -433,6 +433,23 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
+    // Flanders — Verkeerscentrum Vlaanderen (DATEX II v3). GML geometry is
+    // EPSG:31370 (Belgian Lambert 72) → the DATEX parser reprojects to WGS84 via
+    // proj4. Open (commercial OK), no key.
+    id: "flanders-be",
+    name: "Verkeerscentrum Vlaanderen (Flanders)",
+    format: "datex2",
+    url: "https://www.verkeerscentrum.be/uitwisseling/datex2v3full",
+    cadenceSec: 120,
+    freshnessWindowSec: 600,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://www.verkeerscentrum.be/",
+    attribution: "Verkeerscentrum Vlaanderen",
+    country: "BE",
+    privacyUrl: "https://www.verkeerscentrum.be/",
+    enabledByDefault: true,
+  },
+  {
     // Brussels — Bruxelles Mobilité traffic events (OGC API Features → GeoJSON).
     // Geometry is EPSG:3812 (Belgian Lambert 2008, per-geometry crs) → reader
     // reprojects to WGS84 via proj4. CC0, no key.

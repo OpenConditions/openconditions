@@ -523,3 +523,30 @@ describe("parseDatexSituations — CITA (Luxembourg) DATEX II v3.6 fixture", () 
     expect(events[0]!.sourceFormat).toBe("datex2");
   });
 });
+
+const FLANDERS_FIXTURE_PATH = join(import.meta.dirname, "fixtures/flanders-be/situations.xml");
+
+describe("parseDatexSituations — Flanders DATEX II v3 (EPSG:31370 reprojection)", () => {
+  it("reprojects Belgian Lambert-72 GML geometry to WGS84 Belgium", () => {
+    const events = parseDatexSituations(readFileSync(FLANDERS_FIXTURE_PATH), {
+      id: "flanders-be",
+      attribution: "Verkeerscentrum Vlaanderen",
+      country: "BE",
+      license: "CC-BY-4.0",
+    });
+    expect(events.length).toBeGreaterThan(0);
+    expect(events.every((ev) => ev.geometry != null)).toBe(true);
+    // Every coordinate lands in Belgium WGS84 (not raw Lambert metres).
+    for (const ev of events) {
+      const flat = JSON.stringify(ev.geometry!)
+        .match(/-?\d+\.\d+/g)!
+        .map(Number);
+      for (let i = 0; i + 1 < flat.length; i += 2) {
+        expect(flat[i]!).toBeGreaterThan(2);
+        expect(flat[i]!).toBeLessThan(7);
+        expect(flat[i + 1]!).toBeGreaterThan(49);
+        expect(flat[i + 1]!).toBeLessThan(52);
+      }
+    }
+  });
+});

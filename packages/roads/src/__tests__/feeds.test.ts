@@ -221,6 +221,13 @@ describe("FEED_SOURCES", () => {
     expect(feed!.country).toBe("BE");
   });
 
+  it("includes flanders-be (Flanders) as a DATEX II feed (EPSG:31370 reprojected)", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "flanders-be");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.country).toBe("BE");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

@@ -3,6 +3,7 @@ import type { Confidence, RecurringWindow } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
+import { reprojectorFor } from "./reproject.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 import {
@@ -91,18 +92,41 @@ function defaultHeadline(type: string): string {
   return labels[type] ?? "Traffic information";
 }
 
-/** GML `posList` / `pos` are "lat lon [lat lon ...]" under srsName "WGS 84";
- * GeoJSON wants [lon, lat]. Returns finite [lon,lat] pairs only. */
-function parseLatLonList(raw: string | undefined): [number, number][] {
+type Reprojector = (p: [number, number]) => [number, number];
+
+/**
+ * GML `posList` / `pos` to `[lon,lat]` pairs (finite only). Under WGS84 the
+ * values are "lat lon" → swapped to GeoJSON order. When a `reproject` is given
+ * (the feed's geometry is a projected grid, e.g. Flanders EPSG:31370) the values
+ * are "easting northing" in CRS axis order → reprojected to [lon,lat].
+ */
+function parseLatLonList(
+  raw: string | undefined,
+  reproject?: Reprojector | null
+): [number, number][] {
   if (!raw) return [];
   const nums = raw.trim().split(/\s+/).map(Number);
   const out: [number, number][] = [];
   for (let i = 0; i + 1 < nums.length; i += 2) {
-    const lat = nums[i]!;
-    const lon = nums[i + 1]!;
-    if (Number.isFinite(lat) && Number.isFinite(lon)) out.push([lon, lat]);
+    const a = nums[i]!;
+    const b = nums[i + 1]!;
+    if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
+    out.push(reproject ? reproject([a, b]) : [b, a]);
   }
   return out;
+}
+
+/** The first projected `srsName` in the document, as a reprojector to WGS84
+ * (null when the feed is already WGS84). Feeds use a single CRS throughout. */
+function detectReprojector(input: string | Buffer): Reprojector | null {
+  const text = typeof input === "string" ? input : input.toString("utf8");
+  const matches = text.match(/srsName="([^"]+)"/g);
+  if (!matches) return null;
+  for (const m of matches) {
+    const r = reprojectorFor(m.slice(9, -1));
+    if (r) return r;
+  }
+  return null;
 }
 
 /**
@@ -114,15 +138,19 @@ function parseLatLonList(raw: string | undefined): [number, number][] {
  * Multiple lines → MultiLineString; multiple points → MultiPoint. Records with
  * no coordinate geometry (Alert-C/TMC only) return null (decoded in Phase 2).
  */
-function resolveGeometry(rec: XmlObject): Geometry | null {
+function resolveGeometry(rec: XmlObject, reproject?: Reprojector | null): Geometry | null {
   return resolveGeometryFrom(
-    getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations")
+    getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations"),
+    reproject
   );
 }
 
 /** Walk a location subtree (locationReference, groupOfLocations, alternativeRoute,
  * …) for any coordinate-bearing element and assemble a GeoJSON geometry. */
-function resolveGeometryFrom(locRef: XmlObject | undefined): Geometry | null {
+function resolveGeometryFrom(
+  locRef: XmlObject | undefined,
+  reproject?: Reprojector | null
+): Geometry | null {
   if (!locRef) return null;
 
   const lines: [number, number][][] = [];
@@ -139,14 +167,14 @@ function resolveGeometryFrom(locRef: XmlObject | undefined): Geometry | null {
       switch (stripXmlNamespace(key)) {
         case "posList":
           for (const node of xmlNodeToArray(value)) {
-            const coords = parseLatLonList(xmlText(node));
+            const coords = parseLatLonList(xmlText(node), reproject);
             if (coords.length >= 2) lines.push(coords);
             else if (coords.length === 1) points.push(coords[0]!);
           }
           break;
         case "pos":
           for (const node of xmlNodeToArray(value)) {
-            const coords = parseLatLonList(xmlText(node));
+            const coords = parseLatLonList(xmlText(node), reproject);
             if (coords[0]) points.push(coords[0]);
           }
           break;
@@ -154,7 +182,10 @@ function resolveGeometryFrom(locRef: XmlObject | undefined): Geometry | null {
           for (const node of xmlNodeToArray(value)) {
             const lat = Number(getXmlChildText(node, "latitude"));
             const lon = Number(getXmlChildText(node, "longitude"));
-            if (Number.isFinite(lat) && Number.isFinite(lon)) points.push([lon, lat]);
+            if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+            // Projected feeds (e.g. Flanders) carry grid easting/northing in the
+            // longitude/latitude fields; reproject. WGS84 feeds pass through.
+            points.push(reproject ? reproject([lon, lat]) : [lon, lat]);
           }
           break;
         default:
@@ -172,8 +203,11 @@ function resolveGeometryFrom(locRef: XmlObject | undefined): Geometry | null {
 }
 
 /** The diversion route geometry from an `alternativeRoute`, when it is linear. */
-function detourGeometryOf(rec: XmlObject): RoadEvent["detourGeometry"] {
-  const g = resolveGeometryFrom(getXmlChild(rec, "alternativeRoute"));
+function detourGeometryOf(
+  rec: XmlObject,
+  reproject?: Reprojector | null
+): RoadEvent["detourGeometry"] {
+  const g = resolveGeometryFrom(getXmlChild(rec, "alternativeRoute"), reproject);
   return g && (g.type === "LineString" || g.type === "MultiLineString") ? g : undefined;
 }
 
@@ -556,13 +590,17 @@ export function parseDatexSituations(
     isArray: (n) => n === "situation" || n === "situationRecord" || n === "value",
   });
 
+  // Feeds whose GML geometry is a projected national grid (e.g. Flanders
+  // EPSG:31370) declare it via srsName; reproject those to WGS84.
+  const reproject = detectReprojector(input);
+
   const records = listSituationRecords(doc);
   const withGeom: RoadEvent[] = [];
   const unresolved: UnresolvedRoadEvent[] = [];
   let skippedAlertCOnly = 0;
 
   for (const { rec, situationSeverity } of records) {
-    const geometry = resolveGeometry(rec);
+    const geometry = resolveGeometry(rec, reproject);
     const openlr = !geometry ? collectOpenLr(rec) : undefined;
 
     if (!geometry && !openlr) {
@@ -612,7 +650,7 @@ export function parseDatexSituations(
       restrictions: dimensionRestrictionsOf(rec),
       vehiclesAffected: vehiclesAffectedOf(rec),
       detour: detourOf(rec),
-      detourGeometry: detourGeometryOf(rec),
+      detourGeometry: detourGeometryOf(rec, reproject),
       delaySeconds: leafNumber(rec, "delayTimeValue"),
       queueLengthMeters: leafNumber(rec, "queueLength"),
       relatedIds: relatedRefsOf(rec),
