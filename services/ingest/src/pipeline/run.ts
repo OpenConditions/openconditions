@@ -4,6 +4,7 @@ import type { Observation } from "@openconditions/core";
 import type { FeedSource, SiteGeometry, UnresolvedRoadEvent } from "@openconditions/roads";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
+import { makeAuthorizedFetch } from "./auth.js";
 import { fetchAll } from "./fetch.js";
 import { isStreamingFlowFeed, streamMeasuredData } from "./measured-data.js";
 import { parseFor } from "./parse.js";
@@ -76,12 +77,15 @@ export function createOpenlrClient(): MapMatchClient | null {
 export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<RunResult> {
   const start = Date.now();
 
+  // Apply the feed's credential (if any) to every request for this source.
+  const fetchFn = makeAuthorizedFetch(src, deps.fetch);
+
   // Load the companion site table (cached, tolerant of failure) so flow feeds
   // that key measurements by site id can resolve geometry. Loaded before the feed
   // fetch so the streaming flow path has the join map ready.
   let siteMap: Map<string, SiteGeometry> | undefined;
   if (src.siteTable) {
-    siteMap = await loadSiteTable(src, streamFactoryFromFetch(deps.fetch));
+    siteMap = await loadSiteTable(src, streamFactoryFromFetch(fetchFn));
     // A COLD site-table failure (no map ever built, not even stale) means every
     // measurement would lose its geometry and be skipped — parsing on would
     // hand atomicSwap an empty set, deleting all existing last-good rows. Treat
@@ -99,7 +103,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     // Large DATEX flow feed: stream fetch → gunzip → SAX so the ~50 MB document
     // is never buffered or DOM-parsed (the memory-cap OOM this path replaces).
     try {
-      parsed = await streamMeasuredData(src, streamFactoryFromFetch(deps.fetch), siteMap, deps.now);
+      parsed = await streamMeasuredData(src, streamFactoryFromFetch(fetchFn), siteMap, deps.now);
     } catch (err) {
       console.error(`[ingest] stream failed for source ${src.id}:`, err);
       return { count: 0, durationMs: Date.now() - start };
@@ -107,7 +111,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   } else {
     let buffers: Buffer[];
     try {
-      buffers = await fetchAll(src, deps.fetch);
+      buffers = await fetchAll(src, fetchFn);
     } catch (err) {
       console.error(`[ingest] fetch failed for source ${src.id}:`, err);
       return { count: 0, durationMs: Date.now() - start };

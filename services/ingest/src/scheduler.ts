@@ -1,6 +1,7 @@
 import { Cron } from "croner";
 import type postgres from "postgres";
 import { DOMAIN_REGISTRY } from "./domains.js";
+import { hasCredentials, requiredEnvVars } from "./pipeline/auth.js";
 import { createOpenlrClient, runSource } from "./pipeline/run.js";
 import type { DomainFeedSource } from "./pipeline/run.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
@@ -34,6 +35,14 @@ export function startScheduler(sql: Sql): () => void {
     const enabled = plugin.feeds.filter((f) => f.enabledByDefault);
 
     for (const feed of enabled) {
+      // A feed that declares credentials it doesn't have configured is skipped
+      // (not an error) — it activates automatically once its env vars are set.
+      if (!hasCredentials(feed)) {
+        console.warn(
+          `[scheduler] ${domainName}/${feed.id}: skipped — set ${requiredEnvVars(feed.auth).join(", ")} to enable`
+        );
+        continue;
+      }
       const src: DomainFeedSource = { ...feed, domain: domainName };
       const cronExpr = cadenceToCron(feed.cadenceSec);
       let running = false;

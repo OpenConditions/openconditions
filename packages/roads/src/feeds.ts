@@ -11,6 +11,33 @@ import { discoverAutobahnRoads, discoverWzdxFeeds } from "./discover.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
+ * How a feed authenticates. A discriminated union so each kind carries exactly
+ * the env-var names it needs and nothing more. Secrets live only in env.
+ */
+export type FeedAuth =
+  | { kind: "none" }
+  /** Append `?<param>=<secret>` to the request URL (e.g. iPeloton 511 `key=`). */
+  | { kind: "query-key"; param: string; envVar: string }
+  /** Send the secret in a request header (optionally with a value prefix). */
+  | { kind: "header-key"; header: string; envVar: string; valuePrefix?: string }
+  /** HTTP Basic auth from a username + password pair. */
+  | { kind: "basic"; userEnvVar: string; passEnvVar: string }
+  /** Static `Authorization: Bearer <secret>`. */
+  | { kind: "bearer"; envVar: string }
+  /**
+   * OAuth2 client-credentials grant: POST to `tokenUrl`, cache the access token
+   * until it expires, send it as `Authorization: Bearer`. (Slovenia, Taiwan TDX,
+   * Buenos Aires.)
+   */
+  | {
+      kind: "oauth2-client-credentials";
+      tokenUrl: string;
+      clientIdEnvVar: string;
+      clientSecretEnvVar: string;
+      scope?: string;
+    };
+
+/**
  * Describes a remote data feed that the ingest service polls periodically.
  *
  * `url` may be:
@@ -57,10 +84,14 @@ export interface FeedSource {
    * would stream corrupt bytes into the parser (yielding an empty map).
    */
   siteTable?: { url: string; gzip?: boolean };
-  auth?: {
-    kind: "none" | "query-key" | "header-key" | "token";
-    envVar?: string;
-  };
+  /**
+   * How to authenticate requests to this feed. Secrets are never inlined — every
+   * variant names the env var(s) that hold them, so a feed can be committed
+   * openly and activated by supplying credentials at deploy time. The ingest
+   * service applies these (see `pipeline/auth.ts`) and skips a feed whose
+   * required env vars are absent. Omit (or `none`) for open, keyless feeds.
+   */
+  auth?: FeedAuth;
   bbox?: [number, number, number, number];
   cadenceSec: number;
   freshnessWindowSec: number;
