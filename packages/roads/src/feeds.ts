@@ -979,16 +979,26 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
-    // Germany (NRW) — Straßen.NRW DATEX II via the Mobilithek broker (the user's
-    // original verkehr.nrw ask). dl-de/zero-2-0 (fully commercial-OK). Mobilithek
-    // authenticates with an organisation machine certificate (mutual TLS): register
-    // an org on mobilithek.info, obtain the client cert, set MOBILITHEK_NRW_CERT /
-    // MOBILITHEK_NRW_KEY (PEM contents) + the issued subscription id. Covers NRW
-    // non-motorway + municipal roads (overlaps Autobahn → relies on cross-source
-    // dedup). Confirm the exact pull URL + whether the broker needs a SOAP subscribe
-    // vs a plain client-pull GET against the issued subscription when the cert lands.
+    // Germany (NRW) — LVZ.NRW / VIZ.NRW DATEX II via Mobilithek (the user's
+    // original verkehr.nrw ask). dl-de/zero-2-0 (fully commercial-OK). NOTE: the
+    // data is published on Mobilithek under publisher "LVZ.NRW" (Landesverkehrs-
+    // zentrale NRW), not "Straßen.NRW" — search that name or the offer IDs below.
+    // Relevant Mobilithek offers (subscribe to the snapshot/"Gesamtdatensatz"
+    // variants, NOT the "Einzeldatensätze bei Eintreten" delta variant):
+    //   • Roadworks on the non-autobahn network — "Arbeitsstellen im nachgeordneten
+    //     Netz in Nordrhein-Westfalen" → offer 648508602333433856 (the Autobahn
+    //     complement; rides cross-source dedup for any overlap).
+    //   • Incidents — "Verkehrsinformationen der VIZ.NRW für Nordrhein-Westfalen –
+    //     Gesamtdatensatz" → offer 648512079906336768.
+    //   • Optional detours — "Umleitungen von Arbeitsstellen …" → 648509554457178112.
+    // Access is a Mobilithek client-pull subscription. The standard machine
+    // interface uses an organisation certificate (mutual TLS) — register an org on
+    // mobilithek.info, obtain the client cert, set MOBILITHEK_NRW_CERT/KEY (PEM) +
+    // the issued subscription id — but these are open-data offers, so confirm on
+    // the offer's access page whether a plain HTTPS pull/token is offered instead.
+    // Replace the URL with the issued pull URL(s) per subscription when keyed.
     id: "verkehr-nrw-de",
-    name: "Straßen.NRW via Mobilithek (Germany)",
+    name: "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
     format: "datex2",
     url: (env) =>
       `https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${env["MOBILITHEK_NRW_SUBSCRIPTION_ID"] ?? ""}/clientPullService/DatexPull`,
@@ -998,7 +1008,7 @@ export const FEED_SOURCES: FeedSource[] = [
     freshnessWindowSec: 900,
     license: "dl-de/zero-2-0",
     licenseUrl: "https://www.govdata.de/dl-de/zero-2-0",
-    attribution: "Straßen.NRW / Land Nordrhein-Westfalen",
+    attribution: "Landesverkehrszentrale NRW (Straßen.NRW)",
     country: "DE",
     privacyUrl: "https://www.strassen.nrw.de/de/datenschutz.html",
     enabledByDefault: true,
