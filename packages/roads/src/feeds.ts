@@ -433,6 +433,40 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
+    // Iceland — Vegagerðin road-condition point incidents (GeoServer WFS). The
+    // geometry is EPSG:3057 (Icelandic grid) but each feature carries WGS84 X/Y
+    // properties, so the reader builds points from those. Open, no key.
+    id: "vegagerdin-is",
+    name: "Vegagerðin road conditions (Iceland)",
+    format: "geojson",
+    url: "https://gagnaveita.vegagerdin.is/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=gis:roadconditions_pointincident&outputFormat=application/json",
+    geojson: {
+      lonField: "X",
+      latField: "Y",
+      typeField: "DESCRIPTION",
+      typeMap: {
+        Closed: "road_closure",
+        "Road repairs": "roadworks",
+        "Uneven road": "road_condition",
+        "Flying gravel": "hazard",
+        "Animals on the road": "hazard",
+        "Holes in road": "road_condition",
+        "Total axle weight limit": "dimension_restriction",
+      },
+      defaultType: "hazard",
+      headlineField: "DESCRIPTION",
+      updatedField: "CREATIONTIME",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://www.vegagerdin.is/",
+    attribution: "Vegagerðin (Icelandic Road and Coastal Administration)",
+    country: "IS",
+    privacyUrl: "https://www.vegagerdin.is/",
+    enabledByDefault: true,
+  },
+  {
     // Norway — Statens vegvesen DATEX II v3 (nationwide). NLOD (commercial OK).
     // Endpoint confirmed live (HTTP 401 without auth); free account → Basic auth.
     // Set NO_VEGVESEN_USERNAME / NO_VEGVESEN_PASSWORD to activate.

@@ -189,6 +189,14 @@ describe("FEED_SOURCES", () => {
     expect(feed!.country).toBe("NO");
   });
 
+  it("includes vegagerdin-is (Iceland) as a GeoJSON feed with lon/lat fields", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "vegagerdin-is");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("geojson");
+    expect(feed!.geojson?.lonField).toBe("X");
+    expect(feed!.geojson?.latField).toBe("Y");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

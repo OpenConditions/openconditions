@@ -1,0 +1,85 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "roadconditions_pointincident.fid-6befbb0d_19effebb706_-6573",
+      "geometry": { "type": "Point", "coordinates": [335406, 508994] },
+      "geometry_name": "SHAPE",
+      "properties": {
+        "DESCRIPTION": "Uneven road",
+        "STARTTIME": "2026-06-11T08:59:43Z",
+        "STOPTIME": "2026-06-30T09:58:00Z",
+        "CREATIONTIME": "2026-06-25T17:51:00Z",
+        "X": -22.496255,
+        "Y": 65.039839,
+        "ASTAND": "OSLETTUR_VEGUR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "roadconditions_pointincident.fid-6befbb0d_19effebb706_-6572",
+      "geometry": { "type": "Point", "coordinates": [347182, 507559] },
+      "geometry_name": "SHAPE",
+      "properties": {
+        "DESCRIPTION": "Uneven road",
+        "STARTTIME": "2026-06-22T11:18:50Z",
+        "STOPTIME": "2026-07-13T12:18:00Z",
+        "CREATIONTIME": "2026-06-25T17:51:00Z",
+        "X": -22.245006,
+        "Y": 65.032615,
+        "ASTAND": "OSLETTUR_VEGUR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "roadconditions_pointincident.fid-6befbb0d_19effebb706_-6571",
+      "geometry": { "type": "Point", "coordinates": [343889, 509754] },
+      "geometry_name": "SHAPE",
+      "properties": {
+        "DESCRIPTION": "Uneven road",
+        "STARTTIME": "2026-06-22T11:34:30Z",
+        "STOPTIME": "2026-07-13T12:34:00Z",
+        "CREATIONTIME": "2026-06-25T17:51:00Z",
+        "X": -22.317247,
+        "Y": 65.050745,
+        "ASTAND": "OSLETTUR_VEGUR"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "roadconditions_pointincident.fid-6befbb0d_19effebb706_-6570",
+      "geometry": { "type": "Point", "coordinates": [400963, 384782] },
+      "geometry_name": "SHAPE",
+      "properties": {
+        "DESCRIPTION": "Road repairs",
+        "STARTTIME": "2026-03-09T12:26:15Z",
+        "STOPTIME": "2029-03-09T23:45:00Z",
+        "CREATIONTIME": "2026-06-25T17:51:00Z",
+        "X": -21.020719,
+        "Y": 63.952282,
+        "ASTAND": "VEGAVINNA"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "roadconditions_pointincident.fid-6befbb0d_19effebb706_-656f",
+      "geometry": { "type": "Point", "coordinates": [435392, 422071] },
+      "geometry_name": "SHAPE",
+      "properties": {
+        "DESCRIPTION": "Flying gravel",
+        "STARTTIME": "2026-06-24T12:25:48Z",
+        "STOPTIME": "2026-06-28T23:45:00Z",
+        "CREATIONTIME": "2026-06-25T17:51:00Z",
+        "X": -20.334562,
+        "Y": 64.294846,
+        "ASTAND": "STEINKAST"
+      }
+    }
+  ],
+  "totalFeatures": 68,
+  "numberMatched": 68,
+  "numberReturned": 68,
+  "timeStamp": "2026-06-25T17:55:59.443Z",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::3057" } }
+}

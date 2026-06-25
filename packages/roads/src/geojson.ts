@@ -134,17 +134,30 @@ export function parseGeoJson(input: string | Buffer, src: SourceDescriptor): Roa
   const out: RoadEvent[] = [];
 
   features.forEach((feature, index) => {
-    const rawGeometry = feature.geometry;
-    // Accept any geometry that carries shape: coordinates, or a
-    // GeometryCollection's nested geometries (Berlin VIZ mixes Point+LineString).
-    const hasShape =
-      rawGeometry &&
-      rawGeometry.type &&
-      ("coordinates" in rawGeometry ||
-        (rawGeometry.type === "GeometryCollection" && "geometries" in rawGeometry));
-    if (!hasShape) return;
-    const geometry = mercator ? remapCoords(rawGeometry, mercToWgs84) : rawGeometry;
     const props = (feature.properties ?? {}) as Record<string, unknown>;
+
+    // Prefer explicit WGS84 lon/lat property fields when configured (for feeds
+    // whose `geometry` is in a national grid we can't reproject in closed form).
+    let geometry: Geometry | undefined;
+    if (mapping.lonField && mapping.latField) {
+      const lon = Number(get(props, mapping.lonField));
+      const lat = Number(get(props, mapping.latField));
+      if (Number.isFinite(lon) && Number.isFinite(lat)) {
+        geometry = { type: "Point", coordinates: [lon, lat] };
+      }
+    }
+    if (!geometry) {
+      const rawGeometry = feature.geometry;
+      // Accept any geometry that carries shape: coordinates, or a
+      // GeometryCollection's nested geometries (Berlin VIZ mixes Point+LineString).
+      const hasShape =
+        rawGeometry &&
+        rawGeometry.type &&
+        ("coordinates" in rawGeometry ||
+          (rawGeometry.type === "GeometryCollection" && "geometries" in rawGeometry));
+      if (!hasShape) return;
+      geometry = mercator ? remapCoords(rawGeometry, mercToWgs84) : rawGeometry;
+    }
 
     const rawType = str(get(props, mapping.typeField));
     const { type, category, isPlanned } = resolveType(rawType, mapping);

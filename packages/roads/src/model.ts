@@ -41,6 +41,14 @@ export interface GeoJsonMapping {
   roadField?: string;
   /** properties key for a last-updated ISO timestamp. */
   updatedField?: string;
+  /**
+   * When both are set, build Point geometry from these WGS84 lon/lat property
+   * values instead of the feature's `geometry`. Use when a feed's geometry is in
+   * a national grid (not WGS84/Web-Mercator) but it also exposes lon/lat columns
+   * (e.g. Iceland's EPSG:3057 features carry WGS84 X/Y properties).
+   */
+  lonField?: string;
+  latField?: string;
 }
 
 /**

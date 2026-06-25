@@ -161,6 +161,25 @@ describe("parseGeoJson", () => {
     expect(g.coordinates[1]!).toBeLessThan(48);
   });
 
+  it("builds Point geometry from lonField/latField when set (national-grid geometry)", () => {
+    const out = parseGeoJson(
+      JSON.stringify({
+        type: "FeatureCollection",
+        crs: { type: "name", properties: { name: "urn:ogc:def:crs:EPSG::3057" } },
+        features: [
+          {
+            type: "Feature",
+            geometry: { type: "Point", coordinates: [335406, 508994] }, // EPSG:3057 metres
+            properties: { kind: "roadworks", X: -22.49, Y: 65.04 },
+          },
+        ],
+      }),
+      { ...SRC, geojson: { lonField: "X", latField: "Y", typeField: "kind" } }
+    );
+    // Uses the WGS84 X/Y, not the raw 3057 geometry.
+    expect(out[0]!.geometry).toEqual({ type: "Point", coordinates: [-22.49, 65.04] });
+  });
+
   it("returns [] for malformed JSON or a non-FeatureCollection", () => {
     expect(parseGeoJson("not json", SRC)).toEqual([]);
     expect(parseGeoJson(JSON.stringify({ type: "Feature" }), SRC)).toEqual([]);
@@ -231,5 +250,23 @@ describe("parseGeoJson — MTQ Québec fixture (EPSG:3857 reprojection)", () => 
     expect(lon!).toBeLessThan(-57);
     expect(lat!).toBeGreaterThan(44);
     expect(lat!).toBeLessThan(63);
+  });
+});
+
+describe("parseGeoJson — Vegagerðin Iceland fixture (lon/lat from properties)", () => {
+  it("uses the WGS84 X/Y fields, not the EPSG:3057 geometry, via the registered mapping", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "vegagerdin-is")!;
+    const xml = readFileSync(
+      join(import.meta.dirname, "fixtures/vegagerdin-is/pointincident.geojson")
+    );
+    const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
+    expect(events.length).toBeGreaterThan(0);
+    const g = events[0]!.geometry;
+    if (!g || g.type !== "Point") throw new Error("expected Point");
+    // Iceland WGS84 bounds (lon ~ -25..-13, lat ~ 63..67), not 3057 metres.
+    expect(g.coordinates[0]!).toBeGreaterThan(-25);
+    expect(g.coordinates[0]!).toBeLessThan(-13);
+    expect(g.coordinates[1]!).toBeGreaterThan(63);
+    expect(g.coordinates[1]!).toBeLessThan(67);
   });
 });
