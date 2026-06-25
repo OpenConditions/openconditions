@@ -210,12 +210,24 @@ describe("FEED_SOURCES", () => {
     expect(feed!.geojson?.latField).toBe("Y");
   });
 
-  it("includes qld-traffic (Queensland) as a query-key GeoJSON feed", () => {
+  it("includes qld-traffic (Queensland) as a query-key GeoJSON feed with a default public key", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "qld-traffic");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("geojson");
-    expect(feed!.auth?.kind).toBe("query-key");
     expect(feed!.license).toBe("CC-BY-4.0");
+    // /v1 (clean geometry, no appended area-alert geometry) per the API spec.
+    expect(feed!.url).toBe("https://api.qldtraffic.qld.gov.au/v1/events");
+    expect(feed!.auth).toMatchObject({
+      kind: "query-key",
+      param: "apikey",
+      envVar: "QLD_TRAFFIC_API_KEY",
+      defaultValue: "3e83add325cbb69ac4d8e5bf433d770b",
+    });
+    // Spec enum casing + severity + freshness mapping.
+    expect(feed!.geojson?.typeMap?.["Special event"]).toBe("public_event");
+    expect(feed!.geojson?.severityField).toBe("event_priority");
+    expect(feed!.geojson?.severityMap?.["Red Alert"]).toBe("critical");
+    expect(feed!.geojson?.updatedField).toBe("last_updated");
   });
 
   it("includes cita-lu (Luxembourg) as a CC0 DATEX II feed", () => {

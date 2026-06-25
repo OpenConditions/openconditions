@@ -35,6 +35,13 @@ describe("requiredEnvVars", () => {
     ).toEqual(["ID", "SEC"]);
     expect(requiredEnvVars({ kind: "mtls", certEnvVar: "C", keyEnvVar: "K" })).toEqual(["C", "K"]);
   });
+
+  it("treats a query-key with a defaultValue as needing no env var", () => {
+    expect(requiredEnvVars({ kind: "query-key", param: "apikey", envVar: "K" })).toEqual(["K"]);
+    expect(
+      requiredEnvVars({ kind: "query-key", param: "apikey", envVar: "K", defaultValue: "pub" })
+    ).toEqual([]);
+  });
 });
 
 describe("hasCredentials", () => {
@@ -71,6 +78,21 @@ describe("makeAuthorizedFetch", () => {
     const auth: FeedAuth = { kind: "query-key", param: "key", envVar: "K" };
     await makeAuthorizedFetch({ auth }, fn, { K: "secret123" })("https://api.example/get/event");
     expect(calls[0]!.url).toBe("https://api.example/get/event?key=secret123");
+  });
+
+  it("query-key falls back to defaultValue when the env var is unset, and the env var overrides it", async () => {
+    const pub = recorder();
+    const auth: FeedAuth = { kind: "query-key", param: "apikey", envVar: "K", defaultValue: "pub" };
+    // No env var → the built-in default key is used.
+    await makeAuthorizedFetch({ auth }, pub.fn, {})("https://api.example/v1/events");
+    expect(pub.calls[0]!.url).toBe("https://api.example/v1/events?apikey=pub");
+
+    // Env var set → it overrides the default.
+    const own = recorder();
+    await makeAuthorizedFetch({ auth }, own.fn, { K: "registered" })(
+      "https://api.example/v1/events"
+    );
+    expect(own.calls[0]!.url).toBe("https://api.example/v1/events?apikey=registered");
   });
 
   it("header-key sets the configured header (with optional prefix)", async () => {

@@ -23,8 +23,13 @@ import type { SourceDescriptor } from "./types.js";
  */
 export type FeedAuth =
   | { kind: "none" }
-  /** Append `?<param>=<secret>` to the request URL (e.g. iPeloton 511 `key=`). */
-  | { kind: "query-key"; param: string; envVar: string }
+  /**
+   * Append `?<param>=<secret>` to the request URL (e.g. iPeloton 511 `key=`).
+   * When `defaultValue` is set the feed works with no env var configured (e.g. a
+   * published public API key); a non-empty env var overrides it. Without a
+   * `defaultValue` the env var is required and the scheduler gates on it.
+   */
+  | { kind: "query-key"; param: string; envVar: string; defaultValue?: string }
   /** Send the secret in a request header (optionally with a value prefix). */
   | { kind: "header-key"; header: string; envVar: string; valuePrefix?: string }
   /** HTTP Basic auth from a username + password pair. */
@@ -696,29 +701,45 @@ export const FEED_SOURCES: FeedSource[] = [
   },
   {
     // Queensland QLDTraffic — statewide hazards/crashes/congestion/flooding/
-    // roadworks as GeoJSON. CC-BY 4.0 (commercial OK). Needs a free API key →
-    // set QLD_TRAFFIC_API_KEY. Mapping is best-effort from the documented schema;
-    // verify field names against a live response once the key is available.
+    // roadworks/special events as GeoJSON (CC-BY 4.0, commercial OK). Mapped from
+    // the official API spec v1.10. The /v1/events endpoint is used deliberately:
+    // each feature's geometry is a GeometryCollection of LineString/Point road
+    // segments, while /v2/events additionally appends an area-alert geometry as
+    // the last member when area_alert=true — which the generic reader cannot
+    // separate from the road geometry, so v1 keeps the geometry clean.
+    // Ships the published public API key as the default (shared + globally rate-
+    // limited to 100 req/min); set QLD_TRAFFIC_API_KEY to override with a
+    // registered key and avoid the shared quota.
     id: "qld-traffic",
     name: "QLDTraffic (Queensland)",
     format: "geojson",
-    url: "https://api.qldtraffic.qld.gov.au/v2/events",
-    auth: { kind: "query-key", param: "apikey", envVar: "QLD_TRAFFIC_API_KEY" },
+    url: "https://api.qldtraffic.qld.gov.au/v1/events",
+    auth: {
+      kind: "query-key",
+      param: "apikey",
+      envVar: "QLD_TRAFFIC_API_KEY",
+      defaultValue: "3e83add325cbb69ac4d8e5bf433d770b",
+    },
     geojson: {
       idField: "id",
       typeField: "event_type",
+      // event_type is a fixed enum in the spec (§4.3): exactly these six values.
       typeMap: {
-        Crash: "accident",
         Hazard: "hazard",
+        Crash: "accident",
         Congestion: "congestion",
-        Flooding: "weather",
         Roadworks: "roadworks",
-        "Special Event": "public_event",
+        "Special event": "public_event",
+        Flooding: "weather",
       },
       defaultType: "other",
       headlineField: "description",
-      descriptionField: "description",
+      descriptionField: "information",
       roadField: "road_summary.road_name",
+      // event_priority (§4.3): Red Alert | High | Medium | Low.
+      severityField: "event_priority",
+      severityMap: { "Red Alert": "critical", High: "high", Medium: "medium", Low: "low" },
+      updatedField: "last_updated",
     },
     cadenceSec: 300,
     freshnessWindowSec: 900,

@@ -18,6 +18,8 @@ export function requiredEnvVars(auth: FeedAuth | undefined): string[] {
     case "none":
       return [];
     case "query-key":
+      // A built-in default (e.g. a public API key) makes the env var optional.
+      return auth.defaultValue ? [] : [auth.envVar];
     case "header-key":
     case "bearer":
       return [auth.envVar];
@@ -124,7 +126,9 @@ export function makeAuthorizedFetch(
 
   switch (auth.kind) {
     case "query-key": {
-      const value = need(env, auth.envVar);
+      // Env var wins when set; otherwise fall back to a built-in default (e.g. a
+      // public key). `||` (not `??`) so an empty-string env var also falls back.
+      const value = env[auth.envVar] || auth.defaultValue || need(env, auth.envVar);
       return (input, init) => baseFetch(withQueryParam(input, auth.param, value), init);
     }
     case "header-key":
