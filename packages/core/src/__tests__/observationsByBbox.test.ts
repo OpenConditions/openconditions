@@ -62,6 +62,73 @@ describe("observationsByBbox", () => {
     });
   });
 
+  it("collapses a cross-source duplicate into one feature, carrying mergedSources", async () => {
+    const autobahn = {
+      ...fakeRow,
+      id: "autobahn:1",
+      source: "autobahn-de",
+      attributes: { roads: [{ ref: "A3" }] },
+      data_updated_at: "2026-06-22T10:00:00Z",
+      origin: { kind: "feed", attribution: { provider: "Autobahn", license: "dl-de/by-2-0" } },
+      geojson: JSON.stringify({ type: "Point", coordinates: [8.0, 50.0] }),
+    };
+    const nrw = {
+      ...fakeRow,
+      id: "nrw:9",
+      source: "nrw-viz",
+      attributes: { roads: [{ name: "A3 Köln" }] },
+      data_updated_at: "2026-06-22T11:00:00Z",
+      origin: { kind: "feed", attribution: { provider: "VIZ.NRW", license: "dl-de/zero-2-0" } },
+      geojson: JSON.stringify({ type: "Point", coordinates: [8.0, 50.0] }),
+    };
+    const fc = await observationsByBbox(makeStubDb([autobahn, nrw]), {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+    });
+    expect(fc.features).toHaveLength(1);
+    expect(fc.features[0].properties?.id).toBe("nrw:9");
+    expect(fc.features[0].properties?.mergedSources).toEqual([
+      {
+        source: "autobahn-de",
+        id: "autobahn:1",
+        attribution: { provider: "Autobahn", license: "dl-de/by-2-0" },
+      },
+    ]);
+  });
+
+  it("leaves cross-source duplicates separate when dedupe is disabled", async () => {
+    const a = {
+      ...fakeRow,
+      id: "autobahn:1",
+      source: "autobahn-de",
+      attributes: { roads: [{ ref: "A3" }] },
+    };
+    const b = {
+      ...fakeRow,
+      id: "nrw:9",
+      source: "nrw-viz",
+      attributes: { roads: [{ ref: "A3" }] },
+    };
+    const fc = await observationsByBbox(makeStubDb([a, b]), {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+      dedupe: false,
+    });
+    expect(fc.features).toHaveLength(2);
+  });
+
+  it("selects data_updated_at (needed by the dedup newest-tiebreak)", async () => {
+    let capturedQuery = "";
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
+    expect(capturedQuery).toMatch(/data_updated_at/);
+  });
+
   it("returns an empty FeatureCollection when no rows match", async () => {
     const fc = await observationsByBbox(makeStubDb([]), {
       domain: "roads",

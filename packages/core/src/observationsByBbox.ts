@@ -1,4 +1,6 @@
 import type { FeatureCollection, Feature, Geometry } from "geojson";
+import { dedupeAcrossSources } from "./crossSourceDedupe.js";
+import type { Observation, Provenance } from "./model.js";
 import { severityRank } from "./severity.js";
 
 /**
@@ -23,6 +25,12 @@ export interface ObservationsByBboxOpts {
    * of thousands of) flow measurements.
    */
   kind?: string;
+  /**
+   * Collapse cross-source duplicate events (the aggregator dedup) before
+   * returning. On by default; pass `false` for a raw, per-source view. See
+   * `dedupeAcrossSources`.
+   */
+  dedupe?: boolean;
 }
 
 interface ObservationRow {
@@ -36,9 +44,61 @@ interface ObservationRow {
   description: string | null;
   attributes: Record<string, unknown> | null;
   valid_to: string | null;
+  data_updated_at: string | Date | null;
   geojson: string;
   origin: { kind: string; attribution?: { provider?: string; license?: string; url?: string } };
   is_stale: boolean;
+}
+
+/**
+ * Build the minimal Observation the cross-source dedup needs from a query row:
+ * the dedup predicate reads kind/source/type/geometry/roads, richness reads
+ * geometry + description + roads/lanes/restrictions/detour, and the survivor
+ * keeps `dataUpdatedAt` for the newest-tiebreak and `origin` for attribution.
+ */
+function rowToDedupeObservation(row: ObservationRow): Observation {
+  const updated = row.data_updated_at;
+  return {
+    id: row.id,
+    source: row.source,
+    sourceFormat: "native",
+    domain: row.domain,
+    kind: row.kind as Observation["kind"],
+    geometry: JSON.parse(row.geojson) as Geometry,
+    status: "active",
+    dataUpdatedAt: updated instanceof Date ? updated.toISOString() : (updated ?? ""),
+    fetchedAt: "",
+    isStale: row.is_stale,
+    origin: row.origin as Provenance,
+    ...(row.type != null ? { type: row.type } : {}),
+    ...(row.description != null ? { description: row.description } : {}),
+    ...(row.attributes ?? {}),
+  } as unknown as Observation;
+}
+
+/** Project a row to its GeoJSON feature, optionally carrying merged source refs. */
+function rowToFeature(row: ObservationRow, mergedSources?: Observation["mergedSources"]): Feature {
+  const geometry: Geometry = JSON.parse(row.geojson) as Geometry;
+  const attribution = row.origin?.attribution ?? undefined;
+  return {
+    type: "Feature",
+    geometry,
+    properties: {
+      id: row.id,
+      source: row.source,
+      domain: row.domain,
+      kind: row.kind,
+      type: row.type,
+      severity: row.severity,
+      headline: row.headline,
+      description: row.description,
+      attributes: row.attributes,
+      valid_to: row.valid_to,
+      is_stale: row.is_stale,
+      attribution,
+      ...(mergedSources && mergedSources.length > 0 ? { mergedSources } : {}),
+    },
+  };
 }
 
 // Severity ordering for ORDER BY / minSeverity (mirrors core's severityRank).
@@ -89,7 +149,7 @@ export async function observationsByBbox(
   const query = `
     SELECT
       id, source, domain, kind, type, severity,
-      headline, description, attributes, valid_to,
+      headline, description, attributes, valid_to, data_updated_at,
       ST_AsGeoJSON(geom) AS geojson,
       origin,
       (stale_after IS NOT NULL AND stale_after < now()) AS is_stale
@@ -100,29 +160,19 @@ export async function observationsByBbox(
 
   const rows = (await db.execute<ObservationRow[]>(query, params)) ?? [];
 
-  const features: Feature[] = rows.map((row) => {
-    const geometry: Geometry = JSON.parse(row.geojson) as Geometry;
-    const attribution = row.origin?.attribution ?? undefined;
+  if (opts.dedupe === false) {
+    return { type: "FeatureCollection", features: rows.map((row) => rowToFeature(row)) };
+  }
 
-    return {
-      type: "Feature",
-      geometry,
-      properties: {
-        id: row.id,
-        source: row.source,
-        domain: row.domain,
-        kind: row.kind,
-        type: row.type,
-        severity: row.severity,
-        headline: row.headline,
-        description: row.description,
-        attributes: row.attributes,
-        valid_to: row.valid_to,
-        is_stale: row.is_stale,
-        attribution,
-      },
-    };
-  });
+  // Collapse cross-source duplicates on the model, then project the survivors
+  // (mapped back to their original rows by id) so the feature shape is unchanged.
+  const rowById = new Map(rows.map((r) => [r.id, r]));
+  const survivors = dedupeAcrossSources(rows.map(rowToDedupeObservation));
+  const features: Feature[] = [];
+  for (const s of survivors) {
+    const row = rowById.get(s.id);
+    if (row) features.push(rowToFeature(row, s.mergedSources));
+  }
 
   return { type: "FeatureCollection", features };
 }

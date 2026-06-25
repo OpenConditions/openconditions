@@ -11,6 +11,18 @@ export interface Attribution {
   url?: string;
 }
 
+/**
+ * A non-primary source folded into an observation by cross-source dedup. The
+ * surviving (primary) observation keeps its own `origin`; every other source
+ * that described the same real-world condition is recorded here so no source's
+ * attribution is ever dropped when duplicates are merged.
+ */
+export interface MergedSource {
+  source: string;
+  id: string;
+  attribution: Attribution;
+}
+
 export type SourceFormat =
   | "datex2"
   | "open511"
@@ -79,6 +91,13 @@ export interface Observation {
   isStale: boolean;
 
   relatedIds?: string[];
+
+  /**
+   * Other sources whose duplicate of this condition was merged into this one by
+   * the aggregator's cross-source dedup. Absent on observations that were never
+   * merged. See `dedupeAcrossSources`.
+   */
+  mergedSources?: MergedSource[];
 }
 
 export interface ConditionEvent extends Observation {

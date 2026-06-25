@@ -1,4 +1,5 @@
 import type { Geometry } from "geojson";
+import { dedupeAcrossSources } from "./crossSourceDedupe.js";
 import type { ConditionEvent, Measurement, Observation, Provenance } from "./model.js";
 import type { ObservationsByBboxOpts, QueryRunner } from "./observationsByBbox.js";
 import { severityRank } from "./severity.js";
@@ -141,5 +142,6 @@ export async function readObservations(
     LIMIT 2000`;
 
   const rows = (await db.execute<Row[]>(query, params)) ?? [];
-  return rows.map(rowToObservation);
+  const observations = rows.map(rowToObservation);
+  return opts.dedupe === false ? observations : dedupeAcrossSources(observations);
 }

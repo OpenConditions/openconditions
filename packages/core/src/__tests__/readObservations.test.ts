@@ -82,6 +82,47 @@ describe("readObservations", () => {
     expect(typeof obs[0]!.dataUpdatedAt).toBe("string");
   });
 
+  it("collapses a cross-source duplicate event and preserves the other source", async () => {
+    const autobahn = {
+      ...eventRow,
+      id: "autobahn:1",
+      source: "autobahn-de",
+      data_updated_at: "2026-06-22T10:00:00Z",
+      origin: { kind: "feed", attribution: { provider: "Autobahn", license: "dl-de/by-2-0" } },
+    };
+    const nrw = {
+      ...eventRow,
+      id: "nrw:9",
+      source: "nrw-viz",
+      data_updated_at: "2026-06-22T11:00:00Z",
+      origin: { kind: "feed", attribution: { provider: "VIZ.NRW", license: "dl-de/zero-2-0" } },
+    };
+    const obs = await readObservations(stubDb([autobahn, nrw]), {
+      domain: "roads",
+      bbox: [4, 51, 6, 53],
+    });
+    expect(obs).toHaveLength(1);
+    expect(obs[0]!.id).toBe("nrw:9"); // newer survives (equal richness)
+    expect(obs[0]!.mergedSources).toEqual([
+      {
+        source: "autobahn-de",
+        id: "autobahn:1",
+        attribution: { provider: "Autobahn", license: "dl-de/by-2-0" },
+      },
+    ]);
+  });
+
+  it("returns both rows un-merged when dedupe is disabled", async () => {
+    const a = { ...eventRow, id: "autobahn:1", source: "autobahn-de" };
+    const b = { ...eventRow, id: "nrw:9", source: "nrw-viz" };
+    const obs = await readObservations(stubDb([a, b]), {
+      domain: "roads",
+      bbox: [4, 51, 6, 53],
+      dedupe: false,
+    });
+    expect(obs).toHaveLength(2);
+  });
+
   it("selects ST_AsGeoJSON + derives is_stale + filters by validity", async () => {
     let q = "";
     await readObservations(
