@@ -343,6 +343,21 @@ describe("FEED_SOURCES", () => {
     expect(feed!.country).toBe("KR");
   });
 
+  it("includes verkehr-nrw-de (Straßen.NRW) as an mTLS DATEX II feed gated by requiredEnv", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "verkehr-nrw-de");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.auth).toEqual({
+      kind: "mtls",
+      certEnvVar: "MOBILITHEK_NRW_CERT",
+      keyEnvVar: "MOBILITHEK_NRW_KEY",
+    });
+    expect(typeof feed!.url).toBe("function");
+    expect(feed!.requiredEnv).toContain("MOBILITHEK_NRW_SUBSCRIPTION_ID");
+    expect(feed!.license).toBe("dl-de/zero-2-0");
+    expect(feed!.country).toBe("DE");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

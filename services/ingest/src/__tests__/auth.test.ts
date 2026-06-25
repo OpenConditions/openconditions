@@ -33,6 +33,7 @@ describe("requiredEnvVars", () => {
         clientSecretEnvVar: "SEC",
       })
     ).toEqual(["ID", "SEC"]);
+    expect(requiredEnvVars({ kind: "mtls", certEnvVar: "C", keyEnvVar: "K" })).toEqual(["C", "K"]);
   });
 });
 
@@ -97,6 +98,17 @@ describe("makeAuthorizedFetch", () => {
     expect(header(r2.calls[0]!.init, "Authorization")).toBe(
       `Basic ${Buffer.from("user:pass").toString("base64")}`
     );
+  });
+
+  it("mtls injects an undici dispatcher built from the cert/key env vars", async () => {
+    const { fn, calls } = recorder();
+    const auth: FeedAuth = { kind: "mtls", certEnvVar: "CERT", keyEnvVar: "KEY" };
+    await makeAuthorizedFetch({ auth }, fn, {
+      CERT: "-----BEGIN CERTIFICATE-----\nx\n-----END CERTIFICATE-----",
+      KEY: "-----BEGIN PRIVATE KEY-----\ny\n-----END PRIVATE KEY-----",
+    })("https://mobilithek.example/pull");
+    const init = calls[0]!.init as (RequestInit & { dispatcher?: unknown }) | undefined;
+    expect(init?.dispatcher).toBeDefined();
   });
 
   it("throws when a required static secret is missing", () => {

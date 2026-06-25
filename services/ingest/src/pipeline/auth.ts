@@ -1,3 +1,4 @@
+import { Agent } from "undici";
 import type { FeedAuth, FeedSource } from "@openconditions/roads";
 
 /**
@@ -24,6 +25,8 @@ export function requiredEnvVars(auth: FeedAuth | undefined): string[] {
       return [auth.userEnvVar, auth.passEnvVar];
     case "oauth2-client-credentials":
       return [auth.clientIdEnvVar, auth.clientSecretEnvVar];
+    case "mtls":
+      return [auth.certEnvVar, auth.keyEnvVar];
   }
 }
 
@@ -136,5 +139,21 @@ export function makeAuthorizedFetch(
     }
     case "oauth2-client-credentials":
       return oauthClientCredentialsFetch(auth, baseFetch, env, now);
+    case "mtls": {
+      // Build one undici Agent carrying the client certificate and reuse it for
+      // every request (handshake material is set once). Node's global fetch reads
+      // the `dispatcher` option, so injecting the Agent routes the request over the
+      // mutual-TLS connection.
+      const ca = auth.caEnvVar ? env[auth.caEnvVar] : undefined;
+      const dispatcher = new Agent({
+        connect: {
+          cert: need(env, auth.certEnvVar),
+          key: need(env, auth.keyEnvVar),
+          ...(ca ? { ca } : {}),
+        },
+      });
+      return (input, init) =>
+        baseFetch(input, { ...init, dispatcher } as RequestInit & { dispatcher: Agent });
+    }
   }
 }

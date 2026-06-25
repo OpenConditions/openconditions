@@ -42,7 +42,14 @@ export type FeedAuth =
       clientIdEnvVar: string;
       clientSecretEnvVar: string;
       scope?: string;
-    };
+    }
+  /**
+   * Mutual TLS (client certificate). For broker feeds that authenticate with an
+   * organisation machine certificate — notably Germany's Mobilithek (Straßen.NRW,
+   * Bavaria, Saxony). The env vars hold the PEM contents of the client certificate
+   * and its private key (plus an optional CA chain).
+   */
+  | { kind: "mtls"; certEnvVar: string; keyEnvVar: string; caEnvVar?: string };
 
 /**
  * Describes a remote data feed that the ingest service polls periodically.
@@ -935,6 +942,31 @@ export const FEED_SOURCES: FeedSource[] = [
     attribution: "National Transport Information Center (ITS), Republic of Korea",
     country: "KR",
     privacyUrl: "https://www.its.go.kr/",
+    enabledByDefault: true,
+  },
+  {
+    // Germany (NRW) — Straßen.NRW DATEX II via the Mobilithek broker (the user's
+    // original verkehr.nrw ask). dl-de/zero-2-0 (fully commercial-OK). Mobilithek
+    // authenticates with an organisation machine certificate (mutual TLS): register
+    // an org on mobilithek.info, obtain the client cert, set MOBILITHEK_NRW_CERT /
+    // MOBILITHEK_NRW_KEY (PEM contents) + the issued subscription id. Covers NRW
+    // non-motorway + municipal roads (overlaps Autobahn → relies on cross-source
+    // dedup). Confirm the exact pull URL + whether the broker needs a SOAP subscribe
+    // vs a plain client-pull GET against the issued subscription when the cert lands.
+    id: "verkehr-nrw-de",
+    name: "Straßen.NRW via Mobilithek (Germany)",
+    format: "datex2",
+    url: (env) =>
+      `https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${env["MOBILITHEK_NRW_SUBSCRIPTION_ID"] ?? ""}/clientPullService/DatexPull`,
+    auth: { kind: "mtls", certEnvVar: "MOBILITHEK_NRW_CERT", keyEnvVar: "MOBILITHEK_NRW_KEY" },
+    requiredEnv: ["MOBILITHEK_NRW_SUBSCRIPTION_ID"],
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "dl-de/zero-2-0",
+    licenseUrl: "https://www.govdata.de/dl-de/zero-2-0",
+    attribution: "Straßen.NRW / Land Nordrhein-Westfalen",
+    country: "DE",
+    privacyUrl: "https://www.strassen.nrw.de/de/datenschutz.html",
     enabledByDefault: true,
   },
 ];
