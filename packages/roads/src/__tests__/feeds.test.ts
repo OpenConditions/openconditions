@@ -9,6 +9,7 @@ import { parseDigitraffic } from "../digitraffic.js";
 import { parseGeoJson } from "../geojson.js";
 import { parseIbi511 } from "../ibi511.js";
 import { parseLtaIncidents } from "../lta.js";
+import { parseGddkia } from "../gddkia.js";
 import { FEED_SOURCES, feedToSourceDescriptor, parserFor } from "../feeds.js";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
@@ -172,6 +173,14 @@ describe("FEED_SOURCES", () => {
     expect(feed!.geojson?.defaultType).toBe("roadworks");
   });
 
+  it("includes gddkia-pl (Poland) as a CC0 gddkia-xml feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "gddkia-pl");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("gddkia-xml");
+    expect(feed!.license).toBe("CC0-1.0");
+    expect(feed!.country).toBe("PL");
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);
@@ -201,6 +210,10 @@ describe("parserFor", () => {
 
   it("returns parseLtaIncidents for lta-json", () => {
     expect(parserFor("lta-json")).toBe(parseLtaIncidents);
+  });
+
+  it("returns parseGddkia for gddkia-xml", () => {
+    expect(parserFor("gddkia-xml")).toBe(parseGddkia);
   });
 
   it("returns parseAutobahn for autobahn-json", () => {

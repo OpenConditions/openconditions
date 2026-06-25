@@ -12,6 +12,7 @@ export * from "./wzdx.js";
 export * from "./geojson.js";
 export * from "./ibi511.js";
 export * from "./lta.js";
+export * from "./gddkia.js";
 export * from "./feeds.js";
 export * from "./dedupe.js";
 export * from "./discover.js";

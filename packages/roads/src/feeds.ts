@@ -4,6 +4,7 @@ import type { SiteGeometry } from "./siteTable.js";
 import { parseDatexSituations } from "./datex.js";
 import { parseGeoJson } from "./geojson.js";
 import { parseIbi511 } from "./ibi511.js";
+import { parseGddkia } from "./gddkia.js";
 import { parseLtaIncidents } from "./lta.js";
 import { parseOpen511 } from "./open511.js";
 import { parseWzdx } from "./wzdx.js";
@@ -431,6 +432,22 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
     enabledByDefault: true,
   },
+  {
+    // Poland GDDKiA road obstructions (utrudnienia). Proprietary XML, WGS84
+    // points, CC0 — no key.
+    id: "gddkia-pl",
+    name: "GDDKiA road obstructions (Poland)",
+    format: "gddkia-xml",
+    url: "https://archiwum.gddkia.gov.pl/dane/zima_html/utrdane.xml",
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC0-1.0",
+    licenseUrl: "https://dane.gov.pl/",
+    attribution: "GDDKiA",
+    country: "PL",
+    privacyUrl: "https://www.gov.pl/web/gddkia",
+    enabledByDefault: true,
+  },
 ];
 
 type ParserFn = typeof parseDatexSituations;
@@ -451,6 +468,7 @@ export function parserFor(format: SourceFormat): ParserFn {
   if (format === "geojson") return parseGeoJson;
   if (format === "ibi511-json") return parseIbi511 as ParserFn;
   if (format === "lta-json") return parseLtaIncidents as ParserFn;
+  if (format === "gddkia-xml") return parseGddkia;
   if (format === "autobahn-json") return parseAutobahn;
   if (format === "digitraffic-json") return parseDigitraffic;
   throw new Error(`No parser registered for format: ${format}`);
