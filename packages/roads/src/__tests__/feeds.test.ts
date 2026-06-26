@@ -192,6 +192,9 @@ describe("FEED_SOURCES", () => {
     expect(feed!.format).toBe("gddkia-xml");
     expect(feed!.license).toBe("CC0-1.0");
     expect(feed!.country).toBe("PL");
+    // Canonical www host — the bare archiwum host redirects (via an http hop)
+    // and its DNS proved flaky from the ingest container.
+    expect(feed!.url).toBe("https://www.archiwum.gddkia.gov.pl/dane/zima_html/utrdane.xml");
   });
 
   it("includes vegvesen-no (Norway) as a Basic-auth DATEX II feed", () => {

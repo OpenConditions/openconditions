@@ -805,11 +805,14 @@ export const FEED_SOURCES: FeedSource[] = [
   },
   {
     // Poland GDDKiA road obstructions (utrudnienia). Proprietary XML, WGS84
-    // points, CC0 — no key.
+    // points, CC0 — no key. Use the canonical `www.archiwum` host: the bare
+    // `archiwum.gddkia.gov.pl` 301/302-redirects (via an http hop) to it, which
+    // the bare host's flaky DNS made unreliable. The feed is year-round despite
+    // the `zima_html` (winter) path.
     id: "gddkia-pl",
     name: "GDDKiA road obstructions (Poland)",
     format: "gddkia-xml",
-    url: "https://archiwum.gddkia.gov.pl/dane/zima_html/utrdane.xml",
+    url: "https://www.archiwum.gddkia.gov.pl/dane/zima_html/utrdane.xml",
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "CC0-1.0",
