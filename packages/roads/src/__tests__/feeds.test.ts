@@ -349,16 +349,6 @@ describe("FEED_SOURCES", () => {
     expect(feed!.country).toBe("EE");
   });
 
-  it("includes its-kr (South Korea) as a query-key flatjson feed with coordX/coordY", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "its-kr");
-    expect(feed).toBeDefined();
-    expect(feed!.format).toBe("flatjson");
-    expect(feed!.auth?.kind).toBe("query-key");
-    expect(feed!.geojson?.lonField).toBe("coordX");
-    expect(feed!.geojson?.latField).toBe("coordY");
-    expect(feed!.country).toBe("KR");
-  });
-
   it("includes verkehr-nrw-de (Straßen.NRW) as an mTLS DATEX II feed gated by requiredEnv", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "verkehr-nrw-de");
     expect(feed).toBeDefined();

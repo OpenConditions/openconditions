@@ -3,8 +3,8 @@ import type { RoadEvent } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
- * Generic reader for flat JSON arrays of point records (e.g. Thailand iTIC,
- * Korea ITS). It wraps each record as a pseudo-feature and reuses the GeoJSON
+ * Generic reader for flat JSON arrays of point records (e.g. Thailand iTIC).
+ * It wraps each record as a pseudo-feature and reuses the GeoJSON
  * reader's field mapping — geometry is built from the mapping's lonField/latField
  * (so there is no parsing logic duplicated here). The records array is the JSON
  * root, or `mapping.arrayPath` when nested (e.g. LTA-style `{value:[…]}`).
