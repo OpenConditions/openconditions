@@ -349,10 +349,6 @@ describe("FEED_SOURCES", () => {
     expect(feed!.country).toBe("EE");
   });
 
-  it("does not register tdx-tw (Taiwan TDX road News has no coordinates)", () => {
-    expect(FEED_SOURCES.find((f) => f.id === "tdx-tw")).toBeUndefined();
-  });
-
   it("includes its-kr (South Korea) as a query-key flatjson feed with coordX/coordY", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "its-kr");
     expect(feed).toBeDefined();

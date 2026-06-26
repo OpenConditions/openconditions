@@ -38,9 +38,8 @@ export type FeedAuth =
   | { kind: "bearer"; envVar: string }
   /**
    * OAuth2 client-credentials grant: POST to `tokenUrl`, cache the access token
-   * until it expires, send it as `Authorization: Bearer`. Supported transport for
-   * any such feed (e.g. Taiwan TDX, were it geo-/coordinate-viable); no registered
-   * feed uses it today.
+   * until it expires, send it as `Authorization: Bearer`. Supported transport; no
+   * registered feed uses it today.
    */
   | {
       kind: "oauth2-client-credentials";
@@ -913,16 +912,6 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.transpordiamet.ee/en",
     enabledByDefault: true,
   },
-  // Taiwan — TDX (Transport Data eXchange) is intentionally NOT registered. Its
-  // road-incident endpoint (/v2/Road/Traffic/Live/News/{Highway,Freeway,City})
-  // was verified against the public OpenAPI spec: the News object carries NewsID,
-  // Title, NewsCategory (1=traffic control, 2=accident, 3=congestion, 4=roadworks,
-  // 99=other), Description, and times — but NO coordinates/geometry. TDX's only
-  // geo-located road data is sensor/flow (VD/Section/CongestionLevel), not discrete
-  // incident events. So, like Hong Kong, it's unusable for this geometry-first
-  // events feed. (A future congestion "flow" feed from Section + CongestionLevel
-  // would be possible, but needs a TDX key — OAuth2 client-credentials, which the
-  // auth layer already supports.)
   {
     // South Korea — National ITS Center incident API (돌발정보 / eventInfo).
     // KOGL Type 1 (commercial OK with attribution). Sign-up: register at
