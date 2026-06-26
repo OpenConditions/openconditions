@@ -1,5 +1,5 @@
 import type postgres from "postgres";
-import type { Observation } from "@openconditions/core";
+import { toIsoTimestamp, type Observation } from "@openconditions/core";
 import { DOMAIN_REGISTRY } from "../domains.js";
 
 type Sql = postgres.Sql;
@@ -26,7 +26,7 @@ function chunk<T>(arr: T[], size: number): T[][] {
  * Geometry is handled inline via `ST_SetSRID(ST_GeomFromGeoJSON(...), 4326)`.
  * The domain attributes mapper is looked up via the registry.
  */
-function toRow(obs: Observation) {
+export function toRow(obs: Observation) {
   const plugin = DOMAIN_REGISTRY[obs.domain];
   const attributes = plugin ? plugin.attributes(obs) : {};
 
@@ -71,16 +71,22 @@ function toRow(obs: Observation) {
     geometry_json: JSON.stringify(obs.geometry),
     subject: obs.subject ? obs.subject : null,
     attributes: attributes,
-    valid_from: obs.validFrom ?? null,
-    valid_to: obs.validTo ?? null,
+    valid_from: toIsoTimestamp(obs.validFrom) ?? null,
+    valid_to: toIsoTimestamp(obs.validTo) ?? null,
     schedule: obs.schedule ? obs.schedule : null,
     confidence: obs.confidence ?? null,
     is_forecast: obs.isForecast ?? false,
     related_ids: obs.relatedIds ? obs.relatedIds : null,
     origin: obs.origin,
-    data_updated_at: obs.dataUpdatedAt,
-    fetched_at: obs.fetchedAt,
-    expires_at: obs.expiresAt ?? null,
+    // data_updated_at / fetched_at are NOT NULL: coerce, falling back so a
+    // malformed source timestamp degrades to a valid value instead of aborting
+    // the whole batch insert.
+    data_updated_at:
+      toIsoTimestamp(obs.dataUpdatedAt) ??
+      toIsoTimestamp(obs.fetchedAt) ??
+      new Date().toISOString(),
+    fetched_at: toIsoTimestamp(obs.fetchedAt) ?? new Date().toISOString(),
+    expires_at: toIsoTimestamp(obs.expiresAt) ?? null,
     is_stale: obs.isStale ?? false,
   };
 }

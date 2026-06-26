@@ -1,3 +1,4 @@
+import { toIsoTimestamp } from "@openconditions/core";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import type { TypeMapping } from "./taxonomy.js";
@@ -21,9 +22,11 @@ interface IbiEvent {
   RoadwayName?: string;
   DirectionOfTravel?: string;
   Description?: string;
-  LastUpdated?: string;
-  StartDate?: string;
-  PlannedEndDate?: string;
+  // The live feed sends these as Unix epoch seconds (numbers), despite older
+  // docs implying date strings; `toIsoTimestamp` normalises either shape.
+  LastUpdated?: string | number;
+  StartDate?: string | number;
+  PlannedEndDate?: string | number;
   EventType?: string;
   EventSubType?: string;
   IsFullClosure?: boolean;
@@ -162,14 +165,14 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
       roads: road ? [{ name: road }] : [],
       headline,
       description: typeof ev.Description === "string" ? ev.Description : undefined,
-      validFrom: ev.StartDate ?? null,
-      validTo: ev.PlannedEndDate ?? null,
+      validFrom: toIsoTimestamp(ev.StartDate) ?? null,
+      validTo: toIsoTimestamp(ev.PlannedEndDate) ?? null,
       sourceRaw: ev as Record<string, unknown>,
       origin: {
         kind: "feed",
         attribution: { provider: src.attribution, license: src.license, url: src.licenseUrl },
       },
-      dataUpdatedAt: ev.LastUpdated ?? new Date().toISOString(),
+      dataUpdatedAt: toIsoTimestamp(ev.LastUpdated) ?? new Date().toISOString(),
       fetchedAt: new Date().toISOString(),
       isStale: false,
     });

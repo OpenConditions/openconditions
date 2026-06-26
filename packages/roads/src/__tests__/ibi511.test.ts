@@ -74,6 +74,29 @@ describe("parseIbi511", () => {
     expect(out[0]!.geometry!.type).toBe("LineString");
   });
 
+  it("converts epoch-seconds dates (the real API shape) to ISO timestamps", () => {
+    // The live /api/v2/get/event feed returns StartDate/PlannedEndDate/LastUpdated
+    // as Unix epoch SECONDS (numbers), not ISO strings. Passing them through raw
+    // crashed the on-511 batch insert ("date/time field value out of range").
+    const out = parseIbi511(
+      [
+        {
+          ID: 7,
+          EventType: "roadwork",
+          Latitude: 43.65,
+          Longitude: -79.38,
+          StartDate: 1757502000,
+          PlannedEndDate: 1785538800,
+          LastUpdated: 1757532060,
+        },
+      ],
+      SRC
+    );
+    expect(out[0]!.validFrom).toBe("2025-09-10T11:00:00.000Z");
+    expect(out[0]!.validTo).toBe(new Date(1785538800 * 1000).toISOString());
+    expect(out[0]!.dataUpdatedAt).toBe(new Date(1757532060 * 1000).toISOString());
+  });
+
   it("skips events without usable geometry and tolerates malformed input", () => {
     expect(parseIbi511([{ ID: 9, EventType: "closures" }], SRC)).toEqual([]);
     expect(parseIbi511("not json", SRC)).toEqual([]);
