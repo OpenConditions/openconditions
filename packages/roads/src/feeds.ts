@@ -38,8 +38,9 @@ export type FeedAuth =
   | { kind: "bearer"; envVar: string }
   /**
    * OAuth2 client-credentials grant: POST to `tokenUrl`, cache the access token
-   * until it expires, send it as `Authorization: Bearer`. (Slovenia, Taiwan TDX,
-   * Buenos Aires.)
+   * until it expires, send it as `Authorization: Bearer`. Supported transport for
+   * any such feed (e.g. Taiwan TDX, were it geo-/coordinate-viable); no registered
+   * feed uses it today.
    */
   | {
       kind: "oauth2-client-credentials";
@@ -912,43 +913,16 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.transpordiamet.ee/en",
     enabledByDefault: true,
   },
-  {
-    // Taiwan — TDX (Transport Data eXchange) road traffic live news. OGDL
-    // (政府資料開放授權條款, commercial OK). OAuth2 client-credentials — register at
-    // tdx.transportdata.tw, set TDX_CLIENT_ID / TDX_CLIENT_SECRET. The highway
-    // live-news object wraps records under "Newses" with WGS84 PositionLon/
-    // PositionLat. Verify the array path + field names against a live token; if the
-    // News object lacks coordinates, point this at a section/VD endpoint that
-    // carries PositionLat/Lon.
-    id: "tdx-tw",
-    name: "TDX road traffic (Taiwan)",
-    format: "flatjson",
-    url: "https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/Live/News/Highway?%24format=JSON",
-    auth: {
-      kind: "oauth2-client-credentials",
-      tokenUrl: "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token",
-      clientIdEnvVar: "TDX_CLIENT_ID",
-      clientSecretEnvVar: "TDX_CLIENT_SECRET",
-    },
-    geojson: {
-      arrayPath: "Newses",
-      lonField: "PositionLon",
-      latField: "PositionLat",
-      idField: "NewsID",
-      headlineField: "Title",
-      descriptionField: "Description",
-      updatedField: "UpdateTime",
-      defaultType: "other",
-    },
-    cadenceSec: 300,
-    freshnessWindowSec: 900,
-    license: "OGDL-TW-1.0",
-    licenseUrl: "https://data.gov.tw/license",
-    attribution: "Ministry of Transportation and Communications (TDX), Taiwan",
-    country: "TW",
-    privacyUrl: "https://tdx.transportdata.tw/",
-    enabledByDefault: true,
-  },
+  // Taiwan — TDX (Transport Data eXchange) is intentionally NOT registered. Its
+  // road-incident endpoint (/v2/Road/Traffic/Live/News/{Highway,Freeway,City})
+  // was verified against the public OpenAPI spec: the News object carries NewsID,
+  // Title, NewsCategory (1=traffic control, 2=accident, 3=congestion, 4=roadworks,
+  // 99=other), Description, and times — but NO coordinates/geometry. TDX's only
+  // geo-located road data is sensor/flow (VD/Section/CongestionLevel), not discrete
+  // incident events. So, like Hong Kong, it's unusable for this geometry-first
+  // events feed. (A future congestion "flow" feed from Section + CongestionLevel
+  // would be possible, but needs a TDX key — OAuth2 client-credentials, which the
+  // auth layer already supports.)
   {
     // South Korea — National ITS Center incident API (돌발정보 / eventInfo).
     // KOGL Type 1 (commercial OK with attribution). Sign-up: register at

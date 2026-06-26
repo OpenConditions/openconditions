@@ -349,14 +349,8 @@ describe("FEED_SOURCES", () => {
     expect(feed!.country).toBe("EE");
   });
 
-  it("includes tdx-tw (Taiwan) as an oauth2 flatjson feed with PositionLon/Lat", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "tdx-tw");
-    expect(feed).toBeDefined();
-    expect(feed!.format).toBe("flatjson");
-    expect(feed!.auth?.kind).toBe("oauth2-client-credentials");
-    expect(feed!.geojson?.lonField).toBe("PositionLon");
-    expect(feed!.geojson?.latField).toBe("PositionLat");
-    expect(feed!.country).toBe("TW");
+  it("does not register tdx-tw (Taiwan TDX road News has no coordinates)", () => {
+    expect(FEED_SOURCES.find((f) => f.id === "tdx-tw")).toBeUndefined();
   });
 
   it("includes its-kr (South Korea) as a query-key flatjson feed with coordX/coordY", () => {
