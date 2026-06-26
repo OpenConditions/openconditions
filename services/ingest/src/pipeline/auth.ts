@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { Agent } from "undici";
 import type { FeedAuth, FeedSource } from "@openconditions/roads";
 
@@ -10,6 +11,45 @@ import type { FeedAuth, FeedSource } from "@openconditions/roads";
  */
 
 type Env = Record<string, string | undefined>;
+
+/**
+ * Resolve a credential value, supporting the `*_FILE` convention used by
+ * file-based secret delivery (Docker `secrets:` mounts at `/run/secrets/<KEY>`).
+ * Prefers a non-empty env var; otherwise reads the file named by `<KEY>_FILE`.
+ * An empty/whitespace env var falls through to the file, so a blank placeholder
+ * never shadows a mounted secret. Returns `undefined` when neither yields a
+ * non-empty value.
+ */
+export function resolveCredential(env: Env, key: string): string | undefined {
+  const direct = env[key]?.trim();
+  if (direct) return direct;
+  const filePath = env[`${key}_FILE`]?.trim();
+  if (filePath) {
+    try {
+      const contents = readFileSync(filePath, "utf8").trim();
+      if (contents) return contents;
+    } catch {
+      // Missing/unreadable secret file → treated as "not set".
+    }
+  }
+  return undefined;
+}
+
+/**
+ * An env-like view that transparently applies the `*_FILE` fallback on every
+ * lookup. Pass this (instead of raw `process.env`) to a feed's url/body builder
+ * so credentials embedded in a request URL or body — e.g. Trafikverket's
+ * POST-body key, Buenos Aires' client_id/secret, NRW's subscription id — also
+ * resolve from mounted secret files. Non-credential keys fall back to the raw
+ * env value unchanged.
+ */
+export function resolvedEnv(env: Env = process.env): Env {
+  return new Proxy({} as Env, {
+    get: (_t, prop) =>
+      typeof prop === "string" ? (resolveCredential(env, prop) ?? env[prop]) : undefined,
+    has: (_t, prop) => typeof prop === "string" && (prop in env || `${prop}_FILE` in env),
+  });
+}
 
 /** The env-var names a given auth config needs to be usable. */
 export function requiredEnvVars(auth: FeedAuth | undefined): string[] {
@@ -40,15 +80,12 @@ export function hasCredentials(
   env: Env = process.env
 ): boolean {
   const required = [...requiredEnvVars(src.auth), ...(src.requiredEnv ?? [])];
-  return required.every((k) => {
-    const v = env[k];
-    return typeof v === "string" && v.length > 0;
-  });
+  return required.every((k) => resolveCredential(env, k) !== undefined);
 }
 
 function need(env: Env, key: string): string {
-  const v = env[key];
-  if (!v) throw new Error(`missing credential env var ${key}`);
+  const v = resolveCredential(env, key);
+  if (!v) throw new Error(`missing credential env var ${key} (or ${key}_FILE)`);
   return v;
 }
 
@@ -126,9 +163,10 @@ export function makeAuthorizedFetch(
 
   switch (auth.kind) {
     case "query-key": {
-      // Env var wins when set; otherwise fall back to a built-in default (e.g. a
-      // public key). `||` (not `??`) so an empty-string env var also falls back.
-      const value = env[auth.envVar] || auth.defaultValue || need(env, auth.envVar);
+      // Env var (or `*_FILE`) wins when set; otherwise fall back to a built-in
+      // default (e.g. a public key). `||` (not `??`) so an empty value also falls back.
+      const value =
+        resolveCredential(env, auth.envVar) || auth.defaultValue || need(env, auth.envVar);
       return (input, init) => baseFetch(withQueryParam(input, auth.param, value), init);
     }
     case "header-key":

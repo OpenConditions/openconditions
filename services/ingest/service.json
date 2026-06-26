@@ -37,6 +37,240 @@
   },
   "provides": ["openconditions/road-conditions-data"],
   "ownsSchema": "conditions",
+  "configSchema": {
+    "properties": {
+      "HC_HR_USERNAME": {
+        "type": "string",
+        "title": "Hrvatske ceste (Croatia) — B2B username",
+        "description": "HTTP Basic username for the promet-info B2B feed (Croatia).",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://www.hrvatske-ceste.hr/",
+          "urlLabel": "Hrvatske ceste",
+          "steps": [
+            "There is no self-service portal — request B2B account credentials from Hrvatske ceste (the promet-info operator), via hrvatske-ceste.hr or the data.gov.hr dataset page."
+          ],
+          "notes": "Open licence (commercial OK); access is gated on the B2B account."
+        }
+      },
+      "HC_HR_PASSWORD": {
+        "type": "string",
+        "title": "Hrvatske ceste (Croatia) — B2B password",
+        "x-openmapx-secret": true
+      },
+      "NY_511_API_KEY": {
+        "type": "string",
+        "title": "511NY API key (New York)",
+        "description": "Query key for the 511NY events feed.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://511ny.org/developers",
+          "urlLabel": "Get a 511NY key",
+          "steps": [
+            "Register at 511ny.org/developers and request a key.",
+            "Accept the Developer Access Agreement (DAA) during sign-up — it permits commercial redistribution.",
+            "The request form asks why you want the feed; see docs/road-feed-credentials.md for ready-to-paste reasons."
+          ],
+          "cost": "Free",
+          "notes": "Attribution required: \"Powered by 511NY\"."
+        }
+      },
+      "LTA_ACCOUNT_KEY": {
+        "type": "string",
+        "title": "LTA DataMall AccountKey (Singapore)",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://datamall.lta.gov.sg/",
+          "urlLabel": "Request LTA API access",
+          "steps": [
+            "Request an API account at datamall.lta.gov.sg (Request API Access).",
+            "The AccountKey is emailed to you."
+          ],
+          "cost": "Free",
+          "notes": "Singapore ODL (commercial OK); attribution to the Land Transport Authority."
+        }
+      },
+      "TRAFIKVERKET_API_KEY": {
+        "type": "string",
+        "title": "Trafikverket key (Sweden)",
+        "description": "Authentication key, sent in the POST request body.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://api.trafikinfo.trafikverket.se/",
+          "urlLabel": "Register at Trafikverket",
+          "steps": ["Register for a free authentication key."],
+          "cost": "Free",
+          "notes": "CC0 — no restrictions."
+        }
+      },
+      "NAP_SI_USERNAME": {
+        "type": "string",
+        "title": "NAP Slovenia (promet.si) — username",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://www.nap.si/",
+          "urlLabel": "Register at NAP Slovenia",
+          "steps": ["Register at the Slovenian National Access Point (DARS / DRSI)."],
+          "notes": "CC-BY-SA (ShareAlike). Auth scaffolded as Basic — may be OAuth2; verify when granted."
+        }
+      },
+      "NAP_SI_PASSWORD": {
+        "type": "string",
+        "title": "NAP Slovenia (promet.si) — password",
+        "x-openmapx-secret": true
+      },
+      "NO_VEGVESEN_USERNAME": {
+        "type": "string",
+        "title": "Statens vegvesen (Norway) — username",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://www.vegvesen.no/",
+          "urlLabel": "Statens vegvesen",
+          "steps": ["Create a free account for the DATEX II server."],
+          "cost": "Free",
+          "notes": "NLOD-2.0 (commercial OK)."
+        }
+      },
+      "NO_VEGVESEN_PASSWORD": {
+        "type": "string",
+        "title": "Statens vegvesen (Norway) — password",
+        "x-openmapx-secret": true
+      },
+      "NSW_TRANSPORT_API_KEY": {
+        "type": "string",
+        "title": "Live Traffic NSW API key (Australia)",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://opendata.transport.nsw.gov.au/",
+          "urlLabel": "Get a Transport NSW key",
+          "steps": ["Register, create an application, and copy its API key."],
+          "cost": "Free",
+          "notes": "CC-BY-4.0; attribution \"Transport for NSW\"."
+        }
+      },
+      "QLD_TRAFFIC_API_KEY": {
+        "type": "string",
+        "title": "QLDTraffic API key (Australia) — optional",
+        "description": "Optional. A public key is bundled by default; set this only to use your own quota.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://www.qldtraffic.qld.gov.au/",
+          "urlLabel": "QLDTraffic",
+          "email": {
+            "to": "QLDTraffic@tmr.qld.gov.au",
+            "subject": "QLDTraffic API key request",
+            "body": "Organisation name, contact person, email, and application name."
+          },
+          "notes": "Optional — the bundled public key is shared + rate-limited (100 req/min). Set your own to avoid 429s."
+        }
+      },
+      "BA_CLIENT_ID": {
+        "type": "string",
+        "title": "Buenos Aires transport — client_id",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://api-transporte.buenosaires.gob.ar/",
+          "urlLabel": "BA transport API portal",
+          "steps": ["Register to obtain a client_id + client_secret pair."],
+          "notes": "CC-BY-2.5-AR (commercial OK)."
+        }
+      },
+      "BA_CLIENT_SECRET": {
+        "type": "string",
+        "title": "Buenos Aires transport — client_secret",
+        "x-openmapx-secret": true
+      },
+      "NH_API_KEY": {
+        "type": "string",
+        "title": "National Highways NTIS key (England)",
+        "description": "Ocp-Apim-Subscription-Key header value.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://developer.data.nationalhighways.co.uk/",
+          "urlLabel": "National Highways developer portal",
+          "steps": [
+            "Register, then subscribe to the \"Road and Lane Closures v2.0\" product.",
+            "Your Ocp-Apim-Subscription-Key appears in your profile."
+          ],
+          "notes": "OGL-UK-3.0; attribution \"Contains National Highways data © Crown copyright and database right.\""
+        }
+      },
+      "DK_VD_API_KEY": {
+        "type": "string",
+        "title": "Vejdirektoratet key (Denmark)",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://nap.vd.dk/",
+          "urlLabel": "Register at the Danish NAP",
+          "steps": [
+            "Subscribe to \"Traffic Events and Road Works (snapshot)\" — dataset 416 (NOT 415, which is AMQP).",
+            "Leave the \"Dataowner consent\" checkbox unchecked (it's the publisher agreement).",
+            "You'll be issued the snapshot file URL + API key."
+          ],
+          "notes": "CC-BY-4.0; attribution \"Vejdirektoratet.\""
+        }
+      },
+      "AT_ASFINAG_USERNAME": {
+        "type": "string",
+        "title": "ASFINAG (Austria) — username",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://contentportal.asfinag.at/",
+          "urlLabel": "ASFINAG content portal",
+          "steps": [
+            "Register and subscribe to both event records: \"Verkehrsmeldungen zu ungeplanten … Ereignissen\" and \"… zu geplanten Ereignissen\" (roadworks)."
+          ],
+          "notes": "CC-BY-4.0 for the two open event packages (some ASFINAG packages are paid)."
+        }
+      },
+      "AT_ASFINAG_PASSWORD": {
+        "type": "string",
+        "title": "ASFINAG (Austria) — password",
+        "x-openmapx-secret": true
+      },
+      "EE_TARKTEE_API_KEY": {
+        "type": "string",
+        "title": "Tark Tee key (Estonia)",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://tarktee.mnt.ee/",
+          "urlLabel": "Register at Tark Tee",
+          "steps": [
+            "Register at the Transpordiamet \"Smart Road\" DATEX II gateway; a key is issued after registration."
+          ],
+          "notes": "CC-BY-4.0 (commercial OK)."
+        }
+      },
+      "MOBILITHEK_NRW_CERT": {
+        "type": "string",
+        "title": "NRW Mobilithek — client certificate (PEM)",
+        "description": "Paste the PEM contents of the organisation machine certificate (mutual TLS).",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://mobilithek.info/",
+          "urlLabel": "Mobilithek",
+          "steps": [
+            "Register your organisation; leave \"Organisation relevant gemäß MDV/PBefG\" unchecked.",
+            "Subscribe to the LVZ.NRW snapshot offers (648508602333433856 roadworks + 648512079906336768 incidents).",
+            "Use the org machine certificate for the client-pull; paste its PEM here."
+          ],
+          "notes": "dl-de/zero-2-0 (commercial OK, no attribution). Search \"LVZ.NRW\", not \"Straßen.NRW\"."
+        }
+      },
+      "MOBILITHEK_NRW_KEY": {
+        "type": "string",
+        "title": "NRW Mobilithek — client private key (PEM)",
+        "description": "Paste the PEM contents of the certificate's private key.",
+        "x-openmapx-secret": true
+      },
+      "MOBILITHEK_NRW_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "NRW Mobilithek — subscription id",
+        "description": "The subscription id issued for the LVZ.NRW offer (used in the client-pull URL).",
+        "x-openmapx-secret": true
+      }
+    }
+  },
   "exposure": {
     "proxy": {
       "enabled": true,

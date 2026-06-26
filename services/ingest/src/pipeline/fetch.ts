@@ -1,5 +1,6 @@
 import { gunzipSync } from "node:zlib";
 import type { FeedSource } from "@openconditions/roads";
+import { resolvedEnv } from "./auth.js";
 
 const GZIP_MAGIC_0 = 0x1f;
 const GZIP_MAGIC_1 = 0x8b;
@@ -28,7 +29,7 @@ function requestInit(src: FeedSource): RequestInit | undefined {
   }
   return {
     method: "POST",
-    body: src.body ? src.body(process.env as Record<string, string | undefined>) : undefined,
+    body: src.body ? src.body(resolvedEnv()) : undefined,
     headers: src.requestHeaders,
   };
 }
@@ -94,7 +95,7 @@ export async function fetchAll(src: FeedSource, fetchFn: typeof fetch): Promise<
   const init = requestInit(src);
 
   if (typeof urlOrFn === "function") {
-    const resolved = urlOrFn(process.env as Record<string, string | undefined>);
+    const resolved = urlOrFn(resolvedEnv());
     return [await fetchOne(resolved, fetchFn, init)];
   }
 

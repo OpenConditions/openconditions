@@ -3,6 +3,7 @@ import { createGunzip } from "node:zlib";
 import type { Observation } from "@openconditions/core";
 import { createMeasuredDataParser, feedToSourceDescriptor } from "@openconditions/roads";
 import type { SiteGeometry } from "@openconditions/roads";
+import { resolvedEnv } from "./auth.js";
 import type { DomainFeedSource } from "./run.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
 
@@ -19,7 +20,7 @@ export function isStreamingFlowFeed(src: DomainFeedSource): boolean {
 /** Resolves the single feed URL for a streaming flow source (string or env fn). */
 function resolveUrl(src: DomainFeedSource): string {
   const u = src.url;
-  if (typeof u === "function") return u(process.env as Record<string, string | undefined>);
+  if (typeof u === "function") return u(resolvedEnv());
   if (typeof u === "string") return u;
   throw new Error(`flow feed ${src.id} has no streamable url`);
 }

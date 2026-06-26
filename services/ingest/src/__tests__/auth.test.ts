@@ -1,3 +1,6 @@
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import type { FeedAuth } from "@openconditions/roads";
 import { hasCredentials, makeAuthorizedFetch, requiredEnvVars } from "../pipeline/auth.js";
@@ -168,5 +171,47 @@ describe("makeAuthorizedFetch", () => {
     expect(dataCalls).toHaveLength(2);
     expect(header(dataCalls[0]!.init, "Authorization")).toBe("Bearer AT");
     expect(header(dataCalls[1]!.init, "Authorization")).toBe("Bearer AT");
+  });
+});
+
+describe("*_FILE convention (file-based secret delivery)", () => {
+  function secretFile(contents: string): string {
+    const dir = mkdtempSync(join(tmpdir(), "oc-auth-"));
+    const path = join(dir, "secret");
+    writeFileSync(path, contents);
+    return path;
+  }
+
+  it("hasCredentials is true when only <KEY>_FILE is set", () => {
+    const auth: FeedAuth = { kind: "query-key", param: "key", envVar: "K" };
+    expect(hasCredentials({ auth }, {})).toBe(false);
+    expect(hasCredentials({ auth }, { K_FILE: secretFile("from-file") })).toBe(true);
+  });
+
+  it("reads the secret value from <KEY>_FILE (trimmed)", async () => {
+    const { fn, calls } = recorder();
+    const auth: FeedAuth = { kind: "query-key", param: "key", envVar: "K" };
+    const authed = makeAuthorizedFetch({ auth }, fn, { K_FILE: secretFile("file-secret\n") });
+    await authed("https://x/");
+    expect(new URL(calls[0]!.url).searchParams.get("key")).toBe("file-secret");
+  });
+
+  it("an empty env var falls through to the file (no shadowing)", async () => {
+    const { fn, calls } = recorder();
+    const auth: FeedAuth = { kind: "bearer", envVar: "TOK" };
+    const authed = makeAuthorizedFetch({ auth }, fn, { TOK: "  ", TOK_FILE: secretFile("real") });
+    await authed("https://x/");
+    expect(header(calls[0]!.init, "Authorization")).toBe("Bearer real");
+  });
+
+  it("a non-empty env var still wins over the file", async () => {
+    const { fn, calls } = recorder();
+    const auth: FeedAuth = { kind: "bearer", envVar: "TOK" };
+    const authed = makeAuthorizedFetch({ auth }, fn, {
+      TOK: "env-wins",
+      TOK_FILE: secretFile("file"),
+    });
+    await authed("https://x/");
+    expect(header(calls[0]!.init, "Authorization")).toBe("Bearer env-wins");
   });
 });
