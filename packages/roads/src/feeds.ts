@@ -569,7 +569,7 @@ export const FEED_SOURCES: FeedSource[] = [
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "CC0-1.0",
-    licenseUrl: "https://api.trafikinfo.trafikverket.se/",
+    licenseUrl: "https://data.trafikverket.se/",
     attribution: "Trafikverket",
     country: "SE",
     privacyUrl: "https://www.trafikverket.se/integritetspolicy/",

@@ -96,11 +96,14 @@
         "description": "Authentication key, sent in the POST request body.",
         "x-openmapx-secret": true,
         "x-openmapx-setup": {
-          "url": "https://api.trafikinfo.trafikverket.se/",
+          "url": "https://data.trafikverket.se/",
           "urlLabel": "Register at Trafikverket",
-          "steps": ["Register for a free authentication key."],
+          "steps": [
+            "Register at the Trafikverket data portal (Datautbytesportal) for a free authentication key.",
+            "Use the API console there; the key is sent in the POST request body."
+          ],
           "cost": "Free",
-          "notes": "CC0 — no restrictions."
+          "notes": "CC0 — no restrictions. API endpoint: api.trafikinfo.trafikverket.se/v2/data.json (the bare host has no web page)."
         }
       },
       "NAP_SI_USERNAME": {
