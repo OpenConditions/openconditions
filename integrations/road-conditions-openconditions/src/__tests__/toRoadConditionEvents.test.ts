@@ -19,7 +19,11 @@ const fc = {
         headline: "Roadworks on A2",
         description: "Resurfacing",
         attributes: { roads: [{ name: "A2", direction: "north" }], roadState: "some_lanes_closed" },
+        valid_from: "2026-06-20T00:00:00Z",
         valid_to: "2026-07-01T00:00:00Z",
+        schedule: [
+          { dateStart: "2026-06-20", dateEnd: "2026-06-30", timeStart: "20:00", timeEnd: "05:00" },
+        ],
         attribution: { provider: "NDW", license: "CC0-1.0", url: "https://www.ndw.nu" },
       },
     },
@@ -48,7 +52,11 @@ describe("featureCollectionToRoadConditionEvents", () => {
       severity: "high",
       headline: "Roadworks on A2",
       roadState: "some_lanes_closed",
+      validFrom: "2026-06-20T00:00:00Z",
       validTo: "2026-07-01T00:00:00Z",
+      schedule: [
+        { dateStart: "2026-06-20", dateEnd: "2026-06-30", timeStart: "20:00", timeEnd: "05:00" },
+      ],
       geometry: { type: "Point", coordinates: [5, 52] },
     });
     expect(events[0]!.roads).toEqual([{ name: "A2", direction: "north" }]);

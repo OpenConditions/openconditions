@@ -1,5 +1,5 @@
 import { deriveSeverity } from "@openconditions/core";
-import type { GeoJsonGeometry } from "@openconditions/core";
+import type { GeoJsonGeometry, RecurringWindow } from "@openconditions/core";
 import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
@@ -113,13 +113,11 @@ function coerceTimestamp(raw: unknown): string | null {
     return d.toISOString();
   }
 
-  const german = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  const german = raw.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{2})/);
   if (german) {
-    const [, day, month, year, hour, minute, second = "00"] = german;
-    const fullYear = year && year.length === 2 ? `20${year}` : (year ?? "");
-    const iso = `${fullYear}-${(month ?? "").padStart(2, "0")}-${(day ?? "").padStart(2, "0")}T${(hour ?? "").padStart(2, "0")}:${(minute ?? "").padStart(2, "0")}:${second.padStart(2, "0")}`;
-    const d2 = new Date(iso);
-    return isNaN(d2.getTime()) ? null : d2.toISOString();
+    const [, day, month, year, hour, minute] = german;
+    // German-format timestamps carry no offset → interpret as Europe/Berlin.
+    return berlinWallClockToISO(year!, month!, day!, hour!, minute!);
   }
 
   return null;
@@ -135,21 +133,155 @@ function joinDescription(raw: unknown): string | undefined {
   return parts.length > 0 ? parts.join("\n") : undefined;
 }
 
-/** The feed has no structured end time; it is embedded in the prose as
- * "Ende: DD.MM.YY um HH:MM Uhr" (two-digit year). Coerced via the shared
- * German-date helper, which reads the parts as DD.MM.YY — the bare
- * `new Date()` would misread an unambiguous string like "06.07.26" as MM.DD. */
-function endTimeFromDescription(description: string | undefined): string | null {
-  if (!description) return null;
-  const m = description.match(
-    /Ende:\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+um\s+(\d{1,2}):(\d{2})\s*Uhr/i
-  );
-  if (!m) return null;
-  const [, day, month, year, hour, minute] = m;
-  const fullYear = year && year.length === 2 ? `20${year}` : (year ?? "");
-  const iso = `${fullYear}-${(month ?? "").padStart(2, "0")}-${(day ?? "").padStart(2, "0")}T${(hour ?? "").padStart(2, "0")}:${(minute ?? "").padStart(2, "0")}:00`;
-  const d = new Date(iso);
-  return isNaN(d.getTime()) ? null : d.toISOString();
+// The feed exposes only `startTimestamp` (ISO) structurally; the end time and
+// any recurring closure windows live in localized German prose, in a few fixed
+// shapes. We parse them HERE (this adapter is German-only) into the canonical
+// validFrom/validTo/schedule model — never in shared code — always resolving the
+// wall-clock to an absolute instant in Europe/Berlin (DST-aware). Anything
+// unrecognized is left null (fail-safe → treated as ongoing/active).
+
+const BERLIN_TZ = "Europe/Berlin";
+
+/** Minutes Europe/Berlin is ahead of UTC at `utcMs` (60 = CET, 120 = CEST). */
+function berlinOffsetMinutes(utcMs: number): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: BERLIN_TZ,
+    timeZoneName: "shortOffset",
+  }).formatToParts(new Date(utcMs));
+  const tz = parts.find((p) => p.type === "timeZoneName")?.value ?? "GMT+0";
+  const m = tz.match(/GMT([+-])(\d{1,2})(?::?(\d{2}))?/);
+  if (!m) return 0;
+  return (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3] ?? 0));
+}
+
+/**
+ * Resolve a German wall-clock to an absolute ISO instant in Europe/Berlin,
+ * DST-aware. Two-digit years are 20xx. Returns null on an invalid date. Treats
+ * the parts as Berlin local, then subtracts Berlin's offset at that instant —
+ * so "13.07.26 05:00" (CEST) becomes 03:00Z, not 05:00Z.
+ */
+function berlinWallClockToISO(
+  year: string,
+  month: string,
+  day: string,
+  hour: string,
+  minute: string
+): string | null {
+  const y = year.length === 2 ? 2000 + Number(year) : Number(year);
+  const mo = Number(month);
+  const d = Number(day);
+  const h = Number(hour);
+  const mi = Number(minute);
+  if (![y, mo, d, h, mi].every(Number.isFinite)) return null;
+  let ms = Date.UTC(y, mo - 1, d, h, mi);
+  ms -= berlinOffsetMinutes(ms) * 60000;
+  const dt = new Date(ms);
+  return Number.isNaN(dt.getTime()) ? null : dt.toISOString();
+}
+
+function pad2(s: string): string {
+  return s.padStart(2, "0");
+}
+function localDate(year: string, month: string, day: string): string {
+  return `${year.length === 2 ? `20${year}` : year}-${pad2(month)}-${pad2(day)}`;
+}
+function localTime(hour: string, minute: string): string {
+  return `${pad2(hour)}:${pad2(minute)}`;
+}
+
+interface ParsedWindow {
+  startISO: string;
+  endISO: string;
+  /** Local (Berlin) wall-clock parts, kept to build the recurrence schedule. */
+  startDate: string; // YYYY-MM-DD
+  timeStart: string; // HH:MM
+  timeEnd: string; // HH:MM
+}
+
+// One recurring closure window: "29.06.26 20:00 bis zum 30.06.26 05:00 Uhr".
+const WINDOW_LIST_RE =
+  /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{2})\s+bis\s+zum\s+(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{2})\s*Uhr/gi;
+// Single-phase "Beginn: 10.07.26 um 22:00 Uhr" / "Ende: 13.07.26 um 05:00 Uhr".
+// `Ende:` matches the phase end, NOT "Ende der Gesamtmaßnahme:" (no "um … Uhr").
+const BEGIN_RE = /Beginn:\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+um\s+(\d{1,2}):(\d{2})\s*Uhr/i;
+const END_RE = /Ende:\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+um\s+(\d{1,2}):(\d{2})\s*Uhr/i;
+
+function parseWindowList(description: string): ParsedWindow[] {
+  const out: ParsedWindow[] = [];
+  for (const m of description.matchAll(WINDOW_LIST_RE)) {
+    const [, d1, mo1, y1, h1, mi1, d2, mo2, y2, h2, mi2] = m;
+    const startISO = berlinWallClockToISO(y1!, mo1!, d1!, h1!, mi1!);
+    const endISO = berlinWallClockToISO(y2!, mo2!, d2!, h2!, mi2!);
+    if (!startISO || !endISO) continue;
+    out.push({
+      startISO,
+      endISO,
+      startDate: localDate(y1!, mo1!, d1!),
+      timeStart: localTime(h1!, mi1!),
+      timeEnd: localTime(h2!, mi2!),
+    });
+  }
+  return out;
+}
+
+/**
+ * Collapse parsed windows into recurrence windows grouped by daily time-of-day
+ * (local), each spanning the earliest→latest start date. The common case (one
+ * nightly 20:00–05:00 band over consecutive nights) yields a single window.
+ */
+function windowsToSchedule(windows: ParsedWindow[]): RecurringWindow[] {
+  const byTime = new Map<string, ParsedWindow[]>();
+  for (const w of windows) {
+    const key = `${w.timeStart}-${w.timeEnd}`;
+    const group = byTime.get(key);
+    if (group) group.push(w);
+    else byTime.set(key, [w]);
+  }
+  const out: RecurringWindow[] = [];
+  for (const group of byTime.values()) {
+    const dates = group.map((g) => g.startDate).sort();
+    out.push({
+      dateStart: dates[0],
+      dateEnd: dates[dates.length - 1],
+      timeStart: group[0]!.timeStart,
+      timeEnd: group[0]!.timeEnd,
+    });
+  }
+  return out;
+}
+
+interface Temporal {
+  validFrom: string | null;
+  validTo: string | null;
+  schedule?: RecurringWindow[];
+}
+
+/**
+ * Derive the structured validity from an Autobahn item. `startTimestamp` (ISO)
+ * is authoritative for the start. The end and any recurring windows exist only
+ * as German prose: a multi-line "… bis zum … Uhr" list → `schedule` (+ outer
+ * validFrom/validTo bounds), or a single "Beginn:/Ende:" pair.
+ */
+function extractTemporal(item: AutobahnItem, description: string | undefined): Temporal {
+  const structuredStart = coerceTimestamp(item.startTimestamp);
+  if (!description) return { validFrom: structuredStart, validTo: null };
+
+  const windows = parseWindowList(description);
+  if (windows.length > 0) {
+    const starts = windows.map((w) => w.startISO).sort();
+    const ends = windows.map((w) => w.endISO).sort();
+    return {
+      validFrom: structuredStart ?? starts[0]!,
+      validTo: ends[ends.length - 1]!,
+      schedule: windowsToSchedule(windows),
+    };
+  }
+
+  const b = description.match(BEGIN_RE);
+  const beginISO = b ? berlinWallClockToISO(b[3]!, b[2]!, b[1]!, b[4]!, b[5]!) : null;
+  const e = description.match(END_RE);
+  const endISO = e ? berlinWallClockToISO(e[3]!, e[2]!, e[1]!, e[4]!, e[5]!) : null;
+  return { validFrom: structuredStart ?? beginISO, validTo: endISO };
 }
 
 /** Dimension restrictions live in the prose, e.g. "Durchfahrtsbreite: 3.25 m"
@@ -279,8 +411,7 @@ export function parseAutobahn(
 
       const description = joinDescription(item.description);
 
-      const validFrom = coerceTimestamp(item.startTimestamp);
-      const validTo = endTimeFromDescription(description);
+      const { validFrom, validTo, schedule } = extractTemporal(item, description);
       const restrictions = restrictionsFromDescription(description);
 
       const roads = roadsFromTitle(title);
@@ -316,6 +447,7 @@ export function parseAutobahn(
         description,
         validFrom,
         validTo,
+        ...(schedule && schedule.length > 0 ? { schedule } : {}),
         origin: {
           kind: "feed",
           attribution: {

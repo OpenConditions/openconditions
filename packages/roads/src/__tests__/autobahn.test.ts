@@ -371,8 +371,8 @@ describe("parseAutobahn — delaySeconds from congestion delayTimeValue", () => 
   });
 });
 
-describe("parseAutobahn — validTo from prose end time", () => {
-  it("parses 'Ende: DD.MM.YY um HH:MM Uhr' from the description into validTo (ISO)", () => {
+describe("parseAutobahn — structured validity (Europe/Berlin)", () => {
+  it("parses 'Ende: DD.MM.YY um HH:MM Uhr' into validTo as a Berlin-local instant (CEST → -02:00)", () => {
     const feed = {
       warning: [
         {
@@ -388,10 +388,65 @@ describe("parseAutobahn — validTo from prose end time", () => {
       ],
     };
     const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "warning");
-    expect(ev!.validTo).toBe(new Date("2026-07-06T05:00:00").toISOString());
+    // 06.07.26 05:00 CEST == 03:00Z (not 05:00Z).
+    expect(ev!.validTo).toBe("2026-07-06T03:00:00.000Z");
+    expect(ev!.schedule).toBeUndefined();
   });
 
-  it("leaves validTo null when no end-time prose is present", () => {
+  it("prefers structured startTimestamp for validFrom, falling back to 'Beginn:' prose (Berlin)", () => {
+    const feed = {
+      warning: [
+        {
+          identifier: "start-structured",
+          title: "A4 | Köln - Aachen",
+          coordinate: { lat: 50.8, long: 6.5 },
+          startTimestamp: "2026-07-10T22:00:00+02:00",
+          description: ["Beginn: 10.07.26 um 22:00 Uhr"],
+        },
+        {
+          identifier: "start-prose-only",
+          title: "A3 | Köln - Frankfurt",
+          coordinate: { lat: 50.6, long: 7.2 },
+          description: ["Beginn: 22.06.26 um 08:00 Uhr"],
+        },
+      ],
+    };
+    const events = parseAutobahn(feed, AUTOBAHN_SOURCE, "warning");
+    const structured = events.find((e) => e.id.includes("start-structured"));
+    const prose = events.find((e) => e.id.includes("start-prose-only"));
+    expect(structured!.validFrom).toBe("2026-07-10T20:00:00.000Z");
+    // 22.06.26 08:00 CEST == 06:00Z.
+    expect(prose!.validFrom).toBe("2026-06-22T06:00:00.000Z");
+  });
+
+  it("collapses a recurring nightly closure list into a schedule window + outer bounds", () => {
+    const feed = {
+      closure: [
+        {
+          identifier: "nightly",
+          title: "A4 | Köln-Merheim - Untereschbach",
+          coordinate: { lat: 50.95, long: 7.1 },
+          description: [
+            "Die Baustelle ist zu folgenden Zeiträumen gültig:",
+            "29.06.26 20:00 bis zum 30.06.26 05:00 Uhr.",
+            "30.06.26 20:00 bis zum 01.07.26 05:00 Uhr.",
+            "01.07.26 20:00 bis zum 02.07.26 05:00 Uhr.",
+            "(Ende der Gesamtmaßnahme: 10.07.26)",
+          ],
+        },
+      ],
+    };
+    const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "closure");
+    // One recurrence window: nightly 20:00–05:00 over the start-date span.
+    expect(ev!.schedule).toEqual([
+      { dateStart: "2026-06-29", dateEnd: "2026-07-01", timeStart: "20:00", timeEnd: "05:00" },
+    ]);
+    // Outer bounds: first window start … last window end (Berlin → UTC).
+    expect(ev!.validFrom).toBe("2026-06-29T18:00:00.000Z");
+    expect(ev!.validTo).toBe("2026-07-02T03:00:00.000Z");
+  });
+
+  it("leaves validTo null and schedule unset when no end-time prose is present", () => {
     const feed = {
       warning: [
         {
@@ -404,6 +459,7 @@ describe("parseAutobahn — validTo from prose end time", () => {
     };
     const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "warning");
     expect(ev!.validTo).toBeNull();
+    expect(ev!.schedule).toBeUndefined();
   });
 });
 

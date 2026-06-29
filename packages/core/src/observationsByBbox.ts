@@ -43,7 +43,9 @@ interface ObservationRow {
   headline: string | null;
   description: string | null;
   attributes: Record<string, unknown> | null;
+  valid_from: string | null;
   valid_to: string | null;
+  schedule: unknown;
   data_updated_at: string | Date | null;
   geojson: string;
   origin: { kind: string; attribution?: { provider?: string; license?: string; url?: string } };
@@ -93,7 +95,9 @@ function rowToFeature(row: ObservationRow, mergedSources?: Observation["mergedSo
       headline: row.headline,
       description: row.description,
       attributes: row.attributes,
+      valid_from: row.valid_from,
       valid_to: row.valid_to,
+      schedule: row.schedule ?? undefined,
       is_stale: row.is_stale,
       attribution,
       ...(mergedSources && mergedSources.length > 0 ? { mergedSources } : {}),
@@ -149,7 +153,7 @@ export async function observationsByBbox(
   const query = `
     SELECT
       id, source, domain, kind, type, severity,
-      headline, description, attributes, valid_to, data_updated_at,
+      headline, description, attributes, valid_from, valid_to, schedule, data_updated_at,
       ST_AsGeoJSON(geom) AS geojson,
       origin,
       (stale_after IS NOT NULL AND stale_after < now()) AS is_stale

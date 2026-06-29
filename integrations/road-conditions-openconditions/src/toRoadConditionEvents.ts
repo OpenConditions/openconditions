@@ -2,6 +2,7 @@ import type { Feature, FeatureCollection } from "geojson";
 import type {
   RoadConditionEvent,
   RoadConditionRoadRef,
+  RoadConditionScheduleWindow,
   RoadConditionSeverity,
   RoadConditionType,
   RoadState,
@@ -34,8 +35,14 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
     description: str(p.description),
     roadState: attrs.roadState as RoadState | undefined,
     roads: attrs.roads as RoadConditionRoadRef[] | undefined,
-    validFrom: (attrs.validFrom as string | null | undefined) ?? null,
+    validFrom:
+      (p.valid_from as string | null | undefined) ??
+      (attrs.validFrom as string | null | undefined) ??
+      null,
     validTo: (p.valid_to as string | null | undefined) ?? null,
+    ...(Array.isArray(p.schedule) && p.schedule.length > 0
+      ? { schedule: p.schedule as RoadConditionScheduleWindow[] }
+      : {}),
     dataUpdatedAt: str(attrs.dataUpdatedAt),
     attribution: p.attribution as RoadConditionEvent["attribution"],
   };

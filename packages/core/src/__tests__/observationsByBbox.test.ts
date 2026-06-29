@@ -12,7 +12,11 @@ const fakeRow = {
   headline: "Multi-vehicle collision",
   description: "Three vehicles involved",
   attributes: { roads: ["A2"] },
+  valid_from: "2026-06-22T06:00:00Z",
   valid_to: "2026-06-22T10:00:00Z",
+  schedule: [
+    { dateStart: "2026-06-22", dateEnd: "2026-06-22", timeStart: "06:00", timeEnd: "10:00" },
+  ],
   geojson: JSON.stringify({ type: "Point", coordinates: [5.1234, 52.5678] }),
   origin: {
     kind: "feed",
@@ -47,6 +51,13 @@ describe("observationsByBbox", () => {
     expect(feat.properties?.severity).toBe("high");
     expect(feat.properties?.headline).toBe("Multi-vehicle collision");
     expect(feat.properties?.source).toBe("ndw");
+    // Structured validity window + recurring schedule survive into the feature
+    // properties (consumed by the map popup + time-aware routing).
+    expect(feat.properties?.valid_from).toBe("2026-06-22T06:00:00Z");
+    expect(feat.properties?.valid_to).toBe("2026-06-22T10:00:00Z");
+    expect(feat.properties?.schedule).toEqual([
+      { dateStart: "2026-06-22", dateEnd: "2026-06-22", timeStart: "06:00", timeEnd: "10:00" },
+    ]);
   });
 
   it("includes origin.attribution on the feature properties", async () => {
@@ -228,6 +239,23 @@ describe("observationsByBbox", () => {
     await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
     expect(capturedQuery).toMatch(/valid_to IS NULL OR valid_to > now\(\)/);
     expect(capturedQuery).toMatch(/expires_at IS NULL OR expires_at > now\(\)/);
+  });
+
+  it("selects valid_from (projected, not filtered) so future closures still reach consumers", async () => {
+    let capturedQuery = "";
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
+    // valid_from + schedule are in the SELECT list...
+    expect(capturedQuery).toMatch(/\bvalid_from\b/);
+    expect(capturedQuery).toMatch(/\bschedule\b/);
+    // ...but valid_from is NOT a WHERE filter — the map shows upcoming closures;
+    // routing does the time-of-travel filtering itself.
+    expect(capturedQuery).not.toMatch(/valid_from\s+(?:IS|<=|<|>)/);
   });
 
   it("derives is_stale from stale_after at query time (not the stored column)", async () => {
