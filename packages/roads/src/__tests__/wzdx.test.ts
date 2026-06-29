@@ -34,6 +34,17 @@ describe("parseWzdx — WZDx v4.2 fixture", () => {
     expect(events.every((ev) => ev.domain === "roads")).toBe(true);
   });
 
+  it("returns [] without throwing when a feed returns HTML instead of JSON", () => {
+    expect(parseWzdx("<!DOCTYPE html><html><body>Forbidden</body></html>", WZDX_SOURCE)).toEqual(
+      []
+    );
+    expect(parseWzdx("  \n  <html></html>", WZDX_SOURCE)).toEqual([]);
+  });
+
+  it("returns [] without throwing on malformed JSON", () => {
+    expect(parseWzdx("{not json", WZDX_SOURCE)).toEqual([]);
+  });
+
   it("maps work-zone features to type:'roadworks' with isPlanned:true", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseWzdx(json, WZDX_SOURCE);

@@ -66,6 +66,21 @@ describe("fetchAll — discover fan-out", () => {
     expect(bufs.map((b) => b.toString("utf8"))).not.toContain("body:https://x.test/bad");
   });
 
+  it("drops a sub-feed that returns an HTML block/error page (200) and keeps the JSON ones", async () => {
+    const urls = ["https://x.test/json", "https://x.test/html"];
+    const feed = makeFeed({ id: "html", discover: async () => urls });
+    const bufs = await fetchAll(
+      feed,
+      okFor((u) =>
+        u.endsWith("/html")
+          ? "  <!DOCTYPE html><html>blocked</html>"
+          : `{"feed":${JSON.stringify(u)}}`
+      )
+    );
+    expect(bufs).toHaveLength(1);
+    expect(bufs[0]!.toString("utf8")).toContain('"feed"');
+  });
+
   it("throws when every discovered sub-feed fails (preserves last-good upstream)", async () => {
     const feed = makeFeed({
       id: "allbad",
@@ -140,6 +155,16 @@ describe("fetchAll — static url forms (regression)", () => {
       okFor((u) => u)
     );
     expect(bufs[0]!.toString("utf8")).toBe("https://x.test/fn");
+  });
+
+  it("does not HTML-filter the single-url path (XML feeds like NDW pass through)", async () => {
+    const feed = makeFeed({ id: "xml", url: "https://x.test/ndw.xml" });
+    const bufs = await fetchAll(
+      feed,
+      okFor(() => '<?xml version="1.0"?><d2:payload/>')
+    );
+    expect(bufs).toHaveLength(1);
+    expect(bufs[0]!.toString("utf8")).toContain("<?xml");
   });
 
   it("throws when a feed has neither url nor discover", async () => {

@@ -223,9 +223,19 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
   let feed: WzdxFeed;
   try {
     const str = Buffer.isBuffer(geojson) ? geojson.toString("utf8") : geojson;
-    feed = (typeof str === "string" ? JSON.parse(str) : str) as WzdxFeed;
+    if (typeof str === "string") {
+      // A feed that returns an HTML block/login/error page with a 2xx isn't JSON;
+      // skip cleanly instead of letting JSON.parse throw a noisy SyntaxError.
+      if (str.trimStart().startsWith("<")) {
+        console.warn(`[wzdx] ${src.id}: feed returned HTML, not JSON; skipping`);
+        return [];
+      }
+      feed = JSON.parse(str) as WzdxFeed;
+    } else {
+      feed = str as WzdxFeed;
+    }
   } catch (err) {
-    console.warn("[wzdx] failed to parse JSON input:", err);
+    console.warn(`[wzdx] ${src.id}: failed to parse JSON input:`, err);
     return [];
   }
 

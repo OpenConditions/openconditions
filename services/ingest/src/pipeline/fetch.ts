@@ -12,6 +12,13 @@ function isGzip(buf: Buffer): boolean {
   return buf.length >= 2 && buf[0] === GZIP_MAGIC_0 && buf[1] === GZIP_MAGIC_1;
 }
 
+// First non-whitespace char is '<' → an HTML/XML block/login/error page, not the
+// JSON the fanned-out (discovered) feeds serve. Only applied on the fan-out path;
+// XML feeds like NDW go through the single-URL path and are never checked here.
+function looksLikeHtml(buf: Buffer): boolean {
+  return buf.subarray(0, 64).toString("utf8").trimStart().startsWith("<");
+}
+
 async function fetchOne(url: string, fetchFn: typeof fetch, init?: RequestInit): Promise<Buffer> {
   const res = await fetchFn(url, init);
   if (!res.ok) {
@@ -50,7 +57,11 @@ async function fetchFanout(urls: string[], fetchFn: typeof fetch): Promise<Buffe
     while (cursor < urls.length) {
       const url = urls[cursor++]!;
       try {
-        out.push(await fetchOne(url, fetchFn));
+        const buf = await fetchOne(url, fetchFn);
+        if (looksLikeHtml(buf)) {
+          throw new Error("returned HTML, not JSON");
+        }
+        out.push(buf);
       } catch (err) {
         failures++;
         console.warn(

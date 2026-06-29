@@ -59,6 +59,14 @@ export async function discoverAutobahnRoads(fetchFn: typeof fetch): Promise<stri
 
 const WZDX_REGISTRY_URL = "https://datahub.transportation.gov/resource/69qe-yiui.json?$limit=5000";
 
+// Many registry entries for keyed feeds still carry a literal "fill me in"
+// placeholder in the key querystring (e.g. ?api_key=INSERT-API-KEY-HERE,
+// ?apiKey=[Your-API-Key-Here]). Requesting those just 401s/fails every cycle and
+// can't work without per-agency keys we don't have, so drop them up front rather
+// than fan them out. Heuristics: any bracketed token, or a common placeholder phrase.
+const PLACEHOLDER_KEY_RE =
+  /[<>[\]{}]|INSERT[-_ ]?API|API[-_ ]?KEY[-_ ]?HERE|YOUR[-_ ]?(API[-_ ]?)?KEY|REPLACE[-_ ]?(ME|WITH)|X{5,}/i;
+
 interface WzdxRegistryRow {
   active?: unknown;
   format?: unknown;
@@ -103,6 +111,7 @@ export async function discoverWzdxFeeds(
   if (!Array.isArray(rows)) return [];
 
   const urls = new Set<string>();
+  let placeholderSkipped = 0;
   for (const row of rows as WzdxRegistryRow[]) {
     if (!isActive(row.active)) continue;
     if (
@@ -118,7 +127,17 @@ export async function discoverWzdxFeeds(
     )
       continue;
     const url = extractUrl(row.url);
-    if (url) urls.add(url);
+    if (!url) continue;
+    if (PLACEHOLDER_KEY_RE.test(url)) {
+      placeholderSkipped++;
+      continue;
+    }
+    urls.add(url);
+  }
+  if (placeholderSkipped > 0) {
+    console.info(
+      `[wzdx] skipped ${placeholderSkipped} registry feed(s) with an unfilled API-key placeholder`
+    );
   }
   return [...urls];
 }

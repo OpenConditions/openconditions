@@ -78,4 +78,30 @@ describe("discoverWzdxFeeds", () => {
     const urls = await discoverWzdxFeeds(jsonResponder({ error: "nope" }));
     expect(urls).toEqual([]);
   });
+
+  it("skips feeds whose key querystring is still an unfilled placeholder", async () => {
+    const reg = [
+      {
+        active: "true",
+        format: "geojson",
+        version: "4.2",
+        url: "https://a.example/wzdx?api_key=INSERT-API-KEY-HERE",
+      },
+      {
+        active: "true",
+        format: "geojson",
+        version: "4.2",
+        url: { url: "https://b.example/wzdx?apiKey=[Your-API-Key-Here]" },
+      },
+      {
+        active: "true",
+        format: "geojson",
+        version: "4.2",
+        url: "https://c.example/wzdx?key=YOUR_API_KEY",
+      },
+      { active: "true", format: "geojson", version: "4.2", url: "https://good.example/wzdx" },
+    ];
+    const urls = await discoverWzdxFeeds(jsonResponder(reg));
+    expect(urls).toEqual(["https://good.example/wzdx"]);
+  });
 });
