@@ -158,6 +158,20 @@ jobs:
           echo "sha256=$sha" >> "$GITHUB_OUTPUT"
           echo "Artifact sha256: $sha"
 
+      # Emit the extension.json for THIS tag (version + service ref pinned to it)
+      # from the committed template. The OpenMapX catalog points `manifest` at
+      # this release's `…/releases/latest/download/extension.json`, so a new tag
+      # surfaces as an available update with no catalog edit.
+      - name: Generate the release extension.json
+        run: |
+          ver="${GITHUB_REF_NAME#v}"
+          mkdir -p build
+          jq --arg v "$ver" --arg ref "$GITHUB_REF_NAME" \
+            '.version = $v | .services |= map(.ref = $ref)' \
+            extension.json > build/extension.json
+          echo "extension.json for $ver (service ref $GITHUB_REF_NAME):"
+          cat build/extension.json
+
       - name: Attach to the GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -167,4 +181,5 @@ jobs:
             --notes "OpenConditions ${{ github.ref_name }} — road-conditions-openconditions artifact sha256: ${{ steps.pack.outputs.sha256 }}" \
             || echo "release already exists"
           gh release upload "${{ github.ref_name }}" \
-            road-conditions-openconditions.tar.gz road-conditions-openconditions.tar.gz.sha256 --clobber
+            road-conditions-openconditions.tar.gz road-conditions-openconditions.tar.gz.sha256 \
+            build/extension.json --clobber
