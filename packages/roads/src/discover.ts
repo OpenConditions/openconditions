@@ -59,13 +59,36 @@ export async function discoverAutobahnRoads(fetchFn: typeof fetch): Promise<stri
 
 const WZDX_REGISTRY_URL = "https://datahub.transportation.gov/resource/69qe-yiui.json?$limit=5000";
 
-// Many registry entries for keyed feeds still carry a literal "fill me in"
-// placeholder in the key querystring (e.g. ?api_key=INSERT-API-KEY-HERE,
-// ?apiKey=[Your-API-Key-Here]). Requesting those just 401s/fails every cycle and
-// can't work without per-agency keys we don't have, so drop them up front rather
-// than fan them out. Heuristics: any bracketed token, or a common placeholder phrase.
+// Many registry entries for keyed feeds carry an unfilled credential placeholder
+// in the URL instead of a real key. Requesting those just 401s/403s every cycle
+// and can't work without per-agency keys we don't have, so drop them up front
+// rather than fan them out. Three shapes occur in the wild:
+//   1. a literal "fill me in" token — ?api_key=INSERT-API-KEY-HERE,
+//      ?apiKey=[Your-API-Key-Here], or a path segment like /<key>/...
+//   2. the same token percent-encoded — ?key=%3ckey%3e  (decodes to <key>)
+//   3. an empty credential param — ?api_key= , ?key= , ?apiKey=
+// (1) and (2) are caught by matching the URL-*decoded* form against the
+// placeholder pattern; (3) by an empty key/token/secret query param.
 const PLACEHOLDER_KEY_RE =
   /[<>[\]{}]|INSERT[-_ ]?API|API[-_ ]?KEY[-_ ]?HERE|YOUR[-_ ]?(API[-_ ]?)?KEY|REPLACE[-_ ]?(ME|WITH)|X{5,}/i;
+
+// A credential-bearing query param (name ends in key/token/secret) with an empty
+// value: ?api_key= , &key= , ?subscription-key=&foo=… .
+const EMPTY_KEY_PARAM_RE = /[?&][\w.-]*(?:key|token|secret)=(?=$|&)/i;
+
+/** decodeURIComponent that never throws on a malformed `%` sequence. */
+function decodeUrlSafe(url: string): string {
+  try {
+    return decodeURIComponent(url);
+  } catch {
+    return url;
+  }
+}
+
+/** True when the URL still carries an unfilled API-key placeholder (any of the three shapes above). */
+function hasUnfilledKeyPlaceholder(url: string): boolean {
+  return PLACEHOLDER_KEY_RE.test(decodeUrlSafe(url)) || EMPTY_KEY_PARAM_RE.test(url);
+}
 
 interface WzdxRegistryRow {
   active?: unknown;
@@ -128,7 +151,7 @@ export async function discoverWzdxFeeds(
       continue;
     const url = extractUrl(row.url);
     if (!url) continue;
-    if (PLACEHOLDER_KEY_RE.test(url)) {
+    if (hasUnfilledKeyPlaceholder(url)) {
       placeholderSkipped++;
       continue;
     }

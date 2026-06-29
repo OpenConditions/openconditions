@@ -54,7 +54,6 @@ describe("discoverWzdxFeeds", () => {
     expect(urls.sort()).toEqual(
       [
         "https://alpha.example/api/wzdx",
-        "https://bravo.example/api/wzdx?apiKey=",
         "https://charlie.example/api/wzdx",
         "https://hotel.example/api/wzdx-string",
         "https://india.example/api/wzdx",
@@ -68,6 +67,11 @@ describe("discoverWzdxFeeds", () => {
     expect(urls).not.toContain("https://echo.example/api/wzdx");
     expect(urls).not.toContain("https://foxtrot.example/api/cwz");
     expect(urls).not.toContain("https://golf.example/api/v3");
+  });
+
+  it("excludes a feed whose key query param is present but empty", async () => {
+    const urls = await discoverWzdxFeeds(jsonResponder(registry));
+    expect(urls).not.toContain("https://bravo.example/api/wzdx?apiKey=");
   });
 
   it("throws when the registry responds non-ok", async () => {
@@ -99,9 +103,39 @@ describe("discoverWzdxFeeds", () => {
         version: "4.2",
         url: "https://c.example/wzdx?key=YOUR_API_KEY",
       },
+      // Percent-encoded placeholder — ?key=%3ckey%3e decodes to ?key=<key>
+      // (mirrors api.511.org in the live registry).
+      {
+        active: "true",
+        format: "geojson",
+        version: "4.2",
+        url: "https://d.example/wzdx?key=%3ckey%3e",
+      },
+      // Empty credential params (mirror nps `api_key=` and drivetexas `key=`).
+      {
+        active: "true",
+        format: "geojson",
+        version: "4.2",
+        url: "https://e.example/wzdx?api_key=",
+      },
+      {
+        active: "true",
+        format: "geojson",
+        version: "4.2",
+        url: "https://f.example/wzdx?key=&format=geojson",
+      },
+      // A real, filled key must survive.
+      {
+        active: "true",
+        format: "geojson",
+        version: "4.2",
+        url: "https://keyed.example/wzdx?api_key=abc123",
+      },
       { active: "true", format: "geojson", version: "4.2", url: "https://good.example/wzdx" },
     ];
     const urls = await discoverWzdxFeeds(jsonResponder(reg));
-    expect(urls).toEqual(["https://good.example/wzdx"]);
+    expect(urls.sort()).toEqual(
+      ["https://good.example/wzdx", "https://keyed.example/wzdx?api_key=abc123"].sort()
+    );
   });
 });
