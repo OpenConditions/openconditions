@@ -41,3 +41,6 @@ plans/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Local operator credentials runbook (kept out of git)
+docs/road-feed-credentials.md

@@ -386,6 +386,40 @@ describe("FEED_SOURCES", () => {
     expect(feed!.requestHeaders?.["Accept-Encoding"]).toBe("gzip");
   });
 
+  it("registers the German state Mobilithek feeds, all sharing the org cert and gated by a per-region subscription id", () => {
+    const regions = FEED_SOURCES.filter(
+      (f) => f.id === "verkehr-nrw-de" || f.id.startsWith("mobilithek-")
+    );
+    // NRW-LVZ + NRW-kommunal + NRW-Mobidrom + 13 states.
+    expect(regions.length).toBeGreaterThanOrEqual(16);
+    const subEnvVars = new Set<string>();
+    for (const feed of regions) {
+      expect(feed.format).toBe("datex2");
+      // Every region reuses the single org machine certificate.
+      expect(feed.auth).toEqual({
+        kind: "mtls",
+        certEnvVar: "MOBILITHEK_NRW_CERT",
+        keyEnvVar: "MOBILITHEK_NRW_KEY",
+      });
+      expect(feed.country).toBe("DE");
+      expect(feed.requestHeaders?.["Accept-Encoding"]).toBe("gzip");
+      expect(feed.attribution).toBeTruthy();
+      expect(feed.license).toBeTruthy();
+      // Gated by exactly one subscription-id env var, which must be unique so the
+      // regions can be activated independently as the operator subscribes.
+      expect(feed.requiredEnv).toHaveLength(1);
+      const subEnvVar = feed.requiredEnv![0];
+      expect(subEnvVar).toMatch(/^MOBILITHEK_[A-Z_]+_SUBSCRIPTION_ID$/);
+      expect(subEnvVars.has(subEnvVar)).toBe(false);
+      subEnvVars.add(subEnvVar);
+      // Dormant until its subscription id is set — no id → no URLs.
+      const urlFn = feed.url as (env: Record<string, string | undefined>) => string | string[];
+      expect(urlFn({})).toEqual([]);
+      // The Mobidrom bundle is CC-BY-SA and must stay isolated in its own feed.
+      if (feed.id === "mobilithek-nrw-mobidrom") expect(feed.license).toBe("CC-BY-SA-4.0");
+    }
+  });
+
   it("registers unique feed ids", () => {
     const ids = FEED_SOURCES.map((f) => f.id);
     expect(new Set(ids).size).toBe(ids.length);

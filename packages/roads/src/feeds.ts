@@ -155,6 +155,229 @@ export interface FeedSource {
 }
 
 /**
+ * Mobilithek (Germany's National Access Point) brokers DATEX II road-condition
+ * data from nearly every state + many cities. They ALL share one organisation
+ * machine certificate (mutual TLS) — historically named MOBILITHEK_NRW_CERT/KEY
+ * (the first region wired up was LVZ.NRW), reused here as the shared cert so a new
+ * region needs no new credential beyond its subscription id. Each region has its
+ * own comma-separated `<…>_SUBSCRIPTION_ID` env var (one id per subscribed offer);
+ * we fan out one HTTPS client-pull per id. To add a region: subscribe to its
+ * offer(s) on mobilithek.info, set the subscription id(s), and the feed activates.
+ *
+ * Licenses were clarified per region (2026-07, from the Mobilithek catalog + each
+ * publisher's own terms): `dl-de/zero-2-0` (no attribution); `dl-de/by-2-0`,
+ * `GeoNutzV` and `CC-BY-4.0` (attribution); `CC-BY-SA-4.0` (attribution + the
+ * Mobidrom bundle is ShareAlike — isolated in its own feed so it never folds into
+ * a more permissive one).
+ */
+const MOBILITHEK_CERT_ENV = "MOBILITHEK_NRW_CERT";
+const MOBILITHEK_KEY_ENV = "MOBILITHEK_NRW_KEY";
+
+interface MobilithekRegion {
+  id: string;
+  name: string;
+  /** Comma-separated Mobilithek subscription id(s) — one per subscribed offer. */
+  subEnvVar: string;
+  attribution: string;
+  license: string;
+  licenseUrl: string;
+  privacyUrl?: string;
+}
+
+const GEONUTZV_URL = "https://www.gesetze-im-internet.de/geonutzv/";
+const DL_BY_URL = "https://www.govdata.de/dl-de/by-2-0";
+const DL_ZERO_URL = "https://www.govdata.de/dl-de/zero-2-0";
+const CC_BY_URL = "https://creativecommons.org/licenses/by/4.0/";
+const CC_BY_SA_URL = "https://creativecommons.org/licenses/by-sa/4.0/";
+
+const MOBILITHEK_REGIONS: MobilithekRegion[] = [
+  // NRW — LVZ.NRW state network (the original feed; keeps its `verkehr-nrw-de`
+  // source id for DB/provider continuity). Offers: roadworks 648508602333433856
+  // + incidents 648512079906336768 (+ optional detours 648509554457178112).
+  {
+    id: "verkehr-nrw-de",
+    name: "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
+    subEnvVar: "MOBILITHEK_NRW_SUBSCRIPTION_ID",
+    attribution: "Landesverkehrszentrale NRW (Straßen.NRW)",
+    license: "dl-de/zero-2-0",
+    licenseUrl: DL_ZERO_URL,
+    privacyUrl: "https://www.strassen.nrw.de/de/datenschutz.html",
+  },
+  // NRW municipalities — Düsseldorf/dmotion 110000000002056000, Köln 110000000002900004
+  // /110000000002899004/110000000003011002, Kreis Unna 930448553981730816 (all dl-de/zero).
+  {
+    id: "mobilithek-nrw-kommunal",
+    name: "NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek",
+    subEnvVar: "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID",
+    attribution: "Städte und Kreise in Nordrhein-Westfalen (via Mobilithek)",
+    license: "dl-de/zero-2-0",
+    licenseUrl: DL_ZERO_URL,
+  },
+  // NRW.Mobidrom bundled roadworks 884461110418108416 — CC-BY-SA → isolated.
+  {
+    id: "mobilithek-nrw-mobidrom",
+    name: "NRW.Mobidrom bundled roadworks via Mobilithek",
+    subEnvVar: "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID",
+    attribution: "NRW.Mobidrom",
+    license: "CC-BY-SA-4.0",
+    licenseUrl: CC_BY_SA_URL,
+  },
+  // Bayern — Bayerische Straßenbauverwaltung 110000000002506000 + 110000000002507001 (GeoNutzV).
+  {
+    id: "mobilithek-bayern",
+    name: "Bayern via Mobilithek",
+    subEnvVar: "MOBILITHEK_BAYERN_SUBSCRIPTION_ID",
+    attribution: "Bayerische Straßenbauverwaltung",
+    license: "GeoNutzV",
+    licenseUrl: GEONUTZV_URL,
+  },
+  // Baden-Württemberg — Landesmeldestelle (Innenministerium BW) 857127500689977344 (dl-de/by).
+  {
+    id: "mobilithek-bw",
+    name: "Baden-Württemberg via Mobilithek",
+    subEnvVar: "MOBILITHEK_BW_SUBSCRIPTION_ID",
+    attribution: "Innenministerium Baden-Württemberg (Landesmeldestelle)",
+    license: "dl-de/by-2-0",
+    licenseUrl: DL_BY_URL,
+  },
+  // Berlin — SenMVKU 801096621061234688 (dl-de/by).
+  {
+    id: "mobilithek-berlin",
+    name: "Berlin via Mobilithek",
+    subEnvVar: "MOBILITHEK_BERLIN_SUBSCRIPTION_ID",
+    attribution: "Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt Berlin",
+    license: "dl-de/by-2-0",
+    licenseUrl: DL_BY_URL,
+  },
+  // Brandenburg — Landesbetrieb Straßenwesen 636547428851101696 (dl-de/by).
+  {
+    id: "mobilithek-brandenburg",
+    name: "Brandenburg via Mobilithek",
+    subEnvVar: "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID",
+    attribution: "Landesbetrieb Straßenwesen Brandenburg",
+    license: "dl-de/by-2-0",
+    licenseUrl: DL_BY_URL,
+  },
+  // Bremen — Verkehrsmanagementzentrale Bremen 608390979298140160 (dl-de/by).
+  {
+    id: "mobilithek-bremen",
+    name: "Bremen via Mobilithek",
+    subEnvVar: "MOBILITHEK_BREMEN_SUBSCRIPTION_ID",
+    attribution: "Verkehrsmanagementzentrale Bremen",
+    license: "dl-de/by-2-0",
+    licenseUrl: DL_BY_URL,
+  },
+  // Hamburg — LSBG 110000000003540000 (dl-de/by).
+  {
+    id: "mobilithek-hamburg",
+    name: "Hamburg via Mobilithek",
+    subEnvVar: "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID",
+    attribution: "Landesbetrieb Straßen, Brücken und Gewässer Hamburg (LSBG)",
+    license: "dl-de/by-2-0",
+    licenseUrl: DL_BY_URL,
+  },
+  // Hessen — Hessen Mobil 841292914668498944/862010418143330304 + C-ITS 110000000002716000 (GeoNutzV).
+  {
+    id: "mobilithek-hessen",
+    name: "Hessen via Mobilithek",
+    subEnvVar: "MOBILITHEK_HESSEN_SUBSCRIPTION_ID",
+    attribution: "Hessen Mobil – Straßen- und Verkehrsmanagement",
+    license: "GeoNutzV",
+    licenseUrl: GEONUTZV_URL,
+  },
+  // Mecklenburg-Vorpommern — LSBV M-V 110000000002802000 + 818137060259840000 (GeoNutzV).
+  {
+    id: "mobilithek-mv",
+    name: "Mecklenburg-Vorpommern via Mobilithek",
+    subEnvVar: "MOBILITHEK_MV_SUBSCRIPTION_ID",
+    attribution: "Landesamt für Straßenbau und Verkehr Mecklenburg-Vorpommern",
+    license: "GeoNutzV",
+    licenseUrl: GEONUTZV_URL,
+  },
+  // Niedersachsen — NLStBV 110000000002749000/951153778962972672/656880550985773056
+  // + Hannover 633691473746571264 (dl-de/zero).
+  {
+    id: "mobilithek-niedersachsen",
+    name: "Niedersachsen via Mobilithek",
+    subEnvVar: "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID",
+    attribution: "Niedersächsische Landesbehörde für Straßenbau und Verkehr (NLStBV)",
+    license: "dl-de/zero-2-0",
+    licenseUrl: DL_ZERO_URL,
+  },
+  // Sachsen — LASuV 608439575154401280 (CC-BY-4.0) + Leipzig 952541268382826496.
+  {
+    id: "mobilithek-sachsen",
+    name: "Sachsen via Mobilithek",
+    subEnvVar: "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID",
+    attribution: "Landesamt für Straßenbau und Verkehr Sachsen (LASuV)",
+    license: "CC-BY-4.0",
+    licenseUrl: CC_BY_URL,
+  },
+  // Sachsen-Anhalt — LSBB 110000000003150000 (dl-de/by).
+  {
+    id: "mobilithek-sachsen-anhalt",
+    name: "Sachsen-Anhalt via Mobilithek",
+    subEnvVar: "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID",
+    attribution: "Landesstraßenbaubehörde Sachsen-Anhalt",
+    license: "dl-de/by-2-0",
+    licenseUrl: DL_BY_URL,
+  },
+  // Schleswig-Holstein — LBV.SH 110000000003237002 + 110000000003387000 (CC-BY-4.0).
+  {
+    id: "mobilithek-sh",
+    name: "Schleswig-Holstein via Mobilithek",
+    subEnvVar: "MOBILITHEK_SH_SUBSCRIPTION_ID",
+    attribution: "Landesbetrieb Straßenbau und Verkehr Schleswig-Holstein (LBV.SH)",
+    license: "CC-BY-4.0",
+    licenseUrl: CC_BY_URL,
+  },
+  // Thüringen — TLBV 110000000003051000 (GeoNutzV).
+  {
+    id: "mobilithek-thueringen",
+    name: "Thüringen via Mobilithek",
+    subEnvVar: "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID",
+    attribution: "Thüringer Landesamt für Bau und Verkehr",
+    license: "GeoNutzV",
+    licenseUrl: GEONUTZV_URL,
+  },
+];
+
+/**
+ * A Mobilithek region → a credential-gated DATEX II client-pull feed. All share
+ * the org machine cert; each is activated by setting its subscription-id env var.
+ * The URL is the subscription's HTTPS Zugriffspunkt (plain-HTTPS client-pull, NOT
+ * the `/soap/` SOAP binding); Mobilithek REQUIRES `Accept-Encoding: gzip` (without
+ * it the broker returns HTTP 400) and serves gzipped DATEX II (fetchOne gunzips).
+ */
+function mobilithekFeed(r: MobilithekRegion): FeedSource {
+  return {
+    id: r.id,
+    name: r.name,
+    format: "datex2",
+    url: (env) =>
+      (env[r.subEnvVar] ?? "")
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .map(
+          (id) =>
+            `https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${id}/clientPullService?subscriptionID=${id}`
+        ),
+    auth: { kind: "mtls", certEnvVar: MOBILITHEK_CERT_ENV, keyEnvVar: MOBILITHEK_KEY_ENV },
+    requiredEnv: [r.subEnvVar],
+    requestHeaders: { "Accept-Encoding": "gzip" },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: r.license,
+    licenseUrl: r.licenseUrl,
+    attribution: r.attribution,
+    country: "DE",
+    privacyUrl: r.privacyUrl ?? "https://mobilithek.info/datenschutz",
+    enabledByDefault: true,
+  };
+}
+
+/**
  * All registered feed sources.
  */
 export const FEED_SOURCES: FeedSource[] = [
@@ -937,56 +1160,12 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl: "https://www.transpordiamet.ee/en",
     enabledByDefault: true,
   },
-  {
-    // Germany (NRW) — LVZ.NRW / VIZ.NRW DATEX II via Mobilithek (the user's
-    // original verkehr.nrw ask). dl-de/zero-2-0 (fully commercial-OK). NOTE: the
-    // data is published on Mobilithek under publisher "LVZ.NRW" (Landesverkehrs-
-    // zentrale NRW), not "Straßen.NRW" — search that name or the offer IDs below.
-    // Relevant Mobilithek offers (subscribe to the snapshot/"Gesamtdatensatz"
-    // variants, NOT the "Einzeldatensätze bei Eintreten" delta variant):
-    //   • Roadworks on the non-autobahn network — "Arbeitsstellen im nachgeordneten
-    //     Netz in Nordrhein-Westfalen" → offer 648508602333433856 (the Autobahn
-    //     complement; rides cross-source dedup for any overlap).
-    //   • Incidents — "Verkehrsinformationen der VIZ.NRW für Nordrhein-Westfalen –
-    //     Gesamtdatensatz" → offer 648512079906336768.
-    //   • Optional detours — "Umleitungen von Arbeitsstellen …" → 648509554457178112.
-    // Access is a Mobilithek consumer client-pull subscription authenticated with
-    // an organisation machine certificate (mutual TLS): create a machine account,
-    // upload your own PEM cert (key stays with us, no SMS) or convert the issued
-    // .p12 to PEM — either way set MOBILITHEK_NRW_CERT/KEY. Each *subscription*
-    // (one per offer) has its own numeric id, shown on its page under
-    // mobilithek.info/organisation/subscriptions; list them comma-separated in
-    // MOBILITHEK_NRW_SUBSCRIPTION_ID and we fan out one client-pull GET per id.
-    // The URL is the subscription's HTTPS Zugriffspunkt (the plain-HTTPS client-
-    // pull, NOT the `/soap/` SOAP binding — that one only answers POST):
-    // /api/v1.0/subscription/<id>/clientPullService?subscriptionID=<id>.
-    // Mobilithek REQUIRES `Accept-Encoding: gzip` on the pull — without it the
-    // broker returns HTTP 400; the response is gzipped DATEX II v2 (fetchOne
-    // gunzips by magic bytes).
-    id: "verkehr-nrw-de",
-    name: "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
-    format: "datex2",
-    url: (env) =>
-      (env["MOBILITHEK_NRW_SUBSCRIPTION_ID"] ?? "")
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean)
-        .map(
-          (id) =>
-            `https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${id}/clientPullService?subscriptionID=${id}`
-        ),
-    auth: { kind: "mtls", certEnvVar: "MOBILITHEK_NRW_CERT", keyEnvVar: "MOBILITHEK_NRW_KEY" },
-    requiredEnv: ["MOBILITHEK_NRW_SUBSCRIPTION_ID"],
-    requestHeaders: { "Accept-Encoding": "gzip" },
-    cadenceSec: 300,
-    freshnessWindowSec: 900,
-    license: "dl-de/zero-2-0",
-    licenseUrl: "https://www.govdata.de/dl-de/zero-2-0",
-    attribution: "Landesverkehrszentrale NRW (Straßen.NRW)",
-    country: "DE",
-    privacyUrl: "https://www.strassen.nrw.de/de/datenschutz.html",
-    enabledByDefault: true,
-  },
+  // Germany via Mobilithek — one credential-gated DATEX II client-pull feed per
+  // region (states + city bundles), all sharing the org machine cert. See
+  // MOBILITHEK_REGIONS above for the per-region subscription-id env vars, offers,
+  // attribution and licenses. `verkehr-nrw-de` (LVZ.NRW) is the first row; the
+  // rest stay dormant until their `MOBILITHEK_<REGION>_SUBSCRIPTION_ID` is set.
+  ...MOBILITHEK_REGIONS.map(mobilithekFeed),
 ];
 
 type ParserFn = typeof parseDatexSituations;
