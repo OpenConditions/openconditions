@@ -89,6 +89,27 @@ function need(env: Env, key: string): string {
   return v;
 }
 
+/**
+ * Reconstruct canonical PEM from a possibly-mangled credential value. Pasting a
+ * certificate/key into an admin-panel field, or converting a `.p12` with
+ * `openssl pkcs12`, commonly produces material that Node's TLS (and curl) reject:
+ * a "Bag Attributes …" preamble before the first `-----BEGIN`, and/or newlines
+ * collapsed to spaces so the whole block is one line ("no start line"). For each
+ * BEGIN/END block we keep only the base64 body, strip every non-base64 char, and
+ * re-wrap at 64 columns. Returns the input unchanged when it holds no PEM block.
+ */
+export function normalizePem(raw: string): string {
+  const re = /-----BEGIN ([A-Z0-9 ]+?)-----([\s\S]*?)-----END \1-----/g;
+  const blocks: string[] = [];
+  for (let m = re.exec(raw); m !== null; m = re.exec(raw)) {
+    const label = m[1];
+    const body = (m[2].match(/[A-Za-z0-9+/=]/g) ?? []).join("");
+    const wrapped = body.match(/.{1,64}/g)?.join("\n") ?? "";
+    blocks.push(`-----BEGIN ${label}-----\n${wrapped}\n-----END ${label}-----`);
+  }
+  return blocks.length > 0 ? `${blocks.join("\n")}\n` : raw;
+}
+
 function withQueryParam(input: Parameters<typeof fetch>[0], param: string, value: string): string {
   const url = new URL(typeof input === "string" ? input : input.toString());
   url.searchParams.set(param, value);
@@ -189,9 +210,9 @@ export function makeAuthorizedFetch(
       const ca = auth.caEnvVar ? env[auth.caEnvVar] : undefined;
       const dispatcher = new Agent({
         connect: {
-          cert: need(env, auth.certEnvVar),
-          key: need(env, auth.keyEnvVar),
-          ...(ca ? { ca } : {}),
+          cert: normalizePem(need(env, auth.certEnvVar)),
+          key: normalizePem(need(env, auth.keyEnvVar)),
+          ...(ca ? { ca: normalizePem(ca) } : {}),
         },
       });
       return (input, init) =>

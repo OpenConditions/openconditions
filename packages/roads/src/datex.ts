@@ -552,6 +552,22 @@ function listSituationRecords(doc: XmlObject): SituationRecord[] {
     }
   }
 
+  // National Highways (England) and similar emit the publication AS the document
+  // root (e.g. <D2Payload> carrying <feedType>SituationPublication</feedType>)
+  // with <situation> children directly inside it — no nested payload /
+  // ...Publication wrapper for the loops above to match. As a last resort, accept
+  // any root child object that directly holds situations.
+  if (!publication) {
+    for (const [key, value] of Object.entries(root)) {
+      if (key.startsWith("@_")) continue;
+      const candidate = xmlNodeToArray(value).find(isXmlObject);
+      if (candidate && "situation" in candidate) {
+        publication = candidate;
+        break;
+      }
+    }
+  }
+
   if (!publication) return [];
 
   const situations = getXmlChildren(publication, "situation");

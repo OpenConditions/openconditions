@@ -140,6 +140,40 @@ describe("parseDatexSituations — v2/v3 root tolerance", () => {
     expect(events[0]!.type).toBe("lane_closure");
     expect(events[0]!.geometry?.type).toBe("Point");
   });
+
+  it("handles a <D2Payload> document root with <situation> children directly (National Highways)", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<D2Payload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3">
+  <feedType>SituationPublication</feedType>
+  <publicationTime>2026-06-30T00:00:00Z</publicationTime>
+  <situation id="S3">
+    <situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="R3" version="1">
+      <situationRecordVersionTime>2026-06-30T00:00:00Z</situationRecordVersionTime>
+      <validity>
+        <validityStatus>active</validityStatus>
+        <validityTimeSpecification>
+          <overallStartTime>2026-06-30T00:00:00Z</overallStartTime>
+        </validityTimeSpecification>
+      </validity>
+      <roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>
+      <locationReference xsi:type="PointLocation">
+        <pointByCoordinates>
+          <pointCoordinates>
+            <latitude>52.5</latitude>
+            <longitude>-1.9</longitude>
+          </pointCoordinates>
+        </pointByCoordinates>
+      </locationReference>
+    </situationRecord>
+  </situation>
+</D2Payload>`;
+
+    const events = parseDatexSituations(xml, NDW_SOURCE);
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    expect(events[0]!.geometry?.type).toBe("Point");
+    expect(events[0]!.type).not.toBe("other");
+    expect(events[0]!.roadState).toBe("closed");
+  });
 });
 
 /** Wrap one situationRecord body in a minimal DATEX II v3 document. */

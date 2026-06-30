@@ -3,7 +3,12 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import type { FeedAuth } from "@openconditions/roads";
-import { hasCredentials, makeAuthorizedFetch, requiredEnvVars } from "../pipeline/auth.js";
+import {
+  hasCredentials,
+  makeAuthorizedFetch,
+  normalizePem,
+  requiredEnvVars,
+} from "../pipeline/auth.js";
 
 /** A fake fetch that records the (url, init) it was called with and returns 200. */
 function recorder(body = "{}") {
@@ -18,6 +23,34 @@ function recorder(body = "{}") {
 function header(init: RequestInit | undefined, name: string): string | null {
   return new Headers(init?.headers).get(name);
 }
+
+describe("normalizePem", () => {
+  // 130 base64 chars → must re-wrap onto 3 lines (64+64+2).
+  const b64 = "A".repeat(64) + "B".repeat(64) + "C".repeat(2);
+
+  it("reconstructs canonical PEM from a single-line value with a Bag Attributes preamble", () => {
+    const mangled = `Bag Attributes friendlyName: x localKeyID: 01 02 -----BEGIN CERTIFICATE----- ${b64} -----END CERTIFICATE-----`;
+    const out = normalizePem(mangled);
+    const lines = out.trimEnd().split("\n");
+    expect(lines[0]).toBe("-----BEGIN CERTIFICATE-----");
+    expect(lines.at(-1)).toBe("-----END CERTIFICATE-----");
+    expect(out).not.toContain("Bag Attributes");
+    // body re-wrapped at <=64 cols and byte-identical to the source base64
+    const body = lines.slice(1, -1);
+    expect(body.every((l) => l.length <= 64)).toBe(true);
+    expect(body.join("")).toBe(b64);
+  });
+
+  it("normalizes a key whose newlines were collapsed to spaces", () => {
+    const out = normalizePem(`-----BEGIN PRIVATE KEY----- ${b64} -----END PRIVATE KEY-----`);
+    expect(out.startsWith("-----BEGIN PRIVATE KEY-----\n")).toBe(true);
+    expect(out.trimEnd().endsWith("\n-----END PRIVATE KEY-----")).toBe(true);
+  });
+
+  it("returns input unchanged when no PEM block is present", () => {
+    expect(normalizePem("not-a-pem")).toBe("not-a-pem");
+  });
+});
 
 describe("requiredEnvVars", () => {
   it("lists the env vars each auth kind needs", () => {

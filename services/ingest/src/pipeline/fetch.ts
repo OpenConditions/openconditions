@@ -19,10 +19,26 @@ function looksLikeHtml(buf: Buffer): boolean {
   return buf.subarray(0, 64).toString("utf8").trimStart().startsWith("<");
 }
 
+/**
+ * Strip query-string VALUES from a URL for safe logging. Several feeds carry
+ * credentials in query params (e.g. Buenos Aires' client_id/client_secret), and
+ * fetch errors bubble the URL into logs — so redact every value while keeping the
+ * path and param names for debugging. Falls back to the path on a parse failure.
+ */
+function redactUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    for (const k of [...u.searchParams.keys()]) u.searchParams.set(k, "***");
+    return u.toString();
+  } catch {
+    return url.split("?")[0] ?? url;
+  }
+}
+
 async function fetchOne(url: string, fetchFn: typeof fetch, init?: RequestInit): Promise<Buffer> {
   const res = await fetchFn(url, init);
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status} fetching ${url}`);
+    throw new Error(`HTTP ${res.status} fetching ${redactUrl(url)}`);
   }
   const arrayBuf = await res.arrayBuffer();
   const raw = Buffer.from(arrayBuf);
