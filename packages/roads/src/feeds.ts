@@ -82,8 +82,12 @@ export interface FeedSource {
   /**
    * The feed's URL(s). Optional when `discover` is set (the URL set is then
    * resolved dynamically at fetch time). When both are present, `discover` wins.
+   *
+   * The function form may return a single URL or an array — e.g. one
+   * client-pull URL per comma-separated Mobilithek subscription id, where each
+   * URL must embed a secret from env and so cannot be a static `string[]`.
    */
-  url?: string | ((env: Record<string, string | undefined>) => string) | string[];
+  url?: string | ((env: Record<string, string | undefined>) => string | string[]) | string[];
   /**
    * Resolves the concrete URL set to fetch at request time (e.g. enumerate
    * every motorway, or pull a feed registry). The ingest service fans the
@@ -576,16 +580,21 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
-    // Slovenia — NAP/NCUP DATEX II (DARS + DRSI). Endpoint confirmed live
-    // (HTTP 403 without auth). CC-BY-SA (commercial OK; ShareAlike applies to
-    // re-emitted data). Auth is credential-gated — research indicates OAuth2;
-    // verify the exact scheme/token URL when access is granted. Scaffolded with
-    // Basic as a placeholder; set NAP_SI_USERNAME / NAP_SI_PASSWORD (or switch
-    // this `auth` to oauth2-client-credentials once the token URL is known).
+    // Slovenia — NAP/NCUP DATEX II (DARS + DRSI), served from the B2B host
+    // b2b.ncup.si. Two DATEX II v3.3 datasets merged under one source: Traffic
+    // events (b2b.events.datexii33) + Roadworks (b2b.roadworks.datexii33) — the
+    // two "Other contents" records to request on nap.si. CC-BY-SA (commercial
+    // OK; ShareAlike applies to re-emitted data). The B2B host is credential-
+    // gated (HTTP 403 without auth); access comes with the NAP account → set
+    // NAP_SI_USERNAME / NAP_SI_PASSWORD (HTTP Basic). Confirm the exact scheme
+    // against the B2B access instructions when access is granted.
     id: "nap-si",
     name: "NAP Slovenia (promet.si)",
     format: "datex2",
-    url: "https://b2b.nap.si/data/b2b.datex2.xml",
+    url: [
+      "https://b2b.ncup.si/data/b2b.events.datexii33",
+      "https://b2b.ncup.si/data/b2b.roadworks.datexii33",
+    ],
     auth: { kind: "basic", userEnvVar: "NAP_SI_USERNAME", passEnvVar: "NAP_SI_PASSWORD" },
     cadenceSec: 300,
     freshnessWindowSec: 900,
@@ -825,10 +834,11 @@ export const FEED_SOURCES: FeedSource[] = [
   {
     // England — National Highways NTIS "Road and Lane Closures" v2.0 DATEX II
     // (since 2025 it also publishes closures from unplanned events). OGL-UK-3.0
-    // (commercial OK). Subscribe free on the developer portal for an APIM
-    // subscription key → set NH_API_KEY. Host + Ocp-Apim-Subscription-Key header
-    // are the standard NTIS APIM ones; confirm the exact product path against the
-    // subscription's Postman collection when keyed.
+    // (commercial OK). Subscribe free to the "unlimited" product on the developer
+    // portal (one product grants the APIM key for all NTIS DATEX feeds) → the
+    // Ocp-Apim-Subscription-Key shown in your profile goes in NH_API_KEY. Host +
+    // header are the standard NTIS APIM ones; confirm the exact closures path
+    // against the subscription's Postman collection when keyed.
     id: "nationalhighways-gb",
     name: "National Highways NTIS (England)",
     format: "datex2",
@@ -899,12 +909,13 @@ export const FEED_SOURCES: FeedSource[] = [
   {
     // Estonia — Transpordiamet "Tark Tee" (Smart Road) DATEX II gateway (traffic
     // safety + restriction datasets). Estonian open data, CC-BY-4.0 (commercial
-    // OK). Register at tarktee.mnt.ee for an API key → set EE_TARKTEE_API_KEY.
-    // Confirm the exact dataset path and auth param when keyed.
+    // OK). Register for the DATEX II API at tarktee.transpordiamet.ee (the old
+    // tarktee.mnt.ee domain is retired) → set EE_TARKTEE_API_KEY. Confirm the
+    // exact dataset path and auth param when keyed.
     id: "tarktee-ee",
     name: "Tark Tee (Estonia)",
     format: "datex2",
-    url: "https://tarktee.mnt.ee/api/datex2/situation",
+    url: "https://tarktee.transpordiamet.ee/api/datex2/situation",
     auth: { kind: "query-key", param: "apiKey", envVar: "EE_TARKTEE_API_KEY" },
     cadenceSec: 300,
     freshnessWindowSec: 900,
@@ -928,17 +939,27 @@ export const FEED_SOURCES: FeedSource[] = [
     //   • Incidents — "Verkehrsinformationen der VIZ.NRW für Nordrhein-Westfalen –
     //     Gesamtdatensatz" → offer 648512079906336768.
     //   • Optional detours — "Umleitungen von Arbeitsstellen …" → 648509554457178112.
-    // Access is a Mobilithek client-pull subscription. The standard machine
-    // interface uses an organisation certificate (mutual TLS) — register an org on
-    // mobilithek.info, obtain the client cert, set MOBILITHEK_NRW_CERT/KEY (PEM) +
-    // the issued subscription id — but these are open-data offers, so confirm on
-    // the offer's access page whether a plain HTTPS pull/token is offered instead.
-    // Replace the URL with the issued pull URL(s) per subscription when keyed.
+    // Access is a Mobilithek consumer client-pull subscription authenticated with
+    // an organisation machine certificate (mutual TLS): create a machine account,
+    // upload your own PEM cert (key stays with us, no SMS) or convert the issued
+    // .p12 to PEM — either way set MOBILITHEK_NRW_CERT/KEY. Each *subscription*
+    // (one per offer) has its own numeric id, shown on its page under
+    // mobilithek.info/organisation/subscriptions; list them comma-separated in
+    // MOBILITHEK_NRW_SUBSCRIPTION_ID and we fan out one client-pull GET per id.
+    // The URL is the subscription's HTTPS Zugriffspunkt (client-pull container):
+    // /api/v1.0/subscription/soap/<id>/clientPullService?subscriptionID=<id>.
     id: "verkehr-nrw-de",
     name: "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
     format: "datex2",
     url: (env) =>
-      `https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${env["MOBILITHEK_NRW_SUBSCRIPTION_ID"] ?? ""}/clientPullService/DatexPull`,
+      (env["MOBILITHEK_NRW_SUBSCRIPTION_ID"] ?? "")
+        .split(",")
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .map(
+          (id) =>
+            `https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/soap/${id}/clientPullService?subscriptionID=${id}`
+        ),
     auth: { kind: "mtls", certEnvVar: "MOBILITHEK_NRW_CERT", keyEnvVar: "MOBILITHEK_NRW_KEY" },
     requiredEnv: ["MOBILITHEK_NRW_SUBSCRIPTION_ID"],
     cadenceSec: 300,

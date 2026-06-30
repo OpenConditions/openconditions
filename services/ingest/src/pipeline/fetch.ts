@@ -89,7 +89,8 @@ async function fetchFanout(urls: string[], fetchFn: typeof fetch): Promise<Buffe
  * `src.discover`, when present, resolves the URL set dynamically and is fanned
  * out tolerantly (takes precedence over `src.url`). Otherwise `src.url` may be
  * a static string, a string array, or a function that receives `process.env`
- * and returns a string.
+ * and returns a string or string array (e.g. one client-pull URL per
+ * Mobilithek subscription id).
  */
 export async function fetchAll(src: FeedSource, fetchFn: typeof fetch): Promise<Buffer[]> {
   if (typeof src.discover === "function") {
@@ -107,7 +108,8 @@ export async function fetchAll(src: FeedSource, fetchFn: typeof fetch): Promise<
 
   if (typeof urlOrFn === "function") {
     const resolved = urlOrFn(resolvedEnv());
-    return [await fetchOne(resolved, fetchFn, init)];
+    const urls = Array.isArray(resolved) ? resolved : [resolved];
+    return Promise.all(urls.map((u) => fetchOne(u, fetchFn, init)));
   }
 
   if (Array.isArray(urlOrFn)) {

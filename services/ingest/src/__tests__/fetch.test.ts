@@ -157,6 +157,21 @@ describe("fetchAll — static url forms (regression)", () => {
     expect(bufs[0]!.toString("utf8")).toBe("https://x.test/fn");
   });
 
+  it("fetches every url when a function returns an array (Mobilithek multi-subscription)", async () => {
+    const feed = makeFeed({
+      id: "fn-arr",
+      url: () => ["https://x.test/sub/1", "https://x.test/sub/2"],
+    });
+    const bufs = await fetchAll(
+      feed,
+      okFor((u) => u)
+    );
+    expect(bufs.map((b) => b.toString("utf8")).sort()).toEqual([
+      "https://x.test/sub/1",
+      "https://x.test/sub/2",
+    ]);
+  });
+
   it("does not HTML-filter the single-url path (XML feeds like NDW pass through)", async () => {
     const feed = makeFeed({ id: "xml", url: "https://x.test/ndw.xml" });
     const bufs = await fetchAll(

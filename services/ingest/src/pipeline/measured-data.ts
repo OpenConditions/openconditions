@@ -20,8 +20,15 @@ export function isStreamingFlowFeed(src: DomainFeedSource): boolean {
 /** Resolves the single feed URL for a streaming flow source (string or env fn). */
 function resolveUrl(src: DomainFeedSource): string {
   const u = src.url;
-  if (typeof u === "function") return u(resolvedEnv());
-  if (typeof u === "string") return u;
+  const resolved = typeof u === "function" ? u(resolvedEnv()) : u;
+  // Streaming flow feeds are single-URL by contract; the array-returning
+  // function form (e.g. Mobilithek multi-subscription) is only used by buffered
+  // event feeds, never here.
+  if (Array.isArray(resolved)) {
+    if (resolved.length === 1) return resolved[0]!;
+    throw new Error(`flow feed ${src.id} resolved to ${resolved.length} urls; expected one`);
+  }
+  if (typeof resolved === "string") return resolved;
   throw new Error(`flow feed ${src.id} has no streamable url`);
 }
 
