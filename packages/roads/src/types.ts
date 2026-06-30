@@ -12,4 +12,11 @@ export interface SourceDescriptor {
   licenseUrl?: string;
   /** Field mapping for the generic GeoJSON parser (only set for geojson feeds). */
   geojson?: GeoJsonMapping;
+  /**
+   * The DATEX feed publishes GML `posList` coordinates in "lon lat" order rather
+   * than the WGS84/DATEX "lat lon" default (e.g. Trafikverket). Only affects
+   * `posList`/`pos`; elements with explicit latitude/longitude leaves are
+   * unaffected.
+   */
+  posListLonLat?: boolean;
 }

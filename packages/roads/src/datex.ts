@@ -104,13 +104,15 @@ type Reprojector = (p: [number, number]) => [number, number];
 
 /**
  * GML `posList` / `pos` to `[lon,lat]` pairs (finite only). Under WGS84 the
- * values are "lat lon" → swapped to GeoJSON order. When a `reproject` is given
- * (the feed's geometry is a projected grid, e.g. Flanders EPSG:31370) the values
- * are "easting northing" in CRS axis order → reprojected to [lon,lat].
+ * values are "lat lon" → swapped to GeoJSON order, unless `lonFirst` (the feed
+ * publishes "lon lat", e.g. Trafikverket) → kept as-is. When a `reproject` is
+ * given (the feed's geometry is a projected grid, e.g. Flanders EPSG:31370) the
+ * values are "easting northing" in CRS axis order → reprojected to [lon,lat].
  */
 function parseLatLonList(
   raw: string | undefined,
-  reproject?: Reprojector | null
+  reproject?: Reprojector | null,
+  lonFirst = false
 ): [number, number][] {
   if (!raw) return [];
   const nums = raw.trim().split(/\s+/).map(Number);
@@ -119,7 +121,7 @@ function parseLatLonList(
     const a = nums[i]!;
     const b = nums[i + 1]!;
     if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
-    out.push(reproject ? reproject([a, b]) : [b, a]);
+    out.push(reproject ? reproject([a, b]) : lonFirst ? [a, b] : [b, a]);
   }
   return out;
 }
@@ -146,10 +148,15 @@ function detectReprojector(input: string | Buffer): Reprojector | null {
  * Multiple lines → MultiLineString; multiple points → MultiPoint. Records with
  * no coordinate geometry (Alert-C/TMC only) return null (decoded in Phase 2).
  */
-function resolveGeometry(rec: XmlObject, reproject?: Reprojector | null): Geometry | null {
+function resolveGeometry(
+  rec: XmlObject,
+  reproject?: Reprojector | null,
+  lonFirst = false
+): Geometry | null {
   return resolveGeometryFrom(
     getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations"),
-    reproject
+    reproject,
+    lonFirst
   );
 }
 
@@ -157,7 +164,8 @@ function resolveGeometry(rec: XmlObject, reproject?: Reprojector | null): Geomet
  * …) for any coordinate-bearing element and assemble a GeoJSON geometry. */
 function resolveGeometryFrom(
   locRef: XmlObject | undefined,
-  reproject?: Reprojector | null
+  reproject?: Reprojector | null,
+  lonFirst = false
 ): Geometry | null {
   if (!locRef) return null;
 
@@ -175,18 +183,22 @@ function resolveGeometryFrom(
       switch (stripXmlNamespace(key)) {
         case "posList":
           for (const node of xmlNodeToArray(value)) {
-            const coords = parseLatLonList(xmlText(node), reproject);
+            const coords = parseLatLonList(xmlText(node), reproject, lonFirst);
             if (coords.length >= 2) lines.push(coords);
             else if (coords.length === 1) points.push(coords[0]!);
           }
           break;
         case "pos":
           for (const node of xmlNodeToArray(value)) {
-            const coords = parseLatLonList(xmlText(node), reproject);
+            const coords = parseLatLonList(xmlText(node), reproject, lonFirst);
             if (coords[0]) points.push(coords[0]);
           }
           break;
+        // `pointCoordinates` (DATEX v2/v3) and `coordinatesForDisplay`
+        // (Trafikverket's representative point) both carry explicit
+        // latitude/longitude child leaves — no axis-order ambiguity.
         case "pointCoordinates":
+        case "coordinatesForDisplay":
           for (const node of xmlNodeToArray(value)) {
             const lat = Number(getXmlChildText(node, "latitude"));
             const lon = Number(getXmlChildText(node, "longitude"));
@@ -213,9 +225,10 @@ function resolveGeometryFrom(
 /** The diversion route geometry from an `alternativeRoute`, when it is linear. */
 function detourGeometryOf(
   rec: XmlObject,
-  reproject?: Reprojector | null
+  reproject?: Reprojector | null,
+  lonFirst = false
 ): RoadEvent["detourGeometry"] {
-  const g = resolveGeometryFrom(getXmlChild(rec, "alternativeRoute"), reproject);
+  const g = resolveGeometryFrom(getXmlChild(rec, "alternativeRoute"), reproject, lonFirst);
   return g && (g.type === "LineString" || g.type === "MultiLineString") ? g : undefined;
 }
 
@@ -645,6 +658,9 @@ export function parseDatexSituations(
   // Feeds whose GML geometry is a projected national grid (e.g. Flanders
   // EPSG:31370) declare it via srsName; reproject those to WGS84.
   const reproject = detectReprojector(input);
+  // Some publishers emit GML posList in "lon lat" order (e.g. Trafikverket),
+  // opposite the DATEX/WGS84 "lat lon" default.
+  const lonFirst = src.posListLonLat ?? false;
 
   const records = listSituationRecords(doc);
   const withGeom: RoadEvent[] = [];
@@ -653,7 +669,7 @@ export function parseDatexSituations(
 
   for (const { rec: rawRec, situationSeverity } of records) {
     const { body: rec, className } = recordBody(rawRec);
-    const geometry = resolveGeometry(rec, reproject);
+    const geometry = resolveGeometry(rec, reproject, lonFirst);
     const openlr = !geometry ? collectOpenLr(rec) : undefined;
 
     if (!geometry && !openlr) {
@@ -703,7 +719,7 @@ export function parseDatexSituations(
       restrictions: dimensionRestrictionsOf(rec),
       vehiclesAffected: vehiclesAffectedOf(rec),
       detour: detourOf(rec),
-      detourGeometry: detourGeometryOf(rec, reproject),
+      detourGeometry: detourGeometryOf(rec, reproject, lonFirst),
       delaySeconds: leafNumber(rec, "delayTimeValue"),
       queueLengthMeters: leafNumber(rec, "queueLength"),
       relatedIds: relatedRefsOf(rec),

@@ -128,6 +128,11 @@ export interface FeedSource {
   requiredEnv?: string[];
   /** Field mapping for `format: "geojson"` feeds (passed to the generic reader). */
   geojson?: GeoJsonMapping;
+  /**
+   * For `datex2` feeds whose GML `posList` is "lon lat" rather than the WGS84
+   * "lat lon" default (e.g. Trafikverket). Passed through to the parser.
+   */
+  posListLonLat?: boolean;
   bbox?: [number, number, number, number];
   cadenceSec: number;
   freshnessWindowSec: number;
@@ -556,20 +561,26 @@ export const FEED_SOURCES: FeedSource[] = [
     enabledByDefault: true,
   },
   {
-    // Sweden — Trafikverket "Situation" API (POST JSON query; CC0). The API key
-    // is embedded in the XML request body, so it's gated via requiredEnv (set
-    // TRAFIKVERKET_API_KEY). Built from the documented schema; verify against a
-    // live keyed response.
+    // Sweden — Trafikverket DATEX II situations (CC0). NOTE: the road incident/
+    // roadworks data is NOT in the object API (/v2/data.json has no `Situation`
+    // objecttype) — it's the dedicated DATEX II URL endpoint
+    // /v2/datex2/{schemaversion}/{namespace}/sit:situation, a plain GET returning
+    // DATEX II v3 (con:messageContainer). The Situation data is split into
+    // namespaces; we pull the two coordinate-bearing road ones: `roadworks`
+    // (roadworks + closures, the bulk) and `accident`. (`trafficmessages` —
+    // general warnings — also exists but rejects sit:situation without separate
+    // provider approval; `roadSurfaceConditions`/`frostdamage` are Alert-C only.)
+    // Auth = the key as `?authenticationkey=`. Trafikverket publishes posList in
+    // lon-lat order → posListLonLat. Replaces the old POST object-query feed.
     id: "trafikverket-se",
     name: "Trafikverket (Sweden)",
-    format: "trafikverket-json",
-    url: "https://api.trafikinfo.trafikverket.se/v2/data.json",
-    method: "POST",
-    requestHeaders: { "Content-Type": "text/xml" },
-    body: (env) =>
-      `<REQUEST><LOGIN authenticationkey="${env["TRAFIKVERKET_API_KEY"] ?? ""}"/>` +
-      `<QUERY objecttype="Situation" schemaversion="1.5" limit="1000"><FILTER/></QUERY></REQUEST>`,
-    requiredEnv: ["TRAFIKVERKET_API_KEY"],
+    format: "datex2",
+    url: [
+      "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/roadworks/sit:situation",
+      "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/accident/sit:situation",
+    ],
+    auth: { kind: "query-key", param: "authenticationkey", envVar: "TRAFIKVERKET_API_KEY" },
+    posListLonLat: true,
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "CC0-1.0",
@@ -1026,5 +1037,6 @@ export function feedToSourceDescriptor(feed: FeedSource): SourceDescriptor {
     license: feed.license,
     licenseUrl: feed.licenseUrl,
     ...(feed.geojson ? { geojson: feed.geojson } : {}),
+    ...(feed.posListLonLat ? { posListLonLat: true } : {}),
   };
 }

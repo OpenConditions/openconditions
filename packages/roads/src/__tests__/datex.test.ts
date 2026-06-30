@@ -603,3 +603,68 @@ describe("parseDatexSituations — Flanders DATEX II v3 (EPSG:31370 reprojection
     }
   });
 });
+
+describe("parseDatexSituations — Trafikverket DATEX (coordinatesForDisplay + lon-lat posList)", () => {
+  const SE_SOURCE = {
+    id: "trafikverket-se",
+    attribution: "Trafikverket",
+    country: "SE",
+    license: "CC0-1.0",
+    posListLonLat: true,
+  } as const;
+
+  const wrap = (loc: string) => `<?xml version="1.0" encoding="UTF-8"?>
+<con:messageContainer modelBaseVersion="3" xmlns:con="http://datex2.eu/schema/3/messageContainer"
+  xmlns:sit="http://datex2.eu/schema/3/situation" xmlns:loc="http://datex2.eu/schema/3/locationReferencing"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <con:payload>
+    <sit:situation>
+      <sit:situationRecord xsi:type="sit:MaintenanceWorks" id="SE_R1">
+        <sit:situationRecordVersionTime>2026-06-30T00:00:00Z</sit:situationRecordVersionTime>
+        <sit:locationReference>${loc}</sit:locationReference>
+      </sit:situationRecord>
+    </sit:situation>
+  </con:payload>
+</con:messageContainer>`;
+
+  it("reads coordinatesForDisplay (explicit lat/lon) as a Point in [lon,lat]", () => {
+    const xml = wrap(
+      `<loc:coordinatesForDisplay><loc:latitude>59.74617</loc:latitude><loc:longitude>18.101748</loc:longitude></loc:coordinatesForDisplay>`
+    );
+    const [ev] = parseDatexSituations(xml, SE_SOURCE);
+    expect(ev!.geometry).toEqual({ type: "Point", coordinates: [18.101748, 59.74617] });
+  });
+
+  it("keeps a lon-lat posList in order when posListLonLat is set", () => {
+    const xml = wrap(
+      `<loc:gmlLineString><loc:posList>15.5915 56.7236 15.5872 56.724</loc:posList></loc:gmlLineString>`
+    );
+    const [ev] = parseDatexSituations(xml, SE_SOURCE);
+    expect(ev!.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [15.5915, 56.7236],
+        [15.5872, 56.724],
+      ],
+    });
+  });
+
+  it("still swaps lat-lon posList for feeds without posListLonLat", () => {
+    const xml = wrap(
+      `<loc:gmlLineString><loc:posList>56.7236 15.5915 56.724 15.5872</loc:posList></loc:gmlLineString>`
+    );
+    const [ev] = parseDatexSituations(xml, {
+      id: "x",
+      attribution: "x",
+      country: "XX",
+      license: "CC0-1.0",
+    });
+    expect(ev!.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [15.5915, 56.7236],
+        [15.5872, 56.724],
+      ],
+    });
+  });
+});

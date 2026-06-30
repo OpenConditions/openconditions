@@ -300,13 +300,18 @@ describe("FEED_SOURCES", () => {
     ]);
   });
 
-  it("includes trafikverket-se (Sweden) as a POST CC0 feed gated by requiredEnv", () => {
+  it("includes trafikverket-se (Sweden) as a DATEX II GET feed (query-key, lon-lat posList)", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "trafikverket-se");
     expect(feed).toBeDefined();
-    expect(feed!.format).toBe("trafikverket-json");
-    expect(feed!.method).toBe("POST");
-    expect(feed!.requiredEnv).toContain("TRAFIKVERKET_API_KEY");
-    expect(typeof feed!.body).toBe("function");
+    expect(feed!.format).toBe("datex2");
+    expect(feed!.auth).toEqual({
+      kind: "query-key",
+      param: "authenticationkey",
+      envVar: "TRAFIKVERKET_API_KEY",
+    });
+    expect(Array.isArray(feed!.url)).toBe(true);
+    expect((feed!.url as string[])[0]).toContain("/datex2/3.1/roadworks/sit:situation");
+    expect(feed!.posListLonLat).toBe(true);
   });
 
   it("includes ba-cortes-ar (Buenos Aires) as a url-fn geojson feed gated by requiredEnv", () => {
