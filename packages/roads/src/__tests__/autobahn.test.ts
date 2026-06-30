@@ -487,6 +487,28 @@ describe("parseAutobahn — structured validity (Europe/Berlin)", () => {
     expect(ev!.validTo).toBe("2026-07-02T13:00:00.000Z");
   });
 
+  it("treats a continuous multi-day span ('00:00 Uhr bis zum … 24:00 Uhr') as bounds, not a daily schedule", () => {
+    const feed = {
+      closure: [
+        {
+          identifier: "continuous",
+          title: "A7 | Hammelburg - Saalebrücke",
+          coordinate: { lat: 50.1, long: 9.9 },
+          description: [
+            "Die Baustelle ist zu folgenden Zeiträumen gültig:",
+            "01.01.26 00:00 Uhr bis zum 31.12.26 24:00 Uhr.",
+            "(Ende der Gesamtmaßnahme: 31.12.26)",
+          ],
+        },
+      ],
+    };
+    const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "closure");
+    // A ≥24h span is continuous → validFrom/validTo set, NO misleading schedule.
+    expect(ev!.schedule).toBeUndefined();
+    expect(ev!.validFrom).toBe("2025-12-31T23:00:00.000Z"); // 01.01.26 00:00 CET
+    expect(ev!.validTo).toBe("2026-12-31T23:00:00.000Z"); // 31.12.26 24:00 CET
+  });
+
   it("leaves validTo null and schedule unset when no end-time prose is present", () => {
     const feed = {
       warning: [

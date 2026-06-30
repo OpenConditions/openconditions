@@ -200,10 +200,12 @@ interface ParsedWindow {
 }
 
 // The "gültig zu folgenden Zeiträumen" list comes in two phrasings:
-//  - cross-date / overnight: "29.06.26 20:00 bis zum 30.06.26 05:00 Uhr"
+//  - cross-date: "29.06.26 20:00 bis zum 30.06.26 05:00 Uhr" (overnight band) or
+//    "11.05.26 00:00 Uhr bis zum 31.07.26 24:00 Uhr" (a continuous multi-day
+//    span — the "Uhr" after the first time is optional)
 //  - same-day: "01.07.26 von 09:00 bis 15:00 Uhr" (the `von` is optional in the wild)
 const WINDOW_CROSS_DATE_RE =
-  /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{2})\s+bis\s+zum\s+(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{2})\s*Uhr/gi;
+  /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{2})(?:\s*Uhr)?\s+bis\s+zum\s+(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{2})\s*Uhr/gi;
 const WINDOW_SAME_DAY_RE =
   /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(?:von\s+)?(\d{1,2}):(\d{2})\s+bis\s+(\d{1,2}):(\d{2})\s*Uhr/gi;
 // Single-phase "Beginn: 10.07.26 um 22:00 Uhr" / "Ende: 13.07.26 um 05:00 Uhr".
@@ -246,14 +248,22 @@ function parseWindowList(description: string): ParsedWindow[] {
   return out;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 /**
  * Collapse parsed windows into recurrence windows grouped by daily time-of-day
  * (local), each spanning the earliest→latest start date. The common case (one
  * nightly 20:00–05:00 band over consecutive nights) yields a single window.
+ *
+ * Windows spanning ≥24h are CONTINUOUS multi-day closures, not daily
+ * recurrences (e.g. "00:00 Uhr bis zum 24:00 Uhr" over months) — they bound
+ * validFrom/validTo (the caller derives those from every window) but are
+ * excluded here so they don't become a misleading single-day schedule.
  */
 function windowsToSchedule(windows: ParsedWindow[]): LocalSchedule[] {
   const byTime = new Map<string, ParsedWindow[]>();
   for (const w of windows) {
+    if (Date.parse(w.endISO) - Date.parse(w.startISO) >= DAY_MS) continue;
     const key = `${w.timeStart}-${w.timeEnd}`;
     const group = byTime.get(key);
     if (group) group.push(w);
