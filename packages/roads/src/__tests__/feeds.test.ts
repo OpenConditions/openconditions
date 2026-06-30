@@ -371,12 +371,14 @@ describe("FEED_SOURCES", () => {
     expect(feed!.license).toBe("dl-de/zero-2-0");
     expect(feed!.country).toBe("DE");
     // One client-pull URL per comma-separated subscription id, matching the
-    // subscription's HTTPS Zugriffspunkt (id appears in both path and query).
+    // subscription's HTTPS Zugriffspunkt — the plain-HTTPS pull (no `/soap/`),
+    // id in both path and query — plus the mandatory Accept-Encoding: gzip.
     const urlFn = feed!.url as (env: Record<string, string | undefined>) => string | string[];
     expect(urlFn({ MOBILITHEK_NRW_SUBSCRIPTION_ID: "2000001, 2000002" })).toEqual([
-      "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/soap/2000001/clientPullService?subscriptionID=2000001",
-      "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/soap/2000002/clientPullService?subscriptionID=2000002",
+      "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/2000001/clientPullService?subscriptionID=2000001",
+      "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/2000002/clientPullService?subscriptionID=2000002",
     ]);
+    expect(feed!.requestHeaders?.["Accept-Encoding"]).toBe("gzip");
   });
 
   it("registers unique feed ids", () => {

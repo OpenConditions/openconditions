@@ -946,8 +946,12 @@ export const FEED_SOURCES: FeedSource[] = [
     // (one per offer) has its own numeric id, shown on its page under
     // mobilithek.info/organisation/subscriptions; list them comma-separated in
     // MOBILITHEK_NRW_SUBSCRIPTION_ID and we fan out one client-pull GET per id.
-    // The URL is the subscription's HTTPS Zugriffspunkt (client-pull container):
-    // /api/v1.0/subscription/soap/<id>/clientPullService?subscriptionID=<id>.
+    // The URL is the subscription's HTTPS Zugriffspunkt (the plain-HTTPS client-
+    // pull, NOT the `/soap/` SOAP binding — that one only answers POST):
+    // /api/v1.0/subscription/<id>/clientPullService?subscriptionID=<id>.
+    // Mobilithek REQUIRES `Accept-Encoding: gzip` on the pull — without it the
+    // broker returns HTTP 400; the response is gzipped DATEX II v2 (fetchOne
+    // gunzips by magic bytes).
     id: "verkehr-nrw-de",
     name: "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
     format: "datex2",
@@ -958,10 +962,11 @@ export const FEED_SOURCES: FeedSource[] = [
         .filter(Boolean)
         .map(
           (id) =>
-            `https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/soap/${id}/clientPullService?subscriptionID=${id}`
+            `https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${id}/clientPullService?subscriptionID=${id}`
         ),
     auth: { kind: "mtls", certEnvVar: "MOBILITHEK_NRW_CERT", keyEnvVar: "MOBILITHEK_NRW_KEY" },
     requiredEnv: ["MOBILITHEK_NRW_SUBSCRIPTION_ID"],
+    requestHeaders: { "Accept-Encoding": "gzip" },
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "dl-de/zero-2-0",
