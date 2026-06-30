@@ -68,7 +68,8 @@
           "urlLabel": "Create a 511NY account",
           "steps": [
             "Create an account at 511ny.org/my511/register.",
-            "Request an API key at 511ny.org/developers/help. The form asks for your reasons (see docs/road-feed-credentials.md for ready-to-paste text); submitting also accepts the Developer's Access Agreement (DAA), which permits commercial redistribution."
+            "Request an API key at 511ny.org/developers/help. The form asks for your reasons, and submitting accepts the Developer's Access Agreement (DAA), which permits commercial redistribution.",
+            "Ready-to-paste reason: OpenMapX (https://openmapx.com) is a free, open-source maps and navigation app. I would use the 511NY events feed to display live incidents, road work, and closures on the map and to help travelers route around active disruptions in New York, with 'Powered by 511NY' attribution shown to users. It serves the general public at no charge; the data is shown only to end users, not resold or provided to any third-party data broker."
           ],
           "cost": "Free",
           "notes": "Attribution required: \"Powered by 511NY\"."
@@ -115,7 +116,7 @@
           "steps": [
             "Register at nap.si/en/registration (DARS / DRSI).",
             "Request access and tick exactly the two DATEX II v3.3 datasets (under 'Other contents', XML, english): 'Traffic events (DATEX II v3.3)' and 'Roadworks (DATEX II v3.3)'. Leave everything else unticked.",
-            "Fill the Purpose/Description (min. 100 chars), set a Time period, agree to the terms, and submit. See docs/road-feed-credentials.md for ready-to-paste purpose text."
+            "Fill the Purpose/Description (min. 100 chars), set a Time period, agree to the terms, and submit. Ready-to-paste purpose: OpenMapX (https://openmapx.com) is a free, open-source maps and navigation app; we ingest the Traffic events and Roadworks DATEX II v3.3 datasets to display live road conditions and route around closures and roadworks in Slovenia, with CC-BY-SA attribution shown to users."
           ],
           "notes": "CC-BY-SA (ShareAlike). The B2B host (b2b.ncup.si) is credential-gated; the NAP account is sent as HTTP Basic — confirm the exact scheme when granted."
         }
@@ -260,7 +261,7 @@
       "MOBILITHEK_NRW_CERT": {
         "type": "string",
         "title": "NRW Mobilithek — client certificate (PEM)",
-        "description": "PEM contents of the machine-account client certificate (mutual TLS). Recommended: generate your own keypair and upload this certificate under the machine account's 'Zertifikat hochladen' tab — no SMS needed. See docs/road-feed-credentials.md for the openssl commands (and the issued-.p12 alternative).",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key).",
         "x-openmapx-secret": true,
         "x-openmapx-setup": {
           "url": "https://mobilithek.info/registration-request",
@@ -268,7 +269,7 @@
           "steps": [
             "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
             "Subscribe to the LVZ.NRW snapshot offers (648508602333433856 roadworks + 648512079906336768 incidents).",
-            "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command in docs/road-feed-credentials.md, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+            "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
           ],
           "notes": "dl-de/zero-2-0 (commercial OK, no attribution). Search 'LVZ.NRW', not 'Straßen.NRW'."
         }
