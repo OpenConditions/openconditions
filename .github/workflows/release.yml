@@ -165,9 +165,18 @@ jobs:
       - name: Generate the release extension.json
         run: |
           ver="${GITHUB_REF_NAME#v}"
+          # Pin the integration component to THIS release's tarball + its sha256
+          # (the committed template carries the unpinned `…/latest/…` URL). The
+          # OpenMapX installer fetches this https .tar.gz, verifies the sha, and
+          # extracts it into custom_integrations — so `ext update` refreshes the
+          # provider integration, not just the ingest service.
+          artifact="https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/road-conditions-openconditions.tar.gz"
           mkdir -p build
           jq --arg v "$ver" --arg ref "$GITHUB_REF_NAME" \
-            '.version = $v | .services |= map(.ref = $ref)' \
+            --arg art "$artifact" --arg sha "${{ steps.pack.outputs.sha256 }}" \
+            '.version = $v
+             | .services |= map(.ref = $ref)
+             | .integrations = [{ id: "road-conditions-openconditions", artifact: $art, sha256: $sha }]' \
             extension.json > build/extension.json
           echo "extension.json for $ver (service ref $GITHUB_REF_NAME):"
           cat build/extension.json
