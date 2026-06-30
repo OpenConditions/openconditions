@@ -258,25 +258,25 @@
           "notes": "CC-BY-4.0 (commercial OK)."
         }
       },
-      "MOBILITHEK_NRW_CERT": {
+      "MOBILITHEK_CERT": {
         "type": "string",
-        "title": "NRW Mobilithek — client certificate (PEM)",
-        "description": "PEM contents of the machine-account client certificate (mutual TLS). Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key).",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key).",
         "x-openmapx-secret": true,
         "x-openmapx-setup": {
           "url": "https://mobilithek.info/registration-request",
           "urlLabel": "Mobilithek registration",
           "steps": [
             "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
-            "Subscribe to the LVZ.NRW snapshot offers (648508602333433856 roadworks + 648512079906336768 incidents).",
+            "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
             "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
           ],
-          "notes": "dl-de/zero-2-0 (commercial OK, no attribution). Search 'LVZ.NRW', not 'Straßen.NRW'. This ONE certificate also authenticates every other German region feed below — set it once, then just add each region's subscription id."
+          "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)"
         }
       },
-      "MOBILITHEK_NRW_KEY": {
+      "MOBILITHEK_KEY": {
         "type": "string",
-        "title": "NRW Mobilithek — client private key (PEM)",
+        "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
         "x-openmapx-secret": true
       },
@@ -289,91 +289,91 @@
       "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "NRW municipalities Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for NRW city/district offers — Düsseldorf/dmotion 110000000002056000, Köln 110000000002900004 (+ 110000000002899004 / 110000000003011002), Kreis Unna 930448553981730816. Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. dl-de/zero-2-0.",
+        "description": "Subscription id(s) for NRW city/district offers — Düsseldorf/dmotion 110000000002056000, Köln 110000000002900004 (+ 110000000002899004 / 110000000003011002), Kreis Unna 930448553981730816. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "NRW.Mobidrom Mobilithek — subscription id(s)",
-        "description": "Subscription id for the NRW.Mobidrom bundled roadworks offer 884461110418108416. Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. CC-BY-SA-4.0 — ShareAlike; kept in its own feed so it never folds into a more permissive source.",
+        "description": "Subscription id for the NRW.Mobidrom bundled roadworks offer 884461110418108416. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-SA-4.0 — ShareAlike; kept in its own feed so it never folds into a more permissive source.",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_BAYERN_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Bayern Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the Bayerische Straßenbauverwaltung offers (110000000002506000, 110000000002507001). Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. GeoNutzV (attribution required).",
+        "description": "Subscription id(s) for the Bayerische Straßenbauverwaltung offers (110000000002506000, 110000000002507001). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_BW_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Baden-Württemberg Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the BW Landesmeldestelle offer 857127500689977344. Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. dl-de/by-2-0 (attribution required).",
+        "description": "Subscription id(s) for the BW Landesmeldestelle offer 857127500689977344. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_BERLIN_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Berlin Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the Berlin SenMVKU offer 801096621061234688. Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. dl-de/by-2-0 (attribution required).",
+        "description": "Subscription id(s) for the Berlin SenMVKU offer 801096621061234688. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Brandenburg Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the Landesbetrieb Straßenwesen Brandenburg offer 636547428851101696. Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. dl-de/by-2-0 (attribution required).",
+        "description": "Subscription id(s) for the Landesbetrieb Straßenwesen Brandenburg offer 636547428851101696. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_BREMEN_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Bremen Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the Verkehrsmanagementzentrale Bremen offer 608390979298140160. Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. dl-de/by-2-0 (attribution required).",
+        "description": "Subscription id(s) for the Verkehrsmanagementzentrale Bremen offer 608390979298140160. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Hamburg Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the LSBG Hamburg offer 110000000003540000. Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. dl-de/by-2-0 (attribution required).",
+        "description": "Subscription id(s) for the LSBG Hamburg offer 110000000003540000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_HESSEN_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Hessen Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the Hessen Mobil offers (841292914668498944, 862010418143330304). Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. GeoNutzV (attribution required).",
+        "description": "Subscription id(s) for the Hessen Mobil offers (841292914668498944, 862010418143330304). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_MV_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Mecklenburg-Vorpommern Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the LSBV M-V offers (110000000002802000, 818137060259840000). Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. GeoNutzV (attribution required).",
+        "description": "Subscription id(s) for the LSBV M-V offers (110000000002802000, 818137060259840000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Niedersachsen Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the NLStBV offers (110000000002749000, 951153778962972672, 656880550985773056) + Hannover 633691473746571264. Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. dl-de/zero-2-0.",
+        "description": "Subscription id(s) for the NLStBV offers (110000000002749000, 951153778962972672, 656880550985773056) + Hannover 633691473746571264. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Sachsen Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the LASuV Sachsen offer 608439575154401280 (+ Leipzig 952541268382826496). Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. CC-BY-4.0 (attribution required).",
+        "description": "Subscription id(s) for the LASuV Sachsen offer 608439575154401280 (+ Leipzig 952541268382826496). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required).",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Sachsen-Anhalt Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the Landesstraßenbaubehörde Sachsen-Anhalt offer 110000000003150000. Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. dl-de/by-2-0 (attribution required).",
+        "description": "Subscription id(s) for the Landesstraßenbaubehörde Sachsen-Anhalt offer 110000000003150000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_SH_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Schleswig-Holstein Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the LBV.SH offers (110000000003237002, 110000000003387000). Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. CC-BY-4.0 (attribution required).",
+        "description": "Subscription id(s) for the LBV.SH offers (110000000003237002, 110000000003387000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required).",
         "x-openmapx-secret": true
       },
       "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Thüringen Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the TLBV offer 110000000003051000. Comma-separated. Uses the shared MOBILITHEK_NRW cert/key. GeoNutzV (attribution required).",
+        "description": "Subscription id(s) for the TLBV offer 110000000003051000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
         "x-openmapx-secret": true
       }
     }

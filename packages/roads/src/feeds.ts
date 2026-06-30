@@ -157,10 +157,9 @@ export interface FeedSource {
 /**
  * Mobilithek (Germany's National Access Point) brokers DATEX II road-condition
  * data from nearly every state + many cities. They ALL share one organisation
- * machine certificate (mutual TLS) — historically named MOBILITHEK_NRW_CERT/KEY
- * (the first region wired up was LVZ.NRW), reused here as the shared cert so a new
- * region needs no new credential beyond its subscription id. Each region has its
- * own comma-separated `<…>_SUBSCRIPTION_ID` env var (one id per subscribed offer);
+ * machine certificate (mutual TLS) — MOBILITHEK_CERT/KEY — so a new region needs
+ * no new credential beyond its subscription id. Each region has its own
+ * comma-separated `<…>_SUBSCRIPTION_ID` env var (one id per subscribed offer);
  * we fan out one HTTPS client-pull per id. To add a region: subscribe to its
  * offer(s) on mobilithek.info, set the subscription id(s), and the feed activates.
  *
@@ -170,8 +169,8 @@ export interface FeedSource {
  * Mobidrom bundle is ShareAlike — isolated in its own feed so it never folds into
  * a more permissive one).
  */
-const MOBILITHEK_CERT_ENV = "MOBILITHEK_NRW_CERT";
-const MOBILITHEK_KEY_ENV = "MOBILITHEK_NRW_KEY";
+const MOBILITHEK_CERT_ENV = "MOBILITHEK_CERT";
+const MOBILITHEK_KEY_ENV = "MOBILITHEK_KEY";
 
 interface MobilithekRegion {
   id: string;

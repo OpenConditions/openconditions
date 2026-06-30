@@ -368,8 +368,8 @@ describe("FEED_SOURCES", () => {
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth).toEqual({
       kind: "mtls",
-      certEnvVar: "MOBILITHEK_NRW_CERT",
-      keyEnvVar: "MOBILITHEK_NRW_KEY",
+      certEnvVar: "MOBILITHEK_CERT",
+      keyEnvVar: "MOBILITHEK_KEY",
     });
     expect(typeof feed!.url).toBe("function");
     expect(feed!.requiredEnv).toContain("MOBILITHEK_NRW_SUBSCRIPTION_ID");
@@ -398,8 +398,8 @@ describe("FEED_SOURCES", () => {
       // Every region reuses the single org machine certificate.
       expect(feed.auth).toEqual({
         kind: "mtls",
-        certEnvVar: "MOBILITHEK_NRW_CERT",
-        keyEnvVar: "MOBILITHEK_NRW_KEY",
+        certEnvVar: "MOBILITHEK_CERT",
+        keyEnvVar: "MOBILITHEK_KEY",
       });
       expect(feed.country).toBe("DE");
       expect(feed.requestHeaders?.["Accept-Encoding"]).toBe("gzip");
