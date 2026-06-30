@@ -454,6 +454,39 @@ describe("parseAutobahn — structured validity (Europe/Berlin)", () => {
     expect(ev!.validTo).toBe("2026-07-02T03:00:00.000Z");
   });
 
+  it("collapses a same-day 'von HH:MM bis HH:MM' daytime list into a schedule", () => {
+    const feed = {
+      closure: [
+        {
+          identifier: "daytime",
+          title: "A61 von Bergheim (AS) Sperrung einer Anschlussstelle",
+          coordinate: { lat: 50.95, long: 6.65 },
+          description: [
+            "Die Baustelle ist zu folgenden Zeiträumen gültig:",
+            "01.07.26 von 09:00 bis 15:00 Uhr",
+            "02.07.26 von 09:00 bis 15:00 Uhr",
+            "(Ende der Gesamtmaßnahme: 02.07.26)",
+          ],
+        },
+      ],
+    };
+    const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "closure");
+    expect(ev!.schedule).toEqual([
+      {
+        repeatFrequency: "P1D",
+        startDate: "2026-07-01",
+        endDate: "2026-07-02",
+        startTime: "09:00",
+        endTime: "15:00",
+        duration: "PT6H",
+        scheduleTimezone: "Europe/Berlin",
+      },
+    ]);
+    // 09:00 CEST → 07:00Z; 15:00 CEST → 13:00Z.
+    expect(ev!.validFrom).toBe("2026-07-01T07:00:00.000Z");
+    expect(ev!.validTo).toBe("2026-07-02T13:00:00.000Z");
+  });
+
   it("leaves validTo null and schedule unset when no end-time prose is present", () => {
     const feed = {
       warning: [

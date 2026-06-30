@@ -199,9 +199,13 @@ interface ParsedWindow {
   timeEnd: string; // HH:MM
 }
 
-// One recurring closure window: "29.06.26 20:00 bis zum 30.06.26 05:00 Uhr".
-const WINDOW_LIST_RE =
+// The "gültig zu folgenden Zeiträumen" list comes in two phrasings:
+//  - cross-date / overnight: "29.06.26 20:00 bis zum 30.06.26 05:00 Uhr"
+//  - same-day: "01.07.26 von 09:00 bis 15:00 Uhr" (the `von` is optional in the wild)
+const WINDOW_CROSS_DATE_RE =
   /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{2})\s+bis\s+zum\s+(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(\d{1,2}):(\d{2})\s*Uhr/gi;
+const WINDOW_SAME_DAY_RE =
+  /(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+(?:von\s+)?(\d{1,2}):(\d{2})\s+bis\s+(\d{1,2}):(\d{2})\s*Uhr/gi;
 // Single-phase "Beginn: 10.07.26 um 22:00 Uhr" / "Ende: 13.07.26 um 05:00 Uhr".
 // `Ende:` matches the phase end, NOT "Ende der Gesamtmaßnahme:" (no "um … Uhr").
 const BEGIN_RE = /Beginn:\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+um\s+(\d{1,2}):(\d{2})\s*Uhr/i;
@@ -209,7 +213,8 @@ const END_RE = /Ende:\s*(\d{1,2})\.(\d{1,2})\.(\d{2,4})\s+um\s+(\d{1,2}):(\d{2})
 
 function parseWindowList(description: string): ParsedWindow[] {
   const out: ParsedWindow[] = [];
-  for (const m of description.matchAll(WINDOW_LIST_RE)) {
+  // Cross-date / overnight windows.
+  for (const m of description.matchAll(WINDOW_CROSS_DATE_RE)) {
     const [, d1, mo1, y1, h1, mi1, d2, mo2, y2, h2, mi2] = m;
     const startISO = berlinWallClockToISO(y1!, mo1!, d1!, h1!, mi1!);
     const endISO = berlinWallClockToISO(y2!, mo2!, d2!, h2!, mi2!);
@@ -218,6 +223,22 @@ function parseWindowList(description: string): ParsedWindow[] {
       startISO,
       endISO,
       startDate: localDate(y1!, mo1!, d1!),
+      timeStart: localTime(h1!, mi1!),
+      timeEnd: localTime(h2!, mi2!),
+    });
+  }
+  // Same-day windows ("… von HH:MM bis HH:MM Uhr"). The two patterns are
+  // structurally disjoint — a cross-date line has "bis zum <date>", never
+  // "bis <time> Uhr" directly — so no window is double-counted.
+  for (const m of description.matchAll(WINDOW_SAME_DAY_RE)) {
+    const [, d, mo, y, h1, mi1, h2, mi2] = m;
+    const startISO = berlinWallClockToISO(y!, mo!, d!, h1!, mi1!);
+    const endISO = berlinWallClockToISO(y!, mo!, d!, h2!, mi2!);
+    if (!startISO || !endISO) continue;
+    out.push({
+      startISO,
+      endISO,
+      startDate: localDate(y!, mo!, d!),
       timeStart: localTime(h1!, mi1!),
       timeEnd: localTime(h2!, mi2!),
     });
