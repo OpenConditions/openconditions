@@ -269,16 +269,23 @@ function directionOf(rec: XmlObject): string | undefined {
 }
 
 function roadsOf(rec: XmlObject): import("./model.js").RoadRef[] {
-  const locRef = getXmlChild(rec, "locationReference");
+  // v2 feeds (e.g. Straßen.NRW) put the location under `groupOfLocations` and
+  // nest the road under `roadInformation`, not directly on `locationReference`.
+  const locRef = getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations");
   if (!locRef) return [];
   const pointLoc = getXmlChild(locRef, "pointLocation");
 
-  // roadName/roadNumber may be a plain leaf or a multilingual object.
+  // roadName/roadNumber may be a plain leaf or a multilingual object, and may sit
+  // a few levels down (roadInformation > roadNumber / roadDirection).
   const roadName =
     getXmlChildText(locRef, "roadName") ??
     multilingual(getXmlChild(locRef, "roadName"), "en") ??
-    getXmlChildText(pointLoc, "roadName");
-  const roadRef = getXmlChildText(locRef, "roadNumber") ?? getXmlChildText(pointLoc, "roadNumber");
+    getXmlChildText(pointLoc, "roadName") ??
+    multilingual(findFirst(locRef, "roadDirection"), "en");
+  const roadRef =
+    getXmlChildText(locRef, "roadNumber") ??
+    getXmlChildText(pointLoc, "roadNumber") ??
+    collectLeaf(locRef, "roadNumber")[0];
 
   if (roadName || roadRef) {
     return [{ name: roadName ?? roadRef ?? "", ref: roadRef }];
@@ -349,6 +356,31 @@ function subtypeOf(rec: XmlObject): string | undefined {
 /** Human cause text (DATEX `cause/causeDescription`), a multilingual block. */
 function causeDescriptionOf(rec: XmlObject): string | undefined {
   return multilingual(getXmlChild(getXmlChild(rec, "cause"), "causeDescription"), "en");
+}
+
+/**
+ * All `<generalPublicComment>` entries on the record as `{ type, text }`. `type`
+ * is the DATEX `commentExtension/commentExtended/commentType2` discriminator —
+ * publishers like Straßen.NRW (Mobilithek) carry SEVERAL comments per record,
+ * each a distinct field: e.g. `roadworksName` (the title), `roadworksType` (what
+ * the work is), `routeRecommendation` (the diversion). `text` is the best
+ * language match (preferred lang, else the first value), so non-English feeds
+ * still resolve. Handles both a single element and a repeated array — the latter
+ * is what broke the old single-node `multilingual()` lookup (it returned the
+ * default headline for every multi-comment record).
+ */
+function publicComments(rec: XmlObject, lang = "en"): { type?: string; text: string }[] {
+  const out: { type?: string; text: string }[] = [];
+  for (const gpc of getXmlChildren(rec, "generalPublicComment")) {
+    const t = multilingual(gpc, lang);
+    if (!t) continue;
+    const type = getXmlChildText(
+      getXmlChild(getXmlChild(gpc, "commentExtension"), "commentExtended"),
+      "commentType2"
+    );
+    out.push(type ? { type, text: t } : { text: t });
+  }
+  return out;
 }
 
 function speedLimitOf(rec: XmlObject): number | undefined {
@@ -694,9 +726,25 @@ export function parseDatexSituations(
         ? { severity: "medium" as const, severitySource: "derived" as const }
         : normalised;
 
-    const publicComment = getXmlChild(rec, "generalPublicComment");
+    const comments = publicComments(rec, "en");
+    const commentByType = (re: RegExp): string | undefined =>
+      comments.find((c) => c.type && re.test(c.type))?.text;
     const fallbackComment = getXmlChild(rec, "comment");
     const causeDesc = causeDescriptionOf(rec);
+    // Prefer a name/title-typed comment as the headline; the work-type or any
+    // other comment as the description; a route/diversion comment as the detour.
+    const headlineText =
+      commentByType(/name|title|head/i) ??
+      comments.find((c) => !c.type)?.text ??
+      comments[0]?.text ??
+      multilingual(fallbackComment, "en") ??
+      causeDesc ??
+      defaultHeadline(type);
+    const descriptionText =
+      commentByType(/type|description|desc/i) ??
+      comments.map((c) => c.text).find((t) => t !== headlineText) ??
+      multilingual(fallbackComment, "en") ??
+      causeDesc;
 
     const shared = {
       id: `${src.id}:${recId(rec)}`,
@@ -718,22 +766,14 @@ export function parseDatexSituations(
       speedLimitKph: speedLimitOf(rec),
       restrictions: dimensionRestrictionsOf(rec),
       vehiclesAffected: vehiclesAffectedOf(rec),
-      detour: detourOf(rec),
+      detour: commentByType(/route|recommend|divers|detour|umleit/i) ?? detourOf(rec),
       detourGeometry: detourGeometryOf(rec, reproject, lonFirst),
       delaySeconds: leafNumber(rec, "delayTimeValue"),
       queueLengthMeters: leafNumber(rec, "queueLength"),
       relatedIds: relatedRefsOf(rec),
       sourceRaw: rec,
-      headline:
-        multilingual(publicComment, "en") ??
-        multilingual(fallbackComment, "en") ??
-        causeDesc ??
-        defaultHeadline(type),
-      description:
-        multilingual(publicComment, "en") ??
-        multilingual(fallbackComment, "en") ??
-        causeDesc ??
-        undefined,
+      headline: headlineText,
+      description: descriptionText,
       validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
       validTo: text(timeSpec?.["overallEndTime"]) ?? null,
       origin: {

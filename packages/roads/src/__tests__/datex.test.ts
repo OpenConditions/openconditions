@@ -668,3 +668,46 @@ describe("parseDatexSituations — Trafikverket DATEX (coordinatesForDisplay + l
     });
   });
 });
+
+describe("parseDatexSituations — Straßen.NRW typed comments (commentType2) + groupOfLocations road", () => {
+  const gpc = (type: string, text: string) =>
+    `<generalPublicComment><comment><values><value lang="de">${text}</value></values></comment>` +
+    `<commentExtension><commentExtended><commentType2>${type}</commentType2></commentExtended></commentExtension></generalPublicComment>`;
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<D2LogicalModel modelBaseVersion="2">
+  <payloadPublication xsi:type="SituationPublication" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <situation id="S">
+      <situationRecord xsi:type="MaintenanceWorks" id="NRW/6090">
+        <situationRecordVersionTime>2026-06-30T00:00:00Z</situationRecordVersionTime>
+        ${gpc("roadworksType", "Arbeiten an Geh-/Radwegen")}
+        ${gpc("routeRecommendation", "für Fahrzeuge über Willich")}
+        ${gpc("roadworksName", "K19 zur Erneuerung des Geh-/Radwegs")}
+        <groupOfLocations>
+          <locationContainedInGroup>
+            <roadInformation>
+              <roadDirection><values><value lang="de">Willich - Kleve</value></values></roadDirection>
+              <roadNumber>K19</roadNumber>
+            </roadInformation>
+            <gmlLineString><posList>51.0 6.0 51.1 6.1</posList></gmlLineString>
+          </locationContainedInGroup>
+        </groupOfLocations>
+      </situationRecord>
+    </situation>
+  </payloadPublication>
+</D2LogicalModel>`;
+
+  it("picks headline/description/detour from the typed comment array and road from groupOfLocations", () => {
+    const [ev] = parseDatexSituations(xml, {
+      id: "verkehr-nrw-de",
+      attribution: "LVZ.NRW",
+      country: "DE",
+      license: "dl-de/zero-2-0",
+    });
+    expect(ev!.headline).toBe("K19 zur Erneuerung des Geh-/Radwegs");
+    expect(ev!.description).toBe("Arbeiten an Geh-/Radwegen");
+    expect(ev!.detour).toBe("für Fahrzeuge über Willich");
+    expect(ev!.roads[0]?.ref).toBe("K19");
+    expect(ev!.geometry?.type).toBe("LineString");
+  });
+});
