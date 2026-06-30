@@ -22,7 +22,14 @@ const fc = {
         valid_from: "2026-06-20T00:00:00Z",
         valid_to: "2026-07-01T00:00:00Z",
         schedule: [
-          { dateStart: "2026-06-20", dateEnd: "2026-06-30", timeStart: "20:00", timeEnd: "05:00" },
+          {
+            repeatFrequency: "P1D",
+            startDate: "2026-06-20",
+            endDate: "2026-06-30",
+            startTime: "20:00",
+            duration: "PT9H",
+            scheduleTimezone: "Europe/Amsterdam",
+          },
         ],
         attribution: { provider: "NDW", license: "CC0-1.0", url: "https://www.ndw.nu" },
       },
@@ -55,7 +62,14 @@ describe("featureCollectionToRoadConditionEvents", () => {
       validFrom: "2026-06-20T00:00:00Z",
       validTo: "2026-07-01T00:00:00Z",
       schedule: [
-        { dateStart: "2026-06-20", dateEnd: "2026-06-30", timeStart: "20:00", timeEnd: "05:00" },
+        {
+          repeatFrequency: "P1D",
+          startDate: "2026-06-20",
+          endDate: "2026-06-30",
+          startTime: "20:00",
+          duration: "PT9H",
+          scheduleTimezone: "Europe/Amsterdam",
+        },
       ],
       geometry: { type: "Point", coordinates: [5, 52] },
     });

@@ -48,17 +48,24 @@ export interface RoadConditionRoadRef {
 }
 
 /**
- * One recurring validity window: within [dateStart, dateEnd] (inclusive ISO
- * dates), on the listed `dayOfWeek` (0=Sun..6=Sat; all days when absent), active
- * each day from `timeStart` to `timeEnd` (local "HH:MM"; an overnight band wraps
- * when timeEnd < timeStart). Mirrors the canonical `RecurringWindow`.
+ * A recurring validity rule, shaped after schema.org `Schedule`. Local fields
+ * (`startTime`, `startDate`/`endDate`, `byDay`) are interpreted in
+ * `scheduleTimezone` (IANA); `duration` is the authoritative occurrence length
+ * (overnight-safe). Mirrors the canonical `Schedule` + the host contract.
  */
-export interface RoadConditionScheduleWindow {
-  dayOfWeek?: number[];
-  timeStart?: string;
-  timeEnd?: string;
-  dateStart?: string;
-  dateEnd?: string;
+export interface RoadConditionSchedule {
+  repeatFrequency?: string;
+  repeatCount?: number;
+  startDate?: string;
+  endDate?: string;
+  startTime?: string;
+  endTime?: string;
+  duration?: string;
+  byDay?: string[];
+  byMonth?: number[];
+  byMonthDay?: number[];
+  exceptDate?: string[];
+  scheduleTimezone: string;
 }
 
 export interface RoadConditionEvent {
@@ -74,9 +81,9 @@ export interface RoadConditionEvent {
   roads?: RoadConditionRoadRef[];
   validFrom?: string | null;
   validTo?: string | null;
-  /** Fine-grained recurring windows (e.g. nightly closures); when present, an
+  /** Fine-grained recurring schedule (e.g. nightly closures); when present, an
    * event is in effect only inside a window, not across the whole from–to span. */
-  schedule?: RoadConditionScheduleWindow[];
+  schedule?: RoadConditionSchedule[];
   dataUpdatedAt?: string;
   attribution?: RoadConditionAttribution;
 }
