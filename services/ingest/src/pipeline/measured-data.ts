@@ -49,10 +49,20 @@ export async function streamMeasuredData(
   const parser = createMeasuredDataParser(descriptor, siteMap, now);
 
   const source = await streamFactory(resolveUrl(src));
+  // `.pipe()` does not forward the source's errors to the gunzip stream, so a
+  // mid-stream socket drop (the upstream closing a large download) would surface
+  // as an unhandled 'error' event and crash the process. Forward it so the loop
+  // below rejects and the caller turns it into a logged, recoverable skip;
+  // destroy `source` on the way out so a half-read connection never lingers.
   const decoded: Readable = src.gzip ? source.pipe(createGunzip()) : source;
-  decoded.setEncoding("utf8");
-  for await (const chunk of decoded) {
-    parser.write(chunk as string);
+  if (decoded !== source) source.on("error", (err) => decoded.destroy(err));
+  try {
+    decoded.setEncoding("utf8");
+    for await (const chunk of decoded) {
+      parser.write(chunk as string);
+    }
+  } finally {
+    if (decoded !== source) source.destroy();
   }
 
   const { flows, events } = parser.close();

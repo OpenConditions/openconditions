@@ -47,10 +47,20 @@ async function streamIntoParser(
   gzip: boolean
 ): Promise<Map<string, SiteGeometry>> {
   const parser = createSiteTableParser();
+  // `.pipe()` does not forward the source's errors to the gunzip stream, so a
+  // mid-stream socket drop on the (multi-hundred-MB) download would surface as an
+  // unhandled 'error' event and crash the process. Forward it so the loop rejects
+  // and loadSiteTable's try/catch turns it into a logged fall-back to the cached
+  // map; destroy `source` on the way out so a half-read connection never lingers.
   const decoded: Readable = gzip ? source.pipe(createGunzip()) : source;
-  decoded.setEncoding("utf8");
-  for await (const chunk of decoded) {
-    parser.write(chunk as string);
+  if (decoded !== source) source.on("error", (err) => decoded.destroy(err));
+  try {
+    decoded.setEncoding("utf8");
+    for await (const chunk of decoded) {
+      parser.write(chunk as string);
+    }
+  } finally {
+    if (decoded !== source) source.destroy();
   }
   return parser.close();
 }
