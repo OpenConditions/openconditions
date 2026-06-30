@@ -423,7 +423,12 @@ ${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
     expect(ev!.validFrom).toBe("2026-06-01T00:00:00Z");
     expect(ev!.validTo).toBe("2026-07-01T00:00:00Z");
     expect(ev!.schedule).toEqual([
-      { dateStart: "2026-06-10T06:00:00Z", dateEnd: "2026-06-10T18:00:00Z" },
+      {
+        repeatFrequency: "P1D",
+        startDate: "2026-06-10T06:00:00Z",
+        endDate: "2026-06-10T18:00:00Z",
+        scheduleTimezone: "Europe/Berlin",
+      },
     ]);
   });
 

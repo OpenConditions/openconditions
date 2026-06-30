@@ -268,7 +268,16 @@ describe("parseOpen511 — extended fields", () => {
     });
     const [ev] = parseOpen511(json, DRIVEBC_SOURCE);
     expect(ev!.subtype).toBe("ROAD_CONSTRUCTION");
-    expect(ev!.schedule).toEqual([{ dayOfWeek: [1, 2, 3], timeStart: "08:00", timeEnd: "17:00" }]);
+    expect(ev!.schedule).toEqual([
+      {
+        repeatFrequency: "P1W",
+        startTime: "08:00",
+        endTime: "17:00",
+        duration: "PT9H",
+        byDay: ["MO", "TU", "WE"],
+        scheduleTimezone: "America/Vancouver",
+      },
+    ]);
     expect(ev!.sourceRaw?.["event_type"]).toBe("CONSTRUCTION");
   });
 });
@@ -276,7 +285,7 @@ describe("parseOpen511 — extended fields", () => {
 describe("parseOpen511 — deeper field extraction", () => {
   it("maps recurring date range and regions from the DriveBC fixture", () => {
     const events = parseOpen511(readFileSync(FIXTURE_PATH, "utf8"), DRIVEBC_SOURCE);
-    expect(events.some((e) => e.schedule?.some((w) => w.dateStart != null))).toBe(true);
+    expect(events.some((e) => e.schedule?.some((w) => w.startDate != null))).toBe(true);
     expect(events.some((e) => (e.regions?.length ?? 0) > 0)).toBe(true);
   });
 

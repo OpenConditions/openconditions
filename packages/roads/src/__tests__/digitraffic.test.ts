@@ -309,7 +309,16 @@ describe("parseDigitraffic — deeper field extraction", () => {
     expect(ev!.restrictions).toContainEqual({ type: "SPEED_LIMIT", value: 50, unit: "km/h" });
     expect(ev!.speedLimitKph).toBe(50);
     expect(ev!.roadState).toBe("some_lanes_closed");
-    expect(ev!.schedule).toEqual([{ dayOfWeek: [1], timeStart: "07:00:00", timeEnd: "17:00:00" }]);
+    expect(ev!.schedule).toEqual([
+      {
+        repeatFrequency: "P1W",
+        startTime: "07:00:00",
+        endTime: "17:00:00",
+        duration: "PT10H",
+        byDay: ["MO"],
+        scheduleTimezone: "Europe/Helsinki",
+      },
+    ]);
     expect(ev!.roads[0]!.to).toBe("Vt 3 end");
     expect(ev!.description).toBe("Tie 3 between A and B");
   });

@@ -1,7 +1,8 @@
-import { normaliseSeverity } from "@openconditions/core";
-import type { GeoJsonGeometry, RecurringWindow } from "@openconditions/core";
+import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
+import type { GeoJsonGeometry } from "@openconditions/core";
 import type { RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
+import { buildLocalSchedule, isoDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -50,21 +51,25 @@ interface Open511Event {
   [key: string]: unknown;
 }
 
-/** Open511 recurring_schedules → canonical RecurringWindow[]. */
-function parseRecurring(schedule: Open511Schedule | undefined): RecurringWindow[] | undefined {
+/** Open511 recurring_schedules → local schema.org Schedule windows (zone-less;
+ * stamped at assembly). `days` are ISO weekday numbers (1=Mon..7=Sun). */
+function parseRecurring(schedule: Open511Schedule | undefined): LocalSchedule[] | undefined {
   const rs = schedule?.recurring_schedules;
   if (!Array.isArray(rs) || rs.length === 0) return undefined;
   const out = rs.map((r) => {
-    const w: RecurringWindow = {};
-    if (Array.isArray(r.days)) {
-      const days = r.days.filter((d): d is number => typeof d === "number");
-      if (days.length > 0) w.dayOfWeek = days;
-    }
-    if (typeof r.daily_start_time === "string") w.timeStart = r.daily_start_time;
-    if (typeof r.daily_end_time === "string") w.timeEnd = r.daily_end_time;
-    if (typeof r.start_date === "string") w.dateStart = r.start_date;
-    if (typeof r.end_date === "string") w.dateEnd = r.end_date;
-    return w;
+    const byDay = Array.isArray(r.days)
+      ? r.days
+          .filter((d): d is number => typeof d === "number")
+          .map(isoDayToICal)
+          .filter((d): d is string => !!d)
+      : undefined;
+    return buildLocalSchedule({
+      startDate: typeof r.start_date === "string" ? r.start_date : undefined,
+      endDate: typeof r.end_date === "string" ? r.end_date : undefined,
+      startTime: typeof r.daily_start_time === "string" ? r.daily_start_time : undefined,
+      endTime: typeof r.daily_end_time === "string" ? r.daily_end_time : undefined,
+      byDay: byDay && byDay.length > 0 ? byDay : undefined,
+    });
   });
   return out.length > 0 ? out : undefined;
 }
@@ -320,7 +325,7 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
         relatedIds: groupedRelatedIds(ev.grouped_events),
         headline: typeof ev.headline === "string" && ev.headline ? ev.headline : type,
         description: typeof ev.description === "string" ? ev.description : undefined,
-        schedule: parseRecurring(ev.schedule),
+        schedule: withTimezone(parseRecurring(ev.schedule), scheduleTimezoneForGeometry(geometry)),
         validFrom,
         validTo,
         externalRefs,

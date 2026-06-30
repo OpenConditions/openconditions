@@ -15,7 +15,15 @@ const fakeRow = {
   valid_from: "2026-06-22T06:00:00Z",
   valid_to: "2026-06-22T10:00:00Z",
   schedule: [
-    { dateStart: "2026-06-22", dateEnd: "2026-06-22", timeStart: "06:00", timeEnd: "10:00" },
+    {
+      repeatFrequency: "P1D",
+      startDate: "2026-06-22",
+      endDate: "2026-06-22",
+      startTime: "06:00",
+      endTime: "10:00",
+      duration: "PT4H",
+      scheduleTimezone: "Europe/Amsterdam",
+    },
   ],
   geojson: JSON.stringify({ type: "Point", coordinates: [5.1234, 52.5678] }),
   origin: {
@@ -56,7 +64,15 @@ describe("observationsByBbox", () => {
     expect(feat.properties?.valid_from).toBe("2026-06-22T06:00:00Z");
     expect(feat.properties?.valid_to).toBe("2026-06-22T10:00:00Z");
     expect(feat.properties?.schedule).toEqual([
-      { dateStart: "2026-06-22", dateEnd: "2026-06-22", timeStart: "06:00", timeEnd: "10:00" },
+      {
+        repeatFrequency: "P1D",
+        startDate: "2026-06-22",
+        endDate: "2026-06-22",
+        startTime: "06:00",
+        endTime: "10:00",
+        duration: "PT4H",
+        scheduleTimezone: "Europe/Amsterdam",
+      },
     ]);
   });
 

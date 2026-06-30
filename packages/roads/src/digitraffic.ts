@@ -1,7 +1,11 @@
 import { deriveSeverity } from "@openconditions/core";
-import type { GeoJsonGeometry, RecurringWindow, Severity } from "@openconditions/core";
+import type { GeoJsonGeometry, Severity } from "@openconditions/core";
 import type { Restriction, RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
+import { buildLocalSchedule, isoDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
+
+/** Digitraffic is the Finnish national feed → its local times are Europe/Helsinki. */
+const HELSINKI_TZ = "Europe/Helsinki";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -131,16 +135,16 @@ function speedLimitFromPhases(ann: DigitrafficAnnouncement | null): number | und
   return min;
 }
 
-function scheduleFromPhases(ann: DigitrafficAnnouncement | null): RecurringWindow[] | undefined {
-  const out: RecurringWindow[] = [];
+function scheduleFromPhases(ann: DigitrafficAnnouncement | null): LocalSchedule[] | undefined {
+  const out: LocalSchedule[] = [];
   for (const p of roadWorkPhases(ann)) {
     for (const wh of p.workingHours ?? []) {
-      const w: RecurringWindow = {};
-      const day = typeof wh.weekday === "string" ? WEEKDAY[wh.weekday.toUpperCase()] : undefined;
-      if (day) w.dayOfWeek = [day];
-      if (typeof wh.startTime === "string") w.timeStart = wh.startTime;
-      if (typeof wh.endTime === "string") w.timeEnd = wh.endTime;
-      if (w.dayOfWeek || w.timeStart || w.timeEnd) out.push(w);
+      const isoDay = typeof wh.weekday === "string" ? WEEKDAY[wh.weekday.toUpperCase()] : undefined;
+      const iCal = isoDay ? isoDayToICal(isoDay) : undefined;
+      const startTime = typeof wh.startTime === "string" ? wh.startTime : undefined;
+      const endTime = typeof wh.endTime === "string" ? wh.endTime : undefined;
+      if (!iCal && !startTime && !endTime) continue;
+      out.push(buildLocalSchedule({ startTime, endTime, byDay: iCal ? [iCal] : undefined }));
     }
   }
   return out.length > 0 ? out : undefined;
@@ -478,7 +482,7 @@ export function parseDigitraffic(
         restrictions,
         regions: regionsFromAnnouncement(ann),
         externalRefs: externalRefsFromAnnouncement(ann),
-        schedule: scheduleFromPhases(ann),
+        schedule: withTimezone(scheduleFromPhases(ann), HELSINKI_TZ),
         headline,
         description: descriptionFromAnnouncement(ann),
         validFrom,

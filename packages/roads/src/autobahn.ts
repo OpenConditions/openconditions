@@ -1,5 +1,6 @@
 import { deriveSeverity } from "@openconditions/core";
-import type { GeoJsonGeometry, RecurringWindow } from "@openconditions/core";
+import type { GeoJsonGeometry, Schedule } from "@openconditions/core";
+import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { mapSourceType } from "./taxonomy.js";
@@ -229,7 +230,7 @@ function parseWindowList(description: string): ParsedWindow[] {
  * (local), each spanning the earliest→latest start date. The common case (one
  * nightly 20:00–05:00 band over consecutive nights) yields a single window.
  */
-function windowsToSchedule(windows: ParsedWindow[]): RecurringWindow[] {
+function windowsToSchedule(windows: ParsedWindow[]): LocalSchedule[] {
   const byTime = new Map<string, ParsedWindow[]>();
   for (const w of windows) {
     const key = `${w.timeStart}-${w.timeEnd}`;
@@ -237,15 +238,17 @@ function windowsToSchedule(windows: ParsedWindow[]): RecurringWindow[] {
     if (group) group.push(w);
     else byTime.set(key, [w]);
   }
-  const out: RecurringWindow[] = [];
+  const out: LocalSchedule[] = [];
   for (const group of byTime.values()) {
     const dates = group.map((g) => g.startDate).sort();
-    out.push({
-      dateStart: dates[0],
-      dateEnd: dates[dates.length - 1],
-      timeStart: group[0]!.timeStart,
-      timeEnd: group[0]!.timeEnd,
-    });
+    out.push(
+      buildLocalSchedule({
+        startDate: dates[0],
+        endDate: dates[dates.length - 1],
+        startTime: group[0]!.timeStart,
+        endTime: group[0]!.timeEnd,
+      })
+    );
   }
   return out;
 }
@@ -253,7 +256,7 @@ function windowsToSchedule(windows: ParsedWindow[]): RecurringWindow[] {
 interface Temporal {
   validFrom: string | null;
   validTo: string | null;
-  schedule?: RecurringWindow[];
+  schedule?: Schedule[];
 }
 
 /**
@@ -273,7 +276,8 @@ function extractTemporal(item: AutobahnItem, description: string | undefined): T
     return {
       validFrom: structuredStart ?? starts[0]!,
       validTo: ends[ends.length - 1]!,
-      schedule: windowsToSchedule(windows),
+      // Autobahn is the German motorway feed → its local times are Europe/Berlin.
+      schedule: withTimezone(windowsToSchedule(windows), BERLIN_TZ),
     };
   }
 

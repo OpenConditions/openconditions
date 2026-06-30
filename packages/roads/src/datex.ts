@@ -1,8 +1,9 @@
-import { normaliseSeverity } from "@openconditions/core";
-import type { Confidence, RecurringWindow } from "@openconditions/core";
+import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
+import type { Confidence } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
+import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { reprojectorFor } from "./reproject.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
@@ -216,23 +217,19 @@ function detourGeometryOf(
  * endOfPeriod) plus the daily time window (recurringTimePeriodOfDay) when the
  * source supplies one. The overall start/end stay on validFrom/validTo.
  */
-function scheduleOf(timeSpec: XmlObject | undefined): RecurringWindow[] | undefined {
+function scheduleOf(timeSpec: XmlObject | undefined): LocalSchedule[] | undefined {
   if (!timeSpec) return undefined;
-  const out: RecurringWindow[] = [];
+  const out: LocalSchedule[] = [];
   for (const vp of getXmlChildren(timeSpec, "validPeriod")) {
-    const win: RecurringWindow = {};
-    const ds = getXmlChildText(vp, "startOfPeriod");
-    const de = getXmlChildText(vp, "endOfPeriod");
-    if (ds) win.dateStart = ds;
-    if (de) win.dateEnd = de;
     const tod = getXmlChild(vp, "recurringTimePeriodOfDay");
-    if (tod) {
-      const ts = getXmlChildText(tod, "startTimeOfPeriod");
-      const te = getXmlChildText(tod, "endTimeOfPeriod");
-      if (ts) win.timeStart = ts;
-      if (te) win.timeEnd = te;
-    }
-    if (Object.keys(win).length > 0) out.push(win);
+    const win = buildLocalSchedule({
+      startDate: getXmlChildText(vp, "startOfPeriod"),
+      endDate: getXmlChildText(vp, "endOfPeriod"),
+      startTime: tod ? getXmlChildText(tod, "startTimeOfPeriod") : undefined,
+      endTime: tod ? getXmlChildText(tod, "endTimeOfPeriod") : undefined,
+    });
+    // Drop windows with neither a date range nor a time-of-day (no information).
+    if (win.startDate || win.endDate || win.startTime) out.push(win);
   }
   return out.length > 0 ? out : undefined;
 }
@@ -665,7 +662,6 @@ export function parseDatexSituations(
         multilingual(fallbackComment, "en") ??
         causeDesc ??
         undefined,
-      schedule: scheduleOf(timeSpec),
       validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
       validTo: text(timeSpec?.["overallEndTime"]) ?? null,
       origin: {
@@ -685,6 +681,9 @@ export function parseDatexSituations(
       withGeom.push({
         ...shared,
         geometry,
+        // Local schedule times are stamped with the zone of the closure's
+        // location (resolved from geometry), so the recurrence is unambiguous.
+        schedule: withTimezone(scheduleOf(timeSpec), scheduleTimezoneForGeometry(geometry)),
         externalRefs: externalRefsOf(rec),
       });
     } else {

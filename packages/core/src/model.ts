@@ -46,13 +46,41 @@ export type Severity = "low" | "medium" | "high" | "critical" | "unknown";
 
 export type Confidence = "observed" | "likely" | "possible" | "unknown";
 
-export interface RecurringWindow {
-  dayOfWeek?: number[];
-  timeStart?: string;
-  timeEnd?: string;
-  /** Date the recurrence applies from/until (ISO date), when bounded. */
-  dateStart?: string;
-  dateEnd?: string;
+/**
+ * A recurring validity rule, shaped after schema.org `Schedule`
+ * (https://schema.org/Schedule). The local wall-clock fields (`startTime`,
+ * `startDate`/`endDate`, …) are interpreted in `scheduleTimezone` (an IANA name),
+ * so the rule is unambiguous and DST-correct without materialising occurrences.
+ * `duration` is the authoritative occurrence length (overnight-safe, e.g.
+ * "PT9H" for 20:00–05:00); `endTime` is an optional human-readable convenience.
+ * An Observation with no `schedule` (or an empty array) is continuously active
+ * across `[validFrom, validTo]`.
+ */
+export interface Schedule {
+  /** ISO 8601 duration between occurrences: "P1D" daily, "P1W" weekly. */
+  repeatFrequency?: string;
+  /** Bound the recurrence by a count of occurrences instead of `endDate`. */
+  repeatCount?: number;
+  /** Local ISO date of the first occurrence (recurrence lower bound). */
+  startDate?: string;
+  /** Local ISO date of the last occurrence's start (recurrence upper bound). */
+  endDate?: string;
+  /** Local time-of-day each occurrence starts ("HH:MM" or "HH:MM:SS"). */
+  startTime?: string;
+  /** Optional local end time-of-day (human-readable; `duration` is authoritative). */
+  endTime?: string;
+  /** ISO 8601 duration of each occurrence, e.g. "PT9H"; overnight-safe. */
+  duration?: string;
+  /** Days of week as two-letter iCal codes (SU MO TU WE TH FR SA). */
+  byDay?: string[];
+  /** Months of the year (1-12) the recurrence applies to. */
+  byMonth?: number[];
+  /** Days of the month (1-31). */
+  byMonthDay?: number[];
+  /** Local ISO dates excluded from the recurrence. */
+  exceptDate?: string[];
+  /** IANA timezone the local fields above are expressed in (e.g. "Europe/Berlin"). */
+  scheduleTimezone: string;
 }
 
 export interface SubjectRef {
@@ -84,7 +112,7 @@ export interface Observation {
   status: "active" | "inactive" | "archived" | "cancelled";
   validFrom?: string | null;
   validTo?: string | null;
-  schedule?: RecurringWindow[];
+  schedule?: Schedule[];
   confidence?: Confidence;
   isForecast?: boolean;
 

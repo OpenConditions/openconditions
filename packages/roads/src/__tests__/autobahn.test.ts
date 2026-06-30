@@ -437,9 +437,17 @@ describe("parseAutobahn — structured validity (Europe/Berlin)", () => {
       ],
     };
     const [ev] = parseAutobahn(feed, AUTOBAHN_SOURCE, "closure");
-    // One recurrence window: nightly 20:00–05:00 over the start-date span.
+    // One recurrence window: nightly 20:00–05:00 (Europe/Berlin) over the span.
     expect(ev!.schedule).toEqual([
-      { dateStart: "2026-06-29", dateEnd: "2026-07-01", timeStart: "20:00", timeEnd: "05:00" },
+      {
+        repeatFrequency: "P1D",
+        startDate: "2026-06-29",
+        endDate: "2026-07-01",
+        startTime: "20:00",
+        endTime: "05:00",
+        duration: "PT9H",
+        scheduleTimezone: "Europe/Berlin",
+      },
     ]);
     // Outer bounds: first window start … last window end (Berlin → UTC).
     expect(ev!.validFrom).toBe("2026-06-29T18:00:00.000Z");

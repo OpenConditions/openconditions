@@ -84,10 +84,16 @@ importers:
       postgres:
         specifier: ^3.4.0
         version: 3.4.9
+      tz-lookup:
+        specifier: ^6.1.25
+        version: 6.1.25
     devDependencies:
       '@types/geojson':
         specifier: ^7946.0.14
         version: 7946.0.16
+      '@types/tz-lookup':
+        specifier: ^6.1.2
+        version: 6.1.2
       drizzle-kit:
         specifier: ^0.31.1
         version: 0.31.10
@@ -892,6 +898,9 @@ packages:
 
   '@types/ssh2@1.15.5':
     resolution: {integrity: sha512-N1ASjp/nXH3ovBHddRJpli4ozpk6UdDYIX4RJWFa9L1YKnzdhTlVmiGHm4DZnj/jLbqZpes4aeR30EFGQtvhQQ==}
+
+  '@types/tz-lookup@6.1.2':
+    resolution: {integrity: sha512-9y31Xf/8FHXrCHjvVjGZLcsayAa6ABNc8bZlk6MPOQLLlr41tICSqW3TRPRIx2nodbzdKs5N7ipHWBrUsWUiAA==}
 
   '@typescript-eslint/eslint-plugin@8.62.0':
     resolution: {integrity: sha512-o+mpz7EYiMzXoySXiKmzlabIvTVqUuK5yLrAedRPRDA0IpPFMUV1IXt6OqljIxX/kumN6EjUYp41Hqelh6p/Dw==}
@@ -2528,6 +2537,9 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  tz-lookup@6.1.25:
+    resolution: {integrity: sha512-fFewT9o1uDzsW1QnUU1ValqaihFnwiUiiHr1S79/fxOzKXYYvX+EHeRnpvQJ9B3Qg67wPXT6QF2Esc4pFOrvLg==}
+
   uc.micro@2.1.0:
     resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
 
@@ -3264,6 +3276,8 @@ snapshots:
   '@types/ssh2@1.15.5':
     dependencies:
       '@types/node': 18.19.130
+
+  '@types/tz-lookup@6.1.2': {}
 
   '@typescript-eslint/eslint-plugin@8.62.0(@typescript-eslint/parser@8.62.0(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.4(jiti@2.6.1))(typescript@5.9.3)':
     dependencies:
@@ -4961,6 +4975,8 @@ snapshots:
       - supports-color
 
   typescript@5.9.3: {}
+
+  tz-lookup@6.1.25: {}
 
   uc.micro@2.1.0: {}
 

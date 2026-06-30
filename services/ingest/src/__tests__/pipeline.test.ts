@@ -219,7 +219,14 @@ describe("store round-trip — typed columns + attributes JSONB", () => {
           [13.42, 52.51],
         ],
       },
-      schedule: [{ dateStart: "2026-06-10T06:00:00Z", dateEnd: "2026-06-10T18:00:00Z" }],
+      schedule: [
+        {
+          repeatFrequency: "P1D",
+          startDate: "2026-06-10T06:00:00Z",
+          endDate: "2026-06-10T18:00:00Z",
+          scheduleTimezone: "Europe/Berlin",
+        },
+      ],
       externalRefs: { external: { system: "RIS-index", code: "NL123" } },
       confidence: "likely",
       isForecast: true,
@@ -254,7 +261,12 @@ describe("store round-trip — typed columns + attributes JSONB", () => {
       ],
     });
     expect(got!.schedule).toEqual([
-      { dateStart: "2026-06-10T06:00:00Z", dateEnd: "2026-06-10T18:00:00Z" },
+      {
+        repeatFrequency: "P1D",
+        startDate: "2026-06-10T06:00:00Z",
+        endDate: "2026-06-10T18:00:00Z",
+        scheduleTimezone: "Europe/Berlin",
+      },
     ]);
     expect(got!.externalRefs?.external).toEqual({ system: "RIS-index", code: "NL123" });
     expect(got!.confidence).toBe("likely"); // typed column, was dropped on read
