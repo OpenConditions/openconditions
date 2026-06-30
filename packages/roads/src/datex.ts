@@ -41,7 +41,14 @@ function elementType(rec: XmlObject): string {
 }
 
 function recId(rec: XmlObject): string {
-  return getXmlAttribute(rec, "id") ?? `unknown-${Math.random().toString(36).slice(2)}`;
+  // xsi-typed records carry an `id` attribute; substitution-group records (e.g.
+  // National Highways) carry a stable `<idG>` leaf instead.
+  return (
+    getXmlAttribute(rec, "id") ??
+    getXmlChildText(rec, "idG") ??
+    getXmlChildText(rec, "id") ??
+    `unknown-${Math.random().toString(36).slice(2)}`
+  );
 }
 
 function text(node: unknown): string | undefined {
@@ -580,6 +587,38 @@ function listSituationRecords(doc: XmlObject): SituationRecord[] {
   });
 }
 
+/** Field names that mark a node as the situationRecord body (not a wrapper). */
+const RECORD_BODY_MARKERS = [
+  "situationRecordVersionTime",
+  "situationRecordCreationTime",
+  "locationReference",
+  "validity",
+];
+
+/**
+ * Resolve the effective record body and its class name. Most DATEX feeds put the
+ * fields directly on `<situationRecord xsi:type="…">`. Others (e.g. National
+ * Highways) use the v3 substitution group: `<situationRecord><sit{Class}>…fields,
+ * locationReference…</sit{Class}></situationRecord>` with NO xsi:type. There the
+ * real body — and the only locationReference the geometry walk can reach — is one
+ * level down, and the wrapper element name carries the record class. Descend into
+ * that wrapper so the field/geometry getters see the body, and surface the class
+ * name (`sitRoadOrCarriagewayOrLaneManagement` → `RoadOrCarriagewayOrLaneManagement`).
+ */
+function recordBody(rawRec: XmlObject): { body: XmlObject; className?: string } {
+  if (RECORD_BODY_MARKERS.some((m) => m in rawRec)) return { body: rawRec };
+  for (const [key, value] of Object.entries(rawRec)) {
+    if (key.startsWith("@_")) continue;
+    const child = xmlNodeToArray(value).find(isXmlObject);
+    if (child && RECORD_BODY_MARKERS.some((m) => m in child)) {
+      const stripped = stripXmlNamespace(key);
+      const className = stripped.startsWith("sit") ? stripped.slice(3) : stripped;
+      return { body: child, className };
+    }
+  }
+  return { body: rawRec };
+}
+
 /**
  * Parse a DATEX II SituationPublication XML document (v2 or v3) and return
  * an array of RoadEvent or UnresolvedRoadEvent observations.
@@ -612,7 +651,8 @@ export function parseDatexSituations(
   const unresolved: UnresolvedRoadEvent[] = [];
   let skippedAlertCOnly = 0;
 
-  for (const { rec, situationSeverity } of records) {
+  for (const { rec: rawRec, situationSeverity } of records) {
+    const { body: rec, className } = recordBody(rawRec);
     const geometry = resolveGeometry(rec, reproject);
     const openlr = !geometry ? collectOpenLr(rec) : undefined;
 
@@ -621,7 +661,7 @@ export function parseDatexSituations(
       continue;
     }
 
-    const recType = elementType(rec);
+    const recType = elementType(rec) || className || "";
     const { type, category, isPlanned } = mapSourceType("datex2", recType);
 
     const validity = getXmlChild(rec, "validity") ?? {};

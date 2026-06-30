@@ -10,6 +10,15 @@ import {
   requiredEnvVars,
 } from "../pipeline/auth.js";
 
+// mTLS must route through undici's OWN fetch (version-matched to its Agent), not
+// the injected base fetch. Mock undici.fetch (keeping the real Agent) so the test
+// can assert the dispatcher is passed without opening a real TLS connection.
+const { undiciFetchMock } = vi.hoisted(() => ({ undiciFetchMock: vi.fn() }));
+vi.mock("undici", async (orig) => {
+  const actual = await orig<typeof import("undici")>();
+  return { ...actual, fetch: undiciFetchMock };
+});
+
 /** A fake fetch that records the (url, init) it was called with and returns 200. */
 function recorder(body = "{}") {
   const calls: { url: string; init?: RequestInit }[] = [];
@@ -158,15 +167,20 @@ describe("makeAuthorizedFetch", () => {
     );
   });
 
-  it("mtls injects an undici dispatcher built from the cert/key env vars", async () => {
-    const { fn, calls } = recorder();
+  it("mtls builds an undici Agent dispatcher and routes via undici's fetch (not the base fetch)", async () => {
+    undiciFetchMock.mockReset();
+    undiciFetchMock.mockResolvedValue(new Response("ok"));
+    const { fn } = recorder();
     const auth: FeedAuth = { kind: "mtls", certEnvVar: "CERT", keyEnvVar: "KEY" };
     await makeAuthorizedFetch({ auth }, fn, {
       CERT: "-----BEGIN CERTIFICATE-----\nx\n-----END CERTIFICATE-----",
       KEY: "-----BEGIN PRIVATE KEY-----\ny\n-----END PRIVATE KEY-----",
     })("https://mobilithek.example/pull");
-    const init = calls[0]!.init as (RequestInit & { dispatcher?: unknown }) | undefined;
+    expect(undiciFetchMock).toHaveBeenCalledTimes(1);
+    const init = undiciFetchMock.mock.calls[0]![1] as { dispatcher?: unknown };
     expect(init?.dispatcher).toBeDefined();
+    // the injected base fetch (Node's global) must NOT be used for mtls
+    expect(fn).not.toHaveBeenCalled();
   });
 
   it("throws when a required static secret is missing", () => {

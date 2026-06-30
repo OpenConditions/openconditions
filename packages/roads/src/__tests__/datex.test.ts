@@ -146,33 +146,47 @@ describe("parseDatexSituations — v2/v3 root tolerance", () => {
 <D2Payload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3">
   <feedType>SituationPublication</feedType>
   <publicationTime>2026-06-30T00:00:00Z</publicationTime>
-  <situation id="S3">
-    <situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="R3" version="1">
-      <situationRecordVersionTime>2026-06-30T00:00:00Z</situationRecordVersionTime>
-      <validity>
-        <validityStatus>active</validityStatus>
-        <validityTimeSpecification>
-          <overallStartTime>2026-06-30T00:00:00Z</overallStartTime>
-        </validityTimeSpecification>
-      </validity>
-      <roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>
-      <locationReference xsi:type="PointLocation">
-        <pointByCoordinates>
-          <pointCoordinates>
-            <latitude>52.5</latitude>
-            <longitude>-1.9</longitude>
-          </pointCoordinates>
-        </pointByCoordinates>
-      </locationReference>
+  <situation>
+    <idG>473996</idG>
+    <situationRecord>
+      <sitRoadOrCarriagewayOrLaneManagement>
+        <idG>1-1774361395-43d66771</idG>
+        <situationRecordCreationTime>2026-06-30T00:00:00Z</situationRecordCreationTime>
+        <situationRecordVersionTime>2026-06-30T00:00:00Z</situationRecordVersionTime>
+        <validity>
+          <validityStatus>active</validityStatus>
+          <validityTimeSpecification>
+            <overallStartTime>2026-06-30T00:00:00Z</overallStartTime>
+          </validityTimeSpecification>
+        </validity>
+        <roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>
+        <locationReference>
+          <locLocationGroupByList>
+            <locationContainedInGroup>
+              <locLinearLocation>
+                <gmlLineString>
+                  <locGmlLineString>
+                    <srsDimension>2</srsDimension>
+                    <srsName>EPSG::4326</srsName>
+                    <posList>52.5 -1.9 52.6 -1.8</posList>
+                  </locGmlLineString>
+                </gmlLineString>
+              </locLinearLocation>
+            </locationContainedInGroup>
+          </locLocationGroupByList>
+        </locationReference>
+      </sitRoadOrCarriagewayOrLaneManagement>
     </situationRecord>
   </situation>
 </D2Payload>`;
 
     const events = parseDatexSituations(xml, NDW_SOURCE);
     expect(events.length).toBeGreaterThanOrEqual(1);
-    expect(events[0]!.geometry?.type).toBe("Point");
+    expect(events[0]!.geometry?.type).toBe("LineString");
     expect(events[0]!.type).not.toBe("other");
     expect(events[0]!.roadState).toBe("closed");
+    // id derived from the stable <idG> leaf, not a random fallback
+    expect(events[0]!.id).toContain("1-1774361395-43d66771");
   });
 });
 

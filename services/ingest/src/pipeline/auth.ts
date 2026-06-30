@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { Agent } from "undici";
+import { Agent, fetch as undiciFetch } from "undici";
 import type { FeedAuth, FeedSource } from "@openconditions/roads";
 
 /**
@@ -204,9 +204,12 @@ export function makeAuthorizedFetch(
       return oauthClientCredentialsFetch(auth, baseFetch, env, now);
     case "mtls": {
       // Build one undici Agent carrying the client certificate and reuse it for
-      // every request (handshake material is set once). Node's global fetch reads
-      // the `dispatcher` option, so injecting the Agent routes the request over the
-      // mutual-TLS connection.
+      // every request (handshake material is set once). The `dispatcher` must be
+      // consumed by undici's OWN fetch: passing this Agent (from the `undici`
+      // package) as `dispatcher` to Node's BUILT-IN fetch throws "invalid
+      // onRequestStart method" — the two ship different undici versions whose
+      // internal request handlers are incompatible. Using undici's fetch keeps the
+      // Agent and the fetch implementation version-matched.
       const ca = auth.caEnvVar ? env[auth.caEnvVar] : undefined;
       const dispatcher = new Agent({
         connect: {
@@ -215,8 +218,11 @@ export function makeAuthorizedFetch(
           ...(ca ? { ca: normalizePem(ca) } : {}),
         },
       });
-      return (input, init) =>
-        baseFetch(input, { ...init, dispatcher } as RequestInit & { dispatcher: Agent });
+      return ((input: Parameters<typeof fetch>[0], init?: RequestInit) =>
+        undiciFetch(input as Parameters<typeof undiciFetch>[0], {
+          ...(init as Parameters<typeof undiciFetch>[1]),
+          dispatcher,
+        })) as unknown as typeof fetch;
     }
   }
 }
