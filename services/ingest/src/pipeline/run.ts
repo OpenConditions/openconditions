@@ -4,7 +4,12 @@ import type { Observation } from "@openconditions/core";
 import type { FeedSource, SiteGeometry, UnresolvedRoadEvent } from "@openconditions/roads";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
-import { fetchAll, makeAuthorizedFetch } from "@openconditions/ingest-framework";
+import {
+  fetchAll,
+  guardOptionsFromEnv,
+  guardedFetch,
+  makeAuthorizedFetch,
+} from "@openconditions/ingest-framework";
 import { isStreamingFlowFeed, streamMeasuredData } from "./measured-data.js";
 import { parseFor } from "./parse.js";
 import { resolveOpenLr } from "./resolve.js";
@@ -76,8 +81,10 @@ export function createOpenlrClient(): MapMatchClient | null {
 export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<RunResult> {
   const start = Date.now();
 
-  // Apply the feed's credential (if any) to every request for this source.
-  const fetchFn = makeAuthorizedFetch(src, deps.fetch);
+  // Guard every egress path (feed, discover, site-table, OAuth, mTLS) at one seam:
+  // validate URL + DNS, re-check each redirect hop, cap size + time. Authorize on top.
+  const guarded = guardedFetch(deps.fetch, guardOptionsFromEnv());
+  const fetchFn = makeAuthorizedFetch(src, guarded);
 
   // Load the companion site table (cached, tolerant of failure) so flow feeds
   // that key measurements by site id can resolve geometry. Loaded before the feed
