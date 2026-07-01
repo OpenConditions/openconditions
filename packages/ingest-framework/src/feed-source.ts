@@ -14,7 +14,7 @@ export type FeedAuth =
     }
   | { kind: "mtls"; certEnvVar: string; keyEnvVar: string; caEnvVar?: string };
 
-/** Per-key credential-acquisition guide (rendered in the admin panel; owned by L3). */
+/** Per-key credential-acquisition guide (rendered in the admin panel). */
 export interface CredentialSetup {
   url?: string;
   urlLabel?: string;
@@ -22,6 +22,18 @@ export interface CredentialSetup {
   cost?: string;
   notes?: string;
   email?: { to: string; subject?: string; body?: string };
+}
+
+/**
+ * A per-env-var credential field: the admin-panel label/description alongside
+ * the acquisition guide. Generated into `service.json`'s `configSchema`
+ * properties by `pnpm gen:credentials`.
+ */
+export interface CredentialField extends CredentialSetup {
+  /** Admin-panel field label (e.g. "511NY API key (New York)"). */
+  title: string;
+  /** Short field description shown under the label. */
+  description?: string;
 }
 
 /**
@@ -63,5 +75,6 @@ export interface FeedSourceBase {
   country: string;
   privacyUrl: string;
   enabledByDefault: boolean;
-  setup?: Record<string, CredentialSetup>;
+  /** Per-env-var credential guide (title, description, acquisition steps). */
+  setup?: Record<string, CredentialField>;
 }

@@ -88,6 +88,10 @@ interface MobilithekRegion {
   license: string;
   licenseUrl: string;
   privacyUrl?: string;
+  /** Admin-panel label for `subEnvVar` (the credential-setup guide). */
+  subEnvTitle: string;
+  /** Admin-panel description for `subEnvVar`, naming the region's offer id(s). */
+  subEnvDescription: string;
 }
 
 const GEONUTZV_URL = "https://www.gesetze-im-internet.de/geonutzv/";
@@ -108,6 +112,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     license: "dl-de/zero-2-0",
     licenseUrl: DL_ZERO_URL,
     privacyUrl: "https://www.strassen.nrw.de/de/datenschutz.html",
+    subEnvTitle: "NRW (LVZ.NRW) Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Numeric subscription id(s) from mobilithek.info/organisation/subscriptions (one per subscribed offer, e.g. roadworks 648508602333433856 + incidents 648512079906336768). List multiple comma-separated; the feed fans out one HTTPS client-pull per id. dl-de/zero-2-0.",
   },
   // NRW municipalities — Düsseldorf/dmotion 110000000002056000, Köln 110000000002900004
   // /110000000002899004/110000000003011002, Kreis Unna 930448553981730816 (all dl-de/zero).
@@ -118,6 +125,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Städte und Kreise in Nordrhein-Westfalen (via Mobilithek)",
     license: "dl-de/zero-2-0",
     licenseUrl: DL_ZERO_URL,
+    subEnvTitle: "NRW municipalities Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for NRW city/district offers — Düsseldorf/dmotion 110000000002056000, Köln 110000000002900004 (+ 110000000002899004 / 110000000003011002), Kreis Unna 930448553981730816. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
   },
   // NRW.Mobidrom bundled roadworks 884461110418108416 — CC-BY-SA → isolated.
   {
@@ -127,6 +137,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "NRW.Mobidrom",
     license: "CC-BY-SA-4.0",
     licenseUrl: CC_BY_SA_URL,
+    subEnvTitle: "NRW.Mobidrom Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id for the NRW.Mobidrom bundled roadworks offer 884461110418108416. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-SA-4.0 — ShareAlike; kept in its own feed so it never folds into a more permissive source.",
   },
   // Bayern — Bayerische Straßenbauverwaltung 110000000002506000 + 110000000002507001 (GeoNutzV).
   {
@@ -136,6 +149,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Bayerische Straßenbauverwaltung",
     license: "GeoNutzV",
     licenseUrl: GEONUTZV_URL,
+    subEnvTitle: "Bayern Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the Bayerische Straßenbauverwaltung offers (110000000002506000, 110000000002507001). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
   },
   // Baden-Württemberg — Landesmeldestelle (Innenministerium BW) 857127500689977344 (dl-de/by).
   {
@@ -145,6 +161,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Innenministerium Baden-Württemberg (Landesmeldestelle)",
     license: "dl-de/by-2-0",
     licenseUrl: DL_BY_URL,
+    subEnvTitle: "Baden-Württemberg Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the BW Landesmeldestelle offer 857127500689977344. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
   },
   // Berlin — SenMVKU 801096621061234688 (dl-de/by).
   {
@@ -154,6 +173,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt Berlin",
     license: "dl-de/by-2-0",
     licenseUrl: DL_BY_URL,
+    subEnvTitle: "Berlin Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the Berlin SenMVKU offer 801096621061234688. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
   },
   // Brandenburg — Landesbetrieb Straßenwesen 636547428851101696 (dl-de/by).
   {
@@ -163,6 +185,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Landesbetrieb Straßenwesen Brandenburg",
     license: "dl-de/by-2-0",
     licenseUrl: DL_BY_URL,
+    subEnvTitle: "Brandenburg Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the Landesbetrieb Straßenwesen Brandenburg offer 636547428851101696. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
   },
   // Bremen — Verkehrsmanagementzentrale Bremen 608390979298140160 (dl-de/by).
   {
@@ -172,6 +197,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Verkehrsmanagementzentrale Bremen",
     license: "dl-de/by-2-0",
     licenseUrl: DL_BY_URL,
+    subEnvTitle: "Bremen Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the Verkehrsmanagementzentrale Bremen offer 608390979298140160. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
   },
   // Hamburg — LSBG 110000000003540000 (dl-de/by).
   {
@@ -181,6 +209,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Landesbetrieb Straßen, Brücken und Gewässer Hamburg (LSBG)",
     license: "dl-de/by-2-0",
     licenseUrl: DL_BY_URL,
+    subEnvTitle: "Hamburg Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the LSBG Hamburg offer 110000000003540000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
   },
   // Hessen — Hessen Mobil 841292914668498944/862010418143330304 + C-ITS 110000000002716000 (GeoNutzV).
   {
@@ -190,6 +221,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Hessen Mobil – Straßen- und Verkehrsmanagement",
     license: "GeoNutzV",
     licenseUrl: GEONUTZV_URL,
+    subEnvTitle: "Hessen Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the Hessen Mobil offers (841292914668498944, 862010418143330304). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
   },
   // Mecklenburg-Vorpommern — LSBV M-V 110000000002802000 + 818137060259840000 (GeoNutzV).
   {
@@ -199,6 +233,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Landesamt für Straßenbau und Verkehr Mecklenburg-Vorpommern",
     license: "GeoNutzV",
     licenseUrl: GEONUTZV_URL,
+    subEnvTitle: "Mecklenburg-Vorpommern Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the LSBV M-V offers (110000000002802000, 818137060259840000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
   },
   // Niedersachsen — NLStBV 110000000002749000/951153778962972672/656880550985773056
   // + Hannover 633691473746571264 (dl-de/zero).
@@ -209,6 +246,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Niedersächsische Landesbehörde für Straßenbau und Verkehr (NLStBV)",
     license: "dl-de/zero-2-0",
     licenseUrl: DL_ZERO_URL,
+    subEnvTitle: "Niedersachsen Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the NLStBV offers (110000000002749000, 951153778962972672, 656880550985773056) + Hannover 633691473746571264. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
   },
   // Sachsen — LASuV 608439575154401280 (CC-BY-4.0) + Leipzig 952541268382826496.
   {
@@ -218,6 +258,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Landesamt für Straßenbau und Verkehr Sachsen (LASuV)",
     license: "CC-BY-4.0",
     licenseUrl: CC_BY_URL,
+    subEnvTitle: "Sachsen Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the LASuV Sachsen offer 608439575154401280 (+ Leipzig 952541268382826496). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required).",
   },
   // Sachsen-Anhalt — LSBB 110000000003150000 (dl-de/by).
   {
@@ -227,6 +270,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Landesstraßenbaubehörde Sachsen-Anhalt",
     license: "dl-de/by-2-0",
     licenseUrl: DL_BY_URL,
+    subEnvTitle: "Sachsen-Anhalt Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the Landesstraßenbaubehörde Sachsen-Anhalt offer 110000000003150000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
   },
   // Schleswig-Holstein — LBV.SH 110000000003237002 + 110000000003387000 (CC-BY-4.0).
   {
@@ -236,6 +282,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Landesbetrieb Straßenbau und Verkehr Schleswig-Holstein (LBV.SH)",
     license: "CC-BY-4.0",
     licenseUrl: CC_BY_URL,
+    subEnvTitle: "Schleswig-Holstein Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the LBV.SH offers (110000000003237002, 110000000003387000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required).",
   },
   // Thüringen — TLBV 110000000003051000 (GeoNutzV).
   {
@@ -245,6 +294,9 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
     attribution: "Thüringer Landesamt für Bau und Verkehr",
     license: "GeoNutzV",
     licenseUrl: GEONUTZV_URL,
+    subEnvTitle: "Thüringen Mobilithek — subscription id(s)",
+    subEnvDescription:
+      "Subscription id(s) for the TLBV offer 110000000003051000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
   },
 ];
 
@@ -255,6 +307,31 @@ const MOBILITHEK_REGIONS: MobilithekRegion[] = [
  * the `/soap/` SOAP binding); Mobilithek REQUIRES `Accept-Encoding: gzip` (without
  * it the broker returns HTTP 400) and serves gzipped DATEX II (fetchOne gunzips).
  */
+// Shared setup guide for the one organisation machine certificate every
+// Mobilithek region feed authenticates with — identical on every region so the
+// generated `service.json` property is deterministic regardless of iteration
+// order.
+const MOBILITHEK_CERT_SETUP = {
+  title: "Mobilithek — client certificate (PEM)",
+  description:
+    "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key).",
+  url: "https://mobilithek.info/registration-request",
+  urlLabel: "Mobilithek registration",
+  steps: [
+    "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+    "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+    "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field.",
+  ],
+  notes:
+    "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+};
+
+const MOBILITHEK_KEY_SETUP = {
+  title: "Mobilithek — client private key (PEM)",
+  description:
+    "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
+};
+
 function mobilithekFeed(r: MobilithekRegion): FeedSource {
   return {
     id: r.id,
@@ -276,6 +353,11 @@ function mobilithekFeed(r: MobilithekRegion): FeedSource {
     country: "DE",
     privacyUrl: r.privacyUrl ?? "https://mobilithek.info/datenschutz",
     enabledByDefault: true,
+    setup: {
+      [MOBILITHEK_CERT_ENV]: MOBILITHEK_CERT_SETUP,
+      [MOBILITHEK_KEY_ENV]: MOBILITHEK_KEY_SETUP,
+      [r.subEnvVar]: { title: r.subEnvTitle, description: r.subEnvDescription },
+    },
   };
 }
 
@@ -442,6 +524,21 @@ export const FEED_SOURCES: FeedSource[] = [
     country: "HR",
     privacyUrl: "https://www.hrvatske-ceste.hr/",
     enabledByDefault: true,
+    setup: {
+      HC_HR_USERNAME: {
+        title: "Hrvatske ceste (Croatia) — B2B username",
+        description: "HTTP Basic username for the promet-info B2B feed (Croatia).",
+        url: "https://www.hrvatske-ceste.hr/",
+        urlLabel: "Hrvatske ceste",
+        steps: [
+          "There is no self-service portal — request B2B account credentials from Hrvatske ceste (the promet-info operator), via hrvatske-ceste.hr or the data.gov.hr dataset page.",
+        ],
+        notes: "Open licence (commercial OK); access is gated on the B2B account.",
+      },
+      HC_HR_PASSWORD: {
+        title: "Hrvatske ceste (Croatia) — B2B password",
+      },
+    },
   },
   {
     // New Zealand state-highway road events (NZTA Waka Kotahi), served as ArcGIS
@@ -549,6 +646,21 @@ export const FEED_SOURCES: FeedSource[] = [
     country: "US",
     privacyUrl: "https://511ny.org/privacy",
     enabledByDefault: true,
+    setup: {
+      NY_511_API_KEY: {
+        title: "511NY API key (New York)",
+        description: "Query key for the 511NY events feed.",
+        url: "https://511ny.org/my511/register",
+        urlLabel: "Create a 511NY account",
+        steps: [
+          "Create an account at 511ny.org/my511/register.",
+          "Request an API key at 511ny.org/developers/help. The form asks for your reasons, and submitting accepts the Developer's Access Agreement (DAA), which permits commercial redistribution.",
+          "Ready-to-paste reason: OpenMapX (https://openmapx.com) is a free, open-source maps and navigation app. I would use the 511NY events feed to display live incidents, road work, and closures on the map and to help travelers route around active disruptions in New York, with 'Powered by 511NY' attribution shown to users. It serves the general public at no charge; the data is shown only to end users, not resold or provided to any third-party data broker.",
+        ],
+        cost: "Free",
+        notes: 'Attribution required: "Powered by 511NY".',
+      },
+    },
   },
   {
     // Singapore LTA DataMall traffic incidents. Singapore Open Data Licence
@@ -566,6 +678,19 @@ export const FEED_SOURCES: FeedSource[] = [
     country: "SG",
     privacyUrl: "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
     enabledByDefault: true,
+    setup: {
+      LTA_ACCOUNT_KEY: {
+        title: "LTA DataMall AccountKey (Singapore)",
+        url: "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
+        urlLabel: "Request LTA API access",
+        steps: [
+          "Request an API account via the form at datamall.lta.gov.sg/content/datamall/en/request-for-api.html.",
+          "The AccountKey is emailed to you.",
+        ],
+        cost: "Free",
+        notes: "Singapore ODL (commercial OK); attribution to the Land Transport Authority.",
+      },
+    },
   },
   {
     // Québec roadworks (MTQ chantiers), WFS→GeoJSON. Served in EPSG:3857 — the
@@ -714,6 +839,21 @@ export const FEED_SOURCES: FeedSource[] = [
     country: "SE",
     privacyUrl: "https://www.trafikverket.se/integritetspolicy/",
     enabledByDefault: true,
+    setup: {
+      TRAFIKVERKET_API_KEY: {
+        title: "Trafikverket key (Sweden)",
+        description: "Authentication key, sent in the POST request body.",
+        url: "https://data.trafikverket.se/oauth2/Account/register",
+        urlLabel: "Sign up at Trafikverket",
+        steps: [
+          "Sign up at data.trafikverket.se/oauth2/Account/register.",
+          "Create an authentication key under data.trafikverket.se/mypage/systems (My systems). The key is sent in the POST request body.",
+        ],
+        cost: "Free",
+        notes:
+          "CC0 — no restrictions. API endpoint: api.trafikinfo.trafikverket.se/v2/data.json (the bare host has no web page).",
+      },
+    },
   },
   {
     // Slovenia — NAP/NCUP DATEX II (DARS + DRSI), served from the B2B host
@@ -740,6 +880,23 @@ export const FEED_SOURCES: FeedSource[] = [
     country: "SI",
     privacyUrl: "https://nap.si/",
     enabledByDefault: true,
+    setup: {
+      NAP_SI_USERNAME: {
+        title: "NAP Slovenia (promet.si) — username",
+        url: "https://www.nap.si/en/registration",
+        urlLabel: "Register at NAP Slovenia",
+        steps: [
+          "Register at nap.si/en/registration (DARS / DRSI).",
+          "Request access and tick exactly the two DATEX II v3.3 datasets (under 'Other contents', XML, english): 'Traffic events (DATEX II v3.3)' and 'Roadworks (DATEX II v3.3)'. Leave everything else unticked.",
+          "Fill the Purpose/Description (min. 100 chars), set a Time period, agree to the terms, and submit. Ready-to-paste purpose: OpenMapX (https://openmapx.com) is a free, open-source maps and navigation app; we ingest the Traffic events and Roadworks DATEX II v3.3 datasets to display live road conditions and route around closures and roadworks in Slovenia, with CC-BY-SA attribution shown to users.",
+        ],
+        notes:
+          "CC-BY-SA (ShareAlike). The B2B host (b2b.ncup.si) is credential-gated; the NAP account is sent as HTTP Basic — confirm the exact scheme when granted.",
+      },
+      NAP_SI_PASSWORD: {
+        title: "NAP Slovenia (promet.si) — password",
+      },
+    },
   },
   {
     // Norway — Statens vegvesen DATEX II v3 (nationwide). NLOD (commercial OK).
@@ -759,6 +916,21 @@ export const FEED_SOURCES: FeedSource[] = [
     privacyUrl:
       "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
     enabledByDefault: true,
+    setup: {
+      NO_VEGVESEN_USERNAME: {
+        title: "Statens vegvesen (Norway) — username",
+        url: "https://www.vegvesen.no/en/fag/technology/open-data/a-selection-of-open-data/what-is-datex/get-access/",
+        urlLabel: "Statens vegvesen — get DATEX access",
+        steps: [
+          "Request a free account for the DATEX II server via the 'Get access' page (Open data → What is DATEX → Get access).",
+        ],
+        cost: "Free",
+        notes: "NLOD-2.0 (commercial OK).",
+      },
+      NO_VEGVESEN_PASSWORD: {
+        title: "Statens vegvesen (Norway) — password",
+      },
+    },
   },
   {
     // New South Wales — Live Traffic Hazards (TfNSW Open Data), GeoJSON across
@@ -804,6 +976,19 @@ export const FEED_SOURCES: FeedSource[] = [
     country: "AU",
     privacyUrl: "https://www.transport.nsw.gov.au/privacy-statement",
     enabledByDefault: true,
+    setup: {
+      NSW_TRANSPORT_API_KEY: {
+        title: "Live Traffic NSW API key (Australia)",
+        url: "https://opendata.transport.nsw.gov.au/data/user/register",
+        urlLabel: "Register at Transport NSW Open Data",
+        steps: [
+          "Register at opendata.transport.nsw.gov.au/data/user/register.",
+          "Create an API token under your account (Account → API tokens) and copy it. No need to create a separate application — the token alone authorises the live-hazard endpoints.",
+        ],
+        cost: "Free",
+        notes: 'CC-BY-4.0; attribution "Transport for NSW".',
+      },
+    },
   },
   {
     // South Australia — Traffic SA roadworks/incidents (ArcGIS MapServer, both
@@ -894,6 +1079,22 @@ export const FEED_SOURCES: FeedSource[] = [
     country: "AU",
     privacyUrl: "https://www.qld.gov.au/legal/privacy",
     enabledByDefault: true,
+    setup: {
+      QLD_TRAFFIC_API_KEY: {
+        title: "QLDTraffic API key (Australia) — optional",
+        description:
+          "Optional. A public key is bundled by default; set this only to use your own quota.",
+        url: "https://www.qldtraffic.qld.gov.au/",
+        urlLabel: "QLDTraffic",
+        email: {
+          to: "QLDTraffic@tmr.qld.gov.au",
+          subject: "QLDTraffic API key request",
+          body: "Organisation name, contact person, email, and application name.",
+        },
+        notes:
+          "Optional — the bundled public key is shared + rate-limited (100 req/min). Set your own to avoid 429s.",
+      },
+    },
   },
   {
     // Buenos Aires — road closures ("cortes de tránsito"), GeoJSON via the city
@@ -918,6 +1119,20 @@ export const FEED_SOURCES: FeedSource[] = [
     country: "AR",
     privacyUrl: "https://www.buenosaires.gob.ar/politicas-de-privacidad",
     enabledByDefault: true,
+    setup: {
+      BA_CLIENT_ID: {
+        title: "Buenos Aires transport — client_id",
+        url: "https://api-transporte.buenosaires.gob.ar/registro",
+        urlLabel: "BA transport API registration",
+        steps: [
+          "Register / request a key at api-transporte.buenosaires.gob.ar/registro. The client_id + client_secret pair is sent to you by email.",
+        ],
+        notes: "CC-BY-2.5-AR (commercial OK).",
+      },
+      BA_CLIENT_SECRET: {
+        title: "Buenos Aires transport — client_secret",
+      },
+    },
   },
   {
     // Thailand — Longdo / iTIC traffic events (flat JSON array). CC-BY, no key.
@@ -987,6 +1202,21 @@ export const FEED_SOURCES: FeedSource[] = [
     country: "GB",
     privacyUrl: "https://nationalhighways.co.uk/privacy-notice/",
     enabledByDefault: true,
+    setup: {
+      NH_API_KEY: {
+        title: "National Highways NTIS key (England)",
+        description: "Ocp-Apim-Subscription-Key header value.",
+        url: "https://developer.data.nationalhighways.co.uk/signin",
+        urlLabel: "National Highways developer portal",
+        steps: [
+          "Register / sign in at developer.data.nationalhighways.co.uk/signin.",
+          "Subscribe to the 'unlimited' product at developer.data.nationalhighways.co.uk/subscription#product=unlimited (one product grants the APIM key for all NTIS DATEX feeds, incl. Road and Lane Closures v2.0).",
+          "Copy the Ocp-Apim-Subscription-Key from your profile at developer.data.nationalhighways.co.uk/profile.",
+        ],
+        notes:
+          'OGL-UK-3.0; attribution "Contains National Highways data © Crown copyright and database right."',
+      },
+    },
   },
   {
     // Denmark — Vejdirektoratet "Traffic Events and Road Works" DATEX II, served
@@ -1012,6 +1242,20 @@ export const FEED_SOURCES: FeedSource[] = [
     country: "DK",
     privacyUrl: "https://www.vejdirektoratet.dk/",
     enabledByDefault: true,
+    setup: {
+      DK_VD_API_KEY: {
+        title: "Vejdirektoratet key (Denmark)",
+        url: "https://du-portal-ui.dataudveksler.app.vd.dk/data/416/overview",
+        urlLabel: "Danish data exchanger — dataset 416",
+        steps: [
+          "Register on the data exchanger (Dataudveksleren) using an eID — choose 'International' for an eID from another European country. Leave the 'Dataowner consent' checkbox unchecked (it's the publisher agreement).",
+          "Create a service account at du-portal-ui.dataudveksler.app.vd.dk/profile/service-accounts.",
+          "Associate the service account with dataset 416 (Traffic Events and Road Works snapshot — NOT 415, which is AMQP-only). The dataset page then shows the data-access URL and the credential the service account presents.",
+        ],
+        notes:
+          'CC-BY-4.0; attribution "Vejdirektoratet." Access is via a service account, not a plain API key — confirm from the dataset page whether its credential is a header/query token or an OAuth2 client-credentials pair.',
+      },
+    },
   },
   {
     // Austria — ASFINAG traffic messages (DATEX II), published via Mobilitydata
@@ -1040,6 +1284,22 @@ export const FEED_SOURCES: FeedSource[] = [
     country: "AT",
     privacyUrl: "https://www.asfinag.at/datenschutz/",
     enabledByDefault: true,
+    setup: {
+      AT_ASFINAG_USERNAME: {
+        title: "ASFINAG (Austria) — username",
+        url: "https://contentportal.asfinag.at/",
+        urlLabel: "ASFINAG content portal",
+        steps: [
+          "Create an ASFINAG account at contentportal.asfinag.at.",
+          "Enable access to 'Verkehrsmeldungen zu ungeplanten und sicherheitsrelevanten Ereignissen' at contentportal.asfinag.at/data/details/unplannedevents.",
+          "Enable access to 'Verkehrsmeldungen zu geplanten Ereignissen' (roadworks) at contentportal.asfinag.at/data/details/roadworks_detailed.",
+        ],
+        notes: "CC-BY-4.0 for the two open event packages (some ASFINAG packages are paid).",
+      },
+      AT_ASFINAG_PASSWORD: {
+        title: "ASFINAG (Austria) — password",
+      },
+    },
   },
   {
     // Estonia — Transpordiamet "Tark Tee" (Smart Road) DATEX II gateway (traffic
@@ -1060,6 +1320,17 @@ export const FEED_SOURCES: FeedSource[] = [
     country: "EE",
     privacyUrl: "https://www.transpordiamet.ee/en",
     enabledByDefault: true,
+    setup: {
+      EE_TARKTEE_API_KEY: {
+        title: "Tark Tee key (Estonia)",
+        url: "https://tarktee.transpordiamet.ee/#/en/datex-registration",
+        urlLabel: "Register at Tark Tee",
+        steps: [
+          "Register for the DATEX II API at tarktee.transpordiamet.ee/#/en/datex-registration (Transpordiamet 'Smart Road' gateway); a key is issued after registration. The old tarktee.mnt.ee domain is retired.",
+        ],
+        notes: "CC-BY-4.0 (commercial OK).",
+      },
+    },
   },
   // Germany via Mobilithek — one credential-gated DATEX II client-pull feed per
   // region (states + city bundles), all sharing the org machine cert. See

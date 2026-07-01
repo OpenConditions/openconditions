@@ -143,6 +143,7 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
       const envVar = `WZDX_${(state || feedname || "US").toUpperCase().replace(/[^A-Z0-9]+/g, "_")}_API_KEY`;
       feed.setup = {
         [envVar]: {
+          title: `${feed.name} — API key`,
           ...(apikeyurl ? { url: apikeyurl } : {}),
           notes:
             "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one.",
