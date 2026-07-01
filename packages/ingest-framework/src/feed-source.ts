@@ -45,6 +45,8 @@ export interface FeedSourceBase {
   requiredEnv?: string[];
   /** Skip a fetch cycle when the source was fetched within this many seconds. */
   fetchIntervalSec?: number;
+  /** Name of a PRE_FETCH_HOOKS entry that rewrites this feed before fetch. Dormant — no hooks registered. */
+  preFetch?: string;
   gzip?: boolean;
   cadenceSec: number;
   freshnessWindowSec: number;

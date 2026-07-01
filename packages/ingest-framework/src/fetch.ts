@@ -2,6 +2,7 @@ import type { FeedSourceBase } from "./feed-source.js";
 import { resolvedEnv } from "./auth.js";
 import { boundedGunzip } from "./egress.js";
 import { resolveFeedUrls, resolveUrlTemplate } from "./template.js";
+import { applyPreFetch } from "./pre-fetch.js";
 
 const GZIP_MAGIC_0 = 0x1f;
 const GZIP_MAGIC_1 = 0x8b;
@@ -209,29 +210,34 @@ export async function fetchAll(
   const state = opts.state ?? sharedFetchState;
   const now = opts.now ?? Date.now;
 
-  if (typeof src.discover === "function") {
-    const urls = await src.discover(fetchFn);
+  // Reactive pre-fetch transform (dormant — no hooks registered today). When a
+  // hook is registered it may rewrite the descriptor before URL resolution; with
+  // none, this returns `src` unchanged, so the cast preserves `discover`.
+  const active = (await applyPreFetch(src, resolvedEnv(), fetchFn)) as FetchableFeed;
+
+  if (typeof active.discover === "function") {
+    const urls = await active.discover(fetchFn);
     return { status: "fetched", buffers: await fetchFanout(urls, fetchFn) };
   }
 
-  if (src.fetchIntervalSec != null) {
-    const last = state.lastFetchAt.get(src.id);
-    if (last != null && now() - last < src.fetchIntervalSec * 1000) {
+  if (active.fetchIntervalSec != null) {
+    const last = state.lastFetchAt.get(active.id);
+    if (last != null && now() - last < active.fetchIntervalSec * 1000) {
       return { status: "unchanged" };
     }
   }
 
-  const urls = resolveFeedUrls(src, resolvedEnv());
+  const urls = resolveFeedUrls(active, resolvedEnv());
   if (urls.length === 0) {
-    if (src.url == null) throw new Error(`feed ${src.id} has neither url nor discover`);
+    if (active.url == null) throw new Error(`feed ${active.id} has neither url nor discover`);
     // expandEnv configured but no items yet — a dormant, uncredentialed feed.
-    state.lastFetchAt.set(src.id, now());
+    state.lastFetchAt.set(active.id, now());
     return { status: "fetched", buffers: [] };
   }
 
-  const init = requestInit(src);
+  const init = requestInit(active);
   const results = await fetchAllBounded(urls, fetchFn, init, state);
-  state.lastFetchAt.set(src.id, now());
+  state.lastFetchAt.set(active.id, now());
 
   if (results.every((r) => !r.changed)) return { status: "unchanged" };
   return { status: "fetched", buffers: results.map((r) => r.buffer) };
