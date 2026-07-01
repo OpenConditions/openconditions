@@ -26,17 +26,30 @@ function authEnvVars(auth: FeedAuth | undefined): string[] {
 
 const KEYED = (f: FeedSourceBase) => feedEnvVars(f).length > 0;
 
-/** The `.env.example` credential section (one commented block per keyed feed). */
+/**
+ * The `.env.example` credential section (one commented block per keyed feed).
+ *
+ * Vars are deduped globally: a var is emitted once, under the first feed that
+ * needs it. Feeds that share credentials (e.g. the Mobilithek region feeds'
+ * shared mTLS cert/key) contribute no duplicate `VAR=` lines — `.env` parsers
+ * are last-occurrence-wins, so duplicate blank lines would silently null out
+ * a value an operator filled in under an earlier block.
+ */
 export function envExampleFor(feeds: FeedSourceBase[]): string {
-  const blocks = feeds.filter(KEYED).map((f) => {
+  const seen = new Set<string>();
+  const blocks: string[] = [];
+  for (const f of feeds.filter(KEYED)) {
+    const newVars = feedEnvVars(f).filter((v) => !seen.has(v));
+    if (newVars.length === 0) continue;
+    for (const v of newVars) seen.add(v);
     const lines = [`# ${f.name}`];
     const firstSetup = f.setup ? Object.values(f.setup)[0] : undefined;
     if (firstSetup?.url)
       lines.push(`# ${firstSetup.urlLabel ?? "Get credentials"}: ${firstSetup.url}`);
     if (firstSetup?.notes) lines.push(`# ${firstSetup.notes}`);
-    for (const v of feedEnvVars(f)) lines.push(`${v}=`);
-    return lines.join("\n");
-  });
+    for (const v of newVars) lines.push(`${v}=`);
+    blocks.push(lines.join("\n"));
+  }
   return blocks.join("\n\n") + "\n";
 }
 

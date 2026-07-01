@@ -50,4 +50,40 @@ describe("gen-credentials-lib", () => {
       "x-openmapx-setup": { url: "https://511ny.org/my511/register", cost: "Free" },
     });
   });
+
+  it("dedupes env vars shared across feeds (e.g. shared mTLS creds), emitting each once", () => {
+    const feedA: FeedSourceBase = {
+      id: "region-a",
+      name: "Region A",
+      format: "geojson",
+      auth: { kind: "mtls", certEnvVar: "SHARED_CERT", keyEnvVar: "SHARED_KEY" },
+      requiredEnv: ["A_ID"],
+      cadenceSec: 300,
+      freshnessWindowSec: 900,
+      license: "CC0-1.0",
+      attribution: "t",
+      country: "DE",
+      privacyUrl: "https://x",
+      enabledByDefault: true,
+    };
+    const feedB: FeedSourceBase = {
+      id: "region-b",
+      name: "Region B",
+      format: "geojson",
+      auth: { kind: "mtls", certEnvVar: "SHARED_CERT", keyEnvVar: "SHARED_KEY" },
+      requiredEnv: ["B_ID"],
+      cadenceSec: 300,
+      freshnessWindowSec: 900,
+      license: "CC0-1.0",
+      attribution: "t",
+      country: "DE",
+      privacyUrl: "https://x",
+      enabledByDefault: true,
+    };
+    const out = envExampleFor([feedA, feedB]);
+    expect(out.split("SHARED_CERT=").length - 1).toBe(1);
+    expect(out.split("SHARED_KEY=").length - 1).toBe(1);
+    expect(out).toContain("A_ID=");
+    expect(out).toContain("B_ID=");
+  });
 });
