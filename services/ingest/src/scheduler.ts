@@ -1,7 +1,7 @@
 import { Cron } from "croner";
 import type postgres from "postgres";
 import { DOMAIN_REGISTRY } from "./domains.js";
-import { hasCredentials, requiredEnvVars } from "./pipeline/auth.js";
+import { hasCredentials, requiredEnvVars } from "@openconditions/ingest-framework";
 import { createOpenlrClient, runSource } from "./pipeline/run.js";
 import type { DomainFeedSource } from "./pipeline/run.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";

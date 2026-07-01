@@ -3,7 +3,7 @@ import { createGunzip } from "node:zlib";
 import type { Observation } from "@openconditions/core";
 import { createMeasuredDataParser, feedToSourceDescriptor } from "@openconditions/roads";
 import type { SiteGeometry } from "@openconditions/roads";
-import { resolvedEnv } from "./auth.js";
+import { resolvedEnv } from "@openconditions/ingest-framework";
 import type { DomainFeedSource } from "./run.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
 

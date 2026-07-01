@@ -1,4 +1,5 @@
 import type { SourceFormat } from "@openconditions/core";
+import type { FeedAuth } from "@openconditions/ingest-framework";
 import type { GeoJsonMapping } from "./model.js";
 import type { SiteGeometry } from "./siteTable.js";
 import { parseDatexSituations } from "./datex.js";
@@ -17,44 +18,9 @@ import type { FlowParseResult } from "./flow.js";
 import { discoverAutobahnRoads, discoverWzdxFeeds } from "./discover.js";
 import type { SourceDescriptor } from "./types.js";
 
-/**
- * How a feed authenticates. A discriminated union so each kind carries exactly
- * the env-var names it needs and nothing more. Secrets live only in env.
- */
-export type FeedAuth =
-  | { kind: "none" }
-  /**
-   * Append `?<param>=<secret>` to the request URL (e.g. iPeloton 511 `key=`).
-   * When `defaultValue` is set the feed works with no env var configured (e.g. a
-   * published public API key); a non-empty env var overrides it. Without a
-   * `defaultValue` the env var is required and the scheduler gates on it.
-   */
-  | { kind: "query-key"; param: string; envVar: string; defaultValue?: string }
-  /** Send the secret in a request header (optionally with a value prefix). */
-  | { kind: "header-key"; header: string; envVar: string; valuePrefix?: string }
-  /** HTTP Basic auth from a username + password pair. */
-  | { kind: "basic"; userEnvVar: string; passEnvVar: string }
-  /** Static `Authorization: Bearer <secret>`. */
-  | { kind: "bearer"; envVar: string }
-  /**
-   * OAuth2 client-credentials grant: POST to `tokenUrl`, cache the access token
-   * until it expires, send it as `Authorization: Bearer`. Supported transport; no
-   * registered feed uses it today.
-   */
-  | {
-      kind: "oauth2-client-credentials";
-      tokenUrl: string;
-      clientIdEnvVar: string;
-      clientSecretEnvVar: string;
-      scope?: string;
-    }
-  /**
-   * Mutual TLS (client certificate). For broker feeds that authenticate with an
-   * organisation machine certificate — notably Germany's Mobilithek (Straßen.NRW,
-   * Bavaria, Saxony). The env vars hold the PEM contents of the client certificate
-   * and its private key (plus an optional CA chain).
-   */
-  | { kind: "mtls"; certEnvVar: string; keyEnvVar: string; caEnvVar?: string };
+// FeedAuth now lives in @openconditions/ingest-framework; re-exported here so
+// existing consumers of @openconditions/roads are unaffected.
+export type { FeedAuth };
 
 /**
  * Describes a remote data feed that the ingest service polls periodically.

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { Agent, fetch as undiciFetch } from "undici";
-import type { FeedAuth, FeedSource } from "@openconditions/roads";
+import type { FeedAuth, FeedSourceBase } from "./feed-source.js";
 
 /**
  * Per-feed authentication. Turns a feed's declared {@link FeedAuth} into a
@@ -76,7 +76,7 @@ export function requiredEnvVars(auth: FeedAuth | undefined): string[] {
  * Covers both `auth`-derived vars and any extra `requiredEnv` (e.g. a key the
  * feed embeds in its POST body). */
 export function hasCredentials(
-  src: Pick<FeedSource, "auth" | "requiredEnv">,
+  src: Pick<FeedSourceBase, "auth" | "requiredEnv">,
   env: Env = process.env
 ): boolean {
   const required = [...requiredEnvVars(src.auth), ...(src.requiredEnv ?? [])];
@@ -174,7 +174,7 @@ function oauthClientCredentialsFetch(
  * first, so this only fires on misconfiguration).
  */
 export function makeAuthorizedFetch(
-  src: Pick<FeedSource, "auth">,
+  src: Pick<FeedSourceBase, "auth">,
   baseFetch: typeof fetch,
   env: Env = process.env,
   now: () => number = Date.now

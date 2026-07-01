@@ -4,7 +4,7 @@ import type { Observation } from "@openconditions/core";
 import type { FeedSource, SiteGeometry, UnresolvedRoadEvent } from "@openconditions/roads";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
-import { makeAuthorizedFetch } from "./auth.js";
+import { makeAuthorizedFetch } from "@openconditions/ingest-framework";
 import { fetchAll } from "./fetch.js";
 import { isStreamingFlowFeed, streamMeasuredData } from "./measured-data.js";
 import { parseFor } from "./parse.js";

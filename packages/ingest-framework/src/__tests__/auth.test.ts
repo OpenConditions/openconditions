@@ -2,13 +2,8 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import type { FeedAuth } from "@openconditions/roads";
-import {
-  hasCredentials,
-  makeAuthorizedFetch,
-  normalizePem,
-  requiredEnvVars,
-} from "../pipeline/auth.js";
+import type { FeedAuth } from "../feed-source.js";
+import { hasCredentials, makeAuthorizedFetch, normalizePem, requiredEnvVars } from "../auth.js";
 
 // mTLS must route through undici's OWN fetch (version-matched to its Agent), not
 // the injected base fetch. Mock undici.fetch (keeping the real Agent) so the test

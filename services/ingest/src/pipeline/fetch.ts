@@ -1,6 +1,6 @@
 import { gunzipSync } from "node:zlib";
 import type { FeedSource } from "@openconditions/roads";
-import { resolvedEnv } from "./auth.js";
+import { resolvedEnv } from "@openconditions/ingest-framework";
 
 const GZIP_MAGIC_0 = 0x1f;
 const GZIP_MAGIC_1 = 0x8b;
