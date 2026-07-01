@@ -1,5 +1,1483 @@
 [
   {
+    "id": "ndw",
+    "name": "NDW (Netherlands)",
+    "format": "datex2",
+    "url": "http://opendata.ndw.nu/actueel_beeld.xml.gz",
+    "gzip": true,
+    "cadenceSec": 60,
+    "freshnessWindowSec": 300,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://www.ndw.nu",
+    "attribution": "NDW / Rijkswaterstaat",
+    "country": "NL",
+    "privacyUrl": "https://www.ndw.nu/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "drivebc",
+    "name": "DriveBC (British Columbia)",
+    "format": "open511",
+    "url": "https://api.open511.gov.bc.ca/events?format=json",
+    "cadenceSec": 120,
+    "freshnessWindowSec": 600,
+    "license": "OGL-BC",
+    "attribution": "Contains information licensed under the Open Government Licence – British Columbia",
+    "country": "CA",
+    "privacyUrl": "https://www2.gov.bc.ca/gov/content/home/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "digitraffic-fi",
+    "name": "Digitraffic (Finland)",
+    "format": "digitraffic-json",
+    "url": [
+      "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=TRAFFIC_ANNOUNCEMENT",
+      "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=ROAD_WORK"
+    ],
+    "cadenceSec": 120,
+    "freshnessWindowSec": 600,
+    "license": "CC-BY-4.0",
+    "attribution": "Fintraffic / Digitraffic",
+    "country": "FI",
+    "privacyUrl": "https://www.fintraffic.fi/en/fintraffic/data-protection",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-de",
+    "name": "Autobahn GmbH (Germany)",
+    "format": "autobahn-json",
+    "catalog": {
+      "resolver": "autobahn-index"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx",
+    "name": "WZDx (United States)",
+    "format": "wzdx",
+    "catalog": {
+      "resolver": "wzdx-registry"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "attribution": "WZDx publishers",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "ndw-flow",
+    "name": "NDW traffic speed (Netherlands)",
+    "format": "datex2",
+    "produces": "flow",
+    "url": "https://opendata.ndw.nu/trafficspeed.xml.gz",
+    "gzip": true,
+    "siteTable": {
+      "url": "https://opendata.ndw.nu/measurement.xml.gz",
+      "gzip": true
+    },
+    "cadenceSec": 60,
+    "freshnessWindowSec": 300,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://www.ndw.nu",
+    "attribution": "NDW / Rijkswaterstaat",
+    "country": "NL",
+    "privacyUrl": "https://www.ndw.nu/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "dgt-es",
+    "name": "DGT (Spain)",
+    "format": "datex2",
+    "url": "https://nap.dgt.es/datex2/v3/dgt/SituationPublication/datex2_v36.xml",
+    "cadenceSec": 120,
+    "freshnessWindowSec": 600,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://nap.dgt.es",
+    "attribution": "Dirección General de Tráfico (DGT)",
+    "country": "ES",
+    "privacyUrl": "https://www.dgt.es/protecciondedatos/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "svzbw-de",
+    "name": "MobiData BW roadworks (Baden-Württemberg)",
+    "format": "datex2",
+    "url": "https://api.mobidata-bw.de/datasets/traffic/roadworks/roadworks_svzbw.datex2.xml",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.mobidata-bw.de",
+    "attribution": "MobiData BW / Ministerium für Verkehr Baden-Württemberg (SVZ-BW)",
+    "country": "DE",
+    "privacyUrl": "https://www.mobidata-bw.de/pages/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "dir-fr",
+    "name": "DIR / Bison Futé (France national roads)",
+    "format": "datex2",
+    "url": "https://transport.data.gouv.fr/resources/79174/download",
+    "cadenceSec": 600,
+    "freshnessWindowSec": 1800,
+    "license": "etalab-2.0",
+    "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence",
+    "attribution": "DIR / Bison Futé",
+    "country": "FR",
+    "privacyUrl": "https://www.bison-fute.gouv.fr/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "hc-hr",
+    "name": "Hrvatske ceste roadworks (Croatia)",
+    "format": "datex2",
+    "url": "https://b2b.promet-info.hr/dc/b2b.hc.roadworks.datex",
+    "auth": {
+      "kind": "basic",
+      "userEnvVar": "HC_HR_USERNAME",
+      "passEnvVar": "HC_HR_PASSWORD"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "OD-HR",
+    "licenseUrl": "https://data.gov.hr/otvorena-dozvola",
+    "attribution": "Hrvatske ceste",
+    "country": "HR",
+    "privacyUrl": "https://www.hrvatske-ceste.hr/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "nzta-nz",
+    "name": "NZTA Road Events (New Zealand)",
+    "format": "geojson",
+    "url": "https://opendata-nzta.opendata.arcgis.com/datasets/NZTA::road-events.geojson",
+    "geojson": {
+      "idField": "eventId",
+      "typeField": "eventDescription",
+      "typeMap": {
+        "Crash": "accident",
+        "Breakdown": "broken_down_vehicle",
+        "Slip": "hazard",
+        "Maintenance": "roadworks",
+        "Pavement Repairs": "roadworks",
+        "Bridge Repairs": "roadworks",
+        "Resurfacing": "roadworks",
+        "Road Construction": "roadworks",
+        "Services": "roadworks"
+      },
+      "defaultType": "other",
+      "headlineField": "eventDescription",
+      "descriptionField": "eventComments",
+      "severityField": "impact",
+      "severityMap": {
+        "Road Closed": "high",
+        "Delays": "medium",
+        "Caution": "low"
+      },
+      "updatedField": "eventModified"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://opendata-nzta.opendata.arcgis.com/",
+    "attribution": "NZ Transport Agency Waka Kotahi",
+    "country": "NZ",
+    "privacyUrl": "https://www.nzta.govt.nz/privacy-policy/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "berlin-de",
+    "name": "VIZ Berlin roadworks & closures",
+    "format": "geojson",
+    "url": "https://api.viz.berlin.de/daten/baustellen_sperrungen_viz.json",
+    "geojson": {
+      "idField": "id",
+      "typeField": "subtype",
+      "typeMap": {
+        "Baustelle": "roadworks",
+        "Bauarbeiten": "roadworks",
+        "Sperrung": "road_closure",
+        "Störung": "obstruction"
+      },
+      "defaultType": "other",
+      "headlineField": "content",
+      "roadField": "street",
+      "severityField": "severity",
+      "severityMap": {
+        "Vollsperrung": "high",
+        "Fahrtrichtungssperrung": "medium",
+        "keine Sperrung": "low"
+      },
+      "updatedField": "tstore"
+    },
+    "cadenceSec": 600,
+    "freshnessWindowSec": 1800,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://daten.berlin.de/",
+    "attribution": "Verkehrsinformationszentrale Berlin (VIZ)",
+    "country": "DE",
+    "privacyUrl": "https://www.berlin.de/datenschutzerklaerung/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "on-511",
+    "name": "Ontario 511 (Canada)",
+    "format": "ibi511-json",
+    "url": "https://511on.ca/api/v2/get/event?format=json",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "OGL-ON",
+    "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
+    "attribution": "Contains information licensed under the Open Government Licence – Ontario",
+    "country": "CA",
+    "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
+    "enabledByDefault": true
+  },
+  {
+    "id": "ny-511",
+    "name": "511NY (New York)",
+    "format": "ibi511-json",
+    "url": "https://511ny.org/api/v2/get/event?format=json",
+    "auth": {
+      "kind": "query-key",
+      "param": "key",
+      "envVar": "NY_511_API_KEY"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "511NY-DAA",
+    "licenseUrl": "https://511ny.org/developers/daa",
+    "attribution": "Powered by 511NY",
+    "country": "US",
+    "privacyUrl": "https://511ny.org/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "lta-sg",
+    "name": "LTA DataMall Traffic Incidents (Singapore)",
+    "format": "lta-json",
+    "url": "https://datamall2.mytransport.sg/ltaodataservice/TrafficIncidents",
+    "auth": {
+      "kind": "header-key",
+      "header": "AccountKey",
+      "envVar": "LTA_ACCOUNT_KEY"
+    },
+    "cadenceSec": 120,
+    "freshnessWindowSec": 600,
+    "license": "Singapore-ODL-1.0",
+    "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html",
+    "attribution": "Land Transport Authority (Singapore)",
+    "country": "SG",
+    "privacyUrl": "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mtq-qc",
+    "name": "MTQ roadworks (Québec)",
+    "format": "geojson",
+    "url": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:chantiers_mtmdet&outputformat=geojson",
+    "geojson": {
+      "idField": "identifiant",
+      "defaultType": "roadworks",
+      "headlineField": "identificationDesTravaux",
+      "descriptionField": "descriptionFrancais",
+      "roadField": "routeAutoroute",
+      "updatedField": "miseAJour"
+    },
+    "cadenceSec": 600,
+    "freshnessWindowSec": 1800,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.donneesquebec.ca/",
+    "attribution": "Ministère des Transports du Québec (MTQ)",
+    "country": "CA",
+    "privacyUrl": "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
+    "enabledByDefault": true
+  },
+  {
+    "id": "flanders-be",
+    "name": "Verkeerscentrum Vlaanderen (Flanders)",
+    "format": "datex2",
+    "url": "https://www.verkeerscentrum.be/uitwisseling/datex2v3full",
+    "cadenceSec": 120,
+    "freshnessWindowSec": 600,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.verkeerscentrum.be/",
+    "attribution": "Verkeerscentrum Vlaanderen",
+    "country": "BE",
+    "privacyUrl": "https://www.verkeerscentrum.be/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "brussels-be",
+    "name": "Bruxelles Mobilité traffic events",
+    "format": "geojson",
+    "url": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items?f=json&limit=1000",
+    "geojson": {
+      "idField": "fid",
+      "typeField": "datex_codes",
+      "typeMap": {
+        "RWK": "roadworks",
+        "EMR": "public_event",
+        "ACC": "accident",
+        "JAM": "congestion"
+      },
+      "defaultType": "other",
+      "headlineField": "consequences_fr",
+      "roadField": "location_fr",
+      "severityField": "importance",
+      "severityMap": {
+        "0": "low",
+        "1": "low",
+        "2": "medium",
+        "3": "high",
+        "4": "critical"
+      },
+      "updatedField": "last_update"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://data.mobility.brussels/",
+    "attribution": "Bruxelles Mobilité / Brussel Mobiliteit",
+    "country": "BE",
+    "privacyUrl": "https://mobilite-mobiliteit.brussels/en/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "cita-lu",
+    "name": "CITA (Luxembourg)",
+    "format": "datex2",
+    "url": "https://cita.lu/info_trafic/datex/situationrecord36",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/",
+    "attribution": "CITA (Luxembourg)",
+    "country": "LU",
+    "privacyUrl": "https://data.public.lu/en/pages/legal_notice/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "vegagerdin-is",
+    "name": "Vegagerðin road conditions (Iceland)",
+    "format": "geojson",
+    "url": "https://gagnaveita.vegagerdin.is/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=gis:roadconditions_pointincident&outputFormat=application/json",
+    "geojson": {
+      "lonField": "X",
+      "latField": "Y",
+      "typeField": "DESCRIPTION",
+      "typeMap": {
+        "Closed": "road_closure",
+        "Road repairs": "roadworks",
+        "Uneven road": "road_condition",
+        "Flying gravel": "hazard",
+        "Animals on the road": "hazard",
+        "Holes in road": "road_condition",
+        "Total axle weight limit": "dimension_restriction"
+      },
+      "defaultType": "hazard",
+      "headlineField": "DESCRIPTION",
+      "updatedField": "CREATIONTIME"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.vegagerdin.is/",
+    "attribution": "Vegagerðin (Icelandic Road and Coastal Administration)",
+    "country": "IS",
+    "privacyUrl": "https://www.vegagerdin.is/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "trafikverket-se",
+    "name": "Trafikverket (Sweden)",
+    "format": "datex2",
+    "url": [
+      "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/roadworks/sit:situation",
+      "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/accident/sit:situation"
+    ],
+    "auth": {
+      "kind": "query-key",
+      "param": "authenticationkey",
+      "envVar": "TRAFIKVERKET_API_KEY"
+    },
+    "posListLonLat": true,
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://data.trafikverket.se/",
+    "attribution": "Trafikverket",
+    "country": "SE",
+    "privacyUrl": "https://www.trafikverket.se/integritetspolicy/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "nap-si",
+    "name": "NAP Slovenia (promet.si)",
+    "format": "datex2",
+    "url": [
+      "https://b2b.ncup.si/data/b2b.events.datexii33",
+      "https://b2b.ncup.si/data/b2b.roadworks.datexii33"
+    ],
+    "auth": {
+      "kind": "basic",
+      "userEnvVar": "NAP_SI_USERNAME",
+      "passEnvVar": "NAP_SI_PASSWORD"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-SA-4.0",
+    "licenseUrl": "https://nap.si/",
+    "attribution": "DARS / DRSI (NAP Slovenia)",
+    "country": "SI",
+    "privacyUrl": "https://nap.si/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "vegvesen-no",
+    "name": "Statens vegvesen (Norway)",
+    "format": "datex2",
+    "url": "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetSituation/pullSnapshotData",
+    "auth": {
+      "kind": "basic",
+      "userEnvVar": "NO_VEGVESEN_USERNAME",
+      "passEnvVar": "NO_VEGVESEN_PASSWORD"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "NLOD-2.0",
+    "licenseUrl": "https://data.norge.no/nlod/en/2.0",
+    "attribution": "Statens vegvesen",
+    "country": "NO",
+    "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "livetraffic-nsw",
+    "name": "Live Traffic NSW (New South Wales)",
+    "format": "geojson",
+    "url": [
+      "https://api.transport.nsw.gov.au/v1/live/hazards/incident/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/roadwork/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/flood/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/fire/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/majorevent/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/alpine/open"
+    ],
+    "auth": {
+      "kind": "header-key",
+      "header": "Authorization",
+      "envVar": "NSW_TRANSPORT_API_KEY",
+      "valuePrefix": "apikey "
+    },
+    "geojson": {
+      "typeField": "mainCategory",
+      "typeMap": {
+        "Incident": "accident",
+        "Road Work": "roadworks",
+        "Flooding": "weather",
+        "Fire": "hazard",
+        "Major Event": "public_event",
+        "Alpine": "weather"
+      },
+      "defaultType": "other",
+      "headlineField": "headline",
+      "descriptionField": "otherAdvice"
+    },
+    "cadenceSec": 180,
+    "freshnessWindowSec": 600,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://opendata.transport.nsw.gov.au/dataset/live-traffic-hazards",
+    "attribution": "Transport for NSW",
+    "country": "AU",
+    "privacyUrl": "https://www.transport.nsw.gov.au/privacy-statement",
+    "enabledByDefault": true
+  },
+  {
+    "id": "trafficsa-au",
+    "name": "Traffic SA (South Australia)",
+    "format": "geojson",
+    "url": [
+      "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",
+      "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/1/query?where=1%3D1&outFields=*&f=geojson"
+    ],
+    "geojson": {
+      "idField": "ROADWORKS_AND_INCIDENTS_ID",
+      "typeField": "REC_TYPE",
+      "typeMap": {
+        "ROADWORKS": "roadworks",
+        "24HR ROADWORKS": "roadworks",
+        "EMERGENCY WATERWORKS": "roadworks",
+        "SIGNAL FAULT": "equipment_fault",
+        "INCIDENT": "obstruction",
+        "COLLISION": "accident",
+        "CRASH": "accident",
+        "FLOODING": "weather",
+        "EVENT": "public_event",
+        "ROAD CLOSURE": "road_closure",
+        "HAZARD": "hazard"
+      },
+      "defaultType": "other",
+      "headlineField": "DESCRIPTION",
+      "roadField": "ROAD_NO"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+    "attribution": "Department for Infrastructure and Transport (South Australia)",
+    "country": "AU",
+    "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "qld-traffic",
+    "name": "QLDTraffic (Queensland)",
+    "format": "geojson",
+    "url": "https://api.qldtraffic.qld.gov.au/v1/events",
+    "auth": {
+      "kind": "query-key",
+      "param": "apikey",
+      "envVar": "QLD_TRAFFIC_API_KEY",
+      "defaultValue": "3e83add325cbb69ac4d8e5bf433d770b"
+    },
+    "geojson": {
+      "idField": "id",
+      "typeField": "event_type",
+      "typeMap": {
+        "Hazard": "hazard",
+        "Crash": "accident",
+        "Congestion": "congestion",
+        "Roadworks": "roadworks",
+        "Special event": "public_event",
+        "Flooding": "weather"
+      },
+      "defaultType": "other",
+      "headlineField": "description",
+      "descriptionField": "information",
+      "roadField": "road_summary.road_name",
+      "severityField": "event_priority",
+      "severityMap": {
+        "Red Alert": "critical",
+        "High": "high",
+        "Medium": "medium",
+        "Low": "low"
+      },
+      "updatedField": "last_updated"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.qldtraffic.qld.gov.au/",
+    "attribution": "State of Queensland (Department of Transport and Main Roads)",
+    "country": "AU",
+    "privacyUrl": "https://www.qld.gov.au/legal/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "ba-cortes-ar",
+    "name": "Buenos Aires road closures (cortes)",
+    "format": "geojson",
+    "url": "https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=${BA_CLIENT_ID}&client_secret=${BA_CLIENT_SECRET}",
+    "requiredEnv": [
+      "BA_CLIENT_ID",
+      "BA_CLIENT_SECRET"
+    ],
+    "geojson": {
+      "defaultType": "road_closure",
+      "headlineField": "nombre",
+      "descriptionField": "descripcion"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-2.5-AR",
+    "licenseUrl": "https://data.buenosaires.gob.ar/",
+    "attribution": "Gobierno de la Ciudad de Buenos Aires",
+    "country": "AR",
+    "privacyUrl": "https://www.buenosaires.gob.ar/politicas-de-privacidad",
+    "enabledByDefault": true
+  },
+  {
+    "id": "longdo-th",
+    "name": "Longdo Traffic Events (Thailand)",
+    "format": "flatjson",
+    "url": "https://event.longdo.com/feed/json",
+    "geojson": {
+      "lonField": "longitude",
+      "latField": "latitude",
+      "idField": "eid",
+      "typeField": "type",
+      "typeMap": {
+        "3": "accident"
+      },
+      "defaultType": "other",
+      "headlineField": "title_en",
+      "descriptionField": "description_en",
+      "updatedField": "start"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.longdo.com/",
+    "attribution": "Longdo Traffic / iTIC Foundation",
+    "country": "TH",
+    "privacyUrl": "https://map.longdo.com/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "gddkia-pl",
+    "name": "GDDKiA road obstructions (Poland)",
+    "format": "gddkia-xml",
+    "url": "https://www.archiwum.gddkia.gov.pl/dane/zima_html/utrdane.xml",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://dane.gov.pl/",
+    "attribution": "GDDKiA",
+    "country": "PL",
+    "privacyUrl": "https://www.gov.pl/web/gddkia",
+    "enabledByDefault": true
+  },
+  {
+    "id": "nationalhighways-gb",
+    "name": "National Highways NTIS (England)",
+    "format": "datex2",
+    "url": "https://api.data.nationalhighways.co.uk/roads/v2.0/closures",
+    "auth": {
+      "kind": "header-key",
+      "header": "Ocp-Apim-Subscription-Key",
+      "envVar": "NH_API_KEY"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "OGL-UK-3.0",
+    "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "attribution": "Contains National Highways data © Crown copyright and database right",
+    "country": "GB",
+    "privacyUrl": "https://nationalhighways.co.uk/privacy-notice/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "vejdirektoratet-dk",
+    "name": "Vejdirektoratet (Denmark)",
+    "format": "datex2",
+    "url": "https://data.vd-nap.dk/api/datex2/traffic-events",
+    "auth": {
+      "kind": "query-key",
+      "param": "api-key",
+      "envVar": "DK_VD_API_KEY"
+    },
+    "cadenceSec": 600,
+    "freshnessWindowSec": 1800,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://nap.vd.dk/",
+    "attribution": "Vejdirektoratet (Danish Road Directorate)",
+    "country": "DK",
+    "privacyUrl": "https://www.vejdirektoratet.dk/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "asfinag-at",
+    "name": "ASFINAG events (Austria)",
+    "format": "datex2",
+    "url": [
+      "https://contentportal.asfinag.at/datex2/v3/unplanned-events",
+      "https://contentportal.asfinag.at/datex2/v3/planned-events"
+    ],
+    "auth": {
+      "kind": "basic",
+      "userEnvVar": "AT_ASFINAG_USERNAME",
+      "passEnvVar": "AT_ASFINAG_PASSWORD"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.mobilitydata.gv.at/en/data",
+    "attribution": "ASFINAG",
+    "country": "AT",
+    "privacyUrl": "https://www.asfinag.at/datenschutz/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "tarktee-ee",
+    "name": "Tark Tee (Estonia)",
+    "format": "datex2",
+    "url": "https://tarktee.transpordiamet.ee/api/datex2/situation",
+    "auth": {
+      "kind": "query-key",
+      "param": "apiKey",
+      "envVar": "EE_TARKTEE_API_KEY"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://andmed.eesti.ee/information-holders/transpordiamet",
+    "attribution": "Transpordiamet (Estonian Transport Administration)",
+    "country": "EE",
+    "privacyUrl": "https://www.transpordiamet.ee/en",
+    "enabledByDefault": true
+  },
+  {
+    "id": "verkehr-nrw-de",
+    "name": "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_NRW_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_NRW_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/zero-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
+    "attribution": "Landesverkehrszentrale NRW (Straßen.NRW)",
+    "country": "DE",
+    "privacyUrl": "https://www.strassen.nrw.de/de/datenschutz.html",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-nrw-kommunal",
+    "name": "NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/zero-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
+    "attribution": "Städte und Kreise in Nordrhein-Westfalen (via Mobilithek)",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-nrw-mobidrom",
+    "name": "NRW.Mobidrom bundled roadworks via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-SA-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "attribution": "NRW.Mobidrom",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-bayern",
+    "name": "Bayern via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BAYERN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BAYERN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_BAYERN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_BAYERN_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Bayerische Straßenbauverwaltung",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-bw",
+    "name": "Baden-Württemberg via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BW_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BW_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_BW_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_BW_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Innenministerium Baden-Württemberg (Landesmeldestelle)",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-berlin",
+    "name": "Berlin via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BERLIN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BERLIN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_BERLIN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_BERLIN_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt Berlin",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-brandenburg",
+    "name": "Brandenburg via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Landesbetrieb Straßenwesen Brandenburg",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-bremen",
+    "name": "Bremen via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BREMEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BREMEN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_BREMEN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_BREMEN_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Verkehrsmanagementzentrale Bremen",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-hamburg",
+    "name": "Hamburg via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_HAMBURG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_HAMBURG_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Landesbetrieb Straßen, Brücken und Gewässer Hamburg (LSBG)",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-hessen",
+    "name": "Hessen via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_HESSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_HESSEN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_HESSEN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_HESSEN_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Hessen Mobil – Straßen- und Verkehrsmanagement",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-mv",
+    "name": "Mecklenburg-Vorpommern via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_MV_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_MV_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_MV_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_MV_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Landesamt für Straßenbau und Verkehr Mecklenburg-Vorpommern",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-niedersachsen",
+    "name": "Niedersachsen via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/zero-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
+    "attribution": "Niedersächsische Landesbehörde für Straßenbau und Verkehr (NLStBV)",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-sachsen",
+    "name": "Sachsen via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SACHSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SACHSEN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "Landesamt für Straßenbau und Verkehr Sachsen (LASuV)",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-sachsen-anhalt",
+    "name": "Sachsen-Anhalt via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Landesstraßenbaubehörde Sachsen-Anhalt",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-sh",
+    "name": "Schleswig-Holstein via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SH_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SH_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_SH_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_SH_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "Landesbetrieb Straßenbau und Verkehr Schleswig-Holstein (LBV.SH)",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-thueringen",
+    "name": "Thüringen via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID"
+    ],
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Thüringer Landesamt für Bau und Verkehr",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-oklahoma",
+    "name": "WZDx — Oklahoma DOT (oklahoma)",
+    "format": "wzdx",
+    "url": "https://oktraffic.org/api/Geojsons/workzones?&access_token=feOPynfHRJ5sdx8tf3IN5yOsGz89TAUuzHsN3V0jo1Fg41LcpoLhIRltaTPmDngD",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Oklahoma DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-utah",
+    "name": "WZDx — Utah DOT (utah)",
+    "format": "wzdx",
+    "url": "https://udottraffic.utah.gov/wzdx/udot/v40/data",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Utah DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-iowa",
+    "name": "WZDx — Iowa DOT (iowa)",
+    "format": "wzdx",
+    "url": "https://iowa-atms.cloud-q-free.com/api/rest/dataprism/wzdx/wzdxfeed",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Iowa DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-florida",
+    "name": "WZDx — Florida DOT (florida)",
+    "format": "wzdx",
+    "url": "https://us-datacloud.one.network/fdot/feed.json?app_key=c4090b04-26de-c9ee-873b2bd9a38c",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Florida DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-minnesota",
+    "name": "WZDx — Minnesota DOT (minnesota)",
+    "format": "wzdx",
+    "url": "https://mn.carsprogram.org/carsapi_v1/api/wzdx",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Minnesota DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-maryland",
+    "name": "WZDx — Maryland DOT (maryland)",
+    "format": "wzdx",
+    "url": "https://filter.ritis.org/wzdx_v4.1/mdot.geojson",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Maryland DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-arizona",
+    "name": "WZDx — Maricopa County DOT (arizona)",
+    "format": "wzdx",
+    "url": "https://wzdxapi.aztech.org/construction",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Maricopa County DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-new-mexico",
+    "name": "WZDx — New Mexico DOT (new mexico)",
+    "format": "wzdx",
+    "url": "https://ai.blyncsy.io/wzdx/nmdot/feed",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "New Mexico DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-hawaii",
+    "name": "WZDx — Hawaii DOT (hawaii)",
+    "format": "wzdx",
+    "url": "https://ai.blyncsy.io/wzdx/hidot/feed",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Hawaii DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-new-york",
+    "name": "WZDx — New York DOT (new york)",
+    "format": "wzdx",
+    "url": "https://511ny.org/api/wzdx",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "New York DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-washington",
+    "name": "WZDx — Washington State DOT (washington)",
+    "format": "wzdx",
+    "url": "https://wzdx.wsdot.wa.gov/api/v4/WorkZoneFeed",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Washington State DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-missouri",
+    "name": "WZDx — St. Charles County (missouri)",
+    "format": "wzdx",
+    "url": "https://scc.ridsi-dash.com:5000/wzdx.geojson",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "St. Charles County",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-new-jersey",
+    "name": "WZDx — New Jersey Institute of Technology (new jersey)",
+    "format": "wzdx",
+    "url": "https://smartworkzones.njit.edu/nj/wzdx",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "New Jersey Institute of Technology",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-kentucky",
+    "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
+    "format": "wzdx",
+    "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Kentucky Transportation Cabinet",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-kansas",
+    "name": "WZDx — Kansas DOT (kansas)",
+    "format": "wzdx",
+    "url": "https://ks.carsprogram.org/carsapi_v1/api/wzdx",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Kansas DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-texas",
+    "name": "WZDx — City of Austin (texas)",
+    "format": "wzdx",
+    "url": "https://data.austintexas.gov/download/d9mm-cjw9",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "City of Austin",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-delaware",
+    "name": "WZDx — Delaware DOT (delaware)",
+    "format": "wzdx",
+    "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Delaware DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-louisiana",
+    "name": "WZDx — Louisiana DOTD (louisiana)",
+    "format": "wzdx",
+    "url": "https://wzdx.e-dot.com/la_dot_d_feed_wzdx_v4.1.geojson",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Louisiana DOTD",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-idaho",
+    "name": "WZDx — Idaho DOT (idaho)",
+    "format": "wzdx",
+    "url": "https://511.idaho.gov/api/wzdx",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Idaho DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-indiana",
+    "name": "WZDx — Indiana DOT (indiana)",
+    "format": "wzdx",
+    "url": "https://in.carsprogram.org/carsapi_v1/api/wzdx",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Indiana DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-n-a",
+    "name": "WZDx — CivicLink (n/a)",
+    "format": "wzdx",
+    "url": "https://road-connect-community-bry7272.replit.app/api/wzdx/work-zones.geojson",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "CivicLink",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-michigan",
+    "name": "WZDx — Michigan DOT (michigan)",
+    "format": "wzdx",
+    "url": "https://mdotridedata.state.mi.us//api/v1/organization/michigan_department_of_transportation/dataset/work_zone_information/query?limit=200&_format=json",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Michigan DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-north-carolina",
+    "name": "WZDx — North Carolina DOT (north carolina)",
+    "format": "wzdx",
+    "url": "https://drivenc.gov/api/wzdx",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "North Carolina DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-oregon",
+    "name": "WZDx — Oregon DOT (Oregon)",
+    "format": "wzdx",
+    "url": "https://apiportal.odot.state.or.us/",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Oregon DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
     "id": "autobahn-a1-warning",
     "name": "Autobahn A1 — warning",
     "format": "autobahn-json",

@@ -24,7 +24,8 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "export:atlas": "node scripts/export-atlas.ts"
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
