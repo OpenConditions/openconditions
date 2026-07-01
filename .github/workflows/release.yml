@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   publish-packages:
-    name: publish @openconditions/{core,roads} to npm
+    name: publish @openconditions/{core,ingest-framework,roads} to npm
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -48,7 +48,7 @@ jobs:
             echo "NPM_TOKEN not set — skipping npm publish (images + integration artifact still publish)."
             exit 0
           fi
-          pnpm --filter "@openconditions/core" --filter "@openconditions/roads" publish --access public --no-git-checks
+          pnpm --filter "@openconditions/core" --filter "@openconditions/ingest-framework" --filter "@openconditions/roads" publish --access public --no-git-checks
 
   publish-image:
     name: build + push ghcr.io/openconditions/ingest
