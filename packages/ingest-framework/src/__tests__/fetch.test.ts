@@ -225,3 +225,27 @@ describe("fetchAll — url templates", () => {
     ]);
   });
 });
+
+describe("fetchAll — POST body template", () => {
+  it("sends an interpolated bodyTemplate on a POST feed", async () => {
+    const feed = makeFeed({
+      id: "post",
+      method: "POST",
+      url: "https://api.test/query",
+      bodyTemplate: '<REQUEST authenticationkey="${MY_KEY}"><QUERY/></REQUEST>',
+      requestHeaders: { "Content-Type": "application/xml" },
+    });
+    let capturedBody: unknown;
+    const fetchFn = (async (_input: string | URL | Request, init?: RequestInit) => {
+      capturedBody = init?.body;
+      return new Response("<ok/>", { status: 200 });
+    }) as unknown as typeof fetch;
+    process.env.MY_KEY = "sekret";
+    try {
+      await fetchAll(feed, fetchFn);
+    } finally {
+      delete process.env.MY_KEY;
+    }
+    expect(capturedBody).toBe('<REQUEST authenticationkey="sekret"><QUERY/></REQUEST>');
+  });
+});

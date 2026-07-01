@@ -1,7 +1,7 @@
 import type { FeedSourceBase } from "./feed-source.js";
 import { resolvedEnv } from "./auth.js";
 import { boundedGunzip } from "./egress.js";
-import { resolveFeedUrls } from "./template.js";
+import { resolveFeedUrls, resolveUrlTemplate } from "./template.js";
 
 const GZIP_MAGIC_0 = 0x1f;
 const GZIP_MAGIC_1 = 0x8b;
@@ -15,8 +15,7 @@ const FANOUT_CONCURRENCY = 8;
  * `@openconditions/roads`' `FeedSource` today and is removed by the later catalog
  * work; widen locally for it so the framework needn't depend on roads.
  */
-type FetchableSource = FeedSourceBase & {
-  body?: (env: Record<string, string | undefined>) => string;
+type FetchableFeed = FeedSourceBase & {
   discover?: (fetchFn: typeof fetch) => Promise<string[]>;
 };
 
@@ -63,13 +62,13 @@ async function fetchOne(url: string, fetchFn: typeof fetch, init?: RequestInit):
 }
 
 /** Build the RequestInit for a feed: POST + body + headers when configured. */
-function requestInit(src: FetchableSource): RequestInit | undefined {
+function requestInit(src: FetchableFeed): RequestInit | undefined {
   if (src.method !== "POST") {
     return src.requestHeaders ? { headers: src.requestHeaders } : undefined;
   }
   return {
     method: "POST",
-    body: src.body ? src.body(resolvedEnv()) : undefined,
+    body: src.bodyTemplate ? resolveUrlTemplate(src.bodyTemplate, resolvedEnv()) : undefined,
     headers: src.requestHeaders,
   };
 }
@@ -149,7 +148,7 @@ async function fetchAllBounded(
  * subscription id). Multi-URL sets fetch with bounded concurrency so a large
  * resolved URL set cannot fire every request at once.
  */
-export async function fetchAll(src: FetchableSource, fetchFn: typeof fetch): Promise<Buffer[]> {
+export async function fetchAll(src: FetchableFeed, fetchFn: typeof fetch): Promise<Buffer[]> {
   if (typeof src.discover === "function") {
     const urls = await src.discover(fetchFn);
     return fetchFanout(urls, fetchFn);

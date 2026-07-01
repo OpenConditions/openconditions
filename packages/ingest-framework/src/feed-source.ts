@@ -39,6 +39,8 @@ export interface FeedSourceBase {
   expandEnv?: string;
   auth?: FeedAuth;
   method?: "GET" | "POST";
+  /** POST-body template; `${VAR}` interpolated from resolvedEnv, same as `url`. */
+  bodyTemplate?: string;
   requestHeaders?: Record<string, string>;
   requiredEnv?: string[];
   gzip?: boolean;
