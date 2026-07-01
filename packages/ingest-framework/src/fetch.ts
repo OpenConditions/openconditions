@@ -1,6 +1,7 @@
 import type { FeedSourceBase } from "./feed-source.js";
 import { resolvedEnv } from "./auth.js";
 import { boundedGunzip } from "./egress.js";
+import { resolveFeedUrls } from "./template.js";
 
 const GZIP_MAGIC_0 = 0x1f;
 const GZIP_MAGIC_1 = 0x8b;
@@ -9,14 +10,12 @@ const GZIP_MAGIC_1 = 0x8b;
 const FANOUT_CONCURRENCY = 8;
 
 /**
- * `FeedSourceBase` has no function-valued fields (`url` is a plain
- * string/string[], and it has no `body`/`discover` at all) — those transport
- * fields are still declared by `@openconditions/roads`' `FeedSource` today and
- * removed by the later declarative-feed work (L6/L1). Widen locally so this
- * fetch pipeline keeps supporting them without the framework depending on roads.
+ * `FeedSourceBase` carries the declarative transport fields (`url` template(s),
+ * `expandEnv`, `bodyTemplate`). `discover` is still declared by
+ * `@openconditions/roads`' `FeedSource` today and is removed by the later catalog
+ * work; widen locally for it so the framework needn't depend on roads.
  */
-type FetchableSource = Omit<FeedSourceBase, "url"> & {
-  url?: string | string[] | ((env: Record<string, string | undefined>) => string | string[]);
+type FetchableSource = FeedSourceBase & {
   body?: (env: Record<string, string | undefined>) => string;
   discover?: (fetchFn: typeof fetch) => Promise<string[]>;
 };
@@ -144,12 +143,11 @@ async function fetchAllBounded(
  * bytes start with the gzip magic bytes 0x1f 0x8b).
  *
  * `src.discover`, when present, resolves the URL set dynamically and is fanned
- * out tolerantly (takes precedence over `src.url`). Otherwise `src.url` may be
- * a static string, a string array, or a function that receives `process.env`
- * and returns a string or string array (e.g. one client-pull URL per
- * Mobilithek subscription id). Multi-URL static sets fetch with bounded
- * concurrency so a large array-valued or fn-array-valued `url` cannot fire
- * every request at once.
+ * out tolerantly (takes precedence over `src.url`). Otherwise `src.url` is a
+ * `${VAR}` template string or array of templates; `expandEnv` fans one template
+ * out over a comma-separated env var (one client-pull URL per Mobilithek
+ * subscription id). Multi-URL sets fetch with bounded concurrency so a large
+ * resolved URL set cannot fire every request at once.
  */
 export async function fetchAll(src: FetchableSource, fetchFn: typeof fetch): Promise<Buffer[]> {
   if (typeof src.discover === "function") {
@@ -157,23 +155,12 @@ export async function fetchAll(src: FetchableSource, fetchFn: typeof fetch): Pro
     return fetchFanout(urls, fetchFn);
   }
 
-  const urlOrFn = src.url;
-
-  if (urlOrFn == null) {
-    throw new Error(`feed ${src.id} has neither url nor discover`);
+  const urls = resolveFeedUrls(src, resolvedEnv());
+  if (urls.length === 0) {
+    if (src.url == null) throw new Error(`feed ${src.id} has neither url nor discover`);
+    return []; // expandEnv configured but no items yet — a dormant, uncredentialed feed
   }
 
   const init = requestInit(src);
-
-  if (typeof urlOrFn === "function") {
-    const resolved = urlOrFn(resolvedEnv());
-    const urls = Array.isArray(resolved) ? resolved : [resolved];
-    return fetchAllBounded(urls, fetchFn, init);
-  }
-
-  if (Array.isArray(urlOrFn)) {
-    return fetchAllBounded(urlOrFn, fetchFn, init);
-  }
-
-  return [await fetchOne(urlOrFn, fetchFn, init)];
+  return fetchAllBounded(urls, fetchFn, init);
 }

@@ -4,3 +4,4 @@ export * from "./auth.js";
 export * from "./domain.js";
 export * from "./fetch.js";
 export * from "./egress.js";
+export * from "./template.js";

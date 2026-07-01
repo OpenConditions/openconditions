@@ -35,6 +35,8 @@ export interface FeedSourceBase {
   format: string;
   produces?: "events" | "flow";
   url?: string | string[];
+  /** Names a comma-separated env var to fan `url` out over, one resolved URL per item. */
+  expandEnv?: string;
   auth?: FeedAuth;
   method?: "GET" | "POST";
   requestHeaders?: Record<string, string>;

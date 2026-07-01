@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { FeedSourceBase } from "../feed-source.js";
 import { fetchAll } from "../fetch.js";
+import { resolveFeedUrls } from "../template.js";
 
-type TestFeedSource = Omit<FeedSourceBase, "url"> & {
-  url?: string | string[] | ((env: Record<string, string | undefined>) => string | string[]);
+type TestFeedSource = FeedSourceBase & {
   discover?: (fetchFn: typeof fetch) => Promise<string[]>;
 };
 
@@ -153,30 +153,6 @@ describe("fetchAll — static url forms (regression)", () => {
     ]);
   });
 
-  it("resolves a function url against env", async () => {
-    const feed = makeFeed({ id: "fn", url: () => "https://x.test/fn" });
-    const bufs = await fetchAll(
-      feed,
-      okFor((u) => u)
-    );
-    expect(bufs[0]!.toString("utf8")).toBe("https://x.test/fn");
-  });
-
-  it("fetches every url when a function returns an array (Mobilithek multi-subscription)", async () => {
-    const feed = makeFeed({
-      id: "fn-arr",
-      url: () => ["https://x.test/sub/1", "https://x.test/sub/2"],
-    });
-    const bufs = await fetchAll(
-      feed,
-      okFor((u) => u)
-    );
-    expect(bufs.map((b) => b.toString("utf8")).sort()).toEqual([
-      "https://x.test/sub/1",
-      "https://x.test/sub/2",
-    ]);
-  });
-
   it("does not HTML-filter the single-url path (XML feeds like NDW pass through)", async () => {
     const feed = makeFeed({ id: "xml", url: "https://x.test/ndw.xml" });
     const bufs = await fetchAll(
@@ -213,5 +189,39 @@ describe("fetchAll — static url forms (regression)", () => {
     const bufs = await fetchAll(feed, fetchFn);
     expect(bufs).toHaveLength(20);
     expect(maxInFlight).toBe(8);
+  });
+});
+
+describe("fetchAll — url templates", () => {
+  it("interpolates a ${VAR} url from resolvedEnv", async () => {
+    const feed = makeFeed({ id: "tpl", url: "https://h.test/f?k=${K}" });
+    const seen: string[] = [];
+    const fetchFn = (async (input: string | URL | Request) => {
+      seen.push(String(input));
+      return new Response("ok", { status: 200 });
+    }) as unknown as typeof fetch;
+    process.env.K = "secret";
+    try {
+      await fetchAll({ ...feed }, fetchFn);
+    } finally {
+      delete process.env.K;
+    }
+    expect(seen).toEqual(["https://h.test/f?k=secret"]);
+    expect(resolveFeedUrls(feed, { K: "secret", id: feed.id })).toEqual([
+      "https://h.test/f?k=secret",
+    ]);
+  });
+
+  it("expands a Mobilithek-style expandEnv feed to one url per subscription id", async () => {
+    const feed = makeFeed({
+      id: "mob",
+      url: "https://m.test/subscription/${SUB}/pull?subscriptionID=${SUB}",
+      expandEnv: "SUB",
+    });
+    const urls = resolveFeedUrls(feed, { SUB: "a, b", id: feed.id });
+    expect(urls).toEqual([
+      "https://m.test/subscription/a/pull?subscriptionID=a",
+      "https://m.test/subscription/b/pull?subscriptionID=b",
+    ]);
   });
 });
