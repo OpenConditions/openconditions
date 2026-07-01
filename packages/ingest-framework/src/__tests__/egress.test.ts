@@ -1,7 +1,9 @@
+import { gzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 import {
   assertPublicUrl,
   assertResolvesToPublicIp,
+  boundedGunzip,
   guardOptionsFromEnv,
   guardedFetch,
   isPublicUrl,
@@ -146,5 +148,18 @@ describe("guardedFetch", () => {
         OPENCONDITIONS_FETCH_TIMEOUT_MS: "",
       }).maxBytes
     ).toBe(1024);
+  });
+});
+
+describe("boundedGunzip", () => {
+  it("throws on a gzip bomb instead of buffering the whole expansion", async () => {
+    const bomb = gzipSync(Buffer.alloc(50_000, 0)); // ~tiny gzip, expands to 50k
+    await expect(boundedGunzip(bomb, 1_000)).rejects.toThrow(/exceeded/);
+  });
+
+  it("returns the decompressed bytes when under the cap", async () => {
+    const raw = gzipSync(Buffer.from("hello world"));
+    const out = await boundedGunzip(raw, 1_000);
+    expect(out.toString("utf8")).toBe("hello world");
   });
 });

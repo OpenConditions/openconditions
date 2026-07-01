@@ -1,6 +1,6 @@
-import { gunzipSync } from "node:zlib";
 import type { FeedSourceBase } from "./feed-source.js";
 import { resolvedEnv } from "./auth.js";
+import { boundedGunzip } from "./egress.js";
 
 const GZIP_MAGIC_0 = 0x1f;
 const GZIP_MAGIC_1 = 0x8b;
@@ -48,6 +48,11 @@ export function redactUrl(url: string): string {
   }
 }
 
+/** Ceiling on a single feed's decompressed bytes; matches the guard's byte cap. */
+const MAX_DECOMPRESSED_BYTES = Number(
+  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || 256 * 1024 * 1024
+);
+
 async function fetchOne(url: string, fetchFn: typeof fetch, init?: RequestInit): Promise<Buffer> {
   const res = await fetchFn(url, init);
   if (!res.ok) {
@@ -55,7 +60,7 @@ async function fetchOne(url: string, fetchFn: typeof fetch, init?: RequestInit):
   }
   const arrayBuf = await res.arrayBuffer();
   const raw = Buffer.from(arrayBuf);
-  return isGzip(raw) ? gunzipSync(raw) : raw;
+  return isGzip(raw) ? await boundedGunzip(raw, MAX_DECOMPRESSED_BYTES) : raw;
 }
 
 /** Build the RequestInit for a feed: POST + body + headers when configured. */

@@ -6,6 +6,11 @@ import { createSiteTableParser } from "@openconditions/roads";
 /** Site tables change rarely (version-stamped); refetch at most every 6 hours. */
 const SITE_TABLE_TTL_MS = 6 * 60 * 60 * 1000;
 
+/** Ceiling on a single site table's decompressed bytes; matches the guard's byte cap. */
+const MAX_DECOMPRESSED_BYTES = Number(
+  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || 256 * 1024 * 1024
+);
+
 interface CacheEntry {
   map: Map<string, SiteGeometry>;
   fetchedAt: number;
@@ -55,8 +60,15 @@ async function streamIntoParser(
   const decoded: Readable = gzip ? source.pipe(createGunzip()) : source;
   if (decoded !== source) source.on("error", (err) => decoded.destroy(err));
   try {
+    let decompressed = 0;
     decoded.setEncoding("utf8");
     for await (const chunk of decoded) {
+      decompressed += Buffer.byteLength(chunk as string);
+      if (decompressed > MAX_DECOMPRESSED_BYTES) {
+        if (decoded !== source) source.destroy();
+        decoded.destroy();
+        throw new Error(`decompressed stream exceeded ${MAX_DECOMPRESSED_BYTES} bytes`);
+      }
       parser.write(chunk as string);
     }
   } finally {

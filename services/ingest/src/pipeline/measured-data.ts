@@ -17,6 +17,11 @@ export function isStreamingFlowFeed(src: DomainFeedSource): boolean {
   return src.produces === "flow" && src.format === "datex2";
 }
 
+/** Ceiling on a single flow feed's decompressed bytes; matches the guard's byte cap. */
+const MAX_DECOMPRESSED_BYTES = Number(
+  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || 256 * 1024 * 1024
+);
+
 /** Resolves the single feed URL for a streaming flow source (string or env fn). */
 function resolveUrl(src: DomainFeedSource): string {
   const u = src.url;
@@ -57,8 +62,15 @@ export async function streamMeasuredData(
   const decoded: Readable = src.gzip ? source.pipe(createGunzip()) : source;
   if (decoded !== source) source.on("error", (err) => decoded.destroy(err));
   try {
+    let decompressed = 0;
     decoded.setEncoding("utf8");
     for await (const chunk of decoded) {
+      decompressed += Buffer.byteLength(chunk as string);
+      if (decompressed > MAX_DECOMPRESSED_BYTES) {
+        if (decoded !== source) source.destroy();
+        decoded.destroy();
+        throw new Error(`decompressed stream exceeded ${MAX_DECOMPRESSED_BYTES} bytes`);
+      }
       parser.write(chunk as string);
     }
   } finally {

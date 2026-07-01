@@ -6,6 +6,7 @@
  */
 
 import { lookup as dnsLookup } from "node:dns/promises";
+import { createGunzip } from "node:zlib";
 
 const PRIVATE_HOST_RANGES: RegExp[] = [
   /^127\./,
@@ -257,4 +258,25 @@ export function guardOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): Fetch
     timeoutMs: envInt(env, "OPENCONDITIONS_FETCH_TIMEOUT_MS", 60_000),
     maxRedirects: envInt(env, "OPENCONDITIONS_MAX_REDIRECTS", 5),
   };
+}
+
+/**
+ * Gunzip `raw` while capping the DECOMPRESSED size. Streams through zlib and
+ * throws the moment the running decompressed total passes `maxBytes`, so a
+ * highly-compressed "gzip bomb" cannot expand into an OOM.
+ */
+export async function boundedGunzip(raw: Buffer, maxBytes: number): Promise<Buffer> {
+  const gunzip = createGunzip();
+  gunzip.end(raw); // write the whole compressed buffer, close the writable side
+  const chunks: Buffer[] = [];
+  let total = 0;
+  for await (const chunk of gunzip as AsyncIterable<Buffer>) {
+    total += chunk.length;
+    if (total > maxBytes) {
+      gunzip.destroy();
+      throw new Error(`gunzip output exceeded ${maxBytes} bytes`);
+    }
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
 }
