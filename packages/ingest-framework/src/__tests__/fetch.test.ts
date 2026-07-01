@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { FeedSourceBase } from "../feed-source.js";
 import { fetchAll } from "../fetch.js";
+import { createFetchState } from "../index.js";
 import { resolveFeedUrls } from "../template.js";
 
 type TestFeedSource = FeedSourceBase & {
@@ -32,11 +33,20 @@ const okFor = (
     return new Response(body(url), { status: 200 });
   }) as unknown as typeof fetch;
 
+/** Fetch and unwrap the buffers, treating an "unchanged" result as no buffers. */
+async function fetchBuffers(
+  src: Parameters<typeof fetchAll>[0],
+  fetchFn: typeof fetch
+): Promise<Buffer[]> {
+  const res = await fetchAll(src, fetchFn);
+  return res.status === "fetched" ? res.buffers : [];
+}
+
 describe("fetchAll — discover fan-out", () => {
   it("fetches every URL the discover function returns", async () => {
     const urls = ["https://x.test/1", "https://x.test/2", "https://x.test/3"];
     const feed = makeFeed({ id: "disc", discover: async () => urls });
-    const bufs = await fetchAll(
+    const bufs = await fetchBuffers(
       feed,
       okFor((u) => `body:${u}`)
     );
@@ -49,7 +59,7 @@ describe("fetchAll — discover fan-out", () => {
       url: "https://static.test/should-not-be-used",
       discover: async () => ["https://x.test/a"],
     });
-    const bufs = await fetchAll(
+    const bufs = await fetchBuffers(
       feed,
       okFor((u) => u)
     );
@@ -60,7 +70,7 @@ describe("fetchAll — discover fan-out", () => {
   it("tolerates a failing sub-feed and returns the rest", async () => {
     const urls = ["https://x.test/ok1", "https://x.test/bad", "https://x.test/ok2"];
     const feed = makeFeed({ id: "tol", discover: async () => urls });
-    const bufs = await fetchAll(
+    const bufs = await fetchBuffers(
       feed,
       okFor(
         (u) => `body:${u}`,
@@ -74,7 +84,7 @@ describe("fetchAll — discover fan-out", () => {
   it("drops a sub-feed that returns an HTML block/error page (200) and keeps the JSON ones", async () => {
     const urls = ["https://x.test/json", "https://x.test/html"];
     const feed = makeFeed({ id: "html", discover: async () => urls });
-    const bufs = await fetchAll(
+    const bufs = await fetchBuffers(
       feed,
       okFor((u) =>
         u.endsWith("/html")
@@ -104,7 +114,7 @@ describe("fetchAll — discover fan-out", () => {
 
   it("returns nothing (no throw) when discover yields zero URLs", async () => {
     const feed = makeFeed({ id: "empty", discover: async () => [] });
-    const bufs = await fetchAll(
+    const bufs = await fetchBuffers(
       feed,
       okFor((u) => u)
     );
@@ -124,7 +134,7 @@ describe("fetchAll — discover fan-out", () => {
 
     const urls = Array.from({ length: 20 }, (_, i) => `https://x.test/${i}`);
     const feed = makeFeed({ id: "conc", discover: async () => urls });
-    const bufs = await fetchAll(feed, fetchFn);
+    const bufs = await fetchBuffers(feed, fetchFn);
     expect(bufs).toHaveLength(20);
     expect(maxInFlight).toBe(8);
   });
@@ -133,7 +143,7 @@ describe("fetchAll — discover fan-out", () => {
 describe("fetchAll — static url forms (regression)", () => {
   it("fetches a single string url", async () => {
     const feed = makeFeed({ id: "s", url: "https://x.test/one" });
-    const bufs = await fetchAll(
+    const bufs = await fetchBuffers(
       feed,
       okFor((u) => `body:${u}`)
     );
@@ -143,7 +153,7 @@ describe("fetchAll — static url forms (regression)", () => {
 
   it("fetches every url of a string array", async () => {
     const feed = makeFeed({ id: "arr", url: ["https://x.test/a", "https://x.test/b"] });
-    const bufs = await fetchAll(
+    const bufs = await fetchBuffers(
       feed,
       okFor((u) => u)
     );
@@ -155,7 +165,7 @@ describe("fetchAll — static url forms (regression)", () => {
 
   it("does not HTML-filter the single-url path (XML feeds like NDW pass through)", async () => {
     const feed = makeFeed({ id: "xml", url: "https://x.test/ndw.xml" });
-    const bufs = await fetchAll(
+    const bufs = await fetchBuffers(
       feed,
       okFor(() => '<?xml version="1.0"?><d2:payload/>')
     );
@@ -186,7 +196,7 @@ describe("fetchAll — static url forms (regression)", () => {
 
     const urls = Array.from({ length: 20 }, (_, i) => `https://x.test/${i}`);
     const feed = makeFeed({ id: "conc-static", url: urls });
-    const bufs = await fetchAll(feed, fetchFn);
+    const bufs = await fetchBuffers(feed, fetchFn);
     expect(bufs).toHaveLength(20);
     expect(maxInFlight).toBe(8);
   });
@@ -247,5 +257,57 @@ describe("fetchAll — POST body template", () => {
       delete process.env.MY_KEY;
     }
     expect(capturedBody).toBe('<REQUEST authenticationkey="sekret"><QUERY/></REQUEST>');
+  });
+});
+
+describe("fetchAll — conditional GET", () => {
+  it("returns unchanged and reuses the cached buffer on a 304", async () => {
+    const feed = makeFeed({ id: "cond", url: "https://h.test/f.xml" });
+    const state = createFetchState();
+    let call = 0;
+    const fetchFn = (async (_input: string | URL | Request, init?: RequestInit) => {
+      call += 1;
+      if (call === 1) {
+        return new Response("payload-v1", { status: 200, headers: { ETag: 'W/"v1"' } });
+      }
+      const inm = new Headers(init?.headers).get("If-None-Match");
+      expect(inm).toBe('W/"v1"');
+      return new Response(null, { status: 304 });
+    }) as unknown as typeof fetch;
+
+    const first = await fetchAll(feed, fetchFn, { state });
+    expect(first.status).toBe("fetched");
+    expect(first.status === "fetched" && first.buffers[0]!.toString()).toBe("payload-v1");
+
+    const second = await fetchAll(feed, fetchFn, { state });
+    expect(second.status).toBe("unchanged");
+    expect(call).toBe(2);
+  });
+});
+
+describe("fetchAll — fetchIntervalSec gating", () => {
+  it("skips the fetch entirely within the interval window", async () => {
+    const feed = makeFeed({ id: "gated", url: "https://h.test/f.xml", fetchIntervalSec: 300 });
+    const state = createFetchState();
+    let clock = 1_000_000;
+    let call = 0;
+    const fetchFn = (async () => {
+      call += 1;
+      return new Response("body", { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const first = await fetchAll(feed, fetchFn, { state, now: () => clock });
+    expect(first.status).toBe("fetched");
+    expect(call).toBe(1);
+
+    clock += 60_000; // +60s, inside the 300s window
+    const second = await fetchAll(feed, fetchFn, { state, now: () => clock });
+    expect(second.status).toBe("unchanged");
+    expect(call).toBe(1); // no second network call
+
+    clock += 300_000; // past the window
+    const third = await fetchAll(feed, fetchFn, { state, now: () => clock });
+    expect(third.status).toBe("fetched");
+    expect(call).toBe(2);
   });
 });

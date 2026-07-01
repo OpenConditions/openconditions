@@ -117,7 +117,12 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   } else {
     let buffers: Buffer[];
     try {
-      buffers = await fetchAll(src, fetchFn);
+      const result = await fetchAll(src, fetchFn);
+      if (result.status === "unchanged") {
+        // 304 on every URL, or gated by fetchIntervalSec — keep last-good rows, no swap.
+        return { count: 0, durationMs: Date.now() - start };
+      }
+      buffers = result.buffers;
     } catch (err) {
       console.error(`[ingest] fetch failed for source ${src.id}:`, err);
       return { count: 0, durationMs: Date.now() - start };

@@ -43,6 +43,8 @@ export interface FeedSourceBase {
   bodyTemplate?: string;
   requestHeaders?: Record<string, string>;
   requiredEnv?: string[];
+  /** Skip a fetch cycle when the source was fetched within this many seconds. */
+  fetchIntervalSec?: number;
   gzip?: boolean;
   cadenceSec: number;
   freshnessWindowSec: number;

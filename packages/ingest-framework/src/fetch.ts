@@ -19,6 +19,30 @@ type FetchableFeed = FeedSourceBase & {
   discover?: (fetchFn: typeof fetch) => Promise<string[]>;
 };
 
+/**
+ * Per-source politeness memory: the ETag/Last-Modified + last body of each URL
+ * (for conditional GET) and the last fetch time of each source (for the
+ * `fetchIntervalSec` gate). A long-lived scheduler shares one instance across
+ * cycles so conditional headers accumulate; tests pass a fresh one.
+ */
+export interface FetchState {
+  conditional: Map<string, { etag?: string; lastModified?: string; buffer: Buffer }>;
+  lastFetchAt: Map<string, number>;
+}
+
+export function createFetchState(): FetchState {
+  return { conditional: new Map(), lastFetchAt: new Map() };
+}
+
+const sharedFetchState = createFetchState();
+
+export type FetchResult = { status: "fetched"; buffers: Buffer[] } | { status: "unchanged" };
+
+interface FetchOptions {
+  state?: FetchState;
+  now?: () => number;
+}
+
 function isGzip(buf: Buffer): boolean {
   return buf.length >= 2 && buf[0] === GZIP_MAGIC_0 && buf[1] === GZIP_MAGIC_1;
 }
@@ -51,14 +75,33 @@ const MAX_DECOMPRESSED_BYTES = Number(
   process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || 256 * 1024 * 1024
 );
 
-async function fetchOne(url: string, fetchFn: typeof fetch, init?: RequestInit): Promise<Buffer> {
-  const res = await fetchFn(url, init);
+async function fetchOne(
+  url: string,
+  fetchFn: typeof fetch,
+  init?: RequestInit,
+  state?: FetchState
+): Promise<{ changed: boolean; buffer: Buffer }> {
+  const prior = state?.conditional.get(url);
+  const headers = new Headers(init?.headers);
+  if (prior?.etag) headers.set("If-None-Match", prior.etag);
+  if (prior?.lastModified) headers.set("If-Modified-Since", prior.lastModified);
+
+  const res = await fetchFn(url, { ...init, headers });
+  if (res.status === 304 && prior) return { changed: false, buffer: prior.buffer };
   if (!res.ok) {
     throw new Error(`HTTP ${res.status} fetching ${redactUrl(url)}`);
   }
   const arrayBuf = await res.arrayBuffer();
   const raw = Buffer.from(arrayBuf);
-  return isGzip(raw) ? await boundedGunzip(raw, MAX_DECOMPRESSED_BYTES) : raw;
+  const buffer = isGzip(raw) ? await boundedGunzip(raw, MAX_DECOMPRESSED_BYTES) : raw;
+  if (state) {
+    state.conditional.set(url, {
+      etag: res.headers.get("etag") ?? undefined,
+      lastModified: res.headers.get("last-modified") ?? undefined,
+      buffer,
+    });
+  }
+  return { changed: true, buffer };
 }
 
 /** Build the RequestInit for a feed: POST + body + headers when configured. */
@@ -89,11 +132,11 @@ async function fetchFanout(urls: string[], fetchFn: typeof fetch): Promise<Buffe
     while (cursor < urls.length) {
       const url = urls[cursor++]!;
       try {
-        const buf = await fetchOne(url, fetchFn);
-        if (looksLikeHtml(buf)) {
+        const { buffer } = await fetchOne(url, fetchFn);
+        if (looksLikeHtml(buffer)) {
           throw new Error("returned HTML, not JSON");
         }
-        out.push(buf);
+        out.push(buffer);
       } catch (err) {
         failures++;
         console.warn(
@@ -114,21 +157,25 @@ async function fetchFanout(urls: string[], fetchFn: typeof fetch): Promise<Buffe
 }
 
 /**
- * Fetches every url with bounded concurrency, preserving order. Unlike the
- * tolerant discover fan-out, a single failure rejects the whole batch (matching
- * the prior Promise.all semantics for static feed URL sets).
+ * Fetches every url with bounded concurrency, preserving order, threading the
+ * conditional-GET `state` through each request. Unlike the tolerant discover
+ * fan-out, a single failure rejects the whole batch (matching the prior
+ * Promise.all semantics for static feed URL sets). Returns the per-URL
+ * `{changed, buffer}` so the caller can decide the source is unchanged when
+ * every URL replied 304.
  */
 async function fetchAllBounded(
   urls: string[],
   fetchFn: typeof fetch,
-  init: RequestInit | undefined
-): Promise<Buffer[]> {
-  const out: Buffer[] = new Array<Buffer>(urls.length);
+  init: RequestInit | undefined,
+  state?: FetchState
+): Promise<{ changed: boolean; buffer: Buffer }[]> {
+  const out = new Array<{ changed: boolean; buffer: Buffer }>(urls.length);
   let cursor = 0;
   async function worker(): Promise<void> {
     while (cursor < urls.length) {
       const i = cursor++;
-      out[i] = await fetchOne(urls[i]!, fetchFn, init);
+      out[i] = await fetchOne(urls[i]!, fetchFn, init, state);
     }
   }
   const workerCount = Math.min(FANOUT_CONCURRENCY, urls.length);
@@ -137,29 +184,55 @@ async function fetchAllBounded(
 }
 
 /**
- * Resolves the URL(s) for a feed source and fetches each one, returning
- * an array of decoded Buffers (gunzipped transparently when the response
- * bytes start with the gzip magic bytes 0x1f 0x8b).
+ * Resolves the URL(s) for a feed source and fetches each one, returning a
+ * {@link FetchResult}. Buffers are gunzipped transparently when the response
+ * bytes start with the gzip magic bytes 0x1f 0x8b.
  *
  * `src.discover`, when present, resolves the URL set dynamically and is fanned
- * out tolerantly (takes precedence over `src.url`). Otherwise `src.url` is a
- * `${VAR}` template string or array of templates; `expandEnv` fans one template
- * out over a comma-separated env var (one client-pull URL per Mobilithek
- * subscription id). Multi-URL sets fetch with bounded concurrency so a large
- * resolved URL set cannot fire every request at once.
+ * out tolerantly (takes precedence over `src.url`) — always "fetched", since
+ * registry sub-feeds are best-effort and not conditionally cached. Otherwise
+ * `src.url` is a `${VAR}` template string or array of templates; `expandEnv`
+ * fans one template out over a comma-separated env var. Multi-URL sets fetch
+ * with bounded concurrency so a large resolved URL set cannot fire every
+ * request at once.
+ *
+ * Politeness on the static/template path: a source fetched within its
+ * `fetchIntervalSec` window is skipped ("unchanged"); each URL sends its cached
+ * ETag/Last-Modified, and a source whose every URL replied 304 is "unchanged"
+ * so the caller preserves last-good rows instead of re-swapping.
  */
-export async function fetchAll(src: FetchableFeed, fetchFn: typeof fetch): Promise<Buffer[]> {
+export async function fetchAll(
+  src: FetchableFeed,
+  fetchFn: typeof fetch,
+  opts: FetchOptions = {}
+): Promise<FetchResult> {
+  const state = opts.state ?? sharedFetchState;
+  const now = opts.now ?? Date.now;
+
   if (typeof src.discover === "function") {
     const urls = await src.discover(fetchFn);
-    return fetchFanout(urls, fetchFn);
+    return { status: "fetched", buffers: await fetchFanout(urls, fetchFn) };
+  }
+
+  if (src.fetchIntervalSec != null) {
+    const last = state.lastFetchAt.get(src.id);
+    if (last != null && now() - last < src.fetchIntervalSec * 1000) {
+      return { status: "unchanged" };
+    }
   }
 
   const urls = resolveFeedUrls(src, resolvedEnv());
   if (urls.length === 0) {
     if (src.url == null) throw new Error(`feed ${src.id} has neither url nor discover`);
-    return []; // expandEnv configured but no items yet — a dormant, uncredentialed feed
+    // expandEnv configured but no items yet — a dormant, uncredentialed feed.
+    state.lastFetchAt.set(src.id, now());
+    return { status: "fetched", buffers: [] };
   }
 
   const init = requestInit(src);
-  return fetchAllBounded(urls, fetchFn, init);
+  const results = await fetchAllBounded(urls, fetchFn, init, state);
+  state.lastFetchAt.set(src.id, now());
+
+  if (results.every((r) => !r.changed)) return { status: "unchanged" };
+  return { status: "fetched", buffers: results.map((r) => r.buffer) };
 }
