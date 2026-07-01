@@ -10,7 +10,7 @@ import type { FeedAuth, FeedSourceBase } from "./feed-source.js";
  * secrets and HTTP concerns out of the pure feed registry.
  */
 
-type Env = Record<string, string | undefined>;
+export type Env = Record<string, string | undefined>;
 
 /**
  * Resolve a credential value, supporting the `*_FILE` convention used by
