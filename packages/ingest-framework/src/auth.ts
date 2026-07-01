@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { Agent, fetch as undiciFetch } from "undici";
+import { guardOptionsFromEnv, guardedFetch } from "./egress.js";
 import type { FeedAuth, FeedSourceBase } from "./feed-source.js";
 
 /**
@@ -218,11 +219,16 @@ export function makeAuthorizedFetch(
           ...(ca ? { ca: normalizePem(ca) } : {}),
         },
       });
-      return ((input: Parameters<typeof fetch>[0], init?: RequestInit) =>
+      const certFetch = ((input: Parameters<typeof fetch>[0], init?: RequestInit) =>
         undiciFetch(input as Parameters<typeof undiciFetch>[0], {
           ...(init as Parameters<typeof undiciFetch>[1]),
           dispatcher,
         })) as unknown as typeof fetch;
+      // Route the cert-bearing fetch through the same egress guard as every
+      // other auth kind: SSRF/DNS-rebinding checks, per-hop redirect
+      // re-validation, byte cap, timeout. Without this, mTLS feeds (undici
+      // auto-follows redirects) could be 302'd to an internal address.
+      return guardedFetch(certFetch, guardOptionsFromEnv());
     }
   }
 }

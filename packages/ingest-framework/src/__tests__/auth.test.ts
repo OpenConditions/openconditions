@@ -167,15 +167,33 @@ describe("makeAuthorizedFetch", () => {
     undiciFetchMock.mockResolvedValue(new Response("ok"));
     const { fn } = recorder();
     const auth: FeedAuth = { kind: "mtls", certEnvVar: "CERT", keyEnvVar: "KEY" };
+    // Public IP literal so the (now guard-wrapped) fetch resolves it locally, no network.
     await makeAuthorizedFetch({ auth }, fn, {
       CERT: "-----BEGIN CERTIFICATE-----\nx\n-----END CERTIFICATE-----",
       KEY: "-----BEGIN PRIVATE KEY-----\ny\n-----END PRIVATE KEY-----",
-    })("https://mobilithek.example/pull");
+    })("https://93.184.216.34/pull");
     expect(undiciFetchMock).toHaveBeenCalledTimes(1);
     const init = undiciFetchMock.mock.calls[0]![1] as { dispatcher?: unknown };
     expect(init?.dispatcher).toBeDefined();
     // the injected base fetch (Node's global) must NOT be used for mtls
     expect(fn).not.toHaveBeenCalled();
+  });
+
+  it("mtls routes through the egress guard, rejecting a redirect to the metadata IP", async () => {
+    undiciFetchMock.mockReset();
+    undiciFetchMock.mockResolvedValue(
+      new Response(null, {
+        status: 302,
+        headers: { location: "http://169.254.169.254/latest/meta-data" },
+      })
+    );
+    const auth: FeedAuth = { kind: "mtls", certEnvVar: "CERT", keyEnvVar: "KEY" };
+    const authed = makeAuthorizedFetch({ auth }, recorder().fn, {
+      CERT: "-----BEGIN CERTIFICATE-----\nx\n-----END CERTIFICATE-----",
+      KEY: "-----BEGIN PRIVATE KEY-----\ny\n-----END PRIVATE KEY-----",
+    });
+    // Public IP literal so the guard's DNS check resolves it locally, no network.
+    await expect(authed("http://93.184.216.34/")).rejects.toThrow(/internal\/private/);
   });
 
   it("throws when a required static secret is missing", () => {
