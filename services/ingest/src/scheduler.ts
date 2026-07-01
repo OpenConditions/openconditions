@@ -44,7 +44,9 @@ export function startScheduler(sql: Sql): () => void {
         );
         continue;
       }
-      const src: DomainFeedSource = { ...feed, domain: domainName };
+      // plugin.feeds is typed against the domain-generic FeedSourceBase; runSource
+      // needs the concrete per-domain FeedSource shape the actual feed objects have.
+      const src = { ...feed, domain: domainName } as DomainFeedSource;
       const cronExpr = cadenceToCron(feed.cadenceSec);
       let running = false;
 

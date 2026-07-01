@@ -1,5 +1,10 @@
 import type { Observation } from "@openconditions/core";
-import type { FeedSource, SiteGeometry, UnresolvedRoadEvent } from "@openconditions/roads";
+import type {
+  FeedSource,
+  SiteGeometry,
+  SourceDescriptor,
+  UnresolvedRoadEvent,
+} from "@openconditions/roads";
 import { flowParserFor } from "@openconditions/roads";
 import { feedToSourceDescriptor } from "../domains.js";
 import { DOMAIN_REGISTRY } from "../domains.js";
@@ -37,7 +42,13 @@ export function parseFor(
     return [...flows, ...events] as Observation[];
   }
 
-  const parserFn = plugin.parserFor(src.format);
+  // The registry's parserFor is domain-generic (IngestDomain#parserFor returns a
+  // loosely-typed ParserFn); cast to the concrete per-record signature every
+  // registered roads parser actually has.
+  const parserFn = plugin.parserFor(src.format) as (
+    buf: Buffer,
+    descriptor: SourceDescriptor
+  ) => (Observation | UnresolvedRoadEvent)[];
   const descriptor = feedToSourceDescriptor(src);
-  return parserFn(buf, descriptor) as (Observation | UnresolvedRoadEvent)[];
+  return parserFn(buf, descriptor);
 }
