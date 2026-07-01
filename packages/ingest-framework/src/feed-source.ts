@@ -37,6 +37,13 @@ export interface FeedSourceBase {
   url?: string | string[];
   /** Names a comma-separated env var to fan `url` out over, one resolved URL per item. */
   expandEnv?: string;
+  /**
+   * A declarative reference into a registry/catalog resolver (replaces the old
+   * `discover` closure). The named resolver is looked up in the domain's catalog
+   * registry and expanded into concrete feeds at fetch time; `filter` narrows the
+   * resolved set (a shallow equality match on the resolved descriptors).
+   */
+  catalog?: { resolver: string; filter?: Record<string, unknown> };
   auth?: FeedAuth;
   method?: "GET" | "POST";
   /** POST-body template; `${VAR}` interpolated from resolvedEnv, same as `url`. */
