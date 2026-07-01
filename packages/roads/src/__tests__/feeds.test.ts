@@ -12,6 +12,7 @@ import { parseLtaIncidents } from "../lta.js";
 import { parseGddkia } from "../gddkia.js";
 import { parseFlatJson } from "../flatjson.js";
 import { parseTrafikverket } from "../trafikverket.js";
+import { resolveFeedUrls, resolvedEnv } from "@openconditions/ingest-framework";
 import { FEED_SOURCES, feedToSourceDescriptor, parserFor } from "../feeds.js";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
@@ -314,12 +315,16 @@ describe("FEED_SOURCES", () => {
     expect(feed!.posListLonLat).toBe(true);
   });
 
-  it("includes ba-cortes-ar (Buenos Aires) as a url-fn geojson feed gated by requiredEnv", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "ba-cortes-ar");
-    expect(feed).toBeDefined();
-    expect(feed!.format).toBe("geojson");
-    expect(typeof feed!.url).toBe("function");
-    expect(feed!.requiredEnv).toContain("BA_CLIENT_ID");
+  it("includes ba-cortes-ar (Buenos Aires) as a templated geojson feed gated by requiredEnv", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "ba-cortes-ar")!;
+    expect(feed.format).toBe("geojson");
+    expect(typeof feed.url).toBe("string");
+    expect(feed.requiredEnv).toContain("BA_CLIENT_ID");
+    expect(
+      resolveFeedUrls(feed, resolvedEnv({ BA_CLIENT_ID: "cid", BA_CLIENT_SECRET: "csec" }))
+    ).toEqual([
+      "https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=cid&client_secret=csec",
+    ]);
   });
 
   it("includes nationalhighways-gb (England) as a header-key DATEX II feed", () => {
@@ -371,15 +376,17 @@ describe("FEED_SOURCES", () => {
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     });
-    expect(typeof feed!.url).toBe("function");
+    expect(typeof feed!.url).toBe("string");
+    expect(feed!.expandEnv).toBe("MOBILITHEK_NRW_SUBSCRIPTION_ID");
     expect(feed!.requiredEnv).toContain("MOBILITHEK_NRW_SUBSCRIPTION_ID");
     expect(feed!.license).toBe("dl-de/zero-2-0");
     expect(feed!.country).toBe("DE");
     // One client-pull URL per comma-separated subscription id, matching the
     // subscription's HTTPS Zugriffspunkt — the plain-HTTPS pull (no `/soap/`),
     // id in both path and query — plus the mandatory Accept-Encoding: gzip.
-    const urlFn = feed!.url as (env: Record<string, string | undefined>) => string | string[];
-    expect(urlFn({ MOBILITHEK_NRW_SUBSCRIPTION_ID: "2000001, 2000002" })).toEqual([
+    expect(
+      resolveFeedUrls(feed!, resolvedEnv({ MOBILITHEK_NRW_SUBSCRIPTION_ID: "2000001, 2000002" }))
+    ).toEqual([
       "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/2000001/clientPullService?subscriptionID=2000001",
       "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/2000002/clientPullService?subscriptionID=2000002",
     ]);
@@ -413,8 +420,8 @@ describe("FEED_SOURCES", () => {
       expect(subEnvVars.has(subEnvVar)).toBe(false);
       subEnvVars.add(subEnvVar);
       // Dormant until its subscription id is set — no id → no URLs.
-      const urlFn = feed.url as (env: Record<string, string | undefined>) => string | string[];
-      expect(urlFn({})).toEqual([]);
+      expect(feed.expandEnv).toBe(feed.requiredEnv![0]);
+      expect(resolveFeedUrls(feed, resolvedEnv({}))).toEqual([]);
       // The Mobidrom bundle is CC-BY-SA and must stay isolated in its own feed.
       if (feed.id === "mobilithek-nrw-mobidrom") expect(feed.license).toBe("CC-BY-SA-4.0");
     }

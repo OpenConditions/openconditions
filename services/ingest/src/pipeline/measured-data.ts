@@ -3,7 +3,7 @@ import { createGunzip } from "node:zlib";
 import type { Observation } from "@openconditions/core";
 import { createMeasuredDataParser, feedToSourceDescriptor } from "@openconditions/roads";
 import type { SiteGeometry } from "@openconditions/roads";
-import { resolvedEnv } from "@openconditions/ingest-framework";
+import { resolveFeedUrls, resolvedEnv } from "@openconditions/ingest-framework";
 import type { DomainFeedSource } from "./run.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
 
@@ -22,19 +22,15 @@ const MAX_DECOMPRESSED_BYTES = Number(
   process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || 256 * 1024 * 1024
 );
 
-/** Resolves the single feed URL for a streaming flow source (string or env fn). */
+/** Resolves the single feed URL for a streaming flow source from its template(s). */
 function resolveUrl(src: DomainFeedSource): string {
-  const u = src.url;
-  const resolved = typeof u === "function" ? u(resolvedEnv()) : u;
-  // Streaming flow feeds are single-URL by contract; the array-returning
-  // function form (e.g. Mobilithek multi-subscription) is only used by buffered
-  // event feeds, never here.
-  if (Array.isArray(resolved)) {
-    if (resolved.length === 1) return resolved[0]!;
-    throw new Error(`flow feed ${src.id} resolved to ${resolved.length} urls; expected one`);
-  }
-  if (typeof resolved === "string") return resolved;
-  throw new Error(`flow feed ${src.id} has no streamable url`);
+  // Streaming flow feeds are single-URL by contract; the multi-URL expandEnv
+  // form (e.g. Mobilithek multi-subscription) is only used by buffered event
+  // feeds, never here.
+  const urls = resolveFeedUrls(src, resolvedEnv());
+  if (urls.length === 1) return urls[0]!;
+  if (urls.length === 0) throw new Error(`flow feed ${src.id} has no streamable url`);
+  throw new Error(`flow feed ${src.id} resolved to ${urls.length} urls; expected one`);
 }
 
 /**

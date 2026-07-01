@@ -25,26 +25,12 @@ export type { FeedAuth };
 /**
  * Describes a remote data feed that the ingest service polls periodically.
  * Extends the domain-agnostic {@link FeedSourceBase} (id, name, format, auth,
- * cadence, license, etc. — see `@openconditions/ingest-framework`) with the
- * road-specific mapping fields and the still-function-valued transport fields
- * `url`/`body`/`discover` (removed by the L6/L1 declarative-feed work).
- *
- * `url` may be:
- *  - a static string (most feeds)
- *  - a function receiving the runtime env (for feeds needing an API key in the URL)
- *  - a string array (for feeds served as multiple regional files)
+ * cadence, license, `url` template(s), `expandEnv`, `bodyTemplate`, etc. — see
+ * `@openconditions/ingest-framework`) with the road-specific mapping fields.
+ * The only remaining closure is `discover`, removed by the later catalog work.
  */
-export type FeedSource = Omit<FeedSourceBase, "url"> & {
+export type FeedSource = FeedSourceBase & {
   format: SourceFormat;
-  /**
-   * The feed's URL(s). Optional when `discover` is set (the URL set is then
-   * resolved dynamically at fetch time). When both are present, `discover` wins.
-   *
-   * The function form may return a single URL or an array — e.g. one
-   * client-pull URL per comma-separated Mobilithek subscription id, where each
-   * URL must embed a secret from env and so cannot be a static `string[]`.
-   */
-  url?: string | string[] | ((env: Record<string, string | undefined>) => string | string[]);
   /**
    * Resolves the concrete URL set to fetch at request time (e.g. enumerate
    * every motorway, or pull a feed registry). The ingest service fans the
@@ -64,8 +50,6 @@ export type FeedSource = Omit<FeedSourceBase, "url"> & {
    * would stream corrupt bytes into the parser (yielding an empty map).
    */
   siteTable?: { url: string; gzip?: boolean };
-  /** Request body for a POST feed. A function so it can embed credentials from env. */
-  body?: (env: Record<string, string | undefined>) => string;
   /** Field mapping for `format: "geojson"` feeds (passed to the generic reader). */
   geojson?: GeoJsonMapping;
   /**
@@ -284,15 +268,11 @@ function mobilithekFeed(r: MobilithekRegion): FeedSource {
     id: r.id,
     name: r.name,
     format: "datex2",
-    url: (env) =>
-      (env[r.subEnvVar] ?? "")
-        .split(",")
-        .map((id) => id.trim())
-        .filter(Boolean)
-        .map(
-          (id) =>
-            `https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${id}/clientPullService?subscriptionID=${id}`
-        ),
+    // One client-pull URL per comma-separated subscription id; the id appears in
+    // both the path and the `subscriptionID` query param, so the template references
+    // it twice and expandEnv fans it out.
+    url: `https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/\${${r.subEnvVar}}/clientPullService?subscriptionID=\${${r.subEnvVar}}`,
+    expandEnv: r.subEnvVar,
     auth: { kind: "mtls", certEnvVar: MOBILITHEK_CERT_ENV, keyEnvVar: MOBILITHEK_KEY_ENV },
     requiredEnv: [r.subEnvVar],
     requestHeaders: { "Accept-Encoding": "gzip" },
@@ -926,13 +906,12 @@ export const FEED_SOURCES: FeedSource[] = [
   {
     // Buenos Aires — road closures ("cortes de tránsito"), GeoJSON via the city
     // transit API. CC-BY-2.5-AR. Auth is client_id + client_secret query params
-    // (a url function injects them from env); gated via requiredEnv. Geometry
-    // comes straight from the features; verify the property field names when keyed.
+    // interpolated from env; gated via requiredEnv. Geometry comes straight from
+    // the features; verify the property field names when keyed.
     id: "ba-cortes-ar",
     name: "Buenos Aires road closures (cortes)",
     format: "geojson",
-    url: (env) =>
-      `https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=${env["BA_CLIENT_ID"] ?? ""}&client_secret=${env["BA_CLIENT_SECRET"] ?? ""}`,
+    url: "https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=${BA_CLIENT_ID}&client_secret=${BA_CLIENT_SECRET}",
     requiredEnv: ["BA_CLIENT_ID", "BA_CLIENT_SECRET"],
     geojson: {
       defaultType: "road_closure",
