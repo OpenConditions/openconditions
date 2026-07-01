@@ -40,4 +40,15 @@ describe("runFeedOnce", () => {
     });
     expect(store.get("demo")?.lastSuccessAt).toBeUndefined();
   });
+
+  it("records an error when the run swallows a genuine failure (result.error set)", async () => {
+    const store = new FeedStatusStore();
+    const runSource = vi.fn(async () => ({ count: 0, durationMs: 100, error: "HTTP 503" }));
+    await runFeedOnce(feed, { sql: {} as never, fetch, now: () => "x" }, store, {
+      runSource,
+      now: () => "2026-07-01T00:10:00.000Z",
+    });
+    expect(store.get("demo")?.lastError).toBe("HTTP 503");
+    expect(store.get("demo")?.lastSuccessAt).toBeUndefined();
+  });
 });

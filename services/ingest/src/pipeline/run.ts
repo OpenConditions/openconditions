@@ -22,6 +22,15 @@ type Sql = postgres.Sql;
 export interface RunResult {
   count: number;
   durationMs: number;
+  /**
+   * Set when the run swallowed a genuine failure (site-table cold failure,
+   * streaming-flow error, or fetch error) rather than throwing. Absent for a
+   * successful poll, including an unchanged (304/interval-gated) poll — that
+   * is a successful no-op, not a failure. Callers that need "did this run
+   * actually succeed" (e.g. the scheduler's status recording) must check
+   * this field, not just whether the call threw.
+   */
+  error?: string;
 }
 
 export interface RunDeps {
@@ -76,7 +85,9 @@ export function createOpenlrClient(): MapMatchClient | null {
  *
  * Feed-downtime safety: if fetching throws, the swap is never opened and
  * existing rows for this source are left intact (last-good behavior).
- * The error is logged and the function returns {count:0, durationMs}.
+ * The error is logged and the function returns {count:0, durationMs, error}
+ * so callers can distinguish a swallowed failure from a genuinely successful
+ * (including unchanged/304) poll.
  */
 export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<RunResult> {
   const start = Date.now();
@@ -100,7 +111,11 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       console.warn(
         `[ingest] ${src.id}: site-table cold failure — skipping swap, preserving last-good rows`
       );
-      return { count: 0, durationMs: Date.now() - start };
+      return {
+        count: 0,
+        durationMs: Date.now() - start,
+        error: "site-table cold failure — no geometry map built",
+      };
     }
   }
 
@@ -112,7 +127,11 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       parsed = await streamMeasuredData(src, streamFactoryFromFetch(fetchFn), siteMap, deps.now);
     } catch (err) {
       console.error(`[ingest] stream failed for source ${src.id}:`, err);
-      return { count: 0, durationMs: Date.now() - start };
+      return {
+        count: 0,
+        durationMs: Date.now() - start,
+        error: err instanceof Error ? err.message : String(err),
+      };
     }
   } else {
     let buffers: Buffer[];
@@ -125,7 +144,11 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       buffers = result.buffers;
     } catch (err) {
       console.error(`[ingest] fetch failed for source ${src.id}:`, err);
-      return { count: 0, durationMs: Date.now() - start };
+      return {
+        count: 0,
+        durationMs: Date.now() - start,
+        error: err instanceof Error ? err.message : String(err),
+      };
     }
     parsed = buffers.flatMap((b) => parseFor(src, b, siteMap));
   }

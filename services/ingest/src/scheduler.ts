@@ -26,9 +26,19 @@ export async function runFeedOnce(
   const now = o.now ?? (() => new Date().toISOString());
   try {
     const result = await run(src, deps);
-    statusStore.recordSuccess(src.id, now(), result.count, result.durationMs);
+    if (result.error) {
+      // runSource is fault-tolerant and swallows fetch/timeout/DNS/site-table
+      // failures, returning {count:0, error} instead of throwing — record
+      // those as errors too, or a down feed would look like a quiet success.
+      console.error(`[scheduler] ${src.id}: ${result.error}`);
+      statusStore.recordError(src.id, now(), result.error);
+    } else {
+      statusStore.recordSuccess(src.id, now(), result.count, result.durationMs);
+    }
   } catch (err) {
-    statusStore.recordError(src.id, now(), err instanceof Error ? err.message : String(err));
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[scheduler] ${src.id}: ${message}`);
+    statusStore.recordError(src.id, now(), message);
   }
 }
 
