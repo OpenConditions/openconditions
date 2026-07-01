@@ -154,6 +154,20 @@ export async function insertRows(
   `;
 }
 
+/** Hard ceiling on rows written for a single source per swap. */
+export const MAX_ROWS_PER_SOURCE = 100_000;
+
+/**
+ * Caps a source's fresh row set. Pure + synchronous so it unit-tests without a
+ * database; a truncation is logged so an upstream that starts returning an
+ * absurd row count is visible in the ingest logs.
+ */
+export function capRows<T>(fresh: T[], max: number = MAX_ROWS_PER_SOURCE): T[] {
+  if (fresh.length <= max) return fresh;
+  console.warn(`[ingest] row cap hit: truncating ${fresh.length} to ${max} rows for one source`);
+  return fresh.slice(0, max);
+}
+
 /**
  * Atomically replaces all observations for a given source: deletes the
  * existing rows for that source then bulk-inserts the fresh set in one
@@ -165,9 +179,10 @@ export async function atomicSwap(
   fresh: Observation[],
   freshnessWindowSec?: number
 ): Promise<void> {
+  const capped = capRows(fresh);
   await sql.begin(async (tx) => {
     await tx`DELETE FROM conditions.observations WHERE source = ${sourceId}`;
-    for (const batch of chunk(fresh, CHUNK_SIZE)) {
+    for (const batch of chunk(capped, CHUNK_SIZE)) {
       await insertRows(tx, batch, freshnessWindowSec);
     }
   });
