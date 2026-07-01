@@ -12,7 +12,7 @@ import type { DomainRegistry, IngestDomain } from "@openconditions/ingest-framew
 
 const roads: IngestDomain = {
   name: "roads",
-  // Roads' FeedSource still carries the pre-L6 function-valued url/body/discover
+  // Roads' FeedSource intersects FeedSourceBase with road-specific mapping
   // fields (see packages/roads/src/feeds.ts), so it is not a strict structural
   // subtype of the generic FeedSourceBase[] the registry declares. The runtime
   // values are the same objects the roads pipeline consumes directly.

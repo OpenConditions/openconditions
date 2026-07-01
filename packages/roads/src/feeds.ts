@@ -15,7 +15,6 @@ import { parseAutobahn } from "./autobahn.js";
 import { parseDigitraffic } from "./digitraffic.js";
 import { parseDigitrafficFlow, parseDatexMeasuredData } from "./flow.js";
 import type { FlowParseResult } from "./flow.js";
-import { discoverAutobahnRoads, discoverWzdxFeeds } from "./discover.js";
 import type { SourceDescriptor } from "./types.js";
 
 // FeedAuth now lives in @openconditions/ingest-framework; re-exported here so
@@ -25,19 +24,12 @@ export type { FeedAuth };
 /**
  * Describes a remote data feed that the ingest service polls periodically.
  * Extends the domain-agnostic {@link FeedSourceBase} (id, name, format, auth,
- * cadence, license, `url` template(s), `expandEnv`, `bodyTemplate`, etc. — see
- * `@openconditions/ingest-framework`) with the road-specific mapping fields.
- * The only remaining closure is `discover`, removed by the later catalog work.
+ * cadence, license, `url` template(s), `expandEnv`, `bodyTemplate`, `catalog`,
+ * etc. — see `@openconditions/ingest-framework`) with the road-specific mapping
+ * fields. All feed transport is now pure data.
  */
 export type FeedSource = FeedSourceBase & {
   format: SourceFormat;
-  /**
-   * Resolves the concrete URL set to fetch at request time (e.g. enumerate
-   * every motorway, or pull a feed registry). The ingest service fans the
-   * returned URLs out with bounded concurrency and per-URL tolerance, so one
-   * failing sub-feed never wipes the source.
-   */
-  discover?: (fetchFn: typeof fetch) => Promise<string[]>;
   /**
    * A companion DATEX II MeasurementSiteTablePublication that supplies the
    * geometry for measurement sites keyed only by id in the data feed (the NDW
@@ -340,7 +332,7 @@ export const FEED_SOURCES: FeedSource[] = [
     id: "autobahn-de",
     name: "Autobahn GmbH (Germany)",
     format: "autobahn-json",
-    discover: discoverAutobahnRoads,
+    catalog: { resolver: "autobahn-index" },
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "dl-de/by-2-0",
@@ -353,7 +345,7 @@ export const FEED_SOURCES: FeedSource[] = [
     id: "wzdx",
     name: "WZDx (United States)",
     format: "wzdx",
-    discover: discoverWzdxFeeds,
+    catalog: { resolver: "wzdx-registry" },
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "CC0-1.0",

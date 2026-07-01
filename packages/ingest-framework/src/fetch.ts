@@ -3,22 +3,20 @@ import { resolvedEnv } from "./auth.js";
 import { boundedGunzip } from "./egress.js";
 import { resolveFeedUrls, resolveUrlTemplate } from "./template.js";
 import { applyPreFetch } from "./pre-fetch.js";
+import { getCatalogResolverById, resolveWithSnapshot } from "./catalog.js";
 
 const GZIP_MAGIC_0 = 0x1f;
 const GZIP_MAGIC_1 = 0x8b;
 
-/** Max sub-feed fetches in flight when fanning out a discovered URL set. */
+/** Max sub-feed fetches in flight when fanning out a resolved catalog URL set. */
 const FANOUT_CONCURRENCY = 8;
 
 /**
- * `FeedSourceBase` carries the declarative transport fields (`url` template(s),
- * `expandEnv`, `bodyTemplate`). `discover` is still declared by
- * `@openconditions/roads`' `FeedSource` today and is removed by the later catalog
- * work; widen locally for it so the framework needn't depend on roads.
+ * `FeedSourceBase` carries every declarative transport field this module needs
+ * (`url` template(s), `expandEnv`, `bodyTemplate`, `catalog`). Kept as an alias
+ * so the internal helpers read against one name.
  */
-type FetchableFeed = FeedSourceBase & {
-  discover?: (fetchFn: typeof fetch) => Promise<string[]>;
-};
+type FetchableFeed = FeedSourceBase;
 
 /**
  * Per-source politeness memory: the ETag/Last-Modified + last body of each URL
@@ -49,7 +47,7 @@ function isGzip(buf: Buffer): boolean {
 }
 
 // First non-whitespace char is '<' → an HTML/XML block/login/error page, not the
-// JSON the fanned-out (discovered) feeds serve. Only applied on the fan-out path;
+// JSON the fanned-out catalog feeds serve. Only applied on the fan-out path;
 // XML feeds like NDW go through the single-URL path and are never checked here.
 function looksLikeHtml(buf: Buffer): boolean {
   return buf.subarray(0, 64).toString("utf8").trimStart().startsWith("<");
@@ -118,7 +116,7 @@ function requestInit(src: FetchableFeed): RequestInit | undefined {
 }
 
 /**
- * Fetches a discovered URL set with bounded concurrency and per-URL tolerance:
+ * Fetches a resolved catalog URL set with bounded concurrency and per-URL tolerance:
  * a single failing sub-feed is logged and skipped rather than aborting the
  * whole batch (many registry feeds require operator-supplied keys and will
  * fail). Throws only if *every* sub-feed fails, so the caller preserves the
@@ -159,7 +157,7 @@ async function fetchFanout(urls: string[], fetchFn: typeof fetch): Promise<Buffe
 
 /**
  * Fetches every url with bounded concurrency, preserving order, threading the
- * conditional-GET `state` through each request. Unlike the tolerant discover
+ * conditional-GET `state` through each request. Unlike the tolerant catalog
  * fan-out, a single failure rejects the whole batch (matching the prior
  * Promise.all semantics for static feed URL sets). Returns the per-URL
  * `{changed, buffer}` so the caller can decide the source is unchanged when
@@ -184,13 +182,22 @@ async function fetchAllBounded(
   return out;
 }
 
+/** Shallow equality match of a resolved descriptor against a catalog filter. */
+function matchesFilter(feed: FeedSourceBase, filter?: Record<string, unknown>): boolean {
+  if (!filter) return true;
+  return Object.entries(filter).every(
+    ([k, v]) => (feed as unknown as Record<string, unknown>)[k] === v
+  );
+}
+
 /**
  * Resolves the URL(s) for a feed source and fetches each one, returning a
  * {@link FetchResult}. Buffers are gunzipped transparently when the response
  * bytes start with the gzip magic bytes 0x1f 0x8b.
  *
- * `src.discover`, when present, resolves the URL set dynamically and is fanned
- * out tolerantly (takes precedence over `src.url`) — always "fetched", since
+ * `src.catalog`, when present, resolves a registry into concrete feed
+ * descriptors (live, with a vendored-snapshot fallback) and fans their URLs out
+ * tolerantly (takes precedence over `src.url`) — always "fetched", since
  * registry sub-feeds are best-effort and not conditionally cached. Otherwise
  * `src.url` is a `${VAR}` template string or array of templates; `expandEnv`
  * fans one template out over a comma-separated env var. Multi-URL sets fetch
@@ -212,11 +219,15 @@ export async function fetchAll(
 
   // Reactive pre-fetch transform (dormant — no hooks registered today). When a
   // hook is registered it may rewrite the descriptor before URL resolution; with
-  // none, this returns `src` unchanged, so the cast preserves `discover`.
-  const active = (await applyPreFetch(src, resolvedEnv(), fetchFn)) as FetchableFeed;
+  // none, this returns `src` unchanged.
+  const active = await applyPreFetch(src, resolvedEnv(), fetchFn);
 
-  if (typeof active.discover === "function") {
-    const urls = await active.discover(fetchFn);
+  if (active.catalog) {
+    const resolver = getCatalogResolverById(active.catalog.resolver);
+    const feeds = (await resolveWithSnapshot(resolver, fetchFn)).filter((f) =>
+      matchesFilter(f, active.catalog?.filter)
+    );
+    const urls = feeds.flatMap((f) => (Array.isArray(f.url) ? f.url : f.url ? [f.url] : []));
     return { status: "fetched", buffers: await fetchFanout(urls, fetchFn) };
   }
 
@@ -229,7 +240,7 @@ export async function fetchAll(
 
   const urls = resolveFeedUrls(active, resolvedEnv());
   if (urls.length === 0) {
-    if (active.url == null) throw new Error(`feed ${active.id} has neither url nor discover`);
+    if (active.url == null) throw new Error(`feed ${active.id} has neither url nor catalog`);
     // expandEnv configured but no items yet — a dormant, uncredentialed feed.
     state.lastFetchAt.set(active.id, now());
     return { status: "fetched", buffers: [] };

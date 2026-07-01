@@ -17,4 +17,4 @@ export * from "./flatjson.js";
 export * from "./trafikverket.js";
 export * from "./feeds.js";
 export * from "./dedupe.js";
-export * from "./discover.js";
+export * from "./catalog/index.js";

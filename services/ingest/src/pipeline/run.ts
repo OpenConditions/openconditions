@@ -81,7 +81,7 @@ export function createOpenlrClient(): MapMatchClient | null {
 export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<RunResult> {
   const start = Date.now();
 
-  // Guard every egress path (feed, discover, site-table, OAuth, mTLS) at one seam:
+  // Guard every egress path (feed, catalog, site-table, OAuth, mTLS) at one seam:
   // validate URL + DNS, re-check each redirect hop, cap size + time. Authorize on top.
   const guarded = guardedFetch(deps.fetch, guardOptionsFromEnv());
   const fetchFn = makeAuthorizedFetch(src, guarded);

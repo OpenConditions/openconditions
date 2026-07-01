@@ -1,12 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import type { FeedSourceBase } from "../feed-source.js";
 import { fetchAll } from "../fetch.js";
-import { createFetchState } from "../index.js";
+import { __resetCatalogResolvers, createFetchState, registerCatalogResolver } from "../index.js";
 import { resolveFeedUrls } from "../template.js";
 
-type TestFeedSource = FeedSourceBase & {
-  discover?: (fetchFn: typeof fetch) => Promise<string[]>;
-};
+type TestFeedSource = FeedSourceBase;
 
 function makeFeed(overrides: Partial<TestFeedSource> & Pick<TestFeedSource, "id">): TestFeedSource {
   return {
@@ -21,6 +19,25 @@ function makeFeed(overrides: Partial<TestFeedSource> & Pick<TestFeedSource, "id"
     enabledByDefault: false,
     ...overrides,
   };
+}
+
+/**
+ * Builds a feed backed by a one-off catalog resolver that resolves the given
+ * URLs into concrete feed descriptors, so the catalog fan-out (bounded
+ * concurrency + per-URL tolerance) can be exercised through `fetchAll`.
+ */
+function catalogFeed(
+  id: string,
+  urls: string[],
+  extra: Partial<TestFeedSource> = {}
+): TestFeedSource {
+  const resolverId = `res-${id}`;
+  registerCatalogResolver("test", {
+    id: resolverId,
+    snapshotPath: "/nonexistent.json",
+    resolve: async () => urls.map((url, i) => makeFeed({ id: `${id}-${i}`, format: "wzdx", url })),
+  });
+  return makeFeed({ id, catalog: { resolver: resolverId }, ...extra });
 }
 
 const okFor = (
@@ -42,10 +59,12 @@ async function fetchBuffers(
   return res.status === "fetched" ? res.buffers : [];
 }
 
-describe("fetchAll — discover fan-out", () => {
-  it("fetches every URL the discover function returns", async () => {
+describe("fetchAll — catalog fan-out", () => {
+  afterEach(() => __resetCatalogResolvers());
+
+  it("fetches every URL the catalog resolver returns", async () => {
     const urls = ["https://x.test/1", "https://x.test/2", "https://x.test/3"];
-    const feed = makeFeed({ id: "disc", discover: async () => urls });
+    const feed = catalogFeed("disc", urls);
     const bufs = await fetchBuffers(
       feed,
       okFor((u) => `body:${u}`)
@@ -53,11 +72,9 @@ describe("fetchAll — discover fan-out", () => {
     expect(bufs.map((b) => b.toString("utf8")).sort()).toEqual(urls.map((u) => `body:${u}`).sort());
   });
 
-  it("prefers discover over a static url when both are present", async () => {
-    const feed = makeFeed({
-      id: "both",
+  it("prefers the catalog over a static url when both are present", async () => {
+    const feed = catalogFeed("both", ["https://x.test/a"], {
       url: "https://static.test/should-not-be-used",
-      discover: async () => ["https://x.test/a"],
     });
     const bufs = await fetchBuffers(
       feed,
@@ -69,7 +86,7 @@ describe("fetchAll — discover fan-out", () => {
 
   it("tolerates a failing sub-feed and returns the rest", async () => {
     const urls = ["https://x.test/ok1", "https://x.test/bad", "https://x.test/ok2"];
-    const feed = makeFeed({ id: "tol", discover: async () => urls });
+    const feed = catalogFeed("tol", urls);
     const bufs = await fetchBuffers(
       feed,
       okFor(
@@ -83,7 +100,7 @@ describe("fetchAll — discover fan-out", () => {
 
   it("drops a sub-feed that returns an HTML block/error page (200) and keeps the JSON ones", async () => {
     const urls = ["https://x.test/json", "https://x.test/html"];
-    const feed = makeFeed({ id: "html", discover: async () => urls });
+    const feed = catalogFeed("html", urls);
     const bufs = await fetchBuffers(
       feed,
       okFor((u) =>
@@ -96,11 +113,8 @@ describe("fetchAll — discover fan-out", () => {
     expect(bufs[0]!.toString("utf8")).toContain('"feed"');
   });
 
-  it("throws when every discovered sub-feed fails (preserves last-good upstream)", async () => {
-    const feed = makeFeed({
-      id: "allbad",
-      discover: async () => ["https://x.test/1", "https://x.test/2"],
-    });
+  it("throws when every resolved sub-feed fails (preserves last-good upstream)", async () => {
+    const feed = catalogFeed("allbad", ["https://x.test/1", "https://x.test/2"]);
     await expect(
       fetchAll(
         feed,
@@ -112,8 +126,8 @@ describe("fetchAll — discover fan-out", () => {
     ).rejects.toThrow(/all .*sub-feed/);
   });
 
-  it("returns nothing (no throw) when discover yields zero URLs", async () => {
-    const feed = makeFeed({ id: "empty", discover: async () => [] });
+  it("returns nothing (no throw) when the catalog yields zero URLs", async () => {
+    const feed = catalogFeed("empty", []);
     const bufs = await fetchBuffers(
       feed,
       okFor((u) => u)
@@ -133,7 +147,7 @@ describe("fetchAll — discover fan-out", () => {
     }) as unknown as typeof fetch;
 
     const urls = Array.from({ length: 20 }, (_, i) => `https://x.test/${i}`);
-    const feed = makeFeed({ id: "conc", discover: async () => urls });
+    const feed = catalogFeed("conc", urls);
     const bufs = await fetchBuffers(feed, fetchFn);
     expect(bufs).toHaveLength(20);
     expect(maxInFlight).toBe(8);
@@ -173,14 +187,14 @@ describe("fetchAll — static url forms (regression)", () => {
     expect(bufs[0]!.toString("utf8")).toContain("<?xml");
   });
 
-  it("throws when a feed has neither url nor discover", async () => {
+  it("throws when a feed has neither url nor catalog", async () => {
     const feed = makeFeed({ id: "none" });
     await expect(
       fetchAll(
         feed,
         okFor((u) => u)
       )
-    ).rejects.toThrow(/neither url nor discover/);
+    ).rejects.toThrow(/neither url nor catalog/);
   });
 
   it("bounds concurrency to 8 on the static url-array path", async () => {
