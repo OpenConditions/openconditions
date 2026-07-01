@@ -1,4 +1,6 @@
+import { readFile, writeFile } from "node:fs/promises";
 import type { FeedSourceBase } from "./feed-source.js";
+import { guardedFetch } from "./egress.js";
 
 /**
  * Expands a catalog/registry reference into concrete feeds. Fetches the registry
@@ -49,4 +51,49 @@ export function getCatalogResolverById(id: string): CatalogResolver {
 export function __resetCatalogResolvers(): void {
   byDomainId.clear();
   byId.clear();
+}
+
+/**
+ * Resolves a catalog live, refreshing the vendored snapshot on success and
+ * falling back to it on failure (Transitland's git-submodule resilience). Never
+ * throws: a dead registry with no snapshot degrades to an empty feed set so the
+ * surrounding fan-out preserves last-good rows.
+ *
+ * On live failure the bundle-safe `resolver.snapshot` (a JSON module) is
+ * preferred over reading `snapshotPath`, because a bundled resolver's
+ * `snapshotPath` resolves relative to the service bundle, not this package.
+ */
+export async function resolveWithSnapshot(
+  resolver: CatalogResolver,
+  fetchFn: typeof fetch = guardedFetch()
+): Promise<FeedSourceBase[]> {
+  try {
+    const feeds = await resolver.resolve(fetchFn);
+    try {
+      await writeFile(resolver.snapshotPath, `${JSON.stringify(feeds, null, 2)}\n`);
+    } catch (writeErr) {
+      console.warn(
+        `[catalog] ${resolver.id}: could not refresh snapshot ${resolver.snapshotPath}:`,
+        writeErr instanceof Error ? writeErr.message : writeErr
+      );
+    }
+    return feeds;
+  } catch (liveErr) {
+    const why = liveErr instanceof Error ? liveErr.message : String(liveErr);
+    try {
+      const snapshot =
+        resolver.snapshot ??
+        (JSON.parse(await readFile(resolver.snapshotPath, "utf8")) as FeedSourceBase[]);
+      console.warn(
+        `[catalog] ${resolver.id}: live resolve failed (${why}); using vendored snapshot`
+      );
+      return snapshot;
+    } catch (snapErr) {
+      console.error(
+        `[catalog] ${resolver.id}: live resolve failed (${why}) and no usable snapshot at ${resolver.snapshotPath}:`,
+        snapErr instanceof Error ? snapErr.message : snapErr
+      );
+      return [];
+    }
+  }
 }
