@@ -1,0 +1,56 @@
+import { mkdtempSync, writeFileSync, readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { applyOrCheck } from "../gen-credentials.js";
+import type { FeedSourceBase } from "@openconditions/ingest-framework";
+
+const feed: FeedSourceBase = {
+  id: "k",
+  name: "Keyed",
+  format: "geojson",
+  auth: { kind: "bearer", envVar: "K_TOKEN" },
+  cadenceSec: 300,
+  freshnessWindowSec: 900,
+  license: "CC0-1.0",
+  attribution: "t",
+  country: "NL",
+  privacyUrl: "https://x",
+  enabledByDefault: true,
+  setup: { K_TOKEN: { title: "K token" } },
+};
+
+function paths() {
+  const d = mkdtempSync(join(tmpdir(), "gencred-"));
+  const service = join(d, "service.json");
+  writeFileSync(
+    service,
+    JSON.stringify(
+      { id: "s", container: { image: "x" }, configSchema: { properties: {} } },
+      null,
+      2
+    )
+  );
+  return { envExample: join(d, ".env.example"), serviceJson: service, doc: join(d, "creds.md") };
+}
+
+describe("gen-credentials", () => {
+  it("write mode produces files; a re-check then reports no drift", () => {
+    const p = paths();
+    expect(applyOrCheck([feed], p, true).drift).toEqual([]);
+    expect(readFileSync(p.envExample, "utf8")).toContain("K_TOKEN=");
+    // service.json got the property spliced in, other keys preserved:
+    const svc = JSON.parse(readFileSync(p.serviceJson, "utf8"));
+    expect(svc.container.image).toBe("x");
+    expect(svc.configSchema.properties.K_TOKEN["x-openmapx-secret"]).toBe(true);
+    // check mode is now a no-op (no drift):
+    expect(applyOrCheck([feed], p, false).drift).toEqual([]);
+  });
+
+  it("check mode reports drift when a file is stale", () => {
+    const p = paths();
+    applyOrCheck([feed], p, true);
+    writeFileSync(p.envExample, "STALE\n");
+    expect(applyOrCheck([feed], p, false).drift.join()).toContain(".env.example");
+  });
+});
