@@ -1,5 +1,5 @@
 import type { SourceFormat } from "@openconditions/core";
-import type { FeedAuth } from "@openconditions/ingest-framework";
+import type { FeedAuth, FeedSourceBase } from "@openconditions/ingest-framework";
 import type { GeoJsonMapping } from "./model.js";
 import type { SiteGeometry } from "./siteTable.js";
 import { parseDatexSituations } from "./datex.js";
@@ -24,27 +24,18 @@ export type { FeedAuth };
 
 /**
  * Describes a remote data feed that the ingest service polls periodically.
+ * Extends the domain-agnostic {@link FeedSourceBase} (id, name, format, auth,
+ * cadence, license, etc. — see `@openconditions/ingest-framework`) with the
+ * road-specific mapping fields and the still-function-valued transport fields
+ * `url`/`body`/`discover` (removed by the L6/L1 declarative-feed work).
  *
  * `url` may be:
  *  - a static string (most feeds)
  *  - a function receiving the runtime env (for feeds needing an API key in the URL)
  *  - a string array (for feeds served as multiple regional files)
  */
-export interface FeedSource {
-  id: string;
-  name: string;
+export type FeedSource = Omit<FeedSourceBase, "url"> & {
   format: SourceFormat;
-  /**
-   * Declares what this feed produces:
-   *   "events" (default) — the parser returns Observation[] directly (RoadEvent etc.)
-   *   "flow"             — the parser returns FlowParseResult; both the RoadFlow
-   *                        measurements and the derived congestion RoadEvents are
-   *                        flattened into the pipeline's Observation[] output.
-   *
-   * Each flow feed must carry its own unique `id` so atomicSwap (which is
-   * source-id–scoped) never collides with an event feed from the same provider.
-   */
-  produces?: "events" | "flow";
   /**
    * The feed's URL(s). Optional when `discover` is set (the URL set is then
    * resolved dynamically at fetch time). When both are present, `discover` wins.
@@ -53,7 +44,7 @@ export interface FeedSource {
    * client-pull URL per comma-separated Mobilithek subscription id, where each
    * URL must embed a secret from env and so cannot be a static `string[]`.
    */
-  url?: string | ((env: Record<string, string | undefined>) => string | string[]) | string[];
+  url?: string | string[] | ((env: Record<string, string | undefined>) => string | string[]);
   /**
    * Resolves the concrete URL set to fetch at request time (e.g. enumerate
    * every motorway, or pull a feed registry). The ingest service fans the
@@ -73,25 +64,8 @@ export interface FeedSource {
    * would stream corrupt bytes into the parser (yielding an empty map).
    */
   siteTable?: { url: string; gzip?: boolean };
-  /**
-   * How to authenticate requests to this feed. Secrets are never inlined — every
-   * variant names the env var(s) that hold them, so a feed can be committed
-   * openly and activated by supplying credentials at deploy time. The ingest
-   * service applies these (see `pipeline/auth.ts`) and skips a feed whose
-   * required env vars are absent. Omit (or `none`) for open, keyless feeds.
-   */
-  auth?: FeedAuth;
-  /** HTTP method — default GET. Set "POST" for query-style APIs (e.g. Sweden Trafikverket). */
-  method?: "GET" | "POST";
   /** Request body for a POST feed. A function so it can embed credentials from env. */
   body?: (env: Record<string, string | undefined>) => string;
-  /** Extra request headers (e.g. a Content-Type for the POST body). */
-  requestHeaders?: Record<string, string>;
-  /**
-   * Env vars the feed needs that the `auth` config doesn't cover (e.g. an API key
-   * embedded in `body`). The scheduler gates on these in addition to `auth`.
-   */
-  requiredEnv?: string[];
   /** Field mapping for `format: "geojson"` feeds (passed to the generic reader). */
   geojson?: GeoJsonMapping;
   /**
@@ -100,9 +74,6 @@ export interface FeedSource {
    */
   posListLonLat?: boolean;
   bbox?: [number, number, number, number];
-  cadenceSec: number;
-  freshnessWindowSec: number;
-  gzip?: boolean;
   /**
    * Marks a reference-only feed whose records carry OpenLR but no coordinate, so
    * the ingest resolve stage map-matches them via the openlr-resolver service.
@@ -112,13 +83,7 @@ export interface FeedSource {
    * services/openlr-resolver/README.md "Status".
    */
   openlrResolver?: boolean;
-  license: string;
-  licenseUrl?: string;
-  attribution: string;
-  country: string;
-  privacyUrl: string;
-  enabledByDefault: boolean;
-}
+};
 
 /**
  * Mobilithek (Germany's National Access Point) brokers DATEX II road-condition
