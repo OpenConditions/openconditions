@@ -16,7 +16,7 @@ import { hasCredentials, requiredEnvVars } from "@openconditions/ingest-framewor
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { DOMAIN_REGISTRY } from "./domains.js";
-import type { FeedStatusStore } from "./feed-status.js";
+import type { FeedRunStatus, FeedStatusStore } from "./feed-status.js";
 
 type Sql = postgres.Sql;
 type BBox = [number, number, number, number];
@@ -47,6 +47,16 @@ function runner(sql: Sql) {
   };
 }
 
+/** One row of the `GET /feeds/status` listing: feed metadata + its run status. */
+export type FeedStatusRow = {
+  id: string;
+  name: string;
+  domain: string;
+  enabled: boolean;
+  hasCredentials: boolean;
+  missingEnv: string[];
+} & FeedRunStatus;
+
 /**
  * Registers `GET /feeds/status`: every feed registered across all domains,
  * joined with its runtime status (last run/success/error, row count). Mirrors
@@ -54,11 +64,15 @@ function runner(sql: Sql) {
  */
 export function registerFeedStatusRoute(app: FastifyInstance, statusStore: FeedStatusStore): void {
   app.get("/feeds/status", async () => {
-    const feeds = [];
+    const feeds: FeedStatusRow[] = [];
     for (const [domain, plugin] of Object.entries(DOMAIN_REGISTRY)) {
       for (const feed of plugin.feeds) {
+        // Check each candidate key independently (auth: undefined) so a
+        // multi-var auth (basic/oauth2/mtls) with only one var unset reports
+        // just that key, not every key hasCredentials would re-derive from
+        // feed.auth as a whole.
         const missingEnv = [...requiredEnvVars(feed.auth), ...(feed.requiredEnv ?? [])].filter(
-          (k) => !hasCredentials({ auth: feed.auth, requiredEnv: [k] })
+          (k) => !hasCredentials({ auth: undefined, requiredEnv: [k] })
         );
         feeds.push({
           id: feed.id,
