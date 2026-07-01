@@ -11,8 +11,12 @@
   "container": {
     "image": "ghcr.io/openconditions/ingest",
     "tag": "latest",
-    "expose": [4100],
-    "networkAliases": ["openconditions-ingest"],
+    "expose": [
+      4100
+    ],
+    "networkAliases": [
+      "openconditions-ingest"
+    ],
     "environment": {
       "PORT": "4100",
       "HOST": "0.0.0.0",
@@ -24,7 +28,12 @@
     },
     "memory": "1g",
     "restart": "unless-stopped",
-    "dependsOn": [{ "service": "postgis", "condition": "service_healthy" }],
+    "dependsOn": [
+      {
+        "service": "postgis",
+        "condition": "service_healthy"
+      }
+    ],
     "healthcheck": {
       "type": "http",
       "path": "/status",
@@ -35,7 +44,9 @@
       "startPeriod": "30s"
     }
   },
-  "provides": ["openconditions/road-conditions-data"],
+  "provides": [
+    "openconditions/road-conditions-data"
+  ],
   "ownsSchema": "conditions",
   "configSchema": {
     "properties": {
@@ -385,5 +396,7 @@
       "stripPrefix": true
     }
   },
-  "ui": { "category": "data" }
+  "ui": {
+    "category": "data"
+  }
 }

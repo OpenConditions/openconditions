@@ -17,6 +17,12 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^21.1.0
         version: 21.1.0
+      '@openconditions/ingest-framework':
+        specifier: workspace:*
+        version: link:packages/ingest-framework
+      '@openconditions/roads':
+        specifier: workspace:*
+        version: link:packages/roads
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.2
@@ -41,6 +47,9 @@ importers:
       tsup:
         specifier: ^8.0.0
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.15)(tsx@4.22.4)(typescript@5.9.3)(yaml@2.9.0)
+      tsx:
+        specifier: ^4.19.0
+        version: 4.22.4
       turbo:
         specifier: ^2.0.0
         version: 2.10.0

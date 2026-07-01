@@ -1,6 +1,7 @@
 {
   "name": "openconditions",
   "private": true,
+  "type": "module",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
@@ -11,11 +12,15 @@
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:coverage": "vitest run --passWithNoTests --coverage",
+    "gen:credentials": "pnpm --filter @openconditions/ingest-framework build && pnpm --filter @openconditions/roads build && tsx scripts/gen-credentials.ts --write",
+    "check-credentials": "pnpm --filter @openconditions/ingest-framework build && pnpm --filter @openconditions/roads build && tsx scripts/gen-credentials.ts",
     "prepare": "husky"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.1.0",
     "@commitlint/config-conventional": "^21.1.0",
+    "@openconditions/ingest-framework": "workspace:*",
+    "@openconditions/roads": "workspace:*",
     "@types/node": "^24.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
@@ -24,6 +29,7 @@
     "husky": "^9.1.7",
     "prettier": "^3.0.0",
     "tsup": "^8.0.0",
+    "tsx": "^4.19.0",
     "turbo": "^2.0.0",
     "typescript": "^5.0.0",
     "typescript-eslint": "^8",
