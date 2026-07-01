@@ -2,11 +2,35 @@ import { Cron } from "croner";
 import type postgres from "postgres";
 import { DOMAIN_REGISTRY } from "./domains.js";
 import { hasCredentials, requiredEnvVars } from "@openconditions/ingest-framework";
-import { createOpenlrClient, runSource } from "./pipeline/run.js";
-import type { DomainFeedSource } from "./pipeline/run.js";
+import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
+import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
+import { FeedStatusStore } from "./feed-status.js";
 
 type Sql = postgres.Sql;
+
+/** Overridable deps so the run body is unit-testable without cron. */
+export interface RunFeedOnceDeps {
+  runSource?: typeof defaultRunSource;
+  now?: () => string;
+}
+
+/** Run one feed once and record the outcome in the status store. */
+export async function runFeedOnce(
+  src: DomainFeedSource,
+  deps: RunDeps,
+  statusStore: FeedStatusStore,
+  o: RunFeedOnceDeps = {}
+): Promise<void> {
+  const run = o.runSource ?? defaultRunSource;
+  const now = o.now ?? (() => new Date().toISOString());
+  try {
+    const result = await run(src, deps);
+    statusStore.recordSuccess(src.id, now(), result.count, result.durationMs);
+  } catch (err) {
+    statusStore.recordError(src.id, now(), err instanceof Error ? err.message : String(err));
+  }
+}
 
 /** How often the stale-observation sweep runs. */
 const SWEEP_CRON = "*/5 * * * *";
@@ -27,7 +51,7 @@ function cadenceToCron(cadenceSec: number): string {
  * Each job holds a single-flight boolean so slow runs do not overlap.
  * Returns a cancel function that stops all scheduled jobs.
  */
-export function startScheduler(sql: Sql): () => void {
+export function startScheduler(sql: Sql, statusStore: FeedStatusStore): () => void {
   const jobs: Cron[] = [];
   const openlrClient = createOpenlrClient();
 
@@ -57,9 +81,11 @@ export function startScheduler(sql: Sql): () => void {
         }
         running = true;
         try {
-          await runSource(src, { sql, fetch, now: () => new Date().toISOString(), openlrClient });
-        } catch (err) {
-          console.error(`[scheduler] ${src.id}: unexpected error`, err);
+          await runFeedOnce(
+            src,
+            { sql, fetch, now: () => new Date().toISOString(), openlrClient },
+            statusStore
+          );
         } finally {
           running = false;
         }

@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import { runMigrations } from "@openconditions/core/server";
 import { DATABASE_URL, sql } from "./db.js";
+import { FeedStatusStore } from "./feed-status.js";
 import { registerPublishRoutes } from "./publish-routes.js";
 import { RateLimiter } from "./rate-limit.js";
 import { startScheduler } from "./scheduler.js";
@@ -41,9 +42,10 @@ async function boot() {
     return reply.send({ status: "ok", service: "openconditions-ingest" });
   });
 
+  const statusStore = new FeedStatusStore();
   registerPublishRoutes(app, sql);
 
-  const stopScheduler = startScheduler(sql);
+  const stopScheduler = startScheduler(sql, statusStore);
   const close = async () => {
     stopScheduler();
     limiter.destroy();
