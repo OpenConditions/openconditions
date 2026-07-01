@@ -1,12 +1,25 @@
 import { gunzipSync } from "node:zlib";
-import type { FeedSource } from "@openconditions/roads";
-import { resolvedEnv } from "@openconditions/ingest-framework";
+import type { FeedSourceBase } from "./feed-source.js";
+import { resolvedEnv } from "./auth.js";
 
 const GZIP_MAGIC_0 = 0x1f;
 const GZIP_MAGIC_1 = 0x8b;
 
 /** Max sub-feed fetches in flight when fanning out a discovered URL set. */
 const FANOUT_CONCURRENCY = 8;
+
+/**
+ * `FeedSourceBase` has no function-valued fields (`url` is a plain
+ * string/string[], and it has no `body`/`discover` at all) — those transport
+ * fields are still declared by `@openconditions/roads`' `FeedSource` today and
+ * removed by the later declarative-feed work (L6/L1). Widen locally so this
+ * fetch pipeline keeps supporting them without the framework depending on roads.
+ */
+type FetchableSource = Omit<FeedSourceBase, "url"> & {
+  url?: string | string[] | ((env: Record<string, string | undefined>) => string | string[]);
+  body?: (env: Record<string, string | undefined>) => string;
+  discover?: (fetchFn: typeof fetch) => Promise<string[]>;
+};
 
 function isGzip(buf: Buffer): boolean {
   return buf.length >= 2 && buf[0] === GZIP_MAGIC_0 && buf[1] === GZIP_MAGIC_1;
@@ -25,7 +38,7 @@ function looksLikeHtml(buf: Buffer): boolean {
  * fetch errors bubble the URL into logs — so redact every value while keeping the
  * path and param names for debugging. Falls back to the path on a parse failure.
  */
-function redactUrl(url: string): string {
+export function redactUrl(url: string): string {
   try {
     const u = new URL(url);
     for (const k of [...u.searchParams.keys()]) u.searchParams.set(k, "***");
@@ -46,7 +59,7 @@ async function fetchOne(url: string, fetchFn: typeof fetch, init?: RequestInit):
 }
 
 /** Build the RequestInit for a feed: POST + body + headers when configured. */
-function requestInit(src: FeedSource): RequestInit | undefined {
+function requestInit(src: FetchableSource): RequestInit | undefined {
   if (src.method !== "POST") {
     return src.requestHeaders ? { headers: src.requestHeaders } : undefined;
   }
@@ -108,7 +121,7 @@ async function fetchFanout(urls: string[], fetchFn: typeof fetch): Promise<Buffe
  * and returns a string or string array (e.g. one client-pull URL per
  * Mobilithek subscription id).
  */
-export async function fetchAll(src: FeedSource, fetchFn: typeof fetch): Promise<Buffer[]> {
+export async function fetchAll(src: FetchableSource, fetchFn: typeof fetch): Promise<Buffer[]> {
   if (typeof src.discover === "function") {
     const urls = await src.discover(fetchFn);
     return fetchFanout(urls, fetchFn);

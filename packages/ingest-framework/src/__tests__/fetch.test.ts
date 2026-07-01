@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { FeedSource } from "@openconditions/roads";
-import { fetchAll } from "../pipeline/fetch.js";
+import type { FeedSourceBase } from "../feed-source.js";
+import { fetchAll } from "../fetch.js";
 
-function makeFeed(overrides: Partial<FeedSource> & Pick<FeedSource, "id">): FeedSource {
+type TestFeedSource = Omit<FeedSourceBase, "url"> & {
+  url?: string | string[] | ((env: Record<string, string | undefined>) => string | string[]);
+  discover?: (fetchFn: typeof fetch) => Promise<string[]>;
+};
+
+function makeFeed(overrides: Partial<TestFeedSource> & Pick<TestFeedSource, "id">): TestFeedSource {
   return {
     name: overrides.id,
     format: "autobahn-json",
