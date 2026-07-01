@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { assertPublicUrl, assertResolvesToPublicIp, isPublicUrl } from "../egress.js";
+import {
+  assertPublicUrl,
+  assertResolvesToPublicIp,
+  guardOptionsFromEnv,
+  guardedFetch,
+  isPublicUrl,
+} from "../egress.js";
 
 describe("assertPublicUrl", () => {
   it("accepts ordinary public https/http URLs", () => {
@@ -64,5 +70,81 @@ describe("assertResolvesToPublicIp", () => {
 
   it("throws when no records resolve", async () => {
     await expect(assertResolvesToPublicIp("nx", fakeLookup([]))).rejects.toThrow(/No DNS records/);
+  });
+});
+
+// A public IPv4 literal as the initial host so the default DNS lookup resolves
+// the literal locally (no network) and passes assertResolvesToPublicIp.
+const PUBLIC = "http://93.184.216.34/";
+const OPTS = { maxBytes: 1_000, timeoutMs: 1_000, maxRedirects: 3 };
+
+describe("guardedFetch", () => {
+  it("rejects a redirect that points at the metadata IP", async () => {
+    const base = (async () =>
+      new Response(null, {
+        status: 302,
+        headers: { location: "http://169.254.169.254/latest/meta-data" },
+      })) as unknown as typeof fetch;
+    await expect(guardedFetch(base, OPTS)(PUBLIC)).rejects.toThrow(/internal\/private/);
+  });
+
+  it("follows a public redirect and returns the final response", async () => {
+    const base = (async (input: string | URL | Request) => {
+      const url = String(input);
+      if (url === PUBLIC) {
+        return new Response(null, {
+          status: 302,
+          headers: { location: "http://93.184.216.34/next" },
+        });
+      }
+      return new Response("ok", { status: 200 });
+    }) as unknown as typeof fetch;
+    const res = await guardedFetch(base, OPTS)(PUBLIC);
+    expect(await res.text()).toBe("ok");
+  });
+
+  it("aborts a body that streams past maxBytes", async () => {
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode("x".repeat(5_000)));
+        controller.close();
+      },
+    });
+    const base = (async () => new Response(stream, { status: 200 })) as unknown as typeof fetch;
+    const res = await guardedFetch(base, { ...OPTS, maxBytes: 100 })(PUBLIC);
+    await expect(res.arrayBuffer()).rejects.toThrow(/exceeded/);
+  });
+
+  it("fires the timeout via the injected AbortSignal", async () => {
+    const base = (async (_input: string | URL | Request, init?: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new Error("aborted")));
+      })) as unknown as typeof fetch;
+    await expect(guardedFetch(base, { ...OPTS, timeoutMs: 10 })(PUBLIC)).rejects.toThrow();
+  });
+
+  it("stops after too many redirects", async () => {
+    const base = (async () =>
+      new Response(null, {
+        status: 302,
+        headers: { location: "http://93.184.216.34/loop" },
+      })) as unknown as typeof fetch;
+    await expect(guardedFetch(base, { ...OPTS, maxRedirects: 2 })(PUBLIC)).rejects.toThrow(
+      /too many redirects/
+    );
+  });
+
+  it("guardOptionsFromEnv reads the caps with sane defaults", () => {
+    expect(guardOptionsFromEnv({})).toEqual({
+      maxBytes: 256 * 1024 * 1024,
+      timeoutMs: 60_000,
+      maxRedirects: 5,
+    });
+    expect(
+      guardOptionsFromEnv({
+        OPENCONDITIONS_MAX_FEED_BYTES: "1024",
+        OPENCONDITIONS_FETCH_TIMEOUT_MS: "",
+      }).maxBytes
+    ).toBe(1024);
   });
 });
