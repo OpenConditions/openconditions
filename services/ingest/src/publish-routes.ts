@@ -12,8 +12,11 @@ import {
   observationsToJsonLd,
   observationsToTraff,
 } from "@openconditions/publishers";
+import { hasCredentials, requiredEnvVars } from "@openconditions/ingest-framework";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
+import { DOMAIN_REGISTRY } from "./domains.js";
+import type { FeedStatusStore } from "./feed-status.js";
 
 type Sql = postgres.Sql;
 type BBox = [number, number, number, number];
@@ -45,15 +48,47 @@ function runner(sql: Sql) {
 }
 
 /**
+ * Registers `GET /feeds/status`: every feed registered across all domains,
+ * joined with its runtime status (last run/success/error, row count). Mirrors
+ * the scheduler's own enabled/credential checks so the two never disagree.
+ */
+export function registerFeedStatusRoute(app: FastifyInstance, statusStore: FeedStatusStore): void {
+  app.get("/feeds/status", async () => {
+    const feeds = [];
+    for (const [domain, plugin] of Object.entries(DOMAIN_REGISTRY)) {
+      for (const feed of plugin.feeds) {
+        const missingEnv = [...requiredEnvVars(feed.auth), ...(feed.requiredEnv ?? [])].filter(
+          (k) => !hasCredentials({ auth: feed.auth, requiredEnv: [k] })
+        );
+        feeds.push({
+          id: feed.id,
+          name: feed.name,
+          domain,
+          enabled: feed.enabledByDefault,
+          hasCredentials: hasCredentials(feed),
+          missingEnv,
+          ...(statusStore.get(feed.id) ?? {}),
+        });
+      }
+    }
+    return { feeds };
+  });
+}
+
+/**
  * Public emitter endpoints — read-only projections of conditions.observations
  * into standard wire formats so the wider ecosystem can consume OpenConditions:
  *   GET /observations.geojson · /observations.jsonld · /traff.xml ·
  *       /gtfs-rt/alerts.pb · /datex2/situations.xml ·
- *       /valhalla/exclusions.json · /stream (SSE)
+ *       /valhalla/exclusions.json · /stream (SSE) · /feeds/status
  * All bbox-filterable (?bbox=west,south,east,north[&domain=roads]); /stream also
  * takes an optional comma-separated &type= filter and pushes live deltas.
  */
-export function registerPublishRoutes(app: FastifyInstance, sql: Sql): void {
+export function registerPublishRoutes(
+  app: FastifyInstance,
+  sql: Sql,
+  statusStore: FeedStatusStore
+): void {
   const db = runner(sql);
 
   const read = (q: Record<string, string | undefined>) => {
@@ -160,4 +195,6 @@ export function registerPublishRoutes(app: FastifyInstance, sql: Sql): void {
     });
     return reply;
   });
+
+  registerFeedStatusRoute(app, statusStore);
 }

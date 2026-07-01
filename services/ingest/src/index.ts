@@ -43,7 +43,7 @@ async function boot() {
   });
 
   const statusStore = new FeedStatusStore();
-  registerPublishRoutes(app, sql);
+  registerPublishRoutes(app, sql, statusStore);
 
   const stopScheduler = startScheduler(sql, statusStore);
   const close = async () => {
