@@ -26,6 +26,11 @@ describe("assertPublicUrl", () => {
     expect(() => assertPublicUrl("http://localhost:8080")).toThrow(/internal\/private/);
   });
 
+  it("rejects the full fe80::/10 link-local range, not just the fe80: prefix", () => {
+    // fea0:: falls inside fe80::/10 (second byte 0x80-0xbf) but outside the fe80:/fe8/fe9 prefixes.
+    expect(() => assertPublicUrl("http://[fea0::1]")).toThrow(/internal\/private/);
+  });
+
   it("rejects non-http(s) schemes", () => {
     expect(() => assertPublicUrl("ftp://example.com")).toThrow(/HTTP\(S\)/);
     expect(() => assertPublicUrl("file:///etc/passwd")).toThrow(/HTTP\(S\)/);
@@ -72,6 +77,12 @@ describe("assertResolvesToPublicIp", () => {
 
   it("throws when no records resolve", async () => {
     await expect(assertResolvesToPublicIp("nx", fakeLookup([]))).rejects.toThrow(/No DNS records/);
+  });
+
+  it("rejects a hostname resolving into the fe80::/10 range beyond the fe80: prefix", async () => {
+    await expect(
+      assertResolvesToPublicIp("evil-linklocal", fakeLookup([{ address: "fea0::1", family: 6 }]))
+    ).rejects.toThrow(/private IP/);
   });
 });
 
@@ -134,6 +145,12 @@ describe("guardedFetch", () => {
     await expect(guardedFetch(base, { ...OPTS, maxRedirects: 2 })(PUBLIC)).rejects.toThrow(
       /too many redirects/
     );
+  });
+
+  it("reaches the base fetch for a bracketed public IPv6-literal URL (DNS check strips brackets)", async () => {
+    const base = (async () => new Response("ok", { status: 200 })) as unknown as typeof fetch;
+    const res = await guardedFetch(base, OPTS)("http://[2606:2800:220:1:248:1893:25c8:1946]/");
+    expect(await res.text()).toBe("ok");
   });
 
   it("guardOptionsFromEnv reads the caps with sane defaults", () => {

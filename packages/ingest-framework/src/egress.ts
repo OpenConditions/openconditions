@@ -18,7 +18,7 @@ const PRIVATE_HOST_RANGES: RegExp[] = [
   /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./, // 100.64.0.0/10 (CGNAT)
   /^::1$/,
   /^f[cd]/, // fc00::/7 unique-local
-  /^fe80:/, // link-local
+  /^fe[89ab]/i, // fe80::/10 link-local (2nd byte 0x80-0xbf: fe8/fe9/fea/feb)
 ];
 
 /**
@@ -84,7 +84,8 @@ function isPrivateIpv4(address: number): boolean {
 function isPrivateIpv6(address: string): boolean {
   const lower = address.toLowerCase();
   if (lower === "::1" || lower === "::") return true;
-  if (lower.startsWith("fe80:") || lower.startsWith("fe8") || lower.startsWith("fe9")) return true;
+  // fe80::/10 link-local: 2nd byte 0x80-0xbf, i.e. fe8/fe9/fea/feb.
+  if (/^fe[89ab]/.test(lower)) return true;
   if (lower.startsWith("fc") || lower.startsWith("fd")) return true;
   const mapped = lower.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/);
   if (mapped) {
@@ -205,7 +206,13 @@ export function guardedFetch(
 
     for (let hop = 0; hop <= opts.maxRedirects; hop++) {
       assertPublicUrl(currentUrl);
-      await assertResolvesToPublicIp(new URL(currentUrl).hostname);
+      const rawHost = new URL(currentUrl).hostname;
+      // `URL.hostname` keeps the brackets on an IPv6 literal (e.g. "[::1]"),
+      // which dns.lookup cannot parse; strip them for the DNS check, mirroring
+      // the bracket-strip assertPublicUrl already does.
+      const host =
+        rawHost.startsWith("[") && rawHost.endsWith("]") ? rawHost.slice(1, -1) : rawHost;
+      await assertResolvesToPublicIp(host);
 
       const controller = new AbortController();
       const timer = setTimeout(
