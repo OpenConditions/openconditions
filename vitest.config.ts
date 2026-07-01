@@ -25,7 +25,12 @@ export default defineConfig({
           name: "node",
           environment: "node",
           globals: true,
-          include: ["packages/**/*.test.ts", "services/**/*.test.ts", "integrations/**/*.test.ts"],
+          include: [
+            "packages/**/*.test.ts",
+            "services/**/*.test.ts",
+            "integrations/**/*.test.ts",
+            "scripts/**/*.test.ts",
+          ],
           exclude: ["**/node_modules/**"],
         },
       },
