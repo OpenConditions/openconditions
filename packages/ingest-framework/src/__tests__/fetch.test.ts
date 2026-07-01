@@ -196,4 +196,22 @@ describe("fetchAll — static url forms (regression)", () => {
       )
     ).rejects.toThrow(/neither url nor discover/);
   });
+
+  it("bounds concurrency to 8 on the static url-array path", async () => {
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const fetchFn = (async (input: string | URL | Request) => {
+      inFlight++;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+      await new Promise((r) => setTimeout(r, 5));
+      inFlight--;
+      return new Response(String(input), { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const urls = Array.from({ length: 20 }, (_, i) => `https://x.test/${i}`);
+    const feed = makeFeed({ id: "conc-static", url: urls });
+    const bufs = await fetchAll(feed, fetchFn);
+    expect(bufs).toHaveLength(20);
+    expect(maxInFlight).toBe(8);
+  });
 });

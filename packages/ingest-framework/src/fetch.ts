@@ -116,6 +116,29 @@ async function fetchFanout(urls: string[], fetchFn: typeof fetch): Promise<Buffe
 }
 
 /**
+ * Fetches every url with bounded concurrency, preserving order. Unlike the
+ * tolerant discover fan-out, a single failure rejects the whole batch (matching
+ * the prior Promise.all semantics for static feed URL sets).
+ */
+async function fetchAllBounded(
+  urls: string[],
+  fetchFn: typeof fetch,
+  init: RequestInit | undefined
+): Promise<Buffer[]> {
+  const out: Buffer[] = new Array<Buffer>(urls.length);
+  let cursor = 0;
+  async function worker(): Promise<void> {
+    while (cursor < urls.length) {
+      const i = cursor++;
+      out[i] = await fetchOne(urls[i]!, fetchFn, init);
+    }
+  }
+  const workerCount = Math.min(FANOUT_CONCURRENCY, urls.length);
+  await Promise.all(Array.from({ length: workerCount }, () => worker()));
+  return out;
+}
+
+/**
  * Resolves the URL(s) for a feed source and fetches each one, returning
  * an array of decoded Buffers (gunzipped transparently when the response
  * bytes start with the gzip magic bytes 0x1f 0x8b).
@@ -124,7 +147,9 @@ async function fetchFanout(urls: string[], fetchFn: typeof fetch): Promise<Buffe
  * out tolerantly (takes precedence over `src.url`). Otherwise `src.url` may be
  * a static string, a string array, or a function that receives `process.env`
  * and returns a string or string array (e.g. one client-pull URL per
- * Mobilithek subscription id).
+ * Mobilithek subscription id). Multi-URL static sets fetch with bounded
+ * concurrency so a large array-valued or fn-array-valued `url` cannot fire
+ * every request at once.
  */
 export async function fetchAll(src: FetchableSource, fetchFn: typeof fetch): Promise<Buffer[]> {
   if (typeof src.discover === "function") {
@@ -143,11 +168,11 @@ export async function fetchAll(src: FetchableSource, fetchFn: typeof fetch): Pro
   if (typeof urlOrFn === "function") {
     const resolved = urlOrFn(resolvedEnv());
     const urls = Array.isArray(resolved) ? resolved : [resolved];
-    return Promise.all(urls.map((u) => fetchOne(u, fetchFn, init)));
+    return fetchAllBounded(urls, fetchFn, init);
   }
 
   if (Array.isArray(urlOrFn)) {
-    return Promise.all(urlOrFn.map((u) => fetchOne(u, fetchFn, init)));
+    return fetchAllBounded(urlOrFn, fetchFn, init);
   }
 
   return [await fetchOne(urlOrFn, fetchFn, init)];
