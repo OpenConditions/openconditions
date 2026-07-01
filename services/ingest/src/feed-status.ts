@@ -1,3 +1,5 @@
+import { redactUrl } from "@openconditions/ingest-framework";
+
 /** Latest run outcome for one feed. All timestamps are ISO 8601 strings. */
 export interface FeedRunStatus {
   lastRunAt?: string;
@@ -30,7 +32,8 @@ export class FeedStatusStore {
 
   recordError(feedId: string, at: string, message: string): void {
     const prev = this.map.get(feedId) ?? {};
-    this.map.set(feedId, { ...prev, lastRunAt: at, lastError: message, lastErrorAt: at });
+    const scrubbed = message.replace(/https?:\/\/\S+/g, (m) => redactUrl(m));
+    this.map.set(feedId, { ...prev, lastRunAt: at, lastError: scrubbed, lastErrorAt: at });
   }
 
   get(feedId: string): FeedRunStatus | undefined {

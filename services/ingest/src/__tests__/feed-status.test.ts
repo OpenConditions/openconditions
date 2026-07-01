@@ -30,4 +30,15 @@ describe("FeedStatusStore", () => {
     s.recordSuccess("a", "2026-07-01T00:00:00.000Z", 1, 1);
     expect(Object.keys(s.all())).toEqual(["a"]);
   });
+
+  it("redacts URL query values in recorded error messages", () => {
+    const s = new FeedStatusStore();
+    s.recordError(
+      "k",
+      "2026-07-01T00:00:00.000Z",
+      "fetch failed for https://api.example.com/v2/get?key=SECRET123&x=1"
+    );
+    expect(s.get("k")?.lastError).not.toContain("SECRET123");
+    expect(s.get("k")?.lastError).toContain("***");
+  });
 });
