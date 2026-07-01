@@ -28,7 +28,8 @@
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
-    "undici": "^8.5.0"
+    "undici": "^8.5.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

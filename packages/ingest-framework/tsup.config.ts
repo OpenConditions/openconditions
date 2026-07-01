@@ -7,5 +7,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outDir: "dist",
-  external: ["@openconditions/core", "undici"],
+  external: ["@openconditions/core", "undici", "zod"],
 });
