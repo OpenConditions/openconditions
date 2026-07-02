@@ -11,7 +11,10 @@ const SPEED_SENSORS: Record<string, "1" | "2"> = {
 
 interface SensorValue {
   name?: unknown;
-  sensorValue?: unknown;
+  // Digitraffic's TMS sensorValues entries carry the reading in `value`
+  // (e.g. {"name":"KESKINOPEUS_5MIN_LIUKUVA_SUUNTA1","value":98}), not
+  // `sensorValue`.
+  value?: unknown;
   measuredTime?: unknown;
 }
 interface Station {
@@ -53,7 +56,7 @@ export function parseFintrafficFlow(
     for (const s of sensors) {
       const dir = typeof s.name === "string" ? SPEED_SENSORS[s.name] : undefined;
       if (!dir) continue;
-      const speedKph = typeof s.sensorValue === "number" ? s.sensorValue : NaN;
+      const speedKph = typeof s.value === "number" ? s.value : NaN;
       if (!Number.isFinite(speedKph) || speedKph < 0) continue;
       const measuredAt =
         typeof s.measuredTime === "string"
