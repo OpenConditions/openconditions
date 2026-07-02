@@ -11,6 +11,7 @@ import {
 import type { FeedSource } from "@openconditions/roads";
 import { deriveBaselines, pruneSpeedSamples } from "./pipeline/baseline-derive.js";
 import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js";
+import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
 import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
 import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
@@ -170,6 +171,15 @@ export function startScheduler(
       const { upserted } = await deriveBaselines(sql);
       const { deleted } = await pruneSpeedSamples(sql);
       console.info(`[scheduler] baselines: upserted ${upserted}, pruned ${deleted} sample(s)`);
+
+      // Fills sensors that still lack any baseline (native/derived always win —
+      // this only runs after both, so it never clobbers a better method).
+      const osm = await resolveOsmMaxspeed(sql, {
+        fetch: guarded,
+        now: () => new Date().toISOString(),
+        batchCap: 200,
+      });
+      console.info(`[scheduler] osm-maxspeed fallback: ${osm.updated} baseline(s)`);
     } catch (err) {
       console.error("[scheduler] baseline derivation failed", err);
     } finally {
