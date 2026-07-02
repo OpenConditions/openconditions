@@ -6,6 +6,7 @@ export * from "./datex.js";
 export * from "./digitraffic.js";
 export * from "./flow.js";
 export * from "./flow-fintraffic.js";
+export * from "./fintraffic-constants.js";
 export * from "./measuredData.js";
 export * from "./siteTable.js";
 export * from "./stations-fintraffic.js";

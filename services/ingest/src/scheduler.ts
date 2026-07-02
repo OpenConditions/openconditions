@@ -2,11 +2,15 @@ import { Cron } from "croner";
 import type postgres from "postgres";
 import { fetch as undiciFetch } from "undici";
 import {
+  guardedFetch,
+  guardOptionsFromEnv,
   hasCredentials,
   requiredEnvVars,
   type DomainRegistry,
 } from "@openconditions/ingest-framework";
+import type { FeedSource } from "@openconditions/roads";
 import { deriveBaselines, pruneSpeedSamples } from "./pipeline/baseline-derive.js";
+import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js";
 import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
 import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
@@ -75,6 +79,9 @@ export function startScheduler(
 ): () => void {
   const jobs: Cron[] = [];
   const openlrClient = createOpenlrClient();
+  // Same egress-guarded dispatcher the per-feed jobs use, reused for the
+  // low-frequency Fintraffic native-baseline refresh below.
+  const guarded = guardedFetch(undiciFetch as unknown as typeof fetch, guardOptionsFromEnv());
 
   for (const [domainName, plugin] of Object.entries(registry)) {
     const enabled = plugin.feeds.filter((f) => f.enabledByDefault);
@@ -149,6 +156,17 @@ export function startScheduler(
     if (derivingBaselines) return;
     derivingBaselines = true;
     try {
+      for (const plugin of Object.values(registry)) {
+        for (const feed of plugin.feeds) {
+          if (feed.format !== "fintraffic-tms-json" || !feed.enabledByDefault) continue;
+          const { updated } = await updateFintrafficNativeBaselines(
+            sql,
+            feed as unknown as FeedSource,
+            { fetch: guarded, now: () => new Date(), batchCap: 200 }
+          );
+          console.info(`[scheduler] fintraffic native baselines: ${updated} updated`);
+        }
+      }
       const { upserted } = await deriveBaselines(sql);
       const { deleted } = await pruneSpeedSamples(sql);
       console.info(`[scheduler] baselines: upserted ${upserted}, pruned ${deleted} sample(s)`);
