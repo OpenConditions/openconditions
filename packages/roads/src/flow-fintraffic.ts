@@ -23,7 +23,7 @@ interface Station {
 /**
  * Parse a Fintraffic TMS `/stations/data` JSON payload into RoadFlow
  * measurements — one per station direction carrying a 5-minute sliding-average
- * speed. Geometry comes from the station registry map (Task 8) keyed by station
+ * speed. Geometry comes from the injected station registry map keyed by station
  * id. los is left "unknown"; the baseline enrichment classifies it.
  */
 export function parseFintrafficFlow(
