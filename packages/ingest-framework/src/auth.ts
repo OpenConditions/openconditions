@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { Agent, fetch as undiciFetch } from "undici";
+import { fetch as undiciFetch } from "undici";
 import { guardOptionsFromEnv, guardedFetch } from "./egress.js";
 import type { FeedAuth, FeedSourceBase } from "./feed-source.js";
 
@@ -204,31 +204,19 @@ export function makeAuthorizedFetch(
     case "oauth2-client-credentials":
       return oauthClientCredentialsFetch(auth, baseFetch, env, now);
     case "mtls": {
-      // Build one undici Agent carrying the client certificate and reuse it for
-      // every request (handshake material is set once). The `dispatcher` must be
-      // consumed by undici's OWN fetch: passing this Agent (from the `undici`
-      // package) as `dispatcher` to Node's BUILT-IN fetch throws "invalid
-      // onRequestStart method" — the two ship different undici versions whose
-      // internal request handlers are incompatible. Using undici's fetch keeps the
-      // Agent and the fetch implementation version-matched.
+      // Fold the client certificate into the egress guard's OWN pinned
+      // dispatcher, so mTLS gets the same SSRF/DNS-rebinding protection as every
+      // other auth kind: the guard resolves+validates the host once and dials the
+      // pinned IP with the cert on a single Agent — no separate, unpinned
+      // handshake path that a 302 could redirect to an internal address, and no
+      // second unchecked DNS resolution. `dispatcher` is honored by undici's
+      // fetch (the guard's default base), version-matched to its Agent.
       const ca = auth.caEnvVar ? env[auth.caEnvVar] : undefined;
-      const dispatcher = new Agent({
-        connect: {
-          cert: normalizePem(need(env, auth.certEnvVar)),
-          key: normalizePem(need(env, auth.keyEnvVar)),
-          ...(ca ? { ca: normalizePem(ca) } : {}),
-        },
+      return guardedFetch(undiciFetch as unknown as typeof fetch, guardOptionsFromEnv(), {
+        cert: normalizePem(need(env, auth.certEnvVar)),
+        key: normalizePem(need(env, auth.keyEnvVar)),
+        ...(ca ? { ca: normalizePem(ca) } : {}),
       });
-      const certFetch = ((input: Parameters<typeof fetch>[0], init?: RequestInit) =>
-        undiciFetch(input as Parameters<typeof undiciFetch>[0], {
-          ...(init as Parameters<typeof undiciFetch>[1]),
-          dispatcher,
-        })) as unknown as typeof fetch;
-      // Route the cert-bearing fetch through the same egress guard as every
-      // other auth kind: SSRF/DNS-rebinding checks, per-hop redirect
-      // re-validation, byte cap, timeout. Without this, mTLS feeds (undici
-      // auto-follows redirects) could be 302'd to an internal address.
-      return guardedFetch(certFetch, guardOptionsFromEnv());
     }
   }
 }

@@ -94,6 +94,10 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
 
   // Guard every egress path (feed, catalog, site-table, OAuth, mTLS) at one seam:
   // validate URL + DNS, re-check each redirect hop, cap size + time. Authorize on top.
+  // The guard pins the socket to the validated IP via an undici dispatcher, which
+  // only undici's fetch honors — so `deps.fetch` MUST be undici's fetch in
+  // production (the scheduler passes it). Tests inject a fake fetch that serves
+  // fixtures and ignores the dispatcher, keeping the run path hermetic.
   const guarded = guardedFetch(deps.fetch, guardOptionsFromEnv());
   const fetchFn = makeAuthorizedFetch(src, guarded);
 

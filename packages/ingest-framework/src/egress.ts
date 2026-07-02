@@ -7,6 +7,7 @@
 
 import { lookup as dnsLookup } from "node:dns/promises";
 import { createGunzip } from "node:zlib";
+import { Agent, fetch as undiciFetch } from "undici";
 
 const PRIVATE_HOST_RANGES: RegExp[] = [
   /^127\./,
@@ -105,15 +106,17 @@ const defaultLookup: LookupFn = (hostname, opts) =>
   dnsLookup(hostname, opts) as Promise<LookupAddress[]>;
 
 /**
- * Resolves `hostname` and throws if any returned address is private, loopback,
- * link-local, CGNAT, reserved, or IPv6 ULA/link-local — closing the rebinding
- * window where {@link assertPublicUrl} approves a name but the socket lands on a
- * private address. `lookup` is injectable so tests can force a resolver result.
+ * Resolves `hostname`, validates every returned address (rejecting private,
+ * loopback, link-local, CGNAT, reserved, and IPv6 ULA/link-local), and RETURNS
+ * the validated addresses so the caller can PIN the connection to one of them —
+ * closing the DNS-rebinding TOCTOU where a second, independent resolution inside
+ * the network stack could land the socket on a private address the check never
+ * saw. `lookup` is injectable so tests can force a resolver result.
  */
-export async function assertResolvesToPublicIp(
+export async function resolvePublicIps(
   hostname: string,
   lookup: LookupFn = defaultLookup
-): Promise<void> {
+): Promise<LookupAddress[]> {
   const addresses = await lookup(hostname, { all: true, verbatim: true });
   if (!addresses.length) {
     throw new Error(`No DNS records for ${hostname}`);
@@ -130,6 +133,18 @@ export async function assertResolvesToPublicIp(
       }
     }
   }
+  return addresses;
+}
+
+/**
+ * Throwing-only form of {@link resolvePublicIps} that discards the addresses —
+ * kept for callers that only need the validation, not the pinned result.
+ */
+export async function assertResolvesToPublicIp(
+  hostname: string,
+  lookup: LookupFn = defaultLookup
+): Promise<void> {
+  await resolvePublicIps(hostname, lookup);
 }
 
 export interface FetchGuardOptions {
@@ -189,15 +204,37 @@ function urlOf(input: string | URL | Request): string {
   return input.url;
 }
 
+/** Optional mTLS material folded into the pinned dispatcher's `connect`. */
+export interface GuardedConnectOptions {
+  cert?: string;
+  key?: string;
+  ca?: string;
+}
+
+// `dispatcher` is an undici extension to the standard RequestInit — undici's
+// fetch reads it, a test's fake baseFetch ignores it.
+type PinnedInit = RequestInit & { dispatcher?: unknown };
+
 /**
  * Wraps `baseFetch` with the egress guard: validates the URL (scheme +
  * private-range + DNS), follows redirects manually so every `Location` is
  * re-validated (feeds rely on 302s, so this is the real SSRF bypass), applies a
  * timeout AbortSignal per hop, and caps the streamed body size.
+ *
+ * The guard PINS the connection: it resolves+validates the hostname ONCE, then
+ * dials exactly that address via a per-hop undici Agent whose `connect.lookup`
+ * returns the pre-validated IP (the Host header and TLS SNI stay the original
+ * hostname). This closes the DNS-rebinding TOCTOU — a short-TTL name cannot pass
+ * the check and then re-resolve to a private IP for the actual socket. Because
+ * the dispatcher is honored by undici's fetch, `baseFetch` MUST default to
+ * undici's fetch. `connect` carries optional mTLS material so the mTLS path pins
+ * on the SAME dispatcher. `lookup` is injectable for tests.
  */
 export function guardedFetch(
-  baseFetch: typeof fetch = fetch,
-  opts: FetchGuardOptions = guardOptionsFromEnv()
+  baseFetch: typeof fetch = undiciFetch as unknown as typeof fetch,
+  opts: FetchGuardOptions = guardOptionsFromEnv(),
+  connect: GuardedConnectOptions = {},
+  lookup: LookupFn = defaultLookup
 ): typeof fetch {
   return (async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
     const startUrl = urlOf(input);
@@ -212,7 +249,22 @@ export function guardedFetch(
       // the bracket-strip assertPublicUrl already does.
       const host =
         rawHost.startsWith("[") && rawHost.endsWith("]") ? rawHost.slice(1, -1) : rawHost;
-      await assertResolvesToPublicIp(host);
+      const addrs = await resolvePublicIps(host, lookup);
+      const pinned = addrs[0]!;
+
+      // Per-hop dispatcher that dials the exact validated IP. `connect.lookup`
+      // receives the ORIGINAL hostname (so Host/SNI stay correct) but resolves
+      // it to the pinned address — no second, unchecked DNS resolution happens.
+      const agent = new Agent({
+        connect: {
+          lookup: (
+            _h: string,
+            _o: unknown,
+            cb: (e: Error | null, addrs: LookupAddress[]) => void
+          ) => cb(null, [{ address: pinned.address, family: pinned.family }]),
+          ...(connect.cert ? { cert: connect.cert, key: connect.key, ca: connect.ca } : {}),
+        },
+      });
 
       const controller = new AbortController();
       const timer = setTimeout(
@@ -225,7 +277,8 @@ export function guardedFetch(
           ...currentInit,
           redirect: "manual",
           signal: controller.signal,
-        });
+          dispatcher: agent,
+        } as PinnedInit);
       } finally {
         clearTimeout(timer);
       }
@@ -233,6 +286,7 @@ export function guardedFetch(
       if (REDIRECT_STATUSES.has(res.status)) {
         const location = res.headers.get("location");
         void res.body?.cancel().catch(() => {});
+        void agent.close().catch(() => {}); // this hop is done — release its socket
         if (!location) {
           throw new Error(`redirect ${res.status} without Location from ${redact(currentUrl)}`);
         }
@@ -244,6 +298,8 @@ export function guardedFetch(
         continue;
       }
 
+      // Final hop: do NOT close the agent here — its socket still carries the
+      // body being returned. Left to GC + undici's keepAliveTimeout.
       return capBody(res, opts.maxBytes, currentUrl);
     }
     throw new Error(`too many redirects (>${opts.maxRedirects}) fetching ${redact(startUrl)}`);

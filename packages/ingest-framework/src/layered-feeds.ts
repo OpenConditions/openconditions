@@ -71,7 +71,7 @@ async function loadRemoteFeeds(
   const assertUrl = deps.assertUrl ?? assertPublicUrl;
   const fetchImpl =
     deps.remoteFetch ??
-    guardedFetch(globalThis.fetch, {
+    guardedFetch(undefined, {
       maxBytes: REMOTE_MAX_BYTES,
       timeoutMs: REMOTE_TIMEOUT_MS,
       maxRedirects: REMOTE_MAX_REDIRECTS,

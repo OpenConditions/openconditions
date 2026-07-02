@@ -1,5 +1,6 @@
 import { Cron } from "croner";
 import type postgres from "postgres";
+import { fetch as undiciFetch } from "undici";
 import {
   hasCredentials,
   requiredEnvVars,
@@ -100,7 +101,14 @@ export function startScheduler(
         try {
           await runFeedOnce(
             src,
-            { sql, fetch, now: () => new Date().toISOString(), openlrClient },
+            // undici's fetch (not the global) so the egress guard's IP-pinning
+            // dispatcher is honored — the global fetch rejects a foreign undici Agent.
+            {
+              sql,
+              fetch: undiciFetch as unknown as typeof fetch,
+              now: () => new Date().toISOString(),
+              openlrClient,
+            },
             statusStore
           );
         } finally {

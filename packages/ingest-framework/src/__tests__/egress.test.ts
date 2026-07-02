@@ -1,5 +1,5 @@
 import { gzipSync } from "node:zlib";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   assertPublicUrl,
   assertResolvesToPublicIp,
@@ -7,6 +7,7 @@ import {
   guardOptionsFromEnv,
   guardedFetch,
   isPublicUrl,
+  resolvePublicIps,
 } from "../egress.js";
 
 describe("assertPublicUrl", () => {
@@ -86,10 +87,39 @@ describe("assertResolvesToPublicIp", () => {
   });
 });
 
+describe("resolvePublicIps", () => {
+  it("returns the validated addresses when all are public", async () => {
+    const addrs = [
+      { address: "93.184.216.34", family: 4 },
+      { address: "2606:2800:220:1:248:1893:25c8:1946", family: 6 },
+    ];
+    await expect(resolvePublicIps("ok.example.com", fakeLookup(addrs))).resolves.toEqual(addrs);
+  });
+
+  it("throws when any address is private", async () => {
+    await expect(
+      resolvePublicIps(
+        "evil.example.com",
+        fakeLookup([
+          { address: "93.184.216.34", family: 4 },
+          { address: "10.0.0.5", family: 4 },
+        ])
+      )
+    ).rejects.toThrow(/private IP/);
+  });
+
+  it("throws when no records resolve", async () => {
+    await expect(resolvePublicIps("nx", fakeLookup([]))).rejects.toThrow(/No DNS records/);
+  });
+});
+
 // A public IPv4 literal as the initial host so the default DNS lookup resolves
 // the literal locally (no network) and passes assertResolvesToPublicIp.
 const PUBLIC = "http://93.184.216.34/";
 const OPTS = { maxBytes: 1_000, timeoutMs: 1_000, maxRedirects: 3 };
+// A lookup that pins any hostname to a fixed set of addresses, for the wiring tests.
+const pinLookup = (addrs: LookupAddr[]) =>
+  (async () => addrs) as unknown as Parameters<typeof guardedFetch>[3];
 
 describe("guardedFetch", () => {
   it("rejects a redirect that points at the metadata IP", async () => {
@@ -151,6 +181,37 @@ describe("guardedFetch", () => {
     const base = (async () => new Response("ok", { status: 200 })) as unknown as typeof fetch;
     const res = await guardedFetch(base, OPTS)("http://[2606:2800:220:1:248:1893:25c8:1946]/");
     expect(await res.text()).toBe("ok");
+  });
+
+  it("pins the connection: passes an undici dispatcher built from the validated IP", async () => {
+    const seen: { dispatcher?: unknown } = {};
+    const base = (async (_input: string | URL | Request, init?: RequestInit) => {
+      seen.dispatcher = (init as { dispatcher?: unknown }).dispatcher;
+      return new Response("ok", { status: 200 });
+    }) as unknown as typeof fetch;
+    const res = await guardedFetch(
+      base,
+      OPTS,
+      {},
+      pinLookup([{ address: "93.184.216.34", family: 4 }])
+    )("https://rebind.example.com/");
+    expect(await res.text()).toBe("ok");
+    // undici's Agent exposes a `dispatch` method — a plain object would not.
+    expect(seen.dispatcher).toBeDefined();
+    expect(typeof (seen.dispatcher as { dispatch?: unknown }).dispatch).toBe("function");
+  });
+
+  it("rejects before opening a socket when the hostname resolves to a private IP", async () => {
+    const base = vi.fn(async () => new Response("ok", { status: 200 })) as unknown as typeof fetch;
+    await expect(
+      guardedFetch(
+        base,
+        OPTS,
+        {},
+        pinLookup([{ address: "10.0.0.5", family: 4 }])
+      )("https://rebind.example.com/")
+    ).rejects.toThrow(/private IP/);
+    expect(base).not.toHaveBeenCalled();
   });
 
   it("guardOptionsFromEnv reads the caps with sane defaults", () => {
