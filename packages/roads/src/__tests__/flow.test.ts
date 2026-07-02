@@ -289,6 +289,11 @@ describe("parseDatexMeasuredData — fixture", () => {
     const congestion = events.find((e) => e.id.includes("NL-MS-003"));
     expect(congestion).toBeDefined();
     expect(congestion!.type).toBe("congestion");
+    // trafficStatus-derived (no free-flow baseline behind this los) — the
+    // event must carry no freeFlowSource, distinguishing it from a
+    // baseline-derived congestion event.
+    expect(congestion!.freeFlowSource).toBeUndefined();
+    expect(congestion!.validFrom).toBeDefined();
   });
 
   it("carries license from source descriptor", () => {

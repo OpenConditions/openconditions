@@ -11,7 +11,7 @@
  */
 import type { LineString, Point } from "geojson";
 import type { LineStringGeometry, PointGeometry, Severity } from "@openconditions/core";
-import type { RoadEvent, RoadFlow } from "./model.js";
+import type { BaselineMethod, RoadEvent, RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
 import {
   getXmlChild,
@@ -37,6 +37,18 @@ export type { FlowGeometry };
 type LosValue = RoadFlow["los"];
 
 const QUEUING_LOS = new Set<LosValue>(["queuing", "stationary", "blocked"]);
+
+/**
+ * The single free-flow-ratio → level-of-service threshold ladder, shared by
+ * buildMeasuredSiteFlow and reclassifyFlow so there is exactly one thresholds
+ * definition.
+ */
+function losFromSpeedRatio(ratio: number): LosValue {
+  if (ratio >= 0.85) return "free_flow";
+  if (ratio >= 0.5) return "heavy";
+  if (ratio >= 0.15) return "queuing";
+  return "stationary";
+}
 
 function losSeverity(los: LosValue): Severity {
   if (los === "blocked" || los === "stationary") return "critical";
@@ -69,6 +81,9 @@ function derivedCongestionEvent(
     dataUpdatedAt: flow.dataUpdatedAt,
     fetchedAt: flow.fetchedAt,
     isStale: false,
+    validFrom: flow.dataUpdatedAt,
+    ...(flow.direction ? { direction: flow.direction } : {}),
+    ...(flow.freeFlowSource ? { freeFlowSource: flow.freeFlowSource } : {}),
   };
 }
 
@@ -446,11 +461,7 @@ export function buildMeasuredSiteFlow(
 
   let los: LosValue = mapDatexTrafficStatus(trafficStatus);
   if (los === "unknown" && speedKph != null && freeFlowKph != null && freeFlowKph > 0) {
-    const ratio = speedKph / freeFlowKph;
-    if (ratio >= 0.85) los = "free_flow";
-    else if (ratio >= 0.5) los = "heavy";
-    else if (ratio >= 0.15) los = "queuing";
-    else los = "stationary";
+    los = losFromSpeedRatio(speedKph / freeFlowKph);
   }
 
   // Skip sites with no geometry, or with neither a valid speed nor a resolvable
@@ -486,6 +497,46 @@ export function buildMeasuredSiteFlow(
     return { flow, event: derivedCongestionEvent(flow, src, siteId) };
   }
   return { flow };
+}
+
+/**
+ * Applies a resolved free-flow baseline to a flow that lacks one, recomputing
+ * los from the shared threshold ladder and stamping the baseline provenance
+ * (freeFlowSource), appending a derived congestion event when los reaches queuing
+ * or worse. Reuses mapDatexTrafficStatus precedence via the caller's guard: a
+ * flow that already has a non-"unknown" los (from a trafficStatus) or already
+ * carries a freeFlowKph is returned untouched, as is a flow with no speed or a
+ * non-positive baseline.
+ */
+export function reclassifyFlow(
+  flow: RoadFlow,
+  freeFlowKph: number,
+  freeFlowSource: BaselineMethod,
+  src: SourceDescriptor
+): { flow: RoadFlow; event?: RoadEvent } {
+  if (
+    flow.los !== "unknown" ||
+    flow.freeFlowKph != null ||
+    flow.speedKph == null ||
+    freeFlowKph <= 0
+  ) {
+    return { flow };
+  }
+  const ratio = flow.speedKph / freeFlowKph;
+  const los = losFromSpeedRatio(ratio);
+  const next: RoadFlow = {
+    ...flow,
+    freeFlowKph,
+    freeFlowSource,
+    speedRatio: ratio,
+    los,
+    level: los,
+  };
+  const suffix = next.id.startsWith(`${src.id}:`) ? next.id.slice(src.id.length + 1) : next.id;
+  if (QUEUING_LOS.has(los)) {
+    return { flow: next, event: derivedCongestionEvent(next, src, suffix) };
+  }
+  return { flow: next };
 }
 
 /**

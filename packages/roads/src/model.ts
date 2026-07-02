@@ -152,6 +152,14 @@ export interface RoadEvent extends ConditionEvent {
   queueLengthMeters?: number;
   /** WZDx: are workers present in the zone. */
   workersPresent?: boolean;
+  /**
+   * Provenance of the free-flow baseline behind a derived congestion event
+   * (copied from the flow by derivedCongestionEvent). Unset for a
+   * trafficStatus-derived congestion event (NDW path, los straight from status,
+   * no baseline) — that absence is meaningful: "status-derived, not
+   * baseline-derived", distinct from severitySource:"derived".
+   */
+  freeFlowSource?: BaselineMethod;
   /** WZDx work-zone kind. */
   workZoneType?: "static" | "moving" | "area";
   /** Administrative areas the condition sits in (municipality/province/district). */
@@ -181,6 +189,9 @@ export interface RoadEvent extends ConditionEvent {
   sourceRaw?: Record<string, unknown>;
 }
 
+/** Provenance of a resolved free-flow baseline; matches sensor_baseline.method. */
+export type BaselineMethod = "native" | "derived" | "osm_maxspeed";
+
 export interface RoadFlow extends Measurement {
   domain: "roads";
   metric: "flow";
@@ -188,6 +199,10 @@ export interface RoadFlow extends Measurement {
   los: "free_flow" | "heavy" | "queuing" | "stationary" | "blocked" | "unknown";
   speedKph?: number;
   freeFlowKph?: number;
+  /** Which provenance produced freeFlowKph (native > derived > osm_maxspeed). */
+  freeFlowSource?: BaselineMethod;
+  /** Carriageway direction where the feed carries it; unset otherwise. */
+  direction?: string;
   speedRatio?: number;
   delaySeconds?: number;
   jamFactor?: number;
@@ -242,6 +257,7 @@ export function roadAttributes(ev: RoadEvent): Record<string, unknown> {
   // Keyed "sourceRaw" (not "source") so it never clobbers the top-level
   // Observation.source when readObservations spreads attributes back.
   if (ev.sourceRaw != null) attrs["sourceRaw"] = ev.sourceRaw;
+  if (ev.freeFlowSource != null) attrs["freeFlowSource"] = ev.freeFlowSource;
 
   return attrs;
 }
@@ -255,6 +271,8 @@ export function roadFlowAttributes(flow: RoadFlow): Record<string, unknown> {
   const attrs: Record<string, unknown> = { los: flow.los };
   if (flow.speedKph != null) attrs["speedKph"] = flow.speedKph;
   if (flow.freeFlowKph != null) attrs["freeFlowKph"] = flow.freeFlowKph;
+  if (flow.freeFlowSource != null) attrs["freeFlowSource"] = flow.freeFlowSource;
+  if (flow.direction != null) attrs["direction"] = flow.direction;
   if (flow.speedRatio != null) attrs["speedRatio"] = flow.speedRatio;
   if (flow.delaySeconds != null) attrs["delaySeconds"] = flow.delaySeconds;
   if (flow.jamFactor != null) attrs["jamFactor"] = flow.jamFactor;
