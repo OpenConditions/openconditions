@@ -37,7 +37,7 @@
     name: "WebTRIS traffic flow (Great Britain)",
     format: "webtris-json",
     produces: "flow",
-    url: "https://webtris.nationalhighways.co.uk/api/v1.0/reports/daily?sites=5607&start_date={start_date}&end_date={end_date}&page=1&page_size=100",
+    url: "https://webtris.nationalhighways.co.uk/api/v1.0/reports/daily?sites={sites}&start_date={start_date}&end_date={end_date}&page=1&page_size=100",
     preFetch: "webtrisDailyWindow",
     stationRegistry: {
       url: "https://webtris.nationalhighways.co.uk/api/v1.0/sites",
