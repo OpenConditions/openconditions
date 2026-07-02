@@ -14,7 +14,11 @@ but the data and the libraries are designed to be reused anywhere.
 Road domain, v0.1:
 
 - **Live feeds:** NDW (NL), Die Autobahn (DE), Fintraffic / Digitraffic (FI), DriveBC (CA), and WZDx (US),
-  spanning DATEX II, Open511, and WZDx GeoJSON — plus NDW traffic-speed as `Measurement` flow.
+  spanning DATEX II, Open511, and WZDx GeoJSON — plus government point-sensor **traffic speed** as
+  `Measurement` flow from Fintraffic (FI), WebTRIS (GB), NYC DOT (US-NY), NDW (NL), OHGO (US-OH, keyed),
+  and Trafikverket (SE, keyed). Congestion is computed from a self-derived free-flow baseline (85th
+  percentile), with native reference speeds where a feed ships one and OSM `maxspeed` as a day-one proxy.
+  See [docs/speed-coverage.md](docs/speed-coverage.md).
 - **Emitters:** GeoJSON, TraFF, DATEX II, GTFS-RT Alert, JSON-LD, Valhalla exclusions, and an SSE stream —
   all public, rate-limited, and bbox-filterable.
 - **OpenMapX integration:** ships as an installable extension (a service + a provider integration).
