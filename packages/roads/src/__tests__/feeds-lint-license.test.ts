@@ -53,4 +53,22 @@ describe("feeds-lint license rule", () => {
     });
     expect(errors.join("\n")).toContain("169.254.169.254");
   });
+
+  it("catches a private-IP stationRegistry.url", () => {
+    const errors = lintFeed({
+      id: "x",
+      name: "X",
+      format: "datex2",
+      url: "https://x.test/a.xml",
+      stationRegistry: { url: "http://169.254.169.254/latest/meta-data", format: "webtris-sites" },
+      cadenceSec: 300,
+      freshnessWindowSec: 900,
+      license: "CC0-1.0",
+      attribution: "t",
+      country: "NL",
+      privacyUrl: "https://x",
+      enabledByDefault: true,
+    });
+    expect(errors.join("\n")).toContain("169.254.169.254");
+  });
 });

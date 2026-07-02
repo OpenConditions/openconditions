@@ -12,6 +12,7 @@ export function lintFeed(feed: RoadFeed): string[] {
   // feeds — those resolve at fetch time and are guarded then).
   const urls = feed.url == null ? [] : Array.isArray(feed.url) ? feed.url : [feed.url];
   if (feed.siteTable?.url != null) urls.push(feed.siteTable.url);
+  if (feed.stationRegistry?.url != null) urls.push(feed.stationRegistry.url);
   for (const url of urls) {
     if (url.includes("${")) continue;
     try {

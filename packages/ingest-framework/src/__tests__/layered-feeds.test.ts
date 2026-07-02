@@ -263,6 +263,30 @@ describe("loadFeeds remote-pull", () => {
     expect(feeds.map((f) => f.id)).toEqual(["a"]);
   });
 
+  it("rejects a bundle descriptor whose stationRegistry.url fails the guard, at parse-time", async () => {
+    writeFeed(baked, feed("a", "baked-a"));
+    const remoteFeed = feed("r", "remote-r", {
+      stationRegistry: { url: "http://169.254.169.254/station-registry", format: "webtris-sites" },
+    });
+
+    const feeds = await loadFeeds(
+      {
+        domain: "test",
+        bakedInDir: baked,
+        remote: { url: REMOTE_URL, enabled: true, snapshotPath: join(mount, "snap.json") },
+      },
+      {
+        assertUrl: (u) => {
+          if (u.includes("169.254")) throw new Error("blocked private/metadata host");
+        },
+        remoteFetch: async () => new Response(bundle(remoteFeed)),
+      }
+    );
+    // the stationRegistry.url guard rejects the descriptor at parse-time →
+    // remote contributes nothing → baked-in only
+    expect(feeds.map((f) => f.id)).toEqual(["a"]);
+  });
+
   it("gives a clean 'neither array nor { feeds }' error, not a raw TypeError, for a literal null bundle body", async () => {
     writeFeed(baked, feed("a", "baked-a"));
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});

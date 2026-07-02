@@ -53,4 +53,20 @@ describe("lintFeedDir", () => {
     );
     expect(lintFeedDir(dir).join("\n")).toMatch(/169\.254\.169\.254/);
   });
+
+  it("catches a private / link-local stationRegistry.url", () => {
+    writeFileSync(
+      join(dir, "ssrf-stationregistry.json5"),
+      JSON.stringify([
+        {
+          ...ok,
+          stationRegistry: {
+            url: "http://169.254.169.254/latest/meta-data",
+            format: "webtris-sites",
+          },
+        },
+      ])
+    );
+    expect(lintFeedDir(dir).join("\n")).toMatch(/169\.254\.169\.254/);
+  });
 });

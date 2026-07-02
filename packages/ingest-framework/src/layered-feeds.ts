@@ -124,10 +124,10 @@ function parseBundle(
 
 /**
  * Guard each static URL a remote descriptor supplies. Templated URLs (`${VAR}`)
- * are guarded per-hop at fetch-time. `siteTable.url` is a domain-specific
- * (roads) field not declared on the base type; the runtime `guardedFetch`
- * already covers it, so this is parse-time defense-in-depth mirroring
- * `feeds-lint`.
+ * are guarded per-hop at fetch-time. `siteTable.url` and `stationRegistry.url`
+ * are domain-specific (roads) fields not declared on the base type; the
+ * runtime `guardedFetch` already covers them, so this is parse-time
+ * defense-in-depth mirroring `feeds-lint`.
  */
 function assertFeedUrls(feed: FeedSourceBase, assertUrl: (url: string) => void): void {
   const urls = Array.isArray(feed.url) ? feed.url : feed.url ? [feed.url] : [];
@@ -135,6 +135,9 @@ function assertFeedUrls(feed: FeedSourceBase, assertUrl: (url: string) => void):
 
   const sUrl = (feed as { siteTable?: { url?: string } }).siteTable?.url;
   if (sUrl && !sUrl.includes("${")) assertUrl(sUrl);
+
+  const rUrl = (feed as { stationRegistry?: { url?: string } }).stationRegistry?.url;
+  if (rUrl && !rUrl.includes("${")) assertUrl(rUrl);
 }
 
 async function writeSnapshot(path: string, feeds: FeedSourceBase[]): Promise<void> {
