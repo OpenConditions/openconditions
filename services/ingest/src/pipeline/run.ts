@@ -17,6 +17,7 @@ import { resolveOpenLr } from "./resolve.js";
 import { loadSiteTable } from "./site-table.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
 import { atomicSwap } from "./write-postgis.js";
+import { writeSpeedSamples } from "./baseline-store.js";
 
 type Sql = postgres.Sql;
 
@@ -171,6 +172,17 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   const { resolved, dropped } = await resolveOpenLr(parsed, deps.openlrClient ?? null);
 
   await atomicSwap(deps.sql, src.id, resolved, src.freshnessWindowSec);
+
+  if (src.produces === "flow") {
+    // Append this cycle's speeds to the rolling per-sensor history (the raw
+    // material the nightly baseline derivation consumes). Best-effort: a history
+    // write must never fail the live swap that already succeeded.
+    try {
+      await writeSpeedSamples(deps.sql, src.id, resolved, deps.now, src.cadenceSec);
+    } catch (err) {
+      console.warn(`[ingest] ${src.id}: speed-sample write failed:`, err);
+    }
+  }
 
   const durationMs = Date.now() - start;
   const dropNote = dropped > 0 ? ` (${dropped} dropped — no geometry)` : "";
