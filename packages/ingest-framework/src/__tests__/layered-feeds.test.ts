@@ -77,6 +77,32 @@ describe("loadFeeds", () => {
     expect(byId).toEqual({ a: "mount-a", b: "baked-b", c: "mount-c" });
   });
 
+  it("treats a missing mount dir as a silent no-op (baked-in only)", async () => {
+    writeFeed(baked, feed("a", "baked-a"));
+    const feeds = await loadFeeds({
+      domain: "test",
+      bakedInDir: baked,
+      mountDir: join(tmpdir(), "oc-does-not-exist-xyz"),
+    });
+    expect(feeds.map((f) => f.id)).toEqual(["a"]);
+  });
+
+  it("fails loudly when a mounted file is malformed", async () => {
+    writeFeed(baked, feed("a", "baked-a"));
+    writeFileSync(join(mount, "broken.json5"), "{ this is : not, valid", "utf8");
+    await expect(
+      loadFeeds({ domain: "test", bakedInDir: baked, mountDir: mount })
+    ).rejects.toThrow();
+  });
+
+  it("fails loudly when a mounted file violates the schema", async () => {
+    writeFeed(baked, feed("a", "baked-a"));
+    writeFileSync(join(mount, "bad.json5"), JSON.stringify([{ id: "z" }]), "utf8");
+    await expect(
+      loadFeeds({ domain: "test", bakedInDir: baked, mountDir: mount })
+    ).rejects.toThrow();
+  });
+
   it("ignores remote entirely when remote.enabled is false", async () => {
     writeFeed(baked, feed("a", "baked-a"));
     let fetched = false;
