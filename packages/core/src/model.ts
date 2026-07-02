@@ -40,6 +40,7 @@ export type SourceFormat =
   | "webtris-json"
   | "nyc-dot-speed-json"
   | "ohgo-json"
+  | "trafikverket-flow-json"
   | "gtfs-rt"
   | "native"
   | "crowd";

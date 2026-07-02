@@ -30,6 +30,7 @@
 | Hrvatske ceste roadworks (Croatia) | `HC_HR_USERNAME`, `HC_HR_PASSWORD` | OD-HR | [Hrvatske ceste](https://www.hrvatske-ceste.hr/) |
 | Statens vegvesen (Norway) | `NO_VEGVESEN_USERNAME`, `NO_VEGVESEN_PASSWORD` | NLOD-2.0 | [Statens vegvesen — get DATEX access](https://www.vegvesen.no/en/fag/technology/open-data/a-selection-of-open-data/what-is-datex/get-access/) |
 | Trafikverket (Sweden) | `TRAFIKVERKET_API_KEY` | CC0-1.0 | [Sign up at Trafikverket](https://data.trafikverket.se/oauth2/Account/register) |
+| Trafikverket traffic flow (Sweden) | `TRAFIKVERKET_API_KEY` | CC0-1.0 | [Sign up at Trafikverket](https://data.trafikverket.se/oauth2/Account/register) |
 | LTA DataMall Traffic Incidents (Singapore) | `LTA_ACCOUNT_KEY` | Singapore-ODL-1.0 | [Request LTA API access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html) |
 | NAP Slovenia (promet.si) | `NAP_SI_USERNAME`, `NAP_SI_PASSWORD` | CC-BY-SA-4.0 | [Register at NAP Slovenia](https://www.nap.si/en/registration) |
 | 511NY (New York) | `NY_511_API_KEY` | 511NY-DAA | [Create a 511NY account](https://511ny.org/my511/register) |

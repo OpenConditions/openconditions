@@ -42,4 +42,41 @@
       },
     },
   },
+  {
+    // The TrafficFlow object (speed/flow sensors) lives on the object API, a
+    // separate endpoint from the DATEX2 situation feed above. It is queried
+    // via a POST XML request body (not a query-key), so the key travels
+    // through bodyTemplate's ${TRAFIKVERKET_API_KEY} expansion instead of auth.
+    id: "trafikverket-flow-se",
+    name: "Trafikverket traffic flow (Sweden)",
+    format: "trafikverket-flow-json",
+    produces: "flow",
+    url: "https://api.trafikinfo.trafikverket.se/v2/data.json",
+    method: "POST",
+    requestHeaders: { "Content-Type": "text/xml" },
+    requiredEnv: ["TRAFIKVERKET_API_KEY"],
+    bodyTemplate: '<REQUEST><LOGIN authenticationkey="${TRAFIKVERKET_API_KEY}"/><QUERY objecttype="TrafficFlow" schemaversion="1.4"><INCLUDE>SiteId</INCLUDE><INCLUDE>AverageVehicleSpeed</INCLUDE><INCLUDE>VehicleFlowRate</INCLUDE><INCLUDE>MeasurementOrCalculationTime</INCLUDE><INCLUDE>Geometry.WGS84</INCLUDE></QUERY></REQUEST>',
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC0-1.0",
+    licenseUrl: "https://api.trafikinfo.trafikverket.se/",
+    attribution: "Trafikverket",
+    country: "SE",
+    privacyUrl: "https://www.trafikverket.se/en/privacy-policy/",
+    enabledByDefault: true,
+    setup: {
+      TRAFIKVERKET_API_KEY: {
+        title: "Trafikverket key (Sweden)",
+        description: "Authentication key, sent in the POST request body.",
+        url: "https://data.trafikverket.se/oauth2/Account/register",
+        urlLabel: "Sign up at Trafikverket",
+        steps: [
+          "Sign up at data.trafikverket.se/oauth2/Account/register.",
+          "Create an authentication key under data.trafikverket.se/mypage/systems (My systems). The key is sent in the POST request body.",
+        ],
+        cost: "Free",
+        notes: "CC0 — no restrictions. API endpoint: api.trafikinfo.trafikverket.se/v2/data.json (the bare host has no web page).",
+      },
+    },
+  },
 ]
