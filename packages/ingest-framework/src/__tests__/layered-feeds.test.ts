@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
@@ -124,6 +124,118 @@ describe("loadFeeds", () => {
       }
     );
     expect(fetched).toBe(false);
+    expect(feeds.map((f) => f.id)).toEqual(["a"]);
+  });
+});
+
+const REMOTE_URL = "https://atlas.example.org/roads.json5";
+
+function bundle(...feeds: FeedSourceBase[]): string {
+  return JSON.stringify(feeds);
+}
+
+describe("loadFeeds remote-pull", () => {
+  it("pulls live, writes the snapshot, and uses the remote feeds", async () => {
+    writeFeed(baked, feed("a", "baked-a"));
+    const snapshotPath = join(mount, "snap.json");
+    const remoteFeed = feed("r", "remote-r", { url: "https://feeds.example.org/r.json" });
+
+    const feeds = await loadFeeds(
+      {
+        domain: "test",
+        bakedInDir: baked,
+        remote: { url: REMOTE_URL, enabled: true, snapshotPath },
+      },
+      { remoteFetch: async () => new Response(bundle(remoteFeed)) }
+    );
+
+    expect(feeds.map((f) => f.id).sort()).toEqual(["a", "r"]);
+    expect(existsSync(snapshotPath)).toBe(true);
+    expect(JSON.parse(readFileSync(snapshotPath, "utf8"))[0].id).toBe("r");
+  });
+
+  it("falls back to the vendored snapshot when the live pull fails", async () => {
+    writeFeed(baked, feed("a", "baked-a"));
+    const snapshotPath = join(mount, "snap.json");
+    writeFileSync(snapshotPath, JSON.stringify([feed("r", "snapshot-r")]), "utf8");
+
+    const feeds = await loadFeeds(
+      {
+        domain: "test",
+        bakedInDir: baked,
+        remote: { url: REMOTE_URL, enabled: true, snapshotPath },
+      },
+      {
+        remoteFetch: async () => {
+          throw new Error("network down");
+        },
+      }
+    );
+
+    const r = feeds.find((f) => f.id === "r");
+    expect(r?.name).toBe("snapshot-r");
+  });
+
+  it("degrades to baked-in only when live fails and no snapshot exists", async () => {
+    writeFeed(baked, feed("a", "baked-a"));
+    const feeds = await loadFeeds(
+      {
+        domain: "test",
+        bakedInDir: baked,
+        remote: { url: REMOTE_URL, enabled: true, snapshotPath: join(mount, "missing.json") },
+      },
+      {
+        remoteFetch: async () => {
+          throw new Error("network down");
+        },
+      }
+    );
+    expect(feeds.map((f) => f.id)).toEqual(["a"]);
+  });
+
+  it("guards the bundle URL and every descriptor URL via assertUrl", async () => {
+    writeFeed(baked, feed("a", "baked-a"));
+    const seen: string[] = [];
+    const remoteFeed = feed("r", "remote-r", { url: "https://feeds.example.org/r.json" });
+
+    await loadFeeds(
+      {
+        domain: "test",
+        bakedInDir: baked,
+        remote: { url: REMOTE_URL, enabled: true, snapshotPath: join(mount, "snap.json") },
+      },
+      {
+        remoteFetch: async () => new Response(bundle(remoteFeed)),
+        assertUrl: (u) => {
+          seen.push(u);
+        },
+      }
+    );
+
+    expect(seen).toContain(REMOTE_URL);
+    expect(seen).toContain("https://feeds.example.org/r.json");
+  });
+
+  it("rejects a bundle URL that fails the guard", async () => {
+    writeFeed(baked, feed("a", "baked-a"));
+    const feeds = await loadFeeds(
+      {
+        domain: "test",
+        bakedInDir: baked,
+        remote: {
+          url: "http://169.254.169.254/latest",
+          enabled: true,
+          snapshotPath: join(mount, "snap.json"),
+        },
+      },
+      {
+        assertUrl: (u) => {
+          if (u.includes("169.254")) throw new Error("blocked private/metadata host");
+        },
+        remoteFetch: async () => new Response(bundle(feed("r", "remote-r"))),
+      }
+    );
+    // guard threw before fetch → remote contributes nothing → baked-in only
     expect(feeds.map((f) => f.id)).toEqual(["a"]);
   });
 });
