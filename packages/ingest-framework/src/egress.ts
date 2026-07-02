@@ -294,6 +294,16 @@ export function guardedFetch(
         assertPublicUrl(next); // re-validate the hop before the next iteration checks DNS
         // A 303 downgrades to GET and drops the body; 307/308 preserve method + body.
         if (res.status === 303) currentInit = { ...currentInit, method: "GET", body: undefined };
+        // Mirror browser redirect behavior: a cross-origin hop must not replay
+        // credentials the outer caller (e.g. makeAuthorizedFetch) injected for the
+        // ORIGINAL host onto a DIFFERENT host.
+        if (new URL(next).host !== new URL(currentUrl).host) {
+          const h = new Headers(currentInit.headers);
+          h.delete("authorization");
+          h.delete("cookie");
+          h.delete("proxy-authorization");
+          currentInit = { ...currentInit, headers: h };
+        }
         currentUrl = next;
         continue;
       }

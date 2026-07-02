@@ -146,6 +146,47 @@ describe("guardedFetch", () => {
     expect(await res.text()).toBe("ok");
   });
 
+  it("strips the Authorization header on a cross-origin redirect", async () => {
+    const start = "http://198.51.100.7/";
+    const seenAuth: Array<string | null> = [];
+    const base = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      seenAuth.push(new Headers(init?.headers).get("authorization"));
+      if (url === start) {
+        return new Response(null, {
+          status: 302,
+          headers: { location: "http://93.184.216.34/next" },
+        });
+      }
+      return new Response("ok", { status: 200 });
+    }) as unknown as typeof fetch;
+    const res = await guardedFetch(base, OPTS)(start, {
+      headers: { Authorization: "Bearer SEKRET" },
+    });
+    expect(await res.text()).toBe("ok");
+    expect(seenAuth).toEqual(["Bearer SEKRET", null]);
+  });
+
+  it("preserves the Authorization header on a same-host redirect", async () => {
+    const seenAuth: Array<string | null> = [];
+    const base = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      seenAuth.push(new Headers(init?.headers).get("authorization"));
+      if (url === PUBLIC) {
+        return new Response(null, {
+          status: 302,
+          headers: { location: "http://93.184.216.34/next" },
+        });
+      }
+      return new Response("ok", { status: 200 });
+    }) as unknown as typeof fetch;
+    const res = await guardedFetch(base, OPTS)(PUBLIC, {
+      headers: { Authorization: "Bearer SEKRET" },
+    });
+    expect(await res.text()).toBe("ok");
+    expect(seenAuth).toEqual(["Bearer SEKRET", "Bearer SEKRET"]);
+  });
+
   it("aborts a body that streams past maxBytes", async () => {
     const stream = new ReadableStream<Uint8Array>({
       start(controller) {
