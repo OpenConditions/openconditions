@@ -10,3 +10,4 @@ export * from "./template.js";
 export * from "./pre-fetch.js";
 export * from "./catalog.js";
 export * from "./licenses.js";
+export * from "./attribution.js";
