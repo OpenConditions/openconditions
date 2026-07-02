@@ -26,7 +26,8 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "export:atlas": "node scripts/export-atlas.ts"
+    "export:atlas": "node scripts/export-atlas.ts",
+    "feeds:lint": "pnpm --filter @openconditions/ingest-framework build && pnpm --filter @openconditions/roads build && tsx scripts/feeds-lint.ts"
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",

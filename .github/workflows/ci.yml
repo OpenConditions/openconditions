@@ -47,6 +47,9 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Feeds lint
+        run: pnpm --filter @openconditions/roads feeds:lint
+
       - name: Test
         run: pnpm test
 
