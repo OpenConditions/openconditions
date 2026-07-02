@@ -46,6 +46,35 @@ describe("fetchAll — catalog branch", () => {
     expect(seen.sort()).toEqual(["https://a.example/f", "https://b.example/f"]);
   });
 
+  it("applies catalog.filter to the resolved descriptors, fetching only the matches", async () => {
+    const resolver: CatalogResolver = {
+      id: "filtered-registry",
+      snapshotPath: "/nonexistent.json",
+      resolve: async () => [
+        { ...desc("us", "https://us.example/f"), country: "US" },
+        { ...desc("ca", "https://ca.example/f"), country: "CA" },
+      ],
+    };
+    registerCatalogResolver("roads", resolver);
+
+    const seen: string[] = [];
+    const fetchFn = vi.fn(async (u: string) => {
+      seen.push(String(u));
+      return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const feed: FeedSourceBase = {
+      ...desc("wzdx", ""),
+      url: undefined,
+      catalog: { resolver: "filtered-registry", filter: { country: "US" } },
+    };
+    const result = await fetchAll(feed, fetchFn);
+    expect(result.status).toBe("fetched");
+    if (result.status !== "fetched") throw new Error("expected fetched");
+    expect(result.buffers).toHaveLength(1);
+    expect(seen).toEqual(["https://us.example/f"]);
+  });
+
   it("throws for a feed referencing an unregistered resolver", async () => {
     const feed: FeedSourceBase = {
       ...desc("x", ""),
