@@ -9,3 +9,4 @@ export * from "./egress.js";
 export * from "./template.js";
 export * from "./pre-fetch.js";
 export * from "./catalog.js";
+export * from "./licenses.js";
