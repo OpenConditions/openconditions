@@ -24,6 +24,17 @@ describe("FeedStatusStore", () => {
     expect(st?.lastRunAt).toBe("2026-07-01T00:05:00.000Z");
   });
 
+  it("clears a stale error once the feed recovers with a success", () => {
+    const s = new FeedStatusStore();
+    s.recordError("ndw", "2026-07-01T00:05:00.000Z", "HTTP 503");
+    s.recordSuccess("ndw", "2026-07-01T00:10:00.000Z", 42, 1000);
+    const st = s.get("ndw");
+    expect(st?.lastError).toBeUndefined();
+    expect(st?.lastErrorAt).toBeUndefined();
+    expect(st?.lastSuccessAt).toBe("2026-07-01T00:10:00.000Z");
+    expect(st?.lastRowCount).toBe(42);
+  });
+
   it("returns undefined for an unknown feed and a snapshot from all()", () => {
     const s = new FeedStatusStore();
     expect(s.get("nope")).toBeUndefined();

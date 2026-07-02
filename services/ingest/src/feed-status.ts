@@ -27,6 +27,10 @@ export class FeedStatusStore {
       lastSuccessAt: at,
       lastRowCount: rowCount,
       lastDurationMs: durationMs,
+      // A genuine success means the feed recovered — a stale error from a prior
+      // cycle should not keep showing on GET /feeds/status.
+      lastError: undefined,
+      lastErrorAt: undefined,
     });
   }
 
