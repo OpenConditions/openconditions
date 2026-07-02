@@ -10,13 +10,22 @@ carries no speed observation.
 | feed id                | region            | format                   | keyed                        | license              |
 | ---------------------- | ----------------- | ------------------------ | ---------------------------- | -------------------- |
 | `fintraffic-tms-fi`    | Finland           | `fintraffic-tms-json`    | no                           | CC-BY-4.0            |
-| `webtris-gb`           | Great Britain     | `webtris-json`           | no                           | OGL-UK-3.0           |
+| `webtris-gb`           | Great Britain     | `webtris-json`           | no, **disabled by default**  | OGL-UK-3.0           |
 | `nyc-dot-speed-us`     | New York City, US | `nyc-dot-speed-json`     | no (optional token)          | NYC-Open-Data        |
 | `ohgo-oh-us`           | Ohio, US          | `ohgo-json`              | yes (`OHGO_API_KEY`)         | US-Gov-Public-Domain |
 | `trafikverket-flow-se` | Sweden            | `trafikverket-flow-json` | yes (`TRAFIKVERKET_API_KEY`) | CC0-1.0              |
 
 NDW (Netherlands) also carries traffic speed as part of its existing DATEX II
 `Measurement` flow, independent of this roster.
+
+`webtris-gb` is disabled by default: WebTRIS publishes quality-checked
+_historical_ traffic data lagged roughly 6-8 weeks — a query for a recent date
+window returns HTTP 204 (no content), and even the older data it does hold
+falls outside the 28-day free-flow baseline-derivation window
+(`deriveBaselines`'s default `windowDays`), so it never contributes to the
+live pipeline. An operator who wants the historical samples anyway can flip
+`enabledByDefault` on `webtris-gb` and widen the derive window to reach back
+far enough.
 
 ## How congestion is derived
 

@@ -51,6 +51,8 @@
     attribution: "National Highways / WebTRIS",
     country: "GB",
     privacyUrl: "https://nationalhighways.co.uk/privacy-notice/",
-    enabledByDefault: true,
+    // WebTRIS publishes quality-checked historical data lagged ~6-8 weeks
+    // (recent-date queries return HTTP 204); see docs/speed-coverage.md.
+    enabledByDefault: false,
   },
 ]
