@@ -172,12 +172,15 @@ describe("webtrisDailyWindow {sites} fan-out", () => {
 
   it("falls back to a single default site when the sites response has zero active sites", async () => {
     const hook = PRE_FETCH_HOOKS["webtrisDailyWindow"]!;
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
     const out = await hook(multiSiteSrc, {}, sitesFetch([{ Id: "1", Status: "Inactive" }]));
     const urls = out.url as string[];
 
     expect(urls).toHaveLength(1);
     expect(urls[0]).not.toContain("{sites}");
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 
   it("sends the feed's requestHeaders on the /sites fetch", async () => {

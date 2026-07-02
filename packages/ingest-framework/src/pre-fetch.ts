@@ -26,11 +26,11 @@ const WEBTRIS_SITES_TTL_MS = 6 * 60 * 60 * 1000;
  * Hard cap on the number of WebTRIS sites fanned out to per ingest cycle.
  * WebTRIS has 11k+ registered sites nationwide; querying all of them every
  * `cadenceSec` would be an unreasonable request rate against a public,
- * unauthenticated government API, and the resulting URL array is fetched via
- * `fetchAllBounded` (fetch.ts), whose multi-URL semantics reject the whole
- * batch on a single URL failure — so a very large fan-out also multiplies the
- * odds of one bad site aborting the entire cycle's swap. Kept well under a
- * few hundred requests per cycle as a courtesy/robustness balance.
+ * unauthenticated government API. The resulting URL array is fetched via the
+ * tolerant `fetchFanout` (fetch.ts, opted into via `fanoutTolerant` on the
+ * feed), so one bad site no longer risks aborting the whole cycle's swap —
+ * the cap remains purely a request-rate courtesy/robustness balance, kept
+ * well under a few hundred requests per cycle.
  */
 export const WEBTRIS_MAX_SITES = 150;
 
@@ -134,8 +134,9 @@ function chunk<T>(items: T[], size: number): T[][] {
  * `WEBTRIS_SITE_CHUNK_SIZE`), so the feed gets real multi-site coverage
  * instead of one hardcoded sensor. Falls back to `WEBTRIS_FALLBACK_SITE_ID`
  * — never leaving `{sites}` unresolved — when the registry is unreachable or
- * yields no active sites, so the feed always resolves to a working URL.
- * `stationRegistry` is a roads-domain field not declared on the base
+ * yields no active sites, so the feed always resolves to a working URL; both
+ * fallback cases emit a `console.warn` so a silent revert-to-one-site stays
+ * operator-visible. `stationRegistry` is a roads-domain field not declared on the base
  * `FeedSourceBase` type, so it is read via a structural cast, mirroring the
  * same pattern in `layered-feeds.ts`.
  */
@@ -156,6 +157,11 @@ const webtrisDailyWindow: PreFetchHook = async (src, _env, fetchFn) => {
   const activeIds = registryUrl
     ? await loadWebtrisActiveSiteIds(registryUrl, src.requestHeaders, fetchFn)
     : [];
+  if (activeIds.length === 0) {
+    console.warn(
+      `[ingest] webtrisDailyWindow: ${src.id} has zero active sites (registry unreachable or none marked Active); falling back to default site ${WEBTRIS_FALLBACK_SITE_ID}`
+    );
+  }
   const ids = activeIds.length > 0 ? activeIds : [WEBTRIS_FALLBACK_SITE_ID];
   const urls = chunk(ids, WEBTRIS_SITE_CHUNK_SIZE).map((c) =>
     dateStamped.replace("{sites}", c.join(","))
