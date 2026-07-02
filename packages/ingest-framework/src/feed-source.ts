@@ -74,6 +74,12 @@ export interface FeedSourceBase {
   attribution: string;
   country: string;
   privacyUrl: string;
+  /**
+   * Optional feed owner(s). Each entry names a person and their GitHub handle so
+   * the scheduled liveness check can @-mention them when the feed goes dark.
+   * Pure declarative data — no secrets, safe to commit.
+   */
+  maintainers?: { name: string; github: string }[];
   enabledByDefault: boolean;
   /** Per-env-var credential guide (title, description, acquisition steps). */
   setup?: Record<string, CredentialField>;

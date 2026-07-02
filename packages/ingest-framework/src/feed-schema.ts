@@ -91,7 +91,9 @@ export const feedSourceBaseShape = {
   attribution: z.string().min(1),
   country: z.string().regex(/^[A-Z]{2}$/, "ISO 3166-1 alpha-2, uppercase"),
   privacyUrl: z.string().url(),
-  maintainers: z.array(z.object({ name: z.string(), github: z.string() }).strict()).optional(),
+  maintainers: z
+    .array(z.object({ name: z.string().min(1), github: z.string().min(1) }).strict())
+    .optional(),
   setup: z
     .record(
       z.string(),
