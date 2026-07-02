@@ -294,5 +294,57 @@ describe("updateFintrafficNativeBaselines", () => {
       expect(seen).toEqual(["40001", "40002", "40003"]);
       expect(updated).toBeGreaterThan(0);
     }, 30_000);
+
+    it("orders covered stations by oldest computed_at first once the batch exhausts uncovered stations", async () => {
+      const coveredFeed = {
+        id: "fintraffic-tms-fi-priority-covered",
+        stationRegistry: {
+          url: "https://tie.digitraffic.fi/api/tms/v1/stations",
+          format: "fintraffic-stations",
+        },
+      } as unknown as FeedSource;
+
+      // Registry order: 50001 (A), 50002 (B), 50003 (C).
+      const ids = [50001, 50002, 50003];
+      const geo = JSON.stringify({
+        type: "FeatureCollection",
+        features: ids.map((id) => ({
+          type: "Feature",
+          id,
+          properties: {},
+          geometry: { type: "Point", coordinates: [24.9, 60.2] },
+        })),
+      });
+
+      // 50001 (A) and 50002 (B) already have native baselines, B older than A;
+      // 50003 (C) has none and wins priority as uncovered. batchCap covers the
+      // whole registry, so the batch also reaches the two covered stations,
+      // and must visit the older one (B) before the newer one (A).
+      await sql`
+        INSERT INTO conditions.sensor_baseline
+          (sensor_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
+        VALUES
+          ('fintraffic-tms-fi-priority-covered:50001-1', ${coveredFeed.id}, -1, -1, 100, 'native', 0, '2025-06-01T00:00:00Z'),
+          ('fintraffic-tms-fi-priority-covered:50002-1', ${coveredFeed.id}, -1, -1, 100, 'native', 0, '2020-01-01T00:00:00Z')`;
+
+      const seen: string[] = [];
+      const trackingFetch = (async (url: string) => {
+        const s = String(url);
+        if (s.includes("sensor-constants")) {
+          const stationId = s.split("/").at(-2)!;
+          seen.push(stationId);
+          return new Response(constants, { status: 200 });
+        }
+        return new Response(geo, { status: 200 });
+      }) as unknown as typeof fetch;
+
+      await updateFintrafficNativeBaselines(sql, coveredFeed, {
+        fetch: trackingFetch,
+        now: () => new Date("2026-07-15T00:00:00Z"),
+        batchCap: 3,
+      });
+
+      expect(seen).toEqual(["50003", "50002", "50001"]);
+    }, 30_000);
   });
 });
