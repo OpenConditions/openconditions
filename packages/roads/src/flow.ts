@@ -10,7 +10,7 @@
  * conditions.observations is the data foundation that pipeline will consume.
  */
 import type { LineString, Point } from "geojson";
-import type { Severity } from "@openconditions/core";
+import type { LineStringGeometry, PointGeometry, Severity } from "@openconditions/core";
 import type { RoadEvent, RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
 import {
@@ -81,6 +81,20 @@ export function makeOrigin(src: SourceDescriptor) {
       url: src.licenseUrl,
     },
   };
+}
+
+/**
+ * A single representative [lon, lat] for a flow's geometry: a Point's own
+ * coordinates, or a LineString's middle vertex. Used to store a sensor's
+ * location as a Point in sensor_speed_sample.
+ */
+export function representativePoint(geom: PointGeometry | LineStringGeometry): [number, number] {
+  if (geom.type === "Point") {
+    return [geom.coordinates[0]!, geom.coordinates[1]!];
+  }
+  const coords = geom.coordinates;
+  const mid = coords[Math.floor(coords.length / 2)] ?? coords[0]!;
+  return [mid[0]!, mid[1]!];
 }
 
 function safeParse(input: string | Buffer | object): Record<string, unknown> | null {
