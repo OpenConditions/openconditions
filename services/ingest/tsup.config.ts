@@ -10,6 +10,13 @@ import { defineConfig } from "tsup";
 const coreDrizzle = fileURLToPath(new URL("../../packages/core/drizzle", import.meta.url));
 const bundledDrizzle = fileURLToPath(new URL("./dist/drizzle", import.meta.url));
 
+// @openconditions/roads is inlined (noExternal), so its runtime-read feed data
+// files don't travel with the bundle. Copy them next to the entry; the inlined
+// resolveFeedsDir() finds them at ./feeds/roads. Lives in dist/ so it rides the
+// turbo dist/** cache and the Docker `COPY dist`.
+const roadsFeeds = fileURLToPath(new URL("../../packages/roads/feeds/roads", import.meta.url));
+const bundledFeeds = fileURLToPath(new URL("./dist/feeds/roads", import.meta.url));
+
 export default defineConfig({
   entry: ["src/index.ts"],
   format: ["esm"],
@@ -23,5 +30,7 @@ export default defineConfig({
   async onSuccess() {
     await rm(bundledDrizzle, { recursive: true, force: true });
     await cp(coreDrizzle, bundledDrizzle, { recursive: true });
+    await rm(bundledFeeds, { recursive: true, force: true });
+    await cp(roadsFeeds, bundledFeeds, { recursive: true });
   },
 });
