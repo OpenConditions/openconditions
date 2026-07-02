@@ -8,6 +8,7 @@ import { readObservations } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import { FEED_SOURCES } from "@openconditions/roads";
 import type { RoadEvent, RoadFlow } from "@openconditions/roads";
+import type { LookupFn } from "@openconditions/ingest-framework";
 import { atomicSwap } from "../pipeline/write-postgis.js";
 import { runSource } from "../pipeline/run.js";
 import type { DomainFeedSource } from "../pipeline/run.js";
@@ -47,6 +48,12 @@ const ndwFlowFeed: DomainFeedSource = {
   ...FEED_SOURCES.find((f) => f.id === "ndw-flow")!,
   domain: "roads",
 };
+
+// These e2e tests inject a fake `fetch` to serve local fixtures instead of the
+// real feed hosts, but `runSource` still resolves the feed host via DNS to pin
+// the egress connection before calling it. Injecting a fake lookup here keeps
+// the suite hermetic — it never depends on the real feed hosts' DNS being up.
+const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -89,6 +96,7 @@ describe("pipeline — happy path", () => {
       sql,
       fetch: fakeFetch as typeof fetch,
       now: () => new Date().toISOString(),
+      lookup: fakeLookup,
     });
 
     expect(result.count).toBeGreaterThan(0);
@@ -142,6 +150,7 @@ describe("pipeline — feed downtime", () => {
       sql,
       fetch: throwingFetch as typeof fetch,
       now: () => new Date().toISOString(),
+      lookup: fakeLookup,
     });
 
     expect(result.count).toBe(0);
@@ -166,6 +175,7 @@ describe("pipeline — open511 (DriveBC)", () => {
       sql,
       fetch: fakeFetch as typeof fetch,
       now: () => new Date().toISOString(),
+      lookup: fakeLookup,
     });
 
     expect(result.count).toBeGreaterThan(0);
@@ -440,6 +450,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
       sql,
       fetch: fakeFetch as typeof fetch,
       now: () => new Date().toISOString(),
+      lookup: fakeLookup,
     });
 
     expect(result.count).toBeGreaterThan(0);
@@ -527,6 +538,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
       sql,
       fetch: partialFetch as typeof fetch,
       now: () => new Date().toISOString(),
+      lookup: fakeLookup,
     });
 
     expect(result.count).toBe(0);

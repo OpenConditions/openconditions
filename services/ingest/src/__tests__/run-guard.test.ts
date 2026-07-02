@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type postgres from "postgres";
+import type { LookupFn } from "@openconditions/ingest-framework";
 import type { DomainFeedSource } from "../pipeline/run.js";
 import { runSource } from "../pipeline/run.js";
 
@@ -41,5 +42,32 @@ describe("runSource egress guard", () => {
       openlrClient: null,
     });
     expect(res.count).toBe(0);
+  });
+
+  it("uses an injected lookup instead of performing a real DNS resolution", async () => {
+    const seenHosts: string[] = [];
+    const fakeLookup = (async (hostname: string) => {
+      seenHosts.push(hostname);
+      return [{ address: "93.184.216.34", family: 4 }];
+    }) as unknown as LookupFn;
+
+    const upstream = (async () => new Response("{}", { status: 200 })) as unknown as typeof fetch;
+
+    // A hostname under the RFC 2606 reserved .invalid TLD never resolves via
+    // real DNS — if resolvePublicIps ever fell through to the real resolver
+    // here it would throw, and runSource would swallow it into count:0 without
+    // seenHosts ever being populated by our fake.
+    await runSource(blockedFeed("https://feed.this-host-does-not-exist.invalid/feed.json"), {
+      sql: noSwapSql,
+      fetch: upstream,
+      now: () => new Date().toISOString(),
+      openlrClient: null,
+      lookup: fakeLookup,
+    }).catch(() => {
+      // Parsing an unrelated fixture may throw after the fetch — irrelevant
+      // here, we only assert the injected lookup was actually consulted.
+    });
+
+    expect(seenHosts).toContain("feed.this-host-does-not-exist.invalid");
   });
 });

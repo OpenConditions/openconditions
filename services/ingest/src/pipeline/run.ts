@@ -10,6 +10,7 @@ import {
   guardedFetch,
   makeAuthorizedFetch,
 } from "@openconditions/ingest-framework";
+import type { LookupFn } from "@openconditions/ingest-framework";
 import { isStreamingFlowFeed, streamMeasuredData } from "./measured-data.js";
 import { parseFor } from "./parse.js";
 import { resolveOpenLr } from "./resolve.js";
@@ -38,6 +39,14 @@ export interface RunDeps {
   fetch: typeof fetch;
   now: () => string;
   openlrClient?: MapMatchClient | null;
+  /**
+   * Overrides the DNS resolver `guardedFetch` uses to pin egress connections.
+   * Left unset in production (the scheduler doesn't set it), so `guardedFetch`
+   * falls back to its default real `node:dns` lookup — pinning behavior is
+   * unchanged. Tests inject a fake here so a fake `fetch` used to serve
+   * fixtures doesn't still require live DNS to resolve the feed host first.
+   */
+  lookup?: LookupFn;
 }
 
 /**
@@ -98,7 +107,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   // only undici's fetch honors — so `deps.fetch` MUST be undici's fetch in
   // production (the scheduler passes it). Tests inject a fake fetch that serves
   // fixtures and ignores the dispatcher, keeping the run path hermetic.
-  const guarded = guardedFetch(deps.fetch, guardOptionsFromEnv());
+  const guarded = guardedFetch(deps.fetch, guardOptionsFromEnv(), {}, deps.lookup);
   const fetchFn = makeAuthorizedFetch(src, guarded);
 
   // Load the companion site table (cached, tolerant of failure) so flow feeds
