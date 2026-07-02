@@ -1,18 +1,277 @@
 [
   {
-    "id": "ndw",
-    "name": "NDW (Netherlands)",
+    "id": "ba-cortes-ar",
+    "name": "Buenos Aires road closures (cortes)",
+    "format": "geojson",
+    "url": "https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=${BA_CLIENT_ID}&client_secret=${BA_CLIENT_SECRET}",
+    "requiredEnv": [
+      "BA_CLIENT_ID",
+      "BA_CLIENT_SECRET"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-2.5-AR",
+    "licenseUrl": "https://data.buenosaires.gob.ar/",
+    "attribution": "Gobierno de la Ciudad de Buenos Aires",
+    "country": "AR",
+    "privacyUrl": "https://www.buenosaires.gob.ar/politicas-de-privacidad",
+    "setup": {
+      "BA_CLIENT_ID": {
+        "url": "https://api-transporte.buenosaires.gob.ar/registro",
+        "urlLabel": "BA transport API registration",
+        "steps": [
+          "Register / request a key at api-transporte.buenosaires.gob.ar/registro. The client_id + client_secret pair is sent to you by email."
+        ],
+        "notes": "CC-BY-2.5-AR (commercial OK).",
+        "title": "Buenos Aires transport — client_id"
+      },
+      "BA_CLIENT_SECRET": {
+        "title": "Buenos Aires transport — client_secret"
+      }
+    },
+    "enabledByDefault": true,
+    "geojson": {
+      "defaultType": "road_closure",
+      "headlineField": "nombre",
+      "descriptionField": "descripcion"
+    }
+  },
+  {
+    "id": "asfinag-at",
+    "name": "ASFINAG events (Austria)",
     "format": "datex2",
-    "url": "http://opendata.ndw.nu/actueel_beeld.xml.gz",
-    "gzip": true,
-    "cadenceSec": 60,
-    "freshnessWindowSec": 300,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://www.ndw.nu",
-    "attribution": "NDW / Rijkswaterstaat",
-    "country": "NL",
-    "privacyUrl": "https://www.ndw.nu/privacy",
+    "url": [
+      "https://contentportal.asfinag.at/datex2/v3/unplanned-events",
+      "https://contentportal.asfinag.at/datex2/v3/planned-events"
+    ],
+    "auth": {
+      "kind": "basic",
+      "userEnvVar": "AT_ASFINAG_USERNAME",
+      "passEnvVar": "AT_ASFINAG_PASSWORD"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.mobilitydata.gv.at/en/data",
+    "attribution": "ASFINAG",
+    "country": "AT",
+    "privacyUrl": "https://www.asfinag.at/datenschutz/",
+    "setup": {
+      "AT_ASFINAG_USERNAME": {
+        "url": "https://contentportal.asfinag.at/",
+        "urlLabel": "ASFINAG content portal",
+        "steps": [
+          "Create an ASFINAG account at contentportal.asfinag.at.",
+          "Enable access to 'Verkehrsmeldungen zu ungeplanten und sicherheitsrelevanten Ereignissen' at contentportal.asfinag.at/data/details/unplannedevents.",
+          "Enable access to 'Verkehrsmeldungen zu geplanten Ereignissen' (roadworks) at contentportal.asfinag.at/data/details/roadworks_detailed."
+        ],
+        "notes": "CC-BY-4.0 for the two open event packages (some ASFINAG packages are paid).",
+        "title": "ASFINAG (Austria) — username"
+      },
+      "AT_ASFINAG_PASSWORD": {
+        "title": "ASFINAG (Austria) — password"
+      }
+    },
     "enabledByDefault": true
+  },
+  {
+    "id": "livetraffic-nsw",
+    "name": "Live Traffic NSW (New South Wales)",
+    "format": "geojson",
+    "url": [
+      "https://api.transport.nsw.gov.au/v1/live/hazards/incident/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/roadwork/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/flood/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/fire/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/majorevent/open",
+      "https://api.transport.nsw.gov.au/v1/live/hazards/alpine/open"
+    ],
+    "auth": {
+      "kind": "header-key",
+      "header": "Authorization",
+      "envVar": "NSW_TRANSPORT_API_KEY",
+      "valuePrefix": "apikey "
+    },
+    "cadenceSec": 180,
+    "freshnessWindowSec": 600,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://opendata.transport.nsw.gov.au/dataset/live-traffic-hazards",
+    "attribution": "Transport for NSW",
+    "country": "AU",
+    "privacyUrl": "https://www.transport.nsw.gov.au/privacy-statement",
+    "setup": {
+      "NSW_TRANSPORT_API_KEY": {
+        "url": "https://opendata.transport.nsw.gov.au/data/user/register",
+        "urlLabel": "Register at Transport NSW Open Data",
+        "steps": [
+          "Register at opendata.transport.nsw.gov.au/data/user/register.",
+          "Create an API token under your account (Account → API tokens) and copy it. No need to create a separate application — the token alone authorises the live-hazard endpoints."
+        ],
+        "cost": "Free",
+        "notes": "CC-BY-4.0; attribution \"Transport for NSW\".",
+        "title": "Live Traffic NSW API key (Australia)"
+      }
+    },
+    "enabledByDefault": true,
+    "geojson": {
+      "typeField": "mainCategory",
+      "typeMap": {
+        "Incident": "accident",
+        "Road Work": "roadworks",
+        "Flooding": "weather",
+        "Fire": "hazard",
+        "Major Event": "public_event",
+        "Alpine": "weather"
+      },
+      "defaultType": "other",
+      "headlineField": "headline",
+      "descriptionField": "otherAdvice"
+    }
+  },
+  {
+    "id": "trafficsa-au",
+    "name": "Traffic SA (South Australia)",
+    "format": "geojson",
+    "url": [
+      "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",
+      "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/1/query?where=1%3D1&outFields=*&f=geojson"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+    "attribution": "Department for Infrastructure and Transport (South Australia)",
+    "country": "AU",
+    "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
+    "enabledByDefault": true,
+    "geojson": {
+      "idField": "ROADWORKS_AND_INCIDENTS_ID",
+      "typeField": "REC_TYPE",
+      "typeMap": {
+        "ROADWORKS": "roadworks",
+        "24HR ROADWORKS": "roadworks",
+        "EMERGENCY WATERWORKS": "roadworks",
+        "SIGNAL FAULT": "equipment_fault",
+        "INCIDENT": "obstruction",
+        "COLLISION": "accident",
+        "CRASH": "accident",
+        "FLOODING": "weather",
+        "EVENT": "public_event",
+        "ROAD CLOSURE": "road_closure",
+        "HAZARD": "hazard"
+      },
+      "defaultType": "other",
+      "headlineField": "DESCRIPTION",
+      "roadField": "ROAD_NO"
+    }
+  },
+  {
+    "id": "qld-traffic",
+    "name": "QLDTraffic (Queensland)",
+    "format": "geojson",
+    "url": "https://api.qldtraffic.qld.gov.au/v1/events",
+    "auth": {
+      "kind": "query-key",
+      "param": "apikey",
+      "envVar": "QLD_TRAFFIC_API_KEY",
+      "defaultValue": "3e83add325cbb69ac4d8e5bf433d770b"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.qldtraffic.qld.gov.au/",
+    "attribution": "State of Queensland (Department of Transport and Main Roads)",
+    "country": "AU",
+    "privacyUrl": "https://www.qld.gov.au/legal/privacy",
+    "setup": {
+      "QLD_TRAFFIC_API_KEY": {
+        "url": "https://www.qldtraffic.qld.gov.au/",
+        "urlLabel": "QLDTraffic",
+        "notes": "Optional — the bundled public key is shared + rate-limited (100 req/min). Set your own to avoid 429s.",
+        "email": {
+          "to": "QLDTraffic@tmr.qld.gov.au",
+          "subject": "QLDTraffic API key request",
+          "body": "Organisation name, contact person, email, and application name."
+        },
+        "title": "QLDTraffic API key (Australia) — optional",
+        "description": "Optional. A public key is bundled by default; set this only to use your own quota."
+      }
+    },
+    "enabledByDefault": true,
+    "geojson": {
+      "idField": "id",
+      "typeField": "event_type",
+      "typeMap": {
+        "Hazard": "hazard",
+        "Crash": "accident",
+        "Congestion": "congestion",
+        "Roadworks": "roadworks",
+        "Special event": "public_event",
+        "Flooding": "weather"
+      },
+      "defaultType": "other",
+      "headlineField": "description",
+      "descriptionField": "information",
+      "severityField": "event_priority",
+      "severityMap": {
+        "Red Alert": "critical",
+        "High": "high",
+        "Medium": "medium",
+        "Low": "low"
+      },
+      "roadField": "road_summary.road_name",
+      "updatedField": "last_updated"
+    }
+  },
+  {
+    "id": "flanders-be",
+    "name": "Verkeerscentrum Vlaanderen (Flanders)",
+    "format": "datex2",
+    "url": "https://www.verkeerscentrum.be/uitwisseling/datex2v3full",
+    "cadenceSec": 120,
+    "freshnessWindowSec": 600,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.verkeerscentrum.be/",
+    "attribution": "Verkeerscentrum Vlaanderen",
+    "country": "BE",
+    "privacyUrl": "https://www.verkeerscentrum.be/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "brussels-be",
+    "name": "Bruxelles Mobilité traffic events",
+    "format": "geojson",
+    "url": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items?f=json&limit=1000",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://data.mobility.brussels/",
+    "attribution": "Bruxelles Mobilité / Brussel Mobiliteit",
+    "country": "BE",
+    "privacyUrl": "https://mobilite-mobiliteit.brussels/en/privacy",
+    "enabledByDefault": true,
+    "geojson": {
+      "idField": "fid",
+      "typeField": "datex_codes",
+      "typeMap": {
+        "RWK": "roadworks",
+        "EMR": "public_event",
+        "ACC": "accident",
+        "JAM": "congestion"
+      },
+      "defaultType": "other",
+      "headlineField": "consequences_fr",
+      "severityField": "importance",
+      "severityMap": {
+        "0": "low",
+        "1": "low",
+        "2": "medium",
+        "3": "high",
+        "4": "critical"
+      },
+      "roadField": "location_fr",
+      "updatedField": "last_update"
+    }
   },
   {
     "id": "drivebc",
@@ -25,6 +284,949 @@
     "attribution": "Contains information licensed under the Open Government Licence – British Columbia",
     "country": "CA",
     "privacyUrl": "https://www2.gov.bc.ca/gov/content/home/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "on-511",
+    "name": "Ontario 511 (Canada)",
+    "format": "ibi511-json",
+    "url": "https://511on.ca/api/v2/get/event?format=json",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "OGL-ON",
+    "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
+    "attribution": "Contains information licensed under the Open Government Licence – Ontario",
+    "country": "CA",
+    "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
+    "enabledByDefault": true
+  },
+  {
+    "id": "mtq-qc",
+    "name": "MTQ roadworks (Québec)",
+    "format": "geojson",
+    "url": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:chantiers_mtmdet&outputformat=geojson",
+    "cadenceSec": 600,
+    "freshnessWindowSec": 1800,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.donneesquebec.ca/",
+    "attribution": "Ministère des Transports du Québec (MTQ)",
+    "country": "CA",
+    "privacyUrl": "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
+    "enabledByDefault": true,
+    "geojson": {
+      "idField": "identifiant",
+      "defaultType": "roadworks",
+      "headlineField": "identificationDesTravaux",
+      "descriptionField": "descriptionFrancais",
+      "roadField": "routeAutoroute",
+      "updatedField": "miseAJour"
+    }
+  },
+  {
+    "id": "autobahn-de",
+    "name": "Autobahn GmbH (Germany)",
+    "format": "autobahn-json",
+    "catalog": {
+      "resolver": "autobahn-index"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "svzbw-de",
+    "name": "MobiData BW roadworks (Baden-Württemberg)",
+    "format": "datex2",
+    "url": "https://api.mobidata-bw.de/datasets/traffic/roadworks/roadworks_svzbw.datex2.xml",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.mobidata-bw.de",
+    "attribution": "MobiData BW / Ministerium für Verkehr Baden-Württemberg (SVZ-BW)",
+    "country": "DE",
+    "privacyUrl": "https://www.mobidata-bw.de/pages/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "berlin-de",
+    "name": "VIZ Berlin roadworks & closures",
+    "format": "geojson",
+    "url": "https://api.viz.berlin.de/daten/baustellen_sperrungen_viz.json",
+    "cadenceSec": 600,
+    "freshnessWindowSec": 1800,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://daten.berlin.de/",
+    "attribution": "Verkehrsinformationszentrale Berlin (VIZ)",
+    "country": "DE",
+    "privacyUrl": "https://www.berlin.de/datenschutzerklaerung/",
+    "enabledByDefault": true,
+    "geojson": {
+      "idField": "id",
+      "typeField": "subtype",
+      "typeMap": {
+        "Baustelle": "roadworks",
+        "Bauarbeiten": "roadworks",
+        "Sperrung": "road_closure",
+        "Störung": "obstruction"
+      },
+      "defaultType": "other",
+      "headlineField": "content",
+      "severityField": "severity",
+      "severityMap": {
+        "Vollsperrung": "high",
+        "Fahrtrichtungssperrung": "medium",
+        "keine Sperrung": "low"
+      },
+      "roadField": "street",
+      "updatedField": "tstore"
+    }
+  },
+  {
+    "id": "verkehr-nrw-de",
+    "name": "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_NRW_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_NRW_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/zero-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
+    "attribution": "Landesverkehrszentrale NRW (Straßen.NRW)",
+    "country": "DE",
+    "privacyUrl": "https://www.strassen.nrw.de/de/datenschutz.html",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_NRW_SUBSCRIPTION_ID": {
+        "title": "NRW (LVZ.NRW) Mobilithek — subscription id(s)",
+        "description": "Numeric subscription id(s) from mobilithek.info/organisation/subscriptions (one per subscribed offer, e.g. roadworks 648508602333433856 + incidents 648512079906336768). List multiple comma-separated; the feed fans out one HTTPS client-pull per id. dl-de/zero-2-0."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-nrw-kommunal",
+    "name": "NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/zero-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
+    "attribution": "Städte und Kreise in Nordrhein-Westfalen (via Mobilithek)",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID": {
+        "title": "NRW municipalities Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for NRW city/district offers — Düsseldorf/dmotion 110000000002056000, Köln 110000000002900004 (+ 110000000002899004 / 110000000003011002), Kreis Unna 930448553981730816. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-nrw-mobidrom",
+    "name": "NRW.Mobidrom bundled roadworks via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-SA-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "attribution": "NRW.Mobidrom",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID": {
+        "title": "NRW.Mobidrom Mobilithek — subscription id(s)",
+        "description": "Subscription id for the NRW.Mobidrom bundled roadworks offer 884461110418108416. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-SA-4.0 — ShareAlike; kept in its own feed so it never folds into a more permissive source."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-bayern",
+    "name": "Bayern via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BAYERN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BAYERN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_BAYERN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_BAYERN_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Bayerische Straßenbauverwaltung",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_BAYERN_SUBSCRIPTION_ID": {
+        "title": "Bayern Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the Bayerische Straßenbauverwaltung offers (110000000002506000, 110000000002507001). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required)."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-bw",
+    "name": "Baden-Württemberg via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BW_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BW_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_BW_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_BW_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Innenministerium Baden-Württemberg (Landesmeldestelle)",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_BW_SUBSCRIPTION_ID": {
+        "title": "Baden-Württemberg Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the BW Landesmeldestelle offer 857127500689977344. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-berlin",
+    "name": "Berlin via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BERLIN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BERLIN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_BERLIN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_BERLIN_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt Berlin",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_BERLIN_SUBSCRIPTION_ID": {
+        "title": "Berlin Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the Berlin SenMVKU offer 801096621061234688. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-brandenburg",
+    "name": "Brandenburg via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Landesbetrieb Straßenwesen Brandenburg",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID": {
+        "title": "Brandenburg Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the Landesbetrieb Straßenwesen Brandenburg offer 636547428851101696. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-bremen",
+    "name": "Bremen via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BREMEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BREMEN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_BREMEN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_BREMEN_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Verkehrsmanagementzentrale Bremen",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_BREMEN_SUBSCRIPTION_ID": {
+        "title": "Bremen Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the Verkehrsmanagementzentrale Bremen offer 608390979298140160. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-hamburg",
+    "name": "Hamburg via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_HAMBURG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_HAMBURG_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Landesbetrieb Straßen, Brücken und Gewässer Hamburg (LSBG)",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID": {
+        "title": "Hamburg Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the LSBG Hamburg offer 110000000003540000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-hessen",
+    "name": "Hessen via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_HESSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_HESSEN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_HESSEN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_HESSEN_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Hessen Mobil – Straßen- und Verkehrsmanagement",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_HESSEN_SUBSCRIPTION_ID": {
+        "title": "Hessen Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the Hessen Mobil offers (841292914668498944, 862010418143330304). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required)."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-mv",
+    "name": "Mecklenburg-Vorpommern via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_MV_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_MV_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_MV_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_MV_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Landesamt für Straßenbau und Verkehr Mecklenburg-Vorpommern",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_MV_SUBSCRIPTION_ID": {
+        "title": "Mecklenburg-Vorpommern Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the LSBV M-V offers (110000000002802000, 818137060259840000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required)."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-niedersachsen",
+    "name": "Niedersachsen via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/zero-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
+    "attribution": "Niedersächsische Landesbehörde für Straßenbau und Verkehr (NLStBV)",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID": {
+        "title": "Niedersachsen Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the NLStBV offers (110000000002749000, 951153778962972672, 656880550985773056) + Hannover 633691473746571264. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-sachsen",
+    "name": "Sachsen via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SACHSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SACHSEN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "Landesamt für Straßenbau und Verkehr Sachsen (LASuV)",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID": {
+        "title": "Sachsen Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the LASuV Sachsen offer 608439575154401280 (+ Leipzig 952541268382826496). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required)."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-sachsen-anhalt",
+    "name": "Sachsen-Anhalt via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Landesstraßenbaubehörde Sachsen-Anhalt",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID": {
+        "title": "Sachsen-Anhalt Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the Landesstraßenbaubehörde Sachsen-Anhalt offer 110000000003150000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-sh",
+    "name": "Schleswig-Holstein via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SH_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SH_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_SH_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_SH_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "Landesbetrieb Straßenbau und Verkehr Schleswig-Holstein (LBV.SH)",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_SH_SUBSCRIPTION_ID": {
+        "title": "Schleswig-Holstein Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the LBV.SH offers (110000000003237002, 110000000003387000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required)."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "mobilithek-thueringen",
+    "name": "Thüringen via Mobilithek",
+    "format": "datex2",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID}",
+    "expandEnv": "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Thüringer Landesamt für Bau und Verkehr",
+    "country": "DE",
+    "privacyUrl": "https://mobilithek.info/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID": {
+        "title": "Thüringen Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the TLBV offer 110000000003051000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required)."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "vejdirektoratet-dk",
+    "name": "Vejdirektoratet (Denmark)",
+    "format": "datex2",
+    "url": "https://data.vd-nap.dk/api/datex2/traffic-events",
+    "auth": {
+      "kind": "query-key",
+      "param": "api-key",
+      "envVar": "DK_VD_API_KEY"
+    },
+    "cadenceSec": 600,
+    "freshnessWindowSec": 1800,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://nap.vd.dk/",
+    "attribution": "Vejdirektoratet (Danish Road Directorate)",
+    "country": "DK",
+    "privacyUrl": "https://www.vejdirektoratet.dk/",
+    "setup": {
+      "DK_VD_API_KEY": {
+        "url": "https://du-portal-ui.dataudveksler.app.vd.dk/data/416/overview",
+        "urlLabel": "Danish data exchanger — dataset 416",
+        "steps": [
+          "Register on the data exchanger (Dataudveksleren) using an eID — choose 'International' for an eID from another European country. Leave the 'Dataowner consent' checkbox unchecked (it's the publisher agreement).",
+          "Create a service account at du-portal-ui.dataudveksler.app.vd.dk/profile/service-accounts.",
+          "Associate the service account with dataset 416 (Traffic Events and Road Works snapshot — NOT 415, which is AMQP-only). The dataset page then shows the data-access URL and the credential the service account presents."
+        ],
+        "notes": "CC-BY-4.0; attribution \"Vejdirektoratet.\" Access is via a service account, not a plain API key — confirm from the dataset page whether its credential is a header/query token or an OAuth2 client-credentials pair.",
+        "title": "Vejdirektoratet key (Denmark)"
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "tarktee-ee",
+    "name": "Tark Tee (Estonia)",
+    "format": "datex2",
+    "url": "https://tarktee.transpordiamet.ee/api/datex2/situation",
+    "auth": {
+      "kind": "query-key",
+      "param": "apiKey",
+      "envVar": "EE_TARKTEE_API_KEY"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://andmed.eesti.ee/information-holders/transpordiamet",
+    "attribution": "Transpordiamet (Estonian Transport Administration)",
+    "country": "EE",
+    "privacyUrl": "https://www.transpordiamet.ee/en",
+    "setup": {
+      "EE_TARKTEE_API_KEY": {
+        "url": "https://tarktee.transpordiamet.ee/#/en/datex-registration",
+        "urlLabel": "Register at Tark Tee",
+        "steps": [
+          "Register for the DATEX II API at tarktee.transpordiamet.ee/#/en/datex-registration (Transpordiamet 'Smart Road' gateway); a key is issued after registration. The old tarktee.mnt.ee domain is retired."
+        ],
+        "notes": "CC-BY-4.0 (commercial OK).",
+        "title": "Tark Tee key (Estonia)"
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "dgt-es",
+    "name": "DGT (Spain)",
+    "format": "datex2",
+    "url": "https://nap.dgt.es/datex2/v3/dgt/SituationPublication/datex2_v36.xml",
+    "cadenceSec": 120,
+    "freshnessWindowSec": 600,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://nap.dgt.es",
+    "attribution": "Dirección General de Tráfico (DGT)",
+    "country": "ES",
+    "privacyUrl": "https://www.dgt.es/protecciondedatos/",
     "enabledByDefault": true
   },
   {
@@ -44,84 +1246,6 @@
     "enabledByDefault": true
   },
   {
-    "id": "autobahn-de",
-    "name": "Autobahn GmbH (Germany)",
-    "format": "autobahn-json",
-    "catalog": {
-      "resolver": "autobahn-index"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "wzdx",
-    "name": "WZDx (United States)",
-    "format": "wzdx",
-    "catalog": {
-      "resolver": "wzdx-registry"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "attribution": "WZDx publishers",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
-  },
-  {
-    "id": "ndw-flow",
-    "name": "NDW traffic speed (Netherlands)",
-    "format": "datex2",
-    "produces": "flow",
-    "url": "https://opendata.ndw.nu/trafficspeed.xml.gz",
-    "gzip": true,
-    "siteTable": {
-      "url": "https://opendata.ndw.nu/measurement.xml.gz",
-      "gzip": true
-    },
-    "cadenceSec": 60,
-    "freshnessWindowSec": 300,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://www.ndw.nu",
-    "attribution": "NDW / Rijkswaterstaat",
-    "country": "NL",
-    "privacyUrl": "https://www.ndw.nu/privacy",
-    "enabledByDefault": true
-  },
-  {
-    "id": "dgt-es",
-    "name": "DGT (Spain)",
-    "format": "datex2",
-    "url": "https://nap.dgt.es/datex2/v3/dgt/SituationPublication/datex2_v36.xml",
-    "cadenceSec": 120,
-    "freshnessWindowSec": 600,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://nap.dgt.es",
-    "attribution": "Dirección General de Tráfico (DGT)",
-    "country": "ES",
-    "privacyUrl": "https://www.dgt.es/protecciondedatos/",
-    "enabledByDefault": true
-  },
-  {
-    "id": "svzbw-de",
-    "name": "MobiData BW roadworks (Baden-Württemberg)",
-    "format": "datex2",
-    "url": "https://api.mobidata-bw.de/datasets/traffic/roadworks/roadworks_svzbw.datex2.xml",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "licenseUrl": "https://www.mobidata-bw.de",
-    "attribution": "MobiData BW / Ministerium für Verkehr Baden-Württemberg (SVZ-BW)",
-    "country": "DE",
-    "privacyUrl": "https://www.mobidata-bw.de/pages/datenschutz",
-    "enabledByDefault": true
-  },
-  {
     "id": "dir-fr",
     "name": "DIR / Bison Futé (France national roads)",
     "format": "datex2",
@@ -133,6 +1257,39 @@
     "attribution": "DIR / Bison Futé",
     "country": "FR",
     "privacyUrl": "https://www.bison-fute.gouv.fr/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "nationalhighways-gb",
+    "name": "National Highways NTIS (England)",
+    "format": "datex2",
+    "url": "https://api.data.nationalhighways.co.uk/roads/v2.0/closures",
+    "auth": {
+      "kind": "header-key",
+      "header": "Ocp-Apim-Subscription-Key",
+      "envVar": "NH_API_KEY"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "OGL-UK-3.0",
+    "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "attribution": "Contains National Highways data © Crown copyright and database right",
+    "country": "GB",
+    "privacyUrl": "https://nationalhighways.co.uk/privacy-notice/",
+    "setup": {
+      "NH_API_KEY": {
+        "url": "https://developer.data.nationalhighways.co.uk/signin",
+        "urlLabel": "National Highways developer portal",
+        "steps": [
+          "Register / sign in at developer.data.nationalhighways.co.uk/signin.",
+          "Subscribe to the 'unlimited' product at developer.data.nationalhighways.co.uk/subscription#product=unlimited (one product grants the APIM key for all NTIS DATEX feeds, incl. Road and Lane Closures v2.0).",
+          "Copy the Ocp-Apim-Subscription-Key from your profile at developer.data.nationalhighways.co.uk/profile."
+        ],
+        "notes": "OGL-UK-3.0; attribution \"Contains National Highways data © Crown copyright and database right.\"",
+        "title": "National Highways NTIS key (England)",
+        "description": "Ocp-Apim-Subscription-Key header value."
+      }
+    },
     "enabledByDefault": true
   },
   {
@@ -152,6 +1309,135 @@
     "attribution": "Hrvatske ceste",
     "country": "HR",
     "privacyUrl": "https://www.hrvatske-ceste.hr/",
+    "setup": {
+      "HC_HR_USERNAME": {
+        "url": "https://www.hrvatske-ceste.hr/",
+        "urlLabel": "Hrvatske ceste",
+        "steps": [
+          "There is no self-service portal — request B2B account credentials from Hrvatske ceste (the promet-info operator), via hrvatske-ceste.hr or the data.gov.hr dataset page."
+        ],
+        "notes": "Open licence (commercial OK); access is gated on the B2B account.",
+        "title": "Hrvatske ceste (Croatia) — B2B username",
+        "description": "HTTP Basic username for the promet-info B2B feed (Croatia)."
+      },
+      "HC_HR_PASSWORD": {
+        "title": "Hrvatske ceste (Croatia) — B2B password"
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "vegagerdin-is",
+    "name": "Vegagerðin road conditions (Iceland)",
+    "format": "geojson",
+    "url": "https://gagnaveita.vegagerdin.is/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=gis:roadconditions_pointincident&outputFormat=application/json",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.vegagerdin.is/",
+    "attribution": "Vegagerðin (Icelandic Road and Coastal Administration)",
+    "country": "IS",
+    "privacyUrl": "https://www.vegagerdin.is/",
+    "enabledByDefault": true,
+    "geojson": {
+      "typeField": "DESCRIPTION",
+      "typeMap": {
+        "Closed": "road_closure",
+        "Road repairs": "roadworks",
+        "Uneven road": "road_condition",
+        "Flying gravel": "hazard",
+        "Animals on the road": "hazard",
+        "Holes in road": "road_condition",
+        "Total axle weight limit": "dimension_restriction"
+      },
+      "defaultType": "hazard",
+      "headlineField": "DESCRIPTION",
+      "updatedField": "CREATIONTIME",
+      "lonField": "X",
+      "latField": "Y"
+    }
+  },
+  {
+    "id": "cita-lu",
+    "name": "CITA (Luxembourg)",
+    "format": "datex2",
+    "url": "https://cita.lu/info_trafic/datex/situationrecord36",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/",
+    "attribution": "CITA (Luxembourg)",
+    "country": "LU",
+    "privacyUrl": "https://data.public.lu/en/pages/legal_notice/",
+    "enabledByDefault": true
+  },
+  {
+    "id": "ndw",
+    "name": "NDW (Netherlands)",
+    "format": "datex2",
+    "url": "http://opendata.ndw.nu/actueel_beeld.xml.gz",
+    "gzip": true,
+    "cadenceSec": 60,
+    "freshnessWindowSec": 300,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://www.ndw.nu",
+    "attribution": "NDW / Rijkswaterstaat",
+    "country": "NL",
+    "privacyUrl": "https://www.ndw.nu/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "ndw-flow",
+    "name": "NDW traffic speed (Netherlands)",
+    "format": "datex2",
+    "produces": "flow",
+    "url": "https://opendata.ndw.nu/trafficspeed.xml.gz",
+    "gzip": true,
+    "cadenceSec": 60,
+    "freshnessWindowSec": 300,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://www.ndw.nu",
+    "attribution": "NDW / Rijkswaterstaat",
+    "country": "NL",
+    "privacyUrl": "https://www.ndw.nu/privacy",
+    "enabledByDefault": true,
+    "siteTable": {
+      "url": "https://opendata.ndw.nu/measurement.xml.gz",
+      "gzip": true
+    }
+  },
+  {
+    "id": "vegvesen-no",
+    "name": "Statens vegvesen (Norway)",
+    "format": "datex2",
+    "url": "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetSituation/pullSnapshotData",
+    "auth": {
+      "kind": "basic",
+      "userEnvVar": "NO_VEGVESEN_USERNAME",
+      "passEnvVar": "NO_VEGVESEN_PASSWORD"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "NLOD-2.0",
+    "licenseUrl": "https://data.norge.no/nlod/en/2.0",
+    "attribution": "Statens vegvesen",
+    "country": "NO",
+    "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
+    "setup": {
+      "NO_VEGVESEN_USERNAME": {
+        "url": "https://www.vegvesen.no/en/fag/technology/open-data/a-selection-of-open-data/what-is-datex/get-access/",
+        "urlLabel": "Statens vegvesen — get DATEX access",
+        "steps": [
+          "Request a free account for the DATEX II server via the 'Get access' page (Open data → What is DATEX → Get access)."
+        ],
+        "cost": "Free",
+        "notes": "NLOD-2.0 (commercial OK).",
+        "title": "Statens vegvesen (Norway) — username"
+      },
+      "NO_VEGVESEN_PASSWORD": {
+        "title": "Statens vegvesen (Norway) — password"
+      }
+    },
     "enabledByDefault": true
   },
   {
@@ -159,6 +1445,14 @@
     "name": "NZTA Road Events (New Zealand)",
     "format": "geojson",
     "url": "https://opendata-nzta.opendata.arcgis.com/datasets/NZTA::road-events.geojson",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://opendata-nzta.opendata.arcgis.com/",
+    "attribution": "NZ Transport Agency Waka Kotahi",
+    "country": "NZ",
+    "privacyUrl": "https://www.nzta.govt.nz/privacy-policy/",
+    "enabledByDefault": true,
     "geojson": {
       "idField": "eventId",
       "typeField": "eventDescription",
@@ -183,82 +1477,58 @@
         "Caution": "low"
       },
       "updatedField": "eventModified"
-    },
+    }
+  },
+  {
+    "id": "gddkia-pl",
+    "name": "GDDKiA road obstructions (Poland)",
+    "format": "gddkia-xml",
+    "url": "https://www.archiwum.gddkia.gov.pl/dane/zima_html/utrdane.xml",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://opendata-nzta.opendata.arcgis.com/",
-    "attribution": "NZ Transport Agency Waka Kotahi",
-    "country": "NZ",
-    "privacyUrl": "https://www.nzta.govt.nz/privacy-policy/",
+    "license": "CC0-1.0",
+    "licenseUrl": "https://dane.gov.pl/",
+    "attribution": "GDDKiA",
+    "country": "PL",
+    "privacyUrl": "https://www.gov.pl/web/gddkia",
     "enabledByDefault": true
   },
   {
-    "id": "berlin-de",
-    "name": "VIZ Berlin roadworks & closures",
-    "format": "geojson",
-    "url": "https://api.viz.berlin.de/daten/baustellen_sperrungen_viz.json",
-    "geojson": {
-      "idField": "id",
-      "typeField": "subtype",
-      "typeMap": {
-        "Baustelle": "roadworks",
-        "Bauarbeiten": "roadworks",
-        "Sperrung": "road_closure",
-        "Störung": "obstruction"
-      },
-      "defaultType": "other",
-      "headlineField": "content",
-      "roadField": "street",
-      "severityField": "severity",
-      "severityMap": {
-        "Vollsperrung": "high",
-        "Fahrtrichtungssperrung": "medium",
-        "keine Sperrung": "low"
-      },
-      "updatedField": "tstore"
-    },
-    "cadenceSec": 600,
-    "freshnessWindowSec": 1800,
-    "license": "dl-de/by-2-0",
-    "licenseUrl": "https://daten.berlin.de/",
-    "attribution": "Verkehrsinformationszentrale Berlin (VIZ)",
-    "country": "DE",
-    "privacyUrl": "https://www.berlin.de/datenschutzerklaerung/",
-    "enabledByDefault": true
-  },
-  {
-    "id": "on-511",
-    "name": "Ontario 511 (Canada)",
-    "format": "ibi511-json",
-    "url": "https://511on.ca/api/v2/get/event?format=json",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "OGL-ON",
-    "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
-    "attribution": "Contains information licensed under the Open Government Licence – Ontario",
-    "country": "CA",
-    "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
-    "enabledByDefault": true
-  },
-  {
-    "id": "ny-511",
-    "name": "511NY (New York)",
-    "format": "ibi511-json",
-    "url": "https://511ny.org/api/v2/get/event?format=json",
+    "id": "trafikverket-se",
+    "name": "Trafikverket (Sweden)",
+    "format": "datex2",
+    "url": [
+      "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/roadworks/sit:situation",
+      "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/accident/sit:situation"
+    ],
     "auth": {
       "kind": "query-key",
-      "param": "key",
-      "envVar": "NY_511_API_KEY"
+      "param": "authenticationkey",
+      "envVar": "TRAFIKVERKET_API_KEY"
     },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "511NY-DAA",
-    "licenseUrl": "https://511ny.org/developers/daa",
-    "attribution": "Powered by 511NY",
-    "country": "US",
-    "privacyUrl": "https://511ny.org/privacy",
-    "enabledByDefault": true
+    "license": "CC0-1.0",
+    "licenseUrl": "https://data.trafikverket.se/",
+    "attribution": "Trafikverket",
+    "country": "SE",
+    "privacyUrl": "https://www.trafikverket.se/integritetspolicy/",
+    "setup": {
+      "TRAFIKVERKET_API_KEY": {
+        "url": "https://data.trafikverket.se/oauth2/Account/register",
+        "urlLabel": "Sign up at Trafikverket",
+        "steps": [
+          "Sign up at data.trafikverket.se/oauth2/Account/register.",
+          "Create an authentication key under data.trafikverket.se/mypage/systems (My systems). The key is sent in the POST request body."
+        ],
+        "cost": "Free",
+        "notes": "CC0 — no restrictions. API endpoint: api.trafikinfo.trafikverket.se/v2/data.json (the bare host has no web page).",
+        "title": "Trafikverket key (Sweden)",
+        "description": "Authentication key, sent in the POST request body."
+      }
+    },
+    "enabledByDefault": true,
+    "posListLonLat": true
   },
   {
     "id": "lta-sg",
@@ -277,146 +1547,19 @@
     "attribution": "Land Transport Authority (Singapore)",
     "country": "SG",
     "privacyUrl": "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mtq-qc",
-    "name": "MTQ roadworks (Québec)",
-    "format": "geojson",
-    "url": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:chantiers_mtmdet&outputformat=geojson",
-    "geojson": {
-      "idField": "identifiant",
-      "defaultType": "roadworks",
-      "headlineField": "identificationDesTravaux",
-      "descriptionField": "descriptionFrancais",
-      "roadField": "routeAutoroute",
-      "updatedField": "miseAJour"
+    "setup": {
+      "LTA_ACCOUNT_KEY": {
+        "url": "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
+        "urlLabel": "Request LTA API access",
+        "steps": [
+          "Request an API account via the form at datamall.lta.gov.sg/content/datamall/en/request-for-api.html.",
+          "The AccountKey is emailed to you."
+        ],
+        "cost": "Free",
+        "notes": "Singapore ODL (commercial OK); attribution to the Land Transport Authority.",
+        "title": "LTA DataMall AccountKey (Singapore)"
+      }
     },
-    "cadenceSec": 600,
-    "freshnessWindowSec": 1800,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://www.donneesquebec.ca/",
-    "attribution": "Ministère des Transports du Québec (MTQ)",
-    "country": "CA",
-    "privacyUrl": "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
-    "enabledByDefault": true
-  },
-  {
-    "id": "flanders-be",
-    "name": "Verkeerscentrum Vlaanderen (Flanders)",
-    "format": "datex2",
-    "url": "https://www.verkeerscentrum.be/uitwisseling/datex2v3full",
-    "cadenceSec": 120,
-    "freshnessWindowSec": 600,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://www.verkeerscentrum.be/",
-    "attribution": "Verkeerscentrum Vlaanderen",
-    "country": "BE",
-    "privacyUrl": "https://www.verkeerscentrum.be/",
-    "enabledByDefault": true
-  },
-  {
-    "id": "brussels-be",
-    "name": "Bruxelles Mobilité traffic events",
-    "format": "geojson",
-    "url": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items?f=json&limit=1000",
-    "geojson": {
-      "idField": "fid",
-      "typeField": "datex_codes",
-      "typeMap": {
-        "RWK": "roadworks",
-        "EMR": "public_event",
-        "ACC": "accident",
-        "JAM": "congestion"
-      },
-      "defaultType": "other",
-      "headlineField": "consequences_fr",
-      "roadField": "location_fr",
-      "severityField": "importance",
-      "severityMap": {
-        "0": "low",
-        "1": "low",
-        "2": "medium",
-        "3": "high",
-        "4": "critical"
-      },
-      "updatedField": "last_update"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://data.mobility.brussels/",
-    "attribution": "Bruxelles Mobilité / Brussel Mobiliteit",
-    "country": "BE",
-    "privacyUrl": "https://mobilite-mobiliteit.brussels/en/privacy",
-    "enabledByDefault": true
-  },
-  {
-    "id": "cita-lu",
-    "name": "CITA (Luxembourg)",
-    "format": "datex2",
-    "url": "https://cita.lu/info_trafic/datex/situationrecord36",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/",
-    "attribution": "CITA (Luxembourg)",
-    "country": "LU",
-    "privacyUrl": "https://data.public.lu/en/pages/legal_notice/",
-    "enabledByDefault": true
-  },
-  {
-    "id": "vegagerdin-is",
-    "name": "Vegagerðin road conditions (Iceland)",
-    "format": "geojson",
-    "url": "https://gagnaveita.vegagerdin.is/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=gis:roadconditions_pointincident&outputFormat=application/json",
-    "geojson": {
-      "lonField": "X",
-      "latField": "Y",
-      "typeField": "DESCRIPTION",
-      "typeMap": {
-        "Closed": "road_closure",
-        "Road repairs": "roadworks",
-        "Uneven road": "road_condition",
-        "Flying gravel": "hazard",
-        "Animals on the road": "hazard",
-        "Holes in road": "road_condition",
-        "Total axle weight limit": "dimension_restriction"
-      },
-      "defaultType": "hazard",
-      "headlineField": "DESCRIPTION",
-      "updatedField": "CREATIONTIME"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://www.vegagerdin.is/",
-    "attribution": "Vegagerðin (Icelandic Road and Coastal Administration)",
-    "country": "IS",
-    "privacyUrl": "https://www.vegagerdin.is/",
-    "enabledByDefault": true
-  },
-  {
-    "id": "trafikverket-se",
-    "name": "Trafikverket (Sweden)",
-    "format": "datex2",
-    "url": [
-      "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/roadworks/sit:situation",
-      "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/accident/sit:situation"
-    ],
-    "auth": {
-      "kind": "query-key",
-      "param": "authenticationkey",
-      "envVar": "TRAFIKVERKET_API_KEY"
-    },
-    "posListLonLat": true,
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://data.trafikverket.se/",
-    "attribution": "Trafikverket",
-    "country": "SE",
-    "privacyUrl": "https://www.trafikverket.se/integritetspolicy/",
     "enabledByDefault": true
   },
   {
@@ -439,170 +1582,22 @@
     "attribution": "DARS / DRSI (NAP Slovenia)",
     "country": "SI",
     "privacyUrl": "https://nap.si/",
-    "enabledByDefault": true
-  },
-  {
-    "id": "vegvesen-no",
-    "name": "Statens vegvesen (Norway)",
-    "format": "datex2",
-    "url": "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetSituation/pullSnapshotData",
-    "auth": {
-      "kind": "basic",
-      "userEnvVar": "NO_VEGVESEN_USERNAME",
-      "passEnvVar": "NO_VEGVESEN_PASSWORD"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "NLOD-2.0",
-    "licenseUrl": "https://data.norge.no/nlod/en/2.0",
-    "attribution": "Statens vegvesen",
-    "country": "NO",
-    "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
-    "enabledByDefault": true
-  },
-  {
-    "id": "livetraffic-nsw",
-    "name": "Live Traffic NSW (New South Wales)",
-    "format": "geojson",
-    "url": [
-      "https://api.transport.nsw.gov.au/v1/live/hazards/incident/open",
-      "https://api.transport.nsw.gov.au/v1/live/hazards/roadwork/open",
-      "https://api.transport.nsw.gov.au/v1/live/hazards/flood/open",
-      "https://api.transport.nsw.gov.au/v1/live/hazards/fire/open",
-      "https://api.transport.nsw.gov.au/v1/live/hazards/majorevent/open",
-      "https://api.transport.nsw.gov.au/v1/live/hazards/alpine/open"
-    ],
-    "auth": {
-      "kind": "header-key",
-      "header": "Authorization",
-      "envVar": "NSW_TRANSPORT_API_KEY",
-      "valuePrefix": "apikey "
-    },
-    "geojson": {
-      "typeField": "mainCategory",
-      "typeMap": {
-        "Incident": "accident",
-        "Road Work": "roadworks",
-        "Flooding": "weather",
-        "Fire": "hazard",
-        "Major Event": "public_event",
-        "Alpine": "weather"
+    "setup": {
+      "NAP_SI_USERNAME": {
+        "url": "https://www.nap.si/en/registration",
+        "urlLabel": "Register at NAP Slovenia",
+        "steps": [
+          "Register at nap.si/en/registration (DARS / DRSI).",
+          "Request access and tick exactly the two DATEX II v3.3 datasets (under 'Other contents', XML, english): 'Traffic events (DATEX II v3.3)' and 'Roadworks (DATEX II v3.3)'. Leave everything else unticked.",
+          "Fill the Purpose/Description (min. 100 chars), set a Time period, agree to the terms, and submit. Ready-to-paste purpose: OpenMapX (https://openmapx.com) is a free, open-source maps and navigation app; we ingest the Traffic events and Roadworks DATEX II v3.3 datasets to display live road conditions and route around closures and roadworks in Slovenia, with CC-BY-SA attribution shown to users."
+        ],
+        "notes": "CC-BY-SA (ShareAlike). The B2B host (b2b.ncup.si) is credential-gated; the NAP account is sent as HTTP Basic — confirm the exact scheme when granted.",
+        "title": "NAP Slovenia (promet.si) — username"
       },
-      "defaultType": "other",
-      "headlineField": "headline",
-      "descriptionField": "otherAdvice"
+      "NAP_SI_PASSWORD": {
+        "title": "NAP Slovenia (promet.si) — password"
+      }
     },
-    "cadenceSec": 180,
-    "freshnessWindowSec": 600,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://opendata.transport.nsw.gov.au/dataset/live-traffic-hazards",
-    "attribution": "Transport for NSW",
-    "country": "AU",
-    "privacyUrl": "https://www.transport.nsw.gov.au/privacy-statement",
-    "enabledByDefault": true
-  },
-  {
-    "id": "trafficsa-au",
-    "name": "Traffic SA (South Australia)",
-    "format": "geojson",
-    "url": [
-      "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",
-      "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/1/query?where=1%3D1&outFields=*&f=geojson"
-    ],
-    "geojson": {
-      "idField": "ROADWORKS_AND_INCIDENTS_ID",
-      "typeField": "REC_TYPE",
-      "typeMap": {
-        "ROADWORKS": "roadworks",
-        "24HR ROADWORKS": "roadworks",
-        "EMERGENCY WATERWORKS": "roadworks",
-        "SIGNAL FAULT": "equipment_fault",
-        "INCIDENT": "obstruction",
-        "COLLISION": "accident",
-        "CRASH": "accident",
-        "FLOODING": "weather",
-        "EVENT": "public_event",
-        "ROAD CLOSURE": "road_closure",
-        "HAZARD": "hazard"
-      },
-      "defaultType": "other",
-      "headlineField": "DESCRIPTION",
-      "roadField": "ROAD_NO"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
-    "attribution": "Department for Infrastructure and Transport (South Australia)",
-    "country": "AU",
-    "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
-    "enabledByDefault": true
-  },
-  {
-    "id": "qld-traffic",
-    "name": "QLDTraffic (Queensland)",
-    "format": "geojson",
-    "url": "https://api.qldtraffic.qld.gov.au/v1/events",
-    "auth": {
-      "kind": "query-key",
-      "param": "apikey",
-      "envVar": "QLD_TRAFFIC_API_KEY",
-      "defaultValue": "3e83add325cbb69ac4d8e5bf433d770b"
-    },
-    "geojson": {
-      "idField": "id",
-      "typeField": "event_type",
-      "typeMap": {
-        "Hazard": "hazard",
-        "Crash": "accident",
-        "Congestion": "congestion",
-        "Roadworks": "roadworks",
-        "Special event": "public_event",
-        "Flooding": "weather"
-      },
-      "defaultType": "other",
-      "headlineField": "description",
-      "descriptionField": "information",
-      "roadField": "road_summary.road_name",
-      "severityField": "event_priority",
-      "severityMap": {
-        "Red Alert": "critical",
-        "High": "high",
-        "Medium": "medium",
-        "Low": "low"
-      },
-      "updatedField": "last_updated"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://www.qldtraffic.qld.gov.au/",
-    "attribution": "State of Queensland (Department of Transport and Main Roads)",
-    "country": "AU",
-    "privacyUrl": "https://www.qld.gov.au/legal/privacy",
-    "enabledByDefault": true
-  },
-  {
-    "id": "ba-cortes-ar",
-    "name": "Buenos Aires road closures (cortes)",
-    "format": "geojson",
-    "url": "https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=${BA_CLIENT_ID}&client_secret=${BA_CLIENT_SECRET}",
-    "requiredEnv": [
-      "BA_CLIENT_ID",
-      "BA_CLIENT_SECRET"
-    ],
-    "geojson": {
-      "defaultType": "road_closure",
-      "headlineField": "nombre",
-      "descriptionField": "descripcion"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC-BY-2.5-AR",
-    "licenseUrl": "https://data.buenosaires.gob.ar/",
-    "attribution": "Gobierno de la Ciudad de Buenos Aires",
-    "country": "AR",
-    "privacyUrl": "https://www.buenosaires.gob.ar/politicas-de-privacidad",
     "enabledByDefault": true
   },
   {
@@ -610,9 +1605,15 @@
     "name": "Longdo Traffic Events (Thailand)",
     "format": "flatjson",
     "url": "https://event.longdo.com/feed/json",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.longdo.com/",
+    "attribution": "Longdo Traffic / iTIC Foundation",
+    "country": "TH",
+    "privacyUrl": "https://map.longdo.com/",
+    "enabledByDefault": true,
     "geojson": {
-      "lonField": "longitude",
-      "latField": "latitude",
       "idField": "eid",
       "typeField": "type",
       "typeMap": {
@@ -621,524 +1622,58 @@
       "defaultType": "other",
       "headlineField": "title_en",
       "descriptionField": "description_en",
-      "updatedField": "start"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://www.longdo.com/",
-    "attribution": "Longdo Traffic / iTIC Foundation",
-    "country": "TH",
-    "privacyUrl": "https://map.longdo.com/",
-    "enabledByDefault": true
+      "updatedField": "start",
+      "lonField": "longitude",
+      "latField": "latitude"
+    }
   },
   {
-    "id": "gddkia-pl",
-    "name": "GDDKiA road obstructions (Poland)",
-    "format": "gddkia-xml",
-    "url": "https://www.archiwum.gddkia.gov.pl/dane/zima_html/utrdane.xml",
+    "id": "wzdx",
+    "name": "WZDx (United States)",
+    "format": "wzdx",
+    "catalog": {
+      "resolver": "wzdx-registry"
+    },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "CC0-1.0",
-    "licenseUrl": "https://dane.gov.pl/",
-    "attribution": "GDDKiA",
-    "country": "PL",
-    "privacyUrl": "https://www.gov.pl/web/gddkia",
+    "attribution": "WZDx publishers",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
     "enabledByDefault": true
   },
   {
-    "id": "nationalhighways-gb",
-    "name": "National Highways NTIS (England)",
-    "format": "datex2",
-    "url": "https://api.data.nationalhighways.co.uk/roads/v2.0/closures",
-    "auth": {
-      "kind": "header-key",
-      "header": "Ocp-Apim-Subscription-Key",
-      "envVar": "NH_API_KEY"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "OGL-UK-3.0",
-    "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
-    "attribution": "Contains National Highways data © Crown copyright and database right",
-    "country": "GB",
-    "privacyUrl": "https://nationalhighways.co.uk/privacy-notice/",
-    "enabledByDefault": true
-  },
-  {
-    "id": "vejdirektoratet-dk",
-    "name": "Vejdirektoratet (Denmark)",
-    "format": "datex2",
-    "url": "https://data.vd-nap.dk/api/datex2/traffic-events",
+    "id": "ny-511",
+    "name": "511NY (New York)",
+    "format": "ibi511-json",
+    "url": "https://511ny.org/api/v2/get/event?format=json",
     "auth": {
       "kind": "query-key",
-      "param": "api-key",
-      "envVar": "DK_VD_API_KEY"
-    },
-    "cadenceSec": 600,
-    "freshnessWindowSec": 1800,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://nap.vd.dk/",
-    "attribution": "Vejdirektoratet (Danish Road Directorate)",
-    "country": "DK",
-    "privacyUrl": "https://www.vejdirektoratet.dk/",
-    "enabledByDefault": true
-  },
-  {
-    "id": "asfinag-at",
-    "name": "ASFINAG events (Austria)",
-    "format": "datex2",
-    "url": [
-      "https://contentportal.asfinag.at/datex2/v3/unplanned-events",
-      "https://contentportal.asfinag.at/datex2/v3/planned-events"
-    ],
-    "auth": {
-      "kind": "basic",
-      "userEnvVar": "AT_ASFINAG_USERNAME",
-      "passEnvVar": "AT_ASFINAG_PASSWORD"
+      "param": "key",
+      "envVar": "NY_511_API_KEY"
     },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://www.mobilitydata.gv.at/en/data",
-    "attribution": "ASFINAG",
-    "country": "AT",
-    "privacyUrl": "https://www.asfinag.at/datenschutz/",
-    "enabledByDefault": true
-  },
-  {
-    "id": "tarktee-ee",
-    "name": "Tark Tee (Estonia)",
-    "format": "datex2",
-    "url": "https://tarktee.transpordiamet.ee/api/datex2/situation",
-    "auth": {
-      "kind": "query-key",
-      "param": "apiKey",
-      "envVar": "EE_TARKTEE_API_KEY"
+    "license": "511NY-DAA",
+    "licenseUrl": "https://511ny.org/developers/daa",
+    "attribution": "Powered by 511NY",
+    "country": "US",
+    "privacyUrl": "https://511ny.org/privacy",
+    "setup": {
+      "NY_511_API_KEY": {
+        "url": "https://511ny.org/my511/register",
+        "urlLabel": "Create a 511NY account",
+        "steps": [
+          "Create an account at 511ny.org/my511/register.",
+          "Request an API key at 511ny.org/developers/help. The form asks for your reasons, and submitting accepts the Developer's Access Agreement (DAA), which permits commercial redistribution.",
+          "Ready-to-paste reason: OpenMapX (https://openmapx.com) is a free, open-source maps and navigation app. I would use the 511NY events feed to display live incidents, road work, and closures on the map and to help travelers route around active disruptions in New York, with 'Powered by 511NY' attribution shown to users. It serves the general public at no charge; the data is shown only to end users, not resold or provided to any third-party data broker."
+        ],
+        "cost": "Free",
+        "notes": "Attribution required: \"Powered by 511NY\".",
+        "title": "511NY API key (New York)",
+        "description": "Query key for the 511NY events feed."
+      }
     },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://andmed.eesti.ee/information-holders/transpordiamet",
-    "attribution": "Transpordiamet (Estonian Transport Administration)",
-    "country": "EE",
-    "privacyUrl": "https://www.transpordiamet.ee/en",
-    "enabledByDefault": true
-  },
-  {
-    "id": "verkehr-nrw-de",
-    "name": "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_NRW_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_NRW_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/zero-2-0",
-    "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
-    "attribution": "Landesverkehrszentrale NRW (Straßen.NRW)",
-    "country": "DE",
-    "privacyUrl": "https://www.strassen.nrw.de/de/datenschutz.html",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-nrw-kommunal",
-    "name": "NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/zero-2-0",
-    "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
-    "attribution": "Städte und Kreise in Nordrhein-Westfalen (via Mobilithek)",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-nrw-mobidrom",
-    "name": "NRW.Mobidrom bundled roadworks via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC-BY-SA-4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-    "attribution": "NRW.Mobidrom",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-bayern",
-    "name": "Bayern via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BAYERN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BAYERN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_BAYERN_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_BAYERN_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "GeoNutzV",
-    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
-    "attribution": "Bayerische Straßenbauverwaltung",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-bw",
-    "name": "Baden-Württemberg via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BW_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BW_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_BW_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_BW_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
-    "attribution": "Innenministerium Baden-Württemberg (Landesmeldestelle)",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-berlin",
-    "name": "Berlin via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BERLIN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BERLIN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_BERLIN_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_BERLIN_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
-    "attribution": "Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt Berlin",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-brandenburg",
-    "name": "Brandenburg via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
-    "attribution": "Landesbetrieb Straßenwesen Brandenburg",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-bremen",
-    "name": "Bremen via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BREMEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BREMEN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_BREMEN_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_BREMEN_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
-    "attribution": "Verkehrsmanagementzentrale Bremen",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-hamburg",
-    "name": "Hamburg via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_HAMBURG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_HAMBURG_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
-    "attribution": "Landesbetrieb Straßen, Brücken und Gewässer Hamburg (LSBG)",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-hessen",
-    "name": "Hessen via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_HESSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_HESSEN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_HESSEN_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_HESSEN_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "GeoNutzV",
-    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
-    "attribution": "Hessen Mobil – Straßen- und Verkehrsmanagement",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-mv",
-    "name": "Mecklenburg-Vorpommern via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_MV_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_MV_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_MV_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_MV_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "GeoNutzV",
-    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
-    "attribution": "Landesamt für Straßenbau und Verkehr Mecklenburg-Vorpommern",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-niedersachsen",
-    "name": "Niedersachsen via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/zero-2-0",
-    "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
-    "attribution": "Niedersächsische Landesbehörde für Straßenbau und Verkehr (NLStBV)",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-sachsen",
-    "name": "Sachsen via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SACHSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SACHSEN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "Landesamt für Straßenbau und Verkehr Sachsen (LASuV)",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-sachsen-anhalt",
-    "name": "Sachsen-Anhalt via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
-    "attribution": "Landesstraßenbaubehörde Sachsen-Anhalt",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-sh",
-    "name": "Schleswig-Holstein via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SH_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SH_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_SH_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_SH_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC-BY-4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
-    "attribution": "Landesbetrieb Straßenbau und Verkehr Schleswig-Holstein (LBV.SH)",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "mobilithek-thueringen",
-    "name": "Thüringen via Mobilithek",
-    "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID",
-    "auth": {
-      "kind": "mtls",
-      "certEnvVar": "MOBILITHEK_CERT",
-      "keyEnvVar": "MOBILITHEK_KEY"
-    },
-    "requiredEnv": [
-      "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID"
-    ],
-    "requestHeaders": {
-      "Accept-Encoding": "gzip"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "GeoNutzV",
-    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
-    "attribution": "Thüringer Landesamt für Bau und Verkehr",
-    "country": "DE",
-    "privacyUrl": "https://mobilithek.info/datenschutz",
     "enabledByDefault": true
   },
   {
@@ -3861,32 +4396,6 @@
     "name": "Autobahn A620 — closure",
     "format": "autobahn-json",
     "url": "https://verkehr.autobahn.de/o/autobahn/A620/services/closure",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "autobahn-a623-warning",
-    "name": "Autobahn A623 — warning",
-    "format": "autobahn-json",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/warning",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "autobahn-a623-closure",
-    "name": "Autobahn A623 — closure",
-    "format": "autobahn-json",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/closure",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "dl-de/by-2-0",
