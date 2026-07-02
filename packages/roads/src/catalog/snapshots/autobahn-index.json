@@ -2392,32 +2392,6 @@
     "enabledByDefault": true
   },
   {
-    "id": "autobahn-a623-warning",
-    "name": "Autobahn A623 — warning",
-    "format": "autobahn-json",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/warning",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "autobahn-a623-closure",
-    "name": "Autobahn A623 — closure",
-    "format": "autobahn-json",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/closure",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
-  },
-  {
     "id": "autobahn-a640-warning",
     "name": "Autobahn A640 — warning",
     "format": "autobahn-json",
