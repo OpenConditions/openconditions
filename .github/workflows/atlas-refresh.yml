@@ -27,6 +27,11 @@ jobs:
     permissions:
       contents: write # push the refresh branch
       pull-requests: write # open the refresh PR
+    env:
+      # Don't run the local Husky git hooks (pre-push runs the full test suite) when
+      # the create-pull-request action makes its internal commit/push — CI already
+      # built the packages, and a data-only refresh shouldn't re-run the suite here.
+      HUSKY: "0"
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
