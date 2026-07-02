@@ -42,17 +42,44 @@ jobs:
       - run: pnpm install --frozen-lockfile
       # Build so export-atlas can import the compiled @openconditions/roads barrel.
       - run: pnpm build
+      # Snapshot the resolved-feed counts BEFORE regenerating, so the guard below
+      # can detect an abnormal drop (a broken resolver or an upstream outage).
+      - name: Baseline resolved-feed counts
+        id: baseline
+        run: |
+          node -e "const a=JSON.parse(require('fs').readFileSync('packages/roads/atlas/roads.json5','utf8'));const c=p=>a.filter(f=>String(f.id).startsWith(p)).length;console.log('wzdx='+c('wzdx-'));console.log('autobahn='+c('autobahn-'))" >> "$GITHUB_OUTPUT"
       # Live-resolve the WZDx registry + Autobahn index (both public, no secrets),
-      # rewriting atlas/roads.json5 and the vendored snapshots. Falls through to the
-      # committed snapshots on a transient upstream failure (resolveWithSnapshot).
+      # rewriting atlas/roads.json5 and the vendored snapshots. resolveWithSnapshot
+      # falls back to the committed snapshot on a transient upstream failure.
       - name: Regenerate atlas + snapshots
         run: pnpm --filter @openconditions/roads export:atlas
-      # Opens/updates a PR ONLY when the atlas or a snapshot actually changed;
-      # a no-op run creates no PR. Uses a PAT if provided (so required CI runs on
-      # the PR and it can be auto-merged); otherwise the default token (PR still
-      # opens, but you merge it manually — GITHUB_TOKEN-authored PRs don't trigger
-      # the required status checks).
+      # The atlas is built from untrusted third-party registries and CI does not
+      # validate its content — so refuse to open/merge a refresh that abnormally
+      # loses feeds (below an absolute floor, or >30% under the pre-run baseline).
+      # A tripped guard fails the job (no PR, no auto-merge) so a human investigates.
+      - name: Guard against an abnormal feed drop
+        env:
+          OLD_WZDX: ${{ steps.baseline.outputs.wzdx }}
+          OLD_AUTOBAHN: ${{ steps.baseline.outputs.autobahn }}
+        run: |
+          counts=$(node -e "const a=JSON.parse(require('fs').readFileSync('packages/roads/atlas/roads.json5','utf8'));const c=p=>a.filter(f=>String(f.id).startsWith(p)).length;console.log(c('wzdx-')+' '+c('autobahn-'))")
+          NEW_WZDX=${counts% *}; NEW_AUTOBAHN=${counts#* }
+          echo "wzdx: ${OLD_WZDX} -> ${NEW_WZDX} | autobahn: ${OLD_AUTOBAHN} -> ${NEW_AUTOBAHN}"
+          fail=0
+          if [ "$NEW_WZDX" -lt 10 ]; then echo "::error::WZDx feeds ${NEW_WZDX} below floor 10"; fail=1; fi
+          if [ "$NEW_AUTOBAHN" -lt 100 ]; then echo "::error::Autobahn feeds ${NEW_AUTOBAHN} below floor 100"; fail=1; fi
+          if [ "${OLD_WZDX:-0}" -gt 0 ] && [ "$NEW_WZDX" -lt $((OLD_WZDX * 70 / 100)) ]; then echo "::error::WZDx dropped >30% (${OLD_WZDX} -> ${NEW_WZDX})"; fail=1; fi
+          if [ "${OLD_AUTOBAHN:-0}" -gt 0 ] && [ "$NEW_AUTOBAHN" -lt $((OLD_AUTOBAHN * 70 / 100)) ]; then echo "::error::Autobahn dropped >30% (${OLD_AUTOBAHN} -> ${NEW_AUTOBAHN})"; fail=1; fi
+          if [ "$fail" -ne 0 ]; then
+            echo "Abnormal feed drop — refusing to open a refresh PR. Check the resolvers / upstream registries."
+            exit 1
+          fi
+          echo "Feed counts healthy."
+      # Opens/updates a PR ONLY when the atlas or a snapshot actually changed; a
+      # no-op run creates no PR. Uses a PAT if provided (so required CI runs on the
+      # PR and it can auto-merge); otherwise the default token (PR opens, merge by hand).
       - name: Open a refresh PR if the atlas changed
+        id: cpr
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           token: ${{ secrets.ATLAS_PAT || secrets.GITHUB_TOKEN }}
@@ -66,9 +93,15 @@ jobs:
           body: |
             Automated weekly regeneration of `packages/roads/atlas/roads.json5` and the
             vendored catalog snapshots (`packages/roads/src/catalog/snapshots/*.json`)
-            from the live WZDx registry + Autobahn index.
+            from the live WZDx registry + Autobahn index. Feed counts passed the drop guard.
 
-            This is a generated artifact — review the diff for anything surprising (a
-            resolver breaking would show up as a large drop in resolved feeds), then merge.
-            The refreshed snapshots reach production on the next image build/deploy.
+            Generated artifact — auto-merges once required CI is green. The refreshed
+            snapshots reach production on the next image build/deploy.
           labels: automated, atlas
+      # Auto-merge a healthy refresh once required CI passes (the drop guard already
+      # ran; a PAT-authored PR triggers the required checks so this is protected).
+      - name: Enable auto-merge on the refresh PR
+        if: steps.cpr.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ secrets.ATLAS_PAT || secrets.GITHUB_TOKEN }}
+        run: gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --auto --squash --repo ${{ github.repository }}
