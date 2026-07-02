@@ -1,0 +1,69 @@
+name: Atlas refresh
+
+# Regenerates the road-conditions atlas + the vendored catalog snapshots on a
+# schedule. The atlas is ~83% live-resolved feeds (WZDx registry + Autobahn
+# index), so it is NON-deterministic and network-bound — it must NOT be a git
+# hook (a pre-commit/pre-push drift-check would flap on every upstream change).
+# A weekly scheduled run keeps the public commons snapshot and the bundled
+# runtime fallback fresh, opening a PR only when something actually changed.
+
+on:
+  schedule:
+    - cron: "15 5 * * 3" # Wednesdays 05:15 UTC (staggered off the Monday liveness/link jobs)
+  workflow_dispatch:
+
+concurrency:
+  group: atlas-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    name: regenerate the atlas + catalog snapshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # push the refresh branch
+      pull-requests: write # open the refresh PR
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Build so export-atlas can import the compiled @openconditions/roads barrel.
+      - run: pnpm build
+      # Live-resolve the WZDx registry + Autobahn index (both public, no secrets),
+      # rewriting atlas/roads.json5 and the vendored snapshots. Falls through to the
+      # committed snapshots on a transient upstream failure (resolveWithSnapshot).
+      - name: Regenerate atlas + snapshots
+        run: pnpm --filter @openconditions/roads export:atlas
+      # Opens/updates a PR ONLY when the atlas or a snapshot actually changed;
+      # a no-op run creates no PR. Uses a PAT if provided (so required CI runs on
+      # the PR and it can be auto-merged); otherwise the default token (PR still
+      # opens, but you merge it manually — GITHUB_TOKEN-authored PRs don't trigger
+      # the required status checks).
+      - name: Open a refresh PR if the atlas changed
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
+        with:
+          token: ${{ secrets.ATLAS_PAT || secrets.GITHUB_TOKEN }}
+          add-paths: |
+            packages/roads/atlas/roads.json5
+            packages/roads/src/catalog/snapshots/*.json
+          branch: chore/atlas-refresh
+          delete-branch: true
+          commit-message: "chore(roads): refresh road-conditions atlas + catalog snapshots"
+          title: "chore(roads): weekly atlas + catalog-snapshot refresh"
+          body: |
+            Automated weekly regeneration of `packages/roads/atlas/roads.json5` and the
+            vendored catalog snapshots (`packages/roads/src/catalog/snapshots/*.json`)
+            from the live WZDx registry + Autobahn index.
+
+            This is a generated artifact — review the diff for anything surprising (a
+            resolver breaking would show up as a large drop in resolved feeds), then merge.
+            The refreshed snapshots reach production on the next image build/deploy.
+          labels: automated, atlas
