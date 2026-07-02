@@ -41,4 +41,28 @@ describe("renderReport", () => {
     expect(md.startsWith("Automated feed-liveness check")).toBe(true);
     expect(md).toContain("1 failing");
   });
+
+  it("sanitizes untrusted feed error text so it cannot @-mention or break Markdown", () => {
+    const md = renderReport([
+      {
+        domain: "roads",
+        feed: {
+          id: "evil-feed",
+          name: "Evil `Feed`",
+          country: "@evil",
+          maintainers: [{ name: "Ada", github: "ada" }],
+        },
+        message: "boom @evil please review `x` and\nmerge",
+      },
+    ]);
+
+    // The untrusted message's @-mention must be de-linked, not raw.
+    expect(md).not.toMatch(/[^@]@evil\b/);
+    expect(md).toContain("@​evil");
+    // A trusted maintainer @-mention must still work normally.
+    expect(md).toContain("@ada");
+    // Backticks from untrusted fields must not survive verbatim.
+    expect(md).not.toContain("`Feed`");
+    expect(md).not.toContain("`x`");
+  });
 });
