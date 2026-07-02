@@ -168,6 +168,9 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../core
+      '@openconditions/ingest-framework':
+        specifier: workspace:*
+        version: link:../ingest-framework
       fast-xml-parser:
         specifier: ^5.8.0
         version: 5.9.3
