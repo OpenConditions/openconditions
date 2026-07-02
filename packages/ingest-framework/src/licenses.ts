@@ -138,6 +138,14 @@ export const LICENSES: Record<string, LicenseInfo> = Object.fromEntries([
     shareAlike: false,
     commercialOk: true,
   }),
+  L({
+    id: "NYC-Open-Data",
+    name: "NYC Open Data Terms of Use",
+    url: "https://www.nyc.gov/html/data/terms.html",
+    attributionRequired: false,
+    shareAlike: false,
+    commercialOk: true,
+  }),
 ]);
 
 /** Case-insensitive lookup of a license id. */

@@ -432,9 +432,20 @@ describe("FEED_SOURCES", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("loads every feed from the data files (all 51 migrated)", () => {
-    expect(FEED_SOURCES.length).toBe(51);
+  it("loads every feed from the data files (all 52 migrated)", () => {
+    expect(FEED_SOURCES.length).toBe(52);
     expect(new Set(FEED_SOURCES.map((f) => f.id)).size).toBe(FEED_SOURCES.length);
+  });
+
+  it("includes nyc-dot-speed-us as a keyless nyc-dot-speed-json flow feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "nyc-dot-speed-us");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("nyc-dot-speed-json");
+    expect(feed!.produces).toBe("flow");
+    expect(feed!.license).toBe("NYC-Open-Data");
+    expect(feed!.country).toBe("US");
+    expect(feed!.auth).toBeUndefined();
+    expect(feed!.enabledByDefault).toBe(true);
   });
 });
 

@@ -21,6 +21,7 @@ import { parseDigitrafficFlow, parseDatexMeasuredData } from "./flow.js";
 import type { FlowParseResult } from "./flow.js";
 import { parseFintrafficFlow } from "./flow-fintraffic.js";
 import { parseWebtrisFlow } from "./flow-webtris.js";
+import { parseNycDotFlow } from "./flow-nycdot.js";
 import type { SourceDescriptor } from "./types.js";
 
 // FeedAuth now lives in @openconditions/ingest-framework; re-exported here so
@@ -140,6 +141,7 @@ export function flowParserFor(format: SourceFormat): FlowParserFn {
   if (format === "datex2") return parseDatexMeasuredData;
   if (format === "fintraffic-tms-json") return parseFintrafficFlow;
   if (format === "webtris-json") return parseWebtrisFlow;
+  if (format === "nyc-dot-speed-json") return parseNycDotFlow;
   throw new Error(`No flow parser registered for format: ${format}`);
 }
 
