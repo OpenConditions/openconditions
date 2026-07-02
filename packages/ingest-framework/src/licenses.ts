@@ -138,14 +138,6 @@ export const LICENSES: Record<string, LicenseInfo> = Object.fromEntries([
     shareAlike: false,
     commercialOk: true,
   }),
-  L({
-    id: "CC-BY-4.0-ASF",
-    name: "ASFINAG CC-BY-4.0 (open event packages)",
-    url: "https://creativecommons.org/licenses/by/4.0/",
-    attributionRequired: true,
-    shareAlike: false,
-    commercialOk: true,
-  }),
 ]);
 
 /** Case-insensitive lookup of a license id. */

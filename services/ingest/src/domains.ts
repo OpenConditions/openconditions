@@ -34,7 +34,6 @@ const roadsDispatch: IngestDomain = {
     obs.kind === "measurement"
       ? roadFlowAttributes(obs as RoadFlow)
       : roadAttributes(obs as RoadEvent),
-  feedSchema: roadFeedSchema,
 };
 
 /**

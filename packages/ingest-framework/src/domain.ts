@@ -15,7 +15,6 @@ export interface IngestDomain {
   parserFor(format: string): ParserFn;
   flowParserFor?(format: string): FlowParserFn;
   attributes(obs: Observation): Record<string, unknown>;
-  feedSchema?: unknown;
 }
 
 export type DomainRegistry = Record<string, IngestDomain>;
