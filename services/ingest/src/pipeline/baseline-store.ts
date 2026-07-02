@@ -1,6 +1,6 @@
 import type postgres from "postgres";
 import { toIsoTimestamp, type Observation } from "@openconditions/core";
-import { representativePoint, type RoadFlow } from "@openconditions/roads";
+import { representativePoint, type BaselineMethod, type RoadFlow } from "@openconditions/roads";
 
 type Sql = postgres.Sql;
 
@@ -81,4 +81,38 @@ export async function writeSpeedSamples(
       ON CONFLICT (sensor_key, observed_at) DO NOTHING`;
   }
   return rows.length;
+}
+
+/**
+ * Returns the per-sensor free-flow baseline (kph + method provenance) for the
+ * run's current UTC (weekday/weekend, hour) bucket, choosing per sensor the
+ * specific-bucket row (only 'derived' populates those), else the overall
+ * (-1,-1) row preferring method native > derived > osm_maxspeed. The method is
+ * threaded so enrichment can stamp freeFlowSource. A plain Map so
+ * packages/roads stays DB-free. TODO: local-timezone bucketing is a future
+ * refinement.
+ */
+export async function loadBaselineMap(
+  sql: Sql,
+  source: string,
+  now: () => string
+): Promise<Map<string, { kph: number; method: BaselineMethod }>> {
+  const d = new Date(now());
+  const dow = d.getUTCDay();
+  const dowBucket = dow === 0 || dow === 6 ? 1 : 0;
+  const todBucket = d.getUTCHours();
+
+  const rows = await sql<{ sensor_key: string; free_flow_kph: number; method: BaselineMethod }[]>`
+    SELECT DISTINCT ON (sensor_key) sensor_key, free_flow_kph, method
+    FROM conditions.sensor_baseline
+    WHERE source = ${source}
+      AND (
+        (dow_bucket = ${dowBucket} AND tod_bucket = ${todBucket})
+        OR (dow_bucket = -1 AND tod_bucket = -1)
+      )
+    ORDER BY sensor_key,
+      (CASE WHEN dow_bucket <> -1 THEN 0 ELSE 1 END),
+      (CASE method WHEN 'native' THEN 0 WHEN 'derived' THEN 1 ELSE 2 END)`;
+
+  return new Map(rows.map((r) => [r.sensor_key, { kph: r.free_flow_kph, method: r.method }]));
 }

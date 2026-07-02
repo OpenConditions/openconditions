@@ -2,6 +2,7 @@ import { Readable } from "node:stream";
 import type postgres from "postgres";
 import type { Observation } from "@openconditions/core";
 import type { FeedSource, SiteGeometry, UnresolvedRoadEvent } from "@openconditions/roads";
+import { enrichFlowsWithBaseline } from "@openconditions/roads";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
 import {
@@ -11,13 +12,14 @@ import {
   makeAuthorizedFetch,
 } from "@openconditions/ingest-framework";
 import type { LookupFn } from "@openconditions/ingest-framework";
+import { feedToSourceDescriptor } from "../domains.js";
 import { isStreamingFlowFeed, streamMeasuredData } from "./measured-data.js";
 import { parseFor } from "./parse.js";
 import { resolveOpenLr } from "./resolve.js";
 import { loadSiteTable } from "./site-table.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
 import { atomicSwap } from "./write-postgis.js";
-import { writeSpeedSamples } from "./baseline-store.js";
+import { loadBaselineMap, writeSpeedSamples } from "./baseline-store.js";
 
 type Sql = postgres.Sql;
 
@@ -171,14 +173,26 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   // are resolved to real geometry or dropped — resolved[] always has geometry.
   const { resolved, dropped } = await resolveOpenLr(parsed, deps.openlrClient ?? null);
 
-  await atomicSwap(deps.sql, src.id, resolved, src.freshnessWindowSec);
+  // Stamp each flow's free-flow baseline (native > derived > osm_maxspeed) before
+  // the swap so the enriched los/freeFlowKph and any newly derived congestion
+  // events are what gets persisted, for every flow format (buffered and
+  // streaming NDW alike) at this one seam.
+  let toWrite = resolved;
+  if (src.produces === "flow") {
+    const baselineMap = await loadBaselineMap(deps.sql, src.id, deps.now);
+    if (baselineMap.size > 0) {
+      toWrite = enrichFlowsWithBaseline(resolved, baselineMap, feedToSourceDescriptor(src));
+    }
+  }
+
+  await atomicSwap(deps.sql, src.id, toWrite, src.freshnessWindowSec);
 
   if (src.produces === "flow") {
     // Append this cycle's speeds to the rolling per-sensor history (the raw
     // material the nightly baseline derivation consumes). Best-effort: a history
     // write must never fail the live swap that already succeeded.
     try {
-      await writeSpeedSamples(deps.sql, src.id, resolved, deps.now, src.cadenceSec);
+      await writeSpeedSamples(deps.sql, src.id, toWrite, deps.now, src.cadenceSec);
     } catch (err) {
       console.warn(`[ingest] ${src.id}: speed-sample write failed:`, err);
     }
@@ -186,8 +200,6 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
 
   const durationMs = Date.now() - start;
   const dropNote = dropped > 0 ? ` (${dropped} dropped — no geometry)` : "";
-  console.info(
-    `[ingest] ${src.id}: inserted ${resolved.length} rows in ${durationMs}ms${dropNote}`
-  );
-  return { count: resolved.length, durationMs };
+  console.info(`[ingest] ${src.id}: inserted ${toWrite.length} rows in ${durationMs}ms${dropNote}`);
+  return { count: toWrite.length, durationMs };
 }

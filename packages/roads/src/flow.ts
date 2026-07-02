@@ -10,7 +10,12 @@
  * conditions.observations is the data foundation that pipeline will consume.
  */
 import type { LineString, Point } from "geojson";
-import type { LineStringGeometry, PointGeometry, Severity } from "@openconditions/core";
+import type {
+  LineStringGeometry,
+  Observation,
+  PointGeometry,
+  Severity,
+} from "@openconditions/core";
 import type { BaselineMethod, RoadEvent, RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
 import {
@@ -537,6 +542,40 @@ export function reclassifyFlow(
     return { flow: next, event: derivedCongestionEvent(next, src, suffix) };
   }
   return { flow: next };
+}
+
+/**
+ * Single post-parse enrichment seam covering every flow format. For each
+ * measurement flow that carries a speed but no freeFlowKph, applies the
+ * baseline from baselineMap (keyed by flow.id) via reclassifyFlow, replacing
+ * the flow and appending any derived congestion event. The baseline's method
+ * is threaded into reclassifyFlow so the flow's freeFlowSource records its
+ * provenance. Non-flow observations, and flows with no matching baseline
+ * entry, pass through unchanged.
+ */
+export function enrichFlowsWithBaseline(
+  observations: Observation[],
+  baselineMap: Map<string, { kph: number; method: BaselineMethod }>,
+  src: SourceDescriptor
+): Observation[] {
+  const out: Observation[] = [];
+  for (const obs of observations) {
+    const isFlow = obs.kind === "measurement" && (obs as RoadFlow).metric === "flow";
+    if (!isFlow) {
+      out.push(obs);
+      continue;
+    }
+    const flow = obs as RoadFlow;
+    const baseline = baselineMap.get(flow.id);
+    if (baseline == null) {
+      out.push(obs);
+      continue;
+    }
+    const { flow: next, event } = reclassifyFlow(flow, baseline.kph, baseline.method, src);
+    out.push(next as unknown as Observation);
+    if (event) out.push(event as unknown as Observation);
+  }
+  return out;
 }
 
 /**
