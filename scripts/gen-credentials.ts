@@ -54,6 +54,22 @@ OPENCONDITIONS_MAX_FEED_BYTES=268435456
 OPENCONDITIONS_FETCH_TIMEOUT_MS=60000
 OPENCONDITIONS_MAX_REDIRECTS=5
 
+# Layered feed delivery (optional). Feeds load at boot from baked-in defaults +
+# an operator-mounted directory + an optional (default-off) remote bundle,
+# merged by feed id with precedence mounted > remote > baked-in.
+#
+# Directory of mounted *.json5 feed override/add files (overrides baked-in by id,
+# no rebuild). Unset = baked-in feeds only.
+OPENCONDITIONS_FEEDS_DIR=
+# URL of a remote feed bundle (e.g. the public road-conditions-atlas). Only used
+# when remote-pull is enabled below.
+OPENCONDITIONS_FEEDS_REMOTE_URL=
+# "true" opts into remote-pull (default off). Descriptors are schema-validated
+# and URL-guarded; a snapshot is vendored under the state dir
+# (\${OPENCONDITIONS_STATE_DIR:-/data}/feeds) so the instance survives the remote
+# being down.
+OPENCONDITIONS_FEEDS_REMOTE_ENABLED=
+
 ${ENV_MARKER}`;
 
 /** Splice the generated credential blocks below the marker into `.env.example`, preserving the hand-authored preamble above it (or seeding the default preamble if the marker is missing). */

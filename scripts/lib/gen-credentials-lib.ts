@@ -53,9 +53,35 @@ export function envExampleFor(feeds: FeedSourceBase[]): string {
   return blocks.join("\n\n") + "\n";
 }
 
-/** The `service.json` configSchema.properties object (admin-panel credential fields). */
+/**
+ * Non-secret operational settings (not per-feed credentials). Layered feed
+ * delivery is configured by these three env vars; they render as plain config
+ * fields in the admin panel (no vault, no `*_FILE` path).
+ */
+const SERVICE_SETTINGS: Record<string, { title: string; description: string }> = {
+  OPENCONDITIONS_FEEDS_DIR: {
+    title: "Mounted feed overrides directory",
+    description:
+      "Directory of operator-mounted *.json5 feed override/add files; overrides baked-in feeds by id with no rebuild. Unset = no overrides.",
+  },
+  OPENCONDITIONS_FEEDS_REMOTE_URL: {
+    title: "Remote feed bundle URL",
+    description:
+      "URL of a remote feed bundle (typically the public road-conditions-atlas) to pull descriptors from. Only used when remote-pull is enabled.",
+  },
+  OPENCONDITIONS_FEEDS_REMOTE_ENABLED: {
+    title: "Enable remote feed-pull",
+    description:
+      'Set to "true" to opt the instance into remote-pull (default off). Every descriptor is schema-validated and every URL is egress-guarded; a snapshot is vendored so the instance survives the remote being down.',
+  },
+};
+
+/** The `service.json` configSchema.properties object (admin-panel fields). */
 export function configSchemaPropertiesFor(feeds: FeedSourceBase[]): Record<string, unknown> {
   const props: Record<string, unknown> = {};
+  for (const [key, { title, description }] of Object.entries(SERVICE_SETTINGS)) {
+    props[key] = { type: "string", title, description, "x-openmapx-secret": false };
+  }
   for (const f of feeds.filter(KEYED)) {
     for (const v of feedEnvVars(f)) {
       const field: CredentialField | undefined = f.setup?.[v];

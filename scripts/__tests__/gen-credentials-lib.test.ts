@@ -51,6 +51,17 @@ describe("gen-credentials-lib", () => {
     });
   });
 
+  it("emits the layered feed-delivery settings as non-secret service settings", () => {
+    const props = configSchemaPropertiesFor([]);
+    for (const key of [
+      "OPENCONDITIONS_FEEDS_DIR",
+      "OPENCONDITIONS_FEEDS_REMOTE_URL",
+      "OPENCONDITIONS_FEEDS_REMOTE_ENABLED",
+    ]) {
+      expect(props[key]).toMatchObject({ type: "string", "x-openmapx-secret": false });
+    }
+  });
+
   it("dedupes env vars shared across feeds (e.g. shared mTLS creds), emitting each once", () => {
     const feedA: FeedSourceBase = {
       id: "region-a",
