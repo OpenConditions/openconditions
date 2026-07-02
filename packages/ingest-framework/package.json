@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
+    "json5": "^2.2.3",
     "undici": "^8.5.0",
     "zod": "^4.4.3"
   },
