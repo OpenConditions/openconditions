@@ -16,8 +16,14 @@ const base: FeedSourceBase = {
 };
 const noFetch = (async () => new Response("", { status: 200 })) as unknown as typeof fetch;
 
+// Snapshot the built-in hooks (e.g. webtrisDailyWindow) registered at module
+// load, so tests can add/remove their own without clobbering them.
+const builtInHooks = Object.keys(PRE_FETCH_HOOKS);
+
 afterEach(() => {
-  for (const k of Object.keys(PRE_FETCH_HOOKS)) delete PRE_FETCH_HOOKS[k];
+  for (const k of Object.keys(PRE_FETCH_HOOKS)) {
+    if (!builtInHooks.includes(k)) delete PRE_FETCH_HOOKS[k];
+  }
 });
 
 describe("applyPreFetch", () => {
@@ -38,7 +44,7 @@ describe("applyPreFetch", () => {
     );
   });
 
-  it("ships with no registered hooks", () => {
-    expect(Object.keys(PRE_FETCH_HOOKS)).toHaveLength(0);
+  it("ships with only the built-in feed hooks registered", () => {
+    expect(Object.keys(PRE_FETCH_HOOKS).sort()).toEqual(["webtrisDailyWindow"]);
   });
 });

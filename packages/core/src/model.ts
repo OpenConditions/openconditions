@@ -37,6 +37,7 @@ export type SourceFormat =
   | "autobahn-json"
   | "digitraffic-json"
   | "fintraffic-tms-json"
+  | "webtris-json"
   | "gtfs-rt"
   | "native"
   | "crowd";
