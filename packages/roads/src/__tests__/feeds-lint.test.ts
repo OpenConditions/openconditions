@@ -45,4 +45,12 @@ describe("lintFeedDir", () => {
     );
     expect(lintFeedDir(dir).join("\n")).toMatch(/169\.254\.169\.254/);
   });
+
+  it("catches a private / link-local siteTable.url", () => {
+    writeFileSync(
+      join(dir, "ssrf-sitetable.json5"),
+      JSON.stringify([{ ...ok, siteTable: { url: "http://169.254.169.254/latest/meta-data" } }])
+    );
+    expect(lintFeedDir(dir).join("\n")).toMatch(/169\.254\.169\.254/);
+  });
 });

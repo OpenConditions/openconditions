@@ -1,16 +1,37 @@
 import { fileURLToPath } from "node:url";
-import { assertPublicUrl, loadFeedFiles } from "@openconditions/ingest-framework";
+import { assertPublicUrl, licenseInfo, loadFeedFiles } from "@openconditions/ingest-framework";
 import { roadFeedSchema } from "../src/feed-schema.js";
 
 type RoadFeed = ReturnType<typeof roadFeedSchema.parse>;
 
-// Replaced with the curated license registry (LICENSES) once it lands.
-const KNOWN_LICENSE_STUB = (id: string): boolean => id.length > 0;
+/** Per-feed lint checks: egress on every static url + a registered license. */
+export function lintFeed(feed: RoadFeed): string[] {
+  const problems: string[] = [];
+
+  // Egress guard on every STATIC url (skip env-templated `${…}` and catalog
+  // feeds — those resolve at fetch time and are guarded then).
+  const urls = feed.url == null ? [] : Array.isArray(feed.url) ? feed.url : [feed.url];
+  if (feed.siteTable?.url != null) urls.push(feed.siteTable.url);
+  for (const url of urls) {
+    if (url.includes("${")) continue;
+    try {
+      assertPublicUrl(url);
+    } catch (err) {
+      problems.push(`${feed.id}: ${url} — ${(err as Error).message}`);
+    }
+  }
+
+  if (!licenseInfo(feed.license)) {
+    problems.push(
+      `${feed.id}: unknown license id '${feed.license}' — add it to packages/ingest-framework/src/licenses.ts`
+    );
+  }
+
+  return problems;
+}
 
 /** Returns a list of human-readable problems; empty === clean. */
 export function lintFeedDir(dir: string): string[] {
-  const problems: string[] = [];
-
   // Schema validation (throws an aggregated error naming file + zod path).
   let feeds: RoadFeed[];
   try {
@@ -19,23 +40,7 @@ export function lintFeedDir(dir: string): string[] {
     return [(err as Error).message];
   }
 
-  for (const feed of feeds) {
-    // Egress guard on every STATIC url (skip env-templated `${…}` and catalog
-    // feeds — those resolve at fetch time and are guarded then).
-    const urls = feed.url == null ? [] : Array.isArray(feed.url) ? feed.url : [feed.url];
-    for (const url of urls) {
-      if (url.includes("${")) continue;
-      try {
-        assertPublicUrl(url);
-      } catch (err) {
-        problems.push(`${feed.id}: ${url} — ${(err as Error).message}`);
-      }
-    }
-    if (!KNOWN_LICENSE_STUB(feed.license)) {
-      problems.push(`${feed.id}: unknown license "${feed.license}"`);
-    }
-  }
-  return problems;
+  return feeds.flatMap((feed) => lintFeed(feed));
 }
 
 // CLI entry: lint the repo's roads feed dir and set the exit code.
