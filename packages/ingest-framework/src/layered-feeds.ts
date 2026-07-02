@@ -106,10 +106,12 @@ function parseBundle(
   assertUrl: (url: string) => void
 ): FeedSourceBase[] {
   const raw: unknown = JSON5.parse(text);
+  const feedsField =
+    raw && typeof raw === "object" ? (raw as { feeds?: unknown }).feeds : undefined;
   const list: unknown[] = Array.isArray(raw)
     ? raw
-    : Array.isArray((raw as { feeds?: unknown }).feeds)
-      ? (raw as { feeds: unknown[] }).feeds
+    : Array.isArray(feedsField)
+      ? feedsField
       : (() => {
           throw new Error("remote bundle is neither an array nor { feeds: [...] }");
         })();
@@ -120,10 +122,19 @@ function parseBundle(
   });
 }
 
-/** Guard each static URL a remote descriptor supplies. Templated URLs (`${VAR}`) are guarded per-hop at fetch-time. */
+/**
+ * Guard each static URL a remote descriptor supplies. Templated URLs (`${VAR}`)
+ * are guarded per-hop at fetch-time. `siteTable.url` is a domain-specific
+ * (roads) field not declared on the base type; the runtime `guardedFetch`
+ * already covers it, so this is parse-time defense-in-depth mirroring
+ * `feeds-lint`.
+ */
 function assertFeedUrls(feed: FeedSourceBase, assertUrl: (url: string) => void): void {
   const urls = Array.isArray(feed.url) ? feed.url : feed.url ? [feed.url] : [];
   for (const u of urls) if (!u.includes("${")) assertUrl(u);
+
+  const sUrl = (feed as { siteTable?: { url?: string } }).siteTable?.url;
+  if (sUrl && !sUrl.includes("${")) assertUrl(sUrl);
 }
 
 async function writeSnapshot(path: string, feeds: FeedSourceBase[]): Promise<void> {
