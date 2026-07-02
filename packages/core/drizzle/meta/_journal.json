@@ -15,6 +15,13 @@
       "when": 1782247279180,
       "tag": "0001_add_label",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783003324994,
+      "tag": "0002_sour_whizzer",
+      "breakpoints": true
     }
   ]
 }

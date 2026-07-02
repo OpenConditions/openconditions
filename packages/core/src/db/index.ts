@@ -1,2 +1,2 @@
 export { runMigrations } from "./migrate.js";
-export { observations } from "./schema.js";
+export { observations, sensorSpeedSample, sensorBaseline } from "./schema.js";

@@ -1,12 +1,17 @@
 import {
+  bigserial,
   boolean,
   customType,
   doublePrecision,
   index,
+  integer,
   jsonb,
   pgSchema,
+  primaryKey,
+  smallint,
   text,
   timestamp,
+  unique,
 } from "drizzle-orm/pg-core";
 
 const conditionsSchema = pgSchema("conditions");
@@ -76,5 +81,52 @@ export const observations = conditionsSchema.table(
     index("idx_conditions_obs_expires").on(t.expiresAt),
     index("idx_conditions_obs_subject").using("gin", t.subject),
     index("idx_conditions_obs_source").on(t.source),
+  ]
+);
+
+/**
+ * Append-only per-sensor speed history. One row per flow observation that
+ * carries a speed. `dow`/`tod_hour` are UTC (getUTCDay / getUTCHours).
+ * TODO: local-timezone bucketing is a future refinement (MVP is UTC).
+ */
+export const sensorSpeedSample = conditionsSchema.table(
+  "sensor_speed_sample",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    sensorKey: text("sensor_key").notNull(),
+    source: text("source").notNull(),
+    observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
+    speedKph: doublePrecision("speed_kph").notNull(),
+    dow: smallint("dow").notNull(),
+    todHour: smallint("tod_hour").notNull(),
+    geom: geometry("geom").notNull(),
+  },
+  (t) => [
+    index("idx_sensor_sample_key_bucket").on(t.sensorKey, t.dow, t.todHour),
+    index("idx_sensor_sample_observed").on(t.observedAt),
+    unique("uq_sensor_sample_key_observed").on(t.sensorKey, t.observedAt),
+  ]
+);
+
+/**
+ * Derived / native / osm free-flow baselines, upserted. `dow_bucket`:
+ * 0 = weekday (Mon–Fri), 1 = weekend, -1 = per-sensor overall. `tod_bucket`:
+ * 0–23 hour, -1 = overall. `method`: 'native' | 'derived' | 'osm_maxspeed'.
+ */
+export const sensorBaseline = conditionsSchema.table(
+  "sensor_baseline",
+  {
+    sensorKey: text("sensor_key").notNull(),
+    source: text("source").notNull(),
+    dowBucket: smallint("dow_bucket").notNull(),
+    todBucket: smallint("tod_bucket").notNull(),
+    freeFlowKph: doublePrecision("free_flow_kph").notNull(),
+    method: text("method").notNull(),
+    sampleCount: integer("sample_count").notNull(),
+    computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.sensorKey, t.dowBucket, t.todBucket, t.method] }),
+    index("idx_sensor_baseline_source_bucket").on(t.source, t.dowBucket, t.todBucket),
   ]
 );
