@@ -1,0 +1,47 @@
+name: Feed PR check
+
+on:
+  pull_request:
+    paths:
+      - "packages/*/feeds/**"
+
+concurrency:
+  group: feed-pr-check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  changed-feeds:
+    name: fetch + parse changed keyless feeds (non-gating)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TURBO_TELEMETRY_DISABLED: 1
+      # fetch-depth:0 checks out all branches, so origin/<base_ref> resolves.
+      FEED_CHECK_BASE_REF: origin/${{ github.base_ref }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0 # full history + all branches so the base-ref diff resolves
+
+      # Version comes from package.json "packageManager" (single source of truth).
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The script imports the built @openconditions/* workspace packages.
+      - run: pnpm build
+
+      # Non-gating: the script always exits 0 and posts ::warning::/::error::
+      # annotations. continue-on-error is a second guard so an unexpected crash
+      # of the script still cannot fail the PR.
+      - name: Validate changed keyless feeds
+        continue-on-error: true
+        run: node scripts/validate-changed-feeds.ts
