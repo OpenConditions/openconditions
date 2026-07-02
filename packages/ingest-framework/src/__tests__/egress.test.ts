@@ -4,6 +4,7 @@ import {
   assertPublicUrl,
   assertResolvesToPublicIp,
   boundedGunzip,
+  DEFAULT_MAX_FEED_BYTES,
   guardOptionsFromEnv,
   guardedFetch,
   isPublicUrl,
@@ -257,10 +258,14 @@ describe("guardedFetch", () => {
 
   it("guardOptionsFromEnv reads the caps with sane defaults", () => {
     expect(guardOptionsFromEnv({})).toEqual({
-      maxBytes: 256 * 1024 * 1024,
+      maxBytes: DEFAULT_MAX_FEED_BYTES,
       timeoutMs: 60_000,
       maxRedirects: 5,
     });
+    // The default must clear the largest default-enabled feed: NDW's site table
+    // decompresses to ~373 MiB, so the cap has to sit comfortably above it.
+    expect(DEFAULT_MAX_FEED_BYTES).toBe(512 * 1024 * 1024);
+    expect(DEFAULT_MAX_FEED_BYTES).toBeGreaterThan(390 * 1024 * 1024);
     expect(
       guardOptionsFromEnv({
         OPENCONDITIONS_MAX_FEED_BYTES: "1024",

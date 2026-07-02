@@ -2,13 +2,14 @@ import { Readable } from "node:stream";
 import { createGunzip } from "node:zlib";
 import type { FeedSource, SiteGeometry } from "@openconditions/roads";
 import { createSiteTableParser } from "@openconditions/roads";
+import { DEFAULT_MAX_FEED_BYTES } from "@openconditions/ingest-framework";
 
 /** Site tables change rarely (version-stamped); refetch at most every 6 hours. */
 const SITE_TABLE_TTL_MS = 6 * 60 * 60 * 1000;
 
 /** Ceiling on a single site table's decompressed bytes; matches the guard's byte cap. */
 const MAX_DECOMPRESSED_BYTES = Number(
-  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || 256 * 1024 * 1024
+  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES
 );
 
 interface CacheEntry {

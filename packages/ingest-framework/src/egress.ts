@@ -324,10 +324,23 @@ function envInt(env: NodeJS.ProcessEnv, key: string, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-/** Reads the guard caps from the environment (defaults ~256 MB / 60 s / 5 hops). */
+/**
+ * Default ceiling on a feed's decompressed / response bytes. Sized above the
+ * largest legitimate default-enabled feed — NDW's site table
+ * (measurement.xml.gz) decompresses to ~373 MiB. That table (and the flow
+ * feeds) are processed as a stream (SAX, one chunk at a time), so this cap
+ * bounds cumulative bytes seen, not resident memory: raising it lets a large
+ * legitimate feed complete without increasing RSS (which stays bounded by the
+ * per-chunk read plus the small retained site-id map). A true decompression
+ * bomb is still bounded by this finite cap plus the fetch timeout. Overridable
+ * via OPENCONDITIONS_MAX_FEED_BYTES.
+ */
+export const DEFAULT_MAX_FEED_BYTES = 512 * 1024 * 1024;
+
+/** Reads the guard caps from the environment (defaults ~512 MB / 60 s / 5 hops). */
 export function guardOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): FetchGuardOptions {
   return {
-    maxBytes: envInt(env, "OPENCONDITIONS_MAX_FEED_BYTES", 256 * 1024 * 1024),
+    maxBytes: envInt(env, "OPENCONDITIONS_MAX_FEED_BYTES", DEFAULT_MAX_FEED_BYTES),
     timeoutMs: envInt(env, "OPENCONDITIONS_FETCH_TIMEOUT_MS", 60_000),
     maxRedirects: envInt(env, "OPENCONDITIONS_MAX_REDIRECTS", 5),
   };

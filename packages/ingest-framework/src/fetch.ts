@@ -1,6 +1,6 @@
 import type { FeedSourceBase } from "./feed-source.js";
 import { resolvedEnv } from "./auth.js";
-import { boundedGunzip } from "./egress.js";
+import { boundedGunzip, DEFAULT_MAX_FEED_BYTES } from "./egress.js";
 import { resolveFeedUrls, resolveUrlTemplate } from "./template.js";
 import { applyPreFetch } from "./pre-fetch.js";
 import { getCatalogResolverById, resolveWithSnapshot } from "./catalog.js";
@@ -71,7 +71,7 @@ export function redactUrl(url: string): string {
 
 /** Ceiling on a single feed's decompressed bytes; matches the guard's byte cap. */
 const MAX_DECOMPRESSED_BYTES = Number(
-  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || 256 * 1024 * 1024
+  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES
 );
 
 async function fetchOne(

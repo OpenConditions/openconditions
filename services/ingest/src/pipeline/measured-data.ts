@@ -3,7 +3,11 @@ import { createGunzip } from "node:zlib";
 import type { Observation } from "@openconditions/core";
 import { createMeasuredDataParser, feedToSourceDescriptor } from "@openconditions/roads";
 import type { SiteGeometry } from "@openconditions/roads";
-import { resolveFeedUrls, resolvedEnv } from "@openconditions/ingest-framework";
+import {
+  resolveFeedUrls,
+  resolvedEnv,
+  DEFAULT_MAX_FEED_BYTES,
+} from "@openconditions/ingest-framework";
 import type { DomainFeedSource } from "./run.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
 
@@ -19,7 +23,7 @@ export function isStreamingFlowFeed(src: DomainFeedSource): boolean {
 
 /** Ceiling on a single flow feed's decompressed bytes; matches the guard's byte cap. */
 const MAX_DECOMPRESSED_BYTES = Number(
-  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || 256 * 1024 * 1024
+  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES
 );
 
 /** Resolves the single feed URL for a streaming flow source from its template(s). */
