@@ -15,7 +15,7 @@
 # (see services/ingest/tsup.config.ts) and copies the migrations to dist/drizzle,
 # so only fastify, postgres and croner remain as external runtime dependencies.
 
-FROM node:24-alpine@sha256:156b55f92e98ccd5ef49578a8cea0df4679826564bad1c9d4ef04462b9f0ded6 AS base
+FROM node:24-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS base
 # Read the pnpm version from the repo root package.json so lockfile resolution
 # stays reproducible across local and CI Docker builds.
 COPY package.json /tmp/package.json
@@ -60,7 +60,7 @@ COPY services/ingest/ services/ingest/
 RUN pnpm --filter @openconditions/ingest... build
 
 # Production image.
-FROM node:24-alpine@sha256:156b55f92e98ccd5ef49578a8cea0df4679826564bad1c9d4ef04462b9f0ded6 AS runner
+FROM node:24-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS runner
 WORKDIR /app
 
 # curl backs the http healthcheck; the OpenMapX compose renderer falls back to
