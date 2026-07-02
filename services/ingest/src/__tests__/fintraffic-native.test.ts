@@ -186,4 +186,113 @@ describe("updateFintrafficNativeBaselines", () => {
     });
     expect(constantsRequests).toBe(2);
   }, 30_000);
+
+  it("sends the feed's requestHeaders on both the registry and sensor-constants sub-fetches", async () => {
+    const seenHeaders: (Record<string, string> | undefined)[] = [];
+    const headerFetch = (async (url: string, init?: RequestInit) => {
+      seenHeaders.push(init?.headers as Record<string, string> | undefined);
+      return new Response(String(url).includes("sensor-constants") ? constants : stations, {
+        status: 200,
+      });
+    }) as unknown as typeof fetch;
+    const feedWithHeaders = {
+      ...feed,
+      requestHeaders: { "Digitraffic-User": "OpenConditions/1.0" },
+    } as unknown as FeedSource;
+
+    await updateFintrafficNativeBaselines(sql, feedWithHeaders, {
+      fetch: headerFetch,
+      now: () => new Date("2026-07-15T00:00:00Z"),
+      batchCap: 50,
+    });
+
+    // One registry fetch + one sensor-constants fetch, both carrying the header.
+    expect(seenHeaders).toHaveLength(2);
+    for (const headers of seenHeaders) {
+      expect(headers).toEqual({ "Digitraffic-User": "OpenConditions/1.0" });
+    }
+  }, 30_000);
+
+  describe("station batch prioritization", () => {
+    const priorityFeed = {
+      id: "fintraffic-tms-fi-priority",
+      stationRegistry: {
+        url: "https://tie.digitraffic.fi/api/tms/v1/stations",
+        format: "fintraffic-stations",
+      },
+    } as unknown as FeedSource;
+
+    // Registry order: 40001 (A), 40002 (B), 40003 (C), 40004 (D), 40005 (E).
+    const REGISTRY_IDS = [40001, 40002, 40003, 40004, 40005];
+
+    function priorityStationsGeoJson(): string {
+      return JSON.stringify({
+        type: "FeatureCollection",
+        features: REGISTRY_IDS.map((id) => ({
+          type: "Feature",
+          id,
+          properties: {},
+          geometry: { type: "Point", coordinates: [24.9, 60.2] },
+        })),
+      });
+    }
+
+    /** Records the station id of every sensor-constants sub-fetch, in request order. */
+    function trackingFetch(seen: string[]): typeof fetch {
+      return (async (url: string) => {
+        const s = String(url);
+        if (s.includes("sensor-constants")) {
+          const stationId = s.split("/").at(-2)!;
+          seen.push(stationId);
+          return new Response(constants, { status: 200 });
+        }
+        return new Response(priorityStationsGeoJson(), { status: 200 });
+      }) as unknown as typeof fetch;
+    }
+
+    it("processes uncovered stations first, then oldest-baseline stations, over the raw registry slice", async () => {
+      // 40001 (A) already has an old native baseline; 40003 (C) has a newer
+      // one. 40002/40004/40005 (B/D/E) have none and must win priority.
+      await sql`
+        INSERT INTO conditions.sensor_baseline
+          (sensor_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
+        VALUES
+          ('fintraffic-tms-fi-priority:40001-1', ${priorityFeed.id}, -1, -1, 100, 'native', 0, '2020-01-01T00:00:00Z'),
+          ('fintraffic-tms-fi-priority:40003-1', ${priorityFeed.id}, -1, -1, 100, 'native', 0, '2025-01-01T00:00:00Z')`;
+
+      const seen: string[] = [];
+      await updateFintrafficNativeBaselines(sql, priorityFeed, {
+        fetch: trackingFetch(seen),
+        now: () => new Date("2026-07-15T00:00:00Z"),
+        batchCap: 3,
+      });
+
+      expect(seen).toEqual(["40002", "40004", "40005"]);
+    }, 30_000);
+
+    it("falls back to the raw registry-order slice when the priority query fails", async () => {
+      let selectAttempts = 0;
+      const throwingSql = new Proxy(sql, {
+        apply(target, thisArg, args) {
+          const strings = args[0] as TemplateStringsArray;
+          if (strings[0]?.includes("SELECT sensor_key")) {
+            selectAttempts += 1;
+            throw new Error("existing-rows query failed");
+          }
+          return Reflect.apply(target, thisArg, args);
+        },
+      }) as typeof sql;
+
+      const seen: string[] = [];
+      const { updated } = await updateFintrafficNativeBaselines(throwingSql, priorityFeed, {
+        fetch: trackingFetch(seen),
+        now: () => new Date("2026-07-15T00:00:00Z"),
+        batchCap: 3,
+      });
+
+      expect(selectAttempts).toBe(1);
+      expect(seen).toEqual(["40001", "40002", "40003"]);
+      expect(updated).toBeGreaterThan(0);
+    }, 30_000);
+  });
 });
