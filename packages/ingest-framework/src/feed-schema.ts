@@ -83,6 +83,13 @@ export const feedSourceBaseShape = {
   requiredEnv: z.array(z.string()).optional(),
   fetchIntervalSec: z.number().int().positive().optional(),
   preFetch: z.string().optional(),
+  /**
+   * Route this feed's multi-URL fan-out through the tolerant `fetchFanout`
+   * (per-URL skip-and-continue) instead of the all-or-nothing static path —
+   * for large fan-outs where one transient sub-URL failure must not drop the
+   * whole cycle.
+   */
+  fanoutTolerant: z.boolean().optional(),
   gzip: z.boolean().optional(),
   cadenceSec: z.number().int().positive(),
   freshnessWindowSec: z.number().int().positive(),

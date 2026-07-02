@@ -202,7 +202,9 @@ function matchesFilter(feed: FeedSourceBase, filter?: Record<string, unknown>): 
  * `src.url` is a `${VAR}` template string or array of templates; `expandEnv`
  * fans one template out over a comma-separated env var. Multi-URL sets fetch
  * with bounded concurrency so a large resolved URL set cannot fire every
- * request at once.
+ * request at once. A static multi-URL feed with `fanoutTolerant: true` is
+ * instead routed through the same per-URL tolerant fetcher as the catalog
+ * path (see below).
  *
  * Politeness on the static/template path: a source fetched within its
  * `fetchIntervalSec` window is skipped ("unchanged"); each URL sends its cached
@@ -229,6 +231,21 @@ export async function fetchAll(
     );
     const urls = feeds.flatMap((f) => (Array.isArray(f.url) ? f.url : f.url ? [f.url] : []));
     return { status: "fetched", buffers: await fetchFanout(urls, fetchFn) };
+  }
+
+  // `fanoutTolerant` opts a large static multi-URL fan-out (e.g. WebTRIS's
+  // ~150 per-site URLs) into the same per-URL tolerant fetcher the catalog
+  // path uses, instead of the all-or-nothing `fetchAllBounded` below. This
+  // skips conditional-GET/`fetchIntervalSec`/`unchanged` handling entirely
+  // (fetchFanout doesn't do ETag/304) — an acceptable trade for these feeds,
+  // e.g. WebTRIS's URL date-window changes every run, so conditional GET buys
+  // nothing anyway. Feeds without the flag (or with a single URL) are
+  // unaffected and fall through to the static path unchanged.
+  if (active.fanoutTolerant) {
+    const fanoutUrls = resolveFeedUrls(active, resolvedEnv());
+    if (fanoutUrls.length > 1) {
+      return { status: "fetched", buffers: await fetchFanout(fanoutUrls, fetchFn) };
+    }
   }
 
   if (active.fetchIntervalSec != null) {

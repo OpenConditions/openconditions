@@ -66,6 +66,13 @@ export interface FeedSourceBase {
   fetchIntervalSec?: number;
   /** Name of a PRE_FETCH_HOOKS entry that rewrites this feed before fetch. Dormant — no hooks registered. */
   preFetch?: string;
+  /**
+   * Route this feed's multi-URL fan-out through the tolerant `fetchFanout`
+   * (per-URL skip-and-continue) instead of the all-or-nothing static path —
+   * for large fan-outs where one transient sub-URL failure must not drop the
+   * whole cycle.
+   */
+  fanoutTolerant?: boolean;
   gzip?: boolean;
   cadenceSec: number;
   freshnessWindowSec: number;

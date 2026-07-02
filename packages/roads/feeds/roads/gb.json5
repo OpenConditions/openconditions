@@ -39,6 +39,7 @@
     produces: "flow",
     url: "https://webtris.nationalhighways.co.uk/api/v1.0/reports/daily?sites={sites}&start_date={start_date}&end_date={end_date}&page=1&page_size=100",
     preFetch: "webtrisDailyWindow",
+    fanoutTolerant: true,
     stationRegistry: {
       url: "https://webtris.nationalhighways.co.uk/api/v1.0/sites",
       format: "webtris-sites",

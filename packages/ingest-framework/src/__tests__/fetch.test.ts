@@ -216,6 +216,60 @@ describe("fetchAll — static url forms (regression)", () => {
   });
 });
 
+describe("fetchAll — fanoutTolerant static url arrays", () => {
+  it("tolerates a failing url and returns the buffers from the rest", async () => {
+    const urls = ["https://x.test/ok1", "https://x.test/bad", "https://x.test/ok2"];
+    const feed = makeFeed({ id: "fanout-tol", url: urls, fanoutTolerant: true });
+    const bufs = await fetchBuffers(
+      feed,
+      okFor(
+        (u) => `body:${u}`,
+        (u) => u.endsWith("/bad")
+      )
+    );
+    expect(bufs).toHaveLength(2);
+    expect(bufs.map((b) => b.toString("utf8"))).not.toContain("body:https://x.test/bad");
+  });
+
+  it("does not affect a static url array without the flag (one failure still throws)", async () => {
+    const urls = ["https://x.test/ok1", "https://x.test/bad", "https://x.test/ok2"];
+    const feed = makeFeed({ id: "no-fanout-tol", url: urls });
+    await expect(
+      fetchAll(
+        feed,
+        okFor(
+          (u) => `body:${u}`,
+          (u) => u.endsWith("/bad")
+        )
+      )
+    ).rejects.toThrow();
+  });
+
+  it("leaves a single-url fanoutTolerant feed on the normal static path (conditional GET still applies)", async () => {
+    const feed = makeFeed({
+      id: "fanout-tol-single",
+      url: "https://h.test/f.xml",
+      fanoutTolerant: true,
+    });
+    const state = createFetchState();
+    let call = 0;
+    const fetchFn = (async (_input: string | URL | Request, init?: RequestInit) => {
+      call += 1;
+      if (call === 1) {
+        return new Response("payload-v1", { status: 200, headers: { ETag: 'W/"v1"' } });
+      }
+      const inm = new Headers(init?.headers).get("If-None-Match");
+      expect(inm).toBe('W/"v1"');
+      return new Response(null, { status: 304 });
+    }) as unknown as typeof fetch;
+
+    const first = await fetchAll(feed, fetchFn, { state });
+    expect(first.status).toBe("fetched");
+    const second = await fetchAll(feed, fetchFn, { state });
+    expect(second.status).toBe("unchanged");
+  });
+});
+
 describe("fetchAll — url templates", () => {
   it("interpolates a ${VAR} url from resolvedEnv", async () => {
     const feed = makeFeed({ id: "tpl", url: "https://h.test/f?k=${K}" });
