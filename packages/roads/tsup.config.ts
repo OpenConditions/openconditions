@@ -7,5 +7,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outDir: "dist",
-  external: ["@openconditions/core", "@openconditions/ingest-framework"],
+  external: ["@openconditions/core", "@openconditions/ingest-framework", "zod"],
 });

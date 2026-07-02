@@ -16,5 +16,6 @@ export * from "./gddkia.js";
 export * from "./flatjson.js";
 export * from "./trafikverket.js";
 export * from "./feeds.js";
+export * from "./feed-schema.js";
 export * from "./dedupe.js";
 export * from "./catalog/index.js";

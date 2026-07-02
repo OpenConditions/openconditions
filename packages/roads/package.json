@@ -32,7 +32,8 @@
     "@openconditions/ingest-framework": "workspace:*",
     "fast-xml-parser": "^5.8.0",
     "proj4": "^2.20.9",
-    "saxes": "^6.0.0"
+    "saxes": "^6.0.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.14",
