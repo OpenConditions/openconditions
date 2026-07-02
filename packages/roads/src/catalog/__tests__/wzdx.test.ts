@@ -69,4 +69,9 @@ describe("wzdxRegistryResolver", () => {
   it("throws when the registry responds non-ok", async () => {
     await expect(wzdxRegistryResolver.resolve(jsonResponder("", 500))).rejects.toThrow(/500/);
   });
+
+  it("returns no feeds when the payload is not an array", async () => {
+    const feeds = await wzdxRegistryResolver.resolve(jsonResponder({}));
+    expect(feeds).toEqual([]);
+  });
 });

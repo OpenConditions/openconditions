@@ -44,4 +44,9 @@ describe("autobahnIndexResolver", () => {
     const feeds = await autobahnIndexResolver.resolve(jsonResponder({}));
     expect(feeds).toEqual([]);
   });
+
+  it("returns no feeds when roads is present but not an array", async () => {
+    const feeds = await autobahnIndexResolver.resolve(jsonResponder({ roads: "x" }));
+    expect(feeds).toEqual([]);
+  });
 });
