@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { enrichFlowsWithBaseline } from "../flow.js";
 import type { Observation } from "@openconditions/core";
-import type { BaselineMethod } from "../model.js";
+import type { BaselineMethod, RoadEvent, RoadFlow } from "../model.js";
 import type { SourceDescriptor } from "../types.js";
 
 const src = {
@@ -47,13 +47,13 @@ describe("enrichFlowsWithBaseline", () => {
       src
     );
     const byId = new Map(out.map((o) => [o.id, o]));
-    expect((byId.get("src:slow") as any).los).toBe("queuing");
-    expect((byId.get("src:slow") as any).freeFlowSource).toBe("derived");
-    expect((byId.get("src:fast") as any).los).toBe("free_flow");
-    expect((byId.get("src:fast") as any).freeFlowSource).toBe("osm_maxspeed");
-    expect((byId.get("src:none") as any).los).toBe("unknown");
+    expect((byId.get("src:slow") as RoadFlow | undefined)?.los).toBe("queuing");
+    expect((byId.get("src:slow") as RoadFlow | undefined)?.freeFlowSource).toBe("derived");
+    expect((byId.get("src:fast") as RoadFlow | undefined)?.los).toBe("free_flow");
+    expect((byId.get("src:fast") as RoadFlow | undefined)?.freeFlowSource).toBe("osm_maxspeed");
+    expect((byId.get("src:none") as RoadFlow | undefined)?.los).toBe("unknown");
     expect(
-      out.some((o) => o.id === "src:slow:congestion" && (o as any).type === "congestion")
+      out.some((o) => o.id === "src:slow:congestion" && (o as RoadEvent).type === "congestion")
     ).toBe(true);
   });
   it("passes non-flow observations through untouched", () => {
@@ -72,6 +72,6 @@ describe("enrichFlowsWithBaseline", () => {
     const existing = flow("src:has-ff", { speedKph: 30, freeFlowKph: 90 });
     const out = enrichFlowsWithBaseline([existing], map, src);
     expect(out).toEqual([existing]);
-    expect(out.some((o) => (o as any).type === "congestion")).toBe(false);
+    expect(out.some((o) => (o as RoadEvent).type === "congestion")).toBe(false);
   });
 });
