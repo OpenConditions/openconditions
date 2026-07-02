@@ -1,0 +1,39 @@
+name: Feed liveness
+
+on:
+  schedule:
+    - cron: "45 6 * * 1" # Mondays 06:45 UTC (staggered off the link check at 07:30)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  liveness:
+    name: check keyless feeds are alive
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write # to open the failing-feed issue
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: pnpm/action-setup@0ebf47130e4866e96fce0953f49152a61190b271 # v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version-file: .nvmrc
+      - run: pnpm install --frozen-lockfile
+      # Build so the scripts' @openconditions/* package imports resolve at runtime.
+      - run: pnpm build
+      - name: Check keyless feeds
+        id: liveness
+        # Keyless feeds only — forks/CI hold no feed secrets. The script never
+        # fails the job; it writes ./liveness/out.md and sets found=true when a
+        # feed is down, and we report via an issue below (non-gating).
+        run: node scripts/check-feed-liveness.ts
+      - name: Open an issue for failing feeds
+        if: steps.liveness.outputs.found == 'true'
+        uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6
+        with:
+          title: Keyless feed liveness check found failing feeds
+          content-filepath: ./liveness/out.md
+          labels: feed-issue
