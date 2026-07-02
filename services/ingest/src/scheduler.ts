@@ -6,6 +6,7 @@ import {
   requiredEnvVars,
   type DomainRegistry,
 } from "@openconditions/ingest-framework";
+import { deriveBaselines, pruneSpeedSamples } from "./pipeline/baseline-derive.js";
 import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
 import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
@@ -48,6 +49,8 @@ export async function runFeedOnce(
 
 /** How often the stale-observation sweep runs. */
 const SWEEP_CRON = "*/5 * * * *";
+/** When the nightly baseline derivation + sample prune runs (UTC). */
+const BASELINE_CRON = "0 3 * * *";
 /**
  * Rows whose `fetched_at` is older than this are swept as orphans. Far larger
  * than the slowest feed cadence (300s) so a healthy source is never removed.
@@ -140,6 +143,23 @@ export function startScheduler(
   });
   console.info(`[scheduler] registered stale-observation sweep (${SWEEP_CRON})`);
   jobs.push(sweepJob);
+
+  let derivingBaselines = false;
+  const baselineJob = new Cron(BASELINE_CRON, { catch: true }, async () => {
+    if (derivingBaselines) return;
+    derivingBaselines = true;
+    try {
+      const { upserted } = await deriveBaselines(sql);
+      const { deleted } = await pruneSpeedSamples(sql);
+      console.info(`[scheduler] baselines: upserted ${upserted}, pruned ${deleted} sample(s)`);
+    } catch (err) {
+      console.error("[scheduler] baseline derivation failed", err);
+    } finally {
+      derivingBaselines = false;
+    }
+  });
+  console.info(`[scheduler] registered nightly baseline derivation (${BASELINE_CRON})`);
+  jobs.push(baselineJob);
 
   return () => {
     for (const job of jobs) {
