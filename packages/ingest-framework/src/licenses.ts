@@ -146,6 +146,14 @@ export const LICENSES: Record<string, LicenseInfo> = Object.fromEntries([
     shareAlike: false,
     commercialOk: true,
   }),
+  L({
+    id: "US-Gov-Public-Domain",
+    name: "U.S. Government Public Domain (17 U.S.C. §105)",
+    url: "https://www.usa.gov/government-works",
+    attributionRequired: false,
+    shareAlike: false,
+    commercialOk: true,
+  }),
 ]);
 
 /** Case-insensitive lookup of a license id. */

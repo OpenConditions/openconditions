@@ -404,6 +404,20 @@
           "cost": "Free",
           "notes": "Attribution required: \"Powered by 511NY\"."
         }
+      },
+      "OHGO_API_KEY": {
+        "type": "string",
+        "title": "OHGO API key",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://ohgo.com/developer",
+          "urlLabel": "OHGO developer registration",
+          "steps": [
+            "Register for a free OHGO developer account at ohgo.com/developer and create an API key.",
+            "Set OHGO_API_KEY to the key value; the feed activates on the next scheduler cycle."
+          ],
+          "notes": "Free key. Data is U.S. government public domain."
+        }
       }
     }
   },

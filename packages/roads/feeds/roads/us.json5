@@ -63,4 +63,37 @@
     privacyUrl: "https://www.nyc.gov/home/privacy-policy.page",
     enabledByDefault: true,
   },
+  {
+    id: "ohgo-oh-us",
+    name: "OHGO travel delays (Ohio)",
+    format: "ohgo-json",
+    produces: "flow",
+    url: "https://publicapi.ohgo.com/api/v1/travel-delays?page-all=true",
+    auth: {
+      kind: "header-key",
+      header: "Authorization",
+      envVar: "OHGO_API_KEY",
+      valuePrefix: "APIKEY ",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "US-Gov-Public-Domain",
+    licenseUrl: "https://www.usa.gov/government-works",
+    attribution: "Ohio Department of Transportation (OHGO)",
+    country: "US",
+    privacyUrl: "https://www.transportation.ohio.gov/about-us/privacy",
+    enabledByDefault: true,
+    setup: {
+      OHGO_API_KEY: {
+        title: "OHGO API key",
+        url: "https://ohgo.com/developer",
+        urlLabel: "OHGO developer registration",
+        steps: [
+          "Register for a free OHGO developer account at ohgo.com/developer and create an API key.",
+          "Set OHGO_API_KEY to the key value; the feed activates on the next scheduler cycle.",
+        ],
+        notes: "Free key. Data is U.S. government public domain.",
+      },
+    },
+  },
 ]

@@ -432,8 +432,8 @@ describe("FEED_SOURCES", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("loads every feed from the data files (all 52 migrated)", () => {
-    expect(FEED_SOURCES.length).toBe(52);
+  it("loads every feed from the data files (all 53 migrated)", () => {
+    expect(FEED_SOURCES.length).toBe(53);
     expect(new Set(FEED_SOURCES.map((f) => f.id)).size).toBe(FEED_SOURCES.length);
   });
 
@@ -446,6 +446,23 @@ describe("FEED_SOURCES", () => {
     expect(feed!.country).toBe("US");
     expect(feed!.auth).toBeUndefined();
     expect(feed!.enabledByDefault).toBe(true);
+  });
+
+  it("includes ohgo-oh-us as a keyed ohgo-json flow feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "ohgo-oh-us");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("ohgo-json");
+    expect(feed!.produces).toBe("flow");
+    expect(feed!.license).toBe("US-Gov-Public-Domain");
+    expect(feed!.country).toBe("US");
+    expect(feed!.auth).toEqual({
+      kind: "header-key",
+      header: "Authorization",
+      envVar: "OHGO_API_KEY",
+      valuePrefix: "APIKEY ",
+    });
+    expect(feed!.enabledByDefault).toBe(true);
+    expect(feed!.setup?.["OHGO_API_KEY"]).toBeDefined();
   });
 });
 

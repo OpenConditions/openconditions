@@ -22,6 +22,7 @@ import type { FlowParseResult } from "./flow.js";
 import { parseFintrafficFlow } from "./flow-fintraffic.js";
 import { parseWebtrisFlow } from "./flow-webtris.js";
 import { parseNycDotFlow } from "./flow-nycdot.js";
+import { parseOhgoFlow } from "./flow-ohgo.js";
 import type { SourceDescriptor } from "./types.js";
 
 // FeedAuth now lives in @openconditions/ingest-framework; re-exported here so
@@ -142,6 +143,7 @@ export function flowParserFor(format: SourceFormat): FlowParserFn {
   if (format === "fintraffic-tms-json") return parseFintrafficFlow;
   if (format === "webtris-json") return parseWebtrisFlow;
   if (format === "nyc-dot-speed-json") return parseNycDotFlow;
+  if (format === "ohgo-json") return parseOhgoFlow;
   throw new Error(`No flow parser registered for format: ${format}`);
 }
 

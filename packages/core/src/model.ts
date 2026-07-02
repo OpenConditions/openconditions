@@ -39,6 +39,7 @@ export type SourceFormat =
   | "fintraffic-tms-json"
   | "webtris-json"
   | "nyc-dot-speed-json"
+  | "ohgo-json"
   | "gtfs-rt"
   | "native"
   | "crowd";
