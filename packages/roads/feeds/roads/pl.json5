@@ -1,0 +1,20 @@
+[
+  {
+    // Poland GDDKiA road obstructions (utrudnienia). Proprietary XML, WGS84 points,
+    // CC0. Use the canonical www.archiwum host: the bare archiwum.gddkia.gov.pl
+    // 301/302-redirects (via an http hop) to it, which the bare host's flaky DNS
+    // made unreliable. Year-round despite the zima_html (winter) path.
+    id: "gddkia-pl",
+    name: "GDDKiA road obstructions (Poland)",
+    format: "gddkia-xml",
+    url: "https://www.archiwum.gddkia.gov.pl/dane/zima_html/utrdane.xml",
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC0-1.0",
+    licenseUrl: "https://dane.gov.pl/",
+    attribution: "GDDKiA",
+    country: "PL",
+    privacyUrl: "https://www.gov.pl/web/gddkia",
+    enabledByDefault: true,
+  },
+]

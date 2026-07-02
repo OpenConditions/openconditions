@@ -1,0 +1,16 @@
+[
+  {
+    id: "dgt-es",
+    name: "DGT (Spain)",
+    format: "datex2",
+    url: "https://nap.dgt.es/datex2/v3/dgt/SituationPublication/datex2_v36.xml",
+    cadenceSec: 120,
+    freshnessWindowSec: 600,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://nap.dgt.es",
+    attribution: "Dirección General de Tráfico (DGT)",
+    country: "ES",
+    privacyUrl: "https://www.dgt.es/protecciondedatos/",
+    enabledByDefault: true,
+  },
+]

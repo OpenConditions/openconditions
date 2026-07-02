@@ -1,0 +1,32 @@
+[
+  {
+    id: "tarktee-ee",
+    name: "Tark Tee (Estonia)",
+    format: "datex2",
+    url: "https://tarktee.transpordiamet.ee/api/datex2/situation",
+    auth: {
+      kind: "query-key",
+      param: "apiKey",
+      envVar: "EE_TARKTEE_API_KEY",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://andmed.eesti.ee/information-holders/transpordiamet",
+    attribution: "Transpordiamet (Estonian Transport Administration)",
+    country: "EE",
+    privacyUrl: "https://www.transpordiamet.ee/en",
+    enabledByDefault: true,
+    setup: {
+      EE_TARKTEE_API_KEY: {
+        title: "Tark Tee key (Estonia)",
+        url: "https://tarktee.transpordiamet.ee/#/en/datex-registration",
+        urlLabel: "Register at Tark Tee",
+        steps: [
+          "Register for the DATEX II API at tarktee.transpordiamet.ee/#/en/datex-registration (Transpordiamet 'Smart Road' gateway); a key is issued after registration. The old tarktee.mnt.ee domain is retired.",
+        ],
+        notes: "CC-BY-4.0 (commercial OK).",
+      },
+    },
+  },
+]

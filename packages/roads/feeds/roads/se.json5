@@ -1,0 +1,45 @@
+[
+  {
+    // Trafikverket's road incident/roadworks data is NOT in the object API — it's
+    // the dedicated DATEX II URL endpoint /v2/datex2/{schemaversion}/{namespace}/
+    // sit:situation (plain GET, DATEX II v3). The Situation data is split into
+    // namespaces; we pull the two coordinate-bearing road ones: roadworks
+    // (roadworks + closures, the bulk) and accident. Auth = the key as
+    // ?authenticationkey=. Trafikverket publishes posList in lon-lat order.
+    id: "trafikverket-se",
+    name: "Trafikverket (Sweden)",
+    format: "datex2",
+    url: [
+      "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/roadworks/sit:situation",
+      "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/accident/sit:situation",
+    ],
+    auth: {
+      kind: "query-key",
+      param: "authenticationkey",
+      envVar: "TRAFIKVERKET_API_KEY",
+    },
+    posListLonLat: true,
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC0-1.0",
+    licenseUrl: "https://data.trafikverket.se/",
+    attribution: "Trafikverket",
+    country: "SE",
+    privacyUrl: "https://www.trafikverket.se/integritetspolicy/",
+    enabledByDefault: true,
+    setup: {
+      TRAFIKVERKET_API_KEY: {
+        title: "Trafikverket key (Sweden)",
+        description: "Authentication key, sent in the POST request body.",
+        url: "https://data.trafikverket.se/oauth2/Account/register",
+        urlLabel: "Sign up at Trafikverket",
+        steps: [
+          "Sign up at data.trafikverket.se/oauth2/Account/register.",
+          "Create an authentication key under data.trafikverket.se/mypage/systems (My systems). The key is sent in the POST request body.",
+        ],
+        cost: "Free",
+        notes: "CC0 — no restrictions. API endpoint: api.trafikinfo.trafikverket.se/v2/data.json (the bare host has no web page).",
+      },
+    },
+  },
+]

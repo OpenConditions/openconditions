@@ -1,0 +1,34 @@
+[
+  {
+    id: "vejdirektoratet-dk",
+    name: "Vejdirektoratet (Denmark)",
+    format: "datex2",
+    url: "https://data.vd-nap.dk/api/datex2/traffic-events",
+    auth: {
+      kind: "query-key",
+      param: "api-key",
+      envVar: "DK_VD_API_KEY",
+    },
+    cadenceSec: 600,
+    freshnessWindowSec: 1800,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://nap.vd.dk/",
+    attribution: "Vejdirektoratet (Danish Road Directorate)",
+    country: "DK",
+    privacyUrl: "https://www.vejdirektoratet.dk/",
+    enabledByDefault: true,
+    setup: {
+      DK_VD_API_KEY: {
+        title: "Vejdirektoratet key (Denmark)",
+        url: "https://du-portal-ui.dataudveksler.app.vd.dk/data/416/overview",
+        urlLabel: "Danish data exchanger — dataset 416",
+        steps: [
+          "Register on the data exchanger (Dataudveksleren) using an eID — choose 'International' for an eID from another European country. Leave the 'Dataowner consent' checkbox unchecked (it's the publisher agreement).",
+          "Create a service account at du-portal-ui.dataudveksler.app.vd.dk/profile/service-accounts.",
+          "Associate the service account with dataset 416 (Traffic Events and Road Works snapshot — NOT 415, which is AMQP-only). The dataset page then shows the data-access URL and the credential the service account presents.",
+        ],
+        notes: 'CC-BY-4.0; attribution "Vejdirektoratet." Access is via a service account, not a plain API key — confirm from the dataset page whether its credential is a header/query token or an OAuth2 client-credentials pair.',
+      },
+    },
+  },
+]

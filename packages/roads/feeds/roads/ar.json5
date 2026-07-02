@@ -1,0 +1,36 @@
+[
+  {
+    id: "ba-cortes-ar",
+    name: "Buenos Aires road closures (cortes)",
+    format: "geojson",
+    url: "https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=${BA_CLIENT_ID}&client_secret=${BA_CLIENT_SECRET}",
+    requiredEnv: ["BA_CLIENT_ID", "BA_CLIENT_SECRET"],
+    geojson: {
+      defaultType: "road_closure",
+      headlineField: "nombre",
+      descriptionField: "descripcion",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-2.5-AR",
+    licenseUrl: "https://data.buenosaires.gob.ar/",
+    attribution: "Gobierno de la Ciudad de Buenos Aires",
+    country: "AR",
+    privacyUrl: "https://www.buenosaires.gob.ar/politicas-de-privacidad",
+    enabledByDefault: true,
+    setup: {
+      BA_CLIENT_ID: {
+        title: "Buenos Aires transport — client_id",
+        url: "https://api-transporte.buenosaires.gob.ar/registro",
+        urlLabel: "BA transport API registration",
+        steps: [
+          "Register / request a key at api-transporte.buenosaires.gob.ar/registro. The client_id + client_secret pair is sent to you by email.",
+        ],
+        notes: "CC-BY-2.5-AR (commercial OK).",
+      },
+      BA_CLIENT_SECRET: {
+        title: "Buenos Aires transport — client_secret",
+      },
+    },
+  },
+]

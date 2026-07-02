@@ -1,0 +1,41 @@
+[
+  {
+    id: "ndw",
+    name: "NDW (Netherlands)",
+    format: "datex2",
+    url: "http://opendata.ndw.nu/actueel_beeld.xml.gz",
+    gzip: true,
+    cadenceSec: 60,
+    freshnessWindowSec: 300,
+    license: "CC0-1.0",
+    licenseUrl: "https://www.ndw.nu",
+    attribution: "NDW / Rijkswaterstaat",
+    country: "NL",
+    privacyUrl: "https://www.ndw.nu/privacy",
+    enabledByDefault: true,
+  },
+  {
+    // Separate source id from "ndw" (events) so atomicSwap stays source-id-scoped
+    // and the two NDW feeds never clobber each other's rows. The trafficspeed feed
+    // carries measurements keyed by site id only; the companion measurement.xml.gz
+    // site table supplies each site's geometry.
+    id: "ndw-flow",
+    name: "NDW traffic speed (Netherlands)",
+    format: "datex2",
+    produces: "flow",
+    url: "https://opendata.ndw.nu/trafficspeed.xml.gz",
+    gzip: true,
+    siteTable: {
+      url: "https://opendata.ndw.nu/measurement.xml.gz",
+      gzip: true,
+    },
+    cadenceSec: 60,
+    freshnessWindowSec: 300,
+    license: "CC0-1.0",
+    licenseUrl: "https://www.ndw.nu",
+    attribution: "NDW / Rijkswaterstaat",
+    country: "NL",
+    privacyUrl: "https://www.ndw.nu/privacy",
+    enabledByDefault: true,
+  },
+]

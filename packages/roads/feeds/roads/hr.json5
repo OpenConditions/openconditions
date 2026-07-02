@@ -1,0 +1,36 @@
+[
+  {
+    id: "hc-hr",
+    name: "Hrvatske ceste roadworks (Croatia)",
+    format: "datex2",
+    url: "https://b2b.promet-info.hr/dc/b2b.hc.roadworks.datex",
+    auth: {
+      kind: "basic",
+      userEnvVar: "HC_HR_USERNAME",
+      passEnvVar: "HC_HR_PASSWORD",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "OD-HR",
+    licenseUrl: "https://data.gov.hr/otvorena-dozvola",
+    attribution: "Hrvatske ceste",
+    country: "HR",
+    privacyUrl: "https://www.hrvatske-ceste.hr/",
+    enabledByDefault: true,
+    setup: {
+      HC_HR_USERNAME: {
+        title: "Hrvatske ceste (Croatia) — B2B username",
+        description: "HTTP Basic username for the promet-info B2B feed (Croatia).",
+        url: "https://www.hrvatske-ceste.hr/",
+        urlLabel: "Hrvatske ceste",
+        steps: [
+          "There is no self-service portal — request B2B account credentials from Hrvatske ceste (the promet-info operator), via hrvatske-ceste.hr or the data.gov.hr dataset page.",
+        ],
+        notes: "Open licence (commercial OK); access is gated on the B2B account.",
+      },
+      HC_HR_PASSWORD: {
+        title: "Hrvatske ceste (Croatia) — B2B password",
+      },
+    },
+  },
+]

@@ -1,0 +1,18 @@
+[
+  {
+    id: "digitraffic-fi",
+    name: "Digitraffic (Finland)",
+    format: "digitraffic-json",
+    url: [
+      "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=TRAFFIC_ANNOUNCEMENT",
+      "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=ROAD_WORK",
+    ],
+    cadenceSec: 120,
+    freshnessWindowSec: 600,
+    license: "CC-BY-4.0",
+    attribution: "Fintraffic / Digitraffic",
+    country: "FI",
+    privacyUrl: "https://www.fintraffic.fi/en/fintraffic/data-protection",
+    enabledByDefault: true,
+  },
+]

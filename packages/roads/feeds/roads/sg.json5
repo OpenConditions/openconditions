@@ -1,0 +1,34 @@
+[
+  {
+    id: "lta-sg",
+    name: "LTA DataMall Traffic Incidents (Singapore)",
+    format: "lta-json",
+    url: "https://datamall2.mytransport.sg/ltaodataservice/TrafficIncidents",
+    auth: {
+      kind: "header-key",
+      header: "AccountKey",
+      envVar: "LTA_ACCOUNT_KEY",
+    },
+    cadenceSec: 120,
+    freshnessWindowSec: 600,
+    license: "Singapore-ODL-1.0",
+    licenseUrl: "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html",
+    attribution: "Land Transport Authority (Singapore)",
+    country: "SG",
+    privacyUrl: "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
+    enabledByDefault: true,
+    setup: {
+      LTA_ACCOUNT_KEY: {
+        title: "LTA DataMall AccountKey (Singapore)",
+        url: "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
+        urlLabel: "Request LTA API access",
+        steps: [
+          "Request an API account via the form at datamall.lta.gov.sg/content/datamall/en/request-for-api.html.",
+          "The AccountKey is emailed to you.",
+        ],
+        cost: "Free",
+        notes: "Singapore ODL (commercial OK); attribution to the Land Transport Authority.",
+      },
+    },
+  },
+]

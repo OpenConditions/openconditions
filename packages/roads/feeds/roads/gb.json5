@@ -1,0 +1,35 @@
+[
+  {
+    id: "nationalhighways-gb",
+    name: "National Highways NTIS (England)",
+    format: "datex2",
+    url: "https://api.data.nationalhighways.co.uk/roads/v2.0/closures",
+    auth: {
+      kind: "header-key",
+      header: "Ocp-Apim-Subscription-Key",
+      envVar: "NH_API_KEY",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "OGL-UK-3.0",
+    licenseUrl: "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    attribution: "Contains National Highways data © Crown copyright and database right",
+    country: "GB",
+    privacyUrl: "https://nationalhighways.co.uk/privacy-notice/",
+    enabledByDefault: true,
+    setup: {
+      NH_API_KEY: {
+        title: "National Highways NTIS key (England)",
+        description: "Ocp-Apim-Subscription-Key header value.",
+        url: "https://developer.data.nationalhighways.co.uk/signin",
+        urlLabel: "National Highways developer portal",
+        steps: [
+          "Register / sign in at developer.data.nationalhighways.co.uk/signin.",
+          "Subscribe to the 'unlimited' product at developer.data.nationalhighways.co.uk/subscription#product=unlimited (one product grants the APIM key for all NTIS DATEX feeds, incl. Road and Lane Closures v2.0).",
+          "Copy the Ocp-Apim-Subscription-Key from your profile at developer.data.nationalhighways.co.uk/profile.",
+        ],
+        notes: 'OGL-UK-3.0; attribution "Contains National Highways data © Crown copyright and database right."',
+      },
+    },
+  },
+]

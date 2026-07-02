@@ -1,0 +1,36 @@
+[
+  {
+    id: "vegvesen-no",
+    name: "Statens vegvesen (Norway)",
+    format: "datex2",
+    url: "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetSituation/pullSnapshotData",
+    auth: {
+      kind: "basic",
+      userEnvVar: "NO_VEGVESEN_USERNAME",
+      passEnvVar: "NO_VEGVESEN_PASSWORD",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "NLOD-2.0",
+    licenseUrl: "https://data.norge.no/nlod/en/2.0",
+    attribution: "Statens vegvesen",
+    country: "NO",
+    privacyUrl: "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
+    enabledByDefault: true,
+    setup: {
+      NO_VEGVESEN_USERNAME: {
+        title: "Statens vegvesen (Norway) — username",
+        url: "https://www.vegvesen.no/en/fag/technology/open-data/a-selection-of-open-data/what-is-datex/get-access/",
+        urlLabel: "Statens vegvesen — get DATEX access",
+        steps: [
+          "Request a free account for the DATEX II server via the 'Get access' page (Open data → What is DATEX → Get access).",
+        ],
+        cost: "Free",
+        notes: "NLOD-2.0 (commercial OK).",
+      },
+      NO_VEGVESEN_PASSWORD: {
+        title: "Statens vegvesen (Norway) — password",
+      },
+    },
+  },
+]
