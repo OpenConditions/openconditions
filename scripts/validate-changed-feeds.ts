@@ -190,13 +190,19 @@ async function loadFeedFile(file: string): Promise<FeedSourceBase[]> {
 }
 
 async function main(): Promise<void> {
-  const baseRef = process.env["FEED_CHECK_BASE_REF"] ?? "origin/main";
-  const summary = await checkChangedFeeds({
-    changedFiles: changedFeedFiles(baseRef),
-    load: loadFeedFile,
-    validate: (feed) => validateFeed(feed),
-  });
-  for (const line of formatAnnotations(summary)) console.log(line);
+  try {
+    const baseRef = process.env["FEED_CHECK_BASE_REF"] ?? "origin/main";
+    const summary = await checkChangedFeeds({
+      changedFiles: changedFeedFiles(baseRef),
+      load: loadFeedFile,
+      validate: (feed) => validateFeed(feed),
+    });
+    for (const line of formatAnnotations(summary)) console.log(line);
+  } catch (err) {
+    // Non-gating by design even when the setup itself throws (e.g. an
+    // unresolvable base ref) — surface it as a warning, never fail the job.
+    console.error(`::warning::changed-feed liveness check crashed: ${errText(err)}`);
+  }
   // Non-gating by design: surface parse failures AND upstream flakes as
   // annotations, but never fail the job — a human decides. Always exit 0.
   process.exit(0);

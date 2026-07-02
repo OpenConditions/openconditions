@@ -14,7 +14,7 @@ export interface FeedValidation {
 }
 
 export interface ValidateFeedDeps {
-  /** Overridable fetch — defaults to the L10 SSRF+resource guard. */
+  /** Overridable fetch — defaults to the SSRF + resource egress guard. */
   fetch?: typeof fetch;
   /** Overridable parser dispatch — defaults to the roads domain. */
   parserFor?: (format: string) => ParserFn;

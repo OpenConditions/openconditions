@@ -39,7 +39,7 @@ export interface CredentialField extends CredentialSetup {
 /**
  * The domain-agnostic feed descriptor. A domain narrows `format` and adds
  * domain-specific mapping fields via intersection (e.g. roads adds `geojson`).
- * After L6 there are no function-valued fields.
+ * After the declarative-templating work, no feed field holds a function.
  */
 export interface FeedSourceBase {
   id: string;
