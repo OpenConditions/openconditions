@@ -24,7 +24,8 @@ const PARSERS: Record<string, (input: string) => Map<string, SiteGeometry>> = {
  * Loads a feed's JSON/GeoJSON station registry into a station-id → geometry
  * map, cached in-process so it is not refetched on every ingest run. Fetched
  * through the caller's egress-guarded fetch — never a raw `fetch` — the same
- * way the DATEX `siteTable` loader is guarded.
+ * way the DATEX `siteTable` loader is guarded, and carrying the feed's
+ * `requestHeaders` (e.g. Fintraffic's `Digitraffic-User`) when it declares any.
  *
  * Returns undefined when the feed declares no registry, or when the fetch or
  * parse fails with no usable cache yet — the flow parser then simply skips
@@ -44,7 +45,7 @@ export async function loadStationRegistry(
   if (cached && now() - cached.fetchedAt < REGISTRY_TTL_MS) return cached.map;
 
   try {
-    const res = await fetchFn(reg.url);
+    const res = await fetchFn(reg.url, { headers: src.requestHeaders });
     if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${reg.url}`);
     const parse = PARSERS[reg.format];
     if (!parse) throw new Error(`no station-registry parser for ${reg.format}`);

@@ -54,4 +54,34 @@ describe("loadStationRegistry", () => {
     const out = await loadStationRegistry(feed(REG), badFetch, later);
     expect(out?.get("1")).toEqual({ type: "Point", coordinates: [24.9, 60.2] });
   });
+
+  it("forwards the feed's requestHeaders on the registry fetch when declared", async () => {
+    let seenHeaders: Record<string, string> | undefined;
+    const capturingFetch = (async (_url: string, init?: RequestInit) => {
+      seenHeaders = init?.headers as Record<string, string> | undefined;
+      return new Response(geojson, { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const withHeaders = {
+      id: "f",
+      stationRegistry: REG,
+      requestHeaders: { "Digitraffic-User": "OpenConditions/1.0" },
+    } as unknown as FeedSource;
+
+    const map = await loadStationRegistry(withHeaders, capturingFetch);
+    expect(map?.get("1")).toBeDefined();
+    expect(seenHeaders).toEqual({ "Digitraffic-User": "OpenConditions/1.0" });
+  });
+
+  it("still works for a feed with no requestHeaders (e.g. WebTRIS)", async () => {
+    let seenHeaders: Record<string, string> | undefined;
+    const capturingFetch = (async (_url: string, init?: RequestInit) => {
+      seenHeaders = init?.headers as Record<string, string> | undefined;
+      return new Response(geojson, { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const map = await loadStationRegistry(feed(REG), capturingFetch);
+    expect(map?.get("1")).toBeDefined();
+    expect(seenHeaders).toBeUndefined();
+  });
 });
