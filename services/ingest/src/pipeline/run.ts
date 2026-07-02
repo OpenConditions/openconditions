@@ -179,9 +179,16 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   // streaming NDW alike) at this one seam.
   let toWrite = resolved;
   if (src.produces === "flow") {
-    const baselineMap = await loadBaselineMap(deps.sql, src.id, deps.now);
-    if (baselineMap.size > 0) {
-      toWrite = enrichFlowsWithBaseline(resolved, baselineMap, feedToSourceDescriptor(src));
+    // Best-effort: a baseline-load failure must never throw away a good fetch +
+    // resolve — fall back to writing the unenriched observations rather than
+    // aborting the whole poll and reverting the feed to stale data.
+    try {
+      const baselineMap = await loadBaselineMap(deps.sql, src.id, deps.now);
+      if (baselineMap.size > 0) {
+        toWrite = enrichFlowsWithBaseline(resolved, baselineMap, feedToSourceDescriptor(src));
+      }
+    } catch (err) {
+      console.warn(`[ingest] ${src.id}: baseline-map load failed, skipping enrichment:`, err);
     }
   }
 

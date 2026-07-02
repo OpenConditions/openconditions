@@ -65,4 +65,13 @@ describe("enrichFlowsWithBaseline", () => {
     const out = enrichFlowsWithBaseline([event], new Map(), src);
     expect(out).toEqual([event]);
   });
+  it("passes a flow through untouched when it already has a freeFlowKph, even with a matching baseline entry", () => {
+    const map = new Map<string, { kph: number; method: BaselineMethod }>([
+      ["src:has-ff", { kph: 100, method: "derived" }],
+    ]);
+    const existing = flow("src:has-ff", { speedKph: 30, freeFlowKph: 90 });
+    const out = enrichFlowsWithBaseline([existing], map, src);
+    expect(out).toEqual([existing]);
+    expect(out.some((o) => (o as any).type === "congestion")).toBe(false);
+  });
 });
