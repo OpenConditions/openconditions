@@ -47,6 +47,13 @@ export type FeedSource = FeedSourceBase & {
    * would stream corrupt bytes into the parser (yielding an empty map).
    */
   siteTable?: { url: string; gzip?: boolean };
+  /**
+   * A JSON/GeoJSON station registry supplying Point geometry for flow feeds
+   * keyed only by station id (Fintraffic, WebTRIS). The ingest service fetches
+   * it (egress-guarded, cached) and joins it into the flow parser as its
+   * siteMap — the JSON counterpart to the DATEX `siteTable`.
+   */
+  stationRegistry?: { url: string; format: "fintraffic-stations" | "webtris-sites" };
   /** Field mapping for `format: "geojson"` feeds (passed to the generic reader). */
   geojson?: GeoJsonMapping;
   /**

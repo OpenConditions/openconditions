@@ -36,6 +36,13 @@ export const roadFeedSchema = z
       .object({ url: z.string().url(), gzip: z.boolean().optional() })
       .strict()
       .optional(),
+    stationRegistry: z
+      .object({
+        url: z.string().url(),
+        format: z.enum(["fintraffic-stations", "webtris-sites"]),
+      })
+      .strict()
+      .optional(),
     openlrResolver: z.boolean().optional(),
     bbox: z.tuple([z.number(), z.number(), z.number(), z.number()]).optional(),
   })

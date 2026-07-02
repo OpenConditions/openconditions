@@ -18,6 +18,7 @@ import { parseFor } from "./parse.js";
 import { resolveOpenLr } from "./resolve.js";
 import { loadSiteTable } from "./site-table.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
+import { loadStationRegistry } from "./station-registry.js";
 import { atomicSwap } from "./write-postgis.js";
 import { loadBaselineMap, writeSpeedSamples } from "./baseline-store.js";
 
@@ -131,6 +132,25 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
         count: 0,
         durationMs: Date.now() - start,
         error: "site-table cold failure — no geometry map built",
+      };
+    }
+  }
+
+  // Same join, JSON/GeoJSON shape: a station registry supplies geometry for
+  // flow feeds keyed only by station id (Fintraffic, WebTRIS) rather than a
+  // DATEX site table. Mutually exclusive with `siteTable` in practice. Uses
+  // the same guarded `fetchFn` the feed fetch uses, so the registry request is
+  // egress-guarded too.
+  if (src.stationRegistry) {
+    siteMap = await loadStationRegistry(src, fetchFn);
+    if (siteMap === undefined) {
+      console.warn(
+        `[ingest] ${src.id}: station-registry cold failure — skipping swap, preserving last-good rows`
+      );
+      return {
+        count: 0,
+        durationMs: Date.now() - start,
+        error: "station-registry cold failure — no geometry map built",
       };
     }
   }
