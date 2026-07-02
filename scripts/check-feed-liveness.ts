@@ -2,9 +2,11 @@ import { appendFile, mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { hasCredentials } from "@openconditions/ingest-framework";
 import type { FeedSourceBase } from "@openconditions/ingest-framework";
-// DOMAIN_REGISTRY lives in the ingest service; it imports only built package
-// names, so Node's native .ts execution resolves this explicit-.ts specifier.
-import { DOMAIN_REGISTRY } from "../services/ingest/src/domains.ts";
+// buildDomainRegistry lives in the ingest service; it imports only built
+// package names, so Node's native .ts execution resolves this explicit-.ts
+// specifier. The feed set now comes from the built registry (baked-in +
+// mounted + optional remote), not the dispatch-only static DOMAIN_REGISTRY.
+import { buildDomainRegistry } from "../services/ingest/src/domains.ts";
 import { renderReport, type FeedFailure } from "./lib/liveness-report.ts";
 import { validateFeed } from "./lib/validate-feed.ts";
 
@@ -18,7 +20,8 @@ function isKeyless(feed: FeedSourceBase): boolean {
 
 async function collectFailures(): Promise<FeedFailure[]> {
   const failures: FeedFailure[] = [];
-  for (const [domain, plugin] of Object.entries(DOMAIN_REGISTRY)) {
+  const registry = await buildDomainRegistry();
+  for (const [domain, plugin] of Object.entries(registry)) {
     for (const feed of plugin.feeds) {
       if (!feed.enabledByDefault) continue;
       if (!isKeyless(feed) || !hasCredentials(feed)) continue;

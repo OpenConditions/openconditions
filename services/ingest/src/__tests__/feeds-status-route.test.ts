@@ -1,12 +1,18 @@
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import Fastify from "fastify";
 import { FeedStatusStore } from "../feed-status.js";
+import { buildDomainRegistry } from "../domains.js";
 import { registerFeedStatusRoute } from "../publish-routes.js";
 
 const app = Fastify();
 const store = new FeedStatusStore();
 store.recordSuccess("ndw", "2026-07-01T00:00:00.000Z", 5, 100);
-registerFeedStatusRoute(app, store);
+
+beforeAll(async () => {
+  const registry = await buildDomainRegistry();
+  registerFeedStatusRoute(app, store, registry);
+  await app.ready();
+});
 
 afterAll(() => app.close());
 

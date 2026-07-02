@@ -1,7 +1,10 @@
 import { Cron } from "croner";
 import type postgres from "postgres";
-import { DOMAIN_REGISTRY } from "./domains.js";
-import { hasCredentials, requiredEnvVars } from "@openconditions/ingest-framework";
+import {
+  hasCredentials,
+  requiredEnvVars,
+  type DomainRegistry,
+} from "@openconditions/ingest-framework";
 import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
 import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
@@ -61,11 +64,15 @@ function cadenceToCron(cadenceSec: number): string {
  * Each job holds a single-flight boolean so slow runs do not overlap.
  * Returns a cancel function that stops all scheduled jobs.
  */
-export function startScheduler(sql: Sql, statusStore: FeedStatusStore): () => void {
+export function startScheduler(
+  sql: Sql,
+  statusStore: FeedStatusStore,
+  registry: DomainRegistry
+): () => void {
   const jobs: Cron[] = [];
   const openlrClient = createOpenlrClient();
 
-  for (const [domainName, plugin] of Object.entries(DOMAIN_REGISTRY)) {
+  for (const [domainName, plugin] of Object.entries(registry)) {
     const enabled = plugin.feeds.filter((f) => f.enabledByDefault);
 
     for (const feed of enabled) {

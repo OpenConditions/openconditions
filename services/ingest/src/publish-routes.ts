@@ -12,10 +12,13 @@ import {
   observationsToJsonLd,
   observationsToTraff,
 } from "@openconditions/publishers";
-import { hasCredentials, requiredEnvVars } from "@openconditions/ingest-framework";
+import {
+  hasCredentials,
+  requiredEnvVars,
+  type DomainRegistry,
+} from "@openconditions/ingest-framework";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
-import { DOMAIN_REGISTRY } from "./domains.js";
 import type { FeedRunStatus, FeedStatusStore } from "./feed-status.js";
 
 type Sql = postgres.Sql;
@@ -62,10 +65,14 @@ export type FeedStatusRow = {
  * joined with its runtime status (last run/success/error, row count). Mirrors
  * the scheduler's own enabled/credential checks so the two never disagree.
  */
-export function registerFeedStatusRoute(app: FastifyInstance, statusStore: FeedStatusStore): void {
+export function registerFeedStatusRoute(
+  app: FastifyInstance,
+  statusStore: FeedStatusStore,
+  registry: DomainRegistry
+): void {
   app.get("/feeds/status", async () => {
     const feeds: FeedStatusRow[] = [];
-    for (const [domain, plugin] of Object.entries(DOMAIN_REGISTRY)) {
+    for (const [domain, plugin] of Object.entries(registry)) {
       for (const feed of plugin.feeds) {
         // Check each candidate key independently (auth: undefined) so a
         // multi-var auth (basic/oauth2/mtls) with only one var unset reports
@@ -101,7 +108,8 @@ export function registerFeedStatusRoute(app: FastifyInstance, statusStore: FeedS
 export function registerPublishRoutes(
   app: FastifyInstance,
   sql: Sql,
-  statusStore: FeedStatusStore
+  statusStore: FeedStatusStore,
+  registry: DomainRegistry
 ): void {
   const db = runner(sql);
 
@@ -210,5 +218,5 @@ export function registerPublishRoutes(
     return reply;
   });
 
-  registerFeedStatusRoute(app, statusStore);
+  registerFeedStatusRoute(app, statusStore, registry);
 }

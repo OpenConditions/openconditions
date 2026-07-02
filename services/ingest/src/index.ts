@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import { runMigrations } from "@openconditions/core/server";
 import { DATABASE_URL, sql } from "./db.js";
+import { buildDomainRegistry } from "./domains.js";
 import { FeedStatusStore } from "./feed-status.js";
 import { registerPublishRoutes } from "./publish-routes.js";
 import { RateLimiter } from "./rate-limit.js";
@@ -43,9 +44,10 @@ async function boot() {
   });
 
   const statusStore = new FeedStatusStore();
-  registerPublishRoutes(app, sql, statusStore);
+  const registry = await buildDomainRegistry();
+  registerPublishRoutes(app, sql, statusStore, registry);
 
-  const stopScheduler = startScheduler(sql, statusStore);
+  const stopScheduler = startScheduler(sql, statusStore, registry);
   const close = async () => {
     stopScheduler();
     limiter.destroy();
