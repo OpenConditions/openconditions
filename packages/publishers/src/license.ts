@@ -1,18 +1,22 @@
 import type { Observation } from "@openconditions/core";
+import { licenseInfo } from "@openconditions/ingest-framework";
 
-/** SPDX/short ids of share-alike (copyleft) data licenses. Matched case-insensitively. */
-const SHARE_ALIKE = ["cc-by-sa", "odbl", "gpl", "agpl", "cc-sa"];
+/** Fallback SPDX/short ids of share-alike (copyleft) licenses not (yet) in the
+ *  registry. Matched case-insensitively. */
+const SHARE_ALIKE_FALLBACK = ["cc-by-sa", "odbl", "gpl", "agpl", "cc-sa"];
 
 /** The license carried on a record (from its feed provenance). */
 export function recordLicense(o: Observation): string | undefined {
   return o.origin.attribution.license;
 }
 
-/** Whether a license is share-alike / copyleft (incompatible with permissive redistribution). */
+/** Share-alike per the license registry; falls back to substrings for unregistered ids. */
 export function isShareAlikeLicense(license: string | undefined): boolean {
   if (!license) return false;
+  const info = licenseInfo(license);
+  if (info) return info.shareAlike;
   const l = license.toLowerCase();
-  return SHARE_ALIKE.some((s) => l.includes(s));
+  return SHARE_ALIKE_FALLBACK.some((s) => l.includes(s));
 }
 
 /**

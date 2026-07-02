@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
+    "@openconditions/ingest-framework": "workspace:*",
     "fast-xml-parser": "^5.8.0",
     "gtfs-realtime-bindings": "^2.0.0"
   },

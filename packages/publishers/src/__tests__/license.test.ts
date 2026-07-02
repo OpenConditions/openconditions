@@ -2,6 +2,27 @@ import { describe, expect, it } from "vitest";
 import { filterForPermissiveExport, isShareAlikeLicense } from "../license.js";
 import { roadEvent } from "./fixture.js";
 
+describe("registry-driven share-alike", () => {
+  it("uses the registry flag, not substrings", () => {
+    expect(isShareAlikeLicense("CC-BY-SA-4.0")).toBe(true); // registry: shareAlike:true
+    expect(isShareAlikeLicense("dl-de/zero-2-0")).toBe(false); // registry: shareAlike:false
+  });
+
+  it("falls back to substrings for a license not in the registry", () => {
+    expect(isShareAlikeLicense("odbl")).toBe(true);
+  });
+
+  it("drops share-alike records from a permissive export using the registry flag", () => {
+    const mk = (id: string, license: string) =>
+      roadEvent({ id, origin: { kind: "feed", attribution: { provider: "p", license } } });
+    const kept = filterForPermissiveExport([
+      mk("drop-sa", "CC-BY-SA-4.0"),
+      mk("keep-zero", "dl-de/zero-2-0"),
+    ]);
+    expect(kept.map((o) => o.id)).toEqual(["keep-zero"]);
+  });
+});
+
 describe("isShareAlikeLicense", () => {
   it("flags share-alike / copyleft licenses", () => {
     expect(isShareAlikeLicense("CC-BY-SA-4.0")).toBe(true);
