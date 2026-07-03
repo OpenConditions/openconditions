@@ -26,7 +26,7 @@
       "RATE_LIMIT_WINDOW_MS": "${OPENCONDITIONS_RATE_LIMIT_WINDOW_MS:-60000}",
       "TRUST_PROXY_HOPS": "${TRUST_PROXY_HOPS:-1}"
     },
-    "memory": "1g",
+    "memory": "2560m",
     "restart": "unless-stopped",
     "dependsOn": [
       {

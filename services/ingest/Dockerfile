@@ -70,9 +70,11 @@ RUN apk add --no-cache curl
 ENV NODE_ENV=production
 ENV PORT=4100
 ENV HOST=0.0.0.0
-# Bounds the V8 heap; the largest job (streaming the ~360 MB NDW site table)
-# runs comfortably under this. Operators can override via the service env.
-ENV NODE_OPTIONS=--max-old-space-size=512
+# Bounds the V8 heap. The NDW flow feed (enabled by default) processes ~18k
+# per-sensor flows plus per-flow sample-writing/enrichment every cycle on top of
+# the streamed ~373 MB site table, which needs well over 512 MB of heap; sized
+# to run under the service memory limit below. Operators can override via env.
+ENV NODE_OPTIONS=--max-old-space-size=1536
 
 # Runtime externals (fastify, postgres, croner) resolved from the workspace
 # node_modules; everything else is inlined in dist.
