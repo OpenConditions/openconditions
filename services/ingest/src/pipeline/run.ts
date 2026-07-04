@@ -2,7 +2,7 @@ import { Readable } from "node:stream";
 import type postgres from "postgres";
 import type { Observation } from "@openconditions/core";
 import type { FeedSource, SiteGeometry, UnresolvedRoadEvent } from "@openconditions/roads";
-import { enrichFlowsWithBaseline } from "@openconditions/roads";
+import { enrichEventSeverity, enrichFlowsWithBaseline } from "@openconditions/roads";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
 import {
@@ -211,6 +211,12 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       console.warn(`[ingest] ${src.id}: baseline-map load failed, skipping enrichment:`, err);
     }
   }
+
+  // Derive a severity for events the feed left undeclared (uniform across every
+  // feed at this one seam) so the map's severity ramp is meaningful for sources
+  // that omit it, e.g. the German Mobilithek roadworks. No-op on declared
+  // events and on flows.
+  toWrite = enrichEventSeverity(toWrite);
 
   await atomicSwap(deps.sql, src.id, toWrite, src.freshnessWindowSec);
 

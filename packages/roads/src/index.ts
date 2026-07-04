@@ -1,5 +1,6 @@
 export * from "./model.js";
 export * from "./taxonomy.js";
+export * from "./severity-derive.js";
 export * from "./types.js";
 export * from "./autobahn.js";
 export * from "./datex.js";
