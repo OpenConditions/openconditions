@@ -18,7 +18,7 @@ const payload = JSON.stringify({
             SiteId: "TMS-1",
             AverageVehicleSpeed: 92,
             VehicleFlowRate: 800,
-            MeasurementOrCalculationTime: "2026-03-04T14:30:00Z",
+            MeasurementTime: "2026-03-04T14:30:00Z",
             Geometry: { WGS84: "POINT (18.06 59.33)" },
           },
           {

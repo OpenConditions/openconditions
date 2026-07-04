@@ -55,7 +55,7 @@
     method: "POST",
     requestHeaders: { "Content-Type": "text/xml" },
     requiredEnv: ["TRAFIKVERKET_API_KEY"],
-    bodyTemplate: '<REQUEST><LOGIN authenticationkey="${TRAFIKVERKET_API_KEY}"/><QUERY objecttype="TrafficFlow" schemaversion="1.4"><INCLUDE>SiteId</INCLUDE><INCLUDE>AverageVehicleSpeed</INCLUDE><INCLUDE>VehicleFlowRate</INCLUDE><INCLUDE>MeasurementOrCalculationTime</INCLUDE><INCLUDE>Geometry.WGS84</INCLUDE></QUERY></REQUEST>',
+    bodyTemplate: '<REQUEST><LOGIN authenticationkey="${TRAFIKVERKET_API_KEY}"/><QUERY objecttype="TrafficFlow" schemaversion="1.4"><INCLUDE>SiteId</INCLUDE><INCLUDE>AverageVehicleSpeed</INCLUDE><INCLUDE>VehicleFlowRate</INCLUDE><INCLUDE>MeasurementTime</INCLUDE><INCLUDE>Geometry.WGS84</INCLUDE></QUERY></REQUEST>',
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "CC0-1.0",

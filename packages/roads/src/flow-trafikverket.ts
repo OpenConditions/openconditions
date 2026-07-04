@@ -7,7 +7,7 @@ import type { FlowParseResult } from "./flow.js";
 interface Flow {
   SiteId?: unknown;
   AverageVehicleSpeed?: unknown;
-  MeasurementOrCalculationTime?: unknown;
+  MeasurementTime?: unknown;
   Geometry?: { WGS84?: unknown };
 }
 
@@ -56,10 +56,7 @@ export function parseTrafikverketFlow(
       if (!geometry) continue;
       const speedKph = Number(item.AverageVehicleSpeed);
       if (!Number.isFinite(speedKph) || speedKph < 0) continue;
-      const measuredAt =
-        typeof item.MeasurementOrCalculationTime === "string"
-          ? item.MeasurementOrCalculationTime
-          : now;
+      const measuredAt = typeof item.MeasurementTime === "string" ? item.MeasurementTime : now;
       flows.push({
         id: `${src.id}:${siteId}`,
         source: src.id,
