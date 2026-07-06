@@ -179,7 +179,7 @@ importers:
         version: 5.9.3
       gtfs-realtime-bindings:
         specifier: ^2.0.0
-        version: 2.0.0
+        version: 2.1.0
     devDependencies:
       '@openconditions/roads':
         specifier: workspace:*
@@ -1760,8 +1760,8 @@ packages:
   graceful-fs@4.2.11:
     resolution: {integrity: sha512-RbJ5/jmFcNNCcDV5o9eTnBLJ/HszWV0P73bc+Ff4nS/rJj+YaS6IGyiOL0VoBYX+l1Wrl3k63h/KrH+nhJ0XvQ==}
 
-  gtfs-realtime-bindings@2.0.0:
-    resolution: {integrity: sha512-gCKOKZCQ++6z+aBDc//wlORJw1kICwS9MzofMnGr5+yE64B578G+H60FndmY22XXsA8fTwuPmOd+fuKlq6aq/w==}
+  gtfs-realtime-bindings@2.1.0:
+    resolution: {integrity: sha512-++VHaoPiKPC53MJ0rNOq47qCQwj3k26D4pJepSQAmI/eFq+Uv+Kr4NCI4KNu5XsmPapiNPywymKHSfcGupVj/g==}
     engines: {node: '>=22'}
 
   has-flag@4.0.0:
@@ -1945,8 +1945,8 @@ packages:
   lines-and-columns@1.2.4:
     resolution: {integrity: sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==}
 
-  linkify-it@5.0.1:
-    resolution: {integrity: sha512-wVoTjP4Q6R0NW5hiZkVJaFZPWgtXfoGF+6LucL3/FtiNjmcHhYjEr5f1Kqjirc1nBW07J/ZuRFumqr2oqccEWg==}
+  linkify-it@5.0.2:
+    resolution: {integrity: sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q==}
 
   load-tsconfig@0.2.5:
     resolution: {integrity: sha512-IXO6OCs9yg8tMKzfPZ1YmheJbZCiEsnBdcB03l0OcfK9prKnJb96siuHCr5Fl37/yo9DnKU+TLpxzTUspw9shg==}
@@ -1990,8 +1990,8 @@ packages:
       '@types/markdown-it': '*'
       markdown-it: '*'
 
-  markdown-it@14.2.0:
-    resolution: {integrity: sha512-1TGiQiJVRQ3NPmZH6sx5Cfnmg6GQm9jvC1ch4TK511NjSJvjzKLzn5pPfZRNZkRPZP0HqCioSndqH8v2nRaWVQ==}
+  markdown-it@14.3.0:
+    resolution: {integrity: sha512-RCEsPjR+sr0x+AuYp601tKTkgFG4YEPLCzHST3cQ/fhlJkqAkz1L2/Qbp1j9qw5SBwQHFBoW8+hoN5xssOF0Tw==}
     hasBin: true
 
   marked@4.3.0:
@@ -2224,19 +2224,19 @@ packages:
     resolution: {integrity: sha512-WPn+h9RGEExOKdu4bsF4HksG/uzd3cFq3MFtq8PsFeExPse5Ha/VOjQNyHhjboBFwGXGev6muJYTSPAOkROq2g==}
     engines: {node: '>=18'}
 
-  protobufjs-cli@2.5.5:
-    resolution: {integrity: sha512-OAiS0/kDwcuZd760SejJHLsOZDp+0Gu5payJrsDQ147pP+B5KXzMGTLRnWQ1VD047Km1yT8q9MPtiCgoQlvDOA==}
+  protobufjs-cli@2.5.7:
+    resolution: {integrity: sha512-vTO8KSAG6qAXZYOT4pulivSN1wV+1RgulUeT2NCUvfKnypfJ2kF0GGYFNhlqQr7I9o8syQbfhJLnq6OJglliqw==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     peerDependencies:
-      protobufjs: ^8.6.4
+      protobufjs: ^8.6.6
 
-  protobufjs@7.6.4:
-    resolution: {integrity: sha512-RJJPTTpvFfHcWLkIa2JFWK4XvtSzS0yEWDmunqHXli1h3JlkbcQZXDZdcWxv+JK3Xsl5/UFDPZ0iGm7DAengYw==}
+  protobufjs@7.6.5:
+    resolution: {integrity: sha512-/FPD0nUc9jH6rfFjji9IBqOz4pcSE3CsT1m7Ep6Mdb0LxSUMj8hgl6GomOvZzpNpAqqGaXA0P3VSrZLFzIhQrw==}
     engines: {node: '>=12.0.0'}
 
-  protobufjs@8.6.4:
-    resolution: {integrity: sha512-/+XMv9JalknuncEJSwsyEVlwcxVLKx2iaoSUXFZA86MJkdqyOdfrlB1sB7S6aKyUk9tl20YY+SgQe5J2sJHTcg==}
+  protobufjs@8.6.6:
+    resolution: {integrity: sha512-RkLIhE+Tdc2Kpq1F4Uw6OnpAXPca7B+GSDov/GqGCqNBpVyDskQ9yReZfgM+C7xw9AAix873iQZXbBWXj6NzYQ==}
     engines: {node: '>=12.0.0'}
 
   pump@3.0.4:
@@ -3085,14 +3085,14 @@ snapshots:
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.3.2
-      protobufjs: 7.6.4
+      protobufjs: 7.6.5
       yargs: 17.7.3
 
   '@grpc/proto-loader@0.8.1':
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.3.2
-      protobufjs: 7.6.4
+      protobufjs: 7.6.5
       yargs: 17.7.3
 
   '@humanfs/core@0.19.2':
@@ -3824,7 +3824,7 @@ snapshots:
       '@grpc/grpc-js': 1.14.4
       '@grpc/proto-loader': 0.7.15
       docker-modem: 5.0.7
-      protobufjs: 7.6.4
+      protobufjs: 7.6.5
       tar-fs: 2.1.4
     transitivePeerDependencies:
       - supports-color
@@ -4160,10 +4160,10 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  gtfs-realtime-bindings@2.0.0:
+  gtfs-realtime-bindings@2.1.0:
     dependencies:
-      protobufjs: 8.6.4
-      protobufjs-cli: 2.5.5(protobufjs@8.6.4)
+      protobufjs: 8.6.6
+      protobufjs-cli: 2.5.7(protobufjs@8.6.6)
 
   has-flag@4.0.0: {}
 
@@ -4272,8 +4272,8 @@ snapshots:
       escape-string-regexp: 2.0.0
       js2xmlparser: 4.0.2
       klaw: 3.0.0
-      markdown-it: 14.2.0
-      markdown-it-anchor: 8.6.7(@types/markdown-it@14.1.2)(markdown-it@14.2.0)
+      markdown-it: 14.3.0
+      markdown-it-anchor: 8.6.7(@types/markdown-it@14.1.2)(markdown-it@14.3.0)
       marked: 4.3.0
       mkdirp: 1.0.4
       requizzle: 0.2.4
@@ -4328,7 +4328,7 @@ snapshots:
 
   lines-and-columns@1.2.4: {}
 
-  linkify-it@5.0.1:
+  linkify-it@5.0.2:
     dependencies:
       uc.micro: 2.1.0
 
@@ -4364,16 +4364,16 @@ snapshots:
     dependencies:
       semver: 7.8.5
 
-  markdown-it-anchor@8.6.7(@types/markdown-it@14.1.2)(markdown-it@14.2.0):
+  markdown-it-anchor@8.6.7(@types/markdown-it@14.1.2)(markdown-it@14.3.0):
     dependencies:
       '@types/markdown-it': 14.1.2
-      markdown-it: 14.2.0
+      markdown-it: 14.3.0
 
-  markdown-it@14.2.0:
+  markdown-it@14.3.0:
     dependencies:
       argparse: 2.0.1
       entities: 4.5.0
-      linkify-it: 5.0.1
+      linkify-it: 5.0.2
       mdurl: 2.0.0
       punycode.js: 2.3.1
       uc.micro: 2.1.0
@@ -4583,7 +4583,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  protobufjs-cli@2.5.5(protobufjs@8.6.4):
+  protobufjs-cli@2.5.7(protobufjs@8.6.6):
     dependencies:
       chalk: 4.1.2
       escodegen: 1.14.3
@@ -4592,10 +4592,10 @@ snapshots:
       glob: 8.1.0
       jsdoc: 4.0.5
       minimist: 1.2.8
-      protobufjs: 8.6.4
+      protobufjs: 8.6.6
       tmp: 0.2.7
 
-  protobufjs@7.6.4:
+  protobufjs@7.6.5:
     dependencies:
       '@protobufjs/aspromise': 1.1.2
       '@protobufjs/base64': 1.1.2
@@ -4609,7 +4609,7 @@ snapshots:
       '@types/node': 24.13.2
       long: 5.3.2
 
-  protobufjs@8.6.4:
+  protobufjs@8.6.6:
     dependencies:
       long: 5.3.2
 
