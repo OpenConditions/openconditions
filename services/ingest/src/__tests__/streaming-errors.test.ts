@@ -5,6 +5,13 @@ import type { FeedSource } from "@openconditions/roads";
 import { clearSiteTableCache, loadSiteTable } from "../pipeline/site-table.js";
 import { streamMeasuredData } from "../pipeline/measured-data.js";
 import type { DomainFeedSource } from "../pipeline/run.js";
+import { isTransientSocketError, withStreamRetry } from "../pipeline/stream-retry.js";
+
+/** undici's real shape for a mid-stream drop: `terminated` wrapping UND_ERR_SOCKET. */
+function terminatedError(): Error {
+  const cause = Object.assign(new Error("other side closed"), { code: "UND_ERR_SOCKET" });
+  return new TypeError("terminated", { cause });
+}
 
 /**
  * A Readable that errors on first read, mimicking undici's `SocketError: other
@@ -52,5 +59,68 @@ describe("streaming feed error handling", () => {
         () => new Date(0).toISOString()
       )
     ).rejects.toThrow();
+  });
+});
+
+describe("withStreamRetry", () => {
+  it("retries a transient socket drop with a fresh attempt and succeeds", async () => {
+    let calls = 0;
+    const result = await withStreamRetry(
+      async () => {
+        calls += 1;
+        if (calls < 2) throw terminatedError();
+        return "ok";
+      },
+      "test-feed",
+      { baseDelayMs: 0 }
+    );
+    expect(result).toBe("ok");
+    expect(calls).toBe(2);
+  });
+
+  it("gives up after the retry budget and rethrows the transient error", async () => {
+    let calls = 0;
+    await expect(
+      withStreamRetry(
+        async () => {
+          calls += 1;
+          throw terminatedError();
+        },
+        "test-feed",
+        { retries: 2, baseDelayMs: 0 }
+      )
+    ).rejects.toThrow(/terminated/);
+    expect(calls).toBe(3); // initial attempt + 2 retries
+  });
+
+  it("does not retry a non-transient error (throws on the first attempt)", async () => {
+    let calls = 0;
+    await expect(
+      withStreamRetry(
+        async () => {
+          calls += 1;
+          throw new Error("HTTP 500 fetching x");
+        },
+        "test-feed",
+        { baseDelayMs: 0 }
+      )
+    ).rejects.toThrow("HTTP 500");
+    expect(calls).toBe(1);
+  });
+});
+
+describe("isTransientSocketError", () => {
+  it("recognizes undici terminated / UND_ERR_SOCKET through the cause chain", () => {
+    expect(isTransientSocketError(terminatedError())).toBe(true);
+    expect(isTransientSocketError(Object.assign(new Error("x"), { code: "ECONNRESET" }))).toBe(
+      true
+    );
+    expect(isTransientSocketError(new Error("socket hang up"))).toBe(true);
+  });
+
+  it("does not treat HTTP status, decompression-cap, or parse errors as transient", () => {
+    expect(isTransientSocketError(new Error("HTTP 503 fetching x"))).toBe(false);
+    expect(isTransientSocketError(new Error("decompressed stream exceeded 512 bytes"))).toBe(false);
+    expect(isTransientSocketError(new Error("invalid XML"))).toBe(false);
   });
 });

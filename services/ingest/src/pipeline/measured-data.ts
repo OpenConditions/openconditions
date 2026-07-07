@@ -10,6 +10,7 @@ import {
 } from "@openconditions/ingest-framework";
 import type { DomainFeedSource } from "./run.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
+import { withStreamRetry } from "./stream-retry.js";
 
 /**
  * True for DATEX II flow feeds that must be streamed rather than buffered. The
@@ -51,32 +52,40 @@ export async function streamMeasuredData(
   now: () => string
 ): Promise<Observation[]> {
   const descriptor = feedToSourceDescriptor(src);
-  const parser = createMeasuredDataParser(descriptor, siteMap, now);
+  const url = resolveUrl(src);
 
-  const source = await streamFactory(resolveUrl(src));
-  // `.pipe()` does not forward the source's errors to the gunzip stream, so a
-  // mid-stream socket drop (the upstream closing a large download) would surface
-  // as an unhandled 'error' event and crash the process. Forward it so the loop
-  // below rejects and the caller turns it into a logged, recoverable skip;
-  // destroy `source` on the way out so a half-read connection never lingers.
-  const decoded: Readable = src.gzip ? source.pipe(createGunzip()) : source;
-  if (decoded !== source) source.on("error", (err) => decoded.destroy(err));
-  try {
-    let decompressed = 0;
-    decoded.setEncoding("utf8");
-    for await (const chunk of decoded) {
-      decompressed += Buffer.byteLength(chunk as string);
-      if (decompressed > MAX_DECOMPRESSED_BYTES) {
-        if (decoded !== source) source.destroy();
-        decoded.destroy();
-        throw new Error(`decompressed stream exceeded ${MAX_DECOMPRESSED_BYTES} bytes`);
+  // Re-fetch + re-parse from scratch on a transient mid-stream socket drop (NDW
+  // drops ~10% of these large downloads) — a fresh parser and a fresh connection
+  // each attempt, so a dropped cycle self-heals instead of skipping to the next
+  // 60 s tick. A decompression-bomb abort is a plain Error, not transient, so it
+  // is not retried.
+  return withStreamRetry(async () => {
+    const parser = createMeasuredDataParser(descriptor, siteMap, now);
+    const source = await streamFactory(url);
+    // `.pipe()` does not forward the source's errors to the gunzip stream, so a
+    // mid-stream socket drop (the upstream closing a large download) would surface
+    // as an unhandled 'error' event and crash the process. Forward it so the loop
+    // below rejects and withStreamRetry/the caller handle it; destroy `source` on
+    // the way out so a half-read connection never lingers.
+    const decoded: Readable = src.gzip ? source.pipe(createGunzip()) : source;
+    if (decoded !== source) source.on("error", (err) => decoded.destroy(err));
+    try {
+      let decompressed = 0;
+      decoded.setEncoding("utf8");
+      for await (const chunk of decoded) {
+        decompressed += Buffer.byteLength(chunk as string);
+        if (decompressed > MAX_DECOMPRESSED_BYTES) {
+          if (decoded !== source) source.destroy();
+          decoded.destroy();
+          throw new Error(`decompressed stream exceeded ${MAX_DECOMPRESSED_BYTES} bytes`);
+        }
+        parser.write(chunk as string);
       }
-      parser.write(chunk as string);
+    } finally {
+      if (decoded !== source) source.destroy();
     }
-  } finally {
-    if (decoded !== source) source.destroy();
-  }
 
-  const { flows, events } = parser.close();
-  return [...flows, ...events];
+    const { flows, events } = parser.close();
+    return [...flows, ...events];
+  }, src.id);
 }

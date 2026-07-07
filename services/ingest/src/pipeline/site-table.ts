@@ -3,6 +3,7 @@ import { createGunzip } from "node:zlib";
 import type { FeedSource, SiteGeometry } from "@openconditions/roads";
 import { createSiteTableParser } from "@openconditions/roads";
 import { DEFAULT_MAX_FEED_BYTES } from "@openconditions/ingest-framework";
+import { withStreamRetry } from "./stream-retry.js";
 
 /** Site tables change rarely (version-stamped); refetch at most every 6 hours. */
 const SITE_TABLE_TTL_MS = 6 * 60 * 60 * 1000;
@@ -104,8 +105,12 @@ export async function loadSiteTable(
   }
 
   try {
-    const source = await streamFactory(table.url);
-    const map = await streamIntoParser(source, table.gzip ?? false);
+    // Retry a transient mid-stream drop with a fresh connection + parser before
+    // falling back — the cold 362 MB fetch is the one most likely to drop.
+    const map = await withStreamRetry(
+      async () => streamIntoParser(await streamFactory(table.url), table.gzip ?? false),
+      `${src.id} site-table`
+    );
     cache.set(table.url, { map, fetchedAt: now() });
     return map;
   } catch (err) {
