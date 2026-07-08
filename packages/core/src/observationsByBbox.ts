@@ -107,7 +107,16 @@ function rowToFeature(row: ObservationRow, mergedSources?: Observation["mergedSo
 
 // Severity ordering for ORDER BY / minSeverity (mirrors core's severityRank).
 const SEVERITY_RANK_SQL =
-  "(CASE severity WHEN 'critical' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 WHEN 'low' THEN 1 ELSE 0 END)";
+  "(CASE o.severity WHEN 'critical' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 WHEN 'low' THEN 1 ELSE 0 END)";
+
+// A source is stale when it has no source_status row at all (never
+// registered a successful poll) or its last success is older than its own
+// freshness window. Joined rather than read from the row's own
+// fetched_at/stale_after: the diff-upsert swap leaves an unchanged row's
+// fetched_at untouched, so per-row freshness would flag a healthy-but-static
+// row as stale even though its source just polled successfully.
+const IS_STALE_SQL =
+  "(ss.last_success_at IS NULL OR ss.last_success_at + make_interval(secs => ss.freshness_window_sec) < now())";
 
 /**
  * Query active observations within a bounding box and return a GeoJSON FeatureCollection.
@@ -127,23 +136,23 @@ export async function observationsByBbox(
 
   const params: unknown[] = [domain, west, south, east, north];
   const clauses = [
-    "domain = $1",
-    "geom && ST_MakeEnvelope($2, $3, $4, $5, 4326)",
-    "status = 'active'",
+    "o.domain = $1",
+    "o.geom && ST_MakeEnvelope($2, $3, $4, $5, 4326)",
+    "o.status = 'active'",
     // Never serve a condition past its validity/expiry, even if a stale row is
     // still present (e.g. between sweeps, or from a source that stopped polling).
-    "(valid_to IS NULL OR valid_to > now())",
-    "(expires_at IS NULL OR expires_at > now())",
+    "(o.valid_to IS NULL OR o.valid_to > now())",
+    "(o.expires_at IS NULL OR o.expires_at > now())",
   ];
 
   if (kind != null) {
     params.push(kind);
-    clauses.push(`kind = $${params.length}`);
+    clauses.push(`o.kind = $${params.length}`);
   }
 
   if (Array.isArray(types) && types.length > 0) {
     params.push(types);
-    clauses.push(`type = ANY($${params.length}::text[])`);
+    clauses.push(`o.type = ANY($${params.length}::text[])`);
   }
   if (minSeverity != null) {
     params.push(severityRank(minSeverity));
@@ -152,12 +161,13 @@ export async function observationsByBbox(
 
   const query = `
     SELECT
-      id, source, domain, kind, type, severity,
-      headline, description, attributes, valid_from, valid_to, schedule, data_updated_at,
-      ST_AsGeoJSON(geom) AS geojson,
-      origin,
-      (stale_after IS NOT NULL AND stale_after < now()) AS is_stale
-    FROM conditions.observations
+      o.id, o.source, o.domain, o.kind, o.type, o.severity,
+      o.headline, o.description, o.attributes, o.valid_from, o.valid_to, o.schedule, o.data_updated_at,
+      ST_AsGeoJSON(o.geom) AS geojson,
+      o.origin,
+      ${IS_STALE_SQL} AS is_stale
+    FROM conditions.observations o
+    LEFT JOIN conditions.source_status ss ON ss.source = o.source
     WHERE ${clauses.join(" AND ")}
     ORDER BY ${SEVERITY_RANK_SQL} DESC
     LIMIT 2000`;

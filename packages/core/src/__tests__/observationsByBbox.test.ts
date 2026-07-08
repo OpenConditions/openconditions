@@ -253,8 +253,8 @@ describe("observationsByBbox", () => {
       },
     };
     await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
-    expect(capturedQuery).toMatch(/valid_to IS NULL OR valid_to > now\(\)/);
-    expect(capturedQuery).toMatch(/expires_at IS NULL OR expires_at > now\(\)/);
+    expect(capturedQuery).toMatch(/valid_to IS NULL OR o\.valid_to > now\(\)/);
+    expect(capturedQuery).toMatch(/expires_at IS NULL OR o\.expires_at > now\(\)/);
   });
 
   it("selects valid_from (projected, not filtered) so future closures still reach consumers", async () => {
@@ -274,7 +274,7 @@ describe("observationsByBbox", () => {
     expect(capturedQuery).not.toMatch(/valid_from\s+(?:IS|<=|<|>)/);
   });
 
-  it("derives is_stale from stale_after at query time (not the stored column)", async () => {
+  it("derives is_stale from a source_status join at query time (not the stored column)", async () => {
     let capturedQuery = "";
     const db: QueryRunner = {
       async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
@@ -284,7 +284,10 @@ describe("observationsByBbox", () => {
     };
     await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
     expect(capturedQuery).toMatch(
-      /\(stale_after IS NOT NULL AND stale_after < now\(\)\) AS is_stale/
+      /LEFT JOIN conditions\.source_status ss ON ss\.source = o\.source/
+    );
+    expect(capturedQuery).toMatch(
+      /\(ss\.last_success_at IS NULL OR ss\.last_success_at \+ make_interval\(secs => ss\.freshness_window_sec\) < now\(\)\) AS is_stale/
     );
   });
 
@@ -297,7 +300,7 @@ describe("observationsByBbox", () => {
       },
     };
     await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
-    expect(capturedQuery).toMatch(/ORDER BY.*CASE severity/s);
+    expect(capturedQuery).toMatch(/ORDER BY.*CASE o\.severity/s);
     expect(capturedQuery).not.toMatch(/ORDER BY severity\b/);
   });
 });

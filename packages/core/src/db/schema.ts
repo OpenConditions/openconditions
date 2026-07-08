@@ -70,6 +70,10 @@ export const observations = conditionsSchema.table(
     isStale: boolean("is_stale").notNull().default(false),
     // fetched_at + freshness window; read derives is_stale as now() > stale_after.
     staleAfter: timestamp("stale_after", { withTimezone: true }),
+    // Deterministic hash of the observation's meaningful fields (see
+    // write-postgis.ts computeContentHash). Diff key for the swap upsert —
+    // never queried directly, only compared inside `ON CONFLICT ... WHERE`.
+    contentHash: text("content_hash"),
   },
   (t) => [
     index("idx_conditions_obs_geom").using("gist", t.geom),
@@ -83,6 +87,26 @@ export const observations = conditionsSchema.table(
     index("idx_conditions_obs_source").on(t.source),
   ]
 );
+
+/**
+ * One row per feed source, updated on every poll cycle (including a 304/
+ * unchanged no-op) so freshness and orphan-status can be derived from *when
+ * the source last polled/succeeded* rather than from any individual row's
+ * `fetched_at`. This is what lets a healthy feed sitting behind a 304 keep
+ * its last-good rows indefinitely instead of aging out of `sweepStale
+ * Observations` after `ORPHAN_MAX_AGE_SEC` — the swap only touches
+ * `fetched_at` for rows that actually changed, so a per-row freshness check
+ * would otherwise treat an unchanged-but-healthy source as gone stale.
+ */
+export const sourceStatus = conditionsSchema.table("source_status", {
+  source: text("source").primaryKey(),
+  lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
+  lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
+  freshnessWindowSec: integer("freshness_window_sec").notNull(),
+  lastRowCount: integer("last_row_count"),
+  lastError: text("last_error"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 /**
  * Append-only per-sensor speed history. One row per flow observation that

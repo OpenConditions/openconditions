@@ -57,8 +57,10 @@ const SWEEP_CRON = "*/5 * * * *";
 /** When the nightly baseline derivation + sample prune runs (UTC). */
 const BASELINE_CRON = "0 3 * * *";
 /**
- * Rows whose `fetched_at` is older than this are swept as orphans. Far larger
- * than the slowest feed cadence (300s) so a healthy source is never removed.
+ * A source is swept as orphaned when its `conditions.source_status.
+ * last_success_at` is older than this, or it has no source_status row at all
+ * (see sweepStaleObservations). Far larger than the slowest feed cadence
+ * (300s) so a healthy source is never removed.
  */
 const ORPHAN_MAX_AGE_SEC = 3600;
 

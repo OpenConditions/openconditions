@@ -5,7 +5,12 @@ import type { ObservationsByBboxOpts, QueryRunner } from "./observationsByBbox.j
 import { severityRank } from "./severity.js";
 
 const SEVERITY_RANK_SQL =
-  "(CASE severity WHEN 'critical' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 WHEN 'low' THEN 1 ELSE 0 END)";
+  "(CASE o.severity WHEN 'critical' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 WHEN 'low' THEN 1 ELSE 0 END)";
+
+// See observationsByBbox.ts's IS_STALE_SQL for why this is a source_status
+// join rather than the row's own stale_after/fetched_at.
+const IS_STALE_SQL =
+  "(ss.last_success_at IS NULL OR ss.last_success_at + make_interval(secs => ss.freshness_window_sec) < now())";
 
 interface Row {
   id: string;
@@ -111,15 +116,15 @@ export async function readObservations(
 
   const params: unknown[] = [domain, west, south, east, north];
   const clauses = [
-    "domain = $1",
-    "geom && ST_MakeEnvelope($2, $3, $4, $5, 4326)",
-    "status = 'active'",
-    "(valid_to IS NULL OR valid_to > now())",
-    "(expires_at IS NULL OR expires_at > now())",
+    "o.domain = $1",
+    "o.geom && ST_MakeEnvelope($2, $3, $4, $5, 4326)",
+    "o.status = 'active'",
+    "(o.valid_to IS NULL OR o.valid_to > now())",
+    "(o.expires_at IS NULL OR o.expires_at > now())",
   ];
   if (Array.isArray(types) && types.length > 0) {
     params.push(types);
-    clauses.push(`type = ANY($${params.length}::text[])`);
+    clauses.push(`o.type = ANY($${params.length}::text[])`);
   }
   if (minSeverity != null) {
     params.push(severityRank(minSeverity));
@@ -128,15 +133,16 @@ export async function readObservations(
 
   const query = `
     SELECT
-      id, source, source_format, domain, kind, type, subtype, category,
-      severity, severity_source, headline, description, label,
-      metric, value, level, unit, aggregation,
-      status, valid_from, valid_to, data_updated_at, fetched_at, expires_at,
-      schedule, confidence, is_forecast, related_ids,
-      attributes, subject, origin,
-      ST_AsGeoJSON(geom) AS geojson,
-      (stale_after IS NOT NULL AND stale_after < now()) AS is_stale
-    FROM conditions.observations
+      o.id, o.source, o.source_format, o.domain, o.kind, o.type, o.subtype, o.category,
+      o.severity, o.severity_source, o.headline, o.description, o.label,
+      o.metric, o.value, o.level, o.unit, o.aggregation,
+      o.status, o.valid_from, o.valid_to, o.data_updated_at, o.fetched_at, o.expires_at,
+      o.schedule, o.confidence, o.is_forecast, o.related_ids,
+      o.attributes, o.subject, o.origin,
+      ST_AsGeoJSON(o.geom) AS geojson,
+      ${IS_STALE_SQL} AS is_stale
+    FROM conditions.observations o
+    LEFT JOIN conditions.source_status ss ON ss.source = o.source
     WHERE ${clauses.join(" AND ")}
     ORDER BY ${SEVERITY_RANK_SQL} DESC
     LIMIT 2000`;

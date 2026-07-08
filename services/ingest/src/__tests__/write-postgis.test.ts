@@ -48,3 +48,11 @@ describe("toRow timestamp coercion (defense-in-depth)", () => {
     expect(Number.isNaN(Date.parse(r.fetched_at))).toBe(false);
   });
 });
+
+describe("content_hash includes expires_at", () => {
+  it("produces different hashes for observations differing only in expiresAt", () => {
+    const a = toRow(baseObs({ expiresAt: "2026-06-25T12:00:00.000Z" }));
+    const b = toRow(baseObs({ expiresAt: "2026-06-25T18:00:00.000Z" }));
+    expect(a.content_hash).not.toBe(b.content_hash);
+  });
+});

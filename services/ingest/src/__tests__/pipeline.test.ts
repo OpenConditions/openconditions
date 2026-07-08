@@ -426,6 +426,144 @@ describe("atomicSwap — bulk insert at volume", () => {
     expect(rows.length).toBe(1);
     expect(rows[0]!.id).toBe("bulk:new");
   }, 30_000);
+
+  it("diff-upserts on a second swap: unchanged row untouched, changed row updated, new row inserted, missing row deleted", async () => {
+    const mkFlow = (id: string, speedKph: number, dataUpdatedAt: string): RoadFlow => ({
+      id,
+      source: "diffsrc",
+      sourceFormat: "native",
+      domain: "roads",
+      kind: "measurement",
+      metric: "flow",
+      geometry: { type: "Point", coordinates: [6.0, 50.0] },
+      los: "heavy",
+      speedKph,
+      aggregation: "live",
+      status: "active",
+      origin: { kind: "feed", attribution: { provider: "Diff", license: "CC0-1.0" } },
+      dataUpdatedAt,
+      fetchedAt: dataUpdatedAt,
+      isStale: false,
+    });
+
+    const first = await atomicSwap(
+      sql,
+      "diffsrc",
+      [
+        mkFlow("diffsrc:unchanged", 50, "2026-06-24T11:00:00Z"),
+        mkFlow("diffsrc:changed", 50, "2026-06-24T11:00:00Z"),
+        mkFlow("diffsrc:removed", 50, "2026-06-24T11:00:00Z"),
+      ],
+      300
+    );
+    expect(first).toEqual({ inserted: 3, updated: 0, deleted: 0 });
+
+    const before = await sql<{ id: string; fetched_at: Date }[]>`
+      SELECT id, fetched_at FROM conditions.observations WHERE source = 'diffsrc' ORDER BY id
+    `;
+    const unchangedFetchedAtBefore = before.find((r) => r.id === "diffsrc:unchanged")!.fetched_at;
+
+    const second = await atomicSwap(
+      sql,
+      "diffsrc",
+      [
+        mkFlow("diffsrc:unchanged", 50, "2026-06-24T11:00:00Z"),
+        mkFlow("diffsrc:changed", 90, "2026-06-24T12:00:00Z"),
+        mkFlow("diffsrc:new", 50, "2026-06-24T12:00:00Z"),
+      ],
+      300
+    );
+    expect(second).toEqual({ inserted: 1, updated: 1, deleted: 1 });
+
+    const after = await sql<{ id: string; fetched_at: Date }[]>`
+      SELECT id, fetched_at FROM conditions.observations
+      WHERE source = 'diffsrc' ORDER BY id
+    `;
+    expect(after.map((r) => r.id)).toEqual(["diffsrc:changed", "diffsrc:new", "diffsrc:unchanged"]);
+
+    // The unchanged row's fetched_at was never rewritten by the diff-upsert.
+    const unchangedAfter = after.find((r) => r.id === "diffsrc:unchanged")!;
+    expect(unchangedAfter.fetched_at.toISOString()).toBe(unchangedFetchedAtBefore.toISOString());
+
+    // The changed row picked up its new speed and a fresh fetched_at.
+    const changedAfter = after.find((r) => r.id === "diffsrc:changed")!;
+    expect(changedAfter.fetched_at.toISOString()).not.toBe(unchangedFetchedAtBefore.toISOString());
+  }, 30_000);
+
+  it("collapses duplicate ids in the fresh set before chunking (last-wins), swap succeeds", async () => {
+    const mkFlow = (id: string, value: number): RoadFlow => ({
+      id,
+      source: "dupsrc",
+      sourceFormat: "native",
+      domain: "roads",
+      kind: "measurement",
+      metric: "flow",
+      geometry: { type: "Point", coordinates: [8.0, 50.0] },
+      los: "heavy",
+      value,
+      unit: "veh/h",
+      aggregation: "live",
+      status: "active",
+      origin: { kind: "feed", attribution: { provider: "Dup", license: "CC0-1.0" } },
+      dataUpdatedAt: "2026-06-24T10:00:00Z",
+      fetchedAt: "2026-06-24T10:00:00Z",
+      isStale: false,
+    });
+
+    // Two observations sharing an id, differing content — the exact shape a
+    // streaming parser or an `${src.id}:${externalId}` id scheme can produce
+    // without cross-document dedup. Without the fix, `ON CONFLICT (id) DO
+    // UPDATE` throws "command cannot affect row a second time" and the whole
+    // swap rolls back.
+    const counts = await atomicSwap(
+      sql,
+      "dupsrc",
+      [mkFlow("dupsrc:1", 10), mkFlow("dupsrc:1", 20)],
+      300
+    );
+    expect(counts).toEqual({ inserted: 1, updated: 0, deleted: 0 });
+
+    const rows = await sql<{ id: string; value: string | null }[]>`
+      SELECT id, value::text AS value FROM conditions.observations WHERE source = 'dupsrc'
+    `;
+    expect(rows.length).toBe(1);
+    expect(rows[0]!.id).toBe("dupsrc:1");
+    expect(Number(rows[0]!.value)).toBe(20); // last one in the fresh set wins
+  }, 30_000);
+
+  it("writes the success source_status row atomically with a brand-new source's rows", async () => {
+    const flow: RoadFlow = {
+      id: "atomicstatus:1",
+      source: "atomicstatussrc",
+      sourceFormat: "native",
+      domain: "roads",
+      kind: "measurement",
+      metric: "flow",
+      geometry: { type: "Point", coordinates: [7.0, 51.0] },
+      los: "heavy",
+      aggregation: "live",
+      status: "active",
+      origin: { kind: "feed", attribution: { provider: "X", license: "CC0-1.0" } },
+      dataUpdatedAt: "2026-06-24T10:00:00Z",
+      fetchedAt: "2026-06-24T10:00:00Z",
+      isStale: false,
+    };
+
+    // Before this fix, atomicSwap alone never touched source_status — the
+    // caller had to make a second, separate call after the swap committed.
+    // Calling ONLY atomicSwap here and immediately reading source_status back
+    // proves the success write now lands in the same transaction as the swap.
+    const counts = await atomicSwap(sql, "atomicstatussrc", [flow], 300);
+    expect(counts.inserted).toBe(1);
+
+    const status = await sql<{ last_success_at: Date | null; last_row_count: number | null }[]>`
+      SELECT last_success_at, last_row_count FROM conditions.source_status
+      WHERE source = 'atomicstatussrc'
+    `;
+    expect(status.length).toBe(1);
+    expect(status[0]!.last_success_at).not.toBeNull();
+    expect(status[0]!.last_row_count).toBe(1);
+  }, 30_000);
 });
 
 describe("flow feed — e2e pipeline (NDW site-table join)", () => {
@@ -548,4 +686,40 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     `;
     expect(parseInt(afterCount[0]!.count, 10)).toBe(countBefore);
   }, 60_000);
+});
+
+describe("pipeline — parse failure", () => {
+  it("swallows a parser-dispatch throw, writes source_status error, and does not advance last_success_at", async () => {
+    // A feed whose format has no registered parser: `parserFor` (called from
+    // inside the `buffers.flatMap(...)` dispatch, unguarded before this fix)
+    // throws synchronously, before any content is actually parsed.
+    const throwingFeed: DomainFeedSource = {
+      ...ndwFeed,
+      id: "parse-throw-src",
+      format: "bogus-format",
+    } as unknown as DomainFeedSource;
+
+    const fakeFetch = async (_url: string | URL | Request): Promise<Response> => {
+      return new Response("irrelevant body", { status: 200 });
+    };
+
+    const result = await runSource(throwingFeed, {
+      sql,
+      fetch: fakeFetch as typeof fetch,
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+
+    expect(result.count).toBe(0);
+    expect(result.error).toBeDefined();
+    expect(result.error).toMatch(/no parser registered for format/i);
+
+    const status = await sql<{ last_error: string | null; last_success_at: Date | null }[]>`
+      SELECT last_error, last_success_at FROM conditions.source_status
+      WHERE source = 'parse-throw-src'
+    `;
+    expect(status.length).toBe(1);
+    expect(status[0]!.last_error).toMatch(/no parser registered for format/i);
+    expect(status[0]!.last_success_at).toBeNull();
+  }, 30_000);
 });

@@ -123,14 +123,17 @@ describe("readObservations", () => {
     expect(obs).toHaveLength(2);
   });
 
-  it("selects ST_AsGeoJSON + derives is_stale + filters by validity", async () => {
+  it("selects ST_AsGeoJSON + derives is_stale from source_status + filters by validity", async () => {
     let q = "";
     await readObservations(
       stubDb([], (query) => (q = query)),
       { domain: "roads", bbox: [4, 51, 6, 53] }
     );
-    expect(q).toMatch(/ST_AsGeoJSON\(geom\) AS geojson/);
-    expect(q).toMatch(/stale_after < now\(\)\) AS is_stale/);
-    expect(q).toMatch(/valid_to IS NULL OR valid_to > now\(\)/);
+    expect(q).toMatch(/ST_AsGeoJSON\(o\.geom\) AS geojson/);
+    expect(q).toMatch(/LEFT JOIN conditions\.source_status ss ON ss\.source = o\.source/);
+    expect(q).toMatch(
+      /ss\.last_success_at \+ make_interval\(secs => ss\.freshness_window_sec\) < now\(\)\) AS is_stale/
+    );
+    expect(q).toMatch(/valid_to IS NULL OR o\.valid_to > now\(\)/);
   });
 });

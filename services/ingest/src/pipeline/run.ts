@@ -21,10 +21,18 @@ import type { SiteTableStreamFactory } from "./site-table.js";
 import { loadStationRegistry } from "./station-registry.js";
 import { atomicSwap } from "./write-postgis.js";
 import { loadBaselineMap, writeSpeedSamples } from "./baseline-store.js";
+import { upsertSourceStatus } from "./source-status.js";
 
 type Sql = postgres.Sql;
 
 export interface RunResult {
+  /**
+   * Rows actually persisted this cycle: `inserted + updated` from the
+   * diff-upsert swap (an unchanged row, left untouched by the swap, counts
+   * toward neither). 0 for an unchanged/304 poll and for every swallowed
+   * failure below — not the size of the fetched/parsed set, which may be
+   * larger than what was actually written (capped, or partially unchanged).
+   */
   count: number;
   durationMs: number;
   /**
@@ -125,14 +133,14 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     // hand atomicSwap an empty set, deleting all existing last-good rows. Treat
     // this like a fetch failure: skip the swap and preserve last-good.
     if (siteMap === undefined) {
-      console.warn(
-        `[ingest] ${src.id}: site-table cold failure — skipping swap, preserving last-good rows`
-      );
-      return {
-        count: 0,
-        durationMs: Date.now() - start,
-        error: "site-table cold failure — no geometry map built",
-      };
+      const error = "site-table cold failure — no geometry map built";
+      console.warn(`[ingest] ${src.id}: ${error} — skipping swap, preserving last-good rows`);
+      await upsertSourceStatus(deps.sql, src.id, {
+        freshnessWindowSec: src.freshnessWindowSec,
+        outcome: "error",
+        error,
+      });
+      return { count: 0, durationMs: Date.now() - start, error };
     }
   }
 
@@ -144,14 +152,14 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   if (src.stationRegistry) {
     siteMap = await loadStationRegistry(src, fetchFn);
     if (siteMap === undefined) {
-      console.warn(
-        `[ingest] ${src.id}: station-registry cold failure — skipping swap, preserving last-good rows`
-      );
-      return {
-        count: 0,
-        durationMs: Date.now() - start,
-        error: "station-registry cold failure — no geometry map built",
-      };
+      const error = "station-registry cold failure — no geometry map built";
+      console.warn(`[ingest] ${src.id}: ${error} — skipping swap, preserving last-good rows`);
+      await upsertSourceStatus(deps.sql, src.id, {
+        freshnessWindowSec: src.freshnessWindowSec,
+        outcome: "error",
+        error,
+      });
+      return { count: 0, durationMs: Date.now() - start, error };
     }
   }
 
@@ -162,31 +170,53 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     try {
       parsed = await streamMeasuredData(src, streamFactoryFromFetch(fetchFn), siteMap, deps.now);
     } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] stream failed for source ${src.id}:`, err);
-      return {
-        count: 0,
-        durationMs: Date.now() - start,
-        error: err instanceof Error ? err.message : String(err),
-      };
+      await upsertSourceStatus(deps.sql, src.id, {
+        freshnessWindowSec: src.freshnessWindowSec,
+        outcome: "error",
+        error,
+      });
+      return { count: 0, durationMs: Date.now() - start, error };
     }
   } else {
     let buffers: Buffer[];
     try {
       const result = await fetchAll(src, fetchFn);
       if (result.status === "unchanged") {
-        // 304 on every URL, or gated by fetchIntervalSec — keep last-good rows, no swap.
+        // 304 on every URL, or gated by fetchIntervalSec — keep last-good rows,
+        // no swap. Still a successful poll: advance last_success_at without
+        // touching last_row_count, so an orphan sweep keyed off source_status
+        // never treats this healthy source as gone.
+        await upsertSourceStatus(deps.sql, src.id, {
+          freshnessWindowSec: src.freshnessWindowSec,
+          outcome: "success",
+        });
         return { count: 0, durationMs: Date.now() - start };
       }
       buffers = result.buffers;
     } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] fetch failed for source ${src.id}:`, err);
-      return {
-        count: 0,
-        durationMs: Date.now() - start,
-        error: err instanceof Error ? err.message : String(err),
-      };
+      await upsertSourceStatus(deps.sql, src.id, {
+        freshnessWindowSec: src.freshnessWindowSec,
+        outcome: "error",
+        error,
+      });
+      return { count: 0, durationMs: Date.now() - start, error };
     }
-    parsed = buffers.flatMap((b) => parseFor(src, b, siteMap));
+    try {
+      parsed = buffers.flatMap((b) => parseFor(src, b, siteMap));
+    } catch (err) {
+      const error = err instanceof Error ? err.message : String(err);
+      console.error(`[ingest] parse failed for source ${src.id}:`, err);
+      await upsertSourceStatus(deps.sql, src.id, {
+        freshnessWindowSec: src.freshnessWindowSec,
+        outcome: "error",
+        error,
+      });
+      return { count: 0, durationMs: Date.now() - start, error };
+    }
   }
 
   // resolveOpenLr narrows the union: items without geometry (UnresolvedRoadEvent)
@@ -218,7 +248,11 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   // events and on flows.
   toWrite = enrichEventSeverity(toWrite);
 
-  await atomicSwap(deps.sql, src.id, toWrite, src.freshnessWindowSec);
+  // atomicSwap writes the success source_status row itself, inside the same
+  // transaction as the swap (see its doc comment) — this is what closes the
+  // race where a brand-new source's rows commit before its status row exists
+  // and the 5-min orphan sweep, keyed off source_status, deletes them again.
+  const swapCounts = await atomicSwap(deps.sql, src.id, toWrite, src.freshnessWindowSec);
 
   if (src.produces === "flow") {
     // Append this cycle's speeds to the rolling per-sensor history (the raw
@@ -233,6 +267,9 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
 
   const durationMs = Date.now() - start;
   const dropNote = dropped > 0 ? ` (${dropped} dropped — no geometry)` : "";
-  console.info(`[ingest] ${src.id}: inserted ${toWrite.length} rows in ${durationMs}ms${dropNote}`);
-  return { count: toWrite.length, durationMs };
+  console.info(
+    `[ingest] ${src.id}: swap inserted=${swapCounts.inserted} updated=${swapCounts.updated} ` +
+      `deleted=${swapCounts.deleted} of ${toWrite.length} fresh rows in ${durationMs}ms${dropNote}`
+  );
+  return { count: swapCounts.inserted + swapCounts.updated, durationMs };
 }
