@@ -159,9 +159,18 @@ describe("parseDigitrafficFlow — fixture", () => {
     expect(parseDigitrafficFlow(input, DT_SOURCE).flows).toEqual([]);
   });
 
+  it("does NOT set failed for a well-formed but empty features array (a legitimate 0-rows cycle)", () => {
+    const input = JSON.stringify({ type: "FeatureCollection", features: [] });
+    expect(parseDigitrafficFlow(input, DT_SOURCE).failed).toBeFalsy();
+  });
+
   it("never throws on invalid JSON", () => {
     expect(() => parseDigitrafficFlow("not-json", DT_SOURCE)).not.toThrow();
     expect(parseDigitrafficFlow("not-json", DT_SOURCE).flows).toEqual([]);
+  });
+
+  it("sets failed:true on invalid JSON (a hard parse failure, not a legitimate empty result)", () => {
+    expect(parseDigitrafficFlow("not-json", DT_SOURCE).failed).toBe(true);
   });
 });
 
@@ -312,6 +321,22 @@ describe("parseDatexMeasuredData — fixture", () => {
       parseDatexMeasuredData(Buffer.from("<D2LogicalModel/>"), NDW_SOURCE)
     ).not.toThrow();
     expect(parseDatexMeasuredData(Buffer.from("<D2LogicalModel/>"), NDW_SOURCE).flows).toEqual([]);
+  });
+
+  it("sets failed:true when no MeasuredDataPublication is found (hard failure, not a legitimate empty publication)", () => {
+    const result = parseDatexMeasuredData(Buffer.from("<D2LogicalModel/>"), NDW_SOURCE);
+    expect(result.failed).toBe(true);
+  });
+
+  it("sets failed:true when the XML itself fails to parse", () => {
+    // assertNoEntityDeclarations rejects any <!ENTITY declaration outright —
+    // a deterministic, always-throwing "XML parse failed" trigger.
+    const result = parseDatexMeasuredData(
+      Buffer.from(`<!ENTITY x "y"><D2LogicalModel/>`),
+      NDW_SOURCE
+    );
+    expect(result.flows).toEqual([]);
+    expect(result.failed).toBe(true);
   });
 });
 

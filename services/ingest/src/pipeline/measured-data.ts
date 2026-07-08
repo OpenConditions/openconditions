@@ -85,7 +85,16 @@ export async function streamMeasuredData(
       if (decoded !== source) source.destroy();
     }
 
-    const { flows, events } = parser.close();
+    const { flows, events, failed } = parser.close();
+    // A SAX error (mid-document glitch, malformed chunk) stopped accumulation
+    // partway through the ~50 MB document: `flows`/`events` hold only whatever
+    // resolved before the break, which `runSource` must not treat as a
+    // legitimate (possibly empty) fresh set — throwing routes this through the
+    // same fetch/parse-failure handling `runSource` already has around this
+    // call, skipping the swap and preserving last-good rows.
+    if (failed) {
+      throw new Error(`streaming parse failed for source ${src.id} (partial/truncated document)`);
+    }
     return [...flows, ...events];
   }, src.id);
 }

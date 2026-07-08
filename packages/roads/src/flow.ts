@@ -32,6 +32,17 @@ import type { XmlObject } from "./xml.js";
 export type FlowParseResult = {
   flows: RoadFlow[];
   events: RoadEvent[];
+  /**
+   * Set when the document could not be read at all (JSON/XML parse threw, or
+   * no recognizable publication/root was found) — a HARD parse failure, as
+   * opposed to a well-formed document that legitimately carries zero
+   * measurements this cycle. Absent (or false) in every other case, including
+   * a genuinely empty document. Callers (see `runSource`) must treat a
+   * `failed` result exactly like a fetch failure — skip the swap rather than
+   * handing an empty/partial set to `atomicSwap`, which would otherwise wipe
+   * the source's last-good rows.
+   */
+  failed?: boolean;
 };
 
 /** Geometry shapes a flow measurement can carry (point sensors or segments). */
@@ -157,9 +168,17 @@ export function parseDigitrafficFlow(
   src: SourceDescriptor
 ): FlowParseResult {
   const payload = safeParse(input);
-  if (!payload) return { flows: [], events: [] };
+  // safeParse returns null on a hard failure: JSON.parse threw, or the top-level
+  // value isn't an object at all — an error page or other garbage body, not a
+  // legitimately empty feed. Flag it so `runSource` skips the swap instead of
+  // wiping last-good rows with this empty result.
+  if (!payload) return { flows: [], events: [], failed: true };
 
   const features = payload["features"];
+  // A well-formed document with no (or an empty) features array is a real "0
+  // measurements this cycle" — not flagged as failed; see the shrink tripwire
+  // in runSource for how a flow feed's own "never legitimately empty" rule
+  // handles this instead.
   if (!Array.isArray(features) || features.length === 0) return { flows: [], events: [] };
 
   const flows: RoadFlow[] = [];
@@ -618,7 +637,7 @@ export function parseDatexMeasuredData(
     });
   } catch (err) {
     console.warn("[datex-flow] failed to parse XML:", err);
-    return { flows: [], events: [] };
+    return { flows: [], events: [], failed: true };
   }
 
   const root = doc;
@@ -630,7 +649,11 @@ export function parseDatexMeasuredData(
   const siteGeometryMap = buildSiteGeometryMap(root);
 
   const publication = findMeasuredPublication(root);
-  if (!publication) return { flows: [], events: [] };
+  // No siteMeasurements-bearing node anywhere in the document: the XML parsed,
+  // but this isn't a recognizable MeasuredDataPublication at all (wrong feed
+  // shape, HTML error page, truncated envelope) — a hard failure, not a
+  // legitimately empty publication.
+  if (!publication) return { flows: [], events: [], failed: true };
 
   const sitesMeasurements = getXmlChildren(publication, "siteMeasurements");
 

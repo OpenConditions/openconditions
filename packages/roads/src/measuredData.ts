@@ -98,7 +98,14 @@ export function createMeasuredDataParser(
   let site: SiteState | null = null;
   let textTarget: TextTarget = null;
   let textBuffer = "";
-  let failed = false;
+  // SAX-error flag: a parser error or thrown write()/close() stops further
+  // accumulation — mirrors the buffered parser's "XML parse threw" hard failure.
+  let parseError = false;
+  // Set the first time a `siteMeasurements` element is entered — mirrors
+  // findMeasuredPublication's `"siteMeasurements" in root` check in the
+  // buffered parser (flow.ts), i.e. "did this document ever contain the
+  // expected DATEX publication", independent of how many records it held.
+  let sawPublication = false;
 
   // No namespace resolution: tag names arrive verbatim (e.g. `gml:posList`) and
   // are normalised with stripXmlNamespace, the same way the site-table parser
@@ -111,7 +118,7 @@ export function createMeasuredDataParser(
   });
 
   parser.on("error", () => {
-    failed = true;
+    parseError = true;
   });
 
   parser.on("opentag", (tag) => {
@@ -119,6 +126,7 @@ export function createMeasuredDataParser(
     stack.push(local);
 
     if (local === "siteMeasurements") {
+      sawPublication = true;
       site = freshSite();
       textTarget = null;
       textBuffer = "";
@@ -270,22 +278,31 @@ export function createMeasuredDataParser(
 
   return {
     write(chunk: string): void {
-      if (failed) return;
+      if (parseError) return;
       try {
         parser.write(chunk);
       } catch {
-        failed = true;
+        parseError = true;
       }
     },
     close(): FlowParseResult {
-      if (!failed) {
+      if (!parseError) {
         try {
           parser.close();
         } catch {
-          failed = true;
+          parseError = true;
         }
       }
-      return { flows, events };
+      // A hard failure is either a SAX error/throw, or a document that closed
+      // without ever entering the expected DATEX publication/root element at
+      // all (mirrors parseDatexMeasuredData's `!publication` check in flow.ts)
+      // — otherwise both look identical to a document that legitimately
+      // closed with zero accumulated sites, and a mid-document glitch or a
+      // wrong-shape/error-page body would silently hand `atomicSwap` an empty
+      // set. A well-formed document that DID contain the publication (just
+      // zero records) stays `failed: false`.
+      const failed = parseError || !sawPublication;
+      return { flows, events, ...(failed ? { failed: true } : {}) };
     },
   };
 }

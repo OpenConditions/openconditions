@@ -21,9 +21,31 @@ import type { SiteTableStreamFactory } from "./site-table.js";
 import { loadStationRegistry } from "./station-registry.js";
 import { atomicSwap } from "./write-postgis.js";
 import { loadBaselineMap, writeSpeedSamples } from "./baseline-store.js";
-import { upsertSourceStatus } from "./source-status.js";
+import { getLastRowCount, upsertSourceStatus } from "./source-status.js";
 
 type Sql = postgres.Sql;
+
+/**
+ * Ratio (0-1) of an event feed's previous `source_status.last_row_count` that
+ * its fresh count must exceed, or the swap is skipped as a suspected
+ * partial-failure wipe rather than applied (see the shrink tripwire below).
+ * Default 0: conservative, only guards the unambiguous drop-to-zero case (a
+ * fresh count of exactly 0 while the previous cycle had rows) — a feed whose
+ * count merely shrinks while staying above zero is written as-is, since a
+ * smaller-but-nonempty count is often a legitimate falling event count, not a
+ * partial parse. Raise it (e.g. "0.1") via env to also guard partial drops.
+ * A `""` value (Compose's `${VAR:-}` unset-injection) is treated as absent,
+ * matching the repo's other env-tunable readers (see guardOptionsFromEnv).
+ * Read fresh on every call (same per-call env-read path as
+ * `guardOptionsFromEnv`), not cached at module load, so the env var takes
+ * effect without a process restart.
+ */
+function shrinkTripwireRatioFromEnv(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env["OPENCONDITIONS_SHRINK_TRIPWIRE_RATIO"];
+  if (raw == null || raw === "") return 0;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
 
 export interface RunResult {
   /**
@@ -109,6 +131,14 @@ export function createOpenlrClient(): MapMatchClient | null {
  * The error is logged and the function returns {count:0, durationMs, error}
  * so callers can distinguish a swallowed failure from a genuinely successful
  * (including unchanged/304) poll.
+ *
+ * The same last-good guarantee also covers a parse that "succeeds" but yields
+ * an empty or suspiciously-shrunk fresh set (a HARD parse failure surfaced via
+ * `FlowParseResult.failed`, a 200-with-garbage body, a dormant feed resolving
+ * zero URLs, or an event feed's row count collapsing relative to its last
+ * successful cycle) — every one of these skips the swap instead of handing
+ * `atomicSwap` an empty/shrunk set, since its delete-missing step would
+ * otherwise delete every row absent from that set.
  */
 export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<RunResult> {
   const start = Date.now();
@@ -195,6 +225,21 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
         return { count: 0, durationMs: Date.now() - start };
       }
       buffers = result.buffers;
+      if (buffers.length === 0) {
+        // A dormant/uncredentialed feed (e.g. an expandEnv fan-out with zero
+        // resolved URLs) resolves to `{status:"fetched", buffers:[]}` rather
+        // than "unchanged" — treat it the same way: a successful no-op, not a
+        // fresh (empty) set to swap in, which would otherwise wipe the
+        // source's last-good rows every cycle it stays dormant.
+        console.warn(
+          `[ingest] ${src.id}: fetch resolved zero URLs — no-op, preserving last-good rows`
+        );
+        await upsertSourceStatus(deps.sql, src.id, {
+          freshnessWindowSec: src.freshnessWindowSec,
+          outcome: "success",
+        });
+        return { count: 0, durationMs: Date.now() - start };
+      }
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] fetch failed for source ${src.id}:`, err);
@@ -247,6 +292,46 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   // that omit it, e.g. the German Mobilithek roadworks. No-op on declared
   // events and on flows.
   toWrite = enrichEventSeverity(toWrite);
+
+  // Shrink tripwire: the diff-upsert swap's delete-missing step deletes every
+  // row absent from `toWrite`, so an empty/suspiciously-shrunk fresh set is as
+  // dangerous as a thrown parse error — it just doesn't look like one. Both
+  // guards below skip the swap entirely (last-good rows survive) rather than
+  // letting `atomicSwap` reconcile against a bad fresh set.
+  if (src.produces === "flow") {
+    // A sensor network never legitimately vanishes to zero — this also covers
+    // a 200-with-garbage body (parses to []) and any parse path that yields an
+    // empty set without throwing.
+    if (toWrite.length === 0) {
+      const error = `flow feed produced zero measurements this cycle — skipping swap to avoid wiping sensor data`;
+      console.warn(`[ingest] ${src.id}: ${error}`);
+      await upsertSourceStatus(deps.sql, src.id, {
+        freshnessWindowSec: src.freshnessWindowSec,
+        outcome: "error",
+        error,
+      });
+      return { count: 0, durationMs: Date.now() - start, error };
+    }
+  } else if (!src.allowMassClear) {
+    const shrinkTripwireRatio = shrinkTripwireRatioFromEnv();
+    const previousCount = await getLastRowCount(deps.sql, src.id);
+    if (
+      previousCount != null &&
+      previousCount > 0 &&
+      toWrite.length <= previousCount * shrinkTripwireRatio
+    ) {
+      const error =
+        `event feed shrank from ${previousCount} to ${toWrite.length} rows ` +
+        `(tripwire ratio ${shrinkTripwireRatio}) — skipping swap to avoid a suspected partial-failure wipe`;
+      console.warn(`[ingest] ${src.id}: ${error}`);
+      await upsertSourceStatus(deps.sql, src.id, {
+        freshnessWindowSec: src.freshnessWindowSec,
+        outcome: "error",
+        error,
+      });
+      return { count: 0, durationMs: Date.now() - start, error };
+    }
+  }
 
   // atomicSwap writes the success source_status row itself, inside the same
   // transaction as the swap (see its doc comment) — this is what closes the

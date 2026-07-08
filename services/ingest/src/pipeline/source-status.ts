@@ -75,3 +75,19 @@ export async function upsertSourceStatus(
       updated_at = now()
   `;
 }
+
+/**
+ * Reads back the row count a source's last successful swap wrote
+ * (`source_status.last_row_count`), the "previous count" the event-feed
+ * shrink tripwire in `runSource` compares a fresh cycle's count against.
+ * Returns null when the source has no status row yet (first-ever poll) or its
+ * last successful cycle didn't record a count — either way there is no prior
+ * baseline to guard against, so the caller should skip the tripwire rather
+ * than treat a null as "previously zero".
+ */
+export async function getLastRowCount(sql: Sql, sourceId: string): Promise<number | null> {
+  const rows = await sql<{ last_row_count: number | null }[]>`
+    SELECT last_row_count FROM conditions.source_status WHERE source = ${sourceId}
+  `;
+  return rows[0]?.last_row_count ?? null;
+}

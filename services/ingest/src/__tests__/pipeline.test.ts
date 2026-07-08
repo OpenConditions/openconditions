@@ -723,3 +723,211 @@ describe("pipeline — parse failure", () => {
     expect(status[0]!.last_success_at).toBeNull();
   }, 30_000);
 });
+
+describe("pipeline — streaming SAX parse failure preserves last-good rows", () => {
+  const sitePayload = readFileSync(NDW_FLOW_SITE_TABLE_FIXTURE_PATH);
+  const speedPayload = readFileSync(NDW_FLOW_SPEED_FIXTURE_PATH);
+
+  it("parse-failure-preserves-last-good: a truncated document sets failed:true, skips the swap, and does not advance last_success_at", async () => {
+    // Establish a known-good baseline for this source first, independent of
+    // whatever earlier describe blocks in this file left behind.
+    clearSiteTableCache();
+    const goodFetch = async (url: string | URL | Request): Promise<Response> => {
+      const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+      const body = href.includes("measurement.xml.gz") ? sitePayload : speedPayload;
+      return new Response(gzipSync(body), { status: 200 });
+    };
+    const goodResult = await runSource(ndwFlowFeed, {
+      sql,
+      fetch: goodFetch as typeof fetch,
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    // `count` reflects rows the diff-upsert actually touched this cycle, which
+    // can legitimately be 0 if content is byte-identical to an earlier run in
+    // this file (an unchanged row is left untouched) — the real assertion is
+    // "no failure" plus the row-count check just below.
+    expect(goodResult.error).toBeUndefined();
+
+    const before = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw-flow'
+    `;
+    const countBefore = parseInt(before[0]!.count, 10);
+    expect(countBefore).toBeGreaterThan(0);
+
+    const statusBefore = await sql<{ last_success_at: Date | null }[]>`
+      SELECT last_success_at FROM conditions.source_status WHERE source = 'ndw-flow'
+    `;
+    const lastSuccessAtBefore = statusBefore[0]!.last_success_at;
+    expect(lastSuccessAtBefore).not.toBeNull();
+
+    // Site table still resolves fine; the measurement document itself is
+    // truncated mid-element — the same kind of mid-document glitch a ~50 MB
+    // feed can suffer, which the SAX parser's internal `failed` flag catches.
+    clearSiteTableCache();
+    const truncatedSpeedXml = speedPayload
+      .toString("utf8")
+      .slice(0, Math.floor(speedPayload.length * 0.6));
+    const brokenFetch = async (url: string | URL | Request): Promise<Response> => {
+      const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+      const body = href.includes("measurement.xml.gz")
+        ? gzipSync(sitePayload)
+        : gzipSync(Buffer.from(truncatedSpeedXml, "utf8"));
+      return new Response(body, { status: 200 });
+    };
+
+    const result = await runSource(ndwFlowFeed, {
+      sql,
+      fetch: brokenFetch as typeof fetch,
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+
+    expect(result.count).toBe(0);
+    expect(result.error).toBeDefined();
+    expect(result.error).toMatch(/streaming parse failed/i);
+
+    const after = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw-flow'
+    `;
+    expect(parseInt(after[0]!.count, 10)).toBe(countBefore);
+
+    const statusAfter = await sql<{ last_error: string | null; last_success_at: Date | null }[]>`
+      SELECT last_error, last_success_at FROM conditions.source_status WHERE source = 'ndw-flow'
+    `;
+    expect(statusAfter[0]!.last_error).toMatch(/streaming parse failed/i);
+    expect(statusAfter[0]!.last_success_at?.toISOString()).toBe(lastSuccessAtBefore!.toISOString());
+  }, 60_000);
+});
+
+describe("pipeline — flow feed 200-with-garbage (well-formed empty publication)", () => {
+  const sitePayload = readFileSync(NDW_FLOW_SITE_TABLE_FIXTURE_PATH);
+  const speedPayload = readFileSync(NDW_FLOW_SPEED_FIXTURE_PATH);
+
+  it("200-with-garbage (flow): a body that parses to zero measurements skips the swap; rows survive", async () => {
+    // Establish a known-good baseline for this source first, independent of
+    // whatever earlier describe blocks in this file left behind (mirrors the
+    // SAX-failure test above).
+    clearSiteTableCache();
+    const goodFetch = async (url: string | URL | Request): Promise<Response> => {
+      const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+      const body = href.includes("measurement.xml.gz") ? sitePayload : speedPayload;
+      return new Response(gzipSync(body), { status: 200 });
+    };
+    const goodResult = await runSource(ndwFlowFeed, {
+      sql,
+      fetch: goodFetch as typeof fetch,
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(goodResult.error).toBeUndefined();
+
+    const before = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw-flow'
+    `;
+    const countBefore = parseInt(before[0]!.count, 10);
+    expect(countBefore).toBeGreaterThan(0);
+
+    clearSiteTableCache();
+    // A 200 response whose body is well-formed XML and DOES contain a
+    // `siteMeasurements` element (so the streaming parser's `failed` flag is
+    // NOT set — the parser saw the expected publication), but the site carries
+    // no resolvable geometry — indistinguishable from "garbage" at the HTTP
+    // layer, and yields zero flows. The flow-feed shrink guard ("a sensor
+    // network never legitimately vanishes to zero") is what must catch this,
+    // independent of the `failed` flag (that flag's own hard-failure case —
+    // no publication found at all — is covered by the SAX-failure describe
+    // block above).
+    const garbageFetch = async (url: string | URL | Request): Promise<Response> => {
+      const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+      const body = href.includes("measurement.xml.gz")
+        ? gzipSync(sitePayload)
+        : gzipSync(Buffer.from("<D2LogicalModel><siteMeasurements/></D2LogicalModel>"));
+      return new Response(body, { status: 200 });
+    };
+
+    const result = await runSource(ndwFlowFeed, {
+      sql,
+      fetch: garbageFetch as typeof fetch,
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+
+    expect(result.count).toBe(0);
+    expect(result.error).toBeDefined();
+    expect(result.error).toMatch(/zero measurements/i);
+
+    const after = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw-flow'
+    `;
+    expect(parseInt(after[0]!.count, 10)).toBe(countBefore);
+  }, 60_000);
+});
+
+describe("pipeline — shrink tripwire (event feed)", () => {
+  const shrinkFeed: DomainFeedSource = { ...drivebcFeed, id: "shrink-test-src" };
+  const emptyEventsFetch = async (_url: string | URL | Request): Promise<Response> => {
+    return new Response(JSON.stringify({ events: [] }), { status: 200 });
+  };
+
+  it("shrink tripwire (events): seeds N rows, then a well-formed empty response is written as-is only once allowMassClear is set", async () => {
+    // Seed N rows for this source from the real DriveBC fixture.
+    const jsonPayload = readFileSync(DRIVEBC_FIXTURE_PATH);
+    const seedFetch = async (_url: string | URL | Request): Promise<Response> => {
+      return new Response(jsonPayload, { status: 200 });
+    };
+    const seedResult = await runSource(shrinkFeed, {
+      sql,
+      fetch: seedFetch as typeof fetch,
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(seedResult.count).toBeGreaterThan(0);
+    const seededCount = seedResult.count;
+
+    const status = await sql<{ last_row_count: number | null }[]>`
+      SELECT last_row_count FROM conditions.source_status WHERE source = 'shrink-test-src'
+    `;
+    expect(status[0]!.last_row_count).toBe(seededCount);
+
+    // allowMassClear defaults to false: a fresh count of 0 against a nonzero
+    // previous count must skip the swap and preserve the seeded rows.
+    const guarded = await runSource(shrinkFeed, {
+      sql,
+      fetch: emptyEventsFetch as typeof fetch,
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(guarded.count).toBe(0);
+    expect(guarded.error).toBeDefined();
+    expect(guarded.error).toMatch(/shrank/i);
+
+    const afterGuarded = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'shrink-test-src'
+    `;
+    expect(parseInt(afterGuarded[0]!.count, 10)).toBe(seededCount);
+
+    // The error write must not have clobbered last_row_count (needed so the
+    // tripwire's baseline survives an error cycle).
+    const statusAfterGuarded = await sql<{ last_row_count: number | null }[]>`
+      SELECT last_row_count FROM conditions.source_status WHERE source = 'shrink-test-src'
+    `;
+    expect(statusAfterGuarded[0]!.last_row_count).toBe(seededCount);
+
+    // allowMassClear:true opts this feed out of the tripwire — the same empty
+    // response now legitimately clears the source's rows.
+    const massClearFeed: DomainFeedSource = { ...shrinkFeed, allowMassClear: true };
+    const cleared = await runSource(massClearFeed, {
+      sql,
+      fetch: emptyEventsFetch as typeof fetch,
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(cleared.error).toBeUndefined();
+
+    const afterCleared = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'shrink-test-src'
+    `;
+    expect(parseInt(afterCleared[0]!.count, 10)).toBe(0);
+  }, 30_000);
+});

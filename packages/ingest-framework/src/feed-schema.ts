@@ -90,6 +90,8 @@ export const feedSourceBaseShape = {
    * whole cycle.
    */
   fanoutTolerant: z.boolean().optional(),
+  /** Opts out of the event-feed shrink tripwire in `runSource`; see FeedSourceBase. */
+  allowMassClear: z.boolean().optional(),
   gzip: z.boolean().optional(),
   cadenceSec: z.number().int().positive(),
   freshnessWindowSec: z.number().int().positive(),

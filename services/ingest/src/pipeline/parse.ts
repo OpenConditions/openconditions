@@ -38,7 +38,16 @@ export function parseFor(
   if (src.produces === "flow") {
     const flowParserFn = flowParserFor(src.format);
     const descriptor = feedToSourceDescriptor(src);
-    const { flows, events } = flowParserFn(buf, descriptor, siteMap);
+    const { flows, events, failed } = flowParserFn(buf, descriptor, siteMap);
+    // A HARD parse failure (XML/JSON parse threw, or no recognizable
+    // publication/root found) — `flows`/`events` are empty or partial and must
+    // not reach `atomicSwap` as a "0 rows this cycle" result. Throwing routes
+    // this through the try/catch `runSource` already wraps this dispatch in,
+    // so the swap is skipped and last-good rows survive, same as a fetch
+    // failure.
+    if (failed) {
+      throw new Error(`flow parser reported a hard parse failure for source ${src.id}`);
+    }
     return [...flows, ...events] as Observation[];
   }
 

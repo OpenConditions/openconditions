@@ -73,6 +73,16 @@ export interface FeedSourceBase {
    * whole cycle.
    */
   fanoutTolerant?: boolean;
+  /**
+   * Opts this feed out of the event-feed shrink tripwire in `runSource` (see
+   * `OPENCONDITIONS_SHRINK_TRIPWIRE_RATIO`): a feed whose row count can
+   * legitimately collapse to zero or near-zero between cycles (e.g. a
+   * seasonal/short-lived event catalog) sets this so its swap always proceeds
+   * instead of being skipped as a suspected partial-failure wipe. Defaults to
+   * false — a real, unexpected drop is far more common than a legitimate mass
+   * clear, so the safe default guards every feed unless it opts out.
+   */
+  allowMassClear?: boolean;
   gzip?: boolean;
   cadenceSec: number;
   freshnessWindowSec: number;

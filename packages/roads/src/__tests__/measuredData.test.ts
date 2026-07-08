@@ -145,6 +145,16 @@ describe("createMeasuredDataParser — robustness", () => {
     expect(out.events).toEqual([]);
   });
 
+  it("sets failed:true when no MeasuredDataPublication is found (matches the DOM parser on the same input)", () => {
+    const parser = createMeasuredDataParser(
+      NDW_SOURCE,
+      undefined,
+      () => "2026-06-24T10:10:00.000Z"
+    );
+    parser.write("<D2LogicalModel/>");
+    expect(parser.close().failed).toBe(true);
+  });
+
   it("tolerates malformed/truncated XML, returning what resolved before the break", () => {
     const xml = readFileSync(DATEX_FLOW_FIXTURE, "utf8");
     const truncated = xml.slice(0, Math.floor(xml.length * 0.6));
@@ -153,9 +163,24 @@ describe("createMeasuredDataParser — robustness", () => {
       undefined,
       () => "2026-06-24T10:10:00.000Z"
     );
+    let out: FlowParseResult | undefined;
     expect(() => {
       parser.write(truncated);
-      parser.close();
+      out = parser.close();
     }).not.toThrow();
+    expect(out).toBeDefined();
+  });
+
+  it("sets failed:true on truncated/malformed XML (a SAX error occurred, even though some sites resolved)", () => {
+    const xml = readFileSync(DATEX_FLOW_FIXTURE, "utf8");
+    const truncated = xml.slice(0, Math.floor(xml.length * 0.6));
+    const parser = createMeasuredDataParser(
+      NDW_SOURCE,
+      undefined,
+      () => "2026-06-24T10:10:00.000Z"
+    );
+    parser.write(truncated);
+    const out = parser.close();
+    expect(out.failed).toBe(true);
   });
 });
