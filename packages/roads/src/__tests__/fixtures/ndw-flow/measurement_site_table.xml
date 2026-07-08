@@ -58,6 +58,45 @@
             </measurementSiteName>
             <measurementSiteNumberOfLanes>1</measurementSiteNumberOfLanes>
           </measurementSiteRecord>
+          <measurementSiteRecord id="PZH01_MST_ZEROCOUNT_00" version="1">
+            <measurementSiteName>
+              <values><value lang="nl">N211 hmp 7.0 Re</value></values>
+            </measurementSiteName>
+            <measurementSiteNumberOfLanes>1</measurementSiteNumberOfLanes>
+            <measurementSide>northBound</measurementSide>
+            <measurementSiteLocation xsi:type="Point">
+              <locationForDisplay>
+                <latitude>52.0300000</latitude>
+                <longitude>4.5400000</longitude>
+              </locationForDisplay>
+            </measurementSiteLocation>
+          </measurementSiteRecord>
+          <measurementSiteRecord id="PZH01_MST_STANDSTILL_00" version="1">
+            <measurementSiteName>
+              <values><value lang="nl">N211 hmp 7.1 Re</value></values>
+            </measurementSiteName>
+            <measurementSiteNumberOfLanes>1</measurementSiteNumberOfLanes>
+            <measurementSide>northBound</measurementSide>
+            <measurementSiteLocation xsi:type="Point">
+              <locationForDisplay>
+                <latitude>52.0310000</latitude>
+                <longitude>4.5410000</longitude>
+              </locationForDisplay>
+            </measurementSiteLocation>
+          </measurementSiteRecord>
+          <measurementSiteRecord id="PZH01_MST_ABSURD_00" version="1">
+            <measurementSiteName>
+              <values><value lang="nl">N211 hmp 7.2 Re</value></values>
+            </measurementSiteName>
+            <measurementSiteNumberOfLanes>1</measurementSiteNumberOfLanes>
+            <measurementSide>northBound</measurementSide>
+            <measurementSiteLocation xsi:type="Point">
+              <locationForDisplay>
+                <latitude>52.0320000</latitude>
+                <longitude>4.5420000</longitude>
+              </locationForDisplay>
+            </measurementSiteLocation>
+          </measurementSiteRecord>
         </measurementSiteTable>
       </payloadPublication>
     </d2LogicalModel>

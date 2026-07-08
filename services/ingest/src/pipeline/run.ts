@@ -278,7 +278,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     // resolve — fall back to writing the unenriched observations rather than
     // aborting the whole poll and reverting the feed to stale data.
     try {
-      const baselineMap = await loadBaselineMap(deps.sql, src.id, deps.now);
+      const baselineMap = await loadBaselineMap(deps.sql, src.id);
       if (baselineMap.size > 0) {
         toWrite = enrichFlowsWithBaseline(resolved, baselineMap, feedToSourceDescriptor(src));
       }

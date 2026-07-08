@@ -55,6 +55,14 @@ type LosValue = RoadFlow["los"];
 const QUEUING_LOS = new Set<LosValue>(["queuing", "stationary", "blocked"]);
 
 /**
+ * Upper plausibility bound for a DATEX speed reading, in kph. A reading at or
+ * above this is a sensor/feed glitch, not a real vehicle speed — rejected as
+ * no usable speed everywhere a speed is extracted or persisted (parsers here
+ * and the baseline history in baseline-store.ts).
+ */
+export const ABSURD_SPEED_KPH = 250;
+
+/**
  * The single free-flow-ratio → level-of-service threshold ladder, shared by
  * buildMeasuredSiteFlow and reclassifyFlow so there is exactly one thresholds
  * definition.
@@ -299,7 +307,11 @@ function extractDatexSpeed(node: unknown): number | undefined {
 
   const speedRaw = xmlText(speedNode["speed"]);
   const n = speedRaw != null ? Number(speedRaw) : NaN;
-  return Number.isFinite(n) && n >= 0 ? n : undefined;
+  // n >= 0 rejects NDW's -1 no-data sentinel while keeping a genuine 0 (a real
+  // standstill survives to the numberOfInputValuesUsed gate at the call site,
+  // see readMeasuredSpeedSample/the best-sample loop in parseDatexMeasuredData
+  // below); n < ABSURD_SPEED_KPH rejects implausible sensor-glitch readings.
+  return Number.isFinite(n) && n >= 0 && n < ABSURD_SPEED_KPH ? n : undefined;
 }
 
 function extractDatexFreeFlowSpeed(node: unknown): number | undefined {
@@ -409,8 +421,12 @@ function buildSiteGeometryMap(
  *
  * Handles two real shapes: NDW's `<basicData xsi:type="TrafficSpeed">` with the
  * vehicle count as an `averageVehicleSpeed` attribute, and the older
- * `<basicDataValue>`/`<trafficStatus>` layout. A speed <= 0 (NDW's -1 no-data
- * sentinel) yields a null speed.
+ * `<basicDataValue>`/`<trafficStatus>` layout. A speed < 0 (NDW's -1 no-data
+ * sentinel) or >= ABSURD_SPEED_KPH yields a null speed. `inputCount` defaults
+ * to 1 (not 0) when the feed never publishes `numberOfInputValuesUsed` at all
+ * (the older layout) — the zero-input gate at the call site must only reject a
+ * count that is explicitly reported as <= 0 (NDW's "no vehicles observed this
+ * interval" shape), not a feed that simply doesn't report a count.
  */
 function firstDataNode(node: XmlObject): XmlObject | undefined {
   return (
@@ -441,7 +457,7 @@ function readMeasuredSpeedSample(mv: XmlObject): {
 
   const speedNode = getXmlChild(dataNode, "averageVehicleSpeed");
   const inputRaw = speedNode?.["@_numberOfInputValuesUsed"];
-  const inputCount = inputRaw != null ? Number(xmlText(inputRaw) ?? inputRaw) : 0;
+  const inputCount = inputRaw != null ? Number(xmlText(inputRaw) ?? inputRaw) : 1;
 
   const speedKph = extractDatexSpeed(dataNode);
   const trafficStatus = xmlText(dataNode["trafficStatus"]);
@@ -601,7 +617,13 @@ export function enrichFlowsWithBaseline(
  * Parse a DATEX II MeasuredDataPublication into RoadFlow measurements, one per
  * measurement site. The representative average speed for a site is the
  * `TrafficSpeed`/`averageVehicleSpeed` sample with the highest
- * `numberOfInputValuesUsed`, ignoring no-data samples (speed <= 0).
+ * `numberOfInputValuesUsed`, ignoring no-data samples: a speed < 0 (NDW's -1
+ * sentinel) or >= ABSURD_SPEED_KPH is never a usable speed, and a sample whose
+ * `numberOfInputValuesUsed` is explicitly <= 0 is rejected regardless of its
+ * speed value — this is what distinguishes a no-data zero ("no vehicles
+ * observed this interval", speed reported as 0 alongside a 0 count) from a
+ * genuine standstill (speed 0 with a positive count), which is kept and still
+ * classifies as congestion.
  *
  * Geometry is resolved by priority: an inline `locationReference` on a
  * measuredValue, then an inline `measurementSiteTable` entry, then the external
@@ -689,6 +711,13 @@ export function parseDatexMeasuredData(
         trafficStatus ??= sample.trafficStatus;
         freeFlowKph ??= sample.freeFlowKph;
         if (sample.speedKph == null) continue;
+        // A count explicitly reported as <= 0 means "no vehicles observed this
+        // interval" — a speed of 0 alongside it is a no-data zero, not a
+        // genuine standstill, and must never become `best` (it would otherwise
+        // masquerade as a real stationary reading). A speed > 0 with count <= 0
+        // is equally untrustworthy. inputCount defaults to 1 when a feed never
+        // reports the attribute at all, so this only rejects an explicit zero.
+        if (sample.inputCount <= 0) continue;
         if (best == null || sample.inputCount > best.inputCount) {
           best = sample;
         }

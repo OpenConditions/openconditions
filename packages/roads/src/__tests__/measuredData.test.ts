@@ -86,9 +86,10 @@ describe("createMeasuredDataParser — equivalence with the DOM parser", () => {
     const dom = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap);
     const streamed = streamWhole(xml, siteMap);
 
-    // Two sites resolve geometry from the table; the others are no-data/missing.
+    // Three sites resolve geometry from the table (including the genuine
+    // standstill); the others are no-data/absurd/missing.
     expect(streamed.flows.length).toBe(dom.flows.length);
-    expect(streamed.flows.length).toBe(2);
+    expect(streamed.flows.length).toBe(3);
     expect(sortedFlowKeys(streamed)).toEqual(sortedFlowKeys(dom));
   });
 
@@ -99,6 +100,17 @@ describe("createMeasuredDataParser — equivalence with the DOM parser", () => {
     const best = streamed.flows.find((f) => f.id === "ndw-flow:PZH01_MST_0065_00");
     expect(best).toBeDefined();
     expect(best!.speedKph).toBe(64);
+  });
+
+  it("keeps a genuine standstill (speed=0, count>0) but rejects a no-data zero (speed=0, count=0) and an absurd speed (>=250)", () => {
+    const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE, "utf8");
+    const siteMap = parseDatexSiteTable(readFileSync(NDW_SITE_TABLE_FIXTURE));
+    const streamed = streamWhole(xml, siteMap);
+    const standstill = streamed.flows.find((f) => f.id === "ndw-flow:PZH01_MST_STANDSTILL_00");
+    expect(standstill).toBeDefined();
+    expect(standstill!.speedKph).toBe(0);
+    expect(streamed.flows.find((f) => f.id === "ndw-flow:PZH01_MST_ZEROCOUNT_00")).toBeUndefined();
+    expect(streamed.flows.find((f) => f.id === "ndw-flow:PZH01_MST_ABSURD_00")).toBeUndefined();
   });
 });
 

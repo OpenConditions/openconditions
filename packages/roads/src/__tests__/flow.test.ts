@@ -657,7 +657,11 @@ describe("parseDatexMeasuredData — external site-map join (NDW shape)", () => 
     const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
     const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
     const ids = flows.map((f) => f.id).sort();
-    expect(ids).toEqual(["ndw:PZH01_MST_0029-00", "ndw:PZH01_MST_0065_00"]);
+    expect(ids).toEqual([
+      "ndw:PZH01_MST_0029-00",
+      "ndw:PZH01_MST_0065_00",
+      "ndw:PZH01_MST_STANDSTILL_00",
+    ]);
   });
 
   it("uses the speed sample with the highest numberOfInputValuesUsed and ignores no-data (-1)", () => {
@@ -698,6 +702,31 @@ describe("parseDatexMeasuredData — external site-map join (NDW shape)", () => 
     const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
     const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
     expect(flows.find((f) => f.id === "ndw:PZH01_MST_ALLNODATA_00")).toBeUndefined();
+  });
+
+  it("rejects a no-data zero (speed=0, numberOfInputValuesUsed=0) distinct from the -1 sentinel", () => {
+    const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
+    const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
+    expect(flows.find((f) => f.id === "ndw:PZH01_MST_ZEROCOUNT_00")).toBeUndefined();
+  });
+
+  it("keeps a genuine standstill (speed=0, numberOfInputValuesUsed>0) as a real speed reading, distinct from the no-data zero", () => {
+    const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
+    const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
+    const standstill = flows.find((f) => f.id === "ndw:PZH01_MST_STANDSTILL_00");
+    expect(standstill).toBeDefined();
+    expect(standstill!.speedKph).toBe(0);
+    // This fixture carries no trafficStatus/freeFlow anywhere, so los stays
+    // "unknown" here by design (see the "sets los:'unknown'" test above); the
+    // speed=0 -> stationary/critical classification, once a free-flow baseline
+    // is resolved, is covered in reclassify-flow.test.ts.
+    expect(standstill!.los).toBe("unknown");
+  });
+
+  it("rejects an absurd speed (>= ABSURD_SPEED_KPH) as implausible, treated as no usable speed", () => {
+    const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
+    const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
+    expect(flows.find((f) => f.id === "ndw:PZH01_MST_ABSURD_00")).toBeUndefined();
   });
 
   it("skips a site that is absent from the site map (no geometry)", () => {

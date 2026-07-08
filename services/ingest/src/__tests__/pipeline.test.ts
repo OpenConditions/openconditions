@@ -601,8 +601,9 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     `;
 
     const measurements = rows.filter((r) => r.kind === "measurement");
-    // Two sites resolve (Point + LineString); two are skipped (no-data, missing).
-    expect(measurements.length).toBe(2);
+    // Three sites resolve (Point + LineString + the genuine standstill); the
+    // rest are skipped (no-data zero/sentinel, absurd speed, missing geometry).
+    expect(measurements.length).toBe(3);
     // los is unknown for NDW (no baseline), so no derived congestion events.
     const events = rows.filter((r) => r.kind === "event");
     expect(events.length).toBe(0);
@@ -644,7 +645,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
       FROM conditions.observations
       WHERE source = 'ndw-flow' AND kind = 'measurement'
     `;
-    expect(rows.length).toBe(2);
+    expect(rows.length).toBe(3);
     expect(rows.every((r) => r.metric === "flow")).toBe(true);
     const best = rows.find((r) => r.value != null && Number(r.value) === 64);
     expect(best).toBeDefined();

@@ -81,6 +81,25 @@ describe("writeSpeedSamples", () => {
     expect(rows[0]!.n).toBe(1);
   }, 30_000);
 
+  it("filters out non-positive and absurd speeds from the baseline history (defense-in-depth)", async () => {
+    // A genuine standstill (0) still classifies as congestion at the flow.ts
+    // LOS layer (unaffected by this filter), but must not drag the derived p85
+    // baseline down; an implausible reading (>= ABSURD_SPEED_KPH) must not
+    // inflate it either. Only a plausible positive speed is persisted.
+    const written = await writeSpeedSamples(
+      sql,
+      "filt",
+      [flow("filt:zero", 0), flow("filt:absurd", 300), flow("filt:ok", 55)],
+      () => "2026-03-04T14:31:00Z",
+      300
+    );
+    expect(written).toBe(1);
+    const rows = await sql<{ sensor_key: string }[]>`
+      SELECT sensor_key FROM conditions.sensor_speed_sample
+      WHERE source = 'filt' ORDER BY sensor_key`;
+    expect(rows.map((r) => r.sensor_key)).toEqual(["filt:ok"]);
+  }, 30_000);
+
   it("quantizes now()-fallback samples to one row per sensor per cadence bucket", async () => {
     // A timestamp-less measurement falls back to now(); two polls a few minutes
     // apart but within one 300s cadence bucket floor to the same observed_at, so

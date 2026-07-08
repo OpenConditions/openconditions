@@ -78,6 +78,51 @@
             </measuredValue>
           </measuredValue>
         </siteMeasurements>
+        <siteMeasurements>
+          <measurementSiteReference id="PZH01_MST_ZEROCOUNT_00" version="1" targetClass="MeasurementSiteRecord"/>
+          <measurementTimeDefault>2026-06-24T10:09:00Z</measurementTimeDefault>
+          <measuredValue index="8">
+            <measuredValue>
+              <basicData xsi:type="TrafficSpeed">
+                <!-- A real, distinct-from -1 "no vehicles observed" shape: speed
+                     reported as 0 with numberOfInputValuesUsed explicitly 0. This
+                     must be rejected as no-data, not kept as a genuine standstill. -->
+                <averageVehicleSpeed numberOfInputValuesUsed="0"><speed>0</speed></averageVehicleSpeed>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+        </siteMeasurements>
+        <siteMeasurements>
+          <measurementSiteReference id="PZH01_MST_STANDSTILL_00" version="1" targetClass="MeasurementSiteRecord"/>
+          <measurementTimeDefault>2026-06-24T10:09:00Z</measurementTimeDefault>
+          <measuredValue index="8">
+            <measuredValue>
+              <basicData xsi:type="TrafficSpeed">
+                <!-- A genuine standstill: vehicles WERE observed (count > 0) at
+                     ~0 kph. Must survive the zero-input gate as a real sample
+                     (this fixture carries no trafficStatus/freeFlow anywhere,
+                     so los stays "unknown" here by design — see
+                     reclassify-flow.test.ts for the speed=0 -> stationary/
+                     critical classification, which happens once a free-flow
+                     baseline is resolved). -->
+                <averageVehicleSpeed numberOfInputValuesUsed="5"><speed>0</speed></averageVehicleSpeed>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+        </siteMeasurements>
+        <siteMeasurements>
+          <measurementSiteReference id="PZH01_MST_ABSURD_00" version="1" targetClass="MeasurementSiteRecord"/>
+          <measurementTimeDefault>2026-06-24T10:09:00Z</measurementTimeDefault>
+          <measuredValue index="8">
+            <measuredValue>
+              <basicData xsi:type="TrafficSpeed">
+                <!-- Implausible sensor glitch (>= ABSURD_SPEED_KPH); must be
+                     rejected as no usable speed regardless of input count. -->
+                <averageVehicleSpeed numberOfInputValuesUsed="10"><speed>300</speed></averageVehicleSpeed>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+        </siteMeasurements>
       </payloadPublication>
     </d2LogicalModel>
   </SOAP:Body>

@@ -74,6 +74,13 @@ describe("reclassifyFlow", () => {
   it("classifies stationary below 0.15", () => {
     expect(reclassifyFlow(base({ speedKph: 10 }), 100, "derived", src).flow.los).toBe("stationary");
   });
+  it("keeps a genuine standstill (speedKph: 0) as stationary with a critical derived event, once a baseline is resolved", () => {
+    const { flow, event } = reclassifyFlow(base({ speedKph: 0 }), 100, "native", src);
+    expect(flow.los).toBe("stationary");
+    expect(flow.speedRatio).toBe(0);
+    expect(event?.type).toBe("congestion");
+    expect(event?.severity).toBe("critical");
+  });
   it("leaves a flow with an already-resolved los untouched", () => {
     const input = base({ speedKph: 30, los: "free_flow" });
     const { flow, event } = reclassifyFlow(input, 100, "derived", src);

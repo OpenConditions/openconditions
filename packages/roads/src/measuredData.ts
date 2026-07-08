@@ -21,7 +21,7 @@
  */
 import type { LineString } from "geojson";
 import { SaxesParser } from "saxes";
-import { buildMeasuredSiteFlow, makeOrigin } from "./flow.js";
+import { ABSURD_SPEED_KPH, buildMeasuredSiteFlow, makeOrigin } from "./flow.js";
 import type { FlowGeometry, FlowParseResult } from "./flow.js";
 import type { RoadEvent, RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
@@ -143,11 +143,18 @@ export function createMeasuredDataParser(
         if (ref != null) site.siteId ??= flattenString(ref);
         break;
       }
-      case "averageVehicleSpeed":
-        site.curInputCount = Number(attrs["numberOfInputValuesUsed"] ?? "0") || 0;
+      case "averageVehicleSpeed": {
+        // Defaults to 1 (not 0) when the attribute is absent altogether — the
+        // zero-input gate in the "averageVehicleSpeed" closetag below must only
+        // reject a count explicitly reported as <= 0, not a feed that simply
+        // never publishes numberOfInputValuesUsed. Mirrors readMeasuredSpeedSample
+        // in flow.ts, which the buffered parser uses for the same reason.
+        const rawCount = attrs["numberOfInputValuesUsed"];
+        site.curInputCount = rawCount != null ? Number(rawCount) || 0 : 1;
         site.curSpeed = undefined;
         site.curDataError = false;
         break;
+      }
       case "speed": {
         // `<speed>` appears under both averageVehicleSpeed and freeFlowSpeed;
         // the parent on the stack disambiguates which value we are reading.
@@ -195,8 +202,12 @@ export function createMeasuredDataParser(
         case "speed": {
           const v = Number(textBuffer.trim());
           if (textTarget === "avgspeed") {
-            // A speed < 0 is NDW's no-data sentinel (e.g. -1); drop it.
-            site.curSpeed = Number.isFinite(v) && v >= 0 ? v : undefined;
+            // A speed < 0 is NDW's no-data sentinel (e.g. -1); drop it. A speed
+            // >= ABSURD_SPEED_KPH is an implausible sensor glitch; drop that too.
+            // A genuine 0 survives here and is gated on curInputCount instead
+            // (see the "averageVehicleSpeed" case below), so a real standstill
+            // (count > 0) is kept while a no-data zero (count <= 0) is not.
+            site.curSpeed = Number.isFinite(v) && v >= 0 && v < ABSURD_SPEED_KPH ? v : undefined;
           } else if (textTarget === "freeflow") {
             if (Number.isFinite(v) && v > 0) site.freeFlowKph ??= v;
           }
@@ -208,8 +219,11 @@ export function createMeasuredDataParser(
           textTarget = null;
           break;
         case "averageVehicleSpeed":
-          // Keep the best-supported (highest input count) valid sample.
-          if (!site.curDataError && site.curSpeed != null) {
+          // Keep the best-supported (highest input count) valid sample. A
+          // count explicitly reported as <= 0 means "no vehicles observed this
+          // interval" — never let it become best, even at speed 0, so a
+          // no-data zero cannot masquerade as a genuine standstill.
+          if (!site.curDataError && site.curSpeed != null && site.curInputCount > 0) {
             if (site.best == null || site.curInputCount > site.best.inputCount) {
               site.best = { speedKph: site.curSpeed, inputCount: site.curInputCount };
             }

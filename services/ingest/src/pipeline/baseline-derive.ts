@@ -16,6 +16,10 @@ export async function deriveBaselines(
   const windowDays = opts.windowDays ?? 28;
   const minSamples = opts.minSamples ?? 30;
 
+  // These specific-bucket rows are NOT read by loadBaselineMap (baseline-store.ts) —
+  // it resolves free-flow from the overall (-1,-1) row only. They are kept here
+  // for a future typical-speed-per-bucket feature (plan 12 segment_profile), not
+  // dead: do not remove this INSERT to "clean up" loadBaselineMap's fix.
   const specific = await sql<{ sensor_key: string }[]>`
     INSERT INTO conditions.sensor_baseline
       (sensor_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
