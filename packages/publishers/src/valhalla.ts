@@ -24,18 +24,62 @@ export interface ValhallaExclusionOptions {
   /** Cap on points contributed to `exclude_locations` per linear closure (a long
    * line is evenly downsampled to this), bounding the payload. Default 200. */
   maxPointsPerClosure?: number;
+  /**
+   * Hard cap on the TOTAL number of `exclude_locations` across every closure
+   * in the response, applied after per-closure sampling. Valhalla rejects more
+   * than 50 `exclude_locations` outright (HTTP 400, "Exceeded max avoid
+   * locations: 50"), which would fail the whole route — so we stay safely
+   * below that ceiling and subsample if needed. Default 45.
+   */
+  maxTotalPoints?: number;
+  /**
+   * Wall-clock instant the feed is "active at": events whose `validFrom` is
+   * in the future relative to this are not yet in effect and are excluded, so
+   * planned-but-not-started closures don't block routing early. Default the
+   * current time — pass an explicit value for deterministic tests/replays.
+   */
+  activeAt?: Date;
 }
 
 const CLOSURE_TYPES = new Set(["road_closure", "lane_closure"]);
 const DEFAULT_MAX_SPACING_M = 45;
 const DEFAULT_MAX_POINTS = 200;
+const DEFAULT_MAX_TOTAL_POINTS = 45;
+
+function eventType(o: Observation): string | undefined {
+  return (o as Observation & { type?: string }).type;
+}
+
+/** Closure-typed events (road/lane closures) are the only ones whose polygon
+ * geometry is safe to exclude wholesale — a critical but non-closure event
+ * (e.g. a region-sized weather warning) must not turn into a routing-blocking
+ * polygon, even though its point/line geometry still contributes. */
+function isClosureType(o: Observation): boolean {
+  const type = eventType(o);
+  return type != null && CLOSURE_TYPES.has(type);
+}
 
 /** A closure or otherwise route-blocking event worth feeding to Valhalla: an
- * active road/lane closure, or any active critical-severity event. */
-function isExcludable(o: Observation): boolean {
+ * active road/lane closure, or any active critical-severity event, currently
+ * in effect at `activeAt` (not yet started, or already ended, closures don't
+ * contribute). */
+function isExcludable(o: Observation, activeAt: Date): boolean {
   if (o.kind !== "event" || o.status !== "active") return false;
-  const e = o as Observation & { type?: string; severity?: string };
-  return (e.type != null && CLOSURE_TYPES.has(e.type)) || e.severity === "critical";
+  const e = o as Observation & { severity?: string };
+  if (!(isClosureType(o) || e.severity === "critical")) return false;
+  const t = activeAt.getTime();
+  if (o.validFrom != null) {
+    const from = Date.parse(o.validFrom);
+    if (!Number.isNaN(from) && t < from) return false; // not yet in effect
+  }
+  // Belt-and-suspenders: readObservations already filters `valid_to > now()`
+  // upstream, but a route-local check is cheap and keeps this projection
+  // correct even if called with pre-filtered or stale data.
+  if (o.validTo != null) {
+    const to = Date.parse(o.validTo);
+    if (!Number.isNaN(to) && t > to) return false; // already ended
+  }
+  return true;
 }
 
 function haversineMeters(a: [number, number], b: [number, number]): number {
@@ -87,13 +131,28 @@ function pushRing(ring: number[][] | undefined, ex: ValhallaExclusions): void {
   if (ring && ring.length >= 3) ex.exclude_polygons.push(ring.map(([lon, lat]) => [lon!, lat!]));
 }
 
+/** Evenly subsample `points` down to at most `max`, preserving geographic
+ * spread (and the first vertex). Returns the input unchanged when already
+ * within `max`. Mirrors the OpenMapX routing consumer's own total cap. */
+function subsampleEvenly<T>(points: T[], max: number): T[] {
+  if (points.length <= max) return points;
+  const stride = points.length / max;
+  const out: T[] = [];
+  for (let i = 0; i < max; i++) out.push(points[Math.floor(i * stride)] as T);
+  return out;
+}
+
 /** Add one geometry's avoidance footprint: points → locations, lines → sampled
- * locations, polygons → exterior rings. Unknown types are skipped. */
+ * locations, polygons → exterior rings (only for closure-typed events —
+ * `isClosureType` false suppresses the ring so a critical-but-non-closure
+ * polygon, e.g. a region-sized weather warning, doesn't become a
+ * region-sized routing exclusion). Unknown types are skipped. */
 function addGeometry(
   geometry: Geometry,
   ex: ValhallaExclusions,
   maxSpacing: number,
-  cap: number
+  cap: number,
+  isClosure: boolean
 ): void {
   switch (geometry.type) {
     case "Point":
@@ -110,13 +169,13 @@ function addGeometry(
         pushLine(line as [number, number][], ex, maxSpacing, cap);
       break;
     case "Polygon":
-      pushRing(geometry.coordinates[0], ex);
+      if (isClosure) pushRing(geometry.coordinates[0], ex);
       break;
     case "MultiPolygon":
-      for (const poly of geometry.coordinates) pushRing(poly[0], ex);
+      if (isClosure) for (const poly of geometry.coordinates) pushRing(poly[0], ex);
       break;
     case "GeometryCollection":
-      for (const g of geometry.geometries) addGeometry(g, ex, maxSpacing, cap);
+      for (const g of geometry.geometries) addGeometry(g, ex, maxSpacing, cap, isClosure);
       break;
   }
 }
@@ -124,8 +183,17 @@ function addGeometry(
 /**
  * Projects road-condition observations to a Valhalla exclusions object — the
  * live-avoidance half of the "Valhalla feed". Only active closures and critical
- * events contribute; a consumer merges the result into its Valhalla route
- * request to route around them. Pure and read-only over the canonical model.
+ * events, currently in effect, contribute; a consumer merges the result into
+ * its Valhalla route request to route around them. Read-only over the
+ * canonical model, but defaults to wall-clock time (`activeAt`), so pass that
+ * option explicitly for deterministic/reproducible calls.
+ *
+ * Bounds the payload two ways: each closure is downsampled to at most
+ * `maxPointsPerClosure` points, and the combined `exclude_locations` across
+ * ALL closures is then evenly subsampled to at most `maxTotalPoints` — the
+ * total is what Valhalla actually enforces a hard ceiling on (50), so a
+ * per-closure-only cap still lets many small closures add up to a rejected
+ * request.
  */
 export function eventsToExclusions(
   obs: Observation[],
@@ -133,9 +201,16 @@ export function eventsToExclusions(
 ): ValhallaExclusions {
   const maxSpacing = opts.maxSpacingMeters ?? DEFAULT_MAX_SPACING_M;
   const cap = opts.maxPointsPerClosure ?? DEFAULT_MAX_POINTS;
+  const maxTotal = opts.maxTotalPoints ?? DEFAULT_MAX_TOTAL_POINTS;
+  const activeAt = opts.activeAt ?? new Date();
   const ex: ValhallaExclusions = { exclude_locations: [], exclude_polygons: [] };
   for (const o of obs) {
-    if (isExcludable(o)) addGeometry(o.geometry as Geometry, ex, maxSpacing, cap);
+    if (isExcludable(o, activeAt)) {
+      addGeometry(o.geometry as Geometry, ex, maxSpacing, cap, isClosureType(o));
+    }
+  }
+  if (ex.exclude_locations.length > maxTotal) {
+    ex.exclude_locations = subsampleEvenly(ex.exclude_locations, maxTotal);
   }
   return ex;
 }
