@@ -98,6 +98,10 @@ function rowToFeature(row: ObservationRow, mergedSources?: Observation["mergedSo
       valid_from: row.valid_from,
       valid_to: row.valid_to,
       schedule: row.schedule ?? undefined,
+      data_updated_at:
+        row.data_updated_at instanceof Date
+          ? row.data_updated_at.toISOString()
+          : (row.data_updated_at ?? null),
       is_stale: row.is_stale,
       attribution,
       ...(mergedSources && mergedSources.length > 0 ? { mergedSources } : {}),

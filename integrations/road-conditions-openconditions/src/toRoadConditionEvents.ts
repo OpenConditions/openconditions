@@ -43,7 +43,7 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
     ...(Array.isArray(p.schedule) && p.schedule.length > 0
       ? { schedule: p.schedule as RoadConditionSchedule[] }
       : {}),
-    dataUpdatedAt: str(attrs.dataUpdatedAt),
+    dataUpdatedAt: str(p.data_updated_at),
     attribution: p.attribution as RoadConditionEvent["attribution"],
   };
 }

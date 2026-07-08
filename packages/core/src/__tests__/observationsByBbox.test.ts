@@ -274,6 +274,33 @@ describe("observationsByBbox", () => {
     expect(capturedQuery).not.toMatch(/valid_from\s+(?:IS|<=|<|>)/);
   });
 
+  it("projects data_updated_at (top-level, ISO string) onto the feature properties", async () => {
+    const row = { ...fakeRow, data_updated_at: "2026-06-22T05:30:00Z" };
+    const fc = await observationsByBbox(makeStubDb([row]), {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+    });
+    expect(fc.features[0]?.properties?.data_updated_at).toBe("2026-06-22T05:30:00Z");
+  });
+
+  it("serializes a Date data_updated_at value to an ISO string", async () => {
+    const row = { ...fakeRow, data_updated_at: new Date("2026-06-22T05:30:00Z") };
+    const fc = await observationsByBbox(makeStubDb([row]), {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+    });
+    expect(fc.features[0]?.properties?.data_updated_at).toBe("2026-06-22T05:30:00.000Z");
+  });
+
+  it("projects a null data_updated_at as null rather than dropping the key", async () => {
+    const row = { ...fakeRow, data_updated_at: null };
+    const fc = await observationsByBbox(makeStubDb([row]), {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+    });
+    expect(fc.features[0]?.properties?.data_updated_at).toBeNull();
+  });
+
   it("derives is_stale from a source_status join at query time (not the stored column)", async () => {
     let capturedQuery = "";
     const db: QueryRunner = {

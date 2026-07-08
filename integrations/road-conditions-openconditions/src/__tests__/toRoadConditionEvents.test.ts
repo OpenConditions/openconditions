@@ -21,6 +21,7 @@ const fc = {
         attributes: { roads: [{ name: "A2", direction: "north" }], roadState: "some_lanes_closed" },
         valid_from: "2026-06-20T00:00:00Z",
         valid_to: "2026-07-01T00:00:00Z",
+        data_updated_at: "2026-06-22T05:30:00Z",
         schedule: [
           {
             repeatFrequency: "P1D",
@@ -61,6 +62,7 @@ describe("featureCollectionToRoadConditionEvents", () => {
       roadState: "some_lanes_closed",
       validFrom: "2026-06-20T00:00:00Z",
       validTo: "2026-07-01T00:00:00Z",
+      dataUpdatedAt: "2026-06-22T05:30:00Z",
       schedule: [
         {
           repeatFrequency: "P1D",
@@ -74,6 +76,26 @@ describe("featureCollectionToRoadConditionEvents", () => {
       geometry: { type: "Point", coordinates: [5, 52] },
     });
     expect(events[0]!.roads).toEqual([{ name: "A2", direction: "north" }]);
+  });
+
+  it("populates dataUpdatedAt from the top-level properties.data_updated_at (not attributes)", () => {
+    const out = featureCollectionToRoadConditionEvents({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [1, 1] },
+          properties: {
+            id: "x",
+            data_updated_at: "2026-06-22T05:30:00Z",
+            // A stray attrs.dataUpdatedAt must NOT be read — the real value is
+            // top-level, matching the valid_from/valid_to convention.
+            attributes: { dataUpdatedAt: "1999-01-01T00:00:00Z" },
+          },
+        },
+      ],
+    } as unknown as FeatureCollection);
+    expect(out[0]?.dataUpdatedAt).toBe("2026-06-22T05:30:00Z");
   });
 
   it("defaults type/severity when absent", () => {
