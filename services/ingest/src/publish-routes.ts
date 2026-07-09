@@ -93,6 +93,33 @@ function withoutSourceRaw(o: Observation): Observation {
   return rest as Observation;
 }
 
+/** One `road_segment JOIN segment_profile` row: a single weekly-profile bucket
+ * for a directed segment, from the weekly-profile derive job. `wayId` is a
+ * bigint column -- postgres-js returns it as a `string`, not a `number` (same
+ * convention as `SegmentSpeedCsvRow.wayId`). */
+type SegmentProfileBucketRow = {
+  segmentId: string;
+  wayId: string | number;
+  dir: string;
+  freeFlowKph: number | null;
+  dow: number;
+  todHour: number;
+  speedKph: number;
+};
+
+/** First/last local hour (inclusive) of Valhalla's `constrained` window --
+ * `constrained` applies strictly 07:00-19:00 local, `freeflow` at night. */
+const DAYTIME_START_HOUR = 7;
+const DAYTIME_END_HOUR = 19;
+
+/** Median of a non-empty numeric array (average of the two middle values on
+ * an even-length input). Caller guarantees non-empty. */
+function median(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1]! + sorted[mid]!) / 2 : sorted[mid]!;
+}
+
 /** Adapt postgres-js to the QueryRunner (`execute`) interface the readers expect. */
 function runner(sql: Sql) {
   return {
@@ -155,7 +182,7 @@ export function registerFeedStatusRoute(
  *   GET /observations.geojson · /observations.jsonld · /traff.xml ·
  *       /gtfs-rt/alerts.pb · /datex2/situations.xml ·
  *       /valhalla/exclusions.json · /stream (SSE) · /feeds/status ·
- *       /segments.geojson · /segments/speed.csv
+ *       /segments.geojson · /segments/speed.csv · /segments/profiles.json
  * All bbox-filterable (?bbox=west,south,east,north[&domain=roads]); /stream also
  * takes an optional comma-separated &type= filter and pushes live deltas.
  *
@@ -296,6 +323,74 @@ export function registerPublishRoutes(
     reply.header("Content-Type", "text/csv");
     reply.header("Cache-Control", "public, max-age=60");
     return reply.send(flowToSegmentSpeedCsv(rows));
+  });
+
+  // Weekly speed-profile export for the OpenMapX predicted-traffic baker,
+  // which expands each segment into Valhalla's 2016 five-minute weekly buckets
+  // and bakes them via `valhalla_add_predicted_traffic`. One entry per directed
+  // segment that has at least one `segment_profile` bucket.
+  //
+  // `hourly[dow * 24 + tod_hour] = speed_kph` (null where no bucket exists)
+  // is **Sunday-first (dow 0=Sun...6=Sat), in the segment's REGION-LOCAL
+  // time** -- this is exactly Valhalla's own `DateTime::second_of_week`
+  // bucket convention (source-verified), NOT UTC and NOT Monday-first. The baker indexes this array directly;
+  // re-deriving a different week start on that side would silently shift
+  // every region's rush hour.
+  app.get("/segments/profiles.json", async (_req, reply) => {
+    const rows = await db.execute<SegmentProfileBucketRow[]>(
+      `SELECT rs.segment_id AS "segmentId", rs.way_id AS "wayId", rs.dir,
+              rs.free_flow_kph AS "freeFlowKph",
+              sp.dow, sp.tod_hour AS "todHour", sp.speed_kph AS "speedKph"
+       FROM conditions.segment_profile sp
+       JOIN conditions.road_segment rs USING (segment_id)
+       ORDER BY rs.segment_id`
+    );
+
+    const bySegment = new Map<
+      string,
+      {
+        wayId: string | number;
+        dir: string;
+        freeFlowKph: number | null;
+        hourly: (number | null)[];
+      }
+    >();
+    for (const row of rows) {
+      let entry = bySegment.get(row.segmentId);
+      if (!entry) {
+        entry = {
+          wayId: row.wayId,
+          dir: row.dir,
+          freeFlowKph: row.freeFlowKph,
+          hourly: new Array<number | null>(168).fill(null),
+        };
+        bySegment.set(row.segmentId, entry);
+      }
+      entry.hourly[row.dow * 24 + row.todHour] = row.speedKph;
+    }
+
+    const segments = [...bySegment.values()].map(({ wayId, dir, freeFlowKph, hourly }) => {
+      // Median of the daytime (07:00-19:00 local, inclusive) buckets only;
+      // Valhalla treats an absent/0 constrained speed as "don't set" and
+      // warns on predicted-without-freeflow/constrained, so this always
+      // falls back to free_flow_kph rather than omitting the field.
+      const daytime = hourly.filter(
+        (v, i): v is number =>
+          v != null && i % 24 >= DAYTIME_START_HOUR && i % 24 <= DAYTIME_END_HOUR
+      );
+      const constrainedKph = daytime.length > 0 ? median(daytime) : freeFlowKph;
+      return {
+        way_id: wayId,
+        dir,
+        free_flow_kph: freeFlowKph,
+        constrained_kph: constrainedKph,
+        hourly,
+      };
+    });
+
+    reply.header("Content-Type", "application/json");
+    reply.header("Cache-Control", "public, max-age=3600");
+    return reply.send(segments);
   });
 
   app.get("/stream", (req, reply) => {
