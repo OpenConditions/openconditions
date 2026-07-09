@@ -22,6 +22,10 @@ export interface SegmentSpeedRow {
   confidence?: string | null;
   currentKph?: number | null;
   freeFlowKph?: number | null;
+  /** ISO timestamp; the caller is responsible for coercing the driver's raw
+   * `Date` (postgres-js returns `timestamptz` as `Date`) before this row is
+   * built — see the `/segments.geojson` route. */
+  observedAt?: string | null;
 }
 
 /**
@@ -51,6 +55,7 @@ export function segmentsToGeoJSON(rows: SegmentSpeedRow[]): {
     if (row.confidence != null) properties["confidence"] = row.confidence;
     if (row.currentKph != null) properties["current_kph"] = row.currentKph;
     if (row.freeFlowKph != null) properties["free_flow_kph"] = row.freeFlowKph;
+    if (row.observedAt != null) properties["observed_at"] = row.observedAt;
     return {
       type: "Feature",
       geometry: JSON.parse(row.geojson),

@@ -11,11 +11,22 @@
  * monorepo-wired: swap types.ts for the @openmapx/extension-sdk IntegrationContext
  */
 
-import type { Geometry } from "geojson";
+import type { Geometry, LineString } from "geojson";
 
 /** Matches OpenMapX `IntegrationContext.db` (DatabaseClient). */
 export interface DatabaseClient {
   execute<T = unknown>(query: string, params?: unknown[]): Promise<T>;
+}
+
+export interface HttpClientOptions {
+  params?: Record<string, string | number | boolean | undefined>;
+}
+
+/** Matches OpenMapX `IntegrationContext.http` (`HttpClient`, `get` only — this
+ * provider never needs `post`). Auto-parses JSON and throws on a non-2xx
+ * response. */
+export interface HttpClient {
+  get<T = unknown>(url: string, options?: HttpClientOptions): Promise<T>;
 }
 
 export type BBox = [west: number, south: number, east: number, north: number];
@@ -93,18 +104,52 @@ export interface RoadConditionsQuery {
   minSeverity?: RoadConditionSeverity;
 }
 
+/**
+ * A directed, colored road segment — the `getFlow` counterpart to
+ * `RoadConditionEvent`. Mirrors OpenMapX `@openmapx/core`'s `RoadFlowSegment`
+ * host contract. `los` and `confidence` are required: a segment with no fused
+ * speed still needs a value, mapped to `"unknown"`/`"typical"` respectively —
+ * never invent a ratio.
+ */
+export interface RoadFlowSegment {
+  id: string;
+  geometry: LineString;
+  currentSpeedKph?: number;
+  freeFlowSpeedKph?: number;
+  speedRatio?: number;
+  los: "free_flow" | "heavy" | "queuing" | "stationary" | "unknown";
+  confidence: "measured" | "estimated" | "typical" | "unknown";
+  direction: "f" | "b";
+  roads?: string;
+  source?: string;
+  observedAt?: string;
+}
+
+export interface RoadFlowQuery {
+  minLos?: string;
+}
+
 export interface RoadConditionsProvider {
   readonly id: string;
   readonly attribution?: RoadConditionAttribution[];
   readonly coverage?: { bbox: BBox } | { all: true };
   getEvents(bbox: BBox, opts?: RoadConditionsQuery): Promise<RoadConditionEvent[]>;
+  /** Optional: colored-segment traffic-flow source. Undefined for providers
+   * that only surface incidents (the orchestrator's `aggregateRoadFlow`
+   * filters to providers that implement this). */
+  getFlow?(bbox: BBox, opts?: RoadFlowQuery): Promise<RoadFlowSegment[]>;
 }
 
 export interface IntegrationContext {
   db?: DatabaseClient;
+  http: HttpClient;
   cache: {
     withCache<T>(key: string, ttlSec: number, fn: () => Promise<T>): Promise<T>;
   };
+  /** Matches OpenMapX `IntegrationContext.getRequiredService` — resolves a
+   * `requires:` entry (service slug or capability) to its reachable target, or
+   * `null` when unsatisfied. */
+  getRequiredService(key: string): { serviceId: string; url: string; enabled: boolean } | null;
   registerRoadConditionsProvider(provider: RoadConditionsProvider): void;
   manifest: {
     dataSources?: unknown[];

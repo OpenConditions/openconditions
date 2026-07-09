@@ -12,6 +12,7 @@ describe("segmentsToGeoJSON", () => {
         speedRatio: 0.5,
         los: "heavy",
         confidence: "measured",
+        observedAt: "2026-07-01T00:00:00.000Z",
       },
     ]);
     expect(fc.type).toBe("FeatureCollection");
@@ -31,6 +32,7 @@ describe("segmentsToGeoJSON", () => {
       speed_ratio: 0.5,
       los: "heavy",
       confidence: "measured",
+      observed_at: "2026-07-01T00:00:00.000Z",
     });
   });
 
@@ -51,6 +53,7 @@ describe("segmentsToGeoJSON", () => {
     expect("confidence" in f.properties).toBe(false);
     expect("current_kph" in f.properties).toBe(false);
     expect("free_flow_kph" in f.properties).toBe(false);
+    expect("observed_at" in f.properties).toBe(false);
   });
 
   it("omits explicit-null speed props (a real LEFT-JOIN miss from the driver, not undefined)", () => {
@@ -66,13 +69,22 @@ describe("segmentsToGeoJSON", () => {
         confidence: null,
         currentKph: null,
         freeFlowKph: null,
+        observedAt: null,
       },
     ]);
     const f = fc.features[0] as { properties: Record<string, unknown> };
     // A `!== undefined` guard would let these through as `null`; they must be
     // absent keys, not present-as-null.
     expect(f.properties).toEqual({ segment_id: "4:f", dir: "f", highway: "secondary" });
-    for (const k of ["ref", "speed_ratio", "los", "confidence", "current_kph", "free_flow_kph"]) {
+    for (const k of [
+      "ref",
+      "speed_ratio",
+      "los",
+      "confidence",
+      "current_kph",
+      "free_flow_kph",
+      "observed_at",
+    ]) {
       expect(k in f.properties).toBe(false);
     }
   });
@@ -87,12 +99,14 @@ describe("segmentsToGeoJSON", () => {
         geojson: '{"type":"LineString","coordinates":[[7,50],[7.1,50.1]]}',
         currentKph: 80,
         freeFlowKph: 120,
+        observedAt: "2026-07-01T00:00:00.000Z",
       },
     ]);
     const f = fc.features[0] as { properties: Record<string, unknown> };
     expect(f.properties["ref"]).toBe("A2");
     expect(f.properties["current_kph"]).toBe(80);
     expect(f.properties["free_flow_kph"]).toBe(120);
+    expect(f.properties["observed_at"]).toBe("2026-07-01T00:00:00.000Z");
   });
 
   it("maps multiple rows to one Feature each, in order", () => {

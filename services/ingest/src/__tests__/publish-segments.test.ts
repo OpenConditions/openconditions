@@ -106,6 +106,7 @@ describe("GET /segments.geojson", () => {
         confidence: "measured",
         current_kph: 50,
         free_flow_kph: 100,
+        observed_at: NOW,
       });
       expect(f.geometry).toEqual({
         type: "LineString",
@@ -137,7 +138,14 @@ describe("GET /segments.geojson", () => {
         dir: "f",
         highway: "primary",
       });
-      for (const k of ["speed_ratio", "los", "confidence", "current_kph", "free_flow_kph"]) {
+      for (const k of [
+        "speed_ratio",
+        "los",
+        "confidence",
+        "current_kph",
+        "free_flow_kph",
+        "observed_at",
+      ]) {
         expect(k in base!.properties).toBe(false);
       }
     } finally {

@@ -255,17 +255,27 @@ export function registerPublishRoutes(
     const bbox = parseBbox(q.bbox);
     if (!bbox) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
     const [west, south, east, north] = bbox;
-    const rows = await db.execute<SegmentSpeedRow[]>(
+    // postgres-js returns `timestamptz` as a JS `Date`, not a string (same as
+    // the observations readers) -- coerce to ISO before handing rows to
+    // segmentsToGeoJSON, which expects SegmentSpeedRow.observedAt as a string.
+    const rawRows = await db.execute<
+      Array<Omit<SegmentSpeedRow, "observedAt"> & { observedAt?: string | Date | null }>
+    >(
       `SELECT s.segment_id AS "segmentId", s.dir, s.highway, s.ref,
               ST_AsGeoJSON(s.geom) AS geojson,
               sp.speed_ratio AS "speedRatio", sp.los, sp.confidence,
-              sp.current_kph AS "currentKph", sp.free_flow_kph AS "freeFlowKph"
+              sp.current_kph AS "currentKph", sp.free_flow_kph AS "freeFlowKph",
+              sp.observed_at AS "observedAt"
        FROM conditions.road_segment s
        LEFT JOIN conditions.segment_speed sp USING (segment_id)
        WHERE s.geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)
        LIMIT 20000`,
       [west, south, east, north]
     );
+    const rows: SegmentSpeedRow[] = rawRows.map((row) => ({
+      ...row,
+      observedAt: row.observedAt instanceof Date ? row.observedAt.toISOString() : row.observedAt,
+    }));
     reply.header("Content-Type", "application/geo+json");
     reply.header("Cache-Control", "public, max-age=60");
     return reply.send(segmentsToGeoJSON(rows));
