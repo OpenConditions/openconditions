@@ -1,7 +1,8 @@
-import { type ConditionEvent, readObservations } from "@openconditions/core";
+import { type ConditionEvent, type Observation, readObservations } from "@openconditions/core";
 import {
   diffObservations,
   eventsToExclusions,
+  filterForPermissiveExport,
   matchesTypeFilter,
   observationsToDatexSituations,
   parseTypeFilter,
@@ -59,6 +60,33 @@ export function parseBbox(raw: string | undefined): BBox | null {
   // rather than silently returning empty/wrong results.
   if (west > east) return null;
   return parts as BBox;
+}
+
+/**
+ * Distinct `origin.attribution.license` ids present in an observation set, for
+ * the `X-Data-License` response header. Called on an already
+ * `filterForPermissiveExport`-filtered set, so this is bounded (a handful of
+ * permissive ids at most, never the raw per-feed cardinality of every source).
+ */
+function distinctLicenses(obs: Observation[]): string {
+  const licenses = new Set<string>();
+  for (const o of obs) {
+    if (o.origin.attribution.license) licenses.add(o.origin.attribution.license);
+  }
+  return licenses.size > 0 ? [...licenses].join(", ") : "unknown";
+}
+
+/**
+ * Shallow-copies an observation with `sourceRaw` omitted, mirroring the
+ * GeoJSON route's `?raw=1` gating for `/stream`. Never mutates `o` — the SSE
+ * diff poller (`prev`/`next` maps in the `/stream` handler) keeps reusing the
+ * same observation objects across polls.
+ */
+function withoutSourceRaw(o: Observation): Observation {
+  const withRaw = o as Observation & { sourceRaw?: unknown };
+  if (withRaw.sourceRaw === undefined) return o;
+  const { sourceRaw: _sourceRaw, ...rest } = withRaw;
+  return rest as Observation;
 }
 
 /** Adapt postgres-js to the QueryRunner (`execute`) interface the readers expect. */
@@ -134,10 +162,14 @@ export function registerPublishRoutes(
 ): void {
   const db = runner(sql);
 
-  const read = (q: Record<string, string | undefined>) => {
+  // Every route funnelling through `read()` is a redistributable export
+  // (see the module doc comment above), so share-alike records are dropped
+  // here, once, for all of them.
+  const read = async (q: Record<string, string | undefined>) => {
     const bbox = parseBbox(q.bbox);
     if (!bbox) return null;
-    return readObservations(db, { domain: q.domain ?? "roads", bbox });
+    const obs = await readObservations(db, { domain: q.domain ?? "roads", bbox });
+    return filterForPermissiveExport(obs);
   };
   const info = (): FeedInfo => ({ ...FEED_BASE, timestamp: new Date().toISOString() });
 
@@ -147,6 +179,7 @@ export function registerPublishRoutes(
     if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
     reply.header("Content-Type", "application/geo+json");
     reply.header("Cache-Control", "public, max-age=90");
+    reply.header("X-Data-License", distinctLicenses(obs));
     // ?raw=1 includes the verbatim sourceRaw passthrough (larger payload).
     return reply.send(observationsToGeoJSON(obs, info(), { includeRaw: q.raw === "1" }));
   });
@@ -156,6 +189,7 @@ export function registerPublishRoutes(
     if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
     reply.header("Content-Type", "application/ld+json");
     reply.header("Cache-Control", "public, max-age=90");
+    reply.header("X-Data-License", distinctLicenses(obs));
     return reply.send(observationsToJsonLd(obs, info()));
   });
 
@@ -165,6 +199,7 @@ export function registerPublishRoutes(
     const events = obs.filter((o): o is ConditionEvent => o.kind === "event");
     reply.header("Content-Type", "application/xml; charset=utf-8");
     reply.header("Cache-Control", "public, max-age=90");
+    reply.header("X-Data-License", distinctLicenses(obs));
     return reply.send(observationsToTraff(events));
   });
 
@@ -175,6 +210,7 @@ export function registerPublishRoutes(
     const pb = observationsToGtfsRtAlerts(events, { timestamp: new Date().toISOString() });
     reply.header("Content-Type", "application/x-protobuf");
     reply.header("Cache-Control", "public, max-age=90");
+    reply.header("X-Data-License", distinctLicenses(obs));
     return reply.send(Buffer.from(pb));
   });
 
@@ -184,6 +220,7 @@ export function registerPublishRoutes(
     const events = obs.filter((o): o is ConditionEvent => o.kind === "event");
     reply.header("Content-Type", "application/xml; charset=utf-8");
     reply.header("Cache-Control", "public, max-age=90");
+    reply.header("X-Data-License", distinctLicenses(obs));
     return reply.send(observationsToDatexSituations(events, info()));
   });
 
@@ -192,6 +229,7 @@ export function registerPublishRoutes(
     if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
     reply.header("Content-Type", "application/json");
     reply.header("Cache-Control", "public, max-age=90");
+    reply.header("X-Data-License", distinctLicenses(obs));
     return reply.send(eventsToExclusions(obs));
   });
 
@@ -208,18 +246,25 @@ export function registerPublishRoutes(
       "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
       "X-Accel-Buffering": "no",
+      // The stream can't enumerate a distinct license list up front (future
+      // ticks may add sources), but every record it ever emits is
+      // permissive-filtered below, so this static notice is accurate.
+      "X-Data-License": "permissive (share-alike filtered)",
     });
 
     let prev = new Map<string, string>();
     const tick = async () => {
       try {
-        const obs = (await readObservations(db, { domain, bbox })).filter((o) =>
-          matchesTypeFilter(o, types)
+        const obs = filterForPermissiveExport(await readObservations(db, { domain, bbox })).filter(
+          (o) => matchesTypeFilter(o, types)
         );
         const { changed, removed, next } = diffObservations(prev, obs);
         prev = next;
         for (const o of changed) {
-          reply.raw.write(sseFrame({ event: "condition", id: o.id, data: o }));
+          // ?raw=1 includes the verbatim sourceRaw passthrough, mirroring the
+          // GeoJSON route's gating (larger payload).
+          const data = q.raw === "1" ? o : withoutSourceRaw(o);
+          reply.raw.write(sseFrame({ event: "condition", id: o.id, data }));
         }
         for (const id of removed) {
           reply.raw.write(sseFrame({ event: "remove", data: { id } }));

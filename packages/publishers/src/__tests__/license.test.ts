@@ -48,4 +48,45 @@ describe("filterForPermissiveExport", () => {
     ]);
     expect(out.map((o) => o.id)).toEqual(["keep-cc0", "keep-by"]);
   });
+
+  it("strips a share-alike mergedSources entry from a permissive-primary record", () => {
+    const rec = roadEvent({
+      id: "keep-primary",
+      origin: { kind: "feed", attribution: { provider: "permissive", license: "CC-BY-4.0" } },
+      mergedSources: [
+        { source: "sa-src", id: "sa:1", attribution: { provider: "sa", license: "CC-BY-SA-4.0" } },
+        { source: "ok-src", id: "ok:1", attribution: { provider: "ok", license: "CC-BY-4.0" } },
+      ],
+    });
+    const out = filterForPermissiveExport([rec]);
+    expect(out).toHaveLength(1);
+    expect(out[0]!.id).toBe("keep-primary");
+    expect(out[0]!.mergedSources?.map((m) => m.source)).toEqual(["ok-src"]);
+    // non-mutating: the shared input object still carries the copyleft trace
+    expect(rec.mergedSources?.map((m) => m.source)).toEqual(["sa-src", "ok-src"]);
+  });
+
+  it("still drops a record whose primary license is share-alike, mergedSources notwithstanding", () => {
+    const rec = roadEvent({
+      id: "drop-primary-sa",
+      origin: { kind: "feed", attribution: { provider: "sa", license: "CC-BY-SA-4.0" } },
+      mergedSources: [
+        { source: "ok-src", id: "ok:1", attribution: { provider: "ok", license: "CC-BY-4.0" } },
+      ],
+    });
+    expect(filterForPermissiveExport([rec])).toEqual([]);
+  });
+
+  it("returns a permissive record with only permissive mergedSources unchanged (same reference)", () => {
+    const rec = roadEvent({
+      id: "unchanged",
+      origin: { kind: "feed", attribution: { provider: "permissive", license: "CC-BY-4.0" } },
+      mergedSources: [
+        { source: "ok-src", id: "ok:1", attribution: { provider: "ok", license: "CC0-1.0" } },
+      ],
+    });
+    const out = filterForPermissiveExport([rec]);
+    expect(out).toHaveLength(1);
+    expect(out[0]).toBe(rec);
+  });
 });
