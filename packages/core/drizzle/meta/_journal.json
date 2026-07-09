@@ -29,6 +29,13 @@
       "when": 1783543441977,
       "tag": "0003_source_status_and_content_hash",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783594649129,
+      "tag": "0004_segment_spine",
+      "breakpoints": true
     }
   ]
 }

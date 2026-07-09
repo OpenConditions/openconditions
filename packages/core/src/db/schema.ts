@@ -1,4 +1,5 @@
 import {
+  bigint,
   bigserial,
   boolean,
   customType,
@@ -153,4 +154,71 @@ export const sensorBaseline = conditionsSchema.table(
     primaryKey({ columns: [t.sensorKey, t.dowBucket, t.todBucket, t.method] }),
     index("idx_sensor_baseline_source_bucket").on(t.source, t.dowBucket, t.todBucket),
   ]
+);
+
+/**
+ * Imported OSM highway ways for the sensored regions (weekly refresh). Raw
+ * geometry source for the directed segment spine below.
+ */
+export const osmRoad = conditionsSchema.table(
+  "osm_road",
+  {
+    wayId: bigint("way_id", { mode: "number" }).primaryKey(),
+    geom: geometry("geom").notNull(),
+    highway: text("highway").notNull(),
+    oneway: boolean("oneway").notNull().default(false),
+    ref: text("ref"),
+    name: text("name"),
+    maxspeedKph: doublePrecision("maxspeed_kph"),
+    region: text("region").notNull(),
+    importedAt: timestamp("imported_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    index("idx_osm_road_geom").using("gist", t.geom),
+    index("idx_osm_road_highway").on(t.highway),
+    index("idx_osm_road_ref").on(t.ref),
+  ]
+);
+
+/**
+ * The directed traffic-segment spine (v1: one row per way per travel
+ * direction). `segmentId` = "${wayId}:${dir}", dir in {"f","b"}.
+ */
+export const roadSegment = conditionsSchema.table(
+  "road_segment",
+  {
+    segmentId: text("segment_id").primaryKey(),
+    wayId: bigint("way_id", { mode: "number" }).notNull(),
+    dir: text("dir").notNull(),
+    geom: geometry("geom").notNull(),
+    highway: text("highway").notNull(),
+    ref: text("ref"),
+    lengthM: doublePrecision("length_m").notNull(),
+    minZoom: smallint("min_zoom").notNull(),
+    freeFlowKph: doublePrecision("free_flow_kph"),
+    openlr: text("openlr"),
+    computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    index("idx_road_segment_geom").using("gist", t.geom),
+    index("idx_road_segment_way").on(t.wayId),
+    index("idx_road_segment_minzoom").on(t.minZoom),
+  ]
+);
+
+/**
+ * Sensor -> segment binding (KNN snap + carriageway disambiguation).
+ * `sensorKey` matches Phase A's convention exactly (flow.id).
+ */
+export const sensorSegment = conditionsSchema.table(
+  "sensor_segment",
+  {
+    sensorKey: text("sensor_key").primaryKey(),
+    segmentId: text("segment_id").notNull(),
+    fraction: doublePrecision("fraction").notNull(),
+    offsetM: doublePrecision("offset_m").notNull(),
+    bearingDeg: doublePrecision("bearing_deg"),
+    matchedAt: timestamp("matched_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [index("idx_sensor_segment_segment").on(t.segmentId)]
 );
