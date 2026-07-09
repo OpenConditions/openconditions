@@ -7,6 +7,7 @@ import {
   importOsmRoads,
   loadOsmRegions,
   overpassSource,
+  overpassUrl,
 } from "../pipeline/osm-import.js";
 
 let sql: postgres.Sql;
@@ -132,5 +133,21 @@ describe("loadOsmRegions", () => {
     const custom = [{ id: "de", bbox: [5.9, 47.3, 15.0, 55.1], tz: "Europe/Berlin" }];
     const regions = loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify(custom) });
     expect(regions).toEqual(custom);
+  });
+});
+
+describe("overpassUrl", () => {
+  it("falls back to the public instance when OVERPASS_URL is unset", () => {
+    expect(overpassUrl({})).toBe("https://overpass-api.de/api/interpreter");
+  });
+
+  it("falls back to the public instance on an empty OVERPASS_URL value", () => {
+    expect(overpassUrl({ OVERPASS_URL: "" })).toBe("https://overpass-api.de/api/interpreter");
+  });
+
+  it("uses a configured OVERPASS_URL override", () => {
+    expect(overpassUrl({ OVERPASS_URL: "http://overpass/api/interpreter" })).toBe(
+      "http://overpass/api/interpreter"
+    );
   });
 });

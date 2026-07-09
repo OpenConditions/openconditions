@@ -77,7 +77,19 @@ export interface OsmWaySource {
 // plan): swap this fetcher for a `pbfExtractSource` reading Geofabrik/planet
 // PBF extracts filtered with `osmium tags-filter` — same `osm_road` sink,
 // different fetcher, behind the OsmWaySource interface above.
-const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
+const DEFAULT_OVERPASS_URL = "https://overpass-api.de/api/interpreter";
+
+/**
+ * Resolves the Overpass endpoint from `OVERPASS_URL`, falling back to the
+ * public instance when unset or empty (Compose's `${VAR:-}` unset-injection).
+ * A self-hoster running their own Overpass (e.g. a planet instance already on
+ * the stack) can point large per-region pulls at it to avoid the public
+ * server's fair-use budget and client-timeout risk on heavy bboxes.
+ */
+export function overpassUrl(env: NodeJS.ProcessEnv = process.env): string {
+  const raw = env["OVERPASS_URL"];
+  return raw != null && raw !== "" ? raw : DEFAULT_OVERPASS_URL;
+}
 
 const HIGHWAY_FILTER =
   '["highway"~"^(motorway|trunk|motorway_link|trunk_link|primary|primary_link)$"]';
@@ -103,7 +115,7 @@ function overpassQuery(region: OsmRegion): string {
 export function overpassSource(fetchFn: typeof fetch): OsmWaySource {
   return {
     async fetchRegion(region: OsmRegion): Promise<OsmWay[]> {
-      const res = await fetchFn(OVERPASS_URL, {
+      const res = await fetchFn(overpassUrl(), {
         method: "POST",
         headers: {
           "Content-Type": "text/plain",
