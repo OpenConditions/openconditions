@@ -1,6 +1,13 @@
 import type postgres from "postgres";
 
 type Sql = postgres.Sql;
+// fuseSegmentSpeed and propagateSegmentSpeed both need to run against either
+// the top-level pool (their own standalone tests) or an already-open
+// transaction (refreshSegmentSpeed, which runs them together inside one
+// sql.begin so a tile request never lands between one stage's DELETE and its
+// INSERT). See the refreshSegmentSpeed doc comment for why that rules out
+// either of them opening a nested sql.begin of their own.
+type FuseSql = postgres.Sql | postgres.TransactionSql;
 
 export interface WriteSensorObservationsResult {
   /** Rows inserted or updated in `segment_observation` this run. */
@@ -74,7 +81,7 @@ export interface FuseSegmentSpeedResult {
  * fused estimate stays auditable and re-fusable by a peer.
  */
 export async function fuseSegmentSpeed(
-  sql: Sql,
+  sql: FuseSql,
   now: () => string
 ): Promise<FuseSegmentSpeedResult> {
   const nowIso = now();
@@ -135,9 +142,19 @@ export interface PropagateSegmentSpeedResult {
  * reading is never stretched across a long, likely-heterogeneous stretch of
  * road. A segment that already has any `segment_speed` row — measured or
  * estimated — is left alone; measured rows always win.
+ *
+ * Runs its DELETE and INSERT directly against whatever `sql` it is given,
+ * rather than wrapping them in an internal `sql.begin` — when called from
+ * `refreshSegmentSpeed` that `sql` is already an open transaction
+ * (`postgres.TransactionSql`), which exposes `savepoint`, not `begin`, so a
+ * second top-level transaction can't be opened there; the outer transaction
+ * already gives the DELETE+INSERT here the atomicity it needs. Its own
+ * standalone tests call it with the top-level pool instead, where the two
+ * statements just run sequentially, which is fine since those tests only
+ * assert on state after the call returns, not on interleaving.
  */
 export async function propagateSegmentSpeed(
-  sql: Sql,
+  sql: FuseSql,
   now: () => string,
   opts?: PropagateSegmentSpeedOptions
 ): Promise<PropagateSegmentSpeedResult> {
@@ -145,39 +162,80 @@ export async function propagateSegmentSpeed(
   const maxNeighborM = opts?.maxNeighborM ?? 3000;
   const nowIso = now();
 
-  return sql.begin(async (tx) => {
-    await tx`DELETE FROM conditions.segment_speed WHERE is_estimated = true`;
+  await sql`DELETE FROM conditions.segment_speed WHERE is_estimated = true`;
 
-    const rows = await tx`
-      INSERT INTO conditions.segment_speed
-        (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, is_estimated, observed_at, updated_at)
-      SELECT DISTINCT ON (nb.segment_id)
-        nb.segment_id, m.current_kph, nb.free_flow_kph,
-        CASE WHEN nb.free_flow_kph > 0 THEN m.current_kph / nb.free_flow_kph END,
-        CASE WHEN nb.free_flow_kph IS NULL OR nb.free_flow_kph <= 0 THEN 'unknown'
-             WHEN m.current_kph / nb.free_flow_kph >= 0.85 THEN 'free_flow'
-             WHEN m.current_kph / nb.free_flow_kph >= 0.5  THEN 'heavy'
-             WHEN m.current_kph / nb.free_flow_kph >= 0.15 THEN 'queuing'
-             ELSE 'stationary' END,
-        'estimated', 'sensor', true, m.observed_at, ${nowIso}
-      FROM conditions.segment_speed m
-      JOIN conditions.road_segment ms ON ms.segment_id = m.segment_id
-      JOIN conditions.road_segment nb
-        ON nb.ref = ms.ref AND nb.highway = ms.highway AND nb.segment_id <> ms.segment_id
-       AND nb.length_m <= ${maxNeighborM}
-       AND ( ST_DWithin(ST_EndPoint(ms.geom)::geography, ST_StartPoint(nb.geom)::geography, ${withinM})
-          OR ST_DWithin(ST_StartPoint(ms.geom)::geography, ST_EndPoint(nb.geom)::geography, ${withinM}) )
-      CROSS JOIN LATERAL (
-        SELECT abs(degrees(ST_Azimuth(ST_StartPoint(ms.geom), ST_EndPoint(ms.geom)))
-                 - degrees(ST_Azimuth(ST_StartPoint(nb.geom), ST_EndPoint(nb.geom)))) AS d
-      ) bearing
-      LEFT JOIN conditions.segment_speed ex ON ex.segment_id = nb.segment_id
-      WHERE m.is_estimated = false AND ex.segment_id IS NULL AND m.current_kph IS NOT NULL
-        AND least(bearing.d, 360 - bearing.d) <= 60
-      ORDER BY nb.segment_id, ST_Distance(nb.geom::geography, ms.geom::geography)
-      ON CONFLICT (segment_id) DO NOTHING
-      RETURNING segment_id`;
+  const rows = await sql`
+    INSERT INTO conditions.segment_speed
+      (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, is_estimated, observed_at, updated_at)
+    SELECT DISTINCT ON (nb.segment_id)
+      nb.segment_id, m.current_kph, nb.free_flow_kph,
+      CASE WHEN nb.free_flow_kph > 0 THEN m.current_kph / nb.free_flow_kph END,
+      CASE WHEN nb.free_flow_kph IS NULL OR nb.free_flow_kph <= 0 THEN 'unknown'
+           WHEN m.current_kph / nb.free_flow_kph >= 0.85 THEN 'free_flow'
+           WHEN m.current_kph / nb.free_flow_kph >= 0.5  THEN 'heavy'
+           WHEN m.current_kph / nb.free_flow_kph >= 0.15 THEN 'queuing'
+           ELSE 'stationary' END,
+      'estimated', 'sensor', true, m.observed_at, ${nowIso}
+    FROM conditions.segment_speed m
+    JOIN conditions.road_segment ms ON ms.segment_id = m.segment_id
+    JOIN conditions.road_segment nb
+      ON nb.ref = ms.ref AND nb.highway = ms.highway AND nb.segment_id <> ms.segment_id
+     AND nb.length_m <= ${maxNeighborM}
+     AND ( ST_DWithin(ST_EndPoint(ms.geom)::geography, ST_StartPoint(nb.geom)::geography, ${withinM})
+        OR ST_DWithin(ST_StartPoint(ms.geom)::geography, ST_EndPoint(nb.geom)::geography, ${withinM}) )
+    CROSS JOIN LATERAL (
+      SELECT abs(degrees(ST_Azimuth(ST_StartPoint(ms.geom), ST_EndPoint(ms.geom)))
+               - degrees(ST_Azimuth(ST_StartPoint(nb.geom), ST_EndPoint(nb.geom)))) AS d
+    ) bearing
+    LEFT JOIN conditions.segment_speed ex ON ex.segment_id = nb.segment_id
+    WHERE m.is_estimated = false AND ex.segment_id IS NULL AND m.current_kph IS NOT NULL
+      AND least(bearing.d, 360 - bearing.d) <= 60
+    ORDER BY nb.segment_id, ST_Distance(nb.geom::geography, ms.geom::geography)
+    ON CONFLICT (segment_id) DO NOTHING
+    RETURNING segment_id`;
 
-    return { estimated: rows.length };
-  });
+  return { estimated: rows.length };
+}
+
+export interface RefreshSegmentSpeedResult {
+  /** `segment_observation` rows written by writeSensorObservations. */
+  written: number;
+  /** Measured `segment_speed` rows written by fuseSegmentSpeed. */
+  measured: number;
+  /** Estimated `segment_speed` rows written by propagateSegmentSpeed. */
+  estimated: number;
+}
+
+/**
+ * The scheduled entry point for the whole segment-speed surface: write fresh
+ * sensor observations, then run fuse and propagate together inside one
+ * transaction. fuseSegmentSpeed and propagateSegmentSpeed each start with a
+ * DELETE before their INSERT/SELECT, so without one enclosing transaction
+ * here a tile request landing between one stage's DELETE and its matching
+ * INSERT would see a momentarily empty `segment_speed` table. The whole
+ * sequence is one try/catch — a failure anywhere (a bad feed row, a
+ * transient DB error) is logged and yields all-zero counts for that cycle
+ * rather than throwing, so one bad sweep can never take the scheduler
+ * process down with it. On success the counts are logged at info level —
+ * the ops signal that the surface is still alive.
+ */
+export async function refreshSegmentSpeed(
+  sql: Sql,
+  now: () => string
+): Promise<RefreshSegmentSpeedResult> {
+  try {
+    const { written } = await writeSensorObservations(sql, now);
+    const { measured, estimated } = await sql.begin(async (tx) => {
+      const fused = await fuseSegmentSpeed(tx, now);
+      const propagated = await propagateSegmentSpeed(tx, now);
+      return { measured: fused.measured, estimated: propagated.estimated };
+    });
+    console.info(
+      `[ingest] segment-speed refresh: written ${written}, measured ${measured}, estimated ${estimated}`
+    );
+    return { written, measured, estimated };
+  } catch (err) {
+    console.error("[ingest] segment-speed refresh failed:", err);
+    return { written: 0, measured: 0, estimated: 0 };
+  }
 }

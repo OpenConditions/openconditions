@@ -15,6 +15,7 @@ import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
 import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
 import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
 import { runSegmentRebuild } from "./pipeline/segment-rebuild.js";
+import { refreshSegmentSpeed } from "./pipeline/segment-speed.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
 import { FeedStatusStore } from "./feed-status.js";
 
@@ -154,6 +155,7 @@ export function startScheduler(
   // Periodic cleanup: remove expired conditions + orphaned rows from sources
   // that stopped polling (the per-source atomic swap only cleans live feeds).
   let sweeping = false;
+  let refreshingSegments = false;
   const sweepJob = new Cron(SWEEP_CRON, { catch: true }, async () => {
     if (sweeping) return;
     sweeping = true;
@@ -164,6 +166,16 @@ export function startScheduler(
       console.error("[scheduler] sweep failed", err);
     } finally {
       sweeping = false;
+    }
+
+    if (refreshingSegments) return;
+    refreshingSegments = true;
+    try {
+      await refreshSegmentSpeed(sql, () => new Date().toISOString());
+    } catch (err) {
+      console.error("[scheduler] segment-speed refresh failed", err);
+    } finally {
+      refreshingSegments = false;
     }
   });
   console.info(`[scheduler] registered stale-observation sweep (${SWEEP_CRON})`);
