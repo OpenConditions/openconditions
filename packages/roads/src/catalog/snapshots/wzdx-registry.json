@@ -168,20 +168,6 @@
     "enabledByDefault": true
   },
   {
-    "id": "wzdx-new-jersey",
-    "name": "WZDx — New Jersey Institute of Technology (new jersey)",
-    "format": "wzdx",
-    "url": "https://smartworkzones.njit.edu/nj/wzdx",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attribution": "New Jersey Institute of Technology",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
-  },
-  {
     "id": "wzdx-kentucky",
     "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
     "format": "wzdx",
@@ -191,6 +177,20 @@
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Kentucky Transportation Cabinet",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-new-jersey",
+    "name": "WZDx — New Jersey Institute of Technology (new jersey)",
+    "format": "wzdx",
+    "url": "https://smartworkzones.njit.edu/nj/wzdx",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "New Jersey Institute of Technology",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
     "enabledByDefault": true
@@ -305,7 +305,16 @@
     "attribution": "Michigan DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "auth": {
+      "kind": "none"
+    },
+    "setup": {
+      "WZDX_MICHIGAN_API_KEY": {
+        "title": "WZDx — Michigan DOT (michigan) — API key",
+        "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one."
+      }
+    }
   },
   {
     "id": "wzdx-north-carolina",
@@ -333,6 +342,15 @@
     "attribution": "Oregon DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "auth": {
+      "kind": "none"
+    },
+    "setup": {
+      "WZDX_OREGON_API_KEY": {
+        "title": "WZDx — Oregon DOT (Oregon) — API key",
+        "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one."
+      }
+    }
   }
 ]

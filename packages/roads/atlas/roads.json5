@@ -1246,6 +1246,28 @@
     "enabledByDefault": true
   },
   {
+    "id": "fintraffic-tms-fi",
+    "name": "Fintraffic TMS traffic speed (Finland)",
+    "format": "fintraffic-tms-json",
+    "produces": "flow",
+    "url": "https://tie.digitraffic.fi/api/tms/v1/stations/data",
+    "requestHeaders": {
+      "Digitraffic-User": "OpenConditions/1.0"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.fintraffic.fi/en/fintraffic/open-data",
+    "attribution": "Fintraffic / Digitraffic",
+    "country": "FI",
+    "privacyUrl": "https://www.fintraffic.fi/en/fintraffic/data-protection",
+    "enabledByDefault": true,
+    "stationRegistry": {
+      "url": "https://tie.digitraffic.fi/api/tms/v1/stations",
+      "format": "fintraffic-stations"
+    }
+  },
+  {
     "id": "dir-fr",
     "name": "DIR / Bison Futé (France national roads)",
     "format": "datex2",
@@ -1291,6 +1313,27 @@
       }
     },
     "enabledByDefault": true
+  },
+  {
+    "id": "webtris-gb",
+    "name": "WebTRIS traffic flow (Great Britain)",
+    "format": "webtris-json",
+    "produces": "flow",
+    "url": "https://webtris.nationalhighways.co.uk/api/v1.0/reports/daily?sites={sites}&start_date={start_date}&end_date={end_date}&page=1&page_size=100",
+    "preFetch": "webtrisDailyWindow",
+    "fanoutTolerant": true,
+    "cadenceSec": 900,
+    "freshnessWindowSec": 3600,
+    "license": "OGL-UK-3.0",
+    "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "attribution": "National Highways / WebTRIS",
+    "country": "GB",
+    "privacyUrl": "https://nationalhighways.co.uk/privacy-notice/",
+    "enabledByDefault": false,
+    "stationRegistry": {
+      "url": "https://webtris.nationalhighways.co.uk/api/v1.0/sites",
+      "format": "webtris-sites"
+    }
   },
   {
     "id": "hc-hr",
@@ -1531,6 +1574,43 @@
     "posListLonLat": true
   },
   {
+    "id": "trafikverket-flow-se",
+    "name": "Trafikverket traffic flow (Sweden)",
+    "format": "trafikverket-flow-json",
+    "produces": "flow",
+    "url": "https://api.trafikinfo.trafikverket.se/v2/data.json",
+    "method": "POST",
+    "bodyTemplate": "<REQUEST><LOGIN authenticationkey=\"${TRAFIKVERKET_API_KEY}\"/><QUERY objecttype=\"TrafficFlow\" schemaversion=\"1.4\"><INCLUDE>SiteId</INCLUDE><INCLUDE>AverageVehicleSpeed</INCLUDE><INCLUDE>VehicleFlowRate</INCLUDE><INCLUDE>MeasurementTime</INCLUDE><INCLUDE>Geometry.WGS84</INCLUDE></QUERY></REQUEST>",
+    "requestHeaders": {
+      "Content-Type": "text/xml"
+    },
+    "requiredEnv": [
+      "TRAFIKVERKET_API_KEY"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://api.trafikinfo.trafikverket.se/",
+    "attribution": "Trafikverket",
+    "country": "SE",
+    "privacyUrl": "https://www.trafikverket.se/en/privacy-policy/",
+    "setup": {
+      "TRAFIKVERKET_API_KEY": {
+        "url": "https://data.trafikverket.se/oauth2/Account/register",
+        "urlLabel": "Sign up at Trafikverket",
+        "steps": [
+          "Sign up at data.trafikverket.se/oauth2/Account/register.",
+          "Create an authentication key under data.trafikverket.se/mypage/systems (My systems). The key is sent in the POST request body."
+        ],
+        "cost": "Free",
+        "notes": "CC0 — no restrictions. API endpoint: api.trafikinfo.trafikverket.se/v2/data.json (the bare host has no web page).",
+        "title": "Trafikverket key (Sweden)",
+        "description": "Authentication key, sent in the POST request body."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
     "id": "lta-sg",
     "name": "LTA DataMall Traffic Incidents (Singapore)",
     "format": "lta-json",
@@ -1672,6 +1752,54 @@
         "notes": "Attribution required: \"Powered by 511NY\".",
         "title": "511NY API key (New York)",
         "description": "Query key for the 511NY events feed."
+      }
+    },
+    "enabledByDefault": true
+  },
+  {
+    "id": "nyc-dot-speed-us",
+    "name": "NYC DOT real-time traffic speeds (New York City)",
+    "format": "nyc-dot-speed-json",
+    "produces": "flow",
+    "url": "https://data.cityofnewyork.us/resource/i4gi-tjb9.json?$limit=5000",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "NYC-Open-Data",
+    "licenseUrl": "https://www.nyc.gov/html/data/terms.html",
+    "attribution": "New York City Department of Transportation",
+    "country": "US",
+    "privacyUrl": "https://www.nyc.gov/home/privacy-policy.page",
+    "enabledByDefault": true
+  },
+  {
+    "id": "ohgo-oh-us",
+    "name": "OHGO travel delays (Ohio)",
+    "format": "ohgo-json",
+    "produces": "flow",
+    "url": "https://publicapi.ohgo.com/api/v1/travel-delays?page-all=true",
+    "auth": {
+      "kind": "header-key",
+      "header": "Authorization",
+      "envVar": "OHGO_API_KEY",
+      "valuePrefix": "APIKEY "
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "US-Gov-Public-Domain",
+    "licenseUrl": "https://www.usa.gov/government-works",
+    "attribution": "Ohio Department of Transportation (OHGO)",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.ohio.gov/about-us/privacy",
+    "setup": {
+      "OHGO_API_KEY": {
+        "url": "https://ohgo.com/developer",
+        "urlLabel": "OHGO developer registration",
+        "steps": [
+          "Register for a free OHGO developer account at ohgo.com/developer and create an API key.",
+          "Set OHGO_API_KEY to the key value; the feed activates on the next scheduler cycle."
+        ],
+        "notes": "Free key. Data is U.S. government public domain.",
+        "title": "OHGO API key"
       }
     },
     "enabledByDefault": true
@@ -1845,20 +1973,6 @@
     "enabledByDefault": true
   },
   {
-    "id": "wzdx-new-jersey",
-    "name": "WZDx — New Jersey Institute of Technology (new jersey)",
-    "format": "wzdx",
-    "url": "https://smartworkzones.njit.edu/nj/wzdx",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attribution": "New Jersey Institute of Technology",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
-  },
-  {
     "id": "wzdx-kentucky",
     "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
     "format": "wzdx",
@@ -1868,6 +1982,20 @@
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Kentucky Transportation Cabinet",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-new-jersey",
+    "name": "WZDx — New Jersey Institute of Technology (new jersey)",
+    "format": "wzdx",
+    "url": "https://smartworkzones.njit.edu/nj/wzdx",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "New Jersey Institute of Technology",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
     "enabledByDefault": true
@@ -1982,7 +2110,16 @@
     "attribution": "Michigan DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "auth": {
+      "kind": "none"
+    },
+    "setup": {
+      "WZDX_MICHIGAN_API_KEY": {
+        "title": "WZDx — Michigan DOT (michigan) — API key",
+        "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one."
+      }
+    }
   },
   {
     "id": "wzdx-north-carolina",
@@ -2010,7 +2147,16 @@
     "attribution": "Oregon DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "auth": {
+      "kind": "none"
+    },
+    "setup": {
+      "WZDX_OREGON_API_KEY": {
+        "title": "WZDx — Oregon DOT (Oregon) — API key",
+        "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one."
+      }
+    }
   },
   {
     "id": "autobahn-a1-warning",
@@ -3963,6 +4109,32 @@
     "enabledByDefault": true
   },
   {
+    "id": "autobahn-a280-warning",
+    "name": "Autobahn A280 — warning",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A280/services/warning",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a280-closure",
+    "name": "Autobahn A280 — closure",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A280/services/closure",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
     "id": "autobahn-a281-warning",
     "name": "Autobahn A281 — warning",
     "format": "autobahn-json",
@@ -3980,6 +4152,32 @@
     "name": "Autobahn A281 — closure",
     "format": "autobahn-json",
     "url": "https://verkehr.autobahn.de/o/autobahn/A281/services/closure",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a293-warning",
+    "name": "Autobahn A293 — warning",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A293/services/warning",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a293-closure",
+    "name": "Autobahn A293 — closure",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A293/services/closure",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "dl-de/by-2-0",
@@ -4197,6 +4395,32 @@
     "enabledByDefault": true
   },
   {
+    "id": "autobahn-a524-warning",
+    "name": "Autobahn A524 — warning",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/warning",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a524-closure",
+    "name": "Autobahn A524 — closure",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/closure",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
     "id": "autobahn-a535-warning",
     "name": "Autobahn A535 — warning",
     "format": "autobahn-json",
@@ -4370,6 +4594,58 @@
     "name": "Autobahn A565 — closure",
     "format": "autobahn-json",
     "url": "https://verkehr.autobahn.de/o/autobahn/A565/services/closure",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a571-warning",
+    "name": "Autobahn A571 — warning",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A571/services/warning",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a571-closure",
+    "name": "Autobahn A571 — closure",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A571/services/closure",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a602-warning",
+    "name": "Autobahn A602 — warning",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A602/services/warning",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a602-closure",
+    "name": "Autobahn A602 — closure",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A602/services/closure",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "dl-de/by-2-0",
@@ -4613,32 +4889,6 @@
     "enabledByDefault": true
   },
   {
-    "id": "autobahn-a672-warning",
-    "name": "Autobahn A672 — warning",
-    "format": "autobahn-json",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A672/services/warning",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
-  },
-  {
-    "id": "autobahn-a672-closure",
-    "name": "Autobahn A672 — closure",
-    "format": "autobahn-json",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A672/services/closure",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
-  },
-  {
     "id": "autobahn-a831-warning",
     "name": "Autobahn A831 — warning",
     "format": "autobahn-json",
@@ -4656,6 +4906,32 @@
     "name": "Autobahn A831 — closure",
     "format": "autobahn-json",
     "url": "https://verkehr.autobahn.de/o/autobahn/A831/services/closure",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a861-warning",
+    "name": "Autobahn A861 — warning",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/warning",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a861-closure",
+    "name": "Autobahn A861 — closure",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/closure",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "dl-de/by-2-0",
