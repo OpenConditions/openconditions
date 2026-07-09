@@ -14,6 +14,7 @@ import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js
 import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
 import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
 import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
+import { runSegmentRebuild } from "./pipeline/segment-rebuild.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
 import { FeedStatusStore } from "./feed-status.js";
 
@@ -56,6 +57,8 @@ export async function runFeedOnce(
 const SWEEP_CRON = "*/5 * * * *";
 /** When the nightly baseline derivation + sample prune runs (UTC). */
 const BASELINE_CRON = "0 3 * * *";
+/** When the weekly segment-spine rebuild (import->build->openlr->match) runs (UTC). */
+const SEGMENT_CRON = "0 4 * * 1";
 /**
  * A source is swept as orphaned when its `conditions.source_status.
  * last_success_at` is older than this, or it has no source_status row at all
@@ -68,6 +71,18 @@ function cadenceToCron(cadenceSec: number): string {
   if (cadenceSec < 60) return `*/${cadenceSec} * * * * *`;
   const mins = Math.round(cadenceSec / 60);
   return `*/${mins} * * * *`;
+}
+
+/**
+ * Resolves a job's cron expression from an env var: unset or empty (Compose's
+ * `${VAR:-}` unset-injection) falls back to `fallback`; the `off` sentinel
+ * (case-insensitive) disables the job entirely by returning `null`.
+ */
+function pickCronExpression(env: NodeJS.ProcessEnv, key: string, fallback: string): string | null {
+  const raw = env[key];
+  if (raw == null || raw === "") return fallback;
+  if (raw.trim().toLowerCase() === "off") return null;
+  return raw;
 }
 
 /**
@@ -190,6 +205,33 @@ export function startScheduler(
   });
   console.info(`[scheduler] registered nightly baseline derivation (${BASELINE_CRON})`);
   jobs.push(baselineJob);
+
+  const segmentCron = pickCronExpression(process.env, "SEGMENT_REBUILD_CRON", SEGMENT_CRON);
+  if (segmentCron) {
+    let rebuildingSegments = false;
+    const segmentJob = new Cron(segmentCron, { catch: true }, async () => {
+      if (rebuildingSegments) return;
+      rebuildingSegments = true;
+      try {
+        const counts = await runSegmentRebuild(sql, {
+          fetch: guarded,
+          now: () => new Date().toISOString(),
+        });
+        console.info(
+          `[scheduler] segment rebuild: imported ${counts.imported}, built ${counts.built}, ` +
+            `encoded ${counts.encoded}, matched ${counts.matched}`
+        );
+      } catch (err) {
+        console.error("[scheduler] segment rebuild failed", err);
+      } finally {
+        rebuildingSegments = false;
+      }
+    });
+    console.info(`[scheduler] registered weekly segment rebuild (${segmentCron})`);
+    jobs.push(segmentJob);
+  } else {
+    console.info("[scheduler] weekly segment rebuild disabled (SEGMENT_REBUILD_CRON=off)");
+  }
 
   return () => {
     for (const job of jobs) {
