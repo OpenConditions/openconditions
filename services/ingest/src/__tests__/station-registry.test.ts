@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearStationRegistryCache, loadStationRegistry } from "../pipeline/station-registry.js";
 import type { FeedSource } from "@openconditions/roads";
 
@@ -83,5 +83,31 @@ describe("loadStationRegistry", () => {
     const map = await loadStationRegistry(feed(REG), capturingFetch);
     expect(map?.get("1")).toBeDefined();
     expect(seenHeaders).toBeUndefined();
+  });
+
+  it("scrubs a path-embedded secret out of the load-failure warn log", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const secretReg = {
+        url: "https://registry.test/subscription/999999secretid/sites",
+        format: "fintraffic-stations",
+      } as const;
+      const src = {
+        id: "f-secret",
+        stationRegistry: secretReg,
+        requiredEnv: ["REG_SECRET"],
+      } as unknown as FeedSource;
+      process.env.REG_SECRET = "999999secretid";
+      try {
+        expect(await loadStationRegistry(src, badFetch)).toBeUndefined();
+      } finally {
+        delete process.env.REG_SECRET;
+      }
+      const logged = warnSpy.mock.calls.map((c) => c.join(" ")).join("\n");
+      expect(logged).not.toContain("999999secretid");
+      expect(logged).toContain("***");
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });

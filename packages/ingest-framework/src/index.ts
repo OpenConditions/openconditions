@@ -13,3 +13,4 @@ export * from "./pre-fetch.js";
 export * from "./catalog.js";
 export * from "./licenses.js";
 export * from "./attribution.js";
+export * from "./redact.js";

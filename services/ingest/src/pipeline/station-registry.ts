@@ -1,5 +1,6 @@
 import type { FeedSource, SiteGeometry } from "@openconditions/roads";
 import { parseFintrafficStations, parseWebtrisSites } from "@openconditions/roads";
+import { feedSecretValues, redactSecrets } from "@openconditions/ingest-framework";
 
 /** Station registries change rarely; refetch at most every 6 hours. */
 const REGISTRY_TTL_MS = 6 * 60 * 60 * 1000;
@@ -44,9 +45,15 @@ export async function loadStationRegistry(
   const cached = cache.get(reg.url);
   if (cached && now() - cached.fetchedAt < REGISTRY_TTL_MS) return cached.map;
 
+  // Scrubs `src`'s own secret values out of any string before it reaches the
+  // warn log below — the registry url itself, AND any error message that
+  // embeds it (e.g. the HTTP-status error just below), so a credential
+  // duplicated into the URL path is never logged unredacted either way.
+  const redact = (s: string) => redactSecrets(s, feedSecretValues(src));
+
   try {
     const res = await fetchFn(reg.url, { headers: src.requestHeaders });
-    if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${reg.url}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${redact(reg.url)}`);
     const parse = PARSERS[reg.format];
     if (!parse) throw new Error(`no station-registry parser for ${reg.format}`);
     const map = parse(await res.text());
@@ -54,8 +61,8 @@ export async function loadStationRegistry(
     return map;
   } catch (err) {
     console.warn(
-      `[ingest] station-registry load failed for ${src.id} (${reg.url}):`,
-      err instanceof Error ? err.message : err
+      `[ingest] station-registry load failed for ${src.id} (${redact(reg.url)}):`,
+      err instanceof Error ? redact(err.message) : err
     );
     return cached?.map;
   }

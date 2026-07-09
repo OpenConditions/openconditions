@@ -1,8 +1,20 @@
 import { fileURLToPath } from "node:url";
-import { assertPublicUrl, licenseInfo, loadFeedFiles } from "@openconditions/ingest-framework";
+import {
+  allowedTemplateVars,
+  assertPublicUrl,
+  licenseInfo,
+  loadFeedFiles,
+} from "@openconditions/ingest-framework";
 import { roadFeedSchema } from "../src/feed-schema.js";
 
 type RoadFeed = ReturnType<typeof roadFeedSchema.parse>;
+
+const TEMPLATE_TOKEN = /\$\{([A-Za-z0-9_]+)\}/g;
+
+/** Every `${NAME}` token referenced in a template string, de-duplicated. */
+function templateTokens(template: string): string[] {
+  return [...template.matchAll(TEMPLATE_TOKEN)].map((m) => m[1]!);
+}
 
 /** Per-feed lint checks: egress on every static url + a registered license. */
 export function lintFeed(feed: RoadFeed): string[] {
@@ -19,6 +31,25 @@ export function lintFeed(feed: RoadFeed): string[] {
       assertPublicUrl(url);
     } catch (err) {
       problems.push(`${feed.id}: ${url} — ${(err as Error).message}`);
+    }
+  }
+
+  // Template-exfiltration guard: every `${VAR}` token in `url`/`bodyTemplate`
+  // must be declared in the feed's own `requiredEnv`/auth vars — the same
+  // allowlist `resolveUrlTemplate` enforces at fetch time. A feed that fails
+  // this check would crash on its first live fetch (`resolveUrlTemplate`
+  // throws for an undeclared token), so this is caught here instead, at
+  // commit/CI time, naming the exact undeclared variable.
+  const allowed = allowedTemplateVars(feed);
+  const templated = feed.url == null ? [] : Array.isArray(feed.url) ? feed.url : [feed.url];
+  if (feed.bodyTemplate != null) templated.push(feed.bodyTemplate);
+  for (const template of templated) {
+    for (const name of templateTokens(template)) {
+      if (!allowed.has(name)) {
+        problems.push(
+          `${feed.id}: template references undeclared variable \${${name}} — add it to requiredEnv`
+        );
+      }
     }
   }
 

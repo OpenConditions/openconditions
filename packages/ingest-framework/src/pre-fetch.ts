@@ -1,5 +1,6 @@
 import type { Env } from "./auth.js";
 import type { FeedSourceBase } from "./feed-source.js";
+import { redactUrl } from "./redact.js";
 
 /**
  * A reactive pre-fetch transform: given a feed and the resolved env, return a
@@ -108,8 +109,13 @@ export async function loadWebtrisActiveSiteIds(
     webtrisSitesCache.set(registryUrl, { ids, fetchedAt: now() });
     return ids;
   } catch (err) {
+    // This registry isn't credential-bearing today (no feed threads a `src`
+    // into this loader — only a plain `registryUrl`), so the full per-feed
+    // `redactSecrets`/`feedSecretValues` scrub isn't wired through here; the
+    // query-only `redactUrl` is a deliberate, cheaper stand-in kept for
+    // uniformity with every other raw-URL log site in this module.
     console.warn(
-      `[ingest] webtrisDailyWindow: sites registry load failed (${registryUrl}):`,
+      `[ingest] webtrisDailyWindow: sites registry load failed (${redactUrl(registryUrl)}):`,
       err instanceof Error ? err.message : err
     );
     return cached?.ids ?? [];

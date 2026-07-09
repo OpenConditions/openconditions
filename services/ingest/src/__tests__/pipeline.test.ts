@@ -932,3 +932,137 @@ describe("pipeline — shrink tripwire (event feed)", () => {
     expect(parseInt(afterCleared[0]!.count, 10)).toBe(0);
   }, 30_000);
 });
+
+describe("pipeline — fan-out partial-failure threshold", () => {
+  /** Minimal well-formed open511 event, unique per url so each sub-feed's
+   * contribution is distinguishable in the observations table. */
+  function eventBodyFor(url: string): string {
+    return JSON.stringify({
+      events: [
+        {
+          id: url,
+          event_type: "CONSTRUCTION",
+          geography: { type: "Point", coordinates: [0, 0] },
+        },
+      ],
+    });
+  }
+
+  function fanoutFetchFor(failUrls: Set<string>): typeof fetch {
+    return (async (input: string | URL | Request): Promise<Response> => {
+      const url = String(input);
+      if (failUrls.has(url)) return new Response("err", { status: 500 });
+      return new Response(eventBodyFor(url), { status: 200 });
+    }) as unknown as typeof fetch;
+  }
+
+  it("skips the swap when the fan-out failure ratio is at/above the default threshold (0.5), preserving last-good rows", async () => {
+    const urls = Array.from({ length: 4 }, (_, i) => `https://fanout-skip.test/${i}`);
+    const feed: DomainFeedSource = {
+      ...drivebcFeed,
+      id: "fanout-skip-test-src",
+      url: urls,
+      fanoutTolerant: true,
+    };
+
+    const seeded = await runSource(feed, {
+      sql,
+      fetch: fanoutFetchFor(new Set()),
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(seeded.error).toBeUndefined();
+    expect(seeded.count).toBe(4);
+
+    // 3 of 4 sub-feeds fail this cycle (ratio 0.75 >= the 0.5 default) — the
+    // swap must be skipped entirely rather than reconciling against the
+    // surviving 1-of-4 fragment, which would otherwise delete the 3 rows
+    // belonging to the failed sub-feeds as "missing".
+    const guarded = await runSource(feed, {
+      sql,
+      fetch: fanoutFetchFor(new Set(urls.slice(1))),
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(guarded.count).toBe(0);
+    expect(guarded.error).toBeDefined();
+    expect(guarded.error).toMatch(/fan-out/i);
+
+    const after = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'fanout-skip-test-src'
+    `;
+    expect(parseInt(after[0]!.count, 10)).toBe(4);
+  }, 30_000);
+
+  it("skips the swap at the EXACT threshold boundary (2 of 4 fail = ratio 0.5, >= semantics)", async () => {
+    const urls = Array.from({ length: 4 }, (_, i) => `https://fanout-boundary.test/${i}`);
+    const feed: DomainFeedSource = {
+      ...drivebcFeed,
+      id: "fanout-boundary-test-src",
+      url: urls,
+      fanoutTolerant: true,
+    };
+
+    const seeded = await runSource(feed, {
+      sql,
+      fetch: fanoutFetchFor(new Set()),
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(seeded.error).toBeUndefined();
+    expect(seeded.count).toBe(4);
+
+    // Exactly half the sub-feeds fail (ratio 0.5 === the 0.5 default): the
+    // guard's `>=` must treat the boundary as skip, not proceed.
+    const guarded = await runSource(feed, {
+      sql,
+      fetch: fanoutFetchFor(new Set(urls.slice(0, 2))),
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(guarded.count).toBe(0);
+    expect(guarded.error).toBeDefined();
+    expect(guarded.error).toMatch(/fan-out/i);
+
+    const after = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'fanout-boundary-test-src'
+    `;
+    expect(parseInt(after[0]!.count, 10)).toBe(4);
+  }, 30_000);
+
+  it("proceeds with the swap when the fan-out failure ratio is below the default threshold", async () => {
+    const urls = Array.from({ length: 4 }, (_, i) => `https://fanout-proceed.test/${i}`);
+    const feed: DomainFeedSource = {
+      ...drivebcFeed,
+      id: "fanout-proceed-test-src",
+      url: urls,
+      fanoutTolerant: true,
+    };
+
+    const seeded = await runSource(feed, {
+      sql,
+      fetch: fanoutFetchFor(new Set()),
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(seeded.error).toBeUndefined();
+    expect(seeded.count).toBe(4);
+
+    // Only 1 of 4 sub-feeds fails this cycle (ratio 0.25 < the 0.5 default) —
+    // below threshold the swap proceeds as normal, accepting that the failed
+    // sub-feed's row is pruned as "missing" this cycle (the named trade-off).
+    const proceeded = await runSource(feed, {
+      sql,
+      fetch: fanoutFetchFor(new Set([urls[0]!])),
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(proceeded.error).toBeUndefined();
+    expect(proceeded.count).toBe(3);
+
+    const after = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'fanout-proceed-test-src'
+    `;
+    expect(parseInt(after[0]!.count, 10)).toBe(3);
+  }, 30_000);
+});

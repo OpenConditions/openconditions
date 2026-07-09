@@ -47,6 +47,30 @@ function shrinkTripwireRatioFromEnv(env: NodeJS.ProcessEnv = process.env): numbe
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
+/**
+ * Ratio (0-1) of a tolerant fan-out's sub-feed URLs that must fail this cycle
+ * before `runSource` skips the swap entirely, preserving every last-good row
+ * for the source rather than reconciling against the surviving fragment.
+ * `fetchFanout` (ingest-framework) already tolerates any number of failures
+ * short of "every URL failed" and returns only the successful buffers — with
+ * no ratio guard, a mass failure (e.g. 9 of 10 sub-feeds down) still produced
+ * a tiny-but-nonempty fresh set, and the diff-upsert swap's delete-missing
+ * step then deleted every row belonging to the 9 failed sub-feeds as "no
+ * longer present". Default 0.5: a fan-out where half or more of its sub-feeds
+ * failed is treated as too unreliable to trust this cycle. Below the
+ * threshold the swap proceeds as usual, accepting that the minority of failed
+ * sub-feeds' rows are pruned — the trade-off this default is tuned for.
+ * Same env-read shape as the other tunables in this file (`""` from Compose's
+ * `${VAR:-}` unset-injection treated as absent; read fresh per call, not
+ * cached at module load).
+ */
+function fanoutFailSkipRatioFromEnv(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env["OPENCONDITIONS_FANOUT_FAIL_SKIP_RATIO"];
+  if (raw == null || raw === "") return 0.5;
+  const n = Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : 0.5;
+}
+
 export interface RunResult {
   /**
    * Rows actually persisted this cycle: `inserted + updated` from the
@@ -135,10 +159,12 @@ export function createOpenlrClient(): MapMatchClient | null {
  * The same last-good guarantee also covers a parse that "succeeds" but yields
  * an empty or suspiciously-shrunk fresh set (a HARD parse failure surfaced via
  * `FlowParseResult.failed`, a 200-with-garbage body, a dormant feed resolving
- * zero URLs, or an event feed's row count collapsing relative to its last
- * successful cycle) — every one of these skips the swap instead of handing
- * `atomicSwap` an empty/shrunk set, since its delete-missing step would
- * otherwise delete every row absent from that set.
+ * zero URLs, an event feed's row count collapsing relative to its last
+ * successful cycle, or a tolerant fan-out whose failure ratio is at/above
+ * `OPENCONDITIONS_FANOUT_FAIL_SKIP_RATIO`) — every one of these skips the
+ * swap instead of handing `atomicSwap` an empty/shrunk/unreliable set, since
+ * its delete-missing step would otherwise delete every row absent from that
+ * set.
  */
 export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<RunResult> {
   const start = Date.now();
@@ -239,6 +265,33 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
           outcome: "success",
         });
         return { count: 0, durationMs: Date.now() - start };
+      }
+      // Tolerant fan-out (catalog or `fanoutTolerant`) partial-failure guard:
+      // `result.partial` is only set on that path (see FetchResult's doc
+      // comment). A ratio at/above the threshold means too many sub-feeds
+      // failed to trust the surviving fragment — skip the swap so the
+      // diff-upsert's delete-missing step never runs against it, preserving
+      // every last-good row for the source instead. FUTURE refinement: once
+      // fetchFanout can thread a per-sub-feed last-good buffer through (it
+      // depends on the in-progress cacheBody plumbing in fetch.ts), a failed
+      // sub-feed could contribute its cached buffer instead, so no rows would
+      // be pruned even below this threshold.
+      if (result.partial && result.partial.total > 0) {
+        const { failures, total } = result.partial;
+        const ratio = failures / total;
+        const skipRatio = fanoutFailSkipRatioFromEnv();
+        if (ratio >= skipRatio) {
+          const error =
+            `fan-out fetch failed for ${failures}/${total} sub-feeds (ratio ${ratio.toFixed(2)} ` +
+            `>= skip threshold ${skipRatio}) — skipping swap to avoid a mass-failure wipe`;
+          console.warn(`[ingest] ${src.id}: ${error}`);
+          await upsertSourceStatus(deps.sql, src.id, {
+            freshnessWindowSec: src.freshnessWindowSec,
+            outcome: "error",
+            error,
+          });
+          return { count: 0, durationMs: Date.now() - start, error };
+        }
       }
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);

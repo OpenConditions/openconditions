@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { FeedSourceBase } from "../feed-source.js";
 import { fetchAll } from "../fetch.js";
 import { __resetCatalogResolvers, createFetchState, registerCatalogResolver } from "../index.js";
@@ -98,6 +98,22 @@ describe("fetchAll — catalog fan-out", () => {
     expect(bufs.map((b) => b.toString("utf8"))).not.toContain("body:https://x.test/bad");
   });
 
+  it("reports the partial-failure signal (failures/total) alongside the surviving buffers", async () => {
+    const urls = ["https://x.test/ok1", "https://x.test/bad", "https://x.test/ok2"];
+    const feed = catalogFeed("tol-signal", urls);
+    const res = await fetchAll(
+      feed,
+      okFor(
+        (u) => `body:${u}`,
+        (u) => u.endsWith("/bad")
+      )
+    );
+    expect(res.status).toBe("fetched");
+    if (res.status !== "fetched") throw new Error("unreachable");
+    expect(res.buffers).toHaveLength(2);
+    expect(res.partial).toEqual({ failures: 1, total: 3 });
+  });
+
   it("drops a sub-feed that returns an HTML block/error page (200) and keeps the JSON ones", async () => {
     const urls = ["https://x.test/json", "https://x.test/html"];
     const feed = catalogFeed("html", urls);
@@ -163,6 +179,17 @@ describe("fetchAll — static url forms (regression)", () => {
     );
     expect(bufs).toHaveLength(1);
     expect(bufs[0]!.toString("utf8")).toBe("body:https://x.test/one");
+  });
+
+  it("leaves the partial-failure signal undefined on the non-fanout static path", async () => {
+    const feed = makeFeed({ id: "s-no-partial", url: "https://x.test/one" });
+    const res = await fetchAll(
+      feed,
+      okFor((u) => `body:${u}`)
+    );
+    expect(res.status).toBe("fetched");
+    if (res.status !== "fetched") throw new Error("unreachable");
+    expect(res.partial).toBeUndefined();
   });
 
   it("fetches every url of a string array", async () => {
@@ -231,6 +258,22 @@ describe("fetchAll — fanoutTolerant static url arrays", () => {
     expect(bufs.map((b) => b.toString("utf8"))).not.toContain("body:https://x.test/bad");
   });
 
+  it("reports the partial-failure signal for a fanoutTolerant static url array", async () => {
+    const urls = ["https://x.test/ok1", "https://x.test/bad", "https://x.test/ok2"];
+    const feed = makeFeed({ id: "fanout-tol-signal", url: urls, fanoutTolerant: true });
+    const res = await fetchAll(
+      feed,
+      okFor(
+        (u) => `body:${u}`,
+        (u) => u.endsWith("/bad")
+      )
+    );
+    expect(res.status).toBe("fetched");
+    if (res.status !== "fetched") throw new Error("unreachable");
+    expect(res.buffers).toHaveLength(2);
+    expect(res.partial).toEqual({ failures: 1, total: 3 });
+  });
+
   it("does not affect a static url array without the flag (one failure still throws)", async () => {
     const urls = ["https://x.test/ok1", "https://x.test/bad", "https://x.test/ok2"];
     const feed = makeFeed({ id: "no-fanout-tol", url: urls });
@@ -272,7 +315,7 @@ describe("fetchAll — fanoutTolerant static url arrays", () => {
 
 describe("fetchAll — url templates", () => {
   it("interpolates a ${VAR} url from resolvedEnv", async () => {
-    const feed = makeFeed({ id: "tpl", url: "https://h.test/f?k=${K}" });
+    const feed = makeFeed({ id: "tpl", url: "https://h.test/f?k=${K}", requiredEnv: ["K"] });
     const seen: string[] = [];
     const fetchFn = (async (input: string | URL | Request) => {
       seen.push(String(input));
@@ -295,6 +338,7 @@ describe("fetchAll — url templates", () => {
       id: "mob",
       url: "https://m.test/subscription/${SUB}/pull?subscriptionID=${SUB}",
       expandEnv: "SUB",
+      requiredEnv: ["SUB"],
     });
     const urls = resolveFeedUrls(feed, { SUB: "a, b", id: feed.id });
     expect(urls).toEqual([
@@ -312,6 +356,7 @@ describe("fetchAll — POST body template", () => {
       url: "https://api.test/query",
       bodyTemplate: '<REQUEST authenticationkey="${MY_KEY}"><QUERY/></REQUEST>',
       requestHeaders: { "Content-Type": "application/xml" },
+      requiredEnv: ["MY_KEY"],
     });
     let capturedBody: unknown;
     const fetchFn = (async (_input: string | URL | Request, init?: RequestInit) => {
@@ -325,6 +370,57 @@ describe("fetchAll — POST body template", () => {
       delete process.env.MY_KEY;
     }
     expect(capturedBody).toBe('<REQUEST authenticationkey="sekret"><QUERY/></REQUEST>');
+  });
+
+  it("rejects a bodyTemplate referencing a var outside requiredEnv/auth (undeclared)", async () => {
+    const feed = makeFeed({
+      id: "post-leaky",
+      method: "POST",
+      url: "https://api.test/query",
+      // No requiredEnv/auth declares DATABASE_URL — the template-exfiltration guard
+      // must reject this even though the var happens to be set in the process env.
+      bodyTemplate: '<REQUEST secret="${DATABASE_URL}"/>',
+    });
+    process.env.DATABASE_URL = "postgres://leak";
+    try {
+      await expect(
+        fetchAll(
+          feed,
+          (async () => new Response("<ok/>", { status: 200 })) as unknown as typeof fetch
+        )
+      ).rejects.toThrow(/undeclared variable DATABASE_URL/);
+    } finally {
+      delete process.env.DATABASE_URL;
+    }
+  });
+});
+
+describe("fetchAll — redaction", () => {
+  it("scrubs a path-embedded secret out of the fan-out sub-feed warn log", async () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      const feed = catalogFeed(
+        "path-secret",
+        ["https://mobilithek.test/subscription/999999secretid/clientPullService"],
+        { requiredEnv: ["SUBSCRIPTION_ID"] }
+      );
+      process.env.SUBSCRIPTION_ID = "999999secretid";
+      try {
+        await expect(
+          fetchAll(
+            feed,
+            (async () => new Response("err", { status: 500 })) as unknown as typeof fetch
+          )
+        ).rejects.toThrow();
+      } finally {
+        delete process.env.SUBSCRIPTION_ID;
+      }
+      const logged = warnSpy.mock.calls.map((c) => c.join(" ")).join("\n");
+      expect(logged).not.toContain("999999secretid");
+      expect(logged).toContain("***");
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });
 
@@ -350,6 +446,55 @@ describe("fetchAll — conditional GET", () => {
     const second = await fetchAll(feed, fetchFn, { state });
     expect(second.status).toBe("unchanged");
     expect(call).toBe(2);
+  });
+
+  it("keeps validators but does NOT retain the body for a single-url feed", async () => {
+    // The off-heap-memory fix: a single-url feed skips whole on 304, so its body
+    // is never re-read and must not be cached (it was ~1 GB across all feeds).
+    const url = "https://h.test/single.xml";
+    const feed = makeFeed({ id: "single-nobody", url });
+    const state = createFetchState();
+    const fetchFn = (async () =>
+      new Response("payload", {
+        status: 200,
+        headers: { ETag: 'W/"v1"' },
+      })) as unknown as typeof fetch;
+
+    const res = await fetchAll(feed, fetchFn, { state });
+    expect(res.status).toBe("fetched");
+    const entry = state.conditional.get(url);
+    expect(entry?.etag).toBe('W/"v1"'); // validators kept → conditional GET still works
+    expect(entry?.buffer).toBeUndefined(); // body NOT retained
+  });
+
+  it("retains bodies for a multi-url feed and re-parses a 304 url beside a changed sibling", async () => {
+    const a = "https://h.test/a.xml";
+    const b = "https://h.test/b.xml";
+    const feed = makeFeed({ id: "multi", url: [a, b] });
+    const state = createFetchState();
+    let round = 0;
+    const fetchFn = (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      if (round === 0) {
+        return new Response(`${url}-v1`, { status: 200, headers: { ETag: `"${url}-v1"` } });
+      }
+      if (url === a) {
+        expect(new Headers(init?.headers).get("If-None-Match")).toBe(`"${a}-v1"`);
+        return new Response(null, { status: 304 }); // A unchanged
+      }
+      return new Response(`${url}-v2`, { status: 200, headers: { ETag: `"${url}-v2"` } }); // B changed
+    }) as unknown as typeof fetch;
+
+    const first = await fetchAll(feed, fetchFn, { state });
+    expect(first.status).toBe("fetched");
+    expect(state.conditional.get(a)?.buffer?.toString()).toBe(`${a}-v1`); // both retained (multi-url)
+    expect(state.conditional.get(b)?.buffer?.toString()).toBe(`${b}-v1`);
+
+    round = 1;
+    const second = await fetchAll(feed, fetchFn, { state });
+    // A comes from cache (304), B is fresh — the full source is re-parsed, in order.
+    const bodies = second.status === "fetched" ? second.buffers.map((x) => x.toString()) : [];
+    expect(bodies).toEqual([`${a}-v1`, `${b}-v2`]);
   });
 });
 

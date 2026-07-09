@@ -1,9 +1,10 @@
 import type { FeedSourceBase } from "./feed-source.js";
 import { resolvedEnv } from "./auth.js";
 import { boundedGunzip, DEFAULT_MAX_FEED_BYTES } from "./egress.js";
-import { resolveFeedUrls, resolveUrlTemplate } from "./template.js";
+import { resolveFeedUrls, resolveUrlTemplate, allowedTemplateVars } from "./template.js";
 import { applyPreFetch } from "./pre-fetch.js";
 import { getCatalogResolverById, resolveWithSnapshot } from "./catalog.js";
+import { redactUrl, redactSecrets, feedSecretValues } from "./redact.js";
 
 const GZIP_MAGIC_0 = 0x1f;
 const GZIP_MAGIC_1 = 0x8b;
@@ -19,13 +20,19 @@ const FANOUT_CONCURRENCY = 8;
 type FetchableFeed = FeedSourceBase;
 
 /**
- * Per-source politeness memory: the ETag/Last-Modified + last body of each URL
- * (for conditional GET) and the last fetch time of each source (for the
+ * Per-source politeness memory: the ETag/Last-Modified of each URL (for
+ * conditional GET) and the last fetch time of each source (for the
  * `fetchIntervalSec` gate). A long-lived scheduler shares one instance across
  * cycles so conditional headers accumulate; tests pass a fresh one.
+ *
+ * `buffer` (the last decompressed body) is retained ONLY for multi-URL feeds,
+ * where a URL that replies 304 must be re-combined with a sibling URL that
+ * changed before the source is re-parsed. Single-URL feeds skip entirely on 304
+ * (see {@link fetchAll}), so caching their bodies — often tens of MB each, ~1 GB
+ * across the ~30 datex feeds — only bloats off-heap memory and is omitted.
  */
 export interface FetchState {
-  conditional: Map<string, { etag?: string; lastModified?: string; buffer: Buffer }>;
+  conditional: Map<string, { etag?: string; lastModified?: string; buffer?: Buffer }>;
   lastFetchAt: Map<string, number>;
 }
 
@@ -35,7 +42,21 @@ export function createFetchState(): FetchState {
 
 const sharedFetchState = createFetchState();
 
-export type FetchResult = { status: "fetched"; buffers: Buffer[] } | { status: "unchanged" };
+export type FetchResult =
+  | {
+      status: "fetched";
+      buffers: Buffer[];
+      /**
+       * Set only on a tolerant fan-out path (catalog or `fanoutTolerant`
+       * static arrays) — undefined on every other path, where every URL
+       * either succeeded or the whole fetch threw. `failures`/`total` count
+       * sub-feed URLs, not bytes, so the caller (`runSource`) can compute a
+       * failure ratio and decide whether a mostly-failed fan-out is too
+       * unreliable to swap in (see `OPENCONDITIONS_FANOUT_FAIL_SKIP_RATIO`).
+       */
+      partial?: { failures: number; total: number };
+    }
+  | { status: "unchanged" };
 
 interface FetchOptions {
   state?: FetchState;
@@ -53,32 +74,20 @@ function looksLikeHtml(buf: Buffer): boolean {
   return buf.subarray(0, 64).toString("utf8").trimStart().startsWith("<");
 }
 
-/**
- * Strip query-string VALUES from a URL for safe logging. Several feeds carry
- * credentials in query params (e.g. Buenos Aires' client_id/client_secret), and
- * fetch errors bubble the URL into logs — so redact every value while keeping the
- * path and param names for debugging. Falls back to the path on a parse failure.
- */
-export function redactUrl(url: string): string {
-  try {
-    const u = new URL(url);
-    for (const k of [...u.searchParams.keys()]) u.searchParams.set(k, "***");
-    return u.toString();
-  } catch {
-    return url.split("?")[0] ?? url;
-  }
-}
-
 /** Ceiling on a single feed's decompressed bytes; matches the guard's byte cap. */
 const MAX_DECOMPRESSED_BYTES = Number(
   process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES
 );
 
+const EMPTY_BUFFER = Buffer.alloc(0);
+
 async function fetchOne(
   url: string,
   fetchFn: typeof fetch,
   init?: RequestInit,
-  state?: FetchState
+  state?: FetchState,
+  cacheBody = false,
+  redact: (s: string) => string = (s) => s
 ): Promise<{ changed: boolean; buffer: Buffer }> {
   const prior = state?.conditional.get(url);
   const headers = new Headers(init?.headers);
@@ -86,9 +95,15 @@ async function fetchOne(
   if (prior?.lastModified) headers.set("If-Modified-Since", prior.lastModified);
 
   const res = await fetchFn(url, { ...init, headers });
-  if (res.status === 304 && prior) return { changed: false, buffer: prior.buffer };
+  // A 304 body is only consumed for a multi-URL feed's partial-304 re-parse
+  // (where `cacheBody` is true and `prior.buffer` was retained). A single-URL 304
+  // returns this empty buffer, which the caller discards on its "unchanged" path.
+  if (res.status === 304 && prior) return { changed: false, buffer: prior.buffer ?? EMPTY_BUFFER };
   if (!res.ok) {
-    throw new Error(`HTTP ${res.status} fetching ${redactUrl(url)}`);
+    // `redact` (the feed's own secret values) runs after `redactUrl` (query
+    // values) so a credential duplicated into the URL PATH — e.g. Mobilithek's
+    // subscription id — is also scrubbed, not just its query-string copy.
+    throw new Error(`HTTP ${res.status} fetching ${redact(redactUrl(url))}`);
   }
   const arrayBuf = await res.arrayBuffer();
   const raw = Buffer.from(arrayBuf);
@@ -97,7 +112,7 @@ async function fetchOne(
     state.conditional.set(url, {
       etag: res.headers.get("etag") ?? undefined,
       lastModified: res.headers.get("last-modified") ?? undefined,
-      buffer,
+      buffer: cacheBody ? buffer : undefined,
     });
   }
   return { changed: true, buffer };
@@ -110,7 +125,9 @@ function requestInit(src: FetchableFeed): RequestInit | undefined {
   }
   return {
     method: "POST",
-    body: src.bodyTemplate ? resolveUrlTemplate(src.bodyTemplate, resolvedEnv()) : undefined,
+    body: src.bodyTemplate
+      ? resolveUrlTemplate(src.bodyTemplate, resolvedEnv(), allowedTemplateVars(src))
+      : undefined,
     headers: src.requestHeaders,
   };
 }
@@ -121,8 +138,27 @@ function requestInit(src: FetchableFeed): RequestInit | undefined {
  * whole batch (many registry feeds require operator-supplied keys and will
  * fail). Throws only if *every* sub-feed fails, so the caller preserves the
  * last-good rows instead of swapping in an empty set.
+ *
+ * Returns `failures`/`total` alongside the successful buffers (rather than a
+ * bare `Buffer[]`) so a caller can tell a mostly-healthy fan-out from a
+ * mass-failure one that merely stayed above the all-failed floor — without
+ * this, `runSource` swapped in whatever fragment survived even when e.g. 9 of
+ * 10 sub-feeds failed, and the diff-upsert's delete-missing step then wiped
+ * every row belonging to the 9 failed sub-feeds as "no longer present".
+ *
+ * FUTURE refinement: once a per-sub-feed last-good buffer is available here
+ * (the `cacheBody`/`FetchState.conditional` plumbing `fetchOne` already
+ * supports for the static multi-URL path, but `fetchFanout` doesn't thread a
+ * `state` through today), a failed sub-feed could contribute its cached
+ * buffer instead of vanishing from `out` — so no rows would be pruned even
+ * below the ratio threshold below. Not built here: it depends on that
+ * in-progress per-URL body-caching work landing first.
  */
-async function fetchFanout(urls: string[], fetchFn: typeof fetch): Promise<Buffer[]> {
+async function fetchFanout(
+  urls: string[],
+  fetchFn: typeof fetch,
+  redact: (s: string) => string = (s) => s
+): Promise<{ buffers: Buffer[]; failures: number; total: number }> {
   const out: Buffer[] = [];
   let failures = 0;
   let cursor = 0;
@@ -131,7 +167,7 @@ async function fetchFanout(urls: string[], fetchFn: typeof fetch): Promise<Buffe
     while (cursor < urls.length) {
       const url = urls[cursor++]!;
       try {
-        const { buffer } = await fetchOne(url, fetchFn);
+        const { buffer } = await fetchOne(url, fetchFn, undefined, undefined, false, redact);
         if (looksLikeHtml(buffer)) {
           throw new Error("returned HTML, not JSON");
         }
@@ -139,7 +175,7 @@ async function fetchFanout(urls: string[], fetchFn: typeof fetch): Promise<Buffe
       } catch (err) {
         failures++;
         console.warn(
-          `[ingest] sub-feed fetch failed (${url}):`,
+          `[ingest] sub-feed fetch failed (${redact(url)}):`,
           err instanceof Error ? err.message : err
         );
       }
@@ -152,7 +188,7 @@ async function fetchFanout(urls: string[], fetchFn: typeof fetch): Promise<Buffe
   if (urls.length > 0 && out.length === 0) {
     throw new Error(`all ${urls.length} sub-feeds failed (${failures} failures)`);
   }
-  return out;
+  return { buffers: out, failures, total: urls.length };
 }
 
 /**
@@ -167,14 +203,16 @@ async function fetchAllBounded(
   urls: string[],
   fetchFn: typeof fetch,
   init: RequestInit | undefined,
-  state?: FetchState
+  state: FetchState | undefined,
+  cacheBody: boolean,
+  redact: (s: string) => string = (s) => s
 ): Promise<{ changed: boolean; buffer: Buffer }[]> {
   const out = new Array<{ changed: boolean; buffer: Buffer }>(urls.length);
   let cursor = 0;
   async function worker(): Promise<void> {
     while (cursor < urls.length) {
       const i = cursor++;
-      out[i] = await fetchOne(urls[i]!, fetchFn, init, state);
+      out[i] = await fetchOne(urls[i]!, fetchFn, init, state, cacheBody, redact);
     }
   }
   const workerCount = Math.min(FANOUT_CONCURRENCY, urls.length);
@@ -219,6 +257,14 @@ export async function fetchAll(
   const state = opts.state ?? sharedFetchState;
   const now = opts.now ?? Date.now;
 
+  // Scrubs `src`'s own secret values (its auth vars + `requiredEnv`) out of
+  // any string before it reaches a log or `FeedStatusStore` — computed once,
+  // at the source, from the ORIGINAL descriptor (not `active`; the one
+  // registered pre-fetch hook never rewrites `auth`/`requiredEnv`) so every
+  // downstream log/error is pre-scrubbed of values a syntax-only redactor
+  // like `redactUrl` would miss (e.g. a credential duplicated into the URL path).
+  const redact = (s: string) => redactSecrets(s, feedSecretValues(src));
+
   // Reactive pre-fetch transform (dormant — no hooks registered today). When a
   // hook is registered it may rewrite the descriptor before URL resolution; with
   // none, this returns `src` unchanged.
@@ -230,7 +276,12 @@ export async function fetchAll(
       matchesFilter(f, active.catalog?.filter)
     );
     const urls = feeds.flatMap((f) => (Array.isArray(f.url) ? f.url : f.url ? [f.url] : []));
-    return { status: "fetched", buffers: await fetchFanout(urls, fetchFn) };
+    const fanout = await fetchFanout(urls, fetchFn, redact);
+    return {
+      status: "fetched",
+      buffers: fanout.buffers,
+      partial: { failures: fanout.failures, total: fanout.total },
+    };
   }
 
   // `fanoutTolerant` opts a large static multi-URL fan-out (e.g. WebTRIS's
@@ -244,7 +295,12 @@ export async function fetchAll(
   if (active.fanoutTolerant) {
     const fanoutUrls = resolveFeedUrls(active, resolvedEnv());
     if (fanoutUrls.length > 1) {
-      return { status: "fetched", buffers: await fetchFanout(fanoutUrls, fetchFn) };
+      const fanout = await fetchFanout(fanoutUrls, fetchFn, redact);
+      return {
+        status: "fetched",
+        buffers: fanout.buffers,
+        partial: { failures: fanout.failures, total: fanout.total },
+      };
     }
   }
 
@@ -264,7 +320,10 @@ export async function fetchAll(
   }
 
   const init = requestInit(active);
-  const results = await fetchAllBounded(urls, fetchFn, init, state);
+  // Retain last bodies only for multi-URL feeds — a single-URL feed skips whole
+  // on 304 (below) and never re-reads its cached body, so caching it just holds
+  // tens of MB of off-heap Buffer per feed for nothing.
+  const results = await fetchAllBounded(urls, fetchFn, init, state, urls.length > 1, redact);
   state.lastFetchAt.set(active.id, now());
 
   if (results.every((r) => !r.changed)) return { status: "unchanged" };
