@@ -14,6 +14,7 @@ import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js
 import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
 import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
 import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
+import { deriveSegmentProfiles } from "./pipeline/segment-profile.js";
 import { runSegmentRebuild } from "./pipeline/segment-rebuild.js";
 import { refreshSegmentSpeed } from "./pipeline/segment-speed.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
@@ -60,6 +61,8 @@ const SWEEP_CRON = "*/5 * * * *";
 const BASELINE_CRON = "0 3 * * *";
 /** When the weekly segment-spine rebuild (import->build->openlr->match) runs (UTC). */
 const SEGMENT_CRON = "0 4 * * 1";
+/** When the weekly segment speed-profile derivation runs (UTC) — after the nightly baseline, before the segment rebuild. */
+const SEGMENT_PROFILE_CRON = "30 3 * * 1";
 /**
  * A source is swept as orphaned when its `conditions.source_status.
  * last_success_at` is older than this, or it has no source_status row at all
@@ -217,6 +220,35 @@ export function startScheduler(
   });
   console.info(`[scheduler] registered nightly baseline derivation (${BASELINE_CRON})`);
   jobs.push(baselineJob);
+
+  const segmentProfileCron = pickCronExpression(
+    process.env,
+    "SEGMENT_PROFILE_CRON",
+    SEGMENT_PROFILE_CRON
+  );
+  if (segmentProfileCron) {
+    let derivingProfiles = false;
+    const segmentProfileJob = new Cron(segmentProfileCron, { catch: true }, async () => {
+      if (derivingProfiles) return;
+      derivingProfiles = true;
+      try {
+        const { upserted } = await deriveSegmentProfiles(sql, () => new Date().toISOString());
+        console.info(`[scheduler] segment profiles: upserted ${upserted}`);
+      } catch (err) {
+        console.error("[scheduler] segment profile derivation failed", err);
+      } finally {
+        derivingProfiles = false;
+      }
+    });
+    console.info(
+      `[scheduler] registered weekly segment profile derivation (${segmentProfileCron})`
+    );
+    jobs.push(segmentProfileJob);
+  } else {
+    console.info(
+      "[scheduler] weekly segment profile derivation disabled (SEGMENT_PROFILE_CRON=off)"
+    );
+  }
 
   const segmentCron = pickCronExpression(process.env, "SEGMENT_REBUILD_CRON", SEGMENT_CRON);
   if (segmentCron) {
