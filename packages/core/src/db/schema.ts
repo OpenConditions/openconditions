@@ -253,6 +253,28 @@ export const segmentObservation = conditionsSchema.table(
 );
 
 /**
+ * Weekly per-(segment, weekday, hour) typical-speed profiles, derived from
+ * `sensor_speed_sample` history and bucketed in the segment's REGION-LOCAL
+ * time (Valhalla convention: `dow` 0=Sun…6=Sat, `tod_hour` 0-23). Exported
+ * to bake Valhalla's predicted-traffic tiles (see plan 12).
+ */
+export const segmentProfile = conditionsSchema.table(
+  "segment_profile",
+  {
+    segmentId: text("segment_id").notNull(),
+    dow: smallint("dow").notNull(),
+    todHour: smallint("tod_hour").notNull(),
+    speedKph: doublePrecision("speed_kph").notNull(),
+    sampleCount: integer("sample_count").notNull(),
+    computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.segmentId, t.dow, t.todHour] }),
+    index("idx_segment_profile_segment").on(t.segmentId),
+  ]
+);
+
+/**
  * The fused + propagated live surface (one row per segment; the
  * render/routing read model). Populated by reducing `segment_observation`
  * rows per segment, then propagating one hop into adjacent gap segments

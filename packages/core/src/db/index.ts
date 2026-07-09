@@ -8,5 +8,6 @@ export {
   roadSegment,
   sensorSegment,
   segmentObservation,
+  segmentProfile,
   segmentSpeed,
 } from "./schema.js";
