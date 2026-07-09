@@ -7,4 +7,6 @@ export {
   osmRoad,
   roadSegment,
   sensorSegment,
+  segmentObservation,
+  segmentSpeed,
 } from "./schema.js";

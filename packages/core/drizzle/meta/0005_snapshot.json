@@ -1,0 +1,1158 @@
+{
+  "id": "52a30178-dbae-4660-b0db-1508f2644a09",
+  "prevId": "f10fc4e9-7e38-499c-9155-f7f88f5babd0",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "conditions.observations": {
+      "name": "observations",
+      "schema": "conditions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_format": {
+          "name": "source_format",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "domain": {
+          "name": "domain",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subtype": {
+          "name": "subtype",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "severity": {
+          "name": "severity",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "severity_source": {
+          "name": "severity_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "headline": {
+          "name": "headline",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "metric": {
+          "name": "metric",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "name": "value",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "level": {
+          "name": "level",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "aggregation": {
+          "name": "aggregation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "geom": {
+          "name": "geom",
+          "type": "geometry(Geometry, 4326)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subject": {
+          "name": "subject",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attributes": {
+          "name": "attributes",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "valid_from": {
+          "name": "valid_from",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "valid_to": {
+          "name": "valid_to",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "schedule": {
+          "name": "schedule",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_forecast": {
+          "name": "is_forecast",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "related_ids": {
+          "name": "related_ids",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "origin": {
+          "name": "origin",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data_updated_at": {
+          "name": "data_updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fetched_at": {
+          "name": "fetched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_stale": {
+          "name": "is_stale",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "stale_after": {
+          "name": "stale_after",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content_hash": {
+          "name": "content_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_conditions_obs_geom": {
+          "name": "idx_conditions_obs_geom",
+          "columns": [
+            {
+              "expression": "geom",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gist",
+          "with": {}
+        },
+        "idx_conditions_obs_domain": {
+          "name": "idx_conditions_obs_domain",
+          "columns": [
+            {
+              "expression": "domain",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_conditions_obs_dom_type": {
+          "name": "idx_conditions_obs_dom_type",
+          "columns": [
+            {
+              "expression": "domain",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_conditions_obs_severity": {
+          "name": "idx_conditions_obs_severity",
+          "columns": [
+            {
+              "expression": "severity",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_conditions_obs_metric": {
+          "name": "idx_conditions_obs_metric",
+          "columns": [
+            {
+              "expression": "metric",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_conditions_obs_valid_to": {
+          "name": "idx_conditions_obs_valid_to",
+          "columns": [
+            {
+              "expression": "valid_to",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_conditions_obs_expires": {
+          "name": "idx_conditions_obs_expires",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_conditions_obs_subject": {
+          "name": "idx_conditions_obs_subject",
+          "columns": [
+            {
+              "expression": "subject",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gin",
+          "with": {}
+        },
+        "idx_conditions_obs_source": {
+          "name": "idx_conditions_obs_source",
+          "columns": [
+            {
+              "expression": "source",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "conditions.osm_road": {
+      "name": "osm_road",
+      "schema": "conditions",
+      "columns": {
+        "way_id": {
+          "name": "way_id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "geom": {
+          "name": "geom",
+          "type": "geometry(Geometry, 4326)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "highway": {
+          "name": "highway",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "oneway": {
+          "name": "oneway",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "ref": {
+          "name": "ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "maxspeed_kph": {
+          "name": "maxspeed_kph",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "region": {
+          "name": "region",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "imported_at": {
+          "name": "imported_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_osm_road_geom": {
+          "name": "idx_osm_road_geom",
+          "columns": [
+            {
+              "expression": "geom",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gist",
+          "with": {}
+        },
+        "idx_osm_road_highway": {
+          "name": "idx_osm_road_highway",
+          "columns": [
+            {
+              "expression": "highway",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_osm_road_ref": {
+          "name": "idx_osm_road_ref",
+          "columns": [
+            {
+              "expression": "ref",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "conditions.road_segment": {
+      "name": "road_segment",
+      "schema": "conditions",
+      "columns": {
+        "segment_id": {
+          "name": "segment_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "way_id": {
+          "name": "way_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dir": {
+          "name": "dir",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "geom": {
+          "name": "geom",
+          "type": "geometry(Geometry, 4326)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "highway": {
+          "name": "highway",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ref": {
+          "name": "ref",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "length_m": {
+          "name": "length_m",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "min_zoom": {
+          "name": "min_zoom",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "free_flow_kph": {
+          "name": "free_flow_kph",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "openlr": {
+          "name": "openlr",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "computed_at": {
+          "name": "computed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_road_segment_geom": {
+          "name": "idx_road_segment_geom",
+          "columns": [
+            {
+              "expression": "geom",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "gist",
+          "with": {}
+        },
+        "idx_road_segment_way": {
+          "name": "idx_road_segment_way",
+          "columns": [
+            {
+              "expression": "way_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_road_segment_minzoom": {
+          "name": "idx_road_segment_minzoom",
+          "columns": [
+            {
+              "expression": "min_zoom",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "conditions.segment_observation": {
+      "name": "segment_observation",
+      "schema": "conditions",
+      "columns": {
+        "segment_id": {
+          "name": "segment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_tier": {
+          "name": "source_tier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "current_kph": {
+          "name": "current_kph",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "free_flow_kph": {
+          "name": "free_flow_kph",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "speed_ratio": {
+          "name": "speed_ratio",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "los": {
+          "name": "los",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sample_count": {
+          "name": "sample_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "observed_at": {
+          "name": "observed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_segment_observation_segment": {
+          "name": "idx_segment_observation_segment",
+          "columns": [
+            {
+              "expression": "segment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "segment_observation_segment_id_source_pk": {
+          "name": "segment_observation_segment_id_source_pk",
+          "columns": [
+            "segment_id",
+            "source"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "conditions.segment_speed": {
+      "name": "segment_speed",
+      "schema": "conditions",
+      "columns": {
+        "segment_id": {
+          "name": "segment_id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "current_kph": {
+          "name": "current_kph",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "free_flow_kph": {
+          "name": "free_flow_kph",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "speed_ratio": {
+          "name": "speed_ratio",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "los": {
+          "name": "los",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "confidence": {
+          "name": "confidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_tier": {
+          "name": "source_tier",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contributing": {
+          "name": "contributing",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_estimated": {
+          "name": "is_estimated",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "observed_at": {
+          "name": "observed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_segment_speed_los": {
+          "name": "idx_segment_speed_los",
+          "columns": [
+            {
+              "expression": "los",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "conditions.sensor_baseline": {
+      "name": "sensor_baseline",
+      "schema": "conditions",
+      "columns": {
+        "sensor_key": {
+          "name": "sensor_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dow_bucket": {
+          "name": "dow_bucket",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tod_bucket": {
+          "name": "tod_bucket",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "free_flow_kph": {
+          "name": "free_flow_kph",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "method": {
+          "name": "method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sample_count": {
+          "name": "sample_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "computed_at": {
+          "name": "computed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_sensor_baseline_source_bucket": {
+          "name": "idx_sensor_baseline_source_bucket",
+          "columns": [
+            {
+              "expression": "source",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "dow_bucket",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tod_bucket",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "sensor_baseline_sensor_key_dow_bucket_tod_bucket_method_pk": {
+          "name": "sensor_baseline_sensor_key_dow_bucket_tod_bucket_method_pk",
+          "columns": [
+            "sensor_key",
+            "dow_bucket",
+            "tod_bucket",
+            "method"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "conditions.sensor_segment": {
+      "name": "sensor_segment",
+      "schema": "conditions",
+      "columns": {
+        "sensor_key": {
+          "name": "sensor_key",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "segment_id": {
+          "name": "segment_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fraction": {
+          "name": "fraction",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "offset_m": {
+          "name": "offset_m",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bearing_deg": {
+          "name": "bearing_deg",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "matched_at": {
+          "name": "matched_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_sensor_segment_segment": {
+          "name": "idx_sensor_segment_segment",
+          "columns": [
+            {
+              "expression": "segment_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "conditions.sensor_speed_sample": {
+      "name": "sensor_speed_sample",
+      "schema": "conditions",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "sensor_key": {
+          "name": "sensor_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observed_at": {
+          "name": "observed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "speed_kph": {
+          "name": "speed_kph",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dow": {
+          "name": "dow",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tod_hour": {
+          "name": "tod_hour",
+          "type": "smallint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "geom": {
+          "name": "geom",
+          "type": "geometry(Geometry, 4326)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_sensor_sample_key_bucket": {
+          "name": "idx_sensor_sample_key_bucket",
+          "columns": [
+            {
+              "expression": "sensor_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "dow",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "tod_hour",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_sensor_sample_observed": {
+          "name": "idx_sensor_sample_observed",
+          "columns": [
+            {
+              "expression": "observed_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_sensor_sample_key_observed": {
+          "name": "uq_sensor_sample_key_observed",
+          "nullsNotDistinct": false,
+          "columns": [
+            "sensor_key",
+            "observed_at"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "conditions.source_status": {
+      "name": "source_status",
+      "schema": "conditions",
+      "columns": {
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "last_attempt_at": {
+          "name": "last_attempt_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_success_at": {
+          "name": "last_success_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "freshness_window_sec": {
+          "name": "freshness_window_sec",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_row_count": {
+          "name": "last_row_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_error": {
+          "name": "last_error",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

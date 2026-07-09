@@ -222,3 +222,56 @@ export const sensorSegment = conditionsSchema.table(
   },
   (t) => [index("idx_sensor_segment_segment").on(t.segmentId)]
 );
+
+/**
+ * The multi-source/crowd/federation fusion seam: one row per (segment,
+ * source), each source free to report on its own tier and cadence. A
+ * `sensor` source is the freshest flow reading bound via `sensor_segment`;
+ * later a crowd aggregate, a federation peer, or an authoritative feed can
+ * land its own row here with its own tier. The fusion step (09) reduces all
+ * rows per segment -> segment_speed.
+ */
+export const segmentObservation = conditionsSchema.table(
+  "segment_observation",
+  {
+    segmentId: text("segment_id").notNull(),
+    source: text("source").notNull(),
+    sourceTier: text("source_tier").notNull(),
+    currentKph: doublePrecision("current_kph"),
+    freeFlowKph: doublePrecision("free_flow_kph"),
+    speedRatio: doublePrecision("speed_ratio"),
+    los: text("los").notNull(),
+    confidence: doublePrecision("confidence").notNull(),
+    sampleCount: integer("sample_count"),
+    observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.segmentId, t.source] }),
+    index("idx_segment_observation_segment").on(t.segmentId),
+  ]
+);
+
+/**
+ * The fused + propagated live surface (one row per segment; the
+ * render/routing read model). Populated by reducing `segment_observation`
+ * rows per segment, then propagating one hop into adjacent gap segments
+ * along the same ref/highway.
+ */
+export const segmentSpeed = conditionsSchema.table(
+  "segment_speed",
+  {
+    segmentId: text("segment_id").primaryKey(),
+    currentKph: doublePrecision("current_kph"),
+    freeFlowKph: doublePrecision("free_flow_kph"),
+    speedRatio: doublePrecision("speed_ratio"),
+    los: text("los").notNull(),
+    confidence: text("confidence").notNull(),
+    sourceTier: text("source_tier"),
+    contributing: text("contributing").array(),
+    isEstimated: boolean("is_estimated").notNull().default(false),
+    observedAt: timestamp("observed_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [index("idx_segment_speed_los").on(t.los)]
+);

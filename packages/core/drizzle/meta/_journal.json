@@ -36,6 +36,13 @@
       "when": 1783594649129,
       "tag": "0004_segment_spine",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783600395617,
+      "tag": "0005_segment_observation_speed",
+      "breakpoints": true
     }
   ]
 }
