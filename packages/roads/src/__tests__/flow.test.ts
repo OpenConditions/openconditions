@@ -6,6 +6,7 @@ import { createSiteTableParser, parseDatexSiteTable } from "../siteTable.js";
 import type { SiteGeometry } from "../siteTable.js";
 import { parseDigitraffic } from "../digitraffic.js";
 import { parseDatexSituations } from "../datex.js";
+import { roadFlowAttributes } from "../model.js";
 
 const DT_FLOW_FIXTURE = join(import.meta.dirname, "fixtures/digitraffic-flow/flow.json");
 const DATEX_FLOW_FIXTURE = join(
@@ -107,6 +108,13 @@ describe("parseDigitrafficFlow — fixture", () => {
     expect(freeFlow!.speedRatio).toBeCloseTo(95.2 / 100.0, 2);
   });
 
+  it("stamps freeFlowSource:'native' when the feed carries an inline freeFlowSpeed", () => {
+    const json = readFileSync(DT_FLOW_FIXTURE, "utf8");
+    const { flows } = parseDigitrafficFlow(json, DT_SOURCE);
+    const freeFlow = flows.find((f) => f.id.includes("DT_FLOW_FREE"));
+    expect(freeFlow!.freeFlowSource).toBe("native");
+  });
+
   it("carries delaySeconds when provided", () => {
     const json = readFileSync(DT_FLOW_FIXTURE, "utf8");
     const { flows } = parseDigitrafficFlow(json, DT_SOURCE);
@@ -205,6 +213,13 @@ describe("parseDigitrafficFlow — derived congestion events", () => {
     expect(congestion!.severity).toBe("critical");
   });
 
+  it("derived congestion event inherits freeFlowSource:'native' from the flow's inline freeFlowSpeed", () => {
+    const json = readFileSync(DT_FLOW_FIXTURE, "utf8");
+    const { events } = parseDigitrafficFlow(json, DT_SOURCE);
+    const congestion = events.find((e) => e.id.includes("DT_FLOW_STATIONARY"));
+    expect(congestion!.freeFlowSource).toBe("native");
+  });
+
   it("derived congestion event has category:'conditions'", () => {
     const json = readFileSync(DT_FLOW_FIXTURE, "utf8");
     const { events } = parseDigitrafficFlow(json, DT_SOURCE);
@@ -268,6 +283,38 @@ describe("parseDatexMeasuredData — fixture", () => {
     expect(withSpeed!.speedKph).toBeGreaterThan(0);
   });
 
+  it("stamps freeFlowSource:'native' on a site whose feed carries an inline freeFlowSpeed", () => {
+    const xml = readFileSync(DATEX_FLOW_FIXTURE);
+    const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE);
+    const withBaseline = flows.find((f) => f.id.includes("NL-MS-001"));
+    expect(withBaseline).toBeDefined();
+    expect(withBaseline!.freeFlowKph).toBe(100.0);
+    expect(withBaseline!.freeFlowSource).toBe("native");
+  });
+
+  it("persists the native freeFlowSource stamp into the flow's attributes", () => {
+    const xml = readFileSync(DATEX_FLOW_FIXTURE);
+    const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE);
+    const withBaseline = flows.find((f) => f.id.includes("NL-MS-001"))!;
+    expect(roadFlowAttributes(withBaseline)["freeFlowSource"]).toBe("native");
+  });
+
+  it("leaves freeFlowSource absent when the feed carries no inline freeFlowSpeed (DB-baseline path stamps it later)", () => {
+    const xml = readFileSync(DATEX_FLOW_FIXTURE);
+    const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE);
+    const noBaseline = flows.find((f) => f.id.includes("NL-MS-002"));
+    expect(noBaseline).toBeDefined();
+    expect(noBaseline!.freeFlowKph).toBeUndefined();
+    expect(noBaseline!.freeFlowSource).toBeUndefined();
+  });
+
+  it("omits the freeFlowSource key from attributes when no inline baseline was applied", () => {
+    const xml = readFileSync(DATEX_FLOW_FIXTURE);
+    const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE);
+    const noBaseline = flows.find((f) => f.id.includes("NL-MS-002"))!;
+    expect(roadFlowAttributes(noBaseline)).not.toHaveProperty("freeFlowSource");
+  });
+
   it("maps trafficStatus:'heavy' to los:'heavy'", () => {
     const xml = readFileSync(DATEX_FLOW_FIXTURE);
     const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE);
@@ -298,10 +345,12 @@ describe("parseDatexMeasuredData — fixture", () => {
     const congestion = events.find((e) => e.id.includes("NL-MS-003"));
     expect(congestion).toBeDefined();
     expect(congestion!.type).toBe("congestion");
-    // trafficStatus-derived (no free-flow baseline behind this los) — the
-    // event must carry no freeFlowSource, distinguishing it from a
-    // baseline-derived congestion event.
-    expect(congestion!.freeFlowSource).toBeUndefined();
+    // los itself is trafficStatus-derived here, but this site's measuredValue
+    // also carries an inline freeFlowSpeed (a genuine feed-native baseline,
+    // used for speedRatio regardless of how los was resolved) — so the event
+    // must carry freeFlowSource:"native", not be mistaken for a
+    // trafficStatus-only reading with no baseline at all.
+    expect(congestion!.freeFlowSource).toBe("native");
     expect(congestion!.validFrom).toBeDefined();
   });
 

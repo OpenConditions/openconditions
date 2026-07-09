@@ -92,6 +92,10 @@ function rowToObservation(row: Row): Observation {
           subtype: row.subtype ?? undefined,
           category: (row.category ?? "conditions") as ConditionEvent["category"],
           severity: (row.severity ?? "unknown") as ConditionEvent["severity"],
+          // NULL -> "derived" is safe only under the conjunct discriminator
+          // (type==='congestion' AND severitySource==='derived'); severitySource
+          // alone is stamped by nearly every severity-derivation path and must
+          // never be read as a sensor-tier signal on its own.
           severitySource: (row.severity_source ?? "derived") as ConditionEvent["severitySource"],
           headline: row.headline ?? "",
           description: row.description ?? undefined,

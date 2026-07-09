@@ -257,7 +257,9 @@ export function parseDigitrafficFlow(
           geometry: geom,
           los,
           ...(avgSpeed != null ? { speedKph: avgSpeed } : {}),
-          ...(freeFlowSpeed != null ? { freeFlowKph: freeFlowSpeed } : {}),
+          ...(freeFlowSpeed != null
+            ? { freeFlowKph: freeFlowSpeed, freeFlowSource: "native" as const }
+            : {}),
           ...(speedRatio != null ? { speedRatio } : {}),
           ...(delaySeconds != null ? { delaySeconds } : {}),
           ...(jamFactor != null ? { jamFactor } : {}),
@@ -486,6 +488,10 @@ export interface MeasuredSiteFields {
  * site from the fields a parser extracted, applying the shared level-of-service,
  * speed-ratio and skip rules. Returns null when the site has no resolvable
  * geometry, or carries neither a valid speed nor a resolvable level-of-service.
+ * When the feed itself carries an inline free-flow speed, stamps
+ * freeFlowSource:"native" alongside freeFlowKph; a site with no inline
+ * free-flow leaves freeFlowSource absent so a later DB-baseline pass
+ * ({@link reclassifyFlow}) can stamp its own provenance.
  *
  * Shared by the buffered DOM parser ({@link parseDatexMeasuredData}) and the
  * streaming parser ({@link createMeasuredDataParser}) so both emit identical
@@ -525,7 +531,7 @@ export function buildMeasuredSiteFlow(
     geometry: geom,
     los,
     ...(speedKph != null ? { speedKph } : {}),
-    ...(freeFlowKph != null ? { freeFlowKph } : {}),
+    ...(freeFlowKph != null ? { freeFlowKph, freeFlowSource: "native" as const } : {}),
     ...(speedRatio != null ? { speedRatio } : {}),
     origin,
     dataUpdatedAt: measuredAt,

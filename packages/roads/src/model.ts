@@ -153,11 +153,15 @@ export interface RoadEvent extends ConditionEvent {
   /** WZDx: are workers present in the zone. */
   workersPresent?: boolean;
   /**
-   * Provenance of the free-flow baseline behind a derived congestion event
-   * (copied from the flow by derivedCongestionEvent). Unset for a
-   * trafficStatus-derived congestion event (NDW path, los straight from status,
-   * no baseline) — that absence is meaningful: "status-derived, not
-   * baseline-derived", distinct from severitySource:"derived".
+   * Provenance of the freeFlowKph baseline behind a derived congestion event
+   * (copied from the flow by derivedCongestionEvent): "native" for a feed-carried
+   * free-flow reference, "derived" for a history-derived DB baseline, or
+   * "osm_maxspeed" for the coarse speed-limit proxy. Records where the baseline
+   * came from, independent of how the flow's los was resolved (a los read from a
+   * trafficStatus can still rest on a native feed baseline). Unset only when no
+   * baseline (inline or DB-resolved) was applied at all — that absence is
+   * meaningful: "no free-flow reference behind this event", distinct from
+   * severitySource:"derived".
    */
   freeFlowSource?: BaselineMethod;
   /** WZDx work-zone kind. */
@@ -199,7 +203,11 @@ export interface RoadFlow extends Measurement {
   los: "free_flow" | "heavy" | "queuing" | "stationary" | "blocked" | "unknown";
   speedKph?: number;
   freeFlowKph?: number;
-  /** Which provenance produced freeFlowKph (native > derived > osm_maxspeed). */
+  /**
+   * Which provenance produced freeFlowKph (native > derived > osm_maxspeed),
+   * independent of how los was resolved. Unset only when no baseline (inline
+   * feed reference or DB-resolved) was applied.
+   */
   freeFlowSource?: BaselineMethod;
   /** Carriageway direction where the feed carries it; unset otherwise. */
   direction?: string;
