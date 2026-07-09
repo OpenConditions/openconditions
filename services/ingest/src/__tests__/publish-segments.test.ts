@@ -158,3 +158,26 @@ describe("GET /segments.geojson", () => {
     }
   }, 30_000);
 });
+
+describe("GET /segments/speed.csv", () => {
+  it("returns the header and a row for the measured segment, omitting speed-less segments", async () => {
+    const app = Fastify();
+    const registry = await buildDomainRegistry();
+    registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
+    await app.ready();
+    try {
+      const res = await app.inject({ method: "GET", url: "/segments/speed.csv" });
+      expect(res.statusCode).toBe(200);
+      expect(res.headers["content-type"]).toBe("text/csv");
+      expect(res.headers["cache-control"]).toBe("public, max-age=60");
+
+      const lines = res.body.split("\n");
+      expect(lines[0]).toBe("way_id,dir,current_kph,free_flow_kph,los");
+      expect(lines).toContain("500,f,50,100,heavy");
+      // BASE_SEGMENT_ID (700) has no segment_speed row -- must not appear.
+      expect(res.body).not.toContain("700,");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+});

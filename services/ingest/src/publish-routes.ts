@@ -3,12 +3,14 @@ import {
   diffObservations,
   eventsToExclusions,
   filterForPermissiveExport,
+  flowToSegmentSpeedCsv,
   matchesTypeFilter,
   observationsToDatexSituations,
   parseTypeFilter,
   segmentsToGeoJSON,
   sseFrame,
   type FeedInfo,
+  type SegmentSpeedCsvRow,
   type SegmentSpeedRow,
   observationsToGeoJSON,
   observationsToGtfsRtAlerts,
@@ -153,7 +155,7 @@ export function registerFeedStatusRoute(
  *   GET /observations.geojson · /observations.jsonld · /traff.xml ·
  *       /gtfs-rt/alerts.pb · /datex2/situations.xml ·
  *       /valhalla/exclusions.json · /stream (SSE) · /feeds/status ·
- *       /segments.geojson
+ *       /segments.geojson · /segments/speed.csv
  * All bbox-filterable (?bbox=west,south,east,north[&domain=roads]); /stream also
  * takes an optional comma-separated &type= filter and pushes live deltas.
  *
@@ -267,6 +269,23 @@ export function registerPublishRoutes(
     reply.header("Content-Type", "application/geo+json");
     reply.header("Cache-Control", "public, max-age=60");
     return reply.send(segmentsToGeoJSON(rows));
+  });
+
+  // Routing feed for the OpenMapX `traffic.tar` writer: one row per directed
+  // segment that HAS a measured/fused speed (unlike `/segments.geojson`,
+  // segments with no `segment_speed` row are omitted rather than LEFT-JOINed
+  // in as nulls — a routing consumer has no use for a speed-less row).
+  app.get("/segments/speed.csv", async (_req, reply) => {
+    const rows = await db.execute<SegmentSpeedCsvRow[]>(
+      `SELECT rs.way_id AS "wayId", rs.dir, sp.current_kph AS "currentKph",
+              sp.free_flow_kph AS "freeFlowKph", sp.los
+       FROM conditions.segment_speed sp
+       JOIN conditions.road_segment rs USING (segment_id)
+       WHERE sp.current_kph IS NOT NULL`
+    );
+    reply.header("Content-Type", "text/csv");
+    reply.header("Cache-Control", "public, max-age=60");
+    return reply.send(flowToSegmentSpeedCsv(rows));
   });
 
   app.get("/stream", (req, reply) => {

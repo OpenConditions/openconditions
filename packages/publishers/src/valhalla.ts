@@ -214,3 +214,30 @@ export function eventsToExclusions(
   }
   return ex;
 }
+
+/** One directed segment's fused speed, ready to render as a `speed.csv` row. */
+export interface SegmentSpeedCsvRow {
+  wayId: string | number;
+  dir: string;
+  currentKph: number | null;
+  freeFlowKph: number | null;
+  los: string;
+}
+
+/**
+ * Projects fused segment speeds into the `GET /segments/speed.csv` routing
+ * feed body: a header line followed by one row per directed segment, the
+ * OpenMapX `traffic.tar` writer's input. Null current/free-flow (should not
+ * occur for rows the caller has already filtered to `current_kph IS NOT
+ * NULL`, but kept defensive here since this is a pure, caller-agnostic
+ * formatter) renders as an empty CSV field rather than the string "null".
+ */
+export function flowToSegmentSpeedCsv(rows: SegmentSpeedCsvRow[]): string {
+  const lines = ["way_id,dir,current_kph,free_flow_kph,los"];
+  for (const row of rows) {
+    const current = row.currentKph == null ? "" : String(row.currentKph);
+    const freeFlow = row.freeFlowKph == null ? "" : String(row.freeFlowKph);
+    lines.push(`${row.wayId},${row.dir},${current},${freeFlow},${row.los}`);
+  }
+  return lines.join("\n");
+}

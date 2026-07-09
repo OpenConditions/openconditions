@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { eventsToExclusions } from "../valhalla.js";
+import { eventsToExclusions, flowToSegmentSpeedCsv } from "../valhalla.js";
 import { measurement, roadEvent } from "./fixture.js";
 
 describe("eventsToExclusions", () => {
@@ -217,5 +217,27 @@ describe("eventsToExclusions", () => {
     });
     const ex = eventsToExclusions([started], { activeAt });
     expect(ex.exclude_locations).toEqual([{ lon: 4.9, lat: 52.37 }]);
+  });
+});
+
+describe("flowToSegmentSpeedCsv", () => {
+  it("emits just the header for no rows", () => {
+    expect(flowToSegmentSpeedCsv([])).toBe("way_id,dir,current_kph,free_flow_kph,los");
+  });
+
+  it("formats a measured row after the header", () => {
+    const csv = flowToSegmentSpeedCsv([
+      { wayId: 500, dir: "f", currentKph: 50, freeFlowKph: 100, los: "heavy" },
+    ]);
+    const lines = csv.split("\n");
+    expect(lines[0]).toBe("way_id,dir,current_kph,free_flow_kph,los");
+    expect(lines[1]).toBe("500,f,50,100,heavy");
+  });
+
+  it("renders null current/free-flow as an empty field, not the string null", () => {
+    const csv = flowToSegmentSpeedCsv([
+      { wayId: 501, dir: "b", currentKph: null, freeFlowKph: null, los: "unknown" },
+    ]);
+    expect(csv.split("\n")[1]).toBe("501,b,,,unknown");
   });
 });
