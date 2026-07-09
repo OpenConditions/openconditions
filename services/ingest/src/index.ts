@@ -6,6 +6,7 @@ import { FeedStatusStore } from "./feed-status.js";
 import { registerPublishRoutes } from "./publish-routes.js";
 import { RateLimiter } from "./rate-limit.js";
 import { startScheduler } from "./scheduler.js";
+import { startMemTelemetry } from "./mem.js";
 
 const PORT = parseInt(process.env["PORT"] || "4100", 10);
 const HOST = process.env["HOST"] || "0.0.0.0";
@@ -48,8 +49,10 @@ async function boot() {
   registerPublishRoutes(app, sql, statusStore, registry);
 
   const stopScheduler = startScheduler(sql, statusStore, registry);
+  const stopMemTelemetry = startMemTelemetry();
   const close = async () => {
     stopScheduler();
+    stopMemTelemetry();
     limiter.destroy();
     await app.close();
     await sql.end();

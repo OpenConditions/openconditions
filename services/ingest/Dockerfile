@@ -74,7 +74,7 @@ ENV HOST=0.0.0.0
 # per-sensor flows plus per-flow sample-writing/enrichment every cycle on top of
 # the streamed ~373 MB site table, which needs well over 512 MB of heap; sized
 # to run under the service memory limit below. Operators can override via env.
-ENV NODE_OPTIONS=--max-old-space-size=1536
+ENV NODE_OPTIONS="--max-old-space-size=1536 --heapsnapshot-signal=SIGUSR2"
 
 # Runtime externals (fastify, postgres, croner) resolved from the workspace
 # node_modules; everything else is inlined in dist.
