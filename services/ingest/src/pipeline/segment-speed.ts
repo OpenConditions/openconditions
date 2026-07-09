@@ -102,3 +102,82 @@ export async function fuseSegmentSpeed(
 
   return { measured: rows.length };
 }
+
+export interface PropagateSegmentSpeedOptions {
+  /** Endpoint-adjacency tolerance in meters for treating a neighbor as a continuation. Defaults to 50. */
+  withinM?: number;
+  /** Longest neighbor a single measured segment may lend its speed onto, in meters. Defaults to 3000 (see the module doc comment for the FHWA/PeMS grounding). */
+  maxNeighborM?: number;
+}
+
+export interface PropagateSegmentSpeedResult {
+  /** Estimated `segment_speed` rows written this run. */
+  estimated: number;
+}
+
+/**
+ * Fills same-`ref`/`highway` gap segments one hop out from a measured
+ * neighbor, run AFTER `fuseSegmentSpeed`. A measured segment lends its
+ * absolute `current_kph` onward; the ratio and LOS are recomputed against
+ * the *target's own* `free_flow_kph`, not the source's. Every estimated row
+ * is deleted and rewritten from scratch each sweep — `ON CONFLICT DO
+ * NOTHING` alone would let a stale estimate outlive the measurement that
+ * produced it, since nothing else would ever refresh or clear that row. A
+ * neighbor only qualifies as a continuation when its start touches the
+ * measured segment's end (or vice versa) via `ST_DWithin` on the endpoints
+ * specifically — checking the whole geometries would also reach the
+ * opposite carriageway of a divided highway, which sits a lane-width away
+ * under the same `ref`+`highway`. An endpoint-adjacent neighbor whose
+ * overall bearing runs opposite (within a 360°-wraparound-aware 60°) is
+ * rejected too, since a junction can still let the opposite-direction
+ * segment (or the reversed twin of the same bidirectional way) share an
+ * endpoint. Neighbors longer than `maxNeighborM` are excluded so one sensor
+ * reading is never stretched across a long, likely-heterogeneous stretch of
+ * road. A segment that already has any `segment_speed` row — measured or
+ * estimated — is left alone; measured rows always win.
+ */
+export async function propagateSegmentSpeed(
+  sql: Sql,
+  now: () => string,
+  opts?: PropagateSegmentSpeedOptions
+): Promise<PropagateSegmentSpeedResult> {
+  const withinM = opts?.withinM ?? 50;
+  const maxNeighborM = opts?.maxNeighborM ?? 3000;
+  const nowIso = now();
+
+  return sql.begin(async (tx) => {
+    await tx`DELETE FROM conditions.segment_speed WHERE is_estimated = true`;
+
+    const rows = await tx`
+      INSERT INTO conditions.segment_speed
+        (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, is_estimated, observed_at, updated_at)
+      SELECT DISTINCT ON (nb.segment_id)
+        nb.segment_id, m.current_kph, nb.free_flow_kph,
+        CASE WHEN nb.free_flow_kph > 0 THEN m.current_kph / nb.free_flow_kph END,
+        CASE WHEN nb.free_flow_kph IS NULL OR nb.free_flow_kph <= 0 THEN 'unknown'
+             WHEN m.current_kph / nb.free_flow_kph >= 0.85 THEN 'free_flow'
+             WHEN m.current_kph / nb.free_flow_kph >= 0.5  THEN 'heavy'
+             WHEN m.current_kph / nb.free_flow_kph >= 0.15 THEN 'queuing'
+             ELSE 'stationary' END,
+        'estimated', 'sensor', true, m.observed_at, ${nowIso}
+      FROM conditions.segment_speed m
+      JOIN conditions.road_segment ms ON ms.segment_id = m.segment_id
+      JOIN conditions.road_segment nb
+        ON nb.ref = ms.ref AND nb.highway = ms.highway AND nb.segment_id <> ms.segment_id
+       AND nb.length_m <= ${maxNeighborM}
+       AND ( ST_DWithin(ST_EndPoint(ms.geom)::geography, ST_StartPoint(nb.geom)::geography, ${withinM})
+          OR ST_DWithin(ST_StartPoint(ms.geom)::geography, ST_EndPoint(nb.geom)::geography, ${withinM}) )
+      CROSS JOIN LATERAL (
+        SELECT abs(degrees(ST_Azimuth(ST_StartPoint(ms.geom), ST_EndPoint(ms.geom)))
+                 - degrees(ST_Azimuth(ST_StartPoint(nb.geom), ST_EndPoint(nb.geom)))) AS d
+      ) bearing
+      LEFT JOIN conditions.segment_speed ex ON ex.segment_id = nb.segment_id
+      WHERE m.is_estimated = false AND ex.segment_id IS NULL AND m.current_kph IS NOT NULL
+        AND least(bearing.d, 360 - bearing.d) <= 60
+      ORDER BY nb.segment_id, ST_Distance(nb.geom::geography, ms.geom::geography)
+      ON CONFLICT (segment_id) DO NOTHING
+      RETURNING segment_id`;
+
+    return { estimated: rows.length };
+  });
+}

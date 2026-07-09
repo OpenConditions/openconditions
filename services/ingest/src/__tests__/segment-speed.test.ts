@@ -2,7 +2,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
-import { fuseSegmentSpeed, writeSensorObservations } from "../pipeline/segment-speed.js";
+import {
+  fuseSegmentSpeed,
+  propagateSegmentSpeed,
+  writeSensorObservations,
+} from "../pipeline/segment-speed.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -43,6 +47,39 @@ async function seedSensorSegment(sensorKey: string, segmentId: string): Promise<
   await sql`
     INSERT INTO conditions.sensor_segment (sensor_key, segment_id, fraction, offset_m, matched_at)
     VALUES (${sensorKey}, ${segmentId}, 0.5, 5.0, ${NOW})`;
+}
+
+async function seedRefSegment(
+  segmentId: string,
+  wayId: number,
+  dir: string,
+  wkt: string,
+  ref: string,
+  freeFlowKph: number | null,
+  lengthM = 1000
+): Promise<void> {
+  await sql`
+    INSERT INTO conditions.road_segment
+      (segment_id, way_id, dir, geom, highway, ref, length_m, min_zoom, free_flow_kph, computed_at)
+    VALUES (${segmentId}, ${wayId}, ${dir},
+      ST_SetSRID(ST_GeomFromText(${wkt}), 4326),
+      'motorway', ${ref}, ${lengthM}, 5, ${freeFlowKph}, ${NOW})`;
+}
+
+async function seedSpeed(
+  segmentId: string,
+  currentKph: number,
+  freeFlowKph: number,
+  isEstimated: boolean
+): Promise<void> {
+  const ratio = currentKph / freeFlowKph;
+  const los =
+    ratio >= 0.85 ? "free_flow" : ratio >= 0.5 ? "heavy" : ratio >= 0.15 ? "queuing" : "stationary";
+  await sql`
+    INSERT INTO conditions.segment_speed
+      (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, contributing, is_estimated, observed_at, updated_at)
+    VALUES (${segmentId}, ${currentKph}, ${freeFlowKph}, ${ratio}, ${los},
+      ${isEstimated ? "estimated" : "measured"}, 'sensor', ARRAY['test-source'], ${isEstimated}, ${NOW}, ${NOW})`;
 }
 
 async function seedObservation(
@@ -230,6 +267,135 @@ describe("fuseSegmentSpeed", () => {
       expect(row.confidence).toBe("measured");
       expect(row.is_estimated).toBe(false);
       expect([...row.contributing].sort()).toEqual(["incident-authority", "verkehr-nrw-de"]);
+    },
+    30_000
+  );
+});
+
+describe("propagateSegmentSpeed", () => {
+  it(
+    "lends a measured segment's absolute speed onto a continuing same-ref/highway gap segment " +
+      "(ratio recomputed against the gap's own free-flow speed), never overwrites a segment that " +
+      "already has its own speed row, rejects an endpoint-adjacent but antiparallel (reversed-twin) " +
+      "neighbor, and clears the estimate once its source measurement is gone",
+    async () => {
+      // A: measured, current_kph=40, heading east.
+      await seedRefSegment("900:f", 900, "f", "LINESTRING(5.0 52.0, 5.1 52.0)", "prop-a1", 100);
+      await seedSpeed("900:f", 40, 100, false);
+
+      // B: continuation of A (B's start = A's end), no speed of its own yet,
+      // own free_flow_kph=120 -- the row propagateSegmentSpeed should fill.
+      await seedRefSegment("901:f", 901, "f", "LINESTRING(5.1 52.0, 5.2 52.0)", "prop-a1", 120);
+
+      // D: also a valid continuation of A geometrically, but already carries
+      // its own measured row -- must survive untouched.
+      await seedRefSegment("902:f", 902, "f", "LINESTRING(5.1 52.0, 5.15 52.0)", "prop-a1", 100);
+      await seedSpeed("902:f", 99, 100, false);
+
+      // C: the reversed twin of A itself (same endpoints, opposite direction)
+      // -- endpoint-adjacent to A but ~180 degrees off bearing, must be rejected.
+      await seedRefSegment("903:f", 903, "b", "LINESTRING(5.1 52.0, 5.0 52.0)", "prop-a1", 100);
+
+      await propagateSegmentSpeed(sql, () => NOW);
+
+      const b = await sql<
+        {
+          is_estimated: boolean;
+          confidence: string;
+          current_kph: number;
+          free_flow_kph: number;
+          speed_ratio: number;
+          los: string;
+        }[]
+      >`SELECT is_estimated, confidence, current_kph, free_flow_kph, speed_ratio, los
+        FROM conditions.segment_speed WHERE segment_id = '901:f'`;
+      expect(b).toHaveLength(1);
+      expect(b[0]!.is_estimated).toBe(true);
+      expect(b[0]!.confidence).toBe("estimated");
+      expect(Number(b[0]!.current_kph)).toBeCloseTo(40, 5);
+      expect(Number(b[0]!.free_flow_kph)).toBeCloseTo(120, 5);
+      expect(Number(b[0]!.speed_ratio)).toBeCloseTo(0.3333, 2);
+      expect(b[0]!.los).toBe("queuing");
+
+      const d = await sql<{ is_estimated: boolean; confidence: string; current_kph: number }[]>`
+        SELECT is_estimated, confidence, current_kph FROM conditions.segment_speed WHERE segment_id = '902:f'`;
+      expect(d).toHaveLength(1);
+      expect(d[0]!.is_estimated).toBe(false);
+      expect(d[0]!.confidence).toBe("measured");
+      expect(Number(d[0]!.current_kph)).toBeCloseTo(99, 5);
+
+      const c =
+        await sql`SELECT segment_id FROM conditions.segment_speed WHERE segment_id = '903:f'`;
+      expect(c).toHaveLength(0);
+
+      // Stale-estimate regression: once A's own measurement is gone, re-running
+      // must clear B's estimate rather than let it survive forever via ON CONFLICT DO NOTHING.
+      await sql`DELETE FROM conditions.segment_speed WHERE segment_id = '900:f'`;
+      await propagateSegmentSpeed(sql, () => NOW);
+
+      const bAfter =
+        await sql`SELECT segment_id FROM conditions.segment_speed WHERE segment_id = '901:f'`;
+      expect(bAfter).toHaveLength(0);
+    },
+    30_000
+  );
+
+  it(
+    "does not lend a reading onto a neighbor longer than the length cap even when it is an " +
+      "endpoint-adjacent, bearing-aligned continuation",
+    async () => {
+      // A: measured, heading east.
+      await seedRefSegment("910:f", 910, "f", "LINESTRING(6.0 53.0, 6.1 53.0)", "prop-len", 100);
+      await seedSpeed("910:f", 40, 100, false);
+
+      // B: a perfect continuation of A (start = A's end, same eastward bearing)
+      // whose stored length exceeds the 3 km cap -- one sensor must not paint it.
+      await seedRefSegment(
+        "911:f",
+        911,
+        "f",
+        "LINESTRING(6.1 53.0, 6.2 53.0)",
+        "prop-len",
+        120,
+        4000
+      );
+
+      await propagateSegmentSpeed(sql, () => NOW);
+
+      const b =
+        await sql`SELECT segment_id FROM conditions.segment_speed WHERE segment_id = '911:f'`;
+      expect(b).toHaveLength(0);
+    },
+    30_000
+  );
+
+  it(
+    "does not lend a reading onto a parallel, bearing-aligned opposite-carriageway neighbor whose " +
+      "whole geometry is within tolerance but whose endpoints do not touch the measured segment's endpoints",
+    async () => {
+      // A: measured, heading east along lat 53.0.
+      await seedRefSegment("920:f", 920, "f", "LINESTRING(7.0 53.0, 7.1 53.0)", "prop-par", 100);
+      await seedSpeed("920:f", 40, 100, false);
+
+      // P: same ref/highway, runs parallel ~20 m north and the SAME eastward
+      // direction (so the bearing gate does not exclude it). Its whole geometry
+      // is within the 50 m tolerance of A, but its start/end are ~6.7 km from
+      // A's end/start respectively, so the endpoint-continuation gate rejects it.
+      // A blanket whole-geometry ST_DWithin would wrongly fill it.
+      await seedRefSegment(
+        "921:f",
+        921,
+        "f",
+        "LINESTRING(7.0 53.00018, 7.1 53.00018)",
+        "prop-par",
+        120
+      );
+
+      await propagateSegmentSpeed(sql, () => NOW);
+
+      const p =
+        await sql`SELECT segment_id FROM conditions.segment_speed WHERE segment_id = '921:f'`;
+      expect(p).toHaveLength(0);
     },
     30_000
   );
