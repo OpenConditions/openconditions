@@ -7,3 +7,4 @@ export * from "./gtfsrt.js";
 export * from "./datex.js";
 export * from "./valhalla.js";
 export * from "./sse.js";
+export * from "./segments.js";

@@ -6,8 +6,10 @@ import {
   matchesTypeFilter,
   observationsToDatexSituations,
   parseTypeFilter,
+  segmentsToGeoJSON,
   sseFrame,
   type FeedInfo,
+  type SegmentSpeedRow,
   observationsToGeoJSON,
   observationsToGtfsRtAlerts,
   observationsToJsonLd,
@@ -150,9 +152,22 @@ export function registerFeedStatusRoute(
  * into standard wire formats so the wider ecosystem can consume OpenConditions:
  *   GET /observations.geojson · /observations.jsonld · /traff.xml ·
  *       /gtfs-rt/alerts.pb · /datex2/situations.xml ·
- *       /valhalla/exclusions.json · /stream (SSE) · /feeds/status
+ *       /valhalla/exclusions.json · /stream (SSE) · /feeds/status ·
+ *       /segments.geojson
  * All bbox-filterable (?bbox=west,south,east,north[&domain=roads]); /stream also
  * takes an optional comma-separated &type= filter and pushes live deltas.
+ *
+ * `/segments.geojson` is a projection of `conditions.road_segment` (LEFT JOIN
+ * `segment_speed`), not of `conditions.observations`, so unlike the routes
+ * above it does NOT run `filterForPermissiveExport`. `segment_speed` is a fused
+ * product; for a segment with a single contributing source it is effectively
+ * that source's own reading, so skipping the license filter is only safe while
+ * no share-alike source feeds the surface. That holds for v1: the current
+ * share-alike feeds are event/roadworks feeds (`kind: "event"`), not
+ * `metric: "flow"` measurements, so they never contribute to `segment_speed`.
+ * Follow-up when a share-alike FLOW source is ever added: filter segments by the
+ * licenses of their contributing sources (`segment_speed.contributing` carries
+ * the source ids) before emitting here.
  */
 export function registerPublishRoutes(
   app: FastifyInstance,
@@ -231,6 +246,27 @@ export function registerPublishRoutes(
     reply.header("Cache-Control", "public, max-age=90");
     reply.header("X-Data-License", distinctLicenses(obs));
     return reply.send(eventsToExclusions(obs));
+  });
+
+  app.get("/segments.geojson", async (req, reply) => {
+    const q = req.query as Record<string, string | undefined>;
+    const bbox = parseBbox(q.bbox);
+    if (!bbox) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
+    const [west, south, east, north] = bbox;
+    const rows = await db.execute<SegmentSpeedRow[]>(
+      `SELECT s.segment_id AS "segmentId", s.dir, s.highway, s.ref,
+              ST_AsGeoJSON(s.geom) AS geojson,
+              sp.speed_ratio AS "speedRatio", sp.los, sp.confidence,
+              sp.current_kph AS "currentKph", sp.free_flow_kph AS "freeFlowKph"
+       FROM conditions.road_segment s
+       LEFT JOIN conditions.segment_speed sp USING (segment_id)
+       WHERE s.geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)
+       LIMIT 20000`,
+      [west, south, east, north]
+    );
+    reply.header("Content-Type", "application/geo+json");
+    reply.header("Cache-Control", "public, max-age=60");
+    return reply.send(segmentsToGeoJSON(rows));
   });
 
   app.get("/stream", (req, reply) => {
