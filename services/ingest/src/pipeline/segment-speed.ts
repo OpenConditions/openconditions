@@ -53,3 +53,52 @@ export async function writeSensorObservations(
 
   return { written: rows.length };
 }
+
+export interface FuseSegmentSpeedResult {
+  /** Measured `segment_speed` rows written this run. */
+  measured: number;
+}
+
+/**
+ * Reduces every unexpired `segment_observation` row per segment to a single
+ * measured `segment_speed` row — the multi-source fusion seam: a second
+ * source (TomTom/HERE), a crowd aggregate, or a federation peer is a new
+ * `segment_observation` row with its own tier, not a rearchitect of this
+ * step. v1 reducer = **highest tier, then freshest** (tier order
+ * `authoritative > sensor > peer > crowd`); the weighted/Kalman-per-segment
+ * upgrade is a later drop-in replacement for this one query only. Estimated
+ * rows (written by the propagation step) are left untouched —
+ * only `is_estimated = false` rows are cleared and rewritten here, so measured
+ * always wins over estimated by construction. `contributing` lists every
+ * still-live source id on the segment (not just the winning tier's), so a
+ * fused estimate stays auditable and re-fusable by a peer.
+ */
+export async function fuseSegmentSpeed(
+  sql: Sql,
+  now: () => string
+): Promise<FuseSegmentSpeedResult> {
+  const nowIso = now();
+
+  await sql`DELETE FROM conditions.segment_speed WHERE is_estimated = false`;
+
+  const rows = await sql`
+    INSERT INTO conditions.segment_speed
+      (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, contributing, is_estimated, observed_at, updated_at)
+    SELECT DISTINCT ON (o.segment_id)
+      o.segment_id, o.current_kph, o.free_flow_kph, o.speed_ratio, o.los, 'measured', o.source_tier,
+      ARRAY(SELECT DISTINCT source FROM conditions.segment_observation o2
+            WHERE o2.segment_id = o.segment_id AND (o2.expires_at IS NULL OR o2.expires_at > ${nowIso}::timestamptz)),
+      false, o.observed_at, ${nowIso}
+    FROM conditions.segment_observation o
+    WHERE o.expires_at IS NULL OR o.expires_at > ${nowIso}::timestamptz
+    ORDER BY o.segment_id,
+      CASE o.source_tier WHEN 'authoritative' THEN 0 WHEN 'sensor' THEN 1 WHEN 'peer' THEN 2 WHEN 'crowd' THEN 3 ELSE 4 END,
+      o.observed_at DESC
+    ON CONFLICT (segment_id) DO UPDATE SET
+      current_kph=EXCLUDED.current_kph, free_flow_kph=EXCLUDED.free_flow_kph, speed_ratio=EXCLUDED.speed_ratio,
+      los=EXCLUDED.los, confidence='measured', source_tier=EXCLUDED.source_tier, contributing=EXCLUDED.contributing,
+      is_estimated=false, observed_at=EXCLUDED.observed_at, updated_at=EXCLUDED.updated_at
+    RETURNING segment_id`;
+
+  return { measured: rows.length };
+}
