@@ -432,8 +432,8 @@ describe("FEED_SOURCES", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("loads every feed from the data files (all 59 migrated)", () => {
-    expect(FEED_SOURCES.length).toBe(59);
+  it("loads every feed from the data files (all 60 migrated)", () => {
+    expect(FEED_SOURCES.length).toBe(60);
     expect(new Set(FEED_SOURCES.map((f) => f.id)).size).toBe(FEED_SOURCES.length);
   });
 

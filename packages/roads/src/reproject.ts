@@ -33,6 +33,10 @@ const EPSG_DEFS: Record<string, string> = {
   // ETRS89 / UTM zone 30N — City of Madrid INFORMO sensors (no datum shift).
   "EPSG:25830":
     "+proj=utm +zone=30 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
+  // RGF93 / Lambert-93 — French national road counting-station reference.
+  "EPSG:2154":
+    "+proj=lcc +lat_0=46.5 +lon_0=3 +lat_1=49 +lat_2=44 +x_0=700000 +y_0=6600000 " +
+    "+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs +type=crs",
 };
 for (const [code, def] of Object.entries(EPSG_DEFS)) proj4.defs(code, def);
 

@@ -58,8 +58,10 @@ export function parseMivConfig(input: string | Buffer): Map<string, SiteGeometry
  * speed is the harmonic speed of the highest-intensity valid class (252 = no
  * data). Geometry comes from the config `siteMap`, joined on `unieke_id`. los is
  * left "unknown" (absolute speed is road-class–dependent) for baseline
- * enrichment. Faulty (`defect`), invalid (`geldig=0`), ungeolocated, or
- * no-vehicle points are skipped.
+ * enrichment. Faulty (`defect`), ungeolocated, or no-vehicle points are
+ * skipped. (`geldig` is NOT a per-cycle data-validity flag — it is 0 for the
+ * vast majority of live points that nonetheless carry real speeds — so the
+ * 252-km/h no-data sentinel and a positive intensity are the validity signal.)
  */
 export function parseMivFlow(
   input: string | Buffer,
@@ -88,7 +90,7 @@ export function parseMivFlow(
     try {
       const id = mp["@_unieke_id"];
       if (id == null) continue;
-      if (xmlText(mp["defect"]) === "1" || xmlText(mp["geldig"]) === "0") continue;
+      if (xmlText(mp["defect"]) === "1") continue;
 
       const geom = siteMap?.get(String(id)) as Point | undefined;
       if (!geom) continue;

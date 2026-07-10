@@ -13,4 +13,23 @@
     privacyUrl: "https://www.bison-fute.gouv.fr/",
     enabledByDefault: true,
   },
+  {
+    id: "circulation-fr",
+    name: "Circulation temps réel — vitesses & débits (France)",
+    format: "datex2",
+    produces: "flow",
+    url: "https://transport.data.gouv.fr/resources/79165/download",
+    stationRegistry: {
+      url: "https://transport.data.gouv.fr/resources/79167/download",
+      format: "france-comptage-csv",
+    },
+    cadenceSec: 360,
+    freshnessWindowSec: 1200,
+    license: "etalab-2.0",
+    licenseUrl: "https://www.etalab.gouv.fr/licence-ouverte-open-licence",
+    attribution: "Ministère de la Transition écologique / DIR",
+    country: "FR",
+    privacyUrl: "https://www.bison-fute.gouv.fr/",
+    enabledByDefault: true,
+  },
 ]

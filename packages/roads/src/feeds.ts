@@ -61,7 +61,10 @@ export type FeedSource = FeedSourceBase & {
    * it (egress-guarded, cached) and joins it into the flow parser as its
    * siteMap — the JSON counterpart to the DATEX `siteTable`.
    */
-  stationRegistry?: { url: string; format: "fintraffic-stations" | "webtris-sites" | "miv-config" };
+  stationRegistry?: {
+    url: string;
+    format: "fintraffic-stations" | "webtris-sites" | "miv-config" | "france-comptage-csv";
+  };
   /** Field mapping for `format: "geojson"` feeds (passed to the generic reader). */
   geojson?: GeoJsonMapping;
   /**

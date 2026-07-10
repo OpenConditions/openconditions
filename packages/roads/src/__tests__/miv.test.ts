@@ -50,7 +50,7 @@ describe("parseMivFlow", () => {
   it("uses the highest-intensity valid class's harmonic speed, joined to config geometry", () => {
     const siteMap = parseMivConfig(CONFIG);
     const { flows } = parseMivFlow(DATA, src, siteMap);
-    // meetpunt 29 is geldig=0 (all classes are the 252 no-data sentinel) → skipped.
+    // meetpunt 29 has no valid class (intensity 0 + the 252 no-data sentinel) → skipped.
     expect(flows).toHaveLength(1);
     expect(flows[0]!.id).toBe("miv-flow-be:4970");
     // Class 2 has the higher intensity (120 > 30) → its 88 km/h wins.
