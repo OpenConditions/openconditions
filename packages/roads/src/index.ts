@@ -13,6 +13,7 @@ export * from "./flow-ohgo.js";
 export * from "./flow-trafikverket.js";
 export * from "./maxspeed.js";
 export * from "./overpass.js";
+export * from "./pbf-geojson.js";
 export * from "./segment.js";
 export * from "./fintraffic-constants.js";
 export * from "./measuredData.js";
