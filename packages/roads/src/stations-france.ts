@@ -16,14 +16,12 @@ export function parseFranceComptageStations(input: string | Buffer): Map<string,
   const lines = text.split(/\r?\n/);
   if (lines.length < 2) return map;
 
-  const header = lines[0]!.split(";").map((h) => h.trim());
-  const col = (name: string) => header.indexOf(name);
-  const iId = col("code_pme");
-  const iXd = col("x_deb");
-  const iYd = col("y_deb");
-  const iXf = col("x_fin");
-  const iYf = col("y_fin");
-  if (iId < 0 || iXd < 0 || iYd < 0 || iXf < 0 || iYf < 0) return map;
+  // The published file is column-misaligned — the header carries 20 columns but
+  // every data row carries 19 (a middle column is dropped), so header-index
+  // lookups read the wrong cells. `code_pme` is reliably the first column and the
+  // coordinate block (x_deb, y_deb, x_fin, y_fin, code_traficolor) is reliably
+  // the trailing five, so anchor the coordinates to the row's end instead.
+  if (!lines[0]!.toLowerCase().includes("code_pme")) return map;
 
   const toWgs = reprojectorFor("EPSG:2154");
   if (!toWgs) return map;
@@ -38,12 +36,14 @@ export function parseFranceComptageStations(input: string | Buffer): Map<string,
     const row = lines[i]!;
     if (row.trim() === "") continue;
     const cells = row.split(";");
-    const id = cells[iId]?.trim();
+    if (cells.length < 6) continue;
+    const id = cells[0]?.trim();
     if (!id) continue;
-    const xd = num(cells[iXd]);
-    const yd = num(cells[iYd]);
-    const xf = num(cells[iXf]);
-    const yf = num(cells[iYf]);
+    const n = cells.length;
+    const xd = num(cells[n - 5]);
+    const yd = num(cells[n - 4]);
+    const xf = num(cells[n - 3]);
+    const yf = num(cells[n - 2]);
     if (xd == null || yd == null || xf == null || yf == null) continue;
 
     const [lonD, latD] = toWgs([xd, yd]);
