@@ -17,6 +17,21 @@ function envInt(env: NodeJS.ProcessEnv, key: string, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+/**
+ * The URL's last path segment when it's a plain filename (letters, digits,
+ * `.`, `-`, `_`), else `"artifact"`. Keeps the extension (osmium infers format
+ * from it) while refusing anything that could escape the temp dir.
+ */
+function safeBasename(url: string): string {
+  try {
+    const name = new URL(url).pathname.split("/").pop();
+    if (name && /^[\w.-]+$/.test(name)) return name;
+  } catch {
+    // fall through
+  }
+  return "artifact";
+}
+
 export interface DownloadArtifactDeps {
   /**
    * Test seam: the guarded fetch to use. Production omits it and gets a
@@ -65,7 +80,9 @@ export async function downloadLargeArtifact(
     guardedFetch(undiciFetch as unknown as typeof fetch, { ...guardOptionsFromEnv(env), maxBytes });
 
   const dir = await mkdtemp(join(deps.tmpDir ?? tmpdir(), "oc-artifact-"));
-  const path = join(dir, "artifact");
+  // Preserve the URL's basename so downstream tools that infer format from the
+  // filename (osmium reads `.osm.pbf`) work; fall back to a safe generic name.
+  const path = join(dir, safeBasename(url));
 
   const controller = new AbortController();
   const timer = setTimeout(

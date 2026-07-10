@@ -52,6 +52,18 @@ describe("downloadLargeArtifact", () => {
     }
   });
 
+  it("names the temp file from the URL basename so osmium can infer the format", async () => {
+    const f = fakeFetch({ "http://x/europe/netherlands-latest.osm.pbf": { body: "PBF" } });
+    const r = await downloadLargeArtifact("http://x/europe/netherlands-latest.osm.pbf", {
+      fetchImpl: f,
+    });
+    try {
+      expect(r.path.endsWith("/netherlands-latest.osm.pbf")).toBe(true);
+    } finally {
+      await rm(r.dir, { recursive: true, force: true });
+    }
+  });
+
   it("throws on a non-ok download response", async () => {
     const f = fakeFetch({ "http://x/a.pbf": { status: 500, body: "" } });
     await expect(downloadLargeArtifact("http://x/a.pbf", { fetchImpl: f })).rejects.toThrow(
