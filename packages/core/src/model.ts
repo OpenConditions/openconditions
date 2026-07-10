@@ -41,6 +41,9 @@ export type SourceFormat =
   | "nyc-dot-speed-json"
   | "ohgo-json"
   | "trafikverket-flow-json"
+  | "bonn-geojson"
+  | "madrid-informo-xml"
+  | "lta-speedbands-json"
   | "gtfs-rt"
   | "native"
   | "crowd";

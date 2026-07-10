@@ -31,4 +31,40 @@
       },
     },
   },
+  {
+    id: "lta-speedbands-sg",
+    name: "LTA DataMall Traffic Speed Bands (Singapore)",
+    format: "lta-speedbands-json",
+    produces: "flow",
+    url: "https://datamall2.mytransport.sg/ltaodataservice/v3/TrafficSpeedBands",
+    auth: {
+      kind: "header-key",
+      header: "AccountKey",
+      envVar: "LTA_ACCOUNT_KEY",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "Singapore-ODL-1.0",
+    licenseUrl: "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html",
+    attribution: "Land Transport Authority (Singapore)",
+    country: "SG",
+    privacyUrl: "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
+    // DataMall pages this resource 500 links per call ($skip); a single fetch
+    // covers the first page only, so it ships off until the fetch layer pages.
+    // Reuses the shared LTA_ACCOUNT_KEY (see lta-sg above).
+    enabledByDefault: false,
+    setup: {
+      LTA_ACCOUNT_KEY: {
+        title: "LTA DataMall AccountKey (Singapore)",
+        url: "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
+        urlLabel: "Request LTA API access",
+        steps: [
+          "Request an API account via the form at datamall.lta.gov.sg/content/datamall/en/request-for-api.html.",
+          "The AccountKey is emailed to you.",
+        ],
+        cost: "Free",
+        notes: "Singapore ODL (commercial OK); attribution to the Land Transport Authority. Shared with the LTA Traffic Incidents feed.",
+      },
+    },
+  },
 ]

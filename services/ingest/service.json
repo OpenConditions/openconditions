@@ -372,7 +372,7 @@
             "The AccountKey is emailed to you."
           ],
           "cost": "Free",
-          "notes": "Singapore ODL (commercial OK); attribution to the Land Transport Authority."
+          "notes": "Singapore ODL (commercial OK); attribution to the Land Transport Authority. Shared with the LTA Traffic Incidents feed."
         }
       },
       "NAP_SI_USERNAME": {

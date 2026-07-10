@@ -24,6 +24,9 @@ import { parseWebtrisFlow } from "./flow-webtris.js";
 import { parseNycDotFlow } from "./flow-nycdot.js";
 import { parseOhgoFlow } from "./flow-ohgo.js";
 import { parseTrafikverketFlow } from "./flow-trafikverket.js";
+import { parseBonnFlow } from "./flow-bonn.js";
+import { parseMadridFlow } from "./flow-madrid.js";
+import { parseLtaSpeedBands } from "./flow-lta-speedbands.js";
 import type { SourceDescriptor } from "./types.js";
 
 // FeedAuth now lives in @openconditions/ingest-framework; re-exported here so
@@ -146,6 +149,9 @@ export function flowParserFor(format: SourceFormat): FlowParserFn {
   if (format === "nyc-dot-speed-json") return parseNycDotFlow;
   if (format === "ohgo-json") return parseOhgoFlow;
   if (format === "trafikverket-flow-json") return parseTrafikverketFlow;
+  if (format === "bonn-geojson") return parseBonnFlow;
+  if (format === "madrid-informo-xml") return parseMadridFlow;
+  if (format === "lta-speedbands-json") return parseLtaSpeedBands;
   throw new Error(`No flow parser registered for format: ${format}`);
 }
 
