@@ -27,8 +27,13 @@ const PRIVATE_HOST_RANGES: RegExp[] = [
  * `localhost`, and any host matching the private/loopback/link-local/CGNAT/ULA
  * denylist. Textual only — DNS resolution is checked separately by
  * {@link assertResolvesToPublicIp} to close the rebinding window.
+ *
+ * `allowedHosts` is an operator-configured set of trusted internal hostnames
+ * (e.g. a self-hosted Overpass on the compose network) that bypass the
+ * private-range denylist — the scheme check always applies. Empty by default,
+ * so the guard is strict unless an operator explicitly opts a host in.
  */
-export function assertPublicUrl(url: string): void {
+export function assertPublicUrl(url: string, allowedHosts?: ReadonlySet<string>): void {
   let parsed: URL;
   try {
     parsed = new URL(url);
@@ -40,6 +45,7 @@ export function assertPublicUrl(url: string): void {
   }
   const raw = parsed.hostname;
   const host = raw.startsWith("[") && raw.endsWith("]") ? raw.slice(1, -1) : raw;
+  if (allowedHosts?.has(host.toLowerCase())) return;
   if (host === "localhost" || host === "" || PRIVATE_HOST_RANGES.some((re) => re.test(host))) {
     throw new Error("URLs targeting internal/private addresses are not allowed");
   }
@@ -115,12 +121,18 @@ const defaultLookup: LookupFn = (hostname, opts) =>
  */
 export async function resolvePublicIps(
   hostname: string,
-  lookup: LookupFn = defaultLookup
+  lookup: LookupFn = defaultLookup,
+  opts: { allowPrivate?: boolean } = {}
 ): Promise<LookupAddress[]> {
   const addresses = await lookup(hostname, { all: true, verbatim: true });
   if (!addresses.length) {
     throw new Error(`No DNS records for ${hostname}`);
   }
+  // An operator-allowlisted host still resolves (so the connection can be pinned
+  // to the returned address — no unchecked second lookup), but skips the
+  // private-IP rejection. Trust is explicit and host-scoped, so there is no
+  // rebinding gap: we allow the private address AND dial exactly it.
+  if (opts.allowPrivate) return addresses;
   for (const { address, family } of addresses) {
     if (family === 4) {
       const int = ipv4ToInt(address);
@@ -154,6 +166,13 @@ export interface FetchGuardOptions {
   timeoutMs: number;
   /** Cap on redirect hops before giving up. */
   maxRedirects: number;
+  /**
+   * Operator-configured trusted internal hostnames (lowercased) that bypass the
+   * private-IP rejection — every other check (scheme, redirect re-validation,
+   * size/timeout caps) still applies, and a redirect to a NON-allowed host is
+   * still rejected. Undefined/empty keeps the guard strict.
+   */
+  allowedHosts?: ReadonlySet<string>;
 }
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
@@ -242,14 +261,15 @@ export function guardedFetch(
     let currentInit: RequestInit = { ...(init ?? {}) };
 
     for (let hop = 0; hop <= opts.maxRedirects; hop++) {
-      assertPublicUrl(currentUrl);
+      assertPublicUrl(currentUrl, opts.allowedHosts);
       const rawHost = new URL(currentUrl).hostname;
       // `URL.hostname` keeps the brackets on an IPv6 literal (e.g. "[::1]"),
       // which dns.lookup cannot parse; strip them for the DNS check, mirroring
       // the bracket-strip assertPublicUrl already does.
       const host =
         rawHost.startsWith("[") && rawHost.endsWith("]") ? rawHost.slice(1, -1) : rawHost;
-      const addrs = await resolvePublicIps(host, lookup);
+      const allowPrivate = opts.allowedHosts?.has(host.toLowerCase()) ?? false;
+      const addrs = await resolvePublicIps(host, lookup, { allowPrivate });
       const pinned = addrs[0]!;
 
       // Per-hop dispatcher that dials the exact validated IP. `connect.lookup`
@@ -291,7 +311,9 @@ export function guardedFetch(
           throw new Error(`redirect ${res.status} without Location from ${redact(currentUrl)}`);
         }
         const next = new URL(location, currentUrl).toString();
-        assertPublicUrl(next); // re-validate the hop before the next iteration checks DNS
+        // Re-validate the hop before the next iteration checks DNS. The allowlist
+        // is passed too, so a redirect to a NON-allowed private host is still rejected.
+        assertPublicUrl(next, opts.allowedHosts);
         // A 303 downgrades to GET and drops the body; 307/308 preserve method + body.
         if (res.status === 303) currentInit = { ...currentInit, method: "GET", body: undefined };
         // Mirror browser redirect behavior: a cross-origin hop must not replay
@@ -325,6 +347,21 @@ function envInt(env: NodeJS.ProcessEnv, key: string, fallback: number): number {
 }
 
 /**
+ * Parses a comma-separated hostname list into a lowercased Set, or undefined
+ * when unset/empty (Compose's `${VAR:-}`). These hosts bypass the private-IP
+ * rejection — an operator lists a self-hosted service they explicitly trust
+ * (e.g. `overpass` for a same-network Overpass instance).
+ */
+export function parseAllowedHosts(raw: string | undefined): ReadonlySet<string> | undefined {
+  if (raw == null || raw.trim() === "") return undefined;
+  const hosts = raw
+    .split(",")
+    .map((h) => h.trim().toLowerCase())
+    .filter((h) => h !== "");
+  return hosts.length > 0 ? new Set(hosts) : undefined;
+}
+
+/**
  * Default ceiling on a feed's decompressed / response bytes. Sized above the
  * largest legitimate default-enabled feed — NDW's site table
  * (measurement.xml.gz) decompresses to ~373 MiB. That table (and the flow
@@ -343,6 +380,7 @@ export function guardOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): Fetch
     maxBytes: envInt(env, "OPENCONDITIONS_MAX_FEED_BYTES", DEFAULT_MAX_FEED_BYTES),
     timeoutMs: envInt(env, "OPENCONDITIONS_FETCH_TIMEOUT_MS", 60_000),
     maxRedirects: envInt(env, "OPENCONDITIONS_MAX_REDIRECTS", 5),
+    allowedHosts: parseAllowedHosts(env["OPENCONDITIONS_EGRESS_ALLOWED_HOSTS"]),
   };
 }
 

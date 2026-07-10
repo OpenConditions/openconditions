@@ -8,6 +8,7 @@ import {
   guardOptionsFromEnv,
   guardedFetch,
   isPublicUrl,
+  parseAllowedHosts,
   resolvePublicIps,
 } from "../egress.js";
 
@@ -112,6 +113,43 @@ describe("resolvePublicIps", () => {
   it("throws when no records resolve", async () => {
     await expect(resolvePublicIps("nx", fakeLookup([]))).rejects.toThrow(/No DNS records/);
   });
+
+  it("returns private addresses (no rejection) when allowPrivate is set", async () => {
+    const addrs = [{ address: "172.18.0.13", family: 4 }];
+    await expect(
+      resolvePublicIps("overpass", fakeLookup(addrs), { allowPrivate: true })
+    ).resolves.toEqual(addrs);
+    // Same host is still rejected without the flag.
+    await expect(resolvePublicIps("overpass", fakeLookup(addrs))).rejects.toThrow(/private IP/);
+  });
+});
+
+describe("allowlist (parseAllowedHosts + assertPublicUrl)", () => {
+  it("parses a comma-separated, case-normalized host list; empty/unset → undefined", () => {
+    expect(parseAllowedHosts("Overpass, nominatim ,")).toEqual(new Set(["overpass", "nominatim"]));
+    expect(parseAllowedHosts(undefined)).toBeUndefined();
+    expect(parseAllowedHosts("")).toBeUndefined();
+    expect(parseAllowedHosts("  ")).toBeUndefined();
+  });
+
+  it("guardOptionsFromEnv reads OPENCONDITIONS_EGRESS_ALLOWED_HOSTS", () => {
+    expect(
+      guardOptionsFromEnv({
+        OPENCONDITIONS_EGRESS_ALLOWED_HOSTS: "overpass",
+      } as unknown as NodeJS.ProcessEnv).allowedHosts
+    ).toEqual(new Set(["overpass"]));
+    expect(guardOptionsFromEnv({} as unknown as NodeJS.ProcessEnv).allowedHosts).toBeUndefined();
+  });
+
+  it("assertPublicUrl lets an allowlisted host bypass the private-range check, keeping scheme", () => {
+    const allow = new Set(["overpass"]);
+    expect(() => assertPublicUrl("http://overpass/api/interpreter", allow)).not.toThrow();
+    expect(() => assertPublicUrl("http://OVERPASS/x", allow)).not.toThrow(); // case-insensitive
+    // A non-allowlisted private host is still rejected.
+    expect(() => assertPublicUrl("http://127.0.0.1", allow)).toThrow(/internal\/private/);
+    // The scheme check still applies to an allowlisted host.
+    expect(() => assertPublicUrl("file:///etc/passwd", allow)).toThrow(/HTTP\(S\)/);
+  });
 });
 
 // A public IPv4 literal as the initial host so the default DNS lookup resolves
@@ -130,6 +168,39 @@ describe("guardedFetch", () => {
         headers: { location: "http://169.254.169.254/latest/meta-data" },
       })) as unknown as typeof fetch;
     await expect(guardedFetch(base, OPTS)(PUBLIC)).rejects.toThrow(/internal\/private/);
+  });
+
+  it("reaches an allowlisted host that resolves to a private IP", async () => {
+    const base = (async () => new Response("osm", { status: 200 })) as unknown as typeof fetch;
+    const opts = { ...OPTS, allowedHosts: new Set(["overpass"]) };
+    const res = await guardedFetch(
+      base,
+      opts,
+      {},
+      pinLookup([{ address: "172.18.0.13", family: 4 }])
+    )("http://overpass/api/interpreter");
+    expect(await res.text()).toBe("osm");
+  });
+
+  it("still rejects a redirect from an allowlisted host to a NON-allowlisted private host", async () => {
+    const base = (async (input: string | URL | Request) => {
+      if (String(input) === "http://overpass/") {
+        return new Response(null, {
+          status: 302,
+          headers: { location: "http://169.254.169.254/latest/meta-data" },
+        });
+      }
+      return new Response("ok", { status: 200 });
+    }) as unknown as typeof fetch;
+    const opts = { ...OPTS, allowedHosts: new Set(["overpass"]) };
+    await expect(
+      guardedFetch(
+        base,
+        opts,
+        {},
+        pinLookup([{ address: "172.18.0.13", family: 4 }])
+      )("http://overpass/")
+    ).rejects.toThrow(/internal\/private/);
   });
 
   it("follows a public redirect and returns the final response", async () => {
