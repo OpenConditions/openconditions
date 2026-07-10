@@ -2,6 +2,7 @@ import type { FeedSource, SiteGeometry } from "@openconditions/roads";
 import {
   parseFintrafficStations,
   parseFranceComptageStations,
+  parseHkDetectors,
   parseMivConfig,
   parseWebtrisSites,
 } from "@openconditions/roads";
@@ -26,6 +27,7 @@ const PARSERS: Record<string, (input: string) => Map<string, SiteGeometry>> = {
   "webtris-sites": parseWebtrisSites,
   "miv-config": parseMivConfig,
   "france-comptage-csv": parseFranceComptageStations,
+  "hk-detector-csv": parseHkDetectors,
 };
 
 /**

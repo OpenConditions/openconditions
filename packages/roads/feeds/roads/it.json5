@@ -1,0 +1,17 @@
+[
+  {
+    id: "turin-5t-flow",
+    name: "5T real-time traffic flow (Turin)",
+    format: "turin-fdt-xml",
+    produces: "flow",
+    url: "https://opendata.5t.torino.it/get_fdt",
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+    attribution: "5T / Città di Torino",
+    country: "IT",
+    privacyUrl: "https://www.5t.torino.it/privacy/",
+    enabledByDefault: true,
+  },
+]

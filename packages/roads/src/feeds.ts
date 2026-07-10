@@ -28,6 +28,8 @@ import { parseBonnFlow } from "./flow-bonn.js";
 import { parseMadridFlow } from "./flow-madrid.js";
 import { parseLtaSpeedBands } from "./flow-lta-speedbands.js";
 import { parseMivFlow } from "./miv.js";
+import { parseTurinFlow } from "./flow-turin.js";
+import { parseHkRawFlow } from "./hk.js";
 import type { SourceDescriptor } from "./types.js";
 
 // FeedAuth now lives in @openconditions/ingest-framework; re-exported here so
@@ -63,7 +65,12 @@ export type FeedSource = FeedSourceBase & {
    */
   stationRegistry?: {
     url: string;
-    format: "fintraffic-stations" | "webtris-sites" | "miv-config" | "france-comptage-csv";
+    format:
+      | "fintraffic-stations"
+      | "webtris-sites"
+      | "miv-config"
+      | "france-comptage-csv"
+      | "hk-detector-csv";
   };
   /** Field mapping for `format: "geojson"` feeds (passed to the generic reader). */
   geojson?: GeoJsonMapping;
@@ -157,6 +164,8 @@ export function flowParserFor(format: SourceFormat): FlowParserFn {
   if (format === "madrid-informo-xml") return parseMadridFlow;
   if (format === "lta-speedbands-json") return parseLtaSpeedBands;
   if (format === "miv-xml") return parseMivFlow;
+  if (format === "turin-fdt-xml") return parseTurinFlow;
+  if (format === "hk-raw-xml") return parseHkRawFlow;
   throw new Error(`No flow parser registered for format: ${format}`);
 }
 

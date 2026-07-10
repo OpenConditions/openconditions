@@ -139,6 +139,14 @@ export const LICENSES: Record<string, LicenseInfo> = Object.fromEntries([
     commercialOk: true,
   }),
   L({
+    id: "HK-Gov-Open-Data",
+    name: "DATA.GOV.HK Terms and Conditions of Use",
+    url: "https://data.gov.hk/en/terms-and-conditions",
+    attributionRequired: true,
+    shareAlike: false,
+    commercialOk: true,
+  }),
+  L({
     id: "NYC-Open-Data",
     name: "NYC Open Data Terms of Use",
     url: "https://www.nyc.gov/html/data/terms.html",

@@ -44,6 +44,7 @@ export const roadFeedSchema = z
           "webtris-sites",
           "miv-config",
           "france-comptage-csv",
+          "hk-detector-csv",
         ]),
       })
       .strict()

@@ -45,6 +45,8 @@ export type SourceFormat =
   | "madrid-informo-xml"
   | "lta-speedbands-json"
   | "miv-xml"
+  | "turin-fdt-xml"
+  | "hk-raw-xml"
   | "gtfs-rt"
   | "native"
   | "crowd";
