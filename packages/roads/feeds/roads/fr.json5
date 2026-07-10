@@ -18,9 +18,12 @@
     name: "Circulation temps réel — vitesses & débits (France)",
     format: "datex2",
     produces: "flow",
-    url: "https://transport.data.gouv.fr/resources/79165/download",
+    // The transport.data.gouv.fr /download link 302-chains to an HTTP endpoint,
+    // which the streaming measured-data fetch can't follow; point straight at the
+    // publisher's HTTPS file (the resolved target of resource 79165).
+    url: "https://tipi.bison-fute.gouv.fr/bison-fute-ouvert/publicationsDIR/QTV-DIR/qtvDir.xml",
     stationRegistry: {
-      url: "https://transport.data.gouv.fr/resources/79167/download",
+      url: "https://tipi.bison-fute.gouv.fr/bison-fute-ouvert/publicationsDIR/QTV-DIR/refDir.csv",
       format: "france-comptage-csv",
     },
     cadenceSec: 360,
