@@ -30,6 +30,7 @@ describe("pbfToWays", () => {
 
     expect(calls[0]).toEqual([
       "tags-filter",
+      "-R",
       "-O",
       "/tmp/in.pbf",
       "w/highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link",

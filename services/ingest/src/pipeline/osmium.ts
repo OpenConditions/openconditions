@@ -75,7 +75,9 @@ export async function pbfToWays(
   const geojson = join(workDir, "roads.geojsonl");
   const [w, s, e, n] = bbox;
 
-  await run(["tags-filter", "-O", pbfPath, HIGHWAY_TAGS, "-o", filtered]);
+  // -R keeps the nodes referenced by the matched ways, so `filtered` is
+  // self-contained and the bbox `extract` (which resolves geometry) works.
+  await run(["tags-filter", "-R", "-O", pbfPath, HIGHWAY_TAGS, "-o", filtered]);
   await run([
     "extract",
     "-O",

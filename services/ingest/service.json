@@ -33,7 +33,7 @@
       "RATE_LIMIT_WINDOW_MS": "${OPENCONDITIONS_RATE_LIMIT_WINDOW_MS:-60000}",
       "TRUST_PROXY_HOPS": "${TRUST_PROXY_HOPS:-1}"
     },
-    "memory": "2560m",
+    "memory": "${OPENCONDITIONS_INGEST_MEMORY:-4g}",
     "restart": "unless-stopped",
     "dependsOn": [
       {
