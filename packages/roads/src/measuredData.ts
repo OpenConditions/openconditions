@@ -141,8 +141,8 @@ export function createMeasuredDataParser(
       case "measurementSiteReference": {
         // Flatten: the id is baked into every emitted flow's id and looked up in
         // the site map, so a sliced-string id would pin its input chunk. NDW
-        // carries the id as an attribute; DATEX v1 feeds (e.g. TII) carry it as
-        // the element's text instead, captured on close via the "siteRef" target.
+        // carries the id as an attribute; some DATEX v1 feeds carry it as the
+        // element's text instead, captured on close via the "siteRef" target.
         const ref = attrs["id"] ?? attrs["targetClass"];
         if (ref != null) site.siteId ??= flattenString(ref);
         else {
@@ -161,7 +161,7 @@ export function createMeasuredDataParser(
         site.curInputCount = rawCount != null ? Number(rawCount) || 0 : 1;
         site.curSpeed = undefined;
         site.curDataError = false;
-        // DATEX v1 (e.g. TII) puts the speed as this element's direct text rather
+        // Some DATEX v1 feeds put the speed as this element's direct text rather
         // than a nested <speed>; capture it, to be used on close only if no
         // nested <speed> supplied a value first.
         textTarget = "avgspeedDirect";

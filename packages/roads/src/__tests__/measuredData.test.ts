@@ -197,49 +197,50 @@ describe("createMeasuredDataParser — robustness", () => {
   });
 });
 
-describe("createMeasuredDataParser — DATEX v1 (TII/Ireland shape)", () => {
-  // TII VDSData carries the site id as element TEXT (not an @id attribute) and
-  // the speed as the direct text of <averageVehicleSpeed> (not a nested <speed>).
-  // The companion VdsSites table places each site by a Point coordinate pair.
-  const TII_SITES = `<?xml version="1.0" encoding="UTF-8"?>
+describe("createMeasuredDataParser — DATEX v1 shape (element-text ref, direct-text speed, point site)", () => {
+  // Some DATEX v1 MeasuredData feeds carry the site id as element TEXT (not an
+  // @id attribute) and the speed as the direct text of <averageVehicleSpeed>
+  // (not a nested <speed>), with the companion site table placing each site by a
+  // bare pointCoordinates Point. The Norway measured feed relies on this path.
+  const V1_SITES = `<?xml version="1.0" encoding="UTF-8"?>
 <d2LogicalModel><payloadPublication xsi:type="MeasurementSiteTablePublication">
-  <measurementSiteTable id="VDSSites">
-    <measurementSiteRecord id="VDS601">
+  <measurementSiteTable id="Sites">
+    <measurementSiteRecord id="S601">
       <measurementSiteLocation xsi:type="Point">
-        <pointCoordinates><latitude>53.561461</latitude><longitude>-6.213296</longitude></pointCoordinates>
+        <pointCoordinates><latitude>60.472024</latitude><longitude>8.468946</longitude></pointCoordinates>
       </measurementSiteLocation>
     </measurementSiteRecord>
   </measurementSiteTable>
 </payloadPublication></d2LogicalModel>`;
 
-  const TII_DATA = `<?xml version="1.0" encoding="UTF-8"?>
+  const V1_DATA = `<?xml version="1.0" encoding="UTF-8"?>
 <d2LogicalModel><payloadPublication xsi:type="MeasuredDataPublication">
   <siteMeasurements>
-    <measurementSiteReference>VDS601</measurementSiteReference>
+    <measurementSiteReference>S601</measurementSiteReference>
     <measuredValue index="1"><basicDataValue xsi:type="TrafficFlow"><vehicleFlow>420</vehicleFlow></basicDataValue></measuredValue>
     <measuredValue index="3"><basicDataValue xsi:type="TrafficSpeed"><averageVehicleSpeed>101</averageVehicleSpeed></basicDataValue></measuredValue>
   </siteMeasurements>
 </payloadPublication></d2LogicalModel>`;
 
-  const TII_SOURCE = {
-    id: "tii-vds-ie",
-    attribution: "Transport Infrastructure Ireland",
-    country: "IE",
-    license: "CC-BY-4.0",
+  const V1_SOURCE = {
+    id: "datex-v1-flow",
+    attribution: "DATEX v1 example",
+    country: "NO",
+    license: "NLOD-2.0",
   } as const;
 
   it("resolves the element-text site id against a point site table and reads direct-text speed", () => {
-    const siteMap = parseDatexSiteTable(TII_SITES);
-    expect(siteMap.get("VDS601")).toEqual({ type: "Point", coordinates: [-6.213296, 53.561461] });
+    const siteMap = parseDatexSiteTable(V1_SITES);
+    expect(siteMap.get("S601")).toEqual({ type: "Point", coordinates: [8.468946, 60.472024] });
 
-    const parser = createMeasuredDataParser(TII_SOURCE, siteMap, () => "2026-06-24T10:10:00.000Z");
-    parser.write(TII_DATA);
+    const parser = createMeasuredDataParser(V1_SOURCE, siteMap, () => "2026-06-24T10:10:00.000Z");
+    parser.write(V1_DATA);
     const out = parser.close();
 
     expect(out.failed).toBeFalsy();
     expect(out.flows).toHaveLength(1);
-    expect(out.flows[0]!.id).toBe("tii-vds-ie:VDS601");
+    expect(out.flows[0]!.id).toBe("datex-v1-flow:S601");
     expect(out.flows[0]!.speedKph).toBe(101);
-    expect(out.flows[0]!.geometry).toEqual({ type: "Point", coordinates: [-6.213296, 53.561461] });
+    expect(out.flows[0]!.geometry).toEqual({ type: "Point", coordinates: [8.468946, 60.472024] });
   });
 });
