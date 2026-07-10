@@ -336,7 +336,7 @@
             "Request a free account for the DATEX II server via the 'Get access' page (Open data → What is DATEX → Get access)."
           ],
           "cost": "Free",
-          "notes": "NLOD-2.0 (commercial OK)."
+          "notes": "NLOD-2.0 (commercial OK). Same account as the Statens vegvesen events feed."
         }
       },
       "NO_VEGVESEN_PASSWORD": {

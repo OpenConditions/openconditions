@@ -44,6 +44,7 @@ export type SourceFormat =
   | "bonn-geojson"
   | "madrid-informo-xml"
   | "lta-speedbands-json"
+  | "miv-xml"
   | "gtfs-rt"
   | "native"
   | "crowd";

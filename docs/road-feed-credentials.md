@@ -29,6 +29,7 @@
 | National Highways NTIS (England) | `NH_API_KEY` | OGL-UK-3.0 | [National Highways developer portal](https://developer.data.nationalhighways.co.uk/signin) |
 | Hrvatske ceste roadworks (Croatia) | `HC_HR_USERNAME`, `HC_HR_PASSWORD` | OD-HR | [Hrvatske ceste](https://www.hrvatske-ceste.hr/) |
 | Statens vegvesen (Norway) | `NO_VEGVESEN_USERNAME`, `NO_VEGVESEN_PASSWORD` | NLOD-2.0 | [Statens vegvesen — get DATEX access](https://www.vegvesen.no/en/fag/technology/open-data/a-selection-of-open-data/what-is-datex/get-access/) |
+| Statens vegvesen traffic speed (Norway) | `NO_VEGVESEN_USERNAME`, `NO_VEGVESEN_PASSWORD` | NLOD-2.0 | [Statens vegvesen — get DATEX access](https://www.vegvesen.no/en/fag/technology/open-data/a-selection-of-open-data/what-is-datex/get-access/) |
 | Trafikverket (Sweden) | `TRAFIKVERKET_API_KEY` | CC0-1.0 | [Sign up at Trafikverket](https://data.trafikverket.se/oauth2/Account/register) |
 | Trafikverket traffic flow (Sweden) | `TRAFIKVERKET_API_KEY` | CC0-1.0 | [Sign up at Trafikverket](https://data.trafikverket.se/oauth2/Account/register) |
 | LTA DataMall Traffic Incidents (Singapore) | `LTA_ACCOUNT_KEY` | Singapore-ODL-1.0 | [Request LTA API access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html) |

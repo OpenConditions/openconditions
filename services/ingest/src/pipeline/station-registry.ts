@@ -1,5 +1,5 @@
 import type { FeedSource, SiteGeometry } from "@openconditions/roads";
-import { parseFintrafficStations, parseWebtrisSites } from "@openconditions/roads";
+import { parseFintrafficStations, parseMivConfig, parseWebtrisSites } from "@openconditions/roads";
 import { feedSecretValues, redactSecrets } from "@openconditions/ingest-framework";
 
 /** Station registries change rarely; refetch at most every 6 hours. */
@@ -19,6 +19,7 @@ export function clearStationRegistryCache(): void {
 const PARSERS: Record<string, (input: string) => Map<string, SiteGeometry>> = {
   "fintraffic-stations": parseFintrafficStations,
   "webtris-sites": parseWebtrisSites,
+  "miv-config": parseMivConfig,
 };
 
 /**

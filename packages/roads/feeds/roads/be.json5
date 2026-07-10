@@ -49,4 +49,23 @@
     privacyUrl: "https://mobilite-mobiliteit.brussels/en/privacy",
     enabledByDefault: true,
   },
+  {
+    id: "miv-flow-be",
+    name: "MIV traffic speed (Flanders)",
+    format: "miv-xml",
+    produces: "flow",
+    url: "http://miv.opendata.belfla.be/miv/verkeersdata",
+    stationRegistry: {
+      url: "http://miv.opendata.belfla.be/miv/configuratie/xml",
+      format: "miv-config",
+    },
+    cadenceSec: 60,
+    freshnessWindowSec: 300,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data",
+    attribution: "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",
+    country: "BE",
+    privacyUrl: "https://www.vlaanderen.be/uw-overheid/werking-en-structuur/hoe-werkt-de-vlaamse-overheid/informatie-en-communicatie/privacy",
+    enabledByDefault: true,
+  },
 ]

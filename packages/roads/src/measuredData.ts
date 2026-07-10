@@ -66,12 +66,14 @@ function freshSite(): SiteState {
 
 type TextTarget =
   | "avgspeed"
+  | "avgspeedDirect"
   | "freeflow"
   | "trafficStatus"
   | "timeDefault"
   | "obsTime"
   | "dataError"
   | "posList"
+  | "siteRef"
   | null;
 
 /**
@@ -138,9 +140,15 @@ export function createMeasuredDataParser(
     switch (local) {
       case "measurementSiteReference": {
         // Flatten: the id is baked into every emitted flow's id and looked up in
-        // the site map, so a sliced-string id would pin its input chunk.
+        // the site map, so a sliced-string id would pin its input chunk. NDW
+        // carries the id as an attribute; DATEX v1 feeds (e.g. TII) carry it as
+        // the element's text instead, captured on close via the "siteRef" target.
         const ref = attrs["id"] ?? attrs["targetClass"];
         if (ref != null) site.siteId ??= flattenString(ref);
+        else {
+          textTarget = "siteRef";
+          textBuffer = "";
+        }
         break;
       }
       case "averageVehicleSpeed": {
@@ -153,6 +161,11 @@ export function createMeasuredDataParser(
         site.curInputCount = rawCount != null ? Number(rawCount) || 0 : 1;
         site.curSpeed = undefined;
         site.curDataError = false;
+        // DATEX v1 (e.g. TII) puts the speed as this element's direct text rather
+        // than a nested <speed>; capture it, to be used on close only if no
+        // nested <speed> supplied a value first.
+        textTarget = "avgspeedDirect";
+        textBuffer = "";
         break;
       }
       case "speed": {
@@ -219,6 +232,13 @@ export function createMeasuredDataParser(
           textTarget = null;
           break;
         case "averageVehicleSpeed":
+          // DATEX v1 direct-text speed: use it only when no nested <speed> was
+          // read (curSpeed still unset and the direct-text target still open).
+          if (site.curSpeed == null && textTarget === "avgspeedDirect") {
+            const v = Number(textBuffer.trim());
+            site.curSpeed = Number.isFinite(v) && v >= 0 && v < ABSURD_SPEED_KPH ? v : undefined;
+          }
+          if (textTarget === "avgspeedDirect") textTarget = null;
           // Keep the best-supported (highest input count) valid sample. A
           // count explicitly reported as <= 0 means "no vehicles observed this
           // interval" — never let it become best, even at speed 0, so a
@@ -227,6 +247,13 @@ export function createMeasuredDataParser(
             if (site.best == null || site.curInputCount > site.best.inputCount) {
               site.best = { speedKph: site.curSpeed, inputCount: site.curInputCount };
             }
+          }
+          break;
+        case "measurementSiteReference":
+          if (textTarget === "siteRef") {
+            const t = textBuffer.trim();
+            if (t) site.siteId ??= flattenString(t);
+            textTarget = null;
           }
           break;
         case "trafficStatus":

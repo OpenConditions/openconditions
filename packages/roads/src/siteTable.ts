@@ -157,7 +157,12 @@ export function createSiteTableParser(): SiteTableParser {
     } else {
       const value = finiteOrNaN(textBuffer);
       if (Number.isFinite(value)) {
-        const inDisplay = stack.includes("locationForDisplay");
+        // NDW carries a point under `locationForDisplay`; DATEX v1 feeds (e.g.
+        // TII) carry it as a bare `pointCoordinates` directly under an
+        // `xsi:type="Point"` location. Both are display points when not inside a
+        // linear start/end endpoint (those are handled by the branches above).
+        const inDisplay =
+          stack.includes("locationForDisplay") || stack.includes("pointCoordinates");
         if (endpoint === "start") {
           if (textTarget === "latitude") record.startLat = value;
           else record.startLon = value;

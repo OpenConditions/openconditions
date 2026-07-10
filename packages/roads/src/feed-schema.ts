@@ -39,7 +39,7 @@ export const roadFeedSchema = z
     stationRegistry: z
       .object({
         url: z.string().url(),
-        format: z.enum(["fintraffic-stations", "webtris-sites"]),
+        format: z.enum(["fintraffic-stations", "webtris-sites", "miv-config"]),
       })
       .strict()
       .optional(),

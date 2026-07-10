@@ -27,6 +27,7 @@ import { parseTrafikverketFlow } from "./flow-trafikverket.js";
 import { parseBonnFlow } from "./flow-bonn.js";
 import { parseMadridFlow } from "./flow-madrid.js";
 import { parseLtaSpeedBands } from "./flow-lta-speedbands.js";
+import { parseMivFlow } from "./miv.js";
 import type { SourceDescriptor } from "./types.js";
 
 // FeedAuth now lives in @openconditions/ingest-framework; re-exported here so
@@ -60,7 +61,7 @@ export type FeedSource = FeedSourceBase & {
    * it (egress-guarded, cached) and joins it into the flow parser as its
    * siteMap — the JSON counterpart to the DATEX `siteTable`.
    */
-  stationRegistry?: { url: string; format: "fintraffic-stations" | "webtris-sites" };
+  stationRegistry?: { url: string; format: "fintraffic-stations" | "webtris-sites" | "miv-config" };
   /** Field mapping for `format: "geojson"` feeds (passed to the generic reader). */
   geojson?: GeoJsonMapping;
   /**
@@ -152,6 +153,7 @@ export function flowParserFor(format: SourceFormat): FlowParserFn {
   if (format === "bonn-geojson") return parseBonnFlow;
   if (format === "madrid-informo-xml") return parseMadridFlow;
   if (format === "lta-speedbands-json") return parseLtaSpeedBands;
+  if (format === "miv-xml") return parseMivFlow;
   throw new Error(`No flow parser registered for format: ${format}`);
 }
 
