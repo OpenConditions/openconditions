@@ -1,5 +1,11 @@
 import type postgres from "postgres";
-import { importOsmRoads, loadOsmRegions, overpassSource } from "./osm-import.js";
+import {
+  autoOsmSource,
+  importOsmRoads,
+  loadOsmRegions,
+  overpassSource,
+  pbfExtractSource,
+} from "./osm-import.js";
 import { buildSegments } from "./segment-build.js";
 import { encodeSegmentOpenlr } from "./segment-openlr.js";
 import { matchSensors } from "./sensor-match.js";
@@ -52,7 +58,13 @@ export async function runSegmentRebuild(
     deps.steps?.importOsmRoads ??
     ((s: Sql) =>
       importOsmRoads(s, {
-        source: overpassSource(deps.fetch),
+        // Per-region source selection: regions with `pbfUrls` use the PBF-extract
+        // source (deterministic, complete), the rest use Overpass. No fallback.
+        source: autoOsmSource(
+          overpassSource(deps.fetch),
+          pbfExtractSource({ logger: { info: (m) => console.info(m) } }),
+          process.env
+        ),
         now: deps.now,
         regions: loadOsmRegions(process.env),
       }));

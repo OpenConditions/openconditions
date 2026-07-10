@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { pbfExtractSource } from "../pipeline/osm-import.js";
+import { autoOsmSource, pbfExtractSource } from "../pipeline/osm-import.js";
 
 const way = (wayId: number) => ({
   wayId,
@@ -52,5 +52,26 @@ describe("pbfExtractSource", () => {
     await expect(
       pbfExtractSource({ download, extract }).fetchRegion(region(["A", "B"]))
     ).rejects.toThrow(/boom on B/);
+  });
+});
+
+describe("autoOsmSource", () => {
+  const overpass = { fetchRegion: vi.fn(async () => [way(1)]) };
+  const pbf = { fetchRegion: vi.fn(async () => [way(2)]) };
+
+  it("auto: region with pbfUrls uses pbf, without uses overpass", async () => {
+    const src = autoOsmSource(overpass, pbf, {});
+    expect(await src.fetchRegion(region(["u"]))).toEqual([way(2)]);
+    expect(await src.fetchRegion(region(undefined))).toEqual([way(1)]);
+  });
+
+  it("OSM_SOURCE=overpass forces overpass even when pbfUrls exist", async () => {
+    const src = autoOsmSource(overpass, pbf, { OSM_SOURCE: "overpass" });
+    expect(await src.fetchRegion(region(["u"]))).toEqual([way(1)]);
+  });
+
+  it("OSM_SOURCE=pbf forces pbf even when pbfUrls are absent", async () => {
+    const src = autoOsmSource(overpass, pbf, { OSM_SOURCE: "pbf" });
+    expect(await src.fetchRegion(region(undefined))).toEqual([way(2)]);
   });
 });

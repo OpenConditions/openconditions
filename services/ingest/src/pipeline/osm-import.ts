@@ -204,6 +204,30 @@ export function pbfExtractSource(deps: PbfExtractSourceDeps = {}): OsmWaySource 
   };
 }
 
+/**
+ * Composite {@link OsmWaySource} that picks per region: `OSM_SOURCE=overpass|pbf`
+ * forces one for all regions (testing / a deliberate override); otherwise it's
+ * automatic — a region with `pbfUrls` uses the PBF extract source, else Overpass.
+ * There is deliberately NO fallback to Overpass when the PBF path fails: Overpass
+ * is the nondeterminism this replaces, and a silent shrink cascades downstream, so
+ * a failed PBF region fails loudly and keeps its previous spine (undercoverage
+ * guard) rather than being quietly re-fetched from Overpass.
+ */
+export function autoOsmSource(
+  overpass: OsmWaySource,
+  pbf: OsmWaySource,
+  env: NodeJS.ProcessEnv = process.env
+): OsmWaySource {
+  const forced = env["OSM_SOURCE"]?.trim().toLowerCase();
+  return {
+    fetchRegion(region: OsmRegion): Promise<OsmWay[]> {
+      if (forced === "overpass") return overpass.fetchRegion(region);
+      if (forced === "pbf") return pbf.fetchRegion(region);
+      return (region.pbfUrls && region.pbfUrls.length > 0 ? pbf : overpass).fetchRegion(region);
+    },
+  };
+}
+
 export interface ImportOsmRoadsDeps {
   source: OsmWaySource;
   now: () => string;
