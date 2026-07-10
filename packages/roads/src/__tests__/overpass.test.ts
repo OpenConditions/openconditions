@@ -47,6 +47,40 @@ describe("parseOverpassWays", () => {
     expect(parseOverpassWays("not json")).toEqual([]);
   });
 
+  it("drops null/non-finite geometry nodes instead of crashing (large `out geom` quirk)", () => {
+    const ways = parseOverpassWays(
+      JSON.stringify({
+        elements: [
+          // A null node in the middle is dropped; two valid coords remain.
+          {
+            type: "way",
+            id: 10,
+            geometry: [{ lat: 1, lon: 1 }, null, { lat: 2, lon: 2 }],
+            tags: { highway: "motorway" },
+          },
+          // Left with a single valid node → skipped like any short way.
+          {
+            type: "way",
+            id: 11,
+            geometry: [null, { lat: 3, lon: 3 }, { lat: null, lon: 4 }],
+            tags: { highway: "primary" },
+          },
+        ],
+      })
+    );
+    expect(ways).toEqual([
+      {
+        wayId: 10,
+        coords: [
+          [1, 1],
+          [2, 2],
+        ],
+        highway: "motorway",
+        oneway: false,
+      },
+    ]);
+  });
+
   it("marks oneway=-1 as reversed", () => {
     const body = JSON.stringify({
       elements: [
