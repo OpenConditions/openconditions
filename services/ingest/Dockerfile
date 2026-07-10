@@ -59,13 +59,34 @@ COPY services/ingest/ services/ingest/
 # can inline their freshly built dist into the bundle.
 RUN pnpm --filter @openconditions/ingest... build
 
+# osmium-tool, built from source — it is not packaged for Alpine (see
+# docs/plans/conditions/pbf-extract-source-design.md §3.1). Multi-stage so only
+# the tiny binary + its shared libs reach the runtime image. Pinned to git tags;
+# bump on a base-image change. Validated to build + run on musl (osmium 1.19.0).
+FROM node:24-alpine@sha256:156b55f92e98ccd5ef49578a8cea0df4679826564bad1c9d4ef04462b9f0ded6 AS osmium-build
+RUN apk add --no-cache cmake make g++ git boost-dev expat-dev bzip2-dev zlib-dev lz4-dev nlohmann-json
+RUN git clone --depth 1 -b v1.8.2 https://github.com/mapbox/protozero /src/protozero \
+ && git clone --depth 1 -b v2.23.1 https://github.com/osmcode/libosmium /src/libosmium \
+ && git clone --depth 1 -b v1.19.0 https://github.com/osmcode/osmium-tool /src/osmium-tool
+RUN cmake -S /src/osmium-tool -B /build -DCMAKE_BUILD_TYPE=Release \
+      -DOSMIUM_INCLUDE_DIR=/src/libosmium/include \
+      -DPROTOZERO_INCLUDE_DIR=/src/protozero/include \
+ && cmake --build /build -j"$(nproc)"
+
 # Production image.
 FROM node:24-alpine@sha256:156b55f92e98ccd5ef49578a8cea0df4679826564bad1c9d4ef04462b9f0ded6 AS runner
 WORKDIR /app
 
 # curl backs the http healthcheck; the OpenMapX compose renderer falls back to
-# busybox wget, but curl keeps a plain `docker run` healthcheck working too.
-RUN apk add --no-cache curl
+# busybox wget, but curl keeps a plain `docker run` healthcheck working too. The
+# rest are osmium's runtime shared libs (boost::program_options is NOT
+# header-only; the lib is `libbz2`, not the `bzip2` CLI).
+RUN apk add --no-cache curl libstdc++ expat libbz2 zlib lz4-libs boost-program_options
+
+# The PBF-extract OSM source (pbfExtractSource) shells out to osmium; smoke-check
+# the binary at build time so a broken/incompatible build fails CI, not prod.
+COPY --from=osmium-build /build/src/osmium /usr/local/bin/osmium
+RUN osmium --version
 
 ENV NODE_ENV=production
 ENV PORT=4100
