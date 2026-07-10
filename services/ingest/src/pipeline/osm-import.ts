@@ -1,5 +1,8 @@
+import { rm } from "node:fs/promises";
+import { downloadLargeArtifact } from "@openconditions/ingest-framework";
+import { type OsmWay, parseOverpassWays } from "@openconditions/roads";
 import type postgres from "postgres";
-import { parseOverpassWays, type OsmWay } from "@openconditions/roads";
+import { pbfToWays } from "./osmium.js";
 
 type Sql = postgres.Sql;
 
@@ -143,6 +146,60 @@ export function overpassSource(fetchFn: typeof fetch): OsmWaySource {
       }
       const text = await res.text();
       return parseOverpassWays(text);
+    },
+  };
+}
+
+export interface PbfExtractSourceDeps {
+  /** Test seam: download an artifact to a temp file. Production uses `downloadLargeArtifact`. */
+  download?: (url: string) => Promise<{ path: string; dir: string }>;
+  /** Test seam: run the osmium pipeline on a downloaded pbf. Production uses `pbfToWays`. */
+  extract?: (
+    pbfPath: string,
+    bbox: [number, number, number, number],
+    workDir: string
+  ) => Promise<OsmWay[]>;
+  logger?: { info?: (msg: string) => void };
+}
+
+/**
+ * {@link OsmWaySource} backed by `.osm.pbf` extracts (§ PBF-extract design).
+ * For each unique `region.pbfUrls` entry: download (SSRF-guarded, md5-verified),
+ * run osmium filter→clip→export, parse, and concatenate. Border overlap between
+ * extracts is deduped by the `way_id` upsert in `importOsmRoads`, so no merge
+ * step is needed. Any URL failing fails the whole region (its `fetchRegion`
+ * throws) — a knowingly-partial fetch must not reach the swap; the undercoverage
+ * guard is the backstop. Each URL's temp dir is removed in a `finally`.
+ */
+export function pbfExtractSource(deps: PbfExtractSourceDeps = {}): OsmWaySource {
+  const download =
+    deps.download ??
+    (async (url: string) => {
+      const dl = await downloadLargeArtifact(url);
+      return { path: dl.path, dir: dl.dir };
+    });
+  const extract = deps.extract ?? ((path, bbox, workDir) => pbfToWays(path, bbox, workDir));
+
+  return {
+    async fetchRegion(region: OsmRegion): Promise<OsmWay[]> {
+      const urls = region.pbfUrls;
+      if (!urls || urls.length === 0) {
+        throw new Error(`region ${region.id}: pbfExtractSource requires pbfUrls`);
+      }
+      const ways: OsmWay[] = [];
+      for (const url of [...new Set(urls)]) {
+        const dl = await download(url);
+        try {
+          const extracted = await extract(dl.path, region.bbox, dl.dir);
+          deps.logger?.info?.(
+            `[ingest] pbf-extract: ${region.id} ${url} → ${extracted.length} ways`
+          );
+          ways.push(...extracted);
+        } finally {
+          await rm(dl.dir, { recursive: true, force: true });
+        }
+      }
+      return ways;
     },
   };
 }

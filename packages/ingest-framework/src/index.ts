@@ -8,6 +8,7 @@ export * from "./auth.js";
 export * from "./domain.js";
 export * from "./fetch.js";
 export * from "./egress.js";
+export * from "./download.js";
 export * from "./template.js";
 export * from "./pre-fetch.js";
 export * from "./catalog.js";
