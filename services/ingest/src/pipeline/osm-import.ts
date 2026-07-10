@@ -12,6 +12,14 @@ export interface OsmRegion {
   /** [west, south, east, north] — reordered to Overpass' `(south,west,north,east)` at query time. */
   bbox: [number, number, number, number];
   tz: string;
+  /**
+   * Optional list of `.osm.pbf` extract URLs (e.g. Geofabrik country/subregion
+   * extracts) whose union covers `bbox`. When present, the PBF-extract source is
+   * used for this region instead of Overpass (see `pbfExtractSource`); a bbox
+   * that straddles a border needs every covering extract listed (border overlap
+   * is deduped by the way_id upsert). Absent ⇒ Overpass.
+   */
+  pbfUrls?: string[];
 }
 
 /**
@@ -30,13 +38,19 @@ export const DEFAULT_OSM_REGIONS: OsmRegion[] = [
 function isOsmRegion(value: unknown): value is OsmRegion {
   if (typeof value !== "object" || value === null) return false;
   const r = value as Record<string, unknown>;
-  return (
+  const baseOk =
     typeof r.id === "string" &&
     typeof r.tz === "string" &&
     Array.isArray(r.bbox) &&
     r.bbox.length === 4 &&
-    r.bbox.every((n) => typeof n === "number" && Number.isFinite(n))
-  );
+    r.bbox.every((n) => typeof n === "number" && Number.isFinite(n));
+  if (!baseOk) return false;
+  // pbfUrls, when present, must be a non-empty array of non-empty strings.
+  if (r.pbfUrls !== undefined) {
+    if (!Array.isArray(r.pbfUrls) || r.pbfUrls.length === 0) return false;
+    if (!r.pbfUrls.every((u) => typeof u === "string" && u.trim() !== "")) return false;
+  }
+  return true;
 }
 
 /**
@@ -137,7 +151,18 @@ export interface ImportOsmRoadsDeps {
   source: OsmWaySource;
   now: () => string;
   regions: OsmRegion[];
+  /**
+   * Undercoverage guard (the keystone): a region's swap is refused when the new
+   * way count is below `swapThreshold × previousCount` (and a previous spine
+   * exists), so a silently-truncated import — wrong extract, partial download,
+   * Overpass variance — never replaces a good spine. Defaults to 0.9.
+   */
+  swapThreshold?: number;
+  /** Bypass the undercoverage guard for a genuine road-network config change. */
+  force?: boolean;
 }
+
+const DEFAULT_SWAP_THRESHOLD = 0.9;
 
 // Rows per bulk INSERT — mirrors the chunking in write-postgis.ts/baseline-store.ts.
 const CHUNK_SIZE = 1000;
@@ -196,6 +221,7 @@ export async function importOsmRoads(
   sql: Sql,
   deps: ImportOsmRoadsDeps
 ): Promise<{ imported: number }> {
+  const swapThreshold = deps.swapThreshold ?? DEFAULT_SWAP_THRESHOLD;
   let imported = 0;
   for (const region of deps.regions) {
     try {
@@ -204,6 +230,22 @@ export async function importOsmRoads(
       const rows = ways.map((way) => toRow(way, region.id, importedAt));
 
       await sql.begin(async (tx) => {
+        // Undercoverage guard: throwing here rolls back the transaction BEFORE
+        // the DELETE, so the previous spine is preserved intact. The per-region
+        // catch below logs it; downstream (build/match) keeps working off the
+        // old rows until a healthy import lands.
+        if (!deps.force) {
+          const [prev] = await tx<{ count: number }[]>`
+            SELECT count(*)::int AS count FROM conditions.osm_road WHERE region = ${region.id}`;
+          const oldCount = prev?.count ?? 0;
+          if (oldCount > 0 && rows.length < swapThreshold * oldCount) {
+            throw new Error(
+              `region ${region.id}: refusing swap — new ${rows.length} ways < ` +
+                `${swapThreshold} × previous ${oldCount} (undercoverage guard; ` +
+                `set force to override for a genuine road-network change)`
+            );
+          }
+        }
         await tx`DELETE FROM conditions.osm_road WHERE region = ${region.id}`;
         for (const batch of chunk(rows, CHUNK_SIZE)) {
           await tx`

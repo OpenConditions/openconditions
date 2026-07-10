@@ -114,6 +114,73 @@ describe("importOsmRoads", () => {
     expect(rows).toHaveLength(1);
     expect(rows[0]!.region).toBe("nl");
   }, 30_000);
+
+  const nlRegion = {
+    id: "nl",
+    bbox: [4.8, 51.9, 5.0, 52.1] as [number, number, number, number],
+    tz: "Europe/Amsterdam",
+  };
+  const way = (wayId: number) => ({
+    wayId,
+    coords: [
+      [4.9, 52.0],
+      [4.91, 52.01],
+    ] as [number, number][],
+    highway: "motorway",
+    oneway: false,
+  });
+  const staticSource = (ways: ReturnType<typeof way>[]) => ({ fetchRegion: async () => ways });
+  const seedNl = (ids: number[]) =>
+    importOsmRoads(sql, {
+      source: staticSource(ids.map(way)),
+      now: () => new Date().toISOString(),
+      regions: [nlRegion],
+    });
+
+  it("refuses the swap and keeps the previous spine when the new count is below the threshold", async () => {
+    await seedNl([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+    // 4 new ways < 0.9 × 10 → undercoverage guard trips; region "fails", spine kept.
+    const { imported } = await importOsmRoads(sql, {
+      source: staticSource([101, 102, 103, 104].map(way)),
+      now: () => new Date().toISOString(),
+      regions: [nlRegion],
+    });
+    expect(imported).toBe(0);
+    const rows = await sql<
+      { way_id: string }[]
+    >`SELECT way_id FROM conditions.osm_road WHERE region = 'nl' ORDER BY way_id`;
+    expect(rows).toHaveLength(10);
+    expect(rows.map((r) => Number(r.way_id))).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  }, 30_000);
+
+  it("swaps below the threshold when force is set", async () => {
+    await seedNl([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    const { imported } = await importOsmRoads(sql, {
+      source: staticSource([101, 102, 103, 104].map(way)),
+      now: () => new Date().toISOString(),
+      regions: [nlRegion],
+      force: true,
+    });
+    expect(imported).toBe(4);
+    const rows = await sql<
+      { way_id: string }[]
+    >`SELECT way_id FROM conditions.osm_road WHERE region = 'nl' ORDER BY way_id`;
+    expect(rows.map((r) => Number(r.way_id))).toEqual([101, 102, 103, 104]);
+  }, 30_000);
+
+  it("imports normally on first load (no previous spine to guard)", async () => {
+    const { imported } = await importOsmRoads(sql, {
+      source: staticSource([1, 2, 3].map(way)),
+      now: () => new Date().toISOString(),
+      regions: [nlRegion],
+    });
+    expect(imported).toBe(3);
+    const [{ count }] = await sql<
+      { count: string }[]
+    >`SELECT count(*) AS count FROM conditions.osm_road WHERE region = 'nl'`;
+    expect(Number(count)).toBe(3);
+  }, 30_000);
 });
 
 describe("loadOsmRegions", () => {
@@ -133,6 +200,25 @@ describe("loadOsmRegions", () => {
     const custom = [{ id: "de", bbox: [5.9, 47.3, 15.0, 55.1], tz: "Europe/Berlin" }];
     const regions = loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify(custom) });
     expect(regions).toEqual(custom);
+  });
+
+  it("accepts a region carrying valid pbfUrls", () => {
+    const custom = [
+      {
+        id: "nl",
+        bbox: [3.31, 50.75, 7.09, 53.51],
+        tz: "Europe/Amsterdam",
+        pbfUrls: ["https://download.geofabrik.de/europe/netherlands-latest.osm.pbf"],
+      },
+    ];
+    expect(loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify(custom) })).toEqual(custom);
+  });
+
+  it("rejects a region whose pbfUrls is empty or contains a non-string/blank", () => {
+    const empty = [{ id: "nl", bbox: [1, 2, 3, 4], tz: "T", pbfUrls: [] }];
+    const blank = [{ id: "nl", bbox: [1, 2, 3, 4], tz: "T", pbfUrls: [""] }];
+    expect(loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify(empty) })).toEqual(DEFAULT_OSM_REGIONS);
+    expect(loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify(blank) })).toEqual(DEFAULT_OSM_REGIONS);
   });
 });
 
