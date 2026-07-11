@@ -8,3 +8,4 @@ export * from "./observationsByBbox.js";
 export * from "./readObservations.js";
 export * from "./dedupe.js";
 export * from "./crossSourceDedupe.js";
+export * from "./evidence.js";
