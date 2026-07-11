@@ -281,7 +281,7 @@ function buildRegistry(): Record<string, ObservedProperty> {
   });
 
   entries.push({
-    key: "environment/air_quality",
+    key: "environment/aqi",
     name: "Air quality index",
     description:
       "Air-quality index (AQI) at a location/station. Unit-less: an index value, not a physical concentration.",

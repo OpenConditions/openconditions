@@ -205,6 +205,40 @@ describe("normalizeObservation — non-TypeError from the fingerprint path propa
   });
 });
 
+describe("normalizeObservation — soft-validation throw never aborts the swap", () => {
+  afterEach(() => {
+    vi.doUnmock("@openconditions/core");
+    vi.resetModules();
+    vi.restoreAllMocks();
+  });
+
+  it("returns normally and logs once when validateObserved throws unexpectedly", async () => {
+    vi.resetModules();
+    vi.doMock("@openconditions/core", async (importOriginal) => {
+      const actual = await importOriginal<typeof import("@openconditions/core")>();
+      return {
+        ...actual,
+        validateObserved: () => {
+          throw new Error("simulated core regression");
+        },
+      };
+    });
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const { normalizeObservation: normalize } = await import("../pipeline/normalize.js");
+
+    const first = normalize(feedEvent(), CTX);
+    expect(first.instanceId).toBe("inst-x");
+    expect(first.canonicalId).toBe(canonicalId({ namespace: "src", recordId: "src:1" }));
+    // Second row from the same source must not re-log the failure.
+    expect(() => normalize(feedEvent({ id: "src:2" }), CTX)).not.toThrow();
+
+    const failWarns = warnSpy.mock.calls.filter((c) =>
+      String(c[0]).includes("validateObserved threw unexpectedly")
+    );
+    expect(failWarns).toHaveLength(1);
+  });
+});
+
 describe("normalizeObservation — idempotence", () => {
   it("normalize(normalize(x)) deep-equals normalize(x)", () => {
     const once = normalizeObservation(feedEvent(), CTX);

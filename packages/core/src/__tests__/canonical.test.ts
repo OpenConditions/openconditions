@@ -397,7 +397,28 @@ describe("timeBucket", () => {
   });
 
   it("parses offset-less timestamps as UTC regardless of host timezone", () => {
-    expect(timeBucket("2026-07-10T12:00:00", 300)).toBe(timeBucket("2026-07-10T12:00:00Z", 300));
+    // Force a non-UTC zone so this stays diagnostic on a UTC CI runner: Node
+    // applies process.env.TZ to Date.parse immediately, so a regression that let
+    // the legacy parser interpret the offset-less string in local time would make
+    // the two buckets diverge here.
+    const prevTz = process.env.TZ;
+    process.env.TZ = "America/New_York";
+    try {
+      expect(timeBucket("2026-07-10T12:00:00", 300)).toBe(timeBucket("2026-07-10T12:00:00Z", 300));
+    } finally {
+      if (prevTz === undefined) delete process.env.TZ;
+      else process.env.TZ = prevTz;
+    }
+  });
+
+  it("accepts a date-only ISO string (UTC midnight)", () => {
+    expect(timeBucket("2026-07-10", 300)).toBe(timeBucket("2026-07-10T00:00:00Z", 300));
+  });
+
+  it("rejects non-ISO-shaped date strings instead of falling through to the legacy parser", () => {
+    expect(() => timeBucket("07/10/2026", 300)).toThrow(TypeError);
+    expect(() => timeBucket("Fri Jul 10 2026", 300)).toThrow(TypeError);
+    expect(() => timeBucket("July 10, 2026", 300)).toThrow(TypeError);
   });
 
   it("respects explicit UTC offsets", () => {

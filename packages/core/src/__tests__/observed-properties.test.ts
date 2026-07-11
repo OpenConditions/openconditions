@@ -8,7 +8,7 @@ import {
 } from "../observed-properties.js";
 
 /** Measurement properties that are intentionally unit-less (enumerated level / index). */
-const UNITLESS_MEASUREMENTS = ["transit/occupancy", "places/busyness", "environment/air_quality"];
+const UNITLESS_MEASUREMENTS = ["transit/occupancy", "places/busyness", "environment/aqi"];
 
 function baseEvent(overrides: Partial<ConditionEvent> = {}): ConditionEvent {
   return {

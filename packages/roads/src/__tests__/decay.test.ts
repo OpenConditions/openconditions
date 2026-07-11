@@ -48,6 +48,28 @@ describe("DEFAULT_DECAY_TTLS table", () => {
       }
     }
   });
+
+  it("is deep-frozen: the table, its entries, and FALLBACK_DECAY are immutable", () => {
+    expect(Object.isFrozen(DEFAULT_DECAY_TTLS)).toBe(true);
+    for (const entry of Object.values(DEFAULT_DECAY_TTLS)) {
+      expect(Object.isFrozen(entry)).toBe(true);
+    }
+    expect(Object.isFrozen(FALLBACK_DECAY)).toBe(true);
+  });
+
+  it("ignores a mutation attempt — lookups keep returning the policy value", () => {
+    const attempt = () => {
+      (DEFAULT_DECAY_TTLS.congestion as { crowdTtlSec: number }).crowdTtlSec = 99999;
+    };
+    // Frozen: a write either throws (strict) or silently no-ops; either way the
+    // resolved TTL must be unchanged.
+    try {
+      attempt();
+    } catch {
+      /* strict-mode TypeError is acceptable */
+    }
+    expect(decayTtlSec("congestion", "crowd")).toBe(EXPECTED.congestion.crowdTtlSec);
+  });
 });
 
 describe("decayTtlSec", () => {
@@ -130,6 +152,11 @@ describe("expiresAtFor", () => {
     expect(expiresAtFor("2026-07-11T12:00:00", "congestion", "crowd")).toBe(
       "2026-07-11T12:05:00.000Z"
     );
+  });
+
+  it("treats a date-only input as UTC midnight before adding the TTL", () => {
+    // congestion crowd TTL = 300 s from 2026-07-10T00:00:00Z
+    expect(expiresAtFor("2026-07-10", "congestion", "crowd")).toBe("2026-07-10T00:05:00.000Z");
   });
 
   it("respects a per-type override", () => {

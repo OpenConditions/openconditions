@@ -78,6 +78,15 @@ function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
 }
 
+/** The five evidence states scoreByState must supply a finite ranking base for. */
+const EVIDENCE_STATES: readonly EvidenceState[] = [
+  "self_reported",
+  "corroborated",
+  "externally_resolved",
+  "negated",
+  "expired",
+];
+
 /**
  * Evaluate an evidence ledger under a policy.
  *
@@ -110,7 +119,8 @@ function clamp01(value: number): number {
  *   when two admissible entries share the same id (ids are the append-only
  *   ledger identity, so a duplicate means a corrupt ledger), when
  *   reporterLowerBound is present but not a finite number in [0, 1], or when
- *   any policy.scoreByState value or policy.reliabilityWeight is not finite.
+ *   any of the five policy.scoreByState entries is missing/non-finite or
+ *   policy.reliabilityWeight is not finite.
  */
 export function evaluateEvidence(
   input: EvidenceLedger,
@@ -129,8 +139,11 @@ export function evaluateEvidence(
   if (!Number.isFinite(policy.reliabilityWeight)) {
     throw new TypeError("evaluateEvidence: policy.reliabilityWeight must be finite");
   }
-  for (const [stateName, score] of Object.entries(policy.scoreByState)) {
-    if (!Number.isFinite(score)) {
+  // Iterate the known states (not Object.entries) so a policy MISSING an entry —
+  // e.g. a lossy cast that dropped "expired" — is caught here, not silently read
+  // as NaN when that state is later selected.
+  for (const stateName of EVIDENCE_STATES) {
+    if (!Number.isFinite(policy.scoreByState[stateName])) {
       throw new TypeError(`evaluateEvidence: policy.scoreByState.${stateName} must be finite`);
     }
   }

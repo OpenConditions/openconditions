@@ -453,6 +453,15 @@ describe("evaluateEvidence input validation", () => {
     const badPolicy: EvidencePolicy = { ...TEST_POLICY, reliabilityWeight: NaN };
     expect(() => evaluateEvidence(ledger([report], 10), badPolicy)).toThrow(TypeError);
   });
+
+  it("throws TypeError when scoreByState is missing a state entry (lossy cast dropped 'expired')", () => {
+    const { expired: _dropped, ...partial } = TEST_POLICY.scoreByState;
+    const badPolicy = {
+      ...TEST_POLICY,
+      scoreByState: partial,
+    } as unknown as EvidencePolicy;
+    expect(() => evaluateEvidence(ledger([report], 10), badPolicy)).toThrow(TypeError);
+  });
 });
 
 describe("evaluateEvidence reporterLowerBound adjustment", () => {

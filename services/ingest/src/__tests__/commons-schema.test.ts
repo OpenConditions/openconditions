@@ -86,10 +86,12 @@ describe("commons observation columns", () => {
     expect(byName.get("source_license")?.data_type).toBe("text");
 
     const fuzziness = byName.get("fuzziness");
+    expect(fuzziness?.data_type).toBe("text");
     expect(fuzziness?.is_nullable).toBe("NO");
     expect(fuzziness?.column_default).toContain("'exact'");
 
     const privacyClass = byName.get("privacy_class");
+    expect(privacyClass?.data_type).toBe("text");
     expect(privacyClass?.is_nullable).toBe("NO");
     expect(privacyClass?.column_default).toContain("'unknown'");
   }, 30_000);
@@ -126,31 +128,60 @@ describe("commons CHECK constraints", () => {
   }
 
   it("rejects confidence_score outside [0,1]", async () => {
-    await expect(insertInvalid("chk:cs", "confidence_score", "1.5")).rejects.toThrow();
+    await expect(insertInvalid("chk:cs", "confidence_score", "1.5")).rejects.toThrow(
+      /obs_confidence_score_range/
+    );
   }, 30_000);
 
   it("rejects dp_delta = 1", async () => {
-    await expect(insertInvalid("chk:dd", "dp_delta", "1")).rejects.toThrow();
+    await expect(insertInvalid("chk:dd", "dp_delta", "1")).rejects.toThrow(/obs_dp_delta_range/);
   }, 30_000);
 
   it("rejects dp_epsilon < 0", async () => {
-    await expect(insertInvalid("chk:de", "dp_epsilon", "-0.1")).rejects.toThrow();
+    await expect(insertInvalid("chk:de", "dp_epsilon", "-0.1")).rejects.toThrow(
+      /obs_dp_epsilon_nonneg/
+    );
   }, 30_000);
 
   it("rejects k_anonymity = 0", async () => {
-    await expect(insertInvalid("chk:k", "k_anonymity", "0")).rejects.toThrow();
+    await expect(insertInvalid("chk:k", "k_anonymity", "0")).rejects.toThrow(
+      /obs_k_anonymity_positive/
+    );
   }, 30_000);
 
   it("rejects severity_level = 6", async () => {
-    await expect(insertInvalid("chk:sl", "severity_level", "6")).rejects.toThrow();
+    await expect(insertInvalid("chk:sl", "severity_level", "6")).rejects.toThrow(
+      /obs_severity_level_range/
+    );
   }, 30_000);
 
   it("rejects an unknown fuzziness value", async () => {
-    await expect(insertInvalid("chk:fz", "fuzziness", "'bogus'")).rejects.toThrow();
+    await expect(insertInvalid("chk:fz", "fuzziness", "'bogus'")).rejects.toThrow(
+      /obs_fuzziness_enum/
+    );
   }, 30_000);
 
   it("rejects an unknown privacy_class value", async () => {
-    await expect(insertInvalid("chk:pc", "privacy_class", "'bogus'")).rejects.toThrow();
+    await expect(insertInvalid("chk:pc", "privacy_class", "'bogus'")).rejects.toThrow(
+      /obs_privacy_class_enum/
+    );
+  }, 30_000);
+
+  it("accepts the CHECK boundary values (0.999 delta, severity 1 and 5, k=1, score 0 and 1)", async () => {
+    const cases: Array<[string, string, string]> = [
+      ["chk:bound-dd", "dp_delta", "0.999"],
+      ["chk:bound-sl1", "severity_level", "1"],
+      ["chk:bound-sl5", "severity_level", "5"],
+      ["chk:bound-k1", "k_anonymity", "1"],
+      ["chk:bound-cs0", "confidence_score", "0"],
+      ["chk:bound-cs1", "confidence_score", "1"],
+    ];
+    for (const [id, col, value] of cases) {
+      await expect(insertInvalid(id, col, value)).resolves.toBeDefined();
+    }
+    const rows = await sql<{ id: string }[]>`
+      SELECT id FROM conditions.observations WHERE id LIKE 'chk:bound-%'`;
+    expect(rows).toHaveLength(cases.length);
   }, 30_000);
 
   it("accepts a fully valid commons row", async () => {

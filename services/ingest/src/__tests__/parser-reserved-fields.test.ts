@@ -20,20 +20,28 @@ const RESERVED = [
   "dpDelta",
 ] as const;
 
-const RESERVED_ASSIGNMENT = new RegExp(`\\b(?:${RESERVED.join("|")})\\s*[:=]`);
+const FIELDS = RESERVED.join("|");
+// Catches both dot/bare-identifier assignments (`obs.privacyClass =`,
+// `privacyClass:`) and bracket-notation string literals (`obs["privacyClass"] =`,
+// `["privacyClass"]:`) so a parser cannot smuggle a reserved field past the seam
+// through computed access.
+const RESERVED_ASSIGNMENT = new RegExp(
+  `(?:\\b(?:${FIELDS})\\s*[:=])|(?:\\[\\s*["'](?:${FIELDS})["']\\s*\\]\\s*[:=])`
+);
 
 const ROADS_SRC = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../../../../packages/roads/src"
 );
 
-/** model/type declaration files and tests may legitimately reference the fields. */
+/**
+ * Only test files may legitimately name a reserved field. model.ts/types.ts are
+ * NOT exempt: the roads model reuses core's Observation type and declares none of
+ * these fields, so it must stay clean too — the seam (normalizeObservation) is the
+ * one writer.
+ */
 function isAllowlisted(path: string): boolean {
-  return (
-    /(?:^|\/)(?:model|types)\.ts$/.test(path) ||
-    path.includes("__tests__") ||
-    path.includes(".test.")
-  );
+  return path.includes("__tests__") || path.includes(".test.");
 }
 
 function walk(dir: string): string[] {

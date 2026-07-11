@@ -112,13 +112,25 @@ export function truncateType(domain: string, type: string, depth: number): strin
 }
 
 const HAS_ZONE_DESIGNATOR = /(?:[zZ]|[+-]\d{2}:?\d{2})$/;
+// The string must start with the ISO calendar-date shape, optionally followed by
+// a `T` time part. This rejects locale/legacy formats ("07/10/2026",
+// "Fri Jul 10 2026", "July 10, 2026") and expanded ±YYYYYY years before they
+// reach V8's lenient, timezone-dependent legacy Date.parse path — that fallback
+// would make the fingerprint host-timezone-dependent and non-deterministic.
+const ISO_CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}(?:T|$)/;
 
 export function timeBucket(validFrom: string | null | undefined, bucketSec: number): number {
   if (!validFrom) {
     throw new TypeError("timeBucket requires a validFrom timestamp");
   }
+  if (!ISO_CALENDAR_DATE.test(validFrom)) {
+    throw new TypeError(
+      `timeBucket requires an ISO calendar date (YYYY-MM-DD, optionally with a T time part): ${validFrom}`
+    );
+  }
   // An offset-less datetime is pinned to UTC: cross-instance determinism of the
-  // key outweighs absolute wall-clock correctness for a 300 s bucket.
+  // key outweighs absolute wall-clock correctness for a 300 s bucket. A date-only
+  // string carries no `T`, so it is left as-is (parsed as UTC midnight per spec).
   const pinned =
     validFrom.includes("T") && !HAS_ZONE_DESIGNATOR.test(validFrom) ? `${validFrom}Z` : validFrom;
   const epochMs = Date.parse(pinned);

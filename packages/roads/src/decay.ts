@@ -29,11 +29,23 @@ export interface DecayEntry {
   maxLifetimeSec: number;
 }
 
+/** Recursively freeze the policy table so a caller cannot mutate shared TTLs. */
+function deepFreeze<T>(value: T): T {
+  if (value !== null && typeof value === "object") {
+    for (const name of Object.getOwnPropertyNames(value)) {
+      deepFreeze((value as Record<string, unknown>)[name]);
+    }
+    Object.freeze(value);
+  }
+  return value;
+}
+
 /**
  * Default decay policy keyed by canonical road/transit event type. `crowd` <
  * `feed` <= `maxLifetime` holds for every row (asserted in the test suite).
+ * Deep-frozen (entries too) so this shared policy cannot be mutated at runtime.
  */
-export const DEFAULT_DECAY_TTLS: Record<string, DecayEntry> = {
+export const DEFAULT_DECAY_TTLS: Record<string, DecayEntry> = deepFreeze({
   congestion: { crowdTtlSec: 300, feedTtlSec: 600, maxLifetimeSec: 3600 },
   hazard: { crowdTtlSec: 900, feedTtlSec: 1800, maxLifetimeSec: 7200 },
   accident: { crowdTtlSec: 1800, feedTtlSec: 3600, maxLifetimeSec: 14400 },
@@ -42,14 +54,14 @@ export const DEFAULT_DECAY_TTLS: Record<string, DecayEntry> = {
   roadworks: { crowdTtlSec: 604800, feedTtlSec: 1209600, maxLifetimeSec: 2592000 },
   transit_disruption: { crowdTtlSec: 1800, feedTtlSec: 3600, maxLifetimeSec: 14400 },
   accessibility: { crowdTtlSec: 7200, feedTtlSec: 14400, maxLifetimeSec: 43200 },
-};
+});
 
 /** Decay policy for an event type not present in {@link DEFAULT_DECAY_TTLS}. */
-export const FALLBACK_DECAY: DecayEntry = {
+export const FALLBACK_DECAY: DecayEntry = deepFreeze({
   crowdTtlSec: 900,
   feedTtlSec: 1800,
   maxLifetimeSec: 7200,
-};
+});
 
 const ENTRY_FIELDS = ["crowdTtlSec", "feedTtlSec", "maxLifetimeSec"] as const;
 
