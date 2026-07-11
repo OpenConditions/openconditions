@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type postgres from "postgres";
 import { toIsoTimestamp, type Observation } from "@openconditions/core";
 import { DOMAIN_REGISTRY } from "../domains.js";
+import { normalizeObservation, resolveInstanceId, type WriterContext } from "./normalize.js";
 import { upsertSourceStatus } from "./source-status.js";
 
 type Sql = postgres.Sql;
@@ -428,8 +429,18 @@ export async function atomicSwap(
   sql: Sql,
   sourceId: string,
   fresh: Observation[],
-  freshnessWindowSec?: number
+  freshnessWindowSec?: number,
+  ctx?: WriterContext
 ): Promise<SwapCounts> {
+  // The single defaulting seam: stamp the commons federation/privacy provenance
+  // onto every row here — the one write choke point — before anything else, so
+  // no parser output reaches the DB un-normalized and a spoofed provenance field
+  // aborts the whole swap loudly. The instance id is read per call (env may
+  // change without a process restart); future trusted entry points pass their
+  // own `ctx` instead of the default feed context.
+  const writerCtx: WriterContext = ctx ?? { kind: "feed", instanceId: resolveInstanceId() };
+  const normalized = fresh.map((obs) => normalizeObservation(obs, writerCtx));
+
   // Last-wins de-dup by id before capping/chunking: two rows sharing an id
   // within one `fresh` set (parsers do no cross-document id dedup — e.g. the
   // streaming SAX measuredData.ts, or a `${src.id}:${externalId}` id scheme)
@@ -438,7 +449,7 @@ export async function atomicSwap(
   // the whole source's swap. A `Map` keyed by id keeps insertion order and the
   // last entry written for a given id wins, matching "most recent occurrence
   // in the fresh set" semantics.
-  const deduped = [...new Map(fresh.map((obs) => [obs.id, obs] as const)).values()];
+  const deduped = [...new Map(normalized.map((obs) => [obs.id, obs] as const)).values()];
   const capped = capRows(deduped);
   const keptIds = capped.map((obs) => obs.id);
 
