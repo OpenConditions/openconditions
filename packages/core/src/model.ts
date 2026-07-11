@@ -58,6 +58,31 @@ export type Severity = "low" | "medium" | "high" | "critical" | "unknown";
 export type Confidence = "observed" | "likely" | "possible" | "unknown";
 
 /**
+ * How precisely an observation's geometry/extent is known. `exact` is the
+ * default; the `*_res` values mark deliberately coarsened geometry and the
+ * `*_unknown` values mark an open-ended or missing extent boundary.
+ */
+export type Fuzziness =
+  | "exact"
+  | "low_res"
+  | "medium_res"
+  | "end_unknown"
+  | "start_unknown"
+  | "extent_unknown";
+
+/**
+ * The privacy tier an observation was produced under. Governs how it may be
+ * exposed/aggregated. (The DB carries an extra `unknown` legacy default that is
+ * intentionally NOT part of this enum — a defaulting seam assigns a real class.)
+ */
+export type PrivacyClass =
+  | "authoritative"
+  | "aggregate"
+  | "k_anon"
+  | "dp_noised"
+  | "crowd_pseudonym";
+
+/**
  * A recurring validity rule, shaped after schema.org `Schedule`
  * (https://schema.org/Schedule). The local wall-clock fields (`startTime`,
  * `startDate`/`endDate`, …) are interpreted in `scheduleTimezone` (an IANA name),
@@ -143,6 +168,35 @@ export interface Observation {
    * merged. See `dedupeAcrossSources`.
    */
   mergedSources?: MergedSource[];
+
+  /** Stable id of the concrete report instance this observation came from. */
+  instanceId?: string;
+  /** Id of the canonical condition this observation resolves to (fusion key). */
+  canonicalId?: string;
+  /** Hash grouping observations that describe the same real-world phenomenon. */
+  phenomenonFingerprint?: string;
+  /** Canonical ids this observation supersedes. */
+  replaces?: string[];
+  /** Ids of independent observations that corroborate this one. */
+  corroborations?: string[];
+  /** How precisely the geometry/extent is known (defaults to `exact`). */
+  fuzziness?: Fuzziness;
+  /** Normalized [0,1] confidence for this observation. */
+  confidenceScore?: number;
+  /** Privacy tier this observation was produced under. */
+  privacyClass?: PrivacyClass;
+  /** k for k-anonymity, when the observation is a k-anonymized aggregate. */
+  kAnonymity?: number;
+  /** Differential-privacy epsilon budget spent, when DP-noised. */
+  dpEpsilon?: number;
+  /** Differential-privacy delta parameter, when DP-noised. */
+  dpDelta?: number;
+  /** Transit entities this observation informs (modes/routes/stops/trips). */
+  informed?: { modes?: string[]; routes?: string[]; stops?: string[]; trips?: string[] };
+  /** Canonical URI of the upstream record this observation derives from. */
+  sourceUri?: string;
+  /** SPDX license the upstream source is published under. */
+  sourceLicense?: string;
 }
 
 export interface ConditionEvent extends Observation {
@@ -151,6 +205,8 @@ export interface ConditionEvent extends Observation {
   subtype?: string;
   category: "incident" | "planned" | "conditions" | "report";
   severity: Severity;
+  /** Numeric 1–5 severity, when a controller assigns a graded level. */
+  severityLevel?: 1 | 2 | 3 | 4 | 5;
   severitySource: "declared" | "derived";
   headline: string;
   description?: string;

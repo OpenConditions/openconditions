@@ -68,6 +68,19 @@ interface ContentHashInput {
   related_ids: unknown;
   data_updated_at: string;
   expires_at: string | null;
+  // Commons content-bearing fields — hashed only WHEN PRESENT (see
+  // computeContentHash). The derived/identity commons fields are intentionally
+  // absent here: they never enter the hash.
+  replaces: unknown;
+  corroborations: unknown;
+  fuzziness: string | null;
+  severity_level: number | null;
+  informed: unknown;
+  source_uri: string | null;
+  source_license: string | null;
+  k_anonymity: number | null;
+  dp_epsilon: number | null;
+  dp_delta: number | null;
 }
 
 /**
@@ -82,9 +95,17 @@ interface ContentHashInput {
  * expiry must count as a real change. Geometry is hashed as the GeoJSON
  * string (not the DB geom), so it stays independent of PostGIS's own
  * normalization.
+ *
+ * The commons content-bearing fields are folded in only WHEN PRESENT so an
+ * observation carrying none of them hashes byte-identically to before those
+ * columns existed — that absent-key omission is what keeps existing feeds from
+ * mass-rewriting. The derived/identity commons fields (instance_id,
+ * canonical_id, phenomenon_fingerprint, confidence_score, privacy_class) are
+ * excluded entirely: they are derived from already-hashed content or trusted
+ * writer config, so hashing them would force the same one-time full rewrite.
  */
 function computeContentHash(row: ContentHashInput): string {
-  const material = {
+  const material: Record<string, unknown> = {
     id: row.id,
     type: row.type,
     subtype: row.subtype,
@@ -112,6 +133,16 @@ function computeContentHash(row: ContentHashInput): string {
     dataUpdatedAt: row.data_updated_at,
     expiresAt: row.expires_at,
   };
+  if (row.replaces != null) material.replaces = row.replaces;
+  if (row.corroborations != null) material.corroborations = row.corroborations;
+  if (row.fuzziness != null) material.fuzziness = row.fuzziness;
+  if (row.severity_level != null) material.severityLevel = row.severity_level;
+  if (row.informed != null) material.informed = row.informed;
+  if (row.source_uri != null) material.sourceUri = row.source_uri;
+  if (row.source_license != null) material.sourceLicense = row.source_license;
+  if (row.k_anonymity != null) material.kAnonymity = row.k_anonymity;
+  if (row.dp_epsilon != null) material.dpEpsilon = row.dp_epsilon;
+  if (row.dp_delta != null) material.dpDelta = row.dp_delta;
   return createHash("sha256")
     .update(JSON.stringify(sortKeysDeep(material)))
     .digest("hex");
@@ -134,6 +165,7 @@ export function toRow(obs: Observation) {
     severitySource?: string;
     headline?: string;
     description?: string;
+    severityLevel?: number;
   };
   // Measurement axis (e.g. RoadFlow) — populated when kind === "measurement".
   const measurement = obs as Observation & {
@@ -184,6 +216,23 @@ export function toRow(obs: Observation) {
     fetched_at: toIsoTimestamp(obs.fetchedAt) ?? new Date().toISOString(),
     expires_at: toIsoTimestamp(obs.expiresAt) ?? null,
     is_stale: obs.isStale ?? false,
+    // Commons fields: pass-through only. `undefined` collapses to null (or the
+    // column default for fuzziness/privacy_class); no derivation happens here.
+    instance_id: obs.instanceId ?? null,
+    canonical_id: obs.canonicalId ?? null,
+    phenomenon_fingerprint: obs.phenomenonFingerprint ?? null,
+    replaces: obs.replaces ?? null,
+    corroborations: obs.corroborations ?? null,
+    fuzziness: obs.fuzziness ?? null,
+    confidence_score: obs.confidenceScore ?? null,
+    severity_level: condEvent.severityLevel ?? null,
+    privacy_class: obs.privacyClass ?? null,
+    k_anonymity: obs.kAnonymity ?? null,
+    dp_epsilon: obs.dpEpsilon ?? null,
+    dp_delta: obs.dpDelta ?? null,
+    informed: obs.informed ?? null,
+    source_uri: obs.sourceUri ?? null,
+    source_license: obs.sourceLicense ?? null,
   };
 
   return { ...row, content_hash: computeContentHash(row) };
@@ -240,7 +289,10 @@ export async function upsertRows(
       subject, attributes,
       valid_from, valid_to, schedule,
       confidence, is_forecast, related_ids,
-      origin, data_updated_at, fetched_at, expires_at, is_stale, stale_after, content_hash
+      origin, data_updated_at, fetched_at, expires_at, is_stale, stale_after, content_hash,
+      instance_id, canonical_id, phenomenon_fingerprint, replaces, corroborations,
+      fuzziness, confidence_score, severity_level, privacy_class, k_anonymity,
+      dp_epsilon, dp_delta, informed, source_uri, source_license
     )
     SELECT
       id, source, source_format, domain, kind,
@@ -251,7 +303,11 @@ export async function upsertRows(
       subject, attributes,
       valid_from, valid_to, schedule,
       confidence, is_forecast, related_ids,
-      origin, data_updated_at, fetched_at, expires_at, is_stale, stale_after, content_hash
+      origin, data_updated_at, fetched_at, expires_at, is_stale, stale_after, content_hash,
+      instance_id, canonical_id, phenomenon_fingerprint, replaces, corroborations,
+      COALESCE(fuzziness, 'exact'), confidence_score, severity_level,
+      COALESCE(privacy_class, 'unknown'), k_anonymity,
+      dp_epsilon, dp_delta, informed, source_uri, source_license
     FROM jsonb_to_recordset(${tx.json(rows as AnyJson)}::jsonb) AS t(
       id text, source text, source_format text, domain text, kind text,
       type text, subtype text, category text, severity text, severity_source text,
@@ -262,7 +318,13 @@ export async function upsertRows(
       valid_from timestamptz, valid_to timestamptz, schedule jsonb,
       confidence text, is_forecast boolean, related_ids jsonb,
       origin jsonb, data_updated_at timestamptz, fetched_at timestamptz,
-      expires_at timestamptz, is_stale boolean, stale_after timestamptz, content_hash text
+      expires_at timestamptz, is_stale boolean, stale_after timestamptz, content_hash text,
+      instance_id text, canonical_id text, phenomenon_fingerprint text,
+      replaces jsonb, corroborations jsonb,
+      fuzziness text, confidence_score double precision, severity_level smallint,
+      privacy_class text, k_anonymity integer,
+      dp_epsilon double precision, dp_delta double precision, informed jsonb,
+      source_uri text, source_license text
     )
     ON CONFLICT (id) DO UPDATE SET
       source = excluded.source,
@@ -298,7 +360,22 @@ export async function upsertRows(
       expires_at = excluded.expires_at,
       is_stale = excluded.is_stale,
       stale_after = excluded.stale_after,
-      content_hash = excluded.content_hash
+      content_hash = excluded.content_hash,
+      instance_id = excluded.instance_id,
+      canonical_id = excluded.canonical_id,
+      phenomenon_fingerprint = excluded.phenomenon_fingerprint,
+      replaces = excluded.replaces,
+      corroborations = excluded.corroborations,
+      fuzziness = excluded.fuzziness,
+      confidence_score = excluded.confidence_score,
+      severity_level = excluded.severity_level,
+      privacy_class = excluded.privacy_class,
+      k_anonymity = excluded.k_anonymity,
+      dp_epsilon = excluded.dp_epsilon,
+      dp_delta = excluded.dp_delta,
+      informed = excluded.informed,
+      source_uri = excluded.source_uri,
+      source_license = excluded.source_license
     WHERE conditions.observations.content_hash IS DISTINCT FROM excluded.content_hash
     RETURNING (xmax = 0) AS inserted
   `;

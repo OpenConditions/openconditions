@@ -56,3 +56,101 @@ describe("content_hash includes expires_at", () => {
     expect(a.content_hash).not.toBe(b.content_hash);
   });
 });
+
+describe("commons fields — toRow mapping", () => {
+  it("maps every new commons field to its column", () => {
+    const r = toRow(
+      baseObs({
+        instanceId: "inst-1",
+        canonicalId: "canon-1",
+        phenomenonFingerprint: "fp-1",
+        replaces: ["a", "b"],
+        corroborations: ["c"],
+        fuzziness: "low_res",
+        confidenceScore: 0.7,
+        severityLevel: 3,
+        privacyClass: "authoritative",
+        kAnonymity: 5,
+        dpEpsilon: 0.5,
+        dpDelta: 0.001,
+        informed: { modes: ["bus"], routes: ["r1"], stops: ["s1"], trips: ["t1"] },
+        sourceUri: "https://example.test/x",
+        sourceLicense: "CC-BY-4.0",
+      })
+    ) as unknown as Record<string, unknown>;
+    expect(r.instance_id).toBe("inst-1");
+    expect(r.canonical_id).toBe("canon-1");
+    expect(r.phenomenon_fingerprint).toBe("fp-1");
+    expect(r.replaces).toEqual(["a", "b"]);
+    expect(r.corroborations).toEqual(["c"]);
+    expect(r.fuzziness).toBe("low_res");
+    expect(r.confidence_score).toBe(0.7);
+    expect(r.severity_level).toBe(3);
+    expect(r.privacy_class).toBe("authoritative");
+    expect(r.k_anonymity).toBe(5);
+    expect(r.dp_epsilon).toBe(0.5);
+    expect(r.dp_delta).toBe(0.001);
+    expect(r.informed).toEqual({
+      modes: ["bus"],
+      routes: ["r1"],
+      stops: ["s1"],
+      trips: ["t1"],
+    });
+    expect(r.source_uri).toBe("https://example.test/x");
+    expect(r.source_license).toBe("CC-BY-4.0");
+  });
+
+  it("leaves the new columns null when the observation carries no commons fields", () => {
+    const r = toRow(baseObs()) as unknown as Record<string, unknown>;
+    for (const col of [
+      "instance_id",
+      "canonical_id",
+      "phenomenon_fingerprint",
+      "replaces",
+      "corroborations",
+      "fuzziness",
+      "confidence_score",
+      "severity_level",
+      "privacy_class",
+      "k_anonymity",
+      "dp_epsilon",
+      "dp_delta",
+      "informed",
+      "source_uri",
+      "source_license",
+    ]) {
+      expect(r[col]).toBeNull();
+    }
+  });
+});
+
+describe("commons fields — content_hash policy", () => {
+  // Pinned pre-change hash of a plain (no commons fields) observation. A plain
+  // observation MUST hash identically to before the commons columns existed, so
+  // existing feeds do not mass-rewrite when this lands.
+  const GOLDEN_PLAIN_HASH = "23a0a4ac868c70ed7c6fbafbc66421a4eec176d4d429e03efd915fe519aeae50";
+
+  it("is byte-identical for a no-commons-fields observation", () => {
+    expect(toRow(baseObs()).content_hash).toBe(GOLDEN_PLAIN_HASH);
+  });
+
+  it("is unaffected by the derived/identity fields (excluded from the hash material)", () => {
+    const withDerived = toRow(
+      baseObs({
+        instanceId: "inst-1",
+        canonicalId: "canon-1",
+        phenomenonFingerprint: "fp-1",
+        confidenceScore: 0.42,
+        privacyClass: "authoritative",
+      })
+    );
+    expect(withDerived.content_hash).toBe(GOLDEN_PLAIN_HASH);
+  });
+
+  it("changes when a content-bearing field (sourceLicense) changes", () => {
+    const a = toRow(baseObs({ sourceLicense: "CC0-1.0" }));
+    const b = toRow(baseObs({ sourceLicense: "CC-BY-4.0" }));
+    expect(a.content_hash).not.toBe(b.content_hash);
+    expect(a.content_hash).not.toBe(GOLDEN_PLAIN_HASH);
+  });
+});

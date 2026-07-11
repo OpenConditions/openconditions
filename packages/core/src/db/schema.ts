@@ -1,7 +1,9 @@
+import { sql } from "drizzle-orm";
 import {
   bigint,
   bigserial,
   boolean,
+  check,
   customType,
   doublePrecision,
   index,
@@ -75,6 +77,25 @@ export const observations = conditionsSchema.table(
     // write-postgis.ts computeContentHash). Diff key for the swap upsert —
     // never queried directly, only compared inside `ON CONFLICT ... WHERE`.
     contentHash: text("content_hash"),
+
+    // Commons substrate: identity/lineage, uncertainty, privacy and provenance
+    // fields for crowd-reporting/federation. Nothing populates these yet; the
+    // central defaulting seam lands in a later change.
+    instanceId: text("instance_id"),
+    canonicalId: text("canonical_id"),
+    phenomenonFingerprint: text("phenomenon_fingerprint"),
+    replaces: jsonb("replaces"),
+    corroborations: jsonb("corroborations"),
+    fuzziness: text("fuzziness").notNull().default("exact"),
+    confidenceScore: doublePrecision("confidence_score"),
+    severityLevel: smallint("severity_level"),
+    privacyClass: text("privacy_class").notNull().default("unknown"),
+    kAnonymity: integer("k_anonymity"),
+    dpEpsilon: doublePrecision("dp_epsilon"),
+    dpDelta: doublePrecision("dp_delta"),
+    informed: jsonb("informed"),
+    sourceUri: text("source_uri"),
+    sourceLicense: text("source_license"),
   },
   (t) => [
     index("idx_conditions_obs_geom").using("gist", t.geom),
@@ -86,6 +107,32 @@ export const observations = conditionsSchema.table(
     index("idx_conditions_obs_expires").on(t.expiresAt),
     index("idx_conditions_obs_subject").using("gin", t.subject),
     index("idx_conditions_obs_source").on(t.source),
+    index("idx_conditions_obs_canonical").on(t.canonicalId),
+    index("idx_conditions_obs_phenomenon").on(t.phenomenonFingerprint),
+    index("idx_conditions_obs_instance").on(t.instanceId),
+    index("idx_conditions_obs_privacy").on(t.privacyClass),
+    check(
+      "obs_confidence_score_range",
+      sql`${t.confidenceScore} IS NULL OR (${t.confidenceScore} >= 0 AND ${t.confidenceScore} <= 1)`
+    ),
+    check("obs_dp_epsilon_nonneg", sql`${t.dpEpsilon} IS NULL OR ${t.dpEpsilon} >= 0`),
+    check(
+      "obs_dp_delta_range",
+      sql`${t.dpDelta} IS NULL OR (${t.dpDelta} >= 0 AND ${t.dpDelta} < 1)`
+    ),
+    check("obs_k_anonymity_positive", sql`${t.kAnonymity} IS NULL OR ${t.kAnonymity} > 0`),
+    check(
+      "obs_severity_level_range",
+      sql`${t.severityLevel} IS NULL OR (${t.severityLevel} >= 1 AND ${t.severityLevel} <= 5)`
+    ),
+    check(
+      "obs_fuzziness_enum",
+      sql`${t.fuzziness} IN ('exact','low_res','medium_res','end_unknown','start_unknown','extent_unknown')`
+    ),
+    check(
+      "obs_privacy_class_enum",
+      sql`${t.privacyClass} IN ('unknown','authoritative','aggregate','k_anon','dp_noised','crowd_pseudonym')`
+    ),
   ]
 );
 
