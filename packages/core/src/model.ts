@@ -128,7 +128,13 @@ export interface SubjectRef {
 
 export interface ReporterRef {
   keyId: string;
-  signature: string;
+  /**
+   * The report's detached signature. Optional because a crowd observation's
+   * `origin` is kept minimal — the authoritative signature lives in the
+   * `report_evidence` ledger, not in provenance. Present only where an older
+   * caller folds it in.
+   */
+  signature?: string;
   reputation?: number;
 }
 

@@ -11,6 +11,13 @@
  */
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type postgres from "postgres";
+import {
+  checkPlausibility,
+  verifyReport,
+  type LandingContext,
+  type SignedReport,
+} from "@openconditions/contrib-core";
+import { resolveInstanceId } from "@openconditions/ingest/pipeline/normalize";
 import { enrollReporter } from "./attester/enroll.js";
 import { resolveGrantSecret, verifyReportingGrant } from "./attester/grant.js";
 import { ATTESTER_POLICY, type DeviceProof } from "./attester/policy.js";
@@ -18,6 +25,7 @@ import { reportEpoch, type PublicContext } from "./issuer/context.js";
 import { issueToken } from "./issuer/issue.js";
 import { DEFAULT_ISSUER_NAME, ensureIssuerKeys, loadActiveIssuerKeys } from "./issuer/keys.js";
 import { TokenVerifier } from "./issuer/verify.js";
+import { GeometryInvalidError, landReport } from "./landing/insert.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -48,6 +56,19 @@ interface TokensBody {
   taskId?: string;
   epoch?: string;
 }
+
+interface ReportsBody {
+  report?: SignedReport;
+  reportingGrant?: string;
+}
+
+/**
+ * Per-key insert-rate ceiling: at most this many `report` evidence rows for one
+ * key inside the trailing window. A lightweight anti-flood guard; H3 spatial
+ * rate limiting is a later concern.
+ */
+const REPORT_RATE_MAX = 10;
+const REPORT_RATE_WINDOW_SECONDS = 60;
 
 /** Minimal per-IP token bucket for the enrollment endpoint. */
 class EnrollLimiter {
@@ -186,6 +207,98 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       return reply.status(403).send({ error: "token issuance refused" });
     }
     return reply.send({ token: Buffer.from(result.tokenResponse).toString("base64url") });
+  });
+
+  const crowdSourceUri =
+    env["OPENCONDITIONS_CROWD_SOURCE_URI"] || `urn:openconditions:crowd:${resolveInstanceId(env)}`;
+  const crowdSourceLicense = env["OPENCONDITIONS_CROWD_LICENSE"] || "ODbL-1.0";
+
+  app.post<{ Body: ReportsBody }>("/contrib/reports", async (req, reply) => {
+    const body = req.body ?? {};
+    const { report, reportingGrant } = body;
+    if (report === null || typeof report !== "object" || typeof reportingGrant !== "string") {
+      return reply.status(400).send({ error: "report and reportingGrant are required" });
+    }
+    if (typeof report.keyId !== "string" || report.keyId.length === 0) {
+      return reply.status(400).send({ error: "report.keyId is required" });
+    }
+    const nowIso = now();
+
+    // 1. The grant binds the key. It must be valid, unexpired, and issued FOR
+    // this exact key — the report is separately key-signed, so both must agree.
+    const grant = await verifyReportingGrant(reportingGrant, grantSecret, nowIso, report.keyId);
+    if (!grant.valid || grant.keyId !== report.keyId) {
+      return reply.status(401).send({ error: `invalid reporting grant (${grant.reason})` });
+    }
+
+    // The reporter row (fetched now so verification can use the cached JWK, but
+    // the enrollment verdict is withheld until AFTER the signature check so an
+    // unauthenticated caller can never probe whether a key is enrolled).
+    const reporterRows = await sql<{ status: string; pub_jwk: JsonWebKey }[]>`
+      SELECT status, pub_jwk FROM conditions.reporter WHERE key_id = ${report.keyId}
+    `;
+    const reporter = reporterRows[0];
+
+    // 2. The signature must verify and the envelope keyId must equal its RFC
+    // 7638 thumbprint (contrib-core enforces). The cached JWK is preferred when
+    // the key is known; otherwise the embedded pubJwk (bound by the thumbprint)
+    // is used.
+    const verified = await verifyReport(report, reporter?.pub_jwk);
+    if (!verified.ok || verified.keyId !== report.keyId) {
+      return reply
+        .status(400)
+        .send({ error: `report verification failed (${verified.error ?? "keyId mismatch"})` });
+    }
+
+    // 3. The reporter row MUST already exist and be active — enrollment is the
+    // only gate that creates a reporter; a report from an unknown/blocked key is
+    // refused and NEVER auto-creates a reporter row.
+    if (reporter === undefined || reporter.status !== "active") {
+      return reply.status(403).send({ error: "reporter is not enrolled or is blocked" });
+    }
+
+    // 4. Deterministic plausibility: coordinates finite + in WGS84 range, a
+    // sane reportedAt window, a well-formed nonce.
+    const plausibility = checkPlausibility(report.claim, nowIso);
+    if (!plausibility.ok) {
+      return reply.status(422).send({ error: "implausible report", reasons: plausibility.reasons });
+    }
+
+    // Lightweight per-key insert-rate guard.
+    const recent = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM conditions.report_evidence
+      WHERE actor_key_id = ${report.keyId}
+        AND evidence_kind = 'report'
+        AND occurred_at > ${nowIso}::timestamptz - make_interval(secs => ${REPORT_RATE_WINDOW_SECONDS})
+    `;
+    if ((recent[0]?.n ?? 0) >= REPORT_RATE_MAX) {
+      return reply.status(429).send({ error: "too many reports; slow down" });
+    }
+
+    // 5. Map → central normalize seam → crowd insert + initial evidence +
+    // recompute, all in one transaction.
+    const landingCtx: LandingContext = {
+      instanceId: resolveInstanceId(env),
+      now: nowIso,
+      sourceUri: crowdSourceUri,
+      sourceLicense: crowdSourceLicense,
+    };
+    let result;
+    try {
+      result = await landReport(sql, report, landingCtx);
+    } catch (err) {
+      if (err instanceof GeometryInvalidError) {
+        return reply
+          .status(422)
+          .send({ error: "implausible report", reasons: ["geometry_invalid"] });
+      }
+      throw err;
+    }
+    return reply.status(200).send({
+      observationId: result.observationId,
+      evidenceState: result.evidenceState,
+      routingEligible: result.routingEligible,
+    });
   });
 
   app.get("/contrib/issuer-keys", async (_req, reply) => {

@@ -283,6 +283,92 @@ describe("normalizeObservation — content_hash impact", () => {
   });
 });
 
+const CROWD_CTX: WriterContext = { kind: "crowd", instanceId: "maps.example.org" };
+
+function crowdEvent(overrides: Record<string, unknown> = {}): Observation {
+  return {
+    id: "crowd:key-1:nonce-abcdefghij",
+    source: "crowd",
+    sourceFormat: "crowd",
+    domain: "roads",
+    kind: "event",
+    type: "congestion",
+    status: "active",
+    validFrom: "2026-07-12T08:00:00Z",
+    fuzziness: "low_res",
+    geometry: { type: "Point", coordinates: [4.9, 52.37] },
+    origin: {
+      kind: "crowd",
+      attribution: { provider: "maps.example.org", license: "ODbL-1.0" },
+      reporter: { keyId: "key-1" },
+    },
+    dataUpdatedAt: "2026-07-12T08:00:00Z",
+    fetchedAt: "2026-07-12T08:05:00Z",
+    isStale: false,
+    ...overrides,
+  } as unknown as Observation;
+}
+
+describe("normalizeObservation — crowd writer context", () => {
+  it("stamps privacyClass crowd_pseudonym and the instance id", () => {
+    const out = normalizeObservation(crowdEvent(), CROWD_CTX);
+    expect(out.privacyClass).toBe("crowd_pseudonym");
+    expect(out.instanceId).toBe("maps.example.org");
+  });
+
+  it("namespaces canonicalId on the instance id for a crowd row (not the source)", () => {
+    const out = normalizeObservation(crowdEvent(), CROWD_CTX);
+    expect(out.canonicalId).toBe(
+      canonicalId({ namespace: "maps.example.org", recordId: "crowd:key-1:nonce-abcdefghij" })
+    );
+    expect(out.canonicalId).not.toBe(
+      canonicalId({ namespace: "crowd", recordId: "crowd:key-1:nonce-abcdefghij" })
+    );
+  });
+
+  it("stamps the phenomenonFingerprint for a crowd event", () => {
+    const evt = crowdEvent();
+    const out = normalizeObservation(evt, CROWD_CTX);
+    expect(out.phenomenonFingerprint).toBe(phenomenonFingerprint(evt as ConditionEvent));
+  });
+
+  it("rejects a crowd report that carries evidenceState", () => {
+    expect(() =>
+      normalizeObservation(crowdEvent({ evidenceState: "corroborated" }), CROWD_CTX)
+    ).toThrow(/evidenceState/);
+  });
+
+  it("rejects a crowd report that carries routingEligible", () => {
+    expect(() => normalizeObservation(crowdEvent({ routingEligible: true }), CROWD_CTX)).toThrow(
+      /routingEligible/
+    );
+  });
+
+  it("rejects a crowd report that carries confidenceScore", () => {
+    expect(() => normalizeObservation(crowdEvent({ confidenceScore: 0.9 }), CROWD_CTX)).toThrow(
+      /confidenceScore/
+    );
+  });
+
+  it("rejects a crowd report that carries dpEpsilon", () => {
+    expect(() => normalizeObservation(crowdEvent({ dpEpsilon: 0.1 }), CROWD_CTX)).toThrow(
+      /dpEpsilon/
+    );
+  });
+
+  it("rejects a crowd report that spoofs its own privacyClass", () => {
+    expect(() =>
+      normalizeObservation(crowdEvent({ privacyClass: "crowd_pseudonym" }), CROWD_CTX)
+    ).toThrow(/privacyClass/);
+  });
+
+  it("rejects a crowd report that spoofs a conflicting instanceId", () => {
+    expect(() => normalizeObservation(crowdEvent({ instanceId: "evil" }), CROWD_CTX)).toThrow(
+      /instanceId|evil/
+    );
+  });
+});
+
 describe("resolveInstanceId", () => {
   it("returns the trimmed env value when set", () => {
     expect(resolveInstanceId({ OPENCONDITIONS_INSTANCE_ID: "  node-a  " })).toBe("node-a");

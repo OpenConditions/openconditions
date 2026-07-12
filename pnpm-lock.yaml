@@ -267,6 +267,9 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@openconditions/ingest':
+        specifier: workspace:*
+        version: link:../ingest
       '@openconditions/roads':
         specifier: workspace:*
         version: link:../../packages/roads

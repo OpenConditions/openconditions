@@ -18,9 +18,12 @@ const roadsFeeds = fileURLToPath(new URL("../../packages/roads/feeds/roads", imp
 const bundledFeeds = fileURLToPath(new URL("./dist/feeds/roads", import.meta.url));
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  // The normalize seam is a second entry so the contributions-api service can
+  // import it (the single central write-normalization choke point is shared,
+  // never reimplemented); dts is emitted only for that public subpath.
+  entry: ["src/index.ts", "src/pipeline/normalize.ts"],
   format: ["esm"],
-  dts: false,
+  dts: { entry: { "pipeline/normalize": "src/pipeline/normalize.ts" } },
   sourcemap: true,
   clean: true,
   outDir: "dist",

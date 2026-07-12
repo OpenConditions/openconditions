@@ -144,6 +144,25 @@ describe("canonicalId", () => {
     expect(canonicalId(onA)).toBe(canonicalId(rehosted));
   });
 
+  it("namespaces a crowd row's canonicalId on the instance id, not the source", () => {
+    const crowd = makeObservation({
+      id: "crowd:key-1:nonce-abcdefghij",
+      source: "crowd",
+      instanceId: "maps.example.org",
+      origin: {
+        kind: "crowd",
+        attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
+        reporter: { keyId: "key-1" },
+      },
+    });
+    expect(canonicalId(crowd)).toBe(
+      canonicalId({ namespace: "maps.example.org", recordId: "crowd:key-1:nonce-abcdefghij" })
+    );
+    expect(canonicalId(crowd)).not.toBe(
+      canonicalId({ namespace: "crowd", recordId: "crowd:key-1:nonce-abcdefghij" })
+    );
+  });
+
   it("is immune to separator injection between namespace and record id", () => {
     expect(canonicalId({ namespace: "a:b", recordId: "c" })).not.toBe(
       canonicalId({ namespace: "a", recordId: "b:c" })
