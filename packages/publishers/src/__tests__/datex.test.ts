@@ -74,6 +74,46 @@ describe("observationsToDatexSituations", () => {
     expect(Number(coords.longitude)).toBe(13.4);
   });
 
+  it("emits a PointLocation for a Point-geometry event, never a buffered linear/area location", () => {
+    const recs = recordsOf(
+      observationsToDatexSituations([
+        roadEvent({
+          type: "congestion",
+          geometry: { type: "Point", coordinates: [13.4, 52.5] },
+        }),
+      ])
+    );
+    const loc = recs[0].locationReference;
+    expect(local(loc["@_type"])).toBe("PointLocation");
+    expect(Number(loc.pointByCoordinates.pointCoordinates.latitude)).toBe(52.5);
+    expect(Number(loc.pointByCoordinates.pointCoordinates.longitude)).toBe(13.4);
+    expect(loc.linearLocation).toBeUndefined();
+    expect(loc.area).toBeUndefined();
+  });
+
+  it("reduces a LineString event to its first coordinate as a PointLocation, never fabricating a linear location by buffering", () => {
+    const recs = recordsOf(
+      observationsToDatexSituations([
+        roadEvent({
+          type: "congestion",
+          geometry: {
+            type: "LineString",
+            coordinates: [
+              [13.4, 52.5],
+              [13.5, 52.6],
+            ],
+          },
+        }),
+      ])
+    );
+    const loc = recs[0].locationReference;
+    expect(local(loc["@_type"])).toBe("PointLocation");
+    expect(Number(loc.pointByCoordinates.pointCoordinates.latitude)).toBe(52.5);
+    expect(Number(loc.pointByCoordinates.pointCoordinates.longitude)).toBe(13.4);
+    expect(loc.linearLocation).toBeUndefined();
+    expect(loc.area).toBeUndefined();
+  });
+
   it("maps severity (critical→highest) and overall validity times", () => {
     const recs = recordsOf(
       observationsToDatexSituations([

@@ -67,16 +67,16 @@ The service applies its migrations, starts polling the enabled feeds, and serves
 
 All are bbox-filterable (`?bbox=west,south,east,north[&domain=roads]`) and rate-limited:
 
-| Endpoint                        | Format                                            |
-| ------------------------------- | ------------------------------------------------- |
-| `GET /observations.geojson`     | GeoJSON FeatureCollection                         |
-| `GET /observations.jsonld`      | JSON-LD (SOSA/Schema.org `@context`)              |
-| `GET /traff.xml`                | TraFF (CoMaps / Navit)                            |
-| `GET /datex2/situations.xml`    | DATEX II v3 SituationPublication                  |
-| `GET /gtfs-rt/alerts.pb`        | GTFS-RT Alert (protobuf)                          |
-| `GET /valhalla/exclusions.json` | Valhalla `exclude_locations` / `exclude_polygons` |
-| `GET /stream`                   | Server-Sent Events (snapshot + live deltas)       |
-| `GET /status`                   | health (unlimited)                                |
+| Endpoint                        | Format                                                                 |
+| ------------------------------- | ---------------------------------------------------------------------- |
+| `GET /observations.geojson`     | GeoJSON FeatureCollection                                              |
+| `GET /observations.jsonld`      | JSON-LD (SOSA/Schema.org `@context`)                                   |
+| `GET /traff.xml`                | TraFF (CoMaps / Navit)                                                 |
+| `GET /datex2/situations.xml`    | DATEX II v3 SituationPublication ([status](docs/datex-conformance.md)) |
+| `GET /gtfs-rt/alerts.pb`        | GTFS-RT Alert (protobuf)                                               |
+| `GET /valhalla/exclusions.json` | Valhalla `exclude_locations` / `exclude_polygons`                      |
+| `GET /stream`                   | Server-Sent Events (snapshot + live deltas)                            |
+| `GET /status`                   | health (unlimited)                                                     |
 
 ## Using OpenConditions with OpenMapX
 

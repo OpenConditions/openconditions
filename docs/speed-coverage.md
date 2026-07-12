@@ -56,10 +56,14 @@ Two feeds need a free API key and stay dormant until it is set:
 
 Point-sensor congestion (Fintraffic, OHGO, Trafikverket) emits **Point**
 geometry, and direction is set only where the feed carries it (Fintraffic,
-OHGO). The CIFS and DATEX II JAM mappings expect a linear polyline plus a
-direction, so for these point-sensor feeds those exports produce degenerate
-(single-point) polylines with partial direction until the emitter buffers the
-point into a short directional segment.
+OHGO). DATEX II models this correctly as-is: `loc:PointLocation` is a valid
+DATEX II v3 location type for a point sensor, so no linear geometry is needed
+and the emitter never fabricates one by buffering a point into a segment (see
+`docs/datex-conformance.md` for what full SRTI conformance still requires).
+**CIFS** (Waze/Google) is not built yet and does expect a linear polyline plus
+a direction; how a point-sensor reading should project into a CIFS `line` is
+an open design question left to whenever CIFS is actually implemented — it
+must not silently invent geometry either.
 
 ## Excluded / deferred
 

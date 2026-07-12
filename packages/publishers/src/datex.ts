@@ -3,17 +3,25 @@ import { XMLBuilder } from "fast-xml-parser";
 import { type FeedInfo, type RoadFields, roadFields } from "./types.js";
 
 /**
- * DATEX II v3 SituationPublication emitter — lets EU NAPs and road authorities
- * consume OpenConditions natively. Spec: https://docs.datex2.eu/ (v3 modular
- * schemas: messageContainer / situation / common / locationReferencing). No
- * usable JS DATEX II writer exists, so this hand-builds the XML with
+ * DATEX II v3 SituationPublication emitter. Spec: https://docs.datex2.eu/ (v3
+ * modular schemas: messageContainer / situation / common / locationReferencing).
+ * No usable JS DATEX II writer exists, so this hand-builds the XML with
  * fast-xml-parser, mirroring the reader in `@openconditions/roads`.
  *
- * Pragmatic deviations from a strict XSD (documented; Level-B-shaped, not
- * XSD-certified): the publication creator carries a single feed-level country
- * (the aggregate spans many); every location is reduced to a representative
- * point (precise linear/OpenLR references are Phase 2); road name/number sit
- * directly under the location reference.
+ * Honest labeling: this is a pragmatic DATEX II v3 SituationPublication-shaped
+ * export, NOT SRTI-profile-conformant and NOT NAP-publication-ready. Actual
+ * conformance requires validating output against the official DATEX II v3 SRTI
+ * Recommended Reference Profile schema, which is not vendored or checked
+ * in-stack — see `docs/datex-conformance.md` for what that requires and the
+ * tracked follow-up. Do not present this route to a NAP or SRTI consumer as
+ * conformant without that validation.
+ *
+ * Known pragmatic deviations from a strict XSD (documented, not exhaustive):
+ * the publication creator carries a single feed-level country (the aggregate
+ * spans many); every location is reduced to a representative point (precise
+ * linear/OpenLR references are Phase 2 — see the conformance doc; point
+ * geometry is never buffered into a fabricated linear location); road
+ * name/number sit directly under the location reference.
  */
 
 /** Map each canonical road type to its DATEX II v3 SituationRecord class. */
