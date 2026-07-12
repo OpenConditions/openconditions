@@ -1,0 +1,2 @@
+ALTER TABLE "conditions"."observations" ADD COLUMN "flagged_at" timestamp with time zone;--> statement-breakpoint
+CREATE INDEX "idx_conditions_obs_flagged" ON "conditions"."observations" USING btree ("flagged_at") WHERE "conditions"."observations"."flagged_at" IS NOT NULL;

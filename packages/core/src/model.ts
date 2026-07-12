@@ -201,6 +201,12 @@ export interface Observation {
    * sets it; peer corroboration never does. Derived, never parser-supplied.
    */
   routingEligible?: boolean;
+  /**
+   * When the observation was first flagged by a reporter (a `flag` sub-claim).
+   * Feeds the reviewer queue; a flag is not evidence of truth, so it never
+   * changes evidenceState. Set only post-landing by the flag route.
+   */
+  flaggedAt?: string;
   /** Privacy tier this observation was produced under. */
   privacyClass?: PrivacyClass;
   /** k for k-anonymity, when the observation is a k-anonymized aggregate. */

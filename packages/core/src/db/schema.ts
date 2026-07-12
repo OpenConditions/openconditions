@@ -112,6 +112,11 @@ export const observations = conditionsSchema.table(
     // non-crowd rows.
     evidenceState: text("evidence_state"),
     routingEligible: boolean("routing_eligible").notNull().default(false),
+    // First-flag marker for the reviewer queue (set by the sub-claim flag route,
+    // never at landing). A flag is not evidence of truth/falsehood, so it does
+    // not touch the evidence ledger; it only lights up this timestamp. Excluded
+    // from content_hash (never set on feed/crowd insert).
+    flaggedAt: timestamp("flagged_at", { withTimezone: true }),
     severityLevel: smallint("severity_level"),
     privacyClass: text("privacy_class").notNull().default("unknown"),
     kAnonymity: integer("k_anonymity"),
@@ -136,6 +141,9 @@ export const observations = conditionsSchema.table(
     index("idx_conditions_obs_instance").on(t.instanceId),
     index("idx_conditions_obs_privacy").on(t.privacyClass),
     index("idx_conditions_obs_evidence_state").on(t.evidenceState),
+    index("idx_conditions_obs_flagged")
+      .on(t.flaggedAt)
+      .where(sql`${t.flaggedAt} IS NOT NULL`),
     check(
       "obs_confidence_score_range",
       sql`${t.confidenceScore} IS NULL OR (${t.confidenceScore} >= 0 AND ${t.confidenceScore} <= 1)`

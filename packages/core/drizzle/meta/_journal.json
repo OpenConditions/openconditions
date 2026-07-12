@@ -71,6 +71,13 @@
       "when": 1783830137444,
       "tag": "0009_spent_token_single_use",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783847483277,
+      "tag": "0010_observation_flagged_at",
+      "breakpoints": true
     }
   ]
 }

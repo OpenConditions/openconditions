@@ -43,7 +43,7 @@ export class GeometryInvalidError extends Error {
  * is NOT matched on its own, so an unrelated DB error can never be misclassified
  * as a 422. Still catches every realistic `ST_GeomFromGeoJSON` failure.
  */
-function isGeometryError(err: unknown): boolean {
+export function isGeometryError(err: unknown): boolean {
   const message = err instanceof Error ? err.message : String(err);
   return /geojson|geometry|geometrycollection|lwgeom|geos|linestring|multiline|polygon|multipolygon|multipoint|linearring|\bring\b|ordinate|coordinate|dimension|closed linestring|requires more|too few points/i.test(
     message

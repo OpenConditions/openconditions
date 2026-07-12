@@ -14,8 +14,11 @@ import type postgres from "postgres";
 import {
   checkPlausibility,
   verifyReport,
+  verifySubClaim,
   type LandingContext,
+  type ReportClaim,
   type SignedReport,
+  type SignedSubClaim,
 } from "@openconditions/contrib-core";
 import { resolveInstanceId } from "@openconditions/ingest/pipeline/normalize";
 import { enrollReporter } from "./attester/enroll.js";
@@ -26,6 +29,7 @@ import { issueToken } from "./issuer/issue.js";
 import { DEFAULT_ISSUER_NAME, ensureIssuerKeys, loadActiveIssuerKeys } from "./issuer/keys.js";
 import { TokenVerifier } from "./issuer/verify.js";
 import { GeometryInvalidError, landReport } from "./landing/insert.js";
+import { castSubClaimVote } from "./subclaim/vote.js";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -61,6 +65,13 @@ interface ReportsBody {
   report?: SignedReport;
   reportingGrant?: string;
 }
+
+interface SubClaimBody {
+  subClaim?: SignedSubClaim;
+  reportingGrant?: string;
+}
+
+const SUB_CLAIM_ACTIONS = new Set(["confirm", "negate", "flag"]);
 
 /**
  * Per-key insert-rate ceiling: at most this many `report` evidence rows for one
@@ -300,6 +311,139 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       routingEligible: result.routingEligible,
     });
   });
+
+  // A signed vote (confirm/negate/flag) ON an existing observation. It appends
+  // evidence and recomputes state, honoring the binding trust rules: two
+  // distinct keys corroborate but NEVER route; a self-vote never corroborates;
+  // the same key never double-counts. The corroboration/negation/retraction
+  // math lives in core's evaluateEvidence — this route only appends the right
+  // report_evidence row and recomputes (or, for a flag, sets flagged_at).
+  app.post<{ Params: { id: string; action: string }; Body: SubClaimBody }>(
+    "/contrib/reports/:id/:action",
+    async (req, reply) => {
+      const { id, action } = req.params;
+      // 1. The action must name a real vote kind, else the route does not exist.
+      if (!SUB_CLAIM_ACTIONS.has(action)) {
+        return reply.status(404).send({ error: "unknown sub-claim action" });
+      }
+
+      const body = req.body ?? {};
+      const { subClaim, reportingGrant } = body;
+      if (subClaim === null || typeof subClaim !== "object" || typeof reportingGrant !== "string") {
+        return reply.status(400).send({ error: "subClaim and reportingGrant are required" });
+      }
+      if (typeof subClaim.keyId !== "string" || subClaim.keyId.length === 0) {
+        return reply.status(400).send({ error: "subClaim.keyId is required" });
+      }
+      const nowIso = now();
+
+      // 2. The grant binds the key: valid, unexpired, issued FOR this exact key.
+      const grant = await verifyReportingGrant(reportingGrant, grantSecret, nowIso, subClaim.keyId);
+      if (!grant.valid || grant.keyId !== subClaim.keyId) {
+        return reply.status(401).send({ error: `invalid reporting grant (${grant.reason})` });
+      }
+
+      // The reporter row is fetched now for its cached JWK, but the enrollment
+      // verdict is withheld until AFTER the signature check so an unauthenticated
+      // caller can never probe whether a key is enrolled.
+      const reporterRows = await sql<{ status: string; pub_jwk: JsonWebKey }[]>`
+        SELECT status, pub_jwk FROM conditions.reporter WHERE key_id = ${subClaim.keyId}
+      `;
+      const reporter = reporterRows[0];
+
+      // 3. The signature must verify and the envelope keyId must equal its RFC
+      // 7638 thumbprint (contrib-core enforces).
+      const verified = await verifySubClaim(subClaim, reporter?.pub_jwk);
+      if (!verified.ok || verified.keyId !== subClaim.keyId) {
+        return reply
+          .status(400)
+          .send({ error: `sub-claim verification failed (${verified.error ?? "keyId mismatch"})` });
+      }
+
+      // 4. The SIGNED claimType and the route action must agree — a confirm-signed
+      // claim must never be replayable on the negate route.
+      if (subClaim.claimType !== action) {
+        return reply.status(400).send({
+          error: `claimType "${subClaim.claimType}" does not match route action "${action}"`,
+        });
+      }
+
+      // 5. The subject must resolve to the target observation id. v1 accepts the
+      // observation id ONLY. A maresi-uri subject cannot be resolved without a
+      // report-signature→observation index, which this task deliberately does
+      // not build, so any subject that is not the id is refused.
+      if (subClaim.subject !== id) {
+        return reply
+          .status(400)
+          .send({ error: "subClaim.subject must be the target observation id in v1" });
+      }
+
+      // 6. The reporter row MUST exist and be active — enrollment is the only gate
+      // that creates a reporter; an unknown/blocked key can never vote.
+      if (reporter === undefined || reporter.status !== "active") {
+        return reply.status(403).send({ error: "reporter is not enrolled or is blocked" });
+      }
+
+      // 6b. A sub-claim geometry is OPTIONAL ("where the vote was made"), but when
+      // present it must be a plausibility-valid Point — the SAME deterministic
+      // geometry screen the report path uses (per-type arity, exactly-two finite
+      // in-WGS84-range coordinates). A non-Point is rejected rather than silently
+      // dropped; a malformed/3D/out-of-range Point is caught here, before any DB
+      // round-trip, so no sub_claim or evidence row is written and PostGIS never
+      // sees a shape it would 500 on.
+      if (subClaim.geometry !== undefined) {
+        if (subClaim.geometry.type !== "Point") {
+          return reply
+            .status(422)
+            .send({ error: "implausible sub-claim geometry", reasons: ["geometry_not_point"] });
+        }
+        const geometryProbe: ReportClaim = {
+          domain: "roads",
+          type: action,
+          geometry: subClaim.geometry,
+          fuzziness: "exact",
+          reportedAt: nowIso,
+          nonce: "0000000000000000",
+        };
+        const geometryReasons = checkPlausibility(geometryProbe, nowIso).reasons.filter((reason) =>
+          reason.startsWith("geometry_")
+        );
+        if (geometryReasons.length > 0) {
+          return reply
+            .status(422)
+            .send({ error: "implausible sub-claim geometry", reasons: geometryReasons });
+        }
+      }
+
+      // 7-9. Lock the observation, store the sub-claim, append evidence, recompute.
+      let outcome;
+      try {
+        outcome = await castSubClaimVote(sql, id, subClaim, nowIso);
+      } catch (err) {
+        if (err instanceof GeometryInvalidError) {
+          return reply
+            .status(422)
+            .send({ error: "implausible sub-claim geometry", reasons: ["geometry_invalid"] });
+        }
+        throw err;
+      }
+      if (outcome.code === 404) {
+        return reply.status(404).send({ error: outcome.error });
+      }
+      if (outcome.code === 409) {
+        return reply.status(409).send({ error: outcome.error });
+      }
+      if (outcome.action === "flag") {
+        return reply.status(200).send({ flagged: true });
+      }
+      return reply.status(200).send({
+        observationId: outcome.observationId,
+        evidenceState: outcome.evidenceState,
+        routingEligible: outcome.routingEligible,
+        action: outcome.action,
+      });
+    }
+  );
 
   app.get("/contrib/issuer-keys", async (_req, reply) => {
     const keys = await loadActiveIssuerKeys(sql, now(), issuerName);
