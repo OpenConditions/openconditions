@@ -3,6 +3,7 @@ import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import type { FastifyInstance } from "fastify";
 import {
+  crowdObservationId,
   generateReporterKey,
   signReport,
   type ReportClaim,
@@ -161,7 +162,7 @@ describe("POST /contrib/reports — happy path landing", () => {
       evidenceState: string;
       routingEligible: boolean;
     };
-    const obsId = `crowd:${key.keyId}:happy-000000000001`;
+    const obsId = await crowdObservationId(key.keyId, "happy-000000000001");
     expect(body.observationId).toBe(obsId);
     expect(body.evidenceState).toBe("self_reported");
     expect(body.routingEligible).toBe(false);
@@ -191,7 +192,7 @@ describe("POST /contrib/reports — happy path landing", () => {
     await postReport(report, grant);
 
     const rows = await sql<{ origin: Record<string, unknown> }[]>`
-      SELECT origin FROM conditions.observations WHERE id = ${`crowd:${key.keyId}:minimal-00000000001`}`;
+      SELECT origin FROM conditions.observations WHERE id = ${await crowdObservationId(key.keyId, "minimal-00000000001")}`;
     const reporter = rows[0]!.origin["reporter"] as Record<string, unknown>;
     expect(reporter["keyId"]).toBe(key.keyId);
     expect(reporter).not.toHaveProperty("signature");
@@ -212,7 +213,7 @@ describe("POST /contrib/reports — idempotent replay", () => {
       (second.json() as { observationId: string }).observationId
     );
 
-    const obsId = `crowd:${key.keyId}:replay-000000000001`;
+    const obsId = await crowdObservationId(key.keyId, "replay-000000000001");
     const evidence = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM conditions.report_evidence WHERE observation_id = ${obsId}`;
     expect(evidence[0]!.n).toBe(1);
@@ -308,7 +309,7 @@ describe("POST /contrib/reports — rejections at the trust boundary", () => {
     expect(res.statusCode).toBe(422);
     expect((res.json() as { reasons: string[] }).reasons).toContain("geometry_malformed");
 
-    const row = await readObs(`crowd:${key.keyId}:arity-mismatch-0001`);
+    const row = await readObs(await crowdObservationId(key.keyId, "arity-mismatch-0001"));
     expect(row).toBeUndefined();
   }, 60_000);
 
@@ -324,7 +325,7 @@ describe("POST /contrib/reports — rejections at the trust boundary", () => {
     expect(res.statusCode).toBe(422);
     expect((res.json() as { reasons: string[] }).reasons).toContain("geometry_malformed");
 
-    const row = await readObs(`crowd:${key.keyId}:three-dee-00000001`);
+    const row = await readObs(await crowdObservationId(key.keyId, "three-dee-00000001"));
     expect(row).toBeUndefined();
   }, 60_000);
 
@@ -382,8 +383,8 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
     expect((await postReport(reportA, grantA)).statusCode).toBe(200);
     expect((await postReport(reportB, grantB)).statusCode).toBe(200);
 
-    const idA = `crowd:${keyA.keyId}:corrob-A-000000001`;
-    const idB = `crowd:${keyB.keyId}:corrob-B-000000001`;
+    const idA = await crowdObservationId(keyA.keyId, "corrob-A-000000001");
+    const idB = await crowdObservationId(keyB.keyId, "corrob-B-000000001");
     const rowA = await readObs(idA);
 
     // The earlier report (A) survives and is corroborated; the later (B) merges in.
@@ -430,8 +431,8 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
     expect((await postReport(reportC, grantC)).statusCode).toBe(200);
     expect((await postReport(reportD, grantD)).statusCode).toBe(200);
 
-    const rowC = await readObs(`crowd:${keyC.keyId}:corrob-far-C-00001`);
-    const rowD = await readObs(`crowd:${keyD.keyId}:corrob-far-D-00001`);
+    const rowC = await readObs(await crowdObservationId(keyC.keyId, "corrob-far-C-00001"));
+    const rowD = await readObs(await crowdObservationId(keyD.keyId, "corrob-far-D-00001"));
     expect(rowC!.evidence_state).toBe("self_reported");
     expect(rowD!.evidence_state).toBe("self_reported");
     expect(rowC!.confidence_score).toBeCloseTo(0.3, 10);
@@ -474,7 +475,7 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
       SELECT count(*)::int AS n FROM conditions.report_evidence
       WHERE observation_id = 'feed:closure:1'`;
     expect(confirms[0]!.n).toBe(0);
-    const crowd = await readObs(`crowd:${key.keyId}:crowd-vs-feed-0001`);
+    const crowd = await readObs(await crowdObservationId(key.keyId, "crowd-vs-feed-0001"));
     expect(crowd!.evidence_state).toBe("self_reported");
   }, 60_000);
 
@@ -500,7 +501,7 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
       });
       const res = await postReport(report, grant, throwingApp);
       expect(res.statusCode).toBe(200);
-      const row = await readObs(`crowd:${key.keyId}:corrob-boom-000001`);
+      const row = await readObs(await crowdObservationId(key.keyId, "corrob-boom-000001"));
       expect(row!.evidence_state).toBe("self_reported");
     } finally {
       await throwingApp.close();
@@ -518,7 +519,7 @@ describe("POST /contrib/reports — police-category gate (DEFAULT OFF)", () => {
     expect(res.statusCode).toBe(422);
     expect((res.json() as { reason: string }).reason).toBe("police_category_disabled");
 
-    const row = await readObs(`crowd:${key.keyId}:police-off-0000001`);
+    const row = await readObs(await crowdObservationId(key.keyId, "police-off-0000001"));
     expect(row).toBeUndefined();
   }, 60_000);
 
@@ -530,7 +531,7 @@ describe("POST /contrib/reports — police-category gate (DEFAULT OFF)", () => {
     const res = await postReport(report, grant, appPolice);
     expect(res.statusCode).toBe(200);
 
-    const row = await readObs(`crowd:${key.keyId}:police-on-00000001`);
+    const row = await readObs(await crowdObservationId(key.keyId, "police-on-00000001"));
     expect(row).toBeDefined();
     expect(row!.evidence_state).toBe("self_reported");
   }, 60_000);
@@ -543,7 +544,7 @@ describe("POST /contrib/reports — police-category gate (DEFAULT OFF)", () => {
     const res = await postReport(report, grant);
     expect(res.statusCode).toBe(200);
 
-    const row = await readObs(`crowd:${key.keyId}:authority-0000001`);
+    const row = await readObs(await crowdObservationId(key.keyId, "authority-0000001"));
     expect(row).toBeDefined();
   }, 60_000);
 
@@ -578,7 +579,7 @@ describe("POST /contrib/reports — media is disabled (no media path in v1)", ()
     const res = await postReport(report, grant);
     expect(res.statusCode).toBe(200);
 
-    const obsId = `crowd:${key.keyId}:media-inert-000001`;
+    const obsId = await crowdObservationId(key.keyId, "media-inert-000001");
     const rows = await sql<{ attributes: Record<string, unknown> | null }[]>`
       SELECT attributes FROM conditions.observations WHERE id = ${obsId}`;
     // The media key survives as inert attribute data — there is no server-side

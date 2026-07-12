@@ -4,6 +4,7 @@ import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import type { FastifyInstance } from "fastify";
 import {
+  crowdObservationId,
   generateReporterKey,
   signReport,
   type ReportClaim,
@@ -209,8 +210,8 @@ describe("kinematic plausibility — post-hoc flag, never a block", () => {
     const second = await report(key, grant, "teleport-b-00000001", 13.405, 52.52);
     expect(second.statusCode).toBe(200);
 
-    const firstId = `crowd:${key.keyId}:teleport-a-00000001`;
-    const secondId = `crowd:${key.keyId}:teleport-b-00000001`;
+    const firstId = await crowdObservationId(key.keyId, "teleport-a-00000001");
+    const secondId = await crowdObservationId(key.keyId, "teleport-b-00000001");
     expect(await readFlaggedAt(firstId)).toBeNull();
     const flagged = await readFlaggedAt(secondId);
     expect(flagged).not.toBeNull();
@@ -238,8 +239,12 @@ describe("kinematic plausibility — post-hoc flag, never a block", () => {
     const second = await report(key, grant, "drive-b-00000000001", 6.0, 52.009);
     expect(second.statusCode).toBe(200);
 
-    expect(await readFlaggedAt(`crowd:${key.keyId}:drive-a-00000000001`)).toBeNull();
-    expect(await readFlaggedAt(`crowd:${key.keyId}:drive-b-00000000001`)).toBeNull();
+    expect(
+      await readFlaggedAt(await crowdObservationId(key.keyId, "drive-a-00000000001"))
+    ).toBeNull();
+    expect(
+      await readFlaggedAt(await crowdObservationId(key.keyId, "drive-b-00000000001"))
+    ).toBeNull();
   }, 120_000);
 });
 

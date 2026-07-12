@@ -66,7 +66,8 @@ export function isGeometryError(err: unknown): boolean {
  * initial `report` evidence row, and its evidence state is recomputed, all in
  * ONE transaction.
  *
- * Idempotency: the id is `crowd:<keyId>:<nonce>`, so a replayed nonce hits
+ * Idempotency: the id is the de-identified `crowd:<sha256(keyId:nonce)>`
+ * (deterministic per key+nonce), so a replayed nonce hits
  * `ON CONFLICT (id) DO NOTHING`. On a replay we neither append a duplicate
  * evidence row nor recompute; we return the existing row's derived state. Since
  * the insert + evidence + recompute are one transaction, a committed
@@ -83,7 +84,7 @@ export async function landReport(
   report: SignedReport,
   ctx: LandingContext
 ): Promise<LandingResult> {
-  const mapped: CrowdLandingObservation = reportToObservation(report, ctx);
+  const mapped: CrowdLandingObservation = await reportToObservation(report, ctx);
   const obs = normalizeObservation(mapped, {
     kind: "crowd",
     instanceId: ctx.instanceId,

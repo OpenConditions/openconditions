@@ -20,26 +20,51 @@ export function isShareAlikeLicense(license: string | undefined): boolean {
 }
 
 /**
- * Prepares a set for a permissive export so no copyleft feed's data leaks into a
- * non-share-alike consumer. Two passes:
- *  1. Drops any record whose PRIMARY license is share-alike. Records with no
+ * Removes the crowd reporter block from an observation's origin, leaving only
+ * `{ kind, attribution }`. The reporter's pseudonymous `keyId` (an RFC 7638
+ * thumbprint), signature, and reputation are identity-bearing and must never
+ * reach a public consumer — a leaked keyId lets anyone cluster all of one
+ * reporter's reports, defeating the pseudonymity model. Feed origins carry no
+ * reporter, so they pass through by reference unchanged.
+ */
+function stripReporter(o: Observation): Observation {
+  if (!("reporter" in o.origin)) return o;
+  // Intentionally a reporter-less origin; the crowd variant nominally requires a
+  // reporter, so cast past the union — dropping it is the whole point here.
+  const origin = {
+    kind: o.origin.kind,
+    attribution: o.origin.attribution,
+  } as Observation["origin"];
+  return { ...o, origin };
+}
+
+/**
+ * Prepares a set for a permissive, public export. Three concerns, applied to
+ * every route/emitter that funnels through this one filter:
+ *  1. Drops any record whose PRIMARY license is share-alike so no copyleft
+ *     feed's data leaks into a non-share-alike consumer. Records with no
  *     declared license are kept (treated as the feed's own terms apply).
- *  2. For each surviving record, strips any `mergedSources` entry whose
- *     `attribution.license` is share-alike — a permissive record that won a
- *     cross-source dedup merge over a share-alike duplicate keeps its own
- *     (permissive) content, but the copyleft source's attribution trace must
- *     not ride along in the lossless emitters (GeoJSON/JSON-LD spread the whole
- *     observation, `mergedSources` included). Non-mutating: a record with no
- *     share-alike merged source is returned as-is; otherwise a shallow copy with
- *     the filtered `mergedSources` is returned, leaving the shared object intact.
+ *  2. Strips `origin.reporter` (keyId/signature/reputation) from every surviving
+ *     record so the pseudonymous reporter identity never reaches a public
+ *     projection (GeoJSON/JSON-LD/GTFS-RT/TraFF/DATEX/SSE/archive all run this).
+ *  3. Strips any `mergedSources` entry whose `attribution.license` is
+ *     share-alike — a permissive record that won a cross-source dedup merge over
+ *     a share-alike duplicate keeps its own (permissive) content, but the
+ *     copyleft source's attribution trace must not ride along in the lossless
+ *     emitters (GeoJSON/JSON-LD spread the whole observation, `mergedSources`
+ *     included).
+ * Non-mutating: a feed record with no share-alike merged source is returned by
+ * reference; any record needing a change gets a shallow copy, leaving the shared
+ * object intact.
  */
 export function filterForPermissiveExport(obs: Observation[]): Observation[] {
   const kept = obs.filter((o) => !isShareAlikeLicense(recordLicense(o)));
   return kept.map((o) => {
-    const merged = o.mergedSources;
-    if (!merged || merged.length === 0) return o;
+    const stripped = stripReporter(o);
+    const merged = stripped.mergedSources;
+    if (!merged || merged.length === 0) return stripped;
     const clean = merged.filter((m) => !isShareAlikeLicense(m.attribution.license));
-    if (clean.length === merged.length) return o;
-    return { ...o, mergedSources: clean };
+    if (clean.length === merged.length) return stripped;
+    return { ...stripped, mergedSources: clean };
   });
 }

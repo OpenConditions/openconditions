@@ -30,9 +30,12 @@
     "@openconditions/core": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
     "fast-xml-parser": "^5.8.0",
-    "gtfs-realtime-bindings": "^2.0.0"
+    "gtfs-realtime-bindings": "^2.0.0",
+    "hyparquet": "1.26.2",
+    "hyparquet-writer": "0.16.1"
   },
   "devDependencies": {
+    "@openconditions/contrib-core": "workspace:*",
     "@openconditions/roads": "workspace:*",
     "@types/geojson": "^7946.0.14",
     "tsup": "^8.0.0",

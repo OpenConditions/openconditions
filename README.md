@@ -103,6 +103,9 @@ it.
 
 - npm: `@openconditions/core`, `@openconditions/roads` (prebuilt, public)
 - images: `ghcr.io/openconditions/ingest`, `ghcr.io/openconditions/openlr-resolver`
+- **static archive:** a nightly [GeoParquet snapshot of the published view](docs/archive.md) —
+  the mirrorable artifact for seeding a new instance or backfilling a federation peer
+  (license/expiry/tombstone enforced, no raw crowd evidence, no probe staging)
 
 Releases are cut by tagging `vX.Y.Z` (see [`.github/workflows/release.yml`](.github/workflows/release.yml)).
 

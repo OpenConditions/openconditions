@@ -19,7 +19,7 @@ export { evidenceRowsToLedger } from "./evidence-ledger.js";
 export type { ReportEvidenceRow } from "./evidence-ledger.js";
 export { matchPhenomenonCandidates } from "./phenomenon-match.js";
 export type { MatchDecision, MatchOptions, PhenomenonCandidate } from "./phenomenon-match.js";
-export { reportToObservation } from "./report-to-observation.js";
+export { crowdObservationId, reportToObservation } from "./report-to-observation.js";
 export type { CrowdLandingObservation, LandingContext } from "./report-to-observation.js";
 export { impliedSpeedKmh, isKinematicallyPlausible } from "./kinematic.js";
 export type { PriorReport } from "./kinematic.js";

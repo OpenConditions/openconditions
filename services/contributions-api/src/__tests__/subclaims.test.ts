@@ -3,6 +3,7 @@ import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import type { FastifyInstance } from "fastify";
 import {
+  crowdObservationId,
   generateReporterKey,
   signReport,
   signSubClaim,
@@ -565,7 +566,7 @@ describe("POST /contrib/reports/:id/:action — rejections at the trust boundary
   it("rejects a vote on a non-existent observation with 404", async () => {
     const keyB = await generateReporterKey();
     const grantB = await enroll(keyB);
-    const missingId = `crowd:${keyB.keyId}:does-not-exist0001`;
+    const missingId = await crowdObservationId(keyB.keyId, "does-not-exist0001");
     const sub = await signSub(keyB, missingId, "confirm");
     const res = await vote(missingId, "confirm", sub, grantB);
     expect(res.statusCode).toBe(404);

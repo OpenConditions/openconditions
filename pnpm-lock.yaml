@@ -202,7 +202,16 @@ importers:
       gtfs-realtime-bindings:
         specifier: ^2.0.0
         version: 2.1.0
+      hyparquet:
+        specifier: 1.26.2
+        version: 1.26.2
+      hyparquet-writer:
+        specifier: 0.16.1
+        version: 0.16.1
     devDependencies:
+      '@openconditions/contrib-core':
+        specifier: workspace:*
+        version: link:../contrib-core
       '@openconditions/roads':
         specifier: workspace:*
         version: link:../roads
@@ -335,6 +344,9 @@ importers:
       gtfs-realtime-bindings:
         specifier: ^2.0.0
         version: 2.1.0
+      hyparquet:
+        specifier: 1.26.2
+        version: 1.26.2
       testcontainers:
         specifier: ^12.0.3
         version: 12.0.3
@@ -1924,6 +1936,15 @@ packages:
     resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
     engines: {node: '>=18'}
     hasBin: true
+
+  hyparquet-writer@0.16.1:
+    resolution: {integrity: sha512-vb87T2ub06kbEKZOQoHTbVwN0kXQPM5mnMuyTNqQPsOzf85qYBzyFG6R83CnXNhrlncdpRtXeKrbF3ZoLj26pg==}
+
+  hyparquet@1.26.1:
+    resolution: {integrity: sha512-Me2psKksCqJGR8+TbalUYUyK4Ao+ReA6XmMSiOVPhOBswULbl3ojT06PQajyTafbNPW1vD0tCA7H6dXJAC1TPw==}
+
+  hyparquet@1.26.2:
+    resolution: {integrity: sha512-6qjyK7R2tZ4vnYP1J8NpcCeDPK1UIYk3xh5XgtQUnUM1iwkYbvI6Mz3xtmpMd6AfCCeoUoJVbEq29k5GReZRWA==}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -4448,6 +4469,14 @@ snapshots:
   html-escaper@2.0.2: {}
 
   husky@9.1.7: {}
+
+  hyparquet-writer@0.16.1:
+    dependencies:
+      hyparquet: 1.26.1
+
+  hyparquet@1.26.1: {}
+
+  hyparquet@1.26.2: {}
 
   ieee754@1.2.1: {}
 

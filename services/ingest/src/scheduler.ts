@@ -9,6 +9,7 @@ import {
   type DomainRegistry,
 } from "@openconditions/ingest-framework";
 import type { FeedSource } from "@openconditions/roads";
+import { buildDailyArchive } from "./pipeline/archive-build.js";
 import { deriveBaselines, pruneSpeedSamples } from "./pipeline/baseline-derive.js";
 import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js";
 import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
@@ -59,6 +60,8 @@ export async function runFeedOnce(
 const SWEEP_CRON = "*/5 * * * *";
 /** When the nightly baseline derivation + sample prune runs (UTC). */
 const BASELINE_CRON = "0 3 * * *";
+/** When the nightly static-archive (GeoParquet published-view) build runs (UTC) — after the baseline derivation. */
+const ARCHIVE_CRON = "30 3 * * *";
 /** When the weekly segment-spine rebuild (import->build->openlr->match) runs (UTC). */
 const SEGMENT_CRON = "0 4 * * 1";
 /** When the weekly segment speed-profile derivation runs (UTC) — after the nightly baseline, before the segment rebuild. */
@@ -220,6 +223,28 @@ export function startScheduler(
   });
   console.info(`[scheduler] registered nightly baseline derivation (${BASELINE_CRON})`);
   jobs.push(baselineJob);
+
+  const archiveCron = pickCronExpression(process.env, "ARCHIVE_CRON", ARCHIVE_CRON);
+  if (archiveCron) {
+    let buildingArchive = false;
+    const archiveJob = new Cron(archiveCron, { catch: true }, async () => {
+      if (buildingArchive) return;
+      buildingArchive = true;
+      try {
+        // buildDailyArchive is itself best-effort (swallows an unwritable dir);
+        // this guard covers a read/serialize failure so it never crashes cron.
+        await buildDailyArchive(sql);
+      } catch (err) {
+        console.error("[scheduler] archive build failed", err);
+      } finally {
+        buildingArchive = false;
+      }
+    });
+    console.info(`[scheduler] registered nightly static-archive build (${archiveCron})`);
+    jobs.push(archiveJob);
+  } else {
+    console.info("[scheduler] nightly static-archive build disabled (ARCHIVE_CRON=off)");
+  }
 
   const segmentProfileCron = pickCronExpression(
     process.env,

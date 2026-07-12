@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { observationsToGeoJSON } from "../geojson.js";
 import { filterForPermissiveExport, isShareAlikeLicense } from "../license.js";
 import { roadEvent } from "./fixture.js";
 
@@ -88,5 +89,52 @@ describe("filterForPermissiveExport", () => {
     const out = filterForPermissiveExport([rec]);
     expect(out).toHaveLength(1);
     expect(out[0]).toBe(rec);
+  });
+});
+
+describe("filterForPermissiveExport — crowd reporter identity stripping", () => {
+  const crowd = () =>
+    roadEvent({
+      id: "crowd:hashed-id",
+      origin: {
+        kind: "crowd",
+        attribution: { provider: "inst", license: "CC0-1.0" },
+        reporter: { keyId: "REPORTER-KEYID-SENTINEL", signature: "SIG", reputation: 5 },
+      },
+      privacyClass: "crowd_pseudonym",
+    });
+
+  it("strips origin.reporter, keeping only {kind, attribution}", () => {
+    const [out] = filterForPermissiveExport([crowd()]);
+    expect(out!.origin).toEqual({
+      kind: "crowd",
+      attribution: { provider: "inst", license: "CC0-1.0" },
+    });
+    expect("reporter" in out!.origin).toBe(false);
+    expect(JSON.stringify(out)).not.toContain("REPORTER-KEYID-SENTINEL");
+  });
+
+  it("keeps privacyClass while dropping the reporter", () => {
+    const [out] = filterForPermissiveExport([crowd()]);
+    expect(out!.privacyClass).toBe("crowd_pseudonym");
+  });
+
+  it("leaves a feed origin (no reporter) unchanged by reference", () => {
+    const feed = roadEvent({
+      id: "feed",
+      origin: { kind: "feed", attribution: { provider: "p", license: "CC0-1.0" } },
+    });
+    const [out] = filterForPermissiveExport([feed]);
+    expect(out).toBe(feed);
+  });
+
+  it("carries no reporter through the GeoJSON emitter once filtered", () => {
+    const fc = observationsToGeoJSON(filterForPermissiveExport([crowd()]));
+    const props = fc.features[0]!.properties as { origin: Record<string, unknown> };
+    expect(props.origin).toEqual({
+      kind: "crowd",
+      attribution: { provider: "inst", license: "CC0-1.0" },
+    });
+    expect(JSON.stringify(fc)).not.toContain("REPORTER-KEYID-SENTINEL");
   });
 });
