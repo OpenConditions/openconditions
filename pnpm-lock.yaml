@@ -256,6 +256,40 @@ importers:
         specifier: ^3.0.0
         version: 3.2.6(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.9.0)
 
+  services/contributions-api:
+    dependencies:
+      '@openconditions/contrib-core':
+        specifier: workspace:*
+        version: link:../../packages/contrib-core
+      '@openconditions/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@openconditions/roads':
+        specifier: workspace:*
+        version: link:../../packages/roads
+      postgres:
+        specifier: ^3.4.0
+        version: 3.4.9
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.2
+      testcontainers:
+        specifier: ^12.0.3
+        version: 12.0.3
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.15)(tsx@4.22.4)(typescript@5.9.3)(yaml@2.9.0)
+      tsx:
+        specifier: ^4.0.0
+        version: 4.22.4
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.9.0)
+
   services/ingest:
     dependencies:
       '@openconditions/core':

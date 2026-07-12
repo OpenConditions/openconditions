@@ -4,6 +4,7 @@ import {
   canonicalIdentityParts,
   normalizeNamespace,
   phenomenonFingerprint,
+  phenomenonFingerprintNeighborhood,
   centroid,
   gridCell,
   truncateType,
@@ -310,6 +311,107 @@ describe("phenomenonFingerprint", () => {
     expect(phenomenonFingerprint(a, { typeDepth: 1 })).toBe(
       phenomenonFingerprint(b, { typeDepth: 1 })
     );
+  });
+});
+
+describe("phenomenonFingerprintNeighborhood", () => {
+  const METERS_PER_DEG_LAT = 111_320;
+
+  it("includes the event's own fingerprint", () => {
+    const evt = makeEvent();
+    expect(phenomenonFingerprintNeighborhood(evt)).toContain(phenomenonFingerprint(evt));
+  });
+
+  it("returns at most 27 distinct fingerprints (3x3 cells x 3 buckets)", () => {
+    const fps = phenomenonFingerprintNeighborhood(makeEvent());
+    expect(fps.length).toBeLessThanOrEqual(27);
+    expect(new Set(fps).size).toBe(fps.length);
+  });
+
+  it("closes the cell-boundary miss: two events 1 m apart across a cell edge each contain the other's own fingerprint", () => {
+    // 100 m grid → one longitude cell ≈ 0.000898°. Straddle a cell edge by ~1 m.
+    const lonStep = 100 / METERS_PER_DEG_LAT;
+    const edgeLon = Math.ceil(6.5 / lonStep) * lonStep;
+    const a = makeEvent({ geometry: { type: "Point", coordinates: [edgeLon - 0.000005, 52.0] } });
+    const b = makeEvent({
+      id: "other-id",
+      geometry: { type: "Point", coordinates: [edgeLon + 0.000005, 52.0] },
+    });
+    // Their exact fingerprints differ (different cells)...
+    expect(phenomenonFingerprint(a)).not.toBe(phenomenonFingerprint(b));
+    // ...yet each sits in the other's neighborhood.
+    expect(phenomenonFingerprintNeighborhood(a)).toContain(phenomenonFingerprint(b));
+    expect(phenomenonFingerprintNeighborhood(b)).toContain(phenomenonFingerprint(a));
+  });
+
+  it("yields all 9 cells for a centroid within 1e-12° of a cell edge at lon ≈ −179.974", () => {
+    // Near |lon| ≈ 180 a coordinate-offset implementation can lose a ±step
+    // offset to floating-point cancellation and skip a neighbor cell. Integer
+    // cell-index offsets must keep the full 3×3 block regardless.
+    const step = 100 / METERS_PER_DEG_LAT;
+    const edgeLon = Math.floor(-179.974 / step) * step;
+    const lonC = edgeLon + 1e-12;
+    const latC = (Math.floor(52.0 / step) + 0.5) * step;
+    const base = makeEvent({ geometry: { type: "Point", coordinates: [lonC, latC] } });
+    const hood = phenomenonFingerprintNeighborhood(base);
+    expect(hood).toHaveLength(27);
+
+    // Re-derive the base cell exactly as gridCell does, then demand the
+    // fingerprint of an event at the CENTER of each of the 9 surrounding cells.
+    const x = Math.floor(lonC / step);
+    const y = Math.floor(latC / step);
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        const neighbor = makeEvent({
+          id: `cell-${dx}-${dy}`,
+          geometry: {
+            type: "Point",
+            coordinates: [(x + dx + 0.5) * step, (y + dy + 0.5) * step],
+          },
+        });
+        expect(hood).toContain(phenomenonFingerprint(neighbor));
+      }
+    }
+  });
+
+  it("includes the ±1 time buckets", () => {
+    const at = makeEvent({ validFrom: "2026-07-10T12:00:00Z" });
+    const prev = makeEvent({ validFrom: "2026-07-10T11:55:00Z" });
+    const next = makeEvent({ validFrom: "2026-07-10T12:05:00Z" });
+    const hood = phenomenonFingerprintNeighborhood(at);
+    expect(hood).toContain(phenomenonFingerprint(prev));
+    expect(hood).toContain(phenomenonFingerprint(next));
+    // ...but not two buckets away.
+    const farPast = makeEvent({ validFrom: "2026-07-10T11:49:00Z" });
+    expect(hood).not.toContain(phenomenonFingerprint(farPast));
+  });
+
+  it("carries the same TypeError guards as phenomenonFingerprint", () => {
+    expect(() => phenomenonFingerprintNeighborhood(makeEvent({ validFrom: null }))).toThrow(
+      TypeError
+    );
+    expect(() =>
+      phenomenonFingerprintNeighborhood(
+        makeEvent({ geometry: { type: "Point", coordinates: [Number.NaN, 52.0] } })
+      )
+    ).toThrow(TypeError);
+    expect(() => phenomenonFingerprintNeighborhood(makeEvent(), { gridMeters: 0 })).toThrow(
+      TypeError
+    );
+    expect(() => phenomenonFingerprintNeighborhood(makeEvent(), { typeDepth: 3 })).toThrow(
+      TypeError
+    );
+    const measurement: Measurement = {
+      ...makeObservation(),
+      kind: "measurement",
+      metric: "speed",
+      value: 87,
+      unit: "km/h",
+      aggregation: "live",
+    };
+    expect(() =>
+      phenomenonFingerprintNeighborhood(measurement as unknown as ConditionEvent)
+    ).toThrow(TypeError);
   });
 });
 

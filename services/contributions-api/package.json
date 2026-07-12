@@ -1,0 +1,29 @@
+{
+  "name": "@openconditions/contributions-api",
+  "version": "0.1.0",
+  "description": "OpenConditions contributions service — crowd report intake and evidence-state recompute",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@openconditions/contrib-core": "workspace:*",
+    "@openconditions/core": "workspace:*",
+    "@openconditions/roads": "workspace:*",
+    "postgres": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "testcontainers": "^12.0.3",
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}

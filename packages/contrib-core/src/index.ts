@@ -15,3 +15,7 @@ export { generateReporterKey } from "./keys.js";
 export type { GenerateReporterKeyOptions, ReporterKey } from "./keys.js";
 export { maresiUri, signReport, verifyReport } from "./report.js";
 export { signSubClaim, verifySubClaim } from "./subclaim.js";
+export { evidenceRowsToLedger } from "./evidence-ledger.js";
+export type { ReportEvidenceRow } from "./evidence-ledger.js";
+export { matchPhenomenonCandidates } from "./phenomenon-match.js";
+export type { MatchDecision, MatchOptions, PhenomenonCandidate } from "./phenomenon-match.js";

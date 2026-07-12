@@ -1,4 +1,5 @@
 import type { Geometry, LineString, MultiLineString, Point } from "geojson";
+import type { EvidenceState } from "./evidence.js";
 
 export type GeoJsonGeometry = Geometry;
 export type LineStringGeometry = LineString;
@@ -183,6 +184,17 @@ export interface Observation {
   fuzziness?: Fuzziness;
   /** Normalized [0,1] confidence for this observation. */
   confidenceScore?: number;
+  /**
+   * Crowd-evidence lifecycle state, materialized from the authoritative
+   * `report_evidence` ledger by the evidence policy. NULL/absent on non-crowd
+   * (feed) rows; a parser must never assert it.
+   */
+  evidenceState?: EvidenceState;
+  /**
+   * Whether this observation is routing-eligible. Only an external resolution
+   * sets it; peer corroboration never does. Derived, never parser-supplied.
+   */
+  routingEligible?: boolean;
   /** Privacy tier this observation was produced under. */
   privacyClass?: PrivacyClass;
   /** k for k-anonymity, when the observation is a k-anonymized aggregate. */

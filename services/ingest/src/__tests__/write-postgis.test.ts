@@ -142,6 +142,8 @@ describe("commons fields — content_hash policy", () => {
         phenomenonFingerprint: "fp-1",
         confidenceScore: 0.42,
         privacyClass: "authoritative",
+        evidenceState: "corroborated",
+        routingEligible: true,
       })
     );
     expect(withDerived.content_hash).toBe(GOLDEN_PLAIN_HASH);

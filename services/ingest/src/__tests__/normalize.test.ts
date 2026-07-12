@@ -161,6 +161,18 @@ describe("normalizeObservation — spoof rejection (trust boundary)", () => {
       /src:1.*dpDelta/
     );
   });
+
+  it("throws when a feed-origin row asserts evidenceState (derived, never parser-set)", () => {
+    expect(() => normalizeObservation(feedEvent({ evidenceState: "corroborated" }), CTX)).toThrow(
+      /src:1.*evidenceState/
+    );
+  });
+
+  it("throws when a feed-origin row asserts routingEligible", () => {
+    expect(() => normalizeObservation(feedEvent({ routingEligible: true }), CTX)).toThrow(
+      /src:1.*routingEligible/
+    );
+  });
 });
 
 describe("normalizeObservation — confidenceScore strip", () => {

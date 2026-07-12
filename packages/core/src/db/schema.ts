@@ -15,6 +15,7 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 const conditionsSchema = pgSchema("conditions");
@@ -24,6 +25,20 @@ const conditionsSchema = pgSchema("conditions");
 const geometry = customType<{ data: string }>({
   dataType() {
     return "geometry(Geometry, 4326)";
+  },
+});
+
+/** PostGIS Point geometry column (crowd sub-claims are always single points). */
+const geometryPoint = customType<{ data: string }>({
+  dataType() {
+    return "geometry(Point, 4326)";
+  },
+});
+
+/** Raw bytes column (issuer signing keypair material). */
+const bytea = customType<{ data: Buffer; default: false }>({
+  dataType() {
+    return "bytea";
   },
 });
 
@@ -91,6 +106,12 @@ export const observations = conditionsSchema.table(
     corroborations: jsonb("corroborations"),
     fuzziness: text("fuzziness").notNull().default("exact"),
     confidenceScore: doublePrecision("confidence_score"),
+    // Materialized outputs of the crowd evidence policy (evaluateEvidence). The
+    // raw report_evidence ledger stays authoritative; these are derived and a
+    // replay recomputes them, so they are excluded from content_hash. NULL on
+    // non-crowd rows.
+    evidenceState: text("evidence_state"),
+    routingEligible: boolean("routing_eligible").notNull().default(false),
     severityLevel: smallint("severity_level"),
     privacyClass: text("privacy_class").notNull().default("unknown"),
     kAnonymity: integer("k_anonymity"),
@@ -114,6 +135,7 @@ export const observations = conditionsSchema.table(
     index("idx_conditions_obs_phenomenon").on(t.phenomenonFingerprint),
     index("idx_conditions_obs_instance").on(t.instanceId),
     index("idx_conditions_obs_privacy").on(t.privacyClass),
+    index("idx_conditions_obs_evidence_state").on(t.evidenceState),
     check(
       "obs_confidence_score_range",
       sql`${t.confidenceScore} IS NULL OR (${t.confidenceScore} >= 0 AND ${t.confidenceScore} <= 1)`
@@ -135,6 +157,10 @@ export const observations = conditionsSchema.table(
     check(
       "obs_privacy_class_enum",
       sql`${t.privacyClass} IN ('unknown','authoritative','aggregate','k_anon','dp_noised','crowd_pseudonym')`
+    ),
+    check(
+      "obs_evidence_state_enum",
+      sql`${t.evidenceState} IS NULL OR ${t.evidenceState} IN ('self_reported','corroborated','externally_resolved','negated','expired')`
     ),
   ]
 );
@@ -347,3 +373,114 @@ export const segmentSpeed = conditionsSchema.table(
   },
   (t) => [index("idx_segment_speed_los").on(t.los)]
 );
+
+/**
+ * One row per pseudonymous crowd reporter, keyed by the RFC 7638 thumbprint of
+ * its P-256 public key. Carries the Beta reliability posterior
+ * (`reputation_alpha`/`reputation_beta`) trained only by externally resolved
+ * outcomes, participation counters, and the entitlement window that gates
+ * whether the key may still submit.
+ */
+export const reporter = conditionsSchema.table(
+  "reporter",
+  {
+    keyId: text("key_id").primaryKey(),
+    pubJwk: jsonb("pub_jwk").notNull(),
+    osmUid: text("osm_uid"),
+    emailLookupHmac: text("email_lookup_hmac"),
+    reputationAlpha: doublePrecision("reputation_alpha").notNull(),
+    reputationBeta: doublePrecision("reputation_beta").notNull(),
+    corroboratedCount: integer("corroborated_count").notNull().default(0),
+    flaggedCount: integer("flagged_count").notNull().default(0),
+    trustSignal: doublePrecision("trust_signal"),
+    entitlementExpiresAt: timestamp("entitlement_expires_at", { withTimezone: true }).notNull(),
+    status: text("status").notNull().default("active"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    lastActiveAt: timestamp("last_active_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    check("reporter_reputation_alpha_positive", sql`${t.reputationAlpha} > 0`),
+    check("reporter_reputation_beta_positive", sql`${t.reputationBeta} > 0`),
+    check("reporter_status_enum", sql`${t.status} IN ('active','blocked')`),
+  ]
+);
+
+/**
+ * A signed reaction to an existing report/observation: a confirm, negate, or
+ * flag from one reporter key. The unique index enforces one reaction per
+ * (subject, key, type) so a key cannot stuff the ballot on a single subject.
+ */
+export const subClaim = conditionsSchema.table(
+  "sub_claim",
+  {
+    id: text("id").primaryKey(),
+    subjectId: text("subject_id").notNull(),
+    claimType: text("claim_type").notNull(),
+    keyId: text("key_id").notNull(),
+    reason: text("reason"),
+    geom: geometryPoint("geom"),
+    signature: text("signature").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    uniqueIndex("uq_sub_claim_subject_key_type").on(t.subjectId, t.keyId, t.claimType),
+    index("idx_sub_claim_subject").on(t.subjectId),
+    index("idx_sub_claim_key").on(t.keyId),
+    check("sub_claim_claim_type_enum", sql`${t.claimType} IN ('confirm','negate','flag')`),
+  ]
+);
+
+/**
+ * The append-only, authoritative evidence ledger for a crowd observation: one
+ * row per admissible piece of evidence (report/confirm/negate/external
+ * resolution/expiry). The observation's derived evidence_state/routing_eligible
+ * are a replayable projection of these rows (see evidenceRowsToLedger +
+ * evaluateEvidence).
+ */
+export const reportEvidence = conditionsSchema.table(
+  "report_evidence",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    observationId: text("observation_id").notNull(),
+    evidenceKind: text("evidence_kind").notNull(),
+    actorKeyId: text("actor_key_id"),
+    sourceId: text("source_id"),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    details: jsonb("details")
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+  },
+  (t) => [
+    index("idx_report_evidence_observation").on(t.observationId, t.occurredAt),
+    check(
+      "report_evidence_kind_enum",
+      sql`${t.evidenceKind} IN ('report','confirm','negate','official_match','reviewer_accept','reviewer_reject','expired')`
+    ),
+  ]
+);
+
+/**
+ * Per-(key, epoch) count of anti-abuse tokens already issued — the rate-limit
+ * ledger for a reporter's submission entitlement.
+ */
+export const tokenQuota = conditionsSchema.table(
+  "token_quota",
+  {
+    keyId: text("key_id").notNull(),
+    epoch: text("epoch").notNull(),
+    issued: integer("issued").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.keyId, t.epoch] })]
+);
+
+/**
+ * This instance's rotating token-issuer keypairs, each valid across a
+ * [not_before, not_after) window.
+ */
+export const issuerKey = conditionsSchema.table("issuer_key", {
+  keyId: text("key_id").primaryKey(),
+  publicKey: bytea("public_key").notNull(),
+  privateKey: bytea("private_key").notNull(),
+  notBefore: timestamp("not_before", { withTimezone: true }).notNull(),
+  notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
+});

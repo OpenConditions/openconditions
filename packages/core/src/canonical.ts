@@ -93,16 +93,31 @@ export function centroid(geometry: GeoJsonGeometry): [number, number] {
 }
 
 /**
- * Snap to an equatorial-scaled grid: longitude cells shrink toward the poles,
- * accepted for a starting quantization (the tuning seam is FingerprintOptions).
+ * Integer (lon, lat) cell indices on the equatorial-scaled grid. The single
+ * quantization step both {@link gridCell} and the fingerprint neighborhood
+ * build on: neighbors are enumerated as integer index offsets from this result,
+ * never by re-quantizing offset coordinates (floating-point cancellation near
+ * cell edges at large |lon| could otherwise skip or repeat a cell).
  */
-export function gridCell([lon, lat]: [number, number], gridMeters: number): string {
+function gridCellIndices([lon, lat]: [number, number], gridMeters: number): [number, number] {
   if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
     throw new TypeError("gridCell requires finite coordinates");
   }
-  const latStep = gridMeters / METERS_PER_DEG_LAT;
-  const lonStep = latStep;
-  return `${Math.floor(lon / lonStep)}:${Math.floor(lat / latStep)}`;
+  const step = gridMeters / METERS_PER_DEG_LAT;
+  return [Math.floor(lon / step), Math.floor(lat / step)];
+}
+
+function cellKey(x: number, y: number): string {
+  return `${x}:${y}`;
+}
+
+/**
+ * Snap to an equatorial-scaled grid: longitude cells shrink toward the poles,
+ * accepted for a starting quantization (the tuning seam is FingerprintOptions).
+ */
+export function gridCell(position: [number, number], gridMeters: number): string {
+  const [x, y] = gridCellIndices(position, gridMeters);
+  return cellKey(x, y);
 }
 
 export function truncateType(domain: string, type: string, depth: number): string[] {
@@ -119,33 +134,44 @@ const HAS_ZONE_DESIGNATOR = /(?:[zZ]|[+-]\d{2}:?\d{2})$/;
 // would make the fingerprint host-timezone-dependent and non-deterministic.
 const ISO_CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}(?:T|$)/;
 
+/**
+ * Parse an ISO calendar-date string to epoch milliseconds under the canonical
+ * ISO-shape + UTC-pinning rule shared by {@link timeBucket} and the phenomenon
+ * matcher: the string must start with the ISO calendar-date shape, an
+ * offset-less datetime is pinned to UTC (cross-instance determinism outweighs
+ * wall-clock correctness), and a date-only string parses as UTC midnight per
+ * spec. Returns NaN for a non-ISO-shaped or unparseable string — callers decide
+ * whether that throws (fingerprinting) or is reported as a named
+ * incompatibility (matching).
+ */
+export function isoUtcEpochMs(value: string): number {
+  if (!ISO_CALENDAR_DATE.test(value)) {
+    return Number.NaN;
+  }
+  const pinned = value.includes("T") && !HAS_ZONE_DESIGNATOR.test(value) ? `${value}Z` : value;
+  return Date.parse(pinned);
+}
+
 export function timeBucket(validFrom: string | null | undefined, bucketSec: number): number {
   if (!validFrom) {
     throw new TypeError("timeBucket requires a validFrom timestamp");
   }
-  if (!ISO_CALENDAR_DATE.test(validFrom)) {
-    throw new TypeError(
-      `timeBucket requires an ISO calendar date (YYYY-MM-DD, optionally with a T time part): ${validFrom}`
-    );
-  }
-  // An offset-less datetime is pinned to UTC: cross-instance determinism of the
-  // key outweighs absolute wall-clock correctness for a 300 s bucket. A date-only
-  // string carries no `T`, so it is left as-is (parsed as UTC midnight per spec).
-  const pinned =
-    validFrom.includes("T") && !HAS_ZONE_DESIGNATOR.test(validFrom) ? `${validFrom}Z` : validFrom;
-  const epochMs = Date.parse(pinned);
+  const epochMs = isoUtcEpochMs(validFrom);
   if (!Number.isFinite(epochMs)) {
-    throw new TypeError(`timeBucket got an invalid date: ${validFrom}`);
+    throw new TypeError(
+      `timeBucket requires a parseable ISO calendar date (YYYY-MM-DD, optionally with a T time part): ${validFrom}`
+    );
   }
   return Math.floor(epochMs / 1000 / bucketSec);
 }
 
-export function phenomenonFingerprint(evt: ConditionEvent, opts: FingerprintOptions = {}): string {
-  if (evt.kind !== "event") {
-    throw new TypeError(
-      "phenomenonFingerprint is events-only: measurements carry no validFrom and would collapse distinct sensors onto one key"
-    );
-  }
+interface ResolvedFingerprintOptions {
+  gridMeters: number;
+  typeDepth: number;
+  timeBucketSec: number;
+}
+
+function resolveFingerprintOptions(opts: FingerprintOptions): ResolvedFingerprintOptions {
   const gridMeters = opts.gridMeters ?? DEFAULT_GRID_METERS;
   const typeDepth = opts.typeDepth ?? DEFAULT_TYPE_DEPTH;
   const timeBucketSec = opts.timeBucketSec ?? DEFAULT_TIME_BUCKET_SEC;
@@ -158,9 +184,81 @@ export function phenomenonFingerprint(evt: ConditionEvent, opts: FingerprintOpti
   if (typeDepth !== 1 && typeDepth !== 2) {
     throw new TypeError("typeDepth must be 1 or 2");
   }
-  return sha256Hex([
+  return { gridMeters, typeDepth, timeBucketSec };
+}
+
+function fingerprintDigest(
+  cell: string,
+  domain: string,
+  type: string,
+  typeDepth: number,
+  bucket: number
+): string {
+  return sha256Hex([cell, ...truncateType(domain, type, typeDepth), String(bucket)]);
+}
+
+export function phenomenonFingerprint(evt: ConditionEvent, opts: FingerprintOptions = {}): string {
+  if (evt.kind !== "event") {
+    throw new TypeError(
+      "phenomenonFingerprint is events-only: measurements carry no validFrom and would collapse distinct sensors onto one key"
+    );
+  }
+  const { gridMeters, typeDepth, timeBucketSec } = resolveFingerprintOptions(opts);
+  return fingerprintDigest(
     gridCell(centroid(evt.geometry), gridMeters),
-    ...truncateType(evt.domain, evt.type, typeDepth),
-    String(timeBucket(evt.validFrom, timeBucketSec)),
-  ]);
+    evt.domain,
+    evt.type,
+    typeDepth,
+    timeBucket(evt.validFrom, timeBucketSec)
+  );
+}
+
+/**
+ * The fingerprints of the 3×3 spatial grid cells around the event's centroid,
+ * crossed with the {t−1, t, t+1} time buckets — up to 27 DISTINCT fingerprints,
+ * always including the event's own {@link phenomenonFingerprint}. The base cell
+ * indices are computed ONCE and neighbors are enumerated as integer index
+ * offsets (x±1, y±1), so a centroid arbitrarily close to a cell edge — where
+ * re-quantizing a coordinate-offset point can lose the offset to floating-point
+ * cancellation at large |lon| — still yields all nine cells exactly. This closes
+ * the cell-boundary miss where two reports a metre apart straddle a cell edge:
+ * their exact fingerprints differ, but each sits inside the other's
+ * neighborhood, so a candidate lookup keyed on this set still pairs them. A
+ * fingerprint match only OPENS a typed candidate set; it never merges
+ * automatically.
+ *
+ * Known limitations (inherited from the {@link gridCell} quantization):
+ * - The grid does not wrap at the antimeridian — cell indices run past ±180°,
+ *   so a pair of reports straddling the ±180° meridian share no neighborhood.
+ * - Longitude cells shrink toward the poles (equatorial-scaled step), so at
+ *   high latitudes the 3×3 cell block covers less east–west ground than
+ *   3×gridMeters.
+ *
+ * Same TypeError guards as {@link phenomenonFingerprint} (events-only, finite
+ * coordinates, valid `validFrom`, valid options).
+ */
+export function phenomenonFingerprintNeighborhood(
+  evt: ConditionEvent,
+  opts: FingerprintOptions = {}
+): string[] {
+  if (evt.kind !== "event") {
+    throw new TypeError(
+      "phenomenonFingerprintNeighborhood is events-only: measurements carry no validFrom and would collapse distinct sensors onto one key"
+    );
+  }
+  const { gridMeters, typeDepth, timeBucketSec } = resolveFingerprintOptions(opts);
+  const [x, y] = gridCellIndices(centroid(evt.geometry), gridMeters);
+  const baseBucket = timeBucket(evt.validFrom, timeBucketSec);
+  const fingerprints = new Set<string>();
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const cell = cellKey(x + dx, y + dy);
+      for (let dBucket = -1; dBucket <= 1; dBucket++) {
+        fingerprints.add(
+          fingerprintDigest(cell, evt.domain, evt.type, typeDepth, baseBucket + dBucket)
+        );
+      }
+    }
+  }
+  return [...fingerprints];
 }

@@ -57,6 +57,13 @@
       "when": 1783800245125,
       "tag": "0007_commons_observation_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1783824959050,
+      "tag": "0008_contribution_tables_evidence_state",
+      "breakpoints": true
     }
   ]
 }

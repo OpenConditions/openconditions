@@ -226,6 +226,10 @@ export function toRow(obs: Observation) {
     corroborations: obs.corroborations ?? null,
     fuzziness: obs.fuzziness ?? null,
     confidence_score: obs.confidenceScore ?? null,
+    // Derived evidence-policy outputs — pass-through only, EXCLUDED from
+    // content_hash (recomputed on replay). A feed row never carries them.
+    evidence_state: obs.evidenceState ?? null,
+    routing_eligible: obs.routingEligible ?? false,
     severity_level: condEvent.severityLevel ?? null,
     privacy_class: obs.privacyClass ?? null,
     k_anonymity: obs.kAnonymity ?? null,
@@ -292,7 +296,7 @@ export async function upsertRows(
       confidence, is_forecast, related_ids,
       origin, data_updated_at, fetched_at, expires_at, is_stale, stale_after, content_hash,
       instance_id, canonical_id, phenomenon_fingerprint, replaces, corroborations,
-      fuzziness, confidence_score, severity_level, privacy_class, k_anonymity,
+      fuzziness, confidence_score, evidence_state, routing_eligible, severity_level, privacy_class, k_anonymity,
       dp_epsilon, dp_delta, informed, source_uri, source_license
     )
     SELECT
@@ -306,7 +310,8 @@ export async function upsertRows(
       confidence, is_forecast, related_ids,
       origin, data_updated_at, fetched_at, expires_at, is_stale, stale_after, content_hash,
       instance_id, canonical_id, phenomenon_fingerprint, replaces, corroborations,
-      COALESCE(fuzziness, 'exact'), confidence_score, severity_level,
+      COALESCE(fuzziness, 'exact'), confidence_score, evidence_state,
+      COALESCE(routing_eligible, false), severity_level,
       COALESCE(privacy_class, 'unknown'), k_anonymity,
       dp_epsilon, dp_delta, informed, source_uri, source_license
     FROM jsonb_to_recordset(${tx.json(rows as AnyJson)}::jsonb) AS t(
@@ -322,7 +327,8 @@ export async function upsertRows(
       expires_at timestamptz, is_stale boolean, stale_after timestamptz, content_hash text,
       instance_id text, canonical_id text, phenomenon_fingerprint text,
       replaces jsonb, corroborations jsonb,
-      fuzziness text, confidence_score double precision, severity_level smallint,
+      fuzziness text, confidence_score double precision,
+      evidence_state text, routing_eligible boolean, severity_level smallint,
       privacy_class text, k_anonymity integer,
       dp_epsilon double precision, dp_delta double precision, informed jsonb,
       source_uri text, source_license text
@@ -369,6 +375,8 @@ export async function upsertRows(
       corroborations = excluded.corroborations,
       fuzziness = excluded.fuzziness,
       confidence_score = excluded.confidence_score,
+      evidence_state = excluded.evidence_state,
+      routing_eligible = excluded.routing_eligible,
       severity_level = excluded.severity_level,
       privacy_class = excluded.privacy_class,
       k_anonymity = excluded.k_anonymity,

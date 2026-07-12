@@ -1,5 +1,6 @@
 export * from "./model.js";
 export * from "./decay.js";
+export * from "./evidence-policy.js";
 export * from "./taxonomy.js";
 export * from "./severity-derive.js";
 export * from "./types.js";

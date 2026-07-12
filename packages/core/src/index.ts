@@ -6,6 +6,7 @@ export * from "./time.js";
 export * from "./timezone.js";
 export * from "./observationsByBbox.js";
 export * from "./readObservations.js";
+export { haversineMeters } from "./spatial.js";
 export * from "./dedupe.js";
 export * from "./crossSourceDedupe.js";
 export * from "./evidence.js";
