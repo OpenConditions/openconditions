@@ -1,9 +1,11 @@
 import type postgres from "postgres";
-import type { EvidenceState } from "@openconditions/core";
+import { centroid, coarseCell, type EvidenceState } from "@openconditions/core";
 import {
+  isKinematicallyPlausible,
   reportToObservation,
   type CrowdLandingObservation,
   type LandingContext,
+  type PriorReport,
   type SignedReport,
 } from "@openconditions/contrib-core";
 import { normalizeObservation } from "@openconditions/ingest/pipeline/normalize";
@@ -20,6 +22,12 @@ export interface LandingResult {
   routingEligible: boolean;
   /** False when the nonce was already landed (idempotent replay). */
   inserted: boolean;
+  /**
+   * True when the transition from this key's previous report was
+   * kinematically implausible and the NEW observation was flagged
+   * (flagged_at set). A post-hoc anomaly signal — the report still landed.
+   */
+  kinematicFlagged: boolean;
 }
 
 /**
@@ -134,21 +142,73 @@ async function landWithin(
         evidenceState: row?.evidence_state ?? null,
         routingEligible: row?.routing_eligible ?? false,
         inserted: false,
+        kinematicFlagged: false,
       };
     }
 
+    // The evidence row carries the report's coarse area cell so the per-(key,
+    // cell) rate limiter can count on `details->>'cell'` without a geometry
+    // join (the landing already has the geometry in hand here).
+    const [lon, lat] = centroid(obs.geometry);
     await tx`
       INSERT INTO conditions.report_evidence
         (observation_id, evidence_kind, actor_key_id, occurred_at, details)
-      VALUES (${obs.id}, 'report', ${report.keyId}, ${ctx.now}, ${tx.json({} as Jsonb)})
+      VALUES (${obs.id}, 'report', ${report.keyId}, ${ctx.now},
+              ${tx.json({ cell: coarseCell(lon, lat) } as Jsonb)})
     `;
 
     const result = await recomputeEvidence(sql, obs.id, ctx.now, tx);
+    const kinematicFlagged = await flagIfKinematicallyImplausible(tx, obs, report.keyId, ctx.now);
     return {
       observationId: obs.id,
       evidenceState: result?.state ?? null,
       routingEligible: result?.routingEligible ?? false,
       inserted: true,
+      kinematicFlagged,
     };
   });
+}
+
+/**
+ * Post-hoc kinematic plausibility (ADR anomaly flagging): if reaching this
+ * report from the key's PREVIOUS landed report would imply an impossible
+ * speed, set flagged_at on the NEW observation. Both instants are the SERVER
+ * clock (`occurred_at` / ctx.now), so a client cannot dodge the check by
+ * backdating `reportedAt`. This NEVER blocks the landing — a truthful fast
+ * mover must not be censored; the report stays self_reported and only gains
+ * reviewer-queue visibility.
+ */
+async function flagIfKinematicallyImplausible(
+  tx: postgres.TransactionSql,
+  obs: CrowdLandingObservation,
+  keyId: string,
+  now: string
+): Promise<boolean> {
+  const previousRows = await tx<{ geometry: string; occurred_at: Date }[]>`
+    SELECT ST_AsGeoJSON(o.geom) AS geometry, e.occurred_at
+    FROM conditions.report_evidence e
+    JOIN conditions.observations o ON o.id = e.observation_id
+    WHERE e.actor_key_id = ${keyId}
+      AND e.evidence_kind = 'report'
+      AND e.observation_id <> ${obs.id}
+    ORDER BY e.occurred_at DESC, e.id DESC
+    LIMIT 1
+  `;
+  const previousRow = previousRows[0];
+  if (previousRow === undefined) {
+    return false;
+  }
+  const previous: PriorReport = {
+    geometry: JSON.parse(previousRow.geometry),
+    reportedAt: new Date(previousRow.occurred_at).toISOString(),
+  };
+  const next: PriorReport = { geometry: obs.geometry, reportedAt: now };
+  if (isKinematicallyPlausible(previous, next)) {
+    return false;
+  }
+  await tx`
+    UPDATE conditions.observations SET flagged_at = ${now}
+    WHERE id = ${obs.id} AND flagged_at IS NULL
+  `;
+  return true;
 }

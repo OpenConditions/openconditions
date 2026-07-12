@@ -6,6 +6,7 @@ import {
   phenomenonFingerprint,
   phenomenonFingerprintNeighborhood,
   centroid,
+  coarseCell,
   gridCell,
   truncateType,
   timeBucket,
@@ -500,6 +501,31 @@ describe("gridCell", () => {
   it("throws a TypeError on non-finite coordinates", () => {
     expect(() => gridCell([Number.NaN, 52.0], 100)).toThrow(TypeError);
     expect(() => gridCell([6.5, Number.POSITIVE_INFINITY], 100)).toThrow(TypeError);
+  });
+});
+
+describe("coarseCell", () => {
+  it("is deterministic for the same coordinates", () => {
+    expect(coarseCell(4.4961, 52.0)).toBe(coarseCell(4.4961, 52.0));
+  });
+
+  it("buckets two points ~100m apart into the same ~1km cell", () => {
+    expect(coarseCell(4.4961, 52.0)).toBe(coarseCell(4.497, 52.0));
+  });
+
+  it("separates two points ~5km apart into different cells", () => {
+    expect(coarseCell(4.4961, 52.0)).not.toBe(coarseCell(4.5411, 52.0));
+    expect(coarseCell(4.4961, 52.0)).not.toBe(coarseCell(4.4961, 52.045));
+  });
+
+  it("defaults to the 1km grid and agrees with gridCell's quantization", () => {
+    expect(coarseCell(6.5, 52.0)).toBe(coarseCell(6.5, 52.0, 1000));
+    expect(coarseCell(6.5, 52.0, 100)).toBe(gridCell([6.5, 52.0], 100));
+  });
+
+  it("throws a TypeError on non-finite coordinates", () => {
+    expect(() => coarseCell(Number.NaN, 52.0)).toThrow(TypeError);
+    expect(() => coarseCell(6.5, Number.NEGATIVE_INFINITY)).toThrow(TypeError);
   });
 });
 

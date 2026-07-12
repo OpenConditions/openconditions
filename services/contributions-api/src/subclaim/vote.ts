@@ -95,6 +95,17 @@ async function castWithin(
     if (obs.status !== "active") {
       return { code: 409, error: "target observation is not active" };
     }
+    // A settled observation is closed to peer voting: once an external
+    // resolution has landed it (externally_resolved or negated), a confirm/
+    // negate can neither corroborate nor negate it — and, crucially, a
+    // confirm arriving AFTER the resolution must never earn reputation off it.
+    // Flagging a resolved observation for review stays legitimate.
+    if (
+      action !== "flag" &&
+      (obs.evidence_state === "externally_resolved" || obs.evidence_state === "negated")
+    ) {
+      return { code: 409, error: "observation already resolved" };
+    }
 
     const inserted = await tx<{ id: string }[]>`
       INSERT INTO conditions.sub_claim

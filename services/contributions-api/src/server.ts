@@ -11,6 +11,7 @@
  */
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type postgres from "postgres";
+import { centroid } from "@openconditions/core";
 import {
   checkPlausibility,
   verifyReport,
@@ -21,6 +22,7 @@ import {
   type SignedSubClaim,
 } from "@openconditions/contrib-core";
 import { resolveInstanceId } from "@openconditions/ingest/pipeline/normalize";
+import { checkReportRate } from "./abuse/rate.js";
 import { enrollReporter } from "./attester/enroll.js";
 import { resolveGrantSecret, verifyReportingGrant } from "./attester/grant.js";
 import { ATTESTER_POLICY, type DeviceProof } from "./attester/policy.js";
@@ -72,14 +74,6 @@ interface SubClaimBody {
 }
 
 const SUB_CLAIM_ACTIONS = new Set(["confirm", "negate", "flag"]);
-
-/**
- * Per-key insert-rate ceiling: at most this many `report` evidence rows for one
- * key inside the trailing window. A lightweight anti-flood guard; H3 spatial
- * rate limiting is a later concern.
- */
-const REPORT_RATE_MAX = 10;
-const REPORT_RATE_WINDOW_SECONDS = 60;
 
 /** Minimal per-IP token bucket for the enrollment endpoint. */
 class EnrollLimiter {
@@ -275,15 +269,12 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       return reply.status(422).send({ error: "implausible report", reasons: plausibility.reasons });
     }
 
-    // Lightweight per-key insert-rate guard.
-    const recent = await sql<{ n: number }[]>`
-      SELECT count(*)::int AS n FROM conditions.report_evidence
-      WHERE actor_key_id = ${report.keyId}
-        AND evidence_kind = 'report'
-        AND occurred_at > ${nowIso}::timestamptz - make_interval(secs => ${REPORT_RATE_WINDOW_SECONDS})
-    `;
-    if ((recent[0]?.n ?? 0) >= REPORT_RATE_MAX) {
-      return reply.status(429).send({ error: "too many reports; slow down" });
+    // Per-key + per-(key, ~1km cell) insert-rate guard. The geometry passed
+    // plausibility above, so its centroid is well-defined.
+    const [lon, lat] = centroid(report.claim.geometry);
+    const rate = await checkReportRate(sql, report.keyId, lon, lat, nowIso);
+    if (!rate.ok) {
+      return reply.status(429).send({ error: "too many reports; slow down", reason: rate.reason });
     }
 
     // 5. Map → central normalize seam → crowd insert + initial evidence +
@@ -304,6 +295,14 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
           .send({ error: "implausible report", reasons: ["geometry_invalid"] });
       }
       throw err;
+    }
+    if (result.kinematicFlagged) {
+      // Post-hoc anomaly signal only: the report landed anyway (a truthful
+      // fast mover must not be censored) and the flag is not evidence.
+      req.log.warn(
+        { observationId: result.observationId },
+        "kinematically implausible reporter transition; new observation flagged"
+      );
     }
     return reply.status(200).send({
       observationId: result.observationId,

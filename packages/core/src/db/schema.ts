@@ -460,6 +460,8 @@ export const reportEvidence = conditionsSchema.table(
   },
   (t) => [
     index("idx_report_evidence_observation").on(t.observationId, t.occurredAt),
+    // Supports the per-key report-rate limiter's trailing-window count.
+    index("idx_report_evidence_actor").on(t.actorKeyId, t.occurredAt),
     check(
       "report_evidence_kind_enum",
       sql`${t.evidenceKind} IN ('report','confirm','negate','official_match','reviewer_accept','reviewer_reject','expired')`

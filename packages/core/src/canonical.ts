@@ -120,6 +120,22 @@ export function gridCell(position: [number, number], gridMeters: number): string
   return cellKey(x, y);
 }
 
+/**
+ * Coarse geographic area bucket for per-area anti-abuse accounting (e.g. "at
+ * most N reports per key per ~1km area per minute"). An equal-intent substitute
+ * for H3 cell bucketing built on the SAME quantization as {@link gridCell} —
+ * OpenConditions deliberately carries no H3 dependency, and any consumer only
+ * needs "nearby points share a bucket", not H3's hierarchy. The cell function
+ * is a swappable seam: replacing this with an H3 index later only changes the
+ * opaque cell strings.
+ *
+ * Same TypeError guard and known limitations as {@link gridCell} (equatorial-
+ * scaled longitude step, no antimeridian wrap).
+ */
+export function coarseCell(lon: number, lat: number, meters = 1000): string {
+  return gridCell([lon, lat], meters);
+}
+
 export function truncateType(domain: string, type: string, depth: number): string[] {
   // Domain and type stay separate hash-input elements so ("a/b","c") and
   // ("a","b/c") cannot collide.

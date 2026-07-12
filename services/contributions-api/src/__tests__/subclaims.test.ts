@@ -165,6 +165,12 @@ async function countSubClaims(id: string, keyId: string, claimType: string): Pro
   return rows[0]!.n;
 }
 
+async function readPosterior(keyId: string): Promise<{ alpha: number; beta: number }> {
+  const rows = await sql<{ reputation_alpha: number; reputation_beta: number }[]>`
+    SELECT reputation_alpha, reputation_beta FROM conditions.reporter WHERE key_id = ${keyId}`;
+  return { alpha: rows[0]!.reputation_alpha, beta: rows[0]!.reputation_beta };
+}
+
 describe("migration 0010 — flagged_at column", () => {
   it("adds a nullable flagged_at timestamptz to conditions.observations", async () => {
     const cols = await sql<{ data_type: string; is_nullable: string }[]>`
@@ -228,6 +234,32 @@ describe("POST /contrib/reports/:id/confirm — corroboration never routes", () 
     expect(body.evidenceState).toBe("corroborated");
     expect(body.routingEligible).toBe(false);
   }, 60_000);
+});
+
+describe("POST /contrib/reports/:id/confirm — crowd agreement never trains reputation", () => {
+  it("five colluding distinct-key confirms through the real vote route leave every posterior at Beta(2,2)", async () => {
+    const { key: originator, id } = await landObs("collude-land-0000001");
+    const colluders: ReporterKey[] = [];
+    for (let i = 0; i < 5; i++) {
+      const keyN = await generateReporterKey();
+      const grantN = await enroll(keyN);
+      colluders.push(keyN);
+      const res = await vote(id, "confirm", await signSub(keyN, id, "confirm"), grantN);
+      expect(res.statusCode).toBe(200);
+    }
+
+    const row = await readObs(id);
+    expect(row!.evidence_state).toBe("corroborated");
+    expect(row!.routing_eligible).toBe(false);
+
+    // The whole point: peer confirmation moved the evidence STATE but must not
+    // have touched a single posterior. If the vote path ever trained
+    // reputation, one of these would drift off the cohort prior.
+    expect(await readPosterior(originator.keyId)).toEqual({ alpha: 2, beta: 2 });
+    for (const colluder of colluders) {
+      expect(await readPosterior(colluder.keyId)).toEqual({ alpha: 2, beta: 2 });
+    }
+  }, 120_000);
 });
 
 describe("POST /contrib/reports/:id/confirm — idempotency", () => {
@@ -532,5 +564,50 @@ describe("POST /contrib/reports/:id/:action — rejections at the trust boundary
     const res = await vote(id, "confirm", await signSub(keyB, id, "confirm"), grantB);
     expect(res.statusCode).toBe(409);
     expect(await countSubClaims(id, keyB.keyId, "confirm")).toBe(0);
+  }, 60_000);
+});
+
+describe("POST /contrib/reports/:id/:action — a settled observation is closed to voting", () => {
+  it("rejects a confirm on an externally_resolved observation with 409 and writes nothing", async () => {
+    const { id } = await landObs("resolved-confirm-001");
+    await sql`
+      UPDATE conditions.observations
+      SET evidence_state = 'externally_resolved', routing_eligible = true WHERE id = ${id}`;
+    const keyB = await generateReporterKey();
+    const grantB = await enroll(keyB);
+    const res = await vote(id, "confirm", await signSub(keyB, id, "confirm"), grantB);
+    expect(res.statusCode).toBe(409);
+    expect((res.json() as { error: string }).error).toMatch(/already resolved/i);
+    expect(await countSubClaims(id, keyB.keyId, "confirm")).toBe(0);
+    expect(await countEvidence(id, "confirm", keyB.keyId)).toBe(0);
+  }, 60_000);
+
+  it("rejects a negate on a negated observation with 409", async () => {
+    const { id } = await landObs("resolved-negate-0001");
+    await sql`UPDATE conditions.observations SET evidence_state = 'negated' WHERE id = ${id}`;
+    const keyB = await generateReporterKey();
+    const grantB = await enroll(keyB);
+    const res = await vote(id, "negate", await signSub(keyB, id, "negate"), grantB);
+    expect(res.statusCode).toBe(409);
+    expect(await countSubClaims(id, keyB.keyId, "negate")).toBe(0);
+  }, 60_000);
+
+  it("still allows flagging a resolved observation for review", async () => {
+    const { id } = await landObs("resolved-flag-00001");
+    await sql`
+      UPDATE conditions.observations
+      SET evidence_state = 'externally_resolved', routing_eligible = true WHERE id = ${id}`;
+    const keyB = await generateReporterKey();
+    const grantB = await enroll(keyB);
+    const res = await vote(
+      id,
+      "flag",
+      await signSub(keyB, id, "flag", { reason: "stale" }),
+      grantB
+    );
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ flagged: true });
+    expect((await readObs(id))!.flagged_at).not.toBeNull();
+    expect((await readObs(id))!.evidence_state).toBe("externally_resolved");
   }, 60_000);
 });

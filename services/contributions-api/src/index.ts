@@ -1,4 +1,16 @@
 export { recomputeEvidence } from "./evidence/recompute.js";
+export {
+  checkReportRate,
+  REPORT_RATE_RULE,
+  type RateDecision,
+  type RateRule,
+} from "./abuse/rate.js";
+export { coReportingClusters, type CoReportingPair } from "./abuse/coreporting.js";
+export {
+  applyExternalResolution,
+  type ExternalResolution,
+  type ResolutionResult,
+} from "./reputation/resolve.js";
 export { applyCorroboration, applyNegation, findCandidates } from "./evidence/phenomenon.js";
 export {
   ATTESTER_POLICY,

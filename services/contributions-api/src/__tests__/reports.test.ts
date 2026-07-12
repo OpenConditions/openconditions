@@ -297,7 +297,13 @@ describe("POST /contrib/reports — rejections at the trust boundary", () => {
     const grant = await enroll(key);
     const codes: number[] = [];
     for (let i = 0; i < 11; i++) {
-      const report = await sign(key, { nonce: `rate-00000000000${i}${i}` });
+      // Spread the reports across distinct ~1km cells so only the per-key
+      // ceiling is exercised here (the per-cell ceiling is covered in
+      // abuse.test.ts).
+      const report = await sign(key, {
+        nonce: `rate-00000000000${i}${i}`,
+        geometry: { type: "Point", coordinates: [4.9 + i * 0.02, 52.37] },
+      });
       const res = await postReport(report, grant);
       codes.push(res.statusCode);
     }
