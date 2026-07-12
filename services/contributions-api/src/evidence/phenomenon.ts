@@ -222,6 +222,10 @@ async function unionInto(tx: Tx, targetId: string, laterId: string): Promise<voi
  * while a stranger's negation is peer evidence weighed against the peer-negation
  * quorum. The negation observation itself is left untouched; this function never
  * creates observations.
+ *
+ * @throws Error when either the negation or the target observation row does
+ *   not exist: a negation against a vanished row must fail loudly, not
+ *   silently half-apply.
  */
 export async function applyNegation(
   sql: Sql,
@@ -230,7 +234,10 @@ export async function applyNegation(
   now: string
 ): Promise<void> {
   await sql.begin(async (tx) => {
-    await lockObservationsInOrder(tx, targetObservationId);
+    const locked = await lockObservationsInOrder(tx, targetObservationId);
+    if (!locked.has(targetObservationId)) {
+      throw new Error(`applyNegation: observation "${targetObservationId}" does not exist`);
+    }
 
     const negationRows = await tx<LaterActorRow[]>`
       SELECT origin, source, data_updated_at
@@ -239,7 +246,7 @@ export async function applyNegation(
     `;
     const negation = negationRows[0];
     if (negation === undefined) {
-      return;
+      throw new Error(`applyNegation: observation "${negationObservationId}" does not exist`);
     }
     const negationKeyId = negation.origin?.reporter?.keyId ?? null;
 

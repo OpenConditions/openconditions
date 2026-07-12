@@ -64,6 +64,13 @@
       "when": 1783824959050,
       "tag": "0008_contribution_tables_evidence_state",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783830137444,
+      "tag": "0009_spent_token_single_use",
+      "breakpoints": true
     }
   ]
 }

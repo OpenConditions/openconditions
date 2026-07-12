@@ -286,4 +286,21 @@ describe("applyNegation", () => {
     expect(await evidenceOf("ret:target", "negate")).toHaveLength(1);
     expect((await obs("ret:target")).evidence_state).toBe("negated");
   }, 30_000);
+
+  it("throws when either the negation or the target observation is missing", async () => {
+    await insertCrowdEvent({
+      id: "negmiss:present",
+      lon: 6.5,
+      lat: 52.0,
+      validFrom: "2026-07-10T12:00:00Z",
+      reporterKey: "key-a",
+    });
+    await expect(
+      applyNegation(sql, "negmiss:absent", "negmiss:present", "2026-07-10T12:10:00Z")
+    ).rejects.toThrow(/does not exist/);
+    await expect(
+      applyNegation(sql, "negmiss:present", "negmiss:absent", "2026-07-10T12:10:00Z")
+    ).rejects.toThrow(/does not exist/);
+    expect(await evidenceOf("negmiss:present", "negate")).toHaveLength(0);
+  }, 30_000);
 });

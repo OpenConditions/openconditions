@@ -474,6 +474,25 @@ export const tokenQuota = conditionsSchema.table(
 );
 
 /**
+ * Durable single-use ledger for redeemed anti-abuse tokens: one row per spent
+ * token, keyed by the SHA-256 hex of the full serialized token bytes (each
+ * token carries a random 32-byte nonce, so the hash is unique per token).
+ * Redemption INSERTs here FIRST and treats a primary-key violation as
+ * already-spent — fail closed. `purpose` records the domain-separated public
+ * context the token was redeemed under; `spent_at` feeds a later retention
+ * sweep.
+ */
+export const spentToken = conditionsSchema.table(
+  "spent_token",
+  {
+    tokenHash: text("token_hash").primaryKey(),
+    purpose: text("purpose").notNull(),
+    spentAt: timestamp("spent_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [index("idx_spent_token_spent_at").on(t.spentAt)]
+);
+
+/**
  * This instance's rotating token-issuer keypairs, each valid across a
  * [not_before, not_after) window.
  */

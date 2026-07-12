@@ -3,16 +3,16 @@ import { fileURLToPath } from "node:url";
 import { defineConfig } from "tsup";
 
 // @openconditions/core is inlined into this bundle (noExternal), so its
-// drizzle-kit migrations folder no longer travels with it. A later Fastify
-// entry point will runMigrations() at boot and read those files at runtime, so
-// copy them next to the bundle entry (dist/drizzle); core resolves `./drizzle`
-// there. Lives inside dist/ so it rides the turbo `dist/**` output cache and the
-// Docker `COPY dist`.
+// drizzle-kit migrations folder no longer travels with it. The main.ts entry
+// runMigrations() at boot and reads those files at runtime, so copy them next
+// to the bundle entry (dist/drizzle); core resolves `./drizzle` there. Lives
+// inside dist/ so it rides the turbo `dist/**` output cache and the Docker
+// `COPY dist`.
 const coreDrizzle = fileURLToPath(new URL("../../packages/core/drizzle", import.meta.url));
 const bundledDrizzle = fileURLToPath(new URL("./dist/drizzle", import.meta.url));
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: ["src/index.ts", "src/main.ts"],
   format: ["esm"],
   dts: false,
   sourcemap: true,

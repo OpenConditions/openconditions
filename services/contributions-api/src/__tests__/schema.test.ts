@@ -116,6 +116,30 @@ describe("migration 0008 — contribution tables exist", () => {
   }, 30_000);
 });
 
+describe("migration 0009 — spent_token single-use ledger", () => {
+  it("creates spent_token with its columns", async () => {
+    expect(await tableColumns("spent_token")).toEqual(
+      new Set(["token_hash", "purpose", "spent_at"])
+    );
+  }, 30_000);
+
+  it("token_hash is the primary key (a second spend violates it)", async () => {
+    await sql`INSERT INTO conditions.spent_token (token_hash, purpose, spent_at)
+      VALUES ('hash-dup', 'report:-:2026-07-12', now())`;
+    await expect(
+      sql`INSERT INTO conditions.spent_token (token_hash, purpose, spent_at)
+        VALUES ('hash-dup', 'report:-:2026-07-13', now())`
+    ).rejects.toThrow(/spent_token_pkey|duplicate key/);
+  }, 30_000);
+
+  it("indexes spent_at for the retention sweep", async () => {
+    const idx = await sql<{ indexname: string }[]>`
+      SELECT indexname FROM pg_indexes
+      WHERE schemaname = 'conditions' AND tablename = 'spent_token'`;
+    expect(idx.map((i) => i.indexname)).toContain("idx_spent_token_spent_at");
+  }, 30_000);
+});
+
 describe("migration 0008 — indexes", () => {
   it("creates the contribution indexes", async () => {
     const idx = await sql<{ indexname: string }[]>`
