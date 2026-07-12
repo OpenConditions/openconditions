@@ -209,10 +209,18 @@ export function registerPublishRoutes(
   // Every route funnelling through `read()` is a redistributable export
   // (see the module doc comment above), so share-alike records are dropped
   // here, once, for all of them.
-  const read = async (q: Record<string, string | undefined>) => {
+  // `defaultDomain` is the domain used when the request carries no `?domain=`.
+  // Pass `null` to read across ALL domains (the GTFS-RT alerts route needs this).
+  // Note: `null`, not `undefined` — an explicit `undefined` argument would
+  // re-trigger the `"roads"` default and silently scope the read back to roads.
+  const read = async (
+    q: Record<string, string | undefined>,
+    defaultDomain: string | null = "roads"
+  ) => {
     const bbox = parseBbox(q.bbox);
     if (!bbox) return null;
-    const obs = await readObservations(db, { domain: q.domain ?? "roads", bbox });
+    const domain = q.domain ?? defaultDomain ?? undefined;
+    const obs = await readObservations(db, { domain, bbox });
     return filterForPermissiveExport(obs);
   };
   const info = (): FeedInfo => ({ ...FEED_BASE, timestamp: new Date().toISOString() });
@@ -248,7 +256,11 @@ export function registerPublishRoutes(
   });
 
   app.get("/gtfs-rt/alerts.pb", async (req, reply) => {
-    const obs = await read(req.query as Record<string, string | undefined>);
+    // A GTFS-RT Alert is dataset-scoped, not road-scoped: read across ALL
+    // domains (unless one is explicitly requested) so transit-affecting events
+    // from any domain are considered, then let the emitter's selector gate drop
+    // everything without a concrete transit entity.
+    const obs = await read(req.query as Record<string, string | undefined>, null);
     if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
     const events = obs.filter((o): o is ConditionEvent => o.kind === "event");
     const pb = observationsToGtfsRtAlerts(events, { timestamp: new Date().toISOString() });

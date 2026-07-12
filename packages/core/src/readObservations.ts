@@ -44,6 +44,7 @@ interface Row {
   related_ids: string[] | null;
   attributes: Record<string, unknown> | null;
   subject: Observation["subject"] | null;
+  informed: Observation["informed"] | null;
   origin: Provenance;
   geojson: string;
   is_stale: boolean;
@@ -74,6 +75,7 @@ function rowToObservation(row: Row): Observation {
     isStale: row.is_stale,
     origin: row.origin,
     ...(row.subject ? { subject: row.subject } : {}),
+    ...(row.informed ? { informed: row.informed } : {}),
     ...(row.label != null ? { label: row.label } : {}),
     ...(row.schedule ? { schedule: row.schedule } : {}),
     ...(row.confidence != null ? { confidence: row.confidence as Observation["confidence"] } : {}),
@@ -128,19 +130,26 @@ function rowToObservation(row: Row): Observation {
  */
 export async function readObservations(
   db: QueryRunner,
-  opts: ObservationsByBboxOpts
+  opts: Omit<ObservationsByBboxOpts, "domain"> & { domain?: string }
 ): Promise<Observation[]> {
   const { domain, bbox, types, minSeverity } = opts;
   const [west, south, east, north] = bbox;
 
-  const params: unknown[] = [domain, west, south, east, north];
+  // The GTFS-RT alerts export reads across ALL domains (a road-domain event can
+  // carry transit selectors), so `domain` is optional here; the emitter's
+  // selector gate decides what belongs in the feed. Every other caller passes a
+  // domain and gets the same single-domain filter as before.
+  const params: unknown[] = [west, south, east, north];
   const clauses = [
-    "o.domain = $1",
-    "o.geom && ST_MakeEnvelope($2, $3, $4, $5, 4326)",
+    "o.geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)",
     "o.status = 'active'",
     "(o.valid_to IS NULL OR o.valid_to > now())",
     "(o.expires_at IS NULL OR o.expires_at > now())",
   ];
+  if (domain != null) {
+    params.push(domain);
+    clauses.push(`o.domain = $${params.length}`);
+  }
   if (Array.isArray(types) && types.length > 0) {
     params.push(types);
     clauses.push(`o.type = ANY($${params.length}::text[])`);
@@ -157,7 +166,7 @@ export async function readObservations(
       o.metric, o.value, o.level, o.unit, o.aggregation,
       o.status, o.valid_from, o.valid_to, o.data_updated_at, o.fetched_at, o.expires_at,
       o.schedule, o.confidence, o.is_forecast, o.related_ids,
-      o.attributes, o.subject, o.origin,
+      o.attributes, o.subject, o.informed, o.origin,
       o.evidence_state, o.routing_eligible,
       ST_AsGeoJSON(o.geom) AS geojson,
       ${IS_STALE_SQL} AS is_stale

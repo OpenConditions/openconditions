@@ -123,6 +123,47 @@ describe("readObservations", () => {
     expect(obs).toHaveLength(2);
   });
 
+  it("selects and maps the informed transit-entity hints when present", async () => {
+    let q = "";
+    const withInformed = {
+      ...eventRow,
+      informed: { modes: ["bus"], routes: ["R1"], stops: ["s1"], trips: ["t1"] },
+    };
+    const obs = await readObservations(
+      stubDb([withInformed], (query) => (q = query)),
+      { domain: "roads", bbox: [4, 51, 6, 53] }
+    );
+    expect(q).toMatch(/o\.informed/);
+    expect(obs[0]!.informed).toEqual({
+      modes: ["bus"],
+      routes: ["R1"],
+      stops: ["s1"],
+      trips: ["t1"],
+    });
+  });
+
+  it("leaves informed undefined for rows without it (byte-identical output)", async () => {
+    const obs = await readObservations(stubDb([eventRow]), {
+      domain: "roads",
+      bbox: [4, 51, 6, 53],
+    });
+    expect(obs[0]!.informed).toBeUndefined();
+  });
+
+  it("reads across all domains when no domain is given", async () => {
+    let q = "";
+    let params: unknown[] | undefined;
+    await readObservations(
+      stubDb([], (query, p) => {
+        q = query;
+        params = p;
+      }),
+      { bbox: [4, 51, 6, 53] }
+    );
+    expect(q).not.toMatch(/o\.domain =/);
+    expect(params).not.toContain("roads");
+  });
+
   it("selects ST_AsGeoJSON + derives is_stale from source_status + filters by validity", async () => {
     let q = "";
     await readObservations(

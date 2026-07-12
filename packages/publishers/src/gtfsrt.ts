@@ -9,7 +9,18 @@ import { roadFields } from "./types.js";
  * https://gtfs.org/realtime/reference/#message-alert. Uses the official
  * `gtfs-realtime-bindings`. GTFS-RT carries no geometry, so a condition's
  * location surfaces only via transit `informed_entity` selectors derived from
- * its `subject` refs; events with none get a single network-wide selector.
+ * its `subject` refs and its `informed` transit hints. A GTFS-RT Alert is
+ * scoped to a GTFS dataset, so an event is emitted ONLY IF it resolves to at
+ * least one concrete transit selector; an event with none (e.g. a plain road
+ * accident) is EXCLUDED entirely — never emitted as a selector-less,
+ * network-wide alert. This gate is domain-aware by construction: a road-domain
+ * event that genuinely affects transit (carries `informed.routes` etc.) is
+ * emitted with those selectors, while a transit-domain event with no resolvable
+ * selector is also dropped (an entity-less transit alert is meaningless).
+ *
+ * The selector ids are passed through as-is: no GTFS dataset is configured in
+ * this repo (road-only today), so per-dataset id validation against a static
+ * feed is deferred until a GTFS dataset is wired.
  */
 
 const { transit_realtime } = GtfsRealtimeBindings;
@@ -83,18 +94,80 @@ function translated(
   return text ? { translation: [{ text, language: "en" }] } : undefined;
 }
 
+/**
+ * GTFS `route_type` for a coarse transit mode string (extended values folded to
+ * their base type). An unknown mode maps to `undefined` and is skipped rather
+ * than emitting a bogus selector.
+ */
+const ROUTE_TYPE_BY_MODE: Record<string, number> = {
+  tram: 0,
+  streetcar: 0,
+  lightrail: 0,
+  subway: 1,
+  metro: 1,
+  rail: 2,
+  bus: 3,
+  ferry: 4,
+  cablecar: 5,
+  cable_tram: 5,
+  aerial: 6,
+  gondola: 6,
+  funicular: 7,
+  trolleybus: 11,
+  monorail: 12,
+};
+
+/**
+ * Concrete transit `informed_entity` selectors for an event, built from BOTH
+ * its `subject` refs (gtfs-stop/route/trip) and its `informed` hints
+ * (stops/routes/trips/modes). Identical selectors are deduped. Returns an empty
+ * array when the event resolves to no transit entity — the caller then excludes
+ * it from the feed rather than emitting a selector-less, network-wide alert.
+ */
 function informedEntities(
   ev: ConditionEvent
 ): GtfsRealtimeBindings.transit_realtime.IEntitySelector[] {
   type Selector = GtfsRealtimeBindings.transit_realtime.IEntitySelector;
-  const sels = (ev.subject ?? []).flatMap<Selector>((s) => {
-    if (s.type === "gtfs-stop") return [{ stopId: s.id }];
-    if (s.type === "gtfs-route") return [{ routeId: s.id }];
-    if (s.type === "gtfs-trip") return [{ trip: { tripId: s.id } }];
-    return [];
+  // An empty/whitespace-only concrete id matches no entity — skip it rather than
+  // emit noise like {routeId:""}.
+  const clean = (id: string | undefined): string | undefined => {
+    const t = id?.trim();
+    return t ? t : undefined;
+  };
+  const sels: Selector[] = [];
+  for (const s of ev.subject ?? []) {
+    const id = clean(s.id);
+    if (!id) continue;
+    if (s.type === "gtfs-stop") sels.push({ stopId: id });
+    else if (s.type === "gtfs-route") sels.push({ routeId: id });
+    else if (s.type === "gtfs-trip") sels.push({ trip: { tripId: id } });
+  }
+  const informed = ev.informed;
+  if (informed) {
+    for (const raw of informed.stops ?? []) {
+      const stopId = clean(raw);
+      if (stopId) sels.push({ stopId });
+    }
+    for (const raw of informed.routes ?? []) {
+      const routeId = clean(raw);
+      if (routeId) sels.push({ routeId });
+    }
+    for (const raw of informed.trips ?? []) {
+      const tripId = clean(raw);
+      if (tripId) sels.push({ trip: { tripId } });
+    }
+    for (const mode of informed.modes ?? []) {
+      const routeType = ROUTE_TYPE_BY_MODE[mode.trim().toLowerCase()];
+      if (routeType != null) sels.push({ routeType });
+    }
+  }
+  const seen = new Set<string>();
+  return sels.filter((sel) => {
+    const key = JSON.stringify(sel);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
   });
-  // GTFS-RT requires at least one selector; an empty one = applies feed-wide.
-  return sels.length > 0 ? sels : [{}];
 }
 
 function activePeriod(
@@ -109,13 +182,17 @@ function activePeriod(
   return [range];
 }
 
-function toEntity(ev: ConditionEvent): GtfsRealtimeBindings.transit_realtime.IFeedEntity {
+function toEntity(ev: ConditionEvent): GtfsRealtimeBindings.transit_realtime.IFeedEntity | null {
+  const informedEntity = informedEntities(ev);
+  // A GTFS-RT Alert is dataset-scoped: with no concrete transit selector the
+  // event does not belong in this feed (and must never become a feed-wide one).
+  if (informedEntity.length === 0) return null;
   const { cause, effect, severity } = toGtfsRtAlertCodes(ev);
   const alert: GtfsRealtimeBindings.transit_realtime.IAlert = {
     cause,
     effect,
     severityLevel: severity,
-    informedEntity: informedEntities(ev),
+    informedEntity,
   };
   const period = activePeriod(ev);
   if (period) alert.activePeriod = period;
@@ -155,7 +232,9 @@ export function observationsToGtfsRtAlerts(
       incrementality: FeedHeader.Incrementality.FULL_DATASET,
       ...(ts != null ? { timestamp: ts } : {}),
     },
-    entity: events.map(toEntity),
+    entity: events
+      .map(toEntity)
+      .filter((e): e is GtfsRealtimeBindings.transit_realtime.IFeedEntity => e !== null),
   };
   const err = transit_realtime.FeedMessage.verify(message);
   if (err) throw new Error(`invalid GTFS-RT FeedMessage: ${err}`);
