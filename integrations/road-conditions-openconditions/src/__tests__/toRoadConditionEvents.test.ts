@@ -98,6 +98,90 @@ describe("featureCollectionToRoadConditionEvents", () => {
     expect(out[0]?.dataUpdatedAt).toBe("2026-06-22T05:30:00Z");
   });
 
+  it("maps a feed observation to originKind 'feed' (routing-authoritative)", () => {
+    const out = featureCollectionToRoadConditionEvents({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [5, 52] },
+          properties: {
+            id: "ndw:2",
+            type: "road_closure",
+            originKind: "feed",
+            // Feeds carry null evidence fields from the projection.
+            evidenceState: undefined,
+            routingEligible: undefined,
+            confidenceScore: undefined,
+          },
+        },
+      ],
+    } as unknown as FeatureCollection);
+    expect(out[0]).toMatchObject({ originKind: "feed" });
+    expect(out[0]?.routingEligible).toBeUndefined();
+    expect(out[0]?.evidenceState).toBeUndefined();
+  });
+
+  it("maps a crowd observation carrying its evidence fields through", () => {
+    const out = featureCollectionToRoadConditionEvents({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [5, 52] },
+          properties: {
+            id: "crowd:1",
+            type: "road_closure",
+            originKind: "crowd",
+            evidenceState: "self_reported",
+            routingEligible: false,
+            confidenceScore: 0.4,
+          },
+        },
+      ],
+    } as unknown as FeatureCollection);
+    expect(out[0]).toMatchObject({
+      originKind: "crowd",
+      evidenceState: "self_reported",
+      routingEligible: false,
+      confidenceScore: 0.4,
+    });
+  });
+
+  it("falls back to origin.kind when originKind is not flattened onto properties", () => {
+    const out = featureCollectionToRoadConditionEvents({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [5, 52] },
+          properties: {
+            id: "crowd:2",
+            type: "road_closure",
+            origin: { kind: "crowd" },
+            routingEligible: true,
+          },
+        },
+      ],
+    } as unknown as FeatureCollection);
+    expect(out[0]).toMatchObject({ originKind: "crowd", routingEligible: true });
+  });
+
+  it("leaves origin fields undefined for a provider that omits them", () => {
+    const out = featureCollectionToRoadConditionEvents({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [1, 1] },
+          properties: { id: "x", type: "road_closure" },
+        },
+      ],
+    } as unknown as FeatureCollection);
+    expect(out[0]?.originKind).toBeUndefined();
+    expect(out[0]?.routingEligible).toBeUndefined();
+  });
+
   it("defaults type/severity when absent", () => {
     const out = featureCollectionToRoadConditionEvents({
       type: "FeatureCollection",

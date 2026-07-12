@@ -13,6 +13,19 @@ function str(v: unknown): string | undefined {
 }
 
 /**
+ * Provenance kind for the event, so the host can gate routing + label the
+ * overlay. The `observationsByBbox` projection flattens it onto
+ * `properties.originKind`; we also read `properties.origin.kind` defensively in
+ * case a caller passes the raw `origin` object instead.
+ */
+function originKindOf(p: Record<string, unknown>): "feed" | "crowd" | undefined {
+  const flat = str(p.originKind);
+  const nested = str((p.origin as { kind?: unknown } | undefined)?.kind);
+  const kind = flat ?? nested;
+  return kind === "feed" || kind === "crowd" ? kind : undefined;
+}
+
+/**
  * Maps one `observationsByBbox` GeoJSON feature to a `RoadConditionEvent`. Road
  * specifics (roads, roadState) live in the feature's `attributes` payload; the
  * `provider` field is left empty for the orchestrator to stamp.
@@ -45,6 +58,15 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
       : {}),
     dataUpdatedAt: str(p.data_updated_at),
     attribution: p.attribution as RoadConditionEvent["attribution"],
+    // Evidence provenance drives the host's routing gate + overlay labeling.
+    // A feed observation → originKind "feed" and (from the projection) null
+    // evidence fields, so it always routes. A crowd observation → originKind
+    // "crowd" carrying its real routingEligible/evidenceState, so a lone
+    // self-report never becomes a routing exclusion.
+    originKind: originKindOf(p),
+    ...(typeof p.routingEligible === "boolean" ? { routingEligible: p.routingEligible } : {}),
+    ...(str(p.evidenceState) ? { evidenceState: str(p.evidenceState) } : {}),
+    ...(typeof p.confidenceScore === "number" ? { confidenceScore: p.confidenceScore } : {}),
   };
 }
 

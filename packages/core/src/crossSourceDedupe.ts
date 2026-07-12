@@ -39,6 +39,13 @@ import { bucketKey, clusterIndices, neighborKeys } from "./spatial.js";
  * geometry detail / populated fields), breaking ties by newest `dataUpdatedAt`.
  * Every other source folds into its {@link Observation.mergedSources} so no
  * attribution is lost.
+ *
+ * SAFETY: if a cluster mixes feed and crowd origins, the survivor is chosen from
+ * the FEED rows only (richest/newest among them), so a feed-corroborated
+ * condition keeps `origin.kind === "feed"` and the host routing gate never
+ * withholds it. Without this, a co-located crowd report could win the survivor
+ * tiebreak and, being crowd-origin + not routing-eligible, be dropped from
+ * routing — erasing a real closure. Crowd-only clusters are unaffected.
  */
 
 const MERGE_DISTANCE_M = 75;
@@ -278,10 +285,22 @@ export function dedupeAcrossSources(
       emitted.push({ order, obs: items[idxs[0]!]! });
       continue;
     }
-    let primary = idxs[0]!;
+    // Feed-origin survivor safety: if ANY row in the cluster is feed-origin, the
+    // survivor MUST be a feed row (pick the richest/newest among the FEED rows;
+    // crowd rows fold into mergedSources). A feed-corroborated closure has to
+    // keep origin.kind === "feed" so the host routing gate never withholds it —
+    // otherwise a single co-located crowd report could win the richness/recency
+    // tiebreak, become a crowd survivor, and be dropped from routing, erasing a
+    // real closure (an adversary could do this deliberately). Only a cluster
+    // with NO feed row lets a crowd row survive. This is a targeted change to
+    // mixed crowd+feed clusters; feed+feed and crowd+crowd clusters are unchanged.
+    const feedIdxs = idxs.filter((k) => items[k]!.origin?.kind === "feed");
+    const candidates = feedIdxs.length > 0 ? feedIdxs : idxs;
+
+    let primary = candidates[0]!;
     let bestRich = richness(items[primary]!, verts[primary]!);
     let bestTime = Date.parse(items[primary]!.dataUpdatedAt);
-    for (const k of idxs.slice(1)) {
+    for (const k of candidates.slice(1)) {
       const r = richness(items[k]!, verts[k]!);
       const t = Date.parse(items[k]!.dataUpdatedAt);
       if (r > bestRich || (r === bestRich && t > bestTime)) {

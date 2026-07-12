@@ -214,4 +214,145 @@ describe("dedupeAcrossSources", () => {
     expect(out).toHaveLength(2);
     expect(out[1]!.id).toBe("e2");
   });
+
+  describe("feed-origin survivor safety (a mixed crowd+feed cluster keeps a feed survivor)", () => {
+    /** A crowd-origin event (self-reported); origin.kind === "crowd". */
+    const crowd = (o: Parameters<typeof evt>[0] & { description?: string }): Observation =>
+      evt({
+        ...o,
+        origin: {
+          kind: "crowd",
+          attribution: { provider: o.source, license: "unknown" },
+          reporter: { keyId: "u1" },
+        },
+      });
+
+    it("picks the FEED row as survivor when a co-located crowd report shares the cluster", () => {
+      // Reviewer PoC: a crowd Point ~20 m from an NDW feed road_closure. Without
+      // the feed-survivor rule the newer crowd row wins the recency tiebreak,
+      // becomes the survivor with origin.kind "crowd", and the OMX routing gate
+      // then drops it — erasing a REAL closure from routing.
+      const ndw = evt({
+        id: "ndw:closure-1",
+        source: "ndw",
+        type: "road_closure",
+        roads: [{ ref: "A2" }],
+        geometry: pt(5.0, 52.0),
+        dataUpdatedAt: "2026-01-01T09:00:00Z", // older
+      });
+      const report = crowd({
+        id: "crowd:1",
+        source: "openconditions-contrib",
+        type: "road_closure",
+        roads: [{ ref: "A2" }],
+        geometry: pt(5.0, 52.0 + dLat(20)),
+        dataUpdatedAt: "2026-01-01T12:00:00Z", // newer — would win the old tiebreak
+      });
+      const out = dedupeAcrossSources([ndw, report]);
+      expect(out).toHaveLength(1);
+      expect(out[0]!.id).toBe("ndw:closure-1");
+      expect(out[0]!.source).toBe("ndw");
+      expect(out[0]!.origin.kind).toBe("feed");
+      // The crowd report is retained as corroboration, not dropped.
+      expect(out[0]!.mergedSources).toEqual([
+        {
+          source: "openconditions-contrib",
+          id: "crowd:1",
+          attribution: { provider: "openconditions-contrib", license: "unknown" },
+        },
+      ]);
+    });
+
+    it("picks the feed row even when a crowd row is richer (feed origin outranks richness)", () => {
+      const feed = evt({
+        id: "feed:sparse",
+        source: "ndw",
+        type: "road_closure",
+        roads: [{ ref: "A2" }],
+        geometry: pt(5.0, 52.0),
+        dataUpdatedAt: "2026-01-01T09:00:00Z",
+      });
+      const richCrowd = crowd({
+        id: "crowd:rich",
+        source: "openconditions-contrib",
+        type: "road_closure",
+        roads: [{ ref: "A2" }],
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [5.0, 51.999],
+            [5.0, 52.001],
+          ],
+        },
+        description: "Detailed self-report with lots of populated fields",
+        dataUpdatedAt: "2026-01-01T12:00:00Z",
+      });
+      const out = dedupeAcrossSources([feed, richCrowd]);
+      expect(out).toHaveLength(1);
+      expect(out[0]!.id).toBe("feed:sparse");
+      expect(out[0]!.origin.kind).toBe("feed");
+    });
+
+    it("still picks the richest/newest among MULTIPLE feed rows (crowd folded in)", () => {
+      const feedSparse = evt({
+        id: "feed:a",
+        source: "autobahn-de",
+        type: "road_closure",
+        roads: [{ ref: "A3" }],
+        geometry: pt(8.0, 50.0),
+        dataUpdatedAt: "2026-01-01T09:00:00Z",
+      });
+      const feedRich = evt({
+        id: "feed:b",
+        source: "nrw-viz",
+        type: "road_closure",
+        roads: [{ ref: "A3" }],
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [8.0, 49.999],
+            [8.0, 50.001],
+          ],
+        },
+        description: "Richer feed representation",
+        dataUpdatedAt: "2026-01-01T10:00:00Z",
+      } as Parameters<typeof evt>[0] & { description: string });
+      const report = crowd({
+        id: "crowd:c",
+        source: "openconditions-contrib",
+        type: "road_closure",
+        roads: [{ ref: "A3" }],
+        geometry: pt(8.0, 50.0),
+        dataUpdatedAt: "2026-01-01T12:00:00Z",
+      });
+      const out = dedupeAcrossSources([feedSparse, feedRich, report]);
+      expect(out).toHaveLength(1);
+      expect(out[0]!.id).toBe("feed:b");
+      expect(out[0]!.origin.kind).toBe("feed");
+      expect((out[0]!.mergedSources ?? []).map((m) => m.id).sort()).toEqual(["crowd:c", "feed:a"]);
+    });
+
+    it("a crowd+crowd cluster still picks by richness/recency (no feed row present)", () => {
+      const c1 = crowd({
+        id: "crowd:1",
+        source: "contrib-a",
+        type: "road_closure",
+        roads: [{ ref: "A2" }],
+        geometry: pt(5.0, 52.0),
+        dataUpdatedAt: "2026-01-01T09:00:00Z",
+      });
+      const c2 = crowd({
+        id: "crowd:2",
+        source: "contrib-b",
+        type: "road_closure",
+        roads: [{ ref: "A2" }],
+        geometry: pt(5.0, 52.0),
+        dataUpdatedAt: "2026-01-01T12:00:00Z", // newer → wins the tiebreak
+      });
+      const out = dedupeAcrossSources([c1, c2]);
+      expect(out).toHaveLength(1);
+      expect(out[0]!.id).toBe("crowd:2");
+      expect(out[0]!.origin.kind).toBe("crowd");
+    });
+  });
 });

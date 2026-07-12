@@ -97,6 +97,21 @@ export interface RoadConditionEvent {
   schedule?: RoadConditionSchedule[];
   dataUpdatedAt?: string;
   attribution?: RoadConditionAttribution;
+  /**
+   * Provenance kind: `"feed"` (authoritative official source) or `"crowd"` (user
+   * report). Drives the host's routing gate and overlay "unconfirmed" labeling.
+   * Mirrors OpenMapX `@openmapx/core`'s `RoadConditionEvent.originKind`.
+   */
+  originKind?: "feed" | "crowd";
+  /**
+   * Whether a crowd event is corroborated strongly enough to affect routing.
+   * Feed events leave this undefined (they always route).
+   */
+  routingEligible?: boolean;
+  /** Evidence maturity of a crowd report (e.g. `"self_reported"`). */
+  evidenceState?: string;
+  /** Aggregate confidence score for a crowd event (0..1). */
+  confidenceScore?: number;
 }
 
 export interface RoadConditionsQuery {
