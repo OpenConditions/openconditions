@@ -503,6 +503,21 @@ export const spentToken = conditionsSchema.table(
 );
 
 /**
+ * Operator-controlled block list: one row per reporter key an accountable
+ * reviewer has blocked. Blocking is a post-hoc moderation action — it both
+ * records the decision here (with the reviewer identity and reason for audit)
+ * and flips the reporter row's status to `blocked`, so the attester zeroes the
+ * key's grants and the report/vote paths refuse it. Block lists are NEVER
+ * auto-synced across federation; each instance owns its own.
+ */
+export const blockList = conditionsSchema.table("block_list", {
+  keyId: text("key_id").primaryKey(),
+  reason: text("reason"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  createdBy: text("created_by").notNull(),
+});
+
+/**
  * This instance's rotating token-issuer keypairs, each valid across a
  * [not_before, not_after) window.
  */

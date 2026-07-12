@@ -31,6 +31,11 @@ import { issueToken } from "./issuer/issue.js";
 import { DEFAULT_ISSUER_NAME, ensureIssuerKeys, loadActiveIssuerKeys } from "./issuer/keys.js";
 import { TokenVerifier } from "./issuer/verify.js";
 import { GeometryInvalidError, landReport } from "./landing/insert.js";
+import { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
+import { blockKey, listBlocked, unblockKey } from "./reviewer/blocklist.js";
+import { acceptObservation, rejectObservation } from "./reviewer/decide.js";
+import { listFlagged } from "./reviewer/queue.js";
+import { flagOntoOpenFlagged } from "./reviewer/streetcomplete.js";
 import { castSubClaimVote } from "./subclaim/vote.js";
 
 declare module "fastify" {
@@ -46,6 +51,12 @@ export interface BuildOptions {
   logger?: FastifyServerOptions["logger"];
   /** Injectable clock (ISO 8601); defaults to the real clock. */
   now?: () => string;
+  /**
+   * Override the post-hoc StreetComplete flag check (a landing seam). Defaults to
+   * the real {@link flagOntoOpenFlagged}; injected in tests to prove that a
+   * failure in this best-effort hook can never fail an already-committed landing.
+   */
+  streetCompleteCheck?: (sql: postgres.Sql, observationId: string, now: string) => Promise<boolean>;
 }
 
 interface EnrollBody {
@@ -108,6 +119,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const { sql } = options;
   const env = options.env ?? process.env;
   const now = options.now ?? (() => new Date().toISOString());
+  const streetCompleteCheck = options.streetCompleteCheck ?? flagOntoOpenFlagged;
   const issuerName = env["OPENCONDITIONS_ISSUER_NAME"] || DEFAULT_ISSUER_NAME;
 
   const app = Fastify({ logger: options.logger ?? true });
@@ -118,6 +130,11 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
 
   // Fail closed: in production a missing grant secret must abort the boot.
   const grantSecret = resolveGrantSecret(env, (msg) => attesterLog.warn(msg));
+
+  // The reviewer surface is operator-authenticated; its token fails closed in
+  // production exactly like the grant secret.
+  const reviewerToken = resolveReviewerToken(env, (msg) => attesterLog.warn(msg));
+  const requireReviewer = makeRequireReviewer(reviewerToken);
 
   await ensureIssuerKeys(sql, now(), issuerName);
 
@@ -174,6 +191,16 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     }
     // The reporter key comes FROM THE GRANT, never from a client field.
     const keyId = grant.keyId;
+
+    // A blocked (or vanished) reporter must not mint tokens, even if it still
+    // holds an unexpired grant issued before the block. The report/vote paths
+    // re-check reporter status too; this closes the token path for symmetry.
+    const tokenReporterRows = await sql<{ status: string }[]>`
+      SELECT status FROM conditions.reporter WHERE key_id = ${keyId}
+    `;
+    if (tokenReporterRows[0] === undefined || tokenReporterRows[0].status !== "active") {
+      return reply.status(403).send({ error: "reporter is not enrolled or is blocked" });
+    }
 
     // The redemption context is SERVER-AUTHORITATIVE. The per-key Sybil ceiling
     // is only real if the quota epoch is not client-chosen: honoring a client
@@ -303,6 +330,26 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         { observationId: result.observationId },
         "kinematically implausible reporter transition; new observation flagged"
       );
+    }
+    // StreetComplete rule: a fresh landing onto an already-disputed element is
+    // flagged for review. Post-hoc — the report has already landed and its row
+    // is committed. This best-effort hook must NEVER fail the landing: any error
+    // is logged and swallowed so the client still gets its 200.
+    if (result.inserted) {
+      try {
+        const pileOn = await streetCompleteCheck(sql, result.observationId, nowIso);
+        if (pileOn) {
+          req.log.warn(
+            { observationId: result.observationId },
+            "new report landed onto an open-flagged phenomenon; new observation flagged"
+          );
+        }
+      } catch (err) {
+        req.log.warn(
+          { err, observationId: result.observationId },
+          "StreetComplete flag check failed; landing is unaffected"
+        );
+      }
     }
     return reply.status(200).send({
       observationId: result.observationId,
@@ -441,6 +488,85 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         routingEligible: outcome.routingEligible,
         action: outcome.action,
       });
+    }
+  );
+
+  // Reviewer / moderation surface — POST-HOC only, nothing gates before publish.
+  // Every route is operator-authenticated with the bearer token (never a device
+  // key/grant) via the requireReviewer preHandler.
+
+  app.get<{ Querystring: { limit?: string; before?: string } }>(
+    "/contrib/reviewer/flagged",
+    { preHandler: requireReviewer },
+    async (req, reply) => {
+      const rawLimit = req.query.limit;
+      const limit = rawLimit === undefined ? undefined : Number.parseInt(rawLimit, 10);
+      const before = req.query.before;
+      if (before !== undefined && Number.isNaN(new Date(before).getTime())) {
+        return reply.status(400).send({ error: "before must be an ISO 8601 timestamp" });
+      }
+      const page = await listFlagged(sql, { limit, before });
+      return reply.send(page);
+    }
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/contrib/reviewer/observations/:id/accept",
+    { preHandler: requireReviewer },
+    async (req, reply) => {
+      const outcome = await acceptObservation(sql, req.params.id, now());
+      if (outcome.code !== 200) {
+        return reply.status(outcome.code).send({ error: outcome.error });
+      }
+      return reply.status(200).send({
+        observationId: outcome.observationId,
+        evidenceState: outcome.evidenceState,
+        routingEligible: outcome.routingEligible,
+      });
+    }
+  );
+
+  app.post<{ Params: { id: string } }>(
+    "/contrib/reviewer/observations/:id/reject",
+    { preHandler: requireReviewer },
+    async (req, reply) => {
+      const outcome = await rejectObservation(sql, req.params.id, now());
+      if (outcome.code !== 200) {
+        return reply.status(outcome.code).send({ error: outcome.error });
+      }
+      return reply.status(200).send({
+        observationId: outcome.observationId,
+        evidenceState: outcome.evidenceState,
+        tombstoned: outcome.tombstoned === true,
+      });
+    }
+  );
+
+  app.get("/contrib/reviewer/blocklist", { preHandler: requireReviewer }, async (_req, reply) => {
+    const items = await listBlocked(sql);
+    return reply.send({ items });
+  });
+
+  app.post<{ Body: { keyId?: string; reason?: string } }>(
+    "/contrib/reviewer/blocklist",
+    { preHandler: requireReviewer },
+    async (req, reply) => {
+      const body = req.body ?? {};
+      if (typeof body.keyId !== "string" || body.keyId.length === 0) {
+        return reply.status(400).send({ error: "keyId is required" });
+      }
+      const reason = typeof body.reason === "string" ? body.reason : null;
+      await blockKey(sql, body.keyId, reason, now());
+      return reply.status(200).send({ keyId: body.keyId, blocked: true });
+    }
+  );
+
+  app.delete<{ Params: { keyId: string } }>(
+    "/contrib/reviewer/blocklist/:keyId",
+    { preHandler: requireReviewer },
+    async (req, reply) => {
+      await unblockKey(sql, req.params.keyId);
+      return reply.status(200).send({ keyId: req.params.keyId, blocked: false });
     }
   );
 

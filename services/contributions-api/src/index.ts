@@ -12,6 +12,17 @@ export {
   type ResolutionResult,
 } from "./reputation/resolve.js";
 export { applyCorroboration, applyNegation, findCandidates } from "./evidence/phenomenon.js";
+export { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
+export {
+  listFlagged,
+  clampLimit,
+  type FlaggedItem,
+  type FlaggedPage,
+  type ListFlaggedParams,
+} from "./reviewer/queue.js";
+export { acceptObservation, rejectObservation, type DecisionOutcome } from "./reviewer/decide.js";
+export { blockKey, unblockKey, listBlocked, type BlockListItem } from "./reviewer/blocklist.js";
+export { flagOntoOpenFlagged } from "./reviewer/streetcomplete.js";
 export {
   ATTESTER_POLICY,
   assessEntitlement,

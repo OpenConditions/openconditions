@@ -66,15 +66,24 @@ function evidenceKindFor(
  * DIFFERENT source or outcome is new evidence and trains again — the ledger
  * keeps both rows and the recompute lets the latest external entry decide.
  *
+ * Pass an existing transaction handle as `tx` to COMPOSE the resolution inside a
+ * larger transaction (e.g. a reviewer reject that resolves then tombstones the
+ * observation atomically). Called standalone (no `tx`) it opens its own
+ * transaction, preserving the FOR UPDATE row-lock and replay behaviour.
+ *
  * Returns null when the observation does not exist.
  */
 export async function applyExternalResolution(
   sql: Sql,
   observationId: string,
   resolution: ExternalResolution,
-  now: string
+  now: string,
+  tx?: Tx
 ): Promise<ResolutionResult | null> {
-  return sql.begin((tx) => resolveWithin(tx, sql, observationId, resolution, now));
+  if (tx !== undefined) {
+    return resolveWithin(tx, sql, observationId, resolution, now);
+  }
+  return sql.begin((t) => resolveWithin(t, sql, observationId, resolution, now));
 }
 
 async function resolveWithin(
