@@ -47,6 +47,8 @@ interface Row {
   origin: Provenance;
   geojson: string;
   is_stale: boolean;
+  evidence_state: string | null;
+  routing_eligible: boolean | null;
 }
 
 /** Coerce a DB timestamp (Date from postgres-js, or string) to an ISO string. */
@@ -77,6 +79,19 @@ function rowToObservation(row: Row): Observation {
     ...(row.confidence != null ? { confidence: row.confidence as Observation["confidence"] } : {}),
     ...(row.is_forecast != null ? { isForecast: row.is_forecast } : {}),
     ...(row.related_ids ? { relatedIds: row.related_ids } : {}),
+    // Evidence lifecycle is a crowd-only concept: feed rows are authoritative and
+    // never go through evidence resolution (their routing_eligible column is
+    // false/NULL and must NOT be asserted). Projecting these only for crowd rows
+    // keeps feed-row output byte-identical and lets the Valhalla routing gate read
+    // routingEligible on the crowd rows it actually consults.
+    ...(row.origin?.kind === "crowd"
+      ? {
+          ...(row.evidence_state != null
+            ? { evidenceState: row.evidence_state as Observation["evidenceState"] }
+            : {}),
+          routingEligible: row.routing_eligible ?? false,
+        }
+      : {}),
   };
   const specific =
     row.kind === "measurement"
@@ -143,6 +158,7 @@ export async function readObservations(
       o.status, o.valid_from, o.valid_to, o.data_updated_at, o.fetched_at, o.expires_at,
       o.schedule, o.confidence, o.is_forecast, o.related_ids,
       o.attributes, o.subject, o.origin,
+      o.evidence_state, o.routing_eligible,
       ST_AsGeoJSON(o.geom) AS geojson,
       ${IS_STALE_SQL} AS is_stale
     FROM conditions.observations o

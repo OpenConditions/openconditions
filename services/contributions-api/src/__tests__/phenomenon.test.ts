@@ -181,6 +181,87 @@ describe("applyCorroboration", () => {
     expect((await obs("co:later")).status).toBe("inactive");
   }, 30_000);
 
+  it("is COMMUTATIVE: the earlier observation survives regardless of argument order", async () => {
+    for (const [first, second] of [
+      ["comm:early", "comm:late"],
+      ["comm:late", "comm:early"],
+    ] as const) {
+      await sql`DELETE FROM conditions.report_evidence WHERE observation_id IN ('comm:early', 'comm:late')`;
+      await sql`DELETE FROM conditions.observations WHERE id IN ('comm:early', 'comm:late')`;
+      await insertCrowdEvent({
+        id: "comm:early",
+        lon: 6.5,
+        lat: 52.0,
+        validFrom: "2026-07-10T12:00:00Z",
+        reporterKey: "key-a",
+        dataUpdatedAt: "2026-07-10T12:00:00Z",
+      });
+      await addReport("comm:early", "key-a", "2026-07-10T12:00:00Z");
+      await insertCrowdEvent({
+        id: "comm:late",
+        lon: 6.5001,
+        lat: 52.0,
+        validFrom: "2026-07-10T12:04:00Z",
+        reporterKey: "key-b",
+        dataUpdatedAt: "2026-07-10T12:04:00Z",
+      });
+      await addReport("comm:late", "key-b", "2026-07-10T12:04:00Z");
+
+      await applyCorroboration(sql, first, second, "2026-07-10T12:10:00Z");
+
+      // Earlier survives (corroborated, active); later merges in (inactive) —
+      // whichever order the ids were passed.
+      const early = await obs("comm:early");
+      expect(early.evidence_state).toBe("corroborated");
+      expect(early.routing_eligible).toBe(false);
+      expect(early.corroborations).toContain("comm:late");
+      expect((await obs("comm:late")).status).toBe("inactive");
+      expect(await evidenceOf("comm:early", "confirm")).toHaveLength(1);
+    }
+  }, 30_000);
+
+  it("concurrent cross-race corroboration converges on ONE survivor, never annihilates", async () => {
+    await insertCrowdEvent({
+      id: "race:a",
+      lon: 6.5,
+      lat: 52.0,
+      validFrom: "2026-07-10T12:00:00Z",
+      reporterKey: "key-a",
+      dataUpdatedAt: "2026-07-10T12:00:00Z",
+    });
+    await addReport("race:a", "key-a", "2026-07-10T12:00:00Z");
+    await insertCrowdEvent({
+      id: "race:b",
+      lon: 6.5001,
+      lat: 52.0,
+      validFrom: "2026-07-10T12:04:00Z",
+      reporterKey: "key-b",
+      dataUpdatedAt: "2026-07-10T12:04:00Z",
+    });
+    await addReport("race:b", "key-b", "2026-07-10T12:04:00Z");
+
+    // Both landing hooks fire at once, each merging "self onto the other". Under
+    // the naive design both would mark the other inactive → phenomenon vanishes.
+    await Promise.all([
+      applyCorroboration(sql, "race:a", "race:b", "2026-07-10T12:10:00Z"),
+      applyCorroboration(sql, "race:b", "race:a", "2026-07-10T12:10:00Z"),
+    ]);
+
+    const a = await obs("race:a");
+    const b = await obs("race:b");
+    // Exactly ONE active survivor (the earlier, race:a), the other inactive —
+    // NEITHER annihilated.
+    const active = [a, b].filter((r) => r.status === "active");
+    expect(active).toHaveLength(1);
+    expect(a.status).toBe("active");
+    expect(a.evidence_state).toBe("corroborated");
+    expect(a.routing_eligible).toBe(false);
+    expect(b.status).toBe("inactive");
+    // One confirm row, one lineage entry (idempotent under the race).
+    expect(await evidenceOf("race:a", "confirm")).toHaveLength(1);
+    expect(a.corroborations).toEqual(["race:b"]);
+  }, 30_000);
+
   it("throws a TypeError when an observation would corroborate itself", async () => {
     await expect(
       applyCorroboration(sql, "self:same", "self:same", "2026-07-10T12:10:00Z")

@@ -9,7 +9,11 @@ import {
   type ReporterKey,
   type SignedReport,
 } from "@openconditions/contrib-core";
-import { reliabilityLowerBound } from "@openconditions/core";
+import {
+  phenomenonFingerprint,
+  reliabilityLowerBound,
+  type ConditionEvent,
+} from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import { createReportingGrant } from "../attester/grant.js";
 import { build } from "../server.js";
@@ -73,15 +77,29 @@ function nextIp(): string {
   return `198.51.100.${ipCounter % 250}`;
 }
 
+// Landing now auto-corroborates two INDEPENDENT reports of the same phenomenon,
+// so tests that don't override geometry each land at their OWN coordinate — the
+// default is unique per claim. Without this, unrelated default landings (happy
+// path, replay, media, …) would cross-corroborate at one shared neighborhood and,
+// with equal reportedAt, pick a survivor by the random-keyId tiebreak → flaky.
+// Tests that DO care about a shared phenomenon override geometry explicitly.
+let claimGeomCounter = 0;
+function nextClaimGeometry(): ReportClaim["geometry"] {
+  const lon = 9.0 + claimGeomCounter * 0.3;
+  claimGeomCounter += 1;
+  return { type: "Point", coordinates: [lon, 44.0] };
+}
+
 function makeClaim(overrides: Partial<ReportClaim> = {}): ReportClaim {
+  const { geometry: overrideGeom, ...rest } = overrides;
   return {
     domain: "roads",
     type: "congestion",
-    geometry: { type: "Point", coordinates: [4.9, 52.37] },
+    geometry: overrideGeom ?? nextClaimGeometry(),
     fuzziness: "low_res",
     reportedAt: NOW,
     nonce: "nonce-000000000001",
-    ...overrides,
+    ...rest,
   };
 }
 
@@ -330,34 +348,163 @@ describe("POST /contrib/reports — rejections at the trust boundary", () => {
   }, 120_000);
 });
 
-describe("POST /contrib/reports — landing never auto-corroborates", () => {
-  it("two distinct keys reporting the same phenomenon land as two self_reported rows", async () => {
+describe("POST /contrib/reports — landing auto-corroborates independent reports", () => {
+  async function posterior(keyId: string): Promise<{ alpha: number; beta: number }> {
+    const rows = await sql<{ reputation_alpha: number; reputation_beta: number }[]>`
+      SELECT reputation_alpha, reputation_beta FROM conditions.reporter WHERE key_id = ${keyId}`;
+    return { alpha: rows[0]!.reputation_alpha, beta: rows[0]!.reputation_beta };
+  }
+
+  it("two distinct keys of the same phenomenon corroborate: earlier survives, later inactive, still not routing, posteriors unchanged", async () => {
     const keyA = await generateReporterKey();
     const keyB = await generateReporterKey();
     const grantA = await enroll(keyA);
     const grantB = await enroll(keyB);
 
-    // Identical claim content (same type/geometry/validFrom) → matching
-    // phenomenon fingerprint, but distinct keys → distinct observation ids.
-    const shared: Partial<ReportClaim> = {
-      geometry: { type: "Point", coordinates: [5.1, 52.1] },
-      reportedAt: NOW,
-    };
-    const reportA = await sign(keyA, { ...shared, nonce: "corrob-A-000000001" });
-    const reportB = await sign(keyB, { ...shared, nonce: "corrob-B-000000001" });
+    // Same type/place → matching phenomenon fingerprint, distinct keys →
+    // independent witnesses. DISTINCT reportedAt a few seconds apart (well within
+    // the 900s match window, the realistic case: two reporters don't file at the
+    // same millisecond) so valid_from differs and the EARLIER report (A)
+    // deterministically survives — an identical valid_from would fall through to
+    // the id tiebreak over RANDOM keyIds and pick nondeterministically.
+    const geometry = { type: "Point" as const, coordinates: [5.1, 52.1] };
+    const EARLIER = "2026-07-12T07:59:55.000Z";
+    const reportA = await sign(keyA, {
+      geometry,
+      reportedAt: EARLIER,
+      nonce: "corrob-A-000000001",
+    });
+    const reportB = await sign(keyB, { geometry, reportedAt: NOW, nonce: "corrob-B-000000001" });
+
+    const beforeA = await posterior(keyA.keyId);
+    const beforeB = await posterior(keyB.keyId);
 
     expect((await postReport(reportA, grantA)).statusCode).toBe(200);
     expect((await postReport(reportB, grantB)).statusCode).toBe(200);
 
-    const rowA = await readObs(`crowd:${keyA.keyId}:corrob-A-000000001`);
-    const rowB = await readObs(`crowd:${keyB.keyId}:corrob-B-000000001`);
-    expect(rowA!.evidence_state).toBe("self_reported");
-    expect(rowB!.evidence_state).toBe("self_reported");
-    // Fingerprints match (same phenomenon) …
-    expect(rowA!.phenomenon_fingerprint).toBe(rowB!.phenomenon_fingerprint);
-    // … but landing left them independent, not corroborated.
-    expect(rowA!.confidence_score).toBeCloseTo(0.3, 10);
-    expect(rowB!.confidence_score).toBeCloseTo(0.3, 10);
+    const idA = `crowd:${keyA.keyId}:corrob-A-000000001`;
+    const idB = `crowd:${keyB.keyId}:corrob-B-000000001`;
+    const rowA = await readObs(idA);
+
+    // The earlier report (A) survives and is corroborated; the later (B) merges in.
+    expect(rowA!.evidence_state).toBe("corroborated");
+    expect(rowA!.routing_eligible).toBe(false);
+    const statusA = await sql<{ status: string }[]>`
+      SELECT status FROM conditions.observations WHERE id = ${idA}`;
+    const statusB = await sql<{ status: string }[]>`
+      SELECT status FROM conditions.observations WHERE id = ${idB}`;
+    expect(statusA[0]!.status).toBe("active");
+    expect(statusB[0]!.status).toBe("inactive");
+
+    // A's lineage records B; a confirm evidence row from B's key lands on A.
+    const lineage = await sql<{ corroborations: string[] | null }[]>`
+      SELECT corroborations FROM conditions.observations WHERE id = ${idA}`;
+    expect(lineage[0]!.corroborations).toContain(idB);
+    const confirms = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM conditions.report_evidence
+      WHERE observation_id = ${idA} AND evidence_kind = 'confirm' AND actor_key_id = ${keyB.keyId}`;
+    expect(confirms[0]!.n).toBe(1);
+
+    // Corroboration NEVER trains reputation: both posteriors are unchanged.
+    expect(await posterior(keyA.keyId)).toEqual(beforeA);
+    expect(await posterior(keyB.keyId)).toEqual(beforeB);
+  }, 60_000);
+
+  it("does NOT corroborate incompatible reports (far apart) — both stay self_reported", async () => {
+    const keyC = await generateReporterKey();
+    const keyD = await generateReporterKey();
+    const grantC = await enroll(keyC);
+    const grantD = await enroll(keyD);
+
+    const reportC = await sign(keyC, {
+      geometry: { type: "Point", coordinates: [3.0, 51.0] },
+      reportedAt: NOW,
+      nonce: "corrob-far-C-00001",
+    });
+    const reportD = await sign(keyD, {
+      geometry: { type: "Point", coordinates: [3.5, 51.5] },
+      reportedAt: NOW,
+      nonce: "corrob-far-D-00001",
+    });
+
+    expect((await postReport(reportC, grantC)).statusCode).toBe(200);
+    expect((await postReport(reportD, grantD)).statusCode).toBe(200);
+
+    const rowC = await readObs(`crowd:${keyC.keyId}:corrob-far-C-00001`);
+    const rowD = await readObs(`crowd:${keyD.keyId}:corrob-far-D-00001`);
+    expect(rowC!.evidence_state).toBe("self_reported");
+    expect(rowD!.evidence_state).toBe("self_reported");
+    expect(rowC!.confidence_score).toBeCloseTo(0.3, 10);
+    expect(rowD!.confidence_score).toBeCloseTo(0.3, 10);
+  }, 60_000);
+
+  it("does NOT auto-corroborate a crowd report onto an OFFICIAL FEED observation (cross-source pass is deferred)", async () => {
+    // A feed road_closure at the same phenomenon as the incoming crowd report.
+    const geometry = { type: "Point" as const, coordinates: [1.0, 48.0] };
+    const feedEvt = {
+      kind: "event",
+      domain: "roads",
+      type: "hazard",
+      geometry,
+      validFrom: NOW,
+    } as ConditionEvent;
+    const fp = phenomenonFingerprint(feedEvt);
+    await sql`
+      INSERT INTO conditions.observations
+        (id, source, source_format, domain, kind, type, status, geom, origin,
+         valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale)
+      VALUES
+        ('feed:closure:1', 'ndw', 'datex2', 'roads', 'event', 'hazard', 'active',
+         ST_SetSRID(ST_MakePoint(1.0, 48.0), 4326),
+         ${sql.json({ kind: "feed", attribution: { provider: "NDW", license: "CC0-1.0" } } as never)},
+         ${NOW}, ${fp}, ${NOW}, now(), false)`;
+
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const report = await sign(key, { type: "hazard", geometry, nonce: "crowd-vs-feed-0001" });
+    expect((await postReport(report, grant)).statusCode).toBe(200);
+
+    // The feed observation is untouched (no confirm evidence, still active,
+    // evidence_state NULL) and the crowd report stays self_reported + active.
+    const feed = await sql<{ status: string; evidence_state: string | null }[]>`
+      SELECT status, evidence_state FROM conditions.observations WHERE id = 'feed:closure:1'`;
+    expect(feed[0]!.status).toBe("active");
+    expect(feed[0]!.evidence_state).toBeNull();
+    const confirms = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM conditions.report_evidence
+      WHERE observation_id = 'feed:closure:1'`;
+    expect(confirms[0]!.n).toBe(0);
+    const crowd = await readObs(`crowd:${key.keyId}:crowd-vs-feed-0001`);
+    expect(crowd!.evidence_state).toBe("self_reported");
+  }, 60_000);
+
+  it("a failing auto-corroboration hook never fails the landing (best-effort)", async () => {
+    const throwingApp = await build({
+      sql,
+      env: {
+        OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+        OPENCONDITIONS_INSTANCE_ID: "maps.example.org",
+      },
+      logger: false,
+      now: () => NOW,
+      autoCorroborate: async () => {
+        throw new Error("matcher boom");
+      },
+    });
+    try {
+      const key = await generateReporterKey();
+      const grant = await enroll(key);
+      const report = await sign(key, {
+        geometry: { type: "Point", coordinates: [2.0, 49.0] },
+        nonce: "corrob-boom-000001",
+      });
+      const res = await postReport(report, grant, throwingApp);
+      expect(res.statusCode).toBe(200);
+      const row = await readObs(`crowd:${key.keyId}:corrob-boom-000001`);
+      expect(row!.evidence_state).toBe("self_reported");
+    } finally {
+      await throwingApp.close();
+    }
   }, 60_000);
 });
 

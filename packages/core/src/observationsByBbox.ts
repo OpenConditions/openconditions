@@ -31,6 +31,16 @@ export interface ObservationsByBboxOpts {
    * `dedupeAcrossSources`.
    */
   dedupe?: boolean;
+  /**
+   * Restrict to observations that may affect ROUTING. Feed observations are
+   * authoritative and always kept; a crowd observation is kept only once it is
+   * `routing_eligible` (an external resolution made it so — peer corroboration
+   * never does). The routing path passes `true` so a single self-reported crowd
+   * closure never becomes a Valhalla exclusion; the map/label path leaves this
+   * `false` (default) and takes ALL rows, just labeled. See the origin-aware
+   * WHERE clause below.
+   */
+  routingEligibleOnly?: boolean;
 }
 
 interface ObservationRow {
@@ -50,6 +60,11 @@ interface ObservationRow {
   geojson: string;
   origin: { kind: string; attribution?: { provider?: string; license?: string; url?: string } };
   is_stale: boolean;
+  evidence_state: string | null;
+  routing_eligible: boolean | null;
+  confidence_score: number | null;
+  privacy_class: string | null;
+  fuzziness: string | null;
 }
 
 /**
@@ -104,6 +119,15 @@ function rowToFeature(row: ObservationRow, mergedSources?: Observation["mergedSo
           : (row.data_updated_at ?? null),
       is_stale: row.is_stale,
       attribution,
+      // Evidence labeling: the overlay + provider render a crowd report distinctly
+      // (e.g. "clearly unconfirmed") and the routing path filters on these. Feed
+      // rows carry null evidence_state/routing_eligible and are authoritative.
+      originKind: row.origin?.kind,
+      evidenceState: row.evidence_state ?? undefined,
+      routingEligible: row.routing_eligible ?? undefined,
+      confidenceScore: row.confidence_score ?? undefined,
+      privacyClass: row.privacy_class ?? undefined,
+      fuzziness: row.fuzziness ?? undefined,
       ...(mergedSources && mergedSources.length > 0 ? { mergedSources } : {}),
     },
   };
@@ -162,6 +186,14 @@ export async function observationsByBbox(
     params.push(severityRank(minSeverity));
     clauses.push(`${SEVERITY_RANK_SQL} >= $${params.length}`);
   }
+  // Origin-aware routing gate: keep every feed row (authoritative), keep a crowd
+  // row only once it is routing_eligible. A crowd row with routing_eligible
+  // false/NULL is excluded here so a lone self-reported closure never routes.
+  if (opts.routingEligibleOnly === true) {
+    clauses.push(
+      "NOT (o.origin->>'kind' = 'crowd' AND COALESCE(o.routing_eligible, false) IS NOT TRUE)"
+    );
+  }
 
   const query = `
     SELECT
@@ -169,6 +201,7 @@ export async function observationsByBbox(
       o.headline, o.description, o.attributes, o.valid_from, o.valid_to, o.schedule, o.data_updated_at,
       ST_AsGeoJSON(o.geom) AS geojson,
       o.origin,
+      o.evidence_state, o.routing_eligible, o.confidence_score, o.privacy_class, o.fuzziness,
       ${IS_STALE_SQL} AS is_stale
     FROM conditions.observations o
     LEFT JOIN conditions.source_status ss ON ss.source = o.source

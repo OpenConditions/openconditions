@@ -65,6 +65,14 @@ function isClosureType(o: Observation): boolean {
  * contribute). */
 function isExcludable(o: Observation, activeAt: Date): boolean {
   if (o.kind !== "event" || o.status !== "active") return false;
+  // Origin-aware routing gate (the plan's #1 safety promise), fail-CLOSED to
+  // match the SQL `routingEligibleOnly` filter: exclude for routing ONLY an
+  // authoritative feed observation, or a crowd observation an external resolution
+  // made routing-eligible. A lone self-reported crowd closure — and any
+  // unknown/missing-provenance closure — never becomes a Valhalla exclusion.
+  const originKind = o.origin?.kind;
+  const routable = originKind === "feed" || (originKind === "crowd" && o.routingEligible === true);
+  if (!routable) return false;
   const e = o as Observation & { severity?: string };
   if (!(isClosureType(o) || e.severity === "critical")) return false;
   const t = activeAt.getTime();

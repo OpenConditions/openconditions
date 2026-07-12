@@ -97,6 +97,28 @@ interface LaterActorRow {
   data_updated_at: Date;
 }
 
+interface CorroborationRow {
+  id: string;
+  status: string;
+  valid_from: Date | null;
+  data_updated_at: Date;
+  origin: { kind?: string; reporter?: { keyId?: string } } | null;
+  source: string;
+}
+
+/**
+ * Stable global order over a corroboration pair: the EARLIER observation
+ * (earliest `valid_from`, tiebreak smaller `id`) survives. A NULL `valid_from`
+ * sorts last. Deterministic and independent of which row landed first, so two
+ * concurrent landing hooks pick the SAME survivor regardless of execution order.
+ */
+function isEarlier(a: CorroborationRow, b: CorroborationRow): boolean {
+  const av = a.valid_from === null ? Number.POSITIVE_INFINITY : a.valid_from.getTime();
+  const bv = b.valid_from === null ? Number.POSITIVE_INFINITY : b.valid_from.getTime();
+  if (av !== bv) return av < bv;
+  return a.id < b.id;
+}
+
 async function lockObservationsInOrder(tx: Tx, ...ids: string[]): Promise<Set<string>> {
   // Deterministic lock order (sorted ids) so two corroborations touching the
   // same pair from opposite directions can never deadlock. Returns the ids that
@@ -113,17 +135,23 @@ async function lockObservationsInOrder(tx: Tx, ...ids: string[]): Promise<Set<st
 }
 
 /**
- * Apply a phenomenon-match corroboration: the `laterObservationId` (a second,
- * independent report of the same phenomenon) confirms `targetObservationId`.
+ * Corroborate two independent reports of the same phenomenon. The argument order
+ * does NOT matter: with both rows locked FOR UPDATE in a deterministic order,
+ * this picks the survivor by a STABLE global rule ({@link isEarlier} — earlier
+ * `valid_from`, tiebreak smaller `id`), so two concurrent landing hooks converge
+ * on the SAME survivor regardless of who ran first.
  *
- * In ONE transaction, with both observation rows locked FOR UPDATE in a
- * deterministic order:
- *  1. append a `confirm` evidence row on the target (actor = the later report's
- *     reporter key and source; `occurred_at` = the later report's
- *     `data_updated_at`), guarded so a repeat call appends nothing;
- *  2. union `laterObservationId` into the target's `corroborations` and `replaces`;
- *  3. mark the later observation `inactive` (the target is the survivor);
- *  4. recompute the target's evidence state in the SAME transaction.
+ * In ONE transaction:
+ *  1. RE-READ both rows' status under the lock. If EITHER is already `inactive`
+ *     (a row merged by a concurrent corroboration), SKIP entirely — this is what
+ *     prevents cross-race annihilation (both hooks picking "self survives" and
+ *     both marking the other inactive, so the real phenomenon vanishes).
+ *  2. append a `confirm` evidence row on the SURVIVOR (actor = the merged
+ *     report's reporter key and source; `occurred_at` = its `data_updated_at`),
+ *     guarded so a repeat call appends nothing;
+ *  3. union the merged id into the survivor's `corroborations` and `replaces`;
+ *  4. mark the MERGED (later) observation `inactive`;
+ *  5. recompute the survivor's evidence state in the SAME transaction.
  *
  * Idempotent: a concurrent double-call appends exactly one `confirm` row and one
  * `corroborations` entry. Corroboration never sets `routing_eligible` — only an
@@ -132,57 +160,67 @@ async function lockObservationsInOrder(tx: Tx, ...ids: string[]): Promise<Set<st
  * No geometry rewriting in v1; composing `start_unknown` + `end_unknown` extents
  * into a fused geometry is deliberately left as future work.
  *
- * @throws TypeError when `laterObservationId` and `targetObservationId` are the
- *   same observation — self-corroboration is never valid evidence.
+ * @throws TypeError when the two ids are the same observation — self-corroboration
+ *   is never valid evidence.
  * @throws Error when either observation row does not exist: a corroboration
  *   against a vanished row must fail loudly, not silently half-apply.
  */
 export async function applyCorroboration(
   sql: Sql,
-  laterObservationId: string,
-  targetObservationId: string,
+  observationIdA: string,
+  observationIdB: string,
   now: string
 ): Promise<void> {
-  if (laterObservationId === targetObservationId) {
+  if (observationIdA === observationIdB) {
     throw new TypeError("applyCorroboration: an observation cannot corroborate itself");
   }
   await sql.begin(async (tx) => {
-    const locked = await lockObservationsInOrder(tx, targetObservationId, laterObservationId);
-    for (const id of [targetObservationId, laterObservationId]) {
+    const locked = await lockObservationsInOrder(tx, observationIdA, observationIdB);
+    for (const id of [observationIdA, observationIdB]) {
       if (!locked.has(id)) {
         throw new Error(`applyCorroboration: observation "${id}" does not exist`);
       }
     }
 
-    const laterRows = await tx<LaterActorRow[]>`
-      SELECT origin, source, data_updated_at
+    const rows = await tx<CorroborationRow[]>`
+      SELECT id, status, valid_from, data_updated_at, origin, source
       FROM conditions.observations
-      WHERE id = ${laterObservationId}
+      WHERE id IN (${observationIdA}, ${observationIdB})
     `;
-    const later = laterRows[0]!;
-    const laterKeyId = later.origin?.reporter?.keyId ?? null;
+    const a = rows.find((r) => r.id === observationIdA)!;
+    const b = rows.find((r) => r.id === observationIdB)!;
+
+    // A row already merged elsewhere must not be re-merged: skipping here is what
+    // makes concurrent hooks converge (one merges, the other no-ops) rather than
+    // annihilate the phenomenon.
+    if (a.status === "inactive" || b.status === "inactive") {
+      return;
+    }
+
+    const [survivor, merged] = isEarlier(a, b) ? [a, b] : [b, a];
+    const mergedKeyId = merged.origin?.reporter?.keyId ?? null;
 
     await tx`
       INSERT INTO conditions.report_evidence
         (observation_id, evidence_kind, actor_key_id, source_id, occurred_at, details)
-      SELECT ${targetObservationId}, 'confirm', ${laterKeyId}, ${later.source},
-             ${later.data_updated_at}, ${tx.json({ via: "phenomenon-match", observationId: laterObservationId } as never)}
+      SELECT ${survivor.id}, 'confirm', ${mergedKeyId}, ${merged.source},
+             ${merged.data_updated_at}, ${tx.json({ via: "phenomenon-match", observationId: merged.id } as never)}
       WHERE NOT EXISTS (
         SELECT 1 FROM conditions.report_evidence
-        WHERE observation_id = ${targetObservationId}
+        WHERE observation_id = ${survivor.id}
           AND evidence_kind = 'confirm'
-          AND details ->> 'observationId' = ${laterObservationId}
+          AND details ->> 'observationId' = ${merged.id}
       )
     `;
 
-    await unionInto(tx, targetObservationId, laterObservationId);
+    await unionInto(tx, survivor.id, merged.id);
 
     await tx`
       UPDATE conditions.observations SET status = 'inactive'
-      WHERE id = ${laterObservationId}
+      WHERE id = ${merged.id}
     `;
 
-    await recomputeEvidence(sql, targetObservationId, now, tx);
+    await recomputeEvidence(sql, survivor.id, now, tx);
   });
 }
 

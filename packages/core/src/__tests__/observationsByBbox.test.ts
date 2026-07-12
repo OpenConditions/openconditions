@@ -330,6 +330,69 @@ describe("observationsByBbox", () => {
     expect(capturedQuery).toMatch(/ORDER BY.*CASE o\.severity/s);
     expect(capturedQuery).not.toMatch(/ORDER BY severity\b/);
   });
+
+  it("projects the evidence-labeling fields (origin.kind + evidence/routing/confidence/privacy/fuzziness)", async () => {
+    const crowd = {
+      ...fakeRow,
+      id: "crowd:1",
+      origin: { kind: "crowd", attribution: { provider: "OpenConditions" } },
+      evidence_state: "self_reported",
+      routing_eligible: false,
+      confidence_score: 0.3,
+      privacy_class: "crowd_pseudonym",
+      fuzziness: "low_res",
+    };
+    const fc = await observationsByBbox(makeStubDb([crowd]), {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+    });
+    const p = fc.features[0]!.properties!;
+    expect(p.originKind).toBe("crowd");
+    expect(p.evidenceState).toBe("self_reported");
+    expect(p.routingEligible).toBe(false);
+    expect(p.confidenceScore).toBe(0.3);
+    expect(p.privacyClass).toBe("crowd_pseudonym");
+    expect(p.fuzziness).toBe("low_res");
+  });
+
+  it("selects the evidence-labeling columns", async () => {
+    let capturedQuery = "";
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
+    expect(capturedQuery).toMatch(/o\.evidence_state/);
+    expect(capturedQuery).toMatch(/o\.routing_eligible/);
+    expect(capturedQuery).toMatch(/o\.confidence_score/);
+    expect(capturedQuery).toMatch(/o\.privacy_class/);
+    expect(capturedQuery).toMatch(/o\.fuzziness/);
+  });
+
+  it("adds the origin-aware routing filter only when routingEligibleOnly is true", async () => {
+    let capturedQuery = "";
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
+    // The column is always selected, but the origin-aware WHERE filter is not.
+    expect(capturedQuery).not.toMatch(/origin->>'kind' = 'crowd'/);
+
+    await observationsByBbox(db, {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+      routingEligibleOnly: true,
+    });
+    // Keep feed rows always; keep crowd rows only when routing_eligible.
+    expect(capturedQuery).toMatch(
+      /NOT \(o\.origin->>'kind' = 'crowd' AND COALESCE\(o\.routing_eligible, false\) IS NOT TRUE\)/
+    );
+  });
 });
 
 describe("severityRank", () => {

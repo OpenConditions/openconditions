@@ -31,6 +31,7 @@ import { reportEpoch, type PublicContext } from "./issuer/context.js";
 import { issueToken } from "./issuer/issue.js";
 import { DEFAULT_ISSUER_NAME, ensureIssuerKeys, loadActiveIssuerKeys } from "./issuer/keys.js";
 import { TokenVerifier } from "./issuer/verify.js";
+import { autoCorroborateOnLanding } from "./evidence/autoCorroborate.js";
 import { GeometryInvalidError, landReport } from "./landing/insert.js";
 import { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
 import { blockKey, listBlocked, unblockKey } from "./reviewer/blocklist.js";
@@ -58,6 +59,13 @@ export interface BuildOptions {
    * failure in this best-effort hook can never fail an already-committed landing.
    */
   streetCompleteCheck?: (sql: postgres.Sql, observationId: string, now: string) => Promise<boolean>;
+  /**
+   * Override the post-hoc auto-corroboration hook (a landing seam). Defaults to
+   * the real {@link autoCorroborateOnLanding}; injected in tests to prove that a
+   * matcher failure in this best-effort hook can never fail an already-committed
+   * landing.
+   */
+  autoCorroborate?: (sql: postgres.Sql, observationId: string, now: string) => Promise<string[]>;
 }
 
 interface EnrollBody {
@@ -124,6 +132,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const env = options.env ?? process.env;
   const now = options.now ?? (() => new Date().toISOString());
   const streetCompleteCheck = options.streetCompleteCheck ?? flagOntoOpenFlagged;
+  const autoCorroborate = options.autoCorroborate ?? autoCorroborateOnLanding;
   const issuerName = env["OPENCONDITIONS_ISSUER_NAME"] || DEFAULT_ISSUER_NAME;
 
   const app = Fastify({ logger: options.logger ?? true });
@@ -367,6 +376,26 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         req.log.warn(
           { err, observationId: result.observationId },
           "StreetComplete flag check failed; landing is unaffected"
+        );
+      }
+
+      // Evidence-ladder step 2: auto-corroborate the fresh landing against any
+      // INDEPENDENT report of the same phenomenon already nearby. Post-hoc and
+      // best-effort like the StreetComplete hook — the report has landed 200 and
+      // a matcher error must NEVER fail it. Corroboration merges the later report
+      // onto the earlier survivor; it never routes and never trains reputation.
+      try {
+        const corroborated = await autoCorroborate(sql, result.observationId, nowIso);
+        if (corroborated.length > 0) {
+          req.log.info(
+            { observationId: result.observationId, corroborated },
+            "landing auto-corroborated an independent report of the same phenomenon"
+          );
+        }
+      } catch (err) {
+        req.log.warn(
+          { err, observationId: result.observationId },
+          "auto-corroboration failed; landing is unaffected"
         );
       }
     }

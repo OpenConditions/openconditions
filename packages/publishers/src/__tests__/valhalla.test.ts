@@ -218,6 +218,72 @@ describe("eventsToExclusions", () => {
     const ex = eventsToExclusions([started], { activeAt });
     expect(ex.exclude_locations).toEqual([{ lon: 4.9, lat: 52.37 }]);
   });
+
+  it("does NOT exclude a self-reported crowd closure that is not routing-eligible", () => {
+    const crowd = roadEvent({
+      type: "road_closure",
+      geometry: { type: "Point", coordinates: [4.9, 52.37] },
+      origin: {
+        kind: "crowd",
+        attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
+        reporter: { keyId: "key-a" },
+      },
+      routingEligible: false,
+    } as never);
+    expect(eventsToExclusions([crowd])).toEqual({ exclude_locations: [], exclude_polygons: [] });
+  });
+
+  it("does NOT exclude a crowd closure with an undefined routingEligible (defaults to not routing)", () => {
+    const crowd = roadEvent({
+      type: "road_closure",
+      geometry: { type: "Point", coordinates: [4.9, 52.37] },
+      origin: {
+        kind: "crowd",
+        attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
+        reporter: { keyId: "key-a" },
+      },
+    } as never);
+    expect(eventsToExclusions([crowd]).exclude_locations).toEqual([]);
+  });
+
+  it("DOES exclude the same crowd closure once an external resolution made it routing-eligible", () => {
+    const resolved = roadEvent({
+      type: "road_closure",
+      geometry: { type: "Point", coordinates: [4.9, 52.37] },
+      origin: {
+        kind: "crowd",
+        attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
+        reporter: { keyId: "key-a" },
+      },
+      routingEligible: true,
+    } as never);
+    expect(eventsToExclusions([resolved]).exclude_locations).toEqual([{ lon: 4.9, lat: 52.37 }]);
+  });
+
+  it("always excludes a feed closure (authoritative; routing_eligible false/NULL must not drop it)", () => {
+    const feed = roadEvent({
+      type: "road_closure",
+      geometry: { type: "Point", coordinates: [4.9, 52.37] },
+      // Feed rows never carry routingEligible; that must not exclude them.
+    });
+    expect(eventsToExclusions([feed]).exclude_locations).toEqual([{ lon: 4.9, lat: 52.37 }]);
+  });
+
+  it("does NOT exclude a closure of unknown/missing provenance (fail-closed, matches the SQL filter)", () => {
+    const unknownKind = roadEvent({
+      type: "road_closure",
+      geometry: { type: "Point", coordinates: [4.9, 52.37] },
+      origin: { kind: "other", attribution: { provider: "?" } },
+    } as never);
+    expect(eventsToExclusions([unknownKind]).exclude_locations).toEqual([]);
+
+    const missingOrigin = roadEvent({
+      type: "road_closure",
+      geometry: { type: "Point", coordinates: [4.9, 52.37] },
+      origin: undefined,
+    } as never);
+    expect(eventsToExclusions([missingOrigin]).exclude_locations).toEqual([]);
+  });
 });
 
 describe("flowToSegmentSpeedCsv", () => {

@@ -90,6 +90,20 @@ async function enroll(key: ReporterKey): Promise<string> {
   return (res.json() as { reportingGrant: string }).reportingGrant;
 }
 
+/**
+ * Distinct phenomenon per landed observation: landing now auto-corroborates two
+ * INDEPENDENT reports of the same phenomenon, so these voting/flag tests — which
+ * each want a single isolated observation — land at their own coordinate unless
+ * they override geometry. ~0.5° apart is far beyond the corroboration
+ * neighborhood, so cross-test landings never merge.
+ */
+let landCounter = 0;
+function nextLandGeometry(): ReportClaim["geometry"] {
+  const lon = 8.0 + landCounter * 0.5;
+  landCounter += 1;
+  return { type: "Point", coordinates: [lon, 45.0] };
+}
+
 /** Enroll a key and land a fresh active crowd observation from it; returns id + grant. */
 async function landObs(
   nonce: string,
@@ -97,7 +111,8 @@ async function landObs(
 ): Promise<{ key: ReporterKey; grant: string; id: string }> {
   const key = await generateReporterKey();
   const grant = await enroll(key);
-  const report: SignedReport = await signReport(makeClaim({ nonce, ...overrides }), key);
+  const geometry = overrides.geometry ?? nextLandGeometry();
+  const report: SignedReport = await signReport(makeClaim({ nonce, ...overrides, geometry }), key);
   const res = await app.inject({
     method: "POST",
     url: "/contrib/reports",
