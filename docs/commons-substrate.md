@@ -89,7 +89,10 @@ migration — it is not part of this substrate and isn't covered here.
 `instance_id`, `canonical_id`, `phenomenon_fingerprint`, `source_uri`, and
 `source_license` onto every observation before it is persisted, and rejects
 any parser-supplied `privacy_class`/`instance_id`/`k_anonymity`/`dp_epsilon`/
-`dp_delta` as a bug. It is already the live consumer of `canonicalId`,
+`dp_delta` as a bug. Because `source_uri`/`source_license` are content-bearing
+(folded into `content_hash` when present), stamping them changes every
+existing feed row's hash exactly once — a deliberate one-time diff-upsert
+rewrite on the first poll after deploying this seam. It is already the live consumer of `canonicalId`,
 `phenomenonFingerprint`, `validateObserved`, and `observedKey` — every other
 row in the tables above names a feature area that has not landed yet, but
 whose contract this normalization seam and the columns/functions above are

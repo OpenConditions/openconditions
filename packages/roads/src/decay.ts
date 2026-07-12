@@ -54,6 +54,10 @@ export const DEFAULT_DECAY_TTLS: Record<string, DecayEntry> = deepFreeze({
   roadworks: { crowdTtlSec: 604800, feedTtlSec: 1209600, maxLifetimeSec: 2592000 },
   transit_disruption: { crowdTtlSec: 1800, feedTtlSec: 3600, maxLifetimeSec: 14400 },
   accessibility: { crowdTtlSec: 7200, feedTtlSec: 14400, maxLifetimeSec: 43200 },
+  // Canonical alias of the accessibility bucket: broken elevators/escalators
+  // report as type "equipment_fault", so the intended accessibility TTLs must
+  // be reachable under that key too.
+  equipment_fault: { crowdTtlSec: 7200, feedTtlSec: 14400, maxLifetimeSec: 43200 },
 });
 
 /** Decay policy for an event type not present in {@link DEFAULT_DECAY_TTLS}. */
@@ -122,18 +126,31 @@ export function decayMaxLifetimeSec(
 
 const HAS_ZONE_DESIGNATOR = /(?:[zZ]|[+-]\d{2}:?\d{2})$/;
 
+// The string must start with the ISO calendar-date shape, optionally followed
+// by a `T` time part — the same gate as core's `timeBucket`. This rejects
+// locale/legacy formats ("07/10/2026", "Fri Jul 10 2026", "July 10, 2026")
+// and expanded ±YYYYYY years before they reach V8's lenient,
+// timezone-dependent legacy Date.parse path.
+const ISO_CALENDAR_DATE = /^\d{4}-\d{2}-\d{2}(?:T|$)/;
+
 /**
- * Parse an ISO instant to epoch ms, pinning an offset-less datetime to UTC —
- * the same UTC-pinning approach as core's `timeBucket`. Replicated locally
- * (rather than importing) because core exposes no epoch-ms parse helper, only
- * the bucket-quantising `timeBucket`; keeping it here avoids a fragile
- * dependency on that function's internals.
+ * Parse an ISO instant to epoch ms, with the same ISO-calendar-shape gate and
+ * UTC pinning of offset-less datetimes as core's `timeBucket`. Replicated
+ * locally (rather than importing) because core exposes no epoch-ms parse
+ * helper, only the bucket-quantising `timeBucket`; keeping it here avoids a
+ * fragile dependency on that function's internals.
  *
- * @throws TypeError when `value` is not a string or does not parse to a finite instant.
+ * @throws TypeError when `value` is not a string, is not ISO-calendar-shaped,
+ *   or does not parse to a finite instant.
  */
 function parseInstantMs(value: string): number {
   if (typeof value !== "string") {
     throw new TypeError(`expiresAtFor requires an ISO dataUpdatedAt string, got: ${String(value)}`);
+  }
+  if (!ISO_CALENDAR_DATE.test(value)) {
+    throw new TypeError(
+      `expiresAtFor requires an ISO calendar date (YYYY-MM-DD, optionally with a T time part): ${value}`
+    );
   }
   const pinned = value.includes("T") && !HAS_ZONE_DESIGNATOR.test(value) ? `${value}Z` : value;
   const epochMs = Date.parse(pinned);

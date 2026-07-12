@@ -17,6 +17,7 @@ const EXPECTED: Record<string, DecayEntry> = {
   roadworks: { crowdTtlSec: 604800, feedTtlSec: 1209600, maxLifetimeSec: 2592000 },
   transit_disruption: { crowdTtlSec: 1800, feedTtlSec: 3600, maxLifetimeSec: 14400 },
   accessibility: { crowdTtlSec: 7200, feedTtlSec: 14400, maxLifetimeSec: 43200 },
+  equipment_fault: { crowdTtlSec: 7200, feedTtlSec: 14400, maxLifetimeSec: 43200 },
 };
 
 describe("DEFAULT_DECAY_TTLS table", () => {
@@ -171,6 +172,15 @@ describe("expiresAtFor", () => {
     expect(() => expiresAtFor("not-a-date", "congestion", "crowd")).toThrow(TypeError);
     // @ts-expect-error exercising the runtime guard with a non-string
     expect(() => expiresAtFor(undefined, "congestion", "crowd")).toThrow(TypeError);
+  });
+
+  it("throws TypeError on legacy non-ISO date shapes instead of the lenient parser", () => {
+    // These parse under V8's legacy, host-timezone-dependent Date.parse path;
+    // the ISO-calendar-shape gate (same as core's timeBucket) must reject them.
+    expect(() => expiresAtFor("07/10/2026", "congestion", "crowd")).toThrow(TypeError);
+    expect(() => expiresAtFor("Fri Jul 10 2026", "congestion", "crowd")).toThrow(TypeError);
+    expect(() => expiresAtFor("July 10, 2026", "congestion", "crowd")).toThrow(TypeError);
+    expect(() => expiresAtFor("+002026-07-10T12:00:00Z", "congestion", "crowd")).toThrow(TypeError);
   });
 
   it("throws TypeError on an unknown origin", () => {

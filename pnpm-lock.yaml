@@ -88,6 +88,28 @@ importers:
         specifier: ^3.0.0
         version: 3.2.6(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.9.0)
 
+  packages/contrib-core:
+    dependencies:
+      '@openconditions/core':
+        specifier: workspace:*
+        version: link:../core
+      canonicalize:
+        specifier: 3.0.0
+        version: 3.0.0
+    devDependencies:
+      '@types/geojson':
+        specifier: ^7946.0.14
+        version: 7946.0.16
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.15)(tsx@4.22.4)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.9.0)
+
   packages/core:
     dependencies:
       drizzle-orm:
@@ -1307,6 +1329,11 @@ packages:
   callsites@3.1.0:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
     engines: {node: '>=6'}
+
+  canonicalize@3.0.0:
+    resolution: {integrity: sha512-yYLfHyDMIXRyRqsKBRLX023riFLpXY2YOfdtqKXZRZy9qsfOJ9U+4F9YZL7MEzL5+ziN2x2nlBvY/Voi3EBljA==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   catharsis@0.9.0:
     resolution: {integrity: sha512-prMTQVpcns/tzFgFVkVp6ak6RykZyWb3gu8ckUpd6YkTlacOd3DXGJjIpD4Q6zJirizvaiAjSSHlOsA+6sNh2A==}
@@ -3809,6 +3836,8 @@ snapshots:
   cac@6.7.14: {}
 
   callsites@3.1.0: {}
+
+  canonicalize@3.0.0: {}
 
   catharsis@0.9.0:
     dependencies:

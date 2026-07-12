@@ -1,0 +1,39 @@
+{
+  "name": "@openconditions/contrib-core",
+  "version": "0.1.0",
+  "description": "Signed, portable crowd report and sub-claim format for OpenConditions (RFC 8785 JCS + WebCrypto ES256)",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@openconditions/core": "workspace:*",
+    "canonicalize": "3.0.0"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.14",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}

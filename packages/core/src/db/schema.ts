@@ -79,8 +79,11 @@ export const observations = conditionsSchema.table(
     contentHash: text("content_hash"),
 
     // Commons substrate: identity/lineage, uncertainty, privacy and provenance
-    // fields for crowd-reporting/federation. Nothing populates these yet; the
-    // central defaulting seam lands in a later change.
+    // fields for crowd-reporting/federation. The ingest pipeline's
+    // normalizeObservation seam stamps instance_id, canonical_id,
+    // phenomenon_fingerprint, privacy_class and source_uri/source_license on
+    // every feed row; the remaining fields await their consumers (crowd
+    // reporting, probe aggregation, federation).
     instanceId: text("instance_id"),
     canonicalId: text("canonical_id"),
     phenomenonFingerprint: text("phenomenon_fingerprint"),
