@@ -11,7 +11,7 @@
  */
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type postgres from "postgres";
-import { centroid } from "@openconditions/core";
+import { centroid, reliabilityLowerBound } from "@openconditions/core";
 import {
   checkPlausibility,
   verifyReport,
@@ -26,6 +26,7 @@ import { checkReportRate } from "./abuse/rate.js";
 import { enrollReporter } from "./attester/enroll.js";
 import { resolveGrantSecret, verifyReportingGrant } from "./attester/grant.js";
 import { ATTESTER_POLICY, type DeviceProof } from "./attester/policy.js";
+import { isPoliceCategory, isPoliceCategoryEnabled } from "./policy/police.js";
 import { reportEpoch, type PublicContext } from "./issuer/context.js";
 import { issueToken } from "./issuer/issue.js";
 import { DEFAULT_ISSUER_NAME, ensureIssuerKeys, loadActiveIssuerKeys } from "./issuer/keys.js";
@@ -85,6 +86,9 @@ interface SubClaimBody {
 }
 
 const SUB_CLAIM_ACTIONS = new Set(["confirm", "negate", "flag"]);
+
+/** Fixed credible level for the advisory own-reputation lower bound. */
+const ADVISORY_CREDIBLE_LEVEL = 0.9;
 
 /** Minimal per-IP token bucket for the enrollment endpoint. */
 class EnrollLimiter {
@@ -245,6 +249,9 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     env["OPENCONDITIONS_CROWD_SOURCE_URI"] || `urn:openconditions:crowd:${resolveInstanceId(env)}`;
   const crowdSourceLicense = env["OPENCONDITIONS_CROWD_LICENSE"] || "ODbL-1.0";
 
+  // Per-instance police-category toggle, resolved once at boot (DEFAULT OFF).
+  const policeCategoryEnabled = isPoliceCategoryEnabled(env);
+
   app.post<{ Body: ReportsBody }>("/contrib/reports", async (req, reply) => {
     const body = req.body ?? {};
     const { report, reportingGrant } = body;
@@ -294,6 +301,18 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     const plausibility = checkPlausibility(report.claim, nowIso);
     if (!plausibility.ok) {
       return reply.status(422).send({ error: "implausible report", reasons: plausibility.reasons });
+    }
+
+    // 4b. Per-instance police-category gate (DEFAULT OFF). Only a NEW report
+    // landing in the sensitive police-presence category is gated; a vote on an
+    // existing observation is never re-gated (it already passed the gate when it
+    // landed). "authority"/"security"/"speed_restriction" are legitimate
+    // categories and are NOT gated — see policy/police.ts.
+    if (isPoliceCategory(report.claim.type) && !policeCategoryEnabled) {
+      return reply.status(422).send({
+        error: "police category is disabled on this instance",
+        reason: "police_category_disabled",
+      });
     }
 
     // Per-key + per-(key, ~1km cell) insert-rate guard. The geometry passed
@@ -490,6 +509,45 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       });
     }
   );
+
+  // Advisory own-reputation read. Authenticated by a valid reporting grant in
+  // the `Authorization: Bearer <grant>` header ONLY — never a query param, so a
+  // bearer credential can't leak into proxy/access logs. The key is taken FROM
+  // THE GRANT, never a client field. Returns the caller's OWN advisory
+  // reliability lower bound — explicitly NOT a probability of truth and NOT a
+  // Sybil-resistance guarantee. A blocked reporter still gets its reputation
+  // (with status), so it can see it is blocked. Single read, no mutation.
+  app.get("/contrib/reporter/me", async (req, reply) => {
+    const auth = req.headers["authorization"];
+    const grant =
+      typeof auth === "string" && auth.startsWith("Bearer ") ? auth.slice(7) : undefined;
+    if (grant === undefined || grant.length === 0) {
+      return reply.status(401).send({ error: "reporting grant required" });
+    }
+    const verified = await verifyReportingGrant(grant, grantSecret, now());
+    if (!verified.valid || verified.keyId === undefined) {
+      return reply.status(401).send({ error: `invalid reporting grant (${verified.reason})` });
+    }
+    const keyId = verified.keyId;
+    const rows = await sql<{ reputation_alpha: number; reputation_beta: number; status: string }[]>`
+        SELECT reputation_alpha, reputation_beta, status
+        FROM conditions.reporter WHERE key_id = ${keyId}
+      `;
+    const reporter = rows[0];
+    if (reporter === undefined) {
+      return reply.status(404).send({ error: "reporter is not enrolled" });
+    }
+    const lowerBound = reliabilityLowerBound(
+      { alpha: reporter.reputation_alpha, beta: reporter.reputation_beta },
+      ADVISORY_CREDIBLE_LEVEL
+    );
+    return reply.status(200).send({
+      keyId,
+      reliabilityLowerBound: lowerBound,
+      status: reporter.status,
+      note: "advisory — not a probability of truth or a Sybil-resistance guarantee",
+    });
+  });
 
   // Reviewer / moderation surface — POST-HOC only, nothing gates before publish.
   // Every route is operator-authenticated with the bearer token (never a device

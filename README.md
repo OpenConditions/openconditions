@@ -92,6 +92,13 @@ pnpm openmapx compose render && pnpm openmapx compose up
 See OpenMapX's _Building an external extension_ guide for the full flow. The ingest writes to the shared PostGIS
 `conditions` schema; the provider integration reads it back into the OpenMapX map overlay and routing avoidance.
 
+## Crowd reporting
+
+Pseudonymous contributors can augment the official feeds with signed
+road-condition reports. Read [what crowd reporting is — and the guarantees we
+deliberately do NOT make](docs/crowd-reporting-limitations.md) before relying on
+it.
+
 ## Published artifacts
 
 - npm: `@openconditions/core`, `@openconditions/roads` (prebuilt, public)

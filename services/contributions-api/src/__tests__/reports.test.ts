@@ -9,6 +9,7 @@ import {
   type ReporterKey,
   type SignedReport,
 } from "@openconditions/contrib-core";
+import { reliabilityLowerBound } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import { createReportingGrant } from "../attester/grant.js";
 import { build } from "../server.js";
@@ -20,6 +21,8 @@ const GRANT_SECRET = new TextEncoder().encode(GRANT_SECRET_VALUE);
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
 let app: FastifyInstance;
+/** A second instance with the police category explicitly enabled. */
+let appPolice: FastifyInstance;
 let ipCounter = 0;
 
 beforeAll(async () => {
@@ -45,10 +48,21 @@ beforeAll(async () => {
     logger: false,
     now: () => NOW,
   });
+  appPolice = await build({
+    sql,
+    env: {
+      OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+      OPENCONDITIONS_INSTANCE_ID: "maps.example.org",
+      OPENCONDITIONS_ALLOW_POLICE_CATEGORY: "true",
+    },
+    logger: false,
+    now: () => NOW,
+  });
 }, 180_000);
 
 afterAll(async () => {
   await app?.close();
+  await appPolice?.close();
   await sql?.end();
   await containerStop?.();
 }, 30_000);
@@ -85,8 +99,12 @@ async function sign(key: ReporterKey, overrides: Partial<ReportClaim> = {}): Pro
   return signReport(makeClaim(overrides), key);
 }
 
-async function postReport(report: SignedReport, reportingGrant: string) {
-  return app.inject({
+async function postReport(
+  report: SignedReport,
+  reportingGrant: string,
+  instance: FastifyInstance = app
+) {
+  return instance.inject({
     method: "POST",
     url: "/contrib/reports",
     payload: { report, reportingGrant },
@@ -340,5 +358,178 @@ describe("POST /contrib/reports — landing never auto-corroborates", () => {
     // … but landing left them independent, not corroborated.
     expect(rowA!.confidence_score).toBeCloseTo(0.3, 10);
     expect(rowB!.confidence_score).toBeCloseTo(0.3, 10);
+  }, 60_000);
+});
+
+describe("POST /contrib/reports — police-category gate (DEFAULT OFF)", () => {
+  it("rejects a police-typed report with 422 police_category_disabled and writes no row", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const report = await sign(key, { type: "police", nonce: "police-off-0000001" });
+
+    const res = await postReport(report, grant);
+    expect(res.statusCode).toBe(422);
+    expect((res.json() as { reason: string }).reason).toBe("police_category_disabled");
+
+    const row = await readObs(`crowd:${key.keyId}:police-off-0000001`);
+    expect(row).toBeUndefined();
+  }, 60_000);
+
+  it("lands a police-typed report normally when the instance enables the category", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const report = await sign(key, { type: "police", nonce: "police-on-00000001" });
+
+    const res = await postReport(report, grant, appPolice);
+    expect(res.statusCode).toBe(200);
+
+    const row = await readObs(`crowd:${key.keyId}:police-on-00000001`);
+    expect(row).toBeDefined();
+    expect(row!.evidence_state).toBe("self_reported");
+  }, 60_000);
+
+  it("does not gate 'authority' — legitimate official activity lands even with the toggle off", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const report = await sign(key, { type: "authority", nonce: "authority-0000001" });
+
+    const res = await postReport(report, grant);
+    expect(res.statusCode).toBe(200);
+
+    const row = await readObs(`crowd:${key.keyId}:authority-0000001`);
+    expect(row).toBeDefined();
+  }, 60_000);
+
+  it("does not gate 'security' — a security-incident report lands with the toggle off", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const report = await sign(key, { type: "security", nonce: "security-00000001" });
+
+    const res = await postReport(report, grant);
+    expect(res.statusCode).toBe(200);
+  }, 60_000);
+
+  it("a hazard report never trips the gate (the gated set is exactly {police})", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const report = await sign(key, { type: "hazard", nonce: "hazard-nogate-0001" });
+
+    const res = await postReport(report, grant);
+    expect(res.statusCode).toBe(200);
+  }, 60_000);
+});
+
+describe("POST /contrib/reports — media is disabled (no media path in v1)", () => {
+  it("lands a report carrying attributes.media as inert attributes with no special handling", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const report = await sign(key, {
+      nonce: "media-inert-000001",
+      attributes: { media: "data:image/png;base64,AAAA", note: "kept as opaque data" },
+    });
+
+    const res = await postReport(report, grant);
+    expect(res.statusCode).toBe(200);
+
+    const obsId = `crowd:${key.keyId}:media-inert-000001`;
+    const rows = await sql<{ attributes: Record<string, unknown> | null }[]>`
+      SELECT attributes FROM conditions.observations WHERE id = ${obsId}`;
+    // The media key survives as inert attribute data — there is no server-side
+    // media storage, redaction, or retrieval; it is just opaque JSON.
+    expect(rows[0]!.attributes).toMatchObject({ media: "data:image/png;base64,AAAA" });
+
+    // No media route/field exists: a media sub-path is simply not a route.
+    const noRoute = await app.inject({
+      method: "GET",
+      url: `/contrib/reports/${encodeURIComponent(obsId)}/media`,
+    });
+    expect(noRoute.statusCode).toBe(404);
+  }, 60_000);
+});
+
+describe("GET /contrib/reporter/me — advisory own-reputation read", () => {
+  const ADVISORY_NOTE = "advisory — not a probability of truth or a Sybil-resistance guarantee";
+
+  async function getMe(grant: string, instance: FastifyInstance = app) {
+    return instance.inject({
+      method: "GET",
+      url: "/contrib/reporter/me",
+      headers: { authorization: `Bearer ${grant}` },
+    });
+  }
+
+  it("returns a lower bound that reflects resolved outcomes and is below the posterior mean", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    // Simulate several confirmed resolutions: a confident α-heavy posterior.
+    await sql`
+      UPDATE conditions.reporter
+      SET reputation_alpha = 8, reputation_beta = 2 WHERE key_id = ${key.keyId}`;
+
+    const res = await getMe(grant);
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as {
+      keyId: string;
+      reliabilityLowerBound: number;
+      status: string;
+      note: string;
+    };
+    expect(body.keyId).toBe(key.keyId);
+    expect(body.status).toBe("active");
+    expect(body.note).toBe(ADVISORY_NOTE);
+    const mean = 8 / (8 + 2);
+    expect(body.reliabilityLowerBound).toBeGreaterThan(0);
+    expect(body.reliabilityLowerBound).toBeLessThan(mean);
+    // It is the core one-sided lower bound at the fixed 0.9 credible level.
+    expect(body.reliabilityLowerBound).toBeCloseTo(
+      reliabilityLowerBound({ alpha: 8, beta: 2 }, 0.9),
+      10
+    );
+  }, 60_000);
+
+  it("gives a fresh reporter a wide-uncertainty low bound from the cohort prior Beta(2,2)", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+
+    const res = await getMe(grant);
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { reliabilityLowerBound: number; note: string };
+    expect(body.note).toBe(ADVISORY_NOTE);
+    // Beta(2,2) mean is 0.5; the 0.9 lower bound sits well below it.
+    expect(body.reliabilityLowerBound).toBeLessThan(0.5);
+    expect(body.reliabilityLowerBound).toBeCloseTo(
+      reliabilityLowerBound({ alpha: 2, beta: 2 }, 0.9),
+      10
+    );
+  }, 60_000);
+
+  it("still returns the reputation for a blocked reporter, with status = blocked", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    await sql`UPDATE conditions.reporter SET status = 'blocked' WHERE key_id = ${key.keyId}`;
+
+    const res = await getMe(grant);
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { status: string; note: string };
+    expect(body.status).toBe("blocked");
+    expect(body.note).toBe(ADVISORY_NOTE);
+  }, 60_000);
+
+  it("404s a valid grant whose key was never enrolled", async () => {
+    const key = await generateReporterKey();
+    const grant = await createReportingGrant(key.keyId, NOW, GRANT_SECRET);
+
+    const res = await getMe(grant);
+    expect(res.statusCode).toBe(404);
+  }, 60_000);
+
+  it("401s a missing grant", async () => {
+    const res = await app.inject({ method: "GET", url: "/contrib/reporter/me" });
+    expect(res.statusCode).toBe(401);
+  }, 60_000);
+
+  it("401s a bad grant", async () => {
+    const res = await getMe("bogus.grant");
+    expect(res.statusCode).toBe(401);
   }, 60_000);
 });
