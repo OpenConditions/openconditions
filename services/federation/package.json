@@ -15,6 +15,7 @@
   "dependencies": {
     "@openconditions/core": "workspace:*",
     "@openconditions/federation": "workspace:*",
+    "@openconditions/ingest-framework": "workspace:*",
     "fastify": "^5.0.0",
     "postgres": "^3.4.0"
   },

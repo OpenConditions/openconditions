@@ -598,3 +598,46 @@ export const federationInstanceKey = conditionsSchema.table("federation_instance
   notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
 });
+
+/**
+ * A peer's federation subscription: the relationship a subscribing instance
+ * establishes so it receives this instance's outbox, plus HOW it wants that
+ * delivery. `delivery_mode` layers push (webhook/sse) as a LATENCY optimization
+ * over the proven pull contract. `cursor` is the PUSH-CHANNEL cursor: under
+ * `priority_only` the push channel carries ONLY the priority classes and this
+ * cursor advances ONLY over those priority events (the scan is priority-restricted
+ * at SQL), so it can never be advanced past a non-priority but matching event.
+ * COMPLETENESS is the peer's OWN independent pull of `/peer/outbox` (never
+ * `priority_only`-restricted); push is a latency optimization for priority events,
+ * not the completeness channel. A successful push advances `cursor` to the
+ * delivered priority page's frontier; a dropped push does NOT advance it, so the
+ * same priority events re-push idempotently and the peer's pull covers everything.
+ *
+ * `push_failures` counts CONSECUTIVE delivery failures; once it reaches the
+ * threshold the row flips to `push_disabled` and the publisher stops pushing —
+ * the peer keeps every event via pull. A recovered peer re-enables push with a
+ * PATCH (which resets the counter and status).
+ */
+export const federationSubscription = conditionsSchema.table(
+  "federation_subscription",
+  {
+    id: text("id").primaryKey(),
+    peerId: text("peer_id").notNull(),
+    filter: jsonb("filter").notNull().default({}),
+    deliveryMode: text("delivery_mode").notNull().default("pull"),
+    inboxUrl: text("inbox_url"),
+    cursor: text("cursor").notNull().default("0.0"),
+    priorityOnly: boolean("priority_only").notNull().default(true),
+    pushFailures: integer("push_failures").notNull().default(0),
+    status: text("status").notNull().default("active"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    index("idx_federation_subscription_peer").on(t.peerId),
+    check(
+      "federation_subscription_delivery_mode_enum",
+      sql`${t.deliveryMode} IN ('pull','webhook','sse')`
+    ),
+  ]
+);

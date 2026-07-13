@@ -98,6 +98,19 @@ export interface OutboxQuery {
    *  (e.g. a prior page's `highWaterMark` replayed straight back). */
   after?: OutboxCursor | string;
   filter?: FederationFilter;
+  /**
+   * The PUSH-CHANNEL restriction: when set, the SQL scan returns ONLY entries
+   * whose event `type` is in this list (plus every delete tombstone — a
+   * retraction always propagates). The frontier ({@link OutboxPage.highWaterMark})
+   * is then computed over the priority subsequence, so a webhook/SSE channel's
+   * cursor advances ONLY across priority events and can never be advanced past a
+   * non-priority (but subscriber-filter-matching) event — that event simply is
+   * not part of the push channel. Completeness for non-priority events is the
+   * PEER's independent pull's job, never the push channel's. Absent → the full
+   * journal is scanned (the pull contract). Applied at SQL, not post-filter, so a
+   * run of >`limit` non-priority events cannot starve the channel.
+   */
+  priorityClasses?: readonly string[];
   /** Page size; default {@link OUTBOX_DEFAULT_LIMIT}, capped at {@link OUTBOX_MAX_LIMIT}. */
   limit?: number;
   /** The collection URL this page is part of; default "/peer/outbox". */
@@ -233,6 +246,14 @@ export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<Out
   const partOf = q.partOf ?? "/peer/outbox";
   const now = q.now ?? new Date().toISOString();
 
+  // The push-channel restriction, applied AT SQL so the frontier is over the
+  // priority subsequence (a delete tombstone always stays in the channel).
+  const priorityClause =
+    q.priorityClasses && q.priorityClasses.length > 0
+      ? sql`AND (operation = 'delete'
+                 OR payload_snapshot->>'type' = ANY(${[...q.priorityClasses]}))`
+      : sql``;
+
   const rows = await sql<JournalRow[]>`
     SELECT seq::text AS seq, txid::text AS txid, object_id, operation,
            canonical_id, payload_snapshot, created_at
@@ -240,6 +261,7 @@ export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<Out
     WHERE (txid > ${after.txid}::xid8
            OR (txid = ${after.txid}::xid8 AND seq > ${after.seq}))
       AND txid < pg_snapshot_xmin(pg_current_snapshot())
+      ${priorityClause}
     ORDER BY txid ASC, seq ASC
     LIMIT ${limit}`;
 

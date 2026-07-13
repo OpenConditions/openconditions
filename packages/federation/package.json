@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
+    "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/publishers": "workspace:*",
     "http-message-signatures": "1.0.6",
     "postgres": "^3.4.0",

@@ -15,6 +15,7 @@ import {
   PEERS_WELL_KNOWN_PATH,
   OUTBOX_DEFAULT_LIMIT,
   OUTBOX_MAX_LIMIT,
+  InMemoryNonceStore,
   buildActorDocument,
   ensureInstanceKey,
   loadActiveKeys,
@@ -25,9 +26,16 @@ import {
 } from "@openconditions/federation";
 import { resolveFederationSettings } from "./config.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
+import { registerSubscriptionRoutes } from "./subscription-routes.js";
 
 /** The pull-side peer exchange path the Actor document advertises as `outbox`. */
 const OUTBOX_PATH = "/peer/outbox";
+
+/** The authenticated subscription CRUD surface. */
+const SUBSCRIPTIONS_PATH = "/peer/subscriptions";
+
+/** The authenticated SSE live channel. */
+const STREAM_PATH = "/peer/stream";
 
 export interface BuildOptions {
   sql: postgres.Sql;
@@ -56,7 +64,13 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   });
 
   if (!settings.enabled) {
-    for (const path of [ACTOR_WELL_KNOWN_PATH, PEERS_WELL_KNOWN_PATH, OUTBOX_PATH]) {
+    for (const path of [
+      ACTOR_WELL_KNOWN_PATH,
+      PEERS_WELL_KNOWN_PATH,
+      OUTBOX_PATH,
+      SUBSCRIPTIONS_PATH,
+      STREAM_PATH,
+    ]) {
       app.get(path, async (_req, reply) => {
         return reply.status(404).send({ error: "federation is disabled on this instance" });
       });
@@ -155,6 +169,16 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       status: 200,
     });
     return reply.status(200).headers(signed.headers).send(body);
+  });
+
+  // The authenticated push/subscription surface shares the pull cursor: one
+  // NonceStore guards replay across every signed peer request.
+  registerSubscriptionRoutes(app, {
+    sql,
+    peers: settings.peers,
+    baseUrl: actorConfig.baseUrl,
+    nonceStore: new InMemoryNonceStore(),
+    now,
   });
 
   return app;

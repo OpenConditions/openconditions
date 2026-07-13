@@ -113,6 +113,13 @@
       "when": 1783917124070,
       "tag": "0015_federation_outbox_txid_cursor",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1783943638564,
+      "tag": "0016_federation_subscription",
+      "breakpoints": true
     }
   ]
 }

@@ -146,6 +146,9 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../core
+      '@openconditions/ingest-framework':
+        specifier: workspace:*
+        version: link:../ingest-framework
       '@openconditions/publishers':
         specifier: workspace:*
         version: link:../publishers

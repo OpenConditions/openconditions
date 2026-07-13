@@ -66,3 +66,31 @@ export type {
   VerifyParams,
   VerifyResult,
 } from "./http-signature.js";
+export { authenticatePeerRequest } from "./peer-auth.js";
+export type { PeerAuthContext, PeerAuthRequest, PeerAuthResult } from "./peer-auth.js";
+export {
+  DELIVERY_MODES,
+  SubscriptionValidationError,
+  createSubscription,
+  deleteSubscription,
+  getSubscription,
+  listSubscriptions,
+  updateSubscription,
+  validateSubscriptionShape,
+} from "./subscriptions.js";
+export type {
+  CreateSubscriptionInput,
+  DeliveryMode,
+  FederationSubscription,
+  SubscriptionStatus,
+  SubscriptionValidationCode,
+  UpdateSubscriptionInput,
+} from "./subscriptions.js";
+export {
+  PRIORITY_EVENT_TYPES,
+  PUSH_FAILURE_THRESHOLD,
+  deliverWebhook,
+  isPriorityEntry,
+  runWebhookDeliveryCycle,
+} from "./push.js";
+export type { DeliverWebhookOptions, DeliverWebhookOutcome, WebhookCycleResult } from "./push.js";
