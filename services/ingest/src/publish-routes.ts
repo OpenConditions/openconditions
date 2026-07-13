@@ -1,4 +1,9 @@
-import { type ConditionEvent, type Observation, readObservations } from "@openconditions/core";
+import {
+  type ConditionEvent,
+  type Measurement,
+  type Observation,
+  readObservations,
+} from "@openconditions/core";
 import {
   diffObservations,
   eventsToExclusions,
@@ -15,6 +20,7 @@ import {
   observationsToGeoJSON,
   observationsToGtfsRtAlerts,
   observationsToJsonLd,
+  observationsToOccupancy,
   observationsToTraff,
 } from "@openconditions/publishers";
 import {
@@ -180,7 +186,7 @@ export function registerFeedStatusRoute(
  * Public emitter endpoints — read-only projections of conditions.observations
  * into standard wire formats so the wider ecosystem can consume OpenConditions:
  *   GET /observations.geojson · /observations.jsonld · /traff.xml ·
- *       /gtfs-rt/alerts.pb · /datex2/situations.xml ·
+ *       /gtfs-rt/alerts.pb · /gtfs-rt/occupancy.pb · /datex2/situations.xml ·
  *       /valhalla/exclusions.json · /stream (SSE) · /feeds/status ·
  *       /segments.geojson · /segments/speed.csv · /segments/profiles.json
  * All bbox-filterable (?bbox=west,south,east,north[&domain=roads]); /stream also
@@ -264,6 +270,25 @@ export function registerPublishRoutes(
     if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
     const events = obs.filter((o): o is ConditionEvent => o.kind === "event");
     const pb = observationsToGtfsRtAlerts(events, { timestamp: new Date().toISOString() });
+    reply.header("Content-Type", "application/x-protobuf");
+    reply.header("Cache-Control", "public, max-age=90");
+    reply.header("X-Data-License", distinctLicenses(obs));
+    return reply.send(Buffer.from(pb));
+  });
+
+  app.get("/gtfs-rt/occupancy.pb", async (req, reply) => {
+    // EXPERIMENTAL GTFS-RT OccupancyStatus feed. Reads `transit/occupancy`
+    // Measurements across ALL domains (like the alerts route), then lets the
+    // emitter's concrete-entity gate keep only trip+vehicle / trip+stop_sequence
+    // occupancy and drop route/stop aggregates. There is NO occupancy data
+    // source wired in this repo today, so this honestly serves an empty feed
+    // until one is added — a valid, decodable, entity-less FeedMessage.
+    const obs = await read(req.query as Record<string, string | undefined>, null);
+    if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
+    const measurements = obs.filter(
+      (o): o is Measurement => o.kind === "measurement" && (o as Measurement).metric === "occupancy"
+    );
+    const pb = observationsToOccupancy(measurements, { timestamp: new Date().toISOString() });
     reply.header("Content-Type", "application/x-protobuf");
     reply.header("Cache-Control", "public, max-age=90");
     reply.header("X-Data-License", distinctLicenses(obs));

@@ -1,4 +1,5 @@
-import type { ConditionEvent } from "@openconditions/core";
+import type { ConditionEvent, Measurement } from "@openconditions/core";
+import { observedKey } from "@openconditions/core";
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
 import { roadFields } from "./types.js";
 
@@ -24,7 +25,8 @@ import { roadFields } from "./types.js";
  */
 
 const { transit_realtime } = GtfsRealtimeBindings;
-const { Alert, FeedHeader } = transit_realtime;
+const { Alert, FeedHeader, VehiclePosition } = transit_realtime;
+const { OccupancyStatus } = VehiclePosition;
 
 export interface GtfsRtAlertCodes {
   cause: number;
@@ -234,6 +236,137 @@ export function observationsToGtfsRtAlerts(
     },
     entity: events
       .map(toEntity)
+      .filter((e): e is GtfsRealtimeBindings.transit_realtime.IFeedEntity => e !== null),
+  };
+  const err = transit_realtime.FeedMessage.verify(message);
+  if (err) throw new Error(`invalid GTFS-RT FeedMessage: ${err}`);
+  return transit_realtime.FeedMessage.encode(message).finish();
+}
+
+/** Trim an id; an empty/whitespace-only value resolves to no concrete entity. */
+function cleanId(id: string | undefined): string | undefined {
+  const t = id?.trim();
+  return t ? t : undefined;
+}
+
+/**
+ * Read one runtime attribute off a Measurement, tolerating BOTH shapes the
+ * attribute can arrive in:
+ *  - top-level, the canonical reconstructed-model form: `readObservations`
+ *    spreads the `attributes` JSONB back onto the observation (same convention
+ *    `roadFields` relies on), so a DB-served measurement carries `vehicleId` /
+ *    `stopSequence` as top-level keys;
+ *  - nested under `attributes`, the pre-write parser form (the write path reads
+ *    `o.attributes`).
+ * Top-level wins when both are present (it is the post-read canonical value).
+ */
+function readAttr(m: Measurement, key: string): unknown {
+  const record = m as unknown as Record<string, unknown>;
+  if (record[key] !== undefined) return record[key];
+  const nested = record.attributes;
+  if (nested != null && typeof nested === "object" && !Array.isArray(nested)) {
+    return (nested as Record<string, unknown>)[key];
+  }
+  return undefined;
+}
+
+/**
+ * Resolve a `transit/occupancy` `level` string to its GTFS-RT `OccupancyStatus`
+ * enum int, or `undefined` when it is not one of the nine enum names. The
+ * binding's enum object is the sole source of truth (forward name→int lookup),
+ * so no int is hardcoded; a numeric-looking string ("5") reverse-maps to a name
+ * (a string), so it is rejected — only the enum NAMES qualify.
+ */
+function occupancyStatusInt(level: string | undefined): number | undefined {
+  if (level == null) return undefined;
+  const v = OccupancyStatus[level as keyof typeof OccupancyStatus];
+  return typeof v === "number" ? v : undefined;
+}
+
+/**
+ * Project one `transit/occupancy` Measurement to a GTFS-RT `FeedEntity`, or
+ * `null` when it does not resolve to a concrete transit entity.
+ *
+ * The concrete-entity gate is binding: occupancy is emitted ONLY for a concrete
+ * trip+vehicle (a VehiclePosition) or a concrete trip+stop_sequence (a
+ * TripUpdate StopTimeUpdate). A measurement that resolves to only a route or
+ * only a stop — an aggregate — is EXCLUDED; it is never forced into a
+ * VehiclePosition (aggregates belong on STA/SIRI surfaces per the plan).
+ *
+ *  - VehiclePosition (primary): a `gtfs-trip` subject supplies `tripId`; the
+ *    vehicle id comes from `attributes.vehicleId`, falling back to a `subject`
+ *    whose `role === "vehicle"`. Preferred whenever a vehicle id is available.
+ *  - TripUpdate: a `gtfs-trip` subject plus a non-negative integer
+ *    `attributes.stopSequence` (and no vehicle id) → a StopTimeUpdate carrying
+ *    `departureOccupancyStatus` (the only occupancy field GTFS-RT defines on a
+ *    StopTimeUpdate; used for NO_DATA / predicted stop-time occupancy).
+ *  - A bare trip with neither a vehicle id nor a stop_sequence has no valid
+ *    GTFS-RT occupancy carrier, so it is EXCLUDED.
+ *
+ * Trip/vehicle ids pass through un-validated: no GTFS static dataset is
+ * configured in this repo (road-only today, same as the Alert emitter), so
+ * per-dataset id validation against a feed is deferred until one is wired.
+ */
+function toOccupancyEntity(
+  m: Measurement
+): GtfsRealtimeBindings.transit_realtime.IFeedEntity | null {
+  if (observedKey(m) !== "transit/occupancy") return null;
+  const occupancyStatus = occupancyStatusInt(m.level);
+  if (occupancyStatus === undefined) return null;
+  const tripId = cleanId(m.subject?.find((s) => s.type === "gtfs-trip")?.id);
+  // No concrete trip (route/stop-only aggregate, or nothing) → not this feed.
+  if (!tripId) return null;
+  const rawVehicleId = readAttr(m, "vehicleId");
+  const vehicleId =
+    cleanId(typeof rawVehicleId === "string" ? rawVehicleId : undefined) ??
+    cleanId(m.subject?.find((s) => s.role === "vehicle")?.id);
+  const timestamp = toEpochSeconds(m.dataUpdatedAt);
+  if (vehicleId) {
+    const vehicle: GtfsRealtimeBindings.transit_realtime.IVehiclePosition = {
+      trip: { tripId },
+      vehicle: { id: vehicleId },
+      occupancyStatus,
+      ...(timestamp != null ? { timestamp } : {}),
+    };
+    return { id: m.id, vehicle };
+  }
+  const stopSequence = readAttr(m, "stopSequence");
+  if (typeof stopSequence === "number" && Number.isInteger(stopSequence) && stopSequence >= 0) {
+    const tripUpdate: GtfsRealtimeBindings.transit_realtime.ITripUpdate = {
+      trip: { tripId },
+      stopTimeUpdate: [{ stopSequence, departureOccupancyStatus: occupancyStatus }],
+    };
+    return { id: m.id, tripUpdate };
+  }
+  return null;
+}
+
+/**
+ * GTFS-RT OccupancyStatus emitter — projects `transit/occupancy` Measurements to
+ * an encoded `FeedMessage` (a FULL_DATASET). A pure projection: `timestamp` (ISO
+ * string or epoch seconds) sets the feed header time; per-vehicle time comes
+ * from each measurement's `dataUpdatedAt`.
+ *
+ * Occupancy is EXPERIMENTAL in GTFS-RT; this emits it, it does not architect
+ * around it. Only concrete-entity occupancy is emitted (see
+ * {@link toOccupancyEntity}): a trip+vehicle VehiclePosition or a
+ * trip+stop_sequence TripUpdate, never a route/stop aggregate. A measurement
+ * whose `level` is not one of the nine OccupancyStatus enum names is excluded
+ * rather than emitted as bogus occupancy.
+ */
+export function observationsToOccupancy(
+  measurements: Measurement[],
+  opts: { timestamp?: string | number } = {}
+): Uint8Array {
+  const ts = toEpochSeconds(opts.timestamp);
+  const message: GtfsRealtimeBindings.transit_realtime.IFeedMessage = {
+    header: {
+      gtfsRealtimeVersion: "2.0",
+      incrementality: FeedHeader.Incrementality.FULL_DATASET,
+      ...(ts != null ? { timestamp: ts } : {}),
+    },
+    entity: measurements
+      .map(toOccupancyEntity)
       .filter((e): e is GtfsRealtimeBindings.transit_realtime.IFeedEntity => e !== null),
   };
   const err = transit_realtime.FeedMessage.verify(message);

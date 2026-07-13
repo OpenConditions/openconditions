@@ -35,6 +35,24 @@ function baseEvent(overrides: Partial<Observation> & Record<string, unknown>): O
   } as Observation;
 }
 
+function baseMeasurement(overrides: Partial<Observation> & Record<string, unknown>): Observation {
+  return {
+    id: "m-base",
+    source: "gtfsrt-occ-test",
+    sourceFormat: "gtfs-rt",
+    domain: "transit",
+    kind: "measurement",
+    metric: "occupancy",
+    geometry: { type: "Point", coordinates: [13.4, 52.5] },
+    status: "active",
+    origin: { kind: "feed", attribution: { provider: "p", license: "CC0-1.0" } },
+    dataUpdatedAt: "2026-06-23T10:00:00Z",
+    fetchedAt: "2026-06-23T10:00:00Z",
+    isStale: false,
+    ...overrides,
+  } as Observation;
+}
+
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
 
@@ -105,6 +123,55 @@ describe("GET /gtfs-rt/alerts.pb — cross-domain read + selector gate", () => {
           expect(Object.keys(s).length).toBeGreaterThan(0);
         }
       }
+    } finally {
+      await app.close();
+    }
+  });
+});
+
+describe("GET /gtfs-rt/occupancy.pb — wired, honestly empty", () => {
+  // There is NO occupancy data source in the repo (no transit domain plugin, so
+  // the write path maps transit measurements to empty attributes — a stored
+  // occupancy measurement carries no vehicle/stop_sequence carrier). This route
+  // therefore serves an EMPTY-but-valid FeedMessage today. This test pins that
+  // the route is wired and always returns a decodable FULL_DATASET envelope,
+  // even alongside unrelated stored observations.
+  it("returns a decodable, entity-less FULL_DATASET occupancy feed", async () => {
+    await atomicSwap(sql, "gtfsrt-occ-test", [
+      // A stored transit occupancy measurement: it is read cross-domain but,
+      // with no attributes mapper to preserve a vehicle id / stop_sequence, it
+      // resolves to no concrete entity and is excluded (never forced into a
+      // VehiclePosition).
+      baseMeasurement({
+        id: "occ-1",
+        level: "FULL",
+        geometry: { type: "Point", coordinates: [13.41, 52.41] },
+        subject: [{ type: "gtfs-trip", id: "trip-A" }],
+      }),
+      // An unrelated road event in-box, to prove it is never mistaken for
+      // occupancy.
+      baseEvent({
+        id: "road-1",
+        domain: "roads",
+        type: "accident",
+        geometry: { type: "Point", coordinates: [13.5, 52.5] },
+      }),
+    ]);
+
+    const app = Fastify();
+    const registry = await buildDomainRegistry();
+    registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
+    await app.ready();
+    try {
+      const res = await app.inject({ method: "GET", url: `/gtfs-rt/occupancy.pb?bbox=${BBOX}` });
+      expect(res.statusCode).toBe(200);
+      expect(res.headers["content-type"]).toContain("application/x-protobuf");
+      const feed = transit_realtime.FeedMessage.decode(res.rawPayload);
+      expect(feed.header?.incrementality).toBe(
+        transit_realtime.FeedHeader.Incrementality.FULL_DATASET
+      );
+      expect(feed.entity).toHaveLength(0);
+      expect(transit_realtime.FeedMessage.verify(feed)).toBeNull();
     } finally {
       await app.close();
     }
