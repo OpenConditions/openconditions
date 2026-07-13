@@ -143,6 +143,12 @@ importers:
 
   packages/federation:
     dependencies:
+      '@openconditions/core':
+        specifier: workspace:*
+        version: link:../core
+      '@openconditions/publishers':
+        specifier: workspace:*
+        version: link:../publishers
       http-message-signatures:
         specifier: 1.0.6
         version: 1.0.6
@@ -153,9 +159,9 @@ importers:
         specifier: ^2.0.2
         version: 2.0.3
     devDependencies:
-      '@openconditions/core':
-        specifier: workspace:*
-        version: link:../core
+      '@types/geojson':
+        specifier: ^7946.0.14
+        version: 7946.0.16
       testcontainers:
         specifier: ^12.0.3
         version: 12.0.3

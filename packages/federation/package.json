@@ -27,12 +27,14 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@openconditions/core": "workspace:*",
+    "@openconditions/publishers": "workspace:*",
     "http-message-signatures": "1.0.6",
     "postgres": "^3.4.0",
     "structured-headers": "^2.0.2"
   },
   "devDependencies": {
-    "@openconditions/core": "workspace:*",
+    "@types/geojson": "^7946.0.14",
     "testcontainers": "^12.0.3",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",

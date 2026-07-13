@@ -184,6 +184,59 @@ describe("verifyMessage round-trip", () => {
     expect(result).toEqual({ ok: true, keyId: key.keyId });
   });
 
+  it("covers an extra response header (etag on a bodyless 304) and rejects a tampered ETag", async () => {
+    const key = await makeKey();
+    const { headers } = await signMessage({
+      method: "GET",
+      url: URL_,
+      headers: { etag: '"42-abc123"' },
+      coverHeaders: ["etag"],
+      keyId: key.keyId,
+      privateKey: key.privateKey,
+      isResponse: true,
+      status: 304,
+    });
+    expect(headers["Signature-Input"]).toContain('"etag"');
+
+    const ok = await verifyMessage({
+      method: "GET",
+      url: URL_,
+      status: 304,
+      headers,
+      isResponse: true,
+      resolvePublicKey: resolverFor(key),
+      nonceStore: new InMemoryNonceStore(),
+    });
+    expect(ok).toEqual({ ok: true, keyId: key.keyId });
+
+    const tampered = await verifyMessage({
+      method: "GET",
+      url: URL_,
+      status: 304,
+      headers: { ...headers, etag: '"999-deadbeef"' },
+      isResponse: true,
+      resolvePublicKey: resolverFor(key),
+      nonceStore: new InMemoryNonceStore(),
+    });
+    expect(tampered).toEqual({ ok: false, reason: "bad-signature" });
+  });
+
+  it("throws when a coverHeaders entry is absent from headers", async () => {
+    const key = await makeKey();
+    await expect(
+      signMessage({
+        method: "GET",
+        url: URL_,
+        headers: {},
+        coverHeaders: ["etag"],
+        keyId: key.keyId,
+        privateKey: key.privateKey,
+        isResponse: true,
+        status: 304,
+      })
+    ).rejects.toThrow(/etag/);
+  });
+
   it("rejects a response whose status was tampered with", async () => {
     const key = await makeKey();
     const { headers } = await signMessage({

@@ -12,7 +12,11 @@ const SEVERITY_RANK_SQL =
 const IS_STALE_SQL =
   "(ss.last_success_at IS NULL OR ss.last_success_at + make_interval(secs => ss.freshness_window_sec) < now())";
 
-interface Row {
+/** A `conditions.observations` row as selected by {@link readObservations};
+ *  exported (with {@link rowToObservation}) so other readers of the same row
+ *  shape — e.g. the federation outbox's point-in-time snapshots — reconstruct
+ *  the canonical model through the one shared mapping. */
+export interface ObservationRow {
   id: string;
   source: string;
   source_format: string;
@@ -58,7 +62,7 @@ function iso(v: string | Date | null | undefined): string | null {
   return v instanceof Date ? v.toISOString() : String(v);
 }
 
-function rowToObservation(row: Row): Observation {
+export function rowToObservation(row: ObservationRow): Observation {
   const base = {
     id: row.id,
     source: row.source,
@@ -176,7 +180,7 @@ export async function readObservations(
     ORDER BY ${SEVERITY_RANK_SQL} DESC
     LIMIT 2000`;
 
-  const rows = (await db.execute<Row[]>(query, params)) ?? [];
+  const rows = (await db.execute<ObservationRow[]>(query, params)) ?? [];
   const observations = rows.map(rowToObservation);
   return opts.dedupe === false ? observations : dedupeAcrossSources(observations);
 }

@@ -42,6 +42,14 @@ const bytea = customType<{ data: Buffer; default: false }>({
   },
 });
 
+/** 64-bit transaction id (`xid8`) — the epoch-safe full transaction id used to
+ * fence the federation outbox cursor against not-yet-committed lower seqs. */
+const xid8 = customType<{ data: string }>({
+  dataType() {
+    return "xid8";
+  },
+});
+
 /**
  * The single generic store for every domain (roads/transit/places/crowd).
  * This Drizzle definition is the SCHEMA SOURCE OF TRUTH — drizzle-kit generates
@@ -516,6 +524,49 @@ export const blockList = conditionsSchema.table("block_list", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
   createdBy: text("created_by").notNull(),
 });
+
+/**
+ * The append-only federation outbox journal — the single ordering authority
+ * for what this instance federates. A row-level trigger on
+ * `conditions.observations` (DDL in this table's migration; drizzle-kit cannot
+ * model triggers) appends exactly one entry per observation mutation IN THE
+ * MUTATION'S OWN TRANSACTION, so a rollback appends nothing and a committed
+ * change is journalled atomically. `payload_snapshot` is the point-in-time row
+ * as jsonb with `origin.reporter` STRIPPED by the trigger — no pseudonymous
+ * reporter key/signature ever rests here — and geometry rendered as GeoJSON.
+ * A delete appends a minimal tombstone marker instead of a payload. `seq`
+ * (bigserial) is the strictly monotonic peer cursor; entries are never
+ * updated or deleted by the application.
+ *
+ * `txid` (the row's creating transaction id, `pg_current_xact_id()` captured
+ * by the column DEFAULT) is the HIGH-ORDER half of the gap-free peer cursor.
+ * `seq` advances per row but `txid` is assigned at a transaction's first write,
+ * so an earlier-txid multi-row swap can interleave HIGHER seqs than a
+ * later-txid concurrent writer — a bare `seq` cursor would skip the later
+ * writer's lower seqs. {@link readOutbox} pages by the composite `(txid, seq)`
+ * (ordering in transaction order) under an xmin fence, which is skip-free under
+ * arbitrary interleaving; the covering index below serves that WHERE/ORDER BY.
+ */
+export const federationOutbox = conditionsSchema.table(
+  "federation_outbox",
+  {
+    seq: bigserial("seq", { mode: "number" }).primaryKey(),
+    objectId: text("object_id").notNull(),
+    operation: text("operation").notNull(),
+    canonicalId: text("canonical_id"),
+    payloadSnapshot: jsonb("payload_snapshot").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    txid: xid8("txid")
+      .notNull()
+      .default(sql`pg_current_xact_id()`),
+  },
+  (t) => [
+    index("idx_federation_outbox_object").on(t.objectId, t.seq),
+    // The composite peer cursor's covering index: WHERE/ORDER BY are (txid, seq).
+    index("idx_federation_outbox_cursor").on(t.txid, t.seq),
+    check("federation_outbox_operation_enum", sql`${t.operation} IN ('create','update','delete')`),
+  ]
+);
 
 /**
  * This instance's rotating token-issuer keypairs, each valid across a

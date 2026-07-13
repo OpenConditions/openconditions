@@ -30,6 +30,24 @@ export type {
 } from "./actor.js";
 export { loadPeers, verifyActorAgainstPin } from "./peers.js";
 export type { PeerRecord, PinVerification } from "./peers.js";
+export { DEFAULT_MIN_EVIDENCE_TIER, EVIDENCE_TIERS, applyFederationFilter } from "./filter.js";
+export type { FederationFilter } from "./filter.js";
+export {
+  OUTBOX_CURSOR_START,
+  OUTBOX_DEFAULT_LIMIT,
+  OUTBOX_MAX_LIMIT,
+  decodeOutboxCursor,
+  encodeOutboxCursor,
+  outboxEtag,
+  readOutbox,
+} from "./outbox.js";
+export type {
+  OutboxCursor,
+  OutboxEntry,
+  OutboxOperation,
+  OutboxPage,
+  OutboxQuery,
+} from "./outbox.js";
 export {
   CLOCK_SKEW_SEC,
   EXPIRES_WINDOW_SEC,
