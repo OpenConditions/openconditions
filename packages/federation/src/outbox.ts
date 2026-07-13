@@ -90,6 +90,8 @@ export interface OutboxEntry {
   observation?: Observation;
   /** Present (true) on delete entries — the deletion fact is the payload. */
   tombstone?: boolean;
+  /** The tombstone reason on a delete entry (why the row was retracted). */
+  reason?: string;
 }
 
 export interface OutboxQuery {
@@ -209,7 +211,13 @@ function rowToEntry(row: JournalRow): OutboxEntry {
     createdAt: row.created_at.toISOString(),
   };
   if (row.operation === "delete") {
-    return { ...base, operation: "delete", tombstone: true };
+    const reason = row.payload_snapshot["reason"];
+    return {
+      ...base,
+      operation: "delete",
+      tombstone: true,
+      ...(typeof reason === "string" ? { reason } : {}),
+    };
   }
   return {
     ...base,

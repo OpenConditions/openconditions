@@ -137,6 +137,7 @@ export async function rejectObservation(
     await tx`
       UPDATE conditions.observations SET
         status = 'archived',
+        tombstone_reason = 'retracted_as_wrong',
         flagged_at = NULL,
         headline = NULL,
         description = NULL,

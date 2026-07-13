@@ -119,7 +119,7 @@ describe("federation_outbox trigger — transactional capture", () => {
     expect(seqs[1]).toBeLessThan(seqs[2]!);
   }, 30_000);
 
-  it("a delete appends a minimal tombstone marker, not a payload", async () => {
+  it("a bare delete appends a minimal tombstone marker with the default 'expired' reason", async () => {
     await insertObservation(sql, "obs-tombstone", { canonicalId: "can-tombstone" });
     await sql`DELETE FROM conditions.observations WHERE id = 'obs-tombstone'`;
 
@@ -128,6 +128,35 @@ describe("federation_outbox trigger — transactional capture", () => {
       id: "obs-tombstone",
       canonical_id: "can-tombstone",
       tombstone: true,
+      reason: "expired",
+    });
+  }, 30_000);
+
+  it("a delete carries the row's tombstone_reason when one was set", async () => {
+    await insertObservation(sql, "obs-reason", { canonicalId: "can-reason" });
+    await sql`UPDATE conditions.observations SET tombstone_reason = 'legal_takedown' WHERE id = 'obs-reason'`;
+    await sql`DELETE FROM conditions.observations WHERE id = 'obs-reason'`;
+
+    const entries = await journalFor("obs-reason");
+    const del = entries.find((e) => e.operation === "delete")!;
+    expect(del.payload_snapshot).toMatchObject({ tombstone: true, reason: "legal_takedown" });
+  }, 30_000);
+
+  it("a soft-archive (status -> archived) propagates as a delete tombstone, not an update", async () => {
+    await insertObservation(sql, "obs-soft", { canonicalId: "can-soft" });
+    await sql`
+      UPDATE conditions.observations
+      SET status = 'archived', tombstone_reason = 'gdpr_erasure'
+      WHERE id = 'obs-soft'`;
+
+    const entries = await journalFor("obs-soft");
+    expect(entries.map((e) => e.operation)).toEqual(["create", "delete"]);
+    const del = entries[1]!;
+    expect(del.payload_snapshot).toEqual({
+      id: "obs-soft",
+      canonical_id: "can-soft",
+      tombstone: true,
+      reason: "gdpr_erasure",
     });
   }, 30_000);
 
@@ -233,7 +262,7 @@ describe("readOutbox — the composite (txid, seq) cursor page", () => {
     expect((observation as { headline?: string }).headline).toBe("wire headline");
   }, 30_000);
 
-  it("keeps a delete entry as a tombstone marker", async () => {
+  it("keeps a delete entry as a tombstone marker and surfaces its reason", async () => {
     const base = await frontier();
     await insertObservation(sql, "wire-del", { canonicalId: "can-del" });
     await sql`DELETE FROM conditions.observations WHERE id = 'wire-del'`;
@@ -243,6 +272,7 @@ describe("readOutbox — the composite (txid, seq) cursor page", () => {
     expect(del.tombstone).toBe(true);
     expect(del.objectId).toBe("wire-del");
     expect(del.canonicalId).toBe("can-del");
+    expect(del.reason).toBe("expired");
     expect(del.observation).toBeUndefined();
   }, 30_000);
 

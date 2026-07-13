@@ -127,6 +127,20 @@
       "when": 1783947895746,
       "tag": "0017_observation_content_hash_index",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1783951708056,
+      "tag": "0018_observation_tombstone_reason",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1783953685829,
+      "tag": "0019_federation_tombstone",
+      "breakpoints": true
     }
   ]
 }

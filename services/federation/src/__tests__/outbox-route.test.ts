@@ -298,4 +298,55 @@ describe("GET /peer/outbox", () => {
       await app.close();
     }
   }, 30_000);
+
+  it("serves a soft-archive tombstone as a signed delete entry; a tampered page fails verification", async () => {
+    await insertObservation("route-tomb");
+    // Soft-archive it: the outbox trigger emits a reasoned delete tombstone.
+    await sql`
+      UPDATE conditions.observations
+      SET status = 'archived', tombstone_reason = 'gdpr_erasure'
+      WHERE id = 'route-tomb'`;
+    const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
+    try {
+      const res = await app.inject({ method: "GET", url: "/peer/outbox?limit=500" });
+      expect(res.statusCode).toBe(200);
+      const page = res.json() as OutboxPage;
+      const tomb = page.orderedItems.find(
+        (e) => e.objectId === "route-tomb" && e.operation === "delete"
+      );
+      expect(tomb).toBeDefined();
+      expect(tomb!.operation).toBe("delete");
+      expect(tomb!.tombstone).toBe(true);
+      expect(tomb!.reason).toBe("gdpr_erasure");
+      expect(tomb!.observation).toBeUndefined();
+
+      const [key] = await loadActiveKeys(sql, NOW);
+      const verified = await verifyMessage({
+        method: "GET",
+        url: OUTBOX_URL,
+        status: 200,
+        isResponse: true,
+        headers: headerStrings(res.headers as Record<string, unknown>),
+        body: res.rawPayload,
+        resolvePublicKey: async (keyId) => (keyId === key!.keyId ? key!.publicKey : null),
+        nonceStore: new InMemoryNonceStore(),
+      });
+      expect(verified).toEqual({ ok: true, keyId: key!.keyId });
+
+      // A tampered body (the content-digest no longer matches) is rejected.
+      const tampered = await verifyMessage({
+        method: "GET",
+        url: OUTBOX_URL,
+        status: 200,
+        isResponse: true,
+        headers: headerStrings(res.headers as Record<string, unknown>),
+        body: Buffer.from(res.rawPayload.toString("utf8").replace("gdpr_erasure", "expired")),
+        resolvePublicKey: async (keyId) => (keyId === key!.keyId ? key!.publicKey : null),
+        nonceStore: new InMemoryNonceStore(),
+      });
+      expect(tampered.ok).toBe(false);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
 });

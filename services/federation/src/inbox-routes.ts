@@ -111,6 +111,7 @@ export function registerInboxRoutes(app: FastifyInstance, ctx: InboxRouteContext
       return reply.status(200).send({
         accepted: result.accepted,
         resupplied: result.resupplied,
+        tombstoned: result.tombstoned,
         skipped: result.skipped,
         maxCursor: result.maxCursor,
       });

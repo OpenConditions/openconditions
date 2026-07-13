@@ -326,6 +326,9 @@ importers:
         specifier: ^3.4.0
         version: 3.4.9
     devDependencies:
+      '@openconditions/publishers':
+        specifier: workspace:*
+        version: link:../../packages/publishers
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.2

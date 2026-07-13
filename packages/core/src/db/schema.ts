@@ -133,6 +133,11 @@ export const observations = conditionsSchema.table(
     informed: jsonb("informed"),
     sourceUri: text("source_uri"),
     sourceLicense: text("source_license"),
+    // Why a row became a tombstone, set at the moment of tombstoning and read by
+    // the federation outbox trigger so a soft-archive (or hard delete) propagates
+    // its reason. NULL on a live row. TTL-driven sweep deletes default to
+    // 'expired' in the trigger, so this stays NULL for the common expiry path.
+    tombstoneReason: text("tombstone_reason"),
   },
   (t) => [
     index("idx_conditions_obs_geom").using("gist", t.geom),
@@ -181,6 +186,10 @@ export const observations = conditionsSchema.table(
     check(
       "obs_evidence_state_enum",
       sql`${t.evidenceState} IS NULL OR ${t.evidenceState} IN ('self_reported','corroborated','externally_resolved','negated','expired')`
+    ),
+    check(
+      "obs_tombstone_reason_enum",
+      sql`${t.tombstoneReason} IS NULL OR ${t.tombstoneReason} IN ('deleted_by_source','gdpr_erasure','retracted_as_wrong','expired','legal_takedown')`
     ),
   ]
 );
@@ -571,6 +580,25 @@ export const federationOutbox = conditionsSchema.table(
     check("federation_outbox_operation_enum", sql`${t.operation} IN ('create','update','delete')`),
   ]
 );
+
+/**
+ * The persistent TERMINAL-tombstone fact, keyed by `canonical_id`. When a row is
+ * tombstoned (via `emitTombstone` or an applied federation tombstone) its
+ * canonicalId is recorded here so a later resupply or a re-discovered create of
+ * the SAME upstream record cannot resurrect it while the fact is live: the
+ * federated ingest refuses to create/reactivate any canonicalId with an active
+ * (non-expired) row here. This also closes the create-after-tombstone race — a
+ * tombstone that arrives before the object does still records the fact, so the
+ * later federated create is refused. `expires_at` is the ADR §7.2 30-day
+ * retention of the deletion fact; after it lapses re-discovery may resurrect.
+ * The ROW is the deletion fact — never the erased content.
+ */
+export const federationTombstone = conditionsSchema.table("federation_tombstone", {
+  canonicalId: text("canonical_id").primaryKey(),
+  reason: text("reason").notNull(),
+  tombstonedAt: timestamp("tombstoned_at", { withTimezone: true }).notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
 
 /**
  * This instance's rotating token-issuer keypairs, each valid across a
