@@ -528,3 +528,22 @@ export const issuerKey = conditionsSchema.table("issuer_key", {
   notBefore: timestamp("not_before", { withTimezone: true }).notNull(),
   notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
 });
+
+/**
+ * This instance's rotating federation Ed25519 signing keys. `key_id` and
+ * `multibase` are both the key's publicKeyMultibase ("z6Mk…" — served in the
+ * Actor document and exchanged out-of-band as the bilateral pin fingerprint);
+ * `public_key` is the raw 32-byte Ed25519 key and `private_key` its PKCS#8
+ * form — an operator secret that is never served, logged, or federated.
+ * Rotation keeps the old and new key's [not_before, not_after) windows
+ * overlapping (≥30 days) so peers keep verifying while the new key propagates.
+ */
+export const federationInstanceKey = conditionsSchema.table("federation_instance_key", {
+  keyId: text("key_id").primaryKey(),
+  publicKey: bytea("public_key").notNull(),
+  privateKey: bytea("private_key").notNull(),
+  multibase: text("multibase").notNull(),
+  notBefore: timestamp("not_before", { withTimezone: true }).notNull(),
+  notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+});
