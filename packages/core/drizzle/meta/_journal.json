@@ -120,6 +120,13 @@
       "when": 1783943638564,
       "tag": "0016_federation_subscription",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1783947895746,
+      "tag": "0017_observation_content_hash_index",
+      "breakpoints": true
     }
   ]
 }

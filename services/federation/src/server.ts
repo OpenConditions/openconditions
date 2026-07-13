@@ -1,10 +1,11 @@
 /**
  * Fastify app for the federation service — the HTTP face of the instance's
  * federated identity: the discovery surface (Actor document + declared peers
- * under /.well-known/openconditions/) and the pull side of the peer exchange,
- * GET /peer/outbox — the RFC-9421-signed, monotonic-cursor read over the
- * append-only federation outbox journal. The remaining peer endpoints the
- * Actor document advertises (inbox, subscribe, …) land in later tasks.
+ * under /.well-known/openconditions/), the pull side of the peer exchange
+ * (GET /peer/outbox — the RFC-9421-signed, monotonic-cursor read over the
+ * append-only federation outbox journal), the subscription surface, and the
+ * INBOX (POST /peer/inbox — the signed webhook target where verified peer
+ * events cross the federation trust boundary).
  * Exported as build() so tests can fastify.inject; only main.ts listens.
  */
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
@@ -25,6 +26,7 @@ import {
   type InstanceKey,
 } from "@openconditions/federation";
 import { resolveFederationSettings } from "./config.js";
+import { INBOX_DEFAULT_MAX_EVENTS_PER_MINUTE, registerInboxRoutes } from "./inbox-routes.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
 import { registerSubscriptionRoutes } from "./subscription-routes.js";
 
@@ -36,6 +38,18 @@ const SUBSCRIPTIONS_PATH = "/peer/subscriptions";
 
 /** The authenticated SSE live channel. */
 const STREAM_PATH = "/peer/stream";
+
+/** The signed webhook delivery target (the federation trust boundary). */
+const INBOX_PATH = "/peer/inbox";
+
+/** Reads a positive-integer env override, tolerating the Compose `${VAR:-}`
+ *  empty-string injection (empty/garbage falls back to the default). */
+function positiveIntEnv(value: string | undefined, fallback: number): number {
+  const trimmed = value?.trim();
+  if (!trimmed) return fallback;
+  const parsed = Number(trimmed);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
 
 export interface BuildOptions {
   sql: postgres.Sql;
@@ -75,6 +89,9 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         return reply.status(404).send({ error: "federation is disabled on this instance" });
       });
     }
+    app.post(INBOX_PATH, async (_req, reply) => {
+      return reply.status(404).send({ error: "federation is disabled on this instance" });
+    });
     return app;
   }
 
@@ -171,14 +188,38 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     return reply.status(200).headers(signed.headers).send(body);
   });
 
-  // The authenticated push/subscription surface shares the pull cursor: one
-  // NonceStore guards replay across every signed peer request.
+  // The signature must verify against the RECEIVED bytes, so every
+  // authenticated POST/PATCH body is kept raw (the handlers parse the JSON
+  // themselves after authenticating). Registered once for all peer routes.
+  app.addContentTypeParser(
+    ["application/json", "application/activity+json"],
+    { parseAs: "buffer" },
+    (_req, body, done) => done(null, body)
+  );
+
+  // One NonceStore guards replay across every signed peer request
+  // (subscriptions, SSE stream, inbox).
+  const nonceStore = new InMemoryNonceStore();
+
   registerSubscriptionRoutes(app, {
     sql,
     peers: settings.peers,
     baseUrl: actorConfig.baseUrl,
-    nonceStore: new InMemoryNonceStore(),
+    nonceStore,
     now,
+  });
+
+  registerInboxRoutes(app, {
+    sql,
+    peers: settings.peers,
+    baseUrl: actorConfig.baseUrl,
+    localInstanceId: actorConfig.instanceId,
+    nonceStore,
+    now,
+    maxEventsPerMinute: positiveIntEnv(
+      env["OPENCONDITIONS_FEDERATION_INBOX_MAX_EVENTS_PER_MINUTE"],
+      INBOX_DEFAULT_MAX_EVENTS_PER_MINUTE
+    ),
   });
 
   return app;

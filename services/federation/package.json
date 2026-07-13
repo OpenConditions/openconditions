@@ -13,6 +13,7 @@
     "start": "node dist/main.js"
   },
   "dependencies": {
+    "@openconditions/contributions-api": "workspace:*",
     "@openconditions/core": "workspace:*",
     "@openconditions/federation": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",

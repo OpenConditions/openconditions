@@ -1,0 +1,1 @@
+CREATE INDEX "idx_conditions_obs_content_hash" ON "conditions"."observations" USING btree ("content_hash");

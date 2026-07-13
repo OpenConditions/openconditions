@@ -14,14 +14,12 @@
  * baseUrl (not the request Host), so a peer signs the logical actor URL and the
  * check is independent of proxies/loopback test sockets.
  */
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import type postgres from "postgres";
 import {
-  authenticatePeerRequest,
   createSubscription,
   deleteSubscription,
   encodeOutboxCursor,
-  federationFailureHeaders,
   getSubscription,
   listSubscriptions,
   readOutbox,
@@ -34,6 +32,7 @@ import {
   type PeerRecord,
   type UpdateSubscriptionInput,
 } from "@openconditions/federation";
+import { requirePeer } from "./peer-request.js";
 
 const SUBSCRIPTIONS_PATH = "/peer/subscriptions";
 const STREAM_PATH = "/peer/stream";
@@ -51,42 +50,6 @@ export interface SubscriptionRouteContext {
   nonceStore: NonceStore;
   /** Injectable clock (ISO 8601). */
   now: () => string;
-}
-
-function headerStrings(headers: NodeJS.Dict<string | string[]>): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [name, value] of Object.entries(headers)) {
-    if (value === undefined) continue;
-    out[name] = Array.isArray(value) ? value.join(", ") : value;
-  }
-  return out;
-}
-
-/** Authenticates the request; on failure sends the 401 and returns null. The
- *  caller returns immediately when this yields null. */
-async function requirePeer(
-  ctx: SubscriptionRouteContext,
-  req: FastifyRequest,
-  reply: FastifyReply,
-  body?: Uint8Array
-): Promise<string | null> {
-  const auth = await authenticatePeerRequest(
-    { peers: ctx.peers, nonceStore: ctx.nonceStore },
-    {
-      method: req.method,
-      url: `${ctx.baseUrl}${req.url}`,
-      headers: headerStrings(req.headers),
-      ...(body !== undefined && body.byteLength > 0 ? { body } : {}),
-    }
-  );
-  if (!auth.ok) {
-    await reply.status(401).headers(federationFailureHeaders(auth.reason)).send({
-      error: "federation request authentication failed",
-      reason: auth.reason,
-    });
-    return null;
-  }
-  return auth.peerId;
 }
 
 /** Parses the request's buffered body as JSON, or 400s. Returns undefined on failure. */
@@ -109,14 +72,6 @@ export function registerSubscriptionRoutes(
   app: FastifyInstance,
   ctx: SubscriptionRouteContext
 ): void {
-  // The signature must verify against the RECEIVED bytes, so keep the raw body
-  // (the handlers parse the JSON themselves after authenticating).
-  app.addContentTypeParser(
-    ["application/json", "application/activity+json"],
-    { parseAs: "buffer" },
-    (_req, body, done) => done(null, body)
-  );
-
   app.post(SUBSCRIPTIONS_PATH, async (req, reply) => {
     const body = (req.body as Buffer | undefined) ?? Buffer.alloc(0);
     const peerId = await requirePeer(ctx, req, reply, body);

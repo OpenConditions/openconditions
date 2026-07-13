@@ -138,9 +138,32 @@ export interface ReporterRef {
   reputation?: number;
 }
 
+/**
+ * One hop in a federated observation's provenance chain: the source record
+ * followed by each restating instance (the DATEX II creation-reference
+ * precedent). `instanceId` is the instance whose PUBLISHED view the hop
+ * restates; `viaPeer` is the authenticated peer the event arrived from (absent
+ * on a record this instance originated itself). Stored inside `origin`
+ * (`origin.originChain`), so it rides the existing jsonb column and stays
+ * queryable via `origin->'originChain'`.
+ */
+export interface OriginHop {
+  instanceId: string;
+  viaPeer?: string;
+  /** When the receiving instance recorded the hop (ISO 8601). */
+  receivedAt: string;
+}
+
+/**
+ * `reporter` is optional on the crowd member because it exists ONLY on the
+ * local instance's own rows: the federation outbox trigger and every publisher
+ * strip it before a crowd observation leaves the instance, so a federated or
+ * journalled crowd origin legitimately has no reporter. Local landing always
+ * sets it.
+ */
 export type Provenance =
-  | { kind: "feed"; attribution: Attribution }
-  | { kind: "crowd"; attribution: Attribution; reporter: ReporterRef };
+  | { kind: "feed"; attribution: Attribution; originChain?: OriginHop[] }
+  | { kind: "crowd"; attribution: Attribution; reporter?: ReporterRef; originChain?: OriginHop[] };
 
 export interface Observation {
   id: string;

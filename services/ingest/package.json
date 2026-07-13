@@ -9,6 +9,10 @@
     "./pipeline/normalize": {
       "types": "./dist/pipeline/normalize.d.ts",
       "import": "./dist/pipeline/normalize.js"
+    },
+    "./pipeline/write-postgis": {
+      "types": "./dist/pipeline/write-postgis.d.ts",
+      "import": "./dist/pipeline/write-postgis.js"
     }
   },
   "scripts": {

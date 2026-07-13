@@ -145,6 +145,10 @@ export const observations = conditionsSchema.table(
     index("idx_conditions_obs_subject").using("gin", t.subject),
     index("idx_conditions_obs_source").on(t.source),
     index("idx_conditions_obs_canonical").on(t.canonicalId),
+    // The federated-ingest byte-equivalence fallback looks a resupplied record
+    // up by its content hash when the canonicalId was lost; without this index
+    // every such lookup is a full scan.
+    index("idx_conditions_obs_content_hash").on(t.contentHash),
     index("idx_conditions_obs_phenomenon").on(t.phenomenonFingerprint),
     index("idx_conditions_obs_instance").on(t.instanceId),
     index("idx_conditions_obs_privacy").on(t.privacyClass),

@@ -347,12 +347,18 @@ importers:
 
   services/federation:
     dependencies:
+      '@openconditions/contributions-api':
+        specifier: workspace:*
+        version: link:../contributions-api
       '@openconditions/core':
         specifier: workspace:*
         version: link:../../packages/core
       '@openconditions/federation':
         specifier: workspace:*
         version: link:../../packages/federation
+      '@openconditions/ingest-framework':
+        specifier: workspace:*
+        version: link:../../packages/ingest-framework
       fastify:
         specifier: ^5.0.0
         version: 5.8.5

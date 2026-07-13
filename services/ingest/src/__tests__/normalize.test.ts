@@ -386,3 +386,139 @@ describe("resolveInstanceId", () => {
     expect(resolveInstanceId({ OPENCONDITIONS_INSTANCE_ID: "" })).toBe("local");
   });
 });
+
+describe("normalizeObservation — federation context preserves origin fields", () => {
+  const FED_CTX: WriterContext = {
+    kind: "federation",
+    instanceId: "inst-x",
+    peerInstanceId: "peer-a",
+  };
+
+  function federatedEvent(overrides: Record<string, unknown> = {}): Observation {
+    return feedEvent({
+      instanceId: "peer-a",
+      canonicalId: "cafe".repeat(16),
+      privacyClass: "authoritative",
+      ...overrides,
+    });
+  }
+
+  it("preserves the origin's instanceId/canonicalId/privacyClass instead of re-stamping", () => {
+    const out = normalizeObservation(federatedEvent(), FED_CTX);
+    expect(out.instanceId).toBe("peer-a");
+    expect(out.canonicalId).toBe("cafe".repeat(16));
+    expect(out.privacyClass).toBe("authoritative");
+    // NOT the locally derived canonical id.
+    expect(out.canonicalId).not.toBe(canonicalId({ namespace: "src", recordId: "src:1" }));
+  });
+
+  it("preserves dpEpsilon/dpDelta/kAnonymity on a dp_noised aggregate (rejected on the feed path)", () => {
+    const out = normalizeObservation(
+      federatedEvent({ privacyClass: "dp_noised", dpEpsilon: 0.5, dpDelta: 1e-6, kAnonymity: 10 }),
+      FED_CTX
+    );
+    expect(out.dpEpsilon).toBe(0.5);
+    expect(out.dpDelta).toBe(1e-6);
+    expect(out.kAnonymity).toBe(10);
+  });
+
+  it("preserves evidenceState and confidenceScore (the origin's published values)", () => {
+    const out = normalizeObservation(
+      federatedEvent({ evidenceState: "corroborated", confidenceScore: 0.8 }),
+      FED_CTX
+    );
+    expect(out.evidenceState).toBe("corroborated");
+    expect(out.confidenceScore).toBe(0.8);
+  });
+
+  it("rejects an event whose instanceId is missing", () => {
+    expect(() => normalizeObservation(federatedEvent({ instanceId: undefined }), FED_CTX)).toThrow(
+      /no instanceId/
+    );
+  });
+
+  it("rejects an event whose instanceId is not the authenticated peer (no third-instance relay)", () => {
+    expect(() => normalizeObservation(federatedEvent({ instanceId: "peer-c" }), FED_CTX)).toThrow(
+      /authenticated peer/
+    );
+  });
+
+  it("rejects an event without a canonicalId", () => {
+    expect(() => normalizeObservation(federatedEvent({ canonicalId: undefined }), FED_CTX)).toThrow(
+      /no canonicalId/
+    );
+  });
+
+  it("rejects an unknown privacyClass (including the DB legacy 'unknown')", () => {
+    expect(() =>
+      normalizeObservation(federatedEvent({ privacyClass: undefined }), FED_CTX)
+    ).toThrow(/privacyClass/);
+    expect(() =>
+      normalizeObservation(federatedEvent({ privacyClass: "unknown" }), FED_CTX)
+    ).toThrow(/privacyClass/);
+  });
+
+  it("rejects an unknown evidenceState and out-of-range privacy accounting", () => {
+    expect(() =>
+      normalizeObservation(federatedEvent({ evidenceState: "verified" }), FED_CTX)
+    ).toThrow(/evidenceState/);
+    expect(() => normalizeObservation(federatedEvent({ dpDelta: 1.5 }), FED_CTX)).toThrow(
+      /dpDelta/
+    );
+    expect(() => normalizeObservation(federatedEvent({ kAnonymity: 0 }), FED_CTX)).toThrow(
+      /kAnonymity/
+    );
+  });
+
+  it("strips a present origin.reporter (never stores another instance's reporter identity)", () => {
+    const out = normalizeObservation(
+      federatedEvent({
+        origin: {
+          kind: "crowd",
+          attribution: { provider: "Peer", license: "ODbL-1.0" },
+          reporter: { keyId: "leaked-key" },
+        },
+      }),
+      FED_CTX
+    );
+    expect(out.origin.kind).toBe("crowd");
+    expect((out.origin as { reporter?: unknown }).reporter).toBeUndefined();
+  });
+
+  it("strips a smuggled origin.reporter off a FEED origin (unconditional strip)", () => {
+    const out = normalizeObservation(
+      federatedEvent({
+        origin: {
+          kind: "feed",
+          attribution: { provider: "Peer", license: "CC0-1.0" },
+          reporter: { keyId: "smuggled-key" },
+        } as Record<string, unknown>,
+      }),
+      FED_CTX
+    );
+    expect(out.origin.kind).toBe("feed");
+    expect((out.origin as { reporter?: unknown }).reporter).toBeUndefined();
+  });
+
+  it("strips routingEligible and flaggedAt (local-only, never federated)", () => {
+    const out = normalizeObservation(
+      federatedEvent({ routingEligible: true, flaggedAt: "2026-06-24T10:00:00Z" }),
+      FED_CTX
+    );
+    expect(out.routingEligible).toBeUndefined();
+    expect(out.flaggedAt).toBeUndefined();
+  });
+
+  it("re-derives phenomenonFingerprint locally, never trusting the wire value", () => {
+    const evt = federatedEvent({ phenomenonFingerprint: "forged" });
+    const out = normalizeObservation(evt, FED_CTX);
+    expect(out.phenomenonFingerprint).toBe(phenomenonFingerprint(feedEvent() as ConditionEvent));
+    expect(out.phenomenonFingerprint).not.toBe("forged");
+  });
+
+  it("does not mutate the input", () => {
+    const input = federatedEvent({ routingEligible: false });
+    normalizeObservation(input, FED_CTX);
+    expect(input.routingEligible).toBe(false);
+  });
+});
