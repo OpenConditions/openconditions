@@ -143,9 +143,15 @@ importers:
 
   packages/federation:
     dependencies:
+      http-message-signatures:
+        specifier: 1.0.6
+        version: 1.0.6
       postgres:
         specifier: ^3.4.0
         version: 3.4.9
+      structured-headers:
+        specifier: ^2.0.2
+        version: 2.0.3
     devDependencies:
       '@openconditions/core':
         specifier: workspace:*
@@ -1988,6 +1994,9 @@ packages:
   html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==}
 
+  http-message-signatures@1.0.6:
+    resolution: {integrity: sha512-mGaW/gs0WyP1X4wcc0iHguoDuv/LGyGLbvn8NWgbSdR+opFXKncrNiwQO8bN5rZ5j0z9HrwrRj33CzIK5dhGXA==}
+
   husky@9.1.7:
     resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
     engines: {node: '>=18'}
@@ -2692,6 +2701,10 @@ packages:
 
   strnum@2.4.1:
     resolution: {integrity: sha512-M9eUSMT2dCB2cTNPG7UYj6KuK7RJR2SN2+yCV/fTW3xzTCS6EaGZ5pSMgDIjB7r8zSfTGk+dvvn9rTjpVS9Mwg==}
+
+  structured-headers@2.0.3:
+    resolution: {integrity: sha512-4g5yxhlDMClRwCcfKfLeS7Z8yAVdOWGDADwm80Poh1iReU2KVKLGBlqwpHWJ2qovq0+ZIf1atAEO1eua2o9Rgg==}
+    engines: {node: '>=18', npm: '>=6'}
 
   sucrase@3.35.1:
     resolution: {integrity: sha512-DhuTmvZWux4H1UOnWMB3sk0sbaCVOoQZjv8u1rDoTV0HTdGem9hkAZtl4JZy8P2z4Bg0nT+YMeOFyVr4zcG5Tw==}
@@ -4524,6 +4537,10 @@ snapshots:
 
   html-escaper@2.0.2: {}
 
+  http-message-signatures@1.0.6:
+    dependencies:
+      structured-headers: 2.0.3
+
   husky@9.1.7: {}
 
   hyparquet-writer@0.16.1:
@@ -5212,6 +5229,8 @@ snapshots:
   strnum@2.4.1:
     dependencies:
       anynum: 1.0.1
+
+  structured-headers@2.0.3: {}
 
   sucrase@3.35.1:
     dependencies:

@@ -27,7 +27,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "postgres": "^3.4.0"
+    "http-message-signatures": "1.0.6",
+    "postgres": "^3.4.0",
+    "structured-headers": "^2.0.2"
   },
   "devDependencies": {
     "@openconditions/core": "workspace:*",

@@ -7,5 +7,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outDir: "dist",
-  external: ["postgres"],
+  external: ["http-message-signatures", "postgres", "structured-headers"],
 });

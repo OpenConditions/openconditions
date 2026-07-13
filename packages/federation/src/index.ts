@@ -30,3 +30,21 @@ export type {
 } from "./actor.js";
 export { loadPeers, verifyActorAgainstPin } from "./peers.js";
 export type { PeerRecord, PinVerification } from "./peers.js";
+export {
+  CLOCK_SKEW_SEC,
+  EXPIRES_WINDOW_SEC,
+  FEDERATION_REASON_HEADER,
+  FEDERATION_TAG,
+  InMemoryNonceStore,
+  NONCE_TTL_SEC,
+  federationFailureHeaders,
+  signMessage,
+  verifyMessage,
+} from "./http-signature.js";
+export type {
+  FederationFailureReason,
+  NonceStore,
+  SignParams,
+  VerifyParams,
+  VerifyResult,
+} from "./http-signature.js";
