@@ -30,6 +30,8 @@ export type {
 } from "./actor.js";
 export { loadPeers, verifyActorAgainstPin } from "./peers.js";
 export type { PeerRecord, PinVerification } from "./peers.js";
+export { CapabilityNegotiationError, negotiateCapabilities } from "./capabilities.js";
+export type { NegotiableCapabilities, NegotiatedCapabilities } from "./capabilities.js";
 export { DEFAULT_MIN_EVIDENCE_TIER, EVIDENCE_TIERS, applyFederationFilter } from "./filter.js";
 export type { FederationFilter } from "./filter.js";
 export {

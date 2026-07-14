@@ -21,13 +21,15 @@ import {
   ensureInstanceKey,
   loadActiveKeys,
   outboxEtag,
-  readOutbox,
   signMessage,
   type InstanceKey,
 } from "@openconditions/federation";
+import { readBackfill } from "./backfill.js";
+import { registerBackfillRoutes } from "./backfill-routes.js";
 import { resolveFederationSettings } from "./config.js";
 import { INBOX_DEFAULT_MAX_EVENTS_PER_MINUTE, registerInboxRoutes } from "./inbox-routes.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
+import { optionalPeer } from "./peer-request.js";
 import { registerSubscriptionRoutes } from "./subscription-routes.js";
 
 /** The pull-side peer exchange path the Actor document advertises as `outbox`. */
@@ -41,6 +43,9 @@ const STREAM_PATH = "/peer/stream";
 
 /** The signed webhook delivery target (the federation trust boundary). */
 const INBOX_PATH = "/peer/inbox";
+
+/** The authenticated, tier-bounded history read (pull outbox with a time floor). */
+const BACKFILL_PATH = "/peer/backfill";
 
 /** Reads a positive-integer env override, tolerating the Compose `${VAR:-}`
  *  empty-string injection (empty/garbage falls back to the default). */
@@ -82,6 +87,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       ACTOR_WELL_KNOWN_PATH,
       PEERS_WELL_KNOWN_PATH,
       OUTBOX_PATH,
+      BACKFILL_PATH,
       SUBSCRIPTIONS_PATH,
       STREAM_PATH,
     ]) {
@@ -127,7 +133,27 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     return reply.send({ peers: settings.peers });
   });
 
+  // One NonceStore guards replay across every signed peer request (the
+  // optionally-authenticated outbox, subscriptions, SSE stream, inbox, backfill).
+  const nonceStore = new InMemoryNonceStore();
+
   app.get(OUTBOX_PATH, async (req, reply) => {
+    // The public outbox is OPTIONALLY authenticated: an unsigned request is the
+    // public Tier-0 snapshot (last 24h); a signed pinned peer gets its own tier's
+    // window. The tier is the PINNED record's, never a client field — an unsigned
+    // caller cannot widen its window, so paging the outbox from 0.0 cannot
+    // exfiltrate history past the floor (that is /peer/backfill + the archive).
+    const auth = await optionalPeer(
+      { peers: settings.peers, baseUrl: actorConfig.baseUrl, nonceStore },
+      req,
+      reply
+    );
+    if (auth.rejected) return reply;
+    const tier: 0 | 1 | 2 =
+      auth.peerId !== null
+        ? (settings.peers.find((p) => p.instanceId === auth.peerId)?.trustTier ?? 0)
+        : 0;
+
     let parsed;
     try {
       parsed = parseOutboxQuery(req.query as Record<string, unknown>);
@@ -143,18 +169,23 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     const limit = Math.min(Math.max(parsed.limit ?? OUTBOX_DEFAULT_LIMIT, 1), OUTBOX_MAX_LIMIT);
 
     // Build the fenced page first, then derive the ETag from THIS page's own
-    // frontier (highWaterMark) — one consistent snapshot, so the ETag height
-    // can never lag the body it labels. `limit` is folded into the ETag: a
-    // different page size is a different representation, not a false 304.
-    const page = await readOutbox(sql, {
+    // frontier (highWaterMark) — one consistent snapshot, so the ETag height can
+    // never lag the body it labels. `limit` and the requester's tier are folded
+    // into the ETag: a different page size or window is a different
+    // representation, not a false 304. The page is the tier-bounded live tail —
+    // the SAME composite-cursor primitive as /peer/backfill (shared tier floor);
+    // an after-cursor before the floor redirects to the static archive.
+    const page = await readBackfill(sql, {
       after: parsed.after,
+      tier,
       limit,
       ...(parsed.filter !== undefined ? { filter: parsed.filter } : {}),
       ...(parsed.nextParams !== undefined ? { nextParams: parsed.nextParams } : {}),
       partOf,
+      archiveUrl: settings.archiveUrl!,
       now: now(),
     });
-    const etag = outboxEtag(page.highWaterMark, parsed.after, limit, parsed.filter);
+    const etag = outboxEtag(page.highWaterMark, parsed.after, limit, parsed.filter, tier);
 
     if (req.headers["if-none-match"] === etag) {
       // A 304 has no body (no content-digest), so the ETag is the only thing to
@@ -197,10 +228,6 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     (_req, body, done) => done(null, body)
   );
 
-  // One NonceStore guards replay across every signed peer request
-  // (subscriptions, SSE stream, inbox).
-  const nonceStore = new InMemoryNonceStore();
-
   registerSubscriptionRoutes(app, {
     sql,
     peers: settings.peers,
@@ -220,6 +247,16 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       env["OPENCONDITIONS_FEDERATION_INBOX_MAX_EVENTS_PER_MINUTE"],
       INBOX_DEFAULT_MAX_EVENTS_PER_MINUTE
     ),
+  });
+
+  registerBackfillRoutes(app, {
+    sql,
+    peers: settings.peers,
+    baseUrl: actorConfig.baseUrl,
+    nonceStore,
+    archiveUrl: settings.archiveUrl!,
+    signingKey,
+    now,
   });
 
   return app;

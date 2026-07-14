@@ -15,6 +15,10 @@ export interface ActorCoverage {
 
 export interface ActorCapabilities {
   protocolVersion: string;
+  /** The full set of protocol versions still supported (e.g. during a
+   *  dual-support window); when absent, {@link protocolVersion} is the only one.
+   *  Used by capability negotiation to pick the highest mutually-supported. */
+  protocolVersions?: string[];
   schemaVersions: string[];
   wireFormats: string[];
   deliveryModes: string[];
@@ -197,6 +201,9 @@ export function parseActorConfig(source: string | unknown): ActorConfig {
   const caps = capabilities as Record<string, unknown>;
   if (typeof caps["protocolVersion"] !== "string" || caps["protocolVersion"].length === 0) {
     fail("capabilities.protocolVersion", "must be a non-empty string");
+  }
+  if (caps["protocolVersions"] !== undefined && !isStringArray(caps["protocolVersions"])) {
+    fail("capabilities.protocolVersions", "must be a string array");
   }
   for (const field of [
     "schemaVersions",

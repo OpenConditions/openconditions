@@ -9,6 +9,7 @@ let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
 let peerA: InstanceKey;
 let peerB: InstanceKey;
+let peer0: InstanceKey;
 let stranger: InstanceKey;
 
 const BASE_URL = "https://conditions.example.org";
@@ -72,6 +73,7 @@ beforeAll(async () => {
   const now = new Date().toISOString();
   peerA = await generateInstanceKey(now);
   peerB = await generateInstanceKey(now);
+  peer0 = await generateInstanceKey(now);
   stranger = await generateInstanceKey(now);
 
   enabledEnv = {
@@ -89,6 +91,12 @@ beforeAll(async () => {
         actorUrl: "https://b.example.net/.well-known/openconditions/actor.json",
         trustTier: 1,
         pinnedKeys: [peerB.keyId],
+      },
+      {
+        instanceId: "peer-tier0",
+        actorUrl: "https://c.example.net/.well-known/openconditions/actor.json",
+        trustTier: 0,
+        pinnedKeys: [peer0.keyId],
       },
     ]),
   };
@@ -460,6 +468,66 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
       await app.close();
     }
   }, 30_000);
+
+  it("floors a Tier-0 peer's SSE snapshot to 24h: an entry older than the window is NOT replayed from cursor 0.0", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    try {
+      const { port } = app.server.address() as { port: number };
+      await insertEvent("sse-t0-old", 30.5);
+      await insertEvent("sse-t0-new", 30.6);
+      await setAge("sse-t0-old", 2 * 24 * 3_600_000); // 2 days — beyond the Tier-0 floor
+
+      // peer-tier0 (pinned Tier-0). Its subscription defaults to cursor 0.0.
+      const id = await createSub(app, peer0, {
+        deliveryMode: "sse",
+        priorityOnly: false,
+        filter: { bbox: [29, 51, 31, 53], permissiveOnly: false },
+      });
+      const path = `/peer/stream?subscriptionId=${id}`;
+      const req = await signed(peer0, "GET", path);
+      const res = await fetch(`http://127.0.0.1:${port}${path}`, { headers: req.headers });
+      expect(res.status).toBe(200);
+
+      const reader = res.body!.getReader();
+      // Collect every matching frame for the window; only the fresh event may appear.
+      const collected = await readEvents(reader, 2, 8000, (e) => e.data.includes("sse-t0-"));
+      expect(collected.some((e) => e.data.includes("sse-t0-new"))).toBe(true);
+      expect(collected.some((e) => e.data.includes("sse-t0-old"))).toBe(false);
+
+      await reader.cancel();
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("serves a Tier-1 peer its 30-day SSE window: a 2-day-old entry the Tier-0 floor hides still streams", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    await app.listen({ port: 0, host: "127.0.0.1" });
+    try {
+      const { port } = app.server.address() as { port: number };
+      await insertEvent("sse-t1-old", 31.5);
+      await setAge("sse-t1-old", 2 * 24 * 3_600_000); // 2 days — within the Tier-1 30d window
+
+      const id = await createSub(app, peerA, {
+        deliveryMode: "sse",
+        priorityOnly: false,
+        filter: { bbox: [31, 51, 32, 53], permissiveOnly: false },
+      });
+      const path = `/peer/stream?subscriptionId=${id}`;
+      const req = await signed(peerA, "GET", path);
+      const res = await fetch(`http://127.0.0.1:${port}${path}`, { headers: req.headers });
+      expect(res.status).toBe(200);
+
+      const reader = res.body!.getReader();
+      const events = await readEvents(reader, 1, 8000, (e) => e.data.includes("sse-t1-old"));
+      expect(events.length).toBeGreaterThan(0);
+
+      await reader.cancel();
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
 });
 
 describe("PATCH re-enables a push_disabled subscription (recovery)", () => {
@@ -505,6 +573,16 @@ async function insertEvent(id: string, lon: number, type = "road_closure"): Prom
        ST_SetSRID(ST_GeomFromGeoJSON(${JSON.stringify(geometry)}), 4326),
        ${sql.json({ kind: "feed", attribution: { provider: "Auth", license: "CC-BY-4.0" } } as never)},
        '2026-07-13T10:00:00Z', '2026-07-13T10:00:00Z', 'authoritative')`;
+}
+
+/** Backdates the outbox row for an object to `msAgo` before the real clock
+ *  (the SSE handler floors against the real clock — no injected `now` here). */
+async function setAge(objectId: string, msAgo: number): Promise<void> {
+  const ts = new Date(Date.now() - msAgo).toISOString();
+  await sql`
+    UPDATE conditions.federation_outbox
+    SET created_at = ${ts}::timestamptz
+    WHERE object_id = ${objectId}`;
 }
 
 /** Creates a subscription via the signed route and returns its id. */

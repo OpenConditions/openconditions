@@ -113,6 +113,14 @@ export interface OutboxQuery {
    * run of >`limit` non-priority events cannot starve the channel.
    */
   priorityClasses?: readonly string[];
+  /**
+   * A LOWER TIME FLOOR (ISO 8601): when set, only entries whose `created_at` is
+   * `>=` this instant are scanned — composed as an ADDITIONAL `WHERE` alongside
+   * the composite cursor and the xmin fence, so gap-freeness within the floor is
+   * preserved (pre-floor entries are simply never scanned, never counted against
+   * the limit). Used by tier-bounded backfill; the live pull never sets it.
+   */
+  minCreatedAt?: string;
   /** Page size; default {@link OUTBOX_DEFAULT_LIMIT}, capped at {@link OUTBOX_MAX_LIMIT}. */
   limit?: number;
   /** The collection URL this page is part of; default "/peer/outbox". */
@@ -262,6 +270,11 @@ export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<Out
                  OR payload_snapshot->>'type' = ANY(${[...q.priorityClasses]}))`
       : sql``;
 
+  // The tier-bounded backfill floor: only entries at or after this instant are
+  // scanned. Composed with the cursor + fence, so within-floor gap-freeness holds.
+  const floorClause =
+    q.minCreatedAt !== undefined ? sql`AND created_at >= ${q.minCreatedAt}::timestamptz` : sql``;
+
   const rows = await sql<JournalRow[]>`
     SELECT seq::text AS seq, txid::text AS txid, object_id, operation,
            canonical_id, payload_snapshot, created_at
@@ -270,6 +283,7 @@ export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<Out
            OR (txid = ${after.txid}::xid8 AND seq > ${after.seq}))
       AND txid < pg_snapshot_xmin(pg_current_snapshot())
       ${priorityClause}
+      ${floorClause}
     ORDER BY txid ASC, seq ASC
     LIMIT ${limit}`;
 
@@ -307,16 +321,25 @@ function sortedCanonical(value: unknown): unknown {
  * outrun the ETag height). It advances exactly when this representation's
  * stable content changes; the composite `after`, `limit`, and the filter are
  * all folded in so two requests that differ in any of them never share a strong
- * ETag (a different `limit` is a different representation, not a false 304).
+ * ETag (a different `limit` is a different representation, not a false 304). The
+ * requester's tier is folded in too: an anonymous (Tier-0) and an authenticated
+ * (Tier-1/2) request see a different time-floored window at the same cursor and
+ * must never collide on one ETag.
  */
 export function outboxEtag(
   height: string,
   after: OutboxCursor,
   limit: number,
-  filter: FederationFilter | undefined
+  filter: FederationFilter | undefined,
+  tier?: 0 | 1 | 2
 ): string {
   const canon = JSON.stringify(
-    sortedCanonical({ after: encodeOutboxCursor(after), limit, filter: filter ?? null })
+    sortedCanonical({
+      after: encodeOutboxCursor(after),
+      limit,
+      filter: filter ?? null,
+      tier: tier ?? null,
+    })
   );
   const hash = createHash("sha256").update(canon).digest("hex").slice(0, 16);
   return `"${height}-${hash}"`;

@@ -57,3 +57,24 @@ export async function requirePeer(
   }
   return auth.peerId;
 }
+
+/**
+ * Optionally authenticates a request. An UNSIGNED request yields
+ * `{ peerId: null }` (anonymous — the caller applies the public/Tier-0 policy);
+ * a validly-signed pinned peer yields its `peerId`; a present-but-INVALID
+ * signature is a hard 401 (returns `{ rejected: true }` after sending, so a
+ * peer that clearly intended to authenticate is never silently downgraded).
+ */
+export async function optionalPeer(
+  ctx: PeerRequestContext,
+  req: FastifyRequest,
+  reply: FastifyReply,
+  body?: Uint8Array
+): Promise<{ peerId: string | null; rejected: boolean }> {
+  const signed =
+    req.headers["signature"] !== undefined || req.headers["signature-input"] !== undefined;
+  if (!signed) return { peerId: null, rejected: false };
+  const peerId = await requirePeer(ctx, req, reply, body);
+  if (peerId === null) return { peerId: null, rejected: true };
+  return { peerId, rejected: false };
+}

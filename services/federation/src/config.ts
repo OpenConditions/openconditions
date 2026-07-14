@@ -19,6 +19,9 @@ export interface FederationSettings {
   actor?: ActorConfig;
   /** This instance's declared peers (public metadata; empty by default). */
   peers: PeerRecord[];
+  /** The static GeoParquet archive URL peers fetch for beyond-window backfill
+   *  (Plan 3 T9). Present iff enabled; defaults to `${baseUrl}/archive`. */
+  archiveUrl?: string;
 }
 
 /** Accepts inline JSON (leading '{' or '[') or a path to a JSON file. */
@@ -50,5 +53,11 @@ export function resolveFederationSettings(
       ? []
       : loadPeers(readJsonSource(peersSource));
 
-  return { enabled: true, actor, peers };
+  const archiveOverride = env["OPENCONDITIONS_FEDERATION_ARCHIVE_URL"]?.trim();
+  const archiveUrl =
+    archiveOverride && archiveOverride.length > 0
+      ? archiveOverride
+      : `${actor.baseUrl.replace(/\/$/, "")}/archive`;
+
+  return { enabled: true, actor, peers, archiveUrl };
 }

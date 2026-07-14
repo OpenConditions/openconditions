@@ -32,6 +32,7 @@ import {
   type PeerRecord,
   type UpdateSubscriptionInput,
 } from "@openconditions/federation";
+import { backfillFloorIso } from "./backfill.js";
 import { requirePeer } from "./peer-request.js";
 
 const SUBSCRIPTIONS_PATH = "/peer/subscriptions";
@@ -50,6 +51,8 @@ export interface SubscriptionRouteContext {
   nonceStore: NonceStore;
   /** Injectable clock (ISO 8601). */
   now: () => string;
+  /** Tier-2 window override in seconds (see backfillWindowForTier). */
+  governanceWindowSec?: number;
 }
 
 /** Parses the request's buffered body as JSON, or 400s. Returns undefined on failure. */
@@ -172,6 +175,13 @@ export function registerSubscriptionRoutes(
     // The push-channel restriction (priority classes only) when priorityOnly, so
     // the SSE cursor advances over the priority subsequence exactly like webhook.
     const priorityClasses = subscription.priorityOnly ? PRIORITY_EVENT_TYPES : undefined;
+    // The tier CEILING is uniform across all three journal channels: the SSE
+    // snapshot + live loop are floored to the requesting peer's tier window
+    // (from the PINNED record, never a client field), exactly like /peer/outbox
+    // and /peer/backfill. The minCreatedAt floor is the effective start-cursor
+    // clamp — even from a stored cursor of 0.0, an entry older than the window is
+    // never scanned, so a Tier-0 peer cannot replay pre-24h history over SSE.
+    const tier = ctx.peers.find((p) => p.instanceId === peerId)?.trustTier ?? 0;
     let cursor = subscription.cursor;
 
     reply.hijack();
@@ -184,12 +194,14 @@ export function registerSubscriptionRoutes(
 
     const tick = async () => {
       try {
+        const nowIso = ctx.now();
         const page = await readOutbox(ctx.sql, {
           after: cursor,
           filter,
           ...(priorityClasses !== undefined ? { priorityClasses } : {}),
+          minCreatedAt: backfillFloorIso(tier, nowIso, ctx.governanceWindowSec),
           partOf: `${ctx.baseUrl}${STREAM_PATH}`,
-          now: ctx.now(),
+          now: nowIso,
         });
         for (const entry of page.orderedItems) {
           const id = encodeOutboxCursor({ txid: entry.txid, seq: entry.seq });

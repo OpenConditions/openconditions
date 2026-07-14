@@ -50,6 +50,18 @@ Standard Parquet written with [`hyparquet-writer`](https://www.npmjs.com/package
 `encoding: "WKB"`, CRS84 / lon-lat WGS84). Any GeoParquet-aware reader (GDAL,
 DuckDB `spatial`, GeoPandas, `hyparquet`) reads it directly.
 
+## Beyond-window federation backfill
+
+The archive is also the **deep-past tier of federation backfill**. A peer catches
+up over `GET /peer/backfill` — the same composite `(txid, seq)` cursor as the live
+pull, but bounded to a lower time floor set by the caller's trust tier (Tier 0 →
+24 h, Tier 1 → 30 days, Tier 2 → ≥ 30 days). A backfill request whose range
+reaches _before_ that floor gets `beyondWindow: true` and an `archiveUrl` in the
+signed page; there is **no protocol** for the pre-floor history — the peer fetches
+this static GeoParquet file directly (HTTP Range), then resumes the live cursor at
+the window edge. So the live exchange stays bounded and the entire history before
+the window is served by one mirrorable file.
+
 ## Nightly build
 
 The ingest scheduler registers a nightly job (default `30 3 * * *`, after the

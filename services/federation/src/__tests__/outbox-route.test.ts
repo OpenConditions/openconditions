@@ -5,10 +5,12 @@ import { runMigrations } from "@openconditions/core/server";
 import {
   InMemoryNonceStore,
   encodeOutboxCursor,
+  generateInstanceKey,
   loadActiveKeys,
+  signMessage,
   verifyMessage,
 } from "@openconditions/federation";
-import type { OutboxEntry, OutboxPage } from "@openconditions/federation";
+import type { InstanceKey, OutboxEntry, OutboxPage } from "@openconditions/federation";
 import { build } from "../server.js";
 
 let sql: postgres.Sql;
@@ -345,6 +347,110 @@ describe("GET /peer/outbox", () => {
         nonceStore: new InMemoryNonceStore(),
       });
       expect(tampered.ok).toBe(false);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+});
+
+/** Backdates the outbox row for an object to `msAgo` before NOW. */
+async function setAge(objectId: string, msAgo: number): Promise<void> {
+  const ts = new Date(Date.parse(NOW) - msAgo).toISOString();
+  await sql`
+    UPDATE conditions.federation_outbox
+    SET created_at = ${ts}::timestamptz
+    WHERE object_id = ${objectId}`;
+}
+
+async function signedGet(key: InstanceKey, path: string): Promise<Record<string, string>> {
+  const s = await signMessage({
+    method: "GET",
+    url: `${ACTOR_CONFIG.baseUrl}${path}`,
+    headers: {},
+    keyId: key.keyId,
+    privateKey: key.privateKey,
+  });
+  return s.headers;
+}
+
+const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
+const ARCHIVE_URL = "https://conditions.example.org/archive";
+
+function peersEnv(peer: InstanceKey, tier: 0 | 1 | 2): Record<string, string> {
+  return {
+    ...ENABLED_ENV,
+    OPENCONDITIONS_FEDERATION_ARCHIVE_URL: ARCHIVE_URL,
+    OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([
+      {
+        instanceId: "peer-snap",
+        actorUrl: "https://a.example.net/.well-known/openconditions/actor.json",
+        trustTier: tier,
+        pinnedKeys: [peer.keyId],
+      },
+    ]),
+  };
+}
+
+describe("GET /peer/outbox — the tier-bounded public snapshot", () => {
+  it("floors an UNAUTHENTICATED request to Tier-0 (24h) and redirects older history to the archive", async () => {
+    await insertObservation("snap-fresh");
+    await insertObservation("snap-2day");
+    await setAge("snap-fresh", 2 * HOUR);
+    await setAge("snap-2day", 2 * DAY);
+
+    const env = { ...ENABLED_ENV, OPENCONDITIONS_FEDERATION_ARCHIVE_URL: ARCHIVE_URL };
+    const app = await build({ sql, env, logger: false, now: () => NOW });
+    try {
+      const res = await app.inject({ method: "GET", url: "/peer/outbox?limit=500" });
+      expect(res.statusCode).toBe(200);
+      const page = res.json() as OutboxPage & { beyondWindow?: boolean; archiveUrl?: string };
+      const ids = page.orderedItems.map((e) => e.objectId);
+      // A within-24h entry is always served; the 2-day-old one is beyond the floor.
+      expect(ids).toContain("snap-fresh");
+      expect(ids).not.toContain("snap-2day");
+      expect(page.beyondWindow).toBe(true);
+      expect(page.archiveUrl).toBe(ARCHIVE_URL);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("serves an AUTHENTICATED Tier-1 peer its 30-day window (an entry the Tier-0 floor excludes)", async () => {
+    await insertObservation("snap-t1-2day");
+    await setAge("snap-t1-2day", 2 * DAY);
+    const peer = await generateInstanceKey(new Date().toISOString());
+
+    const app = await build({ sql, env: peersEnv(peer, 1), logger: false, now: () => NOW });
+    try {
+      const path = "/peer/outbox?limit=500";
+      const res = await app.inject({
+        method: "GET",
+        url: path,
+        headers: await signedGet(peer, path),
+      });
+      expect(res.statusCode).toBe(200);
+      const page = res.json() as OutboxPage;
+      expect(page.orderedItems.map((e) => e.objectId)).toContain("snap-t1-2day");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("rejects a present-but-invalid signature with 401 (no silent downgrade to Tier-0)", async () => {
+    const now = new Date().toISOString();
+    const peer = await generateInstanceKey(now);
+    const stranger = await generateInstanceKey(now);
+
+    const app = await build({ sql, env: peersEnv(peer, 1), logger: false, now: () => NOW });
+    try {
+      const res = await app.inject({
+        method: "GET",
+        url: "/peer/outbox",
+        headers: await signedGet(stranger, "/peer/outbox"),
+      });
+      expect(res.statusCode).toBe(401);
+      expect(res.headers["federation-reason"]).toBe("unknown-key");
     } finally {
       await app.close();
     }
