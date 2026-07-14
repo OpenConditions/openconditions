@@ -113,6 +113,31 @@ export {
   setEffectiveTierUntil,
 } from "./peer-health.js";
 export type { PeerHealth, PeerHealthFailure, PeerHealthRow } from "./peer-health.js";
+export { parseRegistryEntry, registryEntryFileName, registryToPeerRecords } from "./registry.js";
+export type { RegistryEntry, RegistryOperator } from "./registry.js";
+export { REGISTRY_SYNC_INTERVAL_HOURS, mergePeerRecords, syncRegistry } from "./registry-sync.js";
+export type { RegistrySyncOptions, RegistrySyncResult } from "./registry-sync.js";
+export {
+  generateTufSigner,
+  tufKeyIdFromPublicKeyHex,
+  tufSignerFromKeyPair,
+} from "./tuf/signing.js";
+export type { TufSigner } from "./tuf/signing.js";
+export { DEFAULT_EXPIRY_DAYS, TUF_SPEC_VERSION, signRegistry } from "./tuf/repo.js";
+export type {
+  SignRegistryOptions,
+  SignedRegistry,
+  TufRoleConfig,
+  TufRoleName,
+} from "./tuf/repo.js";
+export {
+  TEST_ROOT_ALLOWED_ENVS,
+  TEST_ROOT_MARKER,
+  TestRootInProductionError,
+  repoSourceFromDir,
+  verifyRegistryMetadata,
+} from "./tuf/verify.js";
+export type { RegistryRepoSource, VerifyRegistryOptions } from "./tuf/verify.js";
 export { blockPeer, isPeerBlocked, listBlockedPeers, unblockPeer } from "./peer-blocklist.js";
 export type { BlockedPeer, BlockPeerInput } from "./peer-blocklist.js";
 export { detectAnomaly, peerWindowStats } from "./anomaly.js";

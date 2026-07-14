@@ -30,9 +30,13 @@
     "@openconditions/core": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/publishers": "workspace:*",
+    "@tufjs/canonical-json": "2.0.0",
+    "@tufjs/models": "5.0.0",
     "http-message-signatures": "1.0.6",
     "postgres": "^3.4.0",
-    "structured-headers": "^2.0.2"
+    "structured-headers": "^2.0.2",
+    "tuf-js": "6.0.0",
+    "yaml": "2.8.0"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.14",

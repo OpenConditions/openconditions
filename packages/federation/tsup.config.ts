@@ -7,5 +7,14 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outDir: "dist",
-  external: ["http-message-signatures", "postgres", "structured-headers"],
+  external: [
+    "http-message-signatures",
+    "postgres",
+    "structured-headers",
+    "tuf-js",
+    /^tuf-js\//,
+    "@tufjs/models",
+    /^@tufjs\//,
+    "yaml",
+  ],
 });
