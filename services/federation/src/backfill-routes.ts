@@ -13,14 +13,17 @@ import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import {
   ACTIVITY_JSON,
+  FEDERATION_REASON_HEADER,
+  recordPeerFailure,
   signMessage,
   type InstanceKey,
   type NonceStore,
   type PeerRecord,
+  type RateLimiter,
 } from "@openconditions/federation";
 import { readBackfill } from "./backfill.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
-import { requirePeer } from "./peer-request.js";
+import { requirePeer, respondIfBlocked } from "./peer-request.js";
 
 const BACKFILL_PATH = "/peer/backfill";
 
@@ -36,6 +39,8 @@ export interface BackfillRouteContext {
   archiveUrl: string;
   /** Loads the newest active signing key (self-healing a rotation). */
   signingKey: () => Promise<InstanceKey>;
+  /** Shared per-peer transport rate limiter (inbox + backfill). */
+  rateLimiter: RateLimiter;
   /** Injectable clock (ISO 8601). */
   now: () => string;
   /** Tier-2 window override in seconds. */
@@ -47,11 +52,29 @@ export function registerBackfillRoutes(app: FastifyInstance, ctx: BackfillRouteC
     const peerId = await requirePeer(ctx, req, reply);
     if (peerId === null) return reply;
 
+    if (await respondIfBlocked(ctx.sql, peerId, reply)) return reply;
+
     // The tier is read from the PINNED peer record the auth resolved, never the
     // request — a peer cannot claim a wider window by asserting a higher tier.
     const peer = ctx.peers.find((p) => p.instanceId === peerId);
     if (peer === undefined) {
       return reply.status(401).send({ error: "authenticated peer is not in the registry" });
+    }
+
+    const rate = ctx.rateLimiter.check(
+      peerId,
+      "backfill",
+      peer.trustTier,
+      1,
+      Date.parse(ctx.now())
+    );
+    if (!rate.ok) {
+      await recordPeerFailure(ctx.sql, peerId, "rate", ctx.now());
+      return reply
+        .status(429)
+        .header("Retry-After", String(rate.retryAfterSec ?? 60))
+        .header(FEDERATION_REASON_HEADER, "rate-limited")
+        .send({ error: "backfill rate limit exceeded", retryAfterSec: rate.retryAfterSec });
     }
 
     let parsed;

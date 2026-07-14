@@ -6,9 +6,12 @@
  * logical actor URL and the check is independent of proxies/loopback sockets.
  */
 import type { FastifyReply, FastifyRequest } from "fastify";
+import type postgres from "postgres";
 import {
   authenticatePeerRequest,
   federationFailureHeaders,
+  isPeerBlocked,
+  type FederationFailureReason,
   type NonceStore,
   type PeerRecord,
 } from "@openconditions/federation";
@@ -20,6 +23,32 @@ export interface PeerRequestContext {
   baseUrl: string;
   /** Per-peer replay cache shared across the authenticated routes. */
   nonceStore: NonceStore;
+  /**
+   * Called when authentication fails, BEFORE the 401 is sent. `peerId` is set
+   * only when the signature named a pinned peer's key (a replay or a
+   * bad-signature under a pinned keyid) so the caller can attribute the failure
+   * to that peer's HEALTH — never its event truth. A thrown/rejected hook is
+   * swallowed: health accounting must never turn a 401 into a 500.
+   */
+  onAuthFailure?: (reason: FederationFailureReason, peerId: string | null) => void | Promise<void>;
+}
+
+/**
+ * Enforces the operator federation block list. When `peerId` is blocked, sends a
+ * 403 and returns true (the route returns immediately). A block is a TRANSPORT
+ * control — it stops future requests and never re-judges the peer's already-
+ * received events. Never called for an anonymous (null) caller.
+ */
+export async function respondIfBlocked(
+  sql: postgres.Sql,
+  peerId: string,
+  reply: FastifyReply
+): Promise<boolean> {
+  if (await isPeerBlocked(sql, peerId)) {
+    await reply.status(403).send({ error: "peer is blocked", reason: "blocked" });
+    return true;
+  }
+  return false;
 }
 
 export function headerStrings(headers: NodeJS.Dict<string | string[]>): Record<string, string> {
@@ -49,6 +78,13 @@ export async function requirePeer(
     }
   );
   if (!auth.ok) {
+    if (ctx.onAuthFailure !== undefined) {
+      try {
+        await ctx.onAuthFailure(auth.reason, auth.peerId ?? null);
+      } catch {
+        // Health accounting is best-effort; never let it fail the request.
+      }
+    }
     await reply.status(401).headers(federationFailureHeaders(auth.reason)).send({
       error: "federation request authentication failed",
       reason: auth.reason,

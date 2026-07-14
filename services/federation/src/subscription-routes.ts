@@ -33,7 +33,7 @@ import {
   type UpdateSubscriptionInput,
 } from "@openconditions/federation";
 import { backfillFloorIso } from "./backfill.js";
-import { requirePeer } from "./peer-request.js";
+import { requirePeer, respondIfBlocked } from "./peer-request.js";
 
 const SUBSCRIPTIONS_PATH = "/peer/subscriptions";
 const STREAM_PATH = "/peer/stream";
@@ -79,6 +79,7 @@ export function registerSubscriptionRoutes(
     const body = (req.body as Buffer | undefined) ?? Buffer.alloc(0);
     const peerId = await requirePeer(ctx, req, reply, body);
     if (peerId === null) return reply;
+    if (await respondIfBlocked(ctx.sql, peerId, reply)) return reply;
 
     const parsed = parseJsonBody(reply, body);
     if (parsed === undefined) return reply;
@@ -106,6 +107,7 @@ export function registerSubscriptionRoutes(
   app.get(SUBSCRIPTIONS_PATH, async (req, reply) => {
     const peerId = await requirePeer(ctx, req, reply);
     if (peerId === null) return reply;
+    if (await respondIfBlocked(ctx.sql, peerId, reply)) return reply;
     const subscriptions = await listSubscriptions(ctx.sql, peerId);
     return reply.send({ subscriptions });
   });
@@ -113,6 +115,7 @@ export function registerSubscriptionRoutes(
   app.get<{ Params: { id: string } }>(`${SUBSCRIPTIONS_PATH}/:id`, async (req, reply) => {
     const peerId = await requirePeer(ctx, req, reply);
     if (peerId === null) return reply;
+    if (await respondIfBlocked(ctx.sql, peerId, reply)) return reply;
     const owned = await loadOwned(ctx, req.params.id, peerId, reply);
     if (owned === null) return reply;
     return reply.send(owned);
@@ -122,6 +125,7 @@ export function registerSubscriptionRoutes(
     const body = (req.body as Buffer | undefined) ?? Buffer.alloc(0);
     const peerId = await requirePeer(ctx, req, reply, body);
     if (peerId === null) return reply;
+    if (await respondIfBlocked(ctx.sql, peerId, reply)) return reply;
     const parsed = parseJsonBody(reply, body);
     if (parsed === undefined) return reply;
     const owned = await loadOwned(ctx, req.params.id, peerId, reply);
@@ -150,6 +154,7 @@ export function registerSubscriptionRoutes(
   app.delete<{ Params: { id: string } }>(`${SUBSCRIPTIONS_PATH}/:id`, async (req, reply) => {
     const peerId = await requirePeer(ctx, req, reply);
     if (peerId === null) return reply;
+    if (await respondIfBlocked(ctx.sql, peerId, reply)) return reply;
     const owned = await loadOwned(ctx, req.params.id, peerId, reply);
     if (owned === null) return reply;
     await deleteSubscription(ctx.sql, owned.id);
@@ -159,6 +164,7 @@ export function registerSubscriptionRoutes(
   app.get<{ Querystring: { subscriptionId?: string } }>(STREAM_PATH, async (req, reply) => {
     const peerId = await requirePeer(ctx, req, reply);
     if (peerId === null) return reply;
+    if (await respondIfBlocked(ctx.sql, peerId, reply)) return reply;
 
     // SSE goes THROUGH the subscription model, never the raw query — so it
     // inherits the same fail-closed validation (an over-broad filter was already

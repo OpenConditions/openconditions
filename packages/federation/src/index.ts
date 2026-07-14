@@ -96,3 +96,30 @@ export {
   runWebhookDeliveryCycle,
 } from "./push.js";
 export type { DeliverWebhookOptions, DeliverWebhookOutcome, WebhookCycleResult } from "./push.js";
+export {
+  RATE_DOWNGRADE_COOLDOWN_SEC,
+  RATE_DOWNGRADE_WINDOWS,
+  RATE_MAX_PAGE_SIZE,
+  RATE_WINDOW_MS,
+  createInMemoryRateLimiter,
+  ratePolicyForTier,
+} from "./rate.js";
+export type { PeerRatePolicy, RateCheckResult, RateLimiter, RateLimiterOptions } from "./rate.js";
+export {
+  computePeerHealth,
+  getPeerHealth,
+  recordAvailability,
+  recordPeerFailure,
+  setEffectiveTierUntil,
+} from "./peer-health.js";
+export type { PeerHealth, PeerHealthFailure, PeerHealthRow } from "./peer-health.js";
+export { blockPeer, isPeerBlocked, listBlockedPeers, unblockPeer } from "./peer-blocklist.js";
+export type { BlockedPeer, BlockPeerInput } from "./peer-blocklist.js";
+export { detectAnomaly, peerWindowStats } from "./anomaly.js";
+export type {
+  AnomalyResult,
+  DetectAnomalyOptions,
+  PeerBaseline,
+  PeerWindowStats,
+  RawPeerWindow,
+} from "./anomaly.js";

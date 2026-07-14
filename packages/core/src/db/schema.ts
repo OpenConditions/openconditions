@@ -632,6 +632,47 @@ export const federationInstanceKey = conditionsSchema.table("federation_instance
 });
 
 /**
+ * Per-peer OPERATIONS (health) counters — a TRANSPORT-plane signal only. It
+ * tracks how well a pinned peer behaves as a federation participant
+ * (availability, and the rate of signature/replay/schema/rate-limit failures)
+ * so an operator, the rate policy, or a reviewer notification can react.
+ *
+ * BINDING (ADR §8): PEER HEALTH IS SEPARATE FROM EVENT TRUTH. Nothing here ever
+ * feeds evidence_state, confidence_score, routing eligibility, or reporter
+ * reputation. A low-scoring peer's already-received events are never re-judged;
+ * only transport controls (rate, block) may apply. `effective_tier_until` is a
+ * transport-only cooldown marker for a temporary rate-tier downgrade — it does
+ * not change how the peer's events are trusted.
+ */
+export const federationPeerHealth = conditionsSchema.table("federation_peer_health", {
+  peerId: text("peer_id").primaryKey(),
+  availabilityOk: integer("availability_ok").notNull().default(0),
+  availabilityFail: integer("availability_fail").notNull().default(0),
+  signatureFailures: integer("signature_failures").notNull().default(0),
+  replayFailures: integer("replay_failures").notNull().default(0),
+  schemaFailures: integer("schema_failures").notNull().default(0),
+  rateViolations: integer("rate_violations").notNull().default(0),
+  effectiveTierUntil: timestamp("effective_tier_until", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Operator-controlled federation block list: one row per peer this operator has
+ * blocked. A blocked peer's inbox/backfill/outbox/subscribe requests are
+ * refused with 403. Blocking is a PER-OPERATOR transport decision — it is NEVER
+ * auto-synced or propagated across the federation (a Tier-2 RECOMMENDED list an
+ * operator may voluntarily adopt is a separate opt-in, not enforced here). Like
+ * the reporter block list, blocking a peer is a transport control, never a
+ * judgement that the peer's already-received events are false.
+ */
+export const federationBlocklist = conditionsSchema.table("federation_blocklist", {
+  peerId: text("peer_id").primaryKey(),
+  reason: text("reason"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdBy: text("created_by").notNull(),
+});
+
+/**
  * A peer's federation subscription: the relationship a subscribing instance
  * establishes so it receives this instance's outbox, plus HOW it wants that
  * delivery. `delivery_mode` layers push (webhook/sse) as a LATENCY optimization

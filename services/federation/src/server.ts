@@ -18,18 +18,20 @@ import {
   OUTBOX_MAX_LIMIT,
   InMemoryNonceStore,
   buildActorDocument,
+  createInMemoryRateLimiter,
   ensureInstanceKey,
   loadActiveKeys,
   outboxEtag,
   signMessage,
   type InstanceKey,
+  type RateLimiter,
 } from "@openconditions/federation";
 import { readBackfill } from "./backfill.js";
 import { registerBackfillRoutes } from "./backfill-routes.js";
 import { resolveFederationSettings } from "./config.js";
-import { INBOX_DEFAULT_MAX_EVENTS_PER_MINUTE, registerInboxRoutes } from "./inbox-routes.js";
+import { registerInboxRoutes } from "./inbox-routes.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
-import { optionalPeer } from "./peer-request.js";
+import { optionalPeer, respondIfBlocked } from "./peer-request.js";
 import { registerSubscriptionRoutes } from "./subscription-routes.js";
 
 /** The pull-side peer exchange path the Actor document advertises as `outbox`. */
@@ -47,21 +49,15 @@ const INBOX_PATH = "/peer/inbox";
 /** The authenticated, tier-bounded history read (pull outbox with a time floor). */
 const BACKFILL_PATH = "/peer/backfill";
 
-/** Reads a positive-integer env override, tolerating the Compose `${VAR:-}`
- *  empty-string injection (empty/garbage falls back to the default). */
-function positiveIntEnv(value: string | undefined, fallback: number): number {
-  const trimmed = value?.trim();
-  if (!trimmed) return fallback;
-  const parsed = Number(trimmed);
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback;
-}
-
 export interface BuildOptions {
   sql: postgres.Sql;
   env?: Record<string, string | undefined>;
   logger?: FastifyServerOptions["logger"];
   /** Injectable clock (ISO 8601); defaults to the real clock. */
   now?: () => string;
+  /** Injectable transport rate limiter (tests tighten the caps); defaults to
+   *  the standard tier-aware in-memory limiter. */
+  rateLimiter?: RateLimiter;
 }
 
 export async function build(options: BuildOptions): Promise<FastifyInstance> {
@@ -137,6 +133,11 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   // optionally-authenticated outbox, subscriptions, SSE stream, inbox, backfill).
   const nonceStore = new InMemoryNonceStore();
 
+  // One rate limiter shared by inbox + backfill so a peer's sustained-overrun
+  // tier downgrade is consistent across both transport surfaces. In-memory =
+  // single-instance; a multi-replica deployment would back it with Redis.
+  const rateLimiter = options.rateLimiter ?? createInMemoryRateLimiter();
+
   app.get(OUTBOX_PATH, async (req, reply) => {
     // The public outbox is OPTIONALLY authenticated: an unsigned request is the
     // public Tier-0 snapshot (last 24h); a signed pinned peer gets its own tier's
@@ -149,6 +150,10 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       reply
     );
     if (auth.rejected) return reply;
+    // A blocked authenticated peer is refused the outbox too (transport control).
+    if (auth.peerId !== null && (await respondIfBlocked(sql, auth.peerId, reply))) {
+      return reply;
+    }
     const tier: 0 | 1 | 2 =
       auth.peerId !== null
         ? (settings.peers.find((p) => p.instanceId === auth.peerId)?.trustTier ?? 0)
@@ -242,11 +247,8 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     baseUrl: actorConfig.baseUrl,
     localInstanceId: actorConfig.instanceId,
     nonceStore,
+    rateLimiter,
     now,
-    maxEventsPerMinute: positiveIntEnv(
-      env["OPENCONDITIONS_FEDERATION_INBOX_MAX_EVENTS_PER_MINUTE"],
-      INBOX_DEFAULT_MAX_EVENTS_PER_MINUTE
-    ),
   });
 
   registerBackfillRoutes(app, {
@@ -254,6 +256,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     peers: settings.peers,
     baseUrl: actorConfig.baseUrl,
     nonceStore,
+    rateLimiter,
     archiveUrl: settings.archiveUrl!,
     signingKey,
     now,

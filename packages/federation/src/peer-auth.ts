@@ -39,7 +39,17 @@ export interface PeerAuthRequest {
 
 export type PeerAuthResult =
   | { ok: true; peerId: string; keyId: string }
-  | { ok: false; reason: FederationFailureReason };
+  | {
+      ok: false;
+      reason: FederationFailureReason;
+      /**
+       * The pinned peer whose key the signature named, when one was resolved
+       * (e.g. a `replayed` nonce or a `bad-signature` under a pinned keyid). Lets
+       * the caller attribute a transport failure to a peer's HEALTH — never its
+       * event truth. Absent when the keyid matched no pin (`unknown-key`).
+       */
+      peerId?: string;
+    };
 
 /**
  * Verifies the signature and resolves the authenticated peer. Builds a
@@ -89,7 +99,13 @@ export async function authenticatePeerRequest(
     ...(ctx.now !== undefined ? { now: ctx.now } : {}),
   });
 
-  if (!result.ok) return { ok: false, reason: result.reason ?? "bad-signature" };
+  if (!result.ok) {
+    return {
+      ok: false,
+      reason: result.reason ?? "bad-signature",
+      ...(matchedPeer !== undefined ? { peerId: matchedPeer.instanceId } : {}),
+    };
+  }
   if (matchedPeer === undefined) return { ok: false, reason: "unknown-key" };
   return { ok: true, peerId: matchedPeer.instanceId, keyId: result.keyId! };
 }

@@ -141,6 +141,13 @@
       "when": 1783953685829,
       "tag": "0019_federation_tombstone",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1784056152930,
+      "tag": "0020_federation_peer_health",
+      "breakpoints": true
     }
   ]
 }

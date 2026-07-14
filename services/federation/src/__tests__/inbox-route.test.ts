@@ -2,8 +2,20 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
-import { generateInstanceKey, signMessage, type InstanceKey } from "@openconditions/federation";
+import {
+  blockPeer,
+  createInMemoryRateLimiter,
+  generateInstanceKey,
+  getPeerHealth,
+  signMessage,
+  unblockPeer,
+  type InstanceKey,
+  type PeerRatePolicy,
+} from "@openconditions/federation";
 import { build } from "../server.js";
+
+/** A deliberately tiny budget so a second event trips the limiter in-test. */
+const TIGHT_POLICY: PeerRatePolicy = { inboxPerMin: 1, backfillPerMin: 1 };
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -325,8 +337,9 @@ describe("POST /peer/inbox — the trust boundary", () => {
   it("rate-limits a peer that exceeds its per-minute event budget with 429", async () => {
     const app = await build({
       sql,
-      env: { ...enabledEnv, OPENCONDITIONS_FEDERATION_INBOX_MAX_EVENTS_PER_MINUTE: "1" },
+      env: enabledEnv,
       logger: false,
+      rateLimiter: createInMemoryRateLimiter({ policyForTier: () => TIGHT_POLICY }),
     });
     try {
       const first = pageOf([
@@ -352,6 +365,8 @@ describe("POST /peer/inbox — the trust boundary", () => {
         payload: req2.payload,
       });
       expect(res2.statusCode).toBe(429);
+      expect(res2.headers["retry-after"]).toBeDefined();
+      expect(res2.headers["federation-reason"]).toBe("rate-limited");
       expect(await countRows("peer-a:rl-2")).toBe(0);
 
       // The cap is per PEER: peer B is unaffected by peer A's exhaustion.
@@ -366,6 +381,116 @@ describe("POST /peer/inbox — the trust boundary", () => {
         payload: req3.payload,
       });
       expect(res3.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("refuses a blocked peer with 403 and restores it on unblock (transport control, not truth)", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    try {
+      await blockPeer(sql, {
+        peerId: "peer-a",
+        reason: "operator decision",
+        createdBy: "op-test",
+        now: new Date().toISOString(),
+      });
+
+      const page = pageOf([
+        { seq: 1, txid: "600", observation: fedEvent("peer-a:blk-1", "peer-a", "20".repeat(32)) },
+      ]);
+      const req = await signed(peerA, "POST", "/peer/inbox", page);
+      const blocked = await app.inject({
+        method: "POST",
+        url: "/peer/inbox",
+        headers: req.headers,
+        payload: req.payload,
+      });
+      expect(blocked.statusCode).toBe(403);
+      expect(blocked.json().reason).toBe("blocked");
+      // The block stops the request BEFORE ingest — nothing landed.
+      expect(await countRows("peer-a:blk-1")).toBe(0);
+
+      // The block is LOCAL only — it is never written into the peers document
+      // this instance publishes (no auto-sync / propagation).
+      const peersDoc = await app.inject({
+        method: "GET",
+        url: "/.well-known/openconditions/peers",
+      });
+      expect(JSON.stringify(peersDoc.json())).not.toContain("operator decision");
+
+      await unblockPeer(sql, "peer-a");
+      const page2 = pageOf([
+        { seq: 2, txid: "601", observation: fedEvent("peer-a:blk-2", "peer-a", "21".repeat(32)) },
+      ]);
+      const req2 = await signed(peerA, "POST", "/peer/inbox", page2);
+      const restored = await app.inject({
+        method: "POST",
+        url: "/peer/inbox",
+        headers: req2.headers,
+        payload: req2.payload,
+      });
+      expect(restored.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("records rate and replay failures against peer HEALTH (never event truth)", async () => {
+    const app = await build({
+      sql,
+      env: enabledEnv,
+      logger: false,
+      rateLimiter: createInMemoryRateLimiter({ policyForTier: () => TIGHT_POLICY }),
+    });
+    try {
+      const before = await getPeerHealth(sql, "peer-b");
+      const rateBefore = before?.rateViolations ?? 0;
+      const replayBefore = before?.replayFailures ?? 0;
+
+      // A first valid page lands and consumes the tight budget's single slot.
+      const first = pageOf([
+        { seq: 1, txid: "700", observation: fedEvent("peer-b:h-1", "peer-b", "22".repeat(32)) },
+      ]);
+      const r1 = await signed(peerB, "POST", "/peer/inbox", first);
+      const ok = await app.inject({
+        method: "POST",
+        url: "/peer/inbox",
+        headers: r1.headers,
+        payload: r1.payload,
+      });
+      expect(ok.statusCode).toBe(200);
+
+      // A second (freshly-signed) page authenticates but trips the limiter → 429
+      // and a rate violation counted against health. The event that DID land
+      // (peer-b:h-1) is untouched — a transport refusal never unwinds truth.
+      const second = pageOf([
+        { seq: 2, txid: "701", observation: fedEvent("peer-b:h-2", "peer-b", "23".repeat(32)) },
+      ]);
+      const r2 = await signed(peerB, "POST", "/peer/inbox", second);
+      const over = await app.inject({
+        method: "POST",
+        url: "/peer/inbox",
+        headers: r2.headers,
+        payload: r2.payload,
+      });
+      expect(over.statusCode).toBe(429);
+      expect(await countRows("peer-b:h-1")).toBe(1);
+
+      // Replaying the first request (same signed nonce) fails on the verify path
+      // under peer-b's pinned key → a replay failure counted against health.
+      const replay = await app.inject({
+        method: "POST",
+        url: "/peer/inbox",
+        headers: r1.headers,
+        payload: r1.payload,
+      });
+      expect(replay.statusCode).toBe(401);
+      expect(replay.headers["federation-reason"]).toBe("replayed");
+
+      const after = await getPeerHealth(sql, "peer-b");
+      expect(after!.rateViolations).toBeGreaterThan(rateBefore);
+      expect(after!.replayFailures).toBeGreaterThan(replayBefore);
     } finally {
       await app.close();
     }
