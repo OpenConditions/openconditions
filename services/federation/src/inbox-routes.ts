@@ -19,12 +19,13 @@
  * HEALTH; signature/replay/schema failures are counted against health too.
  * NONE of this re-judges an already-accepted event or feeds evidence/routing.
  */
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import type postgres from "postgres";
 import {
   FEDERATION_REASON_HEADER,
   recordPeerFailure,
   type FederationFailureReason,
+  type MtlsContext,
   type NonceStore,
   type PeerHealthFailure,
   type PeerRecord,
@@ -50,6 +51,8 @@ export interface InboxRouteContext {
   nonceStore: NonceStore;
   /** Shared per-peer transport rate limiter (inbox + backfill). */
   rateLimiter: RateLimiter;
+  /** Resolves the request's TLS client-cert context for the optional mTLS gate. */
+  mtlsContextFor?: (req: FastifyRequest) => MtlsContext | undefined;
   /** Injectable clock (ISO 8601). */
   now: () => string;
 }
@@ -92,6 +95,7 @@ export function registerInboxRoutes(app: FastifyInstance, ctx: InboxRouteContext
             await recordPeerFailure(ctx.sql, failedPeerId, kind, ctx.now());
           }
         },
+        ...(ctx.mtlsContextFor !== undefined ? { mtlsContextFor: ctx.mtlsContextFor } : {}),
       },
       req,
       reply,

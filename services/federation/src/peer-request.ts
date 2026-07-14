@@ -5,13 +5,17 @@
  * instance's CONFIGURED baseUrl (not the request Host), so a peer signs the
  * logical actor URL and the check is independent of proxies/loopback sockets.
  */
+import type { TLSSocket } from "node:tls";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type postgres from "postgres";
 import {
   authenticatePeerRequest,
+  checkMtls,
   federationFailureHeaders,
   isPeerBlocked,
+  FEDERATION_REASON_HEADER,
   type FederationFailureReason,
+  type MtlsContext,
   type NonceStore,
   type PeerRecord,
 } from "@openconditions/federation";
@@ -31,6 +35,32 @@ export interface PeerRequestContext {
    * swallowed: health accounting must never turn a 401 into a 500.
    */
   onAuthFailure?: (reason: FederationFailureReason, peerId: string | null) => void | Promise<void>;
+  /**
+   * Resolves the request's TLS client-certificate context for the optional
+   * per-peer mTLS gate. Defaults to reading the verified client cert off the
+   * request socket ({@link socketMtlsContext}); tests inject a resolver to
+   * simulate a socket cert context under `app.inject`.
+   */
+  mtlsContextFor?: (req: FastifyRequest) => MtlsContext | undefined;
+}
+
+/**
+ * Reads the TLS layer's client-certificate verdict off the request socket for
+ * the mTLS gate. Returns undefined for a plain (non-TLS) socket — a request to
+ * a `mtlsRequired` peer over such a socket then fails the gate. When TLS
+ * terminates at a fronting proxy rather than this process, an operator supplies
+ * a resolver ({@link PeerRequestContext.mtlsContextFor}) that reads the proxy's
+ * verified-client-cert headers instead.
+ */
+export function socketMtlsContext(req: FastifyRequest): MtlsContext | undefined {
+  const socket = req.socket as Partial<TLSSocket>;
+  if (typeof socket.getPeerCertificate !== "function") return undefined;
+  const cert = socket.getPeerCertificate();
+  const fingerprint = cert?.fingerprint256 || cert?.fingerprint || undefined;
+  return {
+    authorized: socket.authorized === true,
+    ...(fingerprint ? { fingerprint } : {}),
+  };
 }
 
 /**
@@ -90,6 +120,24 @@ export async function requirePeer(
       reason: auth.reason,
     });
     return null;
+  }
+
+  // Optional per-peer mTLS gate, ADDITIVE under the (now-verified) signature: a
+  // `mtlsRequired` peer must ALSO present a TLS-verified client cert. A
+  // non-mTLS peer is unaffected. The gate runs only after the signature check
+  // passes, so mTLS never substitutes for signing.
+  const peer = ctx.peers.find((p) => p.instanceId === auth.peerId);
+  if (peer !== undefined) {
+    const cert =
+      ctx.mtlsContextFor !== undefined ? ctx.mtlsContextFor(req) : socketMtlsContext(req);
+    const mtls = checkMtls(peer, cert);
+    if (!mtls.ok) {
+      await reply
+        .status(403)
+        .headers({ [FEDERATION_REASON_HEADER]: mtls.reason! })
+        .send({ error: "mutual TLS required for this peer", reason: mtls.reason });
+      return null;
+    }
   }
   return auth.peerId;
 }

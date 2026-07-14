@@ -93,6 +93,26 @@ describe("loadPeers", () => {
     expect(() => loadPeers([{ ...valid, trustTier: 5 }])).toThrow(TypeError);
     expect(() => loadPeers([valid, { ...valid }])).toThrow(TypeError);
   });
+
+  it("parses the optional mTLS gate fields and validates their shape", async () => {
+    const key = await generateInstanceKey(NOW);
+    const valid = {
+      instanceId: "a",
+      actorUrl: ACTOR_URL,
+      trustTier: 1 as const,
+      pinnedKeys: [key.publicKeyMultibase],
+    };
+    const withMtls = { ...valid, mtlsRequired: true, mtlsFingerprints: ["AA:BB"] };
+    expect(loadPeers([withMtls])[0]).toMatchObject({
+      mtlsRequired: true,
+      mtlsFingerprints: ["AA:BB"],
+    });
+    // Absent → the fields are simply not present (non-mTLS peer).
+    expect(loadPeers([valid])[0]!.mtlsRequired).toBeUndefined();
+    expect(() => loadPeers([{ ...valid, mtlsRequired: "yes" }])).toThrow(TypeError);
+    expect(() => loadPeers([{ ...valid, mtlsFingerprints: "AA:BB" }])).toThrow(TypeError);
+    expect(() => loadPeers([{ ...valid, mtlsFingerprints: [""] }])).toThrow(TypeError);
+  });
 });
 
 describe("verifyActorAgainstPin", () => {

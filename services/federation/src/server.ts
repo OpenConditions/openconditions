@@ -8,7 +8,11 @@
  * events cross the federation trust boundary).
  * Exported as build() so tests can fastify.inject; only main.ts listens.
  */
-import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
+import Fastify, {
+  type FastifyInstance,
+  type FastifyRequest,
+  type FastifyServerOptions,
+} from "fastify";
 import type postgres from "postgres";
 import {
   ACTIVITY_JSON,
@@ -24,6 +28,7 @@ import {
   outboxEtag,
   signMessage,
   type InstanceKey,
+  type MtlsContext,
   type RateLimiter,
 } from "@openconditions/federation";
 import { readBackfill } from "./backfill.js";
@@ -58,6 +63,13 @@ export interface BuildOptions {
   /** Injectable transport rate limiter (tests tighten the caps); defaults to
    *  the standard tier-aware in-memory limiter. */
   rateLimiter?: RateLimiter;
+  /**
+   * Resolves the request's TLS client-cert context for the optional per-peer
+   * mTLS gate; defaults to reading the socket's verified client cert. Tests
+   * inject a resolver to simulate a client cert under `app.inject`; operators
+   * fronting TLS at a proxy inject one that reads the proxy's cert headers.
+   */
+  mtlsContextFor?: (req: FastifyRequest) => MtlsContext | undefined;
 }
 
 export async function build(options: BuildOptions): Promise<FastifyInstance> {
@@ -248,6 +260,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     localInstanceId: actorConfig.instanceId,
     nonceStore,
     rateLimiter,
+    ...(options.mtlsContextFor !== undefined ? { mtlsContextFor: options.mtlsContextFor } : {}),
     now,
   });
 

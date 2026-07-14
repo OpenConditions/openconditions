@@ -19,6 +19,19 @@ export interface PeerRecord {
   trustTier: 0 | 1 | 2;
   /** Out-of-band pinned publicKeyMultibase fingerprints — the trust anchor. */
   pinnedKeys: string[];
+  /**
+   * Optional Tier-1 mTLS gate: when true, a request from this peer must ALSO
+   * arrive over a TLS connection with a verified client certificate, on top of
+   * the mandatory RFC 9421 signing. Absent → the peer is a non-mTLS peer,
+   * unaffected by the gate.
+   */
+  mtlsRequired?: boolean;
+  /**
+   * Optional pinned client-certificate fingerprints. When present alongside
+   * `mtlsRequired`, the peer's presented client cert must match one of these;
+   * absent (or empty) means CA-trust only.
+   */
+  mtlsFingerprints?: string[];
 }
 
 export interface PinVerification {
@@ -112,6 +125,24 @@ export function loadPeers(source: string | unknown): PeerRecord[] {
         fail(index, "coverage must be an object");
       }
       result.coverage = coverage as ActorCoverage;
+    }
+    if (record["mtlsRequired"] !== undefined) {
+      if (typeof record["mtlsRequired"] !== "boolean") {
+        fail(index, "mtlsRequired must be a boolean");
+      }
+      result.mtlsRequired = record["mtlsRequired"];
+    }
+    if (record["mtlsFingerprints"] !== undefined) {
+      const fingerprints = record["mtlsFingerprints"];
+      if (!Array.isArray(fingerprints)) {
+        fail(index, "mtlsFingerprints must be an array of strings");
+      }
+      for (const fingerprint of fingerprints) {
+        if (typeof fingerprint !== "string" || fingerprint.length === 0) {
+          fail(index, "mtlsFingerprints entries must be non-empty strings");
+        }
+      }
+      result.mtlsFingerprints = fingerprints as string[];
     }
     return result;
   });
