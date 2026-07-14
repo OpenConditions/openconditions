@@ -22,9 +22,14 @@ export default defineConfig({
   // federation/ingest is a public subpath entry: the federation service's
   // POST /peer/inbox route runs the SAME federated ingest (one trust
   // boundary); dts is emitted only for that subpath.
-  entry: ["src/index.ts", "src/main.ts", "src/federation/ingest.ts"],
+  entry: ["src/index.ts", "src/main.ts", "src/federation/ingest.ts", "src/contrib.ts"],
   format: ["esm"],
-  dts: { entry: { "federation/ingest": "src/federation/ingest.ts" } },
+  dts: {
+    entry: {
+      "federation/ingest": "src/federation/ingest.ts",
+      contrib: "src/contrib.ts",
+    },
+  },
   sourcemap: true,
   clean: true,
   outDir: "dist",

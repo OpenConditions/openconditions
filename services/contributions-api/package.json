@@ -9,6 +9,10 @@
     "./federation/ingest": {
       "types": "./dist/federation/ingest.d.ts",
       "import": "./dist/federation/ingest.js"
+    },
+    "./contrib": {
+      "types": "./dist/contrib.d.ts",
+      "import": "./dist/contrib.js"
     }
   },
   "scripts": {

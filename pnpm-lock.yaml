@@ -237,6 +237,46 @@ importers:
         specifier: ^3.0.0
         version: 3.2.6(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.9.0)
 
+  packages/probe-spike:
+    dependencies:
+      '@divviup/prio3':
+        specifier: 0.8.0
+        version: 0.8.0
+      '@divviup/vdaf':
+        specifier: 0.8.0
+        version: 0.8.0
+    devDependencies:
+      '@cloudflare/privacypass-ts':
+        specifier: 0.9.0
+        version: 0.9.0
+      '@openconditions/contrib-core':
+        specifier: workspace:*
+        version: link:../contrib-core
+      '@openconditions/contributions-api':
+        specifier: workspace:*
+        version: link:../../services/contributions-api
+      '@openconditions/core':
+        specifier: workspace:*
+        version: link:../core
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.2
+      postgres:
+        specifier: ^3.4.0
+        version: 3.4.9
+      testcontainers:
+        specifier: ^12.0.3
+        version: 12.0.3
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.15)(tsx@4.22.4)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.9.0)
+
   packages/publishers:
     dependencies:
       '@openconditions/core':
@@ -585,6 +625,21 @@ packages:
   '@conventional-changelog/template@1.2.1':
     resolution: {integrity: sha512-TzlTVpKPjaqW6qOYjQcYUDuGsLCNsvFHVBXkYGTAnf5V37jCWrE5haKNXzz0WZUtVHjrpV76L1buANjwXMfT8w==}
     engines: {node: '>=22'}
+
+  '@divviup/common@0.2.2':
+    resolution: {integrity: sha512-QV1Fiu94YWQPxxAZPO2emyb1CvpbmgG38/7CKGeCbLy0/XoYC+meF9lP51l968QC/RwZXiB3m4c2Lkf4xI7jdQ==}
+
+  '@divviup/field@0.2.2':
+    resolution: {integrity: sha512-WWwzV0jjknMAFxK/FEdY1O4f6GR2Bi8FlmKE5FrYEZmEaPqd+YeEplX67YD58NbB5qV/XExkHpTZOvT53q2U8A==}
+
+  '@divviup/prio3@0.8.0':
+    resolution: {integrity: sha512-Pl0FlxdBUGzQ9HO4hG9o1wgtwAXhbu8A9TPpRodEyurEt4RhrY8ZhCw8qXY8g1hf0xYEdbyI3e5dFSRGfk0QTA==}
+
+  '@divviup/vdaf@0.8.0':
+    resolution: {integrity: sha512-TGYRUAyGotslGyrS5G5llvfo13XyRkf8EX4c0MbnTd0ZB+red8K60hldh5ewDlsNWox6CfltkzwSgoTcYMjMSg==}
+
+  '@divviup/xof@0.2.0':
+    resolution: {integrity: sha512-0NaVumN3azm4W+KxvRJi6fTEwYCXhHYvFutaZ2RaWpduW9Otssj5e2Sd2k4BvmJ1GP4fo8LO2xFC6/g3fev1jA==}
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
@@ -2194,6 +2249,9 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
+  jssha@3.3.2:
+    resolution: {integrity: sha512-0RhFxzijV4W0qTXa97D5b6twAWXX7SEOpw8qzAZyZ+oeGOP9e84PnDSLjl7SBB1vBQ+chSUwsZR06i1AzA+nEA==}
+
   keyv@4.5.4:
     resolution: {integrity: sha512-oxVHkHR/EJf2CNXnWxRLW6mg7JyCCUcG0DtEGmL2ctUo1PNTin1PUil+r/+4r5MpVgC/fn1kjsx7mjSujKqIpw==}
 
@@ -2359,6 +2417,9 @@ packages:
 
   once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
+
+  one-webcrypto@1.0.3:
+    resolution: {integrity: sha512-fu9ywBVBPx0gS9K0etIROTiCkvI5S1TDjFsYFb3rC1ewFxeOqsbzq7aIMBHsYfrTHBcGXJaONXXjTl8B01cW1Q==}
 
   openlr-js@3.3.0:
     resolution: {integrity: sha512-4IkLLCpSYSIC2xiuBZAnwDAkN/v3w8jnlJ58c9pUouf7GeCKhJbmmeiDXpIb7GtDfjmRGHTFDzTJNB7QmzYPGw==}
@@ -3248,6 +3309,35 @@ snapshots:
 
   '@conventional-changelog/template@1.2.1': {}
 
+  '@divviup/common@0.2.2':
+    dependencies:
+      one-webcrypto: 1.0.3
+
+  '@divviup/field@0.2.2':
+    dependencies:
+      '@divviup/common': 0.2.2
+      one-webcrypto: 1.0.3
+
+  '@divviup/prio3@0.8.0':
+    dependencies:
+      '@divviup/common': 0.2.2
+      '@divviup/field': 0.2.2
+      '@divviup/vdaf': 0.8.0
+      '@divviup/xof': 0.2.0
+      buffer: 6.0.3
+
+  '@divviup/vdaf@0.8.0':
+    dependencies:
+      '@divviup/common': 0.2.2
+      buffer: 6.0.3
+
+  '@divviup/xof@0.2.0':
+    dependencies:
+      '@divviup/common': 0.2.2
+      '@divviup/field': 0.2.2
+      '@noble/hashes': 1.4.0
+      jssha: 3.3.2
+
   '@drizzle-team/brocli@0.10.2': {}
 
   '@esbuild-kit/core-utils@3.3.2':
@@ -3486,8 +3576,7 @@ snapshots:
       '@noble/hashes': 1.4.0
     optional: true
 
-  '@noble/hashes@1.4.0':
-    optional: true
+  '@noble/hashes@1.4.0': {}
 
   '@nodable/entities@2.2.0': {}
 
@@ -3882,14 +3971,6 @@ snapshots:
       '@vitest/utils': 3.2.6
       chai: 5.3.3
       tinyrainbow: 2.0.0
-
-  '@vitest/mocker@3.2.6(vite@7.3.5(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.8.0))':
-    dependencies:
-      '@vitest/spy': 3.2.6
-      estree-walker: 3.0.3
-      magic-string: 0.30.21
-    optionalDependencies:
-      vite: 7.3.5(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.8.0)
 
   '@vitest/mocker@3.2.6(vite@7.3.5(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.9.0))':
     dependencies:
@@ -4746,6 +4827,8 @@ snapshots:
 
   json5@2.2.3: {}
 
+  jssha@3.3.2: {}
+
   keyv@4.5.4:
     dependencies:
       json-buffer: 3.0.1
@@ -4895,6 +4978,8 @@ snapshots:
   once@1.4.0:
     dependencies:
       wrappy: 1.0.2
+
+  one-webcrypto@1.0.3: {}
 
   openlr-js@3.3.0:
     dependencies:
@@ -5644,7 +5729,7 @@ snapshots:
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.6
-      '@vitest/mocker': 3.2.6(vite@7.3.5(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.8.0))
+      '@vitest/mocker': 3.2.6(vite@7.3.5(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.9.0))
       '@vitest/pretty-format': 3.2.6
       '@vitest/runner': 3.2.6
       '@vitest/snapshot': 3.2.6

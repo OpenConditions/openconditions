@@ -1,0 +1,42 @@
+{
+  "name": "@openconditions/probe-spike",
+  "version": "0.0.0",
+  "description": "NON-PRODUCTION feasibility spike: proves the DAP/VDAF probe-submission crypto invariants (one-hot segment enforcement, two-share confidentiality, token-bound admission, replay/one-hot rejection) against a maintained VDAF library. No production service may depend on this package — it pins a draft-09 DAP / draft-08 VDAF implementation that must never enter a production dependency tree.",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@divviup/prio3": "0.8.0",
+    "@divviup/vdaf": "0.8.0"
+  },
+  "devDependencies": {
+    "@cloudflare/privacypass-ts": "0.9.0",
+    "@openconditions/contrib-core": "workspace:*",
+    "@openconditions/contributions-api": "workspace:*",
+    "@openconditions/core": "workspace:*",
+    "@types/node": "^24.0.0",
+    "postgres": "^3.4.0",
+    "testcontainers": "^12.0.3",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}
