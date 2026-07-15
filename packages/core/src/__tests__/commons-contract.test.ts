@@ -114,6 +114,10 @@ describe("commons substrate public contract (packages/core barrel)", () => {
         expired: 0,
       },
       reliabilityWeight: 0.1,
+      peerConfidenceCap: 0.75,
+      confirmDecay: 0.5,
+      negateAsymmetry: 2,
+      negateShrinkFactor: 0.5,
     };
     const result = evaluateEvidence(ledger, policy);
     expect(result.state).toBe("self_reported");

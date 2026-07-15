@@ -46,9 +46,26 @@ describe("evidencePolicyFor", () => {
     expect(policy.ttlSec).toBe(120);
   });
 
+  it("carries the asymmetric-trust defaults on the built policy", () => {
+    const policy = evidencePolicyFor("hazard", "crowd");
+    expect(policy.peerConfidenceCap).toBe(0.75);
+    expect(policy.confirmDecay).toBe(0.5);
+    expect(policy.negateAsymmetry).toBe(2);
+    expect(policy.negateShrinkFactor).toBe(0.5);
+  });
+
+  it("keeps the peer confidence cap strictly below the externally_resolved score (ADR ceiling)", () => {
+    const policy = evidencePolicyFor("hazard", "crowd");
+    expect(policy.peerConfidenceCap).toBeLessThan(policy.scoreByState.externally_resolved);
+  });
+
   it("exports the constants as EVIDENCE_POLICY_DEFAULTS", () => {
     expect(EVIDENCE_POLICY_DEFAULTS.policyVersion).toBe("v1");
     expect(EVIDENCE_POLICY_DEFAULTS.scoreByState.externally_resolved).toBe(0.9);
+    expect(EVIDENCE_POLICY_DEFAULTS.peerConfidenceCap).toBe(0.75);
+    expect(EVIDENCE_POLICY_DEFAULTS.confirmDecay).toBe(0.5);
+    expect(EVIDENCE_POLICY_DEFAULTS.negateAsymmetry).toBe(2);
+    expect(EVIDENCE_POLICY_DEFAULTS.negateShrinkFactor).toBe(0.5);
   });
 
   it("returns a fresh scoreByState object, not a shared reference", () => {

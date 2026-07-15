@@ -50,6 +50,33 @@ export interface EvidencePolicy {
   scoreByState: Record<EvidenceState, number>;
   /** Bounded advisory adjustment magnitude (e.g. 0.1). */
   reliabilityWeight: number;
+  /**
+   * Saturating ceiling the crowd-state confidence asymptotes toward but never
+   * reaches. Bounded strictly below `scoreByState.externally_resolved`: no
+   * amount of peer agreement may reach an external resolution's authority.
+   */
+  peerConfidenceCap: number;
+  /**
+   * Per-confirmation diminishing-returns base in (0, 1). Each additional
+   * distinct confirmation closes `1 - confirmDecay^c` of the gap from the
+   * base to the peer cap, so smaller values saturate faster.
+   */
+  confirmDecay: number;
+  /**
+   * How much more a sub-quorum negation erodes confidence than one
+   * confirmation builds it. `2.0` makes one "gone" roughly cancel two
+   * confirmations (the asymmetry of the "still there?" model).
+   */
+  negateAsymmetry: number;
+  /**
+   * Per distinct sub-quorum negation, the fraction of the remaining time (from
+   * the last negation's timestamp to the decay expiry) that survives. `0.5`
+   * halves that remaining life per distinct negator. Shrinks life only; it
+   * never extends it or sets the state to negated (only the kill quorum ends an
+   * observation early). Anchoring on the ledger timestamp (not eval-time now)
+   * keeps the shrunk expiry stable across recomputes.
+   */
+  negateShrinkFactor: number;
 }
 
 export interface EvidencePolicyResult {
@@ -76,6 +103,48 @@ interface SortedEntry {
 
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
+}
+
+/**
+ * Incremental, saturating confidence for the two crowd states. Each distinct
+ * confirmation (`confirmers`) closes a diminishing share of the gap from the
+ * base to the peer cap; each distinct sub-quorum negation (`negators`) erodes
+ * `negateAsymmetry` times as much per-negation, so a "gone" costs more than a
+ * confirmation builds. Pure function of the distinct-key counts and the policy.
+ */
+function crowdConfidence(policy: EvidencePolicy, confirmers: number, negators: number): number {
+  const base = policy.scoreByState.self_reported;
+  const gap = policy.peerConfidenceCap - base;
+  const confIncrement = gap * (1 - Math.pow(policy.confirmDecay, confirmers));
+  const negPenalty = policy.negateAsymmetry * gap * (1 - Math.pow(policy.confirmDecay, negators));
+  return clamp01(base + confIncrement - negPenalty);
+}
+
+/**
+ * Shrink a crowd-state expiry toward the last sub-quorum negation by
+ * `negateShrinkFactor^negators` of the life remaining AT THE NEGATION TIME.
+ * Anchoring on the ledger's negation timestamp (not eval-time now) makes the
+ * shrunk expiry a PURE function of the ledger: recomputing an unchanged ledger
+ * at a later now yields the same expiry rather than relaxing it back toward the
+ * full decay expiry. Shrink only — clamped to never exceed the decay expiry;
+ * an already-elapsed shrunk expiry legitimately lets the `expired` overlay fire
+ * (the caller's `now >= expiresAt` check is inclusive). No-op with no negations.
+ */
+function shrinkExpiryForNegations(
+  expiryMs: number,
+  negateAtMs: number,
+  negators: number,
+  shrinkFactor: number
+): number {
+  if (negators <= 0) {
+    return expiryMs;
+  }
+  const remaining = expiryMs - negateAtMs;
+  if (remaining <= 0) {
+    return expiryMs;
+  }
+  const shrunk = negateAtMs + remaining * Math.pow(shrinkFactor, negators);
+  return Math.min(expiryMs, shrunk);
 }
 
 /** The five evidence states scoreByState must supply a finite ranking base for. */
@@ -119,8 +188,9 @@ const EVIDENCE_STATES: readonly EvidenceState[] = [
  *   when two admissible entries share the same id (ids are the append-only
  *   ledger identity, so a duplicate means a corrupt ledger), when
  *   reporterLowerBound is present but not a finite number in [0, 1], or when
- *   any of the five policy.scoreByState entries is missing/non-finite or
- *   policy.reliabilityWeight is not finite.
+ *   any of the five policy.scoreByState entries is missing/non-finite, or
+ *   policy.reliabilityWeight, peerConfidenceCap, confirmDecay, negateAsymmetry
+ *   or negateShrinkFactor is not finite.
  */
 export function evaluateEvidence(
   input: EvidenceLedger,
@@ -138,6 +208,38 @@ export function evaluateEvidence(
   }
   if (!Number.isFinite(policy.reliabilityWeight)) {
     throw new TypeError("evaluateEvidence: policy.reliabilityWeight must be finite");
+  }
+  for (const field of [
+    "peerConfidenceCap",
+    "confirmDecay",
+    "negateAsymmetry",
+    "negateShrinkFactor",
+  ] as const) {
+    if (!Number.isFinite(policy[field])) {
+      throw new TypeError(`evaluateEvidence: policy.${field} must be finite`);
+    }
+  }
+  // Range guards enforce the ADR ceilings in the function itself, not just via
+  // the default policy: peer confidence can never reach an external
+  // resolution's score, confirmations always build and negations always erode.
+  if (
+    !(policy.peerConfidenceCap > 0) ||
+    policy.peerConfidenceCap >= policy.scoreByState.externally_resolved
+  ) {
+    throw new TypeError(
+      "evaluateEvidence: policy.peerConfidenceCap must be > 0 and strictly less than scoreByState.externally_resolved"
+    );
+  }
+  if (!(policy.confirmDecay > 0 && policy.confirmDecay < 1)) {
+    throw new TypeError(
+      "evaluateEvidence: policy.confirmDecay must be in the open interval (0, 1)"
+    );
+  }
+  if (!(policy.negateAsymmetry >= 0)) {
+    throw new TypeError("evaluateEvidence: policy.negateAsymmetry must be >= 0");
+  }
+  if (!(policy.negateShrinkFactor >= 0 && policy.negateShrinkFactor <= 1)) {
+    throw new TypeError("evaluateEvidence: policy.negateShrinkFactor must be in [0, 1]");
   }
   // Iterate the known states (not Object.entries) so a policy MISSING an entry —
   // e.g. a lossy cast that dropped "expired" — is caught here, not silently read
@@ -233,10 +335,20 @@ export function evaluateEvidence(
     expiresAtMs = lastPeerNegate.atMs;
   } else if (1 + confirmerKeys.size >= policy.corroborationMinDistinctKeys) {
     state = "corroborated";
-    expiresAtMs = decayExpiryMs;
+    expiresAtMs = shrinkExpiryForNegations(
+      decayExpiryMs,
+      lastPeerNegate?.atMs ?? decayExpiryMs,
+      negatorKeys.size,
+      policy.negateShrinkFactor
+    );
   } else {
     state = "self_reported";
-    expiresAtMs = decayExpiryMs;
+    expiresAtMs = shrinkExpiryForNegations(
+      decayExpiryMs,
+      lastPeerNegate?.atMs ?? decayExpiryMs,
+      negatorKeys.size,
+      policy.negateShrinkFactor
+    );
   }
 
   if (state !== "negated" && nowMs >= expiresAtMs) {
@@ -248,9 +360,17 @@ export function evaluateEvidence(
       ? policy.reliabilityWeight * (input.reporterLowerBound - 0.5)
       : 0;
 
+  // Only the two crowd states derive an incremental confidence from the
+  // distinct-key counts; the externally_resolved / negated / expired states
+  // keep their flat authority score (a crowd count is not an authority).
+  const baseScore =
+    state === "self_reported" || state === "corroborated"
+      ? crowdConfidence(policy, confirmerKeys.size, negatorKeys.size)
+      : policy.scoreByState[state];
+
   return {
     state,
-    confidenceScore: clamp01(policy.scoreByState[state] + adjustment),
+    confidenceScore: clamp01(baseScore + adjustment),
     routingEligible: state === "externally_resolved",
     expiresAt: new Date(expiresAtMs).toISOString(),
   };

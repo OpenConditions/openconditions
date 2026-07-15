@@ -199,7 +199,7 @@ describe("migration 0010 — flagged_at column", () => {
 });
 
 describe("POST /contrib/reports/:id/confirm — corroboration never routes", () => {
-  it("two distinct keys corroborate: state corroborated, routing STILL false, score ~0.6, expiry extended", async () => {
+  it("two distinct keys corroborate: state corroborated, routing STILL false, score 0.525, expiry extended", async () => {
     const { id } = await landObs("confirm-land-0000001");
     const landed = await readObs(id);
     expect(landed!.evidence_state).toBe("self_reported");
@@ -227,7 +227,9 @@ describe("POST /contrib/reports/:id/confirm — corroboration never routes", () 
     const row = await readObs(id);
     expect(row!.evidence_state).toBe("corroborated");
     expect(row!.routing_eligible).toBe(false);
-    expect(row!.confidence_score).toBeCloseTo(0.6, 10);
+    // Incremental crowd confidence for a single distinct confirmation (c=1):
+    // 0.3 + (0.75 - 0.3) * (1 - 0.5^1) = 0.525, replacing the old flat 0.6.
+    expect(row!.confidence_score).toBeCloseTo(0.525, 10);
     // Corroboration extends expiry from the confirm's observation time.
     expect(row!.expires_at!.getTime()).toBeGreaterThan(landedExpiry);
     expect(row!.expires_at!.toISOString()).toBe("2026-07-12T08:06:00.000Z");

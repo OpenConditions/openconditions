@@ -20,6 +20,15 @@ export const EVIDENCE_POLICY_DEFAULTS = {
     negated: 0.1,
     expired: 0,
   } satisfies Record<EvidenceState, number>,
+  // Asymmetric peer-confirmation trust (the Waze/Google "still there?" model):
+  // confidence saturates below `peerConfidenceCap` (strictly under the 0.9
+  // externally_resolved authority), a "gone" erodes `negateAsymmetry`× as much
+  // as a confirm builds, and each sub-quorum negation shrinks remaining life by
+  // `negateShrinkFactor`.
+  peerConfidenceCap: 0.75,
+  confirmDecay: 0.5,
+  negateAsymmetry: 2,
+  negateShrinkFactor: 0.5,
 } as const;
 
 /**
@@ -43,5 +52,9 @@ export function evidencePolicyFor(
     maxLifetimeSec: decayMaxLifetimeSec(type, opts?.overrides),
     scoreByState: { ...EVIDENCE_POLICY_DEFAULTS.scoreByState },
     reliabilityWeight: EVIDENCE_POLICY_DEFAULTS.reliabilityWeight,
+    peerConfidenceCap: EVIDENCE_POLICY_DEFAULTS.peerConfidenceCap,
+    confirmDecay: EVIDENCE_POLICY_DEFAULTS.confirmDecay,
+    negateAsymmetry: EVIDENCE_POLICY_DEFAULTS.negateAsymmetry,
+    negateShrinkFactor: EVIDENCE_POLICY_DEFAULTS.negateShrinkFactor,
   };
 }

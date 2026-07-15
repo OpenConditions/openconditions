@@ -99,12 +99,14 @@ describe("recomputeEvidence — evidence lifecycle", () => {
     expect(row.expires_at!.toISOString()).toBe("2026-07-11T12:15:00.000Z");
   }, 30_000);
 
-  it("a distinct-key confirm → corroborated / 0.6 / still not routing-eligible / extended expiry", async () => {
+  it("a distinct-key confirm → corroborated / 0.525 / still not routing-eligible / extended expiry", async () => {
     await addEvidence("obs:life", "confirm", "2026-07-11T12:10:00.000Z", "key-b");
 
     const result = await recomputeEvidence(sql, "obs:life", "2026-07-11T12:12:00.000Z");
     expect(result!.state).toBe("corroborated");
-    expect(result!.confidenceScore).toBeCloseTo(0.6, 10);
+    // Incremental crowd confidence for a single confirmation (c=1):
+    // 0.3 + (0.75 - 0.3) * (1 - 0.5^1) = 0.525, replacing the old flat 0.6.
+    expect(result!.confidenceScore).toBeCloseTo(0.525, 10);
     expect(result!.routingEligible).toBe(false);
     // confirm at 12:10 + 900s crowd TTL = 12:25 (well under the 14:00 ceiling),
     // strictly later than the single-report 12:15 expiry.

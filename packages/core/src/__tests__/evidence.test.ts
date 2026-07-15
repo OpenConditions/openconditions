@@ -49,6 +49,10 @@ const TEST_POLICY: EvidencePolicy = {
     expired: 0,
   },
   reliabilityWeight: 0.1,
+  peerConfidenceCap: 0.75,
+  confirmDecay: 0.5,
+  negateAsymmetry: 2,
+  negateShrinkFactor: 0.5,
 };
 
 function ledger(
@@ -80,9 +84,11 @@ describe("evaluateEvidence cold-start ladder", () => {
 
   it("a second distinct admitted key corroborates, raises the score, extends expiry from the confirm time, and STILL does not enable routing", () => {
     const result = evaluateEvidence(ledger([report, confirm], 25), TEST_POLICY);
+    // One distinct confirmation (c=1) yields the incremental crowd confidence
+    // 0.3 + (0.75 - 0.3) * (1 - 0.5^1) = 0.525, replacing the old flat 0.6 step.
     expect(result).toEqual({
       state: "corroborated",
-      confidenceScore: 0.6,
+      confidenceScore: 0.525,
       routingEligible: false,
       expiresAt: iso(20 + 60),
     });
@@ -157,6 +163,279 @@ describe("evaluateEvidence corroboration rules", () => {
     const result = evaluateEvidence(ledger(entries, 15), TEST_POLICY);
     expect(result.state).toBe("corroborated");
     expect(result.routingEligible).toBe(false);
+  });
+});
+
+describe("evaluateEvidence incremental crowd confidence (asymmetric peer trust)", () => {
+  const B = TEST_POLICY.scoreByState.self_reported;
+
+  function scoreForConfirmers(confirmers: number, nowMinutes: number): number {
+    const entries = [entry("r1", 0, "report", "keyA")];
+    for (let i = 0; i < confirmers; i++) {
+      entries.push(entry(`c${i}`, i + 1, "confirm", `key${i}`));
+    }
+    return evaluateEvidence(ledger(entries, nowMinutes), TEST_POLICY).confidenceScore;
+  }
+
+  it("rises with each distinct confirmation, with diminishing returns, never reaching the peer cap or externally_resolved score", () => {
+    const c1 = scoreForConfirmers(1, 5);
+    const c2 = scoreForConfirmers(2, 5);
+    const c3 = scoreForConfirmers(3, 5);
+    // 0.3 + 0.45*(1 - 0.5^c)
+    expect(c1).toBeCloseTo(0.525, 12);
+    expect(c2).toBeCloseTo(0.6375, 12);
+    expect(c3).toBeCloseTo(0.69375, 12);
+    expect(c1).toBeLessThan(c2);
+    expect(c2).toBeLessThan(c3);
+    // Diminishing returns: each successive gain is smaller than the last.
+    expect(c2 - c1).toBeLessThan(c1 - B);
+    expect(c3 - c2).toBeLessThan(c2 - c1);
+    // Saturates strictly below the peer cap, which is strictly below 0.9.
+    expect(c3).toBeLessThan(TEST_POLICY.peerConfidenceCap);
+    expect(TEST_POLICY.peerConfidenceCap).toBeLessThan(
+      TEST_POLICY.scoreByState.externally_resolved
+    );
+  });
+
+  it("saturates below the peer cap even with dozens of confirmations", () => {
+    const entries = [entry("r1", 0, "report", "keyA")];
+    for (let i = 0; i < 40; i++) {
+      entries.push(entry(`c${i}`, i + 1, "confirm", `key${i}`));
+    }
+    const result = evaluateEvidence(ledger(entries, 60), TEST_POLICY);
+    expect(result.state).toBe("corroborated");
+    expect(result.confidenceScore).toBeLessThan(TEST_POLICY.peerConfidenceCap);
+    expect(result.confidenceScore).toBeLessThan(TEST_POLICY.scoreByState.externally_resolved);
+  });
+
+  it("a self-confirm by the originating key does not raise confidence (exclusion holds)", () => {
+    const result = evaluateEvidence(
+      ledger([entry("r1", 0, "report", "keyA"), entry("c1", 5, "confirm", "keyA")], 10),
+      TEST_POLICY
+    );
+    expect(result.state).toBe("self_reported");
+    expect(result.confidenceScore).toBe(0.3);
+  });
+});
+
+describe("evaluateEvidence asymmetric sub-quorum negation", () => {
+  it("one sub-quorum negation erodes more confidence than one confirmation built, without negating or removing", () => {
+    const oneConfirm = evaluateEvidence(
+      ledger([entry("r1", 0, "report", "keyA"), entry("c1", 5, "confirm", "keyB")], 10),
+      TEST_POLICY
+    );
+    const confirmThenNegate = evaluateEvidence(
+      ledger(
+        [
+          entry("r1", 0, "report", "keyA"),
+          entry("c1", 5, "confirm", "keyB"),
+          entry("n1", 8, "negate", "keyC"),
+        ],
+        10
+      ),
+      TEST_POLICY
+    );
+    expect(oneConfirm.confidenceScore).toBeCloseTo(0.525, 12);
+    // Still corroborated (1 confirmer, 1 sub-quorum negator < peerNegationMinKeys),
+    // never routing-eligible, and NOT removed (expiry stays in the future).
+    expect(confirmThenNegate.state).toBe("corroborated");
+    expect(confirmThenNegate.routingEligible).toBe(false);
+    // 0.3 + 0.225 - 0.9*(1 - 0.5^1) = 0.075
+    expect(confirmThenNegate.confidenceScore).toBeCloseTo(0.075, 12);
+    const built = oneConfirm.confidenceScore - 0.3;
+    const eroded = oneConfirm.confidenceScore - confirmThenNegate.confidenceScore;
+    expect(eroded).toBeGreaterThan(built);
+    expect(confirmThenNegate.confidenceScore).toBeLessThan(0.3);
+    expect(Date.parse(confirmThenNegate.expiresAt)).toBeGreaterThan(Date.parse(iso(10)));
+  });
+
+  it("a sub-quorum negation shrinks remaining TTL from the negation time but keeps the state corroborated", () => {
+    const entries = [
+      entry("r1", 0, "report", "keyA"),
+      entry("c1", 20, "confirm", "keyB"),
+      entry("n1", 25, "negate", "keyC"),
+    ];
+    const withNeg = evaluateEvidence(ledger(entries, 30), TEST_POLICY);
+    const withoutNeg = evaluateEvidence(ledger([entries[0], entries[1]], 30), TEST_POLICY);
+    // Without the negation: confirm at 20 + 60min TTL = 80.
+    expect(withoutNeg.expiresAt).toBe(iso(80));
+    // With it, anchored at the negation time (25): remaining 80 - 25 = 55min;
+    // * 0.5^1 = 27.5min → 25 + 27.5 = 52.5 (independent of eval-time now).
+    expect(withNeg.state).toBe("corroborated");
+    expect(withNeg.expiresAt).toBe(iso(52.5));
+    expect(Date.parse(withNeg.expiresAt)).toBeLessThan(Date.parse(withoutNeg.expiresAt));
+    expect(Date.parse(withNeg.expiresAt)).toBeGreaterThan(Date.parse(iso(30)));
+  });
+
+  it("a sub-quorum negation on a lone self-report drops confidence and shrinks TTL but stays self_reported and live", () => {
+    const result = evaluateEvidence(
+      ledger([entry("r1", 0, "report", "keyA"), entry("n1", 10, "negate", "keyB")], 15),
+      TEST_POLICY
+    );
+    expect(result.state).toBe("self_reported");
+    // 0.3 + 0 - 0.9*(1 - 0.5^1) = -0.15 → clamped to 0.
+    expect(result.confidenceScore).toBe(0);
+    // decay expiry = report(0) + 60 = 60; anchored at negation time (10):
+    // remaining 60 - 10 = 50; *0.5 = 25 → 10 + 25 = 35.
+    expect(result.expiresAt).toBe(iso(35));
+    expect(Date.parse(result.expiresAt)).toBeGreaterThan(Date.parse(iso(15)));
+  });
+
+  it("the negation kill quorum is unchanged: 2 distinct negators exceeding confirmers negate immediately at the deciding time", () => {
+    const result = evaluateEvidence(
+      ledger(
+        [
+          entry("r1", 0, "report", "keyA"),
+          entry("c1", 5, "confirm", "keyB"),
+          entry("n1", 10, "negate", "keyC"),
+          entry("n2", 12, "negate", "keyD"),
+        ],
+        20
+      ),
+      TEST_POLICY
+    );
+    expect(result.state).toBe("negated");
+    expect(result.confidenceScore).toBe(0.1);
+    expect(result.expiresAt).toBe(iso(12));
+  });
+});
+
+describe("evaluateEvidence asymmetric-trust ADR guardrails", () => {
+  it("no number of confirmations flips routingEligible or reaches the externally_resolved score", () => {
+    const entries = [entry("r1", 0, "report", "keyA")];
+    for (let i = 0; i < 50; i++) {
+      entries.push(entry(`c${i}`, i + 1, "confirm", `key${i}`));
+    }
+    const result = evaluateEvidence(ledger(entries, 60), TEST_POLICY);
+    expect(result.routingEligible).toBe(false);
+    expect(result.confidenceScore).toBeLessThan(TEST_POLICY.scoreByState.externally_resolved);
+    expect(result.confidenceScore).toBeLessThan(TEST_POLICY.peerConfidenceCap);
+  });
+
+  it("an external resolution still yields routingEligible and the flat 0.9 authority score (crowd math never touches it)", () => {
+    const result = evaluateEvidence(
+      ledger(
+        [
+          entry("r1", 0, "report", "keyA"),
+          entry("c1", 5, "confirm", "keyB"),
+          entry("c2", 6, "confirm", "keyC"),
+          external("x1", 30, "confirmed"),
+        ],
+        40
+      ),
+      TEST_POLICY
+    );
+    expect(result.state).toBe("externally_resolved");
+    expect(result.routingEligible).toBe(true);
+    expect(result.confidenceScore).toBe(0.9);
+  });
+
+  it("peer confirmations and negations never train reputation: the result carries no posterior", () => {
+    const prior = { alpha: 1, beta: 1 };
+    const result = evaluateEvidence(
+      ledger(
+        [
+          entry("r1", 0, "report", "keyA"),
+          entry("c1", 1, "confirm", "keyB"),
+          entry("c2", 2, "confirm", "keyC"),
+          entry("n1", 3, "negate", "keyD"),
+        ],
+        5
+      ),
+      TEST_POLICY
+    );
+    expect(Object.keys(result).sort()).toEqual([
+      "confidenceScore",
+      "expiresAt",
+      "routingEligible",
+      "state",
+    ]);
+    expect(prior).toEqual({ alpha: 1, beta: 1 });
+  });
+
+  it("crowd confidence + TTL shrink are deterministic replays: identical results across repeated calls", () => {
+    const input = ledger(
+      [
+        entry("r1", 0, "report", "keyA"),
+        entry("c1", 5, "confirm", "keyB"),
+        entry("c2", 6, "confirm", "keyC"),
+        entry("n1", 8, "negate", "keyD"),
+      ],
+      12,
+      0.7
+    );
+    expect(evaluateEvidence(input, TEST_POLICY)).toEqual(evaluateEvidence(input, TEST_POLICY));
+  });
+
+  it("the sub-quorum-shrunk expiry is anchored to the ledger, not eval-time now: it stays STABLE (never relaxes) across recomputes at different now", () => {
+    const entries = [
+      entry("r1", 0, "report", "keyA"),
+      entry("c1", 5, "confirm", "keyB"),
+      entry("c2", 6, "confirm", "keyC"),
+      entry("n1", 8, "negate", "keyD"),
+    ];
+    // decay expiry = lastPositive(6) + 60 = 66; anchored at negation time (8):
+    // remaining 66 - 8 = 58; * 0.5^1 = 29 → 8 + 29 = 37, regardless of now.
+    const atEarly = evaluateEvidence(ledger(entries, 12), TEST_POLICY);
+    const atLater = evaluateEvidence(ledger(entries, 30), TEST_POLICY);
+    expect(atEarly.state).toBe("corroborated");
+    expect(atLater.state).toBe("corroborated");
+    expect(atEarly.expiresAt).toBe(iso(37));
+    // A later recompute of the unchanged ledger must NOT relax the shrunk expiry.
+    expect(atLater.expiresAt).toBe(atEarly.expiresAt);
+    // And once now passes the shrunk expiry the observation expires at that same instant.
+    const atExpired = evaluateEvidence(ledger(entries, 40), TEST_POLICY);
+    expect(atExpired.state).toBe("expired");
+    expect(atExpired.expiresAt).toBe(iso(37));
+  });
+
+  it("throws TypeError for a non-finite asymmetric-trust policy field", () => {
+    for (const field of [
+      "peerConfidenceCap",
+      "confirmDecay",
+      "negateAsymmetry",
+      "negateShrinkFactor",
+    ] as const) {
+      const badPolicy: EvidencePolicy = { ...TEST_POLICY, [field]: NaN };
+      expect(() =>
+        evaluateEvidence(ledger([entry("r1", 0, "report", "keyA")], 5), badPolicy)
+      ).toThrow(TypeError);
+    }
+  });
+
+  it.each([
+    // peerConfidenceCap must be > 0 and strictly below externally_resolved (0.9).
+    { field: "peerConfidenceCap", value: 0 },
+    { field: "peerConfidenceCap", value: -0.1 },
+    { field: "peerConfidenceCap", value: 0.9 },
+    { field: "peerConfidenceCap", value: 0.95 },
+    // confirmDecay must be in the open interval (0, 1).
+    { field: "confirmDecay", value: 0 },
+    { field: "confirmDecay", value: 1 },
+    { field: "confirmDecay", value: 1.5 },
+    { field: "confirmDecay", value: -0.5 },
+    // negateAsymmetry must be >= 0.
+    { field: "negateAsymmetry", value: -0.1 },
+    // negateShrinkFactor must be in [0, 1].
+    { field: "negateShrinkFactor", value: -0.1 },
+    { field: "negateShrinkFactor", value: 1.1 },
+  ] as const)(
+    "throws TypeError for an out-of-range policy.$field = $value (ADR ceiling enforced in-function)",
+    ({ field, value }) => {
+      const badPolicy: EvidencePolicy = { ...TEST_POLICY, [field]: value };
+      expect(() =>
+        evaluateEvidence(ledger([entry("r1", 0, "report", "keyA")], 5), badPolicy)
+      ).toThrow(TypeError);
+    }
+  );
+
+  it("a finite-but-malformed policy cannot breach the peer-cap ceiling: peerConfidenceCap >= externally_resolved is rejected before any confidence is derived", () => {
+    const breaching: EvidencePolicy = { ...TEST_POLICY, peerConfidenceCap: 0.95 };
+    const entries = [entry("r1", 0, "report", "keyA")];
+    for (let i = 0; i < 50; i++) {
+      entries.push(entry(`c${i}`, i + 1, "confirm", `key${i}`));
+    }
+    expect(() => evaluateEvidence(ledger(entries, 60), breaching)).toThrow(TypeError);
   });
 });
 
