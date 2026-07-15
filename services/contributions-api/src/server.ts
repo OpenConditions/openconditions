@@ -21,7 +21,7 @@ import {
   type SignedReport,
   type SignedSubClaim,
 } from "@openconditions/contrib-core";
-import { resolveInstanceId } from "@openconditions/ingest/pipeline/normalize";
+import { resolveInstanceId } from "@openconditions/normalize";
 import { checkReportRate } from "./abuse/rate.js";
 import { enrollReporter } from "./attester/enroll.js";
 import { resolveGrantSecret, verifyReportingGrant } from "./attester/grant.js";

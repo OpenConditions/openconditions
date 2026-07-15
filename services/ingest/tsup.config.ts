@@ -18,16 +18,14 @@ const roadsFeeds = fileURLToPath(new URL("../../packages/roads/feeds/roads", imp
 const bundledFeeds = fileURLToPath(new URL("./dist/feeds/roads", import.meta.url));
 
 export default defineConfig({
-  // The normalize seam and the row mapping (toRow — the ONE content-hash
-  // implementation) are extra entries so the contributions-api service can
-  // import them: the central write-normalization choke point and the
-  // byte-equivalence hash are shared, never reimplemented. dts is emitted only
-  // for those public subpaths.
-  entry: ["src/index.ts", "src/pipeline/normalize.ts", "src/pipeline/write-postgis.ts"],
+  // The row mapping (toRow — the ONE content-hash implementation) is an extra
+  // entry so the contributions-api service can import it: the byte-equivalence
+  // hash is shared, never reimplemented. dts is emitted only for that public
+  // subpath. (The write-normalization seam now lives in @openconditions/normalize.)
+  entry: ["src/index.ts", "src/pipeline/write-postgis.ts"],
   format: ["esm"],
   dts: {
     entry: {
-      "pipeline/normalize": "src/pipeline/normalize.ts",
       "pipeline/write-postgis": "src/pipeline/write-postgis.ts",
     },
   },

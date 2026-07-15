@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Observation } from "@openconditions/core";
-import { normalizeObservation, type WriterContext } from "../pipeline/normalize.js";
+import { normalizeObservation, type WriterContext } from "@openconditions/normalize";
 
 const CTX: WriterContext = { kind: "feed", instanceId: "inst-x" };
 

@@ -215,6 +215,25 @@ importers:
         specifier: ^3.0.0
         version: 3.2.6(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.9.0)
 
+  packages/normalize:
+    dependencies:
+      '@openconditions/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      '@types/node':
+        specifier: ^24.0.0
+        version: 24.13.2
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.15)(tsx@4.22.4)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.0.0
+        version: 3.2.6(@types/node@24.13.2)(jiti@2.6.1)(tsx@4.22.4)(yaml@2.9.0)
+
   packages/openlr:
     dependencies:
       '@openconditions/core':
@@ -368,6 +387,9 @@ importers:
       '@openconditions/ingest':
         specifier: workspace:*
         version: link:../ingest
+      '@openconditions/normalize':
+        specifier: workspace:*
+        version: link:../../packages/normalize
       '@openconditions/roads':
         specifier: workspace:*
         version: link:../../packages/roads
@@ -448,6 +470,9 @@ importers:
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:../../packages/ingest-framework
+      '@openconditions/normalize':
+        specifier: workspace:*
+        version: link:../../packages/normalize
       '@openconditions/openlr':
         specifier: workspace:*
         version: link:../../packages/openlr
@@ -646,11 +671,11 @@ packages:
 
   '@esbuild-kit/core-utils@3.3.2':
     resolution: {integrity: sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ==}
-    deprecated: 'Merged into tsx: https://tsx.is'
+    deprecated: 'Merged into tsx: https://tsx.hirok.io'
 
   '@esbuild-kit/esm-loader@2.6.5':
     resolution: {integrity: sha512-FxEMIkJKnodyA1OaCUoEvbYRkoZlLZ4d/eXFu9Fh8CbBBgP5EmZxrfTRyN0qpXZ4vOvqnE5YdRdcrmUUXuU+dA==}
-    deprecated: 'Merged into tsx: https://tsx.is'
+    deprecated: 'Merged into tsx: https://tsx.hirok.io'
 
   '@esbuild/aix-ppc64@0.28.1':
     resolution: {integrity: sha512-Svl7tq8k/08+p6CXPpRjQ1fKX+1odH/BQbb48fV6fj3CWHhsoIOoY87w1oHXm0qEpkIK3ZfVgp0hed3XBXzXMQ==}

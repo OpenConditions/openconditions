@@ -2,7 +2,11 @@ import { createHash } from "node:crypto";
 import type postgres from "postgres";
 import { toIsoTimestamp, type Observation } from "@openconditions/core";
 import { DOMAIN_REGISTRY } from "../domains.js";
-import { normalizeObservation, resolveInstanceId, type WriterContext } from "./normalize.js";
+import {
+  normalizeObservation,
+  resolveInstanceId,
+  type WriterContext,
+} from "@openconditions/normalize";
 import { upsertSourceStatus } from "./source-status.js";
 
 type Sql = postgres.Sql;

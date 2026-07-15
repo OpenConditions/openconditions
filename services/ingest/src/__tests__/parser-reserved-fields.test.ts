@@ -67,7 +67,7 @@ describe("parsers never assign commons provenance fields", () => {
     expect(
       offenders,
       `A parser assigns a reserved commons field. These are set centrally in ` +
-        `normalizeObservation (see services/ingest/src/pipeline/normalize.ts), never by a parser:\n` +
+        `normalizeObservation (see packages/normalize/src/normalize.ts), never by a parser:\n` +
         offenders.join("\n")
     ).toEqual([]);
   });

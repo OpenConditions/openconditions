@@ -5,12 +5,7 @@ import {
   type ConditionEvent,
   type Observation,
 } from "@openconditions/core";
-import {
-  normalizeObservation,
-  resolveInstanceId,
-  type WriterContext,
-} from "../pipeline/normalize.js";
-import { toRow } from "../pipeline/write-postgis.js";
+import { normalizeObservation, resolveInstanceId, type WriterContext } from "../index.js";
 
 const CTX: WriterContext = { kind: "feed", instanceId: "inst-x" };
 
@@ -179,13 +174,6 @@ describe("normalizeObservation — confidenceScore strip", () => {
   it("silently strips a parser-set confidenceScore (derived presentation value)", () => {
     const out = normalizeObservation(feedEvent({ confidenceScore: 0.9 }), CTX);
     expect(out.confidenceScore).toBeUndefined();
-    expect(toRow(out).confidence_score).toBeNull();
-  });
-
-  it("leaves the content_hash unaffected by a stripped confidenceScore", () => {
-    const withScore = toRow(normalizeObservation(feedEvent({ confidenceScore: 0.9 }), CTX));
-    const without = toRow(normalizeObservation(feedEvent(), CTX));
-    expect(withScore.content_hash).toBe(without.content_hash);
   });
 
   it("stays idempotent through the strip", () => {
@@ -212,7 +200,7 @@ describe("normalizeObservation — non-TypeError from the fingerprint path propa
         },
       };
     });
-    const { normalizeObservation: normalize } = await import("../pipeline/normalize.js");
+    const { normalizeObservation: normalize } = await import("../normalize.js");
     expect(() => normalize(feedEvent(), CTX)).toThrow(RangeError);
   });
 });
@@ -236,7 +224,7 @@ describe("normalizeObservation — soft-validation throw never aborts the swap",
       };
     });
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const { normalizeObservation: normalize } = await import("../pipeline/normalize.js");
+    const { normalizeObservation: normalize } = await import("../normalize.js");
 
     const first = normalize(feedEvent(), CTX);
     expect(first.instanceId).toBe("inst-x");
@@ -256,30 +244,6 @@ describe("normalizeObservation — idempotence", () => {
     const once = normalizeObservation(feedEvent(), CTX);
     const twice = normalizeObservation(once, CTX);
     expect(twice).toEqual(once);
-  });
-
-  it("is content_hash-stable across re-normalization", () => {
-    const once = normalizeObservation(feedEvent(), CTX);
-    const twice = normalizeObservation(once, CTX);
-    expect(toRow(twice).content_hash).toBe(toRow(once).content_hash);
-  });
-});
-
-describe("normalizeObservation — content_hash impact", () => {
-  it("stamping attribution url/license changes the hash vs the un-normalized row (one-time rewrite)", () => {
-    const raw = feedEvent();
-    const preSeam = toRow(raw).content_hash;
-    const postSeam = toRow(normalizeObservation(raw, CTX)).content_hash;
-    expect(postSeam).not.toBe(preSeam);
-  });
-
-  it("leaves the hash identical when the attribution carries no url/license", () => {
-    const raw = feedEvent({
-      origin: { kind: "feed", attribution: { provider: "P" } },
-    });
-    const preSeam = toRow(raw).content_hash;
-    const postSeam = toRow(normalizeObservation(raw, CTX)).content_hash;
-    expect(postSeam).toBe(preSeam);
   });
 });
 

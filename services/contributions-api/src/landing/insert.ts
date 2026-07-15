@@ -8,7 +8,7 @@ import {
   type PriorReport,
   type SignedReport,
 } from "@openconditions/contrib-core";
-import { normalizeObservation } from "@openconditions/ingest/pipeline/normalize";
+import { normalizeObservation } from "@openconditions/normalize";
 import { recomputeEvidence } from "../evidence/recompute.js";
 
 type Sql = postgres.Sql;

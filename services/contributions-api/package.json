@@ -27,6 +27,7 @@
     "@openconditions/contrib-core": "workspace:*",
     "@openconditions/core": "workspace:*",
     "@openconditions/ingest": "workspace:*",
+    "@openconditions/normalize": "workspace:*",
     "@openconditions/roads": "workspace:*",
     "fastify": "^5.0.0",
     "postgres": "^3.4.0"
