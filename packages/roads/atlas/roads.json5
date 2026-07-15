@@ -274,6 +274,25 @@
     }
   },
   {
+    "id": "miv-flow-be",
+    "name": "MIV traffic speed (Flanders)",
+    "format": "miv-xml",
+    "produces": "flow",
+    "url": "http://miv.opendata.belfla.be/miv/verkeersdata",
+    "cadenceSec": 60,
+    "freshnessWindowSec": 300,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data",
+    "attribution": "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",
+    "country": "BE",
+    "privacyUrl": "https://www.vlaanderen.be/uw-overheid/werking-en-structuur/hoe-werkt-de-vlaamse-overheid/informatie-en-communicatie/privacy",
+    "enabledByDefault": true,
+    "stationRegistry": {
+      "url": "http://miv.opendata.belfla.be/miv/configuratie/xml",
+      "format": "miv-config"
+    }
+  },
+  {
     "id": "drivebc",
     "name": "DriveBC (British Columbia)",
     "format": "open511",
@@ -1154,6 +1173,21 @@
     "enabledByDefault": true
   },
   {
+    "id": "bonn-flow-de",
+    "name": "Bonn realtime traffic (Germany)",
+    "format": "bonn-geojson",
+    "produces": "flow",
+    "url": "https://stadtplan.bonn.de/geojson?Thema=19584",
+    "cadenceSec": 120,
+    "freshnessWindowSec": 600,
+    "license": "dl-de/zero-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
+    "attribution": "Bundesstadt Bonn",
+    "country": "DE",
+    "privacyUrl": "https://www.bonn.de/datenschutz.php",
+    "enabledByDefault": true
+  },
+  {
     "id": "vejdirektoratet-dk",
     "name": "Vejdirektoratet (Denmark)",
     "format": "datex2",
@@ -1230,6 +1264,21 @@
     "enabledByDefault": true
   },
   {
+    "id": "madrid-informo-es",
+    "name": "Madrid INFORMO traffic (Spain)",
+    "format": "madrid-informo-xml",
+    "produces": "flow",
+    "url": "https://informo.madrid.es/informo/tmadrid/pm.xml",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal",
+    "attribution": "Ayuntamiento de Madrid",
+    "country": "ES",
+    "privacyUrl": "https://www.madrid.es/portal/site/munimadrid/menuitem.privacy",
+    "enabledByDefault": true
+  },
+  {
     "id": "digitraffic-fi",
     "name": "Digitraffic (Finland)",
     "format": "digitraffic-json",
@@ -1280,6 +1329,25 @@
     "country": "FR",
     "privacyUrl": "https://www.bison-fute.gouv.fr/",
     "enabledByDefault": true
+  },
+  {
+    "id": "circulation-fr",
+    "name": "Circulation temps réel — vitesses & débits (France)",
+    "format": "datex2",
+    "produces": "flow",
+    "url": "https://tipi.bison-fute.gouv.fr/bison-fute-ouvert/publicationsDIR/QTV-DIR/qtvDir.xml",
+    "cadenceSec": 360,
+    "freshnessWindowSec": 1200,
+    "license": "etalab-2.0",
+    "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence",
+    "attribution": "Ministère de la Transition écologique / DIR",
+    "country": "FR",
+    "privacyUrl": "https://www.bison-fute.gouv.fr/",
+    "enabledByDefault": true,
+    "stationRegistry": {
+      "url": "https://tipi.bison-fute.gouv.fr/bison-fute-ouvert/publicationsDIR/QTV-DIR/refDir.csv",
+      "format": "france-comptage-csv"
+    }
   },
   {
     "id": "nationalhighways-gb",
@@ -1333,6 +1401,25 @@
     "stationRegistry": {
       "url": "https://webtris.nationalhighways.co.uk/api/v1.0/sites",
       "format": "webtris-sites"
+    }
+  },
+  {
+    "id": "hk-td-flow",
+    "name": "Transport Department traffic detectors (Hong Kong)",
+    "format": "hk-raw-xml",
+    "produces": "flow",
+    "url": "https://resource.data.one.gov.hk/td/traffic-detectors/rawSpeedVol-all.xml",
+    "cadenceSec": 120,
+    "freshnessWindowSec": 600,
+    "license": "HK-Gov-Open-Data",
+    "licenseUrl": "https://data.gov.hk/en/terms-and-conditions",
+    "attribution": "Transport Department, HKSAR",
+    "country": "HK",
+    "privacyUrl": "https://www.td.gov.hk/en/privacy_policy/index.html",
+    "enabledByDefault": true,
+    "stationRegistry": {
+      "url": "https://static.data.gov.hk/td/traffic-data-strategic-major-roads/info/traffic_speed_volume_occ_info.csv",
+      "format": "hk-detector-csv"
     }
   },
   {
@@ -1399,6 +1486,21 @@
       "lonField": "X",
       "latField": "Y"
     }
+  },
+  {
+    "id": "turin-5t-flow",
+    "name": "5T real-time traffic flow (Turin)",
+    "format": "turin-fdt-xml",
+    "produces": "flow",
+    "url": "https://opendata.5t.torino.it/get_fdt",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "5T / Città di Torino",
+    "country": "IT",
+    "privacyUrl": "https://www.5t.torino.it/privacy/",
+    "enabledByDefault": true
   },
   {
     "id": "cita-lu",
@@ -1482,6 +1584,48 @@
       }
     },
     "enabledByDefault": true
+  },
+  {
+    "id": "vegvesen-flow-no",
+    "name": "Statens vegvesen traffic speed (Norway)",
+    "format": "datex2",
+    "produces": "flow",
+    "url": "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetMeasuredData/pullSnapshotData",
+    "auth": {
+      "kind": "basic",
+      "userEnvVar": "NO_VEGVESEN_USERNAME",
+      "passEnvVar": "NO_VEGVESEN_PASSWORD"
+    },
+    "requiredEnv": [
+      "NO_VEGVESEN_USERNAME",
+      "NO_VEGVESEN_PASSWORD"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "NLOD-2.0",
+    "licenseUrl": "https://data.norge.no/nlod/en/2.0",
+    "attribution": "Statens vegvesen",
+    "country": "NO",
+    "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
+    "setup": {
+      "NO_VEGVESEN_USERNAME": {
+        "url": "https://www.vegvesen.no/en/fag/technology/open-data/a-selection-of-open-data/what-is-datex/get-access/",
+        "urlLabel": "Statens vegvesen — get DATEX access",
+        "steps": [
+          "Request a free account for the DATEX II server via the 'Get access' page (Open data → What is DATEX → Get access)."
+        ],
+        "cost": "Free",
+        "notes": "NLOD-2.0 (commercial OK). Same account as the Statens vegvesen events feed.",
+        "title": "Statens vegvesen (Norway) — username"
+      },
+      "NO_VEGVESEN_PASSWORD": {
+        "title": "Statens vegvesen (Norway) — password"
+      }
+    },
+    "enabledByDefault": false,
+    "siteTable": {
+      "url": "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetMeasurementSiteTable/pullSnapshotData"
+    }
   },
   {
     "id": "nzta-nz",
@@ -1641,6 +1785,39 @@
       }
     },
     "enabledByDefault": true
+  },
+  {
+    "id": "lta-speedbands-sg",
+    "name": "LTA DataMall Traffic Speed Bands (Singapore)",
+    "format": "lta-speedbands-json",
+    "produces": "flow",
+    "url": "https://datamall2.mytransport.sg/ltaodataservice/v3/TrafficSpeedBands",
+    "auth": {
+      "kind": "header-key",
+      "header": "AccountKey",
+      "envVar": "LTA_ACCOUNT_KEY"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "Singapore-ODL-1.0",
+    "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html",
+    "attribution": "Land Transport Authority (Singapore)",
+    "country": "SG",
+    "privacyUrl": "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
+    "setup": {
+      "LTA_ACCOUNT_KEY": {
+        "url": "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
+        "urlLabel": "Request LTA API access",
+        "steps": [
+          "Request an API account via the form at datamall.lta.gov.sg/content/datamall/en/request-for-api.html.",
+          "The AccountKey is emailed to you."
+        ],
+        "cost": "Free",
+        "notes": "Singapore ODL (commercial OK); attribution to the Land Transport Authority. Shared with the LTA Traffic Incidents feed.",
+        "title": "LTA DataMall AccountKey (Singapore)"
+      }
+    },
+    "enabledByDefault": false
   },
   {
     "id": "nap-si",
@@ -1973,20 +2150,6 @@
     "enabledByDefault": true
   },
   {
-    "id": "wzdx-kentucky",
-    "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
-    "format": "wzdx",
-    "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attribution": "Kentucky Transportation Cabinet",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
-  },
-  {
     "id": "wzdx-new-jersey",
     "name": "WZDx — New Jersey Institute of Technology (new jersey)",
     "format": "wzdx",
@@ -1996,6 +2159,20 @@
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "New Jersey Institute of Technology",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-kentucky",
+    "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
+    "format": "wzdx",
+    "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Kentucky Transportation Cabinet",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
     "enabledByDefault": true
@@ -4230,6 +4407,32 @@
     "name": "Autobahn A352 — closure",
     "format": "autobahn-json",
     "url": "https://verkehr.autobahn.de/o/autobahn/A352/services/closure",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a369-warning",
+    "name": "Autobahn A369 — warning",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A369/services/warning",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a369-closure",
+    "name": "Autobahn A369 — closure",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A369/services/closure",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "dl-de/by-2-0",
