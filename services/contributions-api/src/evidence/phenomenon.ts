@@ -6,6 +6,9 @@ import { recomputeEvidence } from "./recompute.js";
 type Sql = postgres.Sql;
 type Tx = postgres.TransactionSql;
 
+/** Cluster-lineage walk bound: deep merges are rare, a runaway walk is a bug. */
+const MAX_SURVIVOR_HOPS = 16;
+
 interface CandidateRow {
   id: string;
   domain: string;
@@ -34,20 +37,33 @@ function actorFor(row: CandidateRow): { keyId?: string; source: string } {
   return { source: row.source };
 }
 
+export interface FindCandidatesOptions {
+  /**
+   * Also return `status='inactive'` neighborhood rows (merged survivors of an
+   * earlier corroboration). `status='archived'` tombstones — reviewer-rejected
+   * or GDPR-erased — are ALWAYS excluded and must never become a corroboration
+   * target. Off by default: the direct-match path only ever pairs active rows.
+   */
+  includeInactive?: boolean;
+}
+
 /**
- * Find the active EVENT observations whose `phenomenon_fingerprint` falls in the
+ * Find the EVENT observations whose `phenomenon_fingerprint` falls in the
  * fingerprint NEIGHBORHOOD of `observationId` (the 3×3 grid cells × ±1 time
  * bucket, so cell-edge straddlers are still paired), excluding the observation
  * itself, projected into {@link PhenomenonCandidate}s. This only OPENS a typed
  * candidate set — {@link matchPhenomenonCandidates} decides compatibility and
- * nothing here merges.
+ * nothing here merges. Only `active` rows are returned unless
+ * {@link FindCandidatesOptions.includeInactive} is set; `archived` tombstones
+ * are never returned.
  *
  * Returns an empty array when the observation does not exist, is not an event,
  * or has no `valid_from` (the neighborhood is time-bucketed).
  */
 export async function findCandidates(
   sql: Sql,
-  observationId: string
+  observationId: string,
+  opts: FindCandidatesOptions = {}
 ): Promise<PhenomenonCandidate[]> {
   const targetRows = await sql<TargetRow[]>`
     SELECT domain, type, kind, ST_AsGeoJSON(geom) AS geojson, valid_from
@@ -69,12 +85,20 @@ export async function findCandidates(
 
   const neighborhood = phenomenonFingerprintNeighborhood(evt);
 
+  // `includeInactive` widens the set to merged (`inactive`) rows so a fresh
+  // report can be redirected to their active survivor. Both modes enumerate live
+  // states explicitly (never `archived` tombstones, never `cancelled` records) —
+  // stating intent rather than excluding one known bad state.
+  const statusFilter = opts.includeInactive
+    ? sql`status IN ('active', 'inactive')`
+    : sql`status = 'active'`;
+
   const rows = await sql<CandidateRow[]>`
     SELECT id, domain, type, ST_AsGeoJSON(geom) AS geojson, valid_from,
            attributes, origin, source, status
     FROM conditions.observations
     WHERE kind = 'event'
-      AND status = 'active'
+      AND ${statusFilter}
       AND id <> ${observationId}
       AND phenomenon_fingerprint = ANY(${neighborhood})
   `;
@@ -89,6 +113,114 @@ export async function findCandidates(
     actor: actorFor(row),
     status: row.status,
   }));
+}
+
+/**
+ * Project the given observation ids into {@link PhenomenonCandidate}s (same shape
+ * {@link findCandidates} emits), regardless of their fingerprint neighborhood.
+ * Used to re-read a resolved SURVIVOR — which may sit outside the just-landed
+ * row's neighborhood — so the pure matcher can decide compatibility against it.
+ * Returns only the ids that exist as events.
+ */
+export async function loadPhenomenonCandidates(
+  sql: Sql,
+  ids: string[]
+): Promise<PhenomenonCandidate[]> {
+  if (ids.length === 0) {
+    return [];
+  }
+  const rows = await sql<CandidateRow[]>`
+    SELECT id, domain, type, ST_AsGeoJSON(geom) AS geojson, valid_from,
+           attributes, origin, source, status
+    FROM conditions.observations
+    WHERE kind = 'event' AND id = ANY(${ids})
+  `;
+  return rows.map((row) => ({
+    id: row.id,
+    domain: row.domain,
+    type: row.type ?? "",
+    geometry: JSON.parse(row.geojson),
+    validFrom: row.valid_from === null ? undefined : row.valid_from.toISOString(),
+    attributes: row.attributes ?? undefined,
+    actor: actorFor(row),
+    status: row.status,
+  }));
+}
+
+interface SurvivorRow {
+  id: string;
+  status: string;
+}
+
+/**
+ * Resolve an observation to the ACTIVE survivor of its corroboration cluster.
+ *
+ * - An `active` row is its own survivor.
+ * - An `inactive` (merged) row is followed UP the CORROBORATION lineage: the
+ *   head is the row whose `corroborations` array contains the current id. Only
+ *   `corroborations` is followed — `replaces` is a different relation (feed
+ *   supersession, federation versioning, and cancellation records write it) and
+ *   is NOT corroboration lineage; applyCorroboration always records the merged id
+ *   in `corroborations`, so the corroboration chain is fully captured there. The
+ *   lookup is deterministic (`ORDER BY valid_from, id`) and scoped to event rows
+ *   in a live state, so it never resolves onto a cancellation/tombstone record.
+ *   This walks multi-level merges (B→A→Z) to the earliest active head.
+ * - Returns `null` when the chain dead-ends without an active head — a missing
+ *   row, an `archived` tombstone (GDPR/reviewer-rejected — never a target), or
+ *   a cluster with no surviving active row.
+ *
+ * Bounded to {@link MAX_SURVIVOR_HOPS} hops with a visited-set cycle guard, so a
+ * self-referential or looping lineage returns `null` instead of hanging. Pure
+ * function of the ledger (no clock, no randomness); pass a transaction handle to
+ * resolve inside a larger unit of work.
+ */
+export async function resolveSurvivor(
+  sql: Sql,
+  observationId: string,
+  tx?: Tx
+): Promise<string | null> {
+  const runner = tx ?? sql;
+  const visited = new Set<string>();
+  let currentId = observationId;
+
+  for (let hop = 0; hop < MAX_SURVIVOR_HOPS; hop++) {
+    if (visited.has(currentId)) {
+      return null;
+    }
+    visited.add(currentId);
+
+    const rows = await runner<SurvivorRow[]>`
+      SELECT id, status FROM conditions.observations WHERE id = ${currentId}
+    `;
+    const row = rows[0];
+    if (row === undefined) {
+      return null;
+    }
+    if (row.status === "active") {
+      return currentId;
+    }
+    if (row.status !== "inactive") {
+      // An archived tombstone (or any non-active, non-inactive state) is never a
+      // survivor and never a corroboration target.
+      return null;
+    }
+
+    const parents = await runner<{ id: string }[]>`
+      SELECT id FROM conditions.observations
+      WHERE corroborations @> ${runner.json([currentId] as never)}::jsonb
+        AND kind = 'event'
+        AND status IN ('active', 'inactive')
+      ORDER BY valid_from, id
+      LIMIT 1
+    `;
+    const parent = parents[0];
+    if (parent === undefined) {
+      return null;
+    }
+    currentId = parent.id;
+  }
+
+  return null;
 }
 
 interface LaterActorRow {
@@ -149,9 +281,15 @@ async function lockObservationsInOrder(tx: Tx, ...ids: string[]): Promise<Set<st
  *  2. append a `confirm` evidence row on the SURVIVOR (actor = the merged
  *     report's reporter key and source; `occurred_at` = its `data_updated_at`),
  *     guarded so a repeat call appends nothing;
- *  3. union the merged id into the survivor's `corroborations` and `replaces`;
- *  4. mark the MERGED (later) observation `inactive`;
- *  5. recompute the survivor's evidence state in the SAME transaction.
+ *  3. MIGRATE the merged row's existing `confirm` rows onto the survivor, so
+ *     every distinct witness the merged row had accrued keeps crediting the head
+ *     when composition flips it (a just-landed EARLIER report becoming the head
+ *     must not strand the confirms an inactive later head already held). Same
+ *     NOT-EXISTS guard, keyed by `details.observationId`, so no confirmer is
+ *     double-counted;
+ *  4. union the merged id into the survivor's `corroborations` and `replaces`;
+ *  5. mark the MERGED (later) observation `inactive`;
+ *  6. recompute the survivor's evidence state in the SAME transaction.
  *
  * Idempotent: a concurrent double-call appends exactly one `confirm` row and one
  * `corroborations` entry. Corroboration never sets `routing_eligible` — only an
@@ -211,6 +349,27 @@ export async function applyCorroboration(
           AND evidence_kind = 'confirm'
           AND details ->> 'observationId' = ${merged.id}
       )
+    `;
+
+    // Re-parent the merged row's OWN confirms onto the head. Without this, a
+    // just-landed report that is EARLIER than the resolved survivor flips the
+    // head under isEarlier and would strand the prior witnesses' confirms on the
+    // now-inactive row, so the new head would show fewer distinct confirmers than
+    // the cluster actually has. Keyed by details.observationId so each distinct
+    // confirmer is credited to the head exactly once.
+    await tx`
+      INSERT INTO conditions.report_evidence
+        (observation_id, evidence_kind, actor_key_id, source_id, occurred_at, details)
+      SELECT ${survivor.id}, 'confirm', m.actor_key_id, m.source_id, m.occurred_at, m.details
+      FROM conditions.report_evidence m
+      WHERE m.observation_id = ${merged.id}
+        AND m.evidence_kind = 'confirm'
+        AND NOT EXISTS (
+          SELECT 1 FROM conditions.report_evidence s
+          WHERE s.observation_id = ${survivor.id}
+            AND s.evidence_kind = 'confirm'
+            AND s.details ->> 'observationId' = m.details ->> 'observationId'
+        )
     `;
 
     await unionInto(tx, survivor.id, merged.id);

@@ -7,15 +7,27 @@
  * two concurrent landings converge on one survivor instead of annihilating each
  * other. Two independent witnesses raise the survivor to `corroborated`.
  *
+ * The neighborhood scan ALSO surfaces merged (`inactive`) rows and redirects
+ * them to their active survivor via `resolveSurvivor`, so a 3rd witness that
+ * only neighbors an already-merged report is re-credited to the real
+ * phenomenon instead of landing unlinked. `archived` tombstones are never
+ * surfaced and never a target.
+ *
  * Reuses the existing pieces (nothing is redefined here): `findCandidates` (the
- * fingerprint-neighborhood opener), `matchPhenomenonCandidates` (the pure
+ * fingerprint-neighborhood opener), `resolveSurvivor` (the merged→active-head
+ * walk), `matchPhenomenonCandidates` (the pure
  * type/distance/time/direction/independence decision), and `applyCorroboration`
  * (the atomic merge + recompute). Corroboration NEVER sets `routing_eligible`
  * and NEVER trains reputation — only an external resolution routes.
  */
 import type postgres from "postgres";
 import { matchPhenomenonCandidates, type PhenomenonCandidate } from "@openconditions/contrib-core";
-import { applyCorroboration, findCandidates } from "./phenomenon.js";
+import {
+  applyCorroboration,
+  findCandidates,
+  loadPhenomenonCandidates,
+  resolveSurvivor,
+} from "./phenomenon.js";
 
 type Sql = postgres.Sql;
 
@@ -74,14 +86,33 @@ export async function autoCorroborateOnLanding(
     return [];
   }
 
-  const allCandidates = await findCandidates(sql, observationId);
-  // Crowd-only for now: matching a crowd report to an OFFICIAL FEED observation
-  // (cross-source validation) is a larger pass that would let one crowd report
-  // corroborate an authoritative feed row. It is deliberately DEFERRED as a
-  // tracked follow-up — reviewer external-resolution remains the routing gate in
-  // the interim. Feed candidates carry no reporter keyId (actorFor sets keyId
-  // only for crowd origin), so exclude them here.
-  const candidates = allCandidates.filter((c) => c.actor.keyId !== undefined);
+  // Widen the neighborhood to merged (`inactive`) rows too, then REDIRECT each
+  // candidate to the active survivor of its corroboration cluster. A 3rd witness
+  // that only neighbors an already-merged report must re-credit the real
+  // phenomenon (the survivor), not land unlinked. `archived` tombstones are
+  // never surfaced by findCandidates and `resolveSurvivor` never returns one.
+  const neighborhood = await findCandidates(sql, observationId, { includeInactive: true });
+  const survivorIds = new Set<string>();
+  for (const candidate of neighborhood) {
+    const survivorId = await resolveSurvivor(sql, candidate.id);
+    // Drop dead-end chains (null) and any resolution back onto the just-landed
+    // row (it can never corroborate itself).
+    if (survivorId !== null && survivorId !== observationId) {
+      survivorIds.add(survivorId);
+    }
+  }
+  if (survivorIds.size === 0) {
+    return [];
+  }
+
+  // Match against the SURVIVOR rows (re-read by id — a survivor may sit outside
+  // the just-landed row's own neighborhood). Crowd-only for now: matching a
+  // crowd report to an OFFICIAL FEED observation (cross-source validation) is a
+  // larger pass, deliberately DEFERRED — reviewer external-resolution remains the
+  // routing gate in the interim. Feed survivors carry no reporter keyId (actorFor
+  // sets keyId only for crowd origin), so exclude them here.
+  const survivors = await loadPhenomenonCandidates(sql, [...survivorIds]);
+  const candidates = survivors.filter((c) => c.actor.keyId !== undefined);
   if (candidates.length === 0) {
     return [];
   }
