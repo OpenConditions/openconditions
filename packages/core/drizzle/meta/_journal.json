@@ -148,6 +148,13 @@
       "when": 1784056152930,
       "tag": "0020_federation_peer_health",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1784113337318,
+      "tag": "0021_federation_outbox_retention_index",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+CREATE INDEX "idx_federation_outbox_created_at" ON "conditions"."federation_outbox" USING btree ("created_at");

@@ -577,6 +577,9 @@ export const federationOutbox = conditionsSchema.table(
     index("idx_federation_outbox_object").on(t.objectId, t.seq),
     // The composite peer cursor's covering index: WHERE/ORDER BY are (txid, seq).
     index("idx_federation_outbox_cursor").on(t.txid, t.seq),
+    // The daily retention prune deletes on `created_at < floor`; this btree
+    // keeps that a range scan instead of a full seq-scan as the journal grows.
+    index("idx_federation_outbox_created_at").on(t.createdAt),
     check("federation_outbox_operation_enum", sql`${t.operation} IN ('create','update','delete')`),
   ]
 );

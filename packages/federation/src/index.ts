@@ -53,6 +53,14 @@ export type {
   OutboxQuery,
 } from "./outbox.js";
 export {
+  DEFAULT_OUTBOX_RETENTION_SEC,
+  OUTBOX_PRUNE_INTERVAL_HOURS,
+  OUTBOX_RETENTION_SAFETY_MARGIN_SEC,
+  OUTBOX_RETENTION_TIER1_FLOOR_SEC,
+  pruneOutbox,
+} from "./outbox-retention.js";
+export type { PruneOutboxOptions, PruneOutboxResult } from "./outbox-retention.js";
+export {
   CLOCK_SKEW_SEC,
   EXPIRES_WINDOW_SEC,
   FEDERATION_REASON_HEADER,

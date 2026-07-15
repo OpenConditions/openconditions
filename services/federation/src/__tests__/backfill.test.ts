@@ -2,7 +2,12 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
-import { encodeOutboxCursor, readOutbox, type OutboxCursor } from "@openconditions/federation";
+import {
+  encodeOutboxCursor,
+  pruneOutbox,
+  readOutbox,
+  type OutboxCursor,
+} from "@openconditions/federation";
 import {
   BACKFILL_WINDOW_TIER_0_SEC,
   BACKFILL_WINDOW_TIER_1_SEC,
@@ -223,5 +228,49 @@ describe("readBackfill — the tier-bounded time floor", () => {
       limit: 1,
     });
     expect(second.orderedItems.map((e) => e.objectId)).toEqual(["bf-gap-2"]);
+  }, 30_000);
+});
+
+describe("readBackfill — the archive redirect survives the retention prune", () => {
+  it("still flags beyondWindow/archiveUrl for a stale-cursor Tier-1 peer after pruning", async () => {
+    const base = await frontier();
+    // A row in the SAFETY-MARGIN band: beyond the Tier-1 serve window (30d) so it
+    // drives the archive redirect, but INSIDE the retention floor (30d + 7d) so
+    // the prune must not delete it. Plus a deep-past row the prune removes — the
+    // point of the unconditional margin is that pruning the deep past does not
+    // silence the redirect, because the margin-band row keeps it alive.
+    await insertObservation("bf-margin-band");
+    await insertObservation("bf-deep-past");
+    await setAge("bf-margin-band", 33 * DAY);
+    await setAge("bf-deep-past", 50 * DAY);
+
+    const before = await readBackfill(sql, {
+      after: base,
+      tier: 1,
+      now: NOW,
+      archiveUrl: ARCHIVE_URL,
+      limit: 500,
+    });
+    expect(before.beyondWindow).toBe(true);
+
+    const pruned = await pruneOutbox(sql, { now: NOW });
+    expect(pruned.deleted).toBeGreaterThanOrEqual(1);
+
+    const survivors = await sql<{ object_id: string }[]>`
+      SELECT object_id FROM conditions.federation_outbox
+      WHERE object_id IN ('bf-margin-band', 'bf-deep-past')`;
+    const ids = survivors.map((r) => r.object_id);
+    expect(ids).toContain("bf-margin-band");
+    expect(ids).not.toContain("bf-deep-past");
+
+    const after = await readBackfill(sql, {
+      after: base,
+      tier: 1,
+      now: NOW,
+      archiveUrl: ARCHIVE_URL,
+      limit: 500,
+    });
+    expect(after.beyondWindow).toBe(true);
+    expect(after.archiveUrl).toBe(ARCHIVE_URL);
   }, 30_000);
 });
