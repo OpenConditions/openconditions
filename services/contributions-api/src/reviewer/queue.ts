@@ -28,15 +28,25 @@ export interface FlaggedItem {
 
 export interface FlaggedPage {
   items: FlaggedItem[];
-  /** Keyset cursor for the next page (the last item's `flaggedAt`), or null. */
+  /** Composite keyset cursor: the last item's `flaggedAt`, or null at the end. */
   nextBefore: string | null;
+  /** Composite keyset cursor: the last item's observation `id`, or null. */
+  nextBeforeId: string | null;
 }
 
 export interface ListFlaggedParams {
   /** Page size; clamped to [1, 200], default 50. */
   limit?: number;
-  /** Keyset cursor: only observations flagged strictly BEFORE this ISO instant. */
+  /**
+   * Composite keyset cursor (with `beforeId`): the previous page's last
+   * `flaggedAt`. Supply both `before` and `beforeId` together, or neither.
+   */
   before?: string;
+  /**
+   * Composite keyset cursor (with `before`): the previous page's last
+   * observation `id`, tie-breaking rows that share `before`'s `flaggedAt`.
+   */
+  beforeId?: string;
 }
 
 interface FlaggedRow {
@@ -58,12 +68,17 @@ export function clampLimit(limit: number | undefined): number {
 }
 
 /**
- * List the open-flagged observations, newest flag first, with keyset pagination
- * on `flagged_at`. `before` (exclusive) is the previous page's `nextBefore`.
+ * List the open-flagged observations, newest flag first, with a composite
+ * `(flagged_at, id)` keyset cursor. The cursor is the previous page's last row:
+ * `before` (its `flaggedAt`) and `beforeId` (its `id`), supplied together or
+ * both absent for the first page. The row-wise predicate mirrors the
+ * `ORDER BY flagged_at DESC, id DESC`, so rows sharing a `flagged_at` at a page
+ * boundary are tie-broken by `id` and never skipped.
  */
 export async function listFlagged(sql: Sql, params: ListFlaggedParams = {}): Promise<FlaggedPage> {
   const limit = clampLimit(params.limit);
   const before = params.before ?? null;
+  const beforeId = params.beforeId ?? null;
 
   const rows = await sql<FlaggedRow[]>`
     SELECT o.id, o.flagged_at, o.evidence_state, o.type,
@@ -79,7 +94,11 @@ export async function listFlagged(sql: Sql, params: ListFlaggedParams = {}): Pro
     ) f ON true
     WHERE o.flagged_at IS NOT NULL
       AND o.status = 'active'
-      AND (${before}::timestamptz IS NULL OR o.flagged_at < ${before}::timestamptz)
+      AND (
+        ${before}::timestamptz IS NULL
+        OR o.flagged_at < ${before}::timestamptz
+        OR (o.flagged_at = ${before}::timestamptz AND o.id < ${beforeId}::text)
+      )
     ORDER BY o.flagged_at DESC, o.id DESC
     LIMIT ${limit}
   `;
@@ -95,9 +114,12 @@ export async function listFlagged(sql: Sql, params: ListFlaggedParams = {}): Pro
   }));
 
   // Only advertise a next cursor when the page was full — otherwise the client
-  // has reached the end.
-  const nextBefore =
-    items.length === limit && items.length > 0 ? items[items.length - 1]!.flaggedAt : null;
+  // has reached the end. Both cursor fields come from the last row and are
+  // supplied back together on the next request.
+  const full = items.length === limit && items.length > 0;
+  const last = full ? rows[rows.length - 1]! : null;
+  const nextBefore = last ? last.flagged_at.toISOString() : null;
+  const nextBeforeId = last ? last.id : null;
 
-  return { items, nextBefore };
+  return { items, nextBefore, nextBeforeId };
 }

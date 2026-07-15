@@ -290,15 +290,20 @@ describe("GET /contrib/reviewer/flagged — the anomaly queue", () => {
     const first = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=1", {
       token: REVIEWER_TOKEN,
     });
-    const firstBody = first.json() as { items: { observationId: string }[]; nextBefore: string };
+    const firstBody = first.json() as {
+      items: { observationId: string }[];
+      nextBefore: string;
+      nextBeforeId: string;
+    };
     expect(firstBody.items).toHaveLength(1);
     // b was flagged latest, so it comes first.
     expect(firstBody.items[0]!.observationId).toBe(b.id);
     expect(firstBody.nextBefore).not.toBeNull();
+    expect(firstBody.nextBeforeId).not.toBeNull();
 
     const second = await reviewerInject(
       "GET",
-      `/contrib/reviewer/flagged?limit=1&before=${encodeURIComponent(firstBody.nextBefore)}`,
+      `/contrib/reviewer/flagged?limit=1&before=${encodeURIComponent(firstBody.nextBefore)}&beforeId=${encodeURIComponent(firstBody.nextBeforeId)}`,
       { token: REVIEWER_TOKEN }
     );
     const secondBody = second.json() as { items: { observationId: string }[] };
@@ -318,6 +323,97 @@ describe("GET /contrib/reviewer/flagged — the anomaly queue", () => {
     const body = res.json() as { items: { observationId: string }[] };
     expect(body.items.map((i) => i.observationId)).not.toContain(id);
   }, 60_000);
+
+  it("a non-full page ends the list with null cursor fields", async () => {
+    const res = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=200", {
+      token: REVIEWER_TOKEN,
+    });
+    const body = res.json() as {
+      items: unknown[];
+      nextBefore: string | null;
+      nextBeforeId: string | null;
+    };
+    // The DB never holds 200 flagged rows in this suite, so the page is not full.
+    expect(body.items.length).toBeLessThan(200);
+    expect(body.nextBefore).toBeNull();
+    expect(body.nextBeforeId).toBeNull();
+  }, 60_000);
+});
+
+describe("GET /contrib/reviewer/flagged — composite (flagged_at, id) keyset cursor", () => {
+  /** Land a fresh observation and stamp its flagged_at to an exact instant. */
+  async function seedFlaggedAt(
+    nonce: string,
+    coordinates: [number, number],
+    flaggedAt: string
+  ): Promise<string> {
+    const { id } = await landObs({ nonce, geometry: { type: "Point", coordinates } });
+    await sql`
+      UPDATE conditions.observations SET flagged_at = ${flaggedAt}::timestamptz WHERE id = ${id}`;
+    return id;
+  }
+
+  it("does not skip a same-flagged_at tie row split across a page boundary", async () => {
+    // Three rows, far in the future so they are the newest flagged rows in the
+    // shared DB. TWO share the EXACT same flagged_at; the page boundary lands in
+    // the middle of that tie — the case a flagged_at-only cursor would skip.
+    const tie = "2027-01-01T00:00:01.000Z";
+    const later = "2027-01-01T00:00:02.000Z";
+    const newest = await seedFlaggedAt("cursor-tie-newest-1", [11.0, 46.0], later);
+    const tieA = await seedFlaggedAt("cursor-tie-a-0000001", [12.0, 46.0], tie);
+    const tieB = await seedFlaggedAt("cursor-tie-b-0000001", [13.0, 46.0], tie);
+    const mine = new Set([newest, tieA, tieB]);
+    const [tieHi, tieLo] = [tieA, tieB].sort((x, y) => (x < y ? 1 : -1)); // id DESC
+
+    // Page 1: newest first, boundary in the middle of the tie (limit 2).
+    const p1 = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=2", {
+      token: REVIEWER_TOKEN,
+    });
+    expect(p1.statusCode).toBe(200);
+    const b1 = p1.json() as {
+      items: { observationId: string; flaggedAt: string }[];
+      nextBefore: string | null;
+      nextBeforeId: string | null;
+    };
+    expect(b1.items.map((i) => i.observationId)).toEqual([newest, tieHi]);
+    expect(b1.nextBefore).toBe(tie);
+    expect(b1.nextBeforeId).toBe(tieHi);
+
+    // Page 2: with BOTH cursor fields, the remaining tie row must appear — a
+    // flagged_at-only cursor (before=tie) would have excluded it entirely.
+    const p2 = await reviewerInject(
+      "GET",
+      `/contrib/reviewer/flagged?limit=2&before=${encodeURIComponent(b1.nextBefore!)}&beforeId=${encodeURIComponent(b1.nextBeforeId!)}`,
+      { token: REVIEWER_TOKEN }
+    );
+    expect(p2.statusCode).toBe(200);
+    const b2 = p2.json() as { items: { observationId: string }[] };
+    const p2Ids = b2.items.map((i) => i.observationId);
+    expect(p2Ids[0]).toBe(tieLo);
+
+    // Full set across both pages: no dup, no skip; every seeded row present.
+    const seen = [...b1.items.map((i) => i.observationId), ...p2Ids].filter((id) => mine.has(id));
+    expect(new Set(seen).size).toBe(seen.length); // no duplicate
+    expect(new Set(seen)).toEqual(mine); // no skip — all three returned
+    // Global order across pages is (flagged_at DESC, id DESC).
+    expect(seen).toEqual([newest, tieHi, tieLo]);
+  }, 90_000);
+
+  it("rejects a before without a beforeId with 400", async () => {
+    const res = await reviewerInject(
+      "GET",
+      `/contrib/reviewer/flagged?before=${encodeURIComponent("2027-01-01T00:00:01.000Z")}`,
+      { token: REVIEWER_TOKEN }
+    );
+    expect(res.statusCode).toBe(400);
+  });
+
+  it("rejects a beforeId without a before with 400", async () => {
+    const res = await reviewerInject("GET", "/contrib/reviewer/flagged?beforeId=crowd:x:y", {
+      token: REVIEWER_TOKEN,
+    });
+    expect(res.statusCode).toBe(400);
+  });
 });
 
 describe("POST /contrib/reviewer/observations/:id/accept", () => {

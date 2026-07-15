@@ -617,17 +617,22 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   // Every route is operator-authenticated with the bearer token (never a device
   // key/grant) via the requireReviewer preHandler.
 
-  app.get<{ Querystring: { limit?: string; before?: string } }>(
+  app.get<{ Querystring: { limit?: string; before?: string; beforeId?: string } }>(
     "/contrib/reviewer/flagged",
     { preHandler: requireReviewer },
     async (req, reply) => {
       const rawLimit = req.query.limit;
       const limit = rawLimit === undefined ? undefined : Number.parseInt(rawLimit, 10);
       const before = req.query.before;
+      const beforeId = req.query.beforeId;
+      // The composite keyset cursor is a pair: both halves or neither.
+      if ((before === undefined) !== (beforeId === undefined)) {
+        return reply.status(400).send({ error: "before and beforeId must be supplied together" });
+      }
       if (before !== undefined && Number.isNaN(new Date(before).getTime())) {
         return reply.status(400).send({ error: "before must be an ISO 8601 timestamp" });
       }
-      const page = await listFlagged(sql, { limit, before });
+      const page = await listFlagged(sql, { limit, before, beforeId });
       return reply.send(page);
     }
   );
