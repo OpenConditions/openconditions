@@ -168,20 +168,6 @@
     "enabledByDefault": true
   },
   {
-    "id": "wzdx-kentucky",
-    "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
-    "format": "wzdx",
-    "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attribution": "Kentucky Transportation Cabinet",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
-  },
-  {
     "id": "wzdx-new-jersey",
     "name": "WZDx — New Jersey Institute of Technology (new jersey)",
     "format": "wzdx",
@@ -191,6 +177,20 @@
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "New Jersey Institute of Technology",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "enabledByDefault": true
+  },
+  {
+    "id": "wzdx-kentucky",
+    "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
+    "format": "wzdx",
+    "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Kentucky Transportation Cabinet",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
     "enabledByDefault": true
