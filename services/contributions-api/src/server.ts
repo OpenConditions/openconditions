@@ -32,6 +32,7 @@ import { issueToken } from "./issuer/issue.js";
 import { DEFAULT_ISSUER_NAME, ensureIssuerKeys, loadActiveIssuerKeys } from "./issuer/keys.js";
 import { TokenVerifier } from "./issuer/verify.js";
 import { autoCorroborateOnLanding } from "./evidence/autoCorroborate.js";
+import { crossValidateAgainstFeeds } from "./evidence/crossValidate.js";
 import { GeometryInvalidError, landReport } from "./landing/insert.js";
 import { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
 import { blockKey, listBlocked, unblockKey } from "./reviewer/blocklist.js";
@@ -66,6 +67,17 @@ export interface BuildOptions {
    * landing.
    */
   autoCorroborate?: (sql: postgres.Sql, observationId: string, now: string) => Promise<string[]>;
+  /**
+   * Override the post-hoc official-feed cross-validation hook (a landing seam).
+   * Defaults to the real {@link crossValidateAgainstFeeds}; injected in tests to
+   * prove that a failure in this best-effort routing hook can never fail an
+   * already-committed landing.
+   */
+  crossValidateAgainstFeeds?: (
+    sql: postgres.Sql,
+    observationId: string,
+    now: string
+  ) => Promise<string | null>;
 }
 
 interface EnrollBody {
@@ -133,6 +145,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const now = options.now ?? (() => new Date().toISOString());
   const streetCompleteCheck = options.streetCompleteCheck ?? flagOntoOpenFlagged;
   const autoCorroborate = options.autoCorroborate ?? autoCorroborateOnLanding;
+  const crossValidate = options.crossValidateAgainstFeeds ?? crossValidateAgainstFeeds;
   const issuerName = env["OPENCONDITIONS_ISSUER_NAME"] || DEFAULT_ISSUER_NAME;
 
   const app = Fastify({ logger: options.logger ?? true });
@@ -396,6 +409,28 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         req.log.warn(
           { err, observationId: result.observationId },
           "auto-corroboration failed; landing is unaffected"
+        );
+      }
+
+      // ADR §4 official cross-validation: if the fresh crowd landing phenomenon-
+      // matches an authoritative FEED observation of the same event, route it via
+      // external resolution (which flips routing_eligible AND trains the
+      // reporter). Post-hoc and best-effort like the hooks above — the report has
+      // landed 200 and a matcher error must NEVER fail it. Crowd↔crowd agreement
+      // is handled by autoCorroborate above and never routes; only a FEED match
+      // routes here.
+      try {
+        const matchedFeedId = await crossValidate(sql, result.observationId, nowIso);
+        if (matchedFeedId !== null) {
+          req.log.info(
+            { observationId: result.observationId, matchedFeedId },
+            "landing cross-validated against an official feed; routed via external resolution"
+          );
+        }
+      } catch (err) {
+        req.log.warn(
+          { err, observationId: result.observationId },
+          "official-feed cross-validation failed; landing is unaffected"
         );
       }
     }

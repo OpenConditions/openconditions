@@ -439,7 +439,7 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
     expect(rowD!.confidence_score).toBeCloseTo(0.3, 10);
   }, 60_000);
 
-  it("does NOT auto-corroborate a crowd report onto an OFFICIAL FEED observation (cross-source pass is deferred)", async () => {
+  it("cross-validates a crowd report against an OFFICIAL FEED of the same phenomenon and routes it via external resolution", async () => {
     // A feed road_closure at the same phenomenon as the incoming crowd report.
     const geometry = { type: "Point" as const, coordinates: [1.0, 48.0] };
     const feedEvt = {
@@ -465,18 +465,59 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
     const report = await sign(key, { type: "hazard", geometry, nonce: "crowd-vs-feed-0001" });
     expect((await postReport(report, grant)).statusCode).toBe(200);
 
-    // The feed observation is untouched (no confirm evidence, still active,
-    // evidence_state NULL) and the crowd report stays self_reported + active.
+    // The FEED observation is authoritative and untouched — external resolution
+    // is appended to the CROWD row, not the feed.
     const feed = await sql<{ status: string; evidence_state: string | null }[]>`
       SELECT status, evidence_state FROM conditions.observations WHERE id = 'feed:closure:1'`;
     expect(feed[0]!.status).toBe("active");
     expect(feed[0]!.evidence_state).toBeNull();
-    const confirms = await sql<{ n: number }[]>`
+    const feedEvidence = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM conditions.report_evidence
       WHERE observation_id = 'feed:closure:1'`;
-    expect(confirms[0]!.n).toBe(0);
-    const crowd = await readObs(await crowdObservationId(key.keyId, "crowd-vs-feed-0001"));
-    expect(crowd!.evidence_state).toBe("self_reported");
+    expect(feedEvidence[0]!.n).toBe(0);
+
+    // The CROWD report is now externally resolved (routing-eligible) and carries
+    // exactly one official_match row; the reporter's α was trained (2 → 3).
+    const crowdId = await crowdObservationId(key.keyId, "crowd-vs-feed-0001");
+    const crowd = await readObs(crowdId);
+    expect(crowd!.evidence_state).toBe("externally_resolved");
+    expect(crowd!.routing_eligible).toBe(true);
+    const official = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM conditions.report_evidence
+      WHERE observation_id = ${crowdId} AND evidence_kind = 'official_match'`;
+    expect(official[0]!.n).toBe(1);
+    const reporter = await sql<{ reputation_alpha: number }[]>`
+      SELECT reputation_alpha FROM conditions.reporter WHERE key_id = ${key.keyId}`;
+    expect(reporter[0]!.reputation_alpha).toBe(3);
+  }, 60_000);
+
+  it("a failing official cross-validation hook never fails the landing (best-effort)", async () => {
+    const throwingApp = await build({
+      sql,
+      env: {
+        OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+        OPENCONDITIONS_INSTANCE_ID: "maps.example.org",
+      },
+      logger: false,
+      now: () => NOW,
+      crossValidateAgainstFeeds: async () => {
+        throw new Error("cross-validate boom");
+      },
+    });
+    try {
+      const key = await generateReporterKey();
+      const grant = await enroll(key);
+      const report = await sign(key, {
+        geometry: { type: "Point", coordinates: [2.4, 49.3] },
+        nonce: "xval-boom-0000001",
+      });
+      const res = await postReport(report, grant, throwingApp);
+      expect(res.statusCode).toBe(200);
+      const row = await readObs(await crowdObservationId(key.keyId, "xval-boom-0000001"));
+      expect(row!.evidence_state).toBe("self_reported");
+    } finally {
+      await throwingApp.close();
+    }
   }, 60_000);
 
   it("a failing auto-corroboration hook never fails the landing (best-effort)", async () => {
