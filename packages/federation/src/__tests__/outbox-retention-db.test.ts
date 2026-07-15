@@ -237,4 +237,21 @@ describe("pruneOutbox — the composite-cursor serve path is unaffected", () => 
     const second = await readOutbox(sql, { after: first.highWaterMark, limit: 500 });
     expect(second.orderedItems.map((e) => e.objectId)).toEqual(["fwd-b"]);
   }, 30_000);
+
+  it("deletes a backlog larger than one batch across multiple chunks", async () => {
+    // Seven prunable rows (all past the 37d floor) plus one that must survive.
+    for (let i = 0; i < 7; i++) await seedEntry(`old-${i}`, daysAgo(40 + i));
+    await seedEntry("recent", daysAgo(10));
+
+    // batchSize 2 forces at least four delete round-trips (2+2+2+1); every
+    // prunable row must still be removed and the recent one kept.
+    const result = await pruneOutbox(sql, { now: NOW, batchSize: 2 });
+
+    expect(result.deleted).toBe(7);
+    expect(await survivingObjectIds()).toEqual(["recent"]);
+    // Idempotent under batching: a second pass finds nothing to chunk.
+    const again = await pruneOutbox(sql, { now: NOW, batchSize: 2 });
+    expect(again.deleted).toBe(0);
+    expect(await survivingObjectIds()).toEqual(["recent"]);
+  }, 30_000);
 });

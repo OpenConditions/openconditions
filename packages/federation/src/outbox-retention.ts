@@ -73,6 +73,16 @@ export const OUTBOX_RETENTION_SAFETY_MARGIN_SEC = 604_800;
 export const DEFAULT_OUTBOX_RETENTION_SEC =
   OUTBOX_RETENTION_TIER1_FLOOR_SEC + OUTBOX_RETENTION_SAFETY_MARGIN_SEC;
 
+/**
+ * Rows deleted per statement. The delete runs in bounded chunks rather than one
+ * statement so the FIRST prune of a journal that grew large (e.g. the daily cron
+ * was down for a long stretch) never runs as a single long-lived,
+ * lock-holding transaction over millions of rows — each chunk commits before the
+ * next, releasing locks between batches. Steady-state daily prunes delete far
+ * fewer than one batch and complete in a single round-trip.
+ */
+export const DEFAULT_OUTBOX_PRUNE_BATCH_SIZE = 10_000;
+
 export interface PruneOutboxOptions {
   /**
    * Requested retention in seconds. Clamped UP to the Tier-1 floor PLUS the
@@ -97,6 +107,12 @@ export interface PruneOutboxOptions {
    * (then everything past the floor is simply kept).
    */
   archiveHighWaterIso?: string;
+  /**
+   * Max rows deleted per statement (default {@link DEFAULT_OUTBOX_PRUNE_BATCH_SIZE}).
+   * A non-finite or non-positive value falls back to the default. Pass `sql` as a
+   * pool (not a transaction) so each batch commits between iterations.
+   */
+  batchSize?: number;
 }
 
 export interface PruneOutboxResult {
@@ -159,9 +175,30 @@ export async function pruneOutbox(
     }
   }
 
-  const result = await sql`
-    DELETE FROM conditions.federation_outbox
-    WHERE created_at < ${cutoffIso}::timestamptz`;
+  const batchSize =
+    opts.batchSize !== undefined && Number.isFinite(opts.batchSize) && opts.batchSize > 0
+      ? Math.floor(opts.batchSize)
+      : DEFAULT_OUTBOX_PRUNE_BATCH_SIZE;
 
-  return { deleted: result.count, floorIso };
+  // Delete in bounded chunks (oldest first, via the created_at index) so a large
+  // backlog never locks the journal in one long transaction. Each statement is
+  // its own autocommit round-trip when `sql` is a pool, so locks release between
+  // batches. The WHERE predicate is identical to a single delete — only the
+  // execution is chunked — so the "never prune a servable/un-archived row"
+  // guarantee is unchanged. A partial batch means no rows remain: stop.
+  let deleted = 0;
+  for (;;) {
+    const result = await sql`
+      DELETE FROM conditions.federation_outbox
+      WHERE seq IN (
+        SELECT seq FROM conditions.federation_outbox
+        WHERE created_at < ${cutoffIso}::timestamptz
+        ORDER BY created_at
+        LIMIT ${batchSize}
+      )`;
+    deleted += result.count;
+    if (result.count < batchSize) break;
+  }
+
+  return { deleted, floorIso };
 }
