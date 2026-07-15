@@ -245,6 +245,43 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
   }, 30_000);
 });
 
+describe("deliverWebhook — priorityRestricted self-describing marker", () => {
+  it("stamps priorityRestricted:true on a priorityOnly pushed page", async () => {
+    const bbox: [number, number, number, number] = [40.0, 51.0, 41.0, 53.0];
+    const sub = await webhookSubFromNow({ priorityOnly: true, bbox });
+    await insertEvent("mark-pri", { type: "road_closure", lon: 40.5 });
+
+    const { fetchImpl, captured } = mockInbox([200]);
+    await deliverWebhook(sql, sub, { signingKey, fetchImpl, partOf: PARTOF, now: NOW });
+
+    const page = JSON.parse(captured[0]!.body.toString("utf8")) as { priorityRestricted?: boolean };
+    expect(page.priorityRestricted).toBe(true);
+  }, 30_000);
+
+  it("does NOT set priorityRestricted on a full-fidelity (priorityOnly:false) push", async () => {
+    const bbox: [number, number, number, number] = [42.0, 51.0, 43.0, 53.0];
+    const sub = await webhookSubFromNow({ priorityOnly: false, bbox });
+    await insertEvent("mark-full", { type: "road_closure", lon: 42.5 });
+
+    const { fetchImpl, captured } = mockInbox([200]);
+    await deliverWebhook(sql, sub, { signingKey, fetchImpl, partOf: PARTOF, now: NOW });
+
+    const page = JSON.parse(captured[0]!.body.toString("utf8")) as { priorityRestricted?: boolean };
+    expect(page.priorityRestricted ?? false).toBe(false);
+  }, 30_000);
+
+  it("the pull /peer/outbox page NEVER sets priorityRestricted (it is complete)", async () => {
+    const bbox: [number, number, number, number] = [44.0, 51.0, 45.0, 53.0];
+    const filter = { bbox, permissiveOnly: false };
+    const start = encodeOutboxCursor(await frontier());
+    await insertEvent("mark-pull", { type: "road_closure", lon: 44.5 });
+
+    const pull = await readOutbox(sql, { after: start, filter, now: NOW, limit: 500 });
+    expect(pull.orderedItems.map((e) => e.objectId)).toContain("mark-pull");
+    expect((pull as { priorityRestricted?: boolean }).priorityRestricted).toBeUndefined();
+  }, 30_000);
+});
+
 describe("deliverWebhook — failure disables push after the threshold", () => {
   it("increments push_failures on 5xx and flips to push_disabled at the threshold", async () => {
     const bbox: [number, number, number, number] = [14.0, 51.0, 15.0, 53.0];

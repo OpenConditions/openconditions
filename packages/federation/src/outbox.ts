@@ -143,6 +143,15 @@ export interface OutboxPage {
    * subscriber stores and replays as `after` on its next poll.
    */
   highWaterMark: string;
+  /**
+   * Set (true) ONLY on a `priorityOnly` PUSH page: a self-describing hint that
+   * this page carries the priority subsequence, not every matching event — the
+   * receiving peer must run an independent `/peer/outbox` pull for completeness.
+   * The pull response is complete and NEVER sets this. It does not change the
+   * completeness contract (the peer's own pull is the authority); it just lets a
+   * defensive peer recognise a restricted page without inferring it.
+   */
+  priorityRestricted?: boolean;
   /** Surviving entries in `(txid, seq)` order; filtered-out entries leave gaps. */
   orderedItems: OutboxEntry[];
 }

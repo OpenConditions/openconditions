@@ -66,6 +66,7 @@ export interface UpdateSubscriptionInput {
 export type SubscriptionValidationCode =
   | "invalid-delivery-mode"
   | "over-broad-filter"
+  | "invalid-filter"
   | "inbox-required"
   | "inbox-not-public";
 
@@ -85,6 +86,84 @@ export class SubscriptionValidationError extends Error {
 /** The high-priority event classes a push channel is meant for: a narrower
  *  `types` recommendation handed back when a webhook/sse filter is over-broad. */
 const RECOMMENDED_NARROW_TYPES = ["road_closure", "lane_closure", "accident"];
+
+/** Rejects a `types`/`privacyClasses` value that is not a non-empty array of
+ *  non-empty strings (an open vocabulary — only blank/malformed entries fail). */
+function assertStringAllowList(value: unknown, label: string): void {
+  if (
+    !Array.isArray(value) ||
+    value.length === 0 ||
+    !value.every((entry) => typeof entry === "string" && entry.trim().length > 0)
+  ) {
+    throw new SubscriptionValidationError(
+      "invalid-filter",
+      `${label} must be a non-empty array of non-empty strings`
+    );
+  }
+}
+
+/**
+ * Validates filter VALUES (not just key presence). Untrusted JSON reaches here,
+ * so each present field is range/shape checked and a violation throws
+ * {@link SubscriptionValidationError} (`invalid-filter`) the route turns into 422.
+ * Applied for every delivery mode, so a `pull` subscription cannot store a
+ * malformed bbox/maxAge that would later mis-scope its pages either.
+ */
+function validateFilterValues(filter: FederationFilter): void {
+  // Fail closed on a non-object filter (a string/array would let every field read
+  // below be `undefined` and pass — then get stored as non-object JSON).
+  if (filter === null || typeof filter !== "object" || Array.isArray(filter)) {
+    throw new SubscriptionValidationError("invalid-filter", "filter must be a JSON object");
+  }
+
+  const bbox: unknown = filter.bbox;
+  if (bbox !== undefined) {
+    if (
+      !Array.isArray(bbox) ||
+      bbox.length !== 4 ||
+      !bbox.every((n) => typeof n === "number" && Number.isFinite(n))
+    ) {
+      throw new SubscriptionValidationError(
+        "invalid-filter",
+        "filter.bbox must be [west, south, east, north] — four finite numbers"
+      );
+    }
+    const [west, south, east, north] = bbox as [number, number, number, number];
+    if (west < -180 || west > 180 || east < -180 || east > 180) {
+      throw new SubscriptionValidationError(
+        "invalid-filter",
+        "filter.bbox longitudes (west, east) must be within [-180, 180]"
+      );
+    }
+    if (south < -90 || south > 90 || north < -90 || north > 90) {
+      throw new SubscriptionValidationError(
+        "invalid-filter",
+        "filter.bbox latitudes (south, north) must be within [-90, 90]"
+      );
+    }
+    if (west >= east) {
+      throw new SubscriptionValidationError("invalid-filter", "filter.bbox requires west < east");
+    }
+    if (south >= north) {
+      throw new SubscriptionValidationError("invalid-filter", "filter.bbox requires south < north");
+    }
+  }
+
+  if (filter.types !== undefined) assertStringAllowList(filter.types, "filter.types");
+  if (filter.privacyClasses !== undefined) {
+    assertStringAllowList(filter.privacyClasses, "filter.privacyClasses");
+  }
+
+  const maxAgeSec: unknown = filter.maxAgeSec;
+  if (maxAgeSec !== undefined) {
+    if (typeof maxAgeSec !== "number" || !Number.isFinite(maxAgeSec) || maxAgeSec <= 0) {
+      throw new SubscriptionValidationError(
+        "invalid-filter",
+        "filter.maxAgeSec must be a finite number greater than 0"
+      );
+    }
+  }
+}
 
 /** Whether a filter narrows the journal at all (any of the source-side bounds). */
 function filterIsBounded(filter: FederationFilter): boolean {
@@ -113,6 +192,10 @@ export function validateSubscriptionShape(input: {
       `deliveryMode must be one of ${DELIVERY_MODES.join(", ")}`
     );
   }
+
+  // Value-level validation runs for every mode — a malformed bbox/maxAge is
+  // refused whether the subscription pulls or is pushed.
+  validateFilterValues(input.filter);
 
   const isPush = input.deliveryMode === "webhook" || input.deliveryMode === "sse";
 

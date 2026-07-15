@@ -34,12 +34,17 @@ import {
 } from "@openconditions/federation";
 import { backfillFloorIso } from "./backfill.js";
 import { requirePeer, respondIfBlocked } from "./peer-request.js";
+import { SseStreamPump } from "./stream-pump.js";
 
 const SUBSCRIPTIONS_PATH = "/peer/subscriptions";
 const STREAM_PATH = "/peer/stream";
 
 /** How often the SSE channel re-polls the outbox for new entries + heartbeats. */
 const STREAM_POLL_MS = 3_000;
+
+/** The most entries one SSE tick serialises, so a slow peer never makes a single
+ *  poll build an unbounded page (capped at the outbox max page size). */
+const STREAM_TICK_LIMIT = 500;
 
 export interface SubscriptionRouteContext {
   sql: postgres.Sql;
@@ -188,7 +193,6 @@ export function registerSubscriptionRoutes(
     // clamp — even from a stored cursor of 0.0, an entry older than the window is
     // never scanned, so a Tier-0 peer cannot replay pre-24h history over SSE.
     const tier = ctx.peers.find((p) => p.instanceId === peerId)?.trustTier ?? 0;
-    let cursor = subscription.cursor;
 
     reply.hijack();
     reply.raw.writeHead(200, {
@@ -198,36 +202,47 @@ export function registerSubscriptionRoutes(
       "X-Accel-Buffering": "no",
     });
 
-    const tick = async () => {
-      try {
-        const nowIso = ctx.now();
-        const page = await readOutbox(ctx.sql, {
-          after: cursor,
-          filter,
-          ...(priorityClasses !== undefined ? { priorityClasses } : {}),
-          minCreatedAt: backfillFloorIso(tier, nowIso, ctx.governanceWindowSec),
-          partOf: `${ctx.baseUrl}${STREAM_PATH}`,
-          now: nowIso,
-        });
-        for (const entry of page.orderedItems) {
+    // The pump owns the cursor + backpressure state. It reads a limit-capped,
+    // filter/tier-scoped page each tick and advances the cursor ONLY over frames
+    // it actually wrote — a paused (buffer-full) tick re-reads its remainder next
+    // time, so no entry is skipped and the (txid,seq) semantics are unchanged.
+    const pump = new SseStreamPump(
+      {
+        readPage: (after) =>
+          readOutbox(ctx.sql, {
+            after,
+            filter,
+            ...(priorityClasses !== undefined ? { priorityClasses } : {}),
+            minCreatedAt: backfillFloorIso(tier, ctx.now(), ctx.governanceWindowSec),
+            partOf: `${ctx.baseUrl}${STREAM_PATH}`,
+            limit: STREAM_TICK_LIMIT,
+            now: ctx.now(),
+          }),
+        writer: {
+          write: (frame) => reply.raw.write(frame),
+          onceDrain: (listener) => reply.raw.once("drain", listener),
+        },
+        formatEntry: (entry) => {
           const id = encodeOutboxCursor({ txid: entry.txid, seq: entry.seq });
-          reply.raw.write(
-            `event: condition\nid: ${id}\ndata: ${JSON.stringify({ cursor: id, entry })}\n\n`
-          );
-        }
-        // Advance over the (push-channel-restricted) scanned frontier: the cursor
-        // the peer resumes from stays on the priority subsequence, never past a
-        // non-priority matching event (completeness is the peer's own pull).
-        cursor = page.highWaterMark;
-      } catch (err) {
-        req.log.error(err, "[peer/stream] poll failed");
-      }
-    };
+          return `event: condition\nid: ${id}\ndata: ${JSON.stringify({ cursor: id, entry })}\n\n`;
+        },
+        onError: (err) => req.log.error(err, "[peer/stream] poll failed"),
+      },
+      subscription.cursor
+    );
 
-    await tick(); // initial snapshot from the subscription's cursor
-    const poll = setInterval(() => void tick(), STREAM_POLL_MS);
-    const heartbeat = setInterval(() => reply.raw.write(`: ping ${cursor}\n\n`), STREAM_POLL_MS);
+    await pump.tick(); // initial snapshot from the subscription's cursor
+    const poll = setInterval(() => void pump.tick(), STREAM_POLL_MS);
+    // The heartbeat stands down while paused or while the socket already needs a
+    // drain, so an idle journal + a stalled peer cannot buffer pings unboundedly
+    // (the exact backpressure class the pump guards for data frames).
+    const heartbeat = setInterval(() => {
+      if (!pump.isPaused && !reply.raw.writableNeedDrain) {
+        reply.raw.write(`: ping ${pump.currentCursor}\n\n`);
+      }
+    }, STREAM_POLL_MS);
     req.raw.on("close", () => {
+      pump.stop();
       clearInterval(poll);
       clearInterval(heartbeat);
     });

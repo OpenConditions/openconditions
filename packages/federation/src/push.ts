@@ -138,6 +138,10 @@ export async function deliverWebhook(
     type: "OrderedCollectionPage",
     partOf: opts.partOf,
     highWaterMark: page.highWaterMark,
+    // A self-describing hint that this push carries the priority subsequence, so
+    // a defensive peer knows to run an independent pull for completeness. The
+    // pull response never sets it.
+    ...(subscription.priorityOnly ? { priorityRestricted: true } : {}),
     orderedItems: items,
   };
   const body = Buffer.from(JSON.stringify(payload));
