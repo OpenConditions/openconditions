@@ -88,11 +88,26 @@ function collectTsFiles(absPath: string): string[] {
 }
 
 /**
+ * Strips block comments (incl. `/** … *\/` JSDoc) before the import scan. A
+ * module doc comment may legitimately MENTION a transport concept (e.g. "handled
+ * by the peer-blocklist kill-switch") and even contain the word `export`, which
+ * would otherwise let the import regex start inside the comment and sweep the
+ * forbidden token into a false positive. Imports are code, never inside a
+ * comment, so stripping comments removes false positives without weakening the
+ * guard (the barrel-import self-test below still fires on a real violation).
+ */
+function stripBlockComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, " ");
+}
+
+/**
  * Extracts whole import/export-from statements (multi-line named-import blocks
  * joined), plus side-effect and dynamic imports, so a symbol split across lines
- * cannot escape the scan.
+ * cannot escape the scan. Comments are stripped first so a doc comment cannot
+ * masquerade as an import.
  */
-function importStatements(source: string): string[] {
+function importStatements(rawSource: string): string[] {
+  const source = stripBlockComments(rawSource);
   const stmts: string[] = [];
   const fromImport = /\b(?:import|export)\b[\s\S]*?\bfrom\s*["'][^"']+["']/g;
   const dynamic = /\b(?:require|import)\s*\(\s*["'][^"']+["']\s*\)/g;
