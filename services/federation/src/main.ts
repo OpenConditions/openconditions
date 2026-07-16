@@ -5,7 +5,12 @@
  */
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
-import { loadActiveKeys, runWebhookDeliveryCycle } from "@openconditions/federation";
+import {
+  OUTBOX_PRUNE_INTERVAL_HOURS,
+  loadActiveKeys,
+  pruneOutbox,
+  runWebhookDeliveryCycle,
+} from "@openconditions/federation";
 import { guardedFetch } from "@openconditions/ingest-framework";
 import { build } from "./server.js";
 import { resolveFederationSettings } from "./config.js";
@@ -15,6 +20,9 @@ const HOST = process.env["HOST"] || "0.0.0.0";
 
 /** How often the webhook push cron drains active webhook subscriptions. */
 const WEBHOOK_CYCLE_MS = 5_000;
+
+/** How often the retention cron trims the append-only outbox journal. */
+const PRUNE_CYCLE_MS = OUTBOX_PRUNE_INTERVAL_HOURS * 60 * 60 * 1000;
 
 async function boot() {
   const url = process.env["DATABASE_URL"];
@@ -56,8 +64,33 @@ async function boot() {
     webhookTimer = setInterval(() => void runCycle(), WEBHOOK_CYCLE_MS);
   }
 
+  // Retention cron: trims the append-only outbox journal on the tier-bounded time
+  // floor (never a subscriber cursor). Single-flight, and it runs regardless of
+  // push settings — the journal grows on every observation mutation. The default
+  // retention keeps the widest serve window plus a safety margin; an operator
+  // running the static archive can later thread its high-water mark here.
+  let pruneRunning = false;
+  const runPrune = async () => {
+    if (pruneRunning) return;
+    pruneRunning = true;
+    try {
+      const { deleted, floorIso } = await pruneOutbox(sql, { now: new Date().toISOString() });
+      if (deleted > 0) {
+        console.info(
+          `[federation-api] outbox prune: deleted ${deleted} rows older than ${floorIso}`
+        );
+      }
+    } catch (err) {
+      console.error("[federation-api] outbox prune failed:", err);
+    } finally {
+      pruneRunning = false;
+    }
+  };
+  const pruneTimer = setInterval(() => void runPrune(), PRUNE_CYCLE_MS);
+
   const close = async () => {
     if (webhookTimer) clearInterval(webhookTimer);
+    clearInterval(pruneTimer);
     await app.close();
     await sql.end();
   };
