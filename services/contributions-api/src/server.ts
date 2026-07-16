@@ -13,11 +13,11 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastif
 import type postgres from "postgres";
 import { centroid, reliabilityLowerBound } from "@openconditions/core";
 import {
+  checkGeometryPlausibility,
   checkPlausibility,
   verifyReport,
   verifySubClaim,
   type LandingContext,
-  type ReportClaim,
   type SignedReport,
   type SignedSubClaim,
 } from "@openconditions/contrib-core";
@@ -521,22 +521,9 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       // round-trip, so no sub_claim or evidence row is written and PostGIS never
       // sees a shape it would 500 on.
       if (subClaim.geometry !== undefined) {
-        if (subClaim.geometry.type !== "Point") {
-          return reply
-            .status(422)
-            .send({ error: "implausible sub-claim geometry", reasons: ["geometry_not_point"] });
-        }
-        const geometryProbe: ReportClaim = {
-          domain: "roads",
-          type: action,
-          geometry: subClaim.geometry,
-          fuzziness: "exact",
-          reportedAt: nowIso,
-          nonce: "0000000000000000",
-        };
-        const geometryReasons = checkPlausibility(geometryProbe, nowIso).reasons.filter((reason) =>
-          reason.startsWith("geometry_")
-        );
+        const geometryReasons = checkGeometryPlausibility(subClaim.geometry, {
+          requireType: "Point",
+        });
         if (geometryReasons.length > 0) {
           return reply
             .status(422)

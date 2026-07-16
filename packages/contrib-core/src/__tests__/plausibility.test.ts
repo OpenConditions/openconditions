@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkPlausibility } from "../plausibility.js";
+import { checkGeometryPlausibility, checkPlausibility } from "../plausibility.js";
 import type { ReportClaim } from "../types.js";
 
 const NOW = "2026-07-12T08:00:00.000Z";
@@ -260,5 +260,92 @@ describe("checkPlausibility", () => {
     expect(result.ok).toBe(false);
     expect(result.reasons).toContain("geometry_out_of_range");
     expect(result.reasons).toContain("nonce_malformed");
+  });
+});
+
+describe("checkGeometryPlausibility", () => {
+  it("returns no reasons for a valid Point", () => {
+    expect(checkGeometryPlausibility({ type: "Point", coordinates: [4.9, 52.37] })).toEqual([]);
+  });
+
+  it("returns no reasons for a valid LineString without requireType", () => {
+    expect(
+      checkGeometryPlausibility({
+        type: "LineString",
+        coordinates: [
+          [4, 52],
+          [4.1, 52.1],
+        ],
+      })
+    ).toEqual([]);
+  });
+
+  it("flags an out-of-range coordinate", () => {
+    expect(checkGeometryPlausibility({ type: "Point", coordinates: [181, 52] })).toContain(
+      "geometry_out_of_range"
+    );
+  });
+
+  it("flags a non-finite coordinate", () => {
+    expect(checkGeometryPlausibility({ type: "Point", coordinates: [Number.NaN, 52] })).toContain(
+      "geometry_not_finite"
+    );
+  });
+
+  it("flags a malformed (nested) Point", () => {
+    expect(
+      checkGeometryPlausibility({ type: "Point", coordinates: [[4.9, 52.37]] } as never)
+    ).toContain("geometry_malformed");
+  });
+
+  it("flags a 3-ordinate Point as malformed (v1 is 2D)", () => {
+    expect(
+      checkGeometryPlausibility({ type: "Point", coordinates: [4.9, 52.37, 12] } as never)
+    ).toContain("geometry_malformed");
+  });
+
+  it("flags an empty geometry", () => {
+    expect(checkGeometryPlausibility({ type: "LineString", coordinates: [] })).toContain(
+      "geometry_empty"
+    );
+  });
+
+  it("rejects a non-Point with geometry_not_point when requireType is Point", () => {
+    expect(
+      checkGeometryPlausibility(
+        {
+          type: "LineString",
+          coordinates: [
+            [4.9, 52.37],
+            [4.91, 52.38],
+          ],
+        },
+        { requireType: "Point" }
+      )
+    ).toEqual(["geometry_not_point"]);
+  });
+
+  it("does not run the value scan when requireType rejects the type", () => {
+    expect(
+      checkGeometryPlausibility({ type: "LineString", coordinates: [] }, { requireType: "Point" })
+    ).toEqual(["geometry_not_point"]);
+  });
+
+  it("accepts a valid Point when requireType is Point", () => {
+    expect(
+      checkGeometryPlausibility(
+        { type: "Point", coordinates: [4.9, 52.37] },
+        { requireType: "Point" }
+      )
+    ).toEqual([]);
+  });
+
+  it("still flags a malformed Point when requireType is Point", () => {
+    expect(
+      checkGeometryPlausibility(
+        { type: "Point", coordinates: [999, 999] },
+        { requireType: "Point" }
+      )
+    ).toContain("geometry_out_of_range");
   });
 });

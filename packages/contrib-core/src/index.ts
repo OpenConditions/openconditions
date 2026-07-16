@@ -23,5 +23,5 @@ export { crowdObservationId, reportToObservation } from "./report-to-observation
 export type { CrowdLandingObservation, LandingContext } from "./report-to-observation.js";
 export { impliedSpeedKmh, isKinematicallyPlausible } from "./kinematic.js";
 export type { PriorReport } from "./kinematic.js";
-export { checkPlausibility } from "./plausibility.js";
+export { checkGeometryPlausibility, checkPlausibility } from "./plausibility.js";
 export type { PlausibilityReason, PlausibilityResult } from "./plausibility.js";

@@ -15,6 +15,7 @@ export type PlausibilityReason =
   | "geometry_empty"
   | "geometry_malformed"
   | "geometry_not_finite"
+  | "geometry_not_point"
   | "geometry_out_of_range"
   | "reported_at_invalid"
   | "reported_at_stale"
@@ -149,18 +150,41 @@ function hasValidStructure(geometry: GeoJsonGeometry): boolean {
   }
 }
 
-export function checkPlausibility(claim: ReportClaim, now: string): PlausibilityResult {
-  const reasons: PlausibilityReason[] = [];
+/**
+ * Geometry-only slice of the plausibility screen, sharable by any path that
+ * needs to validate a bare GeoJSON geometry (the full report landing and the
+ * optional sub-claim vote geometry). Returns the `geometry_*` reasons in the
+ * SAME order `checkPlausibility` emits them (empty = valid). When
+ * `opts.requireType` is set and the geometry's `type` differs, the type
+ * requirement short-circuits with `geometry_not_point` BEFORE the value scan —
+ * a non-Point is rejected outright, not tallied.
+ */
+export function checkGeometryPlausibility(
+  geometry: GeoJsonGeometry,
+  opts?: { requireType?: string }
+): PlausibilityReason[] {
+  if (
+    opts?.requireType !== undefined &&
+    (geometry as { type?: string }).type !== opts.requireType
+  ) {
+    return ["geometry_not_point"];
+  }
 
+  const reasons: PlausibilityReason[] = [];
   // Structure first: a type/arity mismatch must fail as malformed BEFORE the
   // value scan (a mis-nested shape makes the finite/range tally meaningless).
-  if (!hasValidStructure(claim.geometry)) {
+  if (!hasValidStructure(geometry)) {
     reasons.push("geometry_malformed");
   }
-  const scan = scanGeometry(claim.geometry);
+  const scan = scanGeometry(geometry);
   if (scan.count === 0) reasons.push("geometry_empty");
   if (scan.hasNonFinite) reasons.push("geometry_not_finite");
   if (scan.outOfRange) reasons.push("geometry_out_of_range");
+  return reasons;
+}
+
+export function checkPlausibility(claim: ReportClaim, now: string): PlausibilityResult {
+  const reasons: PlausibilityReason[] = checkGeometryPlausibility(claim.geometry);
 
   const reportedMs = Date.parse(claim.reportedAt);
   const nowMs = Date.parse(now);
