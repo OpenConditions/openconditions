@@ -341,32 +341,45 @@ describe("GET /contrib/reviewer/flagged — the anomaly queue", () => {
 });
 
 describe("GET /contrib/reviewer/flagged — composite (flagged_at, id) keyset cursor", () => {
-  /** Land a fresh observation and stamp its flagged_at to an exact instant. */
-  async function seedFlaggedAt(
-    nonce: string,
-    coordinates: [number, number],
-    flaggedAt: string
-  ): Promise<string> {
-    const { id } = await landObs({ nonce, geometry: { type: "Point", coordinates } });
+  /**
+   * Inserts a flagged observation DIRECTLY with an explicit id + flagged_at.
+   * Deliberately NOT via the HTTP landing route: a landing spawns best-effort
+   * auto-corroboration / cross-validation whose fire-and-forget completion races
+   * the reviewer query below and made the tie-break assertion flaky. A direct
+   * insert has no such side effects, so the page-boundary positions are
+   * deterministic.
+   */
+  async function insertFlaggedObs(id: string, lon: number, flaggedAt: string): Promise<void> {
     await sql`
-      UPDATE conditions.observations SET flagged_at = ${flaggedAt}::timestamptz WHERE id = ${id}`;
-    return id;
+      INSERT INTO conditions.observations
+        (id, source, source_format, domain, kind, type, status, geom, origin,
+         valid_from, data_updated_at, fetched_at, is_stale, flagged_at)
+      VALUES
+        (${id}, 'reviewer-cursor-test', 'native', 'roads', 'event', 'hazard', 'active',
+         ST_SetSRID(ST_MakePoint(${lon}, 46.0), 4326),
+         ${sql.json({ kind: "crowd" } as never)},
+         '2027-01-01T00:00:00.000Z', now(), now(), false, ${flaggedAt}::timestamptz)`;
   }
 
   it("does not skip a same-flagged_at tie row split across a page boundary", async () => {
-    // Clear flags left by earlier tests in this shared-DB file so these three are
-    // the ONLY flagged rows and the page-boundary positions are deterministic —
-    // otherwise a stray earlier flag can land on page 1 and this assertion flakes.
-    await sql`UPDATE conditions.observations SET flagged_at = NULL WHERE flagged_at IS NOT NULL`;
     // Three rows; TWO share the EXACT same flagged_at, and the page boundary lands
     // in the middle of that tie — the case a flagged_at-only cursor would skip.
     const tie = "2027-01-01T00:00:01.000Z";
     const later = "2027-01-01T00:00:02.000Z";
-    const newest = await seedFlaggedAt("cursor-tie-newest-1", [11.0, 46.0], later);
-    const tieA = await seedFlaggedAt("cursor-tie-a-0000001", [12.0, 46.0], tie);
-    const tieB = await seedFlaggedAt("cursor-tie-b-0000001", [13.0, 46.0], tie);
+    const newest = "cursor-tie-newest";
+    const tieA = "cursor-tie-a";
+    const tieB = "cursor-tie-b";
+    await insertFlaggedObs(newest, 11.0, later);
+    await insertFlaggedObs(tieA, 12.0, tie);
+    await insertFlaggedObs(tieB, 13.0, tie);
     const mine = new Set([newest, tieA, tieB]);
     const [tieHi, tieLo] = [tieA, tieB].sort((x, y) => (x < y ? 1 : -1)); // id DESC
+    // Clear every OTHER flag (from earlier tests / their async side effects) right
+    // before the query, so these three are the only flagged rows at query time and
+    // the page-boundary positions are deterministic regardless of test order.
+    await sql`
+      UPDATE conditions.observations SET flagged_at = NULL
+      WHERE flagged_at IS NOT NULL AND id <> ALL(${sql.array([...mine])})`;
 
     // Page 1: newest first, boundary in the middle of the tie (limit 2).
     const p1 = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=2", {
