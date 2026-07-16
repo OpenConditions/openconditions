@@ -92,6 +92,37 @@ async function insertFeedEvent(opts: EventOpts): Promise<void> {
        ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false)`;
 }
 
+/**
+ * A FEDERATED (peer-relayed) FEED EVENT — origin.kind "feed" WITH a non-empty
+ * originChain (≥1 hop stamped by federation ingest). This is the weaker,
+ * peer-dependent trust signal that must NOT grant local routing eligibility.
+ */
+async function insertFederatedFeedEvent(opts: EventOpts): Promise<void> {
+  const type = opts.type ?? "hazard";
+  const fp = phenomenonFingerprint({
+    kind: "event",
+    domain: "roads",
+    type,
+    geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
+    validFrom: opts.validFrom,
+  } as ConditionEvent);
+  const origin = {
+    kind: "feed",
+    attribution: { provider: "NDW", license: "CC0-1.0" },
+    originChain: [{ instanceId: "peer-b", receivedAt: opts.validFrom }],
+  };
+  await sql`
+    INSERT INTO conditions.observations
+      (id, source, source_format, domain, kind, type, status, geom, origin,
+       valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale)
+    VALUES
+      (${opts.id}, ${opts.source ?? "peer-b"}, 'datex2', 'roads', 'event', ${type},
+       ${opts.status ?? "active"},
+       ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
+       ${sql.json(origin as never)},
+       ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false)`;
+}
+
 async function addReport(obsId: string, key: string, occurredAt: string): Promise<void> {
   await sql`
     INSERT INTO conditions.report_evidence
@@ -386,6 +417,69 @@ describe("crossValidateAgainstFeeds — official cross-validation routing", () =
 
     expect(await externalEvidenceCount("xv:crowd-idem")).toBe(1);
     expect((await readReporter("xv-rep-idem")).reputation_alpha).toBe(3);
+  }, 30_000);
+
+  it("does NOT route against a FEDERATED (peer-relayed) feed — only local official feeds cross-validate", async () => {
+    await seedCrowdReport({
+      id: "xv:crowd-vs-federated",
+      lon: 8.0,
+      lat: 54.0,
+      validFrom: T_REPORT,
+      reporterKey: "xv-rep-federated",
+    });
+    // An official feed relayed from a peer: origin.kind "feed" but carrying an
+    // originChain hop. A weaker, peer-dependent signal that must not route.
+    await insertFederatedFeedEvent({
+      id: "xv:feed-federated",
+      lon: 8.0001,
+      lat: 54.0,
+      validFrom: "2026-07-12T08:04:00.000Z",
+    });
+
+    expect(await crossValidateAgainstFeeds(sql, "xv:crowd-vs-federated", T_RESOLVE)).toBeNull();
+    const crowd = await obs("xv:crowd-vs-federated");
+    expect(crowd.routing_eligible).toBe(false);
+    expect(crowd.evidence_state).not.toBe("externally_resolved");
+    expect(await externalEvidenceCount("xv:crowd-vs-federated")).toBe(0);
+    // The federated feed did not train the reporter.
+    expect((await readReporter("xv-rep-federated")).reputation_alpha).toBe(2);
+  }, 30_000);
+
+  it("routes via the LOCAL feed only when both a LOCAL and a FEDERATED feed match", async () => {
+    await seedCrowdReport({
+      id: "xv:crowd-both",
+      lon: 9.0,
+      lat: 55.0,
+      validFrom: T_REPORT,
+      reporterKey: "xv-rep-both",
+    });
+    // A local official feed AND a federated (peer-relayed) feed both match the
+    // same crowd report; routing must go through the LOCAL one.
+    await insertFeedEvent({
+      id: "xv:feed-local-both",
+      lon: 9.0001,
+      lat: 55.0,
+      validFrom: "2026-07-12T08:04:00.000Z",
+    });
+    await insertFederatedFeedEvent({
+      id: "xv:feed-federated-both",
+      lon: 9.00015,
+      lat: 55.0,
+      validFrom: "2026-07-12T08:05:00.000Z",
+    });
+
+    const matched = await crossValidateAgainstFeeds(sql, "xv:crowd-both", T_RESOLVE);
+    expect(matched).toBe("xv:feed-local-both");
+
+    const crowd = await obs("xv:crowd-both");
+    expect(crowd.evidence_state).toBe("externally_resolved");
+    expect(crowd.routing_eligible).toBe(true);
+    expect((await readReporter("xv-rep-both")).reputation_alpha).toBe(3);
+    // The crowd report resolved via exactly ONE external (official_match) row —
+    // the local feed — not two: the federated feed did not also cross-validate it.
+    expect(await externalEvidenceCount("xv:crowd-both")).toBe(1);
+    // The federated feed is authoritative-but-untrusted-for-routing and untouched.
+    expect(await externalEvidenceCount("xv:feed-federated-both")).toBe(0);
   }, 30_000);
 
   it("no-ops (returns null) when the just-landed observation is itself a FEED", async () => {

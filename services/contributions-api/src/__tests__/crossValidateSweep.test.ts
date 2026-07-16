@@ -98,6 +98,33 @@ async function insertFeedEvent(opts: EventOpts): Promise<void> {
        ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false)`;
 }
 
+/** A FEDERATED (peer-relayed) FEED EVENT — origin.kind "feed" WITH an originChain hop. */
+async function insertFederatedFeedEvent(opts: EventOpts): Promise<void> {
+  const type = opts.type ?? "hazard";
+  const fp = phenomenonFingerprint({
+    kind: "event",
+    domain: "roads",
+    type,
+    geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
+    validFrom: opts.validFrom,
+  } as ConditionEvent);
+  const origin = {
+    kind: "feed",
+    attribution: { provider: "NDW", license: "CC0-1.0" },
+    originChain: [{ instanceId: "peer-b", receivedAt: opts.validFrom }],
+  };
+  await sql`
+    INSERT INTO conditions.observations
+      (id, source, source_format, domain, kind, type, status, geom, origin,
+       valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale)
+    VALUES
+      (${opts.id}, ${opts.source ?? "peer-b"}, 'datex2', 'roads', 'event', ${type},
+       ${opts.status ?? "active"},
+       ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
+       ${sql.json(origin as never)},
+       ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false)`;
+}
+
 async function addReport(obsId: string, key: string, occurredAt: string): Promise<void> {
   await sql`
     INSERT INTO conditions.report_evidence
@@ -270,6 +297,34 @@ describe("sweepCrossValidate — feed-arrives-later periodic cross-match", () =>
     expect(result.scanned).toBe(0);
     expect(result.routed).toBe(0);
     expect((await obs("sw:remote-crowd")).routing_eligible).toBe(false);
+  }, 30_000);
+
+  it("scans a candidate but never routes it against a FEDERATED-only feed (inherits the local-feed guard)", async () => {
+    await seedCrowdReport({
+      id: "sw:crowd-federated",
+      lon: 8.0,
+      lat: 54.0,
+      validFrom: T_REPORT,
+      reporterKey: "sw-rep-federated",
+    });
+    // Only a FEDERATED (peer-relayed) feed matches — the shared local-feed guard
+    // must keep the sweep from routing it.
+    await insertFederatedFeedEvent({
+      id: "sw:feed-federated",
+      lon: 8.0001,
+      lat: 54.0,
+      validFrom: T_FEED,
+    });
+
+    const result = await sweepCrossValidate(sql, T_SWEEP);
+    expect(result.scanned).toBe(1);
+    expect(result.routed).toBe(0);
+
+    const crowd = await obs("sw:crowd-federated");
+    expect(crowd.routing_eligible).toBe(false);
+    expect(crowd.evidence_state).not.toBe("externally_resolved");
+    expect(await externalEvidenceCount("sw:crowd-federated")).toBe(0);
+    expect(await readReporterAlpha("sw-rep-federated")).toBe(2);
   }, 30_000);
 
   it("excludes an EXPIRED candidate from the scan", async () => {

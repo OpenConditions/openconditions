@@ -11,10 +11,21 @@
  * The compatibility decision is the same pure, crowd/feed-aware
  * {@link matchPhenomenonCandidates} used everywhere else (a crowd/feed pair is
  * always independent, even when their source strings coincide). This module only
- * filters the fingerprint-neighborhood candidate set to genuine FEED rows (real
- * `origin.kind === "feed"`, NOT merely a missing reporter keyId — a
+ * filters the fingerprint-neighborhood candidate set to genuine LOCAL FEED rows
+ * (real `origin.kind === "feed"`, NOT merely a missing reporter keyId — a
  * federation-stripped remote CROWD row also lacks a keyId) and routes on the
  * first compatible feed.
+ *
+ * Trust boundary: only genuinely-LOCAL official feeds cross-validate. A LOCAL
+ * feed — configured on and landed by this instance via services/ingest — carries
+ * no `origin.originChain`; a FEDERATED feed relayed from a peer always carries
+ * ≥1 originChain hop. A federated feed is a weaker, peer-dependent signal, so it
+ * is excluded from the candidate set and can never grant local routing
+ * eligibility (a peer-echo trust hole otherwise). Routing a federated CROWD
+ * observation on a LOCAL feed is a deferred follow-on: federation export strips
+ * `origin.reporter`, so a federated crowd row is keyId-less and this function
+ * already skips it; routing it would need a separate route-without-training
+ * design that touches federation routing-trust semantics.
  *
  * Scope: the CROWD landing hook only. Feed landings never notify
  * contributions-api, so a feed that arrives AFTER a crowd report does not
@@ -104,15 +115,30 @@ export async function crossValidateAgainstFeeds(
   if (allCandidates.length === 0) {
     return null;
   }
-  // FEED candidates ONLY, keyed on the row's REAL origin.kind — NOT on a missing
-  // reporter keyId. Federation export strips `origin.reporter` from crowd rows
-  // while keeping `origin.kind: "crowd"`, so a keyId-less candidate can still be a
-  // (remote) CROWD report; routing against one would be forbidden crowd↔crowd
+  // LOCAL FEED candidates ONLY, keyed on the row's REAL origin.kind — NOT on a
+  // missing reporter keyId. Federation export strips `origin.reporter` from crowd
+  // rows while keeping `origin.kind: "crowd"`, so a keyId-less candidate can still
+  // be a (remote) CROWD report; routing against one would be forbidden crowd↔crowd
   // routing. Only genuine `origin.kind === "feed"` rows may cross-validate.
+  //
+  // The originChain clause further narrows this to genuinely-LOCAL feeds: a feed
+  // this instance configured and landed via services/ingest has NO originChain,
+  // whereas a FEDERATED feed relayed from a peer always carries ≥1 originChain hop
+  // (stamped by federation/ingest.ts). A federated feed is a weaker, peer-dependent
+  // trust signal, so it must not grant local routing eligibility — letting a
+  // less-trusted or compromised peer's relayed "feed" route a local crowd report
+  // would be a peer-echo trust hole. Only local official feeds cross-validate.
+  // A malformed (non-array) originChain fails closed via the jsonb_typeof guard:
+  // it does not match the local condition, so it is treated as federated (never
+  // routes) rather than throwing on jsonb_array_length.
   const feedIdRows = await sql<{ id: string }[]>`
     SELECT id FROM conditions.observations
     WHERE id = ANY(${allCandidates.map((c) => c.id)})
       AND origin->>'kind' = 'feed'
+      AND (
+        origin->'originChain' IS NULL
+        OR (jsonb_typeof(origin->'originChain') = 'array' AND jsonb_array_length(origin->'originChain') = 0)
+      )
   `;
   const feedIds = new Set(feedIdRows.map((r) => r.id));
   const feedCandidates = allCandidates.filter((c) => feedIds.has(c.id));
