@@ -354,9 +354,12 @@ describe("GET /contrib/reviewer/flagged — composite (flagged_at, id) keyset cu
   }
 
   it("does not skip a same-flagged_at tie row split across a page boundary", async () => {
-    // Three rows, far in the future so they are the newest flagged rows in the
-    // shared DB. TWO share the EXACT same flagged_at; the page boundary lands in
-    // the middle of that tie — the case a flagged_at-only cursor would skip.
+    // Clear flags left by earlier tests in this shared-DB file so these three are
+    // the ONLY flagged rows and the page-boundary positions are deterministic —
+    // otherwise a stray earlier flag can land on page 1 and this assertion flakes.
+    await sql`UPDATE conditions.observations SET flagged_at = NULL WHERE flagged_at IS NOT NULL`;
+    // Three rows; TWO share the EXACT same flagged_at, and the page boundary lands
+    // in the middle of that tie — the case a flagged_at-only cursor would skip.
     const tie = "2027-01-01T00:00:01.000Z";
     const later = "2027-01-01T00:00:02.000Z";
     const newest = await seedFlaggedAt("cursor-tie-newest-1", [11.0, 46.0], later);
