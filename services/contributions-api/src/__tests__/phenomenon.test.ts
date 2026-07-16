@@ -132,7 +132,7 @@ describe("findCandidates", () => {
     const candidates = await findCandidates(sql, "fc:target");
     expect(candidates.map((c) => c.id)).toEqual(["fc:other"]);
     const [other] = candidates;
-    expect(other!.actor).toEqual({ keyId: "key-b", source: "crowd" });
+    expect(other!.actor).toEqual({ kind: "crowd", keyId: "key-b", source: "crowd" });
     expect(other!.type).toBe("hazard");
     expect(other!.status).toBe("active");
   }, 30_000);

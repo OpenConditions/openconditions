@@ -716,10 +716,11 @@ describe("federated CROWD → LOCAL feed route-without-training", () => {
 
   /**
    * A federated CROWD wire event (origin.kind='crowd'; reporter stripped on
-   * ingest). Its `source` is a crowd source distinct from the official feed's —
-   * a federated crowd row is keyId-less, so the matcher's independence check
-   * treats it like a feed and a coincident `source` string would (safely) block
-   * the route as same-source. Real crowd and official-feed sources differ.
+   * ingest). Its `source` defaults to a crowd source distinct from the official
+   * feed's, but the matcher now keys independence on the REAL origin.kind, so a
+   * federated crowd row and a local feed are independent EVEN when their `source`
+   * strings coincide (see the same-source route test below) — no longer a
+   * fail-closed missed route.
    */
   function fedCrowd(overrides: Record<string, unknown>): Record<string, unknown> {
     return fedEvent({
@@ -830,6 +831,47 @@ describe("federated CROWD → LOCAL feed route-without-training", () => {
     // The feed itself is authoritative and untouched.
     expect(await externalCount("route:local-feed")).toBe(0);
     // No reporter row's alpha/beta/corroborated_count changed — trained nobody.
+    expect(await reporterSnapshot()).toBe(before);
+  }, 30_000);
+
+  it("THE #3 FIX end-to-end: routes a federated crowd row on a LOCAL feed whose SOURCE STRING COINCIDES, training nobody", async () => {
+    // The federated crowd row and the local feed share the same `source` ("ndw").
+    // Before A4 the keyId-inference matcher read the keyId-less federated crowd row
+    // as feed-like and the same-source guard BLOCKED the route (the #3 missed
+    // route). Now, keyed on origin.kind, the crowd/feed pair is independent → routes.
+    await seedReporter("samesrc-witness-untouched");
+    await seedLocalFeed({
+      id: "route:local-feed-samesrc",
+      lon: 25.5,
+      lat: 45.5,
+      validFrom: VALID_FROM,
+    });
+
+    const before = await reporterSnapshot();
+    const outcome = await ingestFederatedObservation(
+      sql,
+      fedCrowd({
+        id: "peer-a:fedcrowd-samesrc",
+        canonicalId: "cd".repeat(32),
+        source: "ndw",
+        geometry: { type: "Point", coordinates: [25.5001, 45.5] },
+        validFrom: VALID_FROM,
+        dataUpdatedAt: VALID_FROM,
+      }) as never,
+      PEER_A
+    );
+    expect(outcome.outcome).toBe("inserted");
+
+    const row = await rowById("peer-a:fedcrowd-samesrc");
+    expect(row!.origin.kind).toBe("crowd");
+    expect(row!.origin.reporter).toBeUndefined();
+    expect(row!.origin.originChain!.length).toBeGreaterThan(0);
+    // Routed on OUR local feed despite the coincident source string.
+    expect(row!.evidence_state).toBe("externally_resolved");
+    expect(row!.routing_eligible).toBe(true);
+    expect(await externalCount("peer-a:fedcrowd-samesrc")).toBe(1);
+    expect(await externalCount("route:local-feed-samesrc")).toBe(0);
+    // Trained nobody.
     expect(await reporterSnapshot()).toBe(before);
   }, 30_000);
 

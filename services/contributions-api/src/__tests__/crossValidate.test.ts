@@ -614,6 +614,43 @@ describe("crossValidateAgainstFeeds — allowFederatedTarget (route-without-trai
     expect(await reporterSnapshot()).toBe(before);
   }, 30_000);
 
+  it("THE #3 FIX: routes a federated crowd target on a LOCAL feed whose SOURCE STRING COINCIDES, training nobody", async () => {
+    // The federated crowd row's `source` deliberately equals the local feed's
+    // `source` ("ndw"). Before A4, the matcher inferred crowd-vs-feed from keyId
+    // presence: a federated crowd row is keyId-less, so it read as feed-like and
+    // the same-source guard fail-closed BLOCKED the route (the #3 missed route).
+    // Keyed on the real origin.kind, the crowd/feed pair is independent → routes.
+    await insertFederatedCrowdEvent({
+      id: "xvf:fed-crowd-samesrc",
+      lon: 16.5,
+      lat: 44.5,
+      validFrom: T_REPORT,
+      source: "ndw",
+    });
+    await insertFeedEvent({
+      id: "xvf:local-feed-samesrc",
+      lon: 16.5001,
+      lat: 44.5,
+      validFrom: "2026-07-12T08:04:00.000Z",
+      source: "ndw",
+    });
+    await insertReporter("xvf-samesrc-witness");
+
+    const before = await reporterSnapshot();
+    const matched = await crossValidateAgainstFeeds(sql, "xvf:fed-crowd-samesrc", T_RESOLVE, {
+      allowFederatedTarget: true,
+    });
+    expect(matched).toBe("xvf:local-feed-samesrc");
+
+    const crowd = await obs("xvf:fed-crowd-samesrc");
+    expect(crowd.evidence_state).toBe("externally_resolved");
+    expect(crowd.routing_eligible).toBe(true);
+    expect(await externalEvidenceCount("xvf:fed-crowd-samesrc")).toBe(1);
+    // The feed itself is authoritative and untouched, and nobody was trained.
+    expect(await externalEvidenceCount("xvf:local-feed-samesrc")).toBe(0);
+    expect(await reporterSnapshot()).toBe(before);
+  }, 30_000);
+
   it("does NOT route a federated crowd target matching only a FEDERATED feed", async () => {
     await insertFederatedCrowdEvent({
       id: "xvf:fed-crowd-vs-fedfeed",

@@ -7,9 +7,13 @@ import {
 
 /**
  * A phenomenon-match candidate: a projection of a stored EVENT observation into
- * the fields the pure matcher decides on. Crowd candidates carry their
- * reporter's `keyId`; feed candidates carry only their `source` id. `direction`
- * is read from `attributes.direction` when present.
+ * the fields the pure matcher decides on. `kind` is the row's REAL
+ * `origin.kind` — crowd or feed — and it, not the presence of a reporter
+ * `keyId`, decides witness independence: a federated crowd row is keyId-less
+ * (reporter stripped on export) yet is still `kind: "crowd"`. Crowd candidates
+ * additionally carry their reporter's `keyId` when they have one (local crowd
+ * rows do; federated crowd rows do not); feed candidates carry only their
+ * `source` id. `direction` is read from `attributes.direction` when present.
  */
 export interface PhenomenonCandidate {
   id: string;
@@ -18,7 +22,7 @@ export interface PhenomenonCandidate {
   geometry: GeoJsonGeometry;
   validFrom?: string;
   attributes?: Record<string, unknown>;
-  actor: { keyId?: string; source: string };
+  actor: { kind: "crowd" | "feed"; keyId?: string; source: string };
   status: string;
 }
 
@@ -58,8 +62,9 @@ function readDirection(attributes: Record<string, unknown> | undefined): string 
  * - centroid distance ≤ `maxCentroidMeters` (haversine over vertex-mean centroids);
  * - both carry `validFrom` and the absolute delta ≤ `maxValidFromDeltaSec`;
  * - direction agrees, or is absent on at least one side;
- * - the two are independent actors — not the same crowd `keyId`, not the same
- *   feed `source`;
+ * - the two are independent actors (keyed on `actor.kind`) — not two crowd
+ *   reports carrying the same defined reporter `keyId`, not two feeds of the same
+ *   `source`; a crowd/feed pair, and two keyId-less crowd rows, are independent;
  * - the candidate's `status` is `"active"`;
  * - the candidate is not the target itself.
  */
@@ -119,12 +124,20 @@ export function matchPhenomenonCandidates(
       reasons.push("direction-mismatch");
     }
 
-    // Independence: two crowd reports from the same device key, or two feed rows
-    // from the same source, are NOT independent witnesses. A crowd/feed pair is
-    // always independent even when their source strings coincide.
-    const bothCrowd = target.actor.keyId !== undefined && candidate.actor.keyId !== undefined;
-    const bothFeed = target.actor.keyId === undefined && candidate.actor.keyId === undefined;
-    if (bothCrowd && target.actor.keyId === candidate.actor.keyId) {
+    // Independence keys on the REAL actor `kind` (origin.kind), never on whether
+    // a reporter `keyId` is present. Two crowd reports from the SAME reporter key,
+    // or two feed rows from the same source, are NOT independent witnesses. A
+    // crowd/feed pair is always independent — even when their source strings
+    // coincide (a federated crowd row can carry the same `source` as a local feed).
+    // Two keyId-less crowd rows are DISTINCT reporters (federation strips the
+    // reporter), so same-reporter-key requires a DEFINED, equal keyId on both.
+    const bothCrowd = target.actor.kind === "crowd" && candidate.actor.kind === "crowd";
+    const bothFeed = target.actor.kind === "feed" && candidate.actor.kind === "feed";
+    if (
+      bothCrowd &&
+      target.actor.keyId !== undefined &&
+      target.actor.keyId === candidate.actor.keyId
+    ) {
       reasons.push("same-reporter-key");
     } else if (bothFeed && target.actor.source === candidate.actor.source) {
       reasons.push("same-source");

@@ -15,7 +15,7 @@ function makeCandidate(overrides: Partial<PhenomenonCandidate> = {}): Phenomenon
     type: "hazard",
     geometry: { type: "Point", coordinates: [6.5, 52.0] },
     validFrom: "2026-07-10T12:00:00Z",
-    actor: { keyId: "key-b", source: "crowd" },
+    actor: { kind: "crowd", keyId: "key-b", source: "crowd" },
     status: "active",
     ...overrides,
   };
@@ -28,7 +28,7 @@ const target: PhenomenonCandidate = {
   geometry: { type: "Point", coordinates: [6.5, 52.0] },
   validFrom: "2026-07-10T12:00:00Z",
   attributes: { fuzziness: "start_unknown" },
-  actor: { keyId: "key-a", source: "crowd" },
+  actor: { kind: "crowd", keyId: "key-a", source: "crowd" },
   status: "active",
 };
 
@@ -47,7 +47,7 @@ describe("matchPhenomenonCandidates", () => {
       geometry: { type: "Point", coordinates: pointNear(150, false) },
       validFrom: "2026-07-10T12:04:00Z",
       attributes: { fuzziness: "end_unknown" },
-      actor: { keyId: "key-b", source: "crowd" },
+      actor: { kind: "crowd", keyId: "key-b", source: "crowd" },
     });
     const { compatible, reasons } = decisionFor(jam);
     expect(compatible).toBe(true);
@@ -141,25 +141,78 @@ describe("matchPhenomenonCandidates", () => {
     ).toBe(true);
   });
 
-  it("names the same reporter key (both crowd)", () => {
-    const sameKey = makeCandidate({ actor: { keyId: "key-a", source: "crowd" } });
+  it("names the same reporter key (both crowd, same defined keyId) — UNCHANGED", () => {
+    const sameKey = makeCandidate({ actor: { kind: "crowd", keyId: "key-a", source: "crowd" } });
     const { compatible, reasons } = decisionFor(sameKey);
     expect(compatible).toBe(false);
     expect(reasons).toContain("same-reporter-key");
   });
 
-  it("names the same source id (both feed)", () => {
-    const feedTarget: PhenomenonCandidate = { ...target, actor: { source: "ndw" } };
-    const sameFeed = makeCandidate({ actor: { source: "ndw" } });
+  it("two distinct local crowd keys are independent — UNCHANGED", () => {
+    const crowdB = makeCandidate({ actor: { kind: "crowd", keyId: "key-b", source: "crowd" } });
+    const { compatible, reasons } = decisionFor(crowdB);
+    expect(compatible).toBe(true);
+    expect(reasons).toEqual([]);
+  });
+
+  it("names the same source id (both feed) — UNCHANGED", () => {
+    const feedTarget: PhenomenonCandidate = { ...target, actor: { kind: "feed", source: "ndw" } };
+    const sameFeed = makeCandidate({ actor: { kind: "feed", source: "ndw" } });
     const { compatible, reasons } = decisionFor(sameFeed, feedTarget);
     expect(compatible).toBe(false);
     expect(reasons).toContain("same-source");
   });
 
+  it("blocks a federated feed relayed from the same underlying feed source (both feed) — UNCHANGED", () => {
+    const localFeed: PhenomenonCandidate = { ...target, actor: { kind: "feed", source: "ndw" } };
+    const federatedFeed = makeCandidate({ actor: { kind: "feed", source: "ndw" } });
+    const { reasons } = decisionFor(federatedFeed, localFeed);
+    expect(reasons).toContain("same-source");
+  });
+
   it("is compatible across a crowd/feed actor boundary even when sources coincide", () => {
-    const feedTarget: PhenomenonCandidate = { ...target, actor: { source: "crowd" } };
-    const crowd = makeCandidate({ actor: { keyId: "key-b", source: "crowd" } });
+    const feedTarget: PhenomenonCandidate = { ...target, actor: { kind: "feed", source: "crowd" } };
+    const crowd = makeCandidate({ actor: { kind: "crowd", keyId: "key-b", source: "crowd" } });
     expect(decisionFor(crowd, feedTarget).reasons).not.toContain("same-source");
+  });
+
+  it("THE #3 FIX: a federated crowd row (kind crowd, no keyId) vs a LOCAL feed of the SAME source is COMPATIBLE", () => {
+    // Federation strips the reporter, so the crowd row is keyId-less; its `source`
+    // string happens to coincide with the local feed's. The OLD keyId-inference
+    // logic misread it as feed-like and blocked it as same-source. Keyed on the
+    // real origin.kind, the crowd/feed pair is independent → routes.
+    const fedCrowd: PhenomenonCandidate = { ...target, actor: { kind: "crowd", source: "ndw" } };
+    const localFeed = makeCandidate({ actor: { kind: "feed", source: "ndw" } });
+    const { compatible, reasons } = decisionFor(localFeed, fedCrowd);
+    expect(compatible).toBe(true);
+    expect(reasons).toEqual([]);
+    expect(reasons).not.toContain("same-source");
+  });
+
+  it("two keyId-less federated crowd rows of the same source are INDEPENDENT (fixes the latent over-block)", () => {
+    // Both keyId-less crowd rows: the OLD logic treated both-undefined-keyId as
+    // bothFeed and blocked them same-source. They are DISTINCT federated reporters.
+    const fedCrowdTarget: PhenomenonCandidate = {
+      ...target,
+      actor: { kind: "crowd", source: "peer-crowd" },
+    };
+    const fedCrowdCand = makeCandidate({ actor: { kind: "crowd", source: "peer-crowd" } });
+    const { compatible, reasons } = decisionFor(fedCrowdCand, fedCrowdTarget);
+    expect(compatible).toBe(true);
+    expect(reasons).toEqual([]);
+    expect(reasons).not.toContain("same-source");
+    expect(reasons).not.toContain("same-reporter-key");
+  });
+
+  it("a keyId-less crowd row does NOT collide with a keyed crowd row on same-reporter-key", () => {
+    const keyed: PhenomenonCandidate = {
+      ...target,
+      actor: { kind: "crowd", keyId: "key-a", source: "crowd" },
+    };
+    const keyless = makeCandidate({ actor: { kind: "crowd", source: "crowd" } });
+    const { compatible, reasons } = decisionFor(keyless, keyed);
+    expect(compatible).toBe(true);
+    expect(reasons).not.toContain("same-reporter-key");
   });
 
   it("names an inactive candidate", () => {
@@ -182,7 +235,7 @@ describe("matchPhenomenonCandidates", () => {
       status: "inactive",
       geometry: { type: "Point", coordinates: pointNear(300, false) },
       validFrom: "2026-07-10T12:30:00Z",
-      actor: { keyId: "key-a", source: "crowd" },
+      actor: { kind: "crowd", keyId: "key-a", source: "crowd" },
     });
     const { reasons } = decisionFor(broken);
     expect(reasons).toEqual(

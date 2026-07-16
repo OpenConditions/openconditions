@@ -26,12 +26,16 @@ interface TargetRow {
   status: string;
 }
 
-function actorFor(row: TargetRow): { keyId?: string; source: string } {
-  if (row.origin?.kind === "crowd") {
-    const keyId = row.origin.reporter?.keyId;
-    return keyId !== undefined ? { keyId, source: row.source } : { source: row.source };
+function actorFor(row: TargetRow): { kind: "crowd" | "feed"; keyId?: string; source: string } {
+  if (row.origin?.kind === "feed") {
+    return { kind: "feed", source: row.source };
   }
-  return { source: row.source };
+  // Crowd (and any non-feed/absent origin.kind) carries a reporter keyId only when
+  // present; a federated crowd row is keyId-less but still kind 'crowd'.
+  const keyId = row.origin?.reporter?.keyId;
+  return keyId !== undefined
+    ? { kind: "crowd", keyId, source: row.source }
+    : { kind: "crowd", source: row.source };
 }
 
 /**
@@ -72,6 +76,12 @@ export async function flagOntoOpenFlagged(
     status: row.status,
   };
 
+  // Since the matcher keys independence on origin.kind, the pile-on flag now also
+  // propagates across a federated-crowd/local-feed (and two keyless-crowd) pair
+  // that a keyId-inference matcher wrongly blocked. That is the conservative
+  // direction: a compatible witness of a disputed phenomenon should await review,
+  // and because `flagged_at` gates both corroboration and cross-validation, this
+  // only ever WITHHOLDS a route pending review — never grants one.
   const compatibleIds = matchPhenomenonCandidates(target, candidates)
     .filter((decision) => decision.compatible)
     .map((decision) => decision.candidateId);

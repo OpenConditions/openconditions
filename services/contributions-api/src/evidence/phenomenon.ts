@@ -29,12 +29,24 @@ interface TargetRow {
   valid_from: Date | null;
 }
 
-function actorFor(row: CandidateRow): { keyId?: string; source: string } {
-  if (row.origin?.kind === "crowd") {
-    const keyId = row.origin.reporter?.keyId;
-    return keyId !== undefined ? { keyId, source: row.source } : { source: row.source };
+function actorFor(row: CandidateRow): { kind: "crowd" | "feed"; keyId?: string; source: string } {
+  if (row.origin?.kind === "feed") {
+    return { kind: "feed", source: row.source };
   }
-  return { source: row.source };
+  // Crowd (and any non-feed/absent origin.kind default here): carry a reporter
+  // keyId only when present. A federated crowd row is keyId-less but still
+  // kind 'crowd'. An unexpected/absent kind is unreachable on real data —
+  // normalize.ts rejects any origin.kind outside {crowd, feed} on every write
+  // path — so this default only defends against a malformed direct DB write; it
+  // maps to keyId-less crowd, which is the conservative shape (it still enforces
+  // same-reporter-key for a keyed row). The end-to-end safety against a malformed
+  // row self-corroborating/routing rests on the caller gates (autoCorroborate's
+  // keyed-crowd-only candidate filter, crossValidate's local-feed-only SQL), NOT
+  // on this matcher default alone.
+  const keyId = row.origin?.reporter?.keyId;
+  return keyId !== undefined
+    ? { kind: "crowd", keyId, source: row.source }
+    : { kind: "crowd", source: row.source };
 }
 
 export interface FindCandidatesOptions {

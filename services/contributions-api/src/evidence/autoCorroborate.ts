@@ -44,12 +44,16 @@ interface TargetRow {
   flagged_at: Date | null;
 }
 
-function actorFor(row: TargetRow): { keyId?: string; source: string } {
-  if (row.origin?.kind === "crowd") {
-    const keyId = row.origin.reporter?.keyId;
-    return keyId !== undefined ? { keyId, source: row.source } : { source: row.source };
+function actorFor(row: TargetRow): { kind: "crowd" | "feed"; keyId?: string; source: string } {
+  if (row.origin?.kind === "feed") {
+    return { kind: "feed", source: row.source };
   }
-  return { source: row.source };
+  // Crowd (and any non-feed/absent origin.kind) carries a reporter keyId only when
+  // present; a federated crowd row is keyId-less but still kind 'crowd'.
+  const keyId = row.origin?.reporter?.keyId;
+  return keyId !== undefined
+    ? { kind: "crowd", keyId, source: row.source }
+    : { kind: "crowd", source: row.source };
 }
 
 /**
