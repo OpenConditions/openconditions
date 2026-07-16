@@ -17,12 +17,41 @@ import {
   type Entitlement,
   type ReporterRow,
 } from "./policy.js";
-import { UNVERIFIED_ATTESTATION, type AttestationVerifier } from "./verifier.js";
+import {
+  UNVERIFIED_ATTESTATION,
+  UNVERIFIED_OSM_AUTH,
+  type AttestationVerifier,
+  type OsmAuthVerifier,
+} from "./verifier.js";
 
 export interface EnrollLogger {
   info: (obj: Record<string, unknown>, msg?: string) => void;
   warn: (obj: Record<string, unknown>, msg?: string) => void;
   error: (obj: Record<string, unknown>, msg?: string) => void;
+}
+
+/**
+ * Sanitize a verifier's thrown error for logging. A real attestation / OSM-auth
+ * verifier's error could embed the raw secret (token or attestation blob) in its
+ * `message` or `stack`; passing the {@link Error} straight to the logger would
+ * leak it, because pino's default `err` serializer emits both. This returns a
+ * plain `{ name, message }` shape (NO stack) with every occurrence of the secret
+ * redacted, so the secret can never reach the log stream.
+ */
+function redactSecretFromError(
+  err: unknown,
+  secret: string | undefined
+): {
+  name?: string;
+  message: string;
+} {
+  const asError = err instanceof Error ? err : undefined;
+  const rawMessage = asError?.message ?? String(err);
+  const message =
+    secret !== undefined && secret.length > 0
+      ? rawMessage.replaceAll(secret, "[redacted-secret]")
+      : rawMessage;
+  return { name: asError?.name, message };
 }
 
 export interface EnrollDeps {
@@ -35,6 +64,13 @@ export interface EnrollDeps {
    * which confirms nothing until a real platform verifier is wired in.
    */
   attestationVerifier?: AttestationVerifier;
+  /**
+   * Verifies a presented OSM auth token. Only a `verified: true` result grants
+   * the advisory trust bump — a present-but-unverified token adds nothing.
+   * Defaults to {@link UNVERIFIED_OSM_AUTH}, which confirms nothing until a real
+   * OSM API verifier is wired in.
+   */
+  osmAuthVerifier?: OsmAuthVerifier;
 }
 
 /**
@@ -57,8 +93,11 @@ export async function enrollReporter(
     throw new TypeError("enrollReporter: proof.keyId does not match the pubJwk thumbprint");
   }
 
-  const existingRows = await sql<{ status: "active" | "blocked"; corroborated_count: number }[]>`
-    SELECT status, corroborated_count FROM conditions.reporter WHERE key_id = ${thumbprint}
+  const existingRows = await sql<
+    { status: "active" | "blocked"; corroborated_count: number; created_at: Date }[]
+  >`
+    SELECT status, corroborated_count, created_at
+    FROM conditions.reporter WHERE key_id = ${thumbprint}
   `;
 
   // A key on the operator block list can never (re-)enroll to active — even if
@@ -79,6 +118,10 @@ export async function enrollReporter(
           keyId: thumbprint,
           status: effectiveStatus,
           corroboratedCount: existingRows[0]?.corroborated_count ?? 0,
+          // Tenure comes from the pre-insert created_at (set once, never reset).
+          // A block-before-enroll synthetic row has no real created_at → null →
+          // zero tenure, never a crash.
+          createdAt: existingRows[0]?.created_at ?? null,
         };
 
   // Resolve the attestation verdict OUT of the pure policy: a present blob only
@@ -93,11 +136,35 @@ export async function enrollReporter(
     } catch (err) {
       // A verifier fault is treated as "unverified" — attestation is advisory
       // and must NEVER gate enrollment. The reporter stays fully eligible; it
-      // simply earns no attestation trust bump.
+      // simply earns no attestation trust bump. Scrub the attestation blob from
+      // the logged error: a real Play Integrity / App Attest verifier's error
+      // could embed the blob in its message/stack.
       attestationVerified = false;
       deps.log.warn(
-        { err, keyId: thumbprint },
+        { err: redactSecretFromError(err, proof.attestation.blob), keyId: thumbprint },
         "attestation verifier threw; treating as unverified"
+      );
+    }
+  }
+
+  // Resolve the OSM-auth verdict the same way: a present token only earns the
+  // trust bump when the injected verifier confirms it. Absent or unverified
+  // osmAuth is never a gate — the reporter stays fully eligible.
+  const osmAuthVerifier = deps.osmAuthVerifier ?? UNVERIFIED_OSM_AUTH;
+  let osmAuthVerified = false;
+  if (proof.osmAuth !== undefined) {
+    try {
+      const outcome = await osmAuthVerifier.verify(proof.osmAuth, { keyId: thumbprint });
+      osmAuthVerified = outcome.verified;
+    } catch (err) {
+      // A verifier fault is treated as "unverified" — osmAuth is advisory and
+      // must NEVER gate enrollment. Scrub the token from the logged error: a real
+      // OSM verifier's error could embed the token value in its message/stack, so
+      // the raw Error is never passed to the logger.
+      osmAuthVerified = false;
+      deps.log.warn(
+        { err: redactSecretFromError(err, proof.osmAuth), keyId: thumbprint },
+        "osm auth verifier threw; treating as unverified"
       );
     }
   }
@@ -106,6 +173,7 @@ export async function enrollReporter(
     now: nowIso,
     reporterRow,
     attestationVerified,
+    osmAuthVerified,
   });
 
   const now = new Date(nowIso);

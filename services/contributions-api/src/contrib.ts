@@ -26,10 +26,14 @@ export {
 export { enrollReporter } from "./attester/enroll.js";
 export {
   UNVERIFIED_ATTESTATION,
+  UNVERIFIED_OSM_AUTH,
   type AttestationVerifier,
   type AttestationClaim,
   type AttestationVerifierCtx,
   type AttestationVerificationResult,
+  type OsmAuthVerifier,
+  type OsmAuthVerifierCtx,
+  type OsmAuthVerificationResult,
 } from "./attester/verifier.js";
 export {
   isValidContextPart,

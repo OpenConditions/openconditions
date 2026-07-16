@@ -54,3 +54,43 @@ export const UNVERIFIED_ATTESTATION: AttestationVerifier = {
     return { verified: false, reason: "no-platform-verifier-configured" };
   },
 };
+
+/** Context the OSM-auth verifier may need to bind the token to the reporter. */
+export interface OsmAuthVerifierCtx {
+  /** RFC 7638 thumbprint of the reporter key the OSM token is claimed for. */
+  keyId: string;
+}
+
+/**
+ * Outcome of an OSM-auth verification attempt. `verified` gates the trust bump;
+ * `osmUid` is the OSM numeric user id when the verifier could resolve it.
+ */
+export interface OsmAuthVerificationResult {
+  verified: boolean;
+  reason?: string;
+  osmUid?: string;
+}
+
+/**
+ * Pluggable OSM-auth verifier. An implementation confirms the presented OSM
+ * OAuth token against OSM's API and (optionally) captures the account's uid.
+ * Only a `verified: true` result grants the advisory trust bump — the mere
+ * PRESENCE of an `osmAuth` string buys nothing, exactly like attestation.
+ */
+export interface OsmAuthVerifier {
+  verify(osmAuth: string, ctx: OsmAuthVerifierCtx): Promise<OsmAuthVerificationResult>;
+}
+
+/**
+ * Default production OSM-auth verifier: confirms NOTHING. No OSM API client is
+ * wired here yet, so every presented token is treated as unverified and grants
+ * no trust. Real OSM OAuth verification (call OSM's API to confirm the token and
+ * capture the uid) is a documented FOLLOW-ON that plugs into this seam by
+ * supplying its own {@link OsmAuthVerifier}. Absent OR unverified osmAuth leaves
+ * the reporter fully eligible — osmAuth is advisory, never a gate.
+ */
+export const UNVERIFIED_OSM_AUTH: OsmAuthVerifier = {
+  async verify() {
+    return { verified: false, reason: "no-osm-verifier-configured" };
+  },
+};

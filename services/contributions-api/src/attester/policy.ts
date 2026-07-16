@@ -22,7 +22,12 @@
 export interface DeviceProof {
   /** RFC 7638 thumbprint of the reporter's public key. */
   keyId: string;
-  /** Self-declared age of the client-side key/account, in whole days. */
+  /**
+   * @deprecated IGNORED by the trust computation. Account tenure is now derived
+   * server-side from the reporter's `created_at` (see {@link AttesterCtx}), so a
+   * self-declared age buys no trust. Retained on the wire only for
+   * backward-compatibility; a future major may drop it.
+   */
   accountAgeDays?: number;
   /**
    * Optional platform attestation. The blob is verified out-of-band by the
@@ -30,7 +35,12 @@ export interface DeviceProof {
    * trust bump when that verification succeeded (see `attestationVerified`).
    */
   attestation?: { kind: "android-keystore" | "app-attest" | "play-integrity"; blob: string };
-  /** Presence of an OSM auth token; OSM-side verification is a later task. */
+  /**
+   * Optional OSM auth token. The token is verified out-of-band by the caller's
+   * {@link ./verifier.OsmAuthVerifier}; the policy only grants a trust bump when
+   * that verification succeeded (see `osmAuthVerified`) — mere presence buys
+   * nothing.
+   */
   osmAuth?: string;
 }
 
@@ -54,6 +64,13 @@ export interface ReporterRow {
   keyId: string;
   status: "active" | "blocked";
   corroboratedCount: number;
+  /**
+   * When this reporter key was first enrolled (set once at INSERT, never
+   * overwritten on re-enroll). Account tenure is derived from this instant —
+   * NULL for a synthetic block-before-enroll row that has no real created_at,
+   * which resolves to zero tenure.
+   */
+  createdAt: Date | null;
 }
 
 export interface AttesterCtx {
@@ -68,6 +85,19 @@ export interface AttesterCtx {
    * false (unverified), so a fabricated blob buys no trust.
    */
   attestationVerified?: boolean;
+  /**
+   * Whether the presented OSM auth token was actually verified by the caller's
+   * {@link ./verifier.OsmAuthVerifier}. The osmAuth trust bump is granted ONLY
+   * when this is true — never on mere presence. Defaults to false (unverified),
+   * so a self-asserted token buys no trust.
+   */
+  osmAuthVerified?: boolean;
+}
+
+/** Whole days between the reporter's first enrollment and the assessment. */
+function tenureDays(createdAt: Date | null, nowIso: string): number {
+  if (createdAt === null) return 0;
+  return (Date.parse(nowIso) - createdAt.getTime()) / 86_400_000;
 }
 
 /**
@@ -109,23 +139,28 @@ export function assessEntitlement(proof: DeviceProof, ctx: AttesterCtx): Entitle
   const weights = ATTESTER_POLICY.trust;
   const reporter = ctx.reporterRow ?? null;
 
+  // Tenure is SERVER-observed (now − reporter.created_at), never the client's
+  // self-declared proof.accountAgeDays — a self-asserted age buys no trust.
+  const tenure = tenureDays(reporter?.createdAt ?? null, ctx.now);
+
   const signals: string[] = [];
   let trust = weights.base;
-  if (proof.accountAgeDays !== undefined && proof.accountAgeDays >= 7) {
+  if (tenure >= 7) {
     trust += weights.accountAgeAtLeast7Days;
-    signals.push("account age >= 7d");
   }
-  if (proof.accountAgeDays !== undefined && proof.accountAgeDays >= 30) {
+  if (tenure >= 30) {
     trust += weights.accountAgeAtLeast30Days;
-    signals.push("account age >= 30d");
+  }
+  if (tenure >= 7) {
+    signals.push(`tenure ${Math.floor(tenure)}d (server-observed)`);
   }
   if (proof.attestation !== undefined && ctx.attestationVerified === true) {
     trust += weights.attestationPresent;
     signals.push(`attestation verified (${proof.attestation.kind})`);
   }
-  if (proof.osmAuth !== undefined) {
+  if (proof.osmAuth !== undefined && ctx.osmAuthVerified === true) {
     trust += weights.osmAuthPresent;
-    signals.push("osm auth present (unverified)");
+    signals.push("osm auth verified");
   }
   if (reporter !== null && reporter.status === "active" && reporter.corroboratedCount > 0) {
     trust += weights.activeWithCorroboratedHistory;

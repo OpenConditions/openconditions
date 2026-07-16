@@ -98,6 +98,8 @@ describe("enrollReporter", () => {
       WHERE key_id = ${key.keyId}`;
 
     const later = "2026-07-12T12:00:00.000Z";
+    // The client lies about a 30-day account age; it is IGNORED. Server tenure
+    // is created_at (NOW) → later = 4 hours, well under the 7-day step.
     const entitlement = await enrollReporter(
       sql,
       key.publicJwk,
@@ -123,9 +125,27 @@ describe("enrollReporter", () => {
     expect(rows[0]!.created_at.toISOString()).toBe(NOW);
     expect(rows[0]!.last_active_at.toISOString()).toBe(later);
     expect(rows[0]!.entitlement_expires_at.toISOString()).toBe("2026-07-13T12:00:00.000Z");
-    // age 30 (0.4) + corroborated history (0.1) on top of base 0.3
-    expect(rows[0]!.trust_signal).toBeCloseTo(0.8, 10);
+    // Server tenure is only 4h (< 7d) so NO age bump; corroborated history (0.1)
+    // on top of base 0.3 = 0.4. The client's accountAgeDays:30 is ignored.
+    expect(rows[0]!.trust_signal).toBeCloseTo(0.4, 10);
     expect(entitlement.grantTokens).toBe(20);
+  }, 30_000);
+
+  it("server-observed tenure (30d created_at) grants the age bumps on re-enroll", async () => {
+    const key = await generateReporterKey();
+    await enroll(key);
+    // Backdate the row's created_at to 30 days before NOW; a re-enroll at NOW now
+    // observes 30 days of tenure and earns both age steps (+0.4).
+    await sql`UPDATE conditions.reporter
+      SET created_at = ${new Date(Date.parse(NOW) - 30 * 86_400_000)}
+      WHERE key_id = ${key.keyId}`;
+
+    const entitlement = await enroll(key);
+    expect(entitlement.grantTokens).toBe(20);
+    expect(entitlement.trustSignal).toBeCloseTo(0.7, 10);
+    const rows = await sql<{ trust_signal: number | null }[]>`
+      SELECT trust_signal FROM conditions.reporter WHERE key_id = ${key.keyId}`;
+    expect(rows[0]!.trust_signal).toBeCloseTo(0.7, 10);
   }, 30_000);
 
   it("rejects a proof whose keyId is not the thumbprint of pubJwk", async () => {
@@ -202,6 +222,117 @@ describe("enrollReporter", () => {
     expect(entitlement.grantTokens).toBe(20);
     expect(entitlement.reportingGrant).not.toBe("");
     expect(entitlement.trustSignal).toBeCloseTo(0.3, 10);
+  }, 30_000);
+
+  it("a present-but-UNVERIFIED osmAuth grants no trust bump (default verifier)", async () => {
+    const key = await generateReporterKey();
+    const entitlement = await enrollReporter(
+      sql,
+      key.publicJwk,
+      proofFor(key, { osmAuth: "osm-token" }),
+      NOW,
+      { grantSecret: GRANT_SECRET, log: noopLog }
+    );
+    expect(entitlement.grantTokens).toBe(20);
+    expect(entitlement.trustSignal).toBeCloseTo(0.3, 10);
+    const rows = await sql<{ trust_signal: number | null }[]>`
+      SELECT trust_signal FROM conditions.reporter WHERE key_id = ${key.keyId}`;
+    expect(rows[0]!.trust_signal).toBeCloseTo(0.3, 10);
+  }, 30_000);
+
+  it("a verifier-CONFIRMED osmAuth grants the 0.1 bump", async () => {
+    const key = await generateReporterKey();
+    const confirming = {
+      verify: async () => ({ verified: true, osmUid: "12345" }),
+    };
+    const entitlement = await enrollReporter(
+      sql,
+      key.publicJwk,
+      proofFor(key, { osmAuth: "osm-token" }),
+      NOW,
+      { grantSecret: GRANT_SECRET, log: noopLog, osmAuthVerifier: confirming }
+    );
+    expect(entitlement.grantTokens).toBe(20);
+    expect(entitlement.trustSignal).toBeCloseTo(0.4, 10);
+    const rows = await sql<{ trust_signal: number | null }[]>`
+      SELECT trust_signal FROM conditions.reporter WHERE key_id = ${key.keyId}`;
+    expect(rows[0]!.trust_signal).toBeCloseTo(0.4, 10);
+  }, 30_000);
+
+  it("a throwing osmAuth verifier never gates enrollment and never logs the token", async () => {
+    const OSM_TOKEN = "super-secret-osm-token-value";
+    const warnCalls: { obj: Record<string, unknown>; msg?: string }[] = [];
+    const capturingLog = {
+      info: () => {},
+      warn: (obj: Record<string, unknown>, msg?: string) => warnCalls.push({ obj, msg }),
+      error: () => {},
+    };
+    const faulty = {
+      verify: async () => {
+        // A real OSM verifier's error could embed the token; simulate it.
+        throw new Error(`OSM API rejected token ${OSM_TOKEN}`);
+      },
+    };
+    const key = await generateReporterKey();
+    const entitlement = await enrollReporter(
+      sql,
+      key.publicJwk,
+      proofFor(key, { osmAuth: OSM_TOKEN }),
+      NOW,
+      { grantSecret: GRANT_SECRET, log: capturingLog, osmAuthVerifier: faulty }
+    );
+    // Fail-safe: still fully eligible, no bump.
+    expect(entitlement.grantTokens).toBe(20);
+    expect(entitlement.reportingGrant).not.toBe("");
+    expect(entitlement.trustSignal).toBeCloseTo(0.3, 10);
+    // The warn log carries only { err, keyId } at the top level...
+    expect(warnCalls.length).toBeGreaterThan(0);
+    const logged = warnCalls[0]!;
+    expect(Object.keys(logged.obj).sort()).toEqual(["err", "keyId"]);
+    expect(logged.obj["keyId"]).toBe(key.keyId);
+    // ...and the logged error is a scrubbed { name, message } shape whose message
+    // has the token redacted and no stack — inspecting the ACTUAL error content
+    // (this FAILS if the raw Error were logged, since err.message embeds the
+    // token). The whole serialized line must also be token-free.
+    const loggedErr = logged.obj["err"] as { name?: string; message: string; stack?: string };
+    expect(loggedErr).not.toBeInstanceOf(Error);
+    expect(loggedErr.stack).toBeUndefined();
+    expect(loggedErr.message).not.toContain(OSM_TOKEN);
+    expect(loggedErr.message).toContain("[redacted-secret]");
+    expect(JSON.stringify(logged.obj)).not.toContain(OSM_TOKEN);
+  }, 30_000);
+
+  it("a throwing attestation verifier never logs the attestation blob", async () => {
+    const BLOB = "super-secret-attestation-blob-value";
+    const warnCalls: { obj: Record<string, unknown>; msg?: string }[] = [];
+    const capturingLog = {
+      info: () => {},
+      warn: (obj: Record<string, unknown>, msg?: string) => warnCalls.push({ obj, msg }),
+      error: () => {},
+    };
+    const faulty = {
+      verify: async () => {
+        // A real platform verifier's error could embed the blob; simulate it.
+        throw new Error(`Play Integrity rejected blob ${BLOB}`);
+      },
+    };
+    const key = await generateReporterKey();
+    const entitlement = await enrollReporter(
+      sql,
+      key.publicJwk,
+      proofFor(key, { attestation: { kind: "play-integrity", blob: BLOB } }),
+      NOW,
+      { grantSecret: GRANT_SECRET, log: capturingLog, attestationVerifier: faulty }
+    );
+    expect(entitlement.grantTokens).toBe(20);
+    expect(entitlement.trustSignal).toBeCloseTo(0.3, 10);
+    expect(warnCalls.length).toBeGreaterThan(0);
+    const loggedErr = warnCalls[0]!.obj["err"] as { message: string; stack?: string };
+    expect(loggedErr).not.toBeInstanceOf(Error);
+    expect(loggedErr.stack).toBeUndefined();
+    expect(loggedErr.message).not.toContain(BLOB);
+    expect(loggedErr.message).toContain("[redacted-secret]");
+    expect(JSON.stringify(warnCalls[0]!.obj)).not.toContain(BLOB);
   }, 30_000);
 });
 

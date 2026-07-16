@@ -26,7 +26,12 @@ import { checkReportRate } from "./abuse/rate.js";
 import { enrollReporter } from "./attester/enroll.js";
 import { resolveGrantSecret, verifyReportingGrant } from "./attester/grant.js";
 import { ATTESTER_POLICY, type DeviceProof } from "./attester/policy.js";
-import { UNVERIFIED_ATTESTATION, type AttestationVerifier } from "./attester/verifier.js";
+import {
+  UNVERIFIED_ATTESTATION,
+  UNVERIFIED_OSM_AUTH,
+  type AttestationVerifier,
+  type OsmAuthVerifier,
+} from "./attester/verifier.js";
 import { isPoliceCategory, isPoliceCategoryEnabled } from "./policy/police.js";
 import { reportEpoch, type PublicContext } from "./issuer/context.js";
 import { issueToken } from "./issuer/issue.js";
@@ -86,6 +91,13 @@ export interface BuildOptions {
    * Play Integrity / App Attest verifier plugs in here as a mobile follow-on.
    */
   attestationVerifier?: AttestationVerifier;
+  /**
+   * OSM-auth verifier for the enrollment flow. Defaults to
+   * {@link UNVERIFIED_OSM_AUTH} (confirms nothing — no real OSM API verifier is
+   * wired yet), so a presented osmAuth token grants no trust. A real OSM OAuth
+   * verifier plugs in here as a follow-on.
+   */
+  osmAuthVerifier?: OsmAuthVerifier;
 }
 
 interface EnrollBody {
@@ -155,6 +167,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const autoCorroborate = options.autoCorroborate ?? autoCorroborateOnLanding;
   const crossValidate = options.crossValidateAgainstFeeds ?? crossValidateAgainstFeeds;
   const attestationVerifier = options.attestationVerifier ?? UNVERIFIED_ATTESTATION;
+  const osmAuthVerifier = options.osmAuthVerifier ?? UNVERIFIED_OSM_AUTH;
   const issuerName = env["OPENCONDITIONS_ISSUER_NAME"] || DEFAULT_ISSUER_NAME;
 
   const app = Fastify({ logger: options.logger ?? true });
@@ -202,6 +215,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         grantSecret,
         log: attesterLog,
         attestationVerifier,
+        osmAuthVerifier,
       });
     } catch (err) {
       if (err instanceof TypeError) {
