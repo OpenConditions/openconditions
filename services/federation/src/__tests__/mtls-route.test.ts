@@ -348,6 +348,38 @@ describe("GET /peer/backfill — the mTLS gate is threaded uniformly (proxy-awar
     }
   }, 30_000);
 
+  it("rejects an unauthorized (unverified) cert (fail-closed still runs)", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "GET", "/peer/backfill");
+      const res = await app.inject({
+        method: "GET",
+        url: "/peer/backfill",
+        headers: { ...req.headers, "x-test-cert": "unauthorized" },
+      });
+      expect(res.statusCode).toBe(403);
+      expect(res.headers["federation-reason"]).toBe("mtls-required");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("rejects an authorized cert whose fingerprint is not pinned (mtls-fingerprint-mismatch)", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "GET", "/peer/backfill");
+      const res = await app.inject({
+        method: "GET",
+        url: "/peer/backfill",
+        headers: { ...req.headers, "x-test-cert": "bad-fp" },
+      });
+      expect(res.statusCode).toBe(403);
+      expect(res.headers["federation-reason"]).toBe("mtls-fingerprint-mismatch");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
   it("leaves a non-mTLS peer unaffected: a valid signature alone passes", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
     try {
@@ -411,6 +443,40 @@ describe("POST /peer/subscriptions — the mTLS gate is threaded uniformly (prox
     }
   }, 30_000);
 
+  it("rejects an unauthorized (unverified) cert (fail-closed still runs)", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "POST", "/peer/subscriptions", { deliveryMode: "pull" });
+      const res = await app.inject({
+        method: "POST",
+        url: "/peer/subscriptions",
+        headers: { ...req.headers, "x-test-cert": "unauthorized" },
+        payload: req.payload,
+      });
+      expect(res.statusCode).toBe(403);
+      expect(res.headers["federation-reason"]).toBe("mtls-required");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("rejects an authorized cert whose fingerprint is not pinned (mtls-fingerprint-mismatch)", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "POST", "/peer/subscriptions", { deliveryMode: "pull" });
+      const res = await app.inject({
+        method: "POST",
+        url: "/peer/subscriptions",
+        headers: { ...req.headers, "x-test-cert": "bad-fp" },
+        payload: req.payload,
+      });
+      expect(res.statusCode).toBe(403);
+      expect(res.headers["federation-reason"]).toBe("mtls-fingerprint-mismatch");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
   it("leaves a non-mTLS peer unaffected: a valid signature alone passes", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
     try {
@@ -469,6 +535,38 @@ describe("GET /peer/outbox — the optionalPeer mTLS gate is threaded (proxy-awa
       const res = await app.inject({ method: "GET", url: "/peer/outbox", headers: req.headers });
       expect(res.statusCode).toBe(403);
       expect(res.headers["federation-reason"]).toBe("mtls-required");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("rejects an unauthorized (unverified) cert (fail-closed still runs)", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "GET", "/peer/outbox");
+      const res = await app.inject({
+        method: "GET",
+        url: "/peer/outbox",
+        headers: { ...req.headers, "x-test-cert": "unauthorized" },
+      });
+      expect(res.statusCode).toBe(403);
+      expect(res.headers["federation-reason"]).toBe("mtls-required");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("rejects an authorized cert whose fingerprint is not pinned (mtls-fingerprint-mismatch)", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "GET", "/peer/outbox");
+      const res = await app.inject({
+        method: "GET",
+        url: "/peer/outbox",
+        headers: { ...req.headers, "x-test-cert": "bad-fp" },
+      });
+      expect(res.statusCode).toBe(403);
+      expect(res.headers["federation-reason"]).toBe("mtls-fingerprint-mismatch");
     } finally {
       await app.close();
     }
