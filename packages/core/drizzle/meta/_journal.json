@@ -155,6 +155,13 @@
       "when": 1784113337318,
       "tag": "0021_federation_outbox_retention_index",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1784199036072,
+      "tag": "0022_equal_wonder_man",
+      "breakpoints": true
     }
   ]
 }

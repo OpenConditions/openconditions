@@ -161,6 +161,11 @@ export const observations = conditionsSchema.table(
     index("idx_conditions_obs_flagged")
       .on(t.flaggedAt)
       .where(sql`${t.flaggedAt} IS NOT NULL`),
+    // Corroboration/version lineage is queried by containment (`corroborations
+    // @> [id]`) during survivor resolution; GIN keeps that a index lookup rather
+    // than a full scan as crowd volume grows.
+    index("idx_conditions_obs_corroborations").using("gin", t.corroborations),
+    index("idx_conditions_obs_replaces").using("gin", t.replaces),
     check(
       "obs_confidence_score_range",
       sql`${t.confidenceScore} IS NULL OR (${t.confidenceScore} >= 0 AND ${t.confidenceScore} <= 1)`
