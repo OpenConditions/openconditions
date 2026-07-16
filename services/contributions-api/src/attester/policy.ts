@@ -6,9 +6,12 @@
  * Honesty constraints (binding, from the architecture record):
  * - Attestation (Play Integrity / App Attest / Android Keystore) is a SOFT
  *   advisory signal, NEVER a gate. A device with no attestation at all
- *   (GrapheneOS, F-Droid builds) is fully eligible. v1 does NOT verify
- *   attestation blobs cryptographically — there are no vendor keys here; only
- *   the KIND and PRESENCE of an attestation feed `trustSignal`.
+ *   (GrapheneOS, F-Droid builds) is fully eligible. The attestation trust bump
+ *   requires an actual verification result (`ctx.attestationVerified === true`),
+ *   NOT the mere presence of a blob — a forgeable, unverified blob buys no
+ *   trust. The async caller resolves that boolean through the pluggable
+ *   {@link ./verifier.AttestationVerifier} seam; this pure policy only consumes
+ *   the already-decided verdict.
  * - `grantTokens` bounds token ISSUANCE per epoch. N redeemed tokens do NOT
  *   prove N distinct contributors, and per-cell bounding is NOT provided here
  *   (the probe plan's gate owns that problem).
@@ -22,8 +25,9 @@ export interface DeviceProof {
   /** Self-declared age of the client-side key/account, in whole days. */
   accountAgeDays?: number;
   /**
-   * Optional platform attestation. Recorded as kind + presence only — the
-   * blob is NOT cryptographically verified in v1 and is never sent anywhere.
+   * Optional platform attestation. The blob is verified out-of-band by the
+   * caller's {@link ./verifier.AttestationVerifier}; the policy only grants a
+   * trust bump when that verification succeeded (see `attestationVerified`).
    */
   attestation?: { kind: "android-keystore" | "app-attest" | "play-integrity"; blob: string };
   /** Presence of an OSM auth token; OSM-side verification is a later task. */
@@ -57,6 +61,13 @@ export interface AttesterCtx {
   now: string;
   /** The existing reporter row for this key, if any. */
   reporterRow?: ReporterRow | null;
+  /**
+   * Whether the presented attestation blob was actually verified by the
+   * caller's {@link ./verifier.AttestationVerifier}. The attestation trust bump
+   * is granted ONLY when this is true — never on mere presence. Defaults to
+   * false (unverified), so a fabricated blob buys no trust.
+   */
+  attestationVerified?: boolean;
 }
 
 /**
@@ -108,9 +119,9 @@ export function assessEntitlement(proof: DeviceProof, ctx: AttesterCtx): Entitle
     trust += weights.accountAgeAtLeast30Days;
     signals.push("account age >= 30d");
   }
-  if (proof.attestation !== undefined) {
+  if (proof.attestation !== undefined && ctx.attestationVerified === true) {
     trust += weights.attestationPresent;
-    signals.push(`attestation present (${proof.attestation.kind}, unverified)`);
+    signals.push(`attestation verified (${proof.attestation.kind})`);
   }
   if (proof.osmAuth !== undefined) {
     trust += weights.osmAuthPresent;

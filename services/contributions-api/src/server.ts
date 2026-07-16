@@ -26,6 +26,7 @@ import { checkReportRate } from "./abuse/rate.js";
 import { enrollReporter } from "./attester/enroll.js";
 import { resolveGrantSecret, verifyReportingGrant } from "./attester/grant.js";
 import { ATTESTER_POLICY, type DeviceProof } from "./attester/policy.js";
+import { UNVERIFIED_ATTESTATION, type AttestationVerifier } from "./attester/verifier.js";
 import { isPoliceCategory, isPoliceCategoryEnabled } from "./policy/police.js";
 import { reportEpoch, type PublicContext } from "./issuer/context.js";
 import { issueToken } from "./issuer/issue.js";
@@ -78,6 +79,13 @@ export interface BuildOptions {
     observationId: string,
     now: string
   ) => Promise<string | null>;
+  /**
+   * Platform-attestation verifier for the enrollment flow. Defaults to
+   * {@link UNVERIFIED_ATTESTATION} (confirms nothing — no real platform verifier
+   * is wired yet), so a fabricated attestation blob grants no trust. A real
+   * Play Integrity / App Attest verifier plugs in here as a mobile follow-on.
+   */
+  attestationVerifier?: AttestationVerifier;
 }
 
 interface EnrollBody {
@@ -146,6 +154,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const streetCompleteCheck = options.streetCompleteCheck ?? flagOntoOpenFlagged;
   const autoCorroborate = options.autoCorroborate ?? autoCorroborateOnLanding;
   const crossValidate = options.crossValidateAgainstFeeds ?? crossValidateAgainstFeeds;
+  const attestationVerifier = options.attestationVerifier ?? UNVERIFIED_ATTESTATION;
   const issuerName = env["OPENCONDITIONS_ISSUER_NAME"] || DEFAULT_ISSUER_NAME;
 
   const app = Fastify({ logger: options.logger ?? true });
@@ -192,6 +201,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       entitlement = await enrollReporter(sql, pubJwk, proof, now(), {
         grantSecret,
         log: attesterLog,
+        attestationVerifier,
       });
     } catch (err) {
       if (err instanceof TypeError) {

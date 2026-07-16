@@ -147,6 +147,62 @@ describe("enrollReporter", () => {
     expect(entitlement.reportingGrant).toBe("");
     expect(entitlement.reason).toMatch(/blocked/i);
   }, 30_000);
+
+  it("a present-but-UNVERIFIED attestation grants no trust bump (default verifier)", async () => {
+    // A Sybil sends an arbitrary blob; the default UNVERIFIED_ATTESTATION
+    // verifier returns verified:false, so trust_signal stays at the
+    // no-attestation baseline (0.3). Enrollment/tokens are unaffected.
+    const key = await generateReporterKey();
+    const entitlement = await enrollReporter(
+      sql,
+      key.publicJwk,
+      proofFor(key, { attestation: { kind: "play-integrity", blob: "forged" } }),
+      NOW,
+      { grantSecret: GRANT_SECRET, log: noopLog }
+    );
+    expect(entitlement.grantTokens).toBe(20);
+    const rows = await sql<{ trust_signal: number | null }[]>`
+      SELECT trust_signal FROM conditions.reporter WHERE key_id = ${key.keyId}`;
+    expect(rows[0]!.trust_signal).toBeCloseTo(0.3, 10);
+  }, 30_000);
+
+  it("a verifier-CONFIRMED attestation grants the bump", async () => {
+    const key = await generateReporterKey();
+    const confirming = {
+      verify: async () => ({ verified: true }),
+    };
+    const entitlement = await enrollReporter(
+      sql,
+      key.publicJwk,
+      proofFor(key, { attestation: { kind: "play-integrity", blob: "opaque" } }),
+      NOW,
+      { grantSecret: GRANT_SECRET, log: noopLog, attestationVerifier: confirming }
+    );
+    expect(entitlement.grantTokens).toBe(20);
+    expect(entitlement.trustSignal).toBeCloseTo(0.4, 10);
+    const rows = await sql<{ trust_signal: number | null }[]>`
+      SELECT trust_signal FROM conditions.reporter WHERE key_id = ${key.keyId}`;
+    expect(rows[0]!.trust_signal).toBeCloseTo(0.4, 10);
+  }, 30_000);
+
+  it("a throwing verifier never gates enrollment (advisory, fully eligible, no bump)", async () => {
+    const key = await generateReporterKey();
+    const faulty = {
+      verify: async () => {
+        throw new Error("platform verifier unreachable");
+      },
+    };
+    const entitlement = await enrollReporter(
+      sql,
+      key.publicJwk,
+      proofFor(key, { attestation: { kind: "app-attest", blob: "opaque" } }),
+      NOW,
+      { grantSecret: GRANT_SECRET, log: noopLog, attestationVerifier: faulty }
+    );
+    expect(entitlement.grantTokens).toBe(20);
+    expect(entitlement.reportingGrant).not.toBe("");
+    expect(entitlement.trustSignal).toBeCloseTo(0.3, 10);
+  }, 30_000);
 });
 
 interface MintedToken {

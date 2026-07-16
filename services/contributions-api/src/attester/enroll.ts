@@ -17,6 +17,7 @@ import {
   type Entitlement,
   type ReporterRow,
 } from "./policy.js";
+import { UNVERIFIED_ATTESTATION, type AttestationVerifier } from "./verifier.js";
 
 export interface EnrollLogger {
   info: (obj: Record<string, unknown>, msg?: string) => void;
@@ -27,6 +28,13 @@ export interface EnrollLogger {
 export interface EnrollDeps {
   grantSecret: Uint8Array;
   log: EnrollLogger;
+  /**
+   * Verifies a presented platform-attestation blob. Only a `verified: true`
+   * result grants the advisory trust bump — a present-but-unverified (e.g.
+   * forged) attestation adds nothing. Defaults to {@link UNVERIFIED_ATTESTATION},
+   * which confirms nothing until a real platform verifier is wired in.
+   */
+  attestationVerifier?: AttestationVerifier;
 }
 
 /**
@@ -73,7 +81,32 @@ export async function enrollReporter(
           corroboratedCount: existingRows[0]?.corroborated_count ?? 0,
         };
 
-  const entitlement = assessEntitlement(proof, { now: nowIso, reporterRow });
+  // Resolve the attestation verdict OUT of the pure policy: a present blob only
+  // earns the trust bump when the injected verifier confirms it. Absent or
+  // unverified attestation is never a gate — the reporter stays fully eligible.
+  const verifier = deps.attestationVerifier ?? UNVERIFIED_ATTESTATION;
+  let attestationVerified = false;
+  if (proof.attestation !== undefined) {
+    try {
+      const outcome = await verifier.verify(proof.attestation, { keyId: thumbprint });
+      attestationVerified = outcome.verified;
+    } catch (err) {
+      // A verifier fault is treated as "unverified" — attestation is advisory
+      // and must NEVER gate enrollment. The reporter stays fully eligible; it
+      // simply earns no attestation trust bump.
+      attestationVerified = false;
+      deps.log.warn(
+        { err, keyId: thumbprint },
+        "attestation verifier threw; treating as unverified"
+      );
+    }
+  }
+
+  const entitlement = assessEntitlement(proof, {
+    now: nowIso,
+    reporterRow,
+    attestationVerified,
+  });
 
   const now = new Date(nowIso);
   const expiresAt = new Date(now.getTime() + ATTESTER_POLICY.entitlementTtlMs);

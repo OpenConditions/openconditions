@@ -25,6 +25,13 @@ export {
 } from "./attester/grant.js";
 export { enrollReporter } from "./attester/enroll.js";
 export {
+  UNVERIFIED_ATTESTATION,
+  type AttestationVerifier,
+  type AttestationClaim,
+  type AttestationVerifierCtx,
+  type AttestationVerificationResult,
+} from "./attester/verifier.js";
+export {
   isValidContextPart,
   publicContextString,
   redemptionContext,

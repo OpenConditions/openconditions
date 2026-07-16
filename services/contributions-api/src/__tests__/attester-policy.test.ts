@@ -39,14 +39,36 @@ describe("assessEntitlement — trustSignal policy table", () => {
     expect(ent.trustSignal).toBeCloseTo(0.7, 10);
   });
 
-  it("attestation presence adds 0.1 (advisory only, never a gate)", () => {
-    const withAttestation = assessEntitlement(
+  it("a VERIFIED attestation adds 0.1 (advisory only, never a gate)", () => {
+    const withVerified = assessEntitlement(
       proofFor({ attestation: { kind: "play-integrity", blob: "opaque" } }),
-      { now: NOW }
+      { now: NOW, attestationVerified: true }
     );
     const without = assessEntitlement(proofFor(), { now: NOW });
-    expect(withAttestation.trustSignal).toBeCloseTo(0.4, 10);
-    expect(withAttestation.grantTokens).toBe(without.grantTokens);
+    expect(withVerified.trustSignal).toBeCloseTo(0.4, 10);
+    expect(withVerified.grantTokens).toBe(without.grantTokens);
+  });
+
+  it("a present-but-UNVERIFIED attestation adds NOTHING (forgery hole closed)", () => {
+    // A Sybil sending an arbitrary blob without a confirming verifier buys no
+    // trust: the bump requires attestationVerified === true, not mere presence.
+    const unverified = assessEntitlement(
+      proofFor({ attestation: { kind: "play-integrity", blob: "forged" } }),
+      { now: NOW, attestationVerified: false }
+    );
+    const baseline = assessEntitlement(proofFor(), { now: NOW });
+    expect(unverified.trustSignal).toBeCloseTo(0.3, 10);
+    expect(unverified.trustSignal).toBeCloseTo(baseline.trustSignal, 10);
+    // Still fully eligible — attestation is never a gate.
+    expect(unverified.grantTokens).toBe(20);
+  });
+
+  it("attestation defaults to unverified when the flag is absent", () => {
+    const ent = assessEntitlement(
+      proofFor({ attestation: { kind: "app-attest", blob: "opaque" } }),
+      { now: NOW }
+    );
+    expect(ent.trustSignal).toBeCloseTo(0.3, 10);
   });
 
   it("osmAuth presence adds 0.1", () => {
@@ -74,7 +96,11 @@ describe("assessEntitlement — trustSignal policy table", () => {
         attestation: { kind: "android-keystore", blob: "opaque" },
         osmAuth: "osm-token",
       }),
-      { now: NOW, reporterRow: reporterFor({ corroboratedCount: 12 }) }
+      {
+        now: NOW,
+        reporterRow: reporterFor({ corroboratedCount: 12 }),
+        attestationVerified: true,
+      }
     );
     expect(ent.trustSignal).toBeCloseTo(1, 10);
     expect(ent.trustSignal).toBeLessThanOrEqual(1);
