@@ -10,6 +10,7 @@ import {
   isCrossValidateSweepEnabled,
   singleFlight,
   sweepCrossValidate,
+  sweepFederatedCrossValidate,
 } from "./evidence/crossValidateSweep.js";
 
 const PORT = parseInt(process.env["PORT"] || "4200", 10);
@@ -40,7 +41,10 @@ async function boot() {
   // report retroactively routes it. Opt out with OPENCONDITIONS_CROSS_VALIDATE_SWEEP=off.
   let sweepTimer: NodeJS.Timeout | undefined;
   if (isCrossValidateSweepEnabled(process.env)) {
-    // Single-flight so a slow cycle can never overlap itself.
+    // Single-flight so a slow cycle can never overlap itself. Both the local
+    // (T2) sweep and the starvation-safe federated sweep run in the SAME tick
+    // under the one guard — no second cron. Each is wrapped in its own try so a
+    // failure in one never skips the other.
     const runSweep = singleFlight(async () => {
       try {
         const result = await sweepCrossValidate(sql, new Date().toISOString(), {
@@ -53,6 +57,18 @@ async function boot() {
         }
       } catch (err) {
         console.error("[contributions-api] cross-validate sweep failed:", err);
+      }
+      try {
+        const fed = await sweepFederatedCrossValidate(sql, new Date().toISOString(), {
+          log: (msg) => console.info(msg),
+        });
+        if (fed.scanned > 0) {
+          console.info(
+            `[contributions-api] federated cross-validate sweep: scanned ${fed.scanned}, routed ${fed.routed}`
+          );
+        }
+      } catch (err) {
+        console.error("[contributions-api] federated cross-validate sweep failed:", err);
       }
     });
     sweepTimer = setInterval(() => void runSweep(), CROSS_VALIDATE_SWEEP_MS);

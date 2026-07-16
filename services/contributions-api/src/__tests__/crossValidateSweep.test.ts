@@ -4,7 +4,7 @@ import postgres from "postgres";
 import { phenomenonFingerprint, type ConditionEvent } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import { crossValidateAgainstFeeds } from "../evidence/crossValidate.js";
-import { sweepCrossValidate } from "../evidence/crossValidateSweep.js";
+import { sweepCrossValidate, sweepFederatedCrossValidate } from "../evidence/crossValidateSweep.js";
 import { recomputeEvidence } from "../evidence/recompute.js";
 
 const T_REPORT = "2026-07-12T08:00:00.000Z";
@@ -167,6 +167,14 @@ async function readReporterAlpha(keyId: string): Promise<number> {
   const rows = await sql<{ reputation_alpha: number }[]>`
     SELECT reputation_alpha FROM conditions.reporter WHERE key_id = ${keyId}`;
   return rows[0]!.reputation_alpha;
+}
+
+/** Byte-snapshot of the WHOLE reporter table — proves a route trained NOBODY. */
+async function reporterSnapshot(): Promise<string> {
+  const rows = await sql<{ key_id: string; a: number; b: number; c: number }[]>`
+    SELECT key_id, reputation_alpha AS a, reputation_beta AS b, corroborated_count AS c
+    FROM conditions.reporter ORDER BY key_id`;
+  return JSON.stringify(rows);
 }
 
 async function externalEvidenceCount(obsId: string): Promise<number> {
@@ -395,5 +403,265 @@ describe("sweepCrossValidate — feed-arrives-later periodic cross-match", () =>
     expect(result.scanned).toBe(2);
     expect(result.routed).toBe(0);
     expect(logs.some((m) => m.includes("sw:crowd-boom"))).toBe(true);
+  }, 30_000);
+});
+
+// A future expiry (relative to T_SWEEP 08:10) — the anti-starvation bound.
+const T_EXPIRES = "2026-07-12T09:00:00.000Z";
+const T_EXPIRES_LATER = "2026-07-12T09:30:00.000Z";
+// Two distinct future expiries to pin the soonest-first ordering.
+const T_SOON = "2026-07-12T08:20:00.000Z";
+const T_LATE = "2026-07-12T08:50:00.000Z";
+
+/**
+ * A genuinely-FEDERATED CROWD EVENT: origin.kind 'crowd', reporter stripped (no
+ * keyId), a non-empty originChain, and a non-null (here future) expires_at — the
+ * shape federation ingest lands. Seeds the matching `report` evidence row (actor
+ * null) exactly as the federation writer does, so applyExternalResolution's
+ * recompute resolves it the same way it would in production.
+ */
+async function insertFederatedCrowdEvent(
+  opts: EventOpts & { expiresAt?: string | null }
+): Promise<void> {
+  const type = opts.type ?? "hazard";
+  const fp = phenomenonFingerprint({
+    kind: "event",
+    domain: "roads",
+    type,
+    geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
+    validFrom: opts.validFrom,
+  } as ConditionEvent);
+  const origin = {
+    kind: "crowd",
+    attribution: { provider: "Peer A", license: "ODbL-1.0" },
+    originChain: [{ instanceId: "peer-a", receivedAt: opts.validFrom }],
+  };
+  await sql`
+    INSERT INTO conditions.observations
+      (id, source, source_format, domain, kind, type, status, geom, origin,
+       valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale, expires_at)
+    VALUES
+      (${opts.id}, ${opts.source ?? "peer-a-crowd"}, 'native', 'roads', 'event', ${type},
+       ${opts.status ?? "active"},
+       ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
+       ${sql.json(origin as never)}, ${opts.validFrom}, ${fp},
+       ${opts.validFrom}, now(), false, ${opts.expiresAt ?? null})`;
+  await sql`
+    INSERT INTO conditions.report_evidence
+      (observation_id, evidence_kind, actor_key_id, source_id, occurred_at, details)
+    VALUES (${opts.id}, 'report', ${null}, ${opts.source ?? "peer-a-crowd"}, ${opts.validFrom}, '{}'::jsonb)`;
+}
+
+/** A keyless crowd row WITHOUT an originChain — a local anomaly, not genuinely federated. */
+async function insertKeylessLocalCrowdEvent(
+  opts: EventOpts & { expiresAt: string }
+): Promise<void> {
+  const type = opts.type ?? "hazard";
+  const fp = phenomenonFingerprint({
+    kind: "event",
+    domain: "roads",
+    type,
+    geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
+    validFrom: opts.validFrom,
+  } as ConditionEvent);
+  await sql`
+    INSERT INTO conditions.observations
+      (id, source, source_format, domain, kind, type, status, geom, origin,
+       valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale, expires_at)
+    VALUES
+      (${opts.id}, 'crowd', 'native', 'roads', 'event', ${type}, 'active',
+       ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
+       ${sql.json({ kind: "crowd" } as never)}, ${opts.validFrom}, ${fp},
+       ${opts.validFrom}, now(), false, ${opts.expiresAt})`;
+}
+
+describe("sweepFederatedCrossValidate — starvation-safe federated feed-arrives-later cross-match", () => {
+  it("routes a federated crowd row whose confirming LOCAL feed arrived AFTER it landed, training nobody", async () => {
+    // A reporter row present in the table — the whole-table snapshot below proves
+    // the federated route moves NO reporter posterior anywhere.
+    await insertReporter("fsw-control");
+    await insertFederatedCrowdEvent({
+      id: "fsw:fedcrowd-late",
+      lon: 10.5,
+      lat: 55.0,
+      validFrom: T_REPORT,
+      expiresAt: T_EXPIRES,
+    });
+    expect((await obs("fsw:fedcrowd-late")).routing_eligible).toBe(false);
+
+    // The LOCAL official feed lands LATER.
+    await insertFeedEvent({ id: "fsw:feed-late", lon: 10.5001, lat: 55.0, validFrom: T_FEED });
+
+    const before = await reporterSnapshot();
+    const result = await sweepFederatedCrossValidate(sql, T_SWEEP);
+    expect(result.scanned).toBe(1);
+    expect(result.routed).toBe(1);
+
+    const row = await obs("fsw:fedcrowd-late");
+    expect(row.evidence_state).toBe("externally_resolved");
+    expect(row.routing_eligible).toBe(true);
+    expect(await externalEvidenceCount("fsw:fedcrowd-late")).toBe(1);
+    // Trained nobody: the ENTIRE reporter table is byte-unchanged across the route.
+    expect(await reporterSnapshot()).toBe(before);
+  }, 30_000);
+
+  it("scans but does NOT route a federated crowd row matching only a FEDERATED feed (inherits the local-feed guard)", async () => {
+    await insertFederatedCrowdEvent({
+      id: "fsw:fedcrowd-vs-fedfeed",
+      lon: 11.5,
+      lat: 56.0,
+      validFrom: T_REPORT,
+      expiresAt: T_EXPIRES,
+    });
+    await insertFederatedFeedEvent({
+      id: "fsw:fedfeed",
+      lon: 11.5001,
+      lat: 56.0,
+      validFrom: T_FEED,
+    });
+
+    const result = await sweepFederatedCrossValidate(sql, T_SWEEP);
+    expect(result.scanned).toBe(1);
+    expect(result.routed).toBe(0);
+
+    const row = await obs("fsw:fedcrowd-vs-fedfeed");
+    expect(row.routing_eligible).toBe(false);
+    expect(row.evidence_state).not.toBe("externally_resolved");
+    expect(await externalEvidenceCount("fsw:fedcrowd-vs-fedfeed")).toBe(0);
+  }, 30_000);
+
+  it("does NOT enumerate a LOCAL crowd row (it has a keyId; the T2 sweep owns it)", async () => {
+    await seedCrowdReport({
+      id: "fsw:localcrowd",
+      lon: 12.5,
+      lat: 57.0,
+      validFrom: T_REPORT,
+      reporterKey: "fsw-rep-local",
+    });
+    await insertFeedEvent({ id: "fsw:feed-local", lon: 12.5001, lat: 57.0, validFrom: T_FEED });
+
+    const result = await sweepFederatedCrossValidate(sql, T_SWEEP);
+    expect(result.scanned).toBe(0);
+    expect(result.routed).toBe(0);
+    expect((await obs("fsw:localcrowd")).routing_eligible).toBe(false);
+    expect(await readReporterAlpha("fsw-rep-local")).toBe(2);
+  }, 30_000);
+
+  it("does NOT enumerate a federated crowd row with NULL expires_at (anti-starvation: NULL>now is not-true)", async () => {
+    await insertFederatedCrowdEvent({
+      id: "fsw:fedcrowd-nullexp",
+      lon: 13.5,
+      lat: 58.0,
+      validFrom: T_REPORT,
+      expiresAt: null,
+    });
+    // A matching LOCAL feed IS present — proving it is the NULL expiry, not a
+    // missing feed, that keeps the never-expiring row out of the candidate set.
+    await insertFeedEvent({ id: "fsw:feed-nullexp", lon: 13.5001, lat: 58.0, validFrom: T_FEED });
+
+    const result = await sweepFederatedCrossValidate(sql, T_SWEEP);
+    expect(result.scanned).toBe(0);
+    expect(result.routed).toBe(0);
+    expect((await obs("fsw:fedcrowd-nullexp")).routing_eligible).toBe(false);
+  }, 30_000);
+
+  it("does NOT enumerate an EXPIRED federated crowd row", async () => {
+    await insertFederatedCrowdEvent({
+      id: "fsw:fedcrowd-expired",
+      lon: 14.5,
+      lat: 59.0,
+      validFrom: T_REPORT,
+      expiresAt: T_REPORT, // 08:00, already past the 08:10 sweep instant.
+    });
+    await insertFeedEvent({ id: "fsw:feed-expired", lon: 14.5001, lat: 59.0, validFrom: T_FEED });
+
+    const result = await sweepFederatedCrossValidate(sql, T_SWEEP);
+    expect(result.scanned).toBe(0);
+    expect(result.routed).toBe(0);
+    expect((await obs("fsw:fedcrowd-expired")).routing_eligible).toBe(false);
+  }, 30_000);
+
+  it("does NOT enumerate a keyless crowd row WITHOUT an originChain (not genuinely federated)", async () => {
+    await insertKeylessLocalCrowdEvent({
+      id: "fsw:keyless-nochain",
+      lon: 15.5,
+      lat: 60.0,
+      validFrom: T_REPORT,
+      expiresAt: T_EXPIRES,
+    });
+    await insertFeedEvent({ id: "fsw:feed-nochain", lon: 15.5001, lat: 60.0, validFrom: T_FEED });
+
+    const result = await sweepFederatedCrossValidate(sql, T_SWEEP);
+    expect(result.scanned).toBe(0);
+    expect(result.routed).toBe(0);
+    expect((await obs("fsw:keyless-nochain")).routing_eligible).toBe(false);
+  }, 30_000);
+
+  it("orders soonest-to-expire FIRST, honors the batch cap, and logs the deferred overflow", async () => {
+    // Two routable federated candidates; the batch cap admits only one. Anti-
+    // starvation ordering must pick the SOONER-to-expire row (its last chance).
+    await insertFederatedCrowdEvent({
+      id: "fsw:soon",
+      lon: 16.5,
+      lat: 61.0,
+      validFrom: T_REPORT,
+      expiresAt: T_SOON,
+    });
+    await insertFeedEvent({ id: "fsw:feed-soon", lon: 16.5001, lat: 61.0, validFrom: T_FEED });
+    await insertFederatedCrowdEvent({
+      id: "fsw:late",
+      lon: 17.5,
+      lat: 62.0,
+      validFrom: T_REPORT,
+      expiresAt: T_LATE,
+    });
+    await insertFeedEvent({ id: "fsw:feed-late2", lon: 17.5001, lat: 62.0, validFrom: T_FEED });
+
+    const logs: string[] = [];
+    const result = await sweepFederatedCrossValidate(sql, T_SWEEP, {
+      maxBatch: 1,
+      log: (m) => logs.push(m),
+    });
+
+    expect(result.scanned).toBe(1);
+    expect(result.routed).toBe(1);
+    // The soonest-to-expire candidate was chosen and routed; the later one deferred.
+    expect((await obs("fsw:soon")).routing_eligible).toBe(true);
+    expect((await obs("fsw:late")).routing_eligible).toBe(false);
+    expect(logs.some((m) => /deferring 1 candidate/.test(m))).toBe(true);
+  }, 30_000);
+
+  it("passes allowFederatedTarget and is best-effort: a throw on one candidate is logged, the sweep continues", async () => {
+    await insertFederatedCrowdEvent({
+      id: "fsw:boom",
+      lon: 18.5,
+      lat: 63.0,
+      validFrom: T_REPORT,
+      expiresAt: T_EXPIRES,
+    });
+    await insertFederatedCrowdEvent({
+      id: "fsw:ok",
+      lon: 19.5,
+      lat: 64.0,
+      validFrom: T_REPORT,
+      expiresAt: T_EXPIRES_LATER,
+    });
+
+    const seen: { id: string; allowFederatedTarget: boolean | undefined }[] = [];
+    const logs: string[] = [];
+    const result = await sweepFederatedCrossValidate(sql, T_SWEEP, {
+      crossValidateAgainstFeeds: async (_sql, id, _now, opts) => {
+        seen.push({ id, allowFederatedTarget: opts?.allowFederatedTarget });
+        if (id === "fsw:boom") throw new Error("boom");
+        return null;
+      },
+      log: (m) => logs.push(m),
+    });
+
+    expect(result.scanned).toBe(2);
+    expect(result.routed).toBe(0);
+    expect(logs.some((m) => m.includes("fsw:boom"))).toBe(true);
+    // The federated sweep ALWAYS opts into the federated target (its whole purpose).
+    expect(seen.every((c) => c.allowFederatedTarget === true)).toBe(true);
   }, 30_000);
 });

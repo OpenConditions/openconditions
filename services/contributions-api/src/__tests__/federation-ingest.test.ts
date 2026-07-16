@@ -1048,3 +1048,213 @@ describe("federated CROWD → LOCAL feed route-without-training", () => {
     expect(await externalCount("peer-a:fedcrowd-idem")).toBe(1);
   }, 30_000);
 });
+
+describe("re-cross-validate on a content-updating federated resupply", () => {
+  async function seedLocalFeed(opts: {
+    id: string;
+    lon: number;
+    lat: number;
+    validFrom: string;
+  }): Promise<void> {
+    const fp = phenomenonFingerprint({
+      kind: "event",
+      domain: "roads",
+      type: "hazard",
+      geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
+      validFrom: opts.validFrom,
+    } as ConditionEvent);
+    await sql`
+      INSERT INTO conditions.observations
+        (id, source, source_format, domain, kind, type, status, geom, origin,
+         valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale,
+         instance_id, canonical_id, privacy_class)
+      VALUES
+        (${opts.id}, 'ndw', 'datex2', 'roads', 'event', 'hazard', 'active',
+         ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
+         ${sql.json({ kind: "feed", attribution: { provider: "NDW", license: "CC0-1.0" } } as never)},
+         ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false,
+         'local', ${
+           "re" +
+           opts.id
+             .replace(/[^a-f0-9]/gi, "")
+             .slice(0, 30)
+             .padEnd(30, "0")
+         },
+         'authoritative')`;
+  }
+
+  function fedCrowd(overrides: Record<string, unknown>): Record<string, unknown> {
+    return fedEvent({
+      source: "peer-a-crowd",
+      privacyClass: "crowd_pseudonym",
+      origin: { kind: "crowd", attribution: { provider: "Peer A", license: "ODbL-1.0" } },
+      ...overrides,
+    });
+  }
+
+  async function seedReporter(keyId: string): Promise<void> {
+    await sql`
+      INSERT INTO conditions.reporter
+        (key_id, pub_jwk, reputation_alpha, reputation_beta,
+         entitlement_expires_at, status, created_at, last_active_at)
+      VALUES (${keyId}, '{}'::jsonb, 2, 2, '2027-01-01T00:00:00Z', 'active', ${NOW}, ${NOW})`;
+  }
+
+  async function reporterSnapshot(): Promise<string> {
+    const rows = await sql<{ key_id: string; a: number; b: number; c: number }[]>`
+      SELECT key_id, reputation_alpha AS a, reputation_beta AS b, corroborated_count AS c
+      FROM conditions.reporter ORDER BY key_id`;
+    return JSON.stringify(rows);
+  }
+
+  async function externalCount(obsId: string): Promise<number> {
+    const rows = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM conditions.report_evidence
+      WHERE observation_id = ${obsId}
+        AND evidence_kind IN ('official_match', 'reviewer_accept', 'reviewer_reject')`;
+    return rows[0]!.n;
+  }
+
+  it("routes a federated crowd row on a content-updating resupply after a matching LOCAL feed appears, training nobody", async () => {
+    await seedReporter("resup-control-untouched");
+    const canonicalId = "31".repeat(32);
+
+    // Lands with NO local feed present → not routed at landing.
+    const first = await ingestFederatedObservation(
+      sql,
+      fedCrowd({
+        id: "peer-a:resup-route",
+        canonicalId,
+        geometry: { type: "Point", coordinates: [30.5, 48.5] },
+        validFrom: VALID_FROM,
+        dataUpdatedAt: VALID_FROM,
+      }) as never,
+      PEER_A
+    );
+    expect(first.outcome).toBe("inserted");
+    expect((await rowById("peer-a:resup-route"))!.routing_eligible).toBe(false);
+
+    // A matching LOCAL official feed appears AFTER the landing.
+    await seedLocalFeed({ id: "route:resup-feed", lon: 30.5001, lat: 48.5, validFrom: VALID_FROM });
+
+    const before = await reporterSnapshot();
+    // A content-updating resupply from the OWNING peer (newer version).
+    const newer = new Date(Date.parse(VALID_FROM) + 60_000).toISOString();
+    const resup = await ingestFederatedObservation(
+      sql,
+      fedCrowd({
+        id: "peer-a:resup-route",
+        canonicalId,
+        headline: "Obstruction on A2 — updated",
+        geometry: { type: "Point", coordinates: [30.5, 48.5] },
+        validFrom: VALID_FROM,
+        dataUpdatedAt: newer,
+      }) as never,
+      PEER_A
+    );
+    expect(resup).toMatchObject({ outcome: "resupplied", contentUpdated: true });
+
+    // The resupply cross-validated immediately — no wait for the next #1 sweep tick.
+    const row = await rowById("peer-a:resup-route");
+    expect(row!.evidence_state).toBe("externally_resolved");
+    expect(row!.routing_eligible).toBe(true);
+    expect(await externalCount("peer-a:resup-route")).toBe(1);
+    // Trained nobody.
+    expect(await reporterSnapshot()).toBe(before);
+  }, 30_000);
+
+  it("does NOT cross-validate a NON-content resupply (contentUpdated=false), even with a matching feed", async () => {
+    const canonicalId = "32".repeat(32);
+    const first = await ingestFederatedObservation(
+      sql,
+      fedCrowd({
+        id: "peer-a:resup-nocontent",
+        canonicalId,
+        geometry: { type: "Point", coordinates: [31.5, 48.7] },
+        validFrom: VALID_FROM,
+        dataUpdatedAt: VALID_FROM,
+      }) as never,
+      PEER_A
+    );
+    expect(first.outcome).toBe("inserted");
+
+    // A matching LOCAL feed IS present — proving it is the missing content update,
+    // not a missing feed, that keeps the row unrouted.
+    await seedLocalFeed({
+      id: "route:resup-nc-feed",
+      lon: 31.5001,
+      lat: 48.7,
+      validFrom: VALID_FROM,
+    });
+
+    // An OLDER resupply cannot rewrite content → contentUpdated=false → no cross-validate.
+    const older = new Date(Date.parse(VALID_FROM) - 60_000).toISOString();
+    const resup = await ingestFederatedObservation(
+      sql,
+      fedCrowd({
+        id: "peer-a:resup-nocontent",
+        canonicalId,
+        headline: "stale restatement",
+        geometry: { type: "Point", coordinates: [31.5, 48.7] },
+        validFrom: VALID_FROM,
+        dataUpdatedAt: older,
+      }) as never,
+      PEER_A
+    );
+    expect(resup).toMatchObject({ outcome: "resupplied", contentUpdated: false });
+
+    const row = await rowById("peer-a:resup-nocontent");
+    expect(row!.routing_eligible).toBe(false);
+    expect(row!.evidence_state).not.toBe("externally_resolved");
+    expect(await externalCount("peer-a:resup-nocontent")).toBe(0);
+  }, 30_000);
+
+  it("is best-effort: a throwing cross-validate in the resupply path never aborts the resupply", async () => {
+    const canonicalId = "33".repeat(32);
+    const first = await ingestFederatedObservation(
+      sql,
+      fedCrowd({
+        id: "peer-a:resup-boom",
+        canonicalId,
+        geometry: { type: "Point", coordinates: [32.5, 48.9] },
+        validFrom: VALID_FROM,
+        dataUpdatedAt: VALID_FROM,
+      }) as never,
+      PEER_A
+    );
+    expect(first.outcome).toBe("inserted");
+    await seedLocalFeed({
+      id: "route:resup-boom-feed",
+      lon: 32.5001,
+      lat: 48.9,
+      validFrom: VALID_FROM,
+    });
+
+    const newer = new Date(Date.parse(VALID_FROM) + 60_000).toISOString();
+    const resup = await ingestFederatedObservation(
+      sql,
+      fedCrowd({
+        id: "peer-a:resup-boom",
+        canonicalId,
+        headline: "Obstruction on A2 — updated",
+        geometry: { type: "Point", coordinates: [32.5, 48.9] },
+        validFrom: VALID_FROM,
+        dataUpdatedAt: newer,
+      }) as never,
+      PEER_A,
+      undefined,
+      {
+        crossValidateAgainstFeeds: async () => {
+          throw new Error("boom");
+        },
+      }
+    );
+    // The resupply still succeeded despite the thrown cross-validate.
+    expect(resup).toMatchObject({ outcome: "resupplied", contentUpdated: true });
+    // The content update DID land; routing simply did not happen this cycle.
+    const row = await rowById("peer-a:resup-boom");
+    expect(row!.headline).toBe("Obstruction on A2 — updated");
+    expect(row!.routing_eligible).toBe(false);
+    expect(await externalCount("peer-a:resup-boom")).toBe(0);
+  }, 30_000);
+});

@@ -62,6 +62,11 @@ export interface FederatedIngestContext {
   now: string;
 }
 
+/** Injection seam for the federated cross-validation hook (defaults to the real fn). */
+export interface FederatedIngestDeps {
+  crossValidateAgainstFeeds?: typeof crossValidateAgainstFeeds;
+}
+
 export type FederatedEventOutcome =
   | {
       outcome: "inserted";
@@ -314,8 +319,10 @@ export async function ingestFederatedObservation(
   sql: Sql,
   wire: Observation,
   ctx: FederatedIngestContext,
-  objectId?: string
+  objectId?: string,
+  deps: FederatedIngestDeps = {}
 ): Promise<FederatedEventOutcome> {
+  const crossValidate = deps.crossValidateAgainstFeeds ?? crossValidateAgainstFeeds;
   const normalized = normalizeObservation(wire, {
     kind: "federation",
     instanceId: ctx.localInstanceId,
@@ -398,6 +405,42 @@ export async function ingestFederatedObservation(
     return { outcome: "skipped", objectId: oid, reason: "non-owned-collision" };
   }
   if (landed.kind === "resupplied") {
+    // A content-updating resupply (a peer's newer version) may now geometry/type-
+    // match a LOCAL feed the inserted-path hook did not see when the row first
+    // landed. Re-run the SAME federated cross-validation on the surviving row so it
+    // routes immediately, not only on the next #1 federated-sweep tick.
+    // crossValidateAgainstFeeds is idempotent + fully guarded (crowd target,
+    // keyId-less + originChain, local-feed-only, trains nobody in the federated-only
+    // case), so it no-ops on any resupplied id that is not a routable federated
+    // crowd row or is already routed. Gate on contentUpdated so a no-content
+    // resupply does not waste the call, AND on the same crowd-event kind/origin as
+    // the inserted-path hook so a content-updating FEED/measurement resupply (the
+    // bulk of federation traffic) does not pay a point-SELECT that just no-ops at
+    // crossValidateAgainstFeeds's kind/origin guards. The surviving row's kind/origin
+    // equal normalized's after a content update, so this gate is exact. Best-effort:
+    // a throw never aborts the resupply.
+    if (
+      landed.contentUpdated &&
+      normalized.kind === "event" &&
+      normalized.origin.kind === "crowd"
+    ) {
+      try {
+        const matchedFeedId = await crossValidate(sql, landed.observationId, ctx.now, {
+          allowFederatedTarget: true,
+        });
+        if (matchedFeedId !== null) {
+          console.info(
+            `[federation] routed resupplied federated crowd ${landed.observationId} ` +
+              `on local feed ${matchedFeedId} (peer ${ctx.peerInstanceId})`
+          );
+        }
+      } catch (err) {
+        console.warn(
+          `[federation] federated cross-validate failed for resupplied ${landed.observationId} ` +
+            `(peer ${ctx.peerInstanceId}): ${String(err)}`
+        );
+      }
+    }
     return {
       outcome: "resupplied",
       objectId: oid,
@@ -441,15 +484,22 @@ export async function ingestFederatedObservation(
   // so a spamming peer is observable in logs. A persisted per-peer routed-counter is
   // a future monitoring enhancement, not required here.
   //
-  // Scope asymmetry (FABLE FIX 3d, accepted): a federated crowd row is cross-
-  // validated ONLY against local feeds present AT federation-ingest time. The
-  // feed-arrives-later sweep deliberately excludes keyId-less rows (adding them
-  // reopens the sweep's oldest-first starvation), so a local feed arriving LATER
-  // will NOT retroactively route a federated crowd row. The mirror direction is
-  // the same accepted fail-closed asymmetry: a content-updating RESUPPLY (a peer's
-  // newer version of the row that now matches a local feed) collapses via
-  // collapseResupply and does NOT re-run cross-validation — only a genuinely NEW
-  // inserted row reaches this hook.
+  // Scope (both directions now covered): this inserted-path hook cross-validates a
+  // federated crowd row against local feeds present AT federation-ingest time. The
+  // two feed/content-arrives-later gaps are closed elsewhere:
+  //   - feed-arrives-later: a LOCAL feed that lands AFTER a federated crowd row is
+  //     picked up by the STARVATION-SAFE federated sweep (sweepFederatedCrossValidate
+  //     in crossValidateSweep.ts). It scans exactly the keyId-less federated crowd
+  //     rows the local T2 sweep skips, bounded by `expires_at > now` (which also
+  //     excludes never-expiring rows) and ordered soonest-to-expire first, so it
+  //     densifies without reopening the T2 sweep's oldest-first starvation.
+  //   - content-arrives-later: a content-updating RESUPPLY (a peer's newer version
+  //     that now matches a local feed) re-runs this same cross-validation on the
+  //     surviving row in the resupply branch above (gated on contentUpdated), so it
+  //     routes immediately rather than waiting on the next sweep tick.
+  // Honest caveats preserved: the sweep is best-effort + bounded (a row may expire
+  // un-attempted at extreme volume — the sensor/feed base still stands), and routing
+  // still TRAINS NOBODY in the federated-only case regardless of which path routes.
   //
   // Life-extension caveat (FABLE FIX 3e): a later local recompute rebuilds
   // expires_at/confidence from the LOCAL ledger whose report occurred_at is the
@@ -459,7 +509,7 @@ export async function ingestFederatedObservation(
   // Best-effort: a failure here must never abort a successful landing.
   if (normalized.kind === "event" && normalized.origin.kind === "crowd") {
     try {
-      const matchedFeedId = await crossValidateAgainstFeeds(sql, normalized.id, ctx.now, {
+      const matchedFeedId = await crossValidate(sql, normalized.id, ctx.now, {
         allowFederatedTarget: true,
       });
       if (matchedFeedId !== null) {
