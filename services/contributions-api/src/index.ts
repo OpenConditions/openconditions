@@ -16,9 +16,12 @@ export { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
 export {
   listFlagged,
   clampLimit,
+  ADVISORY_CREDIBLE_LEVEL,
+  ADVISORY_REPUTATION_NOTE,
   type FlaggedItem,
   type FlaggedPage,
   type ListFlaggedParams,
+  type ReporterSignal,
 } from "./reviewer/queue.js";
 export { acceptObservation, rejectObservation, type DecisionOutcome } from "./reviewer/decide.js";
 export { blockKey, unblockKey, listBlocked, type BlockListItem } from "./reviewer/blocklist.js";

@@ -40,6 +40,13 @@ export const ADVISORY_REPUTATION_NOTE =
 export interface ReporterSignal {
   /** The originating reporter's key thumbprint. */
   keyId: string;
+  /**
+   * The reporter's account status ("active" | "blocked"). Surfaced so a reviewer
+   * triaging a flagged report can see the originator is already blocked — a
+   * strong triage signal — without a second lookup. Advisory context only; the
+   * accept/reject decision stays about the observation's content.
+   */
+  status: string;
   /** The device-trust signal (nullable until the key re-enrolls post-#1). */
   trustSignal: number | null;
   /** One-sided lower credible bound of the Beta posterior at the advisory level. */
@@ -112,6 +119,7 @@ interface FlaggedRow {
   flag_count: number;
   flag_reasons: string[] | null;
   reporter_key_id: string | null;
+  reporter_status: string | null;
   reporter_trust_signal: number | null;
   reporter_alpha: number | null;
   reporter_beta: number | null;
@@ -140,6 +148,7 @@ function reporterSignalFrom(row: FlaggedRow, nowMs: number): ReporterSignal | nu
   const createdMs = row.reporter_created_at ? row.reporter_created_at.getTime() : nowMs;
   return {
     keyId: row.reporter_key_id,
+    status: row.reporter_status ?? "active",
     trustSignal: row.reporter_trust_signal,
     reliabilityLowerBound: reliabilityLowerBound(
       { alpha: row.reporter_alpha, beta: row.reporter_beta },
@@ -178,7 +187,10 @@ export async function listFlagged(sql: Sql, params: ListFlaggedParams = {}): Pro
   const limit = clampLimit(params.limit);
   const before = params.before ?? null;
   const beforeId = params.beforeId ?? null;
-  const nowMs = params.now ? Date.parse(params.now) : Date.now();
+  // A malformed `params.now` (only server code supplies it, but be defensive)
+  // must not silently produce NaN tenureDays — fall back to the wall clock.
+  const parsedNow = params.now ? Date.parse(params.now) : Date.now();
+  const nowMs = Number.isNaN(parsedNow) ? Date.now() : parsedNow;
 
   const rows = await sql<FlaggedRow[]>`
     SELECT o.id, o.flagged_at, o.evidence_state, o.type,
@@ -186,6 +198,7 @@ export async function listFlagged(sql: Sql, params: ListFlaggedParams = {}): Pro
            COALESCE(f.flag_count, 0) AS flag_count,
            f.flag_reasons AS flag_reasons,
            orig.actor_key_id AS reporter_key_id,
+           r.status AS reporter_status,
            r.trust_signal AS reporter_trust_signal,
            r.reputation_alpha AS reporter_alpha,
            r.reputation_beta AS reporter_beta,

@@ -246,6 +246,7 @@ async function seedReporter(opts: {
   corroboratedCount?: number;
   createdAt?: string;
   lastActiveAt?: string;
+  status?: string;
 }): Promise<void> {
   await sql`
     INSERT INTO conditions.reporter
@@ -254,13 +255,14 @@ async function seedReporter(opts: {
     VALUES
       (${opts.keyId}, ${sql.json({ kty: "EC" } as never)},
        ${opts.alpha ?? 2}, ${opts.beta ?? 2}, ${opts.corroboratedCount ?? 0},
-       ${opts.trustSignal ?? null}, '2099-01-01T00:00:00.000Z', 'active',
+       ${opts.trustSignal ?? null}, '2099-01-01T00:00:00.000Z', ${opts.status ?? "active"},
        ${opts.createdAt ?? "2026-06-12T08:00:00.000Z"}::timestamptz,
        ${opts.lastActiveAt ?? "2026-07-10T08:00:00.000Z"}::timestamptz)`;
 }
 
 interface ReporterSignalShape {
   keyId: string;
+  status: string;
   trustSignal: number | null;
   reliabilityLowerBound: number;
   corroboratedCount: number;
@@ -816,6 +818,7 @@ describe("GET /contrib/reviewer/flagged — originating-reporter advisory trust 
     const reporter = item!.reporter;
     expect(reporter).not.toBeNull();
     expect(reporter!.keyId).toBe(keyId);
+    expect(reporter!.status).toBe("active");
     expect(reporter!.trustSignal).toBe(0.8);
     expect(reporter!.corroboratedCount).toBe(3);
     expect(typeof reporter!.reliabilityLowerBound).toBe("number");
@@ -827,6 +830,18 @@ describe("GET /contrib/reviewer/flagged — originating-reporter advisory trust 
     expect(reporter!.lastActiveAt).toBe("2026-07-10T08:00:00.000Z");
     // Mirrors the /contrib/reporter/me advisory disclaimer — not a probability of truth.
     expect(reporter!.note).toMatch(/advisory/);
+  }, 60_000);
+
+  it("surfaces a BLOCKED originating reporter's status so a reviewer sees it", async () => {
+    const keyId = "crowd:trust:reporter-blocked-1";
+    const obsId = "crowd:trust:obs-blocked-1";
+    await seedReporter({ keyId, alpha: 2, beta: 6, status: "blocked" });
+    await insertFlaggedRow(obsId, 15.55, "2027-03-01T00:00:00.000Z");
+    await seedReportEvidence(obsId, keyId, "2026-06-12T08:00:00.000Z");
+
+    const item = await fetchFlaggedItem(obsId);
+    expect(item!.reporter).not.toBeNull();
+    expect(item!.reporter!.status).toBe("blocked");
   }, 60_000);
 
   it("leaves reporter null for a flagged observation with no originating key", async () => {
