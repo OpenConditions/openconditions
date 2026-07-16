@@ -11,6 +11,11 @@
       "repo": "https://github.com/OpenConditions/openconditions",
       "ref": "v0.1.5",
       "service": "openconditions-ingest"
+    },
+    {
+      "repo": "https://github.com/OpenConditions/openconditions",
+      "ref": "v0.1.5",
+      "service": "openconditions-contributions-api"
     }
   ],
   "integrations": [

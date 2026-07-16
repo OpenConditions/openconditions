@@ -30,7 +30,8 @@
     "@openconditions/normalize": "workspace:*",
     "@openconditions/roads": "workspace:*",
     "fastify": "^5.0.0",
-    "postgres": "^3.4.0"
+    "postgres": "^3.4.0",
+    "undici": "^8.5.0"
   },
   "devDependencies": {
     "@openconditions/publishers": "workspace:*",

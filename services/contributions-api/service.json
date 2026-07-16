@@ -1,0 +1,48 @@
+{
+  "id": "openconditions-contributions-api",
+  "name": "OpenConditions Contributions API",
+  "version": "0.1.0",
+  "description": "Crowd-report intake and evidence lifecycle for road conditions: verifies signed device reports, deduplicates and corroborates co-located phenomena, cross-validates against official feeds, and serves the operator reviewer surface — all over the shared PostGIS `conditions` schema. Peer confirmation never routes or trains reputation on its own; only official-feed cross-validation (and operator resolution) does.",
+  "author": "OpenConditions",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://openconditions.org",
+  "documentation": "https://github.com/openconditions/openconditions",
+  "quality": "community-verified",
+  "container": {
+    "image": "ghcr.io/openconditions/contributions-api",
+    "tag": "latest",
+    "expose": [4200],
+    "networkAliases": ["openconditions-contributions-api"],
+    "environment": {
+      "PORT": "4200",
+      "HOST": "0.0.0.0",
+      "DATABASE_URL": "postgresql://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgis:5432/openmapx",
+      "OPENCONDITIONS_GRANT_SECRET": "${OPENCONDITIONS_GRANT_SECRET:?OPENCONDITIONS_GRANT_SECRET must be set}",
+      "OPENCONDITIONS_REVIEWER_TOKEN": "${OPENCONDITIONS_REVIEWER_TOKEN:?OPENCONDITIONS_REVIEWER_TOKEN must be set}",
+      "OPENCONDITIONS_ISSUER_NAME": "${OPENCONDITIONS_ISSUER_NAME:-}",
+      "OPENCONDITIONS_CROSS_VALIDATE_SWEEP": "${OPENCONDITIONS_CROSS_VALIDATE_SWEEP:-}"
+    },
+    "memory": "${OPENCONDITIONS_CONTRIBUTIONS_MEMORY:-1g}",
+    "restart": "unless-stopped",
+    "dependsOn": [
+      {
+        "service": "postgis",
+        "condition": "service_healthy"
+      }
+    ],
+    "healthcheck": {
+      "type": "http",
+      "path": "/status",
+      "port": 4200,
+      "interval": "30s",
+      "timeout": "5s",
+      "retries": 5,
+      "startPeriod": "30s"
+    }
+  },
+  "provides": ["openconditions/crowd-reports-api"],
+  "ownsSchema": "conditions",
+  "ui": {
+    "category": "data"
+  }
+}

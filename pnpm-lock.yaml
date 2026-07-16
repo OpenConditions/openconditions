@@ -399,6 +399,9 @@ importers:
       postgres:
         specifier: ^3.4.0
         version: 3.4.9
+      undici:
+        specifier: ^8.5.0
+        version: 8.7.0
     devDependencies:
       '@openconditions/publishers':
         specifier: workspace:*
