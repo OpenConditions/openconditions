@@ -13,6 +13,7 @@ import { createReportingGrant } from "./grant.js";
 import {
   ATTESTER_POLICY,
   assessEntitlement,
+  validateDeviceProof,
   type DeviceProof,
   type Entitlement,
   type ReporterRow,
@@ -88,6 +89,9 @@ export async function enrollReporter(
   nowIso: string,
   deps: EnrollDeps
 ): Promise<Entitlement> {
+  // Reject malformed optional proof fields at the trust boundary before any of
+  // them reaches a verifier typed to trust their shape (throws TypeError → 400).
+  validateDeviceProof(proof);
   const thumbprint = await keyIdFromJwk(pubJwk);
   if (proof.keyId !== thumbprint) {
     throw new TypeError("enrollReporter: proof.keyId does not match the pubJwk thumbprint");

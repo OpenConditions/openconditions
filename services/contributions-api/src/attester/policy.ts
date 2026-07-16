@@ -44,6 +44,45 @@ export interface DeviceProof {
   osmAuth?: string;
 }
 
+const ATTESTATION_KINDS = ["android-keystore", "app-attest", "play-integrity"] as const;
+
+/**
+ * Shape-validates the OPTIONAL fields of a DeviceProof at the trust boundary.
+ * `keyId` is validated by the enroll route; this rejects malformed optional
+ * fields — a null/garbage `attestation`, a non-string `osmAuth`, a non-finite
+ * `accountAgeDays` — so a lie like `attestation: null` (which passes a bare
+ * `!== undefined` check) never reaches a verifier typed to trust its shape.
+ * Absent fields are fine (all optional). Throws {@link TypeError}, which the
+ * enroll route maps to a 400. Does NOT judge trust — a well-formed field still
+ * only earns a bump when its verifier confirms it.
+ */
+export function validateDeviceProof(proof: DeviceProof): void {
+  if (
+    proof.accountAgeDays !== undefined &&
+    (typeof proof.accountAgeDays !== "number" || !Number.isFinite(proof.accountAgeDays))
+  ) {
+    throw new TypeError("proof.accountAgeDays must be a finite number when present");
+  }
+  if (proof.osmAuth !== undefined && typeof proof.osmAuth !== "string") {
+    throw new TypeError("proof.osmAuth must be a string when present");
+  }
+  if (proof.attestation !== undefined) {
+    const attestation: unknown = proof.attestation;
+    if (attestation === null || typeof attestation !== "object" || Array.isArray(attestation)) {
+      throw new TypeError("proof.attestation must be an object when present");
+    }
+    const { kind, blob } = attestation as { kind?: unknown; blob?: unknown };
+    if (typeof kind !== "string" || !ATTESTATION_KINDS.includes(kind as never)) {
+      throw new TypeError(
+        "proof.attestation.kind must be one of android-keystore, app-attest, play-integrity"
+      );
+    }
+    if (typeof blob !== "string" || blob.length === 0) {
+      throw new TypeError("proof.attestation.blob must be a non-empty string");
+    }
+  }
+}
+
 export interface Entitlement {
   /**
    * HMAC reporting grant, minted by the enrollment flow. Empty from

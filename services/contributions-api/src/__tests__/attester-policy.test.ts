@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   ATTESTER_POLICY,
   assessEntitlement,
+  validateDeviceProof,
   type DeviceProof,
   type ReporterRow,
 } from "../attester/policy.js";
@@ -242,5 +243,59 @@ describe("assessEntitlement — shape", () => {
       expect(ent.trustSignal).toBeGreaterThanOrEqual(0);
       expect(ent.trustSignal).toBeLessThanOrEqual(1);
     }
+  });
+});
+
+describe("validateDeviceProof — reject malformed optional proof fields", () => {
+  it("accepts an all-optional-absent proof and well-formed fields", () => {
+    expect(() => validateDeviceProof(proofFor())).not.toThrow();
+    expect(() =>
+      validateDeviceProof(
+        proofFor({
+          accountAgeDays: 12,
+          osmAuth: "token",
+          attestation: { kind: "play-integrity", blob: "abc" },
+        })
+      )
+    ).not.toThrow();
+  });
+
+  it("rejects a null or non-object attestation (a bare !== undefined check would pass null)", () => {
+    expect(() => validateDeviceProof(proofFor({ attestation: null as never }))).toThrow(
+      /attestation must be an object/
+    );
+    expect(() => validateDeviceProof(proofFor({ attestation: "garbage" as never }))).toThrow(
+      /attestation must be an object/
+    );
+    expect(() => validateDeviceProof(proofFor({ attestation: [] as never }))).toThrow(
+      /attestation must be an object/
+    );
+  });
+
+  it("rejects an unknown attestation kind or a missing/empty blob", () => {
+    expect(() =>
+      validateDeviceProof(proofFor({ attestation: { kind: "bogus" as never, blob: "x" } }))
+    ).toThrow(/attestation.kind must be one of/);
+    expect(() =>
+      validateDeviceProof(proofFor({ attestation: { kind: "app-attest" } as never }))
+    ).toThrow(/attestation.blob must be a non-empty string/);
+    expect(() =>
+      validateDeviceProof(proofFor({ attestation: { kind: "app-attest", blob: "" } }))
+    ).toThrow(/attestation.blob must be a non-empty string/);
+  });
+
+  it("rejects a non-string osmAuth", () => {
+    expect(() => validateDeviceProof(proofFor({ osmAuth: 123 as never }))).toThrow(
+      /osmAuth must be a string/
+    );
+  });
+
+  it("rejects a non-finite accountAgeDays", () => {
+    expect(() => validateDeviceProof(proofFor({ accountAgeDays: "x" as never }))).toThrow(
+      /accountAgeDays must be a finite number/
+    );
+    expect(() => validateDeviceProof(proofFor({ accountAgeDays: Number.NaN }))).toThrow(
+      /accountAgeDays must be a finite number/
+    );
   });
 });
