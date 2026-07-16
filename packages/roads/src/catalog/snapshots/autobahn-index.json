@@ -2080,6 +2080,32 @@
     "enabledByDefault": true
   },
   {
+    "id": "autobahn-a369-warning",
+    "name": "Autobahn A369 — warning",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A369/services/warning",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
+    "id": "autobahn-a369-closure",
+    "name": "Autobahn A369 — closure",
+    "format": "autobahn-json",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A369/services/closure",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "enabledByDefault": true
+  },
+  {
     "id": "autobahn-a391-warning",
     "name": "Autobahn A391 — warning",
     "format": "autobahn-json",
