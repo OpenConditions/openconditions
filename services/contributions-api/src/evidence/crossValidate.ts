@@ -21,11 +21,27 @@
  * no `origin.originChain`; a FEDERATED feed relayed from a peer always carries
  * ≥1 originChain hop. A federated feed is a weaker, peer-dependent signal, so it
  * is excluded from the candidate set and can never grant local routing
- * eligibility (a peer-echo trust hole otherwise). Routing a federated CROWD
- * observation on a LOCAL feed is a deferred follow-on: federation export strips
- * `origin.reporter`, so a federated crowd row is keyId-less and this function
- * already skips it; routing it would need a separate route-without-training
- * design that touches federation routing-trust semantics.
+ * eligibility (a peer-echo trust hole otherwise).
+ *
+ * Federated CROWD target (`deps.allowFederatedTarget`): federation export strips
+ * `origin.reporter`, so a federated crowd row is keyId-less and the STRICT guard
+ * skips it. The federation-ingest path opts into routing such a row on a LOCAL
+ * feed via `allowFederatedTarget: true` — a route-without-training IN THE
+ * FEDERATED-ONLY case (the NULL-keyed originator resolves to no affected keys and
+ * no local confirmer exists, so `applyExternalResolution`'s reputation blocks
+ * no-op). It is NOT unconditionally training-free: a genuine pre-cutoff LOCAL
+ * confirmer of the federated row (a local crowd report that earlier merged into it
+ * via corroboration, carrying its keyId) is still trained, exactly as on any
+ * external resolution. The trust anchor stays OUR OWN local feed, never the peer's
+ * word. Only the keyId requirement is relaxed:
+ * the origin.kind='crowd' check (a federated FEED is never a routable target) and
+ * the local-feed-only candidate guard (crowd↔crowd never routes) are unchanged.
+ *
+ * Accountability asymmetry (documented at the federation-ingest call site):
+ * route-without-training removes the per-key deterrents a local reporter has
+ * (rate-limit / reputation / block). A misbehaving peer that spams keyId-less
+ * crowd rows shadowing local feeds is handled by the peer-level kill-switch (the
+ * peer-blocklist rejects its inbound ingest), NOT by per-report throttling.
  *
  * Scope: the CROWD landing hook only. Feed landings never notify
  * contributions-api, so a feed that arrives AFTER a crowd report does not
@@ -46,7 +62,7 @@ interface TargetRow {
   geojson: string;
   valid_from: Date | null;
   attributes: Record<string, unknown> | null;
-  origin: { kind?: string; reporter?: { keyId?: string } } | null;
+  origin: { kind?: string; reporter?: { keyId?: string }; originChain?: unknown } | null;
   source: string;
   status: string;
   flagged_at: Date | null;
@@ -63,6 +79,27 @@ function actorFor(row: TargetRow): { keyId?: string; source: string } {
 /** Injection seam for the routing function (defaults to the real resolution). */
 export interface CrossValidateDeps {
   applyExternalResolution?: typeof applyExternalResolution;
+  /**
+   * Relax the strict target guard to also route a genuinely-FEDERATED CROWD row
+   * (origin.kind='crowd', reporter stripped → keyId-less, non-empty
+   * origin.originChain). Defaults FALSE — the crowd-landing path AND the
+   * feed-arrives-later sweep keep the strict keyId guard so a keyId-less target
+   * is never routed there. Only the federation-ingest call sets this true.
+   *
+   * When true, only the KEY-ID requirement is relaxed, and only for a real
+   * federated crowd target: a federated FEED row (also keyId-less +
+   * originChain-present) still fails the origin.kind='crowd' check, and a
+   * keyId-less crowd row WITHOUT an originChain (a local anomaly) is still
+   * rejected. The LOCAL-feed-only candidate guard below is unchanged, so
+   * crowd↔crowd never routes and only OUR own local official feed can grant
+   * routing eligibility.
+   */
+  allowFederatedTarget?: boolean;
+}
+
+/** Whether `origin.originChain` is a non-empty array — proof a row is genuinely federated. */
+function hasOriginChain(origin: { originChain?: unknown } | null): boolean {
+  return Array.isArray(origin?.originChain) && origin.originChain.length > 0;
 }
 
 /**
@@ -107,8 +144,24 @@ export async function crossValidateAgainstFeeds(
     return null;
   }
   const targetActor = actorFor(row);
-  if (row.origin?.kind !== "crowd" || targetActor.keyId === undefined) {
+  // The target must be a CROWD row (a feed never routes via this path). FABLE FIX
+  // 3c: keep this origin.kind='crowd' check even under allowFederatedTarget — a
+  // federated FEED row is ALSO keyId-less + originChain-present, and must NOT be
+  // routed as if it were crowd.
+  if (row.origin?.kind !== "crowd") {
     return null;
+  }
+  if (targetActor.keyId === undefined) {
+    // A keyId-less crowd row is a FEDERATED crowd report (federation export strips
+    // origin.reporter). By default (crowd-landing + sweep) it is skipped — the
+    // strict guard is preserved. Only an explicit allowFederatedTarget caller
+    // routes it, and ONLY when its origin.originChain proves it is genuinely
+    // federated (≥1 hop). A keyId-less crowd row WITHOUT an originChain is a local
+    // anomaly (a local crowd row always carries a reporter keyId) and is never
+    // routed.
+    if (deps.allowFederatedTarget !== true || !hasOriginChain(row.origin)) {
+      return null;
+    }
   }
 
   const allCandidates = await findCandidates(sql, observationId);

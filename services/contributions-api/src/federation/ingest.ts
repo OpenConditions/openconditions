@@ -37,6 +37,7 @@ import type { Observation, OriginHop, Provenance } from "@openconditions/core";
 import { normalizeObservation } from "@openconditions/normalize";
 import { toRow } from "@openconditions/ingest/pipeline/write-postgis";
 import { autoCorroborateOnLanding } from "../evidence/autoCorroborate.js";
+import { crossValidateAgainstFeeds } from "../evidence/crossValidate.js";
 import {
   hasActiveTombstone,
   isTombstoneReason,
@@ -411,6 +412,69 @@ export async function ingestFederatedObservation(
   // NEVER auto-collapses. Measurements never fingerprint.
   const corroborated =
     normalized.kind === "event" ? await autoCorroborateOnLanding(sql, normalized.id, ctx.now) : [];
+
+  // Federated CROWD → LOCAL feed cross-validation (route-without-training). A
+  // federated crowd row (origin.kind='crowd', reporter stripped → keyId-less,
+  // origin.originChain present) is skipped by the strict landing/sweep guard. When
+  // a LOCAL official feed this instance already ingested independently confirms the
+  // same event, make the local copy routing-eligible via applyExternalResolution.
+  // In the FEDERATED-ONLY case this trains NOBODY (a NULL-keyed originator, no
+  // local confirmers, so its reputation blocks no-op). It is NOT unconditionally
+  // training-free: if a genuine LOCAL crowd report (with a keyId) earlier merged
+  // into this federated row as a pre-cutoff confirmer — autoCorroborate runs above
+  // and isEarlier can make the federated row the survivor carrying that local
+  // confirm — that LOCAL key IS trained, exactly as on any external resolution.
+  // That is the pre-accepted "a local reporter who separately confirmed the row is
+  // still trained" case (positive-direction only). routing_eligible stays purely
+  // local; the trust anchor is OUR feed, never the peer's word. allowFederatedTarget
+  // relaxes ONLY the keyId guard, and only for a genuinely-federated crowd target —
+  // the local-feed-only candidate guard (crowd↔crowd never routes) and the
+  // origin.kind='crowd' guard (a federated FEED is never a routable target) are
+  // unchanged.
+  //
+  // Accountability asymmetry (FABLE FIX 3b): route-without-training removes the
+  // per-key deterrents (rate-limit / reputation / block) a local reporter has. A
+  // compromised pinned peer spamming keyId-less crowd rows to shadow local feeds is
+  // handled by the peer-level kill-switch — the peer-blocklist rejects its inbound
+  // ingest so it can no longer land rows at all — NOT by per-report throttling. Each
+  // federated route is LOGGED with the sending peer id + the matched local feed id
+  // so a spamming peer is observable in logs. A persisted per-peer routed-counter is
+  // a future monitoring enhancement, not required here.
+  //
+  // Scope asymmetry (FABLE FIX 3d, accepted): a federated crowd row is cross-
+  // validated ONLY against local feeds present AT federation-ingest time. The
+  // feed-arrives-later sweep deliberately excludes keyId-less rows (adding them
+  // reopens the sweep's oldest-first starvation), so a local feed arriving LATER
+  // will NOT retroactively route a federated crowd row. The mirror direction is
+  // the same accepted fail-closed asymmetry: a content-updating RESUPPLY (a peer's
+  // newer version of the row that now matches a local feed) collapses via
+  // collapseResupply and does NOT re-run cross-validation — only a genuinely NEW
+  // inserted row reaches this hook.
+  //
+  // Life-extension caveat (FABLE FIX 3e): a later local recompute rebuilds
+  // expires_at/confidence from the LOCAL ledger whose report occurred_at is the
+  // federation RECEIPT time, so routing can extend the row's life vs its true origin
+  // age. Pre-existing for corroborated federated rows; noted, not fixed here.
+  //
+  // Best-effort: a failure here must never abort a successful landing.
+  if (normalized.kind === "event" && normalized.origin.kind === "crowd") {
+    try {
+      const matchedFeedId = await crossValidateAgainstFeeds(sql, normalized.id, ctx.now, {
+        allowFederatedTarget: true,
+      });
+      if (matchedFeedId !== null) {
+        console.info(
+          `[federation] routed federated crowd ${normalized.id} on local feed ${matchedFeedId} ` +
+            `(peer ${ctx.peerInstanceId})`
+        );
+      }
+    } catch (err) {
+      console.warn(
+        `[federation] federated cross-validate failed for ${normalized.id} ` +
+          `(peer ${ctx.peerInstanceId}): ${String(err)}`
+      );
+    }
+  }
 
   return {
     outcome: "inserted",

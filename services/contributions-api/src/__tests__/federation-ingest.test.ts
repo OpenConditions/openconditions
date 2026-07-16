@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { phenomenonFingerprint, type ConditionEvent, type OriginHop } from "@openconditions/core";
@@ -674,4 +674,335 @@ describe("page ingest — skip-and-report, cursor, shared pull path", () => {
     });
     expect((await rowById("shared:id-1"))!.headline).toBeNull();
   });
+});
+
+describe("federated CROWD → LOCAL feed route-without-training", () => {
+  /** Seed a genuinely-LOCAL official feed EVENT (origin.kind='feed', NO originChain). */
+  async function seedLocalFeed(opts: {
+    id: string;
+    lon: number;
+    lat: number;
+    validFrom: string;
+    type?: string;
+    source?: string;
+  }): Promise<void> {
+    const type = opts.type ?? "hazard";
+    const fp = phenomenonFingerprint({
+      kind: "event",
+      domain: "roads",
+      type,
+      geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
+      validFrom: opts.validFrom,
+    } as ConditionEvent);
+    await sql`
+      INSERT INTO conditions.observations
+        (id, source, source_format, domain, kind, type, status, geom, origin,
+         valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale,
+         instance_id, canonical_id, privacy_class)
+      VALUES
+        (${opts.id}, ${opts.source ?? "ndw"}, 'datex2', 'roads', 'event', ${type}, 'active',
+         ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
+         ${sql.json({ kind: "feed", attribution: { provider: "NDW", license: "CC0-1.0" } } as never)},
+         ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false,
+         'local', ${
+           "fe" +
+           opts.id
+             .replace(/[^a-f0-9]/gi, "")
+             .slice(0, 30)
+             .padEnd(30, "0")
+         },
+         'authoritative')`;
+  }
+
+  /**
+   * A federated CROWD wire event (origin.kind='crowd'; reporter stripped on
+   * ingest). Its `source` is a crowd source distinct from the official feed's —
+   * a federated crowd row is keyId-less, so the matcher's independence check
+   * treats it like a feed and a coincident `source` string would (safely) block
+   * the route as same-source. Real crowd and official-feed sources differ.
+   */
+  function fedCrowd(overrides: Record<string, unknown>): Record<string, unknown> {
+    return fedEvent({
+      source: "peer-a-crowd",
+      privacyClass: "crowd_pseudonym",
+      origin: { kind: "crowd", attribution: { provider: "Peer A", license: "ODbL-1.0" } },
+      ...overrides,
+    });
+  }
+
+  async function seedReporter(keyId: string): Promise<void> {
+    await sql`
+      INSERT INTO conditions.reporter
+        (key_id, pub_jwk, reputation_alpha, reputation_beta,
+         entitlement_expires_at, status, created_at, last_active_at)
+      VALUES (${keyId}, '{}'::jsonb, 2, 2, '2027-01-01T00:00:00Z', 'active', ${NOW}, ${NOW})`;
+  }
+
+  async function reporterSnapshot(): Promise<string> {
+    const rows = await sql<{ key_id: string; a: number; b: number; c: number }[]>`
+      SELECT key_id, reputation_alpha AS a, reputation_beta AS b, corroborated_count AS c
+      FROM conditions.reporter ORDER BY key_id`;
+    return JSON.stringify(rows);
+  }
+
+  async function externalCount(obsId: string): Promise<number> {
+    const rows = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM conditions.report_evidence
+      WHERE observation_id = ${obsId}
+        AND evidence_kind IN ('official_match', 'reviewer_accept', 'reviewer_reject')`;
+    return rows[0]!.n;
+  }
+
+  async function readReporter(keyId: string): Promise<{ a: number; b: number; c: number }> {
+    const rows = await sql<{ a: number; b: number; c: number }[]>`
+      SELECT reputation_alpha AS a, reputation_beta AS b, corroborated_count AS c
+      FROM conditions.reporter WHERE key_id = ${keyId}`;
+    return rows[0]!;
+  }
+
+  /** Seed a genuinely-LOCAL crowd EVENT (origin.kind='crowd' WITH reporter keyId) + its ledger. */
+  async function seedLocalCrowd(opts: {
+    id: string;
+    lon: number;
+    lat: number;
+    validFrom: string;
+    keyId: string;
+    source?: string;
+  }): Promise<void> {
+    const fp = phenomenonFingerprint({
+      kind: "event",
+      domain: "roads",
+      type: "hazard",
+      geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
+      validFrom: opts.validFrom,
+    } as ConditionEvent);
+    await sql`
+      INSERT INTO conditions.observations
+        (id, source, source_format, domain, kind, type, status, geom, origin,
+         valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale,
+         instance_id, canonical_id, privacy_class)
+      VALUES
+        (${opts.id}, ${opts.source ?? "local-crowd"}, 'native', 'roads', 'event', 'hazard', 'active',
+         ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
+         ${sql.json({ kind: "crowd", attribution: { provider: "local", license: "ODbL-1.0" }, reporter: { keyId: opts.keyId } } as never)},
+         ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false,
+         'local', ${
+           "1c" +
+           opts.id
+             .replace(/[^a-f0-9]/gi, "")
+             .slice(0, 30)
+             .padEnd(30, "0")
+         },
+         'crowd_pseudonym')`;
+    await sql`
+      INSERT INTO conditions.report_evidence
+        (observation_id, evidence_kind, actor_key_id, occurred_at, details)
+      VALUES (${opts.id}, 'report', ${opts.keyId}, ${opts.validFrom}, '{}'::jsonb)`;
+  }
+
+  it("routes a federated crowd row on a LOCAL feed after ingest and trains NOBODY", async () => {
+    await seedReporter("witness-untouched");
+    await seedLocalFeed({ id: "route:local-feed", lon: 20.5, lat: 40.5, validFrom: VALID_FROM });
+
+    const before = await reporterSnapshot();
+    const outcome = await ingestFederatedObservation(
+      sql,
+      fedCrowd({
+        id: "peer-a:fedcrowd-route",
+        canonicalId: "ab".repeat(32),
+        geometry: { type: "Point", coordinates: [20.5001, 40.5] },
+        validFrom: VALID_FROM,
+        dataUpdatedAt: VALID_FROM,
+      }) as never,
+      PEER_A
+    );
+    expect(outcome.outcome).toBe("inserted");
+
+    const row = await rowById("peer-a:fedcrowd-route");
+    // Landed as a genuinely-federated crowd row (reporter stripped, originChain stamped).
+    expect(row!.origin.kind).toBe("crowd");
+    expect(row!.origin.reporter).toBeUndefined();
+    expect(row!.origin.originChain!.length).toBeGreaterThan(0);
+    // Routed on OUR local feed.
+    expect(row!.evidence_state).toBe("externally_resolved");
+    expect(row!.routing_eligible).toBe(true);
+    expect(await externalCount("peer-a:fedcrowd-route")).toBe(1);
+    // The feed itself is authoritative and untouched.
+    expect(await externalCount("route:local-feed")).toBe(0);
+    // No reporter row's alpha/beta/corroborated_count changed — trained nobody.
+    expect(await reporterSnapshot()).toBe(before);
+  }, 30_000);
+
+  it("trains the genuine pre-cutoff LOCAL confirmer (merged into the federated survivor), and no other key", async () => {
+    // The one brief-pre-accepted path where a federated route DOES train: a LOCAL
+    // crowd report A (keyId K) that corroborates into the federated row and, being
+    // EARLIER, makes the federated row the survivor carrying A's confirm. The
+    // following federated route then finds K as a pre-cutoff confirmer and trains
+    // it — exactly as on any external resolution. This is positive-direction only
+    // and bounded (a second peer echo can't inherit K's confirm — autoCorroborate
+    // excludes keyId-less survivors, and A is inactive after one merge). Pin it so
+    // a future change can't silently WIDEN the trained set.
+    const K = "merged-local-witness";
+    const control = "merged-control-untouched";
+    await seedReporter(K);
+    await seedReporter(control);
+    // Local crowd A is LATER than the federated row (so the federated row survives).
+    const aValidFrom = VALID_FROM;
+    const fValidFrom = new Date(Date.parse(VALID_FROM) - 60_000).toISOString();
+    await seedLocalCrowd({
+      id: "route:local-crowd-A",
+      lon: 24.5,
+      lat: 44.5,
+      validFrom: aValidFrom,
+      keyId: K,
+    });
+    await seedLocalFeed({
+      id: "route:merged-feed",
+      lon: 24.50005,
+      lat: 44.5,
+      validFrom: fValidFrom,
+    });
+
+    const outcome = await ingestFederatedObservation(
+      sql,
+      fedCrowd({
+        id: "peer-a:fedcrowd-merged",
+        canonicalId: "ae".repeat(32),
+        geometry: { type: "Point", coordinates: [24.5001, 44.5] },
+        validFrom: fValidFrom,
+        dataUpdatedAt: fValidFrom,
+      }) as never,
+      PEER_A
+    );
+    expect(outcome.outcome).toBe("inserted");
+
+    // Local A merged INTO the federated row (F is the earlier survivor), which then
+    // routed on the local feed.
+    expect((await rowById("route:local-crowd-A"))!.status).toBe("inactive");
+    const survivor = await rowById("peer-a:fedcrowd-merged");
+    expect(survivor!.status).toBe("active");
+    expect(survivor!.routing_eligible).toBe(true);
+    expect(survivor!.evidence_state).toBe("externally_resolved");
+
+    // The genuine pre-cutoff LOCAL confirmer K IS trained (+alpha, +corroborated_count).
+    const trained = await readReporter(K);
+    expect(trained.a).toBe(3);
+    expect(trained.c).toBe(1);
+    // The trained set is EXACTLY the genuine local witnesses — no other key moved.
+    const untouched = await readReporter(control);
+    expect(untouched.a).toBe(2);
+    expect(untouched.b).toBe(2);
+    expect(untouched.c).toBe(0);
+  }, 30_000);
+
+  it("does NOT route a federated crowd row against a FEDERATED (peer-relayed) feed", async () => {
+    // A peer-relayed feed carries an originChain hop — weaker, peer-dependent signal.
+    const fp = phenomenonFingerprint({
+      kind: "event",
+      domain: "roads",
+      type: "hazard",
+      geometry: { type: "Point", coordinates: [21.5, 41.5] },
+      validFrom: VALID_FROM,
+    } as ConditionEvent);
+    await sql`
+      INSERT INTO conditions.observations
+        (id, source, source_format, domain, kind, type, status, geom, origin,
+         valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale,
+         instance_id, canonical_id, privacy_class)
+      VALUES ('route:fed-feed', 'peer-b', 'datex2', 'roads', 'event', 'hazard', 'active',
+         ST_SetSRID(ST_MakePoint(21.5, 41.5), 4326),
+         ${sql.json({ kind: "feed", attribution: { provider: "NDW", license: "CC0-1.0" }, originChain: [{ instanceId: "peer-b", receivedAt: VALID_FROM }] } as never)},
+         ${VALID_FROM}, ${fp}, ${VALID_FROM}, now(), false,
+         'peer-b', ${"cc".repeat(32)}, 'authoritative')`;
+
+    const outcome = await ingestFederatedObservation(
+      sql,
+      fedCrowd({
+        id: "peer-a:fedcrowd-vs-fedfeed",
+        canonicalId: "ad".repeat(32),
+        geometry: { type: "Point", coordinates: [21.5001, 41.5] },
+        validFrom: VALID_FROM,
+        dataUpdatedAt: VALID_FROM,
+      }) as never,
+      PEER_A
+    );
+    expect(outcome.outcome).toBe("inserted");
+    const row = await rowById("peer-a:fedcrowd-vs-fedfeed");
+    expect(row!.routing_eligible).toBe(false);
+    expect(row!.evidence_state).not.toBe("externally_resolved");
+    expect(await externalCount("peer-a:fedcrowd-vs-fedfeed")).toBe(0);
+  }, 30_000);
+
+  it("spam shape: N federated crowd rows shadowing one local feed all route, attributable via the logged peer id, training nobody", async () => {
+    await seedReporter("spam-witness");
+    await seedLocalFeed({ id: "route:spam-feed", lon: 22.5, lat: 42.5, validFrom: VALID_FROM });
+
+    const before = await reporterSnapshot();
+    const logged: string[] = [];
+    const infoSpy = vi.spyOn(console, "info").mockImplementation((...args) => {
+      logged.push(args.map(String).join(" "));
+    });
+    const ids: string[] = [];
+    try {
+      for (let i = 0; i < 4; i++) {
+        const id = `peer-a:spam-${i}`;
+        ids.push(id);
+        const outcome = await ingestFederatedObservation(
+          sql,
+          fedCrowd({
+            id,
+            canonicalId: (i.toString(16).padStart(2, "0") + "e").repeat(16).slice(0, 64),
+            // Distinct content per row (a real spammer must vary content to create
+            // separate records — byte-identical rows legitimately collapse).
+            headline: `Obstruction on A2 sighting ${i}`,
+            geometry: { type: "Point", coordinates: [22.5001, 42.5] },
+            validFrom: VALID_FROM,
+            dataUpdatedAt: VALID_FROM,
+          }) as never,
+          PEER_A
+        );
+        expect(outcome.outcome).toBe("inserted");
+      }
+    } finally {
+      infoSpy.mockRestore();
+    }
+
+    // Every shadowing row routed on the same local feed (route-without-training).
+    for (const id of ids) {
+      const row = await rowById(id);
+      expect(row!.routing_eligible).toBe(true);
+      expect(row!.evidence_state).toBe("externally_resolved");
+      expect(await externalCount(id)).toBe(1);
+    }
+    // Each route is attributable: the peer id + matched feed id are logged per route.
+    const routeLogs = logged.filter((m) => m.includes("routed federated crowd"));
+    expect(routeLogs.length).toBe(ids.length);
+    expect(routeLogs.every((m) => m.includes("peer peer-a") && m.includes("route:spam-feed"))).toBe(
+      true
+    );
+    // No reputation trained by any of the spam routes — the deterrent is the
+    // per-peer kill-switch, not per-report throttling.
+    expect(await reporterSnapshot()).toBe(before);
+  }, 60_000);
+
+  it("is idempotent: re-ingesting the same federated crowd row does not double-route", async () => {
+    await seedLocalFeed({ id: "route:idem-feed", lon: 23.5, lat: 43.5, validFrom: VALID_FROM });
+    const canonicalId = "af".repeat(32);
+    const wire = fedCrowd({
+      id: "peer-a:fedcrowd-idem",
+      canonicalId,
+      geometry: { type: "Point", coordinates: [23.5001, 43.5] },
+      validFrom: VALID_FROM,
+      dataUpdatedAt: VALID_FROM,
+    });
+
+    const first = await ingestFederatedObservation(sql, wire as never, PEER_A);
+    expect(first.outcome).toBe("inserted");
+    const second = await ingestFederatedObservation(sql, wire as never, PEER_A);
+    // A re-ingest of the same canonicalId collapses as a resupply — no second route.
+    expect(second.outcome).toBe("resupplied");
+
+    expect((await rowById("peer-a:fedcrowd-idem"))!.routing_eligible).toBe(true);
+    expect(await externalCount("peer-a:fedcrowd-idem")).toBe(1);
+  }, 30_000);
 });

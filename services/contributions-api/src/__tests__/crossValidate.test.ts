@@ -123,6 +123,72 @@ async function insertFederatedFeedEvent(opts: EventOpts): Promise<void> {
        ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false)`;
 }
 
+/**
+ * A FEDERATED (peer-relayed) CROWD EVENT — origin.kind "crowd" with the reporter
+ * (and its keyId) STRIPPED on export, carrying a NON-EMPTY originChain (≥1 hop).
+ * This is the genuinely-federated crowd row the strict landing guard skips and
+ * that only `allowFederatedTarget: true` may route (on a LOCAL feed).
+ */
+async function insertFederatedCrowdEvent(opts: EventOpts): Promise<void> {
+  const type = opts.type ?? "hazard";
+  const fp = phenomenonFingerprint({
+    kind: "event",
+    domain: "roads",
+    type,
+    geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
+    validFrom: opts.validFrom,
+  } as ConditionEvent);
+  const origin = {
+    kind: "crowd",
+    attribution: { provider: "Peer X", license: "ODbL-1.0" },
+    originChain: [{ instanceId: "peer-x", viaPeer: "peer-x", receivedAt: opts.validFrom }],
+  };
+  await sql`
+    INSERT INTO conditions.observations
+      (id, source, source_format, domain, kind, type, status, geom, origin,
+       valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale)
+    VALUES
+      (${opts.id}, ${opts.source ?? "peer-x"}, 'native', 'roads', 'event', ${type},
+       ${opts.status ?? "active"},
+       ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
+       ${sql.json(origin as never)},
+       ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false)`;
+  // Mirror the federated landing: a `report` evidence row with a NULL actor key
+  // (no federated reporter key), so applyExternalResolution has an originator row
+  // to read — resolving to NULL → trains nobody.
+  await sql`
+    INSERT INTO conditions.report_evidence
+      (observation_id, evidence_kind, actor_key_id, occurred_at, details)
+    VALUES (${opts.id}, 'report', ${null}, ${opts.validFrom}, '{}'::jsonb)`;
+}
+
+/**
+ * A keyId-less CROWD EVENT WITHOUT an originChain — a local anomaly that should
+ * never exist (a local crowd row always carries a reporter keyId). Even under
+ * allowFederatedTarget it must NOT route: an empty/absent originChain fails the
+ * genuinely-federated check.
+ */
+async function insertKeyIdlessCrowdNoChain(opts: EventOpts): Promise<void> {
+  const type = opts.type ?? "hazard";
+  const fp = phenomenonFingerprint({
+    kind: "event",
+    domain: "roads",
+    type,
+    geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
+    validFrom: opts.validFrom,
+  } as ConditionEvent);
+  await sql`
+    INSERT INTO conditions.observations
+      (id, source, source_format, domain, kind, type, status, geom, origin,
+       valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale)
+    VALUES
+      (${opts.id}, ${opts.source ?? "peer-x"}, 'native', 'roads', 'event', ${type},
+       ${opts.status ?? "active"},
+       ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
+       ${sql.json({ kind: "crowd" } as never)},
+       ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false)`;
+}
+
 async function addReport(obsId: string, key: string, occurredAt: string): Promise<void> {
   await sql`
     INSERT INTO conditions.report_evidence
@@ -170,6 +236,14 @@ async function obs(id: string): Promise<ObsRow> {
     SELECT status, evidence_state, routing_eligible
     FROM conditions.observations WHERE id = ${id}`;
   return rows[0]!;
+}
+
+/** A stable snapshot of every reporter's trainable columns, to assert nobody was trained. */
+async function reporterSnapshot(): Promise<string> {
+  const rows = await sql<{ key_id: string; a: number; b: number; c: number }[]>`
+    SELECT key_id, reputation_alpha AS a, reputation_beta AS b, corroborated_count AS c
+    FROM conditions.reporter ORDER BY key_id`;
+  return JSON.stringify(rows);
 }
 
 async function externalEvidenceCount(obsId: string): Promise<number> {
@@ -503,5 +577,162 @@ describe("crossValidateAgainstFeeds — official cross-validation routing", () =
 
   it("returns null for a non-existent observation", async () => {
     expect(await crossValidateAgainstFeeds(sql, "xv:nope", T_RESOLVE)).toBeNull();
+  }, 30_000);
+});
+
+describe("crossValidateAgainstFeeds — allowFederatedTarget (route-without-training)", () => {
+  it("routes a FEDERATED crowd target on a LOCAL feed and trains NOBODY", async () => {
+    await insertFederatedCrowdEvent({
+      id: "xvf:fed-crowd",
+      lon: 10.5,
+      lat: 48.5,
+      validFrom: T_REPORT,
+    });
+    await insertFeedEvent({
+      id: "xvf:local-feed",
+      lon: 10.5001,
+      lat: 48.5,
+      validFrom: "2026-07-12T08:04:00.000Z",
+    });
+    // Seed a reporter so the "trains nobody" snapshot is a genuine, self-contained
+    // comparison even when this test runs in isolation (not an empty [] === []).
+    await insertReporter("xvf-witness");
+
+    const before = await reporterSnapshot();
+    const matched = await crossValidateAgainstFeeds(sql, "xvf:fed-crowd", T_RESOLVE, {
+      allowFederatedTarget: true,
+    });
+    expect(matched).toBe("xvf:local-feed");
+
+    const crowd = await obs("xvf:fed-crowd");
+    expect(crowd.evidence_state).toBe("externally_resolved");
+    expect(crowd.routing_eligible).toBe(true);
+    expect(await externalEvidenceCount("xvf:fed-crowd")).toBe(1);
+    // The trust anchor is OUR local feed; the feed itself is untouched.
+    expect(await externalEvidenceCount("xvf:local-feed")).toBe(0);
+    // No reporter row's alpha/beta/corroborated_count changed anywhere.
+    expect(await reporterSnapshot()).toBe(before);
+  }, 30_000);
+
+  it("does NOT route a federated crowd target matching only a FEDERATED feed", async () => {
+    await insertFederatedCrowdEvent({
+      id: "xvf:fed-crowd-vs-fedfeed",
+      lon: 11.5,
+      lat: 49.5,
+      validFrom: T_REPORT,
+    });
+    await insertFederatedFeedEvent({
+      id: "xvf:fed-feed-only",
+      lon: 11.5001,
+      lat: 49.5,
+      validFrom: "2026-07-12T08:04:00.000Z",
+    });
+
+    expect(
+      await crossValidateAgainstFeeds(sql, "xvf:fed-crowd-vs-fedfeed", T_RESOLVE, {
+        allowFederatedTarget: true,
+      })
+    ).toBeNull();
+    const crowd = await obs("xvf:fed-crowd-vs-fedfeed");
+    expect(crowd.routing_eligible).toBe(false);
+    expect(crowd.evidence_state).not.toBe("externally_resolved");
+    expect(await externalEvidenceCount("xvf:fed-crowd-vs-fedfeed")).toBe(0);
+  }, 30_000);
+
+  it("does NOT route a federated FEED row as target even with allowFederatedTarget (kind==='crowd' guard)", async () => {
+    // A federated FEED row is ALSO keyId-less + originChain-present, but it is a
+    // feed, not crowd — it must never become a routable target.
+    await insertFederatedFeedEvent({
+      id: "xvf:fed-feed-target",
+      lon: 12.5,
+      lat: 50.5,
+      validFrom: T_REPORT,
+    });
+    await insertFeedEvent({
+      id: "xvf:local-feed-for-fedtarget",
+      lon: 12.5001,
+      lat: 50.5,
+      validFrom: "2026-07-12T08:04:00.000Z",
+      source: "other",
+    });
+
+    expect(
+      await crossValidateAgainstFeeds(sql, "xvf:fed-feed-target", T_RESOLVE, {
+        allowFederatedTarget: true,
+      })
+    ).toBeNull();
+    expect(await externalEvidenceCount("xvf:fed-feed-target")).toBe(0);
+  }, 30_000);
+
+  it("does NOT route a keyId-less crowd target WITHOUT an originChain even with allowFederatedTarget", async () => {
+    await insertKeyIdlessCrowdNoChain({
+      id: "xvf:crowd-no-chain",
+      lon: 13.5,
+      lat: 51.5,
+      validFrom: T_REPORT,
+    });
+    await insertFeedEvent({
+      id: "xvf:feed-for-nochain",
+      lon: 13.5001,
+      lat: 51.5,
+      validFrom: "2026-07-12T08:04:00.000Z",
+    });
+
+    expect(
+      await crossValidateAgainstFeeds(sql, "xvf:crowd-no-chain", T_RESOLVE, {
+        allowFederatedTarget: true,
+      })
+    ).toBeNull();
+    expect((await obs("xvf:crowd-no-chain")).routing_eligible).toBe(false);
+    expect(await externalEvidenceCount("xvf:crowd-no-chain")).toBe(0);
+  }, 30_000);
+
+  it("keeps the STRICT guard by default: a federated crowd target does NOT route without allowFederatedTarget", async () => {
+    await insertFederatedCrowdEvent({
+      id: "xvf:fed-crowd-strict",
+      lon: 14.5,
+      lat: 52.5,
+      validFrom: T_REPORT,
+    });
+    await insertFeedEvent({
+      id: "xvf:feed-strict",
+      lon: 14.5001,
+      lat: 52.5,
+      validFrom: "2026-07-12T08:04:00.000Z",
+    });
+
+    // No deps → allowFederatedTarget defaults false → the crowd-landing/sweep guard.
+    expect(await crossValidateAgainstFeeds(sql, "xvf:fed-crowd-strict", T_RESOLVE)).toBeNull();
+    expect((await obs("xvf:fed-crowd-strict")).routing_eligible).toBe(false);
+    expect(await externalEvidenceCount("xvf:fed-crowd-strict")).toBe(0);
+  }, 30_000);
+
+  it("is idempotent under allowFederatedTarget: replaying does not double-insert or re-route", async () => {
+    await insertFederatedCrowdEvent({
+      id: "xvf:fed-crowd-idem",
+      lon: 15.5,
+      lat: 53.5,
+      validFrom: T_REPORT,
+    });
+    await insertFeedEvent({
+      id: "xvf:feed-idem",
+      lon: 15.5001,
+      lat: 53.5,
+      validFrom: "2026-07-12T08:04:00.000Z",
+    });
+    // Self-contained snapshot: at least one reporter exists to prove nobody trained.
+    await insertReporter("xvf-idem-witness");
+
+    const before = await reporterSnapshot();
+    await crossValidateAgainstFeeds(sql, "xvf:fed-crowd-idem", T_RESOLVE, {
+      allowFederatedTarget: true,
+    });
+    await crossValidateAgainstFeeds(sql, "xvf:fed-crowd-idem", "2026-07-12T08:20:00.000Z", {
+      allowFederatedTarget: true,
+    });
+
+    expect(await externalEvidenceCount("xvf:fed-crowd-idem")).toBe(1);
+    expect((await obs("xvf:fed-crowd-idem")).routing_eligible).toBe(true);
+    expect(await reporterSnapshot()).toBe(before);
   }, 30_000);
 });
