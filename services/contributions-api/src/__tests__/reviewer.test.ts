@@ -208,6 +208,80 @@ async function countEvidence(id: string, kind: string): Promise<number> {
   return rows[0]!.n;
 }
 
+/**
+ * Inserts a flagged observation DIRECTLY (no HTTP landing) so the fire-and-forget
+ * auto-corroboration/cross-validation side effects can't race the reviewer query.
+ * Used by the reporter-trust-surface tests, mirroring the composite-cursor tests.
+ */
+async function insertFlaggedRow(id: string, lon: number, flaggedAt: string): Promise<void> {
+  await sql`
+    INSERT INTO conditions.observations
+      (id, source, source_format, domain, kind, type, status, geom, origin,
+       valid_from, data_updated_at, fetched_at, is_stale, flagged_at)
+    VALUES
+      (${id}, 'reviewer-trust-test', 'native', 'roads', 'event', 'hazard', 'active',
+       ST_SetSRID(ST_MakePoint(${lon}, 47.0), 4326),
+       ${sql.json({ kind: "crowd" } as never)},
+       '2027-01-01T00:00:00.000Z', now(), now(), false, ${flaggedAt}::timestamptz)`;
+}
+
+/** Seeds a `report` evidence row (the originating claim) for an observation. */
+async function seedReportEvidence(
+  obsId: string,
+  keyId: string | null,
+  occurredAt: string
+): Promise<void> {
+  await sql`
+    INSERT INTO conditions.report_evidence
+      (observation_id, evidence_kind, actor_key_id, occurred_at, details)
+    VALUES (${obsId}, 'report', ${keyId}, ${occurredAt}::timestamptz, '{}'::jsonb)`;
+}
+
+/** Seeds a reporter row directly with an explicit posterior and timestamps. */
+async function seedReporter(opts: {
+  keyId: string;
+  alpha?: number;
+  beta?: number;
+  trustSignal?: number | null;
+  corroboratedCount?: number;
+  createdAt?: string;
+  lastActiveAt?: string;
+}): Promise<void> {
+  await sql`
+    INSERT INTO conditions.reporter
+      (key_id, pub_jwk, reputation_alpha, reputation_beta, corroborated_count,
+       trust_signal, entitlement_expires_at, status, created_at, last_active_at)
+    VALUES
+      (${opts.keyId}, ${sql.json({ kty: "EC" } as never)},
+       ${opts.alpha ?? 2}, ${opts.beta ?? 2}, ${opts.corroboratedCount ?? 0},
+       ${opts.trustSignal ?? null}, '2099-01-01T00:00:00.000Z', 'active',
+       ${opts.createdAt ?? "2026-06-12T08:00:00.000Z"}::timestamptz,
+       ${opts.lastActiveAt ?? "2026-07-10T08:00:00.000Z"}::timestamptz)`;
+}
+
+interface ReporterSignalShape {
+  keyId: string;
+  trustSignal: number | null;
+  reliabilityLowerBound: number;
+  corroboratedCount: number;
+  tenureDays: number;
+  lastActiveAt: string;
+  note: string;
+}
+
+async function fetchFlaggedItem(
+  obsId: string
+): Promise<{ observationId: string; reporter: ReporterSignalShape | null } | undefined> {
+  const res = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=200", {
+    token: REVIEWER_TOKEN,
+  });
+  expect(res.statusCode).toBe(200);
+  const body = res.json() as {
+    items: { observationId: string; reporter: ReporterSignalShape | null }[];
+  };
+  return body.items.find((i) => i.observationId === obsId);
+}
+
 describe("migration 0012 — conditions.block_list", () => {
   it("creates the block_list table with the expected columns", async () => {
     const cols = await sql<{ column_name: string; is_nullable: string }[]>`
@@ -719,6 +793,152 @@ describe("reviewer block list", () => {
     });
     expect(res.statusCode).toBe(403);
   }, 60_000);
+});
+
+describe("GET /contrib/reviewer/flagged — originating-reporter advisory trust surface", () => {
+  it("attaches the originating reporter's advisory component signals to a flagged item", async () => {
+    const keyId = "crowd:trust:reporter-present-1";
+    const obsId = "crowd:trust:obs-present-1";
+    await seedReporter({
+      keyId,
+      alpha: 5,
+      beta: 2,
+      trustSignal: 0.8,
+      corroboratedCount: 3,
+      createdAt: "2026-06-12T08:00:00.000Z",
+      lastActiveAt: "2026-07-10T08:00:00.000Z",
+    });
+    await insertFlaggedRow(obsId, 11.11, "2027-02-01T00:00:00.000Z");
+    await seedReportEvidence(obsId, keyId, "2026-06-12T08:00:00.000Z");
+
+    const item = await fetchFlaggedItem(obsId);
+    expect(item).toBeDefined();
+    const reporter = item!.reporter;
+    expect(reporter).not.toBeNull();
+    expect(reporter!.keyId).toBe(keyId);
+    expect(reporter!.trustSignal).toBe(0.8);
+    expect(reporter!.corroboratedCount).toBe(3);
+    expect(typeof reporter!.reliabilityLowerBound).toBe("number");
+    expect(reporter!.reliabilityLowerBound).toBeGreaterThan(0);
+    expect(reporter!.reliabilityLowerBound).toBeLessThan(1);
+    // now = 2026-07-12, created = 2026-06-12 → ~30 days.
+    expect(reporter!.tenureDays).toBeGreaterThan(29);
+    expect(reporter!.tenureDays).toBeLessThan(31);
+    expect(reporter!.lastActiveAt).toBe("2026-07-10T08:00:00.000Z");
+    // Mirrors the /contrib/reporter/me advisory disclaimer — not a probability of truth.
+    expect(reporter!.note).toMatch(/advisory/);
+  }, 60_000);
+
+  it("leaves reporter null for a flagged observation with no originating key", async () => {
+    // A federated report row with a NULL actor_key_id.
+    const federatedObs = "crowd:trust:obs-federated-1";
+    await insertFlaggedRow(federatedObs, 12.22, "2027-02-01T00:00:01.000Z");
+    await seedReportEvidence(federatedObs, null, "2026-06-12T08:00:00.000Z");
+    // A keyless auto-flag with no report evidence at all.
+    const autoFlagObs = "crowd:trust:obs-autoflag-1";
+    await insertFlaggedRow(autoFlagObs, 13.33, "2027-02-01T00:00:02.000Z");
+
+    const fed = await fetchFlaggedItem(federatedObs);
+    const auto = await fetchFlaggedItem(autoFlagObs);
+    expect(fed).toBeDefined();
+    expect(fed!.reporter).toBeNull();
+    expect(auto).toBeDefined();
+    expect(auto!.reporter).toBeNull();
+  }, 60_000);
+
+  it("is read-only: a GET mutates neither the reporter nor the observation", async () => {
+    const keyId = "crowd:trust:readonly-key";
+    const obsId = "crowd:trust:readonly-obs";
+    await seedReporter({ keyId, alpha: 4, beta: 3, trustSignal: 0.5, corroboratedCount: 2 });
+    await insertFlaggedRow(obsId, 14.44, "2027-02-05T00:00:00.000Z");
+    await seedReportEvidence(obsId, keyId, "2026-06-12T08:00:00.000Z");
+
+    const snapBefore = await sql`
+      SELECT reputation_alpha, reputation_beta, corroborated_count, trust_signal,
+             last_active_at, created_at
+      FROM conditions.reporter WHERE key_id = ${keyId}`;
+    const obsBefore = await sql`
+      SELECT status, evidence_state, flagged_at FROM conditions.observations WHERE id = ${obsId}`;
+
+    const item = await fetchFlaggedItem(obsId);
+    expect(item!.reporter).not.toBeNull();
+
+    const snapAfter = await sql`
+      SELECT reputation_alpha, reputation_beta, corroborated_count, trust_signal,
+             last_active_at, created_at
+      FROM conditions.reporter WHERE key_id = ${keyId}`;
+    const obsAfter = await sql`
+      SELECT status, evidence_state, flagged_at FROM conditions.observations WHERE id = ${obsId}`;
+    expect(snapAfter[0]).toEqual(snapBefore[0]);
+    expect(obsAfter[0]).toEqual(obsBefore[0]);
+  }, 60_000);
+
+  it("computes a sane conservative reliabilityLowerBound for a fresh Beta(2,2) reporter", async () => {
+    const keyId = "crowd:trust:fresh-key";
+    const obsId = "crowd:trust:fresh-obs";
+    await seedReporter({ keyId, alpha: 2, beta: 2 });
+    await insertFlaggedRow(obsId, 15.55, "2027-02-06T00:00:00.000Z");
+    await seedReportEvidence(obsId, keyId, "2026-06-12T08:00:00.000Z");
+
+    const item = await fetchFlaggedItem(obsId);
+    // Beta(2,2) 10th-percentile lower bound at the 0.9 advisory level ≈ 0.2 —
+    // conservative, well under the 0.5 symmetric mean, so it never over-claims.
+    expect(item!.reporter!.reliabilityLowerBound).toBeGreaterThan(0.1);
+    expect(item!.reporter!.reliabilityLowerBound).toBeLessThan(0.3);
+  }, 60_000);
+
+  it("keeps the (flagged_at, id) tie-break exact when the LATERAL reporter join is present", async () => {
+    // Same shape as the composite-cursor tie test, but each tie row's originating
+    // reporter has MULTIPLE report rows: a non-LIMIT-1 join would multiply rows and
+    // corrupt the keyset. The LATERAL LIMIT-1 must keep counts/order intact.
+    const tie = "2027-03-01T00:00:01.000Z";
+    const later = "2027-03-01T00:00:02.000Z";
+    const newest = "trust-tie-newest";
+    const tieA = "trust-tie-a";
+    const tieB = "trust-tie-b";
+    await insertFlaggedRow(newest, 21.0, later);
+    await insertFlaggedRow(tieA, 22.0, tie);
+    await insertFlaggedRow(tieB, 23.0, tie);
+    const keyA = "crowd:trust:tie-a-key";
+    await seedReporter({ keyId: keyA });
+    await seedReportEvidence(tieA, keyA, "2026-06-01T00:00:00.000Z");
+    await seedReportEvidence(tieA, keyA, "2026-06-02T00:00:00.000Z");
+    await seedReportEvidence(tieA, keyA, "2026-06-03T00:00:00.000Z");
+    const mine = new Set([newest, tieA, tieB]);
+    const [tieHi, tieLo] = [tieA, tieB].sort((x, y) => (x < y ? 1 : -1)); // id DESC
+    await sql`
+      UPDATE conditions.observations SET flagged_at = NULL
+      WHERE flagged_at IS NOT NULL AND id <> ALL(${sql.array([...mine])})`;
+
+    const p1 = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=2", {
+      token: REVIEWER_TOKEN,
+    });
+    expect(p1.statusCode).toBe(200);
+    const b1 = p1.json() as {
+      items: { observationId: string; reporter: ReporterSignalShape | null }[];
+      nextBefore: string | null;
+      nextBeforeId: string | null;
+    };
+    // Exactly two rows despite tieA's three report rows — no multiplication.
+    expect(b1.items.map((i) => i.observationId)).toEqual([newest, tieHi]);
+    expect(b1.nextBefore).toBe(tie);
+    expect(b1.nextBeforeId).toBe(tieHi);
+
+    const p2 = await reviewerInject(
+      "GET",
+      `/contrib/reviewer/flagged?limit=2&before=${encodeURIComponent(b1.nextBefore!)}&beforeId=${encodeURIComponent(b1.nextBeforeId!)}`,
+      { token: REVIEWER_TOKEN }
+    );
+    expect(p2.statusCode).toBe(200);
+    const b2 = p2.json() as { items: { observationId: string }[] };
+    const p2Ids = b2.items.map((i) => i.observationId);
+    expect(p2Ids[0]).toBe(tieLo);
+
+    const seen = [...b1.items.map((i) => i.observationId), ...p2Ids].filter((id) => mine.has(id));
+    expect(new Set(seen).size).toBe(seen.length); // no duplicate
+    expect(new Set(seen)).toEqual(mine); // no skip
+    expect(seen).toEqual([newest, tieHi, tieLo]); // (flagged_at DESC, id DESC)
+  }, 90_000);
 });
 
 describe("StreetComplete rule — piling onto a disputed element", () => {

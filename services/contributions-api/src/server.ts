@@ -43,7 +43,11 @@ import { GeometryInvalidError, landReport } from "./landing/insert.js";
 import { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
 import { blockKey, listBlocked, unblockKey } from "./reviewer/blocklist.js";
 import { acceptObservation, rejectObservation } from "./reviewer/decide.js";
-import { listFlagged } from "./reviewer/queue.js";
+import {
+  listFlagged,
+  ADVISORY_CREDIBLE_LEVEL,
+  ADVISORY_REPUTATION_NOTE,
+} from "./reviewer/queue.js";
 import { flagOntoOpenFlagged } from "./reviewer/streetcomplete.js";
 import { castSubClaimVote } from "./subclaim/vote.js";
 
@@ -126,9 +130,6 @@ interface SubClaimBody {
 }
 
 const SUB_CLAIM_ACTIONS = new Set(["confirm", "negate", "flag"]);
-
-/** Fixed credible level for the advisory own-reputation lower bound. */
-const ADVISORY_CREDIBLE_LEVEL = 0.9;
 
 /** Minimal per-IP token bucket for the enrollment endpoint. */
 class EnrollLimiter {
@@ -620,7 +621,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       keyId,
       reliabilityLowerBound: lowerBound,
       status: reporter.status,
-      note: "advisory — not a probability of truth or a Sybil-resistance guarantee",
+      note: ADVISORY_REPUTATION_NOTE,
     });
   });
 
@@ -628,6 +629,14 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   // Every route is operator-authenticated with the bearer token (never a device
   // key/grant) via the requireReviewer preHandler.
 
+  // Each flagged item carries the originating reporter's ADVISORY signals
+  // (`reporter`) as read-only triage context. Those signals are NON-GATING: the
+  // accept/reject decision must be about the OBSERVATION's content — the reporter
+  // standing is context only. Since accept/reject IS the external resolution that
+  // trains the reporter's Beta posterior, treating the displayed signal as the
+  // reason to reject would re-import a mild circularity; the payload `note`
+  // disclaims it. (A monitoring metric — reject-rate vs displayed lower-bound —
+  // would let any drift be observed; not built here.)
   app.get<{ Querystring: { limit?: string; before?: string; beforeId?: string } }>(
     "/contrib/reviewer/flagged",
     { preHandler: requireReviewer },
@@ -643,7 +652,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       if (before !== undefined && Number.isNaN(new Date(before).getTime())) {
         return reply.status(400).send({ error: "before must be an ISO 8601 timestamp" });
       }
-      const page = await listFlagged(sql, { limit, before, beforeId });
+      const page = await listFlagged(sql, { limit, before, beforeId, now: now() });
       return reply.send(page);
     }
   );
