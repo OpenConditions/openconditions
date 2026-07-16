@@ -14,7 +14,7 @@
  * baseUrl (not the request Host), so a peer signs the logical actor URL and the
  * check is independent of proxies/loopback test sockets.
  */
-import type { FastifyInstance, FastifyReply } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type postgres from "postgres";
 import {
   createSubscription,
@@ -28,6 +28,7 @@ import {
   SubscriptionValidationError,
   type CreateSubscriptionInput,
   type FederationSubscription,
+  type MtlsContext,
   type NonceStore,
   type PeerRecord,
   type UpdateSubscriptionInput,
@@ -54,6 +55,8 @@ export interface SubscriptionRouteContext {
   baseUrl: string;
   /** Per-peer replay cache shared across the authenticated routes. */
   nonceStore: NonceStore;
+  /** Resolves the request's TLS client-cert context for the optional mTLS gate. */
+  mtlsContextFor?: (req: FastifyRequest) => MtlsContext | undefined;
   /** Injectable clock (ISO 8601). */
   now: () => string;
   /** Tier-2 window override in seconds (see backfillWindowForTier). */

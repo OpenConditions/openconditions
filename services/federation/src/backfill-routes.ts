@@ -9,7 +9,7 @@
  * signature's key — never a client-supplied field. An unsigned, bad-signature,
  * or unpinned request is a 401 on the whole page.
  */
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import type postgres from "postgres";
 import {
   ACTIVITY_JSON,
@@ -17,6 +17,7 @@ import {
   recordPeerFailure,
   signMessage,
   type InstanceKey,
+  type MtlsContext,
   type NonceStore,
   type PeerRecord,
   type RateLimiter,
@@ -41,6 +42,8 @@ export interface BackfillRouteContext {
   signingKey: () => Promise<InstanceKey>;
   /** Shared per-peer transport rate limiter (inbox + backfill). */
   rateLimiter: RateLimiter;
+  /** Resolves the request's TLS client-cert context for the optional mTLS gate. */
+  mtlsContextFor?: (req: FastifyRequest) => MtlsContext | undefined;
   /** Injectable clock (ISO 8601). */
   now: () => string;
   /** Tier-2 window override in seconds. */

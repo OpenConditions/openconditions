@@ -17,6 +17,7 @@ let mtlsPeer: InstanceKey;
 let plainPeer: InstanceKey;
 
 const BASE_URL = "https://conditions.example.org";
+const ARCHIVE_URL = "https://conditions.example.org/archive";
 const PINNED_FINGERPRINT = "AA:BB:CC:DD";
 
 const ACTOR_CONFIG = {
@@ -141,6 +142,7 @@ beforeAll(async () => {
   enabledEnv = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(ACTOR_CONFIG),
+    OPENCONDITIONS_FEDERATION_ARCHIVE_URL: ARCHIVE_URL,
     OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([
       {
         instanceId: "peer-mtls",
@@ -312,6 +314,189 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
       expect(res.statusCode).toBe(200);
       expect(res.json().accepted).toBe(1);
       expect(await countRows("peer-plain:p1")).toBe(1);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+});
+
+describe("GET /peer/backfill — the mTLS gate is threaded uniformly (proxy-aware resolver)", () => {
+  it("accepts a validly-signed mtlsRequired peer presenting an authorized, pinned cert", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "GET", "/peer/backfill");
+      const res = await app.inject({
+        method: "GET",
+        url: "/peer/backfill",
+        headers: { ...req.headers, "x-test-cert": "authorized" },
+      });
+      expect(res.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("rejects the same peer presenting NO client cert (fail-closed still runs)", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "GET", "/peer/backfill");
+      const res = await app.inject({ method: "GET", url: "/peer/backfill", headers: req.headers });
+      expect(res.statusCode).toBe(403);
+      expect(res.headers["federation-reason"]).toBe("mtls-required");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("leaves a non-mTLS peer unaffected: a valid signature alone passes", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(plainPeer, "GET", "/peer/backfill");
+      const res = await app.inject({ method: "GET", url: "/peer/backfill", headers: req.headers });
+      expect(res.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("keeps RFC 9421 signing FIRST: a valid cert but a bad signature is still 401", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      // Sign for the bare path but request a different query → signature mismatch.
+      const req = await signed(mtlsPeer, "GET", "/peer/backfill");
+      const res = await app.inject({
+        method: "GET",
+        url: "/peer/backfill?limit=5",
+        headers: { ...req.headers, "x-test-cert": "authorized" },
+      });
+      expect(res.statusCode).toBe(401);
+      expect(res.headers["federation-reason"]).not.toMatch(/^mtls-/);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+});
+
+describe("POST /peer/subscriptions — the mTLS gate is threaded uniformly (proxy-aware resolver)", () => {
+  it("accepts a validly-signed mtlsRequired peer presenting an authorized, pinned cert", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "POST", "/peer/subscriptions", { deliveryMode: "pull" });
+      const res = await app.inject({
+        method: "POST",
+        url: "/peer/subscriptions",
+        headers: { ...req.headers, "x-test-cert": "authorized" },
+        payload: req.payload,
+      });
+      expect(res.statusCode).toBe(201);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("rejects the same peer presenting NO client cert (fail-closed still runs)", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "POST", "/peer/subscriptions", { deliveryMode: "pull" });
+      const res = await app.inject({
+        method: "POST",
+        url: "/peer/subscriptions",
+        headers: req.headers,
+        payload: req.payload,
+      });
+      expect(res.statusCode).toBe(403);
+      expect(res.headers["federation-reason"]).toBe("mtls-required");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("leaves a non-mTLS peer unaffected: a valid signature alone passes", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(plainPeer, "POST", "/peer/subscriptions", { deliveryMode: "pull" });
+      const res = await app.inject({
+        method: "POST",
+        url: "/peer/subscriptions",
+        headers: req.headers,
+        payload: req.payload,
+      });
+      expect(res.statusCode).toBe(201);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("keeps RFC 9421 signing FIRST: a valid cert but a bad signature is still 401", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "POST", "/peer/subscriptions", { deliveryMode: "pull" });
+      const res = await app.inject({
+        method: "POST",
+        url: "/peer/subscriptions",
+        headers: { ...req.headers, "x-test-cert": "authorized" },
+        // Tampered body → the signature no longer verifies; mTLS must not rescue it.
+        payload: Buffer.from(JSON.stringify({ deliveryMode: "webhook" })),
+      });
+      expect(res.statusCode).toBe(401);
+      expect(res.headers["federation-reason"]).not.toMatch(/^mtls-/);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+});
+
+describe("GET /peer/outbox — the optionalPeer mTLS gate is threaded (proxy-aware resolver)", () => {
+  it("accepts a validly-signed mtlsRequired peer presenting an authorized, pinned cert", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "GET", "/peer/outbox");
+      const res = await app.inject({
+        method: "GET",
+        url: "/peer/outbox",
+        headers: { ...req.headers, "x-test-cert": "authorized" },
+      });
+      expect(res.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("rejects the same peer presenting NO client cert (fail-closed still runs)", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(mtlsPeer, "GET", "/peer/outbox");
+      const res = await app.inject({ method: "GET", url: "/peer/outbox", headers: req.headers });
+      expect(res.statusCode).toBe(403);
+      expect(res.headers["federation-reason"]).toBe("mtls-required");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("leaves a non-mTLS peer unaffected: a valid signature alone passes", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      const req = await signed(plainPeer, "GET", "/peer/outbox");
+      const res = await app.inject({ method: "GET", url: "/peer/outbox", headers: req.headers });
+      expect(res.statusCode).toBe(200);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("keeps RFC 9421 signing FIRST: a valid cert but a bad signature is still 401", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
+    try {
+      // Sign for the bare path but request a different query → signature mismatch.
+      const req = await signed(mtlsPeer, "GET", "/peer/outbox");
+      const res = await app.inject({
+        method: "GET",
+        url: "/peer/outbox?limit=5",
+        headers: { ...req.headers, "x-test-cert": "authorized" },
+      });
+      expect(res.statusCode).toBe(401);
+      expect(res.headers["federation-reason"]).not.toMatch(/^mtls-/);
     } finally {
       await app.close();
     }

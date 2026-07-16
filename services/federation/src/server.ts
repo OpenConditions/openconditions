@@ -157,7 +157,12 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     // caller cannot widen its window, so paging the outbox from 0.0 cannot
     // exfiltrate history past the floor (that is /peer/backfill + the archive).
     const auth = await optionalPeer(
-      { peers: settings.peers, baseUrl: actorConfig.baseUrl, nonceStore },
+      {
+        peers: settings.peers,
+        baseUrl: actorConfig.baseUrl,
+        nonceStore,
+        ...(options.mtlsContextFor !== undefined ? { mtlsContextFor: options.mtlsContextFor } : {}),
+      },
       req,
       reply
     );
@@ -250,6 +255,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     peers: settings.peers,
     baseUrl: actorConfig.baseUrl,
     nonceStore,
+    ...(options.mtlsContextFor !== undefined ? { mtlsContextFor: options.mtlsContextFor } : {}),
     now,
   });
 
@@ -272,6 +278,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     rateLimiter,
     archiveUrl: settings.archiveUrl!,
     signingKey,
+    ...(options.mtlsContextFor !== undefined ? { mtlsContextFor: options.mtlsContextFor } : {}),
     now,
   });
 
