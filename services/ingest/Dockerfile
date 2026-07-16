@@ -32,6 +32,7 @@ COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
+COPY packages/normalize/package.json packages/normalize/
 COPY services/ingest/package.json services/ingest/
 RUN pnpm install --filter @openconditions/ingest... --frozen-lockfile --prod --ignore-scripts
 
@@ -45,6 +46,7 @@ COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
+COPY packages/normalize/package.json packages/normalize/
 COPY services/ingest/package.json services/ingest/
 RUN pnpm install --filter @openconditions/ingest... --frozen-lockfile --ignore-scripts
 
@@ -54,6 +56,7 @@ COPY packages/ingest-framework/ packages/ingest-framework/
 COPY packages/roads/ packages/roads/
 COPY packages/publishers/ packages/publishers/
 COPY packages/openlr/ packages/openlr/
+COPY packages/normalize/ packages/normalize/
 COPY services/ingest/ services/ingest/
 # `...` builds the ingest's workspace dependencies first (topological), so tsup
 # can inline their freshly built dist into the bundle.
