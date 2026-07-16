@@ -22,8 +22,8 @@ export interface SweepResult {
 
 /**
  * Deletes observations that should no longer be served or stored:
- *  - **expired** — `expires_at` or `valid_to` in the past;
- *  - **orphaned** — the row's *source* has no recent success in
+ *  - **expired** — `expires_at` or `valid_to` in the past (ALL origins);
+ *  - **orphaned** — a *feed* row whose *source* has no recent success in
  *    `conditions.source_status` (see {@link SweepOptions.maxAgeSec}).
  *
  * Orphan status is derived per-SOURCE from `source_status`, not per-row from
@@ -34,21 +34,40 @@ export interface SweepResult {
  * per-row would eventually sweep every last-good row of a perfectly healthy
  * feed.
  *
+ * The orphan sweep is scoped to `origin.kind = 'feed'`. Crowd reports (and any
+ * other non-feed origin — e.g. federated crowd) have no polling `source_status`
+ * row at all, so an unscoped orphan check would delete every crowd report on the
+ * next cycle regardless of its `expires_at`. Crowd rows carry their own
+ * evidence-derived `expires_at`/`valid_to` (set by the contributions-api
+ * recompute), so the per-row expiry above is their sole sweep trigger.
+ *
+ * A deleted observation's `report_evidence` rows are removed in the same
+ * transaction so an expired crowd report never leaves orphaned evidence behind.
+ *
  * Complements the per-source atomic swap (which removes conditions that vanish
- * from a *still-polling* feed). A single row-level DELETE, safe to run
- * concurrently with swaps.
+ * from a *still-polling* feed). Safe to run concurrently with swaps.
  */
 export async function sweepStaleObservations(sql: Sql, opts: SweepOptions): Promise<SweepResult> {
-  const deleted = await sql<{ id: string }[]>`
-    DELETE FROM conditions.observations o
-    WHERE (o.expires_at IS NOT NULL AND o.expires_at < now())
-       OR (o.valid_to   IS NOT NULL AND o.valid_to   < now())
-       OR NOT EXISTS (
-         SELECT 1 FROM conditions.source_status ss
-         WHERE ss.source = o.source
-           AND ss.last_success_at IS NOT NULL
-           AND ss.last_success_at >= now() - make_interval(secs => ${opts.maxAgeSec})
-       )
-    RETURNING o.id`;
-  return { deleted: deleted.length };
+  return sql.begin(async (tx) => {
+    const deleted = await tx<{ id: string }[]>`
+      DELETE FROM conditions.observations o
+      WHERE (o.expires_at IS NOT NULL AND o.expires_at < now())
+         OR (o.valid_to   IS NOT NULL AND o.valid_to   < now())
+         OR (
+           o.origin->>'kind' = 'feed'
+           AND NOT EXISTS (
+             SELECT 1 FROM conditions.source_status ss
+             WHERE ss.source = o.source
+               AND ss.last_success_at IS NOT NULL
+               AND ss.last_success_at >= now() - make_interval(secs => ${opts.maxAgeSec})
+           )
+         )
+      RETURNING o.id`;
+    if (deleted.length > 0) {
+      await tx`
+        DELETE FROM conditions.report_evidence
+        WHERE observation_id = ANY(${deleted.map((r) => r.id)})`;
+    }
+    return { deleted: deleted.length };
+  }) as Promise<SweepResult>;
 }

@@ -25,20 +25,33 @@ async function insertRow(
   id: string,
   opts: {
     source?: string;
+    originKind?: "feed" | "crowd";
     fetchedAt: Date;
     validTo?: Date | null;
     expiresAt?: Date | null;
     staleAfter?: Date | null;
   }
 ): Promise<void> {
+  const origin =
+    opts.originKind === "crowd"
+      ? { kind: "crowd", reporter: { keyId: "k-test" } }
+      : { kind: "feed", attribution: { provider: "test" } };
   await sql`
     INSERT INTO conditions.observations
       (id, source, source_format, domain, kind, type, severity, headline,
        geom, origin, data_updated_at, fetched_at, valid_to, expires_at, stale_after)
     VALUES (${id}, ${opts.source ?? "sweeptest"}, 'seed', 'roads', 'event', 'accident', 'high', ${id},
        ST_SetSRID(ST_GeomFromGeoJSON('{"type":"Point","coordinates":[13.4,52.5]}'), 4326),
-       ${sql.json({ kind: "feed", attribution: { provider: "test" } })},
+       ${sql.json(origin)},
        now(), ${opts.fetchedAt}, ${opts.validTo ?? null}, ${opts.expiresAt ?? null}, ${opts.staleAfter ?? null})`;
+}
+
+/** Attach a `report` evidence row to an observation (crowd audit trail). */
+async function insertEvidence(observationId: string, keyId: string): Promise<void> {
+  await sql`
+    INSERT INTO conditions.report_evidence
+      (observation_id, evidence_kind, actor_key_id, occurred_at, details)
+    VALUES (${observationId}, 'report', ${keyId}, now(), ${sql.json({ cell: "test" })})`;
 }
 
 /** Directly controls last_success_at (including backdating it) so tests can
@@ -149,6 +162,60 @@ describe("sweepStaleObservations — orphan status derived from source_status", 
     const remaining = await sql<{ id: string }[]>`
       SELECT id FROM conditions.observations WHERE source = 'unregistered'`;
     expect(remaining.length).toBe(0);
+  }, 30_000);
+});
+
+describe("sweepStaleObservations — crowd rows are not orphan-swept", () => {
+  it("KEEPS a non-expired crowd report though 'crowd' has no source_status (the orphan check is feed-only)", async () => {
+    const now = new Date();
+    // A fresh crowd report: origin.kind 'crowd', source 'crowd' (which never has
+    // a source_status row), NULL expires_at and a future expires_at variant.
+    await insertRow("crowd:live-null-exp", {
+      source: "crowd",
+      originKind: "crowd",
+      fetchedAt: now,
+    });
+    await insertRow("crowd:live-future-exp", {
+      source: "crowd",
+      originKind: "crowd",
+      fetchedAt: now,
+      expiresAt: new Date(now.getTime() + HOUR_MS),
+    });
+
+    const result = await sweepStaleObservations(sql, { maxAgeSec: 3600 });
+    expect(result.deleted).toBe(0);
+
+    const remaining = await sql<{ id: string }[]>`
+      SELECT id FROM conditions.observations WHERE source = 'crowd' ORDER BY id`;
+    expect(remaining.map((r) => r.id)).toEqual(["crowd:live-future-exp", "crowd:live-null-exp"]);
+  }, 30_000);
+
+  it("removes an EXPIRED crowd report AND cascades its report_evidence (no orphans)", async () => {
+    const now = new Date();
+    await insertRow("crowd:expired", {
+      source: "crowd",
+      originKind: "crowd",
+      fetchedAt: now,
+      expiresAt: new Date(now.getTime() - HOUR_MS),
+    });
+    await insertEvidence("crowd:expired", "k-expired");
+    // A live crowd report whose evidence must survive the sweep untouched.
+    await insertRow("crowd:kept", { source: "crowd", originKind: "crowd", fetchedAt: now });
+    await insertEvidence("crowd:kept", "k-kept");
+
+    const result = await sweepStaleObservations(sql, { maxAgeSec: 3600 });
+    expect(result.deleted).toBe(1);
+
+    const remainingObs = await sql<{ id: string }[]>`
+      SELECT id FROM conditions.observations
+      WHERE id IN ('crowd:expired', 'crowd:kept') ORDER BY id`;
+    expect(remainingObs.map((r) => r.id)).toEqual(["crowd:kept"]);
+
+    // The expired report's evidence is gone; the live report's evidence stays.
+    const evidence = await sql<{ observation_id: string }[]>`
+      SELECT observation_id FROM conditions.report_evidence
+      WHERE observation_id IN ('crowd:expired', 'crowd:kept') ORDER BY observation_id`;
+    expect(evidence.map((r) => r.observation_id)).toEqual(["crowd:kept"]);
   }, 30_000);
 });
 
