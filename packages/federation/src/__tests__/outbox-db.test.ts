@@ -94,12 +94,56 @@ beforeAll(async () => {
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
   sql = postgres(url, { max: 3 });
   await runMigrations(url);
+  // The capture trigger only journals when a peer SUBSCRIBES (migration 0023) —
+  // an instance with no peers must not accumulate a journal nothing will read.
+  // These suites assert the capture itself, so give them a subscriber.
+  await seedSubscriber();
 }, 120_000);
+
+/** One active pull subscription — the capture trigger's gate condition. */
+async function seedSubscriber(): Promise<void> {
+  await sql`
+    INSERT INTO conditions.federation_subscription
+      (id, peer_id, delivery_mode, created_at, updated_at)
+    VALUES ('sub-capture-gate', 'peer-capture-gate', 'pull', now(), now())
+    ON CONFLICT (id) DO NOTHING`;
+}
 
 afterAll(async () => {
   await sql?.end();
   await containerStop?.();
 }, 30_000);
+
+describe("federation_outbox trigger — gated on there being a subscriber", () => {
+  // Regression: the ungated trigger journalled ~1.4M rows/hour of feed churn on
+  // an instance with zero peers, which nothing would ever read and the retention
+  // floor refused to prune. It filled the disk and took Postgres down.
+  it("journals NOTHING while no peer subscribes", async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    try {
+      await insertObservation(sql, "obs-nosub", { canonicalId: "can-nosub" });
+      await sql`UPDATE conditions.observations SET headline = 'v2' WHERE id = 'obs-nosub'`;
+      await sql`DELETE FROM conditions.observations WHERE id = 'obs-nosub'`;
+      expect(await journalFor("obs-nosub")).toEqual([]);
+    } finally {
+      await seedSubscriber();
+    }
+  }, 30_000);
+
+  it("starts journalling as soon as a peer subscribes", async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    await insertObservation(sql, "obs-latesub", { canonicalId: "can-latesub" });
+    expect(await journalFor("obs-latesub")).toEqual([]);
+
+    await seedSubscriber();
+    await sql`UPDATE conditions.observations SET headline = 'v2' WHERE id = 'obs-latesub'`;
+
+    // Only the post-subscription mutation is journalled — the pre-subscription
+    // create is deliberately absent (the documented trade-off in 0023).
+    const entries = await journalFor("obs-latesub");
+    expect(entries.map((e) => e.operation)).toEqual(["update"]);
+  }, 30_000);
+});
 
 describe("federation_outbox trigger — transactional capture", () => {
   it("captures create, update and delete as three entries in order", async () => {

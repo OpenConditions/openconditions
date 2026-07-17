@@ -1,7 +1,18 @@
 import type postgres from "postgres";
+import { SPEED_SAMPLE_RETENTION_DAYS } from "./baseline-derive.js";
 import { loadOsmRegions, type OsmRegion } from "./osm-import.js";
 
 type Sql = postgres.Sql;
+
+/**
+ * Window this derivation reads from `sensor_speed_sample`.
+ *
+ * Capped at the sample retention: asking for more days than are kept does not
+ * widen the history, it just misdescribes it — the extra days were pruned before
+ * this ever runs. (It read 42 days against a 35-day retention, so days 36-42
+ * were always empty and the profiles were quietly derived from 35.)
+ */
+export const SEGMENT_PROFILE_WINDOW_DAYS = SPEED_SAMPLE_RETENTION_DAYS;
 
 export interface DeriveSegmentProfilesOpts {
   windowDays?: number;
@@ -43,7 +54,7 @@ export async function deriveSegmentProfiles(
   now: () => string,
   opts: DeriveSegmentProfilesOpts = {}
 ): Promise<{ upserted: number }> {
-  const windowDays = opts.windowDays ?? 42;
+  const windowDays = opts.windowDays ?? SEGMENT_PROFILE_WINDOW_DAYS;
   const minSamples = opts.minSamples ?? 20;
   const tzCase = regionTzCase(sql, loadOsmRegions(process.env));
 

@@ -102,6 +102,13 @@ beforeAll(async () => {
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
   sql = postgres(url, { max: 4 });
   await runMigrations(url);
+  // The outbox capture trigger only journals for a SUBSCRIBER (migration 0023);
+  // the backfill route serves that journal, so give it one.
+  await sql`
+    INSERT INTO conditions.federation_subscription
+      (id, peer_id, delivery_mode, created_at, updated_at)
+    VALUES ('sub-backfill-route', 'peer-backfill-route', 'pull', now(), now())
+    ON CONFLICT (id) DO NOTHING`;
 
   const now = new Date().toISOString();
   tier1Peer = await generateInstanceKey(now);

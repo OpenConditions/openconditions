@@ -136,6 +136,13 @@ beforeAll(async () => {
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
   sql = postgres(url, { max: 5 });
   await runMigrations(url);
+  // The outbox capture trigger only journals for a SUBSCRIBER (migration 0023);
+  // these tests assert what reaches the journal, so give them one.
+  await sql`
+    INSERT INTO conditions.federation_subscription
+      (id, peer_id, delivery_mode, created_at, updated_at)
+    VALUES ('sub-tombstone', 'peer-tombstone', 'pull', now(), now())
+    ON CONFLICT (id) DO NOTHING`;
 }, 120_000);
 
 afterAll(async () => {

@@ -67,6 +67,14 @@ beforeAll(async () => {
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
   sql = postgres(url, { max: 3 });
   await runMigrations(url);
+  // The capture trigger only journals for a SUBSCRIBER (migration 0023) — an
+  // instance with no peers must not journal its feed churn. This suite needs a
+  // journal to prune, so give it one.
+  await sql`
+    INSERT INTO conditions.federation_subscription
+      (id, peer_id, delivery_mode, created_at, updated_at)
+    VALUES ('sub-retention', 'peer-retention', 'pull', now(), now())
+    ON CONFLICT (id) DO NOTHING`;
 }, 120_000);
 
 afterAll(async () => {

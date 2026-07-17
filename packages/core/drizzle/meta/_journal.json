@@ -162,6 +162,13 @@
       "when": 1784199036072,
       "tag": "0022_equal_wonder_man",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1784281542875,
+      "tag": "0023_gate_federation_outbox_capture",
+      "breakpoints": true
     }
   ]
 }
