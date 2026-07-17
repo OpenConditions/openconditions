@@ -283,6 +283,18 @@ describe("crossValidateAgainstFeeds — official cross-validation routing", () =
     // Exactly one external `official_match` row on the CROWD observation.
     expect(await externalEvidenceCount("xv:crowd-match")).toBe(1);
 
+    // ...and it NAMES the feed row that routed the report. External resolution
+    // is the only path to routing_eligible, so which row said so must be
+    // auditable — not an unattributable "an official feed confirmed this".
+    const official = await sql<
+      { source_id: string | null; details: { source?: string; matchedObservationId?: string } }[]
+    >`
+      SELECT source_id, details FROM conditions.report_evidence
+      WHERE observation_id = 'xv:crowd-match' AND evidence_kind = 'official_match'`;
+    expect(official[0]!.details.matchedObservationId).toBe("xv:feed-match");
+    expect(official[0]!.source_id).toBe("ndw");
+    expect(official[0]!.details.source).toBe("official");
+
     // The FEED observation is authoritative and untouched — no evidence appended.
     expect(await externalEvidenceCount("xv:feed-match")).toBe(0);
     expect((await obs("xv:feed-match")).status).toBe("active");

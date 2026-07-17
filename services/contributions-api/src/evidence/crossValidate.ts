@@ -221,8 +221,23 @@ export async function crossValidateAgainstFeeds(
     return null;
   }
 
+  const matched = feedCandidates.find((candidate) => candidate.id === match.candidateId);
+
   // One official match suffices to route; applyExternalResolution is replay-safe
-  // if multiple feeds match or the hook re-fires.
-  await resolve(sql, observationId, { source: "official", outcome: "confirmed" }, now);
+  // if multiple feeds match or the hook re-fires. Name the matched feed row on
+  // the resolution so the ledger records WHICH feed routed this report, not just
+  // that "an official feed" did — routing is the consequential outcome here.
+  await resolve(
+    sql,
+    observationId,
+    {
+      source: "official",
+      outcome: "confirmed",
+      ...(matched !== undefined
+        ? { matchedObservation: { id: matched.id, source: matched.actor.source } }
+        : {}),
+    },
+    now
+  );
   return match.candidateId;
 }

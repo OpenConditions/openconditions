@@ -9,6 +9,17 @@ type Tx = postgres.TransactionSql;
 export interface ExternalResolution {
   source: "official" | "reviewer" | "objective";
   outcome: "confirmed" | "rejected";
+  /**
+   * The concrete observation that justified this resolution — for an `official`
+   * cross-validation, the matched FEED row. External resolution is the ONLY
+   * path to `routing_eligible`, so which row said so must be auditable: without
+   * it a routed report records "an official feed confirmed this" and nothing
+   * that can be checked, disputed or traced when the feed is later corrected.
+   * Recorded as `report_evidence.source_id` (the feed's source) plus
+   * `details.matchedObservationId` (the exact row). Optional: a reviewer or
+   * objective resolution has no matched row.
+   */
+  matchedObservation?: { id: string; source: string };
 }
 
 export interface ResolutionResult {
@@ -38,9 +49,10 @@ function evidenceKindFor(
  * FOR UPDATE on the observation:
  *
  * 1. Append the external `report_evidence` row (kind per
- *    {@link evidenceKindFor}, `details = { source, outcome }`, occurred_at =
- *    `now`), guarded by NOT EXISTS on the same (observation, source, outcome)
- *    so a double resolution is a no-op replay.
+ *    {@link evidenceKindFor}, `details = { source, outcome }` plus
+ *    `matchedObservationId` and `source_id` when the caller names the row that
+ *    justified it, occurred_at = `now`), guarded by NOT EXISTS on the same
+ *    (observation, source, outcome) so a double resolution is a no-op replay.
  * 2. Recompute the observation's evidence state in-tx: an external
  *    confirmation flips it to `externally_resolved` (the only routing-eligible
  *    state); a rejection negates.
@@ -101,7 +113,18 @@ async function resolveWithin(
   }
 
   const kind = evidenceKindFor(resolution);
-  const details = { source: resolution.source, outcome: resolution.outcome };
+  // The matched row travels in `details.matchedObservationId` + `source_id`, but
+  // NOT in the replay guard below — that stays keyed on (source, outcome), so a
+  // second official match from a different feed remains the same no-op replay it
+  // has always been. One official confirmation routes; the first one is recorded.
+  const details = {
+    source: resolution.source,
+    outcome: resolution.outcome,
+    ...(resolution.matchedObservation !== undefined
+      ? { matchedObservationId: resolution.matchedObservation.id }
+      : {}),
+  };
+  const sourceId = resolution.matchedObservation?.source ?? null;
 
   // The reputation cutoff is the FIRST external resolution's occurred_at,
   // computed BEFORE appending this one. Only confirmers who acted strictly
@@ -120,8 +143,8 @@ async function resolveWithin(
 
   const inserted = await tx<{ id: string }[]>`
     INSERT INTO conditions.report_evidence
-      (observation_id, evidence_kind, actor_key_id, occurred_at, details)
-    SELECT ${observationId}, ${kind}, NULL, ${now}, ${tx.json(details)}
+      (observation_id, evidence_kind, actor_key_id, source_id, occurred_at, details)
+    SELECT ${observationId}, ${kind}, NULL, ${sourceId}, ${now}, ${tx.json(details)}
     WHERE NOT EXISTS (
       SELECT 1 FROM conditions.report_evidence
       WHERE observation_id = ${observationId}
