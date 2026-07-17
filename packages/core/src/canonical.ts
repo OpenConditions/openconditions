@@ -22,9 +22,39 @@ export interface FingerprintOptions {
   timeBucketSec?: number;
 }
 
+/**
+ * The match window the fingerprint NEIGHBORHOOD must cover. See
+ * {@link phenomenonFingerprintNeighborhood}.
+ */
+export interface NeighborhoodOptions extends FingerprintOptions {
+  /** Max centroid distance the matcher accepts, in metres. Default 250. */
+  maxCentroidMeters?: number;
+  /** Max absolute `validFrom` delta the matcher accepts, in seconds. Default 900. */
+  maxValidFromDeltaSec?: number;
+}
+
 const DEFAULT_GRID_METERS = 100;
 const DEFAULT_TYPE_DEPTH = 2;
 const DEFAULT_TIME_BUCKET_SEC = 300;
+
+/**
+ * The match window MIRRORED from `matchPhenomenonCandidates`
+ * (@openconditions/contrib-core). The neighborhood is that matcher's candidate
+ * OPENER, so it MUST cover the matcher's whole acceptance region — a pair the
+ * matcher would call compatible but the opener never surfaces is silently
+ * dropped and can never corroborate or cross-validate. `core` is the lower
+ * layer and cannot import contrib-core, so these mirror its defaults and are
+ * pinned by the "covers the matcher's acceptance window" tests.
+ */
+const DEFAULT_MATCH_MAX_CENTROID_METERS = 250;
+const DEFAULT_MATCH_MAX_VALID_FROM_DELTA_SEC = 900;
+
+/**
+ * Longitude cells are `gridMeters * cos(lat)` wide, so the east-west radius
+ * grows without bound toward the poles. Clamp at 85°, far beyond any road
+ * network, so a degenerate polar centroid cannot explode the neighborhood.
+ */
+const MIN_COS_LAT = Math.cos((85 * Math.PI) / 180);
 
 const METERS_PER_DEG_LAT = 111_320;
 
@@ -255,7 +285,7 @@ export function phenomenonFingerprint(evt: ConditionEvent, opts: FingerprintOpti
  */
 export function phenomenonFingerprintNeighborhood(
   evt: ConditionEvent,
-  opts: FingerprintOptions = {}
+  opts: NeighborhoodOptions = {}
 ): string[] {
   if (evt.kind !== "event") {
     throw new TypeError(
@@ -263,13 +293,35 @@ export function phenomenonFingerprintNeighborhood(
     );
   }
   const { gridMeters, typeDepth, timeBucketSec } = resolveFingerprintOptions(opts);
-  const [x, y] = gridCellIndices(centroid(evt.geometry), gridMeters);
+  const maxCentroidMeters = opts.maxCentroidMeters ?? DEFAULT_MATCH_MAX_CENTROID_METERS;
+  const maxValidFromDeltaSec = opts.maxValidFromDeltaSec ?? DEFAULT_MATCH_MAX_VALID_FROM_DELTA_SEC;
+  if (!Number.isFinite(maxCentroidMeters) || maxCentroidMeters <= 0) {
+    throw new TypeError("maxCentroidMeters must be a finite number > 0");
+  }
+  if (!Number.isFinite(maxValidFromDeltaSec) || maxValidFromDeltaSec <= 0) {
+    throw new TypeError("maxValidFromDeltaSec must be a finite number > 0");
+  }
+
+  const position = centroid(evt.geometry);
+  const [x, y] = gridCellIndices(position, gridMeters);
   const baseBucket = timeBucket(evt.validFrom, timeBucketSec);
+
+  // Radii are DERIVED from the match window rather than fixed at ±1, so the
+  // opener is always a superset of what the matcher accepts. Cells are a fixed
+  // number of DEGREES square: `gridMeters` tall everywhere, but only
+  // `gridMeters * cos(lat)` wide — so the east-west radius must grow with
+  // latitude or a compatible pair drifts out of the neighborhood (at 62°N a
+  // "100 m" cell is ~47 m wide).
+  const cosLat = Math.max(Math.abs(Math.cos((position[1] * Math.PI) / 180)), MIN_COS_LAT);
+  const radiusY = Math.max(1, Math.ceil(maxCentroidMeters / gridMeters));
+  const radiusX = Math.max(1, Math.ceil(maxCentroidMeters / (gridMeters * cosLat)));
+  const radiusBucket = Math.max(1, Math.ceil(maxValidFromDeltaSec / timeBucketSec));
+
   const fingerprints = new Set<string>();
-  for (let dy = -1; dy <= 1; dy++) {
-    for (let dx = -1; dx <= 1; dx++) {
+  for (let dy = -radiusY; dy <= radiusY; dy++) {
+    for (let dx = -radiusX; dx <= radiusX; dx++) {
       const cell = cellKey(x + dx, y + dy);
-      for (let dBucket = -1; dBucket <= 1; dBucket++) {
+      for (let dBucket = -radiusBucket; dBucket <= radiusBucket; dBucket++) {
         fingerprints.add(
           fingerprintDigest(cell, evt.domain, evt.type, typeDepth, baseBucket + dBucket)
         );

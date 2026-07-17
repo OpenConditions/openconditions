@@ -61,8 +61,9 @@ export interface FindCandidatesOptions {
 
 /**
  * Find the EVENT observations whose `phenomenon_fingerprint` falls in the
- * fingerprint NEIGHBORHOOD of `observationId` (the 3×3 grid cells × ±1 time
- * bucket, so cell-edge straddlers are still paired), excluding the observation
+ * fingerprint NEIGHBORHOOD of `observationId` — the cells × time buckets that
+ * cover the matcher's whole acceptance window (250 m / 900 s), so a compatible
+ * pair can never sit outside the opener — excluding the observation
  * itself, projected into {@link PhenomenonCandidate}s. This only OPENS a typed
  * candidate set — {@link matchPhenomenonCandidates} decides compatibility and
  * nothing here merges. Only `active` rows are returned unless

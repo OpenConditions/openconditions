@@ -342,10 +342,59 @@ describe("phenomenonFingerprintNeighborhood", () => {
     expect(phenomenonFingerprintNeighborhood(evt)).toContain(phenomenonFingerprint(evt));
   });
 
-  it("returns at most 27 distinct fingerprints (3x3 cells x 3 buckets)", () => {
+  it("returns distinct fingerprints", () => {
     const fps = phenomenonFingerprintNeighborhood(makeEvent());
-    expect(fps.length).toBeLessThanOrEqual(27);
     expect(new Set(fps).size).toBe(fps.length);
+  });
+
+  // The neighborhood is the candidate OPENER for `matchPhenomenonCandidates`.
+  // It MUST be a superset of the matcher's acceptance region, or a compatible
+  // pair is silently never compared. The matcher's defaults are 250 m centroid
+  // distance and a 900 s validFrom delta.
+  describe("covers the matcher's acceptance window (opener must be a superset)", () => {
+    it("pairs two events 900 s apart at the same point (matcher's max validFrom delta)", () => {
+      const a = makeEvent({ validFrom: "2026-07-10T12:00:00Z" });
+      const b = makeEvent({ id: "other-id", validFrom: "2026-07-10T12:15:00Z" });
+      expect(phenomenonFingerprintNeighborhood(a)).toContain(phenomenonFingerprint(b));
+      expect(phenomenonFingerprintNeighborhood(b)).toContain(phenomenonFingerprint(a));
+    });
+
+    it("pairs two events 583 s apart across a bucket boundary (the live cross-validation miss)", () => {
+      // The real prod case: a feed accident valid_from 08:13:00 and a crowd
+      // report at 08:22:43 — 583 s apart, well inside the matcher's 900 s
+      // window, but two 300 s buckets apart, so a ±1-bucket opener never
+      // surfaced the feed and cross-validation could not fire.
+      const a = makeEvent({ validFrom: "2026-07-17T08:13:00Z" });
+      const b = makeEvent({ id: "other-id", validFrom: "2026-07-17T08:22:43Z" });
+      expect(phenomenonFingerprintNeighborhood(a)).toContain(phenomenonFingerprint(b));
+      expect(phenomenonFingerprintNeighborhood(b)).toContain(phenomenonFingerprint(a));
+    });
+
+    it("pairs two events 250 m apart at the same instant (matcher's max centroid distance)", () => {
+      const latDelta = 250 / METERS_PER_DEG_LAT;
+      const a = makeEvent({ geometry: { type: "Point", coordinates: [6.5, 52.0] } });
+      const b = makeEvent({
+        id: "other-id",
+        geometry: { type: "Point", coordinates: [6.5, 52.0 + latDelta] },
+      });
+      expect(phenomenonFingerprintNeighborhood(a)).toContain(phenomenonFingerprint(b));
+      expect(phenomenonFingerprintNeighborhood(b)).toContain(phenomenonFingerprint(a));
+    });
+
+    it("pairs a 250 m + 900 s corner case (both maxima at once)", () => {
+      const latDelta = 250 / METERS_PER_DEG_LAT;
+      const a = makeEvent({
+        geometry: { type: "Point", coordinates: [6.5, 52.0] },
+        validFrom: "2026-07-10T12:00:00Z",
+      });
+      const b = makeEvent({
+        id: "other-id",
+        geometry: { type: "Point", coordinates: [6.5, 52.0 + latDelta] },
+        validFrom: "2026-07-10T12:15:00Z",
+      });
+      expect(phenomenonFingerprintNeighborhood(a)).toContain(phenomenonFingerprint(b));
+      expect(phenomenonFingerprintNeighborhood(b)).toContain(phenomenonFingerprint(a));
+    });
   });
 
   it("closes the cell-boundary miss: two events 1 m apart across a cell edge each contain the other's own fingerprint", () => {
@@ -364,17 +413,19 @@ describe("phenomenonFingerprintNeighborhood", () => {
     expect(phenomenonFingerprintNeighborhood(b)).toContain(phenomenonFingerprint(a));
   });
 
-  it("yields all 9 cells for a centroid within 1e-12° of a cell edge at lon ≈ −179.974", () => {
+  it("yields all 9 surrounding cells for a centroid within 1e-12° of a cell edge at lon ≈ −179.974", () => {
     // Near |lon| ≈ 180 a coordinate-offset implementation can lose a ±step
     // offset to floating-point cancellation and skip a neighbor cell. Integer
-    // cell-index offsets must keep the full 3×3 block regardless.
+    // cell-index offsets must keep the immediate block regardless (the
+    // neighborhood spans further — it covers the whole match window — so this
+    // asserts the 3×3 core is present, not the total size).
     const step = 100 / METERS_PER_DEG_LAT;
     const edgeLon = Math.floor(-179.974 / step) * step;
     const lonC = edgeLon + 1e-12;
     const latC = (Math.floor(52.0 / step) + 0.5) * step;
     const base = makeEvent({ geometry: { type: "Point", coordinates: [lonC, latC] } });
     const hood = phenomenonFingerprintNeighborhood(base);
-    expect(hood).toHaveLength(27);
+    expect(new Set(hood).size).toBe(hood.length);
 
     // Re-derive the base cell exactly as gridCell does, then demand the
     // fingerprint of an event at the CENTER of each of the 9 surrounding cells.
@@ -394,15 +445,19 @@ describe("phenomenonFingerprintNeighborhood", () => {
     }
   });
 
-  it("includes the ±1 time buckets", () => {
+  it("includes every time bucket the match window reaches, and stops beyond it", () => {
     const at = makeEvent({ validFrom: "2026-07-10T12:00:00Z" });
     const prev = makeEvent({ validFrom: "2026-07-10T11:55:00Z" });
     const next = makeEvent({ validFrom: "2026-07-10T12:05:00Z" });
     const hood = phenomenonFingerprintNeighborhood(at);
     expect(hood).toContain(phenomenonFingerprint(prev));
     expect(hood).toContain(phenomenonFingerprint(next));
-    // ...but not two buckets away.
-    const farPast = makeEvent({ validFrom: "2026-07-10T11:49:00Z" });
+    // The window is 900 s over 300 s buckets, so ±3 buckets are still reachable
+    // (11:49 sits 3 buckets back and a 660 s delta the matcher would accept).
+    expect(hood).toContain(phenomenonFingerprint(makeEvent({ validFrom: "2026-07-10T11:49:00Z" })));
+    // ...but the neighborhood does not grow without bound: 30 min back is far
+    // outside the match window and must not be opened.
+    const farPast = makeEvent({ validFrom: "2026-07-10T11:30:00Z" });
     expect(hood).not.toContain(phenomenonFingerprint(farPast));
   });
 
