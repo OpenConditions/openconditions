@@ -169,6 +169,13 @@
       "when": 1784281542875,
       "tag": "0023_gate_federation_outbox_capture",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1784284590315,
+      "tag": "0024_sensor_speed_hourly_rollup",
+      "breakpoints": true
     }
   ]
 }

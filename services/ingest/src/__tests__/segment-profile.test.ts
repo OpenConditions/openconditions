@@ -3,6 +3,7 @@ import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import { deriveSegmentProfiles } from "../pipeline/segment-profile.js";
+import { rollupSpeedSamples, SPEED_BIN_WIDTH_KPH } from "../pipeline/speed-rollup.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -53,6 +54,8 @@ async function seedSpeedSamples(sensorKey: string, speeds: number[], base: Date)
         ${observedAt.getUTCDay()}, ${observedAt.getUTCHours()},
         ST_SetSRID(ST_GeomFromGeoJSON('{"type":"Point","coordinates":[5.05,52.0]}'), 4326))`;
   }
+  // The profiles read the hourly rollup, not the raw samples.
+  await rollupSpeedSamples(sql);
 }
 
 beforeAll(async () => {
@@ -101,7 +104,9 @@ describe("deriveSegmentProfiles", () => {
     expect(rows[0]!.tod_hour).toBe(8);
     // 2024-07-01 is a Monday -> local dow 1 (Valhalla's Sunday-first convention).
     expect(rows[0]!.dow).toBe(1);
-    expect(rows[0]!.speed_kph).toBeCloseTo(70, 5);
+    // Median 70; the histogram resolves to the containing bin's midpoint, so it
+    // lands within one bin rather than exactly on the sample.
+    expect(Math.abs(rows[0]!.speed_kph - 70)).toBeLessThanOrEqual(SPEED_BIN_WIDTH_KPH);
     expect(rows[0]!.sample_count).toBe(5);
   }, 60_000);
 

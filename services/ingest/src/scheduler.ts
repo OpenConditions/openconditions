@@ -10,7 +10,8 @@ import {
 } from "@openconditions/ingest-framework";
 import type { FeedSource } from "@openconditions/roads";
 import { buildDailyArchive } from "./pipeline/archive-build.js";
-import { deriveBaselines, pruneSpeedSamples } from "./pipeline/baseline-derive.js";
+import { deriveBaselines } from "./pipeline/baseline-derive.js";
+import { pruneHourlyRollup, pruneRawSamples, rollupSpeedSamples } from "./pipeline/speed-rollup.js";
 import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js";
 import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
 import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
@@ -58,6 +59,12 @@ export async function runFeedOnce(
 
 /** How often the stale-observation sweep runs. */
 const SWEEP_CRON = "*/5 * * * *";
+/**
+ * How often raw speed samples are rolled into per-(sensor, hour) histograms.
+ * Runs a few minutes past the hour so the hour it closes is complete (the rollup
+ * only ever aggregates finished hours).
+ */
+const SPEED_ROLLUP_CRON = "10 * * * *";
 /** When the nightly baseline derivation + sample prune runs (UTC). */
 const BASELINE_CRON = "0 3 * * *";
 /** When the nightly static-archive (GeoParquet published-view) build runs (UTC) — after the baseline derivation. */
@@ -187,6 +194,28 @@ export function startScheduler(
   console.info(`[scheduler] registered stale-observation sweep (${SWEEP_CRON})`);
   jobs.push(sweepJob);
 
+  // Roll raw speed samples into per-(sensor, hour) histograms. Hourly rather
+  // than nightly so raw never has to hold more than a few hours of unaggregated
+  // backlog (it takes ~20M rows/day), and so the raw prune always has a fresh
+  // watermark to stay behind.
+  let rollingUpSpeed = false;
+  const speedRollupJob = new Cron(SPEED_ROLLUP_CRON, { catch: true }, async () => {
+    if (rollingUpSpeed) return;
+    rollingUpSpeed = true;
+    try {
+      const { hours, rows } = await rollupSpeedSamples(sql);
+      if (rows > 0) {
+        console.info(`[scheduler] speed rollup: ${rows} hour-row(s) over ${hours}h`);
+      }
+    } catch (err) {
+      console.error("[scheduler] speed rollup failed", err);
+    } finally {
+      rollingUpSpeed = false;
+    }
+  });
+  console.info(`[scheduler] registered speed rollup (${SPEED_ROLLUP_CRON})`);
+  jobs.push(speedRollupJob);
+
   let derivingBaselines = false;
   const baselineJob = new Cron(BASELINE_CRON, { catch: true }, async () => {
     if (derivingBaselines) return;
@@ -203,9 +232,17 @@ export function startScheduler(
           console.info(`[scheduler] fintraffic native baselines: ${updated} updated`);
         }
       }
+      // Roll up before deriving so the window includes the hours since the last
+      // hourly run, and before pruning so the prune has a current watermark to
+      // stay behind (it refuses to outrun the rollup).
+      const rolled = await rollupSpeedSamples(sql);
       const { upserted } = await deriveBaselines(sql);
-      const { deleted } = await pruneSpeedSamples(sql);
-      console.info(`[scheduler] baselines: upserted ${upserted}, pruned ${deleted} sample(s)`);
+      const { deleted } = await pruneRawSamples(sql);
+      const prunedHours = await pruneHourlyRollup(sql);
+      console.info(
+        `[scheduler] baselines: rolled up ${rolled.rows} hour-row(s) over ${rolled.hours}h, ` +
+          `upserted ${upserted}, pruned ${deleted} raw sample(s) and ${prunedHours.deleted} rollup hour(s)`
+      );
 
       // Fills sensors that still lack any baseline (native/derived always win —
       // this only runs after both, so it never clobbers a better method).

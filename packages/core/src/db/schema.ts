@@ -222,7 +222,10 @@ export const sourceStatus = conditionsSchema.table("source_status", {
 /**
  * Append-only per-sensor speed history. One row per flow observation that
  * carries a speed. `dow`/`tod_hour` are UTC (getUTCDay / getUTCHours).
- * TODO: local-timezone bucketing is a future refinement (MVP is UTC).
+ *
+ * SHORT-LIVED: this is the landing buffer, not the history. It takes ~20M
+ * rows/day, so it is rolled up into {@link sensorSpeedHourly} and pruned within
+ * days — the weeks-long history every consumer reads lives in the rollup.
  */
 export const sensorSpeedSample = conditionsSchema.table(
   "sensor_speed_sample",
@@ -240,6 +243,49 @@ export const sensorSpeedSample = conditionsSchema.table(
     index("idx_sensor_sample_key_bucket").on(t.sensorKey, t.dow, t.todHour),
     index("idx_sensor_sample_observed").on(t.observedAt),
     unique("uq_sensor_sample_key_observed").on(t.sensorKey, t.observedAt),
+  ]
+);
+
+/**
+ * Per-(sensor, UTC hour) rollup of {@link sensorSpeedSample} — the durable speed
+ * history. One row replaces ~25 raw rows, so the weeks of history the baseline
+ * and segment-profile derivations need cost ~5 GB instead of ~210 GB.
+ *
+ * The distribution is kept, not a summary statistic, because every consumer wants
+ * a PERCENTILE (free-flow p85, typical-speed p50) over a window spanning many of
+ * these rows — and percentiles do not decompose: the p85 of 28 days cannot be
+ * recovered from 28 daily p85s. A histogram does decompose (bins add
+ * element-wise), so a window is merged by summing counts per bin and reading the
+ * percentile off the cumulative distribution.
+ *
+ * `speedBins`/`speedCounts` are PARALLEL arrays — bin index and its count — held
+ * SPARSE (only non-empty bins, bin-ascending). A sensor-hour holds ~25 samples
+ * across ~9 distinct bins, so sparse keeps both the row (~190 B) and the merge
+ * (~9 rows per sensor-hour, not 128) small. Bin width and the index<->kph mapping
+ * are owned by the ingest rollup, which is the only writer.
+ *
+ * `source`/`geom` are carried per row rather than normalised into a sensor table:
+ * they are what identifies and locates the sensor for consumers that no longer
+ * have raw samples to read, and the duplication costs ~1 GB against a 37x saving.
+ */
+export const sensorSpeedHourly = conditionsSchema.table(
+  "sensor_speed_hourly",
+  {
+    sensorKey: text("sensor_key").notNull(),
+    /** date_trunc('hour', observed_at) — UTC; completed hours only. */
+    hourUtc: timestamp("hour_utc", { withTimezone: true }).notNull(),
+    source: text("source").notNull(),
+    geom: geometry("geom").notNull(),
+    /** Total samples rolled into this hour = sum(speedCounts). */
+    sampleCount: integer("sample_count").notNull(),
+    speedBins: smallint("speed_bins").array().notNull(),
+    speedCounts: integer("speed_counts").array().notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.sensorKey, t.hourUtc] }),
+    // The derivations scan a trailing window across all sensors; the prune
+    // deletes by the same key.
+    index("idx_sensor_hourly_hour").on(t.hourUtc),
   ]
 );
 

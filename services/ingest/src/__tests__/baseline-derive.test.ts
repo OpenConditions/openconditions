@@ -3,6 +3,7 @@ import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import { deriveBaselines } from "../pipeline/baseline-derive.js";
+import { rollupSpeedSamples, SPEED_BIN_WIDTH_KPH } from "../pipeline/speed-rollup.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -59,16 +60,21 @@ describe("deriveBaselines", () => {
     const { dowBucket, tod } = buckets(base);
     const speeds = Array.from({ length: 40 }, (_, i) => 60 + i); // 60..99
     await seed("src:x", speeds, base);
+    // The baselines read the rollup, not the raw samples.
+    await rollupSpeedSamples(sql);
 
     const { upserted } = await deriveBaselines(sql, { windowDays: 28, minSamples: 30 });
     expect(upserted).toBeGreaterThanOrEqual(2);
 
-    const specific = await sql<{ free_flow_kph: number; method: string }[]>`
-      SELECT free_flow_kph, method FROM conditions.sensor_baseline
+    const specific = await sql<{ free_flow_kph: number; method: string; sample_count: number }[]>`
+      SELECT free_flow_kph, method, sample_count FROM conditions.sensor_baseline
       WHERE sensor_key = 'src:x' AND dow_bucket = ${dowBucket} AND tod_bucket = ${tod}`;
     expect(specific[0]!.method).toBe("derived");
-    // percentile_cont(0.85) over 60..99 == 60 + 0.85*39 == 93.15
-    expect(specific[0]!.free_flow_kph).toBeCloseTo(93.15, 1);
+    expect(specific[0]!.sample_count).toBe(40);
+    // percentile_cont(0.85) over 60..99 == 60 + 0.85*39 == 93.15; the histogram
+    // resolves to the containing bin's midpoint, so it lands within one bin.
+    expect(specific[0]!.free_flow_kph).toBeGreaterThan(93.15 - SPEED_BIN_WIDTH_KPH);
+    expect(specific[0]!.free_flow_kph).toBeLessThan(93.15 + SPEED_BIN_WIDTH_KPH);
 
     const overall = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM conditions.sensor_baseline
@@ -77,9 +83,10 @@ describe("deriveBaselines", () => {
   }, 60_000);
 
   it("skips an in-window bucket seeded below minSamples via the HAVING clause", async () => {
-    // In-window but only 3 rows: excluded by HAVING count(*) >= minSamples, NOT
-    // by the time window — so this fails (would produce a row) if HAVING were dropped.
+    // In-window but only 3 rows: excluded by HAVING count >= minSamples, NOT by
+    // the time window — so this fails (would produce a row) if HAVING were dropped.
     await seed("src:sparse", [70, 72, 74], inWindowBase(5));
+    await rollupSpeedSamples(sql);
     await deriveBaselines(sql, { windowDays: 28, minSamples: 30 });
     const rows = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM conditions.sensor_baseline WHERE sensor_key = 'src:sparse'`;

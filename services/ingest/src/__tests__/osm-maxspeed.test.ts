@@ -3,16 +3,23 @@ import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import { resolveOsmMaxspeed } from "../pipeline/osm-maxspeed.js";
+import { rollupSpeedSamples } from "../pipeline/speed-rollup.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
 
+/**
+ * A sensor the fallback can find. Seeded into a COMPLETED hour and rolled up:
+ * resolveOsmMaxspeed reads the hourly rollup (raw is only a landing buffer now),
+ * and the rollup never aggregates the still-open current hour.
+ */
 async function seedSample(sensorKey: string, source: string): Promise<void> {
   await sql`
     INSERT INTO conditions.sensor_speed_sample
       (sensor_key, source, observed_at, speed_kph, dow, tod_hour, geom)
-    VALUES (${sensorKey}, ${source}, now(), 70, 1, 8,
+    VALUES (${sensorKey}, ${source}, now() - interval '2 hours', 70, 1, 8,
       ST_SetSRID(ST_GeomFromGeoJSON('{"type":"Point","coordinates":[24.9,60.2]}'), 4326))`;
+  await rollupSpeedSamples(sql);
 }
 
 const overpass = JSON.stringify({

@@ -37,13 +37,16 @@ export async function resolveOsmMaxspeed(
 
   let targets: { sensor_key: string; source: string; lon: number; lat: number }[];
   try {
+    // Reads the hourly rollup, not the raw samples: raw is only a few days of
+    // rollup buffer now, so a 7-day lookback over it would quietly shrink to
+    // that. The rollup carries each sensor's source/geom for exactly this.
     targets = await sql`
-      SELECT DISTINCT ON (s.sensor_key)
-        s.sensor_key, s.source, ST_X(s.geom) AS lon, ST_Y(s.geom) AS lat
-      FROM conditions.sensor_speed_sample s
-      LEFT JOIN conditions.sensor_baseline b ON b.sensor_key = s.sensor_key
-      WHERE s.observed_at >= now() - make_interval(days => 7) AND b.sensor_key IS NULL
-      ORDER BY s.sensor_key, s.observed_at DESC
+      SELECT DISTINCT ON (h.sensor_key)
+        h.sensor_key, h.source, ST_X(h.geom) AS lon, ST_Y(h.geom) AS lat
+      FROM conditions.sensor_speed_hourly h
+      LEFT JOIN conditions.sensor_baseline b ON b.sensor_key = h.sensor_key
+      WHERE h.hour_utc >= now() - make_interval(days => 7) AND b.sensor_key IS NULL
+      ORDER BY h.sensor_key, h.hour_utc DESC
       LIMIT ${deps.batchCap}`;
   } catch (err) {
     console.warn("[ingest] osm-maxspeed: target query failed:", err);
