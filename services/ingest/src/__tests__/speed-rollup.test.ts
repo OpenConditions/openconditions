@@ -141,6 +141,23 @@ describe("rollupSpeedSamples", () => {
     expect(rows.length).toBe(0);
   }, 60_000);
 
+  it("does not reach back past the rollup retention, however old the oldest raw row is", async () => {
+    await sql`TRUNCATE conditions.sensor_speed_hourly`;
+    await sql`TRUNCATE conditions.sensor_speed_sample`;
+    // Prod holds 38 rows stamped 2022 from a feed with broken clocks. Anchoring
+    // the backfill to the oldest raw row walked the first run through ~1,500
+    // empty daily batches — and every hour it produced was past the rollup
+    // retention, so the very next prune deleted it again.
+    await seedSamples("clamp:ancient", [70], hoursAgo(24 * 365 * 4));
+    await seedSamples("clamp:recent", [80, 82], hoursAgo(5));
+
+    const { rows } = await rollupSpeedSamples(sql, { retentionDays: 35 });
+    expect(rows).toBe(1);
+    const [row] = await sql<{ sensor_key: string }[]>`
+      SELECT sensor_key FROM conditions.sensor_speed_hourly`;
+    expect(row!.sensor_key).toBe("clamp:recent");
+  }, 60_000);
+
   it("absorbs a late-arriving sample by re-rolling the trailing window", async () => {
     const hour = hoursAgo(2);
     await seedSamples("roll:late", [60, 62], hour);
@@ -250,6 +267,20 @@ describe("pruneRawSamples — never outruns the rollup", () => {
     const kept = await sql`
       SELECT 1 FROM conditions.sensor_speed_hourly WHERE sensor_key = 'prune:old'`;
     expect(kept.length).toBe(1);
+  }, 60_000);
+
+  it("drops raw older than the ROLLUP retention without waiting for a bucket that will never exist", async () => {
+    await sql`TRUNCATE conditions.sensor_speed_hourly`;
+    await sql`TRUNCATE conditions.sensor_speed_sample`;
+    // The rollup deliberately never reaches this far back, so demanding its
+    // bucket would keep the row forever. Nothing can read it either — it is past
+    // every consumer's window.
+    await seedSamples("prune:ancient", [70], hoursAgo(24 * 365 * 4));
+
+    const { deleted } = await pruneRawSamples(sql, { retentionDays: 3, hourlyRetentionDays: 35 });
+    expect(deleted).toBe(1);
+    const rows = await sql`SELECT 1 FROM conditions.sensor_speed_sample`;
+    expect(rows.length).toBe(0);
   }, 60_000);
 
   it("deletes in bounded batches", async () => {

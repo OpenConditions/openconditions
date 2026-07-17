@@ -54,8 +54,11 @@ async function seedSpeedSamples(sensorKey: string, speeds: number[], base: Date)
         ${observedAt.getUTCDay()}, ${observedAt.getUTCHours()},
         ST_SetSRID(ST_GeomFromGeoJSON('{"type":"Point","coordinates":[5.05,52.0]}'), 4326))`;
   }
-  // The profiles read the hourly rollup, not the raw samples.
-  await rollupSpeedSamples(sql);
+  // The profiles read the hourly rollup, not the raw samples. These fixtures sit
+  // at a pinned instant years back (the local-hour assertions need a known DST
+  // offset), so the rollup — which by default refuses to reach past its own
+  // retention — is told to cover them, matching the widened windowDays below.
+  await rollupSpeedSamples(sql, { retentionDays: 3650 });
 }
 
 beforeAll(async () => {

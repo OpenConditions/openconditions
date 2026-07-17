@@ -100,6 +100,7 @@ export interface RollupResult {
 interface RollupOpts {
   lookbackHours?: number;
   batchHours?: number;
+  retentionDays?: number;
   /** Injected clock (tests). */
   now?: () => Date;
 }
@@ -114,6 +115,14 @@ interface RollupOpts {
  * current hour, EXCLUSIVE: the in-progress hour is still receiving samples and
  * would be rolled up incomplete.
  *
+ * The start never reaches further back than the rollup retention. Those hours
+ * are past every consumer's window, so `pruneHourlyRollup` would delete them the
+ * moment they were written — and without the floor a SINGLE stray sample anchors
+ * the whole backfill to its timestamp: prod held 38 rows stamped 2022 (a feed
+ * with broken timestamps), which walked the first run through ~1,500 empty daily
+ * batches before it reached any real data. `pruneRawSamples` drops raw that old
+ * without waiting for a rollup that will never come.
+ *
  * Idempotent: re-running over the same range recomputes identical rows and
  * upserts them. Batched by {@link ROLLUP_BATCH_HOURS} so a long backfill never
  * builds one huge statement.
@@ -121,6 +130,7 @@ interface RollupOpts {
 export async function rollupSpeedSamples(sql: Sql, opts: RollupOpts = {}): Promise<RollupResult> {
   const lookbackHours = opts.lookbackHours ?? ROLLUP_LOOKBACK_HOURS;
   const batchHours = opts.batchHours ?? ROLLUP_BATCH_HOURS;
+  const retentionDays = opts.retentionDays ?? HOURLY_RETENTION_DAYS;
   const now = opts.now?.() ?? new Date();
 
   const [bounds] = await sql<{ watermark: Date | null; oldest_raw: Date | null }[]>`
@@ -131,10 +141,12 @@ export async function rollupSpeedSamples(sql: Sql, opts: RollupOpts = {}): Promi
   }
 
   const end = floorToHour(now);
-  const start =
+  const unclamped =
     bounds.watermark === null
       ? floorToHour(new Date(bounds.oldest_raw))
       : new Date(floorToHour(new Date(bounds.watermark)).getTime() - lookbackHours * 3_600_000);
+  const retentionFloor = new Date(end.getTime() - retentionDays * 86_400_000);
+  const start = new Date(Math.max(unclamped.getTime(), retentionFloor.getTime()));
   if (start >= end) {
     return { hours: 0, rows: 0 };
   }
@@ -234,9 +246,10 @@ export const RAW_PRUNE_BATCH_SIZE = 50_000;
  */
 export async function pruneRawSamples(
   sql: Sql,
-  opts: { retentionDays?: number; batchSize?: number } = {}
+  opts: { retentionDays?: number; hourlyRetentionDays?: number; batchSize?: number } = {}
 ): Promise<{ deleted: number }> {
   const retentionDays = opts.retentionDays ?? RAW_SAMPLE_RETENTION_DAYS;
+  const hourlyRetentionDays = opts.hourlyRetentionDays ?? HOURLY_RETENTION_DAYS;
   const batchSize = opts.batchSize ?? RAW_PRUNE_BATCH_SIZE;
 
   let deleted = 0;
@@ -246,10 +259,18 @@ export async function pruneRawSamples(
       WHERE id IN (
         SELECT s.id FROM conditions.sensor_speed_sample s
         WHERE s.observed_at < now() - make_interval(days => ${retentionDays})
-          AND EXISTS (
-            SELECT 1 FROM conditions.sensor_speed_hourly h
-            WHERE h.sensor_key = s.sensor_key
-              AND h.hour_utc = date_trunc('hour', s.observed_at)
+          AND (
+            EXISTS (
+              SELECT 1 FROM conditions.sensor_speed_hourly h
+              WHERE h.sensor_key = s.sensor_key
+                AND h.hour_utc = date_trunc('hour', s.observed_at)
+            )
+            -- Past the rollup's own retention there is nothing to wait for: the
+            -- rollup does not reach back this far (those hours would be pruned
+            -- at once) and no consumer's window can see it, so requiring a
+            -- bucket that will never exist would keep it forever. Prod holds
+            -- exactly such rows — 38 stamped 2022 by a feed with broken clocks.
+            OR s.observed_at < now() - make_interval(days => ${hourlyRetentionDays})
           )
         LIMIT ${batchSize}
       )`;
