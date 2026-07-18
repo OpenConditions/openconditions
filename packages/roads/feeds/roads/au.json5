@@ -15,7 +15,7 @@
     auth: {
       kind: "header-key",
       header: "Authorization",
-      envVar: "NSW_TRANSPORT_API_KEY",
+      envVar: "AU_NSW_LIVETRAFFIC_API_KEY",
       valuePrefix: "apikey ",
     },
     geojson: {
@@ -41,7 +41,7 @@
     privacyUrl: "https://www.transport.nsw.gov.au/privacy-statement",
     enabledByDefault: true,
     setup: {
-      NSW_TRANSPORT_API_KEY: {
+      AU_NSW_LIVETRAFFIC_API_KEY: {
         title: "Live Traffic NSW API key (Australia)",
         url: "https://opendata.transport.nsw.gov.au/data/user/register",
         urlLabel: "Register at Transport NSW Open Data",
@@ -97,7 +97,7 @@
     // GeometryCollection of road segments, while /v2 appends an area-alert geometry
     // the generic reader cannot separate. Ships the published public API key as the
     // default (shared + globally rate-limited to 100 req/min); set
-    // QLD_TRAFFIC_API_KEY to override with a registered key and avoid the quota.
+    // AU_QLD_TRAFFIC_API_KEY to override with a registered key and avoid the quota.
     subdivision: "qld",
     operator: "traffic",
     name: "QLDTraffic (Queensland)",
@@ -106,7 +106,7 @@
     auth: {
       kind: "query-key",
       param: "apikey",
-      envVar: "QLD_TRAFFIC_API_KEY",
+      envVar: "AU_QLD_TRAFFIC_API_KEY",
       defaultValue: "3e83add325cbb69ac4d8e5bf433d770b",
     },
     geojson: {
@@ -142,7 +142,7 @@
     privacyUrl: "https://www.qld.gov.au/legal/privacy",
     enabledByDefault: true,
     setup: {
-      QLD_TRAFFIC_API_KEY: {
+      AU_QLD_TRAFFIC_API_KEY: {
         title: "QLDTraffic API key (Australia) — optional",
         description: "Optional. A public key is bundled by default; set this only to use your own quota.",
         url: "https://www.qldtraffic.qld.gov.au/",

@@ -81,14 +81,14 @@
     operator: "verkehr",
     name: "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_NRW_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_VERKEHR_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_VERKEHR_SUBSCRIPTION_ID}",
+    expandEnv: "DE_NW_VERKEHR_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_NRW_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_NW_VERKEHR_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -117,7 +117,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_NRW_SUBSCRIPTION_ID: {
+      DE_NW_VERKEHR_SUBSCRIPTION_ID: {
         title: "NRW (LVZ.NRW) Mobilithek — subscription id(s)",
         description: "Numeric subscription id(s) from mobilithek.info/organisation/subscriptions (one per subscribed offer, e.g. roadworks 648508602333433856 + incidents 648512079906336768). List multiple comma-separated; the feed fans out one HTTPS client-pull per id. dl-de/zero-2-0.",
       },
@@ -129,14 +129,14 @@
     stream: "kommunal",
     name: "NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID}",
+    expandEnv: "DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -165,7 +165,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID: {
+      DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID: {
         title: "NRW municipalities Mobilithek — subscription id(s)",
         description: "Subscription id(s) for NRW city/district offers — Düsseldorf/dmotion 110000000002056000, Köln 110000000002900004 (+ 110000000002899004 / 110000000003011002), Kreis Unna 930448553981730816. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
       },
@@ -179,14 +179,14 @@
     stream: "mobidrom",
     name: "NRW.Mobidrom bundled roadworks via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID}",
+    expandEnv: "DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -215,7 +215,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID: {
+      DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID: {
         title: "NRW.Mobidrom Mobilithek — subscription id(s)",
         description: "Subscription id for the NRW.Mobidrom bundled roadworks offer 884461110418108416. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-SA-4.0 — ShareAlike; kept in its own feed so it never folds into a more permissive source.",
       },
@@ -226,14 +226,14 @@
     operator: "mobilithek",
     name: "Bayern via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BAYERN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BAYERN_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_BAYERN_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BY_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BY_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_BY_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_BAYERN_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_BY_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -262,7 +262,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_BAYERN_SUBSCRIPTION_ID: {
+      DE_BY_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Bayern Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the Bayerische Straßenbauverwaltung offers (110000000002506000, 110000000002507001). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
       },
@@ -273,14 +273,14 @@
     operator: "mobilithek",
     name: "Baden-Württemberg via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BW_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BW_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_BW_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_BW_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_BW_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_BW_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -309,7 +309,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_BW_SUBSCRIPTION_ID: {
+      DE_BW_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Baden-Württemberg Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the BW Landesmeldestelle offer 857127500689977344. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
       },
@@ -320,14 +320,14 @@
     operator: "mobilithek",
     name: "Berlin via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BERLIN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BERLIN_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_BERLIN_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BE_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BE_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_BE_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_BERLIN_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_BE_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -356,7 +356,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_BERLIN_SUBSCRIPTION_ID: {
+      DE_BE_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Berlin Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the Berlin SenMVKU offer 801096621061234688. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
       },
@@ -367,14 +367,14 @@
     operator: "mobilithek",
     name: "Brandenburg via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BB_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BB_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_BB_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_BB_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -403,7 +403,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID: {
+      DE_BB_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Brandenburg Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the Landesbetrieb Straßenwesen Brandenburg offer 636547428851101696. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
       },
@@ -414,14 +414,14 @@
     operator: "mobilithek",
     name: "Bremen via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BREMEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BREMEN_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_BREMEN_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HB_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HB_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_HB_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_BREMEN_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_HB_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -450,7 +450,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_BREMEN_SUBSCRIPTION_ID: {
+      DE_HB_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Bremen Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the Verkehrsmanagementzentrale Bremen offer 608390979298140160. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
       },
@@ -461,14 +461,14 @@
     operator: "mobilithek",
     name: "Hamburg via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_HAMBURG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_HAMBURG_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HH_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HH_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_HH_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_HAMBURG_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_HH_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -497,7 +497,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_HAMBURG_SUBSCRIPTION_ID: {
+      DE_HH_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Hamburg Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the LSBG Hamburg offer 110000000003540000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
       },
@@ -508,14 +508,14 @@
     operator: "mobilithek",
     name: "Hessen via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_HESSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_HESSEN_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_HESSEN_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HE_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HE_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_HE_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_HESSEN_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_HE_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -544,7 +544,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_HESSEN_SUBSCRIPTION_ID: {
+      DE_HE_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Hessen Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the Hessen Mobil offers (841292914668498944, 862010418143330304). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
       },
@@ -555,14 +555,14 @@
     operator: "mobilithek",
     name: "Mecklenburg-Vorpommern via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_MV_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_MV_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_MV_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_MV_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_MV_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_MV_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_MV_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_MV_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -591,7 +591,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_MV_SUBSCRIPTION_ID: {
+      DE_MV_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Mecklenburg-Vorpommern Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the LSBV M-V offers (110000000002802000, 818137060259840000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
       },
@@ -602,14 +602,14 @@
     operator: "mobilithek",
     name: "Niedersachsen via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NI_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NI_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_NI_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_NI_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -638,7 +638,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID: {
+      DE_NI_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Niedersachsen Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the NLStBV offers (110000000002749000, 951153778962972672, 656880550985773056) + Hannover 633691473746571264. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
       },
@@ -649,14 +649,14 @@
     operator: "mobilithek",
     name: "Sachsen via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SACHSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SACHSEN_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_SN_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_SN_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_SN_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_SACHSEN_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_SN_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -685,7 +685,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_SACHSEN_SUBSCRIPTION_ID: {
+      DE_SN_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Sachsen Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the LASuV Sachsen offer 608439575154401280 (+ Leipzig 952541268382826496). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required).",
       },
@@ -696,14 +696,14 @@
     operator: "mobilithek",
     name: "Sachsen-Anhalt via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_ST_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_ST_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_ST_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_ST_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -732,7 +732,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID: {
+      DE_ST_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Sachsen-Anhalt Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the Landesstraßenbaubehörde Sachsen-Anhalt offer 110000000003150000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
       },
@@ -743,14 +743,14 @@
     operator: "mobilithek",
     name: "Schleswig-Holstein via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SH_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SH_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_SH_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_SH_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_SH_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_SH_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_SH_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_SH_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -779,7 +779,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_SH_SUBSCRIPTION_ID: {
+      DE_SH_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Schleswig-Holstein Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the LBV.SH offers (110000000003237002, 110000000003387000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required).",
       },
@@ -790,14 +790,14 @@
     operator: "mobilithek",
     name: "Thüringen via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID}",
-    expandEnv: "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_TH_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_TH_MOBILITHEK_SUBSCRIPTION_ID}",
+    expandEnv: "DE_TH_MOBILITHEK_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_TH_MOBILITHEK_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -826,7 +826,7 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID: {
+      DE_TH_MOBILITHEK_SUBSCRIPTION_ID: {
         title: "Thüringen Mobilithek — subscription id(s)",
         description: "Subscription id(s) for the TLBV offer 110000000003051000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
       },

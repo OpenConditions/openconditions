@@ -125,8 +125,8 @@ describe("FEED_SOURCES", () => {
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth).toEqual({
       kind: "basic",
-      userEnvVar: "HC_HR_USERNAME",
-      passEnvVar: "HC_HR_PASSWORD",
+      userEnvVar: "HR_HC_USERNAME",
+      passEnvVar: "HR_HC_PASSWORD",
     });
   });
 
@@ -175,7 +175,7 @@ describe("FEED_SOURCES", () => {
     expect(feed!.auth).toEqual({
       kind: "header-key",
       header: "AccountKey",
-      envVar: "LTA_ACCOUNT_KEY",
+      envVar: "SG_LTA_ACCOUNT_KEY",
     });
   });
 
@@ -224,7 +224,7 @@ describe("FEED_SOURCES", () => {
     expect(feed!.auth).toMatchObject({
       kind: "query-key",
       param: "apikey",
-      envVar: "QLD_TRAFFIC_API_KEY",
+      envVar: "AU_QLD_TRAFFIC_API_KEY",
       defaultValue: "3e83add325cbb69ac4d8e5bf433d770b",
     });
     // Spec enum casing + severity + freshness mapping.
@@ -308,7 +308,7 @@ describe("FEED_SOURCES", () => {
     expect(feed!.auth).toEqual({
       kind: "query-key",
       param: "authenticationkey",
-      envVar: "TRAFIKVERKET_API_KEY",
+      envVar: "SE_TRAFIKVERKET_API_KEY",
     });
     expect(Array.isArray(feed!.url)).toBe(true);
     expect((feed!.url as string[])[0]).toContain("/datex2/3.1/roadworks/sit:situation");
@@ -319,9 +319,9 @@ describe("FEED_SOURCES", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "ar-ba-cortes")!;
     expect(feed.format).toBe("geojson");
     expect(typeof feed.url).toBe("string");
-    expect(feed.requiredEnv).toContain("BA_CLIENT_ID");
+    expect(feed.requiredEnv).toContain("AR_BA_CLIENT_ID");
     expect(
-      resolveFeedUrls(feed, resolvedEnv({ BA_CLIENT_ID: "cid", BA_CLIENT_SECRET: "csec" }))
+      resolveFeedUrls(feed, resolvedEnv({ AR_BA_CLIENT_ID: "cid", AR_BA_CLIENT_SECRET: "csec" }))
     ).toEqual([
       "https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=cid&client_secret=csec",
     ]);
@@ -334,7 +334,7 @@ describe("FEED_SOURCES", () => {
     expect(feed!.auth).toEqual({
       kind: "header-key",
       header: "Ocp-Apim-Subscription-Key",
-      envVar: "NH_API_KEY",
+      envVar: "GB_NATIONALHIGHWAYS_API_KEY",
     });
     expect(feed!.country).toBe("GB");
   });
@@ -377,15 +377,15 @@ describe("FEED_SOURCES", () => {
       keyEnvVar: "MOBILITHEK_KEY",
     });
     expect(typeof feed!.url).toBe("string");
-    expect(feed!.expandEnv).toBe("MOBILITHEK_NRW_SUBSCRIPTION_ID");
-    expect(feed!.requiredEnv).toContain("MOBILITHEK_NRW_SUBSCRIPTION_ID");
+    expect(feed!.expandEnv).toBe("DE_NW_VERKEHR_SUBSCRIPTION_ID");
+    expect(feed!.requiredEnv).toContain("DE_NW_VERKEHR_SUBSCRIPTION_ID");
     expect(feed!.license).toBe("dl-de/zero-2-0");
     expect(feed!.country).toBe("DE");
     // One client-pull URL per comma-separated subscription id, matching the
     // subscription's HTTPS Zugriffspunkt — the plain-HTTPS pull (no `/soap/`),
     // id in both path and query — plus the mandatory Accept-Encoding: gzip.
     expect(
-      resolveFeedUrls(feed!, resolvedEnv({ MOBILITHEK_NRW_SUBSCRIPTION_ID: "2000001, 2000002" }))
+      resolveFeedUrls(feed!, resolvedEnv({ DE_NW_VERKEHR_SUBSCRIPTION_ID: "2000001, 2000002" }))
     ).toEqual([
       "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/2000001/clientPullService?subscriptionID=2000001",
       "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/2000002/clientPullService?subscriptionID=2000002",
@@ -416,7 +416,7 @@ describe("FEED_SOURCES", () => {
       // regions can be activated independently as the operator subscribes.
       expect(feed.requiredEnv).toHaveLength(1);
       const subEnvVar = feed.requiredEnv![0];
-      expect(subEnvVar).toMatch(/^MOBILITHEK_[A-Z_]+_SUBSCRIPTION_ID$/);
+      expect(subEnvVar).toMatch(/^DE_[A-Z_]+_SUBSCRIPTION_ID$/);
       expect(subEnvVars.has(subEnvVar)).toBe(false);
       subEnvVars.add(subEnvVar);
       // Dormant until its subscription id is set — no id → no URLs.
@@ -458,11 +458,11 @@ describe("FEED_SOURCES", () => {
     expect(feed!.auth).toEqual({
       kind: "header-key",
       header: "Authorization",
-      envVar: "OHGO_API_KEY",
+      envVar: "US_OH_OHGO_API_KEY",
       valuePrefix: "APIKEY ",
     });
     expect(feed!.enabledByDefault).toBe(true);
-    expect(feed!.setup?.["OHGO_API_KEY"]).toBeDefined();
+    expect(feed!.setup?.["US_OH_OHGO_API_KEY"]).toBeDefined();
   });
 });
 

@@ -23,7 +23,7 @@
     auth: {
       kind: "query-key",
       param: "key",
-      envVar: "NY_511_API_KEY",
+      envVar: "US_NY_511_API_KEY",
     },
     cadenceSec: 300,
     freshnessWindowSec: 900,
@@ -34,7 +34,7 @@
     privacyUrl: "https://511ny.org/privacy",
     enabledByDefault: true,
     setup: {
-      NY_511_API_KEY: {
+      US_NY_511_API_KEY: {
         title: "511NY API key (New York)",
         description: "Query key for the 511NY events feed.",
         url: "https://511ny.org/my511/register",
@@ -75,7 +75,7 @@
     auth: {
       kind: "header-key",
       header: "Authorization",
-      envVar: "OHGO_API_KEY",
+      envVar: "US_OH_OHGO_API_KEY",
       valuePrefix: "APIKEY ",
     },
     cadenceSec: 300,
@@ -87,13 +87,13 @@
     privacyUrl: "https://www.transportation.ohio.gov/about-us/privacy",
     enabledByDefault: true,
     setup: {
-      OHGO_API_KEY: {
+      US_OH_OHGO_API_KEY: {
         title: "OHGO API key",
         url: "https://ohgo.com/developer",
         urlLabel: "OHGO developer registration",
         steps: [
           "Register for a free OHGO developer account at ohgo.com/developer and create an API key.",
-          "Set OHGO_API_KEY to the key value; the feed activates on the next scheduler cycle.",
+          "Set US_OH_OHGO_API_KEY to the key value; the feed activates on the next scheduler cycle.",
         ],
         notes: "Free key. Data is U.S. government public domain.",
       },

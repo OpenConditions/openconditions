@@ -16,7 +16,7 @@
     auth: {
       kind: "query-key",
       param: "authenticationkey",
-      envVar: "TRAFIKVERKET_API_KEY",
+      envVar: "SE_TRAFIKVERKET_API_KEY",
     },
     posListLonLat: true,
     cadenceSec: 300,
@@ -28,7 +28,7 @@
     privacyUrl: "https://www.trafikverket.se/integritetspolicy/",
     enabledByDefault: true,
     setup: {
-      TRAFIKVERKET_API_KEY: {
+      SE_TRAFIKVERKET_API_KEY: {
         title: "Trafikverket key (Sweden)",
         description: "Authentication key, sent in the POST request body.",
         url: "https://data.trafikverket.se/oauth2/Account/register",
@@ -46,7 +46,7 @@
     // The TrafficFlow object (speed/flow sensors) lives on the object API, a
     // separate endpoint from the DATEX2 situation feed above. It is queried
     // via a POST XML request body (not a query-key), so the key travels
-    // through bodyTemplate's ${TRAFIKVERKET_API_KEY} expansion instead of auth.
+    // through bodyTemplate's ${SE_TRAFIKVERKET_API_KEY} expansion instead of auth.
     operator: "trafikverket",
     stream: "flow",
     name: "Trafikverket traffic flow (Sweden)",
@@ -55,8 +55,8 @@
     url: "https://api.trafikinfo.trafikverket.se/v2/data.json",
     method: "POST",
     requestHeaders: { "Content-Type": "text/xml" },
-    requiredEnv: ["TRAFIKVERKET_API_KEY"],
-    bodyTemplate: '<REQUEST><LOGIN authenticationkey="${TRAFIKVERKET_API_KEY}"/><QUERY objecttype="TrafficFlow" schemaversion="1.4"><INCLUDE>SiteId</INCLUDE><INCLUDE>AverageVehicleSpeed</INCLUDE><INCLUDE>VehicleFlowRate</INCLUDE><INCLUDE>MeasurementTime</INCLUDE><INCLUDE>Geometry.WGS84</INCLUDE></QUERY></REQUEST>',
+    requiredEnv: ["SE_TRAFIKVERKET_API_KEY"],
+    bodyTemplate: '<REQUEST><LOGIN authenticationkey="${SE_TRAFIKVERKET_API_KEY}"/><QUERY objecttype="TrafficFlow" schemaversion="1.4"><INCLUDE>SiteId</INCLUDE><INCLUDE>AverageVehicleSpeed</INCLUDE><INCLUDE>VehicleFlowRate</INCLUDE><INCLUDE>MeasurementTime</INCLUDE><INCLUDE>Geometry.WGS84</INCLUDE></QUERY></REQUEST>',
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "CC0-1.0",
@@ -66,7 +66,7 @@
     privacyUrl: "https://www.trafikverket.se/en/privacy-policy/",
     enabledByDefault: true,
     setup: {
-      TRAFIKVERKET_API_KEY: {
+      SE_TRAFIKVERKET_API_KEY: {
         title: "Trafikverket key (Sweden)",
         description: "Authentication key, sent in the POST request body.",
         url: "https://data.trafikverket.se/oauth2/Account/register",

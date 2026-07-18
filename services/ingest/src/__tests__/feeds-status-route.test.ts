@@ -40,24 +40,24 @@ describe("GET /feeds/status", () => {
   });
 
   it("reports missingEnv per-key for a multi-var auth feed with only one var set", async () => {
-    // hc-hr uses basic auth (HC_HR_USERNAME + HC_HR_PASSWORD). With only the
+    // hc-hr uses basic auth (HR_HC_USERNAME + HR_HC_PASSWORD). With only the
     // username set, missingEnv must list only the password — hasCredentials
     // re-deriving the whole auth block for each candidate key would flag both.
-    const prevUser = process.env["HC_HR_USERNAME"];
-    const prevPass = process.env["HC_HR_PASSWORD"];
-    delete process.env["HC_HR_PASSWORD"];
-    process.env["HC_HR_USERNAME"] = "some-user";
+    const prevUser = process.env["HR_HC_USERNAME"];
+    const prevPass = process.env["HR_HC_PASSWORD"];
+    delete process.env["HR_HC_PASSWORD"];
+    process.env["HR_HC_USERNAME"] = "some-user";
     try {
       const res = await app.inject({ method: "GET", url: "/feeds/status" });
       const body = res.json() as { feeds: { id: string; missingEnv: string[] }[] };
       const hcHr = body.feeds.find((f) => f.id === "hr-hc");
       expect(hcHr).toBeTruthy();
-      expect(hcHr?.missingEnv).toEqual(["HC_HR_PASSWORD"]);
+      expect(hcHr?.missingEnv).toEqual(["HR_HC_PASSWORD"]);
     } finally {
-      if (prevUser === undefined) delete process.env["HC_HR_USERNAME"];
-      else process.env["HC_HR_USERNAME"] = prevUser;
-      if (prevPass === undefined) delete process.env["HC_HR_PASSWORD"];
-      else process.env["HC_HR_PASSWORD"] = prevPass;
+      if (prevUser === undefined) delete process.env["HR_HC_USERNAME"];
+      else process.env["HR_HC_USERNAME"] = prevUser;
+      if (prevPass === undefined) delete process.env["HR_HC_PASSWORD"];
+      else process.env["HR_HC_PASSWORD"] = prevPass;
     }
   });
 });

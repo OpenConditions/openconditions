@@ -4,36 +4,36 @@
 
 | Feed | Env var(s) | License | How to get it |
 |---|---|---|---|
-| Buenos Aires road closures (cortes) | `BA_CLIENT_ID`, `BA_CLIENT_SECRET` | CC-BY-2.5-AR | [BA transport API registration](https://api-transporte.buenosaires.gob.ar/registro) |
+| Buenos Aires road closures (cortes) | `AR_BA_CLIENT_ID`, `AR_BA_CLIENT_SECRET` | CC-BY-2.5-AR | [BA transport API registration](https://api-transporte.buenosaires.gob.ar/registro) |
 | ASFINAG events (Austria) | `AT_ASFINAG_USERNAME`, `AT_ASFINAG_PASSWORD` | CC-BY-4.0 | [ASFINAG content portal](https://contentportal.asfinag.at/) |
-| Live Traffic NSW (New South Wales) | `NSW_TRANSPORT_API_KEY` | CC-BY-4.0 | [Register at Transport NSW Open Data](https://opendata.transport.nsw.gov.au/data/user/register) |
-| QLDTraffic (Queensland) | `QLD_TRAFFIC_API_KEY` | CC-BY-4.0 | [QLDTraffic](https://www.qldtraffic.qld.gov.au/) |
-| LVZ.NRW (Nordrhein-Westfalen) via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_NRW_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| NRW.Mobidrom bundled roadworks via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID` | CC-BY-SA-4.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Bayern via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_BAYERN_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Baden-Württemberg via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_BW_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Berlin via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_BERLIN_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Brandenburg via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Bremen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_BREMEN_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Hamburg via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_HAMBURG_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Hessen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_HESSEN_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Mecklenburg-Vorpommern via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_MV_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Niedersachsen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Sachsen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_SACHSEN_SUBSCRIPTION_ID` | CC-BY-4.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Sachsen-Anhalt via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Schleswig-Holstein via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_SH_SUBSCRIPTION_ID` | CC-BY-4.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Thüringen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Vejdirektoratet (Denmark) | `DK_VD_API_KEY` | CC-BY-4.0 | [Danish data exchanger — dataset 416](https://du-portal-ui.dataudveksler.app.vd.dk/data/416/overview) |
+| Live Traffic NSW (New South Wales) | `AU_NSW_LIVETRAFFIC_API_KEY` | CC-BY-4.0 | [Register at Transport NSW Open Data](https://opendata.transport.nsw.gov.au/data/user/register) |
+| QLDTraffic (Queensland) | `AU_QLD_TRAFFIC_API_KEY` | CC-BY-4.0 | [QLDTraffic](https://www.qldtraffic.qld.gov.au/) |
+| LVZ.NRW (Nordrhein-Westfalen) via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_VERKEHR_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| NRW.Mobidrom bundled roadworks via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID` | CC-BY-SA-4.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Bayern via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_BY_MOBILITHEK_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Baden-Württemberg via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_BW_MOBILITHEK_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Berlin via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_BE_MOBILITHEK_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Brandenburg via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_BB_MOBILITHEK_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Bremen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_HB_MOBILITHEK_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Hamburg via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_HH_MOBILITHEK_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Hessen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_HE_MOBILITHEK_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Mecklenburg-Vorpommern via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_MV_MOBILITHEK_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Niedersachsen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NI_MOBILITHEK_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Sachsen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_SN_MOBILITHEK_SUBSCRIPTION_ID` | CC-BY-4.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Sachsen-Anhalt via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_ST_MOBILITHEK_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Schleswig-Holstein via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_SH_MOBILITHEK_SUBSCRIPTION_ID` | CC-BY-4.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Thüringen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_TH_MOBILITHEK_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Vejdirektoratet (Denmark) | `DK_VEJDIREKTORATET_API_KEY` | CC-BY-4.0 | [Danish data exchanger — dataset 416](https://du-portal-ui.dataudveksler.app.vd.dk/data/416/overview) |
 | Tark Tee (Estonia) | `EE_TARKTEE_API_KEY` | CC-BY-4.0 | [Register at Tark Tee](https://tarktee.transpordiamet.ee/#/en/datex-registration) |
-| National Highways NTIS (England) | `NH_API_KEY` | OGL-UK-3.0 | [National Highways developer portal](https://developer.data.nationalhighways.co.uk/signin) |
-| Hrvatske ceste roadworks (Croatia) | `HC_HR_USERNAME`, `HC_HR_PASSWORD` | OD-HR | [Hrvatske ceste](https://www.hrvatske-ceste.hr/) |
+| National Highways NTIS (England) | `GB_NATIONALHIGHWAYS_API_KEY` | OGL-UK-3.0 | [National Highways developer portal](https://developer.data.nationalhighways.co.uk/signin) |
+| Hrvatske ceste roadworks (Croatia) | `HR_HC_USERNAME`, `HR_HC_PASSWORD` | OD-HR | [Hrvatske ceste](https://www.hrvatske-ceste.hr/) |
 | Statens vegvesen (Norway) | `NO_VEGVESEN_USERNAME`, `NO_VEGVESEN_PASSWORD` | NLOD-2.0 | [Statens vegvesen — get DATEX access](https://www.vegvesen.no/en/fag/technology/open-data/a-selection-of-open-data/what-is-datex/get-access/) |
 | Statens vegvesen traffic speed (Norway) | `NO_VEGVESEN_USERNAME`, `NO_VEGVESEN_PASSWORD` | NLOD-2.0 | [Statens vegvesen — get DATEX access](https://www.vegvesen.no/en/fag/technology/open-data/a-selection-of-open-data/what-is-datex/get-access/) |
-| Trafikverket (Sweden) | `TRAFIKVERKET_API_KEY` | CC0-1.0 | [Sign up at Trafikverket](https://data.trafikverket.se/oauth2/Account/register) |
-| Trafikverket traffic flow (Sweden) | `TRAFIKVERKET_API_KEY` | CC0-1.0 | [Sign up at Trafikverket](https://data.trafikverket.se/oauth2/Account/register) |
-| LTA DataMall Traffic Incidents (Singapore) | `LTA_ACCOUNT_KEY` | Singapore-ODL-1.0 | [Request LTA API access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html) |
-| LTA DataMall Traffic Speed Bands (Singapore) | `LTA_ACCOUNT_KEY` | Singapore-ODL-1.0 | [Request LTA API access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html) |
-| NAP Slovenia (promet.si) | `NAP_SI_USERNAME`, `NAP_SI_PASSWORD` | CC-BY-SA-4.0 | [Register at NAP Slovenia](https://www.nap.si/en/registration) |
-| 511NY (New York) | `NY_511_API_KEY` | 511NY-DAA | [Create a 511NY account](https://511ny.org/my511/register) |
-| OHGO travel delays (Ohio) | `OHGO_API_KEY` | US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
+| Trafikverket (Sweden) | `SE_TRAFIKVERKET_API_KEY` | CC0-1.0 | [Sign up at Trafikverket](https://data.trafikverket.se/oauth2/Account/register) |
+| Trafikverket traffic flow (Sweden) | `SE_TRAFIKVERKET_API_KEY` | CC0-1.0 | [Sign up at Trafikverket](https://data.trafikverket.se/oauth2/Account/register) |
+| LTA DataMall Traffic Incidents (Singapore) | `SG_LTA_ACCOUNT_KEY` | Singapore-ODL-1.0 | [Request LTA API access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html) |
+| LTA DataMall Traffic Speed Bands (Singapore) | `SG_LTA_ACCOUNT_KEY` | Singapore-ODL-1.0 | [Request LTA API access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html) |
+| NAP Slovenia (promet.si) | `SI_NAP_USERNAME`, `SI_NAP_PASSWORD` | CC-BY-SA-4.0 | [Register at NAP Slovenia](https://www.nap.si/en/registration) |
+| 511NY (New York) | `US_NY_511_API_KEY` | 511NY-DAA | [Create a 511NY account](https://511ny.org/my511/register) |
+| OHGO travel delays (Ohio) | `US_OH_OHGO_API_KEY` | US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |

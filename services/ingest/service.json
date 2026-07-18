@@ -75,7 +75,7 @@
         "description": "Set to \"true\" to opt the instance into remote-pull (default off). Every descriptor is schema-validated and every URL is egress-guarded; a snapshot is vendored so the instance survives the remote being down.",
         "x-openmapx-secret": false
       },
-      "BA_CLIENT_ID": {
+      "AR_BA_CLIENT_ID": {
         "type": "string",
         "title": "Buenos Aires transport — client_id",
         "x-openmapx-secret": true,
@@ -88,7 +88,7 @@
           "notes": "CC-BY-2.5-AR (commercial OK)."
         }
       },
-      "BA_CLIENT_SECRET": {
+      "AR_BA_CLIENT_SECRET": {
         "type": "string",
         "title": "Buenos Aires transport — client_secret",
         "x-openmapx-secret": true
@@ -113,7 +113,7 @@
         "title": "ASFINAG (Austria) — password",
         "x-openmapx-secret": true
       },
-      "NSW_TRANSPORT_API_KEY": {
+      "AU_NSW_LIVETRAFFIC_API_KEY": {
         "type": "string",
         "title": "Live Traffic NSW API key (Australia)",
         "x-openmapx-secret": true,
@@ -128,7 +128,7 @@
           "notes": "CC-BY-4.0; attribution \"Transport for NSW\"."
         }
       },
-      "QLD_TRAFFIC_API_KEY": {
+      "AU_QLD_TRAFFIC_API_KEY": {
         "type": "string",
         "title": "QLDTraffic API key (Australia) — optional",
         "description": "Optional. A public key is bundled by default; set this only to use your own quota.",
@@ -166,103 +166,103 @@
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_NRW_SUBSCRIPTION_ID": {
+      "DE_NW_VERKEHR_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "NRW (LVZ.NRW) Mobilithek — subscription id(s)",
         "description": "Numeric subscription id(s) from mobilithek.info/organisation/subscriptions (one per subscribed offer, e.g. roadworks 648508602333433856 + incidents 648512079906336768). List multiple comma-separated; the feed fans out one HTTPS client-pull per id. dl-de/zero-2-0.",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID": {
+      "DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "NRW municipalities Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for NRW city/district offers — Düsseldorf/dmotion 110000000002056000, Köln 110000000002900004 (+ 110000000002899004 / 110000000003011002), Kreis Unna 930448553981730816. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID": {
+      "DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "NRW.Mobidrom Mobilithek — subscription id(s)",
         "description": "Subscription id for the NRW.Mobidrom bundled roadworks offer 884461110418108416. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-SA-4.0 — ShareAlike; kept in its own feed so it never folds into a more permissive source.",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_BAYERN_SUBSCRIPTION_ID": {
+      "DE_BY_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Bayern Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the Bayerische Straßenbauverwaltung offers (110000000002506000, 110000000002507001). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_BW_SUBSCRIPTION_ID": {
+      "DE_BW_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Baden-Württemberg Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the BW Landesmeldestelle offer 857127500689977344. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_BERLIN_SUBSCRIPTION_ID": {
+      "DE_BE_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Berlin Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the Berlin SenMVKU offer 801096621061234688. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID": {
+      "DE_BB_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Brandenburg Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the Landesbetrieb Straßenwesen Brandenburg offer 636547428851101696. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_BREMEN_SUBSCRIPTION_ID": {
+      "DE_HB_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Bremen Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the Verkehrsmanagementzentrale Bremen offer 608390979298140160. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID": {
+      "DE_HH_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Hamburg Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the LSBG Hamburg offer 110000000003540000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_HESSEN_SUBSCRIPTION_ID": {
+      "DE_HE_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Hessen Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the Hessen Mobil offers (841292914668498944, 862010418143330304). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_MV_SUBSCRIPTION_ID": {
+      "DE_MV_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Mecklenburg-Vorpommern Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the LSBV M-V offers (110000000002802000, 818137060259840000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID": {
+      "DE_NI_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Niedersachsen Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the NLStBV offers (110000000002749000, 951153778962972672, 656880550985773056) + Hannover 633691473746571264. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID": {
+      "DE_SN_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Sachsen Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the LASuV Sachsen offer 608439575154401280 (+ Leipzig 952541268382826496). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required).",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID": {
+      "DE_ST_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Sachsen-Anhalt Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the Landesstraßenbaubehörde Sachsen-Anhalt offer 110000000003150000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required).",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_SH_SUBSCRIPTION_ID": {
+      "DE_SH_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Schleswig-Holstein Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the LBV.SH offers (110000000003237002, 110000000003387000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required).",
         "x-openmapx-secret": true
       },
-      "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID": {
+      "DE_TH_MOBILITHEK_SUBSCRIPTION_ID": {
         "type": "string",
         "title": "Thüringen Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the TLBV offer 110000000003051000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
         "x-openmapx-secret": true
       },
-      "DK_VD_API_KEY": {
+      "DK_VEJDIREKTORATET_API_KEY": {
         "type": "string",
         "title": "Vejdirektoratet key (Denmark)",
         "x-openmapx-secret": true,
@@ -290,7 +290,7 @@
           "notes": "CC-BY-4.0 (commercial OK)."
         }
       },
-      "NH_API_KEY": {
+      "GB_NATIONALHIGHWAYS_API_KEY": {
         "type": "string",
         "title": "National Highways NTIS key (England)",
         "description": "Ocp-Apim-Subscription-Key header value.",
@@ -306,7 +306,7 @@
           "notes": "OGL-UK-3.0; attribution \"Contains National Highways data © Crown copyright and database right.\""
         }
       },
-      "HC_HR_USERNAME": {
+      "HR_HC_USERNAME": {
         "type": "string",
         "title": "Hrvatske ceste (Croatia) — B2B username",
         "description": "HTTP Basic username for the promet-info B2B feed (Croatia).",
@@ -320,7 +320,7 @@
           "notes": "Open licence (commercial OK); access is gated on the B2B account."
         }
       },
-      "HC_HR_PASSWORD": {
+      "HR_HC_PASSWORD": {
         "type": "string",
         "title": "Hrvatske ceste (Croatia) — B2B password",
         "x-openmapx-secret": true
@@ -344,7 +344,7 @@
         "title": "Statens vegvesen (Norway) — password",
         "x-openmapx-secret": true
       },
-      "TRAFIKVERKET_API_KEY": {
+      "SE_TRAFIKVERKET_API_KEY": {
         "type": "string",
         "title": "Trafikverket key (Sweden)",
         "description": "Authentication key, sent in the POST request body.",
@@ -360,7 +360,7 @@
           "notes": "CC0 — no restrictions. API endpoint: api.trafikinfo.trafikverket.se/v2/data.json (the bare host has no web page)."
         }
       },
-      "LTA_ACCOUNT_KEY": {
+      "SG_LTA_ACCOUNT_KEY": {
         "type": "string",
         "title": "LTA DataMall AccountKey (Singapore)",
         "x-openmapx-secret": true,
@@ -375,7 +375,7 @@
           "notes": "Singapore ODL (commercial OK); attribution to the Land Transport Authority. Shared with the LTA Traffic Incidents feed."
         }
       },
-      "NAP_SI_USERNAME": {
+      "SI_NAP_USERNAME": {
         "type": "string",
         "title": "NAP Slovenia (promet.si) — username",
         "x-openmapx-secret": true,
@@ -390,12 +390,12 @@
           "notes": "CC-BY-SA (ShareAlike). The B2B host (b2b.ncup.si) is credential-gated; the NAP account is sent as HTTP Basic — confirm the exact scheme when granted."
         }
       },
-      "NAP_SI_PASSWORD": {
+      "SI_NAP_PASSWORD": {
         "type": "string",
         "title": "NAP Slovenia (promet.si) — password",
         "x-openmapx-secret": true
       },
-      "NY_511_API_KEY": {
+      "US_NY_511_API_KEY": {
         "type": "string",
         "title": "511NY API key (New York)",
         "description": "Query key for the 511NY events feed.",
@@ -412,7 +412,7 @@
           "notes": "Attribution required: \"Powered by 511NY\"."
         }
       },
-      "OHGO_API_KEY": {
+      "US_OH_OHGO_API_KEY": {
         "type": "string",
         "title": "OHGO API key",
         "x-openmapx-secret": true,
@@ -421,7 +421,7 @@
           "urlLabel": "OHGO developer registration",
           "steps": [
             "Register for a free OHGO developer account at ohgo.com/developer and create an API key.",
-            "Set OHGO_API_KEY to the key value; the feed activates on the next scheduler cycle."
+            "Set US_OH_OHGO_API_KEY to the key value; the feed activates on the next scheduler cycle."
           ],
           "notes": "Free key. Data is U.S. government public domain."
         }

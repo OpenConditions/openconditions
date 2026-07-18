@@ -6,8 +6,8 @@
     url: "https://b2b.promet-info.hr/dc/b2b.hc.roadworks.datex",
     auth: {
       kind: "basic",
-      userEnvVar: "HC_HR_USERNAME",
-      passEnvVar: "HC_HR_PASSWORD",
+      userEnvVar: "HR_HC_USERNAME",
+      passEnvVar: "HR_HC_PASSWORD",
     },
     cadenceSec: 300,
     freshnessWindowSec: 900,
@@ -18,7 +18,7 @@
     privacyUrl: "https://www.hrvatske-ceste.hr/",
     enabledByDefault: true,
     setup: {
-      HC_HR_USERNAME: {
+      HR_HC_USERNAME: {
         title: "Hrvatske ceste (Croatia) — B2B username",
         description: "HTTP Basic username for the promet-info B2B feed (Croatia).",
         url: "https://www.hrvatske-ceste.hr/",
@@ -28,7 +28,7 @@
         ],
         notes: "Open licence (commercial OK); access is gated on the B2B account.",
       },
-      HC_HR_PASSWORD: {
+      HR_HC_PASSWORD: {
         title: "Hrvatske ceste (Croatia) — B2B password",
       },
     },

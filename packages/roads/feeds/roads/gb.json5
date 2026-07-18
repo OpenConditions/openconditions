@@ -7,7 +7,7 @@
     auth: {
       kind: "header-key",
       header: "Ocp-Apim-Subscription-Key",
-      envVar: "NH_API_KEY",
+      envVar: "GB_NATIONALHIGHWAYS_API_KEY",
     },
     cadenceSec: 300,
     freshnessWindowSec: 900,
@@ -18,7 +18,7 @@
     privacyUrl: "https://nationalhighways.co.uk/privacy-notice/",
     enabledByDefault: true,
     setup: {
-      NH_API_KEY: {
+      GB_NATIONALHIGHWAYS_API_KEY: {
         title: "National Highways NTIS key (England)",
         description: "Ocp-Apim-Subscription-Key header value.",
         url: "https://developer.data.nationalhighways.co.uk/signin",

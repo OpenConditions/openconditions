@@ -13,7 +13,7 @@ const ny: FeedSourceBase = {
   operator: "511",
   format: "ibi511",
   url: "https://511ny.org/api/v2/get/event?format=json",
-  auth: { kind: "query-key", param: "key", envVar: "NY_511_API_KEY" },
+  auth: { kind: "query-key", param: "key", envVar: "US_NY_511_API_KEY" },
   cadenceSec: 300,
   freshnessWindowSec: 900,
   license: "511NY-DAA",
@@ -22,7 +22,7 @@ const ny: FeedSourceBase = {
   privacyUrl: "https://511ny.org/privacy",
   enabledByDefault: true,
   setup: {
-    NY_511_API_KEY: {
+    US_NY_511_API_KEY: {
       title: "511NY API key (New York)",
       description: "Query key.",
       url: "https://511ny.org/my511/register",
@@ -33,18 +33,18 @@ const ny: FeedSourceBase = {
 
 describe("gen-credentials-lib", () => {
   it("extracts the env vars a feed needs", () => {
-    expect(feedEnvVars(ny)).toEqual(["NY_511_API_KEY"]);
+    expect(feedEnvVars(ny)).toEqual(["US_NY_511_API_KEY"]);
   });
 
   it("emits an .env.example section with a header comment + the var", () => {
     const out = envExampleFor([ny]);
     expect(out).toContain("# 511NY (New York)");
-    expect(out).toContain("NY_511_API_KEY=");
+    expect(out).toContain("US_NY_511_API_KEY=");
   });
 
   it("emits a configSchema property matching the admin-panel contract", () => {
     const props = configSchemaPropertiesFor([ny]);
-    expect(props["NY_511_API_KEY"]).toEqual({
+    expect(props["US_NY_511_API_KEY"]).toEqual({
       type: "string",
       title: "511NY API key (New York)",
       description: "Query key.",

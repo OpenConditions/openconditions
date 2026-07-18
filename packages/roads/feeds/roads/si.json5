@@ -9,8 +9,8 @@
     ],
     auth: {
       kind: "basic",
-      userEnvVar: "NAP_SI_USERNAME",
-      passEnvVar: "NAP_SI_PASSWORD",
+      userEnvVar: "SI_NAP_USERNAME",
+      passEnvVar: "SI_NAP_PASSWORD",
     },
     cadenceSec: 300,
     freshnessWindowSec: 900,
@@ -21,7 +21,7 @@
     privacyUrl: "https://nap.si/",
     enabledByDefault: true,
     setup: {
-      NAP_SI_USERNAME: {
+      SI_NAP_USERNAME: {
         title: "NAP Slovenia (promet.si) — username",
         url: "https://www.nap.si/en/registration",
         urlLabel: "Register at NAP Slovenia",
@@ -32,7 +32,7 @@
         ],
         notes: "CC-BY-SA (ShareAlike). The B2B host (b2b.ncup.si) is credential-gated; the NAP account is sent as HTTP Basic — confirm the exact scheme when granted.",
       },
-      NAP_SI_PASSWORD: {
+      SI_NAP_PASSWORD: {
         title: "NAP Slovenia (promet.si) — password",
       },
     },

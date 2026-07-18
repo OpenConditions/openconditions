@@ -7,7 +7,7 @@
     auth: {
       kind: "header-key",
       header: "AccountKey",
-      envVar: "LTA_ACCOUNT_KEY",
+      envVar: "SG_LTA_ACCOUNT_KEY",
     },
     cadenceSec: 120,
     freshnessWindowSec: 600,
@@ -18,7 +18,7 @@
     privacyUrl: "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
     enabledByDefault: true,
     setup: {
-      LTA_ACCOUNT_KEY: {
+      SG_LTA_ACCOUNT_KEY: {
         title: "LTA DataMall AccountKey (Singapore)",
         url: "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
         urlLabel: "Request LTA API access",
@@ -41,7 +41,7 @@
     auth: {
       kind: "header-key",
       header: "AccountKey",
-      envVar: "LTA_ACCOUNT_KEY",
+      envVar: "SG_LTA_ACCOUNT_KEY",
     },
     cadenceSec: 300,
     freshnessWindowSec: 900,
@@ -52,10 +52,10 @@
     privacyUrl: "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
     // DataMall pages this resource 500 links per call ($skip); a single fetch
     // covers the first page only, so it ships off until the fetch layer pages.
-    // Reuses the shared LTA_ACCOUNT_KEY (see lta-sg above).
+    // Reuses the shared SG_LTA_ACCOUNT_KEY (see lta-sg above).
     enabledByDefault: false,
     setup: {
-      LTA_ACCOUNT_KEY: {
+      SG_LTA_ACCOUNT_KEY: {
         title: "LTA DataMall AccountKey (Singapore)",
         url: "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
         urlLabel: "Request LTA API access",

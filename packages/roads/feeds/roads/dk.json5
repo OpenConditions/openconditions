@@ -7,7 +7,7 @@
     auth: {
       kind: "query-key",
       param: "api-key",
-      envVar: "DK_VD_API_KEY",
+      envVar: "DK_VEJDIREKTORATET_API_KEY",
     },
     cadenceSec: 600,
     freshnessWindowSec: 1800,
@@ -18,7 +18,7 @@
     privacyUrl: "https://www.vejdirektoratet.dk/",
     enabledByDefault: true,
     setup: {
-      DK_VD_API_KEY: {
+      DK_VEJDIREKTORATET_API_KEY: {
         title: "Vejdirektoratet key (Denmark)",
         url: "https://du-portal-ui.dataudveksler.app.vd.dk/data/416/overview",
         urlLabel: "Danish data exchanger — dataset 416",
