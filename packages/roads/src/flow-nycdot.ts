@@ -57,7 +57,7 @@ export function parseNycDotFlow(input: string | Buffer, src: SourceDescriptor): 
     flows.push({
       id: `${src.id}:${linkId}`,
       source: src.id,
-      sourceFormat: "nyc-dot-speed-json",
+      sourceFormat: "nyc-dot",
       domain: "roads",
       kind: "measurement",
       metric: "flow",

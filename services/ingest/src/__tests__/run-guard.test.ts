@@ -19,7 +19,7 @@ function blockedFeed(url: string): DomainFeedSource {
     domain: "roads",
     id: "blocked",
     name: "blocked",
-    format: "autobahn-json",
+    format: "autobahn",
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "test",

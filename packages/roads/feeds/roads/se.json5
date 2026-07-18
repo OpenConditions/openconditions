@@ -6,7 +6,7 @@
     // namespaces; we pull the two coordinate-bearing road ones: roadworks
     // (roadworks + closures, the bulk) and accident. Auth = the key as
     // ?authenticationkey=. Trafikverket publishes posList in lon-lat order.
-    id: "trafikverket-se",
+    operator: "trafikverket",
     name: "Trafikverket (Sweden)",
     format: "datex2",
     url: [
@@ -47,9 +47,10 @@
     // separate endpoint from the DATEX2 situation feed above. It is queried
     // via a POST XML request body (not a query-key), so the key travels
     // through bodyTemplate's ${TRAFIKVERKET_API_KEY} expansion instead of auth.
-    id: "trafikverket-flow-se",
+    operator: "trafikverket",
+    stream: "flow",
     name: "Trafikverket traffic flow (Sweden)",
-    format: "trafikverket-flow-json",
+    format: "trafikverket-flow",
     produces: "flow",
     url: "https://api.trafikinfo.trafikverket.se/v2/data.json",
     method: "POST",

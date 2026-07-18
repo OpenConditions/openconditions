@@ -3,7 +3,7 @@ import { parseLtaIncidents } from "../lta.js";
 import type { SourceDescriptor } from "../types.js";
 
 const SRC: SourceDescriptor = {
-  id: "lta-sg",
+  id: "sg-lta",
   attribution: "LTA Singapore",
   country: "SG",
   license: "Singapore-ODL-1.0",
@@ -40,7 +40,7 @@ describe("parseLtaIncidents", () => {
     expect(byType.broken_down_vehicle).toBeDefined();
     expect(byType.accident!.geometry).toEqual({ type: "Point", coordinates: [103.84, 1.3201] });
     expect(byType.accident!.headline).toBe("(28/6) Accident on PIE");
-    expect(byType.accident!.sourceFormat).toBe("lta-json");
+    expect(byType.accident!.sourceFormat).toBe("lta");
   });
 
   it("derives a stable content-based id (LTA records carry none)", () => {
@@ -48,7 +48,7 @@ describe("parseLtaIncidents", () => {
     const a = parseLtaIncidents(body(ev), SRC);
     const b = parseLtaIncidents(body(ev), SRC);
     expect(a[0]!.id).toBe(b[0]!.id);
-    expect(a[0]!.id.startsWith("lta-sg:")).toBe(true);
+    expect(a[0]!.id.startsWith("sg-lta:")).toBe(true);
   });
 
   it("skips records without coordinates and tolerates malformed input", () => {

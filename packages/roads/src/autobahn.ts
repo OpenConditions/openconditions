@@ -458,7 +458,7 @@ export function parseAutobahn(
       out.push({
         id: `${src.id}:${rawId}`,
         source: src.id,
-        sourceFormat: "autobahn-json",
+        sourceFormat: "autobahn",
         domain: "roads",
         kind: "event",
         type,

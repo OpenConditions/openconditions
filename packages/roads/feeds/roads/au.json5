@@ -1,6 +1,7 @@
 [
   {
-    id: "livetraffic-nsw",
+    subdivision: "nsw",
+    operator: "livetraffic",
     name: "Live Traffic NSW (New South Wales)",
     format: "geojson",
     url: [
@@ -54,7 +55,8 @@
     },
   },
   {
-    id: "trafficsa-au",
+    subdivision: "sa",
+    operator: "trafficsa",
     name: "Traffic SA (South Australia)",
     format: "geojson",
     url: [
@@ -96,7 +98,8 @@
     // the generic reader cannot separate. Ships the published public API key as the
     // default (shared + globally rate-limited to 100 req/min); set
     // QLD_TRAFFIC_API_KEY to override with a registered key and avoid the quota.
-    id: "qld-traffic",
+    subdivision: "qld",
+    operator: "traffic",
     name: "QLDTraffic (Queensland)",
     format: "geojson",
     url: "https://api.qldtraffic.qld.gov.au/v1/events",

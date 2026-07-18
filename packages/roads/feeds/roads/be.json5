@@ -1,6 +1,6 @@
 [
   {
-    id: "flanders-be",
+    operator: "flanders",
     name: "Verkeerscentrum Vlaanderen (Flanders)",
     format: "datex2",
     url: "https://www.verkeerscentrum.be/uitwisseling/datex2v3full",
@@ -14,7 +14,7 @@
     enabledByDefault: true,
   },
   {
-    id: "brussels-be",
+    operator: "brussels",
     name: "Bruxelles Mobilité traffic events",
     format: "geojson",
     url: "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items?f=json&limit=1000",
@@ -50,9 +50,9 @@
     enabledByDefault: true,
   },
   {
-    id: "miv-flow-be",
+    operator: "miv",
     name: "MIV traffic speed (Flanders)",
-    format: "miv-xml",
+    format: "miv",
     produces: "flow",
     url: "http://miv.opendata.belfla.be/miv/verkeersdata",
     stationRegistry: {

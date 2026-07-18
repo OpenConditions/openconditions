@@ -86,7 +86,7 @@ export function parseMadridFlow(input: string | Buffer, src: SourceDescriptor): 
       const flow: RoadFlow = {
         id: `${src.id}:${id}`,
         source: src.id,
-        sourceFormat: "madrid-informo-xml",
+        sourceFormat: "informo",
         domain: "roads",
         kind: "measurement",
         metric: "flow",
@@ -106,7 +106,7 @@ export function parseMadridFlow(input: string | Buffer, src: SourceDescriptor): 
         events.push({
           id: `${flow.id}:congestion`,
           source: src.id,
-          sourceFormat: "madrid-informo-xml",
+          sourceFormat: "informo",
           domain: "roads",
           kind: "event",
           type: "congestion",

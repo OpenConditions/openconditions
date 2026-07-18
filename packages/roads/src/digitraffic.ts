@@ -464,7 +464,7 @@ export function parseDigitraffic(
       out.push({
         id: `${src.id}:${situationId}`,
         source: src.id,
-        sourceFormat: "digitraffic-json",
+        sourceFormat: "digitraffic",
         domain: "roads",
         kind: "event",
         type,

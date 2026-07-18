@@ -46,7 +46,7 @@ describe("dedupeAcrossSources", () => {
   it("merges the same incident reported by two sources (point vs overlapping line, shared road ref)", () => {
     const autobahn = evt({
       id: "autobahn:1",
-      source: "autobahn-de",
+      source: "de-autobahn",
       type: "accident",
       roads: [{ ref: "A3" }],
       geometry: pt(8.0, 50.0),
@@ -74,9 +74,9 @@ describe("dedupeAcrossSources", () => {
     // The other source is preserved, not dropped.
     expect(out[0]!.mergedSources).toEqual([
       {
-        source: "autobahn-de",
+        source: "de-autobahn",
         id: "autobahn:1",
-        attribution: { provider: "autobahn-de", license: "CC0-1.0" },
+        attribution: { provider: "de-autobahn", license: "CC0-1.0" },
       },
     ]);
     expect(out[0]!.origin.attribution.provider).toBe("nrw-viz");
@@ -233,8 +233,8 @@ describe("dedupeAcrossSources", () => {
       // becomes the survivor with origin.kind "crowd", and the OMX routing gate
       // then drops it — erasing a REAL closure from routing.
       const ndw = evt({
-        id: "ndw:closure-1",
-        source: "ndw",
+        id: "nl-ndw:closure-1",
+        source: "nl-ndw",
         type: "road_closure",
         roads: [{ ref: "A2" }],
         geometry: pt(5.0, 52.0),
@@ -250,8 +250,8 @@ describe("dedupeAcrossSources", () => {
       });
       const out = dedupeAcrossSources([ndw, report]);
       expect(out).toHaveLength(1);
-      expect(out[0]!.id).toBe("ndw:closure-1");
-      expect(out[0]!.source).toBe("ndw");
+      expect(out[0]!.id).toBe("nl-ndw:closure-1");
+      expect(out[0]!.source).toBe("nl-ndw");
       expect(out[0]!.origin.kind).toBe("feed");
       // The crowd report is retained as corroboration, not dropped.
       expect(out[0]!.mergedSources).toEqual([
@@ -266,7 +266,7 @@ describe("dedupeAcrossSources", () => {
     it("picks the feed row even when a crowd row is richer (feed origin outranks richness)", () => {
       const feed = evt({
         id: "feed:sparse",
-        source: "ndw",
+        source: "nl-ndw",
         type: "road_closure",
         roads: [{ ref: "A2" }],
         geometry: pt(5.0, 52.0),
@@ -296,7 +296,7 @@ describe("dedupeAcrossSources", () => {
     it("still picks the richest/newest among MULTIPLE feed rows (crowd folded in)", () => {
       const feedSparse = evt({
         id: "feed:a",
-        source: "autobahn-de",
+        source: "de-autobahn",
         type: "road_closure",
         roads: [{ ref: "A3" }],
         geometry: pt(8.0, 50.0),

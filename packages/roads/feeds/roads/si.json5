@@ -1,6 +1,6 @@
 [
   {
-    id: "nap-si",
+    operator: "nap",
     name: "NAP Slovenia (promet.si)",
     format: "datex2",
     url: [

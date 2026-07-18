@@ -3,9 +3,9 @@
     // Federal motorway network — enumerated from the Autobahn road index by the
     // catalog resolver, which replaced the bespoke discovery closure. No
     // hand-maintained url. Complements the non-motorway city/state feeds below.
-    id: "autobahn-de",
+    operator: "autobahn",
     name: "Autobahn GmbH (Germany)",
-    format: "autobahn-json",
+    format: "autobahn",
     catalog: {
       resolver: "autobahn-index",
     },
@@ -18,7 +18,8 @@
     enabledByDefault: true,
   },
   {
-    id: "svzbw-de",
+    subdivision: "bw",
+    operator: "svzbw",
     name: "MobiData BW roadworks (Baden-Württemberg)",
     format: "datex2",
     url: "https://api.mobidata-bw.de/datasets/traffic/roadworks/roadworks_svzbw.datex2.xml",
@@ -32,7 +33,8 @@
     enabledByDefault: true,
   },
   {
-    id: "berlin-de",
+    subdivision: "be",
+    operator: "berlin",
     name: "VIZ Berlin roadworks & closures",
     format: "geojson",
     url: "https://api.viz.berlin.de/daten/baustellen_sperrungen_viz.json",
@@ -75,7 +77,8 @@
     // (from the Mobilithek catalog + each publisher's terms); the CC-BY-SA Mobidrom
     // bundle is isolated in its own feed so it never folds into a more permissive
     // source. verkehr-nrw-de (LVZ.NRW) keeps its source id for provider continuity.
-    id: "verkehr-nrw-de",
+    subdivision: "nw",
+    operator: "verkehr",
     name: "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_SUBSCRIPTION_ID}",
@@ -121,7 +124,9 @@
     },
   },
   {
-    id: "mobilithek-nrw-kommunal",
+    subdivision: "nw",
+    operator: "mobilithek",
+    stream: "kommunal",
     name: "NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID}",
@@ -169,7 +174,9 @@
   {
     // NRW.Mobidrom bundled roadworks — CC-BY-SA (ShareAlike), kept in its own feed
     // so it never folds into a more permissive source.
-    id: "mobilithek-nrw-mobidrom",
+    subdivision: "nw",
+    operator: "mobilithek",
+    stream: "mobidrom",
     name: "NRW.Mobidrom bundled roadworks via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID}",
@@ -215,7 +222,8 @@
     },
   },
   {
-    id: "mobilithek-bayern",
+    subdivision: "by",
+    operator: "mobilithek",
     name: "Bayern via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BAYERN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BAYERN_SUBSCRIPTION_ID}",
@@ -261,7 +269,8 @@
     },
   },
   {
-    id: "mobilithek-bw",
+    subdivision: "bw",
+    operator: "mobilithek",
     name: "Baden-Württemberg via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BW_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BW_SUBSCRIPTION_ID}",
@@ -307,7 +316,8 @@
     },
   },
   {
-    id: "mobilithek-berlin",
+    subdivision: "be",
+    operator: "mobilithek",
     name: "Berlin via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BERLIN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BERLIN_SUBSCRIPTION_ID}",
@@ -353,7 +363,8 @@
     },
   },
   {
-    id: "mobilithek-brandenburg",
+    subdivision: "bb",
+    operator: "mobilithek",
     name: "Brandenburg via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID}",
@@ -399,7 +410,8 @@
     },
   },
   {
-    id: "mobilithek-bremen",
+    subdivision: "hb",
+    operator: "mobilithek",
     name: "Bremen via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BREMEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BREMEN_SUBSCRIPTION_ID}",
@@ -445,7 +457,8 @@
     },
   },
   {
-    id: "mobilithek-hamburg",
+    subdivision: "hh",
+    operator: "mobilithek",
     name: "Hamburg via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_HAMBURG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_HAMBURG_SUBSCRIPTION_ID}",
@@ -491,7 +504,8 @@
     },
   },
   {
-    id: "mobilithek-hessen",
+    subdivision: "he",
+    operator: "mobilithek",
     name: "Hessen via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_HESSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_HESSEN_SUBSCRIPTION_ID}",
@@ -537,7 +551,8 @@
     },
   },
   {
-    id: "mobilithek-mv",
+    subdivision: "mv",
+    operator: "mobilithek",
     name: "Mecklenburg-Vorpommern via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_MV_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_MV_SUBSCRIPTION_ID}",
@@ -583,7 +598,8 @@
     },
   },
   {
-    id: "mobilithek-niedersachsen",
+    subdivision: "ni",
+    operator: "mobilithek",
     name: "Niedersachsen via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID}",
@@ -629,7 +645,8 @@
     },
   },
   {
-    id: "mobilithek-sachsen",
+    subdivision: "sn",
+    operator: "mobilithek",
     name: "Sachsen via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SACHSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SACHSEN_SUBSCRIPTION_ID}",
@@ -675,7 +692,8 @@
     },
   },
   {
-    id: "mobilithek-sachsen-anhalt",
+    subdivision: "st",
+    operator: "mobilithek",
     name: "Sachsen-Anhalt via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID}",
@@ -721,7 +739,8 @@
     },
   },
   {
-    id: "mobilithek-sh",
+    subdivision: "sh",
+    operator: "mobilithek",
     name: "Schleswig-Holstein via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SH_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SH_SUBSCRIPTION_ID}",
@@ -767,7 +786,8 @@
     },
   },
   {
-    id: "mobilithek-thueringen",
+    subdivision: "th",
+    operator: "mobilithek",
     name: "Thüringen via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID}",
@@ -813,9 +833,9 @@
     },
   },
   {
-    id: "bonn-flow-de",
+    operator: "bonn",
     name: "Bonn realtime traffic (Germany)",
-    format: "bonn-geojson",
+    format: "bonn",
     produces: "flow",
     url: "https://stadtplan.bonn.de/geojson?Thema=19584",
     cadenceSec: 120,

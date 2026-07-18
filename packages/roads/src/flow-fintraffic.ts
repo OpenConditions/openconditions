@@ -67,7 +67,7 @@ export function parseFintrafficFlow(
       flows.push({
         id: `${src.id}:${stationId}-${dir}`,
         source: src.id,
-        sourceFormat: "fintraffic-tms-json",
+        sourceFormat: "fintraffic-tms",
         domain: "roads",
         kind: "measurement",
         metric: "flow",

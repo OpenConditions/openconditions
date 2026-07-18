@@ -45,7 +45,8 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
       feeds.push({
         id: `autobahn-${slug(road)}-${service}`,
         name: `Autobahn ${road} — ${service}`,
-        format: "autobahn-json",
+        operator: "autobahn",
+        format: "autobahn",
         url: `${AUTOBAHN_BASE}/${encodeURIComponent(road)}/services/${service}`,
         cadenceSec: 300,
         freshnessWindowSec: 900,

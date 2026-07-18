@@ -22,7 +22,7 @@ const NDW_SITE_TABLE_FIXTURE = join(
 const NDW_TRAFFICSPEED_FIXTURE = join(import.meta.dirname, "fixtures/ndw-flow/trafficspeed.xml");
 
 const DT_SOURCE = {
-  id: "digitraffic-fi",
+  id: "fi-digitraffic",
   attribution: "Fintraffic / digitraffic.fi",
   country: "FI",
   license: "CC-BY-4.0",
@@ -30,7 +30,7 @@ const DT_SOURCE = {
 } as const;
 
 const NDW_SOURCE = {
-  id: "ndw",
+  id: "nl-ndw",
   attribution: "NDW / Rijkswaterstaat",
   country: "NL",
   license: "CC0-1.0",
@@ -147,7 +147,7 @@ describe("parseDigitrafficFlow — fixture", () => {
   it("prefixes each flow id with source id", () => {
     const json = readFileSync(DT_FLOW_FIXTURE, "utf8");
     const { flows } = parseDigitrafficFlow(json, DT_SOURCE);
-    expect(flows.every((f) => f.id.startsWith("digitraffic-fi:"))).toBe(true);
+    expect(flows.every((f) => f.id.startsWith("fi-digitraffic:"))).toBe(true);
   });
 
   it("carries license from source descriptor via origin", () => {
@@ -446,7 +446,7 @@ describe("parseDigitrafficFlow — MultiLineString geometry", () => {
   it("all member-line flows share the same los and source id", () => {
     const { flows } = parseDigitrafficFlow(multiLineFeature, DT_SOURCE);
     expect(flows.every((f) => f.los === "queuing")).toBe(true);
-    expect(flows.every((f) => f.source === "digitraffic-fi")).toBe(true);
+    expect(flows.every((f) => f.source === "fi-digitraffic")).toBe(true);
   });
 
   it("emits a derived congestion event for each member-line when los >= queuing", () => {
@@ -457,8 +457,8 @@ describe("parseDigitrafficFlow — MultiLineString geometry", () => {
 
   it("member-line flow ids are disambiguated with a line index suffix", () => {
     const { flows } = parseDigitrafficFlow(multiLineFeature, DT_SOURCE);
-    expect(flows[0]!.id).toBe("digitraffic-fi:DT_MULTI_QUEUING:0");
-    expect(flows[1]!.id).toBe("digitraffic-fi:DT_MULTI_QUEUING:1");
+    expect(flows[0]!.id).toBe("fi-digitraffic:DT_MULTI_QUEUING:0");
+    expect(flows[1]!.id).toBe("fi-digitraffic:DT_MULTI_QUEUING:1");
   });
 
   it("each member-line geometry carries its own coordinates", () => {
@@ -707,16 +707,16 @@ describe("parseDatexMeasuredData — external site-map join (NDW shape)", () => 
     const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
     const ids = flows.map((f) => f.id).sort();
     expect(ids).toEqual([
-      "ndw:PZH01_MST_0029-00",
-      "ndw:PZH01_MST_0065_00",
-      "ndw:PZH01_MST_STANDSTILL_00",
+      "nl-ndw:PZH01_MST_0029-00",
+      "nl-ndw:PZH01_MST_0065_00",
+      "nl-ndw:PZH01_MST_STANDSTILL_00",
     ]);
   });
 
   it("uses the speed sample with the highest numberOfInputValuesUsed and ignores no-data (-1)", () => {
     const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
     const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
-    const site = flows.find((f) => f.id === "ndw:PZH01_MST_0065_00")!;
+    const site = flows.find((f) => f.id === "nl-ndw:PZH01_MST_0065_00")!;
     expect(site.speedKph).toBe(64);
     expect(site.value).toBe(64);
     expect(site.unit).toBe("km/h");
@@ -725,7 +725,7 @@ describe("parseDatexMeasuredData — external site-map join (NDW shape)", () => 
   it("attaches the external site geometry (Point) to the aggregated flow", () => {
     const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
     const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
-    const site = flows.find((f) => f.id === "ndw:PZH01_MST_0065_00")!;
+    const site = flows.find((f) => f.id === "nl-ndw:PZH01_MST_0065_00")!;
     expect(site.geometry.type).toBe("Point");
     expect((site.geometry as { coordinates: number[] }).coordinates).toEqual([
       4.536069, 52.0235558,
@@ -735,7 +735,7 @@ describe("parseDatexMeasuredData — external site-map join (NDW shape)", () => 
   it("attaches the external site geometry (LineString) when the site resolves to a line", () => {
     const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
     const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
-    const site = flows.find((f) => f.id === "ndw:PZH01_MST_0029-00")!;
+    const site = flows.find((f) => f.id === "nl-ndw:PZH01_MST_0029-00")!;
     expect(site.geometry.type).toBe("LineString");
   });
 
@@ -750,19 +750,19 @@ describe("parseDatexMeasuredData — external site-map join (NDW shape)", () => 
   it("skips a site whose speed samples are all no-data (-1)", () => {
     const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
     const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
-    expect(flows.find((f) => f.id === "ndw:PZH01_MST_ALLNODATA_00")).toBeUndefined();
+    expect(flows.find((f) => f.id === "nl-ndw:PZH01_MST_ALLNODATA_00")).toBeUndefined();
   });
 
   it("rejects a no-data zero (speed=0, numberOfInputValuesUsed=0) distinct from the -1 sentinel", () => {
     const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
     const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
-    expect(flows.find((f) => f.id === "ndw:PZH01_MST_ZEROCOUNT_00")).toBeUndefined();
+    expect(flows.find((f) => f.id === "nl-ndw:PZH01_MST_ZEROCOUNT_00")).toBeUndefined();
   });
 
   it("keeps a genuine standstill (speed=0, numberOfInputValuesUsed>0) as a real speed reading, distinct from the no-data zero", () => {
     const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
     const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
-    const standstill = flows.find((f) => f.id === "ndw:PZH01_MST_STANDSTILL_00");
+    const standstill = flows.find((f) => f.id === "nl-ndw:PZH01_MST_STANDSTILL_00");
     expect(standstill).toBeDefined();
     expect(standstill!.speedKph).toBe(0);
     // This fixture carries no trafficStatus/freeFlow anywhere, so los stays
@@ -775,13 +775,13 @@ describe("parseDatexMeasuredData — external site-map join (NDW shape)", () => 
   it("rejects an absurd speed (>= ABSURD_SPEED_KPH) as implausible, treated as no usable speed", () => {
     const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
     const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
-    expect(flows.find((f) => f.id === "ndw:PZH01_MST_ABSURD_00")).toBeUndefined();
+    expect(flows.find((f) => f.id === "nl-ndw:PZH01_MST_ABSURD_00")).toBeUndefined();
   });
 
   it("skips a site that is absent from the site map (no geometry)", () => {
     const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE);
     const { flows } = parseDatexMeasuredData(xml, NDW_SOURCE, siteMap());
-    expect(flows.find((f) => f.id === "ndw:PZH01_MST_MISSING_00")).toBeUndefined();
+    expect(flows.find((f) => f.id === "nl-ndw:PZH01_MST_MISSING_00")).toBeUndefined();
   });
 
   it("skips all sites when no site map is provided and geometry is external-only", () => {

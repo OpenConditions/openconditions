@@ -26,7 +26,7 @@ const constants = JSON.stringify({
 });
 
 const feed = {
-  id: "fintraffic-tms-fi",
+  id: "fi-fintraffic",
   stationRegistry: {
     url: "https://tie.digitraffic.fi/api/tms/v1/stations",
     format: "fintraffic-stations",
@@ -72,7 +72,7 @@ describe("updateFintrafficNativeBaselines", () => {
       { free_flow_kph: number; method: string; dow_bucket: number; tod_bucket: number }[]
     >`
       SELECT free_flow_kph, method, dow_bucket, tod_bucket FROM conditions.sensor_baseline
-      WHERE sensor_key = 'fintraffic-tms-fi:23001-1'`;
+      WHERE sensor_key = 'fi-fintraffic:23001-1'`;
     expect(rows).toHaveLength(1);
     expect(rows[0]!.method).toBe("native");
     expect(rows[0]!.dow_bucket).toBe(-1);
@@ -100,7 +100,7 @@ describe("updateFintrafficNativeBaselines", () => {
 
     const rows = await sql<{ free_flow_kph: number }[]>`
       SELECT free_flow_kph FROM conditions.sensor_baseline
-      WHERE sensor_key = 'fintraffic-tms-fi:23001-1'`;
+      WHERE sensor_key = 'fi-fintraffic:23001-1'`;
     expect(rows).toHaveLength(1);
     expect(rows[0]!.free_flow_kph).toBe(130);
   }, 30_000);
@@ -151,7 +151,7 @@ describe("updateFintrafficNativeBaselines", () => {
   }, 30_000);
 
   it("returns 0 and does nothing when the feed declares no station registry", async () => {
-    const noRegistry = { id: "fintraffic-tms-fi" } as unknown as FeedSource;
+    const noRegistry = { id: "fi-fintraffic" } as unknown as FeedSource;
     const { updated } = await updateFintrafficNativeBaselines(sql, noRegistry, {
       fetch: fetchFn,
       now: () => new Date(),

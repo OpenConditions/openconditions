@@ -7,7 +7,7 @@ import { mapSourceType } from "../taxonomy.js";
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/drivebc/events.json");
 
 const DRIVEBC_SOURCE = {
-  id: "drivebc",
+  id: "ca-bc-drivebc",
   attribution: "DriveBC / BC Ministry of Transportation",
   country: "CA",
   license: "OGL-BC",
@@ -74,7 +74,7 @@ describe("parseOpen511 — DriveBC fixture", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseOpen511(json, DRIVEBC_SOURCE);
 
-    expect(events.every((ev) => ev.id.startsWith("drivebc:"))).toBe(true);
+    expect(events.every((ev) => ev.id.startsWith("ca-bc-drivebc:"))).toBe(true);
   });
 
   it("carries OGL-BC license from the source descriptor via origin", () => {
@@ -162,7 +162,7 @@ describe("parseOpen511 — DriveBC fixture", () => {
 
     const events = parseOpen511(payload, DRIVEBC_SOURCE);
     expect(events.length).toBe(1);
-    expect(events[0]!.id).toBe("drivebc:HAS-GEO");
+    expect(events[0]!.id).toBe("ca-bc-drivebc:HAS-GEO");
   });
 
   it("never throws on empty events array", () => {

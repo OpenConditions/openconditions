@@ -110,7 +110,7 @@ description, and that's what the code says.
 
 Separately from schema conformance, actually _publishing_ to a National
 Access Point is a per-member-state administrative process, not a technical
-one. Per the commons ADR (§10.1, verified 2026-07-07):
+one. Per OpenConditions' NAP-publication findings (verified 2026-07-07):
 
 - **France — `transport.data.gouv.fr`.** Fully self-service, no entity-type
   gate, already carries real-time DATEX II (Bison Futé). This is the

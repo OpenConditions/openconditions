@@ -15,7 +15,7 @@ function flow(id: string, extra: Record<string, unknown>): Observation {
   return {
     id,
     source: "src",
-    sourceFormat: "fintraffic-tms-json",
+    sourceFormat: "fintraffic-tms",
     domain: "roads",
     kind: "measurement",
     metric: "flow",

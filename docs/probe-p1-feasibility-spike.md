@@ -5,9 +5,9 @@
 > thresholds, and the DAP + differential-privacy design agenda for the independent reviewer. It exists so the
 > decision to build (or defer) the probe layer can be made **on evidence, before any Phase P0–P6 code is written**.
 >
-> Binding sources (this doc must not contradict them): the commons ADR §3 (D4/D5/D6/D7) and Plan 4
-> (`4-privacy-probe-data.md`) in the OpenMapX plan set; the shared Privacy-Pass token layer from Plan 1
-> (`services/contributions-api` Attester/Issuer); the speed-congestion fusion seam (`segment_observation`).
+> Binding sources (this doc must not contradict them): OpenConditions' commons and probe-layer design
+> decisions; the shared Privacy-Pass token layer already built in `services/contributions-api`
+> (Attester/Issuer); the speed-congestion fusion seam (`segment_observation`).
 
 ## 1. Why this gate exists
 
@@ -15,7 +15,7 @@ The entire probe privacy model rests on one load-bearing assumption: **raw traje
 only `(segment, window, clamped speed)` tuples do.** That is only true if continuous on-device map-matching is
 feasible on a real, mid-range phone at acceptable battery, storage and accuracy. If it is not, the model collapses
 to "send GPS to a server," which is exactly what this layer exists to prevent. So feasibility is decided **before**
-committing to build, not discovered mid-build (ADR §8; Plan 4 Phase P-1).
+committing to build, not discovered mid-build.
 
 P-1 has six sub-gates. All six must pass to commit to P0–P6. They split into work that is verifiable here (in CI,
 without a device or an external party) and work that is **structurally blocked** on a physical device, an
@@ -31,8 +31,8 @@ independent reviewer, or a maintained implementation that does not currently exi
 | 6   | DAP + DP design review (privacy unit, adjacency, ε/δ accountant, mechanism)     | design + independent review         | **BLOCKED — acceptance is reviewer-gated (P0)**                                  |
 
 **Nothing in this spike marks any sub-gate "passed."** Simulator or desktop numbers do not satisfy 1–4; only real
-mid-range-phone evidence does. Item 6 acceptance requires the P0 independent privacy reviewer, by the plan's own
-text ("P0's independent reviewer must approve it").
+mid-range-phone evidence does. Item 6 acceptance requires the P0 independent privacy reviewer, by the probe-layer
+design's own rule ("P0's independent reviewer must approve it").
 
 ## 2. Reconnaissance summary (what exists today)
 
@@ -43,7 +43,7 @@ text ("P0's independent reviewer must approve it").
   `services/contributions-api/src/attester/policy.ts`). This is the intended greenfield starting point.
 - **The Privacy-Pass token layer a probe would reuse already exists and works**, server-side, in
   `services/contributions-api/src/issuer/` + `.../attester/` on `@cloudflare/privacypass-ts@0.9.0` (RFC 9578
-  Blind-RSA). Reusable surface, verbatim from Plan 1:
+  Blind-RSA). Reusable surface, verbatim from the contributions-api crowd-report layer:
   - `PublicContext { purpose; taskId?; epoch }`, `publicContextString` → `` `${purpose}:${taskId ?? "-"}:${epoch}` ``,
     `redemptionContext(ctx)` → **server-authoritative** `SHA-256(purpose:taskId:epoch)` — the probe context is
     literally `purpose: "probe"` (the context hashing is already proven purpose-agnostic in tests).
@@ -55,8 +55,8 @@ text ("P0's independent reviewer must approve it").
 - **The landing target exists**: `segment_observation` (`packages/core/src/db/schema.ts`) with
   `(segmentId, source)` PK and `sourceTier`, and the tier-priority reducer `fuseSegmentSpeed`
   (`services/ingest/src/pipeline/segment-speed.ts`) — `SELECT DISTINCT ON (segment_id) … ORDER BY tier, observed_at DESC`,
-  where `crowd` is the lowest tier. The privacy-accounting columns Plan 4 P5 needs are **not yet present** (that is
-  the P5 additive migration — not built here, it is gated behind P-1 passing).
+  where `crowd` is the lowest tier. The privacy-accounting columns the probe-landing step (P5) needs are **not yet
+  present** (that is the P5 additive migration — not built here, it is gated behind P-1 passing).
 
 ## 3. The decisive tooling finding (item 5 interoperability spike result)
 
@@ -79,7 +79,7 @@ hand-rolling DAP. The interop finding is decisive and blocks a _conformant_ buil
   by autonomously committing non-conformant code. This is a legitimate spike _finding_, and it is a gate that
   cannot go green here.
 - **Differential-privacy primitive.** No maintained **in-process** JS DP bounded-sum/mean primitive exists. The
-  non-hand-rolled options are all **out-of-process**, which the plan anticipates ("Google `differential-privacy` …
+  non-hand-rolled options are all **out-of-process**, which the probe-layer design anticipates ("Google `differential-privacy` …
   run as a Go binary beside the BFF"): Google's `differential-privacy` Go module (`dpagg.BoundedSumFloat64`,
   v4.1.0, 2025-02) invoked as a subprocess wrapper, or OpenDP/PyDP via a Python service. Adopting either introduces
   a **new toolchain (Go or Python) into this TypeScript monorepo** — an operator/architecture decision, not a
@@ -93,8 +93,8 @@ hand-rolling DAP. The interop finding is decisive and blocks a _conformant_ buil
 
 This is the artifact needed to **obtain** the P-1 evidence. It must be run by the operator on a real mid-range phone
 (not a flagship, not a simulator). The proposed thresholds below are **starting values to be confirmed by the
-operator + the independent reviewer** — the plan requires the threshold to be "set explicitly," and the review
-signs off on the numbers.
+operator + the independent reviewer** — the probe-layer design requires the threshold to be "set explicitly," and
+the review signs off on the numbers.
 
 ### 4.1 Battery / thermal (item 1)
 
@@ -147,19 +147,19 @@ signs off on the numbers.
 
 ## 5. DAP + DP design agenda for the independent reviewer (items 5–6)
 
-This is the **agenda a P0 independent reviewer signs off**, not a settled design. It states the ADR-committed
+This is the **agenda a P0 independent reviewer signs off**, not a settled design. It states the design-committed
 constraints (fixed) and the open decisions (reviewer + operator). Writing settled ε/δ values, a chosen VDAF profile,
-or a chosen DP mechanism into code here would pre-empt the review the plan reserves — and would risk manufacturing
+or a chosen DP mechanism into code here would pre-empt the review the design reserves — and would risk manufacturing
 exactly the plausible-but-wrong privacy artifact the whole gated design exists to prevent.
 
-### 5.1 Committed constraints (fixed by the ADR/Plan 4 — not open)
+### 5.1 Committed constraints (fixed by the commons design — not open)
 
 - **On-device only.** Map-match to `way_id:dir`; trim first/last ~200 m of every trip _before_ bucketing; reduce
   candidates to `(segment_id, ~5-min UTC window, speed clamped [0,200])` with at most one candidate per
   `(segment, window)`, then **sample at most one tuple per epoch-bound entitlement** — a multi-segment trip exports
   **at most one measurement per epoch**, not one per segment crossed (this per-epoch bound is what makes the DP
   sensitivity accounting sound). Raw trajectories never leave the device.
-- **Submission.** Reuse Plan 1's single-use RFC 9578 Privacy-Pass token (self-hosted Attester + Issuer) as the
+- **Submission.** Reuse the contributions-api's single-use RFC 9578 Privacy-Pass token (self-hosted Attester + Issuer) as the
   anonymous admission credential; the Origin sees only "a valid token," never identity or which token. **No probe
   pseudonym** enters either input share. No-log ingest edge (drop IP before persistence; if abuse control is
   demonstrably needed, a **short-epoch keyed HMAC behind a rotating key**, documented as personal data, deleted on
@@ -226,7 +226,7 @@ exactly the plausible-but-wrong privacy artifact the whole gated design exists t
   non-viable at our thousands-scale. Rejected.
 - **A plaintext / single-aggregator / raw-tuple / server-GPS bootstrap** — breaks the model's whole premise.
   **Never build it.** If DAP+DP is not viable, the probe layer is **deferred**, and the sensor + official-feed base
-  (speed-congestion) remains the coverage mechanism; the crowd-report layer (Plan 1) is unaffected.
+  (speed-congestion) remains the coverage mechanism; the crowd-report layer is unaffected.
 
 ## 6. The STOP boundary — what only the operator / an outside party can do
 
@@ -239,21 +239,22 @@ P-1 cannot be completed in this environment. It is blocked on three independent 
 2. **The DAP/VDAF tooling decision (item 5, §3 + §5.2.1).** No maintained JS client exists at the draft-18-DAP /
    current-VDAF level; hand-rolling DAP is forbidden. The operator + reviewer must choose the profile + implementation path (and accept any new
    Rust/Go/Python toolchain) before conformant DAP code is written.
-3. **The P0 institutional gate (item 6 acceptance + launch).** Per Plan 4 Phase P0, before any probe code ships:
+3. **The P0 institutional gate (item 6 acceptance + launch).** Before any probe code ships:
    a **public DPIA** + a **scoped public threat-model doc**; a **commissioned independent privacy review** (academic
    / civil-society) of the DPIA + threat model + the k/ε parameters, **passed and published**; a **DSB appointed**
-   and **Cyber-Versicherung bound**; the **crowd-report layer (Plan 1) proven durable in production** (D7: probe
+   and **Cyber-Versicherung bound**; the **crowd-report layer proven durable in production** (probe
    ships _after_ crowd reports prove durability); a **contracted independent DAP Helper operator** with a reviewed
    MoU/DPA (task config, key rotation, retention/deletion, incident response, termination, emergency migration) and
    an **out-of-band key exchange** — a cloud account or second service controlled by us does **not** pass this gate;
    and an **independently operated OHTTP relay** (§5.1 metadata boundary) run by a _different_ operator than the
    aggregator.
 
-Only when all three clear does P-1 pass. Building P0→P6 then _additionally_ requires the Plan-4 prerequisite gate —
-the substrate 0b commons fields on `segment_observation` (the P5 migration), the Plan-1 Attester/Issuer, and the
-live speed-congestion `segment_observation` seam — so a P-1 pass is necessary, not sufficient, for build.
+Only when all three clear does P-1 pass. Building P0→P6 then _additionally_ requires the probe-layer prerequisite
+gate — the substrate commons fields on `segment_observation` (the P5 additive migration), the contributions-api
+Attester/Issuer, and the live speed-congestion `segment_observation` seam — so a P-1 pass is necessary, not
+sufficient, for build.
 
-## 7. Honesty channel (ADR D6 — non-negotiable)
+## 7. Honesty channel (non-negotiable)
 
 Even a fully-built stack is honest about its limits, and so is this spike:
 
@@ -277,12 +278,12 @@ Even a fully-built stack is honest about its limits, and so is this spike:
 
 ## 8. What was intentionally not built here, and why
 
-- **No P0–P6 production code** (client pipeline, Leader/Helper/Collector, landing migration). ADR §8: the spike must
-  pass before any other Plan-4 work is committed.
+- **No P0–P6 production code** (client pipeline, Leader/Helper/Collector, landing migration). The spike must
+  pass before any other probe-layer work is committed.
 - **No DAP/VDAF client on the stale draft-09 lib, and no new Go/Python DP toolchain** committed to `main`. Both are
   operator + reviewer decisions (§3, §5.2); committing a chosen profile/mechanism would pre-empt the P0 review and
   risk a non-conformant or unsupportable privacy artifact.
 - **No claim that any sub-gate passed.** Simulator/desktop numbers do not count; item 6 acceptance is reviewer-gated.
 
-The probe layer stays deferred until P-1's three gates clear. The sensor + official-feed base and the Plan 1
+The probe layer stays deferred until P-1's three gates clear. The sensor + official-feed base and the
 crowd-report layer are the coverage mechanisms in the meantime, and neither is affected by this deferral.

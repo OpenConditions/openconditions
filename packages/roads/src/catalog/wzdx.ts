@@ -124,6 +124,7 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
     const feed: FeedSourceBase = {
       id,
       name: `WZDx — ${org || feedname || state || "feed"}${state ? ` (${state})` : ""}`,
+      operator: "wzdx",
       format: "wzdx",
       url,
       cadenceSec: 300,

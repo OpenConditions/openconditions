@@ -65,7 +65,7 @@ export function parseGddkia(input: string | Buffer, src: SourceDescriptor): Road
     out.push({
       id: `${src.id}:${localId}`,
       source: src.id,
-      sourceFormat: "gddkia-xml",
+      sourceFormat: "gddkia",
       domain: "roads",
       kind: "event",
       type,

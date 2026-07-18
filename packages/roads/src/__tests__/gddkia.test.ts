@@ -5,7 +5,7 @@ import { parseGddkia } from "../gddkia.js";
 import type { SourceDescriptor } from "../types.js";
 
 const SRC: SourceDescriptor = {
-  id: "gddkia-pl",
+  id: "pl-gddkia",
   attribution: "GDDKiA",
   country: "PL",
   license: "CC0-1.0",
@@ -19,7 +19,7 @@ describe("parseGddkia", () => {
     );
     expect(events.length).toBeGreaterThan(0);
     expect(events.every((e) => e.geometry?.type === "Point")).toBe(true);
-    expect(events.every((e) => e.sourceFormat === "gddkia-xml")).toBe(true);
+    expect(events.every((e) => e.sourceFormat === "gddkia")).toBe(true);
     // Poland WGS84 bounds.
     const g = events[0]!.geometry;
     if (!g || g.type !== "Point") throw new Error("expected Point");

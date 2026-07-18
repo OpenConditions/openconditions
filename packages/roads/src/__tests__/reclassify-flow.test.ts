@@ -14,7 +14,7 @@ function base(overrides: Partial<RoadFlow>): RoadFlow {
   return {
     id: "src:1",
     source: "src",
-    sourceFormat: "fintraffic-tms-json",
+    sourceFormat: "fintraffic-tms",
     domain: "roads",
     kind: "measurement",
     metric: "flow",

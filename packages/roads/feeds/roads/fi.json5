@@ -1,8 +1,8 @@
 [
   {
-    id: "digitraffic-fi",
+    operator: "digitraffic",
     name: "Digitraffic (Finland)",
-    format: "digitraffic-json",
+    format: "digitraffic",
     url: [
       "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=TRAFFIC_ANNOUNCEMENT",
       "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=ROAD_WORK",
@@ -16,9 +16,9 @@
     enabledByDefault: true,
   },
   {
-    id: "fintraffic-tms-fi",
+    operator: "fintraffic",
     name: "Fintraffic TMS traffic speed (Finland)",
-    format: "fintraffic-tms-json",
+    format: "fintraffic-tms",
     produces: "flow",
     url: "https://tie.digitraffic.fi/api/tms/v1/stations/data",
     requestHeaders: { "Digitraffic-User": "OpenConditions/1.0" },

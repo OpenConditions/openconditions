@@ -14,7 +14,7 @@ afterEach(() => {
 });
 
 const ok = {
-  id: "x",
+  operator: "x",
   name: "X",
   format: "geojson",
   url: "https://example.org/x.json",

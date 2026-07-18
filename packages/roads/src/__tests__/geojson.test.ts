@@ -203,7 +203,7 @@ describe("parseGeoJson", () => {
 
 describe("parseGeoJson — NZTA Road Events fixture (real wired mapping)", () => {
   it("parses the live ArcGIS GeoJSON via the registered nzta-nz mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "nzta-nz")!;
+    const feed = FEED_SOURCES.find((f) => f.id === "nz-nzta")!;
     const xml = readFileSync(join(import.meta.dirname, "fixtures/nzta-nz/road-events.geojson"));
     const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
     expect(events.length).toBeGreaterThan(0);
@@ -222,7 +222,7 @@ describe("parseGeoJson — NZTA Road Events fixture (real wired mapping)", () =>
 
 describe("parseGeoJson — Berlin VIZ fixture (GeometryCollection + German vocab)", () => {
   it("parses mixed GeometryCollection/Point features via the registered berlin-de mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "berlin-de")!;
+    const feed = FEED_SOURCES.find((f) => f.id === "de-be-berlin")!;
     const xml = readFileSync(join(import.meta.dirname, "fixtures/berlin-de/baustellen.geojson"));
     const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
     expect(events.length).toBeGreaterThan(0);
@@ -236,7 +236,7 @@ describe("parseGeoJson — Berlin VIZ fixture (GeometryCollection + German vocab
 
 describe("parseGeoJson — MTQ Québec fixture (EPSG:3857 reprojection)", () => {
   it("reprojects the WFS Web-Mercator output to WGS84 via the registered mtq-qc mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "mtq-qc")!;
+    const feed = FEED_SOURCES.find((f) => f.id === "ca-qc-mtq")!;
     const xml = readFileSync(join(import.meta.dirname, "fixtures/mtq-qc/chantiers.geojson"));
     const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
     expect(events.length).toBeGreaterThan(0);
@@ -255,7 +255,7 @@ describe("parseGeoJson — MTQ Québec fixture (EPSG:3857 reprojection)", () => 
 
 describe("parseGeoJson — Brussels fixture (per-geometry EPSG:3812 reprojection)", () => {
   it("reprojects Lambert-2008 per-geometry coords to WGS84 via the registered mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "brussels-be")!;
+    const feed = FEED_SOURCES.find((f) => f.id === "be-brussels")!;
     const xml = readFileSync(
       join(import.meta.dirname, "fixtures/brussels-be/traffic_events.geojson")
     );
@@ -274,7 +274,7 @@ describe("parseGeoJson — Brussels fixture (per-geometry EPSG:3812 reprojection
 
 describe("parseGeoJson — Vegagerðin Iceland fixture (lon/lat from properties)", () => {
   it("uses the WGS84 X/Y fields, not the EPSG:3057 geometry, via the registered mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "vegagerdin-is")!;
+    const feed = FEED_SOURCES.find((f) => f.id === "is-vegagerdin")!;
     const xml = readFileSync(
       join(import.meta.dirname, "fixtures/vegagerdin-is/pointincident.geojson")
     );
@@ -292,7 +292,7 @@ describe("parseGeoJson — Vegagerðin Iceland fixture (lon/lat from properties)
 
 describe("parseGeoJson — Traffic SA fixture (ArcGIS f=geojson, real mapping)", () => {
   it("parses South Australia incidents/roadworks via the registered trafficsa-au mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "trafficsa-au")!;
+    const feed = FEED_SOURCES.find((f) => f.id === "au-sa-trafficsa")!;
     const xml = readFileSync(join(import.meta.dirname, "fixtures/trafficsa-au/events.geojson"));
     const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
     expect(events.length).toBeGreaterThan(0);

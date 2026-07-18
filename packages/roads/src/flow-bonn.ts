@@ -97,7 +97,7 @@ export function parseBonnFlow(input: string | Buffer, src: SourceDescriptor): Fl
         const flow: RoadFlow = {
           id: `${src.id}:${lineId}`,
           source: src.id,
-          sourceFormat: "bonn-geojson",
+          sourceFormat: "bonn",
           domain: "roads",
           kind: "measurement",
           metric: "flow",
@@ -118,7 +118,7 @@ export function parseBonnFlow(input: string | Buffer, src: SourceDescriptor): Fl
           events.push({
             id: `${flow.id}:congestion`,
             source: src.id,
-            sourceFormat: "bonn-geojson",
+            sourceFormat: "bonn",
             domain: "roads",
             kind: "event",
             type: "congestion",

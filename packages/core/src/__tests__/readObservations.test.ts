@@ -3,8 +3,8 @@ import type { QueryRunner } from "../observationsByBbox.js";
 import { readObservations } from "../readObservations.js";
 
 const eventRow = {
-  id: "ndw:1",
-  source: "ndw",
+  id: "nl-ndw:1",
+  source: "nl-ndw",
   source_format: "datex2",
   domain: "roads",
   kind: "event",
@@ -50,7 +50,7 @@ describe("readObservations", () => {
     });
     expect(obs).toHaveLength(1);
     expect(obs[0]).toMatchObject({
-      id: "ndw:1",
+      id: "nl-ndw:1",
       sourceFormat: "datex2",
       kind: "event",
       type: "accident",
@@ -86,7 +86,7 @@ describe("readObservations", () => {
     const autobahn = {
       ...eventRow,
       id: "autobahn:1",
-      source: "autobahn-de",
+      source: "de-autobahn",
       data_updated_at: "2026-06-22T10:00:00Z",
       origin: { kind: "feed", attribution: { provider: "Autobahn", license: "dl-de/by-2-0" } },
     };
@@ -105,7 +105,7 @@ describe("readObservations", () => {
     expect(obs[0]!.id).toBe("nrw:9"); // newer survives (equal richness)
     expect(obs[0]!.mergedSources).toEqual([
       {
-        source: "autobahn-de",
+        source: "de-autobahn",
         id: "autobahn:1",
         attribution: { provider: "Autobahn", license: "dl-de/by-2-0" },
       },
@@ -113,7 +113,7 @@ describe("readObservations", () => {
   });
 
   it("returns both rows un-merged when dedupe is disabled", async () => {
-    const a = { ...eventRow, id: "autobahn:1", source: "autobahn-de" };
+    const a = { ...eventRow, id: "autobahn:1", source: "de-autobahn" };
     const b = { ...eventRow, id: "nrw:9", source: "nrw-viz" };
     const obs = await readObservations(stubDb([a, b]), {
       domain: "roads",

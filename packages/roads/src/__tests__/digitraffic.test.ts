@@ -7,7 +7,7 @@ import { mapSourceType } from "../taxonomy.js";
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/digitraffic/messages.json");
 
 const DIGITRAFFIC_SOURCE = {
-  id: "digitraffic-fi",
+  id: "fi-digitraffic",
   attribution: "Fintraffic / digitraffic.fi",
   country: "FI",
   license: "CC-BY-4.0",
@@ -21,10 +21,10 @@ describe("parseDigitraffic — fixture", () => {
     expect(events.length).toBeGreaterThan(0);
   });
 
-  it("emits sourceFormat:'digitraffic-json' on every event", () => {
+  it("emits sourceFormat:'digitraffic' on every event", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
-    expect(events.every((ev) => ev.sourceFormat === "digitraffic-json")).toBe(true);
+    expect(events.every((ev) => ev.sourceFormat === "digitraffic")).toBe(true);
   });
 
   it("emits domain:'roads' on every event", () => {
@@ -76,7 +76,7 @@ describe("parseDigitraffic — fixture", () => {
   it("prefixes event id with source id", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
-    expect(events.every((ev) => ev.id.startsWith("digitraffic-fi:"))).toBe(true);
+    expect(events.every((ev) => ev.id.startsWith("fi-digitraffic:"))).toBe(true);
   });
 
   it("sets headline from announcements[0].title", () => {

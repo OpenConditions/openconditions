@@ -42,9 +42,20 @@ export interface CredentialField extends CredentialSetup {
  * After the declarative-templating work, no feed field holds a function.
  */
 export interface FeedSourceBase {
+  /**
+   * Derived at load time from `[country, subdivision, operator, stream]`
+   * (country lower-cased, empties dropped, joined by "-"); always present on a
+   * loaded feed. Feed data files supply the parts, not the `id` itself.
+   */
   id: string;
   name: string;
   format: string;
+  /** Region-first identity: operator slug (lower-case alphanumeric). */
+  operator: string;
+  /** ISO 3166-2 subdivision or city slug, when the feed is region-scoped. */
+  subdivision?: string;
+  /** Disambiguates a second feed from the same operator (e.g. "flow"). */
+  stream?: string;
   produces?: "events" | "flow";
   url?: string | string[];
   /** Names a comma-separated env var to fan `url` out over, one resolved URL per item. */

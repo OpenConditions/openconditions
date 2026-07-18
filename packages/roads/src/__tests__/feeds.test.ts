@@ -19,27 +19,27 @@ const FIXTURES = join(import.meta.dirname, "fixtures");
 
 describe("FEED_SOURCES", () => {
   it("includes an ndw entry", () => {
-    const ndw = FEED_SOURCES.find((f) => f.id === "ndw");
+    const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw");
     expect(ndw).toBeDefined();
   });
 
   it("ndw entry has format datex2", () => {
-    const ndw = FEED_SOURCES.find((f) => f.id === "ndw")!;
+    const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw")!;
     expect(ndw.format).toBe("datex2");
   });
 
   it("ndw entry has gzip:true", () => {
-    const ndw = FEED_SOURCES.find((f) => f.id === "ndw")!;
+    const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw")!;
     expect(ndw.gzip).toBe(true);
   });
 
   it("ndw entry has license CC0-1.0", () => {
-    const ndw = FEED_SOURCES.find((f) => f.id === "ndw")!;
+    const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw")!;
     expect(ndw.license).toBe("CC0-1.0");
   });
 
   it("includes an ndw-flow entry that produces flow with a companion site table", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "ndw-flow");
+    const feed = FEED_SOURCES.find((f) => f.id === "nl-ndw-flow");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.produces).toBe("flow");
@@ -57,25 +57,25 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes drivebc with format open511 and license OGL-BC", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "drivebc");
+    const feed = FEED_SOURCES.find((f) => f.id === "ca-bc-drivebc");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("open511");
     expect(feed!.license).toBe("OGL-BC");
     expect(feed!.enabledByDefault).toBe(true);
   });
 
-  it("includes digitraffic-fi with format digitraffic-json and license CC-BY-4.0", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "digitraffic-fi");
+  it("includes digitraffic-fi with format digitraffic and license CC-BY-4.0", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "fi-digitraffic");
     expect(feed).toBeDefined();
-    expect(feed!.format).toBe("digitraffic-json");
+    expect(feed!.format).toBe("digitraffic");
     expect(feed!.license).toBe("CC-BY-4.0");
     expect(feed!.enabledByDefault).toBe(true);
   });
 
   it("includes autobahn-de resolving all motorways via the catalog (no static url)", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "autobahn-de");
+    const feed = FEED_SOURCES.find((f) => f.id === "de-autobahn");
     expect(feed).toBeDefined();
-    expect(feed!.format).toBe("autobahn-json");
+    expect(feed!.format).toBe("autobahn");
     expect(feed!.license).toBe("dl-de/by-2-0");
     expect(feed!.enabledByDefault).toBe(true);
     expect(feed!.catalog?.resolver).toBe("autobahn-index");
@@ -83,7 +83,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes wzdx enabled, resolving the feed registry via the catalog (no static url)", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "wzdx");
+    const feed = FEED_SOURCES.find((f) => f.id === "us-wzdx");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("wzdx");
     expect(feed!.enabledByDefault).toBe(true);
@@ -92,7 +92,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes dgt-es (Spain) as an open DATEX II feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "dgt-es");
+    const feed = FEED_SOURCES.find((f) => f.id === "es-dgt");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.license).toBe("CC-BY-4.0");
@@ -102,7 +102,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes svzbw-de (Baden-Württemberg roadworks) as an open DATEX II feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "svzbw-de");
+    const feed = FEED_SOURCES.find((f) => f.id === "de-bw-svzbw");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.license).toBe("dl-de/by-2-0");
@@ -111,7 +111,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes dir-fr (France DIR) as an open DATEX II feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "dir-fr");
+    const feed = FEED_SOURCES.find((f) => f.id === "fr-dir");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.license).toBe("etalab-2.0");
@@ -120,7 +120,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes hc-hr (Croatia) as a Basic-auth DATEX II feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "hc-hr");
+    const feed = FEED_SOURCES.find((f) => f.id === "hr-hc");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth).toEqual({
@@ -131,7 +131,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes nzta-nz (New Zealand) as an open GeoJSON feed with a mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "nzta-nz");
+    const feed = FEED_SOURCES.find((f) => f.id === "nz-nzta");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("geojson");
     expect(feed!.license).toBe("CC-BY-4.0");
@@ -140,7 +140,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes berlin-de (Berlin VIZ) as an open GeoJSON feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "berlin-de");
+    const feed = FEED_SOURCES.find((f) => f.id === "de-be-berlin");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("geojson");
     expect(feed!.license).toBe("dl-de/by-2-0");
@@ -148,30 +148,30 @@ describe("FEED_SOURCES", () => {
     expect(feed!.enabledByDefault).toBe(true);
   });
 
-  it("includes on-511 (Ontario) as a keyless ibi511-json feed", () => {
+  it("includes on-511 (Ontario) as a keyless ibi511 feed", () => {
     // The 511on.ca get/event endpoint is open — verified live (HTTP 200, full
     // event set) and the API docs declare no authentication.
-    const feed = FEED_SOURCES.find((f) => f.id === "on-511");
+    const feed = FEED_SOURCES.find((f) => f.id === "ca-on-511");
     expect(feed).toBeDefined();
-    expect(feed!.format).toBe("ibi511-json");
+    expect(feed!.format).toBe("ibi511");
     expect(feed!.auth).toBeUndefined();
     expect(feed!.requiredEnv).toBeUndefined();
     expect(feed!.enabledByDefault).toBe(true);
   });
 
-  it("includes ny-511 (511NY) as a query-key ibi511-json feed", () => {
+  it("includes ny-511 (511NY) as a query-key ibi511 feed", () => {
     // The 511ny.org /api/v2/get/event path requires a key (returns "Invalid Key"
     // without one), unlike Ontario's open endpoint.
-    const feed = FEED_SOURCES.find((f) => f.id === "ny-511");
+    const feed = FEED_SOURCES.find((f) => f.id === "us-ny-511");
     expect(feed).toBeDefined();
-    expect(feed!.format).toBe("ibi511-json");
+    expect(feed!.format).toBe("ibi511");
     expect(feed!.auth?.kind).toBe("query-key");
   });
 
-  it("includes lta-sg (Singapore) as a header-key lta-json feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "lta-sg");
+  it("includes lta-sg (Singapore) as a header-key lta feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "sg-lta");
     expect(feed).toBeDefined();
-    expect(feed!.format).toBe("lta-json");
+    expect(feed!.format).toBe("lta");
     expect(feed!.auth).toEqual({
       kind: "header-key",
       header: "AccountKey",
@@ -180,17 +180,17 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes mtq-qc (Québec) as an open GeoJSON feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "mtq-qc");
+    const feed = FEED_SOURCES.find((f) => f.id === "ca-qc-mtq");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("geojson");
     expect(feed!.license).toBe("CC-BY-4.0");
     expect(feed!.geojson?.defaultType).toBe("roadworks");
   });
 
-  it("includes gddkia-pl (Poland) as a CC0 gddkia-xml feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "gddkia-pl");
+  it("includes gddkia-pl (Poland) as a CC0 gddkia feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "pl-gddkia");
     expect(feed).toBeDefined();
-    expect(feed!.format).toBe("gddkia-xml");
+    expect(feed!.format).toBe("gddkia");
     expect(feed!.license).toBe("CC0-1.0");
     expect(feed!.country).toBe("PL");
     // Canonical www host — the bare archiwum host redirects (via an http hop)
@@ -199,7 +199,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes vegvesen-no (Norway) as a Basic-auth DATEX II feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "vegvesen-no");
+    const feed = FEED_SOURCES.find((f) => f.id === "no-vegvesen");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth?.kind).toBe("basic");
@@ -207,7 +207,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes vegagerdin-is (Iceland) as a GeoJSON feed with lon/lat fields", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "vegagerdin-is");
+    const feed = FEED_SOURCES.find((f) => f.id === "is-vegagerdin");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("geojson");
     expect(feed!.geojson?.lonField).toBe("X");
@@ -215,7 +215,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes qld-traffic (Queensland) as a query-key GeoJSON feed with a default public key", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "qld-traffic");
+    const feed = FEED_SOURCES.find((f) => f.id === "au-qld-traffic");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("geojson");
     expect(feed!.license).toBe("CC-BY-4.0");
@@ -235,7 +235,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes cita-lu (Luxembourg) as a CC0 DATEX II feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "cita-lu");
+    const feed = FEED_SOURCES.find((f) => f.id === "lu-cita");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.license).toBe("CC0-1.0");
@@ -243,7 +243,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes brussels-be as a CC0 GeoJSON feed (EPSG:3812 reprojected)", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "brussels-be");
+    const feed = FEED_SOURCES.find((f) => f.id === "be-brussels");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("geojson");
     expect(feed!.license).toBe("CC0-1.0");
@@ -251,14 +251,14 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes flanders-be (Flanders) as a DATEX II feed (EPSG:31370 reprojected)", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "flanders-be");
+    const feed = FEED_SOURCES.find((f) => f.id === "be-flanders");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.country).toBe("BE");
   });
 
   it("includes trafficsa-au (South Australia) as a CC-BY GeoJSON feed (2 layers)", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "trafficsa-au");
+    const feed = FEED_SOURCES.find((f) => f.id === "au-sa-trafficsa");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("geojson");
     expect(Array.isArray(feed!.url)).toBe(true);
@@ -266,7 +266,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes livetraffic-nsw (NSW) as a header-key GeoJSON feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "livetraffic-nsw");
+    const feed = FEED_SOURCES.find((f) => f.id === "au-nsw-livetraffic");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("geojson");
     expect(feed!.auth?.kind).toBe("header-key");
@@ -274,7 +274,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes longdo-th (Thailand) as a flatjson feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "longdo-th");
+    const feed = FEED_SOURCES.find((f) => f.id === "th-longdo");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("flatjson");
     expect(feed!.geojson?.lonField).toBe("longitude");
@@ -284,12 +284,12 @@ describe("FEED_SOURCES", () => {
     expect(parserFor("flatjson")).toBe(parseFlatJson);
   });
 
-  it("returns parseTrafikverket for trafikverket-json", () => {
-    expect(parserFor("trafikverket-json")).toBe(parseTrafikverket);
+  it("returns parseTrafikverket for trafikverket", () => {
+    expect(parserFor("trafikverket")).toBe(parseTrafikverket);
   });
 
   it("includes nap-si (Slovenia) as a Basic-auth DATEX II feed covering events + roadworks", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "nap-si");
+    const feed = FEED_SOURCES.find((f) => f.id === "si-nap");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth?.kind).toBe("basic");
@@ -302,7 +302,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes trafikverket-se (Sweden) as a DATEX II GET feed (query-key, lon-lat posList)", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "trafikverket-se");
+    const feed = FEED_SOURCES.find((f) => f.id === "se-trafikverket");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth).toEqual({
@@ -316,7 +316,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes ba-cortes-ar (Buenos Aires) as a templated geojson feed gated by requiredEnv", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "ba-cortes-ar")!;
+    const feed = FEED_SOURCES.find((f) => f.id === "ar-ba-cortes")!;
     expect(feed.format).toBe("geojson");
     expect(typeof feed.url).toBe("string");
     expect(feed.requiredEnv).toContain("BA_CLIENT_ID");
@@ -328,7 +328,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes nationalhighways-gb (England) as a header-key DATEX II feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "nationalhighways-gb");
+    const feed = FEED_SOURCES.find((f) => f.id === "gb-nationalhighways");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth).toEqual({
@@ -340,7 +340,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes vejdirektoratet-dk (Denmark) as a query-key DATEX II feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "vejdirektoratet-dk");
+    const feed = FEED_SOURCES.find((f) => f.id === "dk-vejdirektoratet");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth?.kind).toBe("query-key");
@@ -349,7 +349,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes asfinag-at (Austria) as a Basic-auth DATEX II feed covering planned + unplanned events", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "asfinag-at");
+    const feed = FEED_SOURCES.find((f) => f.id === "at-asfinag");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth?.kind).toBe("basic");
@@ -360,7 +360,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes tarktee-ee (Estonia) as a query-key DATEX II feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "tarktee-ee");
+    const feed = FEED_SOURCES.find((f) => f.id === "ee-tarktee");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth?.kind).toBe("query-key");
@@ -368,7 +368,7 @@ describe("FEED_SOURCES", () => {
   });
 
   it("includes verkehr-nrw-de (Straßen.NRW) as an mTLS DATEX II feed gated by requiredEnv", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "verkehr-nrw-de");
+    const feed = FEED_SOURCES.find((f) => f.id === "de-nw-verkehr");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("datex2");
     expect(feed!.auth).toEqual({
@@ -395,7 +395,7 @@ describe("FEED_SOURCES", () => {
 
   it("registers the German state Mobilithek feeds, all sharing the org cert and gated by a per-region subscription id", () => {
     const regions = FEED_SOURCES.filter(
-      (f) => f.id === "verkehr-nrw-de" || f.id.startsWith("mobilithek-")
+      (f) => f.id === "de-nw-verkehr" || f.id.includes("-mobilithek")
     );
     // NRW-LVZ + NRW-kommunal + NRW-Mobidrom + 13 states.
     expect(regions.length).toBeGreaterThanOrEqual(16);
@@ -423,7 +423,7 @@ describe("FEED_SOURCES", () => {
       expect(feed.expandEnv).toBe(feed.requiredEnv![0]);
       expect(resolveFeedUrls(feed, resolvedEnv({}))).toEqual([]);
       // The Mobidrom bundle is CC-BY-SA and must stay isolated in its own feed.
-      if (feed.id === "mobilithek-nrw-mobidrom") expect(feed.license).toBe("CC-BY-SA-4.0");
+      if (feed.id === "de-nw-mobilithek-mobidrom") expect(feed.license).toBe("CC-BY-SA-4.0");
     }
   });
 
@@ -437,10 +437,10 @@ describe("FEED_SOURCES", () => {
     expect(new Set(FEED_SOURCES.map((f) => f.id)).size).toBe(FEED_SOURCES.length);
   });
 
-  it("includes nyc-dot-speed-us as a keyless nyc-dot-speed-json flow feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "nyc-dot-speed-us");
+  it("includes nyc-dot-speed-us as a keyless nyc-dot flow feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "us-nyc-dot");
     expect(feed).toBeDefined();
-    expect(feed!.format).toBe("nyc-dot-speed-json");
+    expect(feed!.format).toBe("nyc-dot");
     expect(feed!.produces).toBe("flow");
     expect(feed!.license).toBe("NYC-Open-Data");
     expect(feed!.country).toBe("US");
@@ -448,10 +448,10 @@ describe("FEED_SOURCES", () => {
     expect(feed!.enabledByDefault).toBe(true);
   });
 
-  it("includes ohgo-oh-us as a keyed ohgo-json flow feed", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "ohgo-oh-us");
+  it("includes ohgo-oh-us as a keyed ohgo flow feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "us-oh-ohgo");
     expect(feed).toBeDefined();
-    expect(feed!.format).toBe("ohgo-json");
+    expect(feed!.format).toBe("ohgo");
     expect(feed!.produces).toBe("flow");
     expect(feed!.license).toBe("US-Gov-Public-Domain");
     expect(feed!.country).toBe("US");
@@ -483,24 +483,24 @@ describe("parserFor", () => {
     expect(parserFor("geojson")).toBe(parseGeoJson);
   });
 
-  it("returns parseIbi511 for ibi511-json", () => {
-    expect(parserFor("ibi511-json")).toBe(parseIbi511);
+  it("returns parseIbi511 for ibi511", () => {
+    expect(parserFor("ibi511")).toBe(parseIbi511);
   });
 
-  it("returns parseLtaIncidents for lta-json", () => {
-    expect(parserFor("lta-json")).toBe(parseLtaIncidents);
+  it("returns parseLtaIncidents for lta", () => {
+    expect(parserFor("lta")).toBe(parseLtaIncidents);
   });
 
-  it("returns parseGddkia for gddkia-xml", () => {
-    expect(parserFor("gddkia-xml")).toBe(parseGddkia);
+  it("returns parseGddkia for gddkia", () => {
+    expect(parserFor("gddkia")).toBe(parseGddkia);
   });
 
-  it("returns parseAutobahn for autobahn-json", () => {
-    expect(parserFor("autobahn-json")).toBe(parseAutobahn);
+  it("returns parseAutobahn for autobahn", () => {
+    expect(parserFor("autobahn")).toBe(parseAutobahn);
   });
 
-  it("returns parseDigitraffic for digitraffic-json", () => {
-    expect(parserFor("digitraffic-json")).toBe(parseDigitraffic);
+  it("returns parseDigitraffic for digitraffic", () => {
+    expect(parserFor("digitraffic")).toBe(parseDigitraffic);
   });
 
   it("throws for an unsupported format", () => {
@@ -510,7 +510,7 @@ describe("parserFor", () => {
 
 describe("Buffer tolerance", () => {
   const drivebc_src = {
-    id: "drivebc",
+    id: "ca-bc-drivebc",
     attribution: "DriveBC",
     country: "CA",
     license: "OGL-BC",
@@ -522,13 +522,13 @@ describe("Buffer tolerance", () => {
     license: "CC0-1.0",
   } as const;
   const autobahn_src = {
-    id: "autobahn-de",
+    id: "de-autobahn",
     attribution: "Autobahn GmbH des Bundes",
     country: "DE",
     license: "dl-de/by-2-0",
   } as const;
   const digitraffic_src = {
-    id: "digitraffic-fi",
+    id: "fi-digitraffic",
     attribution: "Fintraffic / Digitraffic",
     country: "FI",
     license: "CC-BY-4.0",
@@ -573,20 +573,20 @@ describe("Buffer tolerance", () => {
 
 describe("feedToSourceDescriptor", () => {
   it("maps ndw feed to a SourceDescriptor with matching license", () => {
-    const ndw = FEED_SOURCES.find((f) => f.id === "ndw")!;
+    const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw")!;
     const desc = feedToSourceDescriptor(ndw);
     expect(desc.license).toBe("CC0-1.0");
   });
 
   it("maps ndw feed id and attribution correctly", () => {
-    const ndw = FEED_SOURCES.find((f) => f.id === "ndw")!;
+    const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw")!;
     const desc = feedToSourceDescriptor(ndw);
-    expect(desc.id).toBe("ndw");
+    expect(desc.id).toBe("nl-ndw");
     expect(desc.attribution).toBe("NDW / Rijkswaterstaat");
   });
 
   it("includes licenseUrl when present", () => {
-    const ndw = FEED_SOURCES.find((f) => f.id === "ndw")!;
+    const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw")!;
     const desc = feedToSourceDescriptor(ndw);
     expect(desc.licenseUrl).toBeDefined();
   });

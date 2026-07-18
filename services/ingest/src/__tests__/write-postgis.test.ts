@@ -5,9 +5,9 @@ import { toRow } from "../pipeline/write-postgis.js";
 /** A minimal valid roads event; overrides exercise the timestamp coercion. */
 function baseObs(overrides: Record<string, unknown> = {}): Observation {
   return {
-    id: "on-511:1",
-    source: "on-511",
-    sourceFormat: "ibi511-json",
+    id: "ca-on-511:1",
+    source: "ca-on-511",
+    sourceFormat: "ibi511",
     domain: "roads",
     kind: "event",
     type: "roadworks",
@@ -125,10 +125,11 @@ describe("commons fields — toRow mapping", () => {
 });
 
 describe("commons fields — content_hash policy", () => {
-  // Pinned pre-change hash of a plain (no commons fields) observation. A plain
-  // observation MUST hash identically to before the commons columns existed, so
-  // existing feeds do not mass-rewrite when this lands.
-  const GOLDEN_PLAIN_HASH = "23a0a4ac868c70ed7c6fbafbc66421a4eec176d4d429e03efd915fe519aeae50";
+  // Pinned hash of a plain (no commons fields) observation. `sourceFormat` is
+  // part of the content material, so this value is pinned to the standardized
+  // format id ("ibi511"); the identity/derived fields stay excluded (asserted
+  // below). Feed-id/format standardization re-pins this once.
+  const GOLDEN_PLAIN_HASH = "2e3d52cb6234ff978875df49a7d6a9336bff2e3b7c4cf7a4c33ab172e4654fe5";
 
   it("is byte-identical for a no-commons-fields observation", () => {
     expect(toRow(baseObs()).content_hash).toBe(GOLDEN_PLAIN_HASH);

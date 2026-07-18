@@ -6,7 +6,7 @@ import { registerFeedStatusRoute } from "../publish-routes.js";
 
 const app = Fastify();
 const store = new FeedStatusStore();
-store.recordSuccess("ndw", "2026-07-01T00:00:00.000Z", 5, 100);
+store.recordSuccess("nl-ndw", "2026-07-01T00:00:00.000Z", 5, 100);
 
 beforeAll(async () => {
   const registry = await buildDomainRegistry();
@@ -29,7 +29,7 @@ describe("GET /feeds/status", () => {
         lastRowCount?: number;
       }[];
     };
-    const ndw = body.feeds.find((f) => f.id === "ndw");
+    const ndw = body.feeds.find((f) => f.id === "nl-ndw");
     expect(ndw).toBeTruthy();
     expect(ndw?.enabled).toBe(true);
     expect(ndw?.hasCredentials).toBe(true);
@@ -50,7 +50,7 @@ describe("GET /feeds/status", () => {
     try {
       const res = await app.inject({ method: "GET", url: "/feeds/status" });
       const body = res.json() as { feeds: { id: string; missingEnv: string[] }[] };
-      const hcHr = body.feeds.find((f) => f.id === "hc-hr");
+      const hcHr = body.feeds.find((f) => f.id === "hr-hc");
       expect(hcHr).toBeTruthy();
       expect(hcHr?.missingEnv).toEqual(["HC_HR_PASSWORD"]);
     } finally {

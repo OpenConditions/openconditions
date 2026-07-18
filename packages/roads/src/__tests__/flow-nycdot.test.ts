@@ -3,7 +3,7 @@ import { parseNycDotFlow } from "../flow-nycdot.js";
 import type { SourceDescriptor } from "../types.js";
 
 const src = {
-  id: "nyc-dot-speed-us",
+  id: "us-nyc-dot",
   attribution: "NYC DOT",
   country: "US",
   license: "NYC-Open-Data",
@@ -24,9 +24,9 @@ describe("parseNycDotFlow", () => {
   it("emits a LineString flow with lon,lat order and mph→kph", () => {
     const { flows, events } = parseNycDotFlow(payload, src);
     expect(flows).toHaveLength(1);
-    expect(flows[0]!.id).toBe("nyc-dot-speed-us:4616240");
-    expect(flows[0]!.source).toBe("nyc-dot-speed-us");
-    expect(flows[0]!.sourceFormat).toBe("nyc-dot-speed-json");
+    expect(flows[0]!.id).toBe("us-nyc-dot:4616240");
+    expect(flows[0]!.source).toBe("us-nyc-dot");
+    expect(flows[0]!.sourceFormat).toBe("nyc-dot");
     expect(flows[0]!.geometry).toEqual({
       type: "LineString",
       coordinates: [

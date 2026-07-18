@@ -1,6 +1,6 @@
 [
   {
-    id: "nzta-nz",
+    operator: "nzta",
     name: "NZTA Road Events (New Zealand)",
     format: "geojson",
     url: "https://opendata-nzta.opendata.arcgis.com/datasets/NZTA::road-events.geojson",

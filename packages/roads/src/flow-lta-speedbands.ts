@@ -75,7 +75,7 @@ export function parseLtaSpeedBands(input: string | Buffer, src: SourceDescriptor
       flows.push({
         id: `${src.id}:${linkId}`,
         source: src.id,
-        sourceFormat: "lta-speedbands-json",
+        sourceFormat: "lta-speedbands",
         domain: "roads",
         kind: "measurement",
         metric: "flow",

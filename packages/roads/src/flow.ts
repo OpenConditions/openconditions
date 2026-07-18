@@ -248,7 +248,7 @@ export function parseDigitrafficFlow(
         const flow: RoadFlow = {
           id: `${src.id}:${lineId}`,
           source: src.id,
-          sourceFormat: "digitraffic-json",
+          sourceFormat: "digitraffic",
           domain: "roads",
           kind: "measurement",
           metric: "flow",

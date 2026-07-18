@@ -1,6 +1,6 @@
 [
   {
-    id: "vejdirektoratet-dk",
+    operator: "vejdirektoratet",
     name: "Vejdirektoratet (Denmark)",
     format: "datex2",
     url: "https://data.vd-nap.dk/api/datex2/traffic-events",

@@ -6,6 +6,7 @@ describe("feeds-lint license rule", () => {
     const errors = lintFeed({
       id: "x",
       name: "X",
+      operator: "x",
       format: "geojson",
       url: "https://x.test/a.json",
       cadenceSec: 300,
@@ -23,6 +24,7 @@ describe("feeds-lint license rule", () => {
     const errors = lintFeed({
       id: "x",
       name: "X",
+      operator: "x",
       format: "geojson",
       url: "https://x.test/a.json",
       cadenceSec: 300,
@@ -40,6 +42,7 @@ describe("feeds-lint license rule", () => {
     const errors = lintFeed({
       id: "x",
       name: "X",
+      operator: "x",
       format: "datex2",
       url: "https://x.test/a.xml",
       siteTable: { url: "http://169.254.169.254/latest/meta-data" },
@@ -58,6 +61,7 @@ describe("feeds-lint license rule", () => {
     const errors = lintFeed({
       id: "x",
       name: "X",
+      operator: "x",
       format: "datex2",
       url: "https://x.test/a.xml",
       stationRegistry: { url: "http://169.254.169.254/latest/meta-data", format: "webtris-sites" },

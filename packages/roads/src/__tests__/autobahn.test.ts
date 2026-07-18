@@ -7,7 +7,7 @@ import { mapSourceType } from "../taxonomy.js";
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/autobahn/warning.json");
 
 const AUTOBAHN_SOURCE = {
-  id: "autobahn-de",
+  id: "de-autobahn",
   attribution: "Autobahn GmbH des Bundes",
   country: "DE",
   license: "dl-de/by-2-0",
@@ -22,11 +22,11 @@ describe("parseAutobahn — warning fixture", () => {
     expect(events.length).toBeGreaterThan(0);
   });
 
-  it("emits sourceFormat:'autobahn-json' and domain:'roads' on every event", () => {
+  it("emits sourceFormat:'autobahn' and domain:'roads' on every event", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
 
-    expect(events.every((ev) => ev.sourceFormat === "autobahn-json")).toBe(true);
+    expect(events.every((ev) => ev.sourceFormat === "autobahn")).toBe(true);
     expect(events.every((ev) => ev.domain === "roads")).toBe(true);
   });
 
@@ -151,7 +151,7 @@ describe("parseAutobahn — warning fixture", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
 
-    expect(events.every((ev) => ev.id.startsWith("autobahn-de:"))).toBe(true);
+    expect(events.every((ev) => ev.id.startsWith("de-autobahn:"))).toBe(true);
   });
 
   it("carries license from the source descriptor via origin", () => {

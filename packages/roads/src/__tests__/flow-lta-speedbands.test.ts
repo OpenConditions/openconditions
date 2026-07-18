@@ -3,7 +3,7 @@ import { parseLtaSpeedBands } from "../flow-lta-speedbands.js";
 import type { SourceDescriptor } from "../types.js";
 
 const src = {
-  id: "lta-speedbands-sg",
+  id: "sg-lta-speedbands",
   attribution: "Land Transport Authority (Singapore)",
   country: "SG",
   license: "Singapore-ODL-1.0",
@@ -31,8 +31,8 @@ describe("parseLtaSpeedBands", () => {
   it("builds a Start→End LineString and the band-midpoint speed", () => {
     const { flows } = parseLtaSpeedBands(payload, src);
     expect(flows).toHaveLength(1);
-    expect(flows[0]!.id).toBe("lta-speedbands-sg:103000000");
-    expect(flows[0]!.sourceFormat).toBe("lta-speedbands-json");
+    expect(flows[0]!.id).toBe("sg-lta-speedbands:103000000");
+    expect(flows[0]!.sourceFormat).toBe("lta-speedbands");
     expect(flows[0]!.speedKph).toBe(25); // (21 + 29) / 2
     expect(flows[0]!.los).toBe("unknown");
     expect(flows[0]!.geometry).toEqual({

@@ -1,6 +1,6 @@
 [
   {
-    id: "vegagerdin-is",
+    operator: "vegagerdin",
     name: "Vegagerðin road conditions (Iceland)",
     format: "geojson",
     url: "https://gagnaveita.vegagerdin.is/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=gis:roadconditions_pointincident&outputFormat=application/json",

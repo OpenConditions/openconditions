@@ -1,6 +1,6 @@
 [
   {
-    id: "hc-hr",
+    operator: "hc",
     name: "Hrvatske ceste roadworks (Croatia)",
     format: "datex2",
     url: "https://b2b.promet-info.hr/dc/b2b.hc.roadworks.datex",

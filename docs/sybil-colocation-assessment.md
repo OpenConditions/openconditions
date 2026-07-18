@@ -10,7 +10,7 @@
 > **Bottom line up front.** Investigating is worthwhile, but the _literal_ co-location graph is **not** a near-term
 > build: it is blocked by a direct conflict with our privacy model, a user-density bootstrap problem, significant
 > mobile work, and the fact that a formal Sybil-resistance guarantee on a sparse graph is an open research problem.
-> The near-term, privacy-compatible, ADR-safe work is **device-attestation-as-Sybil-cost** (advisory, non-gating —
+> The near-term, privacy-compatible, design-safe work is **device-attestation-as-Sybil-cost** (advisory, non-gating —
 > shipped in part) plus keeping the co-reporting graph **monitoring-only**. The co-location graph stays an
 > aspirational end-state gated on a privacy-preserving proximity design _and_ user density.
 
@@ -39,7 +39,7 @@ rest of this system:
 - Server-side location collection is prohibited by our posture.
 - The entire probe-data layer (`docs/probe-p1-feasibility-spike.md`) exists so that raw GPS/trajectories **never
   leave the device**.
-- The ADR explicitly forbids a **"nearby-users / live-presence" feature** — a documented tracking vector (Ghost
+- OpenConditions' design explicitly forbids a **"nearby-users / live-presence" feature** — a documented tracking vector (Ghost
   Riders itself shows a presence layer leaks movement).
 
 So the naive version — attach GPS to each report and cluster server-side — is a non-starter; it _is_ the tracking
@@ -59,12 +59,12 @@ has no signal.
 ### 2.3 The mobile-platform lift
 
 Real co-location attestation is significant mobile engineering — background BLE/proximity, permissions, battery — on
-top of Plan 4's already-unvalidated continuous on-device work, and hardware-backed proximity is not uniformly
+top of the probe layer's already-unvalidated continuous on-device work, and hardware-backed proximity is not uniformly
 available. It is not a server-side change we can ship and test headlessly.
 
 ### 2.4 It is genuinely open research
 
-This is _why_ the architecture record's crowd-reporting plan files it under "funded research," not a backlog item. A
+This is _why_ the crowd-reporting design files it under "funded research," not a backlog item. A
 **formal** Sybil-resistance guarantee on a **sparse** co-location graph is not a bounded engineering task; the paper
 proposes the direction, it does not ship a solution with proven bounds at small scale.
 
@@ -144,13 +144,13 @@ Google/Apple-dependency and de-Googled-device-exclusion tradeoff — hence advis
 OpenConditions already computes a **co-reporting graph** (`coReportingClusters`) — distinct key-pairs that report the
 same phenomenon. It is tempting to promote it to an enforcement gate, but that is **wrong on two counts**:
 
-1. **The ADR forbids it.** Genuine events cluster — a real crash _is_ seen by many co-located witnesses — so a hard
-   block on co-reporting would punish honest multi-witness reports. The ADR mandates it stay "a monitoring signal,
+1. **The design forbids it.** Genuine events cluster — a real crash _is_ seen by many co-located witnesses — so a hard
+   block on co-reporting would punish honest multi-witness reports. The design mandates it stay "a monitoring signal,
    never a hard block."
 2. **It is a privacy step in the wrong direction.** Unlike the co-_location_ graph (which needs new location data),
    the co-_reporting_ graph reuses data we already hold — but it is still a **pseudonym-correlation graph**. _Acting_
    on it (vs. merely monitoring) starts to reconstruct who-reports-with-whom, edging toward the same social/tracking
-   surface the ADR forbids and enabling de-pseudonymization (two keys that always co-report may be one person's two
+   surface the design forbids and enabling de-pseudonymization (two keys that always co-report may be one person's two
    devices, or two people who travel together).
 
 So the co-reporting graph stays a **reviewer-facing monitoring signal only**. That is what it already is, and it is
@@ -178,7 +178,7 @@ on its own, to safely route on corroboration or train reputation from it — tho
 The real unlock remains the co-location graph (or an equivalent proof-of-personhood), which stays behind the
 privacy-preserving-proximity + density + research wall. This document exists so that the conservative default is
 understood as a _deliberate, evidence-based choice_, not an oversight — and so the door is explicitly left open: the
-ADR's "separately calibrated high-evidence policy" clause and the `applyExternalResolution("objective")` path are
+design's "separately calibrated high-evidence policy" clause and the `applyExternalResolution("objective")` path are
 already in place, so if a privacy-preserving co-location (or personhood) signal ever lands, enabling
 survived-corroboration reputation or blast-radius advisory routing becomes an _additive_ change, not a rearchitecture.
 

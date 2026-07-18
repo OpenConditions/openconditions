@@ -6,6 +6,7 @@ describe("FeedSourceBase.catalog", () => {
     const feed: FeedSourceBase = {
       id: "wzdx",
       name: "WZDx (United States)",
+      operator: "test",
       format: "wzdx",
       catalog: { resolver: "wzdx-registry", filter: { country: "US" } },
       cadenceSec: 300,

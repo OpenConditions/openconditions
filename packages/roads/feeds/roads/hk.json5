@@ -1,8 +1,8 @@
 [
   {
-    id: "hk-td-flow",
+    operator: "td",
     name: "Transport Department traffic detectors (Hong Kong)",
-    format: "hk-raw-xml",
+    format: "hk-td",
     produces: "flow",
     url: "https://resource.data.one.gov.hk/td/traffic-detectors/rawSpeedVol-all.xml",
     stationRegistry: {

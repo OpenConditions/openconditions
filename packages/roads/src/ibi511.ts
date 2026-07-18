@@ -150,7 +150,7 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
     out.push({
       id: `${src.id}:${localId}`,
       source: src.id,
-      sourceFormat: "ibi511-json",
+      sourceFormat: "ibi511",
       domain: "roads",
       kind: "event",
       type,

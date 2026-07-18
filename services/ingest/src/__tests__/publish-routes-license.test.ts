@@ -71,7 +71,7 @@ describe("license enforcement on the redistributable export routes", () => {
         id: "geo-sa-1",
         source: "lic-test-geojson",
         headline: "Share-alike roadworks",
-        origin: { kind: "feed", attribution: { provider: "nap-si", license: "CC-BY-SA-4.0" } },
+        origin: { kind: "feed", attribution: { provider: "si-nap", license: "CC-BY-SA-4.0" } },
       }),
       baseEvent({
         id: "geo-ok-1",

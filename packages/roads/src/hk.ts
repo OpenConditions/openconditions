@@ -114,7 +114,7 @@ export function parseHkRawFlow(
       flows.push({
         id: `${src.id}:${id}`,
         source: src.id,
-        sourceFormat: "hk-raw-xml",
+        sourceFormat: "hk-td",
         domain: "roads",
         kind: "measurement",
         metric: "flow",

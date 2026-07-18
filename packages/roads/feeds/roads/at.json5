@@ -1,6 +1,6 @@
 [
   {
-    id: "asfinag-at",
+    operator: "asfinag",
     name: "ASFINAG events (Austria)",
     format: "datex2",
     url: [

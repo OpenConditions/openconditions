@@ -1,6 +1,6 @@
 [
   {
-    id: "tarktee-ee",
+    operator: "tarktee",
     name: "Tark Tee (Estonia)",
     format: "datex2",
     url: "https://tarktee.transpordiamet.ee/api/datex2/situation",

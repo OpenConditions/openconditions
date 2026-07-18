@@ -1,8 +1,8 @@
 [
   {
-    id: "lta-sg",
+    operator: "lta",
     name: "LTA DataMall Traffic Incidents (Singapore)",
-    format: "lta-json",
+    format: "lta",
     url: "https://datamall2.mytransport.sg/ltaodataservice/TrafficIncidents",
     auth: {
       kind: "header-key",
@@ -32,9 +32,10 @@
     },
   },
   {
-    id: "lta-speedbands-sg",
+    operator: "lta",
+    stream: "speedbands",
     name: "LTA DataMall Traffic Speed Bands (Singapore)",
-    format: "lta-speedbands-json",
+    format: "lta-speedbands",
     produces: "flow",
     url: "https://datamall2.mytransport.sg/ltaodataservice/v3/TrafficSpeedBands",
     auth: {

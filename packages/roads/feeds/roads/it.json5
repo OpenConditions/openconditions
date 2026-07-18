@@ -1,8 +1,8 @@
 [
   {
-    id: "turin-5t-flow",
+    operator: "turin",
     name: "5T real-time traffic flow (Turin)",
-    format: "turin-fdt-xml",
+    format: "fdt",
     produces: "flow",
     url: "https://opendata.5t.torino.it/get_fdt",
     cadenceSec: 300,

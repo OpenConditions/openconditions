@@ -4,8 +4,9 @@ import { feedSourceBaseSchema } from "../feed-schema.js";
 import type { FeedSourceBase } from "../feed-source.js";
 
 const valid: FeedSourceBase = {
-  id: "ndw",
+  id: "nl-ndw",
   name: "NDW (Netherlands)",
+  operator: "ndw",
   format: "datex2",
   url: "http://opendata.ndw.nu/actueel_beeld.xml.gz",
   gzip: true,
@@ -22,7 +23,7 @@ const valid: FeedSourceBase = {
 describe("feedSourceBaseSchema", () => {
   it("parses a valid feed", () => {
     const parsed = feedSourceBaseSchema.parse(valid);
-    expect(parsed.id).toBe("ndw");
+    expect(parsed.id).toBe("nl-ndw");
   });
 
   it("accepts every FeedAuth kind via the discriminated union", () => {

@@ -116,7 +116,7 @@ export function parseTrafikverket(
         out.push({
           id: `${src.id}:${dev.Id ?? out.length}`,
           source: src.id,
-          sourceFormat: "trafikverket-json",
+          sourceFormat: "trafikverket",
           domain: "roads",
           kind: "event",
           type,

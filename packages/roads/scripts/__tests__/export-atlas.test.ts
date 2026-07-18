@@ -18,7 +18,7 @@ const withClosure = {
 } as unknown as FeedSourceBase;
 
 const staticFeed: FeedSourceBase = {
-  id: "ndw",
+  id: "nl-ndw",
   name: "NDW",
   format: "datex2",
   url: "https://opendata.ndw.nu/actueel_beeld.xml.gz",
@@ -49,7 +49,7 @@ describe("buildAtlas", () => {
   it("drops function-valued fields, keeps static + resolved feeds, dedupes by id", () => {
     const atlas = buildAtlas([staticFeed, withClosure], [[resolvedWzdx]]);
     const ids = atlas.map((f) => f.id).sort();
-    expect(ids).toEqual(["mobilithek-x", "ndw", "wzdx-alpha"].sort());
+    expect(ids).toEqual(["mobilithek-x", "nl-ndw", "wzdx-alpha"].sort());
     const x = atlas.find((f) => f.id === "mobilithek-x");
     expect(typeof x?.url).not.toBe("function"); // closure dropped → undefined
     // no descriptor holds any function-valued field
@@ -60,9 +60,9 @@ describe("buildAtlas", () => {
   });
 
   it("prefers the curated feed over a resolved feed on id collision", () => {
-    const dupResolved = { ...resolvedWzdx, id: "ndw", attribution: "resolved" };
+    const dupResolved = { ...resolvedWzdx, id: "nl-ndw", attribution: "resolved" };
     const atlas = buildAtlas([staticFeed], [[dupResolved]]);
-    expect(atlas.filter((f) => f.id === "ndw")).toHaveLength(1);
-    expect(atlas.find((f) => f.id === "ndw")?.attribution).toBe("NDW");
+    expect(atlas.filter((f) => f.id === "nl-ndw")).toHaveLength(1);
+    expect(atlas.find((f) => f.id === "nl-ndw")?.attribution).toBe("NDW");
   });
 });

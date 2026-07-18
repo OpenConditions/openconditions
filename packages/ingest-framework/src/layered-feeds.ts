@@ -41,7 +41,25 @@ export async function loadFeeds(
   const baked = loadFeedFiles(opts.bakedInDir, schema) as FeedSourceBase[];
   const mounted = loadMountedFeeds(opts.mountDir, schema);
   const remote = await loadRemoteFeeds(opts.domain, opts.remote, schema, deps);
+  // The baked-in set is authored (derived ids must be globally unique); a
+  // collision there would silently collapse two feeds in the merge, so fail
+  // loud. Later layers deliberately OVERRIDE earlier ones by id, so uniqueness
+  // is asserted on the shipped baked set, not across layers.
+  assertUniqueIds(baked, opts.domain);
   return mergeFeedsById([baked, remote, mounted]);
+}
+
+/** Throws if two feeds share a derived id — an authoring error the merge would otherwise hide. */
+function assertUniqueIds(feeds: FeedSourceBase[], domain: string): void {
+  const seen = new Set<string>();
+  const dups = new Set<string>();
+  for (const f of feeds) {
+    if (seen.has(f.id)) dups.add(f.id);
+    seen.add(f.id);
+  }
+  if (dups.size > 0) {
+    throw new Error(`[loadFeeds] ${domain}: duplicate feed id(s): ${[...dups].sort().join(", ")}`);
+  }
 }
 
 /** Later layers override earlier ones by `id`; a new id is appended in first-seen order. */

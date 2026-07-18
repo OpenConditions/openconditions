@@ -6,6 +6,7 @@ describe("IngestDomain", () => {
     const feed: FeedSourceBase = {
       id: "x",
       name: "X",
+      operator: "test",
       format: "geojson",
       cadenceSec: 300,
       freshnessWindowSec: 900,

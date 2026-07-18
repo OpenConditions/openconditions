@@ -21,9 +21,9 @@ function sitesFetch(sites: { Id: string; Status: string }[]): typeof fetch {
 }
 
 const multiSiteSrc = {
-  id: "webtris-gb",
+  id: "gb-webtris",
   name: "WebTRIS",
-  format: "webtris-json",
+  format: "webtris",
   cadenceSec: 900,
   freshnessWindowSec: 3600,
   license: "OGL-UK-3.0",
@@ -43,9 +43,9 @@ describe("webtrisDailyWindow preFetch", () => {
   it("stamps a rolling DDMMYYYY window into the url, replacing both tokens", async () => {
     const hook = PRE_FETCH_HOOKS["webtrisDailyWindow"]!;
     const src = {
-      id: "webtris-gb",
+      id: "gb-webtris",
       name: "WebTRIS",
-      format: "webtris-json",
+      format: "webtris",
       cadenceSec: 900,
       freshnessWindowSec: 3600,
       license: "OGL-UK-3.0",
@@ -68,9 +68,9 @@ describe("webtrisDailyWindow preFetch", () => {
   it("stamps end_date as today (UTC) and start_date as the prior day", async () => {
     const hook = PRE_FETCH_HOOKS["webtrisDailyWindow"]!;
     const src = {
-      id: "webtris-gb",
+      id: "gb-webtris",
       name: "WebTRIS",
-      format: "webtris-json",
+      format: "webtris",
       cadenceSec: 900,
       freshnessWindowSec: 3600,
       license: "OGL-UK-3.0",
@@ -94,9 +94,9 @@ describe("webtrisDailyWindow preFetch", () => {
   it("leaves non-string urls untouched", async () => {
     const hook = PRE_FETCH_HOOKS["webtrisDailyWindow"]!;
     const src = {
-      id: "webtris-gb",
+      id: "gb-webtris",
       name: "WebTRIS",
-      format: "webtris-json",
+      format: "webtris",
       cadenceSec: 900,
       freshnessWindowSec: 3600,
       license: "OGL-UK-3.0",

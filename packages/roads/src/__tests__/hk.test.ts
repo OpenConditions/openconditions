@@ -3,7 +3,7 @@ import { parseHkDetectors, parseHkRawFlow } from "../hk.js";
 import type { SourceDescriptor } from "../types.js";
 
 const src = {
-  id: "hk-td-flow",
+  id: "hk-td",
   attribution: "Transport Department, HKSAR",
   country: "HK",
   license: "HK-Gov-Open-Data",
@@ -44,7 +44,7 @@ describe("parseHkRawFlow", () => {
     const siteMap = parseHkDetectors(CSV);
     const { flows } = parseHkRawFlow(XML, src, siteMap);
     expect(flows).toHaveLength(1);
-    expect(flows[0]!.id).toBe("hk-td-flow:AID01101");
+    expect(flows[0]!.id).toBe("hk-td:AID01101");
     // Latest period: (100·3 + 60·1) / (3+1) = 90; the valid=N lane is ignored.
     expect(flows[0]!.speedKph).toBe(90);
     expect(flows[0]!.geometry).toEqual({ type: "Point", coordinates: [114.152525, 22.248091] });

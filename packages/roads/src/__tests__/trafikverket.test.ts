@@ -3,7 +3,7 @@ import { parseTrafikverket } from "../trafikverket.js";
 import type { SourceDescriptor } from "../types.js";
 
 const SRC: SourceDescriptor = {
-  id: "trafikverket-se",
+  id: "se-trafikverket",
   attribution: "Trafikverket",
   country: "SE",
   license: "CC0-1.0",
@@ -40,15 +40,15 @@ describe("parseTrafikverket", () => {
     );
     expect(out).toHaveLength(2);
     const byId = Object.fromEntries(out.map((e) => [e.id, e]));
-    expect(byId["trafikverket-se:d1"]!.type).toBe("accident");
-    expect(byId["trafikverket-se:d1"]!.severity).toBe("high");
-    expect(byId["trafikverket-se:d1"]!.geometry).toEqual({
+    expect(byId["se-trafikverket:d1"]!.type).toBe("accident");
+    expect(byId["se-trafikverket:d1"]!.severity).toBe("high");
+    expect(byId["se-trafikverket:d1"]!.geometry).toEqual({
       type: "Point",
       coordinates: [18.0686, 59.3293],
     });
-    expect(byId["trafikverket-se:d2"]!.type).toBe("roadworks");
-    expect(byId["trafikverket-se:d2"]!.geometry!.type).toBe("LineString");
-    expect(out[0]!.sourceFormat).toBe("trafikverket-json");
+    expect(byId["se-trafikverket:d2"]!.type).toBe("roadworks");
+    expect(byId["se-trafikverket:d2"]!.geometry!.type).toBe("LineString");
+    expect(out[0]!.sourceFormat).toBe("trafikverket");
   });
 
   it("skips deviations without geometry and tolerates malformed input", () => {

@@ -8,6 +8,7 @@ afterEach(() => __resetCatalogResolvers());
 const desc = (id: string, url: string): FeedSourceBase => ({
   id,
   name: id,
+  operator: "test",
   format: "wzdx",
   url,
   cadenceSec: 300,

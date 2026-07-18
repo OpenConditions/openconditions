@@ -9,7 +9,8 @@ type TestFeedSource = FeedSourceBase;
 function makeFeed(overrides: Partial<TestFeedSource> & Pick<TestFeedSource, "id">): TestFeedSource {
   return {
     name: overrides.id,
-    format: "autobahn-json",
+    operator: "test",
+    format: "autobahn",
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "test",

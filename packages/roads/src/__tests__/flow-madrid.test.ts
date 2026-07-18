@@ -3,7 +3,7 @@ import { parseMadridFlow } from "../flow-madrid.js";
 import type { SourceDescriptor } from "../types.js";
 
 const src = {
-  id: "madrid-informo-es",
+  id: "es-madrid",
   attribution: "Ayuntamiento de Madrid",
   country: "ES",
   license: "CC-BY-4.0",
@@ -43,8 +43,8 @@ describe("parseMadridFlow", () => {
     // The errored (error=S) point is dropped; two remain.
     expect(flows).toHaveLength(2);
 
-    const congested = flows.find((f) => f.id === "madrid-informo-es:9841")!;
-    expect(congested.sourceFormat).toBe("madrid-informo-xml");
+    const congested = flows.find((f) => f.id === "es-madrid:9841")!;
+    expect(congested.sourceFormat).toBe("informo");
     expect(congested.los).toBe("stationary");
     expect(congested.geometry.type).toBe("Point");
     const [lon, lat] = (congested.geometry as { coordinates: number[] }).coordinates;
@@ -53,12 +53,12 @@ describe("parseMadridFlow", () => {
     expect(lat).toBeGreaterThan(40);
     expect(lat).toBeLessThan(41);
 
-    const free = flows.find((f) => f.id === "madrid-informo-es:9842")!;
+    const free = flows.find((f) => f.id === "es-madrid:9842")!;
     expect(free.los).toBe("free_flow");
 
     // Only the stationary point emits a derived congestion event.
     expect(events).toHaveLength(1);
-    expect(events[0]!.id).toBe("madrid-informo-es:9841:congestion");
+    expect(events[0]!.id).toBe("es-madrid:9841:congestion");
     expect(events[0]!.severity).toBe("critical");
   });
 

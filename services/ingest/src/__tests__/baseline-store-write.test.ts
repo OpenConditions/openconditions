@@ -12,7 +12,7 @@ function flow(id: string, speedKph: number | undefined): Observation {
   return {
     id,
     source: "src",
-    sourceFormat: "fintraffic-tms-json",
+    sourceFormat: "fintraffic-tms",
     domain: "roads",
     kind: "measurement",
     metric: "flow",

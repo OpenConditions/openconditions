@@ -7,9 +7,11 @@ import {
 import type { FeedSourceBase } from "@openconditions/ingest-framework";
 
 const ny: FeedSourceBase = {
-  id: "ny-511",
+  id: "us-ny-511",
   name: "511NY (New York)",
-  format: "ibi511-json",
+  subdivision: "ny",
+  operator: "511",
+  format: "ibi511",
   url: "https://511ny.org/api/v2/get/event?format=json",
   auth: { kind: "query-key", param: "key", envVar: "NY_511_API_KEY" },
   cadenceSec: 300,

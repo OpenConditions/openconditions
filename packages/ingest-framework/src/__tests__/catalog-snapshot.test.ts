@@ -8,6 +8,7 @@ import { resolveWithSnapshot } from "../catalog.js";
 const feed = (id: string): FeedSourceBase => ({
   id,
   name: id,
+  operator: "test",
   format: "wzdx",
   url: `https://x.example/${id}`,
   cadenceSec: 300,

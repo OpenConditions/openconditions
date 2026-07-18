@@ -67,7 +67,7 @@ export function parseWebtrisFlow(
     flows.push({
       id: `${src.id}:${token}`,
       source: src.id,
-      sourceFormat: "webtris-json",
+      sourceFormat: "webtris",
       domain: "roads",
       kind: "measurement",
       metric: "flow",

@@ -4,7 +4,7 @@ import { severityRank } from "../severity.js";
 
 const fakeRow = {
   id: "evt-001",
-  source: "ndw",
+  source: "nl-ndw",
   domain: "roads",
   kind: "event",
   type: "accident",
@@ -58,7 +58,7 @@ describe("observationsByBbox", () => {
     expect(feat.properties?.id).toBe("evt-001");
     expect(feat.properties?.severity).toBe("high");
     expect(feat.properties?.headline).toBe("Multi-vehicle collision");
-    expect(feat.properties?.source).toBe("ndw");
+    expect(feat.properties?.source).toBe("nl-ndw");
     // Structured validity window + recurring schedule survive into the feature
     // properties (consumed by the map popup + time-aware routing).
     expect(feat.properties?.valid_from).toBe("2026-06-22T06:00:00Z");
@@ -93,7 +93,7 @@ describe("observationsByBbox", () => {
     const autobahn = {
       ...fakeRow,
       id: "autobahn:1",
-      source: "autobahn-de",
+      source: "de-autobahn",
       attributes: { roads: [{ ref: "A3" }] },
       data_updated_at: "2026-06-22T10:00:00Z",
       origin: { kind: "feed", attribution: { provider: "Autobahn", license: "dl-de/by-2-0" } },
@@ -116,7 +116,7 @@ describe("observationsByBbox", () => {
     expect(fc.features[0].properties?.id).toBe("nrw:9");
     expect(fc.features[0].properties?.mergedSources).toEqual([
       {
-        source: "autobahn-de",
+        source: "de-autobahn",
         id: "autobahn:1",
         attribution: { provider: "Autobahn", license: "dl-de/by-2-0" },
       },
@@ -127,7 +127,7 @@ describe("observationsByBbox", () => {
     const a = {
       ...fakeRow,
       id: "autobahn:1",
-      source: "autobahn-de",
+      source: "de-autobahn",
       attributes: { roads: [{ ref: "A3" }] },
     };
     const b = {

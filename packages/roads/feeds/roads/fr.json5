@@ -1,6 +1,6 @@
 [
   {
-    id: "dir-fr",
+    operator: "dir",
     name: "DIR / Bison Futé (France national roads)",
     format: "datex2",
     url: "https://transport.data.gouv.fr/resources/79174/download",
@@ -14,7 +14,8 @@
     enabledByDefault: true,
   },
   {
-    id: "circulation-fr",
+    operator: "dir",
+    stream: "flow",
     name: "Circulation temps réel — vitesses & débits (France)",
     format: "datex2",
     produces: "flow",

@@ -3,7 +3,7 @@ import { parseOhgoFlow } from "../flow-ohgo.js";
 import type { SourceDescriptor } from "../types.js";
 
 const src = {
-  id: "ohgo-oh-us",
+  id: "us-oh-ohgo",
   attribution: "Ohio DOT",
   country: "US",
   license: "US-Gov-Public-Domain",
@@ -35,16 +35,16 @@ const payload = JSON.stringify({
 describe("parseOhgoFlow", () => {
   it("uses inline NormalAvgSpeed as the native freeFlowKph and classifies via reclassifyFlow", () => {
     const { flows, events } = parseOhgoFlow(payload, src);
-    const slow = flows.find((f) => f.id === "ohgo-oh-us:d1")!;
+    const slow = flows.find((f) => f.id === "us-oh-ohgo:d1")!;
     expect(slow.speedKph).toBeCloseTo(20 * 1.609344, 2);
     expect(slow.freeFlowKph).toBeCloseTo(65 * 1.609344, 2);
     expect(slow.freeFlowSource).toBe("native");
     expect(slow.direction).toBe("EB");
     expect(slow.los).toBe("queuing"); // ratio 20/65 ≈ 0.31
-    expect(events.some((e) => e.id === "ohgo-oh-us:d1:congestion" && e.direction === "EB")).toBe(
+    expect(events.some((e) => e.id === "us-oh-ohgo:d1:congestion" && e.direction === "EB")).toBe(
       true
     );
-    const ok = flows.find((f) => f.id === "ohgo-oh-us:d2")!;
+    const ok = flows.find((f) => f.id === "us-oh-ohgo:d2")!;
     expect(ok.los).toBe("free_flow"); // 62/65 ≈ 0.95
   });
 

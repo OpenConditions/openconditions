@@ -114,7 +114,7 @@ export function parseMivFlow(
       flows.push({
         id: `${src.id}:${id}`,
         source: src.id,
-        sourceFormat: "miv-xml",
+        sourceFormat: "miv",
         domain: "roads",
         kind: "measurement",
         metric: "flow",

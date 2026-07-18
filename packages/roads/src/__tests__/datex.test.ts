@@ -6,7 +6,7 @@ import { parseDatexSituations } from "../datex.js";
 const NDW_FIXTURE_PATH = join(import.meta.dirname, "fixtures/ndw/actueel_beeld.xml");
 
 const NDW_SOURCE = {
-  id: "ndw",
+  id: "nl-ndw",
   attribution: "NDW / Rijkswaterstaat",
   country: "NL",
   license: "CC0-1.0",
@@ -506,7 +506,7 @@ ${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
 const DGT_FIXTURE_PATH = join(import.meta.dirname, "fixtures/dgt-es/situations.xml");
 
 const DGT_SOURCE = {
-  id: "dgt-es",
+  id: "es-dgt",
   attribution: "Dirección General de Tráfico (DGT)",
   country: "ES",
   license: "CC-BY-4.0",
@@ -523,7 +523,7 @@ describe("parseDatexSituations — DGT (Spain) DATEX II v3 fixture", () => {
   it("carries source attribution + datex2 format through from the v3 feed", () => {
     const [ev] = parseDatexSituations(readFileSync(DGT_FIXTURE_PATH), DGT_SOURCE);
     expect(ev!.sourceFormat).toBe("datex2");
-    expect(ev!.source).toBe("dgt-es");
+    expect(ev!.source).toBe("es-dgt");
     expect(ev!.origin.attribution.license).toBe("CC-BY-4.0");
   });
 
@@ -538,7 +538,7 @@ describe("parseDatexSituations — DGT (Spain) DATEX II v3 fixture", () => {
 const DIR_FR_FIXTURE_PATH = join(import.meta.dirname, "fixtures/dir-fr/situations.xml");
 
 const DIR_FR_SOURCE = {
-  id: "dir-fr",
+  id: "fr-dir",
   attribution: "DIR / Bison Futé",
   country: "FR",
   license: "etalab-2.0",
@@ -566,7 +566,7 @@ const CITA_LU_FIXTURE_PATH = join(import.meta.dirname, "fixtures/cita-lu/situati
 describe("parseDatexSituations — CITA (Luxembourg) DATEX II v3.6 fixture", () => {
   it("parses the v3.6 SituationPublication into RoadEvents with WGS84 geometry", () => {
     const events = parseDatexSituations(readFileSync(CITA_LU_FIXTURE_PATH), {
-      id: "cita-lu",
+      id: "lu-cita",
       attribution: "CITA (Luxembourg)",
       country: "LU",
       license: "CC0-1.0",
@@ -582,7 +582,7 @@ const FLANDERS_FIXTURE_PATH = join(import.meta.dirname, "fixtures/flanders-be/si
 describe("parseDatexSituations — Flanders DATEX II v3 (EPSG:31370 reprojection)", () => {
   it("reprojects Belgian Lambert-72 GML geometry to WGS84 Belgium", () => {
     const events = parseDatexSituations(readFileSync(FLANDERS_FIXTURE_PATH), {
-      id: "flanders-be",
+      id: "be-flanders",
       attribution: "Verkeerscentrum Vlaanderen",
       country: "BE",
       license: "CC-BY-4.0",
@@ -606,7 +606,7 @@ describe("parseDatexSituations — Flanders DATEX II v3 (EPSG:31370 reprojection
 
 describe("parseDatexSituations — Trafikverket DATEX (coordinatesForDisplay + lon-lat posList)", () => {
   const SE_SOURCE = {
-    id: "trafikverket-se",
+    id: "se-trafikverket",
     attribution: "Trafikverket",
     country: "SE",
     license: "CC0-1.0",
@@ -699,7 +699,7 @@ describe("parseDatexSituations — Straßen.NRW typed comments (commentType2) + 
 
   it("picks headline/description/detour from the typed comment array and road from groupOfLocations", () => {
     const [ev] = parseDatexSituations(xml, {
-      id: "verkehr-nrw-de",
+      id: "de-nw-verkehr",
       attribution: "LVZ.NRW",
       country: "DE",
       license: "dl-de/zero-2-0",

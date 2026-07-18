@@ -43,14 +43,14 @@ Field rules (enforced by `parseRegistryEntry` in
 `packages/federation/src/registry.ts`, which fails closed on anything
 malformed):
 
-| Field       | Meaning                                                                                                |
-| ----------- | ------------------------------------------------------------------------------------------------------ |
-| `id`        | Lowercase slug (`[a-z0-9-]`). Doubles as the TUF target file name, so no dots, slashes, or case games. |
-| `actor`     | The instance's Actor document URL (`/.well-known/openconditions/actor.json`).                          |
-| `operator`  | Legal operator: `name`, `contact`, `jurisdiction` (all required).                                      |
-| `coverage`  | `iso3166` country codes and/or a `[minLon, minLat, maxLon, maxLat]` bbox.                              |
-| `trustTier` | 0 (observer), 1 (standard), or 2 (anchor) — see the peering tiers in the federation design.            |
-| `keys`      | The instance's **authorized Ed25519 keys** as `publicKeyMultibase` (`z6Mk…`) values.                   |
+| Field       | Meaning                                                                                                     |
+| ----------- | ----------------------------------------------------------------------------------------------------------- |
+| `id`        | Lowercase slug (`[a-z0-9-]`). Doubles as the TUF target file name, so no dots, slashes, or case games.      |
+| `actor`     | The instance's Actor document URL (`/.well-known/openconditions/actor.json`).                               |
+| `operator`  | Legal operator: `name`, `contact`, `jurisdiction` (all required).                                           |
+| `coverage`  | `iso3166` country codes and/or a `[minLon, minLat, maxLon, maxLat]` bbox.                                   |
+| `trustTier` | 0 (observer), 1 (standard), or 2 (anchor) — governs peering scope; admission is the governance review (§5). |
+| `keys`      | The instance's **authorized Ed25519 keys** as `publicKeyMultibase` (`z6Mk…`) values.                        |
 
 ### Ed25519 key authorization
 

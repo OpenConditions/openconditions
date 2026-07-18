@@ -4,7 +4,7 @@ import type { SourceDescriptor } from "../types.js";
 import type { SiteGeometry } from "../siteTable.js";
 
 const src = {
-  id: "fintraffic-tms-fi",
+  id: "fi-fintraffic",
   attribution: "Fintraffic",
   country: "FI",
   license: "CC-BY-4.0",
@@ -68,15 +68,15 @@ describe("parseFintrafficFlow", () => {
   it("emits one flow per direction with a 5-min avg speed and geometry", () => {
     const { flows, events } = parseFintrafficFlow(payload, src, siteMap);
     expect(flows.map((f) => f.id).sort()).toEqual([
-      "fintraffic-tms-fi:23001-1",
-      "fintraffic-tms-fi:23001-2",
+      "fi-fintraffic:23001-1",
+      "fi-fintraffic:23001-2",
     ]);
     const dir1 = flows.find((f) => f.id.endsWith("-1"))!;
     expect(dir1.speedKph).toBe(95);
     expect(dir1.los).toBe("unknown");
     expect(dir1.direction).toBe("SUUNTA1");
     expect(dir1.geometry).toEqual({ type: "Point", coordinates: [24.9, 60.2] });
-    expect(dir1.sourceFormat).toBe("fintraffic-tms-json");
+    expect(dir1.sourceFormat).toBe("fintraffic-tms");
     const dir2 = flows.find((f) => f.id.endsWith("-2"))!;
     expect(dir2.direction).toBe("SUUNTA2");
     expect(events).toEqual([]);
@@ -84,7 +84,7 @@ describe("parseFintrafficFlow", () => {
 
   it("skips stations with no geometry in the registry", () => {
     const { flows } = parseFintrafficFlow(payload, src, siteMap);
-    expect(flows.some((f) => f.id.startsWith("fintraffic-tms-fi:999999"))).toBe(false);
+    expect(flows.some((f) => f.id.startsWith("fi-fintraffic:999999"))).toBe(false);
   });
 
   it("returns empty on malformed input", () => {

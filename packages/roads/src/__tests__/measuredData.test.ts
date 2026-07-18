@@ -20,7 +20,7 @@ const NDW_SITE_TABLE_FIXTURE = join(
 );
 
 const NDW_SOURCE = {
-  id: "ndw-flow",
+  id: "nl-ndw-flow",
   attribution: "NDW / Rijkswaterstaat",
   country: "NL",
   license: "CC0-1.0",
@@ -97,7 +97,7 @@ describe("createMeasuredDataParser — equivalence with the DOM parser", () => {
     const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE, "utf8");
     const siteMap = parseDatexSiteTable(readFileSync(NDW_SITE_TABLE_FIXTURE));
     const streamed = streamWhole(xml, siteMap);
-    const best = streamed.flows.find((f) => f.id === "ndw-flow:PZH01_MST_0065_00");
+    const best = streamed.flows.find((f) => f.id === "nl-ndw-flow:PZH01_MST_0065_00");
     expect(best).toBeDefined();
     expect(best!.speedKph).toBe(64);
   });
@@ -106,11 +106,13 @@ describe("createMeasuredDataParser — equivalence with the DOM parser", () => {
     const xml = readFileSync(NDW_TRAFFICSPEED_FIXTURE, "utf8");
     const siteMap = parseDatexSiteTable(readFileSync(NDW_SITE_TABLE_FIXTURE));
     const streamed = streamWhole(xml, siteMap);
-    const standstill = streamed.flows.find((f) => f.id === "ndw-flow:PZH01_MST_STANDSTILL_00");
+    const standstill = streamed.flows.find((f) => f.id === "nl-ndw-flow:PZH01_MST_STANDSTILL_00");
     expect(standstill).toBeDefined();
     expect(standstill!.speedKph).toBe(0);
-    expect(streamed.flows.find((f) => f.id === "ndw-flow:PZH01_MST_ZEROCOUNT_00")).toBeUndefined();
-    expect(streamed.flows.find((f) => f.id === "ndw-flow:PZH01_MST_ABSURD_00")).toBeUndefined();
+    expect(
+      streamed.flows.find((f) => f.id === "nl-ndw-flow:PZH01_MST_ZEROCOUNT_00")
+    ).toBeUndefined();
+    expect(streamed.flows.find((f) => f.id === "nl-ndw-flow:PZH01_MST_ABSURD_00")).toBeUndefined();
   });
 });
 

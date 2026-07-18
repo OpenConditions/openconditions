@@ -29,7 +29,7 @@ describe("autobahnIndexResolver", () => {
     ).toBe(false);
     expect(urls.some((u) => u?.toString().endsWith("/services/roadworks"))).toBe(false);
     for (const f of feeds) {
-      expect(f.format).toBe("autobahn-json");
+      expect(f.format).toBe("autobahn");
       expect(f.country).toBe("DE");
       expect(f.license).toBe("dl-de/by-2-0");
     }

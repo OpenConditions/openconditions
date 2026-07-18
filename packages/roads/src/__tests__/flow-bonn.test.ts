@@ -3,7 +3,7 @@ import { parseBonnFlow } from "../flow-bonn.js";
 import type { SourceDescriptor } from "../types.js";
 
 const src = {
-  id: "bonn-flow-de",
+  id: "de-bonn",
   attribution: "Bundesstadt Bonn",
   country: "DE",
   license: "dl-de/zero-2-0",
@@ -58,20 +58,20 @@ describe("parseBonnFlow", () => {
     const { flows, events } = parseBonnFlow(payload, src);
     expect(flows).toHaveLength(2);
 
-    const congested = flows.find((f) => f.id === "bonn-flow-de:144")!;
-    expect(congested.sourceFormat).toBe("bonn-geojson");
+    const congested = flows.find((f) => f.id === "de-bonn:144")!;
+    expect(congested.sourceFormat).toBe("bonn");
     expect(congested.speedKph).toBe(12);
     expect(congested.los).toBe("queuing");
     expect(congested.geometry.type).toBe("LineString");
     expect(congested.dataUpdatedAt).toBe("2026-07-10T17:10:00Z");
 
-    const free = flows.find((f) => f.id === "bonn-flow-de:143")!;
+    const free = flows.find((f) => f.id === "de-bonn:143")!;
     expect(free.los).toBe("free_flow");
     expect(free.speedKph).toBe(45);
 
     // Only the queuing section emits a derived congestion event.
     expect(events).toHaveLength(1);
-    expect(events[0]!.id).toBe("bonn-flow-de:144:congestion");
+    expect(events[0]!.id).toBe("de-bonn:144:congestion");
     expect(events[0]!.type).toBe("congestion");
   });
 
@@ -97,7 +97,7 @@ describe("parseBonnFlow", () => {
       ],
     });
     const { flows } = parseBonnFlow(multi, src);
-    expect(flows.map((f) => f.id)).toEqual(["bonn-flow-de:9:0", "bonn-flow-de:9:1"]);
+    expect(flows.map((f) => f.id)).toEqual(["de-bonn:9:0", "de-bonn:9:1"]);
   });
 
   it("flags a hard parse failure (not a legitimately empty cycle)", () => {

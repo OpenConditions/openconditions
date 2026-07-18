@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { roadFeedSchema } from "../feed-schema.js";
 
 const berlin = {
-  id: "berlin-de",
+  subdivision: "be",
+  operator: "berlin",
   name: "VIZ Berlin roadworks & closures",
   format: "geojson",
   url: "https://api.viz.berlin.de/daten/baustellen_sperrungen_viz.json",
@@ -29,7 +30,7 @@ const berlin = {
 
 describe("roadFeedSchema", () => {
   it("parses a roads geojson feed", () => {
-    expect(roadFeedSchema.parse(berlin).id).toBe("berlin-de");
+    expect(roadFeedSchema.parse(berlin).id).toBe("de-be-berlin");
   });
 
   it("rejects a typeMap value that is not a RoadEventType", () => {

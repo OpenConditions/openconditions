@@ -3,7 +3,7 @@ import { parseTrafikverketFlow } from "../flow-trafikverket.js";
 import type { SourceDescriptor } from "../types.js";
 
 const src = {
-  id: "trafikverket-flow-se",
+  id: "se-trafikverket-flow",
   attribution: "Trafikverket",
   country: "SE",
   license: "CC0-1.0",
@@ -44,7 +44,7 @@ const payload = JSON.stringify({
 describe("parseTrafikverketFlow", () => {
   it("emits a Point flow with km/h speed from the inline WGS84 geometry", () => {
     const { flows, events } = parseTrafikverketFlow(payload, src);
-    expect(flows.map((f) => f.id)).toEqual(["trafikverket-flow-se:TMS-1"]);
+    expect(flows.map((f) => f.id)).toEqual(["se-trafikverket-flow:TMS-1"]);
     expect(flows[0]!.geometry).toEqual({ type: "Point", coordinates: [18.06, 59.33] });
     expect(flows[0]!.speedKph).toBe(92);
     expect(flows[0]!.los).toBe("unknown");
@@ -53,9 +53,9 @@ describe("parseTrafikverketFlow", () => {
 
   it("skips records missing speed or geometry", () => {
     const { flows } = parseTrafikverketFlow(payload, src);
-    expect(flows.some((f) => f.id === "trafikverket-flow-se:TMS-2")).toBe(false);
-    expect(flows.some((f) => f.id === "trafikverket-flow-se:TMS-3")).toBe(false);
-    expect(flows.some((f) => f.id === "trafikverket-flow-se:TMS-4")).toBe(false);
+    expect(flows.some((f) => f.id === "se-trafikverket-flow:TMS-2")).toBe(false);
+    expect(flows.some((f) => f.id === "se-trafikverket-flow:TMS-3")).toBe(false);
+    expect(flows.some((f) => f.id === "se-trafikverket-flow:TMS-4")).toBe(false);
   });
 
   it("returns empty on malformed input", () => {

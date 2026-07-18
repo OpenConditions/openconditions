@@ -1,6 +1,6 @@
 [
   {
-    id: "ndw",
+    operator: "ndw",
     name: "NDW (Netherlands)",
     format: "datex2",
     url: "http://opendata.ndw.nu/actueel_beeld.xml.gz",
@@ -19,7 +19,8 @@
     // and the two NDW feeds never clobber each other's rows. The trafficspeed feed
     // carries measurements keyed by site id only; the companion measurement.xml.gz
     // site table supplies each site's geometry.
-    id: "ndw-flow",
+    operator: "ndw",
+    stream: "flow",
     name: "NDW traffic speed (Netherlands)",
     format: "datex2",
     produces: "flow",

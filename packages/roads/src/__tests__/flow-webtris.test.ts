@@ -5,7 +5,7 @@ import type { SourceDescriptor } from "../types.js";
 import type { SiteGeometry } from "../siteTable.js";
 
 const src = {
-  id: "webtris-gb",
+  id: "gb-webtris",
   attribution: "National Highways",
   country: "GB",
   license: "OGL-UK-3.0",
@@ -66,11 +66,11 @@ describe("parseWebtrisFlow", () => {
   it("emits one flow per site from the latest row, mph to kph", () => {
     const { flows, events } = parseWebtrisFlow(report, src, siteMap);
     expect(flows).toHaveLength(1);
-    expect(flows[0]!.id).toBe("webtris-gb:5607");
+    expect(flows[0]!.id).toBe("gb-webtris:5607");
     expect(flows[0]!.speedKph).toBeCloseTo(30 * 1.609344, 3);
     expect(flows[0]!.los).toBe("unknown");
     expect(flows[0]!.geometry).toEqual({ type: "Point", coordinates: [-1.5, 52.4] });
-    expect(flows[0]!.sourceFormat).toBe("webtris-json");
+    expect(flows[0]!.sourceFormat).toBe("webtris");
     expect(events).toEqual([]);
   });
 

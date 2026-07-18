@@ -48,7 +48,7 @@ describe("streaming feed error handling", () => {
   });
 
   it("streamMeasuredData rejects (does not crash) on a mid-stream source error", async () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "ndw-flow")!;
+    const feed = FEED_SOURCES.find((f) => f.id === "nl-ndw-flow")!;
     const src = { ...feed, domain: "roads" } as DomainFeedSource;
 
     await expect(

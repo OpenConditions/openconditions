@@ -35,17 +35,17 @@ const NDW_FLOW_SITE_TABLE_FIXTURE_PATH = path.resolve(
 );
 
 const ndwFeed: DomainFeedSource = {
-  ...FEED_SOURCES.find((f) => f.id === "ndw")!,
+  ...FEED_SOURCES.find((f) => f.id === "nl-ndw")!,
   domain: "roads",
 };
 
 const drivebcFeed: DomainFeedSource = {
-  ...FEED_SOURCES.find((f) => f.id === "drivebc")!,
+  ...FEED_SOURCES.find((f) => f.id === "ca-bc-drivebc")!,
   domain: "roads",
 };
 
 const ndwFlowFeed: DomainFeedSource = {
-  ...FEED_SOURCES.find((f) => f.id === "ndw-flow")!,
+  ...FEED_SOURCES.find((f) => f.id === "nl-ndw-flow")!,
   domain: "roads",
 };
 
@@ -105,7 +105,7 @@ describe("pipeline — happy path", () => {
     const wrongRows = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
       FROM conditions.observations
-      WHERE domain <> 'roads' OR source <> 'ndw'
+      WHERE domain <> 'roads' OR source <> 'nl-ndw'
     `;
     expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
   }, 60_000);
@@ -137,7 +137,7 @@ describe("pipeline — happy path", () => {
 describe("pipeline — feed downtime", () => {
   it("leaves existing rows intact when fetch throws", async () => {
     const beforeCount = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw'
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw'
     `;
     const countBefore = parseInt(beforeCount[0]!.count, 10);
     expect(countBefore).toBeGreaterThan(0);
@@ -156,7 +156,7 @@ describe("pipeline — feed downtime", () => {
     expect(result.count).toBe(0);
 
     const afterCount = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw'
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw'
     `;
     const countAfter = parseInt(afterCount[0]!.count, 10);
     expect(countAfter).toBe(countBefore);
@@ -164,7 +164,7 @@ describe("pipeline — feed downtime", () => {
 });
 
 describe("pipeline — open511 (DriveBC)", () => {
-  it("inserts rows from the DriveBC fixture with source='drivebc' and domain='roads'", async () => {
+  it("inserts rows from the DriveBC fixture with source='ca-bc-drivebc' and domain='roads'", async () => {
     const jsonPayload = readFileSync(DRIVEBC_FIXTURE_PATH);
 
     const fakeFetch = async (_url: string | URL | Request): Promise<Response> => {
@@ -184,7 +184,7 @@ describe("pipeline — open511 (DriveBC)", () => {
     const wrongRows = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
       FROM conditions.observations
-      WHERE source = 'drivebc' AND (domain <> 'roads')
+      WHERE source = 'ca-bc-drivebc' AND (domain <> 'roads')
     `;
     expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
   }, 60_000);
@@ -193,7 +193,7 @@ describe("pipeline — open511 (DriveBC)", () => {
     const invalid = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
       FROM conditions.observations
-      WHERE source = 'drivebc' AND NOT ST_IsValid(geom)
+      WHERE source = 'ca-bc-drivebc' AND NOT ST_IsValid(geom)
     `;
     expect(parseInt(invalid[0]!.count, 10)).toBe(0);
   }, 30_000);
@@ -597,7 +597,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     const rows = await sql<{ id: string; kind: string; source: string }[]>`
       SELECT id, kind, source
       FROM conditions.observations
-      WHERE source = 'ndw-flow'
+      WHERE source = 'nl-ndw-flow'
     `;
 
     const measurements = rows.filter((r) => r.kind === "measurement");
@@ -609,11 +609,11 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     expect(events.length).toBe(0);
   }, 60_000);
 
-  it("flow rows use 'roads' domain and 'ndw-flow' source", async () => {
+  it("flow rows use 'roads' domain and 'nl-ndw-flow' source", async () => {
     const wrongRows = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
       FROM conditions.observations
-      WHERE source = 'ndw-flow' AND (domain <> 'roads')
+      WHERE source = 'nl-ndw-flow' AND (domain <> 'roads')
     `;
     expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
   }, 30_000);
@@ -622,7 +622,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     const invalid = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
       FROM conditions.observations
-      WHERE source = 'ndw-flow' AND NOT ST_IsValid(geom)
+      WHERE source = 'nl-ndw-flow' AND NOT ST_IsValid(geom)
     `;
     expect(parseInt(invalid[0]!.count, 10)).toBe(0);
   }, 30_000);
@@ -631,7 +631,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     const rows = await sql<{ gtype: string; lon: number; lat: number }[]>`
       SELECT ST_GeometryType(geom) AS gtype, ST_X(geom) AS lon, ST_Y(geom) AS lat
       FROM conditions.observations
-      WHERE id = 'ndw-flow:PZH01_MST_0065_00'
+      WHERE id = 'nl-ndw-flow:PZH01_MST_0065_00'
     `;
     expect(rows.length).toBe(1);
     expect(rows[0]!.gtype).toBe("ST_Point");
@@ -643,7 +643,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     const rows = await sql<{ metric: string | null; value: string | null }[]>`
       SELECT metric, value::text AS value
       FROM conditions.observations
-      WHERE source = 'ndw-flow' AND kind = 'measurement'
+      WHERE source = 'nl-ndw-flow' AND kind = 'measurement'
     `;
     expect(rows.length).toBe(3);
     expect(rows.every((r) => r.metric === "flow")).toBe(true);
@@ -654,7 +654,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
   it("preserves last-good rows on a cold site-table failure (no atomicSwap to empty)", async () => {
     // Existing ndw-flow rows from the successful runs above.
     const beforeCount = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw-flow'
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw-flow'
     `;
     const countBefore = parseInt(beforeCount[0]!.count, 10);
     expect(countBefore).toBeGreaterThan(0);
@@ -683,7 +683,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     expect(result.count).toBe(0);
 
     const afterCount = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw-flow'
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw-flow'
     `;
     expect(parseInt(afterCount[0]!.count, 10)).toBe(countBefore);
   }, 60_000);
@@ -751,13 +751,13 @@ describe("pipeline — streaming SAX parse failure preserves last-good rows", ()
     expect(goodResult.error).toBeUndefined();
 
     const before = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw-flow'
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw-flow'
     `;
     const countBefore = parseInt(before[0]!.count, 10);
     expect(countBefore).toBeGreaterThan(0);
 
     const statusBefore = await sql<{ last_success_at: Date | null }[]>`
-      SELECT last_success_at FROM conditions.source_status WHERE source = 'ndw-flow'
+      SELECT last_success_at FROM conditions.source_status WHERE source = 'nl-ndw-flow'
     `;
     const lastSuccessAtBefore = statusBefore[0]!.last_success_at;
     expect(lastSuccessAtBefore).not.toBeNull();
@@ -789,12 +789,12 @@ describe("pipeline — streaming SAX parse failure preserves last-good rows", ()
     expect(result.error).toMatch(/streaming parse failed/i);
 
     const after = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw-flow'
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw-flow'
     `;
     expect(parseInt(after[0]!.count, 10)).toBe(countBefore);
 
     const statusAfter = await sql<{ last_error: string | null; last_success_at: Date | null }[]>`
-      SELECT last_error, last_success_at FROM conditions.source_status WHERE source = 'ndw-flow'
+      SELECT last_error, last_success_at FROM conditions.source_status WHERE source = 'nl-ndw-flow'
     `;
     expect(statusAfter[0]!.last_error).toMatch(/streaming parse failed/i);
     expect(statusAfter[0]!.last_success_at?.toISOString()).toBe(lastSuccessAtBefore!.toISOString());
@@ -824,7 +824,7 @@ describe("pipeline — flow feed 200-with-garbage (well-formed empty publication
     expect(goodResult.error).toBeUndefined();
 
     const before = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw-flow'
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw-flow'
     `;
     const countBefore = parseInt(before[0]!.count, 10);
     expect(countBefore).toBeGreaterThan(0);
@@ -859,7 +859,7 @@ describe("pipeline — flow feed 200-with-garbage (well-formed empty publication
     expect(result.error).toMatch(/zero measurements/i);
 
     const after = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'ndw-flow'
+      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw-flow'
     `;
     expect(parseInt(after[0]!.count, 10)).toBe(countBefore);
   }, 60_000);

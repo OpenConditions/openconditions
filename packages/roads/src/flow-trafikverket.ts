@@ -60,7 +60,7 @@ export function parseTrafikverketFlow(
       flows.push({
         id: `${src.id}:${siteId}`,
         source: src.id,
-        sourceFormat: "trafikverket-flow-json",
+        sourceFormat: "trafikverket-flow",
         domain: "roads",
         kind: "measurement",
         metric: "flow",

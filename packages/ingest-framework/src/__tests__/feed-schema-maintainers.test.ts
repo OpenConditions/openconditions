@@ -5,6 +5,7 @@ import { feedSourceBaseSchema } from "../feed-schema.js";
 const base = {
   id: "x",
   name: "X",
+  operator: "x",
   format: "geojson",
   cadenceSec: 300,
   freshnessWindowSec: 900,

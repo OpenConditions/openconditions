@@ -3,7 +3,7 @@ import { parseMivConfig, parseMivFlow } from "../miv.js";
 import type { SourceDescriptor } from "../types.js";
 
 const src = {
-  id: "miv-flow-be",
+  id: "be-miv",
   attribution: "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",
   country: "BE",
   license: "CC-BY-4.0",
@@ -52,10 +52,10 @@ describe("parseMivFlow", () => {
     const { flows } = parseMivFlow(DATA, src, siteMap);
     // meetpunt 29 has no valid class (intensity 0 + the 252 no-data sentinel) → skipped.
     expect(flows).toHaveLength(1);
-    expect(flows[0]!.id).toBe("miv-flow-be:4970");
+    expect(flows[0]!.id).toBe("be-miv:4970");
     // Class 2 has the higher intensity (120 > 30) → its 88 km/h wins.
     expect(flows[0]!.speedKph).toBe(88);
-    expect(flows[0]!.sourceFormat).toBe("miv-xml");
+    expect(flows[0]!.sourceFormat).toBe("miv");
     expect(flows[0]!.geometry).toEqual({ type: "Point", coordinates: [4.4842054, 50.9828171] });
     expect(flows[0]!.dataUpdatedAt).toBe("2026-07-10T16:21:00+01:00");
   });

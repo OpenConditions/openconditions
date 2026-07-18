@@ -69,6 +69,19 @@ export const feedSourceBaseShape = {
   id: z.string().min(1),
   name: z.string().min(1),
   format: z.string().min(1),
+  // Region-first identity fields. The feed `id` is DERIVED from these at load
+  // time (`[country, subdivision, operator, stream].filter(Boolean).join("-")`,
+  // country lower-cased) rather than hand-written, so it can never drift from
+  // the operator/region it describes. All three are lower-case slug tokens.
+  operator: z.string().regex(/^[a-z0-9]+$/, "lower-case alphanumeric slug"),
+  subdivision: z
+    .string()
+    .regex(/^[a-z0-9]+$/, "lower-case alphanumeric slug (ISO 3166-2 or city slug)")
+    .optional(),
+  stream: z
+    .string()
+    .regex(/^[a-z0-9]+$/, "lower-case alphanumeric slug (e.g. flow, speedbands)")
+    .optional(),
   produces: z.enum(["events", "flow"]).optional(),
   url: z.union([z.string(), z.array(z.string()).nonempty()]).optional(),
   expandEnv: z.string().optional(),

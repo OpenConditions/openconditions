@@ -1,6 +1,6 @@
 [
   {
-    id: "dgt-es",
+    operator: "dgt",
     name: "DGT (Spain)",
     format: "datex2",
     url: "https://nap.dgt.es/datex2/v3/dgt/SituationPublication/datex2_v36.xml",
@@ -14,9 +14,9 @@
     enabledByDefault: true,
   },
   {
-    id: "madrid-informo-es",
+    operator: "madrid",
     name: "Madrid INFORMO traffic (Spain)",
-    format: "madrid-informo-xml",
+    format: "informo",
     produces: "flow",
     url: "https://informo.madrid.es/informo/tmadrid/pm.xml",
     cadenceSec: 300,

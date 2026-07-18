@@ -223,7 +223,7 @@ export function startScheduler(
     try {
       for (const plugin of Object.values(registry)) {
         for (const feed of plugin.feeds) {
-          if (feed.format !== "fintraffic-tms-json" || !feed.enabledByDefault) continue;
+          if (feed.format !== "fintraffic-tms" || !feed.enabledByDefault) continue;
           const { updated } = await updateFintrafficNativeBaselines(
             sql,
             feed as unknown as FeedSource,

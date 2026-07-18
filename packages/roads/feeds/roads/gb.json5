@@ -1,6 +1,6 @@
 [
   {
-    id: "nationalhighways-gb",
+    operator: "nationalhighways",
     name: "National Highways NTIS (England)",
     format: "datex2",
     url: "https://api.data.nationalhighways.co.uk/roads/v2.0/closures",
@@ -33,9 +33,9 @@
     },
   },
   {
-    id: "webtris-gb",
+    operator: "webtris",
     name: "WebTRIS traffic flow (Great Britain)",
-    format: "webtris-json",
+    format: "webtris",
     produces: "flow",
     url: "https://webtris.nationalhighways.co.uk/api/v1.0/reports/daily?sites={sites}&start_date={start_date}&end_date={end_date}&page=1&page_size=100",
     preFetch: "webtrisDailyWindow",

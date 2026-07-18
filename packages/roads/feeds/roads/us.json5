@@ -1,6 +1,6 @@
 [
   {
-    id: "wzdx",
+    operator: "wzdx",
     name: "WZDx (United States)",
     format: "wzdx",
     catalog: {
@@ -15,9 +15,10 @@
     enabledByDefault: true,
   },
   {
-    id: "ny-511",
+    subdivision: "ny",
+    operator: "511",
     name: "511NY (New York)",
-    format: "ibi511-json",
+    format: "ibi511",
     url: "https://511ny.org/api/v2/get/event?format=json",
     auth: {
       kind: "query-key",
@@ -49,9 +50,10 @@
     },
   },
   {
-    id: "nyc-dot-speed-us",
+    subdivision: "nyc",
+    operator: "dot",
     name: "NYC DOT real-time traffic speeds (New York City)",
-    format: "nyc-dot-speed-json",
+    format: "nyc-dot",
     produces: "flow",
     url: "https://data.cityofnewyork.us/resource/i4gi-tjb9.json?$limit=5000",
     cadenceSec: 300,
@@ -64,9 +66,10 @@
     enabledByDefault: true,
   },
   {
-    id: "ohgo-oh-us",
+    subdivision: "oh",
+    operator: "ohgo",
     name: "OHGO travel delays (Ohio)",
-    format: "ohgo-json",
+    format: "ohgo",
     produces: "flow",
     url: "https://publicapi.ohgo.com/api/v1/travel-delays?page-all=true",
     auth: {

@@ -3,7 +3,7 @@ import { parseIbi511 } from "../ibi511.js";
 import type { SourceDescriptor } from "../types.js";
 
 const SRC: SourceDescriptor = {
-  id: "on-511",
+  id: "ca-on-511",
   attribution: "Ontario 511",
   country: "CA",
   license: "OGL-ON",
@@ -29,8 +29,8 @@ describe("parseIbi511", () => {
     );
     expect(out).toHaveLength(1);
     expect(out[0]).toMatchObject({
-      id: "on-511:101",
-      sourceFormat: "ibi511-json",
+      id: "ca-on-511:101",
+      sourceFormat: "ibi511",
       type: "roadworks",
       severity: "high",
       headline: "Lane reductions for paving",

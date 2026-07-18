@@ -4,8 +4,8 @@ import { FeedStatusStore } from "../feed-status.js";
 describe("FeedStatusStore", () => {
   it("records a success and returns it", () => {
     const s = new FeedStatusStore();
-    s.recordSuccess("ndw", "2026-07-01T00:00:00.000Z", 42, 1234);
-    expect(s.get("ndw")).toEqual({
+    s.recordSuccess("nl-ndw", "2026-07-01T00:00:00.000Z", 42, 1234);
+    expect(s.get("nl-ndw")).toEqual({
       lastRunAt: "2026-07-01T00:00:00.000Z",
       lastSuccessAt: "2026-07-01T00:00:00.000Z",
       lastRowCount: 42,
@@ -15,9 +15,9 @@ describe("FeedStatusStore", () => {
 
   it("records an error without clobbering the last success", () => {
     const s = new FeedStatusStore();
-    s.recordSuccess("ndw", "2026-07-01T00:00:00.000Z", 42, 1000);
-    s.recordError("ndw", "2026-07-01T00:05:00.000Z", "HTTP 503");
-    const st = s.get("ndw");
+    s.recordSuccess("nl-ndw", "2026-07-01T00:00:00.000Z", 42, 1000);
+    s.recordError("nl-ndw", "2026-07-01T00:05:00.000Z", "HTTP 503");
+    const st = s.get("nl-ndw");
     expect(st?.lastSuccessAt).toBe("2026-07-01T00:00:00.000Z");
     expect(st?.lastError).toBe("HTTP 503");
     expect(st?.lastErrorAt).toBe("2026-07-01T00:05:00.000Z");
@@ -26,9 +26,9 @@ describe("FeedStatusStore", () => {
 
   it("clears a stale error once the feed recovers with a success", () => {
     const s = new FeedStatusStore();
-    s.recordError("ndw", "2026-07-01T00:05:00.000Z", "HTTP 503");
-    s.recordSuccess("ndw", "2026-07-01T00:10:00.000Z", 42, 1000);
-    const st = s.get("ndw");
+    s.recordError("nl-ndw", "2026-07-01T00:05:00.000Z", "HTTP 503");
+    s.recordSuccess("nl-ndw", "2026-07-01T00:10:00.000Z", 42, 1000);
+    const st = s.get("nl-ndw");
     expect(st?.lastError).toBeUndefined();
     expect(st?.lastErrorAt).toBeUndefined();
     expect(st?.lastSuccessAt).toBe("2026-07-01T00:10:00.000Z");

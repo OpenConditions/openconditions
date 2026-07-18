@@ -60,7 +60,7 @@ export function parseTurinFlow(input: string | Buffer, src: SourceDescriptor): F
       flows.push({
         id: `${src.id}:${id}`,
         source: src.id,
-        sourceFormat: "turin-fdt-xml",
+        sourceFormat: "fdt",
         domain: "roads",
         kind: "measurement",
         metric: "flow",

@@ -53,7 +53,7 @@ describe("parseFlatJson", () => {
   });
 
   it("parses the Longdo (Thailand) fixture via the registered mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "longdo-th")!;
+    const feed = FEED_SOURCES.find((f) => f.id === "th-longdo")!;
     const buf = readFileSync(join(import.meta.dirname, "fixtures/longdo-th/events.json"));
     const out = parseFlatJson(buf, feedToSourceDescriptor(feed));
     expect(out.length).toBeGreaterThan(0);

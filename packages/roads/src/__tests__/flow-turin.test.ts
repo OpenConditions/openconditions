@@ -3,7 +3,7 @@ import { parseTurinFlow } from "../flow-turin.js";
 import type { SourceDescriptor } from "../types.js";
 
 const src = {
-  id: "turin-5t-flow",
+  id: "it-turin",
   attribution: "5T / Città di Torino",
   country: "IT",
   license: "CC-BY-4.0",
@@ -19,8 +19,8 @@ describe("parseTurinFlow", () => {
   it("emits an inline-Point flow with km/h speed and drops accuracy=0 detectors", () => {
     const { flows } = parseTurinFlow(XML, src);
     expect(flows).toHaveLength(1);
-    expect(flows[0]!.id).toBe("turin-5t-flow:39983");
-    expect(flows[0]!.sourceFormat).toBe("turin-fdt-xml");
+    expect(flows[0]!.id).toBe("it-turin:39983");
+    expect(flows[0]!.sourceFormat).toBe("fdt");
     expect(flows[0]!.speedKph).toBe(54.5);
     expect(flows[0]!.direction).toBe("positive");
     expect(flows[0]!.geometry).toEqual({ type: "Point", coordinates: [7.6225, 45.0507] });

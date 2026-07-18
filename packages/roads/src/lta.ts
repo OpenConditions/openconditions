@@ -80,7 +80,7 @@ export function parseLtaIncidents(
     out.push({
       id: `${src.id}:${deriveId(ev)}`,
       source: src.id,
-      sourceFormat: "lta-json",
+      sourceFormat: "lta",
       domain: "roads",
       kind: "event",
       type,

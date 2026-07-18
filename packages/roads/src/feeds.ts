@@ -138,13 +138,13 @@ export function parserFor(format: SourceFormat): ParserFn {
   if (format === "open511") return parseOpen511;
   if (format === "wzdx") return parseWzdx;
   if (format === "geojson") return parseGeoJson;
-  if (format === "ibi511-json") return parseIbi511 as ParserFn;
-  if (format === "lta-json") return parseLtaIncidents as ParserFn;
-  if (format === "gddkia-xml") return parseGddkia;
+  if (format === "ibi511") return parseIbi511 as ParserFn;
+  if (format === "lta") return parseLtaIncidents as ParserFn;
+  if (format === "gddkia") return parseGddkia;
   if (format === "flatjson") return parseFlatJson as ParserFn;
-  if (format === "trafikverket-json") return parseTrafikverket as ParserFn;
-  if (format === "autobahn-json") return parseAutobahn;
-  if (format === "digitraffic-json") return parseDigitraffic;
+  if (format === "trafikverket") return parseTrafikverket as ParserFn;
+  if (format === "autobahn") return parseAutobahn;
+  if (format === "digitraffic") return parseDigitraffic;
   throw new Error(`No parser registered for format: ${format}`);
 }
 
@@ -153,19 +153,19 @@ export function parserFor(format: SourceFormat): ParserFn {
  * Throws when no flow parser is registered for the format.
  */
 export function flowParserFor(format: SourceFormat): FlowParserFn {
-  if (format === "digitraffic-json") return parseDigitrafficFlow;
+  if (format === "digitraffic") return parseDigitrafficFlow;
   if (format === "datex2") return parseDatexMeasuredData;
-  if (format === "fintraffic-tms-json") return parseFintrafficFlow;
-  if (format === "webtris-json") return parseWebtrisFlow;
-  if (format === "nyc-dot-speed-json") return parseNycDotFlow;
-  if (format === "ohgo-json") return parseOhgoFlow;
-  if (format === "trafikverket-flow-json") return parseTrafikverketFlow;
-  if (format === "bonn-geojson") return parseBonnFlow;
-  if (format === "madrid-informo-xml") return parseMadridFlow;
-  if (format === "lta-speedbands-json") return parseLtaSpeedBands;
-  if (format === "miv-xml") return parseMivFlow;
-  if (format === "turin-fdt-xml") return parseTurinFlow;
-  if (format === "hk-raw-xml") return parseHkRawFlow;
+  if (format === "fintraffic-tms") return parseFintrafficFlow;
+  if (format === "webtris") return parseWebtrisFlow;
+  if (format === "nyc-dot") return parseNycDotFlow;
+  if (format === "ohgo") return parseOhgoFlow;
+  if (format === "trafikverket-flow") return parseTrafikverketFlow;
+  if (format === "bonn") return parseBonnFlow;
+  if (format === "informo") return parseMadridFlow;
+  if (format === "lta-speedbands") return parseLtaSpeedBands;
+  if (format === "miv") return parseMivFlow;
+  if (format === "fdt") return parseTurinFlow;
+  if (format === "hk-td") return parseHkRawFlow;
   throw new Error(`No flow parser registered for format: ${format}`);
 }
 

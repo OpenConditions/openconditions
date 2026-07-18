@@ -9,7 +9,7 @@ import { parseGeoJson } from "../geojson.js";
  * of LineString/Point road segments and the documented `properties` (event_type
  * enum, event_priority, road_summary, last_updated, …).
  */
-const SRC = feedToSourceDescriptor(FEED_SOURCES.find((f) => f.id === "qld-traffic")!);
+const SRC = feedToSourceDescriptor(FEED_SOURCES.find((f) => f.id === "au-qld-traffic")!);
 
 function feature(props: Record<string, unknown>, lng: number, lat: number) {
   return {
@@ -84,28 +84,28 @@ describe("QLDTraffic mapping (spec v1.10)", () => {
 
   it("maps every documented event_type enum value to the canonical taxonomy", () => {
     expect(events).toHaveLength(4);
-    expect(byId["qld-traffic:101"]!.type).toBe("roadworks");
-    expect(byId["qld-traffic:102"]!.type).toBe("public_event");
-    expect(byId["qld-traffic:103"]!.type).toBe("accident");
-    expect(byId["qld-traffic:104"]!.type).toBe("weather");
+    expect(byId["au-qld-traffic:101"]!.type).toBe("roadworks");
+    expect(byId["au-qld-traffic:102"]!.type).toBe("public_event");
+    expect(byId["au-qld-traffic:103"]!.type).toBe("accident");
+    expect(byId["au-qld-traffic:104"]!.type).toBe("weather");
   });
 
   it("maps event_priority to severity (Red Alert → critical)", () => {
-    expect(byId["qld-traffic:101"]!.severity).toBe("low");
-    expect(byId["qld-traffic:102"]!.severity).toBe("medium");
-    expect(byId["qld-traffic:103"]!.severity).toBe("critical");
-    expect(byId["qld-traffic:104"]!.severity).toBe("high");
-    expect(byId["qld-traffic:103"]!.severitySource).toBe("declared");
+    expect(byId["au-qld-traffic:101"]!.severity).toBe("low");
+    expect(byId["au-qld-traffic:102"]!.severity).toBe("medium");
+    expect(byId["au-qld-traffic:103"]!.severity).toBe("critical");
+    expect(byId["au-qld-traffic:104"]!.severity).toBe("high");
+    expect(byId["au-qld-traffic:103"]!.severitySource).toBe("declared");
   });
 
   it("reads the road name from the nested road_summary and the headline from description", () => {
-    expect(byId["qld-traffic:101"]!.roads[0]?.name).toBe("Bruce Highway");
-    expect(byId["qld-traffic:101"]!.headline).toBe("Resurfacing on the Bruce Highway");
-    expect(byId["qld-traffic:101"]!.description).toBe("Reduced speed limit in place");
+    expect(byId["au-qld-traffic:101"]!.roads[0]?.name).toBe("Bruce Highway");
+    expect(byId["au-qld-traffic:101"]!.headline).toBe("Resurfacing on the Bruce Highway");
+    expect(byId["au-qld-traffic:101"]!.description).toBe("Reduced speed limit in place");
   });
 
   it("uses last_updated as dataUpdatedAt and preserves the GeometryCollection", () => {
-    expect(byId["qld-traffic:101"]!.dataUpdatedAt).toBe("2026-06-20T11:37:19.448257+10:00");
-    expect(byId["qld-traffic:101"]!.geometry.type).toBe("GeometryCollection");
+    expect(byId["au-qld-traffic:101"]!.dataUpdatedAt).toBe("2026-06-20T11:37:19.448257+10:00");
+    expect(byId["au-qld-traffic:101"]!.geometry.type).toBe("GeometryCollection");
   });
 });

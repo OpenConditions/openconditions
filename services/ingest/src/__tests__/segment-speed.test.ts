@@ -124,7 +124,7 @@ describe("writeSensorObservations", () => {
       "sensor of that source bound to the segment",
     async () => {
       await seedSegment("201:f", 201, 100);
-      await seedFlow("nrw-1:1", "verkehr-nrw-de", 50, 100);
+      await seedFlow("nrw-1:1", "de-nw-verkehr", 50, 100);
       await seedSensorSegment("nrw-1:1", "201:f");
 
       const first = await writeSensorObservations(sql, () => NOW);
@@ -141,7 +141,7 @@ describe("writeSensorObservations", () => {
           expires_at: Date;
         }[]
       >`SELECT source_tier, current_kph, speed_ratio, los, sample_count, observed_at, expires_at
-        FROM conditions.segment_observation WHERE segment_id = '201:f' AND source = 'verkehr-nrw-de'`;
+        FROM conditions.segment_observation WHERE segment_id = '201:f' AND source = 'de-nw-verkehr'`;
       expect(rows).toHaveLength(1);
       const row = rows[0]!;
       expect(row.source_tier).toBe("sensor");
@@ -153,7 +153,7 @@ describe("writeSensorObservations", () => {
 
       // A second sensor of the same source bound to the same segment: the
       // row must be averaged in place, not duplicated.
-      await seedFlow("nrw-2:1", "verkehr-nrw-de", 70, 100);
+      await seedFlow("nrw-2:1", "de-nw-verkehr", 70, 100);
       await seedSensorSegment("nrw-2:1", "201:f");
 
       const second = await writeSensorObservations(sql, () => NOW);
@@ -161,7 +161,7 @@ describe("writeSensorObservations", () => {
 
       const merged = await sql<{ current_kph: number; sample_count: number }[]>`
         SELECT current_kph, sample_count FROM conditions.segment_observation
-        WHERE segment_id = '201:f' AND source = 'verkehr-nrw-de'`;
+        WHERE segment_id = '201:f' AND source = 'de-nw-verkehr'`;
       expect(merged).toHaveLength(1);
       expect(Number(merged[0]!.current_kph)).toBeCloseTo(60, 5);
       expect(Number(merged[0]!.sample_count)).toBe(2);
@@ -171,9 +171,9 @@ describe("writeSensorObservations", () => {
 
   it("keeps one row per (segment, source): two sources on one segment produce two rows, each averaged within its own source", async () => {
     await seedSegment("203:f", 203, 100);
-    await seedFlow("nrw-a:1", "verkehr-nrw-de", 50, 100);
+    await seedFlow("nrw-a:1", "de-nw-verkehr", 50, 100);
     await seedSensorSegment("nrw-a:1", "203:f");
-    await seedFlow("trv-a:1", "trafikverket-se", 70, 100);
+    await seedFlow("trv-a:1", "se-trafikverket", 70, 100);
     await seedSensorSegment("trv-a:1", "203:f");
 
     await writeSensorObservations(sql, () => NOW);
@@ -182,17 +182,17 @@ describe("writeSensorObservations", () => {
       SELECT source, current_kph, sample_count FROM conditions.segment_observation
       WHERE segment_id = '203:f' ORDER BY source`;
     expect(rows).toHaveLength(2);
-    expect(rows.map((r) => r.source)).toEqual(["trafikverket-se", "verkehr-nrw-de"]);
+    expect(rows.map((r) => r.source)).toEqual(["de-nw-verkehr", "se-trafikverket"]);
     const bySource = new Map(rows.map((r) => [r.source, r]));
-    expect(Number(bySource.get("verkehr-nrw-de")!.current_kph)).toBeCloseTo(50, 5);
-    expect(Number(bySource.get("verkehr-nrw-de")!.sample_count)).toBe(1);
-    expect(Number(bySource.get("trafikverket-se")!.current_kph)).toBeCloseTo(70, 5);
-    expect(Number(bySource.get("trafikverket-se")!.sample_count)).toBe(1);
+    expect(Number(bySource.get("de-nw-verkehr")!.current_kph)).toBeCloseTo(50, 5);
+    expect(Number(bySource.get("de-nw-verkehr")!.sample_count)).toBe(1);
+    expect(Number(bySource.get("se-trafikverket")!.current_kph)).toBeCloseTo(70, 5);
+    expect(Number(bySource.get("se-trafikverket")!.sample_count)).toBe(1);
   }, 30_000);
 
   it("leaves los 'unknown' and speed_ratio NULL when no free-flow speed is known (Trafikverket-like)", async () => {
     await seedSegment("202:f", 202, null);
-    await seedFlow("trv-1:1", "trafikverket-se", 50, null);
+    await seedFlow("trv-1:1", "se-trafikverket", 50, null);
     await seedSensorSegment("trv-1:1", "202:f");
 
     await writeSensorObservations(sql, () => NOW);
@@ -200,7 +200,7 @@ describe("writeSensorObservations", () => {
     const rows = await sql<
       { los: string; speed_ratio: number | null; free_flow_kph: number | null }[]
     >`SELECT los, speed_ratio, free_flow_kph FROM conditions.segment_observation
-      WHERE segment_id = '202:f' AND source = 'trafikverket-se'`;
+      WHERE segment_id = '202:f' AND source = 'se-trafikverket'`;
     expect(rows).toHaveLength(1);
     expect(rows[0]!.los).toBe("unknown");
     expect(rows[0]!.speed_ratio).toBeNull();
@@ -217,7 +217,7 @@ describe("fuseSegmentSpeed", () => {
       await seedSegment("301:f", 301, 100);
       await seedObservation(
         "301:f",
-        "verkehr-nrw-de",
+        "de-nw-verkehr",
         "sensor",
         50,
         NOW,
@@ -266,7 +266,7 @@ describe("fuseSegmentSpeed", () => {
       expect(row.source_tier).toBe("authoritative");
       expect(row.confidence).toBe("measured");
       expect(row.is_estimated).toBe(false);
-      expect([...row.contributing].sort()).toEqual(["incident-authority", "verkehr-nrw-de"]);
+      expect([...row.contributing].sort()).toEqual(["de-nw-verkehr", "incident-authority"]);
     },
     30_000
   );

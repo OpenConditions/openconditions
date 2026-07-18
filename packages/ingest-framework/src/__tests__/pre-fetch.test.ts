@@ -5,6 +5,7 @@ import type { FeedSourceBase } from "../index.js";
 const base: FeedSourceBase = {
   id: "h",
   name: "H",
+  operator: "test",
   format: "geojson",
   cadenceSec: 300,
   freshnessWindowSec: 900,

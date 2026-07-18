@@ -48,7 +48,7 @@ export function parseOhgoFlow(input: string | Buffer, src: SourceDescriptor): Fl
     const base: RoadFlow = {
       id: `${src.id}:${id}`,
       source: src.id,
-      sourceFormat: "ohgo-json",
+      sourceFormat: "ohgo",
       domain: "roads",
       kind: "measurement",
       metric: "flow",
