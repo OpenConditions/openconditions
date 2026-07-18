@@ -1,12 +1,13 @@
 [
   {
-    "id": "ba-cortes-ar",
     "name": "Buenos Aires road closures (cortes)",
     "format": "geojson",
-    "url": "https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=${BA_CLIENT_ID}&client_secret=${BA_CLIENT_SECRET}",
+    "operator": "cortes",
+    "subdivision": "ba",
+    "url": "https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=${AR_BA_CLIENT_ID}&client_secret=${AR_BA_CLIENT_SECRET}",
     "requiredEnv": [
-      "BA_CLIENT_ID",
-      "BA_CLIENT_SECRET"
+      "AR_BA_CLIENT_ID",
+      "AR_BA_CLIENT_SECRET"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -16,7 +17,7 @@
     "country": "AR",
     "privacyUrl": "https://www.buenosaires.gob.ar/politicas-de-privacidad",
     "setup": {
-      "BA_CLIENT_ID": {
+      "AR_BA_CLIENT_ID": {
         "url": "https://api-transporte.buenosaires.gob.ar/registro",
         "urlLabel": "BA transport API registration",
         "steps": [
@@ -25,7 +26,7 @@
         "notes": "CC-BY-2.5-AR (commercial OK).",
         "title": "Buenos Aires transport — client_id"
       },
-      "BA_CLIENT_SECRET": {
+      "AR_BA_CLIENT_SECRET": {
         "title": "Buenos Aires transport — client_secret"
       }
     },
@@ -34,12 +35,13 @@
       "defaultType": "road_closure",
       "headlineField": "nombre",
       "descriptionField": "descripcion"
-    }
+    },
+    "id": "ar-ba-cortes"
   },
   {
-    "id": "asfinag-at",
     "name": "ASFINAG events (Austria)",
     "format": "datex2",
+    "operator": "asfinag",
     "url": [
       "https://contentportal.asfinag.at/datex2/v3/unplanned-events",
       "https://contentportal.asfinag.at/datex2/v3/planned-events"
@@ -72,12 +74,14 @@
         "title": "ASFINAG (Austria) — password"
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "at-asfinag"
   },
   {
-    "id": "livetraffic-nsw",
     "name": "Live Traffic NSW (New South Wales)",
     "format": "geojson",
+    "operator": "livetraffic",
+    "subdivision": "nsw",
     "url": [
       "https://api.transport.nsw.gov.au/v1/live/hazards/incident/open",
       "https://api.transport.nsw.gov.au/v1/live/hazards/roadwork/open",
@@ -89,7 +93,7 @@
     "auth": {
       "kind": "header-key",
       "header": "Authorization",
-      "envVar": "NSW_TRANSPORT_API_KEY",
+      "envVar": "AU_NSW_LIVETRAFFIC_API_KEY",
       "valuePrefix": "apikey "
     },
     "cadenceSec": 180,
@@ -100,7 +104,7 @@
     "country": "AU",
     "privacyUrl": "https://www.transport.nsw.gov.au/privacy-statement",
     "setup": {
-      "NSW_TRANSPORT_API_KEY": {
+      "AU_NSW_LIVETRAFFIC_API_KEY": {
         "url": "https://opendata.transport.nsw.gov.au/data/user/register",
         "urlLabel": "Register at Transport NSW Open Data",
         "steps": [
@@ -126,12 +130,14 @@
       "defaultType": "other",
       "headlineField": "headline",
       "descriptionField": "otherAdvice"
-    }
+    },
+    "id": "au-nsw-livetraffic"
   },
   {
-    "id": "trafficsa-au",
     "name": "Traffic SA (South Australia)",
     "format": "geojson",
+    "operator": "trafficsa",
+    "subdivision": "sa",
     "url": [
       "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",
       "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/1/query?where=1%3D1&outFields=*&f=geojson"
@@ -163,17 +169,19 @@
       "defaultType": "other",
       "headlineField": "DESCRIPTION",
       "roadField": "ROAD_NO"
-    }
+    },
+    "id": "au-sa-trafficsa"
   },
   {
-    "id": "qld-traffic",
     "name": "QLDTraffic (Queensland)",
     "format": "geojson",
+    "operator": "traffic",
+    "subdivision": "qld",
     "url": "https://api.qldtraffic.qld.gov.au/v1/events",
     "auth": {
       "kind": "query-key",
       "param": "apikey",
-      "envVar": "QLD_TRAFFIC_API_KEY",
+      "envVar": "AU_QLD_TRAFFIC_API_KEY",
       "defaultValue": "3e83add325cbb69ac4d8e5bf433d770b"
     },
     "cadenceSec": 300,
@@ -184,7 +192,7 @@
     "country": "AU",
     "privacyUrl": "https://www.qld.gov.au/legal/privacy",
     "setup": {
-      "QLD_TRAFFIC_API_KEY": {
+      "AU_QLD_TRAFFIC_API_KEY": {
         "url": "https://www.qldtraffic.qld.gov.au/",
         "urlLabel": "QLDTraffic",
         "notes": "Optional — the bundled public key is shared + rate-limited (100 req/min). Set your own to avoid 429s.",
@@ -221,12 +229,13 @@
       },
       "roadField": "road_summary.road_name",
       "updatedField": "last_updated"
-    }
+    },
+    "id": "au-qld-traffic"
   },
   {
-    "id": "flanders-be",
     "name": "Verkeerscentrum Vlaanderen (Flanders)",
     "format": "datex2",
+    "operator": "flanders",
     "url": "https://www.verkeerscentrum.be/uitwisseling/datex2v3full",
     "cadenceSec": 120,
     "freshnessWindowSec": 600,
@@ -235,12 +244,13 @@
     "attribution": "Verkeerscentrum Vlaanderen",
     "country": "BE",
     "privacyUrl": "https://www.verkeerscentrum.be/",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "be-flanders"
   },
   {
-    "id": "brussels-be",
     "name": "Bruxelles Mobilité traffic events",
     "format": "geojson",
+    "operator": "brussels",
     "url": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items?f=json&limit=1000",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -271,12 +281,13 @@
       },
       "roadField": "location_fr",
       "updatedField": "last_update"
-    }
+    },
+    "id": "be-brussels"
   },
   {
-    "id": "miv-flow-be",
     "name": "MIV traffic speed (Flanders)",
-    "format": "miv-xml",
+    "format": "miv",
+    "operator": "miv",
     "produces": "flow",
     "url": "http://miv.opendata.belfla.be/miv/verkeersdata",
     "cadenceSec": 60,
@@ -290,12 +301,14 @@
     "stationRegistry": {
       "url": "http://miv.opendata.belfla.be/miv/configuratie/xml",
       "format": "miv-config"
-    }
+    },
+    "id": "be-miv"
   },
   {
-    "id": "drivebc",
     "name": "DriveBC (British Columbia)",
     "format": "open511",
+    "operator": "drivebc",
+    "subdivision": "bc",
     "url": "https://api.open511.gov.bc.ca/events?format=json",
     "cadenceSec": 120,
     "freshnessWindowSec": 600,
@@ -303,12 +316,14 @@
     "attribution": "Contains information licensed under the Open Government Licence – British Columbia",
     "country": "CA",
     "privacyUrl": "https://www2.gov.bc.ca/gov/content/home/privacy",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "ca-bc-drivebc"
   },
   {
-    "id": "on-511",
     "name": "Ontario 511 (Canada)",
-    "format": "ibi511-json",
+    "format": "ibi511",
+    "operator": "511",
+    "subdivision": "on",
     "url": "https://511on.ca/api/v2/get/event?format=json",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -317,12 +332,14 @@
     "attribution": "Contains information licensed under the Open Government Licence – Ontario",
     "country": "CA",
     "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "ca-on-511"
   },
   {
-    "id": "mtq-qc",
     "name": "MTQ roadworks (Québec)",
     "format": "geojson",
+    "operator": "mtq",
+    "subdivision": "qc",
     "url": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:chantiers_mtmdet&outputformat=geojson",
     "cadenceSec": 600,
     "freshnessWindowSec": 1800,
@@ -339,12 +356,13 @@
       "descriptionField": "descriptionFrancais",
       "roadField": "routeAutoroute",
       "updatedField": "miseAJour"
-    }
+    },
+    "id": "ca-qc-mtq"
   },
   {
-    "id": "autobahn-de",
     "name": "Autobahn GmbH (Germany)",
-    "format": "autobahn-json",
+    "format": "autobahn",
+    "operator": "autobahn",
     "catalog": {
       "resolver": "autobahn-index"
     },
@@ -354,12 +372,14 @@
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
     "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-autobahn"
   },
   {
-    "id": "svzbw-de",
     "name": "MobiData BW roadworks (Baden-Württemberg)",
     "format": "datex2",
+    "operator": "svzbw",
+    "subdivision": "bw",
     "url": "https://api.mobidata-bw.de/datasets/traffic/roadworks/roadworks_svzbw.datex2.xml",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -368,12 +388,14 @@
     "attribution": "MobiData BW / Ministerium für Verkehr Baden-Württemberg (SVZ-BW)",
     "country": "DE",
     "privacyUrl": "https://www.mobidata-bw.de/pages/datenschutz",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-bw-svzbw"
   },
   {
-    "id": "berlin-de",
     "name": "VIZ Berlin roadworks & closures",
     "format": "geojson",
+    "operator": "berlin",
+    "subdivision": "be",
     "url": "https://api.viz.berlin.de/daten/baustellen_sperrungen_viz.json",
     "cadenceSec": 600,
     "freshnessWindowSec": 1800,
@@ -402,14 +424,16 @@
       },
       "roadField": "street",
       "updatedField": "tstore"
-    }
+    },
+    "id": "de-be-berlin"
   },
   {
-    "id": "verkehr-nrw-de",
     "name": "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_NRW_SUBSCRIPTION_ID",
+    "operator": "verkehr",
+    "subdivision": "nw",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_VERKEHR_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_VERKEHR_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_NW_VERKEHR_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -419,7 +443,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_NRW_SUBSCRIPTION_ID"
+      "DE_NW_VERKEHR_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -445,19 +469,22 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_NRW_SUBSCRIPTION_ID": {
+      "DE_NW_VERKEHR_SUBSCRIPTION_ID": {
         "title": "NRW (LVZ.NRW) Mobilithek — subscription id(s)",
         "description": "Numeric subscription id(s) from mobilithek.info/organisation/subscriptions (one per subscribed offer, e.g. roadworks 648508602333433856 + incidents 648512079906336768). List multiple comma-separated; the feed fans out one HTTPS client-pull per id. dl-de/zero-2-0."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-nw-verkehr"
   },
   {
-    "id": "mobilithek-nrw-kommunal",
     "name": "NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "nw",
+    "stream": "kommunal",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -467,7 +494,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID"
+      "DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -493,19 +520,22 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_NRW_KOMMUNAL_SUBSCRIPTION_ID": {
+      "DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID": {
         "title": "NRW municipalities Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for NRW city/district offers — Düsseldorf/dmotion 110000000002056000, Köln 110000000002900004 (+ 110000000002899004 / 110000000003011002), Kreis Unna 930448553981730816. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-nw-mobilithek-kommunal"
   },
   {
-    "id": "mobilithek-nrw-mobidrom",
     "name": "NRW.Mobidrom bundled roadworks via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "nw",
+    "stream": "mobidrom",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -515,7 +545,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID"
+      "DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -541,19 +571,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_NRW_MOBIDROM_SUBSCRIPTION_ID": {
+      "DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID": {
         "title": "NRW.Mobidrom Mobilithek — subscription id(s)",
         "description": "Subscription id for the NRW.Mobidrom bundled roadworks offer 884461110418108416. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-SA-4.0 — ShareAlike; kept in its own feed so it never folds into a more permissive source."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-nw-mobilithek-mobidrom"
   },
   {
-    "id": "mobilithek-bayern",
     "name": "Bayern via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BAYERN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BAYERN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_BAYERN_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "by",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BY_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BY_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_BY_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -563,7 +595,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_BAYERN_SUBSCRIPTION_ID"
+      "DE_BY_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -589,19 +621,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_BAYERN_SUBSCRIPTION_ID": {
+      "DE_BY_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Bayern Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the Bayerische Straßenbauverwaltung offers (110000000002506000, 110000000002507001). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required)."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-by-mobilithek"
   },
   {
-    "id": "mobilithek-bw",
     "name": "Baden-Württemberg via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BW_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BW_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_BW_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "bw",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_BW_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -611,7 +645,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_BW_SUBSCRIPTION_ID"
+      "DE_BW_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -637,19 +671,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_BW_SUBSCRIPTION_ID": {
+      "DE_BW_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Baden-Württemberg Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the BW Landesmeldestelle offer 857127500689977344. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-bw-mobilithek"
   },
   {
-    "id": "mobilithek-berlin",
     "name": "Berlin via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BERLIN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BERLIN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_BERLIN_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "be",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BE_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BE_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_BE_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -659,7 +695,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_BERLIN_SUBSCRIPTION_ID"
+      "DE_BE_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -685,19 +721,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_BERLIN_SUBSCRIPTION_ID": {
+      "DE_BE_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Berlin Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the Berlin SenMVKU offer 801096621061234688. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-be-mobilithek"
   },
   {
-    "id": "mobilithek-brandenburg",
     "name": "Brandenburg via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "bb",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BB_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BB_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_BB_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -707,7 +745,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID"
+      "DE_BB_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -733,19 +771,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_BRANDENBURG_SUBSCRIPTION_ID": {
+      "DE_BB_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Brandenburg Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the Landesbetrieb Straßenwesen Brandenburg offer 636547428851101696. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-bb-mobilithek"
   },
   {
-    "id": "mobilithek-bremen",
     "name": "Bremen via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_BREMEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_BREMEN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_BREMEN_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "hb",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HB_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HB_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_HB_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -755,7 +795,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_BREMEN_SUBSCRIPTION_ID"
+      "DE_HB_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -781,19 +821,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_BREMEN_SUBSCRIPTION_ID": {
+      "DE_HB_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Bremen Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the Verkehrsmanagementzentrale Bremen offer 608390979298140160. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-hb-mobilithek"
   },
   {
-    "id": "mobilithek-hamburg",
     "name": "Hamburg via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_HAMBURG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_HAMBURG_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "hh",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HH_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HH_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_HH_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -803,7 +845,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID"
+      "DE_HH_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -829,19 +871,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_HAMBURG_SUBSCRIPTION_ID": {
+      "DE_HH_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Hamburg Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the LSBG Hamburg offer 110000000003540000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-hh-mobilithek"
   },
   {
-    "id": "mobilithek-hessen",
     "name": "Hessen via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_HESSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_HESSEN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_HESSEN_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "he",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HE_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HE_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_HE_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -851,7 +895,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_HESSEN_SUBSCRIPTION_ID"
+      "DE_HE_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -877,19 +921,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_HESSEN_SUBSCRIPTION_ID": {
+      "DE_HE_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Hessen Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the Hessen Mobil offers (841292914668498944, 862010418143330304). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required)."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-he-mobilithek"
   },
   {
-    "id": "mobilithek-mv",
     "name": "Mecklenburg-Vorpommern via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_MV_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_MV_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_MV_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "mv",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_MV_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_MV_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_MV_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -899,7 +945,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_MV_SUBSCRIPTION_ID"
+      "DE_MV_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -925,19 +971,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_MV_SUBSCRIPTION_ID": {
+      "DE_MV_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Mecklenburg-Vorpommern Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the LSBV M-V offers (110000000002802000, 818137060259840000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required)."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-mv-mobilithek"
   },
   {
-    "id": "mobilithek-niedersachsen",
     "name": "Niedersachsen via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "ni",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NI_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NI_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_NI_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -947,7 +995,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID"
+      "DE_NI_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -973,19 +1021,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_NIEDERSACHSEN_SUBSCRIPTION_ID": {
+      "DE_NI_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Niedersachsen Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the NLStBV offers (110000000002749000, 951153778962972672, 656880550985773056) + Hannover 633691473746571264. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-ni-mobilithek"
   },
   {
-    "id": "mobilithek-sachsen",
     "name": "Sachsen via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SACHSEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SACHSEN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "sn",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_SN_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_SN_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_SN_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -995,7 +1045,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID"
+      "DE_SN_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1021,19 +1071,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_SACHSEN_SUBSCRIPTION_ID": {
+      "DE_SN_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Sachsen Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the LASuV Sachsen offer 608439575154401280 (+ Leipzig 952541268382826496). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required)."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-sn-mobilithek"
   },
   {
-    "id": "mobilithek-sachsen-anhalt",
     "name": "Sachsen-Anhalt via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "st",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_ST_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_ST_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_ST_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -1043,7 +1095,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID"
+      "DE_ST_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1069,19 +1121,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_SACHSEN_ANHALT_SUBSCRIPTION_ID": {
+      "DE_ST_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Sachsen-Anhalt Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the Landesstraßenbaubehörde Sachsen-Anhalt offer 110000000003150000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-st-mobilithek"
   },
   {
-    "id": "mobilithek-sh",
     "name": "Schleswig-Holstein via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_SH_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_SH_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_SH_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "sh",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_SH_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_SH_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_SH_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -1091,7 +1145,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_SH_SUBSCRIPTION_ID"
+      "DE_SH_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1117,19 +1171,21 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_SH_SUBSCRIPTION_ID": {
+      "DE_SH_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Schleswig-Holstein Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the LBV.SH offers (110000000003237002, 110000000003387000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required)."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-sh-mobilithek"
   },
   {
-    "id": "mobilithek-thueringen",
     "name": "Thüringen via Mobilithek",
     "format": "datex2",
-    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID}",
-    "expandEnv": "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID",
+    "operator": "mobilithek",
+    "subdivision": "th",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_TH_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_TH_MOBILITHEK_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_TH_MOBILITHEK_SUBSCRIPTION_ID",
     "auth": {
       "kind": "mtls",
       "certEnvVar": "MOBILITHEK_CERT",
@@ -1139,7 +1195,7 @@
       "Accept-Encoding": "gzip"
     },
     "requiredEnv": [
-      "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID"
+      "DE_TH_MOBILITHEK_SUBSCRIPTION_ID"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1165,17 +1221,18 @@
         "title": "Mobilithek — client private key (PEM)",
         "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
       },
-      "MOBILITHEK_THUERINGEN_SUBSCRIPTION_ID": {
+      "DE_TH_MOBILITHEK_SUBSCRIPTION_ID": {
         "title": "Thüringen Mobilithek — subscription id(s)",
         "description": "Subscription id(s) for the TLBV offer 110000000003051000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required)."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-th-mobilithek"
   },
   {
-    "id": "bonn-flow-de",
     "name": "Bonn realtime traffic (Germany)",
-    "format": "bonn-geojson",
+    "format": "bonn",
+    "operator": "bonn",
     "produces": "flow",
     "url": "https://stadtplan.bonn.de/geojson?Thema=19584",
     "cadenceSec": 120,
@@ -1185,17 +1242,18 @@
     "attribution": "Bundesstadt Bonn",
     "country": "DE",
     "privacyUrl": "https://www.bonn.de/datenschutz.php",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "de-bonn"
   },
   {
-    "id": "vejdirektoratet-dk",
     "name": "Vejdirektoratet (Denmark)",
     "format": "datex2",
+    "operator": "vejdirektoratet",
     "url": "https://data.vd-nap.dk/api/datex2/traffic-events",
     "auth": {
       "kind": "query-key",
       "param": "api-key",
-      "envVar": "DK_VD_API_KEY"
+      "envVar": "DK_VEJDIREKTORATET_API_KEY"
     },
     "cadenceSec": 600,
     "freshnessWindowSec": 1800,
@@ -1205,7 +1263,7 @@
     "country": "DK",
     "privacyUrl": "https://www.vejdirektoratet.dk/",
     "setup": {
-      "DK_VD_API_KEY": {
+      "DK_VEJDIREKTORATET_API_KEY": {
         "url": "https://du-portal-ui.dataudveksler.app.vd.dk/data/416/overview",
         "urlLabel": "Danish data exchanger — dataset 416",
         "steps": [
@@ -1217,12 +1275,13 @@
         "title": "Vejdirektoratet key (Denmark)"
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "dk-vejdirektoratet"
   },
   {
-    "id": "tarktee-ee",
     "name": "Tark Tee (Estonia)",
     "format": "datex2",
+    "operator": "tarktee",
     "url": "https://tarktee.transpordiamet.ee/api/datex2/situation",
     "auth": {
       "kind": "query-key",
@@ -1247,12 +1306,13 @@
         "title": "Tark Tee key (Estonia)"
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "ee-tarktee"
   },
   {
-    "id": "dgt-es",
     "name": "DGT (Spain)",
     "format": "datex2",
+    "operator": "dgt",
     "url": "https://nap.dgt.es/datex2/v3/dgt/SituationPublication/datex2_v36.xml",
     "cadenceSec": 120,
     "freshnessWindowSec": 600,
@@ -1261,12 +1321,13 @@
     "attribution": "Dirección General de Tráfico (DGT)",
     "country": "ES",
     "privacyUrl": "https://www.dgt.es/protecciondedatos/",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "es-dgt"
   },
   {
-    "id": "madrid-informo-es",
     "name": "Madrid INFORMO traffic (Spain)",
-    "format": "madrid-informo-xml",
+    "format": "informo",
+    "operator": "madrid",
     "produces": "flow",
     "url": "https://informo.madrid.es/informo/tmadrid/pm.xml",
     "cadenceSec": 300,
@@ -1276,12 +1337,13 @@
     "attribution": "Ayuntamiento de Madrid",
     "country": "ES",
     "privacyUrl": "https://www.madrid.es/portal/site/munimadrid/menuitem.privacy",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "es-madrid"
   },
   {
-    "id": "digitraffic-fi",
     "name": "Digitraffic (Finland)",
-    "format": "digitraffic-json",
+    "format": "digitraffic",
+    "operator": "digitraffic",
     "url": [
       "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=TRAFFIC_ANNOUNCEMENT",
       "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=ROAD_WORK"
@@ -1292,12 +1354,13 @@
     "attribution": "Fintraffic / Digitraffic",
     "country": "FI",
     "privacyUrl": "https://www.fintraffic.fi/en/fintraffic/data-protection",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "fi-digitraffic"
   },
   {
-    "id": "fintraffic-tms-fi",
     "name": "Fintraffic TMS traffic speed (Finland)",
-    "format": "fintraffic-tms-json",
+    "format": "fintraffic-tms",
+    "operator": "fintraffic",
     "produces": "flow",
     "url": "https://tie.digitraffic.fi/api/tms/v1/stations/data",
     "requestHeaders": {
@@ -1314,12 +1377,13 @@
     "stationRegistry": {
       "url": "https://tie.digitraffic.fi/api/tms/v1/stations",
       "format": "fintraffic-stations"
-    }
+    },
+    "id": "fi-fintraffic"
   },
   {
-    "id": "dir-fr",
     "name": "DIR / Bison Futé (France national roads)",
     "format": "datex2",
+    "operator": "dir",
     "url": "https://transport.data.gouv.fr/resources/79174/download",
     "cadenceSec": 600,
     "freshnessWindowSec": 1800,
@@ -1328,12 +1392,14 @@
     "attribution": "DIR / Bison Futé",
     "country": "FR",
     "privacyUrl": "https://www.bison-fute.gouv.fr/",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "fr-dir"
   },
   {
-    "id": "circulation-fr",
     "name": "Circulation temps réel — vitesses & débits (France)",
     "format": "datex2",
+    "operator": "dir",
+    "stream": "flow",
     "produces": "flow",
     "url": "https://tipi.bison-fute.gouv.fr/bison-fute-ouvert/publicationsDIR/QTV-DIR/qtvDir.xml",
     "cadenceSec": 360,
@@ -1347,17 +1413,18 @@
     "stationRegistry": {
       "url": "https://tipi.bison-fute.gouv.fr/bison-fute-ouvert/publicationsDIR/QTV-DIR/refDir.csv",
       "format": "france-comptage-csv"
-    }
+    },
+    "id": "fr-dir-flow"
   },
   {
-    "id": "nationalhighways-gb",
     "name": "National Highways NTIS (England)",
     "format": "datex2",
+    "operator": "nationalhighways",
     "url": "https://api.data.nationalhighways.co.uk/roads/v2.0/closures",
     "auth": {
       "kind": "header-key",
       "header": "Ocp-Apim-Subscription-Key",
-      "envVar": "NH_API_KEY"
+      "envVar": "GB_NATIONALHIGHWAYS_API_KEY"
     },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1367,7 +1434,7 @@
     "country": "GB",
     "privacyUrl": "https://nationalhighways.co.uk/privacy-notice/",
     "setup": {
-      "NH_API_KEY": {
+      "GB_NATIONALHIGHWAYS_API_KEY": {
         "url": "https://developer.data.nationalhighways.co.uk/signin",
         "urlLabel": "National Highways developer portal",
         "steps": [
@@ -1380,12 +1447,13 @@
         "description": "Ocp-Apim-Subscription-Key header value."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "gb-nationalhighways"
   },
   {
-    "id": "webtris-gb",
     "name": "WebTRIS traffic flow (Great Britain)",
-    "format": "webtris-json",
+    "format": "webtris",
+    "operator": "webtris",
     "produces": "flow",
     "url": "https://webtris.nationalhighways.co.uk/api/v1.0/reports/daily?sites={sites}&start_date={start_date}&end_date={end_date}&page=1&page_size=100",
     "preFetch": "webtrisDailyWindow",
@@ -1401,12 +1469,13 @@
     "stationRegistry": {
       "url": "https://webtris.nationalhighways.co.uk/api/v1.0/sites",
       "format": "webtris-sites"
-    }
+    },
+    "id": "gb-webtris"
   },
   {
-    "id": "hk-td-flow",
     "name": "Transport Department traffic detectors (Hong Kong)",
-    "format": "hk-raw-xml",
+    "format": "hk-td",
+    "operator": "td",
     "produces": "flow",
     "url": "https://resource.data.one.gov.hk/td/traffic-detectors/rawSpeedVol-all.xml",
     "cadenceSec": 120,
@@ -1420,17 +1489,18 @@
     "stationRegistry": {
       "url": "https://static.data.gov.hk/td/traffic-data-strategic-major-roads/info/traffic_speed_volume_occ_info.csv",
       "format": "hk-detector-csv"
-    }
+    },
+    "id": "hk-td"
   },
   {
-    "id": "hc-hr",
     "name": "Hrvatske ceste roadworks (Croatia)",
     "format": "datex2",
+    "operator": "hc",
     "url": "https://b2b.promet-info.hr/dc/b2b.hc.roadworks.datex",
     "auth": {
       "kind": "basic",
-      "userEnvVar": "HC_HR_USERNAME",
-      "passEnvVar": "HC_HR_PASSWORD"
+      "userEnvVar": "HR_HC_USERNAME",
+      "passEnvVar": "HR_HC_PASSWORD"
     },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1440,7 +1510,7 @@
     "country": "HR",
     "privacyUrl": "https://www.hrvatske-ceste.hr/",
     "setup": {
-      "HC_HR_USERNAME": {
+      "HR_HC_USERNAME": {
         "url": "https://www.hrvatske-ceste.hr/",
         "urlLabel": "Hrvatske ceste",
         "steps": [
@@ -1450,16 +1520,17 @@
         "title": "Hrvatske ceste (Croatia) — B2B username",
         "description": "HTTP Basic username for the promet-info B2B feed (Croatia)."
       },
-      "HC_HR_PASSWORD": {
+      "HR_HC_PASSWORD": {
         "title": "Hrvatske ceste (Croatia) — B2B password"
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "hr-hc"
   },
   {
-    "id": "vegagerdin-is",
     "name": "Vegagerðin road conditions (Iceland)",
     "format": "geojson",
+    "operator": "vegagerdin",
     "url": "https://gagnaveita.vegagerdin.is/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=gis:roadconditions_pointincident&outputFormat=application/json",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1485,12 +1556,13 @@
       "updatedField": "CREATIONTIME",
       "lonField": "X",
       "latField": "Y"
-    }
+    },
+    "id": "is-vegagerdin"
   },
   {
-    "id": "turin-5t-flow",
     "name": "5T real-time traffic flow (Turin)",
-    "format": "turin-fdt-xml",
+    "format": "fdt",
+    "operator": "turin",
     "produces": "flow",
     "url": "https://opendata.5t.torino.it/get_fdt",
     "cadenceSec": 300,
@@ -1500,12 +1572,13 @@
     "attribution": "5T / Città di Torino",
     "country": "IT",
     "privacyUrl": "https://www.5t.torino.it/privacy/",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "it-turin"
   },
   {
-    "id": "cita-lu",
     "name": "CITA (Luxembourg)",
     "format": "datex2",
+    "operator": "cita",
     "url": "https://cita.lu/info_trafic/datex/situationrecord36",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1514,12 +1587,13 @@
     "attribution": "CITA (Luxembourg)",
     "country": "LU",
     "privacyUrl": "https://data.public.lu/en/pages/legal_notice/",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "lu-cita"
   },
   {
-    "id": "ndw",
     "name": "NDW (Netherlands)",
     "format": "datex2",
+    "operator": "ndw",
     "url": "http://opendata.ndw.nu/actueel_beeld.xml.gz",
     "gzip": true,
     "cadenceSec": 60,
@@ -1529,12 +1603,14 @@
     "attribution": "NDW / Rijkswaterstaat",
     "country": "NL",
     "privacyUrl": "https://www.ndw.nu/privacy",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "nl-ndw"
   },
   {
-    "id": "ndw-flow",
     "name": "NDW traffic speed (Netherlands)",
     "format": "datex2",
+    "operator": "ndw",
+    "stream": "flow",
     "produces": "flow",
     "url": "https://opendata.ndw.nu/trafficspeed.xml.gz",
     "gzip": true,
@@ -1549,12 +1625,13 @@
     "siteTable": {
       "url": "https://opendata.ndw.nu/measurement.xml.gz",
       "gzip": true
-    }
+    },
+    "id": "nl-ndw-flow"
   },
   {
-    "id": "vegvesen-no",
     "name": "Statens vegvesen (Norway)",
     "format": "datex2",
+    "operator": "vegvesen",
     "url": "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetSituation/pullSnapshotData",
     "auth": {
       "kind": "basic",
@@ -1583,12 +1660,14 @@
         "title": "Statens vegvesen (Norway) — password"
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "no-vegvesen"
   },
   {
-    "id": "vegvesen-flow-no",
     "name": "Statens vegvesen traffic speed (Norway)",
     "format": "datex2",
+    "operator": "vegvesen",
+    "stream": "flow",
     "produces": "flow",
     "url": "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetMeasuredData/pullSnapshotData",
     "auth": {
@@ -1625,12 +1704,13 @@
     "enabledByDefault": false,
     "siteTable": {
       "url": "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetMeasurementSiteTable/pullSnapshotData"
-    }
+    },
+    "id": "no-vegvesen-flow"
   },
   {
-    "id": "nzta-nz",
     "name": "NZTA Road Events (New Zealand)",
     "format": "geojson",
+    "operator": "nzta",
     "url": "https://opendata-nzta.opendata.arcgis.com/datasets/NZTA::road-events.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1664,12 +1744,13 @@
         "Caution": "low"
       },
       "updatedField": "eventModified"
-    }
+    },
+    "id": "nz-nzta"
   },
   {
-    "id": "gddkia-pl",
     "name": "GDDKiA road obstructions (Poland)",
-    "format": "gddkia-xml",
+    "format": "gddkia",
+    "operator": "gddkia",
     "url": "https://www.archiwum.gddkia.gov.pl/dane/zima_html/utrdane.xml",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1678,12 +1759,13 @@
     "attribution": "GDDKiA",
     "country": "PL",
     "privacyUrl": "https://www.gov.pl/web/gddkia",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "pl-gddkia"
   },
   {
-    "id": "trafikverket-se",
     "name": "Trafikverket (Sweden)",
     "format": "datex2",
+    "operator": "trafikverket",
     "url": [
       "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/roadworks/sit:situation",
       "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/accident/sit:situation"
@@ -1691,7 +1773,7 @@
     "auth": {
       "kind": "query-key",
       "param": "authenticationkey",
-      "envVar": "TRAFIKVERKET_API_KEY"
+      "envVar": "SE_TRAFIKVERKET_API_KEY"
     },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1701,7 +1783,7 @@
     "country": "SE",
     "privacyUrl": "https://www.trafikverket.se/integritetspolicy/",
     "setup": {
-      "TRAFIKVERKET_API_KEY": {
+      "SE_TRAFIKVERKET_API_KEY": {
         "url": "https://data.trafikverket.se/oauth2/Account/register",
         "urlLabel": "Sign up at Trafikverket",
         "steps": [
@@ -1715,21 +1797,23 @@
       }
     },
     "enabledByDefault": true,
-    "posListLonLat": true
+    "posListLonLat": true,
+    "id": "se-trafikverket"
   },
   {
-    "id": "trafikverket-flow-se",
     "name": "Trafikverket traffic flow (Sweden)",
-    "format": "trafikverket-flow-json",
+    "format": "trafikverket-flow",
+    "operator": "trafikverket",
+    "stream": "flow",
     "produces": "flow",
     "url": "https://api.trafikinfo.trafikverket.se/v2/data.json",
     "method": "POST",
-    "bodyTemplate": "<REQUEST><LOGIN authenticationkey=\"${TRAFIKVERKET_API_KEY}\"/><QUERY objecttype=\"TrafficFlow\" schemaversion=\"1.4\"><INCLUDE>SiteId</INCLUDE><INCLUDE>AverageVehicleSpeed</INCLUDE><INCLUDE>VehicleFlowRate</INCLUDE><INCLUDE>MeasurementTime</INCLUDE><INCLUDE>Geometry.WGS84</INCLUDE></QUERY></REQUEST>",
+    "bodyTemplate": "<REQUEST><LOGIN authenticationkey=\"${SE_TRAFIKVERKET_API_KEY}\"/><QUERY objecttype=\"TrafficFlow\" schemaversion=\"1.4\"><INCLUDE>SiteId</INCLUDE><INCLUDE>AverageVehicleSpeed</INCLUDE><INCLUDE>VehicleFlowRate</INCLUDE><INCLUDE>MeasurementTime</INCLUDE><INCLUDE>Geometry.WGS84</INCLUDE></QUERY></REQUEST>",
     "requestHeaders": {
       "Content-Type": "text/xml"
     },
     "requiredEnv": [
-      "TRAFIKVERKET_API_KEY"
+      "SE_TRAFIKVERKET_API_KEY"
     ],
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1739,7 +1823,7 @@
     "country": "SE",
     "privacyUrl": "https://www.trafikverket.se/en/privacy-policy/",
     "setup": {
-      "TRAFIKVERKET_API_KEY": {
+      "SE_TRAFIKVERKET_API_KEY": {
         "url": "https://data.trafikverket.se/oauth2/Account/register",
         "urlLabel": "Sign up at Trafikverket",
         "steps": [
@@ -1752,17 +1836,18 @@
         "description": "Authentication key, sent in the POST request body."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "se-trafikverket-flow"
   },
   {
-    "id": "lta-sg",
     "name": "LTA DataMall Traffic Incidents (Singapore)",
-    "format": "lta-json",
+    "format": "lta",
+    "operator": "lta",
     "url": "https://datamall2.mytransport.sg/ltaodataservice/TrafficIncidents",
     "auth": {
       "kind": "header-key",
       "header": "AccountKey",
-      "envVar": "LTA_ACCOUNT_KEY"
+      "envVar": "SG_LTA_ACCOUNT_KEY"
     },
     "cadenceSec": 120,
     "freshnessWindowSec": 600,
@@ -1772,7 +1857,7 @@
     "country": "SG",
     "privacyUrl": "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
     "setup": {
-      "LTA_ACCOUNT_KEY": {
+      "SG_LTA_ACCOUNT_KEY": {
         "url": "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
         "urlLabel": "Request LTA API access",
         "steps": [
@@ -1784,18 +1869,20 @@
         "title": "LTA DataMall AccountKey (Singapore)"
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "sg-lta"
   },
   {
-    "id": "lta-speedbands-sg",
     "name": "LTA DataMall Traffic Speed Bands (Singapore)",
-    "format": "lta-speedbands-json",
+    "format": "lta-speedbands",
+    "operator": "lta",
+    "stream": "speedbands",
     "produces": "flow",
     "url": "https://datamall2.mytransport.sg/ltaodataservice/v3/TrafficSpeedBands",
     "auth": {
       "kind": "header-key",
       "header": "AccountKey",
-      "envVar": "LTA_ACCOUNT_KEY"
+      "envVar": "SG_LTA_ACCOUNT_KEY"
     },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1805,7 +1892,7 @@
     "country": "SG",
     "privacyUrl": "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
     "setup": {
-      "LTA_ACCOUNT_KEY": {
+      "SG_LTA_ACCOUNT_KEY": {
         "url": "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
         "urlLabel": "Request LTA API access",
         "steps": [
@@ -1817,20 +1904,21 @@
         "title": "LTA DataMall AccountKey (Singapore)"
       }
     },
-    "enabledByDefault": false
+    "enabledByDefault": false,
+    "id": "sg-lta-speedbands"
   },
   {
-    "id": "nap-si",
     "name": "NAP Slovenia (promet.si)",
     "format": "datex2",
+    "operator": "nap",
     "url": [
       "https://b2b.ncup.si/data/b2b.events.datexii33",
       "https://b2b.ncup.si/data/b2b.roadworks.datexii33"
     ],
     "auth": {
       "kind": "basic",
-      "userEnvVar": "NAP_SI_USERNAME",
-      "passEnvVar": "NAP_SI_PASSWORD"
+      "userEnvVar": "SI_NAP_USERNAME",
+      "passEnvVar": "SI_NAP_PASSWORD"
     },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1840,7 +1928,7 @@
     "country": "SI",
     "privacyUrl": "https://nap.si/",
     "setup": {
-      "NAP_SI_USERNAME": {
+      "SI_NAP_USERNAME": {
         "url": "https://www.nap.si/en/registration",
         "urlLabel": "Register at NAP Slovenia",
         "steps": [
@@ -1851,16 +1939,17 @@
         "notes": "CC-BY-SA (ShareAlike). The B2B host (b2b.ncup.si) is credential-gated; the NAP account is sent as HTTP Basic — confirm the exact scheme when granted.",
         "title": "NAP Slovenia (promet.si) — username"
       },
-      "NAP_SI_PASSWORD": {
+      "SI_NAP_PASSWORD": {
         "title": "NAP Slovenia (promet.si) — password"
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "si-nap"
   },
   {
-    "id": "longdo-th",
     "name": "Longdo Traffic Events (Thailand)",
     "format": "flatjson",
+    "operator": "longdo",
     "url": "https://event.longdo.com/feed/json",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1882,12 +1971,13 @@
       "updatedField": "start",
       "lonField": "longitude",
       "latField": "latitude"
-    }
+    },
+    "id": "th-longdo"
   },
   {
-    "id": "wzdx",
     "name": "WZDx (United States)",
     "format": "wzdx",
+    "operator": "wzdx",
     "catalog": {
       "resolver": "wzdx-registry"
     },
@@ -1897,17 +1987,19 @@
     "attribution": "WZDx publishers",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "us-wzdx"
   },
   {
-    "id": "ny-511",
     "name": "511NY (New York)",
-    "format": "ibi511-json",
+    "format": "ibi511",
+    "operator": "511",
+    "subdivision": "ny",
     "url": "https://511ny.org/api/v2/get/event?format=json",
     "auth": {
       "kind": "query-key",
       "param": "key",
-      "envVar": "NY_511_API_KEY"
+      "envVar": "US_NY_511_API_KEY"
     },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1917,7 +2009,7 @@
     "country": "US",
     "privacyUrl": "https://511ny.org/privacy",
     "setup": {
-      "NY_511_API_KEY": {
+      "US_NY_511_API_KEY": {
         "url": "https://511ny.org/my511/register",
         "urlLabel": "Create a 511NY account",
         "steps": [
@@ -1931,12 +2023,14 @@
         "description": "Query key for the 511NY events feed."
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "us-ny-511"
   },
   {
-    "id": "nyc-dot-speed-us",
     "name": "NYC DOT real-time traffic speeds (New York City)",
-    "format": "nyc-dot-speed-json",
+    "format": "nyc-dot",
+    "operator": "dot",
+    "subdivision": "nyc",
     "produces": "flow",
     "url": "https://data.cityofnewyork.us/resource/i4gi-tjb9.json?$limit=5000",
     "cadenceSec": 300,
@@ -1946,18 +2040,20 @@
     "attribution": "New York City Department of Transportation",
     "country": "US",
     "privacyUrl": "https://www.nyc.gov/home/privacy-policy.page",
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "us-nyc-dot"
   },
   {
-    "id": "ohgo-oh-us",
     "name": "OHGO travel delays (Ohio)",
-    "format": "ohgo-json",
+    "format": "ohgo",
+    "operator": "ohgo",
+    "subdivision": "oh",
     "produces": "flow",
     "url": "https://publicapi.ohgo.com/api/v1/travel-delays?page-all=true",
     "auth": {
       "kind": "header-key",
       "header": "Authorization",
-      "envVar": "OHGO_API_KEY",
+      "envVar": "US_OH_OHGO_API_KEY",
       "valuePrefix": "APIKEY "
     },
     "cadenceSec": 300,
@@ -1968,18 +2064,19 @@
     "country": "US",
     "privacyUrl": "https://www.transportation.ohio.gov/about-us/privacy",
     "setup": {
-      "OHGO_API_KEY": {
+      "US_OH_OHGO_API_KEY": {
         "url": "https://ohgo.com/developer",
         "urlLabel": "OHGO developer registration",
         "steps": [
           "Register for a free OHGO developer account at ohgo.com/developer and create an API key.",
-          "Set OHGO_API_KEY to the key value; the feed activates on the next scheduler cycle."
+          "Set US_OH_OHGO_API_KEY to the key value; the feed activates on the next scheduler cycle."
         ],
         "notes": "Free key. Data is U.S. government public domain.",
         "title": "OHGO API key"
       }
     },
-    "enabledByDefault": true
+    "enabledByDefault": true,
+    "id": "us-oh-ohgo"
   },
   {
     "id": "wzdx-oklahoma",
