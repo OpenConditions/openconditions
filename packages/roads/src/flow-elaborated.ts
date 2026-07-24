@@ -193,6 +193,10 @@ export function parseElaboratedFlow(
       }
       if (type === "TrafficFlow" || getXmlChild(basic, "vehicleFlow")) {
         const vf = getXmlChild(basic, "vehicleFlow");
+        // Skip a publisher-flagged invalid rate, mirroring the speed path's
+        // dataError guard — otherwise a bad-but-first reading is published AND
+        // (via `??=`) shadows a valid later reading for the same site.
+        const dataError = xmlText(vf?.["dataError"]);
         // Prefer the mainCarriageway/aggregate rate; summing every TrafficFlow
         // item risks double-counting per-lane + carriageway totals. Task 12
         // validates the real shape; provisional behavior: take the first rate
@@ -200,11 +204,18 @@ export function parseElaboratedFlow(
         const rate = vf
           ? num(vf["vehicleFlowRate"])
           : num(getXmlChildText(basic, "vehicleFlowRate"));
-        if (rate != null) cur.volume ??= rate;
+        if (dataError !== "true" && rate != null) cur.volume ??= rate;
       }
-      if (type === "TrafficStatus" || getXmlChild(basic, "trafficStatus")) {
-        const ts = getXmlChild(basic, "trafficStatus");
-        cur.trafficStatus ??= xmlText(ts?.["trafficStatusValue"]) ?? xmlText(ts);
+      // trafficStatus arrives either nested (`<trafficStatus><trafficStatusValue>
+      // …</trafficStatusValue></trafficStatus>`) or as a plain-text leaf
+      // (`<trafficStatus>…</trafficStatus>`) — the DATEX v2 enum-member form NDW
+      // uses. getXmlChild returns undefined for the leaf, so read it via
+      // getXmlChildText (see the xml.ts pitfall note) or the leaf would be dropped.
+      const statusValue =
+        xmlText(getXmlChild(basic, "trafficStatus")?.["trafficStatusValue"]) ??
+        getXmlChildText(basic, "trafficStatus");
+      if (type === "TrafficStatus" || statusValue != null) {
+        cur.trafficStatus ??= statusValue;
       }
       cur.inlineGeom ??= inlinePoint(basic) ?? inlinePoint(item);
       acc.set(siteId, cur);

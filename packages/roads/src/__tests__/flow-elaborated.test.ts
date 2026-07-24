@@ -67,6 +67,53 @@ describe("parseElaboratedFlow", () => {
     expect(events).toHaveLength(1);
     expect(events[0]!.type).toBe("congestion");
   });
+
+  it("reads a plain-text leaf trafficStatus (the DATEX v2 enum-member form)", () => {
+    const doc = `<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <payloadPublication xsi:type="ElaboratedDataPublication">
+    <elaboratedData>
+      <basicData xsi:type="TrafficStatus">
+        <trafficStatus>congested</trafficStatus>
+        <pertinentLocation xsi:type="Location">
+          <predefinedLocationReference id="MQ_A1_0042"/>
+        </pertinentLocation>
+      </basicData>
+    </elaboratedData>
+  </payloadPublication>
+</d2LogicalModel>`;
+    const { flows } = parseElaboratedFlow(doc, SRC, siteMap);
+    const a1 = flows.find((f) => f.id === "de-hh-autobahn:MQ_A1_0042")!;
+    expect(a1.los).toBe("queuing");
+  });
+
+  it("ignores a dataError-flagged volume so an invalid rate is never published", () => {
+    const doc = `<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <payloadPublication xsi:type="ElaboratedDataPublication">
+    <elaboratedData>
+      <basicData xsi:type="TrafficSpeed">
+        <averageVehicleSpeed numberOfInputValuesUsed="20"><speed>48</speed></averageVehicleSpeed>
+        <pertinentLocation xsi:type="Location">
+          <predefinedLocationReference id="MQ_A1_0042"/>
+        </pertinentLocation>
+      </basicData>
+    </elaboratedData>
+    <elaboratedData>
+      <basicData xsi:type="TrafficFlow">
+        <vehicleFlow><dataError>true</dataError><vehicleFlowRate>9999</vehicleFlowRate></vehicleFlow>
+        <pertinentLocation xsi:type="Location">
+          <predefinedLocationReference id="MQ_A1_0042"/>
+        </pertinentLocation>
+      </basicData>
+    </elaboratedData>
+  </payloadPublication>
+</d2LogicalModel>`;
+    const { flows } = parseElaboratedFlow(doc, SRC, siteMap);
+    const a1 = flows.find((f) => f.id === "de-hh-autobahn:MQ_A1_0042")!;
+    expect(a1.speedKph).toBe(48);
+    expect(a1.volume).toBeUndefined();
+  });
 });
 
 describe("parseElaboratedFlow — Verkehrslage (TrafficStatus only)", () => {
