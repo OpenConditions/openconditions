@@ -131,6 +131,14 @@ export async function fuseSegmentSpeed(
   // congestion state paint the overlay. A declared-only segment emits a row with
   // NULL current_kph — filtered out of the routing CSV downstream but coloured
   // by los on the overlay.
+  //
+  // Deliberate consequence: a declared-only row (is_estimated=false, NULL kph)
+  // blocks propagateSegmentSpeed from lending an adjacent measured segment's
+  // speed onto it (propagate skips any segment that already has a row). So a
+  // segment with only a declared jam is coloured by that jam and does NOT route,
+  // rather than showing a neighbour's (possibly free-flow) estimate — the
+  // operator's authoritative los wins over an inferred speed. Revisit only if a
+  // declared-los + propagated-speed hybrid is ever wanted.
   const rows = await sql`
     WITH live AS (
       SELECT * FROM conditions.segment_observation o

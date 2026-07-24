@@ -30,7 +30,6 @@
         "title": "Buenos Aires transport — client_secret"
       }
     },
-    "enabledByDefault": true,
     "geojson": {
       "defaultType": "road_closure",
       "headlineField": "nombre",
@@ -74,7 +73,6 @@
         "title": "ASFINAG (Austria) — password"
       }
     },
-    "enabledByDefault": true,
     "id": "at-asfinag"
   },
   {
@@ -116,7 +114,6 @@
         "title": "Live Traffic NSW API key (Australia)"
       }
     },
-    "enabledByDefault": true,
     "geojson": {
       "typeField": "mainCategory",
       "typeMap": {
@@ -149,7 +146,6 @@
     "attribution": "Department for Infrastructure and Transport (South Australia)",
     "country": "AU",
     "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
-    "enabledByDefault": true,
     "geojson": {
       "idField": "ROADWORKS_AND_INCIDENTS_ID",
       "typeField": "REC_TYPE",
@@ -205,7 +201,6 @@
         "description": "Optional. A public key is bundled by default; set this only to use your own quota."
       }
     },
-    "enabledByDefault": true,
     "geojson": {
       "idField": "id",
       "typeField": "event_type",
@@ -244,7 +239,6 @@
     "attribution": "Verkeerscentrum Vlaanderen",
     "country": "BE",
     "privacyUrl": "https://www.verkeerscentrum.be/",
-    "enabledByDefault": true,
     "id": "be-flanders"
   },
   {
@@ -259,7 +253,6 @@
     "attribution": "Bruxelles Mobilité / Brussel Mobiliteit",
     "country": "BE",
     "privacyUrl": "https://mobilite-mobiliteit.brussels/en/privacy",
-    "enabledByDefault": true,
     "geojson": {
       "idField": "fid",
       "typeField": "datex_codes",
@@ -297,7 +290,6 @@
     "attribution": "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",
     "country": "BE",
     "privacyUrl": "https://www.vlaanderen.be/uw-overheid/werking-en-structuur/hoe-werkt-de-vlaamse-overheid/informatie-en-communicatie/privacy",
-    "enabledByDefault": true,
     "stationRegistry": {
       "url": "http://miv.opendata.belfla.be/miv/configuratie/xml",
       "format": "miv-config"
@@ -316,7 +308,6 @@
     "attribution": "Contains information licensed under the Open Government Licence – British Columbia",
     "country": "CA",
     "privacyUrl": "https://www2.gov.bc.ca/gov/content/home/privacy",
-    "enabledByDefault": true,
     "id": "ca-bc-drivebc"
   },
   {
@@ -332,7 +323,6 @@
     "attribution": "Contains information licensed under the Open Government Licence – Ontario",
     "country": "CA",
     "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
-    "enabledByDefault": true,
     "id": "ca-on-511"
   },
   {
@@ -348,7 +338,6 @@
     "attribution": "Ministère des Transports du Québec (MTQ)",
     "country": "CA",
     "privacyUrl": "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
-    "enabledByDefault": true,
     "geojson": {
       "idField": "identifiant",
       "defaultType": "roadworks",
@@ -372,7 +361,6 @@
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
     "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true,
     "id": "de-autobahn"
   },
   {
@@ -388,7 +376,6 @@
     "attribution": "MobiData BW / Ministerium für Verkehr Baden-Württemberg (SVZ-BW)",
     "country": "DE",
     "privacyUrl": "https://www.mobidata-bw.de/pages/datenschutz",
-    "enabledByDefault": true,
     "id": "de-bw-svzbw"
   },
   {
@@ -404,7 +391,6 @@
     "attribution": "Verkehrsinformationszentrale Berlin (VIZ)",
     "country": "DE",
     "privacyUrl": "https://www.berlin.de/datenschutzerklaerung/",
-    "enabledByDefault": true,
     "geojson": {
       "idField": "id",
       "typeField": "subtype",
@@ -474,7 +460,6 @@
         "description": "Numeric subscription id(s) from mobilithek.info/organisation/subscriptions (one per subscribed offer, e.g. roadworks 648508602333433856 + incidents 648512079906336768). List multiple comma-separated; the feed fans out one HTTPS client-pull per id. dl-de/zero-2-0."
       }
     },
-    "enabledByDefault": true,
     "id": "de-nw-verkehr"
   },
   {
@@ -525,7 +510,6 @@
         "description": "Subscription id(s) for NRW city/district offers — Düsseldorf/dmotion 110000000002056000, Köln 110000000002900004 (+ 110000000002899004 / 110000000003011002), Kreis Unna 930448553981730816. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0."
       }
     },
-    "enabledByDefault": true,
     "id": "de-nw-mobilithek-kommunal"
   },
   {
@@ -576,7 +560,6 @@
         "description": "Subscription id for the NRW.Mobidrom bundled roadworks offer 884461110418108416. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-SA-4.0 — ShareAlike; kept in its own feed so it never folds into a more permissive source."
       }
     },
-    "enabledByDefault": true,
     "id": "de-nw-mobilithek-mobidrom"
   },
   {
@@ -626,7 +609,6 @@
         "description": "Subscription id(s) for the Bayerische Straßenbauverwaltung offers (110000000002506000, 110000000002507001). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required)."
       }
     },
-    "enabledByDefault": true,
     "id": "de-by-mobilithek"
   },
   {
@@ -676,7 +658,6 @@
         "description": "Subscription id(s) for the BW Landesmeldestelle offer 857127500689977344. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
       }
     },
-    "enabledByDefault": true,
     "id": "de-bw-mobilithek"
   },
   {
@@ -726,7 +707,6 @@
         "description": "Subscription id(s) for the Berlin SenMVKU offer 801096621061234688. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
       }
     },
-    "enabledByDefault": true,
     "id": "de-be-mobilithek"
   },
   {
@@ -776,7 +756,6 @@
         "description": "Subscription id(s) for the Landesbetrieb Straßenwesen Brandenburg offer 636547428851101696. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
       }
     },
-    "enabledByDefault": true,
     "id": "de-bb-mobilithek"
   },
   {
@@ -826,7 +805,6 @@
         "description": "Subscription id(s) for the Verkehrsmanagementzentrale Bremen offer 608390979298140160. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
       }
     },
-    "enabledByDefault": true,
     "id": "de-hb-mobilithek"
   },
   {
@@ -876,8 +854,27 @@
         "description": "Subscription id(s) for the LSBG Hamburg offer 110000000003540000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
       }
     },
-    "enabledByDefault": true,
     "id": "de-hh-mobilithek"
+  },
+  {
+    "name": "Polizei Hamburg traffic incidents (Landesmeldestelle)",
+    "format": "geojson",
+    "operator": "polizei",
+    "subdivision": "hh",
+    "url": "https://api.hamburg.de/datasets/v1/verkehrsinformation/collections/hauptmeldungen_aktuell/items?f=json&limit=5000",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+    "attribution": "Freie und Hansestadt Hamburg, Polizei Hamburg",
+    "country": "DE",
+    "privacyUrl": "https://www.hamburg.de/datenschutz/",
+    "geojson": {
+      "idField": "id",
+      "typeField": "art",
+      "descriptionField": "description"
+    },
+    "id": "de-hh-polizei"
   },
   {
     "name": "Hessen via Mobilithek",
@@ -926,7 +923,6 @@
         "description": "Subscription id(s) for the Hessen Mobil offers (841292914668498944, 862010418143330304). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required)."
       }
     },
-    "enabledByDefault": true,
     "id": "de-he-mobilithek"
   },
   {
@@ -976,7 +972,6 @@
         "description": "Subscription id(s) for the LSBV M-V offers (110000000002802000, 818137060259840000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required)."
       }
     },
-    "enabledByDefault": true,
     "id": "de-mv-mobilithek"
   },
   {
@@ -1026,7 +1021,6 @@
         "description": "Subscription id(s) for the NLStBV offers (110000000002749000, 951153778962972672, 656880550985773056) + Hannover 633691473746571264. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0."
       }
     },
-    "enabledByDefault": true,
     "id": "de-ni-mobilithek"
   },
   {
@@ -1076,7 +1070,6 @@
         "description": "Subscription id(s) for the LASuV Sachsen offer 608439575154401280 (+ Leipzig 952541268382826496). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required)."
       }
     },
-    "enabledByDefault": true,
     "id": "de-sn-mobilithek"
   },
   {
@@ -1126,7 +1119,6 @@
         "description": "Subscription id(s) for the Landesstraßenbaubehörde Sachsen-Anhalt offer 110000000003150000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/by-2-0 (attribution required)."
       }
     },
-    "enabledByDefault": true,
     "id": "de-st-mobilithek"
   },
   {
@@ -1176,7 +1168,6 @@
         "description": "Subscription id(s) for the LBV.SH offers (110000000003237002, 110000000003387000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. CC-BY-4.0 (attribution required)."
       }
     },
-    "enabledByDefault": true,
     "id": "de-sh-mobilithek"
   },
   {
@@ -1226,7 +1217,6 @@
         "description": "Subscription id(s) for the TLBV offer 110000000003051000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required)."
       }
     },
-    "enabledByDefault": true,
     "id": "de-th-mobilithek"
   },
   {
@@ -1242,8 +1232,466 @@
     "attribution": "Bundesstadt Bonn",
     "country": "DE",
     "privacyUrl": "https://www.bonn.de/datenschutz.php",
-    "enabledByDefault": true,
     "id": "de-bonn"
+  },
+  {
+    "name": "Autobahn GmbH BAB traffic data (NL Nord: Hamburg & Schleswig-Holstein)",
+    "format": "datex-elaborated",
+    "operator": "autobahn",
+    "subdivision": "hh",
+    "stream": "nord",
+    "produces": "flow",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID",
+      "DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 60,
+    "freshnessWindowSec": 300,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID": {
+        "title": "Autobahn NL Nord (HH/SH) — Fahrstreifendaten (q/v) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 781571665935880192 (Fahrstreifendaten q und v, NL Nord). Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV."
+      },
+      "DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID": {
+        "title": "Autobahn NL Nord (HH/SH) — Verortung (geometry) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 781573761405784064 (Verortung of the NL-Nord Fahrstreifendaten). Supplies the measurement-site geometry the q/v feed joins against. Shared MOBILITHEK_CERT/KEY. GeoNutzV."
+      }
+    },
+    "siteTable": {
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID}",
+      "format": "datex-predefined-locations"
+    },
+    "id": "de-hh-autobahn-nord"
+  },
+  {
+    "name": "Autobahn GmbH BAB traffic data (Nordrhein-Westfalen, per lane)",
+    "format": "datex-elaborated",
+    "operator": "autobahn",
+    "subdivision": "nw",
+    "stream": "fahrstreifen",
+    "produces": "flow",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_NW_AUTOBAHN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "DE_NW_AUTOBAHN_SUBSCRIPTION_ID",
+      "DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 60,
+    "freshnessWindowSec": 300,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "DE_NW_AUTOBAHN_SUBSCRIPTION_ID": {
+        "title": "Autobahn NRW — Fahrstreifendaten (q/v) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003476000 (Fahrstreifendaten Q und v, NRW). Shared MOBILITHEK_CERT/KEY. GeoNutzV."
+      },
+      "DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID": {
+        "title": "Autobahn NRW — Verortung (geometry) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003477000 (Verortung der Fahrstreifendaten NRW). Shared MOBILITHEK_CERT/KEY. GeoNutzV."
+      }
+    },
+    "siteTable": {
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
+      "format": "datex-predefined-locations"
+    },
+    "id": "de-nw-autobahn-fahrstreifen"
+  },
+  {
+    "name": "Autobahn GmbH BAB traffic data (VZD, Hessen)",
+    "format": "datex-elaborated",
+    "operator": "autobahn",
+    "subdivision": "he",
+    "stream": "vzd",
+    "produces": "flow",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HE_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HE_AUTOBAHN_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_HE_AUTOBAHN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "DE_HE_AUTOBAHN_SUBSCRIPTION_ID",
+      "DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 60,
+    "freshnessWindowSec": 300,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "DE_HE_AUTOBAHN_SUBSCRIPTION_ID": {
+        "title": "Autobahn VZD (Hessen) — Fahrstreifendaten (q/v) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 619101149275615232. Shared MOBILITHEK_CERT/KEY. GeoNutzV."
+      },
+      "DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID": {
+        "title": "Autobahn VZD (Hessen) — Verortung (geometry) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003126003. Shared MOBILITHEK_CERT/KEY. GeoNutzV."
+      }
+    },
+    "siteTable": {
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
+      "format": "datex-predefined-locations"
+    },
+    "id": "de-he-autobahn-vzd"
+  },
+  {
+    "name": "Autobahn GmbH BAB traffic data (NL Südwest, Baden-Württemberg)",
+    "format": "datex-elaborated",
+    "operator": "autobahn",
+    "subdivision": "bw",
+    "stream": "suedwest",
+    "produces": "flow",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_BW_AUTOBAHN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "DE_BW_AUTOBAHN_SUBSCRIPTION_ID",
+      "DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 60,
+    "freshnessWindowSec": 300,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "DE_BW_AUTOBAHN_SUBSCRIPTION_ID": {
+        "title": "Autobahn NL Südwest (BW) — Verkehrsmessquerschnitte (Q,V) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003216000. Shared MOBILITHEK_CERT/KEY. License provisionally GeoNutzV — confirm the offer Einlegeblatt."
+      },
+      "DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID": {
+        "title": "Autobahn NL Südwest (BW) — Verortung (geometry) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003217000. Shared MOBILITHEK_CERT/KEY."
+      }
+    },
+    "siteTable": {
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
+      "format": "datex-predefined-locations"
+    },
+    "id": "de-bw-autobahn-suedwest"
+  },
+  {
+    "name": "Autobahn GmbH BAB traffic data (Bayern, per lane)",
+    "format": "datex-elaborated",
+    "operator": "autobahn",
+    "subdivision": "by",
+    "produces": "flow",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BY_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BY_AUTOBAHN_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_BY_AUTOBAHN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "DE_BY_AUTOBAHN_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 60,
+    "freshnessWindowSec": 300,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "DE_BY_AUTOBAHN_SUBSCRIPTION_ID": {
+        "title": "Autobahn Bayern — Dynamische Messdaten (q/v) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 748580849261105152 (Dynamische Messdaten BAB Bayern fahrstreifenfein). Shared MOBILITHEK_CERT/KEY. GeoNutzV."
+      }
+    },
+    "id": "de-by-autobahn"
+  },
+  {
+    "name": "Autobahn GmbH BAB Verkehrslage LoS (Nordrhein-Westfalen, per lane)",
+    "format": "datex-elaborated",
+    "operator": "autobahn",
+    "subdivision": "nw",
+    "stream": "loslane",
+    "produces": "flow",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID",
+      "DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 60,
+    "freshnessWindowSec": 300,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID": {
+        "title": "Autobahn NRW — fahrstreifenfeine Verkehrslage (LoS) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003478000. Shared MOBILITHEK_CERT/KEY. GeoNutzV."
+      },
+      "DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID": {
+        "title": "Autobahn NRW — fahrstreifenfeine Verkehrslage Verortung Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003479000. Shared MOBILITHEK_CERT/KEY. GeoNutzV."
+      }
+    },
+    "siteTable": {
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}",
+      "format": "datex-predefined-locations"
+    },
+    "id": "de-nw-autobahn-loslane"
+  },
+  {
+    "name": "Autobahn GmbH BAB Verkehrslage LoS (NL Südwest, Baden-Württemberg)",
+    "format": "datex-elaborated",
+    "operator": "autobahn",
+    "subdivision": "bw",
+    "stream": "los",
+    "produces": "flow",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID",
+      "DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 60,
+    "freshnessWindowSec": 300,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID": {
+        "title": "Autobahn NL Südwest (BW) — Verkehrslage (LoS) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003216001. Shared MOBILITHEK_CERT/KEY. Confirm license via Einlegeblatt."
+      },
+      "DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID": {
+        "title": "Autobahn NL Südwest (BW) — Verkehrslage Verortung Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003218001. Shared MOBILITHEK_CERT/KEY."
+      }
+    },
+    "siteTable": {
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID}",
+      "format": "datex-predefined-locations"
+    },
+    "id": "de-bw-autobahn-los"
+  },
+  {
+    "name": "Autobahn GmbH BAB traffic messages (nationwide, incl. delays & closures)",
+    "format": "datex2",
+    "operator": "autobahn",
+    "stream": "meldungen",
+    "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_AUTOBAHN_MELDUNGEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_AUTOBAHN_MELDUNGEN_SUBSCRIPTION_ID}",
+    "expandEnv": "DE_AUTOBAHN_MELDUNGEN_SUBSCRIPTION_ID",
+    "auth": {
+      "kind": "mtls",
+      "certEnvVar": "MOBILITHEK_CERT",
+      "keyEnvVar": "MOBILITHEK_KEY"
+    },
+    "requestHeaders": {
+      "Accept-Encoding": "gzip"
+    },
+    "requiredEnv": [
+      "DE_AUTOBAHN_MELDUNGEN_SUBSCRIPTION_ID"
+    ],
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "GeoNutzV",
+    "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz",
+    "setup": {
+      "MOBILITHEK_CERT": {
+        "url": "https://mobilithek.info/registration-request",
+        "urlLabel": "Mobilithek registration",
+        "steps": [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field."
+        ],
+        "notes": "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+        "title": "Mobilithek — client certificate (PEM)",
+        "description": "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key)."
+      },
+      "MOBILITHEK_KEY": {
+        "title": "Mobilithek — client private key (PEM)",
+        "description": "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed."
+      },
+      "DE_AUTOBAHN_MELDUNGEN_SUBSCRIPTION_ID": {
+        "title": "Autobahn nationwide BAB Verkehrsmeldungen — Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003091005 (Verkehrsmeldungen mit Verlustzeiten und Sperrungen auf BAB, nationwide). Shared MOBILITHEK_CERT/KEY. GeoNutzV. NOTE: overlaps the existing autobahn.de feed — validate for redundancy before enabling."
+      }
+    },
+    "id": "de-autobahn-meldungen"
   },
   {
     "name": "Vejdirektoratet (Denmark)",
@@ -1275,7 +1723,6 @@
         "title": "Vejdirektoratet key (Denmark)"
       }
     },
-    "enabledByDefault": true,
     "id": "dk-vejdirektoratet"
   },
   {
@@ -1306,7 +1753,6 @@
         "title": "Tark Tee key (Estonia)"
       }
     },
-    "enabledByDefault": true,
     "id": "ee-tarktee"
   },
   {
@@ -1321,7 +1767,6 @@
     "attribution": "Dirección General de Tráfico (DGT)",
     "country": "ES",
     "privacyUrl": "https://www.dgt.es/protecciondedatos/",
-    "enabledByDefault": true,
     "id": "es-dgt"
   },
   {
@@ -1337,7 +1782,6 @@
     "attribution": "Ayuntamiento de Madrid",
     "country": "ES",
     "privacyUrl": "https://www.madrid.es/portal/site/munimadrid/menuitem.privacy",
-    "enabledByDefault": true,
     "id": "es-madrid"
   },
   {
@@ -1354,7 +1798,6 @@
     "attribution": "Fintraffic / Digitraffic",
     "country": "FI",
     "privacyUrl": "https://www.fintraffic.fi/en/fintraffic/data-protection",
-    "enabledByDefault": true,
     "id": "fi-digitraffic"
   },
   {
@@ -1373,7 +1816,6 @@
     "attribution": "Fintraffic / Digitraffic",
     "country": "FI",
     "privacyUrl": "https://www.fintraffic.fi/en/fintraffic/data-protection",
-    "enabledByDefault": true,
     "stationRegistry": {
       "url": "https://tie.digitraffic.fi/api/tms/v1/stations",
       "format": "fintraffic-stations"
@@ -1392,7 +1834,6 @@
     "attribution": "DIR / Bison Futé",
     "country": "FR",
     "privacyUrl": "https://www.bison-fute.gouv.fr/",
-    "enabledByDefault": true,
     "id": "fr-dir"
   },
   {
@@ -1409,7 +1850,6 @@
     "attribution": "Ministère de la Transition écologique / DIR",
     "country": "FR",
     "privacyUrl": "https://www.bison-fute.gouv.fr/",
-    "enabledByDefault": true,
     "stationRegistry": {
       "url": "https://tipi.bison-fute.gouv.fr/bison-fute-ouvert/publicationsDIR/QTV-DIR/refDir.csv",
       "format": "france-comptage-csv"
@@ -1447,30 +1887,7 @@
         "description": "Ocp-Apim-Subscription-Key header value."
       }
     },
-    "enabledByDefault": true,
     "id": "gb-nationalhighways"
-  },
-  {
-    "name": "WebTRIS traffic flow (Great Britain)",
-    "format": "webtris",
-    "operator": "webtris",
-    "produces": "flow",
-    "url": "https://webtris.nationalhighways.co.uk/api/v1.0/reports/daily?sites={sites}&start_date={start_date}&end_date={end_date}&page=1&page_size=100",
-    "preFetch": "webtrisDailyWindow",
-    "fanoutTolerant": true,
-    "cadenceSec": 900,
-    "freshnessWindowSec": 3600,
-    "license": "OGL-UK-3.0",
-    "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
-    "attribution": "National Highways / WebTRIS",
-    "country": "GB",
-    "privacyUrl": "https://nationalhighways.co.uk/privacy-notice/",
-    "enabledByDefault": false,
-    "stationRegistry": {
-      "url": "https://webtris.nationalhighways.co.uk/api/v1.0/sites",
-      "format": "webtris-sites"
-    },
-    "id": "gb-webtris"
   },
   {
     "name": "Transport Department traffic detectors (Hong Kong)",
@@ -1485,7 +1902,6 @@
     "attribution": "Transport Department, HKSAR",
     "country": "HK",
     "privacyUrl": "https://www.td.gov.hk/en/privacy_policy/index.html",
-    "enabledByDefault": true,
     "stationRegistry": {
       "url": "https://static.data.gov.hk/td/traffic-data-strategic-major-roads/info/traffic_speed_volume_occ_info.csv",
       "format": "hk-detector-csv"
@@ -1524,7 +1940,6 @@
         "title": "Hrvatske ceste (Croatia) — B2B password"
       }
     },
-    "enabledByDefault": true,
     "id": "hr-hc"
   },
   {
@@ -1539,7 +1954,6 @@
     "attribution": "Vegagerðin (Icelandic Road and Coastal Administration)",
     "country": "IS",
     "privacyUrl": "https://www.vegagerdin.is/",
-    "enabledByDefault": true,
     "geojson": {
       "typeField": "DESCRIPTION",
       "typeMap": {
@@ -1572,7 +1986,6 @@
     "attribution": "5T / Città di Torino",
     "country": "IT",
     "privacyUrl": "https://www.5t.torino.it/privacy/",
-    "enabledByDefault": true,
     "id": "it-turin"
   },
   {
@@ -1587,7 +2000,6 @@
     "attribution": "CITA (Luxembourg)",
     "country": "LU",
     "privacyUrl": "https://data.public.lu/en/pages/legal_notice/",
-    "enabledByDefault": true,
     "id": "lu-cita"
   },
   {
@@ -1603,7 +2015,6 @@
     "attribution": "NDW / Rijkswaterstaat",
     "country": "NL",
     "privacyUrl": "https://www.ndw.nu/privacy",
-    "enabledByDefault": true,
     "id": "nl-ndw"
   },
   {
@@ -1621,7 +2032,6 @@
     "attribution": "NDW / Rijkswaterstaat",
     "country": "NL",
     "privacyUrl": "https://www.ndw.nu/privacy",
-    "enabledByDefault": true,
     "siteTable": {
       "url": "https://opendata.ndw.nu/measurement.xml.gz",
       "gzip": true
@@ -1660,7 +2070,6 @@
         "title": "Statens vegvesen (Norway) — password"
       }
     },
-    "enabledByDefault": true,
     "id": "no-vegvesen"
   },
   {
@@ -1701,7 +2110,6 @@
         "title": "Statens vegvesen (Norway) — password"
       }
     },
-    "enabledByDefault": false,
     "siteTable": {
       "url": "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetMeasurementSiteTable/pullSnapshotData"
     },
@@ -1719,7 +2127,6 @@
     "attribution": "NZ Transport Agency Waka Kotahi",
     "country": "NZ",
     "privacyUrl": "https://www.nzta.govt.nz/privacy-policy/",
-    "enabledByDefault": true,
     "geojson": {
       "idField": "eventId",
       "typeField": "eventDescription",
@@ -1759,7 +2166,6 @@
     "attribution": "GDDKiA",
     "country": "PL",
     "privacyUrl": "https://www.gov.pl/web/gddkia",
-    "enabledByDefault": true,
     "id": "pl-gddkia"
   },
   {
@@ -1796,7 +2202,6 @@
         "description": "Authentication key, sent in the POST request body."
       }
     },
-    "enabledByDefault": true,
     "posListLonLat": true,
     "id": "se-trafikverket"
   },
@@ -1836,7 +2241,6 @@
         "description": "Authentication key, sent in the POST request body."
       }
     },
-    "enabledByDefault": true,
     "id": "se-trafikverket-flow"
   },
   {
@@ -1869,7 +2273,6 @@
         "title": "LTA DataMall AccountKey (Singapore)"
       }
     },
-    "enabledByDefault": true,
     "id": "sg-lta"
   },
   {
@@ -1883,6 +2286,10 @@
       "kind": "header-key",
       "header": "AccountKey",
       "envVar": "SG_LTA_ACCOUNT_KEY"
+    },
+    "pagination": {
+      "skipParam": "$skip",
+      "pageSize": 500
     },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
@@ -1904,7 +2311,6 @@
         "title": "LTA DataMall AccountKey (Singapore)"
       }
     },
-    "enabledByDefault": false,
     "id": "sg-lta-speedbands"
   },
   {
@@ -1943,7 +2349,6 @@
         "title": "NAP Slovenia (promet.si) — password"
       }
     },
-    "enabledByDefault": true,
     "id": "si-nap"
   },
   {
@@ -1958,7 +2363,6 @@
     "attribution": "Longdo Traffic / iTIC Foundation",
     "country": "TH",
     "privacyUrl": "https://map.longdo.com/",
-    "enabledByDefault": true,
     "geojson": {
       "idField": "eid",
       "typeField": "type",
@@ -1987,7 +2391,6 @@
     "attribution": "WZDx publishers",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true,
     "id": "us-wzdx"
   },
   {
@@ -2023,7 +2426,6 @@
         "description": "Query key for the 511NY events feed."
       }
     },
-    "enabledByDefault": true,
     "id": "us-ny-511"
   },
   {
@@ -2040,7 +2442,6 @@
     "attribution": "New York City Department of Transportation",
     "country": "US",
     "privacyUrl": "https://www.nyc.gov/home/privacy-policy.page",
-    "enabledByDefault": true,
     "id": "us-nyc-dot"
   },
   {
@@ -2075,7 +2476,6 @@
         "title": "OHGO API key"
       }
     },
-    "enabledByDefault": true,
     "id": "us-oh-ohgo"
   },
   {
@@ -2089,8 +2489,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Oklahoma DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-utah",
@@ -2103,8 +2502,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Utah DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-iowa",
@@ -2117,8 +2515,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Iowa DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-florida",
@@ -2131,8 +2528,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Florida DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-minnesota",
@@ -2145,8 +2541,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Minnesota DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-maryland",
@@ -2159,8 +2554,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Maryland DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-arizona",
@@ -2173,8 +2567,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Maricopa County DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-new-mexico",
@@ -2187,8 +2580,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "New Mexico DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-hawaii",
@@ -2201,8 +2593,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Hawaii DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-new-york",
@@ -2215,8 +2606,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "New York DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-washington",
@@ -2229,8 +2619,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Washington State DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-missouri",
@@ -2243,8 +2632,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "St. Charles County",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-new-jersey",
@@ -2257,8 +2645,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "New Jersey Institute of Technology",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-kentucky",
@@ -2271,8 +2658,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Kentucky Transportation Cabinet",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-kansas",
@@ -2285,8 +2671,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Kansas DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-texas",
@@ -2299,8 +2684,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "City of Austin",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-delaware",
@@ -2313,8 +2697,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Delaware DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-louisiana",
@@ -2327,8 +2710,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Louisiana DOTD",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-idaho",
@@ -2341,8 +2723,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Idaho DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-indiana",
@@ -2355,8 +2736,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Indiana DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-n-a",
@@ -2369,8 +2749,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "CivicLink",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-michigan",
@@ -2384,7 +2763,6 @@
     "attribution": "Michigan DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true,
     "auth": {
       "kind": "none"
     },
@@ -2406,8 +2784,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "North Carolina DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-oregon",
@@ -2421,7 +2798,6 @@
     "attribution": "Oregon DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true,
     "auth": {
       "kind": "none"
     },
@@ -2442,8 +2818,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a1-closure",
@@ -2455,8 +2830,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a2-warning",
@@ -2468,8 +2842,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a2-closure",
@@ -2481,8 +2854,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a3-warning",
@@ -2494,8 +2866,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a3-closure",
@@ -2507,8 +2878,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a4-warning",
@@ -2520,8 +2890,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a4-closure",
@@ -2533,8 +2902,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a5-warning",
@@ -2546,8 +2914,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a5-closure",
@@ -2559,8 +2926,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a6-warning",
@@ -2572,8 +2938,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a6-closure",
@@ -2585,8 +2950,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a7-warning",
@@ -2598,8 +2962,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a7-closure",
@@ -2611,8 +2974,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a8-warning",
@@ -2624,8 +2986,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a8-closure",
@@ -2637,8 +2998,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a9-warning",
@@ -2650,8 +3010,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a9-closure",
@@ -2663,8 +3022,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a10-warning",
@@ -2676,8 +3034,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a10-closure",
@@ -2689,8 +3046,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a11-warning",
@@ -2702,8 +3058,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a11-closure",
@@ -2715,8 +3070,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a12-warning",
@@ -2728,8 +3082,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a12-closure",
@@ -2741,8 +3094,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a13-warning",
@@ -2754,8 +3106,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a13-closure",
@@ -2767,8 +3118,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a14-warning",
@@ -2780,8 +3130,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a14-closure",
@@ -2793,8 +3142,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a15-warning",
@@ -2806,8 +3154,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a15-closure",
@@ -2819,8 +3166,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a17-warning",
@@ -2832,8 +3178,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a17-closure",
@@ -2845,8 +3190,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a19-warning",
@@ -2858,8 +3202,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a19-closure",
@@ -2871,8 +3214,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a20-warning",
@@ -2884,8 +3226,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a20-closure",
@@ -2897,8 +3238,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a21-warning",
@@ -2910,8 +3250,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a21-closure",
@@ -2923,8 +3262,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a23-warning",
@@ -2936,8 +3274,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a23-closure",
@@ -2949,8 +3286,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a24-warning",
@@ -2962,8 +3298,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a24-closure",
@@ -2975,8 +3310,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a25-warning",
@@ -2988,8 +3322,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a25-closure",
@@ -3001,8 +3334,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a27-warning",
@@ -3014,8 +3346,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a27-closure",
@@ -3027,8 +3358,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a28-warning",
@@ -3040,8 +3370,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a28-closure",
@@ -3053,8 +3382,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a29-warning",
@@ -3066,8 +3394,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a29-closure",
@@ -3079,8 +3406,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a30-warning",
@@ -3092,8 +3418,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a30-closure",
@@ -3105,8 +3430,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a31-warning",
@@ -3118,8 +3442,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a31-closure",
@@ -3131,8 +3454,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a33-warning",
@@ -3144,8 +3466,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a33-closure",
@@ -3157,8 +3478,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a36-warning",
@@ -3170,8 +3490,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a36-closure",
@@ -3183,8 +3502,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a37-warning",
@@ -3196,8 +3514,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a37-closure",
@@ -3209,8 +3526,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a38-warning",
@@ -3222,8 +3538,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a38-closure",
@@ -3235,8 +3550,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a39-warning",
@@ -3248,8 +3562,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a39-closure",
@@ -3261,8 +3574,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a40-warning",
@@ -3274,8 +3586,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a40-closure",
@@ -3287,8 +3598,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a42-warning",
@@ -3300,8 +3610,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a42-closure",
@@ -3313,8 +3622,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a43-warning",
@@ -3326,8 +3634,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a43-closure",
@@ -3339,8 +3646,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a44-warning",
@@ -3352,8 +3658,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a44-closure",
@@ -3365,8 +3670,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a45-warning",
@@ -3378,8 +3682,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a45-closure",
@@ -3391,8 +3694,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a46-warning",
@@ -3404,8 +3706,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a46-closure",
@@ -3417,8 +3718,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a48-warning",
@@ -3430,8 +3730,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a48-closure",
@@ -3443,8 +3742,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a49-warning",
@@ -3456,8 +3754,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a49-closure",
@@ -3469,8 +3766,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a52-warning",
@@ -3482,8 +3778,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a52-closure",
@@ -3495,8 +3790,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a57-warning",
@@ -3508,8 +3802,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a57-closure",
@@ -3521,8 +3814,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a59-warning",
@@ -3534,8 +3826,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a59-closure",
@@ -3547,8 +3838,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a60-warning",
@@ -3560,8 +3850,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a60-closure",
@@ -3573,8 +3862,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a61-warning",
@@ -3586,8 +3874,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a61-closure",
@@ -3599,8 +3886,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a62-warning",
@@ -3612,8 +3898,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a62-closure",
@@ -3625,8 +3910,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a63-warning",
@@ -3638,8 +3922,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a63-closure",
@@ -3651,8 +3934,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a64-warning",
@@ -3664,8 +3946,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a64-closure",
@@ -3677,8 +3958,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a65-warning",
@@ -3690,8 +3970,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a65-closure",
@@ -3703,8 +3982,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a66-warning",
@@ -3716,8 +3994,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a66-closure",
@@ -3729,8 +4006,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a67-warning",
@@ -3742,8 +4018,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a67-closure",
@@ -3755,8 +4030,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a70-warning",
@@ -3768,8 +4042,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a70-closure",
@@ -3781,8 +4054,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a71-warning",
@@ -3794,8 +4066,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a71-closure",
@@ -3807,8 +4078,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a72-warning",
@@ -3820,8 +4090,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a72-closure",
@@ -3833,8 +4102,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a73-warning",
@@ -3846,8 +4114,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a73-closure",
@@ -3859,8 +4126,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a81-warning",
@@ -3872,8 +4138,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a81-closure",
@@ -3885,8 +4150,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a92-warning",
@@ -3898,8 +4162,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a92-closure",
@@ -3911,8 +4174,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a93-warning",
@@ -3924,8 +4186,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a93-closure",
@@ -3937,8 +4198,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a94-warning",
@@ -3950,8 +4210,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a94-closure",
@@ -3963,8 +4222,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a95-warning",
@@ -3976,8 +4234,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a95-closure",
@@ -3989,8 +4246,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a96-warning",
@@ -4002,8 +4258,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a96-closure",
@@ -4015,8 +4270,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a98-warning",
@@ -4028,8 +4282,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a98-closure",
@@ -4041,8 +4294,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a99-warning",
@@ -4054,8 +4306,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a99-closure",
@@ -4067,8 +4318,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a100-warning",
@@ -4080,8 +4330,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a100-closure",
@@ -4093,8 +4342,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a103-warning",
@@ -4106,8 +4354,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a103-closure",
@@ -4119,8 +4366,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a111-warning",
@@ -4132,8 +4378,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a111-closure",
@@ -4145,8 +4390,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a113-warning",
@@ -4158,8 +4402,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a113-closure",
@@ -4171,8 +4414,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a115-warning",
@@ -4184,8 +4426,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a115-closure",
@@ -4197,8 +4438,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a117-warning",
@@ -4210,8 +4450,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a117-closure",
@@ -4223,8 +4462,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a143-warning",
@@ -4236,8 +4474,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a143-closure",
@@ -4249,8 +4486,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a210-warning",
@@ -4262,8 +4498,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a210-closure",
@@ -4275,8 +4510,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a215-warning",
@@ -4288,8 +4522,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a215-closure",
@@ -4301,8 +4534,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a226-warning",
@@ -4314,8 +4546,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a226-closure",
@@ -4327,8 +4558,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a261-warning",
@@ -4340,8 +4570,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a261-closure",
@@ -4353,8 +4582,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a270-warning",
@@ -4366,8 +4594,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a270-closure",
@@ -4379,8 +4606,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a280-warning",
@@ -4392,8 +4618,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a280-closure",
@@ -4405,8 +4630,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a281-warning",
@@ -4418,8 +4642,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a281-closure",
@@ -4431,8 +4654,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a293-warning",
@@ -4444,8 +4666,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a293-closure",
@@ -4457,8 +4678,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a320-warning",
@@ -4470,8 +4690,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a320-closure",
@@ -4483,8 +4702,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a352-warning",
@@ -4496,8 +4714,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a352-closure",
@@ -4509,8 +4726,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a369-warning",
@@ -4522,8 +4738,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a369-closure",
@@ -4535,8 +4750,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a391-warning",
@@ -4548,8 +4762,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a391-closure",
@@ -4561,8 +4774,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a445-warning",
@@ -4574,8 +4786,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a445-closure",
@@ -4587,8 +4798,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a448-warning",
@@ -4600,8 +4810,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a448-closure",
@@ -4613,8 +4822,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a480-warning",
@@ -4626,8 +4834,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a480-closure",
@@ -4639,8 +4846,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a485-warning",
@@ -4652,8 +4858,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a485-closure",
@@ -4665,8 +4870,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a516-warning",
@@ -4678,8 +4882,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a516-closure",
@@ -4691,8 +4894,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a524-warning",
@@ -4704,8 +4906,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a524-closure",
@@ -4717,8 +4918,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a535-warning",
@@ -4730,8 +4930,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a535-closure",
@@ -4743,8 +4942,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a542-warning",
@@ -4756,8 +4954,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a542-closure",
@@ -4769,8 +4966,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a553-warning",
@@ -4782,8 +4978,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a553-closure",
@@ -4795,8 +4990,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a555-warning",
@@ -4808,8 +5002,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a555-closure",
@@ -4821,8 +5014,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a560-warning",
@@ -4834,8 +5026,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a560-closure",
@@ -4847,8 +5038,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a562-warning",
@@ -4860,8 +5050,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a562-closure",
@@ -4873,8 +5062,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a565-warning",
@@ -4886,8 +5074,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a565-closure",
@@ -4899,8 +5086,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a571-warning",
@@ -4912,8 +5098,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a571-closure",
@@ -4925,8 +5110,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a602-warning",
@@ -4938,8 +5122,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a602-closure",
@@ -4951,8 +5134,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a620-warning",
@@ -4964,8 +5146,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a620-closure",
@@ -4977,8 +5158,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a640-warning",
@@ -4990,8 +5170,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a640-closure",
@@ -5003,8 +5182,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a643-warning",
@@ -5016,8 +5194,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a643-closure",
@@ -5029,8 +5206,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a648-warning",
@@ -5042,8 +5218,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a648-closure",
@@ -5055,8 +5230,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a64a-warning",
@@ -5068,8 +5242,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a64a-closure",
@@ -5081,8 +5254,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a656-warning",
@@ -5094,8 +5266,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a656-closure",
@@ -5107,8 +5278,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a659-warning",
@@ -5120,8 +5290,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a659-closure",
@@ -5133,8 +5302,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a661-warning",
@@ -5146,8 +5314,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a661-closure",
@@ -5159,8 +5326,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a671-warning",
@@ -5172,8 +5338,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a671-closure",
@@ -5185,8 +5350,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a831-warning",
@@ -5198,8 +5362,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a831-closure",
@@ -5211,8 +5374,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a861-warning",
@@ -5224,8 +5386,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a861-closure",
@@ -5237,8 +5398,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a864-warning",
@@ -5250,8 +5410,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a864-closure",
@@ -5263,8 +5422,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a952-warning",
@@ -5276,8 +5434,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a952-closure",
@@ -5289,8 +5446,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a980-warning",
@@ -5302,8 +5458,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a980-closure",
@@ -5315,8 +5470,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a995-warning",
@@ -5328,8 +5482,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a995-closure",
@@ -5341,8 +5494,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a99a-warning",
@@ -5354,8 +5506,7 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
     "id": "autobahn-a99a-closure",
@@ -5367,7 +5518,6 @@
     "license": "dl-de/by-2-0",
     "attribution": "Quelle: Die Autobahn GmbH des Bundes",
     "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
   }
 ]

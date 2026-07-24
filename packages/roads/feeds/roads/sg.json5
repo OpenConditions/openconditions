@@ -46,7 +46,9 @@
     // $skip (pagination below) to pull every page, so coverage is complete rather
     // than first-page-only. Reuses the shared SG_LTA_ACCOUNT_KEY (see lta-sg
     // above), so it runs whenever that key is set.
-    pagination: { skipParam: "$skip", pageSize: 500 },
+    // maxPages well above the dataset size (TrafficSpeedBands runs ~4k-58k links
+    // = up to ~116 pages) so a large cycle is never truncated and its rows pruned.
+    pagination: { skipParam: "$skip", pageSize: 500, maxPages: 200 },
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "Singapore-ODL-1.0",
