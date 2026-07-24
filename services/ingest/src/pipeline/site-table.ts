@@ -1,8 +1,13 @@
 import { Readable } from "node:stream";
 import { createGunzip } from "node:zlib";
-import type { FeedSource, SiteGeometry } from "@openconditions/roads";
-import { createSiteTableParser } from "@openconditions/roads";
-import { DEFAULT_MAX_FEED_BYTES } from "@openconditions/ingest-framework";
+import type { FeedSource, SiteGeometry, SiteTableParser } from "@openconditions/roads";
+import { createPredefinedLocationsParser, createSiteTableParser } from "@openconditions/roads";
+import {
+  DEFAULT_MAX_FEED_BYTES,
+  allowedTemplateVars,
+  resolvedEnv,
+  resolveUrlTemplate,
+} from "@openconditions/ingest-framework";
 import { withStreamRetry } from "./stream-retry.js";
 
 /** Site tables change rarely (version-stamped); refetch at most every 6 hours. */
@@ -51,9 +56,10 @@ export function clearSiteTableCache(): void {
  */
 async function streamIntoParser(
   source: Readable,
-  gzip: boolean
+  gzip: boolean,
+  makeParser: () => SiteTableParser
 ): Promise<Map<string, SiteGeometry>> {
-  const parser = createSiteTableParser();
+  const parser = makeParser();
   // `.pipe()` does not forward the source's errors to the gunzip stream, so a
   // mid-stream socket drop on the (multi-hundred-MB) download would surface as an
   // unhandled 'error' event and crash the process. Forward it so the loop rejects
@@ -99,23 +105,37 @@ export async function loadSiteTable(
   const table = src.siteTable;
   if (!table) return undefined;
 
-  const cached = cache.get(table.url);
+  // resolveUrlTemplate throws for a declared-but-unset ${VAR}; treat an unset
+  // Verortung id as "dormant, no site table" rather than an error.
+  let expanded: string;
+  try {
+    expanded = resolveUrlTemplate(table.url, resolvedEnv(), allowedTemplateVars(src));
+  } catch {
+    return undefined;
+  }
+
+  const cached = cache.get(expanded);
   if (cached && now() - cached.fetchedAt < SITE_TABLE_TTL_MS) {
     return cached.map;
   }
+
+  const makeParser =
+    table.format === "datex-predefined-locations"
+      ? createPredefinedLocationsParser
+      : createSiteTableParser;
 
   try {
     // Retry a transient mid-stream drop with a fresh connection + parser before
     // falling back — the cold 362 MB fetch is the one most likely to drop.
     const map = await withStreamRetry(
-      async () => streamIntoParser(await streamFactory(table.url), table.gzip ?? false),
+      async () => streamIntoParser(await streamFactory(expanded), table.gzip ?? false, makeParser),
       `${src.id} site-table`
     );
-    cache.set(table.url, { map, fetchedAt: now() });
+    cache.set(expanded, { map, fetchedAt: now() });
     return map;
   } catch (err) {
     console.warn(
-      `[ingest] site-table load failed for ${src.id} (${table.url}):`,
+      `[ingest] site-table load failed for ${src.id} (${expanded}):`,
       err instanceof Error ? err.message : err
     );
     return cached?.map;

@@ -13,7 +13,8 @@ import { parseGddkia } from "../gddkia.js";
 import { parseFlatJson } from "../flatjson.js";
 import { parseTrafikverket } from "../trafikverket.js";
 import { resolveFeedUrls, resolvedEnv } from "@openconditions/ingest-framework";
-import { FEED_SOURCES, feedToSourceDescriptor, parserFor } from "../feeds.js";
+import { FEED_SOURCES, feedToSourceDescriptor, flowParserFor, parserFor } from "../feeds.js";
+import { parseElaboratedFlow } from "../flow-elaborated.js";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
 
@@ -432,9 +433,49 @@ describe("FEED_SOURCES", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("loads every feed from the data files (all 63 migrated)", () => {
-    expect(FEED_SOURCES.length).toBe(63);
+  it("loads every feed from the data files (all 68 migrated)", () => {
+    expect(FEED_SOURCES.length).toBe(68);
     expect(new Set(FEED_SOURCES.map((f) => f.id)).size).toBe(FEED_SOURCES.length);
+  });
+
+  it("includes the five Autobahn GmbH BAB flow feeds, all datex-elaborated flow, GeoNutzV, disabled by default", () => {
+    const ids = [
+      "de-hh-autobahn-nord",
+      "de-nw-autobahn-fahrstreifen",
+      "de-he-autobahn-vzd",
+      "de-bw-autobahn-suedwest",
+      "de-by-autobahn",
+    ];
+    for (const id of ids) {
+      const f = FEED_SOURCES.find((s) => s.id === id);
+      expect(f, id).toBeDefined();
+      expect(f!.format).toBe("datex-elaborated");
+      expect(f!.produces).toBe("flow");
+      expect(f!.license).toBe("GeoNutzV");
+      expect(f!.enabledByDefault).toBe(false);
+      expect(f!.auth).toEqual({
+        kind: "mtls",
+        certEnvVar: "MOBILITHEK_CERT",
+        keyEnvVar: "MOBILITHEK_KEY",
+      });
+    }
+  });
+
+  it("wires PredefinedLocations site tables for the four with external geometry (not Bayern)", () => {
+    for (const id of [
+      "de-hh-autobahn-nord",
+      "de-nw-autobahn-fahrstreifen",
+      "de-he-autobahn-vzd",
+      "de-bw-autobahn-suedwest",
+    ]) {
+      const f = FEED_SOURCES.find((s) => s.id === id)!;
+      expect(f.siteTable?.format, id).toBe("datex-predefined-locations");
+    }
+    expect(FEED_SOURCES.find((s) => s.id === "de-by-autobahn")!.siteTable).toBeUndefined();
+  });
+
+  it("registers a flow parser for datex-elaborated", () => {
+    expect(flowParserFor("datex-elaborated")).toBe(parseElaboratedFlow);
   });
 
   it("includes de-hh-polizei as a keyless open geojson police-incident feed", () => {

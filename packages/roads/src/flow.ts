@@ -292,7 +292,7 @@ function mapDatexTrafficStatus(raw: string | undefined): LosValue {
   if (lower === "heavy" || lower === "heavy_traffic" || lower === "slowtraffic") {
     return "heavy";
   }
-  if (lower === "queuing") return "queuing";
+  if (lower === "queuing" || lower === "congested") return "queuing";
   if (lower === "stationary" || lower === "standstill") return "stationary";
   if (lower === "blocked" || lower === "impossible") return "blocked";
   return "unknown";

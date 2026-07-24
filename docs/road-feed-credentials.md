@@ -24,6 +24,11 @@
 | Sachsen-Anhalt via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_ST_MOBILITHEK_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | Schleswig-Holstein via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_SH_MOBILITHEK_SUBSCRIPTION_ID` | CC-BY-4.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | Thüringen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_TH_MOBILITHEK_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Autobahn GmbH BAB traffic data (NL Nord: Hamburg & Schleswig-Holstein) | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID`, `DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Autobahn GmbH BAB traffic data (Nordrhein-Westfalen, per lane) | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_AUTOBAHN_SUBSCRIPTION_ID`, `DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Autobahn GmbH BAB traffic data (VZD, Hessen) | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_HE_AUTOBAHN_SUBSCRIPTION_ID`, `DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Autobahn GmbH BAB traffic data (NL Südwest, Baden-Württemberg) | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_BW_AUTOBAHN_SUBSCRIPTION_ID`, `DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Autobahn GmbH BAB traffic data (Bayern, per lane) | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_BY_AUTOBAHN_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | Vejdirektoratet (Denmark) | `DK_VEJDIREKTORATET_API_KEY` | CC-BY-4.0 | [Danish data exchanger — dataset 416](https://du-portal-ui.dataudveksler.app.vd.dk/data/416/overview) |
 | Tark Tee (Estonia) | `EE_TARKTEE_API_KEY` | CC-BY-4.0 | [Register at Tark Tee](https://tarktee.transpordiamet.ee/#/en/datex-registration) |
 | National Highways NTIS (England) | `GB_NATIONALHIGHWAYS_API_KEY` | OGL-UK-3.0 | [National Highways developer portal](https://developer.data.nationalhighways.co.uk/signin) |

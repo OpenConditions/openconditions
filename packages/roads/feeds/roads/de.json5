@@ -879,4 +879,271 @@
     privacyUrl: "https://www.bonn.de/datenschutz.php",
     enabledByDefault: true,
   },
+  {
+    // Autobahn GmbH BAB detector speed (v) + volume (q), per-minute, Niederlassung
+    // Nord (Hamburg + Schleswig-Holstein). ElaboratedDataPublication joined to the
+    // NL-Nord Verortung (PredefinedLocationsPublication) by predefinedLocationReference
+    // id. GeoNutzV. Mobilithek mtls client-pull, shared MOBILITHEK_CERT/KEY.
+    // Disabled by default until validated against a live payload.
+    subdivision: "hh",
+    operator: "autobahn",
+    stream: "nord",
+    name: "Autobahn GmbH BAB traffic data (NL Nord: Hamburg & Schleswig-Holstein)",
+    format: "datex-elaborated",
+    produces: "flow",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID}",
+    expandEnv: "DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID",
+    auth: { kind: "mtls", certEnvVar: "MOBILITHEK_CERT", keyEnvVar: "MOBILITHEK_KEY" },
+    requiredEnv: [
+      "DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID",
+      "DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID",
+    ],
+    requestHeaders: { "Accept-Encoding": "gzip" },
+    siteTable: {
+      url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID}",
+      format: "datex-predefined-locations",
+    },
+    cadenceSec: 60,
+    freshnessWindowSec: 300,
+    license: "GeoNutzV",
+    licenseUrl: "https://www.gesetze-im-internet.de/geonutzv/",
+    attribution: "Quelle: Die Autobahn GmbH des Bundes",
+    country: "DE",
+    privacyUrl: "https://www.autobahn.de/datenschutz",
+    enabledByDefault: false,
+    setup: {
+      MOBILITHEK_CERT: {
+        title: "Mobilithek — client certificate (PEM)",
+        description: "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key).",
+        url: "https://mobilithek.info/registration-request",
+        urlLabel: "Mobilithek registration",
+        steps: [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field.",
+        ],
+        notes: "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+      },
+      MOBILITHEK_KEY: {
+        title: "Mobilithek — client private key (PEM)",
+        description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
+      },
+      DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID: {
+        title: "Autobahn NL Nord (HH/SH) — Fahrstreifendaten (q/v) Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 781571665935880192 (Fahrstreifendaten q und v, NL Nord). Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+      },
+      DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID: {
+        title: "Autobahn NL Nord (HH/SH) — Verortung (geometry) Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 781573761405784064 (Verortung of the NL-Nord Fahrstreifendaten). Supplies the measurement-site geometry the q/v feed joins against. Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+      },
+    },
+  },
+  {
+    // Autobahn GmbH BAB detector speed (v) + volume (q), per-lane, Nordrhein-Westfalen.
+    // Joined to the NRW Fahrstreifendaten Verortung by predefinedLocationReference id.
+    subdivision: "nw",
+    operator: "autobahn",
+    stream: "fahrstreifen",
+    name: "Autobahn GmbH BAB traffic data (Nordrhein-Westfalen, per lane)",
+    format: "datex-elaborated",
+    produces: "flow",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_SUBSCRIPTION_ID}",
+    expandEnv: "DE_NW_AUTOBAHN_SUBSCRIPTION_ID",
+    auth: { kind: "mtls", certEnvVar: "MOBILITHEK_CERT", keyEnvVar: "MOBILITHEK_KEY" },
+    requiredEnv: ["DE_NW_AUTOBAHN_SUBSCRIPTION_ID", "DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID"],
+    requestHeaders: { "Accept-Encoding": "gzip" },
+    siteTable: {
+      url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
+      format: "datex-predefined-locations",
+    },
+    cadenceSec: 60,
+    freshnessWindowSec: 300,
+    license: "GeoNutzV",
+    licenseUrl: "https://www.gesetze-im-internet.de/geonutzv/",
+    attribution: "Quelle: Die Autobahn GmbH des Bundes",
+    country: "DE",
+    privacyUrl: "https://www.autobahn.de/datenschutz",
+    enabledByDefault: false,
+    setup: {
+      MOBILITHEK_CERT: {
+        title: "Mobilithek — client certificate (PEM)",
+        description: "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key).",
+        url: "https://mobilithek.info/registration-request",
+        urlLabel: "Mobilithek registration",
+        steps: [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field.",
+        ],
+        notes: "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+      },
+      MOBILITHEK_KEY: {
+        title: "Mobilithek — client private key (PEM)",
+        description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
+      },
+      DE_NW_AUTOBAHN_SUBSCRIPTION_ID: {
+        title: "Autobahn NRW — Fahrstreifendaten (q/v) Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 110000000003476000 (Fahrstreifendaten Q und v, NRW). Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+      },
+      DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID: {
+        title: "Autobahn NRW — Verortung (geometry) Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 110000000003477000 (Verortung der Fahrstreifendaten NRW). Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+      },
+    },
+  },
+  {
+    // Autobahn GmbH BAB detector speed (v) + volume (q), Verkehrszentrale Deutschland
+    // (VZD, central node, Hessen). Joined to the VZD Verortung by predefinedLocationReference id.
+    subdivision: "he",
+    operator: "autobahn",
+    stream: "vzd",
+    name: "Autobahn GmbH BAB traffic data (VZD, Hessen)",
+    format: "datex-elaborated",
+    produces: "flow",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HE_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HE_AUTOBAHN_SUBSCRIPTION_ID}",
+    expandEnv: "DE_HE_AUTOBAHN_SUBSCRIPTION_ID",
+    auth: { kind: "mtls", certEnvVar: "MOBILITHEK_CERT", keyEnvVar: "MOBILITHEK_KEY" },
+    requiredEnv: ["DE_HE_AUTOBAHN_SUBSCRIPTION_ID", "DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID"],
+    requestHeaders: { "Accept-Encoding": "gzip" },
+    siteTable: {
+      url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
+      format: "datex-predefined-locations",
+    },
+    cadenceSec: 60,
+    freshnessWindowSec: 300,
+    license: "GeoNutzV",
+    licenseUrl: "https://www.gesetze-im-internet.de/geonutzv/",
+    attribution: "Quelle: Die Autobahn GmbH des Bundes",
+    country: "DE",
+    privacyUrl: "https://www.autobahn.de/datenschutz",
+    enabledByDefault: false,
+    setup: {
+      MOBILITHEK_CERT: {
+        title: "Mobilithek — client certificate (PEM)",
+        description: "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key).",
+        url: "https://mobilithek.info/registration-request",
+        urlLabel: "Mobilithek registration",
+        steps: [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field.",
+        ],
+        notes: "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+      },
+      MOBILITHEK_KEY: {
+        title: "Mobilithek — client private key (PEM)",
+        description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
+      },
+      DE_HE_AUTOBAHN_SUBSCRIPTION_ID: {
+        title: "Autobahn VZD (Hessen) — Fahrstreifendaten (q/v) Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 619101149275615232. Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+      },
+      DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID: {
+        title: "Autobahn VZD (Hessen) — Verortung (geometry) Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 110000000003126003. Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+      },
+    },
+  },
+  {
+    // Autobahn GmbH BAB Verkehrsmessquerschnitte speed (v) + volume (q), NL Südwest
+    // (Baden-Württemberg). Cross-section (not lane-fine). Joined to the Südwest
+    // Verortung by predefinedLocationReference id. License provisionally GeoNutzV
+    // (offer carried no explicit license doc — confirm the Einlegeblatt before enabling).
+    subdivision: "bw",
+    operator: "autobahn",
+    stream: "suedwest",
+    name: "Autobahn GmbH BAB traffic data (NL Südwest, Baden-Württemberg)",
+    format: "datex-elaborated",
+    produces: "flow",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_SUBSCRIPTION_ID}",
+    expandEnv: "DE_BW_AUTOBAHN_SUBSCRIPTION_ID",
+    auth: { kind: "mtls", certEnvVar: "MOBILITHEK_CERT", keyEnvVar: "MOBILITHEK_KEY" },
+    requiredEnv: ["DE_BW_AUTOBAHN_SUBSCRIPTION_ID", "DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID"],
+    requestHeaders: { "Accept-Encoding": "gzip" },
+    siteTable: {
+      url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
+      format: "datex-predefined-locations",
+    },
+    cadenceSec: 60,
+    freshnessWindowSec: 300,
+    license: "GeoNutzV",
+    licenseUrl: "https://www.gesetze-im-internet.de/geonutzv/",
+    attribution: "Quelle: Die Autobahn GmbH des Bundes",
+    country: "DE",
+    privacyUrl: "https://www.autobahn.de/datenschutz",
+    enabledByDefault: false,
+    setup: {
+      MOBILITHEK_CERT: {
+        title: "Mobilithek — client certificate (PEM)",
+        description: "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key).",
+        url: "https://mobilithek.info/registration-request",
+        urlLabel: "Mobilithek registration",
+        steps: [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field.",
+        ],
+        notes: "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+      },
+      MOBILITHEK_KEY: {
+        title: "Mobilithek — client private key (PEM)",
+        description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
+      },
+      DE_BW_AUTOBAHN_SUBSCRIPTION_ID: {
+        title: "Autobahn NL Südwest (BW) — Verkehrsmessquerschnitte (Q,V) Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 110000000003216000. Shared MOBILITHEK_CERT/KEY. License provisionally GeoNutzV — confirm the offer Einlegeblatt.",
+      },
+      DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID: {
+        title: "Autobahn NL Südwest (BW) — Verortung (geometry) Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 110000000003217000. Shared MOBILITHEK_CERT/KEY.",
+      },
+    },
+  },
+  {
+    // Autobahn GmbH BAB detector speed (v) + volume (q), per-lane, Bayern.
+    // No separate Verortung offer was granted; geometry is expected inline on the
+    // ElaboratedData items (parser resolves inline pointCoordinates). If validation
+    // shows geometry is NOT inline, a Bayern Verortung offer must be subscribed and
+    // wired as a siteTable (see the Tier-1 validation task).
+    subdivision: "by",
+    operator: "autobahn",
+    name: "Autobahn GmbH BAB traffic data (Bayern, per lane)",
+    format: "datex-elaborated",
+    produces: "flow",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BY_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BY_AUTOBAHN_SUBSCRIPTION_ID}",
+    expandEnv: "DE_BY_AUTOBAHN_SUBSCRIPTION_ID",
+    auth: { kind: "mtls", certEnvVar: "MOBILITHEK_CERT", keyEnvVar: "MOBILITHEK_KEY" },
+    requiredEnv: ["DE_BY_AUTOBAHN_SUBSCRIPTION_ID"],
+    requestHeaders: { "Accept-Encoding": "gzip" },
+    cadenceSec: 60,
+    freshnessWindowSec: 300,
+    license: "GeoNutzV",
+    licenseUrl: "https://www.gesetze-im-internet.de/geonutzv/",
+    attribution: "Quelle: Die Autobahn GmbH des Bundes",
+    country: "DE",
+    privacyUrl: "https://www.autobahn.de/datenschutz",
+    enabledByDefault: false,
+    setup: {
+      MOBILITHEK_CERT: {
+        title: "Mobilithek — client certificate (PEM)",
+        description: "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key).",
+        url: "https://mobilithek.info/registration-request",
+        urlLabel: "Mobilithek registration",
+        steps: [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field.",
+        ],
+        notes: "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+      },
+      MOBILITHEK_KEY: {
+        title: "Mobilithek — client private key (PEM)",
+        description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
+      },
+      DE_BY_AUTOBAHN_SUBSCRIPTION_ID: {
+        title: "Autobahn Bayern — Dynamische Messdaten (q/v) Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 748580849261105152 (Dynamische Messdaten BAB Bayern fahrstreifenfein). Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+      },
+    },
+  },
 ]

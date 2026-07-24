@@ -262,6 +262,60 @@
         "description": "Subscription id(s) for the TLBV offer 110000000003051000. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
         "x-openmapx-secret": true
       },
+      "DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn NL Nord (HH/SH) — Fahrstreifendaten (q/v) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 781571665935880192 (Fahrstreifendaten q und v, NL Nord). Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+        "x-openmapx-secret": true
+      },
+      "DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn NL Nord (HH/SH) — Verortung (geometry) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 781573761405784064 (Verortung of the NL-Nord Fahrstreifendaten). Supplies the measurement-site geometry the q/v feed joins against. Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+        "x-openmapx-secret": true
+      },
+      "DE_NW_AUTOBAHN_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn NRW — Fahrstreifendaten (q/v) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003476000 (Fahrstreifendaten Q und v, NRW). Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+        "x-openmapx-secret": true
+      },
+      "DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn NRW — Verortung (geometry) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003477000 (Verortung der Fahrstreifendaten NRW). Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+        "x-openmapx-secret": true
+      },
+      "DE_HE_AUTOBAHN_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn VZD (Hessen) — Fahrstreifendaten (q/v) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 619101149275615232. Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+        "x-openmapx-secret": true
+      },
+      "DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn VZD (Hessen) — Verortung (geometry) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003126003. Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+        "x-openmapx-secret": true
+      },
+      "DE_BW_AUTOBAHN_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn NL Südwest (BW) — Verkehrsmessquerschnitte (Q,V) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003216000. Shared MOBILITHEK_CERT/KEY. License provisionally GeoNutzV — confirm the offer Einlegeblatt.",
+        "x-openmapx-secret": true
+      },
+      "DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn NL Südwest (BW) — Verortung (geometry) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003217000. Shared MOBILITHEK_CERT/KEY.",
+        "x-openmapx-secret": true
+      },
+      "DE_BY_AUTOBAHN_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn Bayern — Dynamische Messdaten (q/v) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 748580849261105152 (Dynamische Messdaten BAB Bayern fahrstreifenfein). Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+        "x-openmapx-secret": true
+      },
       "DK_VEJDIREKTORATET_API_KEY": {
         "type": "string",
         "title": "Vejdirektoratet key (Denmark)",
