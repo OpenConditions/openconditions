@@ -2,6 +2,7 @@
   {
     "id": "wzdx-oklahoma",
     "name": "WZDx — Oklahoma DOT (oklahoma)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://oktraffic.org/api/Geojsons/workzones?&access_token=feOPynfHRJ5sdx8tf3IN5yOsGz89TAUuzHsN3V0jo1Fg41LcpoLhIRltaTPmDngD",
     "cadenceSec": 300,
@@ -15,6 +16,7 @@
   {
     "id": "wzdx-utah",
     "name": "WZDx — Utah DOT (utah)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://udottraffic.utah.gov/wzdx/udot/v40/data",
     "cadenceSec": 300,
@@ -28,6 +30,7 @@
   {
     "id": "wzdx-iowa",
     "name": "WZDx — Iowa DOT (iowa)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://iowa-atms.cloud-q-free.com/api/rest/dataprism/wzdx/wzdxfeed",
     "cadenceSec": 300,
@@ -41,6 +44,7 @@
   {
     "id": "wzdx-florida",
     "name": "WZDx — Florida DOT (florida)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://us-datacloud.one.network/fdot/feed.json?app_key=c4090b04-26de-c9ee-873b2bd9a38c",
     "cadenceSec": 300,
@@ -54,6 +58,7 @@
   {
     "id": "wzdx-minnesota",
     "name": "WZDx — Minnesota DOT (minnesota)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://mn.carsprogram.org/carsapi_v1/api/wzdx",
     "cadenceSec": 300,
@@ -67,6 +72,7 @@
   {
     "id": "wzdx-maryland",
     "name": "WZDx — Maryland DOT (maryland)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://filter.ritis.org/wzdx_v4.1/mdot.geojson",
     "cadenceSec": 300,
@@ -80,6 +86,7 @@
   {
     "id": "wzdx-arizona",
     "name": "WZDx — Maricopa County DOT (arizona)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://wzdxapi.aztech.org/construction",
     "cadenceSec": 300,
@@ -93,6 +100,7 @@
   {
     "id": "wzdx-new-mexico",
     "name": "WZDx — New Mexico DOT (new mexico)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://ai.blyncsy.io/wzdx/nmdot/feed",
     "cadenceSec": 300,
@@ -106,6 +114,7 @@
   {
     "id": "wzdx-hawaii",
     "name": "WZDx — Hawaii DOT (hawaii)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://ai.blyncsy.io/wzdx/hidot/feed",
     "cadenceSec": 300,
@@ -119,6 +128,7 @@
   {
     "id": "wzdx-new-york",
     "name": "WZDx — New York DOT (new york)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://511ny.org/api/wzdx",
     "cadenceSec": 300,
@@ -132,6 +142,7 @@
   {
     "id": "wzdx-washington",
     "name": "WZDx — Washington State DOT (washington)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://wzdx.wsdot.wa.gov/api/v4/WorkZoneFeed",
     "cadenceSec": 300,
@@ -145,6 +156,7 @@
   {
     "id": "wzdx-missouri",
     "name": "WZDx — St. Charles County (missouri)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://scc.ridsi-dash.com:5000/wzdx.geojson",
     "cadenceSec": 300,
@@ -158,6 +170,7 @@
   {
     "id": "wzdx-new-jersey",
     "name": "WZDx — New Jersey Institute of Technology (new jersey)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://smartworkzones.njit.edu/nj/wzdx",
     "cadenceSec": 300,
@@ -171,6 +184,7 @@
   {
     "id": "wzdx-kentucky",
     "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
     "cadenceSec": 300,
@@ -184,6 +198,7 @@
   {
     "id": "wzdx-kansas",
     "name": "WZDx — Kansas DOT (kansas)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://ks.carsprogram.org/carsapi_v1/api/wzdx",
     "cadenceSec": 300,
@@ -197,6 +212,7 @@
   {
     "id": "wzdx-texas",
     "name": "WZDx — City of Austin (texas)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://data.austintexas.gov/download/d9mm-cjw9",
     "cadenceSec": 300,
@@ -210,6 +226,7 @@
   {
     "id": "wzdx-delaware",
     "name": "WZDx — Delaware DOT (delaware)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
     "cadenceSec": 300,
@@ -223,6 +240,7 @@
   {
     "id": "wzdx-louisiana",
     "name": "WZDx — Louisiana DOTD (louisiana)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://wzdx.e-dot.com/la_dot_d_feed_wzdx_v4.1.geojson",
     "cadenceSec": 300,
@@ -236,6 +254,7 @@
   {
     "id": "wzdx-idaho",
     "name": "WZDx — Idaho DOT (idaho)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://511.idaho.gov/api/wzdx",
     "cadenceSec": 300,
@@ -249,6 +268,7 @@
   {
     "id": "wzdx-indiana",
     "name": "WZDx — Indiana DOT (indiana)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://in.carsprogram.org/carsapi_v1/api/wzdx",
     "cadenceSec": 300,
@@ -262,6 +282,7 @@
   {
     "id": "wzdx-n-a",
     "name": "WZDx — CivicLink (n/a)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://road-connect-community-bry7272.replit.app/api/wzdx/work-zones.geojson",
     "cadenceSec": 300,
@@ -275,6 +296,7 @@
   {
     "id": "wzdx-michigan",
     "name": "WZDx — Michigan DOT (michigan)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://mdotridedata.state.mi.us//api/v1/organization/michigan_department_of_transportation/dataset/work_zone_information/query?limit=200&_format=json",
     "cadenceSec": 300,
@@ -297,6 +319,7 @@
   {
     "id": "wzdx-north-carolina",
     "name": "WZDx — North Carolina DOT (north carolina)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://drivenc.gov/api/wzdx",
     "cadenceSec": 300,
@@ -310,6 +333,7 @@
   {
     "id": "wzdx-oregon",
     "name": "WZDx — Oregon DOT (Oregon)",
+    "operator": "wzdx",
     "format": "wzdx",
     "url": "https://apiportal.odot.state.or.us/",
     "cadenceSec": 300,
