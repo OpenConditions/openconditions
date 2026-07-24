@@ -30,9 +30,9 @@
     "@openconditions/core": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
+    "@types/node": "^26.1.1",
     "tsup": "^8.0.0",
-    "typescript": "^5.0.0",
+    "typescript": "^7.0.2",
     "vitest": "^3.0.0"
   }
 }
