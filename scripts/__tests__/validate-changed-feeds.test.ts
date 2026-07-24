@@ -12,6 +12,7 @@ function feed(over: Partial<FeedSourceBase>): FeedSourceBase {
   return {
     id: "x",
     name: "X",
+    operator: "test",
     format: "geojson",
     cadenceSec: 300,
     freshnessWindowSec: 900,

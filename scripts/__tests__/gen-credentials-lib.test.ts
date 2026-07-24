@@ -67,6 +67,7 @@ describe("gen-credentials-lib", () => {
     const feedA: FeedSourceBase = {
       id: "region-a",
       name: "Region A",
+      operator: "test",
       format: "geojson",
       auth: { kind: "mtls", certEnvVar: "SHARED_CERT", keyEnvVar: "SHARED_KEY" },
       requiredEnv: ["A_ID"],
@@ -80,6 +81,7 @@ describe("gen-credentials-lib", () => {
     const feedB: FeedSourceBase = {
       id: "region-b",
       name: "Region B",
+      operator: "test",
       format: "geojson",
       auth: { kind: "mtls", certEnvVar: "SHARED_CERT", keyEnvVar: "SHARED_KEY" },
       requiredEnv: ["B_ID"],

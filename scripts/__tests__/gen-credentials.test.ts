@@ -8,6 +8,7 @@ import type { FeedSourceBase } from "@openconditions/ingest-framework";
 const feed: FeedSourceBase = {
   id: "k",
   name: "Keyed",
+  operator: "test",
   format: "geojson",
   auth: { kind: "bearer", envVar: "K_TOKEN" },
   cadenceSec: 300,
