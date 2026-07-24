@@ -88,6 +88,9 @@ export interface RoadConditionEvent {
   geometry: Geometry;
   headline: string;
   description?: string;
+  /** Estimated delay in seconds this event adds vs. free flow (DATEX
+   * delayTimeValue / Verlustzeit), where the source reports it. */
+  delaySeconds?: number;
   roadState?: RoadState;
   roads?: RoadConditionRoadRef[];
   validFrom?: string | null;

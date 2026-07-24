@@ -78,6 +78,26 @@ describe("featureCollectionToRoadConditionEvents", () => {
     expect(events[0]!.roads).toEqual([{ name: "A2", direction: "north" }]);
   });
 
+  it("carries a finite attributes.delaySeconds (Verlustzeit) onto the event", () => {
+    const [withDelay, withoutDelay] = featureCollectionToRoadConditionEvents({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [5, 52] },
+          properties: { id: "a", attributes: { delaySeconds: 1500 } },
+        },
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [5, 52] },
+          properties: { id: "b", attributes: {} },
+        },
+      ],
+    } as unknown as FeatureCollection);
+    expect(withDelay?.delaySeconds).toBe(1500);
+    expect(withoutDelay?.delaySeconds).toBeUndefined();
+  });
+
   it("populates dataUpdatedAt from the top-level properties.data_updated_at (not attributes)", () => {
     const out = featureCollectionToRoadConditionEvents({
       type: "FeatureCollection",

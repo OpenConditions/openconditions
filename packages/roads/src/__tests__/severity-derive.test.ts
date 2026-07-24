@@ -1,6 +1,7 @@
 import type { Observation } from "@openconditions/core";
 import { describe, expect, it } from "vitest";
 import { enrichEventSeverity } from "../severity-derive.js";
+import type { RoadEvent } from "../model.js";
 
 const ev = (over: Record<string, unknown>): Observation =>
   ({
@@ -51,5 +52,43 @@ describe("enrichEventSeverity", () => {
     const flow = { kind: "measurement", metric: "flow" } as unknown as Observation;
     const [o] = enrichEventSeverity([flow]);
     expect(o).toBe(flow);
+  });
+});
+
+describe("enrichEventSeverity — delay floor", () => {
+  it("raises a long-delay event to high", () => {
+    const [out] = enrichEventSeverity([
+      ev({ severity: "medium", delaySeconds: 1500 }),
+    ]) as RoadEvent[];
+    expect(out.severity).toBe("high");
+    expect(out.severitySource).toBe("derived");
+  });
+  it("never sets critical from delay alone", () => {
+    const [out] = enrichEventSeverity([
+      ev({ severity: "medium", delaySeconds: 100000 }),
+    ]) as RoadEvent[];
+    expect(out.severity).toBe("high");
+  });
+  it("does not downgrade an already-higher severity", () => {
+    const [out] = enrichEventSeverity([
+      ev({ severity: "critical", delaySeconds: 1500 }),
+    ]) as RoadEvent[];
+    expect(out.severity).toBe("critical");
+  });
+  it("ignores short/absent delays (existing derivation wins)", () => {
+    const [out] = enrichEventSeverity([ev({ severity: "low", delaySeconds: 120 })]) as RoadEvent[];
+    expect(out.severity).toBe("low");
+  });
+  it("returns the same object when nothing changes", () => {
+    const input = ev({ severity: "high", delaySeconds: 120 });
+    expect(enrichEventSeverity([input])[0]).toBe(input);
+  });
+  it("floors an unknown-severity, unmapped-type event with a large delay to high", () => {
+    // A type with no TYPE_SEVERITY mapping (e.g. "other") leaves derivation at
+    // "unknown"; the delay floor must still raise it.
+    const [out] = enrichEventSeverity([
+      ev({ type: "other", severity: "unknown", delaySeconds: 1500 }),
+    ]) as RoadEvent[];
+    expect(out.severity).toBe("high");
   });
 });

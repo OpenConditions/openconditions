@@ -36,6 +36,7 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
   if (!feature.geometry || !id) return null;
 
   const attrs = (p.attributes ?? {}) as Record<string, unknown>;
+  const delay = Number(attrs.delaySeconds);
 
   return {
     id,
@@ -46,6 +47,7 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
     geometry: feature.geometry,
     headline: str(p.headline) ?? "",
     description: str(p.description),
+    ...(Number.isFinite(delay) ? { delaySeconds: delay } : {}),
     roadState: attrs.roadState as RoadState | undefined,
     roads: attrs.roads as RoadConditionRoadRef[] | undefined,
     validFrom:
