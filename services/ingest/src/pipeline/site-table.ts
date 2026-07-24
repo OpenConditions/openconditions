@@ -1,7 +1,7 @@
 import { Readable } from "node:stream";
 import { createGunzip } from "node:zlib";
 import type { FeedSource, SiteGeometry, SiteTableParser } from "@openconditions/roads";
-import { createPredefinedLocationsParser, createSiteTableParser } from "@openconditions/roads";
+import { createSiteTableParser } from "@openconditions/roads";
 import {
   DEFAULT_MAX_FEED_BYTES,
   allowedTemplateVars,
@@ -119,16 +119,12 @@ export async function loadSiteTable(
     return cached.map;
   }
 
-  const makeParser =
-    table.format === "datex-predefined-locations"
-      ? createPredefinedLocationsParser
-      : createSiteTableParser;
-
   try {
     // Retry a transient mid-stream drop with a fresh connection + parser before
     // falling back — the cold 362 MB fetch is the one most likely to drop.
     const map = await withStreamRetry(
-      async () => streamIntoParser(await streamFactory(expanded), table.gzip ?? false, makeParser),
+      async () =>
+        streamIntoParser(await streamFactory(expanded), table.gzip ?? false, createSiteTableParser),
       `${src.id} site-table`
     );
     cache.set(expanded, { map, fetchedAt: now() });

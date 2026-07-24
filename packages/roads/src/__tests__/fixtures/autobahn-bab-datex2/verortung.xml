@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" modelBaseVersion="2">
+  <payloadPublication xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" lang="DE" xsi:type="MeasurementSiteTablePublication">
+    <measurementSiteTable id="MQ-FS-F" version="1.4.8">
+      <measurementSiteRecord id="eq.test_001.f.de" version="1.4.8">
+        <measurementSiteLocation xsi:type="Point">
+          <pointByCoordinates>
+            <pointCoordinates>
+              <latitude>50.1109</latitude>
+              <longitude>8.6821</longitude>
+            </pointCoordinates>
+          </pointByCoordinates>
+        </measurementSiteLocation>
+      </measurementSiteRecord>
+    </measurementSiteTable>
+  </payloadPublication>
+</d2LogicalModel>

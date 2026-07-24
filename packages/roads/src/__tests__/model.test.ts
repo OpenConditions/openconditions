@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  isRoadEventType,
-  ROAD_EVENT_TYPES,
-  roadFlowAttributes,
-  type RoadEventType,
-} from "../model.js";
-import type { RoadFlow } from "../model.js";
+import { isRoadEventType, ROAD_EVENT_TYPES, type RoadEventType } from "../model.js";
 import { TYPE_CROSSWALK } from "../taxonomy.js";
 
 describe("ROAD_EVENT_TYPES", () => {
@@ -50,31 +44,5 @@ describe("isRoadEventType", () => {
       const narrowed: RoadEventType = value;
       expect(narrowed).toBe("accident");
     }
-  });
-});
-
-const flowBase: RoadFlow = {
-  id: "x:1",
-  source: "x",
-  sourceFormat: "datex-elaborated",
-  domain: "roads",
-  kind: "measurement",
-  metric: "flow",
-  geometry: { type: "Point", coordinates: [10, 53] },
-  los: "free_flow",
-  aggregation: "live",
-  status: "active",
-  origin: { kind: "feed", attribution: { provider: "p", license: "GeoNutzV" } },
-  dataUpdatedAt: "2026-07-23T00:00:00Z",
-  fetchedAt: "2026-07-23T00:00:00Z",
-  isStale: false,
-} as unknown as RoadFlow;
-
-describe("roadFlowAttributes", () => {
-  it("includes volume when set", () => {
-    expect(roadFlowAttributes({ ...flowBase, volume: 1234 })).toMatchObject({ volume: 1234 });
-  });
-  it("omits volume when unset", () => {
-    expect("volume" in roadFlowAttributes(flowBase)).toBe(false);
   });
 });

@@ -431,11 +431,18 @@ function buildSiteGeometryMap(
  * interval" shape), not a feed that simply doesn't report a count.
  */
 function firstDataNode(node: XmlObject): XmlObject | undefined {
-  return (
+  const direct =
     getXmlChild(node, "basicData") ??
     getXmlChild(node, "basicDataValue") ??
-    getXmlChild(node, "elaboratedDataValue")
-  );
+    getXmlChild(node, "elaboratedDataValue");
+  if (direct) return direct;
+  // The Autobahn GmbH BAB feeds wrap basicData two layers deeper than NDW:
+  // `measuredValue > measuredValueExtension > measuredValues > basicData`.
+  // Descend through those before giving up (the streaming SAX parser reaches
+  // the leaf regardless of nesting; this keeps the buffered parser in step).
+  const values = getXmlChild(node, "measuredValueExtension") ?? undefined;
+  const inner = values ? getXmlChild(values, "measuredValues") : undefined;
+  return inner ? firstDataNode(inner) : undefined;
 }
 
 function readMeasuredSpeedSample(mv: XmlObject): {

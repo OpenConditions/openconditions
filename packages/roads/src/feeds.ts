@@ -19,7 +19,6 @@ import { parseAutobahn } from "./autobahn.js";
 import { parseDigitraffic } from "./digitraffic.js";
 import { parseDigitrafficFlow, parseDatexMeasuredData } from "./flow.js";
 import type { FlowParseResult } from "./flow.js";
-import { parseElaboratedFlow } from "./flow-elaborated.js";
 import { parseFintrafficFlow } from "./flow-fintraffic.js";
 import { parseWebtrisFlow } from "./flow-webtris.js";
 import { parseNycDotFlow } from "./flow-nycdot.js";
@@ -57,11 +56,7 @@ export type FeedSource = FeedSourceBase & {
    * NOT magic-byte-sniff the response, so a gzipped body without `gzip: true`
    * would stream corrupt bytes into the parser (yielding an empty map).
    */
-  siteTable?: {
-    url: string;
-    gzip?: boolean;
-    format?: "datex-site-table" | "datex-predefined-locations";
-  };
+  siteTable?: { url: string; gzip?: boolean };
   /**
    * A JSON/GeoJSON station registry supplying Point geometry for flow feeds
    * keyed only by station id (Fintraffic, WebTRIS). The ingest service fetches
@@ -160,7 +155,6 @@ export function parserFor(format: SourceFormat): ParserFn {
 export function flowParserFor(format: SourceFormat): FlowParserFn {
   if (format === "digitraffic") return parseDigitrafficFlow;
   if (format === "datex2") return parseDatexMeasuredData;
-  if (format === "datex-elaborated") return parseElaboratedFlow;
   if (format === "fintraffic-tms") return parseFintrafficFlow;
   if (format === "webtris") return parseWebtrisFlow;
   if (format === "nyc-dot") return parseNycDotFlow;

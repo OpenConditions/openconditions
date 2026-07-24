@@ -49,7 +49,7 @@ async function seedDeclaredFlow(id: string, source: string, los: string): Promis
     INSERT INTO conditions.observations
       (id, source, source_format, domain, kind, metric, value, status, geom, attributes, origin,
        data_updated_at, fetched_at)
-    VALUES (${id}, ${source}, 'datex-elaborated', 'roads', 'measurement', 'flow', NULL, 'active',
+    VALUES (${id}, ${source}, 'datex2', 'roads', 'measurement', 'flow', NULL, 'active',
       ST_SetSRID(ST_GeomFromText('POINT(5.05 52.0)'), 4326),
       ${sql.json({ los })},
       ${sql.json({ kind: "feed", attribution: { provider: "test" } })},

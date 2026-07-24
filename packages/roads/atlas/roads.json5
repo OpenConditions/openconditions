@@ -1236,7 +1236,7 @@
   },
   {
     "name": "Autobahn GmbH BAB traffic data (NL Nord: Hamburg & Schleswig-Holstein)",
-    "format": "datex-elaborated",
+    "format": "datex2",
     "operator": "autobahn",
     "subdivision": "hh",
     "stream": "nord",
@@ -1289,14 +1289,13 @@
       }
     },
     "siteTable": {
-      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID}",
-      "format": "datex-predefined-locations"
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID}"
     },
     "id": "de-hh-autobahn-nord"
   },
   {
     "name": "Autobahn GmbH BAB traffic data (Nordrhein-Westfalen, per lane)",
-    "format": "datex-elaborated",
+    "format": "datex2",
     "operator": "autobahn",
     "subdivision": "nw",
     "stream": "fahrstreifen",
@@ -1349,14 +1348,13 @@
       }
     },
     "siteTable": {
-      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
-      "format": "datex-predefined-locations"
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}"
     },
     "id": "de-nw-autobahn-fahrstreifen"
   },
   {
     "name": "Autobahn GmbH BAB traffic data (VZD, Hessen)",
-    "format": "datex-elaborated",
+    "format": "datex2",
     "operator": "autobahn",
     "subdivision": "he",
     "stream": "vzd",
@@ -1409,14 +1407,13 @@
       }
     },
     "siteTable": {
-      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
-      "format": "datex-predefined-locations"
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}"
     },
     "id": "de-he-autobahn-vzd"
   },
   {
     "name": "Autobahn GmbH BAB traffic data (NL Südwest, Baden-Württemberg)",
-    "format": "datex-elaborated",
+    "format": "datex2",
     "operator": "autobahn",
     "subdivision": "bw",
     "stream": "suedwest",
@@ -1469,14 +1466,13 @@
       }
     },
     "siteTable": {
-      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
-      "format": "datex-predefined-locations"
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}"
     },
     "id": "de-bw-autobahn-suedwest"
   },
   {
     "name": "Autobahn GmbH BAB traffic data (Bayern, per lane)",
-    "format": "datex-elaborated",
+    "format": "datex2",
     "operator": "autobahn",
     "subdivision": "by",
     "produces": "flow",
@@ -1526,7 +1522,7 @@
   },
   {
     "name": "Autobahn GmbH BAB Verkehrslage LoS (Nordrhein-Westfalen, per lane)",
-    "format": "datex-elaborated",
+    "format": "datex2",
     "operator": "autobahn",
     "subdivision": "nw",
     "stream": "loslane",
@@ -1579,14 +1575,13 @@
       }
     },
     "siteTable": {
-      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}",
-      "format": "datex-predefined-locations"
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}"
     },
     "id": "de-nw-autobahn-loslane"
   },
   {
     "name": "Autobahn GmbH BAB Verkehrslage LoS (NL Südwest, Baden-Württemberg)",
-    "format": "datex-elaborated",
+    "format": "datex2",
     "operator": "autobahn",
     "subdivision": "bw",
     "stream": "los",
@@ -1639,8 +1634,7 @@
       }
     },
     "siteTable": {
-      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID}",
-      "format": "datex-predefined-locations"
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID}"
     },
     "id": "de-bw-autobahn-los"
   },

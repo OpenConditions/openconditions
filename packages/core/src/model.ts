@@ -26,7 +26,6 @@ export interface MergedSource {
 
 export type SourceFormat =
   | "datex2"
-  | "datex-elaborated"
   | "open511"
   | "wzdx"
   | "geojson"

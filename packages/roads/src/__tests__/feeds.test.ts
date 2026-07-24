@@ -13,8 +13,7 @@ import { parseGddkia } from "../gddkia.js";
 import { parseFlatJson } from "../flatjson.js";
 import { parseTrafikverket } from "../trafikverket.js";
 import { resolveFeedUrls, resolvedEnv } from "@openconditions/ingest-framework";
-import { FEED_SOURCES, feedToSourceDescriptor, flowParserFor, parserFor } from "../feeds.js";
-import { parseElaboratedFlow } from "../flow-elaborated.js";
+import { FEED_SOURCES, feedToSourceDescriptor, parserFor } from "../feeds.js";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
 
@@ -441,29 +440,20 @@ describe("FEED_SOURCES", () => {
     });
   });
 
-  it("includes the two Autobahn GmbH BAB LoS Verkehrslage feeds, datex-elaborated flow, disabled by default", () => {
-    const ids = ["de-nw-autobahn-loslane", "de-bw-autobahn-los"];
-    for (const id of ids) {
-      const f = FEED_SOURCES.find((s) => s.id === id);
-      expect(f, id).toBeDefined();
-      expect(f!.format).toBe("datex-elaborated");
-      expect(f!.produces).toBe("flow");
-      expect(f!.siteTable?.format).toBe("datex-predefined-locations");
-    }
-  });
-
-  it("includes the five Autobahn GmbH BAB flow feeds, all datex-elaborated flow, GeoNutzV, disabled by default", () => {
+  it("includes the seven Autobahn GmbH BAB flow feeds, all datex2 flow, GeoNutzV, mtls", () => {
     const ids = [
       "de-hh-autobahn-nord",
       "de-nw-autobahn-fahrstreifen",
       "de-he-autobahn-vzd",
       "de-bw-autobahn-suedwest",
       "de-by-autobahn",
+      "de-nw-autobahn-loslane",
+      "de-bw-autobahn-los",
     ];
     for (const id of ids) {
       const f = FEED_SOURCES.find((s) => s.id === id);
       expect(f, id).toBeDefined();
-      expect(f!.format).toBe("datex-elaborated");
+      expect(f!.format).toBe("datex2");
       expect(f!.produces).toBe("flow");
       expect(f!.license).toBe("GeoNutzV");
       expect(f!.auth).toEqual({
@@ -474,21 +464,19 @@ describe("FEED_SOURCES", () => {
     }
   });
 
-  it("wires PredefinedLocations site tables for the four with external geometry (not Bayern)", () => {
+  it("wires a companion Verortung site table for the six with external geometry (not Bayern)", () => {
     for (const id of [
       "de-hh-autobahn-nord",
       "de-nw-autobahn-fahrstreifen",
       "de-he-autobahn-vzd",
       "de-bw-autobahn-suedwest",
+      "de-nw-autobahn-loslane",
+      "de-bw-autobahn-los",
     ]) {
       const f = FEED_SOURCES.find((s) => s.id === id)!;
-      expect(f.siteTable?.format, id).toBe("datex-predefined-locations");
+      expect(typeof f.siteTable?.url, id).toBe("string");
     }
     expect(FEED_SOURCES.find((s) => s.id === "de-by-autobahn")!.siteTable).toBeUndefined();
-  });
-
-  it("registers a flow parser for datex-elaborated", () => {
-    expect(flowParserFor("datex-elaborated")).toBe(parseElaboratedFlow);
   });
 
   it("includes de-hh-polizei as a keyless open geojson police-incident feed", () => {

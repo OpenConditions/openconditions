@@ -860,15 +860,15 @@
   },
   {
     // Autobahn GmbH BAB detector speed (v) + volume (q), per-minute, Niederlassung
-    // Nord (Hamburg + Schleswig-Holstein). ElaboratedDataPublication joined to the
-    // NL-Nord Verortung (PredefinedLocationsPublication) by predefinedLocationReference
+    // Nord (Hamburg + Schleswig-Holstein). MeasuredDataPublication joined to the
+    // NL-Nord Verortung (MeasurementSiteTablePublication) by measurementSiteReference
     // id. GeoNutzV. Mobilithek mtls client-pull, shared MOBILITHEK_CERT/KEY.
     // Disabled by default until validated against a live payload.
     subdivision: "hh",
     operator: "autobahn",
     stream: "nord",
     name: "Autobahn GmbH BAB traffic data (NL Nord: Hamburg & Schleswig-Holstein)",
-    format: "datex-elaborated",
+    format: "datex2",
     produces: "flow",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID}",
     expandEnv: "DE_HH_AUTOBAHNNORD_SUBSCRIPTION_ID",
@@ -880,7 +880,6 @@
     requestHeaders: { "Accept-Encoding": "gzip" },
     siteTable: {
       url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HH_AUTOBAHNNORD_VERORTUNG_SUBSCRIPTION_ID}",
-      format: "datex-predefined-locations",
     },
     cadenceSec: 60,
     freshnessWindowSec: 300,
@@ -918,12 +917,12 @@
   },
   {
     // Autobahn GmbH BAB detector speed (v) + volume (q), per-lane, Nordrhein-Westfalen.
-    // Joined to the NRW Fahrstreifendaten Verortung by predefinedLocationReference id.
+    // Joined to the NRW Fahrstreifendaten Verortung by measurementSiteReference id.
     subdivision: "nw",
     operator: "autobahn",
     stream: "fahrstreifen",
     name: "Autobahn GmbH BAB traffic data (Nordrhein-Westfalen, per lane)",
-    format: "datex-elaborated",
+    format: "datex2",
     produces: "flow",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_SUBSCRIPTION_ID}",
     expandEnv: "DE_NW_AUTOBAHN_SUBSCRIPTION_ID",
@@ -932,7 +931,6 @@
     requestHeaders: { "Accept-Encoding": "gzip" },
     siteTable: {
       url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
-      format: "datex-predefined-locations",
     },
     cadenceSec: 60,
     freshnessWindowSec: 300,
@@ -970,12 +968,12 @@
   },
   {
     // Autobahn GmbH BAB detector speed (v) + volume (q), Verkehrszentrale Deutschland
-    // (VZD, central node, Hessen). Joined to the VZD Verortung by predefinedLocationReference id.
+    // (VZD, central node, Hessen). Joined to the VZD Verortung by measurementSiteReference id.
     subdivision: "he",
     operator: "autobahn",
     stream: "vzd",
     name: "Autobahn GmbH BAB traffic data (VZD, Hessen)",
-    format: "datex-elaborated",
+    format: "datex2",
     produces: "flow",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HE_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HE_AUTOBAHN_SUBSCRIPTION_ID}",
     expandEnv: "DE_HE_AUTOBAHN_SUBSCRIPTION_ID",
@@ -984,7 +982,6 @@
     requestHeaders: { "Accept-Encoding": "gzip" },
     siteTable: {
       url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
-      format: "datex-predefined-locations",
     },
     cadenceSec: 60,
     freshnessWindowSec: 300,
@@ -1023,13 +1020,13 @@
   {
     // Autobahn GmbH BAB Verkehrsmessquerschnitte speed (v) + volume (q), NL Südwest
     // (Baden-Württemberg). Cross-section (not lane-fine). Joined to the Südwest
-    // Verortung by predefinedLocationReference id. License provisionally GeoNutzV
+    // Verortung by measurementSiteReference id. License provisionally GeoNutzV
     // (offer carried no explicit license doc — confirm the Einlegeblatt before enabling).
     subdivision: "bw",
     operator: "autobahn",
     stream: "suedwest",
     name: "Autobahn GmbH BAB traffic data (NL Südwest, Baden-Württemberg)",
-    format: "datex-elaborated",
+    format: "datex2",
     produces: "flow",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_SUBSCRIPTION_ID}",
     expandEnv: "DE_BW_AUTOBAHN_SUBSCRIPTION_ID",
@@ -1038,7 +1035,6 @@
     requestHeaders: { "Accept-Encoding": "gzip" },
     siteTable: {
       url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
-      format: "datex-predefined-locations",
     },
     cadenceSec: 60,
     freshnessWindowSec: 300,
@@ -1075,15 +1071,16 @@
     },
   },
   {
-    // Autobahn GmbH BAB detector speed (v) + volume (q), per-lane, Bayern.
-    // No separate Verortung offer was granted; geometry is expected inline on the
-    // ElaboratedData items (parser resolves inline pointCoordinates). If validation
-    // shows geometry is NOT inline, a Bayern Verortung offer must be subscribed and
-    // wired as a siteTable (see the Tier-1 validation task).
+    // Autobahn GmbH BAB detector speed (v), per-lane, Bayern. MeasuredDataPublication.
+    // The live payload carries NO inline geometry — it references an external
+    // MeasurementSiteTable, and no Bayern Verortung offer was granted, so its sites
+    // cannot be geolocated yet (the flow parses but every site is skipped for lack
+    // of geometry). A Bayern Verortung/site-table offer must be subscribed and wired
+    // as a siteTable for this feed to produce mappable data.
     subdivision: "by",
     operator: "autobahn",
     name: "Autobahn GmbH BAB traffic data (Bayern, per lane)",
-    format: "datex-elaborated",
+    format: "datex2",
     produces: "flow",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BY_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BY_AUTOBAHN_SUBSCRIPTION_ID}",
     expandEnv: "DE_BY_AUTOBAHN_SUBSCRIPTION_ID",
@@ -1122,13 +1119,13 @@
   },
   {
     // Autobahn GmbH BAB fahrstreifenfeine Verkehrslage (4-step LoS) for NRW — the
-    // operator's own per-lane congestion classification. ElaboratedDataPublication
-    // (basicData TrafficStatus) joined to its Verortung by predefinedLocationReference id.
+    // operator's own per-lane congestion classification. MeasuredDataPublication
+    // (basicData TrafficStatus in a MeasuredDataPublication) joined to its Verortung by measurementSiteReference id.
     subdivision: "nw",
     operator: "autobahn",
     stream: "loslane",
     name: "Autobahn GmbH BAB Verkehrslage LoS (Nordrhein-Westfalen, per lane)",
-    format: "datex-elaborated",
+    format: "datex2",
     produces: "flow",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID}",
     expandEnv: "DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID",
@@ -1140,7 +1137,6 @@
     requestHeaders: { "Accept-Encoding": "gzip" },
     siteTable: {
       url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}",
-      format: "datex-predefined-locations",
     },
     cadenceSec: 60,
     freshnessWindowSec: 300,
@@ -1183,7 +1179,7 @@
     operator: "autobahn",
     stream: "los",
     name: "Autobahn GmbH BAB Verkehrslage LoS (NL Südwest, Baden-Württemberg)",
-    format: "datex-elaborated",
+    format: "datex2",
     produces: "flow",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID}",
     expandEnv: "DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID",
@@ -1195,7 +1191,6 @@
     requestHeaders: { "Accept-Encoding": "gzip" },
     siteTable: {
       url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID}",
-      format: "datex-predefined-locations",
     },
     cadenceSec: 60,
     freshnessWindowSec: 300,
