@@ -36,6 +36,5 @@
     attribution: "NZ Transport Agency Waka Kotahi",
     country: "NZ",
     privacyUrl: "https://www.nzta.govt.nz/privacy-policy/",
-    enabledByDefault: true,
   },
 ]

@@ -36,7 +36,7 @@
     "postgres": "^3.4.0",
     "structured-headers": "^2.0.2",
     "tuf-js": "6.0.0",
-    "yaml": "2.8.0"
+    "yaml": "2.9.0"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.14",

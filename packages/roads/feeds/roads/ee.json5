@@ -16,7 +16,6 @@
     attribution: "Transpordiamet (Estonian Transport Administration)",
     country: "EE",
     privacyUrl: "https://www.transpordiamet.ee/en",
-    enabledByDefault: true,
     setup: {
       EE_TARKTEE_API_KEY: {
         title: "Tark Tee key (Estonia)",

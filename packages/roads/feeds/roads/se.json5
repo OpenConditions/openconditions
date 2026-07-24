@@ -26,7 +26,6 @@
     attribution: "Trafikverket",
     country: "SE",
     privacyUrl: "https://www.trafikverket.se/integritetspolicy/",
-    enabledByDefault: true,
     setup: {
       SE_TRAFIKVERKET_API_KEY: {
         title: "Trafikverket key (Sweden)",
@@ -64,7 +63,6 @@
     attribution: "Trafikverket",
     country: "SE",
     privacyUrl: "https://www.trafikverket.se/en/privacy-policy/",
-    enabledByDefault: true,
     setup: {
       SE_TRAFIKVERKET_API_KEY: {
         title: "Trafikverket key (Sweden)",

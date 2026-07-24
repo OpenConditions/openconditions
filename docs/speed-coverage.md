@@ -16,7 +16,6 @@ regenerated into [`road-feed-credentials.md`](./road-feed-credentials.md).
 | ---------------------- | -------------------- | ------------------- | ------------------------------- | -------------------- |
 | `be-miv`               | Flanders, Belgium    | `miv`               | no                              | CC-BY-4.0            |
 | `es-madrid`            | Madrid, Spain        | `informo`           | no                              | CC-BY-4.0            |
-| `gb-webtris`           | Great Britain        | `webtris`           | no, **disabled by default**     | OGL-UK-3.0           |
 | `fr-dir-flow`          | France (DIR/QTV-DIR) | `datex2`            | no                              | etalab-2.0           |
 | `hk-td`                | Hong Kong            | `hk-td`             | no                              | HK-Gov-Open-Data     |
 | `de-bonn`              | Bonn, Germany        | `bonn`              | no                              | dl-de/zero-2-0       |
@@ -26,17 +25,15 @@ regenerated into [`road-feed-credentials.md`](./road-feed-credentials.md).
 | `us-nyc-dot`           | New York City, US    | `nyc-dot`           | no (optional token)             | NYC-Open-Data        |
 | `us-oh-ohgo`           | Ohio, US             | `ohgo`              | yes (`US_OH_OHGO_API_KEY`)      | US-Gov-Public-Domain |
 | `se-trafikverket-flow` | Sweden               | `trafikverket-flow` | yes (`SE_TRAFIKVERKET_API_KEY`) | CC0-1.0              |
-| `no-vegvesen-flow`     | Norway               | `datex2`            | yes, **disabled by default**    | NLOD-2.0             |
-| `sg-lta-speedbands`    | Singapore            | `lta-speedbands`    | yes, **disabled by default**    | Singapore-ODL-1.0    |
+| `no-vegvesen-flow`     | Norway               | `datex2`            | yes (`NO_VEGVESEN_*`)           | NLOD-2.0             |
+| `sg-lta-speedbands`    | Singapore            | `lta-speedbands`    | yes (`SG_LTA_ACCOUNT_KEY`)      | Singapore-ODL-1.0    |
 
-`gb-webtris` is disabled by default: WebTRIS publishes quality-checked
-_historical_ traffic data lagged roughly 6-8 weeks — a query for a recent date
-window returns HTTP 204 (no content), and even the older data it does hold
-falls outside the 28-day free-flow baseline-derivation window
-(`deriveBaselines`'s default `windowDays`), so it never contributes to the
-live pipeline. An operator who wants the historical samples anyway can flip
-`enabledByDefault` on `gb-webtris` and widen the derive window to reach back
-far enough.
+There is no per-feed enable switch: a feed runs as soon as its credentials are
+set (a keyless feed always runs). The keyed speed feeds above therefore stay
+dormant only until their credential is configured. (WebTRIS/Great Britain was
+dropped: it publishes quality-checked data lagged ~4-8 weeks — recent-date
+queries return HTTP 204 — so its yesterday→today fetch window could never
+ingest anything and it never contributed to the live pipeline.)
 
 ## How congestion is derived
 
@@ -64,10 +61,10 @@ full list with registration links is in
 - **OHGO (Ohio)** — `US_OH_OHGO_API_KEY` (ohgo.com/developer).
 - **Trafikverket (Sweden)** — `SE_TRAFIKVERKET_API_KEY`
   (api.trafikinfo.trafikverket.se).
-- **LTA DataMall Speed Bands (Singapore)** — `SG_LTA_ACCOUNT_KEY`; disabled by
-  default until the key is set.
+- **LTA DataMall Speed Bands (Singapore)** — `SG_LTA_ACCOUNT_KEY`; dormant
+  until the key is set.
 - **Statens vegvesen (Norway)** — `NO_VEGVESEN_USERNAME` /
-  `NO_VEGVESEN_PASSWORD`; disabled by default until credentials are set.
+  `NO_VEGVESEN_PASSWORD`; dormant until credentials are set.
 
 ## Known export limitation
 
@@ -89,5 +86,5 @@ must not silently invent geometry either.
 - **Norway and France are now included** (`no-vegvesen-flow`, `fr-dir-flow`
   in the roster above) — both were previously deferred here. The France feed
   (QTV-DIR) resolves its CSV site table (Lambert-93 → WGS84) via
-  `france-comptage-csv`; the Norway DATEX feed is credential-gated and off by
-  default.
+  `france-comptage-csv`; the Norway DATEX feed is credential-gated (dormant
+  until credentials are set).

@@ -19,7 +19,6 @@ const testSchema = z
     attribution: z.string(),
     country: z.string(),
     privacyUrl: z.string(),
-    enabledByDefault: z.boolean(),
     url: z.union([z.string(), z.array(z.string())]).optional(),
   })
   .passthrough();
@@ -35,7 +34,6 @@ function feed(id: string, name: string, extra: Record<string, unknown> = {}): Fe
     attribution: "t",
     country: "NL",
     privacyUrl: "https://x",
-    enabledByDefault: true,
     ...extra,
   } as FeedSourceBase;
 }

@@ -39,7 +39,6 @@
     attribution: "Transport for NSW",
     country: "AU",
     privacyUrl: "https://www.transport.nsw.gov.au/privacy-statement",
-    enabledByDefault: true,
     setup: {
       AU_NSW_LIVETRAFFIC_API_KEY: {
         title: "Live Traffic NSW API key (Australia)",
@@ -90,7 +89,6 @@
     attribution: "Department for Infrastructure and Transport (South Australia)",
     country: "AU",
     privacyUrl: "https://www.dit.sa.gov.au/footer/privacy",
-    enabledByDefault: true,
   },
   {
     // The /v1/events endpoint is used deliberately: each feature's geometry is a
@@ -140,7 +138,6 @@
     attribution: "State of Queensland (Department of Transport and Main Roads)",
     country: "AU",
     privacyUrl: "https://www.qld.gov.au/legal/privacy",
-    enabledByDefault: true,
     setup: {
       AU_QLD_TRAFFIC_API_KEY: {
         title: "QLDTraffic API key (Australia) — optional",

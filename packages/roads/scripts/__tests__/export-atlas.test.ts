@@ -14,7 +14,6 @@ const withClosure = {
   attribution: "X",
   country: "DE",
   privacyUrl: "https://x",
-  enabledByDefault: true,
 } as unknown as FeedSourceBase;
 
 const staticFeed: FeedSourceBase = {
@@ -28,7 +27,6 @@ const staticFeed: FeedSourceBase = {
   attribution: "NDW",
   country: "NL",
   privacyUrl: "https://x",
-  enabledByDefault: true,
 };
 
 const resolvedWzdx: FeedSourceBase = {
@@ -42,7 +40,6 @@ const resolvedWzdx: FeedSourceBase = {
   attribution: "Alpha DOT",
   country: "US",
   privacyUrl: "https://x",
-  enabledByDefault: true,
 };
 
 describe("buildAtlas", () => {

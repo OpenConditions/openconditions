@@ -20,7 +20,6 @@ const ny: FeedSourceBase = {
   attribution: "Powered by 511NY",
   country: "US",
   privacyUrl: "https://511ny.org/privacy",
-  enabledByDefault: true,
   setup: {
     US_NY_511_API_KEY: {
       title: "511NY API key (New York)",
@@ -68,6 +67,7 @@ describe("gen-credentials-lib", () => {
     const feedA: FeedSourceBase = {
       id: "region-a",
       name: "Region A",
+      operator: "test",
       format: "geojson",
       auth: { kind: "mtls", certEnvVar: "SHARED_CERT", keyEnvVar: "SHARED_KEY" },
       requiredEnv: ["A_ID"],
@@ -77,11 +77,11 @@ describe("gen-credentials-lib", () => {
       attribution: "t",
       country: "DE",
       privacyUrl: "https://x",
-      enabledByDefault: true,
     };
     const feedB: FeedSourceBase = {
       id: "region-b",
       name: "Region B",
+      operator: "test",
       format: "geojson",
       auth: { kind: "mtls", certEnvVar: "SHARED_CERT", keyEnvVar: "SHARED_KEY" },
       requiredEnv: ["B_ID"],
@@ -91,7 +91,6 @@ describe("gen-credentials-lib", () => {
       attribution: "t",
       country: "DE",
       privacyUrl: "https://x",
-      enabledByDefault: true,
     };
     const out = envExampleFor([feedA, feedB]);
     expect(out.split("SHARED_CERT=").length - 1).toBe(1);

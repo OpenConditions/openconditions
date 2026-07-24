@@ -13,7 +13,6 @@
     attribution: "Fintraffic / Digitraffic",
     country: "FI",
     privacyUrl: "https://www.fintraffic.fi/en/fintraffic/data-protection",
-    enabledByDefault: true,
   },
   {
     operator: "fintraffic",
@@ -33,6 +32,5 @@
     attribution: "Fintraffic / Digitraffic",
     country: "FI",
     privacyUrl: "https://www.fintraffic.fi/en/fintraffic/data-protection",
-    enabledByDefault: true,
   },
 ]

@@ -220,6 +220,80 @@ async function fetchAllBounded(
   return out;
 }
 
+/** Default ceiling on pages a single paginated feed fetches per cycle. */
+const DEFAULT_MAX_PAGES = 100;
+
+/**
+ * Count the records at `path` (dot-separated) in a JSON page body. Throws when
+ * the body is not JSON so a corrupt page fails the whole cycle (last-good
+ * preserved) rather than silently ending pagination early; a missing/non-array
+ * node counts as zero — a page with no records, which ends pagination.
+ */
+function countJsonRecords(buffer: Buffer, path: string): number {
+  let doc: unknown;
+  try {
+    doc = JSON.parse(buffer.toString("utf8"));
+  } catch {
+    throw new Error("pagination: page body is not valid JSON");
+  }
+  let node: unknown = doc;
+  for (const key of path.split(".")) {
+    if (node == null || typeof node !== "object") return 0;
+    node = (node as Record<string, unknown>)[key];
+  }
+  return Array.isArray(node) ? node.length : 0;
+}
+
+/**
+ * Append `param=offset` to a URL, choosing `?`/`&`. The offset param name is
+ * emitted verbatim (OData wants a literal `$skip`, which URLSearchParams would
+ * percent-encode to `%24skip`).
+ */
+function withOffset(baseUrl: string, param: string, offset: number): string {
+  const sep = baseUrl.includes("?") ? "&" : "?";
+  return `${baseUrl}${sep}${param}=${offset}`;
+}
+
+/**
+ * Offset-paginates each base URL: fetches `$skip=0`, `$skip=pageSize`, … until a
+ * page returns fewer than `pageSize` records (the last page) or `maxPages` is
+ * reached, pushing each non-empty page body as its own buffer (the parser runs
+ * per-buffer and `runSource` concatenates the results). A failed page fetch
+ * throws — all-or-nothing, like the static multi-URL path — so a partial set
+ * never reaches the atomic swap and prunes rows for the pages that didn't load.
+ */
+async function fetchPaginated(
+  baseUrls: string[],
+  src: FetchableFeed,
+  fetchFn: typeof fetch,
+  redact: (s: string) => string
+): Promise<Buffer[]> {
+  const pg = src.pagination!;
+  const recordsPath = pg.recordsPath ?? "value";
+  const maxPages = pg.maxPages ?? DEFAULT_MAX_PAGES;
+  const init = requestInit(src);
+  const out: Buffer[] = [];
+  for (const baseUrl of baseUrls) {
+    let reachedEnd = false;
+    for (let page = 0; page < maxPages; page++) {
+      const url = withOffset(baseUrl, pg.skipParam, page * pg.pageSize);
+      const { buffer } = await fetchOne(url, fetchFn, init, undefined, false, redact);
+      const count = countJsonRecords(buffer, recordsPath);
+      if (count > 0) out.push(buffer);
+      if (count < pg.pageSize) {
+        reachedEnd = true;
+        break;
+      }
+    }
+    if (!reachedEnd) {
+      console.warn(
+        `[ingest] ${src.id}: pagination reached maxPages=${maxPages} without a short page — coverage may be truncated`
+      );
+    }
+  }
+  return out;
+}
+
 /** Shallow equality match of a resolved descriptor against a catalog filter. */
 function matchesFilter(feed: FeedSourceBase, filter?: Record<string, unknown>): boolean {
   if (!filter) return true;
@@ -282,6 +356,16 @@ export async function fetchAll(
       buffers: fanout.buffers,
       partial: { failures: fanout.failures, total: fanout.total },
     };
+  }
+
+  // Offset pagination: follow `$skip` over a single resolved URL until the last
+  // (short) page. Skips conditional-GET/`unchanged` handling (a paged resource
+  // changes each cycle, so an ETag buys nothing) — like the fan-out paths above.
+  if (active.pagination) {
+    const baseUrls = resolveFeedUrls(active, resolvedEnv());
+    state.lastFetchAt.set(active.id, now());
+    if (baseUrls.length === 0) return { status: "fetched", buffers: [] };
+    return { status: "fetched", buffers: await fetchPaginated(baseUrls, active, fetchFn, redact) };
   }
 
   // `fanoutTolerant` opts a large static multi-URL fan-out (e.g. WebTRIS's

@@ -11,6 +11,5 @@
     attribution: "CITA (Luxembourg)",
     country: "LU",
     privacyUrl: "https://data.public.lu/en/pages/legal_notice/",
-    enabledByDefault: true,
   },
 ]

@@ -11,7 +11,6 @@
     attribution: "Verkeerscentrum Vlaanderen",
     country: "BE",
     privacyUrl: "https://www.verkeerscentrum.be/",
-    enabledByDefault: true,
   },
   {
     operator: "brussels",
@@ -47,7 +46,6 @@
     attribution: "Bruxelles Mobilité / Brussel Mobiliteit",
     country: "BE",
     privacyUrl: "https://mobilite-mobiliteit.brussels/en/privacy",
-    enabledByDefault: true,
   },
   {
     operator: "miv",
@@ -66,6 +64,5 @@
     attribution: "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",
     country: "BE",
     privacyUrl: "https://www.vlaanderen.be/uw-overheid/werking-en-structuur/hoe-werkt-de-vlaamse-overheid/informatie-en-communicatie/privacy",
-    enabledByDefault: true,
   },
 ]

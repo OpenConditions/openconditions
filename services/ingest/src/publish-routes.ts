@@ -141,7 +141,6 @@ export type FeedStatusRow = {
   id: string;
   name: string;
   domain: string;
-  enabled: boolean;
   hasCredentials: boolean;
   missingEnv: string[];
 } & FeedRunStatus;
@@ -149,7 +148,8 @@ export type FeedStatusRow = {
 /**
  * Registers `GET /feeds/status`: every feed registered across all domains,
  * joined with its runtime status (last run/success/error, row count). Mirrors
- * the scheduler's own enabled/credential checks so the two never disagree.
+ * the scheduler's own credential check (a feed runs iff it has credentials) so
+ * the two never disagree.
  */
 export function registerFeedStatusRoute(
   app: FastifyInstance,
@@ -171,7 +171,6 @@ export function registerFeedStatusRoute(
           id: feed.id,
           name: feed.name,
           domain,
-          enabled: feed.enabledByDefault,
           hasCredentials: hasCredentials(feed),
           missingEnv,
           ...(statusStore.get(feed.id) ?? {}),

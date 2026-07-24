@@ -6,7 +6,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "clean": "turbo run clean && rm -rf node_modules",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "turbo run typecheck && tsc -p scripts/tsconfig.json",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run --passWithNoTests",

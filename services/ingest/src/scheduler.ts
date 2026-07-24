@@ -116,11 +116,11 @@ export function startScheduler(
   const guarded = guardedFetch(undiciFetch as unknown as typeof fetch, guardOptionsFromEnv());
 
   for (const [domainName, plugin] of Object.entries(registry)) {
-    const enabled = plugin.feeds.filter((f) => f.enabledByDefault);
-
-    for (const feed of enabled) {
+    for (const feed of plugin.feeds) {
       // A feed that declares credentials it doesn't have configured is skipped
       // (not an error) — it activates automatically once its env vars are set.
+      // Credential presence is the only gate: a keyless feed always runs, a
+      // keyed one runs once its env vars are set.
       if (!hasCredentials(feed)) {
         const needed = [...requiredEnvVars(feed.auth), ...(feed.requiredEnv ?? [])];
         console.warn(
@@ -223,7 +223,7 @@ export function startScheduler(
     try {
       for (const plugin of Object.values(registry)) {
         for (const feed of plugin.feeds) {
-          if (feed.format !== "fintraffic-tms" || !feed.enabledByDefault) continue;
+          if (feed.format !== "fintraffic-tms" || !hasCredentials(feed)) continue;
           const { updated } = await updateFintrafficNativeBaselines(
             sql,
             feed as unknown as FeedSource,

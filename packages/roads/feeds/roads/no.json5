@@ -16,7 +16,6 @@
     attribution: "Statens vegvesen",
     country: "NO",
     privacyUrl: "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
-    enabledByDefault: true,
     setup: {
       NO_VEGVESEN_USERNAME: {
         title: "Statens vegvesen (Norway) — username",
@@ -58,8 +57,7 @@
     privacyUrl: "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
     // Measured traffic data (speed/volume) joined to the MeasurementSiteTable for
     // geometry. Shares the same free vegvesen DATEX account as the events feed
-    // above; off until those credentials are set.
-    enabledByDefault: false,
+    // above, so it runs whenever those credentials are set.
     setup: {
       NO_VEGVESEN_USERNAME: {
         title: "Statens vegvesen (Norway) — username",

@@ -23,7 +23,6 @@ async function collectFailures(): Promise<FeedFailure[]> {
   const registry = await buildDomainRegistry();
   for (const [domain, plugin] of Object.entries(registry)) {
     for (const feed of plugin.feeds) {
-      if (!feed.enabledByDefault) continue;
       if (!isKeyless(feed) || !hasCredentials(feed)) continue;
       const result = await validateFeed(feed, { parserFor: plugin.parserFor });
       if (!result.ok) {

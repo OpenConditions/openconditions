@@ -11,7 +11,6 @@
     attribution: "Dirección General de Tráfico (DGT)",
     country: "ES",
     privacyUrl: "https://www.dgt.es/protecciondedatos/",
-    enabledByDefault: true,
   },
   {
     operator: "madrid",
@@ -26,6 +25,5 @@
     attribution: "Ayuntamiento de Madrid",
     country: "ES",
     privacyUrl: "https://www.madrid.es/portal/site/munimadrid/menuitem.privacy",
-    enabledByDefault: true,
   },
 ]

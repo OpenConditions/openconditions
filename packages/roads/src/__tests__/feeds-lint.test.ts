@@ -24,7 +24,6 @@ const ok = {
   attribution: "t",
   country: "NL",
   privacyUrl: "https://example.org/privacy",
-  enabledByDefault: true,
 };
 
 describe("lintFeedDir", () => {

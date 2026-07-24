@@ -19,7 +19,6 @@
     attribution: "DARS / DRSI (NAP Slovenia)",
     country: "SI",
     privacyUrl: "https://nap.si/",
-    enabledByDefault: true,
     setup: {
       SI_NAP_USERNAME: {
         title: "NAP Slovenia (promet.si) — username",

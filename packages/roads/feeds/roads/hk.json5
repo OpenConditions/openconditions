@@ -16,6 +16,5 @@
     attribution: "Transport Department, HKSAR",
     country: "HK",
     privacyUrl: "https://www.td.gov.hk/en/privacy_policy/index.html",
-    enabledByDefault: true,
   },
 ]

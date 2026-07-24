@@ -5,6 +5,7 @@ import { validateFeed } from "../validate-feed.js";
 const feed: FeedSourceBase = {
   id: "demo",
   name: "Demo",
+  operator: "test",
   format: "geojson",
   url: "https://feed.test/data.json",
   cadenceSec: 300,
@@ -13,7 +14,6 @@ const feed: FeedSourceBase = {
   attribution: "t",
   country: "NL",
   privacyUrl: "https://feed.test/privacy",
-  enabledByDefault: true,
 };
 
 const okFetch = (body: string): typeof fetch =>

@@ -103,6 +103,16 @@ export const feedSourceBaseShape = {
    * whole cycle.
    */
   fanoutTolerant: z.boolean().optional(),
+  /** Offset-pagination over a single URL (OData `$skip`); see FeedSourceBase. */
+  pagination: z
+    .object({
+      skipParam: z.string(),
+      pageSize: z.number().int().positive(),
+      recordsPath: z.string().optional(),
+      maxPages: z.number().int().positive().optional(),
+    })
+    .strict()
+    .optional(),
   /** Opts out of the event-feed shrink tripwire in `runSource`; see FeedSourceBase. */
   allowMassClear: z.boolean().optional(),
   gzip: z.boolean().optional(),
@@ -122,7 +132,6 @@ export const feedSourceBaseShape = {
       credentialSetupSchema.extend({ title: z.string(), description: z.string().optional() })
     )
     .optional(),
-  enabledByDefault: z.boolean(),
 } as const;
 
 /** The domain-agnostic feed schema. `.strict()` — an unknown key is an error. */

@@ -15,7 +15,6 @@ describe("feeds-lint license rule", () => {
       attribution: "t",
       country: "NL",
       privacyUrl: "https://x",
-      enabledByDefault: true,
     });
     expect(errors.join("\n")).toContain("unknown license id 'MADE-UP-1.0'");
   });
@@ -33,7 +32,6 @@ describe("feeds-lint license rule", () => {
       attribution: "t",
       country: "NL",
       privacyUrl: "https://x",
-      enabledByDefault: true,
     });
     expect(errors).toEqual([]);
   });
@@ -52,7 +50,6 @@ describe("feeds-lint license rule", () => {
       attribution: "t",
       country: "NL",
       privacyUrl: "https://x",
-      enabledByDefault: true,
     });
     expect(errors.join("\n")).toContain("169.254.169.254");
   });
@@ -71,7 +68,6 @@ describe("feeds-lint license rule", () => {
       attribution: "t",
       country: "NL",
       privacyUrl: "https://x",
-      enabledByDefault: true,
     });
     expect(errors.join("\n")).toContain("169.254.169.254");
   });

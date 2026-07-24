@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" modelBaseVersion="2">
+  <payloadPublication xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" lang="DE" xsi:type="MeasuredDataPublication">
+    <measurementSiteTableReference id="MQ-FS-F" targetClass="MeasurementSiteTable" version="1.4.8"/>
+    <siteMeasurements>
+      <measurementSiteReference id="eq.test_001.f.de" targetClass="MeasurementSiteRecord" version="1.4.8"/>
+      <measurementTimeDefault>2026-07-24T17:11:00Z</measurementTimeDefault>
+      <measuredValue index="5">
+        <measuredValue>
+          <measuredValueExtension>
+            <measuredValues>
+              <basicData xsi:type="TrafficSpeed">
+                <measurementOrCalculationTime>2026-07-24T17:10:40Z</measurementOrCalculationTime>
+                <averageVehicleSpeed numberOfInputValuesUsed="20"><speed>85.0</speed></averageVehicleSpeed>
+              </basicData>
+            </measuredValues>
+          </measuredValueExtension>
+        </measuredValue>
+      </measuredValue>
+    </siteMeasurements>
+  </payloadPublication>
+</d2LogicalModel>

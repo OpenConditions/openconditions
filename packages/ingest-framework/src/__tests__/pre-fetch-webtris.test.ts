@@ -21,7 +21,7 @@ function sitesFetch(sites: { Id: string; Status: string }[]): typeof fetch {
 }
 
 const multiSiteSrc = {
-  id: "gb-webtris",
+  id: "webtris-test",
   name: "WebTRIS",
   format: "webtris",
   cadenceSec: 900,
@@ -30,7 +30,6 @@ const multiSiteSrc = {
   attribution: "National Highways",
   country: "GB",
   privacyUrl: "https://x",
-  enabledByDefault: true,
   url: "https://webtris.nationalhighways.co.uk/api/v1.0/reports/daily?sites={sites}&start_date={start_date}&end_date={end_date}&page=1&page_size=100",
   stationRegistry: { url: REGISTRY_URL, format: "webtris-sites" },
 } as unknown as FeedSourceBase;
@@ -43,7 +42,7 @@ describe("webtrisDailyWindow preFetch", () => {
   it("stamps a rolling DDMMYYYY window into the url, replacing both tokens", async () => {
     const hook = PRE_FETCH_HOOKS["webtrisDailyWindow"]!;
     const src = {
-      id: "gb-webtris",
+      id: "webtris-test",
       name: "WebTRIS",
       format: "webtris",
       cadenceSec: 900,
@@ -52,7 +51,6 @@ describe("webtrisDailyWindow preFetch", () => {
       attribution: "National Highways",
       country: "GB",
       privacyUrl: "https://x",
-      enabledByDefault: true,
       url: "https://webtris.nationalhighways.co.uk/api/v1.0/reports/daily?sites=5607&start_date={start_date}&end_date={end_date}&page=1&page_size=100",
     } as FeedSourceBase;
 
@@ -68,7 +66,7 @@ describe("webtrisDailyWindow preFetch", () => {
   it("stamps end_date as today (UTC) and start_date as the prior day", async () => {
     const hook = PRE_FETCH_HOOKS["webtrisDailyWindow"]!;
     const src = {
-      id: "gb-webtris",
+      id: "webtris-test",
       name: "WebTRIS",
       format: "webtris",
       cadenceSec: 900,
@@ -77,7 +75,6 @@ describe("webtrisDailyWindow preFetch", () => {
       attribution: "National Highways",
       country: "GB",
       privacyUrl: "https://x",
-      enabledByDefault: true,
       url: "https://x.test/?start_date={start_date}&end_date={end_date}",
     } as FeedSourceBase;
 
@@ -94,7 +91,7 @@ describe("webtrisDailyWindow preFetch", () => {
   it("leaves non-string urls untouched", async () => {
     const hook = PRE_FETCH_HOOKS["webtrisDailyWindow"]!;
     const src = {
-      id: "gb-webtris",
+      id: "webtris-test",
       name: "WebTRIS",
       format: "webtris",
       cadenceSec: 900,
@@ -103,7 +100,6 @@ describe("webtrisDailyWindow preFetch", () => {
       attribution: "National Highways",
       country: "GB",
       privacyUrl: "https://x",
-      enabledByDefault: true,
     } as FeedSourceBase;
 
     const out = await hook(src, {}, noFetch);

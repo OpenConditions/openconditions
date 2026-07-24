@@ -12,6 +12,7 @@ function feed(over: Partial<FeedSourceBase>): FeedSourceBase {
   return {
     id: "x",
     name: "X",
+    operator: "test",
     format: "geojson",
     cadenceSec: 300,
     freshnessWindowSec: 900,
@@ -19,7 +20,6 @@ function feed(over: Partial<FeedSourceBase>): FeedSourceBase {
     attribution: "t",
     country: "NL",
     privacyUrl: "https://example.org/privacy",
-    enabledByDefault: true,
     ...over,
   };
 }

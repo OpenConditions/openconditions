@@ -16,7 +16,6 @@
     attribution: "Vejdirektoratet (Danish Road Directorate)",
     country: "DK",
     privacyUrl: "https://www.vejdirektoratet.dk/",
-    enabledByDefault: true,
     setup: {
       DK_VEJDIREKTORATET_API_KEY: {
         title: "Vejdirektoratet key (Denmark)",

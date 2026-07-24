@@ -16,7 +16,6 @@
     attribution: "Contains National Highways data © Crown copyright and database right",
     country: "GB",
     privacyUrl: "https://nationalhighways.co.uk/privacy-notice/",
-    enabledByDefault: true,
     setup: {
       GB_NATIONALHIGHWAYS_API_KEY: {
         title: "National Highways NTIS key (England)",
@@ -31,28 +30,5 @@
         notes: 'OGL-UK-3.0; attribution "Contains National Highways data © Crown copyright and database right."',
       },
     },
-  },
-  {
-    operator: "webtris",
-    name: "WebTRIS traffic flow (Great Britain)",
-    format: "webtris",
-    produces: "flow",
-    url: "https://webtris.nationalhighways.co.uk/api/v1.0/reports/daily?sites={sites}&start_date={start_date}&end_date={end_date}&page=1&page_size=100",
-    preFetch: "webtrisDailyWindow",
-    fanoutTolerant: true,
-    stationRegistry: {
-      url: "https://webtris.nationalhighways.co.uk/api/v1.0/sites",
-      format: "webtris-sites",
-    },
-    cadenceSec: 900,
-    freshnessWindowSec: 3600,
-    license: "OGL-UK-3.0",
-    licenseUrl: "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
-    attribution: "National Highways / WebTRIS",
-    country: "GB",
-    privacyUrl: "https://nationalhighways.co.uk/privacy-notice/",
-    // WebTRIS publishes quality-checked historical data lagged ~6-8 weeks
-    // (recent-date queries return HTTP 204); see docs/speed-coverage.md.
-    enabledByDefault: false,
   },
 ]
