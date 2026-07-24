@@ -433,9 +433,21 @@ describe("FEED_SOURCES", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("loads every feed from the data files (all 68 migrated)", () => {
-    expect(FEED_SOURCES.length).toBe(68);
+  it("loads every feed from the data files (all 70 migrated)", () => {
+    expect(FEED_SOURCES.length).toBe(70);
     expect(new Set(FEED_SOURCES.map((f) => f.id)).size).toBe(FEED_SOURCES.length);
+  });
+
+  it("includes the two Autobahn GmbH BAB LoS Verkehrslage feeds, datex-elaborated flow, disabled by default", () => {
+    const ids = ["de-nw-autobahn-loslane", "de-bw-autobahn-los"];
+    for (const id of ids) {
+      const f = FEED_SOURCES.find((s) => s.id === id);
+      expect(f, id).toBeDefined();
+      expect(f!.format).toBe("datex-elaborated");
+      expect(f!.produces).toBe("flow");
+      expect(f!.enabledByDefault).toBe(false);
+      expect(f!.siteTable?.format).toBe("datex-predefined-locations");
+    }
   });
 
   it("includes the five Autobahn GmbH BAB flow feeds, all datex-elaborated flow, GeoNutzV, disabled by default", () => {

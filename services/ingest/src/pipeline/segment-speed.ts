@@ -37,21 +37,54 @@ export async function writeSensorObservations(
   sql: Sql,
   _now: () => string
 ): Promise<WriteSensorObservationsResult> {
+  // A flow observation contributes either a measured speed (`o.value` set) or,
+  // for a declared-LoS feed (Autobahn Verkehrslage), a speed-less row that
+  // carries only `attributes.los`. Both are admitted; a speed-less row writes
+  // NULL current_kph/speed_ratio and takes its los straight from the declared
+  // status, aggregated worst-first across the sites in a (segment, source)
+  // group (a mix of blocked+queuing fuses to blocked, not the alphabetical
+  // max). The declared los, when present, wins over the ratio ladder — and the
+  // ratio ladder's ELSE 'stationary' arm is only reached when there is a real
+  // avg(value), so an all-declared group never misfuses free_flow to stationary.
   const rows = await sql`
     INSERT INTO conditions.segment_observation
       (segment_id, source, source_tier, current_kph, free_flow_kph, speed_ratio, los, confidence, sample_count, observed_at, expires_at)
-    SELECT ss.segment_id, o.source, 'sensor',
-      avg(o.value), avg(ff.kph),
-      CASE WHEN avg(ff.kph) > 0 THEN avg(o.value) / avg(ff.kph) END,
-      CASE WHEN avg(ff.kph) IS NULL OR avg(ff.kph) <= 0 THEN 'unknown'
-           WHEN avg(o.value) / avg(ff.kph) >= 0.85 THEN 'free_flow'  WHEN avg(o.value) / avg(ff.kph) >= 0.5 THEN 'heavy'
-           WHEN avg(o.value) / avg(ff.kph) >= 0.15 THEN 'queuing'    ELSE 'stationary' END,
-      0.9, count(*), max(o.data_updated_at), max(o.data_updated_at) + interval '15 minutes'
-    FROM conditions.sensor_segment ss
-    JOIN conditions.observations o ON o.id = ss.sensor_key AND o.metric = 'flow' AND o.value IS NOT NULL
-    JOIN conditions.road_segment rs ON rs.segment_id = ss.segment_id
-    CROSS JOIN LATERAL (SELECT COALESCE((o.attributes->>'freeFlowKph')::float, rs.free_flow_kph) AS kph) ff
-    GROUP BY ss.segment_id, o.source
+    SELECT agg.segment_id, agg.source, 'sensor',
+      agg.current_kph, agg.free_flow_kph, agg.speed_ratio,
+      CASE
+        WHEN agg.declared_rank = 4 THEN 'blocked'
+        WHEN agg.declared_rank = 3 THEN 'stationary'
+        WHEN agg.declared_rank = 2 THEN 'queuing'
+        WHEN agg.declared_rank = 1 THEN 'heavy'
+        WHEN agg.declared_rank = 0 THEN 'free_flow'
+        WHEN agg.free_flow_kph IS NULL OR agg.free_flow_kph <= 0 THEN 'unknown'
+        WHEN agg.current_kph / agg.free_flow_kph >= 0.85 THEN 'free_flow'
+        WHEN agg.current_kph / agg.free_flow_kph >= 0.5 THEN 'heavy'
+        WHEN agg.current_kph / agg.free_flow_kph >= 0.15 THEN 'queuing'
+        ELSE 'stationary'
+      END,
+      0.9, agg.sample_count, agg.observed_at, agg.observed_at + interval '15 minutes'
+    FROM (
+      SELECT ss.segment_id, o.source,
+        avg(o.value) AS current_kph,
+        avg(ff.kph) AS free_flow_kph,
+        CASE WHEN avg(ff.kph) > 0 AND avg(o.value) IS NOT NULL THEN avg(o.value) / avg(ff.kph) END AS speed_ratio,
+        max(
+          CASE WHEN o.value IS NULL AND o.attributes->>'los' <> 'unknown' THEN
+            CASE o.attributes->>'los'
+              WHEN 'blocked' THEN 4 WHEN 'stationary' THEN 3 WHEN 'queuing' THEN 2
+              WHEN 'heavy' THEN 1 WHEN 'free_flow' THEN 0 ELSE -1 END
+          ELSE -1 END
+        ) AS declared_rank,
+        count(*) AS sample_count,
+        max(o.data_updated_at) AS observed_at
+      FROM conditions.sensor_segment ss
+      JOIN conditions.observations o ON o.id = ss.sensor_key AND o.metric = 'flow'
+        AND (o.value IS NOT NULL OR (o.value IS NULL AND o.attributes->>'los' <> 'unknown'))
+      JOIN conditions.road_segment rs ON rs.segment_id = ss.segment_id
+      CROSS JOIN LATERAL (SELECT COALESCE((o.attributes->>'freeFlowKph')::float, rs.free_flow_kph) AS kph) ff
+      GROUP BY ss.segment_id, o.source
+    ) agg
     ON CONFLICT (segment_id, source) DO UPDATE SET
       current_kph=EXCLUDED.current_kph, free_flow_kph=EXCLUDED.free_flow_kph, speed_ratio=EXCLUDED.speed_ratio,
       los=EXCLUDED.los, confidence=EXCLUDED.confidence, sample_count=EXCLUDED.sample_count,
@@ -88,19 +121,61 @@ export async function fuseSegmentSpeed(
 
   await sql`DELETE FROM conditions.segment_speed WHERE is_estimated = false`;
 
+  // A column-level merge, not a single-row winner. The speed fields
+  // (current_kph/free_flow_kph/speed_ratio) come from the best speed-bearing
+  // observation on the segment (highest tier, then freshest); `los` is
+  // overridden by a declared-LoS observation when one covers the segment
+  // (worst-first across declared sites), else it falls back to the speed row's
+  // los. This keeps a co-located measured speed alive on a both-covered segment
+  // (so /segments/speed.csv still routes it) while letting the operator's own
+  // congestion state paint the overlay. A declared-only segment emits a row with
+  // NULL current_kph — filtered out of the routing CSV downstream but coloured
+  // by los on the overlay.
   const rows = await sql`
+    WITH live AS (
+      SELECT * FROM conditions.segment_observation o
+      WHERE o.expires_at IS NULL OR o.expires_at > ${nowIso}::timestamptz
+    ),
+    speed AS (
+      SELECT DISTINCT ON (segment_id)
+        segment_id, current_kph, free_flow_kph, speed_ratio, los AS speed_los, source_tier, observed_at
+      FROM live
+      WHERE current_kph IS NOT NULL
+      ORDER BY segment_id,
+        CASE source_tier WHEN 'authoritative' THEN 0 WHEN 'sensor' THEN 1 WHEN 'peer' THEN 2 WHEN 'crowd' THEN 3 ELSE 4 END,
+        observed_at DESC
+    ),
+    declared AS (
+      SELECT segment_id,
+        max(CASE los WHEN 'blocked' THEN 4 WHEN 'stationary' THEN 3 WHEN 'queuing' THEN 2
+                     WHEN 'heavy' THEN 1 WHEN 'free_flow' THEN 0 ELSE -1 END) AS los_rank,
+        max(observed_at) AS observed_at,
+        (array_agg(source_tier ORDER BY observed_at DESC))[1] AS source_tier
+      FROM live
+      WHERE current_kph IS NULL AND los <> 'unknown'
+      GROUP BY segment_id
+    ),
+    segs AS (
+      SELECT segment_id FROM speed
+      UNION
+      SELECT segment_id FROM declared
+    )
     INSERT INTO conditions.segment_speed
       (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, contributing, is_estimated, observed_at, updated_at)
-    SELECT DISTINCT ON (o.segment_id)
-      o.segment_id, o.current_kph, o.free_flow_kph, o.speed_ratio, o.los, 'measured', o.source_tier,
+    SELECT
+      segs.segment_id, sp.current_kph, sp.free_flow_kph, sp.speed_ratio,
+      COALESCE(
+        CASE d.los_rank WHEN 4 THEN 'blocked' WHEN 3 THEN 'stationary' WHEN 2 THEN 'queuing'
+                        WHEN 1 THEN 'heavy' WHEN 0 THEN 'free_flow' ELSE NULL END,
+        sp.speed_los
+      ),
+      'measured', COALESCE(sp.source_tier, d.source_tier),
       ARRAY(SELECT DISTINCT source FROM conditions.segment_observation o2
-            WHERE o2.segment_id = o.segment_id AND (o2.expires_at IS NULL OR o2.expires_at > ${nowIso}::timestamptz)),
-      false, o.observed_at, ${nowIso}
-    FROM conditions.segment_observation o
-    WHERE o.expires_at IS NULL OR o.expires_at > ${nowIso}::timestamptz
-    ORDER BY o.segment_id,
-      CASE o.source_tier WHEN 'authoritative' THEN 0 WHEN 'sensor' THEN 1 WHEN 'peer' THEN 2 WHEN 'crowd' THEN 3 ELSE 4 END,
-      o.observed_at DESC
+            WHERE o2.segment_id = segs.segment_id AND (o2.expires_at IS NULL OR o2.expires_at > ${nowIso}::timestamptz)),
+      false, COALESCE(sp.observed_at, d.observed_at), ${nowIso}
+    FROM segs
+    LEFT JOIN speed sp ON sp.segment_id = segs.segment_id
+    LEFT JOIN declared d ON d.segment_id = segs.segment_id
     ON CONFLICT (segment_id) DO UPDATE SET
       current_kph=EXCLUDED.current_kph, free_flow_kph=EXCLUDED.free_flow_kph, speed_ratio=EXCLUDED.speed_ratio,
       los=EXCLUDED.los, confidence='measured', source_tier=EXCLUDED.source_tier, contributing=EXCLUDED.contributing,

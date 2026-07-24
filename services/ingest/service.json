@@ -316,6 +316,30 @@
         "description": "Numeric subscription id for Mobilithek offer 748580849261105152 (Dynamische Messdaten BAB Bayern fahrstreifenfein). Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
         "x-openmapx-secret": true
       },
+      "DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn NRW — fahrstreifenfeine Verkehrslage (LoS) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003478000. Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+        "x-openmapx-secret": true
+      },
+      "DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn NRW — fahrstreifenfeine Verkehrslage Verortung Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003479000. Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+        "x-openmapx-secret": true
+      },
+      "DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn NL Südwest (BW) — Verkehrslage (LoS) Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003216001. Shared MOBILITHEK_CERT/KEY. Confirm license via Einlegeblatt.",
+        "x-openmapx-secret": true
+      },
+      "DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn NL Südwest (BW) — Verkehrslage Verortung Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003218001. Shared MOBILITHEK_CERT/KEY.",
+        "x-openmapx-secret": true
+      },
       "DK_VEJDIREKTORATET_API_KEY": {
         "type": "string",
         "title": "Vejdirektoratet key (Denmark)",

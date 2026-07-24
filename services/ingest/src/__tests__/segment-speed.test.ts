@@ -43,6 +43,19 @@ async function seedFlow(
       ${NOW}, ${NOW})`;
 }
 
+/** A declared-LoS flow: no measured speed (value NULL), los in attributes only. */
+async function seedDeclaredFlow(id: string, source: string, los: string): Promise<void> {
+  await sql`
+    INSERT INTO conditions.observations
+      (id, source, source_format, domain, kind, metric, value, status, geom, attributes, origin,
+       data_updated_at, fetched_at)
+    VALUES (${id}, ${source}, 'datex-elaborated', 'roads', 'measurement', 'flow', NULL, 'active',
+      ST_SetSRID(ST_GeomFromText('POINT(5.05 52.0)'), 4326),
+      ${sql.json({ los })},
+      ${sql.json({ kind: "feed", attribution: { provider: "test" } })},
+      ${NOW}, ${NOW})`;
+}
+
 async function seedSensorSegment(sensorKey: string, segmentId: string): Promise<void> {
   await sql`
     INSERT INTO conditions.sensor_segment (sensor_key, segment_id, fraction, offset_m, matched_at)
@@ -399,4 +412,61 @@ describe("propagateSegmentSpeed", () => {
     },
     30_000
   );
+});
+
+describe("declared LoS fusion (Verkehrslage)", () => {
+  async function fuse(segmentId: string): Promise<{
+    current_kph: number | null;
+    los: string;
+  }> {
+    await writeSensorObservations(sql, () => NOW);
+    await fuseSegmentSpeed(sql, () => NOW);
+    const rows = await sql<{ current_kph: number | null; los: string }[]>`
+      SELECT current_kph, los FROM conditions.segment_speed WHERE segment_id = ${segmentId}`;
+    expect(rows).toHaveLength(1);
+    return rows[0]!;
+  }
+
+  it("a LoS-only segment fuses to a row with NULL current_kph and the declared los", async () => {
+    await seedSegment("401:f", 401, 100);
+    await seedDeclaredFlow("los-a:1", "de-nw-autobahn-loslane", "queuing");
+    await seedSensorSegment("los-a:1", "401:f");
+
+    const row = await fuse("401:f");
+    expect(row.current_kph).toBeNull();
+    expect(row.los).toBe("queuing");
+  }, 30_000);
+
+  it("a both-covered segment keeps the measured speed AND takes the declared los", async () => {
+    await seedSegment("402:f", 402, 100);
+    await seedFlow("qv-b:1", "de-nw-autobahn-fahrstreifen", 90, 100); // ratio 0.9 -> free_flow
+    await seedSensorSegment("qv-b:1", "402:f");
+    await seedDeclaredFlow("los-b:1", "de-nw-autobahn-loslane", "queuing");
+    await seedSensorSegment("los-b:1", "402:f");
+
+    const row = await fuse("402:f");
+    expect(Number(row.current_kph)).toBeCloseTo(90, 5);
+    expect(row.los).toBe("queuing"); // declared overrides the speed-derived free_flow
+  }, 30_000);
+
+  it("a declared free_flow with no speed fuses to free_flow, not the stationary trap", async () => {
+    await seedSegment("403:f", 403, 100);
+    await seedDeclaredFlow("los-c:1", "de-bw-autobahn-los", "free_flow");
+    await seedSensorSegment("los-c:1", "403:f");
+
+    const row = await fuse("403:f");
+    expect(row.current_kph).toBeNull();
+    expect(row.los).toBe("free_flow");
+  }, 30_000);
+
+  it("two declared sites in one source-group fuse worst-first (blocked over queuing)", async () => {
+    await seedSegment("404:f", 404, 100);
+    await seedDeclaredFlow("los-d1:1", "de-nw-autobahn-loslane", "blocked");
+    await seedSensorSegment("los-d1:1", "404:f");
+    await seedDeclaredFlow("los-d2:1", "de-nw-autobahn-loslane", "queuing");
+    await seedSensorSegment("los-d2:1", "404:f");
+
+    const row = await fuse("404:f");
+    expect(row.los).toBe("blocked");
+  }, 30_000);
 });

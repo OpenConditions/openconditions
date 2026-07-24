@@ -68,3 +68,25 @@ describe("parseElaboratedFlow", () => {
     expect(events[0]!.type).toBe("congestion");
   });
 });
+
+describe("parseElaboratedFlow — Verkehrslage (TrafficStatus only)", () => {
+  const losSiteMap = parsePredefinedLocations(
+    readFileSync(join(import.meta.dirname, "fixtures/autobahn-bab/verortung.xml"))
+  );
+  const losXml = readFileSync(join(import.meta.dirname, "fixtures/autobahn-bab/verkehrslage.xml"));
+
+  it("emits los-only flows (no speed) with los from the declared status", () => {
+    const { flows } = parseElaboratedFlow(losXml, SRC, losSiteMap);
+    const a1 = flows.find((f) => f.id === "de-hh-autobahn:MQ_A1_0042")!;
+    expect(a1.speedKph).toBeUndefined();
+    expect(a1.los).toBe("queuing"); // congested → queuing
+    const a7 = flows.find((f) => f.id === "de-hh-autobahn:MQ_A7_0100")!;
+    expect(a7.los).toBe("free_flow");
+  });
+
+  it("derives a congestion event for the queuing site only", () => {
+    const { events } = parseElaboratedFlow(losXml, SRC, losSiteMap);
+    expect(events).toHaveLength(1);
+    expect(events[0]!.type).toBe("congestion");
+  });
+});

@@ -1146,4 +1146,117 @@
       },
     },
   },
+  {
+    // Autobahn GmbH BAB fahrstreifenfeine Verkehrslage (4-step LoS) for NRW — the
+    // operator's own per-lane congestion classification. ElaboratedDataPublication
+    // (basicData TrafficStatus) joined to its Verortung by predefinedLocationReference id.
+    subdivision: "nw",
+    operator: "autobahn",
+    stream: "loslane",
+    name: "Autobahn GmbH BAB Verkehrslage LoS (Nordrhein-Westfalen, per lane)",
+    format: "datex-elaborated",
+    produces: "flow",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID}",
+    expandEnv: "DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID",
+    auth: { kind: "mtls", certEnvVar: "MOBILITHEK_CERT", keyEnvVar: "MOBILITHEK_KEY" },
+    requiredEnv: [
+      "DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID",
+      "DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID",
+    ],
+    requestHeaders: { "Accept-Encoding": "gzip" },
+    siteTable: {
+      url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}",
+      format: "datex-predefined-locations",
+    },
+    cadenceSec: 60,
+    freshnessWindowSec: 300,
+    license: "GeoNutzV",
+    licenseUrl: "https://www.gesetze-im-internet.de/geonutzv/",
+    attribution: "Quelle: Die Autobahn GmbH des Bundes",
+    country: "DE",
+    privacyUrl: "https://www.autobahn.de/datenschutz",
+    enabledByDefault: false,
+    setup: {
+      MOBILITHEK_CERT: {
+        title: "Mobilithek — client certificate (PEM)",
+        description: "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key).",
+        url: "https://mobilithek.info/registration-request",
+        urlLabel: "Mobilithek registration",
+        steps: [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field.",
+        ],
+        notes: "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+      },
+      MOBILITHEK_KEY: {
+        title: "Mobilithek — client private key (PEM)",
+        description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
+      },
+      DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID: {
+        title: "Autobahn NRW — fahrstreifenfeine Verkehrslage (LoS) Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 110000000003478000. Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+      },
+      DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID: {
+        title: "Autobahn NRW — fahrstreifenfeine Verkehrslage Verortung Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 110000000003479000. Shared MOBILITHEK_CERT/KEY. GeoNutzV.",
+      },
+    },
+  },
+  {
+    // Autobahn GmbH BAB Verkehrsmessquerschnitte 4-step Verkehrslage (LoS), NL Südwest
+    // (Baden-Württemberg). License provisionally GeoNutzV — confirm the Einlegeblatt.
+    subdivision: "bw",
+    operator: "autobahn",
+    stream: "los",
+    name: "Autobahn GmbH BAB Verkehrslage LoS (NL Südwest, Baden-Württemberg)",
+    format: "datex-elaborated",
+    produces: "flow",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID}",
+    expandEnv: "DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID",
+    auth: { kind: "mtls", certEnvVar: "MOBILITHEK_CERT", keyEnvVar: "MOBILITHEK_KEY" },
+    requiredEnv: [
+      "DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID",
+      "DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID",
+    ],
+    requestHeaders: { "Accept-Encoding": "gzip" },
+    siteTable: {
+      url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID}",
+      format: "datex-predefined-locations",
+    },
+    cadenceSec: 60,
+    freshnessWindowSec: 300,
+    license: "GeoNutzV",
+    licenseUrl: "https://www.gesetze-im-internet.de/geonutzv/",
+    attribution: "Quelle: Die Autobahn GmbH des Bundes",
+    country: "DE",
+    privacyUrl: "https://www.autobahn.de/datenschutz",
+    enabledByDefault: false,
+    setup: {
+      MOBILITHEK_CERT: {
+        title: "Mobilithek — client certificate (PEM)",
+        description: "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key).",
+        url: "https://mobilithek.info/registration-request",
+        urlLabel: "Mobilithek registration",
+        steps: [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field.",
+        ],
+        notes: "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+      },
+      MOBILITHEK_KEY: {
+        title: "Mobilithek — client private key (PEM)",
+        description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
+      },
+      DE_BW_AUTOBAHN_LOS_SUBSCRIPTION_ID: {
+        title: "Autobahn NL Südwest (BW) — Verkehrslage (LoS) Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 110000000003216001. Shared MOBILITHEK_CERT/KEY. Confirm license via Einlegeblatt.",
+      },
+      DE_BW_AUTOBAHN_LOS_VERORTUNG_SUBSCRIPTION_ID: {
+        title: "Autobahn NL Südwest (BW) — Verkehrslage Verortung Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 110000000003218001. Shared MOBILITHEK_CERT/KEY.",
+      },
+    },
+  },
 ]
