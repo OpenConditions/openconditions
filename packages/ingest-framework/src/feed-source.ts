@@ -85,6 +85,24 @@ export interface FeedSourceBase {
    */
   fanoutTolerant?: boolean;
   /**
+   * Offset-paginate a single resolved URL: the fetch layer follows
+   * `skipParam` (e.g. OData `$skip`) in `pageSize` steps, fetching page after
+   * page and concatenating each into the buffer set the parser sees, until a
+   * page returns fewer than `pageSize` records (the last page) or `maxPages` is
+   * reached. For sources that cap a resource at N records per call (LTA
+   * DataMall's 500) where a single fetch would only ever see the first page.
+   */
+  pagination?: {
+    /** Query param carrying the row offset (OData: "$skip"). */
+    skipParam: string;
+    /** Rows per page; a page returning fewer than this ends pagination. */
+    pageSize: number;
+    /** Dot-path to the record array used to count a page's rows (default "value"). */
+    recordsPath?: string;
+    /** Safety cap on pages fetched per cycle (default 100). */
+    maxPages?: number;
+  };
+  /**
    * Opts this feed out of the event-feed shrink tripwire in `runSource` (see
    * `OPENCONDITIONS_SHRINK_TRIPWIRE_RATIO`): a feed whose row count can
    * legitimately collapse to zero or near-zero between cycles (e.g. a

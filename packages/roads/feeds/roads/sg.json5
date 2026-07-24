@@ -42,6 +42,11 @@
       header: "AccountKey",
       envVar: "SG_LTA_ACCOUNT_KEY",
     },
+    // DataMall caps this resource at 500 links per call; the fetch layer follows
+    // $skip (pagination below) to pull every page, so coverage is complete rather
+    // than first-page-only. Reuses the shared SG_LTA_ACCOUNT_KEY (see lta-sg
+    // above), so it runs whenever that key is set.
+    pagination: { skipParam: "$skip", pageSize: 500 },
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "Singapore-ODL-1.0",
@@ -49,10 +54,6 @@
     attribution: "Land Transport Authority (Singapore)",
     country: "SG",
     privacyUrl: "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
-    // DataMall pages this resource 500 links per call ($skip); a single fetch
-    // covers the first page only, so coverage is partial until the fetch layer
-    // pages. Reuses the shared SG_LTA_ACCOUNT_KEY (see lta-sg above), so it runs
-    // whenever that key is set.
     setup: {
       SG_LTA_ACCOUNT_KEY: {
         title: "LTA DataMall AccountKey (Singapore)",

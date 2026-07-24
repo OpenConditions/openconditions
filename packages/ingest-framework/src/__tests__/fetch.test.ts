@@ -59,6 +59,83 @@ async function fetchBuffers(
   return res.status === "fetched" ? res.buffers : [];
 }
 
+/**
+ * A DataMall-style OData source: `{ value: [...] }` pages of at most `pageSize`
+ * rows, addressed by `$skip`. `pageRows[n]` is how many rows page n returns;
+ * a page beyond the array returns zero rows.
+ */
+function pagedODataFetch(
+  pageRows: number[],
+  pageSize = 500
+): { fetchFn: typeof fetch; calls: string[] } {
+  const calls: string[] = [];
+  const fetchFn = (async (input: string | URL | Request) => {
+    const url = String(input);
+    calls.push(url);
+    const skip = Number(new URL(url).searchParams.get("$skip") ?? "0");
+    const page = skip / pageSize;
+    const n = pageRows[page] ?? 0;
+    const value = Array.from({ length: n }, (_, i) => ({ LinkID: skip + i }));
+    return new Response(JSON.stringify({ value }), { status: 200 });
+  }) as unknown as typeof fetch;
+  return { fetchFn, calls };
+}
+
+function rowsIn(buffers: Buffer[]): number {
+  return buffers.reduce(
+    (sum, b) => sum + (JSON.parse(b.toString("utf8")).value as unknown[]).length,
+    0
+  );
+}
+
+describe("fetchAll — offset pagination", () => {
+  const pagedFeed = (extra: Partial<TestFeedSource> = {}): TestFeedSource =>
+    makeFeed({
+      id: "paged",
+      format: "lta-speedbands",
+      url: "https://datamall.test/TrafficSpeedBands",
+      pagination: { skipParam: "$skip", pageSize: 500 },
+      ...extra,
+    });
+
+  it("follows $skip until a short page, one buffer per page, all rows preserved", async () => {
+    const { fetchFn, calls } = pagedODataFetch([500, 500, 200]);
+    const bufs = await fetchBuffers(pagedFeed(), fetchFn);
+    expect(bufs).toHaveLength(3);
+    expect(rowsIn(bufs)).toBe(1200);
+    // Stops after the short page — never requests a 4th.
+    expect(calls).toHaveLength(3);
+    expect(calls[0]).toContain("$skip=0");
+    expect(calls[2]).toContain("$skip=1000");
+  });
+
+  it("terminates on an empty page and does not emit an empty buffer", async () => {
+    const { fetchFn, calls } = pagedODataFetch([500, 0]);
+    const bufs = await fetchBuffers(pagedFeed(), fetchFn);
+    expect(bufs).toHaveLength(1);
+    expect(rowsIn(bufs)).toBe(500);
+    expect(calls).toHaveLength(2);
+  });
+
+  it("stops a first short page immediately (single request)", async () => {
+    const { fetchFn, calls } = pagedODataFetch([100]);
+    const bufs = await fetchBuffers(pagedFeed(), fetchFn);
+    expect(bufs).toHaveLength(1);
+    expect(rowsIn(bufs)).toBe(100);
+    expect(calls).toHaveLength(1);
+  });
+
+  it("caps at maxPages when the source never returns a short page", async () => {
+    const { fetchFn, calls } = pagedODataFetch([500, 500, 500, 500, 500]);
+    const bufs = await fetchBuffers(
+      pagedFeed({ pagination: { skipParam: "$skip", pageSize: 500, maxPages: 2 } }),
+      fetchFn
+    );
+    expect(bufs).toHaveLength(2);
+    expect(calls).toHaveLength(2);
+  });
+});
+
 describe("fetchAll — catalog fan-out", () => {
   afterEach(() => __resetCatalogResolvers());
 

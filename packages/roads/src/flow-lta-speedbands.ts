@@ -29,9 +29,9 @@ function num(raw: unknown): number | undefined {
  * coordinate pair as a two-point LineString. los is left "unknown" (absolute
  * speed is road-class–dependent) so the baseline enrichment classifies it.
  *
- * DataMall pages this resource 500 links per call via `$skip`; a single fetch
- * therefore covers the first page only. Full coverage needs paging support in
- * the ingest fetch layer; until then the feed ingests only that first page.
+ * DataMall caps this resource at 500 links per call via `$skip`; the feed
+ * declares `pagination` so the ingest fetch layer follows every page and this
+ * parser runs once per page, its flows concatenated for full national coverage.
  */
 export function parseLtaSpeedBands(input: string | Buffer, src: SourceDescriptor): FlowParseResult {
   let doc: unknown;
