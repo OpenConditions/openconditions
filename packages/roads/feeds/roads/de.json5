@@ -504,6 +504,38 @@
     },
   },
   {
+    // Police-sourced safety incidents from the Landesmeldestelle für den
+    // Verkehrswarndienst (Polizei Hamburg): Stau, Unfall, Sperrung, Baustelle,
+    // Wartung — the "police" channel, distinct from the LSBG roadworks feed
+    // above. Served openly (dl-de/by-2-0) via the api.hamburg.de OGC API
+    // Features endpoint as WGS84 GeoJSON points; we use the deduplicated
+    // "current filtered main messages" collection. NOT the Mobilithek mirror of
+    // this dataset, which is licensed other-closed. The `art` field carries
+    // DATEX II situation classes that map straight through the taxonomy
+    // crosswalk (AbnormalTraffic→congestion, Accident→accident,
+    // MaintenanceWorks/ConstructionWorks→roadworks,
+    // RoadOrCarriagewayOrLaneManagement→lane_closure); severity is type-derived.
+    // No credential: needs no Mobilithek certificate.
+    subdivision: "hh",
+    operator: "polizei",
+    name: "Polizei Hamburg traffic incidents (Landesmeldestelle)",
+    format: "geojson",
+    url: "https://api.hamburg.de/datasets/v1/verkehrsinformation/collections/hauptmeldungen_aktuell/items?f=json&limit=5000",
+    geojson: {
+      idField: "id",
+      typeField: "art",
+      descriptionField: "description",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "dl-de/by-2-0",
+    licenseUrl: "https://www.govdata.de/dl-de/by-2-0",
+    attribution: "Freie und Hansestadt Hamburg, Polizei Hamburg",
+    country: "DE",
+    privacyUrl: "https://www.hamburg.de/datenschutz/",
+    enabledByDefault: true,
+  },
+  {
     subdivision: "he",
     operator: "mobilithek",
     name: "Hessen via Mobilithek",

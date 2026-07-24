@@ -305,3 +305,38 @@ describe("parseGeoJson — Traffic SA fixture (ArcGIS f=geojson, real mapping)",
     expect(events.some((e) => e.type === "roadworks")).toBe(true);
   });
 });
+
+describe("parseGeoJson — Polizei Hamburg fixture (api.hamburg.de OGC API, real mapping)", () => {
+  it("maps the `art` DATEX classes through the crosswalk via the registered de-hh-polizei mapping", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "de-hh-polizei")!;
+    const json = readFileSync(
+      join(import.meta.dirname, "fixtures/polizei-hamburg-de/hauptmeldungen.geojson")
+    );
+    const events = parseGeoJson(json, feedToSourceDescriptor(feed));
+    expect(events).toHaveLength(5);
+
+    // `art` values map straight through the taxonomy crosswalk, no per-feed typeMap.
+    const byType = (t: string) => events.filter((e) => e.type === t);
+    expect(byType("congestion")).toHaveLength(1); // AbnormalTraffic
+    expect(byType("accident")).toHaveLength(1); // Accident
+    expect(byType("lane_closure")).toHaveLength(1); // RoadOrCarriagewayOrLaneManagement
+    expect(byType("roadworks")).toHaveLength(2); // ConstructionWorks + MaintenanceWorks
+
+    const congestion = byType("congestion")[0]!;
+    expect(congestion.id).toBe("de-hh-polizei:LMS/r_LMS/699889_LMS-TH/58.0");
+    expect(congestion.subtype).toBe("AbnormalTraffic");
+    expect(congestion.description).toContain("Steilshooper Allee");
+    expect(congestion.origin.attribution).toMatchObject({
+      provider: "Freie und Hansestadt Hamburg, Polizei Hamburg",
+      license: "dl-de/by-2-0",
+    });
+
+    // Geometry is taken verbatim as WGS84 (OGC API default CRS84) — Hamburg bbox.
+    const g = congestion.geometry;
+    if (!g || g.type !== "Point") throw new Error("expected Point");
+    expect(g.coordinates[0]!).toBeGreaterThan(9.7);
+    expect(g.coordinates[0]!).toBeLessThan(10.4);
+    expect(g.coordinates[1]!).toBeGreaterThan(53.3);
+    expect(g.coordinates[1]!).toBeLessThan(53.8);
+  });
+});

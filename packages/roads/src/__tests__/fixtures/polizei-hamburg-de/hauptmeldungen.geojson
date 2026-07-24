@@ -1,0 +1,77 @@
+{
+  "type": "FeatureCollection",
+  "numberReturned": 5,
+  "numberMatched": 5,
+  "features": [
+    {
+      "type": "Feature",
+      "id": "LMS/r_LMS/699889_LMS-TH/58.0",
+      "geometry": { "type": "Point", "coordinates": [10.0574, 53.60864] },
+      "properties": {
+        "id": "LMS/r_LMS/699889_LMS-TH/58.0",
+        "status": "STAU",
+        "art": "AbnormalTraffic",
+        "art_detail": "",
+        "description": "Steilshooper Allee zwischen Gründgensstraße und Fabriciusstraße, stockender Verkehr.",
+        "start": "2026-07-23 06:40:00",
+        "end": "2026-07-23 20:00:00"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "LMS/r_LMS/700113_LMS-TH/12.0",
+      "geometry": { "type": "Point", "coordinates": [9.9822, 53.5488] },
+      "properties": {
+        "id": "LMS/r_LMS/700113_LMS-TH/12.0",
+        "status": "UNFALL",
+        "art": "Accident",
+        "art_detail": "",
+        "description": "A7 Richtung Flensburg, Höhe Elbtunnel, Unfall, rechter Fahrstreifen gesperrt.",
+        "start": "2026-07-23 08:15:00",
+        "end": "2026-07-23 10:00:00"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "LMS/r_LMS/698002_LMS-TH/3.0",
+      "geometry": { "type": "Point", "coordinates": [10.0009, 53.5677] },
+      "properties": {
+        "id": "LMS/r_LMS/698002_LMS-TH/3.0",
+        "status": "SPERRUNG",
+        "art": "RoadOrCarriagewayOrLaneManagement",
+        "art_detail": "narrowLanes",
+        "description": "Willy-Brandt-Straße, eine Fahrspur gesperrt.",
+        "start": "2026-07-20 09:00:00",
+        "end": "2026-07-25 18:00:00"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "LMS/r_LMS/695431_LMS-TH/7.0",
+      "geometry": { "type": "Point", "coordinates": [10.1203, 53.5901] },
+      "properties": {
+        "id": "LMS/r_LMS/695431_LMS-TH/7.0",
+        "status": "BAUSTELLE",
+        "art": "ConstructionWorks",
+        "art_detail": "roadworks",
+        "description": "Bramfelder Chaussee, Baustelle, Fahrbahnverengung.",
+        "start": "2026-07-01 07:00:00",
+        "end": "2026-08-30 17:00:00"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "LMS/r_LMS/701550_LMS-TH/1.0",
+      "geometry": { "type": "Point", "coordinates": [9.935, 53.551] },
+      "properties": {
+        "id": "LMS/r_LMS/701550_LMS-TH/1.0",
+        "status": "WARTUNG",
+        "art": "MaintenanceWorks",
+        "art_detail": "",
+        "description": "Reeperbahn, Wartungsarbeiten an der Signalanlage.",
+        "start": "2026-07-23 05:00:00",
+        "end": "2026-07-23 12:00:00"
+      }
+    }
+  ]
+}

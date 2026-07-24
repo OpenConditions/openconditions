@@ -432,9 +432,22 @@ describe("FEED_SOURCES", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("loads every feed from the data files (all 62 migrated)", () => {
-    expect(FEED_SOURCES.length).toBe(62);
+  it("loads every feed from the data files (all 63 migrated)", () => {
+    expect(FEED_SOURCES.length).toBe(63);
     expect(new Set(FEED_SOURCES.map((f) => f.id)).size).toBe(FEED_SOURCES.length);
+  });
+
+  it("includes de-hh-polizei as a keyless open geojson police-incident feed", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "de-hh-polizei");
+    expect(feed).toBeDefined();
+    expect(feed!.format).toBe("geojson");
+    expect(feed!.country).toBe("DE");
+    expect(feed!.license).toBe("dl-de/by-2-0");
+    expect(feed!.attribution).toBe("Freie und Hansestadt Hamburg, Polizei Hamburg");
+    expect(feed!.auth).toBeUndefined();
+    expect(feed!.url).toContain("api.hamburg.de");
+    expect(feed!.geojson?.typeField).toBe("art");
+    expect(feed!.enabledByDefault).toBe(true);
   });
 
   it("includes nyc-dot-speed-us as a keyless nyc-dot flow feed", () => {
