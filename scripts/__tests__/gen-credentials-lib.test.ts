@@ -20,7 +20,6 @@ const ny: FeedSourceBase = {
   attribution: "Powered by 511NY",
   country: "US",
   privacyUrl: "https://511ny.org/privacy",
-  enabledByDefault: true,
   setup: {
     US_NY_511_API_KEY: {
       title: "511NY API key (New York)",
@@ -77,7 +76,6 @@ describe("gen-credentials-lib", () => {
       attribution: "t",
       country: "DE",
       privacyUrl: "https://x",
-      enabledByDefault: true,
     };
     const feedB: FeedSourceBase = {
       id: "region-b",
@@ -91,7 +89,6 @@ describe("gen-credentials-lib", () => {
       attribution: "t",
       country: "DE",
       privacyUrl: "https://x",
-      enabledByDefault: true,
     };
     const out = envExampleFor([feedA, feedB]);
     expect(out.split("SHARED_CERT=").length - 1).toBe(1);

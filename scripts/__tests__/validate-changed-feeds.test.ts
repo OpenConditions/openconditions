@@ -19,7 +19,6 @@ function feed(over: Partial<FeedSourceBase>): FeedSourceBase {
     attribution: "t",
     country: "NL",
     privacyUrl: "https://example.org/privacy",
-    enabledByDefault: true,
     ...over,
   };
 }

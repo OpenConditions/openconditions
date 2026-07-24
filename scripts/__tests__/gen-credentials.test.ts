@@ -16,7 +16,6 @@ const feed: FeedSourceBase = {
   attribution: "t",
   country: "NL",
   privacyUrl: "https://x",
-  enabledByDefault: true,
   setup: { K_TOKEN: { title: "K token" } },
 };
 
