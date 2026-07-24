@@ -1259,4 +1259,51 @@
       },
     },
   },
+  {
+    // Autobahn GmbH nationwide BAB Verkehrsmeldungen (situations incl. Verlustzeiten
+    // and Sperrungen), all Bundesländer. DATEX II SituationPublication — parsed by
+    // the shared datex2 situations parser like every state incident feed. GeoNutzV
+    // (per the offer's MDM-publication documentation, §4.2). Mobilithek mtls
+    // client-pull, shared MOBILITHEK_CERT/KEY. Disabled by default until validated
+    // AND confirmed to add content over the existing autobahn (autobahn.de) feed.
+    operator: "autobahn",
+    stream: "meldungen",
+    name: "Autobahn GmbH BAB traffic messages (nationwide, incl. delays & closures)",
+    format: "datex2",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_AUTOBAHN_MELDUNGEN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_AUTOBAHN_MELDUNGEN_SUBSCRIPTION_ID}",
+    expandEnv: "DE_AUTOBAHN_MELDUNGEN_SUBSCRIPTION_ID",
+    auth: { kind: "mtls", certEnvVar: "MOBILITHEK_CERT", keyEnvVar: "MOBILITHEK_KEY" },
+    requiredEnv: ["DE_AUTOBAHN_MELDUNGEN_SUBSCRIPTION_ID"],
+    requestHeaders: { "Accept-Encoding": "gzip" },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "GeoNutzV",
+    licenseUrl: "https://www.gesetze-im-internet.de/geonutzv/",
+    attribution: "Quelle: Die Autobahn GmbH des Bundes",
+    country: "DE",
+    privacyUrl: "https://www.autobahn.de/datenschutz",
+    enabledByDefault: false,
+    setup: {
+      MOBILITHEK_CERT: {
+        title: "Mobilithek — client certificate (PEM)",
+        description: "PEM contents of the machine-account client certificate (mutual TLS). ONE certificate authenticates every German region feed below — set it once, then just add each region's subscription id. Recommended: generate your own keypair with `openssl req -x509 -newkey rsa:4096 -nodes -days 825 -keyout mobilithek.key.pem -out mobilithek.cert.pem -subj \"/CN=openmapx-mobilithek\"`, upload mobilithek.cert.pem under the machine account's 'Zertifikat hochladen' tab (no SMS needed), then paste mobilithek.cert.pem here and mobilithek.key.pem in the next field. Alternative: convert an issued .p12 with `openssl pkcs12 -in m.p12 -clcerts -nokeys | openssl x509` (cert) and `openssl pkcs12 -in m.p12 -nocerts -nodes | openssl rsa` (key).",
+        url: "https://mobilithek.info/registration-request",
+        urlLabel: "Mobilithek registration",
+        steps: [
+          "Register your organisation at mobilithek.info/registration-request; leave 'Organisation relevant gemäß MDV/PBefG' unchecked.",
+          "Subscribe to the region offer(s) you want (each region's offer IDs are listed in its subscription-id field below).",
+          "Create a machine account at mobilithek.info/organisation/machine-accounts and upload your own certificate (generate it with the openssl command shown in the certificate field below, no SMS needed). Paste the certificate PEM here and its private key in the next field.",
+        ],
+        notes: "This ONE certificate authenticates every German region feed — set it once, then add each region's subscription id. (The NRW state network is published under 'LVZ.NRW', not 'Straßen.NRW'.)",
+      },
+      MOBILITHEK_KEY: {
+        title: "Mobilithek — client private key (PEM)",
+        description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
+      },
+      DE_AUTOBAHN_MELDUNGEN_SUBSCRIPTION_ID: {
+        title: "Autobahn nationwide BAB Verkehrsmeldungen — Mobilithek subscription id",
+        description: "Numeric subscription id for Mobilithek offer 110000000003091005 (Verkehrsmeldungen mit Verlustzeiten und Sperrungen auf BAB, nationwide). Shared MOBILITHEK_CERT/KEY. GeoNutzV. NOTE: overlaps the existing autobahn.de feed — validate for redundancy before enabling.",
+      },
+    },
+  },
 ]

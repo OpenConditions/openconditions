@@ -340,6 +340,12 @@
         "description": "Numeric subscription id for Mobilithek offer 110000000003218001. Shared MOBILITHEK_CERT/KEY.",
         "x-openmapx-secret": true
       },
+      "DE_AUTOBAHN_MELDUNGEN_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Autobahn nationwide BAB Verkehrsmeldungen — Mobilithek subscription id",
+        "description": "Numeric subscription id for Mobilithek offer 110000000003091005 (Verkehrsmeldungen mit Verlustzeiten und Sperrungen auf BAB, nationwide). Shared MOBILITHEK_CERT/KEY. GeoNutzV. NOTE: overlaps the existing autobahn.de feed — validate for redundancy before enabling.",
+        "x-openmapx-secret": true
+      },
       "DK_VEJDIREKTORATET_API_KEY": {
         "type": "string",
         "title": "Vejdirektoratet key (Denmark)",

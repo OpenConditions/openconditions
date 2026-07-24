@@ -433,9 +433,24 @@ describe("FEED_SOURCES", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("loads every feed from the data files (all 70 migrated)", () => {
-    expect(FEED_SOURCES.length).toBe(70);
+  it("loads every feed from the data files (all 71 migrated)", () => {
+    expect(FEED_SOURCES.length).toBe(71);
     expect(new Set(FEED_SOURCES.map((f) => f.id)).size).toBe(FEED_SOURCES.length);
+  });
+
+  it("includes the nationwide Autobahn GmbH BAB Verkehrsmeldungen event feed (datex2, events, GeoNutzV, disabled)", () => {
+    const f = FEED_SOURCES.find((s) => s.id === "de-autobahn-meldungen");
+    expect(f).toBeDefined();
+    expect(f!.format).toBe("datex2");
+    expect(f!.produces).toBeUndefined(); // events is the default path
+    expect(f!.license).toBe("GeoNutzV");
+    expect(f!.country).toBe("DE");
+    expect(f!.enabledByDefault).toBe(false);
+    expect(f!.auth).toEqual({
+      kind: "mtls",
+      certEnvVar: "MOBILITHEK_CERT",
+      keyEnvVar: "MOBILITHEK_KEY",
+    });
   });
 
   it("includes the two Autobahn GmbH BAB LoS Verkehrslage feeds, datex-elaborated flow, disabled by default", () => {
