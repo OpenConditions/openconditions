@@ -45,7 +45,6 @@ describe("FEED_SOURCES", () => {
     expect(feed!.format).toBe("datex2");
     expect(feed!.produces).toBe("flow");
     expect(feed!.gzip).toBe(true);
-    expect(feed!.enabledByDefault).toBe(true);
     expect(feed!.siteTable).toEqual({
       url: "https://opendata.ndw.nu/measurement.xml.gz",
       gzip: true,
@@ -62,7 +61,6 @@ describe("FEED_SOURCES", () => {
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("open511");
     expect(feed!.license).toBe("OGL-BC");
-    expect(feed!.enabledByDefault).toBe(true);
   });
 
   it("includes digitraffic-fi with format digitraffic and license CC-BY-4.0", () => {
@@ -70,7 +68,6 @@ describe("FEED_SOURCES", () => {
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("digitraffic");
     expect(feed!.license).toBe("CC-BY-4.0");
-    expect(feed!.enabledByDefault).toBe(true);
   });
 
   it("includes autobahn-de resolving all motorways via the catalog (no static url)", () => {
@@ -78,7 +75,6 @@ describe("FEED_SOURCES", () => {
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("autobahn");
     expect(feed!.license).toBe("dl-de/by-2-0");
-    expect(feed!.enabledByDefault).toBe(true);
     expect(feed!.catalog?.resolver).toBe("autobahn-index");
     expect(feed!.url).toBeUndefined();
   });
@@ -87,7 +83,6 @@ describe("FEED_SOURCES", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "us-wzdx");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("wzdx");
-    expect(feed!.enabledByDefault).toBe(true);
     expect(feed!.catalog?.resolver).toBe("wzdx-registry");
     expect(feed!.url).toBeUndefined();
   });
@@ -99,7 +94,6 @@ describe("FEED_SOURCES", () => {
     expect(feed!.license).toBe("CC-BY-4.0");
     expect(feed!.country).toBe("ES");
     expect(typeof feed!.url).toBe("string");
-    expect(feed!.enabledByDefault).toBe(true);
   });
 
   it("includes svzbw-de (Baden-Württemberg roadworks) as an open DATEX II feed", () => {
@@ -108,7 +102,6 @@ describe("FEED_SOURCES", () => {
     expect(feed!.format).toBe("datex2");
     expect(feed!.license).toBe("dl-de/by-2-0");
     expect(feed!.country).toBe("DE");
-    expect(feed!.enabledByDefault).toBe(true);
   });
 
   it("includes dir-fr (France DIR) as an open DATEX II feed", () => {
@@ -117,7 +110,6 @@ describe("FEED_SOURCES", () => {
     expect(feed!.format).toBe("datex2");
     expect(feed!.license).toBe("etalab-2.0");
     expect(feed!.country).toBe("FR");
-    expect(feed!.enabledByDefault).toBe(true);
   });
 
   it("includes hc-hr (Croatia) as a Basic-auth DATEX II feed", () => {
@@ -137,7 +129,6 @@ describe("FEED_SOURCES", () => {
     expect(feed!.format).toBe("geojson");
     expect(feed!.license).toBe("CC-BY-4.0");
     expect(feed!.geojson?.typeField).toBe("eventDescription");
-    expect(feed!.enabledByDefault).toBe(true);
   });
 
   it("includes berlin-de (Berlin VIZ) as an open GeoJSON feed", () => {
@@ -146,7 +137,6 @@ describe("FEED_SOURCES", () => {
     expect(feed!.format).toBe("geojson");
     expect(feed!.license).toBe("dl-de/by-2-0");
     expect(feed!.country).toBe("DE");
-    expect(feed!.enabledByDefault).toBe(true);
   });
 
   it("includes on-511 (Ontario) as a keyless ibi511 feed", () => {
@@ -157,7 +147,6 @@ describe("FEED_SOURCES", () => {
     expect(feed!.format).toBe("ibi511");
     expect(feed!.auth).toBeUndefined();
     expect(feed!.requiredEnv).toBeUndefined();
-    expect(feed!.enabledByDefault).toBe(true);
   });
 
   it("includes ny-511 (511NY) as a query-key ibi511 feed", () => {
@@ -433,8 +422,8 @@ describe("FEED_SOURCES", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("loads every feed from the data files (all 71 migrated)", () => {
-    expect(FEED_SOURCES.length).toBe(71);
+  it("loads every feed from the data files (all 70 migrated)", () => {
+    expect(FEED_SOURCES.length).toBe(70);
     expect(new Set(FEED_SOURCES.map((f) => f.id)).size).toBe(FEED_SOURCES.length);
   });
 
@@ -445,7 +434,6 @@ describe("FEED_SOURCES", () => {
     expect(f!.produces).toBeUndefined(); // events is the default path
     expect(f!.license).toBe("GeoNutzV");
     expect(f!.country).toBe("DE");
-    expect(f!.enabledByDefault).toBe(false);
     expect(f!.auth).toEqual({
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
@@ -460,7 +448,6 @@ describe("FEED_SOURCES", () => {
       expect(f, id).toBeDefined();
       expect(f!.format).toBe("datex-elaborated");
       expect(f!.produces).toBe("flow");
-      expect(f!.enabledByDefault).toBe(false);
       expect(f!.siteTable?.format).toBe("datex-predefined-locations");
     }
   });
@@ -479,7 +466,6 @@ describe("FEED_SOURCES", () => {
       expect(f!.format).toBe("datex-elaborated");
       expect(f!.produces).toBe("flow");
       expect(f!.license).toBe("GeoNutzV");
-      expect(f!.enabledByDefault).toBe(false);
       expect(f!.auth).toEqual({
         kind: "mtls",
         certEnvVar: "MOBILITHEK_CERT",
@@ -515,7 +501,6 @@ describe("FEED_SOURCES", () => {
     expect(feed!.auth).toBeUndefined();
     expect(feed!.url).toContain("api.hamburg.de");
     expect(feed!.geojson?.typeField).toBe("art");
-    expect(feed!.enabledByDefault).toBe(true);
   });
 
   it("includes nyc-dot-speed-us as a keyless nyc-dot flow feed", () => {
@@ -526,7 +511,6 @@ describe("FEED_SOURCES", () => {
     expect(feed!.license).toBe("NYC-Open-Data");
     expect(feed!.country).toBe("US");
     expect(feed!.auth).toBeUndefined();
-    expect(feed!.enabledByDefault).toBe(true);
   });
 
   it("includes ohgo-oh-us as a keyed ohgo flow feed", () => {
@@ -542,7 +526,6 @@ describe("FEED_SOURCES", () => {
       envVar: "US_OH_OHGO_API_KEY",
       valuePrefix: "APIKEY ",
     });
-    expect(feed!.enabledByDefault).toBe(true);
     expect(feed!.setup?.["US_OH_OHGO_API_KEY"]).toBeDefined();
   });
 });

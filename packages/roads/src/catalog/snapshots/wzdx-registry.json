@@ -10,8 +10,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Oklahoma DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-utah",
@@ -24,8 +23,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Utah DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-iowa",
@@ -38,8 +36,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Iowa DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-florida",
@@ -52,8 +49,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Florida DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-minnesota",
@@ -66,8 +62,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Minnesota DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-maryland",
@@ -80,8 +75,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Maryland DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-arizona",
@@ -94,8 +88,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Maricopa County DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-new-mexico",
@@ -108,8 +101,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "New Mexico DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-hawaii",
@@ -122,8 +114,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Hawaii DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-new-york",
@@ -136,8 +127,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "New York DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-washington",
@@ -150,8 +140,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Washington State DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-missouri",
@@ -164,8 +153,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "St. Charles County",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-new-jersey",
@@ -178,8 +166,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "New Jersey Institute of Technology",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-kentucky",
@@ -192,8 +179,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Kentucky Transportation Cabinet",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-kansas",
@@ -206,8 +192,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Kansas DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-texas",
@@ -220,8 +205,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "City of Austin",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-delaware",
@@ -234,8 +218,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Delaware DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-louisiana",
@@ -248,8 +231,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Louisiana DOTD",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-idaho",
@@ -262,8 +244,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Idaho DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-indiana",
@@ -276,8 +257,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Indiana DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-n-a",
@@ -290,8 +270,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "CivicLink",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-michigan",
@@ -305,7 +284,6 @@
     "attribution": "Michigan DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true,
     "auth": {
       "kind": "none"
     },
@@ -327,8 +305,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "North Carolina DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-oregon",
@@ -342,7 +319,6 @@
     "attribution": "Oregon DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
-    "enabledByDefault": true,
     "auth": {
       "kind": "none"
     },

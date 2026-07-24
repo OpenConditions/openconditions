@@ -26,7 +26,6 @@ function blockedFeed(url: string): DomainFeedSource {
     attribution: "test",
     country: "XX",
     privacyUrl: "https://example.test/privacy",
-    enabledByDefault: false,
     url,
   } as DomainFeedSource;
 }

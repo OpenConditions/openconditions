@@ -17,7 +17,6 @@ const valid: FeedSourceBase = {
   attribution: "NDW / Rijkswaterstaat",
   country: "NL",
   privacyUrl: "https://www.ndw.nu/privacy",
-  enabledByDefault: true,
 };
 
 describe("feedSourceBaseSchema", () => {

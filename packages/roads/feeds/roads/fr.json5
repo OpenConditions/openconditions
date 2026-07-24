@@ -11,7 +11,6 @@
     attribution: "DIR / Bison Futé",
     country: "FR",
     privacyUrl: "https://www.bison-fute.gouv.fr/",
-    enabledByDefault: true,
   },
   {
     operator: "dir",
@@ -34,6 +33,5 @@
     attribution: "Ministère de la Transition écologique / DIR",
     country: "FR",
     privacyUrl: "https://www.bison-fute.gouv.fr/",
-    enabledByDefault: true,
   },
 ]

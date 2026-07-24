@@ -108,7 +108,6 @@ export interface FeedSourceBase {
    * Pure declarative data — no secrets, safe to commit.
    */
   maintainers?: { name: string; github: string }[];
-  enabledByDefault: boolean;
   /** Per-env-var credential guide (title, description, acquisition steps). */
   setup?: Record<string, CredentialField>;
 }

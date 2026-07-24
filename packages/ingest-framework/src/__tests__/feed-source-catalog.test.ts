@@ -15,7 +15,6 @@ describe("FeedSourceBase.catalog", () => {
       attribution: "WZDx publishers",
       country: "US",
       privacyUrl: "https://www.transportation.gov/privacy",
-      enabledByDefault: true,
     };
     expect(feed.catalog?.resolver).toBe("wzdx-registry");
     expect(feed.catalog?.filter?.["country"]).toBe("US");

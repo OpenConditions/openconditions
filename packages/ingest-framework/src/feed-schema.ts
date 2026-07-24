@@ -122,7 +122,6 @@ export const feedSourceBaseShape = {
       credentialSetupSchema.extend({ title: z.string(), description: z.string().optional() })
     )
     .optional(),
-  enabledByDefault: z.boolean(),
 } as const;
 
 /** The domain-agnostic feed schema. `.strict()` — an unknown key is an error. */

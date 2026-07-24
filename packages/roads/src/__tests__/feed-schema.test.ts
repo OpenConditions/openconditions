@@ -25,7 +25,6 @@ const berlin = {
   attribution: "Verkehrsinformationszentrale Berlin (VIZ)",
   country: "DE",
   privacyUrl: "https://www.berlin.de/datenschutzerklaerung/",
-  enabledByDefault: true,
 };
 
 describe("roadFeedSchema", () => {

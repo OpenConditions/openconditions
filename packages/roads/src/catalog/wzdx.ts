@@ -134,7 +134,6 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
       attribution: org || "WZDx publishers",
       country: "US",
       privacyUrl: "https://www.transportation.gov/privacy",
-      enabledByDefault: true,
     };
     if (needsApiKey(row.needapikey)) {
       // The concrete URL is used as published (placeholder rows are dropped

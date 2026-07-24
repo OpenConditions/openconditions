@@ -11,7 +11,6 @@
     attribution: "Contains information licensed under the Open Government Licence – British Columbia",
     country: "CA",
     privacyUrl: "https://www2.gov.bc.ca/gov/content/home/privacy",
-    enabledByDefault: true,
   },
   {
     subdivision: "on",
@@ -26,7 +25,6 @@
     attribution: "Contains information licensed under the Open Government Licence – Ontario",
     country: "CA",
     privacyUrl: "https://www.ontario.ca/page/privacy-statement",
-    enabledByDefault: true,
   },
   {
     subdivision: "qc",
@@ -49,6 +47,5 @@
     attribution: "Ministère des Transports du Québec (MTQ)",
     country: "CA",
     privacyUrl: "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
-    enabledByDefault: true,
   },
 ]

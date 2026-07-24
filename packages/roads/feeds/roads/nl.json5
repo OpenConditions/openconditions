@@ -12,7 +12,6 @@
     attribution: "NDW / Rijkswaterstaat",
     country: "NL",
     privacyUrl: "https://www.ndw.nu/privacy",
-    enabledByDefault: true,
   },
   {
     // Separate source id from "ndw" (events) so atomicSwap stays source-id-scoped
@@ -37,6 +36,5 @@
     attribution: "NDW / Rijkswaterstaat",
     country: "NL",
     privacyUrl: "https://www.ndw.nu/privacy",
-    enabledByDefault: true,
   },
 ]

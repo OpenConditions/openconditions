@@ -16,7 +16,6 @@
     attribution: "Hrvatske ceste",
     country: "HR",
     privacyUrl: "https://www.hrvatske-ceste.hr/",
-    enabledByDefault: true,
     setup: {
       HR_HC_USERNAME: {
         title: "Hrvatske ceste (Croatia) — B2B username",

@@ -30,7 +30,6 @@ const multiSiteSrc = {
   attribution: "National Highways",
   country: "GB",
   privacyUrl: "https://x",
-  enabledByDefault: true,
   url: "https://webtris.nationalhighways.co.uk/api/v1.0/reports/daily?sites={sites}&start_date={start_date}&end_date={end_date}&page=1&page_size=100",
   stationRegistry: { url: REGISTRY_URL, format: "webtris-sites" },
 } as unknown as FeedSourceBase;
@@ -52,7 +51,6 @@ describe("webtrisDailyWindow preFetch", () => {
       attribution: "National Highways",
       country: "GB",
       privacyUrl: "https://x",
-      enabledByDefault: true,
       url: "https://webtris.nationalhighways.co.uk/api/v1.0/reports/daily?sites=5607&start_date={start_date}&end_date={end_date}&page=1&page_size=100",
     } as FeedSourceBase;
 
@@ -77,7 +75,6 @@ describe("webtrisDailyWindow preFetch", () => {
       attribution: "National Highways",
       country: "GB",
       privacyUrl: "https://x",
-      enabledByDefault: true,
       url: "https://x.test/?start_date={start_date}&end_date={end_date}",
     } as FeedSourceBase;
 
@@ -103,7 +100,6 @@ describe("webtrisDailyWindow preFetch", () => {
       attribution: "National Highways",
       country: "GB",
       privacyUrl: "https://x",
-      enabledByDefault: true,
     } as FeedSourceBase;
 
     const out = await hook(src, {}, noFetch);

@@ -14,7 +14,6 @@ describe("IngestDomain", () => {
       attribution: "t",
       country: "NL",
       privacyUrl: "https://x",
-      enabledByDefault: true,
     };
     const domain: IngestDomain = {
       name: "roads",

@@ -28,6 +28,5 @@
     attribution: "Vegagerðin (Icelandic Road and Coastal Administration)",
     country: "IS",
     privacyUrl: "https://www.vegagerdin.is/",
-    enabledByDefault: true,
   },
 ]

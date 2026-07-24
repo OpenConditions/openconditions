@@ -15,7 +15,6 @@
     attribution: "Quelle: Die Autobahn GmbH des Bundes",
     country: "DE",
     privacyUrl: "https://www.autobahn.de/datenschutz",
-    enabledByDefault: true,
   },
   {
     subdivision: "bw",
@@ -30,7 +29,6 @@
     attribution: "MobiData BW / Ministerium für Verkehr Baden-Württemberg (SVZ-BW)",
     country: "DE",
     privacyUrl: "https://www.mobidata-bw.de/pages/datenschutz",
-    enabledByDefault: true,
   },
   {
     subdivision: "be",
@@ -65,7 +63,6 @@
     attribution: "Verkehrsinformationszentrale Berlin (VIZ)",
     country: "DE",
     privacyUrl: "https://www.berlin.de/datenschutzerklaerung/",
-    enabledByDefault: true,
   },
   {
     // Germany via Mobilithek — one credential-gated DATEX II client-pull feed per
@@ -99,7 +96,6 @@
     attribution: "Landesverkehrszentrale NRW (Straßen.NRW)",
     country: "DE",
     privacyUrl: "https://www.strassen.nrw.de/de/datenschutz.html",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -147,7 +143,6 @@
     attribution: "Städte und Kreise in Nordrhein-Westfalen (via Mobilithek)",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -197,7 +192,6 @@
     attribution: "NRW.Mobidrom",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -244,7 +238,6 @@
     attribution: "Bayerische Straßenbauverwaltung",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -291,7 +284,6 @@
     attribution: "Innenministerium Baden-Württemberg (Landesmeldestelle)",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -338,7 +330,6 @@
     attribution: "Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt Berlin",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -385,7 +376,6 @@
     attribution: "Landesbetrieb Straßenwesen Brandenburg",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -432,7 +422,6 @@
     attribution: "Verkehrsmanagementzentrale Bremen",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -479,7 +468,6 @@
     attribution: "Landesbetrieb Straßen, Brücken und Gewässer Hamburg (LSBG)",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -533,7 +521,6 @@
     attribution: "Freie und Hansestadt Hamburg, Polizei Hamburg",
     country: "DE",
     privacyUrl: "https://www.hamburg.de/datenschutz/",
-    enabledByDefault: true,
   },
   {
     subdivision: "he",
@@ -558,7 +545,6 @@
     attribution: "Hessen Mobil – Straßen- und Verkehrsmanagement",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -605,7 +591,6 @@
     attribution: "Landesamt für Straßenbau und Verkehr Mecklenburg-Vorpommern",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -652,7 +637,6 @@
     attribution: "Niedersächsische Landesbehörde für Straßenbau und Verkehr (NLStBV)",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -699,7 +683,6 @@
     attribution: "Landesamt für Straßenbau und Verkehr Sachsen (LASuV)",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -746,7 +729,6 @@
     attribution: "Landesstraßenbaubehörde Sachsen-Anhalt",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -793,7 +775,6 @@
     attribution: "Landesbetrieb Straßenbau und Verkehr Schleswig-Holstein (LBV.SH)",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -840,7 +821,6 @@
     attribution: "Thüringer Landesamt für Bau und Verkehr",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
-    enabledByDefault: true,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -877,7 +857,6 @@
     attribution: "Bundesstadt Bonn",
     country: "DE",
     privacyUrl: "https://www.bonn.de/datenschutz.php",
-    enabledByDefault: true,
   },
   {
     // Autobahn GmbH BAB detector speed (v) + volume (q), per-minute, Niederlassung
@@ -910,7 +889,6 @@
     attribution: "Quelle: Die Autobahn GmbH des Bundes",
     country: "DE",
     privacyUrl: "https://www.autobahn.de/datenschutz",
-    enabledByDefault: false,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -963,7 +941,6 @@
     attribution: "Quelle: Die Autobahn GmbH des Bundes",
     country: "DE",
     privacyUrl: "https://www.autobahn.de/datenschutz",
-    enabledByDefault: false,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -1016,7 +993,6 @@
     attribution: "Quelle: Die Autobahn GmbH des Bundes",
     country: "DE",
     privacyUrl: "https://www.autobahn.de/datenschutz",
-    enabledByDefault: false,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -1071,7 +1047,6 @@
     attribution: "Quelle: Die Autobahn GmbH des Bundes",
     country: "DE",
     privacyUrl: "https://www.autobahn.de/datenschutz",
-    enabledByDefault: false,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -1122,7 +1097,6 @@
     attribution: "Quelle: Die Autobahn GmbH des Bundes",
     country: "DE",
     privacyUrl: "https://www.autobahn.de/datenschutz",
-    enabledByDefault: false,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -1175,7 +1149,6 @@
     attribution: "Quelle: Die Autobahn GmbH des Bundes",
     country: "DE",
     privacyUrl: "https://www.autobahn.de/datenschutz",
-    enabledByDefault: false,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -1231,7 +1204,6 @@
     attribution: "Quelle: Die Autobahn GmbH des Bundes",
     country: "DE",
     privacyUrl: "https://www.autobahn.de/datenschutz",
-    enabledByDefault: false,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",
@@ -1282,7 +1254,6 @@
     attribution: "Quelle: Die Autobahn GmbH des Bundes",
     country: "DE",
     privacyUrl: "https://www.autobahn.de/datenschutz",
-    enabledByDefault: false,
     setup: {
       MOBILITHEK_CERT: {
         title: "Mobilithek — client certificate (PEM)",

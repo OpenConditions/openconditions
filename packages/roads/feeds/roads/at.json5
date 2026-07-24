@@ -19,7 +19,6 @@
     attribution: "ASFINAG",
     country: "AT",
     privacyUrl: "https://www.asfinag.at/datenschutz/",
-    enabledByDefault: true,
     setup: {
       AT_ASFINAG_USERNAME: {
         title: "ASFINAG (Austria) — username",

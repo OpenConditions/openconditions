@@ -17,7 +17,6 @@ const desc = (id: string, url: string): FeedSourceBase => ({
   attribution: "t",
   country: "US",
   privacyUrl: "https://x",
-  enabledByDefault: true,
 });
 
 describe("fetchAll — catalog branch", () => {

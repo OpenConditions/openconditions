@@ -31,7 +31,7 @@ function num(raw: unknown): number | undefined {
  *
  * DataMall pages this resource 500 links per call via `$skip`; a single fetch
  * therefore covers the first page only. Full coverage needs paging support in
- * the ingest fetch layer, which is why the feed ships `enabledByDefault:false`.
+ * the ingest fetch layer; until then the feed ingests only that first page.
  */
 export function parseLtaSpeedBands(input: string | Buffer, src: SourceDescriptor): FlowParseResult {
   let doc: unknown;

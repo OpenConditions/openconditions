@@ -54,7 +54,6 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
         attribution: "Quelle: Die Autobahn GmbH des Bundes",
         country: "DE",
         privacyUrl: "https://www.autobahn.de/datenschutz",
-        enabledByDefault: true,
       });
     }
   }

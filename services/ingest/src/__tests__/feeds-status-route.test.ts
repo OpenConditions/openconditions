@@ -17,13 +17,12 @@ beforeAll(async () => {
 afterAll(() => app.close());
 
 describe("GET /feeds/status", () => {
-  it("lists registered feeds with enabled/credential flags and run status", async () => {
+  it("lists registered feeds with credential flags and run status", async () => {
     const res = await app.inject({ method: "GET", url: "/feeds/status" });
     expect(res.statusCode).toBe(200);
     const body = res.json() as {
       feeds: {
         id: string;
-        enabled: boolean;
         hasCredentials: boolean;
         missingEnv: string[];
         lastRowCount?: number;
@@ -31,7 +30,6 @@ describe("GET /feeds/status", () => {
     };
     const ndw = body.feeds.find((f) => f.id === "nl-ndw");
     expect(ndw).toBeTruthy();
-    expect(ndw?.enabled).toBe(true);
     expect(ndw?.hasCredentials).toBe(true);
     expect(ndw?.lastRowCount).toBe(5);
     // a keyed feed with no creds set is listed but flagged

@@ -12,7 +12,6 @@
     attribution: "WZDx publishers",
     country: "US",
     privacyUrl: "https://www.transportation.gov/privacy",
-    enabledByDefault: true,
   },
   {
     subdivision: "ny",
@@ -32,7 +31,6 @@
     attribution: "Powered by 511NY",
     country: "US",
     privacyUrl: "https://511ny.org/privacy",
-    enabledByDefault: true,
     setup: {
       US_NY_511_API_KEY: {
         title: "511NY API key (New York)",
@@ -63,7 +61,6 @@
     attribution: "New York City Department of Transportation",
     country: "US",
     privacyUrl: "https://www.nyc.gov/home/privacy-policy.page",
-    enabledByDefault: true,
   },
   {
     subdivision: "oh",
@@ -85,7 +82,6 @@
     attribution: "Ohio Department of Transportation (OHGO)",
     country: "US",
     privacyUrl: "https://www.transportation.ohio.gov/about-us/privacy",
-    enabledByDefault: true,
     setup: {
       US_OH_OHGO_API_KEY: {
         title: "OHGO API key",

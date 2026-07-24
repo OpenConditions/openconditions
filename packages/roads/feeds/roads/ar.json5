@@ -18,7 +18,6 @@
     attribution: "Gobierno de la Ciudad de Buenos Aires",
     country: "AR",
     privacyUrl: "https://www.buenosaires.gob.ar/politicas-de-privacidad",
-    enabledByDefault: true,
     setup: {
       AR_BA_CLIENT_ID: {
         title: "Buenos Aires transport — client_id",

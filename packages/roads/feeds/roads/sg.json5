@@ -16,7 +16,6 @@
     attribution: "Land Transport Authority (Singapore)",
     country: "SG",
     privacyUrl: "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
-    enabledByDefault: true,
     setup: {
       SG_LTA_ACCOUNT_KEY: {
         title: "LTA DataMall AccountKey (Singapore)",
@@ -51,9 +50,9 @@
     country: "SG",
     privacyUrl: "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
     // DataMall pages this resource 500 links per call ($skip); a single fetch
-    // covers the first page only, so it ships off until the fetch layer pages.
-    // Reuses the shared SG_LTA_ACCOUNT_KEY (see lta-sg above).
-    enabledByDefault: false,
+    // covers the first page only, so coverage is partial until the fetch layer
+    // pages. Reuses the shared SG_LTA_ACCOUNT_KEY (see lta-sg above), so it runs
+    // whenever that key is set.
     setup: {
       SG_LTA_ACCOUNT_KEY: {
         title: "LTA DataMall AccountKey (Singapore)",
