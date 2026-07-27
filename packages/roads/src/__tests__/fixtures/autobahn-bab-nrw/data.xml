@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" modelBaseVersion="2">
+  <payloadPublication xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" lang="DE" xsi:type="ElaboratedDataPublication">
+    <elaboratedData>
+      <basicData xsi:type="TrafficSpeed">
+        <measurementOrCalculationTime>2026-07-27T02:02:30.880+02:00</measurementOrCalculationTime>
+        <pertinentLocation xsi:type="LocationByReference">
+          <predefinedLocationReference id="fs.MQ_555.050_AB_SW_R_1" targetClass="PredefinedLocation" version="unknown"/>
+        </pertinentLocation>
+        <averageVehicleSpeed numberOfInputValuesUsed="18"><speed>92.0</speed></averageVehicleSpeed>
+      </basicData>
+    </elaboratedData>
+    <elaboratedData>
+      <basicData xsi:type="TrafficFlow">
+        <measurementOrCalculationTime>2026-07-27T02:02:30.880+02:00</measurementOrCalculationTime>
+        <pertinentLocation xsi:type="LocationByReference">
+          <predefinedLocationReference id="fs.MQ_555.050_AB_SW_R_1" targetClass="PredefinedLocation" version="unknown"/>
+        </pertinentLocation>
+        <forVehiclesWithCharacteristicsOf><vehicleType>car</vehicleType></forVehiclesWithCharacteristicsOf>
+        <vehicleFlow><vehicleFlowRate>60</vehicleFlowRate></vehicleFlow>
+      </basicData>
+    </elaboratedData>
+  </payloadPublication>
+</d2LogicalModel>

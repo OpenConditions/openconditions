@@ -426,7 +426,10 @@ describe("FEED_SOURCES", () => {
     expect(new Set(FEED_SOURCES.map((f) => f.id)).size).toBe(FEED_SOURCES.length);
   });
 
-  it("includes the seven Autobahn GmbH BAB flow feeds, all datex2 flow, GeoNutzV, mtls", () => {
+  it("includes the seven Autobahn GmbH BAB flow feeds, GeoNutzV, mtls, per-region DATEX profile", () => {
+    // NRW serves the ElaboratedDataPublication profile (datex-elaborated); the rest
+    // serve MeasuredDataPublication (datex2) — verified per region against live payloads.
+    const elaborated = new Set(["de-nw-autobahn-fahrstreifen", "de-nw-autobahn-loslane"]);
     const ids = [
       "de-hh-autobahn-nord",
       "de-nw-autobahn-fahrstreifen",
@@ -439,7 +442,7 @@ describe("FEED_SOURCES", () => {
     for (const id of ids) {
       const f = FEED_SOURCES.find((s) => s.id === id);
       expect(f, id).toBeDefined();
-      expect(f!.format).toBe("datex2");
+      expect(f!.format, id).toBe(elaborated.has(id) ? "datex-elaborated" : "datex2");
       expect(f!.produces).toBe("flow");
       expect(f!.license).toBe("GeoNutzV");
       expect(f!.auth).toEqual({

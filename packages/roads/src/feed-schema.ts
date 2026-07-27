@@ -57,7 +57,11 @@ export const roadFeedSchema = z
     geojson: geoJsonMappingSchema.optional(),
     posListLonLat: z.boolean().optional(),
     siteTable: z
-      .object({ url: z.string().url(), gzip: z.boolean().optional() })
+      .object({
+        url: z.string().url(),
+        gzip: z.boolean().optional(),
+        format: z.enum(["datex-site-table", "datex-predefined-locations"]).optional(),
+      })
       .strict()
       .optional(),
     stationRegistry: z

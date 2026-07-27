@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0">
+  <payloadPublication xsi:type="PredefinedLocationsPublication" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <predefinedLocationContainer>
+      <predefinedLocation id="MQ_A1_0042">
+        <predefinedLocationName><values><value lang="de">A1 km 42</value></values></predefinedLocationName>
+        <location xsi:type="Point">
+          <pointByCoordinates>
+            <pointCoordinates>
+              <latitude>53.60864</latitude>
+              <longitude>10.05740</longitude>
+            </pointCoordinates>
+          </pointByCoordinates>
+        </location>
+      </predefinedLocation>
+      <predefinedLocation id="MQ_A7_0100">
+        <location xsi:type="Linear">
+          <linearByCoordinates>
+            <linearCoordinatesStartPoint>
+              <pointCoordinates><latitude>53.5488</latitude><longitude>9.9822</longitude></pointCoordinates>
+            </linearCoordinatesStartPoint>
+            <linearCoordinatesEndPoint>
+              <pointCoordinates><latitude>53.5677</latitude><longitude>10.0009</longitude></pointCoordinates>
+            </linearCoordinatesEndPoint>
+          </linearByCoordinates>
+        </location>
+      </predefinedLocation>
+    </predefinedLocationContainer>
+  </payloadPublication>
+</d2LogicalModel>

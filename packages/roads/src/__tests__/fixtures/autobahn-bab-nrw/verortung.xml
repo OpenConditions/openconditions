@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" modelBaseVersion="2">
+  <payloadPublication xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" lang="DE" xsi:type="PredefinedLocationsPublication">
+    <predefinedLocationContainer>
+      <predefinedLocation id="fs.MQ_555.050_AB_SW_R_1" version="202308241348">
+        <location xsi:type="Point">
+          <supplementaryPositionalDescription>
+            <affectedCarriagewayAndLanes>
+              <carriageway>mainCarriageway</carriageway>
+              <lane>lane1</lane>
+            </affectedCarriagewayAndLanes>
+          </supplementaryPositionalDescription>
+          <pointByCoordinates>
+            <pointCoordinates>
+              <latitude>51.474907</latitude>
+              <longitude>7.545113</longitude>
+            </pointCoordinates>
+          </pointByCoordinates>
+        </location>
+      </predefinedLocation>
+    </predefinedLocationContainer>
+  </payloadPublication>
+</d2LogicalModel>

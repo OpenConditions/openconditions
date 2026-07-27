@@ -1295,7 +1295,7 @@
   },
   {
     "name": "Autobahn GmbH BAB traffic data (Nordrhein-Westfalen, per lane)",
-    "format": "datex2",
+    "format": "datex-elaborated",
     "operator": "autobahn",
     "subdivision": "nw",
     "stream": "fahrstreifen",
@@ -1348,7 +1348,8 @@
       }
     },
     "siteTable": {
-      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}"
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
+      "format": "datex-predefined-locations"
     },
     "id": "de-nw-autobahn-fahrstreifen"
   },
@@ -1522,7 +1523,7 @@
   },
   {
     "name": "Autobahn GmbH BAB Verkehrslage LoS (Nordrhein-Westfalen, per lane)",
-    "format": "datex2",
+    "format": "datex-elaborated",
     "operator": "autobahn",
     "subdivision": "nw",
     "stream": "loslane",
@@ -1575,7 +1576,8 @@
       }
     },
     "siteTable": {
-      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}"
+      "url": "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}",
+      "format": "datex-predefined-locations"
     },
     "id": "de-nw-autobahn-loslane"
   },

@@ -214,6 +214,9 @@ export interface RoadFlow extends Measurement {
   speedRatio?: number;
   delaySeconds?: number;
   jamFactor?: number;
+  /** Traffic volume q in vehicles per hour, where the feed reports it (DATEX
+   * TrafficFlow / vehicleFlowRate). Independent of speed/los. */
+  volume?: number;
 }
 
 /**
@@ -284,5 +287,6 @@ export function roadFlowAttributes(flow: RoadFlow): Record<string, unknown> {
   if (flow.speedRatio != null) attrs["speedRatio"] = flow.speedRatio;
   if (flow.delaySeconds != null) attrs["delaySeconds"] = flow.delaySeconds;
   if (flow.jamFactor != null) attrs["jamFactor"] = flow.jamFactor;
+  if (flow.volume != null) attrs["volume"] = flow.volume;
   return attrs;
 }

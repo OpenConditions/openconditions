@@ -917,12 +917,15 @@
   },
   {
     // Autobahn GmbH BAB detector speed (v) + volume (q), per-lane, Nordrhein-Westfalen.
-    // Joined to the NRW Fahrstreifendaten Verortung by measurementSiteReference id.
+    // Unlike Hessen VZD / Bayern (MeasuredData + MeasurementSiteTable), NRW publishes
+    // the ElaboratedDataPublication profile (verified against the live payload
+    // 2026-07-25) joined to a PredefinedLocationsPublication Verortung by
+    // predefinedLocationReference id — hence datex-elaborated + datex-predefined-locations.
     subdivision: "nw",
     operator: "autobahn",
     stream: "fahrstreifen",
     name: "Autobahn GmbH BAB traffic data (Nordrhein-Westfalen, per lane)",
-    format: "datex2",
+    format: "datex-elaborated",
     produces: "flow",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_SUBSCRIPTION_ID}",
     expandEnv: "DE_NW_AUTOBAHN_SUBSCRIPTION_ID",
@@ -931,6 +934,7 @@
     requestHeaders: { "Accept-Encoding": "gzip" },
     siteTable: {
       url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}",
+      format: "datex-predefined-locations",
     },
     cadenceSec: 60,
     freshnessWindowSec: 300,
@@ -1129,13 +1133,14 @@
   },
   {
     // Autobahn GmbH BAB fahrstreifenfeine Verkehrslage (4-step LoS) for NRW — the
-    // operator's own per-lane congestion classification. MeasuredDataPublication
-    // (basicData TrafficStatus in a MeasuredDataPublication) joined to its Verortung by measurementSiteReference id.
+    // operator's own per-lane congestion classification. Same NRW system as the
+    // fahrstreifen feed: ElaboratedDataPublication (basicData TrafficStatus) joined to
+    // a PredefinedLocationsPublication Verortung by predefinedLocationReference id.
     subdivision: "nw",
     operator: "autobahn",
     stream: "loslane",
     name: "Autobahn GmbH BAB Verkehrslage LoS (Nordrhein-Westfalen, per lane)",
-    format: "datex2",
+    format: "datex-elaborated",
     produces: "flow",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID}",
     expandEnv: "DE_NW_AUTOBAHN_LOSLANE_SUBSCRIPTION_ID",
@@ -1147,6 +1152,7 @@
     requestHeaders: { "Accept-Encoding": "gzip" },
     siteTable: {
       url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_AUTOBAHN_LOSLANE_VERORTUNG_SUBSCRIPTION_ID}",
+      format: "datex-predefined-locations",
     },
     cadenceSec: 60,
     freshnessWindowSec: 300,
