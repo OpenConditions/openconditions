@@ -97,15 +97,29 @@ export interface OsmWaySource {
 const DEFAULT_OVERPASS_URL = "https://overpass-api.de/api/interpreter";
 
 /**
+ * Normalizes an Overpass endpoint to the `…/api/interpreter` path so a bare
+ * origin (`http://overpass`) and a full endpoint (`http://overpass/api/interpreter`)
+ * resolve identically. Mirrors the openmapx-side client (which also accepts
+ * either form) so a shared `OVERPASS_URL` behaves the same for both — without OC
+ * taking a dependency on openmapx's `@openmapx/core`.
+ */
+function normalizeOverpassUrl(url: string): string {
+  const trimmed = url.replace(/\/$/, "");
+  return trimmed.endsWith("/api/interpreter") ? trimmed : `${trimmed}/api/interpreter`;
+}
+
+/**
  * Resolves the Overpass endpoint from `OVERPASS_URL`, falling back to the
  * public instance when unset or empty (Compose's `${VAR:-}` unset-injection).
  * A self-hoster running their own Overpass (e.g. a planet instance already on
  * the stack) can point large per-region pulls at it to avoid the public
- * server's fair-use budget and client-timeout risk on heavy bboxes.
+ * server's fair-use budget and client-timeout risk on heavy bboxes. The value
+ * may be a bare origin or a full `…/api/interpreter` endpoint — both normalize
+ * to the same interpreter URL.
  */
 export function overpassUrl(env: NodeJS.ProcessEnv = process.env): string {
   const raw = env["OVERPASS_URL"];
-  return raw != null && raw !== "" ? raw : DEFAULT_OVERPASS_URL;
+  return raw != null && raw !== "" ? normalizeOverpassUrl(raw) : DEFAULT_OVERPASS_URL;
 }
 
 const HIGHWAY_FILTER =

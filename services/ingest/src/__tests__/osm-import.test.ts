@@ -236,4 +236,16 @@ describe("overpassUrl", () => {
       "http://overpass/api/interpreter"
     );
   });
+
+  it("normalizes a bare-origin OVERPASS_URL to the interpreter path", () => {
+    expect(overpassUrl({ OVERPASS_URL: "http://overpass" })).toBe(
+      "http://overpass/api/interpreter"
+    );
+  });
+
+  it("normalizes a trailing-slash OVERPASS_URL", () => {
+    expect(overpassUrl({ OVERPASS_URL: "http://overpass/" })).toBe(
+      "http://overpass/api/interpreter"
+    );
+  });
 });
