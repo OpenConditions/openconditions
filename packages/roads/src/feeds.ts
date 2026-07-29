@@ -32,6 +32,7 @@ import { parseMivFlow } from "./miv.js";
 import { parseTurinFlow } from "./flow-turin.js";
 import { parseHkRawFlow } from "./hk.js";
 import { parseGeojsonFlow } from "./flow-geojson.js";
+import { parseBcnTramsFlow } from "./flow-bcn.js";
 import type { GeojsonFlowMapping, SourceDescriptor } from "./types.js";
 
 // FeedAuth now lives in @openconditions/ingest-framework; re-exported here so
@@ -76,7 +77,8 @@ export type FeedSource = FeedSourceBase & {
       | "webtris-sites"
       | "miv-config"
       | "france-comptage-csv"
-      | "hk-detector-csv";
+      | "hk-detector-csv"
+      | "bcn-trams-csv";
   };
   /** Field mapping for `format: "geojson"` feeds (passed to the generic reader). */
   geojson?: GeoJsonMapping;
@@ -176,6 +178,7 @@ export function flowParserFor(format: SourceFormat): FlowParserFn {
   if (format === "fdt") return parseTurinFlow;
   if (format === "hk-td") return parseHkRawFlow;
   if (format === "geojson-flow") return parseGeojsonFlow;
+  if (format === "bcn-trams") return parseBcnTramsFlow;
   throw new Error(`No flow parser registered for format: ${format}`);
 }
 

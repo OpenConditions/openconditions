@@ -50,6 +50,7 @@ export type SourceFormat =
   | "fdt"
   | "hk-td"
   | "geojson-flow"
+  | "bcn-trams"
   | "gtfs-rt"
   | "native"
   | "crowd";

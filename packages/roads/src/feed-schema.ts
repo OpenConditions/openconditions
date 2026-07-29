@@ -86,6 +86,7 @@ export const roadFeedSchema = z
           "miv-config",
           "france-comptage-csv",
           "hk-detector-csv",
+          "bcn-trams-csv",
         ]),
       })
       .strict()
