@@ -1,6 +1,32 @@
 import type { GeoJsonMapping } from "./model.js";
 
 /**
+ * Field mapping for the generic OpenDataSoft flow parser. Drives one parser
+ * across every ODS `exports/geojson` traffic feed (Rennes, Bordeaux, Valencia …)
+ * whose features carry a per-segment average speed and/or a categorical traffic
+ * status in flat `properties`. Only `idField` is required; a feed supplies
+ * whichever of the value fields it publishes.
+ */
+export interface OdsFlowMapping {
+  /** Stable per-record id, e.g. "predefinedlocationreference" or "ident". */
+  idField: string;
+  /** Average vehicle speed in km/h, when the feed measures one. */
+  speedField?: string;
+  /** Native free-flow / posted-max speed in km/h, when present. */
+  freeFlowField?: string;
+  /** Categorical traffic-status field (e.g. "trafficstatus", "etat"). */
+  statusField?: string;
+  /**
+   * Maps raw status values to a canonical DATEX status token
+   * (freeFlow | heavy | slowTraffic | congested | queuing | stationary | blocked).
+   * Omit when the feed already emits DATEX tokens (e.g. Rennes "freeFlow").
+   */
+  statusMap?: Record<string, string>;
+  /** Measurement timestamp field, when the feed carries one per record. */
+  updatedField?: string;
+}
+
+/**
  * Minimal descriptor for the data source a parser needs at call time.
  * Subset of the full FeedSource; keeps parsers decoupled from the ingest layer.
  */
@@ -12,6 +38,8 @@ export interface SourceDescriptor {
   licenseUrl?: string;
   /** Field mapping for the generic GeoJSON parser (only set for geojson feeds). */
   geojson?: GeoJsonMapping;
+  /** Field mapping for the OpenDataSoft flow parser (only set for opendatasoft feeds). */
+  odsFlow?: OdsFlowMapping;
   /**
    * The DATEX feed publishes GML `posList` coordinates in "lon lat" order rather
    * than the WGS84/DATEX "lat lon" default (e.g. Trafikverket). Only affects

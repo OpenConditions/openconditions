@@ -34,4 +34,56 @@
     country: "FR",
     privacyUrl: "https://www.bison-fute.gouv.fr/",
   },
+  {
+    operator: "rennesmetropole",
+    name: "État du trafic temps réel (Rennes Métropole)",
+    format: "opendatasoft",
+    produces: "flow",
+    // OpenDataSoft export delivers every segment in one call (no pagination),
+    // each feature carrying an inline LineString plus a measured average speed,
+    // the posted max speed (native free-flow) and a DATEX traffic status.
+    url: "https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/etat-du-trafic-en-temps-reel/exports/geojson?limit=-1",
+    odsFlow: {
+      idField: "predefinedlocationreference",
+      speedField: "averagevehiclespeed",
+      freeFlowField: "vitesse_maxi",
+      statusField: "trafficstatus",
+      updatedField: "datetime",
+    },
+    cadenceSec: 180,
+    freshnessWindowSec: 900,
+    license: "ODbL-1.0",
+    licenseUrl: "https://opendatacommons.org/licenses/odbl/1-0/",
+    attribution: "Rennes Métropole",
+    country: "FR",
+    privacyUrl: "https://data.rennesmetropole.fr/pages/donnees-personnelles/",
+  },
+  {
+    operator: "bordeauxmetropole",
+    name: "État du trafic temps réel (Bordeaux Métropole)",
+    format: "opendatasoft",
+    produces: "flow",
+    // Categorical congestion status only (no measured speed): FLUIDE / DENSE /
+    // EMBOUTEILLE, mapped to DATEX status tokens the shared flow builder derives
+    // level-of-service from.
+    url: "https://opendata.bordeaux-metropole.fr/api/explore/v2.1/catalog/datasets/ci_trafi_l/exports/geojson?limit=-1",
+    odsFlow: {
+      idField: "ident",
+      statusField: "etat",
+      statusMap: {
+        FLUIDE: "freeFlow",
+        DENSE: "heavy",
+        EMBOUTEILLE: "congested",
+        INCONNU: "unknown",
+      },
+      updatedField: "mdate",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 1200,
+    license: "etalab-2.0",
+    licenseUrl: "https://www.etalab.gouv.fr/licence-ouverte-open-licence",
+    attribution: "Bordeaux Métropole",
+    country: "FR",
+    privacyUrl: "https://opendata.bordeaux-metropole.fr/pages/donnees-personnelles/",
+  },
 ]

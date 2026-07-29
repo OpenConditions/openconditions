@@ -49,6 +49,7 @@ export type SourceFormat =
   | "miv"
   | "fdt"
   | "hk-td"
+  | "opendatasoft"
   | "gtfs-rt"
   | "native"
   | "crowd";

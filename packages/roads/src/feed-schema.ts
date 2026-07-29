@@ -26,6 +26,18 @@ const geoJsonMappingSchema = z
   })
   .strict();
 
+/** Declarative field mapping for the OpenDataSoft flow parser — mirrors OdsFlowMapping in types.ts. */
+const odsFlowMappingSchema = z
+  .object({
+    idField: z.string(),
+    speedField: z.string().optional(),
+    freeFlowField: z.string().optional(),
+    statusField: z.string().optional(),
+    statusMap: z.record(z.string(), z.string()).optional(),
+    updatedField: z.string().optional(),
+  })
+  .strict();
+
 /** Matches a well-formed feed id: dash-joined lower-case alphanumeric tokens. */
 const FEED_ID_SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
@@ -55,6 +67,7 @@ export const roadFeedSchema = z
     // Derived — accept a serialized id round-trip, but always re-derive below.
     id: z.string().min(1).optional(),
     geojson: geoJsonMappingSchema.optional(),
+    odsFlow: odsFlowMappingSchema.optional(),
     posListLonLat: z.boolean().optional(),
     siteTable: z
       .object({

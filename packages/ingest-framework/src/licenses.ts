@@ -51,6 +51,15 @@ export const LICENSES: Record<string, LicenseInfo> = Object.fromEntries([
     commercialOk: true,
   }),
   L({
+    id: "ODbL-1.0",
+    name: "Open Data Commons Open Database License 1.0",
+    spdxId: "ODbL-1.0",
+    url: "https://opendatacommons.org/licenses/odbl/1-0/",
+    attributionRequired: true,
+    shareAlike: true,
+    commercialOk: true,
+  }),
+  L({
     id: "dl-de/zero-2-0",
     name: "Datenlizenz Deutschland – Zero – 2.0",
     url: "https://www.govdata.de/dl-de/zero-2-0",

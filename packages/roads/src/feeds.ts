@@ -31,7 +31,8 @@ import { parseLtaSpeedBands } from "./flow-lta-speedbands.js";
 import { parseMivFlow } from "./miv.js";
 import { parseTurinFlow } from "./flow-turin.js";
 import { parseHkRawFlow } from "./hk.js";
-import type { SourceDescriptor } from "./types.js";
+import { parseOpendatasoftFlow } from "./flow-opendatasoft.js";
+import type { OdsFlowMapping, SourceDescriptor } from "./types.js";
 
 // FeedAuth now lives in @openconditions/ingest-framework; re-exported here so
 // existing consumers of @openconditions/roads are unaffected.
@@ -79,6 +80,8 @@ export type FeedSource = FeedSourceBase & {
   };
   /** Field mapping for `format: "geojson"` feeds (passed to the generic reader). */
   geojson?: GeoJsonMapping;
+  /** Field mapping for `format: "opendatasoft"` flow feeds (passed to the generic reader). */
+  odsFlow?: OdsFlowMapping;
   /**
    * For `datex2` feeds whose GML `posList` is "lon lat" rather than the WGS84
    * "lat lon" default (e.g. Trafikverket). Passed through to the parser.
@@ -172,6 +175,7 @@ export function flowParserFor(format: SourceFormat): FlowParserFn {
   if (format === "miv") return parseMivFlow;
   if (format === "fdt") return parseTurinFlow;
   if (format === "hk-td") return parseHkRawFlow;
+  if (format === "opendatasoft") return parseOpendatasoftFlow;
   throw new Error(`No flow parser registered for format: ${format}`);
 }
 
@@ -187,6 +191,7 @@ export function feedToSourceDescriptor(feed: FeedSource): SourceDescriptor {
     license: feed.license,
     licenseUrl: feed.licenseUrl,
     ...(feed.geojson ? { geojson: feed.geojson } : {}),
+    ...(feed.odsFlow ? { odsFlow: feed.odsFlow } : {}),
     ...(feed.posListLonLat ? { posListLonLat: true } : {}),
   };
 }
