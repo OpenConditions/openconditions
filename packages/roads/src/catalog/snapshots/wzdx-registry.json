@@ -168,20 +168,6 @@
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
-    "id": "wzdx-new-jersey",
-    "name": "WZDx — New Jersey Institute of Technology (new jersey)",
-    "operator": "wzdx",
-    "format": "wzdx",
-    "url": "https://smartworkzones.njit.edu/nj/wzdx",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attribution": "New Jersey Institute of Technology",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
-  },
-  {
     "id": "wzdx-kentucky",
     "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
     "operator": "wzdx",
@@ -192,6 +178,20 @@
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Kentucky Transportation Cabinet",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
+  },
+  {
+    "id": "wzdx-new-jersey",
+    "name": "WZDx — New Jersey Institute of Technology (new jersey)",
+    "operator": "wzdx",
+    "format": "wzdx",
+    "url": "https://smartworkzones.njit.edu/nj/wzdx",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "New Jersey Institute of Technology",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
@@ -332,10 +332,10 @@
   },
   {
     "id": "wzdx-oregon",
-    "name": "WZDx — Oregon DOT (Oregon)",
+    "name": "WZDx — Oregon DOT (oregon)",
     "operator": "wzdx",
     "format": "wzdx",
-    "url": "https://apiportal.odot.state.or.us/",
+    "url": "https://api.odot.state.or.us/WZDx/v4.0/Workzones",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "CC0-1.0",
@@ -348,9 +348,23 @@
     },
     "setup": {
       "WZDX_OREGON_API_KEY": {
-        "title": "WZDx — Oregon DOT (Oregon) — API key",
+        "title": "WZDx — Oregon DOT (oregon) — API key",
         "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one."
       }
     }
+  },
+  {
+    "id": "wzdx-mississippi",
+    "name": "WZDx — Mississippi DOT (mississippi)",
+    "operator": "wzdx",
+    "format": "wzdx",
+    "url": "https://api.mdottraffic.com/prod/v3/data/wzdx",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Mississippi DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   }
 ]
