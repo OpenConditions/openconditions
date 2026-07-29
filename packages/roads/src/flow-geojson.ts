@@ -13,7 +13,7 @@ function num(raw: unknown): number | undefined {
 /** First usable [lon,lat] LineString or Point from a GeoJSON geometry, else null. */
 function toFlowGeometry(geom: unknown): FlowGeometry | null {
   if (!geom || typeof geom !== "object") return null;
-  const g = geom as { type?: unknown; coordinates?: unknown };
+  const g = geom as { type?: unknown; coordinates?: unknown; geometries?: unknown };
   if (g.type === "Point" && Array.isArray(g.coordinates) && g.coordinates.length >= 2) {
     return {
       type: "Point",
@@ -23,8 +23,8 @@ function toFlowGeometry(geom: unknown): FlowGeometry | null {
   if (g.type === "LineString" && Array.isArray(g.coordinates) && g.coordinates.length >= 2) {
     return { type: "LineString", coordinates: g.coordinates as [number, number][] } as LineString;
   }
-  // Some ODS segment feeds publish MultiLineString; use the first member line so
-  // each observation carries a plain LineString (the model constraint).
+  // Some segment feeds publish MultiLineString; use the first member line so each
+  // observation carries a plain LineString (the model constraint).
   if (
     g.type === "MultiLineString" &&
     Array.isArray(g.coordinates) &&
@@ -36,24 +36,31 @@ function toFlowGeometry(geom: unknown): FlowGeometry | null {
       coordinates: g.coordinates[0] as [number, number][],
     } as LineString;
   }
+  // A GeometryCollection (some government GeoJSON, e.g. an older Victoria layout)
+  // wraps member geometries; recurse into the first usable one.
+  if (g.type === "GeometryCollection" && Array.isArray(g.geometries)) {
+    for (const member of g.geometries) {
+      const resolved = toFlowGeometry(member);
+      if (resolved) return resolved;
+    }
+  }
   return null;
 }
 
 /**
- * Parse an OpenDataSoft `exports/geojson` traffic feed into RoadFlow
- * measurements, one per road segment. Driven entirely by the feed's `odsFlow`
- * field mapping so a single parser serves every ODS traffic dataset (Rennes'
- * per-segment average speed + free-flow, Bordeaux' / Valencia' categorical
- * status, …). Segments with no resolvable geometry, or with neither a speed nor
- * a resolvable level-of-service, are skipped. los, speed-ratio, free-flow
- * provenance and the derived congestion events are all produced by the shared
+ * Parse a plain GeoJSON `FeatureCollection` traffic feed into RoadFlow
+ * measurements, one per road segment. Driven entirely by the feed's `flowMap`
+ * field mapping, so a single parser serves every feed that publishes features
+ * with inline geometry plus flat `properties` carrying a per-segment average
+ * speed and/or categorical traffic status — OpenDataSoft exports (Rennes,
+ * Bordeaux) and Azure-APIM GeoJSON (Victoria Freeway Travel Time) alike.
+ * Segments with no resolvable geometry, or with neither a speed nor a resolvable
+ * level-of-service, are skipped. los, speed-ratio, free-flow provenance and the
+ * derived congestion events are all produced by the shared
  * {@link buildMeasuredSiteFlow}; only the sourceFormat is restamped here.
  */
-export function parseOpendatasoftFlow(
-  input: string | Buffer,
-  src: SourceDescriptor
-): FlowParseResult {
-  const mapping = src.odsFlow;
+export function parseGeojsonFlow(input: string | Buffer, src: SourceDescriptor): FlowParseResult {
+  const mapping = src.flowMap;
   if (!mapping) return { flows: [], events: [], failed: true };
 
   let payload: unknown;
@@ -85,7 +92,7 @@ export function parseOpendatasoftFlow(
       if (!geom) continue;
 
       const rawId = props[mapping.idField];
-      const siteId = rawId != null && rawId !== "" ? String(rawId) : `ods-${flows.length + 1}`;
+      const siteId = rawId != null && rawId !== "" ? String(rawId) : `feat-${flows.length + 1}`;
 
       const rawSpeed = mapping.speedField ? num(props[mapping.speedField]) : undefined;
       // Reject no-data sentinels (negatives) and sensor-glitch readings, keeping a
@@ -121,10 +128,10 @@ export function parseOpendatasoftFlow(
         now
       );
       if (!built) continue;
-      flows.push({ ...built.flow, sourceFormat: "opendatasoft" });
-      if (built.event) events.push({ ...built.event, sourceFormat: "opendatasoft" });
+      flows.push({ ...built.flow, sourceFormat: "geojson-flow" });
+      if (built.event) events.push({ ...built.event, sourceFormat: "geojson-flow" });
     } catch (err) {
-      console.warn("[opendatasoft-flow] skipped malformed feature:", err);
+      console.warn("[geojson-flow] skipped malformed feature:", err);
     }
   }
 

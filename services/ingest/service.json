@@ -144,6 +144,23 @@
           }
         }
       },
+      "AU_VIC_VICROADS_API_KEY": {
+        "type": "string",
+        "title": "Transport Victoria Open Data key (Freeway Travel Time)",
+        "description": "Ocp-Apim-Subscription-Key header value from the Transport Victoria Open Data Portal.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://opendata.transport.vic.gov.au/",
+          "urlLabel": "Transport Victoria Open Data Portal",
+          "steps": [
+            "Create an account at opendata.transport.vic.gov.au (email verification + authenticator 2FA).",
+            "Open My Account → Profile → API tokens; the key is generated there.",
+            "Copy the key and set it as the Ocp-Apim-Subscription-Key value."
+          ],
+          "cost": "Free",
+          "notes": "CC-BY-4.0 (Freeway Travel Time — NOT the CC-BY-NC Bluetooth feed); attribution \"Department of Transport and Planning (Victoria)\". Rate limit 5 req/min."
+        }
+      },
       "MOBILITHEK_CERT": {
         "type": "string",
         "title": "Mobilithek — client certificate (PEM)",

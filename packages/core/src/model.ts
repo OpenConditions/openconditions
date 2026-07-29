@@ -49,7 +49,7 @@ export type SourceFormat =
   | "miv"
   | "fdt"
   | "hk-td"
-  | "opendatasoft"
+  | "geojson-flow"
   | "gtfs-rt"
   | "native"
   | "crowd";

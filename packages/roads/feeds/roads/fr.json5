@@ -37,13 +37,13 @@
   {
     operator: "rennesmetropole",
     name: "État du trafic temps réel (Rennes Métropole)",
-    format: "opendatasoft",
+    format: "geojson-flow",
     produces: "flow",
     // OpenDataSoft export delivers every segment in one call (no pagination),
     // each feature carrying an inline LineString plus a measured average speed,
     // the posted max speed (native free-flow) and a DATEX traffic status.
     url: "https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/etat-du-trafic-en-temps-reel/exports/geojson?limit=-1",
-    odsFlow: {
+    flowMap: {
       idField: "predefinedlocationreference",
       speedField: "averagevehiclespeed",
       freeFlowField: "vitesse_maxi",
@@ -61,13 +61,13 @@
   {
     operator: "bordeauxmetropole",
     name: "État du trafic temps réel (Bordeaux Métropole)",
-    format: "opendatasoft",
+    format: "geojson-flow",
     produces: "flow",
     // Categorical congestion status only (no measured speed): FLUIDE / DENSE /
     // EMBOUTEILLE, mapped to DATEX status tokens the shared flow builder derives
     // level-of-service from.
     url: "https://opendata.bordeaux-metropole.fr/api/explore/v2.1/catalog/datasets/ci_trafi_l/exports/geojson?limit=-1",
-    odsFlow: {
+    flowMap: {
       idField: "ident",
       statusField: "etat",
       statusMap: {

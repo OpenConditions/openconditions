@@ -153,4 +153,54 @@
       },
     },
   },
+  {
+    subdivision: "vic",
+    operator: "vicroads",
+    name: "Freeway Travel Time (Victoria)",
+    format: "geojson-flow",
+    produces: "flow",
+    // GeoJSON FeatureCollection: one LineString feature per freeway segment with
+    // a measured averageSpeed (km/h) and a categorical `condition`. Source
+    // refreshes every 30s; the portal caps callers at 5 req/min, so poll ~60s.
+    // NOTE: this is the CC-BY-4.0 Freeway feed, NOT the CC-BY-NC Bluetooth one.
+    url: "https://api.opendata.transport.vic.gov.au/opendata/roads/traffic/freeway-travel-time/v1/traffic",
+    auth: {
+      kind: "header-key",
+      header: "Ocp-Apim-Subscription-Key",
+      envVar: "AU_VIC_VICROADS_API_KEY",
+    },
+    flowMap: {
+      idField: "id",
+      speedField: "averageSpeed",
+      statusField: "condition",
+      statusMap: {
+        Light: "freeFlow",
+        Medium: "heavy",
+        Heavy: "congested",
+      },
+      updatedField: "publishedTime",
+    },
+    cadenceSec: 60,
+    freshnessWindowSec: 300,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+    attribution: "Department of Transport and Planning (Victoria)",
+    country: "AU",
+    privacyUrl: "https://www.vic.gov.au/privacy",
+    setup: {
+      AU_VIC_VICROADS_API_KEY: {
+        title: "Transport Victoria Open Data key (Freeway Travel Time)",
+        description: "Ocp-Apim-Subscription-Key header value from the Transport Victoria Open Data Portal.",
+        url: "https://opendata.transport.vic.gov.au/",
+        urlLabel: "Transport Victoria Open Data Portal",
+        steps: [
+          "Create an account at opendata.transport.vic.gov.au (email verification + authenticator 2FA).",
+          "Open My Account → Profile → API tokens; the key is generated there.",
+          "Copy the key and set it as the Ocp-Apim-Subscription-Key value.",
+        ],
+        cost: "Free",
+        notes: 'CC-BY-4.0 (Freeway Travel Time — NOT the CC-BY-NC Bluetooth feed); attribution "Department of Transport and Planning (Victoria)". Rate limit 5 req/min.',
+      },
+    },
+  },
 ]

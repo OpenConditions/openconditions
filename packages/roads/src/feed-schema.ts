@@ -26,8 +26,8 @@ const geoJsonMappingSchema = z
   })
   .strict();
 
-/** Declarative field mapping for the OpenDataSoft flow parser — mirrors OdsFlowMapping in types.ts. */
-const odsFlowMappingSchema = z
+/** Declarative field mapping for the GeoJSON flow parser — mirrors GeojsonFlowMapping in types.ts. */
+const geojsonFlowMappingSchema = z
   .object({
     idField: z.string(),
     speedField: z.string().optional(),
@@ -67,7 +67,7 @@ export const roadFeedSchema = z
     // Derived — accept a serialized id round-trip, but always re-derive below.
     id: z.string().min(1).optional(),
     geojson: geoJsonMappingSchema.optional(),
-    odsFlow: odsFlowMappingSchema.optional(),
+    flowMap: geojsonFlowMappingSchema.optional(),
     posListLonLat: z.boolean().optional(),
     siteTable: z
       .object({

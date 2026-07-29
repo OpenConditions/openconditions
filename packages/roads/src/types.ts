@@ -1,13 +1,14 @@
 import type { GeoJsonMapping } from "./model.js";
 
 /**
- * Field mapping for the generic OpenDataSoft flow parser. Drives one parser
- * across every ODS `exports/geojson` traffic feed (Rennes, Bordeaux, Valencia …)
- * whose features carry a per-segment average speed and/or a categorical traffic
- * status in flat `properties`. Only `idField` is required; a feed supplies
- * whichever of the value fields it publishes.
+ * Field mapping for the generic GeoJSON flow parser. Drives one parser across
+ * every `FeatureCollection` traffic feed (OpenDataSoft exports for Rennes /
+ * Bordeaux, Azure-APIM GeoJSON for Victoria, …) whose features carry a
+ * per-segment average speed and/or a categorical traffic status in flat
+ * `properties`. Only `idField` is required; a feed supplies whichever of the
+ * value fields it publishes.
  */
-export interface OdsFlowMapping {
+export interface GeojsonFlowMapping {
   /** Stable per-record id, e.g. "predefinedlocationreference" or "ident". */
   idField: string;
   /** Average vehicle speed in km/h, when the feed measures one. */
@@ -38,8 +39,8 @@ export interface SourceDescriptor {
   licenseUrl?: string;
   /** Field mapping for the generic GeoJSON parser (only set for geojson feeds). */
   geojson?: GeoJsonMapping;
-  /** Field mapping for the OpenDataSoft flow parser (only set for opendatasoft feeds). */
-  odsFlow?: OdsFlowMapping;
+  /** Field mapping for the GeoJSON flow parser (only set for geojson-flow feeds). */
+  flowMap?: GeojsonFlowMapping;
   /**
    * The DATEX feed publishes GML `posList` coordinates in "lon lat" order rather
    * than the WGS84/DATEX "lat lon" default (e.g. Trafikverket). Only affects

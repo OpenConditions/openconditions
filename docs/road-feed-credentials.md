@@ -8,6 +8,7 @@
 | ASFINAG events (Austria) | `AT_ASFINAG_USERNAME`, `AT_ASFINAG_PASSWORD` | CC-BY-4.0 | [ASFINAG content portal](https://contentportal.asfinag.at/) |
 | Live Traffic NSW (New South Wales) | `AU_NSW_LIVETRAFFIC_API_KEY` | CC-BY-4.0 | [Register at Transport NSW Open Data](https://opendata.transport.nsw.gov.au/data/user/register) |
 | QLDTraffic (Queensland) | `AU_QLD_TRAFFIC_API_KEY` | CC-BY-4.0 | [QLDTraffic](https://www.qldtraffic.qld.gov.au/) |
+| Freeway Travel Time (Victoria) | `AU_VIC_VICROADS_API_KEY` | CC-BY-4.0 | [Transport Victoria Open Data Portal](https://opendata.transport.vic.gov.au/) |
 | LVZ.NRW (Nordrhein-Westfalen) via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_VERKEHR_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | NRW.Mobidrom bundled roadworks via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID` | CC-BY-SA-4.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
