@@ -6,6 +6,11 @@
     url: [
       "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=TRAFFIC_ANNOUNCEMENT",
       "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=ROAD_WORK",
+      "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=false&situationType=WEIGHT_RESTRICTION",
+      // Exempted transports are located by municipality, not road address, so
+      // this is the one family that needs the area geometry — requested without
+      // it, every record arrives geometry-less and is dropped.
+      "https://tie.digitraffic.fi/api/traffic-message/v1/messages?inactiveHours=0&includeAreaGeometry=true&situationType=EXEMPTED_TRANSPORT",
     ],
     cadenceSec: 120,
     freshnessWindowSec: 600,

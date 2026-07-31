@@ -136,6 +136,54 @@ describe("fetchAll — offset pagination", () => {
   });
 });
 
+describe("fetchAll — Open511 offset pagination", () => {
+  /**
+   * DriveBC's shape: `{ events: [...] }` addressed by `offset`, capped at the
+   * requested `limit`. Without pagination the endpoint's own default page is 50
+   * of the ~250 events it holds.
+   */
+  function pagedOpen511Fetch(
+    pageRows: number[],
+    pageSize = 500
+  ): { fetchFn: typeof fetch; calls: string[] } {
+    const calls: string[] = [];
+    const fetchFn = (async (input: string | URL | Request) => {
+      const url = String(input);
+      calls.push(url);
+      const offset = Number(new URL(url).searchParams.get("offset") ?? "0");
+      const n = pageRows[offset / pageSize] ?? 0;
+      const events = Array.from({ length: n }, (_, i) => ({ id: `drivebc/${offset + i}` }));
+      return new Response(JSON.stringify({ events, pagination: { offset } }), { status: 200 });
+    }) as unknown as typeof fetch;
+    return { fetchFn, calls };
+  }
+
+  it("follows `offset` across pages and preserves every event", async () => {
+    const { fetchFn, calls } = pagedOpen511Fetch([500, 261]);
+    const bufs = await fetchBuffers(
+      makeFeed({
+        id: "ca-bc-drivebc",
+        format: "open511",
+        url: "https://api.open511.gov.bc.ca/events?format=json&limit=500",
+        pagination: { skipParam: "offset", pageSize: 500, recordsPath: "events" },
+      }),
+      fetchFn
+    );
+
+    expect(bufs).toHaveLength(2);
+    const total = bufs.reduce(
+      (sum, b) => sum + (JSON.parse(b.toString("utf8")).events as unknown[]).length,
+      0
+    );
+    expect(total).toBe(761);
+    expect(calls).toHaveLength(2);
+    expect(calls[0]).toContain("offset=0");
+    expect(calls[1]).toContain("offset=500");
+    // The upstream `limit` survives the offset rewrite.
+    for (const c of calls) expect(c).toContain("limit=500");
+  });
+});
+
 describe("fetchAll — catalog fan-out", () => {
   afterEach(() => __resetCatalogResolvers());
 

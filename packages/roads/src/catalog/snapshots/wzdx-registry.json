@@ -98,6 +98,34 @@
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
+    "id": "wzdx-wisconsin",
+    "name": "WZDx — Wisconsin DOT (wisconsin)",
+    "operator": "wzdx",
+    "format": "wzdx",
+    "url": "https://511wi.gov/api/wzdx",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Wisconsin DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
+  },
+  {
+    "id": "wzdx-missouri",
+    "name": "WZDx — Missouri DOT (missouri)",
+    "operator": "wzdx",
+    "format": "wzdx",
+    "url": "https://traveler.modot.org/timconfig/feed/desktop/mo_wzdx.json",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Missouri DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
+  },
+  {
     "id": "wzdx-new-mexico",
     "name": "WZDx — New Mexico DOT (new mexico)",
     "operator": "wzdx",
@@ -154,7 +182,7 @@
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
-    "id": "wzdx-missouri",
+    "id": "wzdx-missouri-2",
     "name": "WZDx — St. Charles County (missouri)",
     "operator": "wzdx",
     "format": "wzdx",

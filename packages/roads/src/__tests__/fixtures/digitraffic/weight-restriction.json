@@ -1,0 +1,91 @@
+{
+  "type": "FeatureCollection",
+  "dataUpdatedTime": "2026-06-18T06:20:41Z",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [23.014359, 61.419857],
+            [23.014318, 61.419929],
+            [23.014264, 61.420031],
+            [23.014248, 61.420133]
+          ]
+        ]
+      },
+      "properties": {
+        "situationId": "GUID50451433",
+        "situationType": "WEIGHT_RESTRICTION",
+        "trafficAnnouncementType": null,
+        "version": 1,
+        "releaseTime": "2025-08-18T07:28:26.713Z",
+        "versionTime": "2025-08-18T07:28:26.695Z",
+        "announcements": [
+          {
+            "language": "FI",
+            "title": "Tie 12981, Sastamala. Painorajoitus. ",
+            "location": {
+              "countryCode": 6,
+              "locationTableNumber": 17,
+              "locationTableVersion": "1.11.44",
+              "description": "Tie 12981 välillä Heinoo - Karkku, Sastamala.\nTarkempi paikka: Välillä Riippiläntien tasoristeys - Karkku."
+            },
+            "locationDetails": {
+              "roadAddressLocation": {
+                "primaryPoint": {
+                  "municipality": "Sastamala",
+                  "province": "Pirkanmaa",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 12981,
+                    "roadSection": 1,
+                    "distance": 2230
+                  },
+                  "alertCLocation": {
+                    "locationCode": 42745,
+                    "name": "Riippiläntien tasoristeys"
+                  }
+                },
+                "secondaryPoint": {
+                  "municipality": "Sastamala",
+                  "province": "Pirkanmaa",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 12981,
+                    "roadSection": 1,
+                    "distance": 5600
+                  },
+                  "alertCLocation": {
+                    "locationCode": 25388,
+                    "name": "Karkku"
+                  }
+                },
+                "direction": "UNKNOWN"
+              }
+            },
+            "features": [
+              {
+                "name": "Ajoneuvon suurin sallittu massa",
+                "quantity": 12.0,
+                "unit": "t"
+              }
+            ],
+            "roadWorkPhases": [],
+            "timeAndDuration": {
+              "startTime": "2025-08-18T07:24:23.872Z"
+            },
+            "additionalInformation": "Liikenne- ja kelitiedot verkossa: https://liikennetilanne.fintraffic.fi/",
+            "sender": "Fintraffic Tieliikennekeskus Tampere"
+          }
+        ],
+        "contact": {
+          "phone": "02002100",
+          "email": "tampere.liikennekeskus@fintraffic.fi"
+        },
+        "dataUpdatedTime": "2025-08-18T07:28:28Z"
+      }
+    }
+  ]
+}

@@ -103,3 +103,59 @@ describe("parseIbi511", () => {
     expect(parseIbi511(JSON.stringify({ not: "an array" }), SRC)).toEqual([]);
   });
 });
+
+describe("parseIbi511 — Ontario construction projects", () => {
+  const CONSTRUCTION_SRC: SourceDescriptor = { ...SRC, id: "ca-on-511-construction" };
+
+  // Verbatim from one live /constructionprojects record; the endpoint returns a
+  // bare array whose field set is a subset of /event's plus the recurrence and
+  // link fields, which ride along in sourceRaw.
+  const RECORD = {
+    ID: 395,
+    SourceId: "2022-2017-809023677",
+    Organization: "MTO-constructions",
+    RoadwayName: "400",
+    DirectionOfTravel: "N/A",
+    Description: "Highway 400 - South of King Road to north of Canal Road",
+    Reported: 1652241600,
+    LastUpdated: 1784846059,
+    StartDate: 1652241600,
+    PlannedEndDate: 1782792000,
+    LanesAffected: "No Data",
+    Latitude: 43.9205568869433,
+    Longitude: -79.5660099009156,
+    LatitudeSecondary: null,
+    LongitudeSecondary: null,
+    EventType: "roadwork",
+    IsFullClosure: false,
+    Comment: null,
+    EncodedPolyline: "ofakGpfsdNoUjDkAPiIlA_LbB{u@~KoG~@}KbBkBVqWzD_C^cFr@gTbD",
+    Recurrence: "",
+    RecurrenceSchedules: "",
+    LinkId: "29602591",
+  };
+
+  it("maps a construction project to planned roadworks with a decoded LineString", () => {
+    const [ev] = parseIbi511([RECORD], CONSTRUCTION_SRC);
+    expect(ev).toBeDefined();
+    expect(ev!.id).toBe("ca-on-511-construction:395");
+    expect(ev!.type).toBe("roadworks");
+    expect(ev!.category).toBe("planned");
+    expect(ev!.isPlanned).toBe(true);
+    expect(ev!.geometry.type).toBe("LineString");
+    expect((ev!.geometry as { coordinates: unknown[] }).coordinates.length).toBeGreaterThan(1);
+    expect(ev!.roads?.map((r) => r.name)).toContain("400");
+  });
+
+  it("reads the epoch-seconds validity window and update time", () => {
+    const [ev] = parseIbi511([RECORD], CONSTRUCTION_SRC);
+    expect(ev!.validFrom).toBe(new Date(1652241600 * 1000).toISOString());
+    expect(ev!.validTo).toBe(new Date(1782792000 * 1000).toISOString());
+    expect(ev!.dataUpdatedAt).toBe(new Date(1784846059 * 1000).toISOString());
+  });
+
+  it("keeps the construction-only recurrence fields in sourceRaw", () => {
+    const [ev] = parseIbi511([{ ...RECORD, Recurrence: "Weekly" }], CONSTRUCTION_SRC);
+    expect(ev!.sourceRaw).toMatchObject({ Recurrence: "Weekly", LinkId: "29602591" });
+  });
+});

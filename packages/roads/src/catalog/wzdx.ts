@@ -82,8 +82,8 @@ function needsApiKey(v: unknown): boolean {
 
 /**
  * Maps each Socrata WZDx registry row to a full feed descriptor for feeds the
- * WZDx v4.x parser understands: active, GeoJSON-format, version 4.x. Older
- * versions and the CWZ standard use a different shape and are skipped. Deduped by
+ * WZDx v4.x parser understands: active, version 4.x, labeled geojson or json.
+ * Older versions and the CWZ standard use a different shape and are skipped. Deduped by
  * URL and by generated id. Rows whose URL is an unfilled key placeholder are
  * dropped (they can only 401 without a key we don't hold).
  */
@@ -101,7 +101,11 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
 
   for (const row of rows as WzdxRegistryRow[]) {
     if (!isActive(row.active)) continue;
-    if (str(row.format).toLowerCase() !== "geojson") continue;
+    // Several publishers (Wisconsin, statewide Missouri) label an ordinary WZDx
+    // FeatureCollection "json" rather than "geojson". The version gate is what
+    // actually decides whether the v4 parser can read the body.
+    const fmt = str(row.format).toLowerCase();
+    if (fmt !== "geojson" && fmt !== "json") continue;
     if (!str(row.version).startsWith("4")) continue;
     const url = extractUrl(row.url);
     if (!url) continue;

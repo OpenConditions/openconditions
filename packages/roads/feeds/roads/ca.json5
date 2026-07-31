@@ -4,7 +4,10 @@
     operator: "drivebc",
     name: "DriveBC (British Columbia)",
     format: "open511",
-    url: "https://api.open511.gov.bc.ca/events?format=json",
+    url: "https://api.open511.gov.bc.ca/events?format=json&limit=500",
+    // The endpoint's own default page is 50 rows of the ~250 it holds, so an
+    // unpaginated fetch silently dropped four fifths of British Columbia.
+    pagination: { skipParam: "offset", pageSize: 500, recordsPath: "events" },
     cadenceSec: 120,
     freshnessWindowSec: 600,
     license: "OGL-BC",
@@ -18,6 +21,24 @@
     name: "Ontario 511 (Canada)",
     format: "ibi511",
     url: "https://511on.ca/api/v2/get/event?format=json",
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "OGL-ON",
+    licenseUrl: "https://www.ontario.ca/page/open-government-licence-ontario",
+    attribution: "Contains information licensed under the Open Government Licence – Ontario",
+    country: "CA",
+    privacyUrl: "https://www.ontario.ca/page/privacy-statement",
+  },
+  {
+    subdivision: "on",
+    operator: "511",
+    // Separate from the events feed: the two datasets share no ids (146
+    // construction projects vs. 623 events, disjoint) and are worth monitoring
+    // independently.
+    stream: "construction",
+    name: "Ontario 511 construction projects (Canada)",
+    format: "ibi511",
+    url: "https://511on.ca/api/v2/get/constructionprojects?format=json",
     cadenceSec: 300,
     freshnessWindowSec: 900,
     license: "OGL-ON",

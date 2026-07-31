@@ -20,13 +20,16 @@ describe("wzdxRegistryResolver", () => {
     expect(wzdxRegistryResolver.snapshotPath).toMatch(/snapshots[/\\]wzdx-registry\.json$/);
   });
 
-  it("maps active / geojson / v4.x rows to full wzdx feed descriptors", async () => {
+  it("maps active v4.x rows labeled geojson OR json to full wzdx feed descriptors", async () => {
     const feeds = await wzdxRegistryResolver.resolve(jsonResponder(registry));
     const urls = feeds.map((f) => f.url).sort();
     expect(urls).toEqual(
       [
         "https://alpha.example/api/wzdx",
         "https://charlie.example/api/wzdx",
+        // Wisconsin and statewide Missouri label an ordinary WZDx
+        // FeatureCollection "json" rather than "geojson".
+        "https://delta.example/api/json",
         "https://hotel.example/api/wzdx-string",
         "https://india.example/api/wzdx",
       ].sort()
@@ -40,12 +43,30 @@ describe("wzdxRegistryResolver", () => {
     expect(new Set(feeds.map((f) => f.id)).size).toBe(feeds.length); // unique ids
   });
 
-  it("drops inactive / non-geojson / non-v4 and empty/placeholder-key rows", async () => {
+  it("drops inactive / non-v4 / other-format and empty/placeholder-key rows", async () => {
     const feeds = await wzdxRegistryResolver.resolve(jsonResponder(registry));
     const urls = feeds.map((f) => f.url);
-    expect(urls).not.toContain("https://delta.example/api/json");
     expect(urls).not.toContain("https://echo.example/api/wzdx");
     expect(urls).not.toContain("https://bravo.example/api/wzdx?apiKey=");
+    // CWZ 1.0 and WZDx 3.1 are different shapes, not different labels.
+    expect(urls).not.toContain("https://foxtrot.example/api/cwz");
+    expect(urls).not.toContain("https://golf.example/api/v3");
+  });
+
+  it("still rejects a format that is neither geojson nor json", async () => {
+    const feeds = await wzdxRegistryResolver.resolve(
+      jsonResponder([
+        {
+          feedname: "xml-dot",
+          state: "XX",
+          active: "true",
+          format: "xml",
+          version: "4.1",
+          url: { url: "https://xml.example/api/wzdx" },
+        },
+      ])
+    );
+    expect(feeds).toEqual([]);
   });
 
   it("scaffolds a setup guide from needapikey + apikeyurl", async () => {

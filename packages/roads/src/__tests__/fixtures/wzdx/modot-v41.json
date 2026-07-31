@@ -1,0 +1,79 @@
+{
+  "type": "FeatureCollection",
+  "feed_info": {
+    "publisher": "Missouri Department of Transportation",
+    "version": "4.1",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "data_sources": [
+      {
+        "data_source_id": "tms_work_zone",
+        "organization_name": "Missouri Department of Transportation",
+        "update_date": "2026-07-31T08:21:22.3048542Z",
+        "update_frequency": 180
+      }
+    ],
+    "update_date": "2026-07-31T08:21:22.3048551Z",
+    "update_frequency": 180
+  },
+  "features": [
+    {
+      "id": "552055",
+      "type": "Feature",
+      "properties": {
+        "start_date": "2026-05-29T05:00:00.0000000Z",
+        "end_date": "2026-08-31T05:00:00.0000000Z",
+        "is_start_date_verified": false,
+        "is_end_date_verified": false,
+        "is_start_position_verified": false,
+        "is_end_position_verified": false,
+        "location_method": "unknown",
+        "vehicle_impact": "all-lanes-closed",
+        "core_details": {
+          "event_type": "work-zone",
+          "data_source_id": "tms_work_zone",
+          "road_names": ["K", "RT K"],
+          "direction": "westbound",
+          "description": "BRIDGE RECONSTRUCTION"
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-91.5093105941997, 38.8068570652998],
+          [-91.5094716364675, 38.8070516214224],
+          [-91.5095895314747, 38.8071634770587]
+        ]
+      }
+    },
+    {
+      "id": "549748",
+      "type": "Feature",
+      "properties": {
+        "start_date": "2026-04-28T05:00:00.0000000Z",
+        "end_date": "2026-08-31T05:00:00.0000000Z",
+        "is_start_date_verified": false,
+        "is_end_date_verified": false,
+        "is_start_position_verified": false,
+        "is_end_position_verified": false,
+        "location_method": "unknown",
+        "vehicle_impact": "some-lanes-closed",
+        "reduced_speed_limit_kph": 80.0,
+        "core_details": {
+          "event_type": "work-zone",
+          "data_source_id": "tms_work_zone",
+          "road_names": ["60", "US 60"],
+          "direction": "westbound",
+          "description": "NEW PAVEMENT CONSTRUCTION"
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-94.4166541681202, 36.8401259069098],
+          [-94.4203780775314, 36.8399524479573],
+          [-94.4228517565996, 36.8397923238643]
+        ]
+      }
+    }
+  ]
+}

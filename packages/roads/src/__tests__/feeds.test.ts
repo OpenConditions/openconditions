@@ -62,11 +62,38 @@ describe("FEED_SOURCES", () => {
     expect(feed!.license).toBe("OGL-BC");
   });
 
+  it("paginates drivebc — the endpoint's default page is 50 of ~250 events", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "ca-bc-drivebc")!;
+    expect(feed.url).toContain("limit=500");
+    expect(feed.pagination).toEqual({
+      skipParam: "offset",
+      pageSize: 500,
+      recordsPath: "events",
+    });
+  });
+
   it("includes digitraffic-fi with format digitraffic and license CC-BY-4.0", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "fi-digitraffic");
     expect(feed).toBeDefined();
     expect(feed!.format).toBe("digitraffic");
     expect(feed!.license).toBe("CC-BY-4.0");
+  });
+
+  it("requests all four digitraffic situation families", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "fi-digitraffic")!;
+    const urls = (Array.isArray(feed.url) ? feed.url : [feed.url]).map(String);
+    const familyOf = (u: string) => new URL(u).searchParams.get("situationType");
+    expect(urls.map(familyOf).sort()).toEqual([
+      "EXEMPTED_TRANSPORT",
+      "ROAD_WORK",
+      "TRAFFIC_ANNOUNCEMENT",
+      "WEIGHT_RESTRICTION",
+    ]);
+    // Only the municipality-located family asks for area geometry.
+    for (const u of urls) {
+      const wantsArea = new URL(u).searchParams.get("includeAreaGeometry") === "true";
+      expect(wantsArea).toBe(familyOf(u) === "EXEMPTED_TRANSPORT");
+    }
   });
 
   it("includes autobahn-de resolving all motorways via the catalog (no static url)", () => {
@@ -421,8 +448,8 @@ describe("FEED_SOURCES", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("loads every feed from the data files (all 73 migrated)", () => {
-    expect(FEED_SOURCES.length).toBe(73);
+  it("loads every feed from the data files (all 74 migrated)", () => {
+    expect(FEED_SOURCES.length).toBe(74);
     expect(new Set(FEED_SOURCES.map((f) => f.id)).size).toBe(FEED_SOURCES.length);
   });
 

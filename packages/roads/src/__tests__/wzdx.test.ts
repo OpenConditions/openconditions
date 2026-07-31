@@ -587,3 +587,35 @@ describe("parseWzdx — deeper field extraction", () => {
     ]);
   });
 });
+
+describe("parseWzdx — statewide Missouri v4.1 feed (registry format label 'json')", () => {
+  const MODOT = join(import.meta.dirname, "fixtures/wzdx/modot-v41.json");
+  const MODOT_SOURCE = { ...WZDX_SOURCE, id: "wzdx-missouri", attribution: "MoDOT" } as const;
+
+  it("parses the same v4 shape the registry mislabels as plain json", () => {
+    const events = parseWzdx(readFileSync(MODOT, "utf8"), MODOT_SOURCE);
+    expect(events).toHaveLength(2);
+    for (const ev of events) {
+      expect(ev.sourceFormat).toBe("wzdx");
+      expect(ev.type).toBe("roadworks");
+      expect(ev.category).toBe("planned");
+      expect(ev.isPlanned).toBe(true);
+      expect(ev.geometry.type).toBe("LineString");
+    }
+  });
+
+  it("reads validity, roads and lane impact off the core details", () => {
+    const events = parseWzdx(readFileSync(MODOT, "utf8"), MODOT_SOURCE);
+    // MoDOT publishes a single data source, so ids read `<src>:<data_source_id>:<id>`.
+    const closed = events.find((e) => e.id === "wzdx-missouri:tms_work_zone:552055");
+    expect(closed).toBeDefined();
+    expect(closed!.validFrom).toBe("2026-05-29T05:00:00.0000000Z");
+    expect(closed!.validTo).toBe("2026-08-31T05:00:00.0000000Z");
+    expect(closed!.roadState).toBe("closed");
+    expect(closed!.roads?.map((r) => r.name)).toContain("K");
+    expect(closed!.description).toBe("BRIDGE RECONSTRUCTION");
+
+    const partial = events.find((e) => e.id === "wzdx-missouri:tms_work_zone:549748");
+    expect(partial!.roadState).toBe("some_lanes_closed");
+  });
+});

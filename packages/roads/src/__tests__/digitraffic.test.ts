@@ -684,3 +684,38 @@ describe("parseDigitraffic — phase-less feature fallback", () => {
     expect(acc!.restrictions).toBeUndefined();
   });
 });
+
+describe("parseDigitraffic — WEIGHT_RESTRICTION / EXEMPTED_TRANSPORT families", () => {
+  const load = (name: string) =>
+    readFileSync(join(import.meta.dirname, `fixtures/digitraffic/${name}.json`), "utf8");
+
+  it("maps a weight restriction to dimension_restriction with its tonnage and geometry", () => {
+    const [ev] = parseDigitraffic(load("weight-restriction"), DIGITRAFFIC_SOURCE);
+    expect(ev).toBeDefined();
+    expect(ev!.id).toBe("fi-digitraffic:GUID50451433");
+    expect(ev!.type).toBe("dimension_restriction");
+    expect(ev!.geometry.type).toBe("MultiLineString");
+    expect(ev!.restrictions).toContainEqual({ type: "weight", value: 12, unit: "t" });
+    expect(ev!.roads).toContainEqual(expect.objectContaining({ name: "12981" }));
+    expect(ev!.validFrom).toBe("2025-08-18T07:24:23.872Z");
+  });
+
+  // Exempted transports are located by municipality rather than road address,
+  // so theirs is the one family whose URL must request area geometry — without
+  // it every record arrives with a null geometry and is dropped.
+  it("maps an exempted transport to authority, carrying its validity window", () => {
+    const [ev] = parseDigitraffic(load("exempted-transport"), DIGITRAFFIC_SOURCE);
+    expect(ev).toBeDefined();
+    expect(ev!.id).toBe("fi-digitraffic:GUID50468062");
+    expect(ev!.type).toBe("authority");
+    expect(ev!.geometry.type).toBe("MultiPolygon");
+    expect(ev!.validFrom).toBe("2026-07-31T07:30:00Z");
+    expect(ev!.validTo).toBe("2026-07-31T09:00:00Z");
+  });
+
+  it("drops an exempted transport that arrives without area geometry", () => {
+    const fc = JSON.parse(load("exempted-transport")) as { features: { geometry: unknown }[] };
+    fc.features[0]!.geometry = null;
+    expect(parseDigitraffic(JSON.stringify(fc), DIGITRAFFIC_SOURCE)).toEqual([]);
+  });
+});

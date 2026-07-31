@@ -1,0 +1,106 @@
+{
+  "type": "FeatureCollection",
+  "dataUpdatedTime": "2026-07-31T06:20:31Z",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [26.220832, 62.118657],
+              [26.226301, 62.123422],
+              [26.229547, 62.126302],
+              [26.236662, 62.132461],
+              [26.240309, 62.135645],
+              [26.220832, 62.118657]
+            ]
+          ]
+        ]
+      },
+      "properties": {
+        "situationId": "GUID50468062",
+        "situationType": "EXEMPTED_TRANSPORT",
+        "trafficAnnouncementType": null,
+        "version": 3,
+        "releaseTime": "2026-07-31T06:20:14.140Z",
+        "versionTime": "2026-07-31T06:20:14.241Z",
+        "announcements": [
+          {
+            "language": "FI",
+            "title": "Erikoiskuljetus. Etelä-Savo",
+            "location": {
+              "countryCode": 6,
+              "locationTableNumber": 17,
+              "locationTableVersion": "1.11.45",
+              "description": "Kangasniemi - Kangasniemi"
+            },
+            "locationDetails": {
+              "areaLocation": {
+                "areas": [
+                  {
+                    "name": "Kangasniemi",
+                    "locationCode": 127,
+                    "type": "MUNICIPALITY"
+                  },
+                  {
+                    "name": "Kangasniemi",
+                    "locationCode": 127,
+                    "type": "MUNICIPALITY"
+                  }
+                ]
+              }
+            },
+            "features": [
+              {
+                "name": "Liikenne pysäytetään ajoittain"
+              },
+              {
+                "name": "Erikoiskuljetus"
+              },
+              {
+                "name": "Kuljetuksen leveys",
+                "quantity": 8.0,
+                "unit": "m"
+              }
+            ],
+            "roadWorkPhases": [],
+            "timeAndDuration": {
+              "startTime": "2026-07-31T07:30:00Z",
+              "endTime": "2026-07-31T09:00:00Z"
+            },
+            "additionalInformation": "Liikenne- ja kelitiedot verkossa: https://liikennetilanne.fintraffic.fi/",
+            "sender": "Fintraffic Tieliikennekeskus Turku",
+            "lastActiveItinerarySegment": {
+              "startTime": "2026-07-31T07:30:00Z",
+              "endTime": "2026-07-31T09:00:00Z",
+              "legs": [
+                {
+                  "roadLeg": {
+                    "roadNumber": 15228,
+                    "roadName": "Vaimosniementie",
+                    "startArea": "Kangasniemi"
+                  },
+                  "streetName": null
+                },
+                {
+                  "roadLeg": {
+                    "roadNumber": 13,
+                    "startArea": "Kangasniemi"
+                  },
+                  "streetName": null
+                }
+              ]
+            }
+          }
+        ],
+        "contact": {
+          "phone": "02002100",
+          "email": "turku.liikennekeskus@fintraffic.fi"
+        },
+        "dataUpdatedTime": "2026-07-31T06:20:31Z"
+      }
+    }
+  ]
+}
