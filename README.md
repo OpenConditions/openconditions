@@ -22,6 +22,9 @@ Road domain, v0.1:
 - **Emitters:** GeoJSON, TraFF, DATEX II, GTFS-RT Alert, JSON-LD, Valhalla exclusions, and an SSE stream —
   all public, rate-limited, and bbox-filterable.
 - **OpenMapX integration:** ships as an installable extension (a service + a provider integration).
+- **TMC location tables:** publishers that send Alert-C location codes instead of coordinates are placed
+  against the published national table (Germany's LCL 22.0, CC BY 4.0), behind a strict table-version guard.
+  See [docs/tmc-location-tables.md](docs/tmc-location-tables.md).
 - **OpenLR resolver:** built and tested, but **dormant** — no open feed currently carries OpenLR (the open
   feeds use coordinates or Alert-C/TMC). It activates when an OpenLR-bearing source is configured.
 
@@ -34,7 +37,7 @@ Three layers:
 ```
 packages/          reusable libraries (Apache-2.0)
   core/            canonical model, severity, freshness, read helpers, DB schema/migrations (./server)
-  roads/           road-domain parsers (DATEX II / Open511 / WZDx) + feed registry
+  roads/           road-domain parsers (DATEX II / Open511 / WZDx) + feed registry + TMC location tables
   publishers/      outbound emitters (GeoJSON, TraFF, DATEX II, GTFS-RT, JSON-LD, Valhalla)
   openlr/          OpenLR binary decode + resolver client
 

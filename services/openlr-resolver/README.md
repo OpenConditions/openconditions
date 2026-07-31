@@ -32,11 +32,16 @@ ready infrastructure waiting on a source. To activate it:
 2. Or use it for **edge precision** when a feed carries *both* a coordinate and
    an OpenLR linear (prefer the resolved line for closures) — no current feed does.
 
-The realistic future unlock for **NDW** specifically is **Alert-C / TMC**
-decoding, which is a *different* path (a licensed TMC location-code database, not
-OpenLR) and is deferred by design — see the spec's location-referencing notes.
-Until a source exists, this service intentionally has no enabled feed and runs
-against fixtures only in CI.
+**Alert-C / TMC** decoding is a *different* path — a location-code table rather
+than map-matching — and now lives in `@openconditions/roads`, not here; see
+[docs/tmc-location-tables.md](../../docs/tmc-location-tables.md). It resolves
+against national tables we may redistribute, which today means Germany's LCL
+22.0. NDW references the Dutch table (country 8, table 6.13), which is not
+among them, so NDW's Alert-C records remain unplaced — but NDW already ships
+coordinates, so nothing is lost by that.
+
+Until an OpenLR-bearing source exists, this service intentionally has no enabled
+feed and runs against fixtures only in CI.
 
 ## Wire contract
 

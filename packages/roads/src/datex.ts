@@ -7,6 +7,7 @@ import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule
 import { reprojectorFor } from "./reproject.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import { mapSourceType } from "./taxonomy.js";
+import { resolveAlertC, tmcTables, type AlertCReference } from "./tmc/index.js";
 import type { SourceDescriptor } from "./types.js";
 import {
   getXmlAttribute,
@@ -501,25 +502,62 @@ function collectOpenLr(rec: XmlObject): string | undefined {
   return getXmlChildText(rec, "openlrBinary") ?? undefined;
 }
 
-/** Alert-C/TMC reference (country + table + primary specific-location code). */
-function tmcOf(rec: XmlObject): NonNullable<RoadEvent["externalRefs"]>["tmc"] | undefined {
-  const locRef = getXmlChild(rec, "locationReference");
+/** The location code under a primary/secondary point-location wrapper. */
+function specificLocationOf(wrapper: XmlObject | undefined): number | undefined {
+  const raw = getXmlChildText(getXmlChild(wrapper, "alertCLocation"), "specificLocation");
+  if (!raw) return undefined;
+  const code = parseInt(raw, 10);
+  // 0 is the format's "no location" placeholder — some publishers emit an
+  // otherwise-empty Alert-C block rather than omitting it.
+  return Number.isFinite(code) && code > 0 ? code : undefined;
+}
+
+/**
+ * The full Alert-C reference on a record, if it carries one.
+ *
+ * v2 publishers (the German state feeds) nest the location under
+ * `groupOfLocations` while v3 uses `locationReference`; both are searched
+ * because the German feeds are precisely the ones this exists to resolve.
+ */
+function alertCRefOf(rec: XmlObject): AlertCReference | undefined {
+  const locRef = getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations");
   if (!locRef) return undefined;
 
   // alertCPoint (point location) or, nested in an itinerary, alertCLinear.
   const alertC = findFirst(locRef, "alertCPoint") ?? findFirst(locRef, "alertCLinear");
   if (!alertC) return undefined;
 
-  const primary =
+  const primary = specificLocationOf(
     findFirst(alertC, "alertCMethod4PrimaryPointLocation") ??
-    findFirst(alertC, "alertCMethod2PrimaryPointLocation");
-  const country = getXmlChildText(alertC, "alertCLocationCountryCode");
-  const table = getXmlChildText(alertC, "alertCLocationTableNumber");
-  const code = getXmlChildText(getXmlChild(primary, "alertCLocation"), "specificLocation");
-  if (country && table && code) {
-    return { country, table: parseFloat(table), code: parseInt(code, 10) };
-  }
-  return undefined;
+      findFirst(alertC, "alertCMethod2PrimaryPointLocation")
+  );
+  if (primary === undefined) return undefined;
+
+  const secondary = specificLocationOf(
+    findFirst(alertC, "alertCMethod4SecondaryPointLocation") ??
+      findFirst(alertC, "alertCMethod2SecondaryPointLocation")
+  );
+
+  return {
+    ...(getXmlChildText(alertC, "alertCLocationCountryCode")
+      ? { country: getXmlChildText(alertC, "alertCLocationCountryCode") }
+      : {}),
+    ...(getXmlChildText(alertC, "alertCLocationTableNumber")
+      ? { table: getXmlChildText(alertC, "alertCLocationTableNumber") }
+      : {}),
+    ...(getXmlChildText(alertC, "alertCLocationTableVersion")
+      ? { version: getXmlChildText(alertC, "alertCLocationTableVersion") }
+      : {}),
+    primary,
+    ...(secondary !== undefined ? { secondary } : {}),
+  };
+}
+
+/** Alert-C/TMC reference (country + table + primary specific-location code). */
+function tmcOf(rec: XmlObject): NonNullable<RoadEvent["externalRefs"]>["tmc"] | undefined {
+  const ref = alertCRefOf(rec);
+  if (!ref?.country || !ref.table || ref.primary === undefined) return undefined;
+  return { country: ref.country, table: parseFloat(ref.table), code: ref.primary };
 }
 
 /** Provider external location code (NDW's `externalReferencing`, e.g. RIS-index). */
@@ -699,10 +737,39 @@ export function parseDatexSituations(
   const withGeom: RoadEvent[] = [];
   const unresolved: UnresolvedRoadEvent[] = [];
   let skippedAlertCOnly = 0;
+  let resolvedFromTmc = 0;
+  const unresolvedReasons = new Map<string, number>();
 
   for (const { rec: rawRec, situationSeverity } of records) {
     const { body: rec, className } = recordBody(rawRec);
-    const geometry = resolveGeometry(rec, reproject, lonFirst);
+    let geometry = resolveGeometry(rec, reproject, lonFirst);
+    let locationTable: RoadEvent["locationTable"];
+
+    // A record with no coordinates may still say where it is, by Alert-C code.
+    // Some publishers encode every record that way and would otherwise
+    // contribute nothing at all.
+    if (!geometry) {
+      const ref = alertCRefOf(rec);
+      if (ref) {
+        const resolution = resolveAlertC(ref, tmcTables());
+        if (resolution.ok) {
+          geometry = resolution.geometry;
+          locationTable = {
+            ref: `TMC ${resolution.table.cid}/${resolution.table.tabcd}`,
+            version: resolution.table.version,
+            ...(resolution.table.attribution ? { attribution: resolution.table.attribution } : {}),
+            ...(resolution.table.license ? { license: resolution.table.license } : {}),
+          };
+          resolvedFromTmc++;
+        } else {
+          unresolvedReasons.set(
+            resolution.reason,
+            (unresolvedReasons.get(resolution.reason) ?? 0) + 1
+          );
+        }
+      }
+    }
+
     const openlr = !geometry ? collectOpenLr(rec) : undefined;
 
     if (!geometry && !openlr) {
@@ -798,6 +865,7 @@ export function parseDatexSituations(
         // location (resolved from geometry), so the recurrence is unambiguous.
         schedule: withTimezone(scheduleOf(timeSpec), scheduleTimezoneForGeometry(geometry)),
         externalRefs: externalRefsOf(rec),
+        ...(locationTable ? { locationTable } : {}),
       });
     } else {
       // openlr is defined here because we checked !geometry && !openlr above.
@@ -809,9 +877,22 @@ export function parseDatexSituations(
     }
   }
 
+  if (resolvedFromTmc > 0) {
+    console.debug(`[datex] ${src.id}: placed ${resolvedFromTmc} record(s) via TMC location table`);
+  }
+
   if (skippedAlertCOnly > 0) {
+    // The reason matters as much as the count: "no table for this country" is a
+    // licensing problem, "version-mismatch" means our table is the wrong
+    // edition, and "unknown-code" means the publisher referenced something the
+    // table does not contain. Collapsing them into one number would hide which.
+    const reasons = [...unresolvedReasons]
+      .sort((a, b) => b[1] - a[1])
+      .map(([reason, n]) => `${reason}=${n}`)
+      .join(" ");
     console.debug(
-      `[datex] skipped ${skippedAlertCOnly} record(s) with no coordinate geometry (Alert-C only)`
+      `[datex] ${src.id}: skipped ${skippedAlertCOnly} record(s) with no usable geometry` +
+        (reasons ? ` (${reasons})` : "")
     );
     // Also counted per source, so the loss is measurable in GET /feeds/status
     // rather than visible only in a debug log line.

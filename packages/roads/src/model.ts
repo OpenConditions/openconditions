@@ -227,6 +227,20 @@ export interface RoadEvent extends ConditionEvent {
    * source field is ever dropped, even if not (yet) mapped to a typed field.
    * Persisted under `attributes.sourceRaw`. */
   sourceRaw?: Record<string, unknown>;
+  /**
+   * Set when the geometry did not come from the feed but was derived from a TMC
+   * location table. It records which table placed the event, both because the
+   * table's licence requires attribution wherever its data travels, and because
+   * such geometry is only as precise as the table's coded points (a few hundred
+   * metres) — consumers should be able to tell it apart from a feed coordinate.
+   */
+  locationTable?: {
+    /** e.g. "TMC 58/1" — country and table code. */
+    ref: string;
+    version: string;
+    attribution?: string;
+    license?: string;
+  };
 }
 
 /** Provenance of a resolved free-flow baseline; matches sensor_baseline.method. */
@@ -305,6 +319,7 @@ export function roadAttributes(ev: RoadEvent): Record<string, unknown> {
   // Observation.source when readObservations spreads attributes back.
   if (ev.sourceRaw != null) attrs["sourceRaw"] = ev.sourceRaw;
   if (ev.freeFlowSource != null) attrs["freeFlowSource"] = ev.freeFlowSource;
+  if (ev.locationTable != null) attrs["locationTable"] = ev.locationTable;
 
   return attrs;
 }
