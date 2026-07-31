@@ -1,6 +1,7 @@
 import { toIsoTimestamp, type Schedule } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -150,12 +151,16 @@ function baseEvent(
 
 function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): RoadEvent[] {
   const out: RoadEvent[] = [];
+  let skippedNoGeometry = 0;
   for (const raw of records) {
     const r = obj(raw);
     if (!r) continue;
     const id = str(r.id) ?? str(r.disruptionId) ?? str(r.eventId);
     const geometry = unwrapGeometry(r.geometry);
-    if (!id || !geometry) continue;
+    if (!id || !geometry) {
+      skippedNoGeometry++;
+      continue;
+    }
 
     const duration = obj(r.duration);
     const validFrom = toIsoTimestamp(duration?.start);
@@ -195,11 +200,18 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
       dataUpdatedAt: toIsoTimestamp(r.lastUpdated) ?? validFrom ?? now,
     });
   }
+  if (skippedNoGeometry > 0) {
+    console.debug(
+      `[vic-disruptions] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+    );
+    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+  }
   return out;
 }
 
 function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string): RoadEvent[] {
   const out: RoadEvent[] = [];
+  let skippedNoGeometry = 0;
   for (const raw of features) {
     const f = obj(raw);
     if (!f) continue;
@@ -207,7 +219,10 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
     const id = str(p.id) ?? str(f.id) ?? str(p.eventId);
     const geometry =
       obj(f.geometry) && "coordinates" in obj(f.geometry)! ? (f.geometry as Geometry) : undefined;
-    if (!id || !geometry) continue;
+    if (!id || !geometry) {
+      skippedNoGeometry++;
+      continue;
+    }
 
     const eventType = str(p.eventType);
     const eventSubType = str(p.eventSubType) ?? str(p.eventSubtype);
@@ -229,6 +244,12 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
       sourceRaw: p,
       dataUpdatedAt: toIsoTimestamp(p.lastUpdated) ?? toIsoTimestamp(p.created) ?? now,
     });
+  }
+  if (skippedNoGeometry > 0) {
+    console.debug(
+      `[vic-disruptions] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+    );
+    recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }
   return out;
 }

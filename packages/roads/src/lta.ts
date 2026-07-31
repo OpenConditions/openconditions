@@ -1,4 +1,5 @@
 import { dedupeRoadEvents } from "./dedupe.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -69,11 +70,15 @@ export function parseLtaIncidents(
   const value = (data as { value?: unknown })?.value;
   const incidents = Array.isArray(value) ? (value as LtaIncident[]) : [];
   const out: RoadEvent[] = [];
+  let skippedNoGeometry = 0;
 
   for (const ev of incidents) {
     const lat = ev.Latitude;
     const lng = ev.Longitude;
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      skippedNoGeometry++;
+      continue;
+    }
     const rawType = (ev.Type ?? "").trim();
     const type = TYPE_MAP[rawType.toLowerCase()] ?? "other";
 
@@ -104,6 +109,13 @@ export function parseLtaIncidents(
       fetchedAt: new Date().toISOString(),
       isStale: false,
     });
+  }
+
+  if (skippedNoGeometry > 0) {
+    console.debug(
+      `[lta] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+    );
+    recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);

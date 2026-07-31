@@ -1,5 +1,6 @@
 import { toIsoTimestamp } from "@openconditions/core";
 import { dedupeRoadEvents } from "./dedupe.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -85,12 +86,16 @@ function records(input: string | Buffer): Record_[] {
 export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): RoadEvent[] {
   const now = new Date().toISOString();
   const out: RoadEvent[] = [];
+  let skippedNoGeometry = 0;
 
   for (const r of records(input)) {
     const id = str(field(r, "id"));
     const lon = Number(field(r, "longitude"));
     const lat = Number(field(r, "latitude"));
-    if (!id || !Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+    if (!id || !Number.isFinite(lon) || !Number.isFinite(lat)) {
+      skippedNoGeometry++;
+      continue;
+    }
 
     const category = str(field(r, "category"));
     const validFrom = toIsoTimestamp(field(r, "startDate"));
@@ -137,6 +142,13 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
       fetchedAt: now,
       isStale: false,
     });
+  }
+
+  if (skippedNoGeometry > 0) {
+    console.debug(
+      `[ohgo-events] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+    );
+    recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);

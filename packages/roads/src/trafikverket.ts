@@ -1,5 +1,6 @@
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -98,6 +99,7 @@ export function parseTrafikverket(
   if (!Array.isArray(results)) return [];
 
   const out: RoadEvent[] = [];
+  let skippedNoGeometry = 0;
   for (const result of results) {
     const situations = (result as { Situation?: unknown[] })?.Situation;
     if (!Array.isArray(situations)) continue;
@@ -107,7 +109,10 @@ export function parseTrafikverket(
       for (const dev of deviations) {
         const geometry =
           wktToGeometry(dev.Geometry?.Point?.WGS84) ?? wktToGeometry(dev.Geometry?.Line?.WGS84);
-        if (!geometry) continue;
+        if (!geometry) {
+          skippedNoGeometry++;
+          continue;
+        }
         const rawType = (dev.MessageType ?? "").trim();
         const type = TYPE_MAP[rawType.toLowerCase()] ?? "other";
         const road = typeof dev.RoadName === "string" && dev.RoadName ? dev.RoadName : undefined;
@@ -143,6 +148,13 @@ export function parseTrafikverket(
         });
       }
     }
+  }
+
+  if (skippedNoGeometry > 0) {
+    console.debug(
+      `[trafikverket] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+    );
+    recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);

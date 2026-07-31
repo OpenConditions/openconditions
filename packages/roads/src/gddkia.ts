@@ -1,4 +1,5 @@
 import { dedupeRoadEvents } from "./dedupe.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
 import { getXmlChild, getXmlChildText, getXmlChildren, parseXmlDocument } from "./xml.js";
@@ -46,10 +47,14 @@ export function parseGddkia(input: string | Buffer, src: SourceDescriptor): Road
   if (!root) return [];
 
   const out: RoadEvent[] = [];
+  let skippedNoGeometry = 0;
   for (const it of getXmlChildren(root, "utr")) {
     const lat = Number(getXmlChildText(it, "geo_lat"));
     const lng = Number(getXmlChildText(it, "geo_long"));
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      skippedNoGeometry++;
+      continue;
+    }
 
     const typ = getXmlChildText(it, "typ");
     const road = getXmlChildText(it, "nr_drogi");
@@ -91,6 +96,13 @@ export function parseGddkia(input: string | Buffer, src: SourceDescriptor): Road
       fetchedAt: new Date().toISOString(),
       isStale: false,
     });
+  }
+
+  if (skippedNoGeometry > 0) {
+    console.debug(
+      `[gddkia] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+    );
+    recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);

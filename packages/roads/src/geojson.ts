@@ -3,6 +3,7 @@ import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { GeoJsonMapping, RoadEvent, RoadEventType } from "./model.js";
 import { reprojectorFor } from "./reproject.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import { mapSourceType, type TypeMapping } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -177,6 +178,7 @@ export function featuresToRoadEvents(
 ): RoadEvent[] {
   const mapping = src.geojson ?? {};
   const out: RoadEvent[] = [];
+  let skippedNoGeometry = 0;
 
   features.forEach((feature, index) => {
     const props = (feature.properties ?? {}) as Record<string, unknown>;
@@ -212,7 +214,10 @@ export function featuresToRoadEvents(
         // Last resort before dropping the record: endpoints published as WGS84
         // columns rather than as geometry.
         geometry = synthesizeLine(props, mapping);
-        if (!geometry) return;
+        if (!geometry) {
+          skippedNoGeometry++;
+          return;
+        }
       }
     }
 
@@ -257,6 +262,13 @@ export function featuresToRoadEvents(
       isStale: false,
     });
   });
+
+  if (skippedNoGeometry > 0) {
+    console.debug(
+      `[geojson] ${src.id}: skipped ${skippedNoGeometry} feature(s) with no usable geometry`
+    );
+    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+  }
 
   return dedupeRoadEvents(out);
 }

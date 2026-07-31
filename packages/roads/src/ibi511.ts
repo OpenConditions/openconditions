@@ -1,5 +1,6 @@
 import { toIsoTimestamp } from "@openconditions/core";
 import { dedupeRoadEvents } from "./dedupe.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import type { TypeMapping } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
@@ -134,10 +135,14 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
   }
   const events = Array.isArray(data) ? (data as IbiEvent[]) : [];
   const out: RoadEvent[] = [];
+  let skippedNoGeometry = 0;
 
   events.forEach((ev, index) => {
     const geometry = geometryOf(ev);
-    if (!geometry) return;
+    if (!geometry) {
+      skippedNoGeometry++;
+      return;
+    }
     const { type, category, isPlanned } = typeOf(ev);
     const localId = ev.ID != null ? String(ev.ID) : String(index);
     const severity = ev.Severity
@@ -177,6 +182,13 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
       isStale: false,
     });
   });
+
+  if (skippedNoGeometry > 0) {
+    console.debug(
+      `[ibi511] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+    );
+    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+  }
 
   return dedupeRoadEvents(out);
 }
@@ -285,6 +297,7 @@ export function parseIbi511Conditions(
   const records = Array.isArray(data) ? (data as IbiConditionRecord[]) : [];
   const now = new Date().toISOString();
   const out: RoadEvent[] = [];
+  let skippedNoGeometry = 0;
 
   records.forEach((rec, index) => {
     const conditions = conditionValues(rec.Condition);
@@ -292,7 +305,10 @@ export function parseIbi511Conditions(
     if (conditions.every((c) => NOMINAL_CONDITIONS.has(c.toLowerCase()))) return;
 
     const geometry = conditionGeometry(rec);
-    if (!geometry) return;
+    if (!geometry) {
+      skippedNoGeometry++;
+      return;
+    }
 
     const road = rec.RoadwayName || undefined;
     const where = rec.LocationDescription || rec.AreaName || rec.Region || road;
@@ -330,6 +346,13 @@ export function parseIbi511Conditions(
       isStale: false,
     });
   });
+
+  if (skippedNoGeometry > 0) {
+    console.debug(
+      `[ibi511] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+    );
+    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+  }
 
   return dedupeRoadEvents(out);
 }
