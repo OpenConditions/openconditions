@@ -125,3 +125,78 @@ describe("DATEX records carrying only an Alert-C location", () => {
     expect(event!.geometry).toBeDefined();
   });
 });
+
+/**
+ * A v2 `linearByCoordinates` carries its endpoints as latitude/longitude
+ * directly under `start`/`end`, unlike v3 which nests a `pointCoordinates`.
+ * Only the nested form was read, so a record whose whole geometry was its two
+ * endpoints resolved to nothing and was dropped.
+ */
+describe("DATEX linearByCoordinates endpoints", () => {
+  beforeEach(() => __resetSkipMetrics());
+
+  const linear = (inner: string) =>
+    Buffer.from(
+      `<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0">
+  <payloadPublication xsi:type="SituationPublication" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <situation id="S1">
+      <situationRecord xsi:type="Accident" id="R1">
+        <situationRecordCreationTime>2026-07-31T00:00:00Z</situationRecordCreationTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        <groupOfLocations xsi:type="Linear"><linearByCoordinates>${inner}</linearByCoordinates></groupOfLocations>
+      </situationRecord>
+    </situation>
+  </payloadPublication>
+</d2LogicalModel>`
+    );
+
+  const START_END = `
+    <start><latitude>48.6206291</latitude><longitude>10.2168311</longitude></start>
+    <end><latitude>48.6304951</latitude><longitude>10.2203178</longitude></end>`;
+
+  it("keeps a record whose only geometry is its two endpoints", () => {
+    const events = parseDatexSituations(linear(START_END), SOURCE);
+
+    expect(events).toHaveLength(1);
+    // Both endpoints, as a MultiPoint: the two ends of a stretch with no road
+    // path between them. Joining them into a line would invent a chord across
+    // whatever the road actually does.
+    expect(events[0]!.geometry).toEqual({
+      type: "MultiPoint",
+      coordinates: [
+        [10.2168311, 48.6206291],
+        [10.2203178, 48.6304951],
+      ],
+    });
+    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(0);
+  });
+
+  it("keeps the intermediate points that trace the road, alongside the endpoints", () => {
+    const events = parseDatexSituations(
+      linear(
+        `${START_END}<intermediate index="1"><pointCoordinates><latitude>48.625</latitude><longitude>10.218</longitude></pointCoordinates></intermediate>`
+      ),
+      SOURCE
+    );
+
+    const geom = events[0]!.geometry;
+    expect(geom?.type).toBe("MultiPoint");
+    const coords = geom && "coordinates" in geom ? geom.coordinates : [];
+    expect(coords).toHaveLength(3);
+    expect(coords).toContainEqual([10.218, 48.625]);
+  });
+
+  it("still walks a start/end that is not a coordinate pair", () => {
+    // `start`/`end` name non-coordinate things elsewhere in DATEX, so
+    // intercepting the name must not stop the search for nested geometry.
+    const events = parseDatexSituations(
+      linear(
+        `<start><pointCoordinates><latitude>48.62</latitude><longitude>10.21</longitude></pointCoordinates></start>`
+      ),
+      SOURCE
+    );
+
+    expect(events[0]!.geometry).toEqual({ type: "Point", coordinates: [10.21, 48.62] });
+  });
+});

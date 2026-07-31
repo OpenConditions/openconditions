@@ -210,6 +210,24 @@ function resolveGeometryFrom(
             points.push(reproject ? reproject([lon, lat]) : [lon, lat]);
           }
           break;
+        // A v2 `linearByCoordinates` puts latitude/longitude *directly* under
+        // `start`/`end`, where v3 nests a `pointCoordinates` (handled above).
+        // Without this a record whose only geometry is its two endpoints —
+        // no intermediate points, no GML — resolves to nothing and is dropped.
+        case "start":
+        case "end":
+          for (const node of xmlNodeToArray(value)) {
+            const lat = Number(getXmlChildText(node, "latitude"));
+            const lon = Number(getXmlChildText(node, "longitude"));
+            if (Number.isFinite(lat) && Number.isFinite(lon)) {
+              points.push(reproject ? reproject([lon, lat]) : [lon, lat]);
+            } else {
+              // `start`/`end` also name non-coordinate things in DATEX; anything
+              // that is not a coordinate pair keeps being walked as before.
+              visit(node);
+            }
+          }
+          break;
         default:
           visit(value);
       }
