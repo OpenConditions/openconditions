@@ -371,6 +371,76 @@ describe("observationsByBbox", () => {
     expect(capturedQuery).toMatch(/o\.fuzziness/);
   });
 
+  it("adds a bound horizon clause when horizonDays is given", async () => {
+    let capturedQuery = "";
+    let capturedParams: unknown[] = [];
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        capturedParams = p ?? [];
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+      horizonDays: 0,
+    });
+    // A null valid_from is "in effect now" — never filtered out.
+    expect(capturedQuery).toMatch(
+      /\(o\.valid_from IS NULL OR o\.valid_from <= now\(\) \+ make_interval\(days => \$6\)\)/
+    );
+    expect(capturedParams[5]).toBe(0);
+
+    await observationsByBbox(db, {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+      horizonDays: 7,
+    });
+    expect(capturedParams[5]).toBe(7);
+  });
+
+  it("omits the horizon clause entirely when horizonDays is undefined", async () => {
+    let capturedQuery = "";
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
+    expect(capturedQuery).not.toMatch(/make_interval\(days =>/);
+  });
+
+  it("selects and projects is_forecast + category so the map can label planned works", async () => {
+    let capturedQuery = "";
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
+    expect(capturedQuery).toMatch(/o\.is_forecast/);
+    expect(capturedQuery).toMatch(/o\.category/);
+
+    const fc = await observationsByBbox(
+      makeStubDb([{ ...fakeRow, is_forecast: true, category: "planned" }]),
+      { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] }
+    );
+    expect(fc.features[0]?.properties?.is_forecast).toBe(true);
+    expect(fc.features[0]?.properties?.category).toBe("planned");
+  });
+
+  it("projects a missing is_forecast/category as null rather than dropping the keys", async () => {
+    const fc = await observationsByBbox(makeStubDb([fakeRow]), {
+      domain: "roads",
+      bbox: [4.0, 51.0, 6.0, 53.0],
+    });
+    expect(fc.features[0]?.properties?.is_forecast).toBeNull();
+    expect(fc.features[0]?.properties?.category).toBeNull();
+  });
+
   it("adds the origin-aware routing filter only when routingEligibleOnly is true", async () => {
     let capturedQuery = "";
     const db: QueryRunner = {

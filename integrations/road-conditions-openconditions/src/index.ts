@@ -37,6 +37,9 @@ export function setup(ctx: IntegrationContext): void {
         kind: "event",
         types: opts?.types,
         minSeverity: opts?.minSeverity,
+        // Only narrow when the caller asked: routing reads unfiltered so it can
+        // evaluate future closures at the chosen travel time.
+        ...(opts?.horizonDays != null ? { horizonDays: opts.horizonDays } : {}),
       });
       return featureCollectionToRoadConditionEvents(fc);
     },

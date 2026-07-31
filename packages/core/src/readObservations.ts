@@ -136,7 +136,7 @@ export async function readObservations(
   db: QueryRunner,
   opts: Omit<ObservationsByBboxOpts, "domain"> & { domain?: string }
 ): Promise<Observation[]> {
-  const { domain, bbox, types, minSeverity } = opts;
+  const { domain, bbox, types, minSeverity, horizonDays } = opts;
   const [west, south, east, north] = bbox;
 
   // The GTFS-RT alerts export reads across ALL domains (a road-domain event can
@@ -161,6 +161,14 @@ export async function readObservations(
   if (minSeverity != null) {
     params.push(severityRank(minSeverity));
     clauses.push(`${SEVERITY_RANK_SQL} >= $${params.length}`);
+  }
+  // Same predicate as observationsByBbox: a NULL valid_from is already in
+  // effect, so the horizon only ever excludes announced future starts.
+  if (horizonDays != null) {
+    params.push(horizonDays);
+    clauses.push(
+      `(o.valid_from IS NULL OR o.valid_from <= now() + make_interval(days => $${params.length}))`
+    );
   }
 
   const query = `

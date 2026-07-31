@@ -104,6 +104,32 @@ describe("road-conditions-openconditions provider", () => {
     expect(captured).toMatch(/type = ANY/);
   });
 
+  it("pushes horizonDays down into the SQL read, and omits it when unset", async () => {
+    let captured = "";
+    let capturedParams: unknown[] | undefined;
+    const { ctx, registered } = makeCtx([], {
+      capture: (q, p) => {
+        captured = q;
+        capturedParams = p;
+      },
+    });
+    setup(ctx);
+    await registered[0]!.getEvents([4, 51, 6, 53], { horizonDays: 7 });
+    expect(captured).toMatch(/make_interval\(days =>/);
+    expect(capturedParams).toContain(7);
+
+    await registered[0]!.getEvents([4, 51, 6, 53]);
+    expect(captured).not.toMatch(/make_interval\(days =>/);
+  });
+
+  it("carries the planned/forecast flags onto the mapped event", async () => {
+    const planned = { ...fakeRow, is_forecast: true, attributes: { isPlanned: true } };
+    const { ctx, registered } = makeCtx([planned]);
+    setup(ctx);
+    const events = await registered[0]!.getEvents([4, 51, 6, 53]);
+    expect(events[0]).toMatchObject({ isForecast: true, isPlanned: true });
+  });
+
   it("getFlow fetches /segments.geojson with the bbox as a comma-joined param and maps features (fallback url)", async () => {
     const fakeFc = {
       type: "FeatureCollection",

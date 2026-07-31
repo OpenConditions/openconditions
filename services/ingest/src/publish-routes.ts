@@ -72,6 +72,38 @@ export function parseBbox(raw: string | undefined): BBox | null {
   return parts as BBox;
 }
 
+/** The canonical severity ladder, for validating `?minSeverity=`. */
+const SEVERITY_VALUES = ["low", "medium", "high", "critical"] as const;
+
+/** `?types=roadworks,road_closure` → the read filter, or null when unusable. */
+function parseTypesParam(raw: string | undefined): string[] | null {
+  if (!raw) return null;
+  const types = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return types.length > 0 ? types : null;
+}
+
+/** `?minSeverity=high` → the read filter; an unknown value reads as absent. */
+function parseMinSeverityParam(raw: string | undefined): string | null {
+  if (!raw) return null;
+  return (SEVERITY_VALUES as readonly string[]).includes(raw) ? raw : null;
+}
+
+/**
+ * `?horizonDays=7` → "in effect within a week". Anything that is not a
+ * non-negative integer (including `-1` and `abc`) reads as absent, i.e. no
+ * temporal filter at all — never as `0`, which would silently hide every
+ * announced future condition.
+ */
+function parseHorizonDaysParam(raw: string | undefined): number | null {
+  if (raw == null || raw.trim() === "") return null;
+  if (!/^\d+$/.test(raw.trim())) return null;
+  const n = Number.parseInt(raw, 10);
+  return Number.isSafeInteger(n) ? n : null;
+}
+
 /**
  * Distinct `origin.attribution.license` ids present in an observation set, for
  * the `X-Data-License` response header. Called on an already
@@ -225,7 +257,16 @@ export function registerPublishRoutes(
     const bbox = parseBbox(q.bbox);
     if (!bbox) return null;
     const domain = q.domain ?? defaultDomain ?? undefined;
-    const obs = await readObservations(db, { domain, bbox });
+    const types = parseTypesParam(q.types);
+    const minSeverity = parseMinSeverityParam(q.minSeverity);
+    const horizonDays = parseHorizonDaysParam(q.horizonDays);
+    const obs = await readObservations(db, {
+      domain,
+      bbox,
+      ...(types ? { types } : {}),
+      ...(minSeverity ? { minSeverity } : {}),
+      ...(horizonDays != null ? { horizonDays } : {}),
+    });
     return filterForPermissiveExport(obs);
   };
   const info = (): FeedInfo => ({ ...FEED_BASE, timestamp: new Date().toISOString() });

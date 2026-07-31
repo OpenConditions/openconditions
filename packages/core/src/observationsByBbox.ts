@@ -41,6 +41,15 @@ export interface ObservationsByBboxOpts {
    * WHERE clause below.
    */
   routingEligibleOnly?: boolean;
+  /**
+   * Restrict to conditions in effect within the next `n` days: `0` is "active
+   * now", `7` is "active or starting within a week". A NULL `valid_from` means
+   * the condition has no announced start and is treated as already in effect,
+   * so it always passes. Leave undefined for no temporal filter — routing reads
+   * the store unfiltered and evaluates validity at the chosen travel time
+   * itself, so it must keep seeing future closures.
+   */
+  horizonDays?: number;
 }
 
 interface ObservationRow {
@@ -59,6 +68,8 @@ interface ObservationRow {
   data_updated_at: string | Date | null;
   geojson: string;
   origin: { kind: string; attribution?: { provider?: string; license?: string; url?: string } };
+  category: string | null;
+  is_forecast: boolean | null;
   is_stale: boolean;
   evidence_state: string | null;
   routing_eligible: boolean | null;
@@ -112,6 +123,10 @@ function rowToFeature(row: ObservationRow, mergedSources?: Observation["mergedSo
       attributes: row.attributes,
       valid_from: row.valid_from,
       valid_to: row.valid_to,
+      // Planned-works signal: `category: "planned"` and the upstream forecast
+      // flag let the overlay de-emphasise works that have not started yet.
+      category: row.category ?? null,
+      is_forecast: row.is_forecast ?? null,
       schedule: row.schedule ?? undefined,
       data_updated_at:
         row.data_updated_at instanceof Date
@@ -159,7 +174,7 @@ export async function observationsByBbox(
   db: QueryRunner,
   opts: ObservationsByBboxOpts
 ): Promise<FeatureCollection> {
-  const { domain, bbox, types, minSeverity, kind } = opts;
+  const { domain, bbox, types, minSeverity, kind, horizonDays } = opts;
   const [west, south, east, north] = bbox;
 
   const params: unknown[] = [domain, west, south, east, north];
@@ -186,6 +201,12 @@ export async function observationsByBbox(
     params.push(severityRank(minSeverity));
     clauses.push(`${SEVERITY_RANK_SQL} >= $${params.length}`);
   }
+  if (horizonDays != null) {
+    params.push(horizonDays);
+    clauses.push(
+      `(o.valid_from IS NULL OR o.valid_from <= now() + make_interval(days => $${params.length}))`
+    );
+  }
   // Origin-aware routing gate: keep every feed row (authoritative), keep a crowd
   // row only once it is routing_eligible. A crowd row with routing_eligible
   // false/NULL is excluded here so a lone self-reported closure never routes.
@@ -199,6 +220,7 @@ export async function observationsByBbox(
     SELECT
       o.id, o.source, o.domain, o.kind, o.type, o.severity,
       o.headline, o.description, o.attributes, o.valid_from, o.valid_to, o.schedule, o.data_updated_at,
+      o.category, o.is_forecast,
       ST_AsGeoJSON(o.geom) AS geojson,
       o.origin,
       o.evidence_state, o.routing_eligible, o.confidence_score, o.privacy_class, o.fuzziness,

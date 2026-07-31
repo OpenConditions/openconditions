@@ -177,4 +177,26 @@ describe("readObservations", () => {
     );
     expect(q).toMatch(/valid_to IS NULL OR o\.valid_to > now\(\)/);
   });
+
+  it("adds a bound horizon clause when horizonDays is given, and none when it is not", async () => {
+    let q = "";
+    let params: unknown[] | undefined;
+    await readObservations(
+      stubDb([], (query, p) => {
+        q = query;
+        params = p;
+      }),
+      { domain: "roads", bbox: [4, 51, 6, 53], horizonDays: 7 }
+    );
+    expect(q).toMatch(
+      /\(o\.valid_from IS NULL OR o\.valid_from <= now\(\) \+ make_interval\(days => \$6\)\)/
+    );
+    expect(params?.[5]).toBe(7);
+
+    await readObservations(
+      stubDb([], (query) => (q = query)),
+      { domain: "roads", bbox: [4, 51, 6, 53] }
+    );
+    expect(q).not.toMatch(/make_interval\(days =>/);
+  });
 });

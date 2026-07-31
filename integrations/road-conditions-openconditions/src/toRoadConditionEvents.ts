@@ -69,6 +69,11 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
     ...(typeof p.routingEligible === "boolean" ? { routingEligible: p.routingEligible } : {}),
     ...(str(p.evidenceState) ? { evidenceState: str(p.evidenceState) } : {}),
     ...(typeof p.confidenceScore === "number" ? { confidenceScore: p.confidenceScore } : {}),
+    // Planned-works labeling: the overlay dims and dashes works that have not
+    // started yet. `is_forecast` is the upstream announcement flag; `isPlanned`
+    // rides in `attributes` because it is a road-domain field.
+    ...(typeof p.is_forecast === "boolean" ? { isForecast: p.is_forecast } : {}),
+    ...(typeof attrs.isPlanned === "boolean" ? { isPlanned: attrs.isPlanned } : {}),
   };
 }
 

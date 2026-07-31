@@ -115,11 +115,20 @@ export interface RoadConditionEvent {
   evidenceState?: string;
   /** Aggregate confidence score for a crowd event (0..1). */
   confidenceScore?: number;
+  /** Upstream announced this condition before it takes effect. */
+  isForecast?: boolean;
+  /** Scheduled work rather than an unplanned incident. */
+  isPlanned?: boolean;
 }
 
 export interface RoadConditionsQuery {
   types?: RoadConditionType[];
   minSeverity?: RoadConditionSeverity;
+  /**
+   * Keep only conditions in effect within the next `n` days (`0` = active now).
+   * Undefined means no temporal filter — the routing path depends on that.
+   */
+  horizonDays?: number;
 }
 
 /**
