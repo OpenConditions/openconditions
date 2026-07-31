@@ -6,6 +6,7 @@ import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { readObservations } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
+import { recordSkippedNoGeometry } from "@openconditions/roads";
 import { FEED_SOURCES } from "@openconditions/roads";
 import type { RoadEvent, RoadFlow } from "@openconditions/roads";
 import type { LookupFn } from "@openconditions/ingest-framework";
@@ -187,6 +188,26 @@ describe("pipeline — open511 (DriveBC)", () => {
       WHERE source = 'ca-bc-drivebc' AND (domain <> 'roads')
     `;
     expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
+  }, 60_000);
+
+  it("does not carry a crashed run's no-geometry count into the next successful run", async () => {
+    // Most failure paths return before the drain at the end of runSource, so a run
+    // that parsed and then failed leaves its count behind. Stand in for that
+    // leftover directly — the reset at the top of the run must discard it, or the
+    // next healthy cycle reports a loss that already happened.
+    recordSkippedNoGeometry("ca-bc-drivebc", 999);
+
+    const jsonPayload = readFileSync(DRIVEBC_FIXTURE_PATH);
+    const result = await runSource(drivebcFeed, {
+      sql,
+      fetch: (async () => new Response(jsonPayload, { status: 200 })) as unknown as typeof fetch,
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+
+    expect(result.error).toBeUndefined();
+    // The fixture drops nothing, so this cycle's honest answer is "no loss".
+    expect(result.skippedNoGeometry).toBeUndefined();
   }, 60_000);
 
   it("all DriveBC geometries are valid PostGIS geometries", async () => {

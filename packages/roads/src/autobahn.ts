@@ -3,6 +3,7 @@ import type { GeoJsonGeometry, Schedule } from "@openconditions/core";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -502,6 +503,8 @@ export function parseAutobahn(
 
   if (skippedNoGeometry > 0) {
     console.debug(`[autobahn] skipped ${skippedNoGeometry} item(s) with no usable geometry`);
+    // Also counted per source so the loss shows up in GET /feeds/status.
+    recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);

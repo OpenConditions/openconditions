@@ -190,6 +190,13 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   const guarded = guardedFetch(deps.fetch, guardOptionsFromEnv(), {}, deps.lookup);
   const fetchFn = makeAuthorizedFetch(src, guarded);
 
+  // Discard whatever a PREVIOUS run left behind. Most failure paths below return
+  // before the drain at the end, so without this reset a run that parsed and then
+  // failed (shrink tripwire, fan-out threshold, swap error) would carry its count
+  // into the next successful run and report the two summed — reading as a sudden
+  // doubling of the loss rather than the same loss counted twice.
+  drainSkippedNoGeometry(src.id);
+
   // Load the companion site table (cached, tolerant of failure) so flow feeds
   // that key measurements by site id can resolve geometry. Loaded before the feed
   // fetch so the streaming flow path has the join map ready.

@@ -2,6 +2,7 @@ import { deriveSeverity } from "@openconditions/core";
 import type { GeoJsonGeometry, Severity } from "@openconditions/core";
 import type { Restriction, RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import { buildLocalSchedule, isoDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
 
 /** Digitraffic is the Finnish national feed → its local times are Europe/Helsinki. */
@@ -508,6 +509,8 @@ export function parseDigitraffic(
 
   if (skippedNoGeometry > 0) {
     console.debug(`[digitraffic] skipped ${skippedNoGeometry} feature(s) with no usable geometry`);
+    // Also counted per source so the loss shows up in GET /feeds/status.
+    recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);
