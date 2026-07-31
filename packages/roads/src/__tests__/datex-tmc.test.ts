@@ -78,6 +78,42 @@ describe("DATEX records carrying only an Alert-C location", () => {
     expect(event!.locationTable?.attribution).toMatch(/BASt|Bundesanstalt/);
   });
 
+  it("reads an Alert-C block declared inline on the location element", () => {
+    // Publishers differ: some nest an `alertCLinear` element, others type the
+    // location element itself `AlertCLinear` and put the fields directly on it.
+    const inline = `<alertCDirection><alertCDirectionCoded>positive</alertCDirectionCoded></alertCDirection>
+      <alertCLocationCountryCode>D</alertCLocationCountryCode>
+      <alertCLocationTableNumber>1</alertCLocationTableNumber>
+      <alertCLocationTableVersion>22.0</alertCLocationTableVersion>
+      <alertCMethod4PrimaryPointLocation><alertCLocation><specificLocation>12271</specificLocation></alertCLocation></alertCMethod4PrimaryPointLocation>
+      <alertCMethod4SecondaryPointLocation><alertCLocation><specificLocation>12270</specificLocation></alertCLocation></alertCMethod4SecondaryPointLocation>`;
+
+    const xml = Buffer.from(
+      `<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0">
+  <payloadPublication xsi:type="SituationPublication" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <situation id="S1">
+      <situationRecord xsi:type="Accident" id="R1">
+        <situationRecordCreationTime>2026-07-31T00:00:00Z</situationRecordCreationTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        <groupOfLocations xsi:type="AlertCLinear">${inline}</groupOfLocations>
+      </situationRecord>
+    </situation>
+  </payloadPublication>
+</d2LogicalModel>`
+    );
+
+    const [event] = parseDatexSituations(xml, SOURCE);
+    expect(event!.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [10.2075, 48.6133],
+        [10.2144, 48.6899],
+      ],
+    });
+    expect(event!.locationTable).toMatchObject({ ref: "TMC 58/1", version: "22.0" });
+  });
+
   it("still exposes the raw Alert-C reference alongside the resolved geometry", () => {
     const [event] = parseDatexSituations(alertCOnly(LINEAR), SOURCE);
     expect(event!.externalRefs?.tmc).toMatchObject({ country: "D", table: 1, code: 12271 });

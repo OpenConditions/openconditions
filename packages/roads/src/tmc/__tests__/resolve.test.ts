@@ -93,8 +93,19 @@ describe("resolveAlertC", () => {
     });
   });
 
-  it("refuses a record that declares no version at all", () => {
+  /**
+   * Reported apart from a genuine mismatch. Both refuse, but they mean opposite
+   * things: a mismatch says the publisher references an edition we do not hold,
+   * while a missing version says there is nothing to check against — and only
+   * the second can be argued away, since a country with one final table has
+   * little else its codes could mean.
+   */
+  it("distinguishes a record that declares no version from one that declares another", () => {
     expect(resolveAlertC(ref({ version: undefined }), [TABLE])).toEqual({
+      ok: false,
+      reason: "version-missing",
+    });
+    expect(resolveAlertC(ref({ version: "9.00" }), [TABLE])).toEqual({
       ok: false,
       reason: "version-mismatch",
     });

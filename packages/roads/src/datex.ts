@@ -541,15 +541,24 @@ function alertCRefOf(rec: XmlObject): AlertCReference | undefined {
   const locRef = getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations");
   if (!locRef) return undefined;
 
-  // alertCPoint (point location) or, nested in an itinerary, alertCLinear.
-  const alertC = findFirst(locRef, "alertCPoint") ?? findFirst(locRef, "alertCLinear");
+  // Either a nested `alertCPoint`/`alertCLinear` element, or — where the
+  // location element is itself declared an Alert-C type — the same fields
+  // inline on it, with no wrapper. Both are valid DATEX and publishers differ.
+  const inline = /^AlertC/i.test(stripXmlNamespace(getXmlAttribute(locRef, "type") ?? ""));
+  const alertC =
+    findFirst(locRef, "alertCPoint") ??
+    findFirst(locRef, "alertCLinear") ??
+    (inline ? locRef : undefined);
   if (!alertC) return undefined;
 
+  // A missing/placeholder primary is reported as `no-reference` by the resolver
+  // rather than bailing here: "the record has no Alert-C block at all" and "it
+  // has one but names no location" call for different fixes, and collapsing
+  // them into one silent absence is what hid this loss in the first place.
   const primary = specificLocationOf(
     findFirst(alertC, "alertCMethod4PrimaryPointLocation") ??
       findFirst(alertC, "alertCMethod2PrimaryPointLocation")
   );
-  if (primary === undefined) return undefined;
 
   const secondary = specificLocationOf(
     findFirst(alertC, "alertCMethod4SecondaryPointLocation") ??
@@ -566,9 +575,25 @@ function alertCRefOf(rec: XmlObject): AlertCReference | undefined {
     ...(getXmlChildText(alertC, "alertCLocationTableVersion")
       ? { version: getXmlChildText(alertC, "alertCLocationTableVersion") }
       : {}),
-    primary,
+    ...(primary !== undefined ? { primary } : {}),
     ...(secondary !== undefined ? { secondary } : {}),
   };
+}
+
+/**
+ * A compact description of how a record says where it is: the location
+ * element's declared type plus its child element names. Emitted only for
+ * records we failed to place, to name the referencing scheme that lost them.
+ */
+function locationShapeOf(rec: XmlObject): string {
+  const locRef = getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations");
+  if (!locRef) return "(no location element)";
+  const type = getXmlAttribute(locRef, "type");
+  const children = Object.keys(locRef)
+    .filter((k) => !k.startsWith("@_"))
+    .map(stripXmlNamespace)
+    .sort();
+  return `${type ? `${stripXmlNamespace(type)}:` : ""}${children.join("+") || "(empty)"}`;
 }
 
 /** Alert-C/TMC reference (country + table + primary specific-location code). */
@@ -757,6 +782,10 @@ export function parseDatexSituations(
   let skippedAlertCOnly = 0;
   let resolvedFromTmc = 0;
   const unresolvedReasons = new Map<string, number>();
+  // How records we could not place describe their location. A count alone says
+  // a publisher is being lost but not what to build; the shape names the
+  // referencing scheme we do not yet read.
+  const unreadableShapes = new Map<string, number>();
 
   for (const { rec: rawRec, situationSeverity } of records) {
     const { body: rec, className } = recordBody(rawRec);
@@ -768,22 +797,30 @@ export function parseDatexSituations(
     // contribute nothing at all.
     if (!geometry) {
       const ref = alertCRefOf(rec);
-      if (ref) {
-        const resolution = resolveAlertC(ref, tmcTables());
-        if (resolution.ok) {
-          geometry = resolution.geometry;
-          locationTable = {
-            ref: `TMC ${resolution.table.cid}/${resolution.table.tabcd}`,
-            version: resolution.table.version,
-            ...(resolution.table.attribution ? { attribution: resolution.table.attribution } : {}),
-            ...(resolution.table.license ? { license: resolution.table.license } : {}),
-          };
-          resolvedFromTmc++;
-        } else {
-          unresolvedReasons.set(
-            resolution.reason,
-            (unresolvedReasons.get(resolution.reason) ?? 0) + 1
-          );
+      const resolution = ref
+        ? resolveAlertC(ref, tmcTables())
+        : // Not an Alert-C record at all — it locates itself some other way (or
+          // not at all). Counted like any other reason so no dropped record is
+          // left in a silent bucket that reads as "nothing to explain".
+          ({ ok: false, reason: "no-alertc" } as const);
+
+      if (resolution.ok) {
+        geometry = resolution.geometry;
+        locationTable = {
+          ref: `TMC ${resolution.table.cid}/${resolution.table.tabcd}`,
+          version: resolution.table.version,
+          ...(resolution.table.attribution ? { attribution: resolution.table.attribution } : {}),
+          ...(resolution.table.license ? { license: resolution.table.license } : {}),
+        };
+        resolvedFromTmc++;
+      } else {
+        unresolvedReasons.set(
+          resolution.reason,
+          (unresolvedReasons.get(resolution.reason) ?? 0) + 1
+        );
+        if (resolution.reason === "no-alertc") {
+          const shape = locationShapeOf(rec);
+          unreadableShapes.set(shape, (unreadableShapes.get(shape) ?? 0) + 1);
         }
       }
     }
@@ -908,9 +945,15 @@ export function parseDatexSituations(
       .sort((a, b) => b[1] - a[1])
       .map(([reason, n]) => `${reason}=${n}`)
       .join(" ");
+    const shapes = [...unreadableShapes]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([shape, n]) => `${shape}×${n}`)
+      .join(" ");
     console.debug(
       `[datex] ${src.id}: skipped ${skippedAlertCOnly} record(s) with no usable geometry` +
-        (reasons ? ` (${reasons})` : "")
+        (reasons ? ` (${reasons})` : "") +
+        (shapes ? ` [${shapes}]` : "")
     );
     // Also counted per source, so the loss is measurable in GET /feeds/status
     // rather than visible only in a debug log line.

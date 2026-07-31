@@ -41,7 +41,14 @@ export interface AlertCReference {
  * unresolved record that is missing a table reads very differently from one
  * refused for a version mismatch, and only the reason says which to fix.
  */
-export type TmcUnresolvedReason = "no-reference" | "no-table" | "version-mismatch" | "unknown-code";
+export type TmcUnresolvedReason =
+  | "no-reference"
+  | "no-table"
+  /** A version is declared, and it is not the table's. */
+  | "version-mismatch"
+  /** No version is declared at all, so there is nothing to check ours against. */
+  | "version-missing"
+  | "unknown-code";
 
 export type TmcResolution =
   | { ok: true; geometry: PointGeometry | LineStringGeometry; table: TmcLocationTable }
@@ -108,7 +115,8 @@ export function resolveAlertC(ref: AlertCReference, tables: TmcLocationTable[]):
 
   const table = tables.find((t) => matchesTable(t, ref));
   if (!table) return { ok: false, reason: "no-table" };
-  if (!ref.version || !sameVersion(ref.version, table.version)) {
+  if (!ref.version) return { ok: false, reason: "version-missing" };
+  if (!sameVersion(ref.version, table.version)) {
     return { ok: false, reason: "version-mismatch" };
   }
 
