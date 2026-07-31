@@ -85,6 +85,12 @@ export function configSchemaPropertiesFor(feeds: FeedSourceBase[]): Record<strin
   for (const f of feeds.filter(KEYED)) {
     for (const v of feedEnvVars(f)) {
       const field: CredentialField | undefined = f.setup?.[v];
+      // Several feeds legitimately share one key (Victoria's Freeway and
+      // disruption datasets; 511NY's events and winter roads). Only one needs to
+      // carry the setup guide, so a feed declaring none must not overwrite a
+      // guide an earlier feed contributed — otherwise the admin panel's "how to
+      // obtain this key" text would depend on feed ordering.
+      if (!field && props[v]) continue;
       const { title, description, ...setup } = field ?? { title: `${f.name} — ${v}` };
       props[v] = {
         type: "string",

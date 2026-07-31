@@ -98,4 +98,21 @@ describe("mapSourceType", () => {
       isPlanned: false,
     });
   });
+  // The two record classes Hrvatske ceste's events publication leans on; without
+  // these its most distinctive records would ingest as `other`.
+  it("maps InfrastructureDamageObstruction to hazard", () => {
+    expect(mapSourceType("datex2", "InfrastructureDamageObstruction")).toEqual({
+      type: "hazard",
+      category: "incident",
+      isPlanned: false,
+    });
+  });
+
+  it("maps EnvironmentalObstruction to hazard", () => {
+    expect(mapSourceType("datex2", "sit:EnvironmentalObstruction")).toEqual({
+      type: "hazard",
+      category: "incident",
+      isPlanned: false,
+    });
+  });
 });

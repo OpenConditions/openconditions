@@ -275,6 +275,48 @@
     "id": "au-vic-vicroads"
   },
   {
+    "name": "Planned road disruptions (Victoria)",
+    "format": "vic-disruptions",
+    "operator": "transportvic",
+    "subdivision": "vic",
+    "stream": "planned",
+    "url": "https://api.opendata.transport.vic.gov.au/opendata/roads/disruptions/planned/v1/disruptions",
+    "auth": {
+      "kind": "header-key",
+      "header": "Ocp-Apim-Subscription-Key",
+      "envVar": "AU_VIC_VICROADS_API_KEY"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "Department of Transport and Planning (Victoria)",
+    "country": "AU",
+    "privacyUrl": "https://www.vic.gov.au/privacy",
+    "id": "au-vic-transportvic-planned"
+  },
+  {
+    "name": "Unplanned road disruptions (Victoria)",
+    "format": "vic-disruptions",
+    "operator": "transportvic",
+    "subdivision": "vic",
+    "stream": "unplanned",
+    "url": "https://api.opendata.transport.vic.gov.au/opendata/roads/disruptions/unplanned/v2",
+    "auth": {
+      "kind": "header-key",
+      "header": "Ocp-Apim-Subscription-Key",
+      "envVar": "AU_VIC_VICROADS_API_KEY"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "attribution": "Department of Transport and Planning (Victoria)",
+    "country": "AU",
+    "privacyUrl": "https://www.vic.gov.au/privacy",
+    "id": "au-vic-transportvic-unplanned"
+  },
+  {
     "name": "Verkeerscentrum Vlaanderen (Flanders)",
     "format": "datex2",
     "operator": "flanders",
@@ -378,6 +420,39 @@
     "id": "ca-on-511"
   },
   {
+    "name": "Ontario 511 construction projects (Canada)",
+    "format": "ibi511",
+    "operator": "511",
+    "subdivision": "on",
+    "stream": "construction",
+    "url": "https://511on.ca/api/v2/get/constructionprojects?format=json",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "OGL-ON",
+    "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
+    "attribution": "Contains information licensed under the Open Government Licence – Ontario",
+    "country": "CA",
+    "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
+    "id": "ca-on-511-construction"
+  },
+  {
+    "name": "Ontario 511 road conditions (Canada)",
+    "format": "ibi511-conditions",
+    "operator": "511",
+    "subdivision": "on",
+    "stream": "conditions",
+    "url": "https://511on.ca/api/v3/get/roadconditions?format=json",
+    "allowMassClear": true,
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "OGL-ON",
+    "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
+    "attribution": "Contains information licensed under the Open Government Licence – Ontario",
+    "country": "CA",
+    "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
+    "id": "ca-on-511-conditions"
+  },
+  {
     "name": "MTQ roadworks (Québec)",
     "format": "geojson",
     "operator": "mtq",
@@ -396,9 +471,43 @@
       "headlineField": "identificationDesTravaux",
       "descriptionField": "descriptionFrancais",
       "roadField": "routeAutoroute",
-      "updatedField": "miseAJour"
+      "updatedField": "miseAJour",
+      "validFromField": "debut",
+      "validToField": "fin"
     },
     "id": "ca-qc-mtq"
+  },
+  {
+    "name": "MTQ road warnings (Québec)",
+    "format": "geojson",
+    "operator": "mtq",
+    "subdivision": "qc",
+    "stream": "warnings",
+    "url": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:evenements&outputformat=geojson",
+    "cadenceSec": 600,
+    "freshnessWindowSec": 1800,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.donneesquebec.ca/",
+    "attribution": "Ministère des Transports du Québec (MTQ)",
+    "country": "CA",
+    "privacyUrl": "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
+    "geojson": {
+      "idField": "identifiant",
+      "typeField": "entrave",
+      "typeMap": {
+        "Fermeture": "road_closure",
+        "Fermeture de 1 voie sur 2": "lane_closure",
+        "Circulation en alternance": "lane_closure",
+        "Circulation à contresens": "contraflow",
+        "Circulation interdite aux véhicules lourds": "dimension_restriction"
+      },
+      "defaultType": "other",
+      "headlineField": "localisation",
+      "descriptionField": "cause",
+      "roadField": "numeroRoute",
+      "validFromField": "enVigueurDepuis"
+    },
+    "id": "ca-qc-mtq-warnings"
   },
   {
     "name": "Autobahn GmbH (Germany)",
@@ -2012,6 +2121,42 @@
     "id": "hr-hc"
   },
   {
+    "name": "Hrvatske ceste traffic events (Croatia)",
+    "format": "datex2",
+    "operator": "hc",
+    "stream": "events",
+    "url": "https://b2b.promet-info.hr/dc/b2b.hc.events.datex3",
+    "auth": {
+      "kind": "basic",
+      "userEnvVar": "HR_HC_USERNAME",
+      "passEnvVar": "HR_HC_PASSWORD"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "OD-HR",
+    "licenseUrl": "https://data.gov.hr/otvorena-dozvola",
+    "attribution": "Hrvatske ceste",
+    "country": "HR",
+    "privacyUrl": "https://www.hrvatske-ceste.hr/",
+    "setup": {
+      "HR_HC_USERNAME": {
+        "url": "https://www.hrvatske-ceste.hr/",
+        "urlLabel": "Hrvatske ceste",
+        "steps": [
+          "There is no self-service portal — request B2B account credentials from Hrvatske ceste (the promet-info operator), via hrvatske-ceste.hr or the data.gov.hr dataset page.",
+          "Ask for the events publication (\"HC Prometni događaji DatexII v3\") to be enabled on the account as well as roadworks — the two are authorised separately."
+        ],
+        "notes": "Open licence (commercial OK); access is gated on the B2B account.",
+        "title": "Hrvatske ceste (Croatia) — B2B username",
+        "description": "HTTP Basic username for the promet-info B2B feed (Croatia)."
+      },
+      "HR_HC_PASSWORD": {
+        "title": "Hrvatske ceste (Croatia) — B2B password"
+      }
+    },
+    "id": "hr-hc-events"
+  },
+  {
     "name": "Vegagerðin road conditions (Iceland)",
     "format": "geojson",
     "operator": "vegagerdin",
@@ -2041,6 +2186,52 @@
       "latField": "Y"
     },
     "id": "is-vegagerdin"
+  },
+  {
+    "name": "Vegagerðin road conditions — segments (Iceland)",
+    "format": "geojson",
+    "operator": "vegagerdin",
+    "stream": "lines",
+    "url": "https://gagnaveita.vegagerdin.is/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=gis:roadconditions_lineincident&outputFormat=application/json",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC-BY-4.0",
+    "licenseUrl": "https://www.vegagerdin.is/",
+    "attribution": "Vegagerðin (Icelandic Road and Coastal Administration)",
+    "country": "IS",
+    "privacyUrl": "https://www.vegagerdin.is/",
+    "geojson": {
+      "idField": "IDBUTUR",
+      "typeField": "ROADCONDITION",
+      "typeMap": {
+        "Closed": "road_closure",
+        "Impassable": "road_closure",
+        "Impassable because of snow or weather": "weather",
+        "Road repairs": "roadworks",
+        "Spots of ice": "weather",
+        "Mountain vehicles": "dimension_restriction",
+        "No winter services": "road_condition"
+      },
+      "defaultType": "road_condition",
+      "headlineField": "ROADCONDITION",
+      "descriptionField": "ADDITIONALINFORMATION",
+      "roadField": "ROADNUMBER",
+      "updatedField": "CREATIONTIME",
+      "filter": [
+        {
+          "field": "ROADCONDITION",
+          "exclude": [
+            "Easily passable",
+            "Not known"
+          ]
+        }
+      ],
+      "startLonField": "STARTX",
+      "startLatField": "STARTY",
+      "endLonField": "ENDX",
+      "endLatField": "ENDY"
+    },
+    "id": "is-vegagerdin-lines"
   },
   {
     "name": "5T real-time traffic flow (Turin)",
@@ -2499,6 +2690,28 @@
     "id": "us-ny-511"
   },
   {
+    "name": "511NY winter road conditions (New York)",
+    "format": "ibi511-conditions",
+    "operator": "511",
+    "subdivision": "ny",
+    "stream": "winterroads",
+    "url": "https://511ny.org/api/v3/get/winterroads?format=json",
+    "auth": {
+      "kind": "query-key",
+      "param": "key",
+      "envVar": "US_NY_511_API_KEY"
+    },
+    "allowMassClear": true,
+    "cadenceSec": 600,
+    "freshnessWindowSec": 1800,
+    "license": "511NY-DAA",
+    "licenseUrl": "https://511ny.org/developers/daa",
+    "attribution": "Powered by 511NY",
+    "country": "US",
+    "privacyUrl": "https://511ny.org/privacy",
+    "id": "us-ny-511-winterroads"
+  },
+  {
     "name": "NYC DOT real-time traffic speeds (New York City)",
     "format": "nyc-dot",
     "operator": "dot",
@@ -2547,6 +2760,50 @@
       }
     },
     "id": "us-oh-ohgo"
+  },
+  {
+    "name": "OHGO construction (Ohio)",
+    "format": "ohgo-events",
+    "operator": "ohgo",
+    "subdivision": "oh",
+    "stream": "construction",
+    "url": "https://publicapi.ohgo.com/api/v1/construction?page-all=true&include-future=true",
+    "auth": {
+      "kind": "header-key",
+      "header": "Authorization",
+      "envVar": "US_OH_OHGO_API_KEY",
+      "valuePrefix": "APIKEY "
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "US-Gov-Public-Domain",
+    "licenseUrl": "https://www.usa.gov/government-works",
+    "attribution": "Ohio Department of Transportation (OHGO)",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.ohio.gov/about-us/privacy",
+    "id": "us-oh-ohgo-construction"
+  },
+  {
+    "name": "OHGO incidents (Ohio)",
+    "format": "ohgo-events",
+    "operator": "ohgo",
+    "subdivision": "oh",
+    "stream": "incidents",
+    "url": "https://publicapi.ohgo.com/api/v1/incidents?page-all=true",
+    "auth": {
+      "kind": "header-key",
+      "header": "Authorization",
+      "envVar": "US_OH_OHGO_API_KEY",
+      "valuePrefix": "APIKEY "
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "US-Gov-Public-Domain",
+    "licenseUrl": "https://www.usa.gov/government-works",
+    "attribution": "Ohio Department of Transportation (OHGO)",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.ohio.gov/about-us/privacy",
+    "id": "us-oh-ohgo-incidents"
   },
   {
     "id": "wzdx-oklahoma",
@@ -2815,6 +3072,20 @@
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
+    "id": "wzdx-n-a",
+    "name": "WZDx — Quebec City (n/a)",
+    "operator": "wzdx",
+    "format": "wzdx",
+    "url": "https://quebec.gewi.com/wzdx/pull",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Quebec City",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
+  },
+  {
     "id": "wzdx-louisiana",
     "name": "WZDx — Louisiana DOTD (louisiana)",
     "operator": "wzdx",
@@ -2857,7 +3128,7 @@
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
-    "id": "wzdx-n-a",
+    "id": "wzdx-n-a-2",
     "name": "WZDx — CivicLink (n/a)",
     "operator": "wzdx",
     "format": "wzdx",
@@ -7110,6 +7381,45 @@
     "operator": "autobahn",
     "format": "autobahn",
     "url": "https://verkehr.autobahn.de/o/autobahn/A864/services/roadworks",
+    "cadenceSec": 900,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
+  },
+  {
+    "id": "autobahn-a952-warning",
+    "name": "Autobahn A952 — warning",
+    "operator": "autobahn",
+    "format": "autobahn",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/warning",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
+  },
+  {
+    "id": "autobahn-a952-closure",
+    "name": "Autobahn A952 — closure",
+    "operator": "autobahn",
+    "format": "autobahn",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/closure",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
+  },
+  {
+    "id": "autobahn-a952-roadworks",
+    "name": "Autobahn A952 — roadworks",
+    "operator": "autobahn",
+    "format": "autobahn",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/roadworks",
     "cadenceSec": 900,
     "freshnessWindowSec": 900,
     "license": "dl-de/by-2-0",

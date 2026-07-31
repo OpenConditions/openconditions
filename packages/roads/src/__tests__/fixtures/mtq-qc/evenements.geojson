@@ -1,0 +1,147 @@
+{
+  "type": "FeatureCollection",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::3857"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "identifiant": 124315,
+        "entrave": "Fermeture",
+        "numeroRoute": "",
+        "localisation": "route Commerciale fermée entre la R-132 et la route Saint-Jean-Baptiste",
+        "direction": "SUD et NORD",
+        "municipalite": "Lotbinière",
+        "duree": "Du 8 juin 2026 à 7 h au 14 août 2026 à 18 h",
+        "cause": "Travaux",
+        "consequence": "",
+        "detour": "",
+        "regions": "(1:Chaudière-Appalaches)",
+        "regionsDiffusion": "(1:Chaudière-Appalaches)",
+        "enVigueurDepuis": "2026-07-14T09:34:00",
+        "couleurLigne": "#FF0000"
+      },
+      "bbox": [-8007271.975841, 5877301.984352, -8003145.028359, 5879694.072403],
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-8007271.975841, 5879694.072403],
+          [-8004602.97973, 5877422.043142],
+          [-8004421.974238, 5877330.014125]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "identifiant": 81387,
+        "entrave": "Circulation en alternance",
+        "numeroRoute": "",
+        "localisation": "chemin du Barrage sur le pont au-dessus de la rivière Blanche. Largeur de la voie réduite à 4,6 mètres.",
+        "direction": "OUEST et EST",
+        "municipalite": "Val-des-Monts",
+        "duree": "Indéterminée",
+        "cause": "Mesures préventives",
+        "consequence": "",
+        "detour": "",
+        "regions": "(1:Outaouais)",
+        "regionsDiffusion": "(1:Outaouais)",
+        "enVigueurDepuis": "2025-07-30T11:17:00",
+        "couleurLigne": "#FF6A33"
+      },
+      "bbox": [-8420696.979919, 5728202.044171, -8420644.993716, 5728243.943738],
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-8420696.979919, 5728202.044171],
+          [-8420644.993716, 5728243.943738]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "identifiant": 115026,
+        "entrave": "Circulation à contresens",
+        "numeroRoute": "",
+        "localisation": "rue Baby sur le pont, 1 voie par direction. Largeur voie : 3,2 mètres",
+        "direction": "OUEST et EST",
+        "municipalite": "Joliette",
+        "duree": "Indéterminée",
+        "cause": "Inspection",
+        "consequence": "",
+        "detour": "",
+        "regions": "(1:Laurentides—Lanaudière)",
+        "regionsDiffusion": "(1:Laurentides—Lanaudière)",
+        "enVigueurDepuis": "2025-09-23T10:13:00",
+        "couleurLigne": "#FF6A33"
+      },
+      "bbox": [-8175084.995017, 5785208.070792, -8174966.996357, 5785310.046705],
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-8175084.995017, 5785208.070792],
+          [-8174966.996357, 5785310.046705]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "identifiant": 125259,
+        "entrave": "Circulation interdite aux véhicules lourds",
+        "numeroRoute": "138",
+        "localisation": "pont Honoré-Mercier Passage INTERDIT aux véhicules lourds (trois essieux et plus), du lundi au vendredi : direction Montréal (EST), de 5 h à 9 h 30 et direction Rive-Sud (OUEST), de 15 h à 19 h",
+        "direction": "OUEST et EST",
+        "municipalite": "",
+        "duree": "Du 17 juillet 2026 à 23 h au 3 août 2026 à 5 h",
+        "cause": "Travaux",
+        "consequence": "",
+        "detour": "",
+        "regions": "(1:Montérégie)",
+        "regionsDiffusion": "(2:Montérégie,Montréal)",
+        "enVigueurDepuis": "2026-07-15T14:37:00",
+        "couleurLigne": "#FF6A33"
+      },
+      "bbox": [-8199612.018424, 5686386.936885, -8199027.034499, 5688021.940869],
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-8199027.034499, 5688021.940869],
+          [-8199612.018424, 5686386.936885]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "identifiant": 111875,
+        "entrave": "",
+        "numeroRoute": "25",
+        "localisation": "Tunnel Louis-Hippolyte-La Fontaine<br/><br/>Hauteur libre réduite à 4,3 mètres. ATTENTION véhicules récréatifs : assurez-vous de vous y conformer avant d'inclure le tunnel dans votre itinéraire.",
+        "direction": "SUD et NORD",
+        "municipalite": "",
+        "duree": "",
+        "cause": "",
+        "consequence": "",
+        "detour": "",
+        "regions": "(1:Montérégie)",
+        "regionsDiffusion": "(5:Montérégie,Mauricie—Centre-du-Québec,Laurentides—Lanaudière,Montréal,Laval)",
+        "enVigueurDepuis": "2026-07-30T10:29:00",
+        "couleurLigne": "#FF6A33"
+      },
+      "bbox": [-8182814.018582, 5712903.065445, -8178736.051676, 5714116.946229],
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-8178736.051676, 5712903.065445],
+          [-8182814.018582, 5714116.946229]
+        ]
+      }
+    }
+  ]
+}

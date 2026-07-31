@@ -9,6 +9,8 @@
 | Live Traffic NSW (New South Wales) | `AU_NSW_LIVETRAFFIC_API_KEY` | CC-BY-4.0 | [Register at Transport NSW Open Data](https://opendata.transport.nsw.gov.au/data/user/register) |
 | QLDTraffic (Queensland) | `AU_QLD_TRAFFIC_API_KEY` | CC-BY-4.0 | [QLDTraffic](https://www.qldtraffic.qld.gov.au/) |
 | Freeway Travel Time (Victoria) | `AU_VIC_VICROADS_API_KEY` | CC-BY-4.0 | [Transport Victoria Open Data Portal](https://opendata.transport.vic.gov.au/) |
+| Planned road disruptions (Victoria) | `AU_VIC_VICROADS_API_KEY` | CC-BY-4.0 |  |
+| Unplanned road disruptions (Victoria) | `AU_VIC_VICROADS_API_KEY` | CC-BY-4.0 |  |
 | LVZ.NRW (Nordrhein-Westfalen) via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_VERKEHR_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | NRW.Mobidrom bundled roadworks via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID` | CC-BY-SA-4.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
@@ -36,6 +38,7 @@
 | Tark Tee (Estonia) | `EE_TARKTEE_API_KEY` | CC-BY-4.0 | [Register at Tark Tee](https://tarktee.transpordiamet.ee/#/en/datex-registration) |
 | National Highways NTIS (England) | `GB_NATIONALHIGHWAYS_API_KEY` | OGL-UK-3.0 | [National Highways developer portal](https://developer.data.nationalhighways.co.uk/signin) |
 | Hrvatske ceste roadworks (Croatia) | `HR_HC_USERNAME`, `HR_HC_PASSWORD` | OD-HR | [Hrvatske ceste](https://www.hrvatske-ceste.hr/) |
+| Hrvatske ceste traffic events (Croatia) | `HR_HC_USERNAME`, `HR_HC_PASSWORD` | OD-HR | [Hrvatske ceste](https://www.hrvatske-ceste.hr/) |
 | Statens vegvesen (Norway) | `NO_VEGVESEN_USERNAME`, `NO_VEGVESEN_PASSWORD` | NLOD-2.0 | [Statens vegvesen — get DATEX access](https://www.vegvesen.no/en/fag/technology/open-data/a-selection-of-open-data/what-is-datex/get-access/) |
 | Statens vegvesen traffic speed (Norway) | `NO_VEGVESEN_USERNAME`, `NO_VEGVESEN_PASSWORD` | NLOD-2.0 | [Statens vegvesen — get DATEX access](https://www.vegvesen.no/en/fag/technology/open-data/a-selection-of-open-data/what-is-datex/get-access/) |
 | Trafikverket (Sweden) | `SE_TRAFIKVERKET_API_KEY` | CC0-1.0 | [Sign up at Trafikverket](https://data.trafikverket.se/oauth2/Account/register) |
@@ -44,4 +47,7 @@
 | LTA DataMall Traffic Speed Bands (Singapore) | `SG_LTA_ACCOUNT_KEY` | Singapore-ODL-1.0 | [Request LTA API access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html) |
 | NAP Slovenia (promet.si) | `SI_NAP_USERNAME`, `SI_NAP_PASSWORD` | CC-BY-SA-4.0 | [Register at NAP Slovenia](https://www.nap.si/en/registration) |
 | 511NY (New York) | `US_NY_511_API_KEY` | 511NY-DAA | [Create a 511NY account](https://511ny.org/my511/register) |
+| 511NY winter road conditions (New York) | `US_NY_511_API_KEY` | 511NY-DAA |  |
 | OHGO travel delays (Ohio) | `US_OH_OHGO_API_KEY` | US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
+| OHGO construction (Ohio) | `US_OH_OHGO_API_KEY` | US-Gov-Public-Domain |  |
+| OHGO incidents (Ohio) | `US_OH_OHGO_API_KEY` | US-Gov-Public-Domain |  |

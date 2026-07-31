@@ -619,3 +619,69 @@ describe("parseWzdx — statewide Missouri v4.1 feed (registry format label 'jso
     expect(partial!.roadState).toBe("some_lanes_closed");
   });
 });
+
+describe("parseWzdx — Québec City v3.1 feed (core fields on properties)", () => {
+  const QC = join(import.meta.dirname, "fixtures/wzdx/quebec-v31.json");
+  const QC_SOURCE = { ...WZDX_SOURCE, id: "wzdx-quebec", attribution: "Ville de Québec" } as const;
+
+  it("lifts the v3 core fields so events classify instead of all landing as `other`", () => {
+    const events = parseWzdx(readFileSync(QC, "utf8"), QC_SOURCE);
+    expect(events).toHaveLength(2);
+    expect(events.every((e) => e.type !== "other")).toBe(true);
+
+    const wz = events.find((e) => e.type === "roadworks");
+    expect(wz).toBeDefined();
+    expect(wz!.category).toBe("planned");
+    expect(wz!.isPlanned).toBe(true);
+    expect(wz!.roads?.map((r) => r.name)).toContain("Rue de Maisonneuve");
+    expect(wz!.roadState).toBe("some_lanes_closed");
+    expect(wz!.description).toContain("Rue de Maisonneuve");
+  });
+
+  it("maps a v3 detour record to the detour type", () => {
+    const events = parseWzdx(readFileSync(QC, "utf8"), QC_SOURCE);
+    const detour = events.find((e) => e.type === "detour");
+    expect(detour).toBeDefined();
+    expect(detour!.roads?.map((r) => r.name)).toContain("Rue Adanac");
+  });
+
+  it("keeps the v3 ids and validity window", () => {
+    const events = parseWzdx(readFileSync(QC, "utf8"), QC_SOURCE);
+    const wz = events.find((e) => e.type === "roadworks")!;
+    expect(wz.id).toContain("TIC-Quebec/1:");
+    expect(wz.validFrom).toBeTruthy();
+    expect(wz.validTo).toBeTruthy();
+  });
+
+  it("leaves an already-v4 body untouched", () => {
+    // The v4 fixture must classify identically after the lift is in place.
+    const events = parseWzdx(readFileSync(FIXTURE_PATH, "utf8"), WZDX_SOURCE);
+    expect(events.length).toBeGreaterThan(0);
+    expect(events.some((e) => e.type === "roadworks")).toBe(true);
+  });
+});
+
+describe("parseWzdx — CWZ 1.0 spike (characterisation, feed not enabled)", () => {
+  const CWZ = join(import.meta.dirname, "fixtures/wzdx/cwz-pbs.json");
+  const CWZ_SOURCE = {
+    ...WZDX_SOURCE,
+    id: "cwz-pbs",
+    attribution: "PurposeBuilt Systems",
+  } as const;
+
+  // Captured live from the one unkeyed CWZ 1.0 registry row. Its body is an
+  // ordinary core_details-shaped FeatureCollection, so the v4 parser reads it
+  // with no adapter — but the whole feed carries a single work zone. That, plus
+  // two placeholder-key rows and a key-gated MassDOT, is why CWZ stays out of
+  // the resolver: the standard needs no new code, it just has no coverage yet.
+  it("reads a CWZ 1.0 body with the v4 parser, with no adapter", () => {
+    const events = parseWzdx(readFileSync(CWZ, "utf8"), CWZ_SOURCE);
+    expect(events).toHaveLength(1);
+    const [ev] = events;
+    expect(ev!.type).toBe("roadworks");
+    expect(ev!.category).toBe("planned");
+    expect(ev!.roads?.map((r) => r.name)).toContain("US-30 E");
+    expect(ev!.roadState).toBe("closed");
+    expect(ev!.geometry.type).toBe("LineString");
+  });
+});

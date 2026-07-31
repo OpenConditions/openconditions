@@ -1,0 +1,145 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "roadconditions_lineincident.fid-6befbb0d_19fb745e1cd_5f0a",
+      "geometry": null,
+      "properties": {
+        "IDBUTUR": 913080036,
+        "ROADNUMBER": "F210",
+        "EVENTTYPE": "blocked",
+        "ASTAND_YFIRBORD": "LOKAD",
+        "LYSING": "Lokað",
+        "ROADCONDITION": "Closed",
+        "ASTAND_VIDBOTARUPPL": "ALLUR_AKSTUR_BANN",
+        "ADDITIONALINFORMATION": "Driving prohibited",
+        "STARTX": -19.57021386,
+        "STARTY": 63.85508479,
+        "ENDX": -20.02882374,
+        "ENDY": 63.82486302,
+        "CREATIONTIME": "2026-06-02T13:34:27Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "roadconditions_lineincident.fid-6befbb0d_19fb745e1cd_5f4b",
+      "geometry": null,
+      "properties": {
+        "IDBUTUR": 911310036,
+        "ROADNUMBER": "910",
+        "EVENTTYPE": "blocked",
+        "ASTAND_YFIRBORD": "OFAERT_ANNAD",
+        "LYSING": "Ófært af öðrum ástæðum en vegna snjóa",
+        "ROADCONDITION": "Impassable",
+        "ASTAND_VIDBOTARUPPL": null,
+        "ADDITIONALINFORMATION": null,
+        "STARTX": -15.79807549,
+        "STARTY": 64.94880395,
+        "ENDX": -15.53072492,
+        "ENDY": 64.89209331,
+        "CREATIONTIME": "2026-06-02T13:34:27Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "roadconditions_lineincident.fid-6befbb0d_19fb745e1cd_651e",
+      "geometry": null,
+      "properties": {
+        "IDBUTUR": 905020036,
+        "ROADNUMBER": "54",
+        "EVENTTYPE": "road repairs",
+        "ASTAND_YFIRBORD": "VEGAVINNA",
+        "LYSING": "Vegavinna",
+        "ROADCONDITION": "Road repairs",
+        "ASTAND_VIDBOTARUPPL": null,
+        "ADDITIONALINFORMATION": null,
+        "STARTX": -21.995518,
+        "STARTY": 65.01695019,
+        "ENDX": -21.80379585,
+        "ENDY": 65.01042734,
+        "CREATIONTIME": "2026-06-02T13:34:27Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "roadconditions_lineincident.fid-6befbb0d_19fb745e1cd_5fbf",
+      "geometry": null,
+      "properties": {
+        "IDBUTUR": 911220036,
+        "ROADNUMBER": "953",
+        "EVENTTYPE": null,
+        "ASTAND_YFIRBORD": "HALKUBLETTIR",
+        "LYSING": "Hálkublettir",
+        "ROADCONDITION": "Spots of ice",
+        "ASTAND_VIDBOTARUPPL": null,
+        "ADDITIONALINFORMATION": null,
+        "STARTX": -14.34234662,
+        "STARTY": 65.19258131,
+        "ENDX": -14.14145937,
+        "ENDY": 65.1645547,
+        "CREATIONTIME": "2026-06-02T13:34:27Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "roadconditions_lineincident.fid-6befbb0d_19fb745e1cd_5f28",
+      "geometry": null,
+      "properties": {
+        "IDBUTUR": 904470036,
+        "ROADNUMBER": "553",
+        "EVENTTYPE": null,
+        "ASTAND_YFIRBORD": "FAERT_FJALLABILUM",
+        "LYSING": "Fært fjallabílum",
+        "ROADCONDITION": "Mountain vehicles",
+        "ASTAND_VIDBOTARUPPL": "FAERT_FJALLABILUM",
+        "ADDITIONALINFORMATION": "Mountain vehicles",
+        "STARTX": -21.70563938,
+        "STARTY": 64.67402753,
+        "ENDX": -21.69619959,
+        "ENDY": 64.73444113,
+        "CREATIONTIME": "2026-06-02T13:34:27Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "roadconditions_lineincident.fid-6befbb0d_19fb745e1cd_5f09",
+      "geometry": null,
+      "properties": {
+        "IDBUTUR": 908110036,
+        "ROADNUMBER": "77",
+        "EVENTTYPE": null,
+        "ASTAND_YFIRBORD": "GREIDFAERT",
+        "LYSING": "Greiðfært",
+        "ROADCONDITION": "Easily passable",
+        "ASTAND_VIDBOTARUPPL": null,
+        "ADDITIONALINFORMATION": null,
+        "STARTX": -19.39435963,
+        "STARTY": 65.8998645,
+        "ENDX": -19.40962469,
+        "ENDY": 65.89807381,
+        "CREATIONTIME": "2026-06-02T13:34:27Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "roadconditions_lineincident.fid-6befbb0d_19fb745e1cd_5f12",
+      "geometry": null,
+      "properties": {
+        "IDBUTUR": 1209880036,
+        "ROADNUMBER": "988",
+        "EVENTTYPE": null,
+        "ASTAND_YFIRBORD": "OTHEKKT",
+        "LYSING": "Óþekkt",
+        "ROADCONDITION": "Not known",
+        "ASTAND_VIDBOTARUPPL": "OTHEKKT",
+        "ADDITIONALINFORMATION": "Not known",
+        "STARTX": -15.3889544,
+        "STARTY": 64.29122699,
+        "ENDX": -15.40881779,
+        "ENDY": 64.30509712,
+        "CREATIONTIME": "2026-06-02T13:34:27Z"
+      }
+    }
+  ]
+}

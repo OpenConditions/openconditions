@@ -1,0 +1,66 @@
+{
+  "disruptions": [
+    {
+      "id": "PLN-90001",
+      "name": "Monash Freeway resurfacing",
+      "description": "Night resurfacing between Toorak Rd and Warrigal Rd",
+      "eventType": "Roadworks",
+      "eventSubtype": "Maintenance",
+      "roadName": "Monash Freeway",
+      "lastUpdated": "2026-07-28T22:10:00Z",
+      "duration": {
+        "start": "2026-08-03T09:00:00Z",
+        "end": "2026-08-29T05:00:00Z",
+        "recurrences": [
+          {
+            "startDay": 0,
+            "daysDuration": 4,
+            "startTime": "21:00",
+            "duration": "PT8H",
+            "allDay": false
+          }
+        ]
+      },
+      "impact": {
+        "direction": "Inbound",
+        "impactType": "Lane closure",
+        "delay": 600,
+        "numberLanesImpacted": 2,
+        "speedLimitOnSite": 40
+      },
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          {
+            "type": "LineString",
+            "coordinates": [
+              [145.0421, -37.8512],
+              [145.0688, -37.8674]
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "PLN-90002",
+      "name": "Melbourne Marathon road closures",
+      "eventType": "Special Event",
+      "roadName": "St Kilda Road",
+      "duration": { "start": "2026-10-11T19:00:00Z", "end": "2026-10-12T04:00:00Z" },
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          { "type": "Point", "coordinates": [144.9738, -37.8306] },
+          { "type": "Point", "coordinates": [144.9801, -37.8422] }
+        ]
+      }
+    },
+    {
+      "id": "PLN-NOGEO",
+      "name": "Missing geometry",
+      "eventType": "Roadworks",
+      "duration": { "start": "2026-08-03T09:00:00Z" }
+    }
+  ],
+  "nextPageDetails": { "hasMoreRecords": false, "nextPageToken": null }
+}

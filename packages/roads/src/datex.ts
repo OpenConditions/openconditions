@@ -5,6 +5,7 @@ import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { reprojectorFor } from "./reproject.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 import {
@@ -812,6 +813,9 @@ export function parseDatexSituations(
     console.debug(
       `[datex] skipped ${skippedAlertCOnly} record(s) with no coordinate geometry (Alert-C only)`
     );
+    // Also counted per source, so the loss is measurable in GET /feeds/status
+    // rather than visible only in a debug log line.
+    recordSkippedNoGeometry(src.id, skippedAlertCOnly);
   }
 
   // Unresolved OpenLR markers (no geometry yet) must bypass dedupe, which

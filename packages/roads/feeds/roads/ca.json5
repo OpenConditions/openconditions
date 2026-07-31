@@ -48,6 +48,26 @@
     privacyUrl: "https://www.ontario.ca/page/privacy-statement",
   },
   {
+    subdivision: "on",
+    operator: "511",
+    stream: "conditions",
+    name: "Ontario 511 road conditions (Canada)",
+    format: "ibi511-conditions",
+    // v3, not v2: only v3 exposes roadconditions, and it sends EncodedPolyline
+    // as an array of lines rather than a single string.
+    url: "https://511on.ca/api/v3/get/roadconditions?format=json",
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "OGL-ON",
+    licenseUrl: "https://www.ontario.ca/page/open-government-licence-ontario",
+    attribution: "Contains information licensed under the Open Government Licence – Ontario",
+    country: "CA",
+    privacyUrl: "https://www.ontario.ca/page/privacy-statement",
+    // Winter feed: outside the season every segment reports a nominal condition
+    // and the parser skips them all, so an empty result is the normal state.
+    allowMassClear: true,
+  },
+  {
     subdivision: "qc",
     operator: "mtq",
     name: "MTQ roadworks (Québec)",
@@ -60,6 +80,44 @@
       descriptionField: "descriptionFrancais",
       roadField: "routeAutoroute",
       updatedField: "miseAJour",
+      // Zone-less Québec local time ("2026/02/09 06:30:00") — read in the
+      // server's zone, an hours-level approximation that is fine for the
+      // days-granularity horizon filter.
+      validFromField: "debut",
+      validToField: "fin",
+    },
+    cadenceSec: 600,
+    freshnessWindowSec: 1800,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://www.donneesquebec.ca/",
+    attribution: "Ministère des Transports du Québec (MTQ)",
+    country: "CA",
+    privacyUrl: "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
+  },
+  {
+    subdivision: "qc",
+    operator: "mtq",
+    stream: "warnings",
+    name: "MTQ road warnings (Québec)",
+    format: "geojson",
+    url: "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:evenements&outputformat=geojson",
+    geojson: {
+      idField: "identifiant",
+      typeField: "entrave",
+      // MTQ describes the obstruction in prose rather than with a code, so the
+      // crosswalk keys off the exact French phrasings the layer publishes.
+      typeMap: {
+        Fermeture: "road_closure",
+        "Fermeture de 1 voie sur 2": "lane_closure",
+        "Circulation en alternance": "lane_closure",
+        "Circulation à contresens": "contraflow",
+        "Circulation interdite aux véhicules lourds": "dimension_restriction",
+      },
+      defaultType: "other",
+      headlineField: "localisation",
+      descriptionField: "cause",
+      roadField: "numeroRoute",
+      validFromField: "enVigueurDepuis",
     },
     cadenceSec: 600,
     freshnessWindowSec: 1800,

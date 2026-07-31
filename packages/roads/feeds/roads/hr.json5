@@ -32,4 +32,42 @@
       },
     },
   },
+  {
+    operator: "hc",
+    stream: "events",
+    name: "Hrvatske ceste traffic events (Croatia)",
+    format: "datex2",
+    // The v3 sibling of the roadworks publication, on the same B2B portal and
+    // credentials. Registered as its own feed rather than a second URL on the
+    // roadworks entry so the two publications are monitored independently.
+    url: "https://b2b.promet-info.hr/dc/b2b.hc.events.datex3",
+    auth: {
+      kind: "basic",
+      userEnvVar: "HR_HC_USERNAME",
+      passEnvVar: "HR_HC_PASSWORD",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "OD-HR",
+    licenseUrl: "https://data.gov.hr/otvorena-dozvola",
+    attribution: "Hrvatske ceste",
+    country: "HR",
+    privacyUrl: "https://www.hrvatske-ceste.hr/",
+    setup: {
+      HR_HC_USERNAME: {
+        title: "Hrvatske ceste (Croatia) — B2B username",
+        description: "HTTP Basic username for the promet-info B2B feed (Croatia).",
+        url: "https://www.hrvatske-ceste.hr/",
+        urlLabel: "Hrvatske ceste",
+        steps: [
+          "There is no self-service portal — request B2B account credentials from Hrvatske ceste (the promet-info operator), via hrvatske-ceste.hr or the data.gov.hr dataset page.",
+          'Ask for the events publication ("HC Prometni događaji DatexII v3") to be enabled on the account as well as roadworks — the two are authorised separately.',
+        ],
+        notes: "Open licence (commercial OK); access is gated on the B2B account.",
+      },
+      HR_HC_PASSWORD: {
+        title: "Hrvatske ceste (Croatia) — B2B password",
+      },
+    },
+  },
 ]

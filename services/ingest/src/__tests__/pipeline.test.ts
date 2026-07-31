@@ -866,7 +866,13 @@ describe("pipeline — flow feed 200-with-garbage (well-formed empty publication
 });
 
 describe("pipeline — shrink tripwire (event feed)", () => {
-  const shrinkFeed: DomainFeedSource = { ...drivebcFeed, id: "shrink-test-src" };
+  // Derived from the DriveBC descriptor for its format/licence; the tripwire
+  // scenario is about an empty body, not the descriptor's offset pagination.
+  const shrinkFeed: DomainFeedSource = {
+    ...drivebcFeed,
+    id: "shrink-test-src",
+    pagination: undefined,
+  };
   const emptyEventsFetch = async (_url: string | URL | Request): Promise<Response> => {
     return new Response(JSON.stringify({ events: [] }), { status: 200 });
   };
@@ -963,6 +969,8 @@ describe("pipeline — fan-out partial-failure threshold", () => {
       id: "fanout-skip-test-src",
       url: urls,
       fanoutTolerant: true,
+      // Fan-out semantics, not the descriptor's offset pagination.
+      pagination: undefined,
     };
 
     const seeded = await runSource(feed, {
@@ -1001,6 +1009,8 @@ describe("pipeline — fan-out partial-failure threshold", () => {
       id: "fanout-boundary-test-src",
       url: urls,
       fanoutTolerant: true,
+      // Fan-out semantics, not the descriptor's offset pagination.
+      pagination: undefined,
     };
 
     const seeded = await runSource(feed, {
@@ -1037,6 +1047,8 @@ describe("pipeline — fan-out partial-failure threshold", () => {
       id: "fanout-proceed-test-src",
       url: urls,
       fanoutTolerant: true,
+      // Fan-out semantics, not the descriptor's offset pagination.
+      pagination: undefined,
     };
 
     const seeded = await runSource(feed, {

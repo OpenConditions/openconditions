@@ -48,7 +48,13 @@ export async function runFeedOnce(
       console.error(`[scheduler] ${src.id}: ${result.error}`);
       statusStore.recordError(src.id, now(), result.error);
     } else {
-      statusStore.recordSuccess(src.id, now(), result.count, result.durationMs);
+      statusStore.recordSuccess(
+        src.id,
+        now(),
+        result.count,
+        result.durationMs,
+        result.skippedNoGeometry
+      );
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);

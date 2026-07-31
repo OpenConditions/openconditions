@@ -10,13 +10,15 @@ import { parseDatexSituations } from "./datex.js";
 import { parseGeoJson } from "./geojson.js";
 import { parseFlatJson } from "./flatjson.js";
 import { parseTrafikverket } from "./trafikverket.js";
-import { parseIbi511 } from "./ibi511.js";
+import { parseIbi511, parseIbi511Conditions } from "./ibi511.js";
 import { parseGddkia } from "./gddkia.js";
 import { parseLtaIncidents } from "./lta.js";
 import { parseOpen511 } from "./open511.js";
 import { parseWzdx } from "./wzdx.js";
 import { parseAutobahn } from "./autobahn.js";
 import { parseDigitraffic } from "./digitraffic.js";
+import { parseOhgoEvents } from "./ohgo-events.js";
+import { parseVicDisruptions } from "./vic-disruptions.js";
 import { parseDigitrafficFlow, parseDatexMeasuredData } from "./flow.js";
 import type { FlowParseResult } from "./flow.js";
 import { parseElaboratedFlow } from "./flow-elaborated.js";
@@ -155,6 +157,9 @@ export function parserFor(format: SourceFormat): ParserFn {
   if (format === "trafikverket") return parseTrafikverket as ParserFn;
   if (format === "autobahn") return parseAutobahn;
   if (format === "digitraffic") return parseDigitraffic;
+  if (format === "ohgo-events") return parseOhgoEvents as ParserFn;
+  if (format === "vic-disruptions") return parseVicDisruptions as ParserFn;
+  if (format === "ibi511-conditions") return parseIbi511Conditions as ParserFn;
   throw new Error(`No parser registered for format: ${format}`);
 }
 

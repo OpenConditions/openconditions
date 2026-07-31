@@ -1,0 +1,77 @@
+{
+  "type": "FeatureCollection",
+  "feed_info": {
+    "update_date": "2026-07-31T08:56:04.162Z",
+    "publisher": "PurposeBuilt Systems - Digital Traffic Control Diary",
+    "version": "1.0",
+    "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "update_frequency": 60,
+    "contact_name": "PurposeBuilt Systems",
+    "contact_email": "matthew@purposebuilt.systems",
+    "data_sources": [
+      {
+        "data_source_id": "dtcd-cwz-1",
+        "organization_name": "Digital Traffic Control Diary",
+        "update_date": "2026-07-31T08:56:04.162Z",
+        "update_frequency": 60,
+        "contact_name": "PurposeBuilt Systems",
+        "contact_email": "matthew@purposebuilt.systems"
+      }
+    ]
+  },
+  "features": [
+    {
+      "id": "5e289944-03b7-4694-9e30-116e9f0dd62d",
+      "type": "Feature",
+      "properties": {
+        "core_details": {
+          "event_type": "work-zone",
+          "data_source_id": "dtcd-cwz-1",
+          "road_names": ["US-30 E"],
+          "direction": "eastbound",
+          "name": "US-30 E eastbound",
+          "description": "Overhead work on US-30 E eastbound; all lanes closed; reduced speed limit 55 mph.",
+          "creation_date": "2026-07-27T18:39:16.566657+00:00",
+          "update_date": "2026-07-31T08:56:03.798Z"
+        },
+        "start_date": "2026-07-27T18:37:19.977+00:00",
+        "end_date": "2026-08-28T23:00:00+00:00",
+        "is_start_date_verified": true,
+        "is_end_date_verified": true,
+        "is_start_position_verified": true,
+        "is_end_position_verified": true,
+        "location_method": "channel-device-method",
+        "work_zone_type": "static",
+        "is_moving": false,
+        "vehicle_impact": "all-lanes-closed",
+        "reduced_speed_limit_kph": 89,
+        "types_of_work": [
+          {
+            "type_name": "overhead-work",
+            "is_architectural_change": false
+          }
+        ],
+        "lanes": [
+          {
+            "order": 1,
+            "type": "left-lane",
+            "status": "shift-left"
+          },
+          {
+            "order": 2,
+            "type": "right-lane",
+            "status": "shift-left"
+          }
+        ]
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-93.6106973, 42.0037225],
+          [-93.6109081, 42.0036311],
+          [-93.6112162, 42.0035721]
+        ]
+      }
+    }
+  ]
+}

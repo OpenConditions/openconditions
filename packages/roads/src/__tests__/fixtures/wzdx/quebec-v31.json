@@ -1,0 +1,95 @@
+{
+  "type": "FeatureCollection",
+  "road_event_feed_info": {
+    "update_date": "2026-07-31T08:53:00Z",
+    "publisher": "Ville de Québec",
+    "version": "3.1",
+    "data_sources": [
+      {
+        "organization_name": "Quebec",
+        "location_method": "unknown"
+      }
+    ]
+  },
+  "features": [
+    {
+      "id": "ACL-20260729-02-JFP-P6_1",
+      "type": "Feature",
+      "properties": {
+        "data_source_id": "TIC-Quebec/1",
+        "event_type": "work-zone",
+        "road_names": ["Rue de Maisonneuve"],
+        "direction": "northbound",
+        "beginning_accuracy": "estimated",
+        "ending_accuracy": "estimated",
+        "start_date": "2026-08-07T13:00:00Z",
+        "end_date": "2026-08-07T19:00:00Z",
+        "start_date_accuracy": "estimated",
+        "end_date_accuracy": "estimated",
+        "event_status": "planned",
+        "vehicle_impact": "some-lanes-closed",
+        "restrictions": [],
+        "description": "Québec, Rue de Maisonneuve entre Avenue Louis-St-Laurent et Avenue de Salaberry chantier privé (pour la gestion de conteneurs, stationnement, matériaux, etc.), sur 2026-08-07 du 09:00 jusqu'au 15:00",
+        "update_date": "2026-07-29T13:54:15.203Z",
+        "lanes": [
+          {
+            "order": 1,
+            "status": "alternating-flow",
+            "type": "lane"
+          },
+          {
+            "order": 2,
+            "status": "open",
+            "type": "unknown"
+          },
+          {
+            "order": 3,
+            "status": "open",
+            "type": "sidewalk"
+          }
+        ],
+        "relationship": {
+          "parents": ["ACL-20260713-EC-001-WZP"]
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-71.22496, 46.80453],
+          [-71.2238047, 46.8051785]
+        ]
+      }
+    },
+    {
+      "id": "ABEA - 20260727 - EC - 01-D0",
+      "type": "Feature",
+      "properties": {
+        "data_source_id": "TIC-Quebec/1",
+        "event_type": "detour",
+        "road_names": ["Rue Adanac", "Avenue des Cordillères"],
+        "direction": "northbound",
+        "beginning_accuracy": "estimated",
+        "ending_accuracy": "estimated",
+        "start_date": "2026-07-29T13:00:00Z",
+        "end_date": "2026-07-31T20:00:00Z",
+        "start_date_accuracy": "estimated",
+        "end_date_accuracy": "estimated",
+        "event_status": "active",
+        "vehicle_impact": "unknown",
+        "description": "vers le nord via Rue Adanac, Rue des Rocheuses et Avenue des Cordillères",
+        "update_date": "2026-07-27T19:52:24.577Z",
+        "relationship": {
+          "parents": ["ABEA - 20260727 - EC - 01"]
+        }
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-71.19881, 46.87663],
+          [-71.19848, 46.87673],
+          [-71.19833, 46.87678]
+        ]
+      }
+    }
+  ]
+}

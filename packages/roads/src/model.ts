@@ -55,6 +55,42 @@ export interface GeoJsonMapping {
    */
   lonField?: string;
   latField?: string;
+  /**
+   * properties keys carrying the validity window. Values go through
+   * `toIsoTimestamp`, so epoch numbers and parseable date strings both work; an
+   * unparseable value becomes null rather than dropping the record.
+   *
+   * A source publishing a zone-less local time (MTQ's "2026/02/09 06:30:00") is
+   * read in the server's local zone — an hours-level approximation, fine for a
+   * days-granularity horizon filter but not for reasoning about the exact
+   * minute a work starts.
+   */
+  validFromField?: string;
+  validToField?: string;
+  /**
+   * Drop records the feed publishes but the overlay shouldn't carry — e.g.
+   * Iceland's ~1,300 "Easily passable" baseline segments. A feature must
+   * satisfy EVERY entry. Values compare as strings; a missing value passes an
+   * `exclude` entry and fails an `include` one.
+   */
+  filter?: GeoJsonRecordFilter[];
+  /**
+   * When the feature carries no usable geometry and all four parse to finite
+   * numbers, synthesise `LineString [[startLon,startLat],[endLon,endLat]]`.
+   * Values must already be WGS84 — properties are never reprojected, unlike the
+   * feature's own geometry.
+   */
+  startLonField?: string;
+  startLatField?: string;
+  endLonField?: string;
+  endLatField?: string;
+}
+
+/** One clause of {@link GeoJsonMapping.filter}. */
+export interface GeoJsonRecordFilter {
+  field: string;
+  include?: string[];
+  exclude?: string[];
 }
 
 /**

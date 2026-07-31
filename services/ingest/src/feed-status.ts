@@ -8,6 +8,12 @@ export interface FeedRunStatus {
   lastErrorAt?: string;
   lastRowCount?: number;
   lastDurationMs?: number;
+  /**
+   * Records the last run's parser dropped for want of coordinate geometry
+   * (DATEX Alert-C/TMC-only location references). Absent when the run dropped
+   * none, so a feed that never loses records stays visually quiet.
+   */
+  lastSkippedNoGeometry?: number;
 }
 
 /**
@@ -19,7 +25,13 @@ export interface FeedRunStatus {
 export class FeedStatusStore {
   private readonly map = new Map<string, FeedRunStatus>();
 
-  recordSuccess(feedId: string, at: string, rowCount: number, durationMs: number): void {
+  recordSuccess(
+    feedId: string,
+    at: string,
+    rowCount: number,
+    durationMs: number,
+    skippedNoGeometry?: number
+  ): void {
     const prev = this.map.get(feedId) ?? {};
     this.map.set(feedId, {
       ...prev,
@@ -27,6 +39,9 @@ export class FeedStatusStore {
       lastSuccessAt: at,
       lastRowCount: rowCount,
       lastDurationMs: durationMs,
+      // Always overwritten (not merged), so a run that dropped nothing clears a
+      // previous run's count instead of leaving a stale number on the page.
+      lastSkippedNoGeometry: skippedNoGeometry,
       // A genuine success means the feed recovered — a stale error from a prior
       // cycle should not keep showing on GET /feeds/status.
       lastError: undefined,

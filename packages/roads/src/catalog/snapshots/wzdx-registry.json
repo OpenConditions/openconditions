@@ -266,6 +266,20 @@
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
+    "id": "wzdx-n-a",
+    "name": "WZDx — Quebec City (n/a)",
+    "operator": "wzdx",
+    "format": "wzdx",
+    "url": "https://quebec.gewi.com/wzdx/pull",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Quebec City",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
+  },
+  {
     "id": "wzdx-louisiana",
     "name": "WZDx — Louisiana DOTD (louisiana)",
     "operator": "wzdx",
@@ -308,7 +322,7 @@
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
-    "id": "wzdx-n-a",
+    "id": "wzdx-n-a-2",
     "name": "WZDx — CivicLink (n/a)",
     "operator": "wzdx",
     "format": "wzdx",

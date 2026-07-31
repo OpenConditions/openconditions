@@ -1,0 +1,42 @@
+{
+  "Results": [
+    {
+      "id": "OH-CON-1001",
+      "latitude": 39.9612,
+      "longitude": -82.9988,
+      "location": "I-70 EB at Hamilton Rd",
+      "description": "Bridge deck replacement; right lane closed",
+      "category": "Bridge Work",
+      "direction": "Eastbound",
+      "district": "District 6",
+      "routeName": "I-70",
+      "status": "Active",
+      "roadStatus": "Some Lanes Closed",
+      "startDate": "2026-06-01T05:00:00Z",
+      "endDate": "2026-10-15T23:00:00Z",
+      "lastUpdated": "2026-07-30T12:15:00Z",
+      "links": [
+        { "rel": "self", "href": "https://publicapi.ohgo.com/api/v1/construction/OH-CON-1001" }
+      ]
+    },
+    {
+      "id": "OH-CON-1002",
+      "latitude": 41.4993,
+      "longitude": -81.6944,
+      "location": "I-90 WB near W 44th St",
+      "description": "Full closure for beam setting",
+      "category": "Bridge Work",
+      "direction": "Westbound",
+      "routeName": "I-90",
+      "roadStatus": "Closed",
+      "startDate": "2026-09-05T02:00:00Z",
+      "endDate": "2026-09-08T10:00:00Z"
+    },
+    {
+      "id": "OH-CON-NOGEO",
+      "location": "unknown position",
+      "routeName": "US-33",
+      "startDate": "2026-09-05T02:00:00Z"
+    }
+  ]
+}

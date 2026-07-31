@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { parseDatexSituations } from "../datex.js";
+import { __resetSkipMetrics, drainSkippedNoGeometry } from "../skip-metrics.js";
+import type { SourceDescriptor } from "../types.js";
 
 const NDW_FIXTURE_PATH = join(import.meta.dirname, "fixtures/ndw/actueel_beeld.xml");
 
@@ -709,5 +711,74 @@ describe("parseDatexSituations — Straßen.NRW typed comments (commentType2) + 
     expect(ev!.detour).toBe("für Fahrzeuge über Willich");
     expect(ev!.roads[0]?.ref).toBe("K19");
     expect(ev!.geometry?.type).toBe("LineString");
+  });
+});
+
+describe("parseDatexSituations — Hrvatske ceste events publication (DATEX II v3)", () => {
+  const HC: SourceDescriptor = {
+    id: "hr-hc-events",
+    attribution: "Hrvatske ceste",
+    country: "HR",
+    license: "OD-HR",
+  };
+
+  // Shaped after the record classes the operator's official sample carries;
+  // replace with a sanitised capture from the first authenticated pull.
+  const events = () =>
+    parseDatexSituations(
+      readFileSync(join(import.meta.dirname, "fixtures/hc-hr/events.datex3.xml")),
+      HC
+    );
+
+  it("maps InfrastructureDamageObstruction to a hazard rather than `other`", () => {
+    const ev = events().find((e) => e.id === "hr-hc-events:HC_REC_1");
+    expect(ev).toBeDefined();
+    expect(ev!.type).toBe("hazard");
+    expect(ev!.category).toBe("incident");
+    expect(ev!.geometry).toEqual({ type: "Point", coordinates: [14.4422, 45.3271] });
+    expect(ev!.severity).toBe("high");
+  });
+
+  it("maps EnvironmentalObstruction to a hazard, keeping the phenomenon as subtype", () => {
+    const ev = events().find((e) => e.id === "hr-hc-events:HC_REC_2");
+    expect(ev).toBeDefined();
+    expect(ev!.type).toBe("hazard");
+    expect(ev!.subtype).toBeTruthy();
+  });
+
+  it("keeps the already-mapped PoorEnvironmentConditions record as weather", () => {
+    const ev = events().find((e) => e.id === "hr-hc-events:HC_REC_3");
+    expect(ev).toBeDefined();
+    expect(ev!.type).toBe("weather");
+    expect(ev!.category).toBe("conditions");
+  });
+});
+
+describe("parseDatexSituations — per-source skip metrics", () => {
+  beforeEach(() => __resetSkipMetrics());
+
+  it("counts Alert-C-only records per source so the loss is measurable", () => {
+    parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
+    // Every TMC-only record in the NDW capture, including an active
+    // carriageway closure, is dropped for want of coordinates.
+    expect(drainSkippedNoGeometry("nl-ndw")).toBe(11);
+  });
+
+  it("drains the counter, so a later clean run reports zero", () => {
+    parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
+    expect(drainSkippedNoGeometry("nl-ndw")).toBeGreaterThan(0);
+    expect(drainSkippedNoGeometry("nl-ndw")).toBe(0);
+  });
+
+  it("accumulates across the buffers of one multi-URL run", () => {
+    parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
+    parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
+    expect(drainSkippedNoGeometry("nl-ndw")).toBe(22);
+  });
+
+  it("keeps counts separate per source", () => {
+    parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
+    expect(drainSkippedNoGeometry("some-other-feed")).toBe(0);
+    expect(drainSkippedNoGeometry("nl-ndw")).toBe(11);
   });
 });

@@ -251,6 +251,18 @@ describe("parseGeoJson — MTQ Québec fixture (EPSG:3857 reprojection)", () => 
     expect(lat!).toBeGreaterThan(44);
     expect(lat!).toBeLessThan(63);
   });
+
+  it("carries the chantier's debut/fin into the validity window", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "ca-qc-mtq")!;
+    const xml = readFileSync(join(import.meta.dirname, "fixtures/mtq-qc/chantiers.geojson"));
+    const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
+    const ev = events.find((e) => e.id === "ca-qc-mtq:164507");
+    expect(ev).toBeDefined();
+    // MTQ publishes zone-less local times, read here in the server's zone, so
+    // assert the calendar day rather than an exact instant.
+    expect(ev!.validFrom).toMatch(/^2026-02-09T/);
+    expect(ev!.validTo).toMatch(/^2026-09-18T/);
+  });
 });
 
 describe("parseGeoJson — Brussels fixture (per-geometry EPSG:3812 reprojection)", () => {
@@ -338,5 +350,247 @@ describe("parseGeoJson — Polizei Hamburg fixture (api.hamburg.de OGC API, real
     expect(g.coordinates[0]!).toBeLessThan(10.4);
     expect(g.coordinates[1]!).toBeGreaterThan(53.3);
     expect(g.coordinates[1]!).toBeLessThan(53.8);
+  });
+});
+
+describe("parseGeoJson — validity dates", () => {
+  const DATED: SourceDescriptor = {
+    ...SRC,
+    geojson: { idField: "id", validFromField: "debut", validToField: "fin" },
+  };
+  const point = (props: Record<string, unknown>) => ({
+    type: "Feature",
+    geometry: { type: "Point", coordinates: [1, 2] },
+    properties: props,
+  });
+
+  it("reads epoch-seconds validity into validFrom/validTo", () => {
+    const [ev] = parseGeoJson(fc([point({ id: "a", debut: 1680840000, fin: 1782792000 })]), DATED);
+    expect(ev!.validFrom).toBe(new Date(1680840000 * 1000).toISOString());
+    expect(ev!.validTo).toBe(new Date(1782792000 * 1000).toISOString());
+  });
+
+  it("reads a parseable date string into validFrom/validTo", () => {
+    const [ev] = parseGeoJson(
+      fc([point({ id: "b", debut: "2026-02-09T06:30:00Z", fin: "2026-03-01T18:00:00Z" })]),
+      DATED
+    );
+    expect(ev!.validFrom).toBe("2026-02-09T06:30:00.000Z");
+    expect(ev!.validTo).toBe("2026-03-01T18:00:00.000Z");
+  });
+
+  it("emits null for an unparseable or missing validity value", () => {
+    const [ev] = parseGeoJson(fc([point({ id: "c", debut: "not a date" })]), DATED);
+    expect(ev!.validFrom).toBeNull();
+    expect(ev!.validTo).toBeNull();
+  });
+
+  it("leaves validity unset when the mapping declares no date fields", () => {
+    const [ev] = parseGeoJson(fc([point({ id: "d", debut: 1680840000 })]), SRC);
+    expect(ev!.validFrom).toBeUndefined();
+    expect(ev!.validTo).toBeUndefined();
+  });
+});
+
+describe("parseGeoJson — record filter", () => {
+  const point = (props: Record<string, unknown>) => ({
+    type: "Feature",
+    geometry: { type: "Point", coordinates: [1, 2] },
+    properties: props,
+  });
+  const withFilter = (filter: unknown): SourceDescriptor => ({
+    ...SRC,
+    geojson: { idField: "id", filter } as never,
+  });
+
+  it("keeps only features whose value is in an include list", () => {
+    const out = parseGeoJson(
+      fc([point({ id: "a", state: "Closed" }), point({ id: "b", state: "Open" })]),
+      withFilter([{ field: "state", include: ["Closed"] }])
+    );
+    expect(out.map((e) => e.id)).toEqual(["test-gj:a"]);
+  });
+
+  it("drops features whose value is in an exclude list", () => {
+    const out = parseGeoJson(
+      fc([point({ id: "a", state: "Easily passable" }), point({ id: "b", state: "Closed" })]),
+      withFilter([{ field: "state", exclude: ["Easily passable"] }])
+    );
+    expect(out.map((e) => e.id)).toEqual(["test-gj:b"]);
+  });
+
+  it("passes a missing value through exclude but fails it through include", () => {
+    const excluded = parseGeoJson(
+      fc([point({ id: "a" })]),
+      withFilter([{ field: "state", exclude: ["Closed"] }])
+    );
+    expect(excluded.map((e) => e.id)).toEqual(["test-gj:a"]);
+
+    const included = parseGeoJson(
+      fc([point({ id: "a" })]),
+      withFilter([{ field: "state", include: ["Closed"] }])
+    );
+    expect(included).toEqual([]);
+  });
+
+  it("requires every filter entry to pass", () => {
+    const out = parseGeoJson(
+      fc([
+        point({ id: "a", state: "Closed", kind: "repairs" }),
+        point({ id: "b", state: "Closed", kind: "weather" }),
+      ]),
+      withFilter([
+        { field: "state", include: ["Closed"] },
+        { field: "kind", exclude: ["weather"] },
+      ])
+    );
+    expect(out.map((e) => e.id)).toEqual(["test-gj:a"]);
+  });
+
+  it("compares values as strings, so a numeric code matches its literal", () => {
+    const out = parseGeoJson(
+      fc([point({ id: "a", code: 3 }), point({ id: "b", code: 1 })]),
+      withFilter([{ field: "code", include: ["3"] }])
+    );
+    expect(out.map((e) => e.id)).toEqual(["test-gj:a"]);
+  });
+});
+
+describe("parseGeoJson — start/end coordinate LineString synthesis", () => {
+  const SYNTH: SourceDescriptor = {
+    ...SRC,
+    geojson: {
+      idField: "id",
+      startLonField: "STARTX",
+      startLatField: "STARTY",
+      endLonField: "ENDX",
+      endLatField: "ENDY",
+    } as never,
+  };
+  const geomless = (props: Record<string, unknown>) => ({
+    type: "Feature",
+    geometry: null,
+    properties: props,
+  });
+
+  it("builds a LineString from four WGS84 coordinate properties", () => {
+    const [ev] = parseGeoJson(
+      fc([geomless({ id: "a", STARTX: -19.1, STARTY: 63.4, ENDX: -19.2, ENDY: 63.5 })]),
+      SYNTH
+    );
+    expect(ev!.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [-19.1, 63.4],
+        [-19.2, 63.5],
+      ],
+    });
+  });
+
+  it("drops a feature whose coordinates do not all parse", () => {
+    const out = parseGeoJson(
+      fc([
+        geomless({ id: "a", STARTX: -19.1, STARTY: 63.4, ENDX: "n/a", ENDY: 63.5 }),
+        geomless({ id: "b", STARTX: -19.1, STARTY: 63.4, ENDX: -19.2 }),
+      ]),
+      SYNTH
+    );
+    expect(out).toEqual([]);
+  });
+
+  it("prefers real geometry over the synthesised line when the feature has both", () => {
+    const [ev] = parseGeoJson(
+      fc([
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [-19.0, 63.0] },
+          properties: { id: "a", STARTX: -19.1, STARTY: 63.4, ENDX: -19.2, ENDY: 63.5 },
+        },
+      ]),
+      SYNTH
+    );
+    expect(ev!.geometry).toEqual({ type: "Point", coordinates: [-19.0, 63.0] });
+  });
+});
+
+describe("parseGeoJson — MTQ Québec warnings fixture", () => {
+  const events = () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "ca-qc-mtq-warnings")!;
+    const gj = readFileSync(join(import.meta.dirname, "fixtures/mtq-qc/evenements.geojson"));
+    return parseGeoJson(gj, feedToSourceDescriptor(feed));
+  };
+
+  it("maps each French obstruction phrase to its canonical type", () => {
+    const byId = new Map(events().map((e) => [e.id, e.type]));
+    expect(byId.get("ca-qc-mtq-warnings:124315")).toBe("road_closure");
+    expect(byId.get("ca-qc-mtq-warnings:81387")).toBe("lane_closure");
+    expect(byId.get("ca-qc-mtq-warnings:115026")).toBe("contraflow");
+    expect(byId.get("ca-qc-mtq-warnings:125259")).toBe("dimension_restriction");
+    // An empty `entrave` (ferry-service notices) falls back to the default.
+    expect(byId.get("ca-qc-mtq-warnings:111875")).toBe("other");
+  });
+
+  it("reprojects the Web-Mercator geometry to Québec WGS84", () => {
+    const g = events()[0]!.geometry;
+    if (!g || g.type !== "LineString") throw new Error("expected LineString");
+    const [lon, lat] = g.coordinates[0]!;
+    expect(lon!).toBeGreaterThan(-80);
+    expect(lon!).toBeLessThan(-57);
+    expect(lat!).toBeGreaterThan(44);
+    expect(lat!).toBeLessThan(63);
+  });
+
+  it("carries enVigueurDepuis, the road ref and the headline", () => {
+    const ev = events().find((e) => e.id === "ca-qc-mtq-warnings:125259")!;
+    expect(ev.validFrom).toMatch(/^2026-07-15T/);
+    expect(ev.roads?.map((r) => r.name)).toEqual(["138"]);
+    expect(ev.headline).toContain("pont Honoré-Mercier");
+    expect(ev.description).toBeTruthy();
+  });
+});
+
+describe("parseGeoJson — Vegagerðin Iceland line-incident fixture", () => {
+  const events = () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "is-vegagerdin-lines")!;
+    const gj = readFileSync(
+      join(import.meta.dirname, "fixtures/vegagerdin-is/line-incidents.json")
+    );
+    return parseGeoJson(gj, feedToSourceDescriptor(feed));
+  };
+
+  it("synthesises a WGS84 LineString from the START/END columns", () => {
+    const closed = events().find((e) => e.id === "is-vegagerdin-lines:913080036")!;
+    expect(closed.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [-19.57021386, 63.85508479],
+        [-20.02882374, 63.82486302],
+      ],
+    });
+  });
+
+  it("maps the English condition labels to canonical types", () => {
+    const byId = new Map(events().map((e) => [e.id, e.type]));
+    expect(byId.get("is-vegagerdin-lines:913080036")).toBe("road_closure"); // Closed
+    expect(byId.get("is-vegagerdin-lines:911310036")).toBe("road_closure"); // Impassable
+    expect(byId.get("is-vegagerdin-lines:905020036")).toBe("roadworks"); // Road repairs
+    expect(byId.get("is-vegagerdin-lines:911220036")).toBe("weather"); // Spots of ice
+    expect(byId.get("is-vegagerdin-lines:904470036")).toBe("dimension_restriction");
+  });
+
+  it("filters out the passable baseline and the unknown-state segments", () => {
+    const out = events();
+    // The fixture holds one feature per distinct label; the two non-conditions
+    // are dropped, leaving the five that say something.
+    expect(out).toHaveLength(5);
+    expect(out.map((e) => e.headline)).not.toContain("Easily passable");
+    expect(out.map((e) => e.headline)).not.toContain("Not known");
+  });
+
+  it("carries the road number and update time", () => {
+    const ev = events().find((e) => e.id === "is-vegagerdin-lines:913080036")!;
+    expect(ev.roads?.map((r) => r.name)).toEqual(["F210"]);
+    expect(ev.dataUpdatedAt).toBe("2026-06-02T13:34:27Z");
+    expect(ev.description).toBe("Driving prohibited");
   });
 });

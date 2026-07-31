@@ -1,4 +1,4 @@
-import type { Severity, SourceFormat } from "@openconditions/core";
+import { toIsoTimestamp, type Severity, type SourceFormat } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { GeoJsonMapping, RoadEvent, RoadEventType } from "./model.js";
@@ -56,6 +56,43 @@ function str(v: unknown): string | undefined {
   if (typeof v === "string") return v.length > 0 ? v : undefined;
   if (typeof v === "number") return String(v);
   return undefined;
+}
+
+/**
+ * Whether a feature satisfies every filter clause. A missing value passes an
+ * `exclude` clause (there is nothing to exclude) and fails an `include` one
+ * (there is nothing to match), so a sparse discriminator narrows rather than
+ * silently widening the set.
+ */
+function passesFilter(props: Record<string, unknown>, mapping: GeoJsonMapping): boolean {
+  if (!mapping.filter || mapping.filter.length === 0) return true;
+  return mapping.filter.every((clause) => {
+    const value = str(get(props, clause.field));
+    if (clause.include && (value === undefined || !clause.include.includes(value))) return false;
+    if (clause.exclude && value !== undefined && clause.exclude.includes(value)) return false;
+    return true;
+  });
+}
+
+/**
+ * A LineString from four WGS84 lon/lat properties, for feeds that publish a
+ * segment's endpoints as columns rather than as geometry (Iceland's line layer
+ * ships `geometry: null` beside WGS84 START/END columns while its own geometry
+ * is EPSG:3057). Properties are never reprojected — the values must already be
+ * WGS84. Returns undefined unless all four parse.
+ */
+function synthesizeLine(
+  props: Record<string, unknown>,
+  mapping: GeoJsonMapping
+): Geometry | undefined {
+  const { startLonField, startLatField, endLonField, endLatField } = mapping;
+  if (!startLonField || !startLatField || !endLonField || !endLatField) return undefined;
+  const coords = [
+    [Number(get(props, startLonField)), Number(get(props, startLatField))],
+    [Number(get(props, endLonField)), Number(get(props, endLatField))],
+  ];
+  if (coords.some(([lon, lat]) => !Number.isFinite(lon) || !Number.isFinite(lat))) return undefined;
+  return { type: "LineString", coordinates: coords };
 }
 
 function resolveType(rawType: string | undefined, mapping: GeoJsonMapping): TypeMapping {
@@ -143,6 +180,7 @@ export function featuresToRoadEvents(
 
   features.forEach((feature, index) => {
     const props = (feature.properties ?? {}) as Record<string, unknown>;
+    if (!passesFilter(props, mapping)) return;
 
     // Prefer explicit WGS84 lon/lat property fields when configured (for feeds
     // whose `geometry` is in a national grid we can't reproject in closed form).
@@ -163,13 +201,19 @@ export function featuresToRoadEvents(
         rawGeometry.type &&
         ("coordinates" in rawGeometry ||
           (rawGeometry.type === "GeometryCollection" && "geometries" in rawGeometry));
-      if (!hasShape) return;
-      // CRS may be declared on the collection (ArcGIS/WFS) or per-geometry
-      // (Brussels OGC API). Reproject to WGS84 when it's a known projected grid.
-      const reproject = reprojectorFor(
-        crsName((rawGeometry as { crs?: unknown }).crs) ?? collectionCrs
-      );
-      geometry = reproject ? remapCoords(rawGeometry, reproject) : rawGeometry;
+      if (hasShape) {
+        // CRS may be declared on the collection (ArcGIS/WFS) or per-geometry
+        // (Brussels OGC API). Reproject to WGS84 when it's a known projected grid.
+        const reproject = reprojectorFor(
+          crsName((rawGeometry as { crs?: unknown }).crs) ?? collectionCrs
+        );
+        geometry = reproject ? remapCoords(rawGeometry, reproject) : rawGeometry;
+      } else {
+        // Last resort before dropping the record: endpoints published as WGS84
+        // columns rather than as geometry.
+        geometry = synthesizeLine(props, mapping);
+        if (!geometry) return;
+      }
     }
 
     const rawType = str(get(props, mapping.typeField));
@@ -195,6 +239,14 @@ export function featuresToRoadEvents(
       roads: road ? [{ name: road }] : [],
       headline,
       description: str(get(props, mapping.descriptionField)),
+      // Only projected when the mapping declares the fields, so feeds without
+      // dates keep emitting no validity at all rather than an explicit null.
+      ...(mapping.validFromField
+        ? { validFrom: toIsoTimestamp(get(props, mapping.validFromField)) ?? null }
+        : {}),
+      ...(mapping.validToField
+        ? { validTo: toIsoTimestamp(get(props, mapping.validToField)) ?? null }
+        : {}),
       sourceRaw: props,
       origin: {
         kind: "feed",

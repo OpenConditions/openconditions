@@ -23,6 +23,23 @@ const geoJsonMappingSchema = z
     arrayPath: z.string().optional(),
     lonField: z.string().optional(),
     latField: z.string().optional(),
+    validFromField: z.string().optional(),
+    validToField: z.string().optional(),
+    filter: z
+      .array(
+        z
+          .object({
+            field: z.string(),
+            include: z.array(z.string()).optional(),
+            exclude: z.array(z.string()).optional(),
+          })
+          .strict()
+      )
+      .optional(),
+    startLonField: z.string().optional(),
+    startLatField: z.string().optional(),
+    endLonField: z.string().optional(),
+    endLatField: z.string().optional(),
   })
   .strict();
 

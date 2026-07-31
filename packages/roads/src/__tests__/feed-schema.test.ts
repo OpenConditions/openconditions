@@ -40,4 +40,33 @@ describe("roadFeedSchema", () => {
   it("rejects an unknown top-level key on a roads feed too", () => {
     expect(roadFeedSchema.safeParse({ ...berlin, discover: "x" }).success).toBe(false);
   });
+  it("accepts validity-date fields, a record filter and start/end coordinates", () => {
+    const extended = {
+      ...berlin,
+      geojson: {
+        ...berlin.geojson,
+        validFromField: "debut",
+        validToField: "fin",
+        filter: [{ field: "ROADCONDITION", exclude: ["Easily passable"] }],
+        startLonField: "STARTX",
+        startLatField: "STARTY",
+        endLonField: "ENDX",
+        endLatField: "ENDY",
+      },
+    };
+    expect(roadFeedSchema.safeParse(extended).success).toBe(true);
+  });
+
+  it("rejects an unknown key inside a filter entry", () => {
+    const bad = {
+      ...berlin,
+      geojson: { ...berlin.geojson, filter: [{ field: "x", contains: ["y"] }] },
+    };
+    expect(roadFeedSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it("rejects a filter entry with no field", () => {
+    const bad = { ...berlin, geojson: { ...berlin.geojson, filter: [{ include: ["y"] }] } };
+    expect(roadFeedSchema.safeParse(bad).success).toBe(false);
+  });
 });

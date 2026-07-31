@@ -4173,6 +4173,45 @@
     "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
+    "id": "autobahn-a952-warning",
+    "name": "Autobahn A952 — warning",
+    "operator": "autobahn",
+    "format": "autobahn",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/warning",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
+  },
+  {
+    "id": "autobahn-a952-closure",
+    "name": "Autobahn A952 — closure",
+    "operator": "autobahn",
+    "format": "autobahn",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/closure",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
+  },
+  {
+    "id": "autobahn-a952-roadworks",
+    "name": "Autobahn A952 — roadworks",
+    "operator": "autobahn",
+    "format": "autobahn",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/roadworks",
+    "cadenceSec": 900,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
+  },
+  {
     "id": "autobahn-a980-warning",
     "name": "Autobahn A980 — warning",
     "operator": "autobahn",

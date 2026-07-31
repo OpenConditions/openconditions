@@ -99,3 +99,42 @@ describe("gen-credentials-lib", () => {
     expect(out).toContain("B_ID=");
   });
 });
+
+describe("configSchemaPropertiesFor — shared credentials", () => {
+  const keyed = (id: string, name: string, setup?: Record<string, unknown>) =>
+    ({
+      id,
+      name,
+      operator: "t",
+      format: "geojson",
+      url: `https://x.test/${id}`,
+      cadenceSec: 300,
+      freshnessWindowSec: 900,
+      license: "CC-BY-4.0",
+      attribution: "t",
+      country: "AU",
+      privacyUrl: "https://x.test/privacy",
+      auth: { kind: "header-key", header: "K", envVar: "SHARED_KEY" },
+      ...(setup ? { setup } : {}),
+    }) as never;
+
+  it("keeps a guide contributed by one feed when a later feed shares the key without one", () => {
+    const props = configSchemaPropertiesFor([
+      keyed("with-guide", "Feed with guide", {
+        SHARED_KEY: { title: "Portal key", url: "https://portal.test" },
+      }),
+      keyed("no-guide", "Feed without guide"),
+    ]) as Record<string, { title: string; "x-openmapx-setup"?: unknown }>;
+
+    expect(props.SHARED_KEY!.title).toBe("Portal key");
+    expect(props.SHARED_KEY!["x-openmapx-setup"]).toMatchObject({ url: "https://portal.test" });
+  });
+
+  it("still scaffolds a placeholder when no feed declares a guide", () => {
+    const props = configSchemaPropertiesFor([keyed("no-guide", "Feed without guide")]) as Record<
+      string,
+      { title: string }
+    >;
+    expect(props.SHARED_KEY!.title).toBe("Feed without guide — SHARED_KEY");
+  });
+});

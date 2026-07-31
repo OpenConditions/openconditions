@@ -23,6 +23,11 @@ export const TYPE_CROSSWALK: Record<string, TypeMapping> = {
   reroutingmanagement: { type: "detour", category: "conditions", isPlanned: false },
   speedmanagement: { type: "speed_restriction", category: "conditions", isPlanned: false },
   generalobstruction: { type: "obstruction", category: "incident", isPlanned: false },
+  // Bridge/tunnel/surface damage, and landslides/rockfall/flooding blocking a
+  // road. Both map to `hazard` rather than `obstruction`: the distinguishing
+  // detail (which structure, which phenomenon) already flows via `subtypeOf`.
+  infrastructuredamageobstruction: { type: "hazard", category: "incident", isPlanned: false },
+  environmentalobstruction: { type: "hazard", category: "incident", isPlanned: false },
   maintenanceworks: { type: "roadworks", category: "planned", isPlanned: true },
   constructionworks: { type: "roadworks", category: "planned", isPlanned: true },
   generalnetworkmanagement: { type: "other", category: "conditions", isPlanned: false },

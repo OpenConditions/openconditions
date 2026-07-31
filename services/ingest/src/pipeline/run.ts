@@ -2,7 +2,11 @@ import { Readable } from "node:stream";
 import type postgres from "postgres";
 import type { Observation } from "@openconditions/core";
 import type { FeedSource, SiteGeometry, UnresolvedRoadEvent } from "@openconditions/roads";
-import { enrichEventSeverity, enrichFlowsWithBaseline } from "@openconditions/roads";
+import {
+  drainSkippedNoGeometry,
+  enrichEventSeverity,
+  enrichFlowsWithBaseline,
+} from "@openconditions/roads";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
 import {
@@ -81,6 +85,14 @@ export interface RunResult {
    */
   count: number;
   durationMs: number;
+  /**
+   * Records the parser dropped this cycle because they carried no coordinate
+   * geometry (DATEX Alert-C/TMC-only location references). Absent when nothing
+   * was dropped. Surfaced per feed in `GET /feeds/status` so a source silently
+   * losing its records to TMC-only encoding is visible rather than looking like
+   * a healthy, quiet feed.
+   */
+  skippedNoGeometry?: number;
   /**
    * Set when the run swallowed a genuine failure (site-table cold failure,
    * streaming-flow error, or fetch error) rather than throwing. Absent for a
@@ -404,10 +416,18 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   }
 
   const durationMs = Date.now() - start;
+  // Records the parser dropped for want of a coordinate (DATEX Alert-C/TMC
+  // only). Drained per run so the status page shows what this cycle lost, not
+  // a total that keeps climbing after the cause is fixed.
+  const skippedNoGeometry = drainSkippedNoGeometry(src.id);
   const dropNote = dropped > 0 ? ` (${dropped} dropped — no geometry)` : "";
   console.info(
     `[ingest] ${src.id}: swap inserted=${swapCounts.inserted} updated=${swapCounts.updated} ` +
       `deleted=${swapCounts.deleted} of ${toWrite.length} fresh rows in ${durationMs}ms${dropNote}`
   );
-  return { count: swapCounts.inserted + swapCounts.updated, durationMs };
+  return {
+    count: swapCounts.inserted + swapCounts.updated,
+    durationMs,
+    ...(skippedNoGeometry > 0 ? { skippedNoGeometry } : {}),
+  };
 }

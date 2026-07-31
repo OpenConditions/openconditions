@@ -20,7 +20,7 @@ describe("wzdxRegistryResolver", () => {
     expect(wzdxRegistryResolver.snapshotPath).toMatch(/snapshots[/\\]wzdx-registry\.json$/);
   });
 
-  it("maps active v4.x rows labeled geojson OR json to full wzdx feed descriptors", async () => {
+  it("maps active v4.x/v3.1 rows labeled geojson OR json to full wzdx feed descriptors", async () => {
     const feeds = await wzdxRegistryResolver.resolve(jsonResponder(registry));
     const urls = feeds.map((f) => f.url).sort();
     expect(urls).toEqual(
@@ -30,6 +30,8 @@ describe("wzdxRegistryResolver", () => {
         // Wisconsin and statewide Missouri label an ordinary WZDx
         // FeatureCollection "json" rather than "geojson".
         "https://delta.example/api/json",
+        // 3.1 is admitted too — the parser lifts its flat core fields.
+        "https://golf.example/api/v3",
         "https://hotel.example/api/wzdx-string",
         "https://india.example/api/wzdx",
       ].sort()
@@ -48,9 +50,8 @@ describe("wzdxRegistryResolver", () => {
     const urls = feeds.map((f) => f.url);
     expect(urls).not.toContain("https://echo.example/api/wzdx");
     expect(urls).not.toContain("https://bravo.example/api/wzdx?apiKey=");
-    // CWZ 1.0 and WZDx 3.1 are different shapes, not different labels.
+    // CWZ 1.0 is a different shape with no adapter, not a different label.
     expect(urls).not.toContain("https://foxtrot.example/api/cwz");
-    expect(urls).not.toContain("https://golf.example/api/v3");
   });
 
   it("still rejects a format that is neither geojson nor json", async () => {

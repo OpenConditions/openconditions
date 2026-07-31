@@ -180,3 +180,156 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
 
   return dedupeRoadEvents(out);
 }
+
+/**
+ * The same platform's road/winter-condition resources (`/get/roadconditions`,
+ * `/get/winterroads`). Structurally a sibling of the event resource but with a
+ * different field set, so it gets its own parser rather than a branch inside
+ * {@link parseIbi511}.
+ *
+ * Two shape differences between jurisdictions are handled here: v3 sends
+ * `EncodedPolyline` as an ARRAY of polylines (→ MultiLineString) where v2 sends
+ * a single string, and 511NY names the same field `Polyline`.
+ */
+interface IbiConditionRecord {
+  LocationDescription?: string;
+  AreaName?: string;
+  Region?: string;
+  RoadwayName?: string;
+  Condition?: string | string[];
+  Visibility?: string | null;
+  Drifting?: string | null;
+  EncodedPolyline?: string | string[];
+  Polyline?: string | string[];
+  LastUpdated?: string | number;
+}
+
+/**
+ * Condition values that report an ABSENCE of anything worth showing: a clear
+ * road, or no report at all. A record whose every condition is nominal is
+ * skipped, mirroring the Iceland baseline rule — otherwise a whole province of
+ * "Bare and Dry" segments would drown the genuinely affected ones.
+ */
+const NOMINAL_CONDITIONS = new Set([
+  "no report",
+  "update pending",
+  "bare and dry",
+  "bare & dry",
+  "bare",
+  "dry",
+  "generally clear & dry",
+  "generally clear and dry",
+  "clear",
+  "bare pavement",
+  "good winter driving conditions",
+]);
+
+/** Adverse conditions that block or effectively block the road. */
+const CLOSED_CONDITIONS = new Set(["closed", "impassable", "road closed", "travel not advised"]);
+
+/**
+ * Severity by condition text: a closure is critical, ice/snow cover is high,
+ * partly-covered or slushy surfaces are medium, and anything else adverse but
+ * unrecognised stays low rather than overstating what the feed said.
+ */
+function conditionSeverity(conditions: string[]): RoadEvent["severity"] {
+  const lower = conditions.map((c) => c.toLowerCase());
+  if (lower.some((c) => CLOSED_CONDITIONS.has(c))) return "critical";
+  if (lower.some((c) => /ice|icy|snow covered|snow \/ ice|snow packed/.test(c))) return "high";
+  if (lower.some((c) => /snow|slush|partly|wet/.test(c))) return "medium";
+  return "low";
+}
+
+function conditionValues(raw: IbiConditionRecord["Condition"]): string[] {
+  if (Array.isArray(raw)) return raw.filter((c): c is string => typeof c === "string" && c !== "");
+  return typeof raw === "string" && raw ? [raw] : [];
+}
+
+/**
+ * Build geometry from the record's polyline field, honouring 511NY's `Polyline`
+ * alias and v3's array form (several encoded lines → MultiLineString).
+ */
+function conditionGeometry(rec: IbiConditionRecord): RoadEvent["geometry"] | undefined {
+  const raw = rec.EncodedPolyline ?? rec.Polyline;
+  const encoded = (Array.isArray(raw) ? raw : [raw]).filter(
+    (p): p is string => typeof p === "string" && p.length > 0
+  );
+  const lines = encoded
+    .map((p) =>
+      decodePolyline(p).filter(([lon, lat]) => Number.isFinite(lon) && Number.isFinite(lat))
+    )
+    .filter((pts) => pts.length >= 2);
+  if (lines.length === 0) return undefined;
+  return lines.length === 1
+    ? { type: "LineString", coordinates: lines[0]! }
+    : { type: "MultiLineString", coordinates: lines };
+}
+
+/**
+ * Parse an IBI 511 road/winter-conditions payload into RoadEvents. Records whose
+ * conditions are all nominal, or that carry no usable geometry, are skipped;
+ * a malformed body yields [].
+ */
+export function parseIbi511Conditions(
+  input: string | Buffer | unknown,
+  src: SourceDescriptor
+): RoadEvent[] {
+  let data: unknown = input;
+  if (typeof input === "string" || Buffer.isBuffer(input)) {
+    try {
+      data = JSON.parse(input.toString("utf8"));
+    } catch {
+      return [];
+    }
+  }
+  const records = Array.isArray(data) ? (data as IbiConditionRecord[]) : [];
+  const now = new Date().toISOString();
+  const out: RoadEvent[] = [];
+
+  records.forEach((rec, index) => {
+    const conditions = conditionValues(rec.Condition);
+    if (conditions.length === 0) return;
+    if (conditions.every((c) => NOMINAL_CONDITIONS.has(c.toLowerCase()))) return;
+
+    const geometry = conditionGeometry(rec);
+    if (!geometry) return;
+
+    const road = rec.RoadwayName || undefined;
+    const where = rec.LocationDescription || rec.AreaName || rec.Region || road;
+    const label = conditions.join(", ");
+    const severity = conditionSeverity(conditions);
+    const closed = conditions.some((c) => CLOSED_CONDITIONS.has(c.toLowerCase()));
+
+    out.push({
+      id: `${src.id}:${road ?? "seg"}-${index}`,
+      source: src.id,
+      sourceFormat: "ibi511",
+      domain: "roads",
+      kind: "event",
+      type: closed ? "road_closure" : "weather",
+      subtype: label,
+      category: closed ? "incident" : "conditions",
+      isPlanned: false,
+      severity,
+      severitySource: "derived",
+      status: "active",
+      geometry,
+      ...(closed ? { roadState: "closed" as const } : {}),
+      roads: road ? [{ name: road }] : [],
+      headline: where ? `${label} — ${where}` : label,
+      description: rec.LocationDescription || undefined,
+      validFrom: null,
+      validTo: null,
+      sourceRaw: rec as Record<string, unknown>,
+      origin: {
+        kind: "feed",
+        attribution: { provider: src.attribution, license: src.license, url: src.licenseUrl },
+      },
+      dataUpdatedAt: toIsoTimestamp(rec.LastUpdated) ?? now,
+      fetchedAt: now,
+      isStale: false,
+    });
+  });
+
+  return dedupeRoadEvents(out);
+}

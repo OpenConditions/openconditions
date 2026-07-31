@@ -203,4 +203,48 @@
       },
     },
   },
+  {
+    subdivision: "vic",
+    operator: "transportvic",
+    stream: "planned",
+    name: "Planned road disruptions (Victoria)",
+    format: "vic-disruptions",
+    // Planned v1 and unplanned v2 share this server and the
+    // Ocp-Apim-Subscription-Key scheme, so both reuse the Freeway feed's key.
+    // Unplanned v3 sits on another base path behind KeyId-header auth and adds
+    // only endTime/nextUpdateDue — a later upgrade, not worth a second key.
+    url: "https://api.opendata.transport.vic.gov.au/opendata/roads/disruptions/planned/v1/disruptions",
+    auth: {
+      kind: "header-key",
+      header: "Ocp-Apim-Subscription-Key",
+      envVar: "AU_VIC_VICROADS_API_KEY",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+    attribution: "Department of Transport and Planning (Victoria)",
+    country: "AU",
+    privacyUrl: "https://www.vic.gov.au/privacy",
+  },
+  {
+    subdivision: "vic",
+    operator: "transportvic",
+    stream: "unplanned",
+    name: "Unplanned road disruptions (Victoria)",
+    format: "vic-disruptions",
+    url: "https://api.opendata.transport.vic.gov.au/opendata/roads/disruptions/unplanned/v2",
+    auth: {
+      kind: "header-key",
+      header: "Ocp-Apim-Subscription-Key",
+      envVar: "AU_VIC_VICROADS_API_KEY",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "CC-BY-4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+    attribution: "Department of Transport and Planning (Victoria)",
+    country: "AU",
+    privacyUrl: "https://www.vic.gov.au/privacy",
+  },
 ]

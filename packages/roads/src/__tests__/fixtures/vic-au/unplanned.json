@@ -1,0 +1,47 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [144.9631, -37.8136] },
+      "properties": {
+        "id": "UNP-5001",
+        "eventType": "Crash",
+        "eventSubType": "Collision",
+        "name": "Collision on Flinders St",
+        "description": "Two vehicles, right lane blocked",
+        "roadName": "Flinders Street",
+        "direction": "Eastbound",
+        "status": "Active",
+        "created": "2026-07-31T06:12:00Z",
+        "lastUpdated": "2026-07-31T06:40:00Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [143.8503, -37.5622],
+          [143.8712, -37.5701]
+        ]
+      },
+      "properties": {
+        "id": "UNP-5002",
+        "eventType": "Flooding",
+        "name": "Road closed due to flooding",
+        "roadName": "Western Freeway",
+        "created": "2026-07-30T22:05:00Z"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": null,
+      "properties": { "id": "UNP-NOGEO", "eventType": "Hazard" }
+    }
+  ],
+  "meta": { "totalRecords": 3 },
+  "links": {
+    "self": "https://api.opendata.transport.vic.gov.au/opendata/roads/disruptions/unplanned/v2"
+  }
+}

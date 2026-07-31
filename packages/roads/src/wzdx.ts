@@ -214,9 +214,44 @@ function confidenceFrom(props: WzdxProperties): Confidence | undefined {
   return undefined;
 }
 
+/** The v3 property names that v4 moved into the `core_details` sub-object. */
+const V3_CORE_KEYS = [
+  "data_source_id",
+  "event_type",
+  "road_names",
+  "direction",
+  "description",
+  "name",
+  "creation_date",
+  "update_date",
+  "id",
+  "related_road_events",
+] as const;
+
 /**
- * Parse a WZDx v4.x WorkZoneFeed (GeoJSON FeatureCollection) and return an
- * array of RoadEvent observations. Features lacking geometry are skipped.
+ * Normalise a WZDx 3.1 feature's properties into the v4 shape.
+ *
+ * v3 puts the core fields directly on `properties`; v4 groups them under
+ * `core_details`. Feeding a v3 body to the v4 mapping unchanged silently yields
+ * events with no event type at all — Québec City's 493 work zones all landed as
+ * `other` — so the lift happens before the mapping rather than by relaxing the
+ * version gate. A body that already has `core_details` is returned untouched.
+ */
+function liftV3Properties(props: WzdxProperties): WzdxProperties {
+  if (props.core_details) return props;
+  const hasV3Core = V3_CORE_KEYS.some((k) => props[k] !== undefined);
+  if (!hasV3Core) return props;
+
+  const core: WzdxCoreDetails = {};
+  for (const key of V3_CORE_KEYS) {
+    if (props[key] !== undefined) (core as Record<string, unknown>)[key] = props[key];
+  }
+  return { ...props, core_details: core };
+}
+
+/**
+ * Parse a WZDx v3.1 or v4.x WorkZoneFeed (GeoJSON FeatureCollection) and return
+ * an array of RoadEvent observations. Features lacking geometry are skipped.
  * Severity is always derived from vehicle_impact and lane data.
  */
 export function parseWzdx(geojson: string | Buffer | object, src: SourceDescriptor): RoadEvent[] {
@@ -254,7 +289,7 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
         continue;
       }
 
-      const props = feature.properties ?? {};
+      const props = liftV3Properties(feature.properties ?? {});
       const coreDetails = props.core_details ?? {};
       const eventType = typeof coreDetails.event_type === "string" ? coreDetails.event_type : "";
       const { type, category, isPlanned } = mapSourceType("wzdx", eventType);

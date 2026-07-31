@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseIbi511 } from "../ibi511.js";
+import { parseIbi511, parseIbi511Conditions } from "../ibi511.js";
 import type { SourceDescriptor } from "../types.js";
 
 const SRC: SourceDescriptor = {
@@ -157,5 +157,100 @@ describe("parseIbi511 — Ontario construction projects", () => {
   it("keeps the construction-only recurrence fields in sourceRaw", () => {
     const [ev] = parseIbi511([{ ...RECORD, Recurrence: "Weekly" }], CONSTRUCTION_SRC);
     expect(ev!.sourceRaw).toMatchObject({ Recurrence: "Weekly", LinkId: "29602591" });
+  });
+});
+
+describe("parseIbi511Conditions", () => {
+  const ON: SourceDescriptor = { ...SRC, id: "ca-on-511-conditions" };
+  const NY: SourceDescriptor = { ...SRC, id: "us-ny-511-conditions", country: "US" };
+
+  // "_p~iF~ps|U_ulLnnqC_mqNvxq`@" is Google's reference polyline (3 points).
+  const LINE = "_p~iF~ps|U_ulLnnqC_mqNvxq`@";
+
+  it("maps an adverse Ontario record (array polyline) to a MultiLineString conditions event", () => {
+    const [ev] = parseIbi511Conditions(
+      [
+        {
+          LocationDescription: "From Highway 17 to Pukaskwa Park",
+          Condition: ["Snow Covered"],
+          Region: "NWR - Marathon - 212",
+          RoadwayName: "627",
+          EncodedPolyline: [LINE, LINE],
+          LastUpdated: 1779729425,
+        },
+      ],
+      ON
+    );
+    expect(ev).toBeDefined();
+    expect(ev!.type).toBe("weather");
+    expect(ev!.category).toBe("conditions");
+    expect(ev!.severity).toBe("high");
+    expect(ev!.geometry.type).toBe("MultiLineString");
+    expect(ev!.roads).toEqual([{ name: "627" }]);
+    expect(ev!.headline).toContain("Snow Covered");
+    expect(ev!.dataUpdatedAt).toBe(new Date(1779729425 * 1000).toISOString());
+  });
+
+  it("emits a LineString when only one polyline is given", () => {
+    const [ev] = parseIbi511Conditions(
+      [{ RoadwayName: "17", Condition: ["Slushy"], EncodedPolyline: [LINE] }],
+      ON
+    );
+    expect(ev!.geometry.type).toBe("LineString");
+    expect(ev!.severity).toBe("medium");
+  });
+
+  it("reads 511NY's `Polyline` alias and its single-string Condition", () => {
+    const [ev] = parseIbi511Conditions(
+      [
+        {
+          Condition: "Snow / Ice",
+          AreaName: "NYS THRUWAY",
+          LocationDescription: "NYS Thruway New England Section Exits 8 - 22",
+          RoadwayName: "I-95",
+          Polyline: LINE,
+          LastUpdated: 1785482707,
+        },
+      ],
+      NY
+    );
+    expect(ev).toBeDefined();
+    expect(ev!.geometry.type).toBe("LineString");
+    expect(ev!.severity).toBe("high");
+    expect(ev!.headline).toContain("NYS Thruway");
+  });
+
+  it("treats a closed road as a critical closure rather than a weather note", () => {
+    const [ev] = parseIbi511Conditions(
+      [{ RoadwayName: "11", Condition: ["Closed"], EncodedPolyline: [LINE] }],
+      ON
+    );
+    expect(ev!.type).toBe("road_closure");
+    expect(ev!.category).toBe("incident");
+    expect(ev!.severity).toBe("critical");
+    expect(ev!.roadState).toBe("closed");
+  });
+
+  it("skips records whose conditions are all nominal", () => {
+    // The live summer feeds are entirely "No Report" / "Generally Clear & Dry".
+    const out = parseIbi511Conditions(
+      [
+        { RoadwayName: "627", Condition: ["No Report"], EncodedPolyline: [LINE] },
+        { RoadwayName: "I-95", Condition: "Generally Clear & Dry", Polyline: LINE },
+        { RoadwayName: "I-90", Condition: "Update Pending", Polyline: LINE },
+        { RoadwayName: "17", Condition: ["Bare and Dry"], EncodedPolyline: [LINE] },
+      ],
+      ON
+    );
+    expect(out).toEqual([]);
+  });
+
+  it("skips records with no usable geometry and tolerates malformed input", () => {
+    expect(parseIbi511Conditions([{ RoadwayName: "9", Condition: ["Icy"] }], ON)).toEqual([]);
+    expect(
+      parseIbi511Conditions([{ RoadwayName: "9", Condition: ["Icy"], Polyline: null }], ON)
+    ).toEqual([]);
+    expect(parseIbi511Conditions("not json", ON)).toEqual([]);
+    expect(parseIbi511Conditions(JSON.stringify({ not: "an array" }), ON)).toEqual([]);
   });
 });

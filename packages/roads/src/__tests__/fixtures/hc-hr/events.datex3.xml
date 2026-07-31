@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<mc:messageContainer xmlns:sit="http://datex2.eu/schema/3/situation" xmlns:mc="http://datex2.eu/schema/3/messageContainer" xmlns:loc="http://datex2.eu/schema/3/locationReferencing" xmlns:com="http://datex2.eu/schema/3/common" modelBaseVersion="3">
+  <mc:payload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="sit:SituationPublication" lang="hr" modelBaseVersion="3">
+    <com:publicationTime>2026-07-30T09:00:00Z</com:publicationTime>
+    <com:publicationCreator>
+      <com:country>hr</com:country>
+      <com:nationalIdentifier>HC</com:nationalIdentifier>
+    </com:publicationCreator>
+    <sit:situation id="HC_SIT_1">
+      <sit:overallSeverity>high</sit:overallSeverity>
+      <sit:situationVersionTime>2026-07-30T08:45:00Z</sit:situationVersionTime>
+      <sit:situationRecord xsi:type="sit:InfrastructureDamageObstruction" id="HC_REC_1" version="1">
+        <sit:situationRecordCreationTime>2026-07-30T08:45:00Z</sit:situationRecordCreationTime>
+        <sit:situationRecordVersionTime>2026-07-30T08:45:00Z</sit:situationRecordVersionTime>
+        <sit:validity>
+          <com:validityStatus>active</com:validityStatus>
+          <com:validityTimeSpecification>
+            <com:overallStartTime>2026-07-30T08:45:00Z</com:overallStartTime>
+          </com:validityTimeSpecification>
+        </sit:validity>
+        <sit:groupOfLocations xsi:type="loc:PointLocation">
+          <loc:pointByCoordinates>
+            <loc:pointCoordinates>
+              <loc:latitude>45.3271</loc:latitude>
+              <loc:longitude>14.4422</loc:longitude>
+            </loc:pointCoordinates>
+          </loc:pointByCoordinates>
+        </sit:groupOfLocations>
+        <sit:generalPublicComment>
+          <com:comment>
+            <com:values>
+              <com:value lang="hr">Oštećenje kolnika na mostu</com:value>
+            </com:values>
+          </com:comment>
+        </sit:generalPublicComment>
+        <sit:infrastructureDamageType>damagedBridge</sit:infrastructureDamageType>
+      </sit:situationRecord>
+    </sit:situation>
+    <sit:situation id="HC_SIT_2">
+      <sit:overallSeverity>medium</sit:overallSeverity>
+      <sit:situationVersionTime>2026-07-30T07:10:00Z</sit:situationVersionTime>
+      <sit:situationRecord xsi:type="sit:EnvironmentalObstruction" id="HC_REC_2" version="1">
+        <sit:situationRecordCreationTime>2026-07-30T07:10:00Z</sit:situationRecordCreationTime>
+        <sit:situationRecordVersionTime>2026-07-30T07:10:00Z</sit:situationRecordVersionTime>
+        <sit:validity>
+          <com:validityStatus>active</com:validityStatus>
+          <com:validityTimeSpecification>
+            <com:overallStartTime>2026-07-30T07:10:00Z</com:overallStartTime>
+          </com:validityTimeSpecification>
+        </sit:validity>
+        <sit:groupOfLocations xsi:type="loc:PointLocation">
+          <loc:pointByCoordinates>
+            <loc:pointCoordinates>
+              <loc:latitude>44.8683</loc:latitude>
+              <loc:longitude>13.8481</loc:longitude>
+            </loc:pointCoordinates>
+          </loc:pointByCoordinates>
+        </sit:groupOfLocations>
+        <sit:generalPublicComment>
+          <com:comment>
+            <com:values>
+              <com:value lang="hr">Odron na kolniku</com:value>
+            </com:values>
+          </com:comment>
+        </sit:generalPublicComment>
+        <sit:environmentalObstructionType>rockfalls</sit:environmentalObstructionType>
+      </sit:situationRecord>
+    </sit:situation>
+    <sit:situation id="HC_SIT_3">
+      <sit:overallSeverity>low</sit:overallSeverity>
+      <sit:situationVersionTime>2026-07-30T06:00:00Z</sit:situationVersionTime>
+      <sit:situationRecord xsi:type="sit:PoorEnvironmentConditions" id="HC_REC_3" version="1">
+        <sit:situationRecordCreationTime>2026-07-30T06:00:00Z</sit:situationRecordCreationTime>
+        <sit:situationRecordVersionTime>2026-07-30T06:00:00Z</sit:situationRecordVersionTime>
+        <sit:validity>
+          <com:validityStatus>active</com:validityStatus>
+          <com:validityTimeSpecification>
+            <com:overallStartTime>2026-07-30T06:00:00Z</com:overallStartTime>
+          </com:validityTimeSpecification>
+        </sit:validity>
+        <sit:groupOfLocations xsi:type="loc:PointLocation">
+          <loc:pointByCoordinates>
+            <loc:pointCoordinates>
+              <loc:latitude>45.8150</loc:latitude>
+              <loc:longitude>15.9819</loc:longitude>
+            </loc:pointCoordinates>
+          </loc:pointByCoordinates>
+        </sit:groupOfLocations>
+        <sit:generalPublicComment>
+          <com:comment>
+            <com:values>
+              <com:value lang="hr">Jak vjetar</com:value>
+            </com:values>
+          </com:comment>
+        </sit:generalPublicComment>
+      </sit:situationRecord>
+    </sit:situation>
+  </mc:payload>
+</mc:messageContainer>
