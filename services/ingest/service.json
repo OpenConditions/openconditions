@@ -261,10 +261,16 @@
         "description": "Subscription id(s) for the LSBV M-V offers (110000000002802000, 818137060259840000). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. GeoNutzV (attribution required).",
         "x-openmapx-secret": true
       },
-      "DE_NI_MOBILITHEK_SUBSCRIPTION_ID": {
+      "DE_NI_NLSTBV_SUBSCRIPTION_ID": {
         "type": "string",
-        "title": "Niedersachsen Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for the NLStBV offers (110000000002749000, 951153778962972672, 656880550985773056) + Hannover 633691473746571264. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
+        "title": "NLStBV (Niedersachsen) Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the NLStBV offers (110000000002749000, 951153778962972672, 656880550985773056). Comma-separated. Hannover is a separate feed with its own id. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
+        "x-openmapx-secret": true
+      },
+      "DE_NI_HANNOVER_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Hannover Mobilithek — subscription id",
+        "description": "Subscription id for the Landeshauptstadt Hannover offer (633691473746571264). Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
         "x-openmapx-secret": true
       },
       "DE_SN_MOBILITHEK_SUBSCRIPTION_ID": {

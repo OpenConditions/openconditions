@@ -4,14 +4,14 @@ Several German publishers were storing nothing, or nothing usable, while their
 feeds reported success. The causes turned out to be four different things that
 all looked identical from outside: a record went in, no geometry came out.
 
-| Source                             | Was lost per poll | Cause                                 |
-| ---------------------------------- | ----------------- | ------------------------------------- |
-| `de-ni-mobilithek` (Niedersachsen) | 1271 → 0 stored   | Alert-C codes, table edition 17.0     |
-| `de-sh-mobilithek` (Schleswig-H.)  | 614               | position only in `locationForDisplay` |
-| `de-th-mobilithek` (Thüringen)     | 539               | position only in a point extension    |
-| `de-he-mobilithek` (Hessen)        | 407               | position only in `locationForDisplay` |
-| `de-hh-mobilithek` (Hamburg)       | 316 → 0 stored    | `posList` inside an unnamed `any`     |
-| `de-mv-mobilithek` (Meck.-Vorp.)   | (worse) 62 stored | UTM grid stored as if it were degrees |
+| Source                            | Was lost per poll | Cause                                 |
+| --------------------------------- | ----------------- | ------------------------------------- |
+| `de-ni-nlstbv` (Niedersachsen)    | 1271 → 0 stored   | Alert-C codes, table edition 17.0     |
+| `de-sh-mobilithek` (Schleswig-H.) | 614               | position only in `locationForDisplay` |
+| `de-th-mobilithek` (Thüringen)    | 539               | position only in a point extension    |
+| `de-he-mobilithek` (Hessen)       | 407               | position only in `locationForDisplay` |
+| `de-hh-mobilithek` (Hamburg)      | 316 → 0 stored    | `posList` inside an unnamed `any`     |
+| `de-mv-mobilithek` (Meck.-Vorp.)  | (worse) 62 stored | UTM grid stored as if it were degrees |
 
 Only the first was a TMC problem. The rest were coordinates sitting in the
 payload that nothing was reading, which is why the per-source skip counter and

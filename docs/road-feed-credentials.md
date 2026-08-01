@@ -24,7 +24,8 @@
 | Hamburg via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_HH_MOBILITHEK_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | Hessen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_HE_MOBILITHEK_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | Mecklenburg-Vorpommern via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_MV_MOBILITHEK_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| Niedersachsen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NI_MOBILITHEK_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| NLStBV (Niedersachsen) via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NI_NLSTBV_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Hannover via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NI_HANNOVER_SUBSCRIPTION_ID` | dl-de/zero-2-0 |  |
 | Sachsen via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_SN_MOBILITHEK_SUBSCRIPTION_ID` | CC-BY-4.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | Sachsen-Anhalt via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_ST_MOBILITHEK_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | Schleswig-Holstein via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_SH_MOBILITHEK_SUBSCRIPTION_ID` | CC-BY-4.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |

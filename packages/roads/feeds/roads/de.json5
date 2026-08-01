@@ -686,17 +686,23 @@
   },
   {
     subdivision: "ni",
-    operator: "mobilithek",
-    name: "Niedersachsen via Mobilithek",
+    // Named for the publishing authority rather than for Mobilithek, which is
+    // only how the data is delivered — the same reason Hannover sits in its own
+    // feed below instead of being credited to the state authority.
+    operator: "nlstbv",
+    name: "NLStBV (Niedersachsen) via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NI_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NI_MOBILITHEK_SUBSCRIPTION_ID}",
-    expandEnv: "DE_NI_MOBILITHEK_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NI_NLSTBV_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NI_NLSTBV_SUBSCRIPTION_ID}",
+    expandEnv: "DE_NI_NLSTBV_SUBSCRIPTION_ID",
+    // Three offers; one of them lapsing should cost that offer's records rather
+    // than the whole authority's.
+    fanoutTolerant: true,
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["DE_NI_MOBILITHEK_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_NI_NLSTBV_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -724,9 +730,39 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      DE_NI_MOBILITHEK_SUBSCRIPTION_ID: {
-        title: "Niedersachsen Mobilithek — subscription id(s)",
-        description: "Subscription id(s) for the NLStBV offers (110000000002749000, 951153778962972672, 656880550985773056) + Hannover 633691473746571264. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
+      DE_NI_NLSTBV_SUBSCRIPTION_ID: {
+        title: "NLStBV (Niedersachsen) Mobilithek — subscription id(s)",
+        description: "Subscription id(s) for the NLStBV offers (110000000002749000, 951153778962972672, 656880550985773056). Comma-separated. Hannover is a separate feed with its own id. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
+      },
+    },
+  },
+  {
+    subdivision: "ni",
+    operator: "hannover",
+    name: "Hannover via Mobilithek",
+    format: "datex2",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NI_HANNOVER_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NI_HANNOVER_SUBSCRIPTION_ID}",
+    expandEnv: "DE_NI_HANNOVER_SUBSCRIPTION_ID",
+    auth: {
+      kind: "mtls",
+      certEnvVar: "MOBILITHEK_CERT",
+      keyEnvVar: "MOBILITHEK_KEY",
+    },
+    requiredEnv: ["DE_NI_HANNOVER_SUBSCRIPTION_ID"],
+    requestHeaders: {
+      "Accept-Encoding": "gzip",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "dl-de/zero-2-0",
+    licenseUrl: "https://www.govdata.de/dl-de/zero-2-0",
+    attribution: "Landeshauptstadt Hannover",
+    country: "DE",
+    privacyUrl: "https://mobilithek.info/datenschutz",
+    setup: {
+      DE_NI_HANNOVER_SUBSCRIPTION_ID: {
+        title: "Hannover Mobilithek — subscription id",
+        description: "Subscription id for the Landeshauptstadt Hannover offer (633691473746571264). Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
       },
     },
   },
