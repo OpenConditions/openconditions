@@ -163,6 +163,46 @@ function resolveGeometry(
 }
 
 /**
+ * Coordinate lists hiding in leaves that no element name identifies.
+ *
+ * Hamburg publishes its geometry as a bare `posList` wrapped in an element
+ * literally called `any` — an XSD wildcard the publisher never named — so
+ * nothing keyed on element names could find it. Content identifies it instead:
+ * a whitespace-separated run of numbers that reads as a sequence of plausible
+ * WGS84 pairs is a coordinate list, whatever it is called. Requiring at least
+ * two valid pairs keeps arbitrary numeric text from qualifying.
+ */
+function unnamedCoordinateLists(
+  node: unknown,
+  reproject?: Reprojector | null,
+  lonFirst = false
+): [number, number][][] {
+  const out: [number, number][][] = [];
+
+  const walk = (n: unknown): void => {
+    if (Array.isArray(n)) {
+      n.forEach(walk);
+      return;
+    }
+    if (!isXmlObject(n)) return;
+    for (const [key, value] of Object.entries(n)) {
+      if (key.startsWith("@_")) continue;
+      if (isXmlObject(value) || Array.isArray(value)) {
+        walk(value);
+        continue;
+      }
+      const raw = xmlText(value);
+      if (!raw || !/^[\d\s.eE+-]+$/.test(raw)) continue;
+      const coords = parseLatLonList(raw, reproject, lonFirst);
+      if (coords.length >= 2 && coords.every(isPlausibleWgs84)) out.push(coords);
+    }
+  };
+
+  walk(node);
+  return out;
+}
+
+/**
  * Every coordinate in a subtree expressed as explicit latitude/longitude
  * leaves, whatever element carries them.
  *
@@ -278,12 +318,13 @@ function resolveGeometryFrom(
   visit(locRef);
 
   if (lines.length === 0 && points.length === 0) {
-    // Last resort. Some publishers give a record no primary geometry at all and
-    // hang a single coordinate off an extension instead — `locationForDisplay`
-    // on an area, or a point extension. That is a label position rather than a
-    // true extent, so it is used ONLY when nothing better was found and can
-    // never override real geometry. Whole publishers (Hessen,
-    // Schleswig-Holstein) were being dropped for want of reading it.
+    // Last resorts, in order of how much they say. A coordinate list under an
+    // unnamed element is still a real extent (Hamburg); a lone display point is
+    // only a label position (Hessen, Schleswig-Holstein). Both run only when
+    // nothing better was found, so neither can override real geometry.
+    for (const coords of unnamedCoordinateLists(locRef, reproject, lonFirst)) lines.push(coords);
+  }
+  if (lines.length === 0 && points.length === 0) {
     for (const p of displayCoordinates(locRef, reproject)) points.push(p);
   }
 

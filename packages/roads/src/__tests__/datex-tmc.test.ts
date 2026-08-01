@@ -354,3 +354,74 @@ describe("DATEX feeds publishing an undeclared projected grid", () => {
     expect(drainSkippedNoGeometry(SOURCE.id)).toBe(1);
   });
 });
+
+/**
+ * Hamburg publishes its geometry as a bare coordinate list wrapped in an
+ * element literally named `any` — an XSD wildcard it never named — so nothing
+ * keyed on element names could find it. All 298 records a poll were dropped.
+ */
+describe("DATEX geometry under an unnamed element", () => {
+  beforeEach(() => __resetSkipMetrics());
+
+  const wrapped = (inner: string) =>
+    Buffer.from(
+      `<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0">
+  <payloadPublication xsi:type="SituationPublication" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <situation id="S1">
+      <situationRecord xsi:type="MaintenanceWorks" id="R1">
+        <situationRecordCreationTime>2026-07-31T00:00:00Z</situationRecordCreationTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        <groupOfLocations xsi:type="Linear"><linearExtension>${inner}</linearExtension></groupOfLocations>
+      </situationRecord>
+    </situation>
+  </payloadPublication>
+</d2LogicalModel>`
+    );
+
+  it("reads a coordinate list whatever element wraps it", () => {
+    const events = parseDatexSituations(
+      wrapped(
+        "<any>53.6264266786748 10.032114432636327 53.626490917876176 10.032202936906385</any>"
+      ),
+      SOURCE
+    );
+
+    expect(events).toHaveLength(1);
+    expect(events[0]!.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [10.032114432636327, 53.6264266786748],
+        [10.032202936906385, 53.626490917876176],
+      ],
+    });
+    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(0);
+  });
+
+  it("ignores numeric text that is not a coordinate sequence", () => {
+    // Identifiers, counts and measurements are numeric too; requiring plausible
+    // WGS84 pairs is what separates them from geometry.
+    const events = parseDatexSituations(wrapped("<any>12345 67890 999999 111111</any>"), SOURCE);
+
+    expect(events).toEqual([]);
+    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(1);
+  });
+
+  it("does not let an unnamed list override the record's real geometry", () => {
+    const events = parseDatexSituations(
+      wrapped(
+        `<linearExtended><gmlLineString><posList>52.0 13.0 52.1 13.1</posList></gmlLineString></linearExtended>` +
+          `<any>53.62 10.03 53.63 10.04</any>`
+      ),
+      SOURCE
+    );
+
+    expect(events[0]!.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [13.0, 52.0],
+        [13.1, 52.1],
+      ],
+    });
+  });
+});
