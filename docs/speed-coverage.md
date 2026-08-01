@@ -18,7 +18,7 @@ regenerated into [`road-feed-credentials.md`](./road-feed-credentials.md).
 | `es-madrid`            | Madrid, Spain        | `informo`           | no                              | CC-BY-4.0            |
 | `fr-dir-flow`          | France (DIR/QTV-DIR) | `datex2`            | no                              | etalab-2.0           |
 | `hk-td`                | Hong Kong            | `hk-td`             | no                              | HK-Gov-Open-Data     |
-| `de-bonn`              | Bonn, Germany        | `bonn`              | no                              | dl-de/zero-2-0       |
+| `de-nw-bonn`           | Bonn, Germany        | `bonn`              | no                              | dl-de/zero-2-0       |
 | `it-turin`             | Turin, Italy         | `fdt`               | no                              | CC-BY-4.0            |
 | `fi-fintraffic`        | Finland              | `fintraffic-tms`    | no                              | CC-BY-4.0            |
 | `nl-ndw-flow`          | Netherlands          | `datex2`            | no                              | CC0-1.0              |

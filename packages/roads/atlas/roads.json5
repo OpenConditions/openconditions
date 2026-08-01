@@ -1448,9 +1448,10 @@
     "id": "de-th-mobilithek"
   },
   {
-    "name": "Bonn realtime traffic (Germany)",
+    "name": "Bonn realtime traffic (Nordrhein-Westfalen)",
     "format": "bonn",
     "operator": "bonn",
+    "subdivision": "nw",
     "produces": "flow",
     "url": "https://stadtplan.bonn.de/geojson?Thema=19584",
     "cadenceSec": 120,
@@ -1460,7 +1461,7 @@
     "attribution": "Bundesstadt Bonn",
     "country": "DE",
     "privacyUrl": "https://www.bonn.de/datenschutz.php",
-    "id": "de-bonn"
+    "id": "de-nw-bonn"
   },
   {
     "name": "Autobahn GmbH BAB traffic data (NL Nord: Hamburg & Schleswig-Holstein)",

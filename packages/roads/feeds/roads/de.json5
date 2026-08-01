@@ -915,8 +915,9 @@
     },
   },
   {
+    subdivision: "nw",
     operator: "bonn",
-    name: "Bonn realtime traffic (Germany)",
+    name: "Bonn realtime traffic (Nordrhein-Westfalen)",
     format: "bonn",
     produces: "flow",
     url: "https://stadtplan.bonn.de/geojson?Thema=19584",
