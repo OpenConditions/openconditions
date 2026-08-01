@@ -67,11 +67,21 @@ function isGzip(buf: Buffer): boolean {
   return buf.length >= 2 && buf[0] === GZIP_MAGIC_0 && buf[1] === GZIP_MAGIC_1;
 }
 
-// First non-whitespace char is '<' → an HTML/XML block/login/error page, not the
-// JSON the fanned-out catalog feeds serve. Only applied on the fan-out path;
-// XML feeds like NDW go through the single-URL path and are never checked here.
+/**
+ * An HTML page served where data was expected — a sign-in wall or error page
+ * from a portal that answered 200.
+ *
+ * Matched on an actual HTML signature. This used to test for a leading '<',
+ * which was safe only while the fan-out carried JSON alone: the first XML feed
+ * routed through it had every sub-feed rejected as an error page, losing the
+ * whole publisher on the very path meant to survive partial failure. A JSON
+ * feed handed XML still fails — at the parser, where the message names the
+ * real problem instead of misreporting it as HTML.
+ */
 function looksLikeHtml(buf: Buffer): boolean {
-  return buf.subarray(0, 64).toString("utf8").trimStart().startsWith("<");
+  const head = buf.subarray(0, 256).toString("utf8").replace(/^﻿/, "").trimStart();
+  if (head.startsWith("<?xml")) return false;
+  return /^<(!doctype\s+html|html[\s>])/i.test(head);
 }
 
 /** Ceiling on a single feed's decompressed bytes; matches the guard's byte cap. */
@@ -157,7 +167,11 @@ function requestInit(src: FetchableFeed): RequestInit | undefined {
 async function fetchFanout(
   urls: string[],
   fetchFn: typeof fetch,
-  redact: (s: string) => string = (s) => s
+  redact: (s: string) => string = (s) => s,
+  // The feed's own RequestInit — its `requestHeaders`, and a POST method/body
+  // where it has them. The static path has always sent these; the fan-out
+  // dropped them, so a feed quietly lost its headers by being fanned out.
+  init?: RequestInit
 ): Promise<{ buffers: Buffer[]; failures: number; total: number }> {
   const out: Buffer[] = [];
   let failures = 0;
@@ -167,9 +181,9 @@ async function fetchFanout(
     while (cursor < urls.length) {
       const url = urls[cursor++]!;
       try {
-        const { buffer } = await fetchOne(url, fetchFn, undefined, undefined, false, redact);
+        const { buffer } = await fetchOne(url, fetchFn, init, undefined, false, redact);
         if (looksLikeHtml(buffer)) {
-          throw new Error("returned HTML, not JSON");
+          throw new Error("returned an HTML page, not feed data");
         }
         out.push(buffer);
       } catch (err) {
@@ -350,7 +364,7 @@ export async function fetchAll(
       matchesFilter(f, active.catalog?.filter)
     );
     const urls = feeds.flatMap((f) => (Array.isArray(f.url) ? f.url : f.url ? [f.url] : []));
-    const fanout = await fetchFanout(urls, fetchFn, redact);
+    const fanout = await fetchFanout(urls, fetchFn, redact, requestInit(active));
     return {
       status: "fetched",
       buffers: fanout.buffers,
@@ -379,7 +393,7 @@ export async function fetchAll(
   if (active.fanoutTolerant) {
     const fanoutUrls = resolveFeedUrls(active, resolvedEnv());
     if (fanoutUrls.length > 1) {
-      const fanout = await fetchFanout(fanoutUrls, fetchFn, redact);
+      const fanout = await fetchFanout(fanoutUrls, fetchFn, redact, requestInit(active));
       return {
         status: "fetched",
         buffers: fanout.buffers,

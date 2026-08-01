@@ -369,6 +369,52 @@ describe("fetchAll — static url forms (regression)", () => {
 });
 
 describe("fetchAll — fanoutTolerant static url arrays", () => {
+  /**
+   * The tolerant fetcher was written for JSON registry feeds and rejected any
+   * payload starting with "<" as an HTML error page. XML feeds start with an
+   * XML declaration, so opting one into `fanoutTolerant` silently failed every
+   * sub-feed — the whole publisher, on a path meant to survive partial failure.
+   */
+  it("accepts XML sub-feeds, which are not HTML error pages", async () => {
+    const urls = ["https://x.test/a.xml", "https://x.test/b.xml"];
+    const feed = makeFeed({ id: "fanout-xml", url: urls, fanoutTolerant: true });
+    const bufs = await fetchBuffers(
+      feed,
+      okFor(() => '<?xml version="1.0" encoding="UTF-8"?><d2LogicalModel/>')
+    );
+    expect(bufs).toHaveLength(2);
+  });
+
+  it("still rejects an HTML page served in place of data", async () => {
+    const urls = ["https://x.test/a", "https://x.test/b"];
+    const feed = makeFeed({ id: "fanout-html", url: urls, fanoutTolerant: true });
+    await expect(
+      fetchBuffers(
+        feed,
+        okFor(() => "<!DOCTYPE html><html><body>Sign in</body></html>")
+      )
+    ).rejects.toThrow(/sub-feeds failed/);
+  });
+
+  it("sends the feed's request headers on every sub-feed", async () => {
+    // The tolerant path dropped the RequestInit the static path builds, so a
+    // feed's `requestHeaders` (and any POST body) went missing once it fanned out.
+    const seen: (HeadersInit | undefined)[] = [];
+    const feed = makeFeed({
+      id: "fanout-headers",
+      url: ["https://x.test/a", "https://x.test/b"],
+      fanoutTolerant: true,
+      requestHeaders: { "Accept-Encoding": "gzip" },
+    });
+    await fetchBuffers(feed, (async (_u: string, init?: RequestInit) => {
+      seen.push(init?.headers);
+      return new Response("ok", { status: 200 });
+    }) as unknown as typeof fetch);
+
+    expect(seen).toHaveLength(2);
+    for (const h of seen) expect(new Headers(h).get("Accept-Encoding")).toBe("gzip");
+  });
+
   it("tolerates a failing url and returns the buffers from the rest", async () => {
     const urls = ["https://x.test/ok1", "https://x.test/bad", "https://x.test/ok2"];
     const feed = makeFeed({ id: "fanout-tol", url: urls, fanoutTolerant: true });
