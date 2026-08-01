@@ -410,11 +410,20 @@ describe("FEED_SOURCES", () => {
   });
 
   it("registers the German state Mobilithek feeds, all sharing the org cert and gated by a per-region subscription id", () => {
+    // Selected by the certificate they share rather than by a substring of their
+    // id: the municipal feeds are named for their city, so an id-based filter
+    // silently stopped covering them when they were split apart. Autobahn GmbH's
+    // BAB feeds ride the same certificate but are a different publisher family,
+    // and legitimately need a second id for their location table.
     const regions = FEED_SOURCES.filter(
-      (f) => f.id === "de-nw-verkehr" || f.id.includes("-mobilithek")
+      (f) =>
+        f.country === "DE" &&
+        f.auth?.kind === "mtls" &&
+        f.auth.certEnvVar === "MOBILITHEK_CERT" &&
+        !f.id.includes("autobahn")
     );
-    // NRW-LVZ + NRW-kommunal + NRW-Mobidrom + 13 states.
-    expect(regions.length).toBeGreaterThanOrEqual(16);
+    // NRW-LVZ + Düsseldorf + Köln + Kreis Unna + NRW-Mobidrom + 13 states.
+    expect(regions.length).toBeGreaterThanOrEqual(18);
     const subEnvVars = new Set<string>();
     for (const feed of regions) {
       expect(feed.format).toBe("datex2");
@@ -448,8 +457,8 @@ describe("FEED_SOURCES", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("loads every feed from the data files (all 83 migrated)", () => {
-    expect(FEED_SOURCES.length).toBe(83);
+  it("loads every feed from the data files (all 85 migrated)", () => {
+    expect(FEED_SOURCES.length).toBe(85);
     expect(new Set(FEED_SOURCES.map((f) => f.id)).size).toBe(FEED_SOURCES.length);
   });
 

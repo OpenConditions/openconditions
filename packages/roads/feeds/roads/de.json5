@@ -121,18 +121,17 @@
   },
   {
     subdivision: "nw",
-    operator: "mobilithek",
-    stream: "kommunal",
-    name: "NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek",
+    operator: "duesseldorf",
+    name: "Düsseldorf (dmotion) via Mobilithek",
     format: "datex2",
-    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID}",
-    expandEnv: "DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_DUESSELDORF_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_DUESSELDORF_SUBSCRIPTION_ID}",
+    expandEnv: "DE_NW_DUESSELDORF_SUBSCRIPTION_ID",
     auth: {
       kind: "mtls",
       certEnvVar: "MOBILITHEK_CERT",
       keyEnvVar: "MOBILITHEK_KEY",
     },
-    requiredEnv: ["DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID"],
+    requiredEnv: ["DE_NW_DUESSELDORF_SUBSCRIPTION_ID"],
     requestHeaders: {
       "Accept-Encoding": "gzip",
     },
@@ -140,7 +139,7 @@
     freshnessWindowSec: 900,
     license: "dl-de/zero-2-0",
     licenseUrl: "https://www.govdata.de/dl-de/zero-2-0",
-    attribution: "Städte und Kreise in Nordrhein-Westfalen (via Mobilithek)",
+    attribution: "Landeshauptstadt Düsseldorf (dmotion)",
     country: "DE",
     privacyUrl: "https://mobilithek.info/datenschutz",
     setup: {
@@ -160,9 +159,76 @@
         title: "Mobilithek — client private key (PEM)",
         description: "PEM contents of the certificate's private key, with no passphrase (generate with openssl -nodes, or strip an issued .p12 key with openssl rsa). Stays with us — never uploaded to Mobilithek. Shared by every German region feed.",
       },
-      DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID: {
-        title: "NRW municipalities Mobilithek — subscription id(s)",
-        description: "Subscription id(s) for NRW city/district offers — Düsseldorf/dmotion 110000000002056000, Köln 110000000002900004 (+ 110000000002899004 / 110000000003011002), Kreis Unna 930448553981730816. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
+      DE_NW_DUESSELDORF_SUBSCRIPTION_ID: {
+        title: "Düsseldorf Mobilithek — subscription id",
+        description: "Subscription id for the Düsseldorf/dmotion offer (110000000002056000). Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
+      },
+    },
+  },
+  {
+    // Düsseldorf, Köln and Kreis Unna are separate feeds rather than one
+    // comma-separated municipal bundle: each carries its own publisher's
+    // attribution, each is credentialed on its own, and a city whose
+    // subscription lapses no longer takes the others down with it.
+    subdivision: "nw",
+    operator: "koeln",
+    name: "Köln via Mobilithek",
+    format: "datex2",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_KOELN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_KOELN_SUBSCRIPTION_ID}",
+    expandEnv: "DE_NW_KOELN_SUBSCRIPTION_ID",
+    // Köln publishes across three offers; one of them failing should cost that
+    // offer's records, not the whole city's.
+    fanoutTolerant: true,
+    auth: {
+      kind: "mtls",
+      certEnvVar: "MOBILITHEK_CERT",
+      keyEnvVar: "MOBILITHEK_KEY",
+    },
+    requiredEnv: ["DE_NW_KOELN_SUBSCRIPTION_ID"],
+    requestHeaders: {
+      "Accept-Encoding": "gzip",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "dl-de/zero-2-0",
+    licenseUrl: "https://www.govdata.de/dl-de/zero-2-0",
+    attribution: "Stadt Köln",
+    country: "DE",
+    privacyUrl: "https://mobilithek.info/datenschutz",
+    setup: {
+      DE_NW_KOELN_SUBSCRIPTION_ID: {
+        title: "Köln Mobilithek — subscription id(s)",
+        description: "Subscription id(s) for the Köln offers (110000000002900004, 110000000002899004, 110000000003011002). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
+      },
+    },
+  },
+  {
+    subdivision: "nw",
+    operator: "unna",
+    name: "Kreis Unna via Mobilithek",
+    format: "datex2",
+    url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_UNNA_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_UNNA_SUBSCRIPTION_ID}",
+    expandEnv: "DE_NW_UNNA_SUBSCRIPTION_ID",
+    auth: {
+      kind: "mtls",
+      certEnvVar: "MOBILITHEK_CERT",
+      keyEnvVar: "MOBILITHEK_KEY",
+    },
+    requiredEnv: ["DE_NW_UNNA_SUBSCRIPTION_ID"],
+    requestHeaders: {
+      "Accept-Encoding": "gzip",
+    },
+    cadenceSec: 300,
+    freshnessWindowSec: 900,
+    license: "dl-de/zero-2-0",
+    licenseUrl: "https://www.govdata.de/dl-de/zero-2-0",
+    attribution: "Kreis Unna",
+    country: "DE",
+    privacyUrl: "https://mobilithek.info/datenschutz",
+    setup: {
+      DE_NW_UNNA_SUBSCRIPTION_ID: {
+        title: "Kreis Unna Mobilithek — subscription id",
+        description: "Subscription id for the Kreis Unna offer (930448553981730816). Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
       },
     },
   },

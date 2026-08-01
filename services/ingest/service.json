@@ -189,10 +189,22 @@
         "description": "Numeric subscription id(s) from mobilithek.info/organisation/subscriptions (one per subscribed offer, e.g. roadworks 648508602333433856 + incidents 648512079906336768). List multiple comma-separated; the feed fans out one HTTPS client-pull per id. dl-de/zero-2-0.",
         "x-openmapx-secret": true
       },
-      "DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID": {
+      "DE_NW_DUESSELDORF_SUBSCRIPTION_ID": {
         "type": "string",
-        "title": "NRW municipalities Mobilithek — subscription id(s)",
-        "description": "Subscription id(s) for NRW city/district offers — Düsseldorf/dmotion 110000000002056000, Köln 110000000002900004 (+ 110000000002899004 / 110000000003011002), Kreis Unna 930448553981730816. Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
+        "title": "Düsseldorf Mobilithek — subscription id",
+        "description": "Subscription id for the Düsseldorf/dmotion offer (110000000002056000). Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
+        "x-openmapx-secret": true
+      },
+      "DE_NW_KOELN_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Köln Mobilithek — subscription id(s)",
+        "description": "Subscription id(s) for the Köln offers (110000000002900004, 110000000002899004, 110000000003011002). Comma-separated. Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
+        "x-openmapx-secret": true
+      },
+      "DE_NW_UNNA_SUBSCRIPTION_ID": {
+        "type": "string",
+        "title": "Kreis Unna Mobilithek — subscription id",
+        "description": "Subscription id for the Kreis Unna offer (930448553981730816). Uses the shared MOBILITHEK_CERT/KEY. dl-de/zero-2-0.",
         "x-openmapx-secret": true
       },
       "DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID": {

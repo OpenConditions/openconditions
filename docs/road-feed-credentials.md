@@ -12,7 +12,9 @@
 | Planned road disruptions (Victoria) | `AU_VIC_VICROADS_API_KEY` | CC-BY-4.0 |  |
 | Unplanned road disruptions (Victoria) | `AU_VIC_VICROADS_API_KEY` | CC-BY-4.0 |  |
 | LVZ.NRW (Nordrhein-Westfalen) via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_VERKEHR_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
-| NRW municipalities (Düsseldorf, Köln, Kreis Unna) via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_MOBILITHEK_KOMMUNAL_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Düsseldorf (dmotion) via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_DUESSELDORF_SUBSCRIPTION_ID` | dl-de/zero-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
+| Köln via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_KOELN_SUBSCRIPTION_ID` | dl-de/zero-2-0 |  |
+| Kreis Unna via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_UNNA_SUBSCRIPTION_ID` | dl-de/zero-2-0 |  |
 | NRW.Mobidrom bundled roadworks via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_MOBILITHEK_MOBIDROM_SUBSCRIPTION_ID` | CC-BY-SA-4.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | Bayern via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_BY_MOBILITHEK_SUBSCRIPTION_ID` | GeoNutzV | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | Baden-Württemberg via Mobilithek | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_BW_MOBILITHEK_SUBSCRIPTION_ID` | dl-de/by-2-0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
