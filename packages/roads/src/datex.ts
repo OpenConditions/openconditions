@@ -659,7 +659,27 @@ function locationShapeOf(rec: XmlObject): string {
         : stripXmlNamespace(k);
     })
     .sort();
-  return `${type ? `${stripXmlNamespace(type)}:` : ""}${children.join("+") || "(empty)"}`;
+  // Plus the leaf names anywhere beneath, which is what actually says whether
+  // a record is placeable: a wrapper called `any` or `extension` reveals
+  // nothing, while the leaves it holds name the referencing scheme.
+  const leaves = new Set<string>();
+  const collect = (n: unknown, depth: number): void => {
+    if (depth > 6 || leaves.size > 12) return;
+    if (Array.isArray(n)) {
+      n.forEach((x) => collect(x, depth));
+      return;
+    }
+    if (!isXmlObject(n)) return;
+    for (const [k, v] of Object.entries(n)) {
+      if (k.startsWith("@_")) continue;
+      if (isXmlObject(v) || Array.isArray(v)) collect(v, depth + 1);
+      else leaves.add(stripXmlNamespace(k));
+    }
+  };
+  collect(locRef, 0);
+
+  const head = `${type ? `${stripXmlNamespace(type)}:` : ""}${children.join("+") || "(empty)"}`;
+  return leaves.size > 0 ? `${head}{${[...leaves].sort().join(",")}}` : head;
 }
 
 /** Alert-C/TMC reference (country + table + primary specific-location code). */
@@ -865,8 +885,14 @@ export function parseDatexSituations(
     // contribute nothing at all.
     if (!geometry) {
       const ref = alertCRefOf(rec);
+      // The road the record itself names, so a code from another table edition
+      // can be checked against it rather than trusted.
+      const road = roadsOf(rec)[0];
       const resolution = ref
-        ? resolveAlertC(ref, tmcTables())
+        ? resolveAlertC(
+            { ...ref, ...(road?.ref || road?.name ? { road: road.ref ?? road.name } : {}) },
+            tmcTables()
+          )
         : // Not an Alert-C record at all — it locates itself some other way (or
           // not at all). Counted like any other reason so no dropped record is
           // left in a silent bucket that reads as "nothing to explain".
@@ -877,6 +903,9 @@ export function parseDatexSituations(
         locationTable = {
           ref: `TMC ${resolution.table.cid}/${resolution.table.tabcd}`,
           version: resolution.table.version,
+          // Records placed from another edition are marked, because their codes
+          // were vouched for by a road match rather than by the edition itself.
+          ...(resolution.viaRoadMatch ? { viaRoadMatch: true } : {}),
           ...(resolution.table.attribution ? { attribution: resolution.table.attribution } : {}),
           ...(resolution.table.license ? { license: resolution.table.license } : {}),
         };

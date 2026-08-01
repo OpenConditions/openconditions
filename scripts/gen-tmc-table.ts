@@ -72,6 +72,8 @@ async function main() {
       poffsets: read(datDir, "POFFSETS.DAT"),
       locationDatasets: read(datDir, "LOCATIONDATASETS.DAT"),
       countries: read(datDir, "COUNTRIES.DAT"),
+      roads: read(datDir, "ROADS.DAT"),
+      segments: read(datDir, "SEGMENTS.DAT"),
     },
     { attribution: SOURCE.attribution, license: SOURCE.license }
   );

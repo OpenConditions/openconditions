@@ -20,6 +20,16 @@ export interface TmcPoint {
   pos?: number;
   /** Previous coded location, i.e. the negative direction, if any. */
   neg?: number;
+  /**
+   * The road this location sits on, as the table numbers it ("A7", "B462").
+   *
+   * Carried so a resolution can be checked against the road a record claims to
+   * be about. That check is what makes a code from another table edition usable
+   * at all: agreement is evidence the code still means the same place, and
+   * disagreement catches exactly the renumbering that would otherwise put an
+   * incident on the wrong road.
+   */
+  road?: string;
 }
 
 /**
@@ -54,8 +64,11 @@ export interface TmcTableSnapshot {
   ecc?: string;
   attribution: string;
   license: string;
-  /** `[lcd, lon, lat, pos, neg]`; `pos`/`neg` are 0 when the point has no link. */
-  points: [number, number, number, number, number][];
+  /**
+   * `[lcd, lon, lat, pos, neg, road]`; `pos`/`neg` are 0 when the point has no
+   * link, `road` an empty string when the table names none.
+   */
+  points: [number, number, number, number, number, string][];
 }
 
 /** Rows of a `*.DAT` file, keyed by the header row's column names. */
@@ -98,6 +111,10 @@ export interface LclFiles {
   locationDatasets: string;
   /** `COUNTRIES.DAT` — maps the CID to its alphabetic codes. */
   countries?: string;
+  /** `ROADS.DAT` — road numbers a point may belong to. */
+  roads?: string;
+  /** `SEGMENTS.DAT` — carries a road number for points linked by segment. */
+  segments?: string;
 }
 
 /**
@@ -124,13 +141,26 @@ export function buildTmcTable(
     ? parseDatFile(files.countries).find((r) => Number.parseInt(r["CID"] ?? "", 10) === cid)
     : undefined;
 
+  // A point names its road directly (`ROA_LCD`) or through the segment it sits
+  // on (`SEG_LCD`); both routes are followed, which covers 96% of the table.
+  const roadByLcd = new Map<string, string>();
+  for (const row of files.roads ? parseDatFile(files.roads) : []) {
+    if (row["LCD"] && row["ROADNUMBER"]) roadByLcd.set(row["LCD"], row["ROADNUMBER"]);
+  }
+  const segmentRoad = new Map<string, string>();
+  for (const row of files.segments ? parseDatFile(files.segments) : []) {
+    const road = row["ROADNUMBER"] || roadByLcd.get(row["ROA_LCD"] ?? "") || "";
+    if (row["LCD"] && road) segmentRoad.set(row["LCD"], road);
+  }
+
   const points = new Map<number, TmcPoint>();
   for (const row of parseDatFile(files.points)) {
     const code = lcd(row["LCD"]);
     const lon = coord(row["XCOORD"]);
     const lat = coord(row["YCOORD"]);
     if (code === undefined || lon === undefined || lat === undefined) continue;
-    points.set(code, { lon, lat });
+    const road = roadByLcd.get(row["ROA_LCD"] ?? "") ?? segmentRoad.get(row["SEG_LCD"] ?? "");
+    points.set(code, { lon, lat, ...(road ? { road } : {}) });
   }
 
   for (const row of files.poffsets ? parseDatFile(files.poffsets) : []) {
@@ -160,7 +190,14 @@ export function toSnapshot(table: TmcLocationTable): TmcTableSnapshot {
     .sort((a, b) => a[0] - b[0])
     .map(
       ([code, p]) =>
-        [code, p.lon, p.lat, p.pos ?? 0, p.neg ?? 0] as [number, number, number, number, number]
+        [code, p.lon, p.lat, p.pos ?? 0, p.neg ?? 0, p.road ?? ""] as [
+          number,
+          number,
+          number,
+          number,
+          number,
+          string,
+        ]
     );
   return {
     cid: table.cid,
@@ -176,8 +213,14 @@ export function toSnapshot(table: TmcLocationTable): TmcTableSnapshot {
 
 export function fromSnapshot(snap: TmcTableSnapshot): TmcLocationTable {
   const points = new Map<number, TmcPoint>();
-  for (const [code, lon, lat, pos, neg] of snap.points) {
-    points.set(code, { lon, lat, ...(pos ? { pos } : {}), ...(neg ? { neg } : {}) });
+  for (const [code, lon, lat, pos, neg, road] of snap.points) {
+    points.set(code, {
+      lon,
+      lat,
+      ...(pos ? { pos } : {}),
+      ...(neg ? { neg } : {}),
+      ...(road ? { road } : {}),
+    });
   }
   return {
     cid: snap.cid,

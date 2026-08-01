@@ -140,6 +140,77 @@ describe("resolveAlertC", () => {
   });
 });
 
+/**
+ * Niedersachsen references LCL edition 17.0 while the published table is 22.0,
+ * and no 17.0 table is obtainable. Refusing outright loses the publisher
+ * entirely; trusting the codes risks placing incidents on the wrong road. The
+ * record's own road settles it per record instead of per edition.
+ */
+describe("resolving a code from another table edition", () => {
+  const ROADED: TmcLocationTable = {
+    ...TABLE,
+    points: new Map([
+      [100, { lon: 0, lat: 0, pos: 200, road: "A7" }],
+      [200, { lon: 0, lat: 1, neg: 100, road: "A7" }],
+      [300, { lon: 5, lat: 5, road: "B462" }],
+      [400, { lon: 9, lat: 9 }],
+    ]),
+  };
+  const older = (over: Record<string, unknown> = {}) =>
+    resolveAlertC({ country: "D", table: "1", version: "17.0", primary: 100, ...over }, [ROADED]);
+
+  it("accepts a code that lands on the road the record names", () => {
+    const r = older({ road: "A7" });
+    expect(r).toMatchObject({ ok: true, viaRoadMatch: true });
+  });
+
+  it("tolerates how differently the two sides spell the same road", () => {
+    for (const road of ["A 7", "a7", "BAB A7"]) {
+      expect(older({ road })).toMatchObject({ ok: true, viaRoadMatch: true });
+    }
+  });
+
+  it("refuses a code that lands on a different road", () => {
+    // Exactly the renumbering the guard exists for: a plausible coordinate,
+    // on the wrong road.
+    expect(older({ primary: 300, road: "A7" })).toEqual({
+      ok: false,
+      reason: "version-mismatch",
+    });
+  });
+
+  it("refuses when the record names no road to check against", () => {
+    expect(older({})).toEqual({ ok: false, reason: "version-mismatch" });
+  });
+
+  it("refuses when the table knows no road for the code", () => {
+    expect(older({ primary: 400, road: "A7" })).toEqual({
+      ok: false,
+      reason: "version-mismatch",
+    });
+  });
+
+  it("requires BOTH ends of a linear location to be on that road", () => {
+    expect(older({ primary: 100, secondary: 300, road: "A7" })).toEqual({
+      ok: false,
+      reason: "version-mismatch",
+    });
+    expect(older({ primary: 100, secondary: 200, road: "A7" })).toMatchObject({
+      ok: true,
+      viaRoadMatch: true,
+    });
+  });
+
+  it("does not mark a matching-edition record as road-vouched", () => {
+    const r = resolveAlertC(
+      { country: "D", table: "1", version: "22.0", primary: 100, road: "A7" },
+      [ROADED]
+    );
+    expect(r).toMatchObject({ ok: true });
+    expect((r as { viaRoadMatch?: boolean }).viaRoadMatch).toBeUndefined();
+  });
+});
+
 describe("the vendored German table", () => {
   const [table] = tmcTables();
 

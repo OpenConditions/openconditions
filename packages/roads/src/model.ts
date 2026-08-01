@@ -240,6 +240,12 @@ export interface RoadEvent extends ConditionEvent {
     version: string;
     attribution?: string;
     license?: string;
+    /**
+     * Set when the record named a different table edition and was placed only
+     * because its codes resolved onto the road it claims to be about. Such a
+     * placement rests on that cross-check rather than on matching editions.
+     */
+    viaRoadMatch?: boolean;
   };
 }
 

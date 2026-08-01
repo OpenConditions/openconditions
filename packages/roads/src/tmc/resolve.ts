@@ -34,6 +34,14 @@ export interface AlertCReference {
   primary?: number;
   /** Secondary location code — the far end of a linear location's extent. */
   secondary?: number;
+  /**
+   * The road the record itself says it is about ("A7", "B 462").
+   *
+   * Used to vouch for a code from a table edition we do not hold: if the code
+   * resolves onto the very road the publisher named, it still means the same
+   * place, and if it does not, that is the renumbering we refuse over.
+   */
+  road?: string;
 }
 
 /**
@@ -51,8 +59,28 @@ export type TmcUnresolvedReason =
   | "unknown-code";
 
 export type TmcResolution =
-  | { ok: true; geometry: PointGeometry | LineStringGeometry; table: TmcLocationTable }
+  | {
+      ok: true;
+      geometry: PointGeometry | LineStringGeometry;
+      table: TmcLocationTable;
+      /**
+       * True when the record named another table edition and was accepted only
+       * because its codes resolved onto the road it claims to be about.
+       */
+      viaRoadMatch?: boolean;
+    }
   | { ok: false; reason: TmcUnresolvedReason };
+
+/** "B 462" / "BAB A7" / "a7" all compare equal to the table's "A7". */
+function sameRoad(a: string | undefined, b: string | undefined): boolean {
+  if (!a || !b) return false;
+  const norm = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  const x = norm(a);
+  const y = norm(b);
+  if (!x || !y) return false;
+  // One side often carries a prefix the other omits ("BAB A7" vs "A7").
+  return x === y || x.endsWith(y) || y.endsWith(x);
+}
 
 /** Does this table describe the country/table the record names? */
 function matchesTable(table: TmcLocationTable, ref: AlertCReference): boolean {
@@ -116,18 +144,30 @@ export function resolveAlertC(ref: AlertCReference, tables: TmcLocationTable[]):
   const table = tables.find((t) => matchesTable(t, ref));
   if (!table) return { ok: false, reason: "no-table" };
   if (!ref.version) return { ok: false, reason: "version-missing" };
-  if (!sameVersion(ref.version, table.version)) {
-    return { ok: false, reason: "version-mismatch" };
-  }
 
   const primary = table.points.get(ref.primary);
+  const secondary = ref.secondary ? table.points.get(ref.secondary) : undefined;
+
+  let viaRoadMatch = false;
+  if (!sameVersion(ref.version, table.version)) {
+    // Another edition. Codes are renumbered between editions, so this is only
+    // safe where the record itself can vouch for the result: every coded point
+    // the table knows a road for must sit on the road the record names. That
+    // turns an unverifiable assumption about editions into a per-record fact.
+    const known = [primary, secondary].filter((p) => p?.road);
+    if (known.length === 0 || !known.every((p) => sameRoad(p!.road, ref.road))) {
+      return { ok: false, reason: "version-mismatch" };
+    }
+    viaRoadMatch = true;
+  }
+
   if (!primary) return { ok: false, reason: "unknown-code" };
 
-  const secondary = ref.secondary ? table.points.get(ref.secondary) : undefined;
   if (!ref.secondary || !secondary || ref.secondary === ref.primary) {
     return {
       ok: true,
       table,
+      ...(viaRoadMatch ? { viaRoadMatch } : {}),
       geometry: { type: "Point", coordinates: [primary.lon, primary.lat] },
     };
   }
@@ -147,8 +187,14 @@ export function resolveAlertC(ref: AlertCReference, tables: TmcLocationTable[]):
     return {
       ok: true,
       table,
+      ...(viaRoadMatch ? { viaRoadMatch } : {}),
       geometry: { type: "Point", coordinates: [primary.lon, primary.lat] },
     };
   }
-  return { ok: true, table, geometry: { type: "LineString", coordinates } };
+  return {
+    ok: true,
+    table,
+    ...(viaRoadMatch ? { viaRoadMatch } : {}),
+    geometry: { type: "LineString", coordinates },
+  };
 }
