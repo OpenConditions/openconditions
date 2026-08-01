@@ -91,6 +91,12 @@ export type FeedSource = FeedSourceBase & {
    * "lat lon" default (e.g. Trafikverket). Passed through to the parser.
    */
   posListLonLat?: boolean;
+  /**
+   * CRS for `datex2` feeds publishing a projected grid that declare no
+   * `srsName` in the payload (e.g. Mecklenburg-Vorpommern's UTM zone 33).
+   * Passed through to the parser.
+   */
+  srsName?: string;
   bbox?: [number, number, number, number];
   /**
    * Marks a reference-only feed whose records carry OpenLR but no coordinate, so
@@ -201,5 +207,6 @@ export function feedToSourceDescriptor(feed: FeedSource): SourceDescriptor {
     ...(feed.geojson ? { geojson: feed.geojson } : {}),
     ...(feed.flowMap ? { flowMap: feed.flowMap } : {}),
     ...(feed.posListLonLat ? { posListLonLat: true } : {}),
+    ...(feed.srsName ? { srsName: feed.srsName } : {}),
   };
 }

@@ -305,3 +305,52 @@ describe("DATEX linearByCoordinates endpoints", () => {
     expect(events[0]!.geometry).toEqual({ type: "Point", coordinates: [10.21, 48.62] });
   });
 });
+
+/**
+ * Mecklenburg-Vorpommern publishes GML in UTM zone 33 with the zone carried as
+ * an easting prefix, and declares no CRS. The raw grid values were being stored
+ * as if they were degrees, putting 62 records nowhere at all.
+ */
+describe("DATEX feeds publishing an undeclared projected grid", () => {
+  beforeEach(() => __resetSkipMetrics());
+
+  const utm33 = (posList: string) =>
+    Buffer.from(
+      `<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0">
+  <payloadPublication xsi:type="SituationPublication" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <situation id="S1">
+      <situationRecord xsi:type="MaintenanceWorks" id="R1">
+        <situationRecordCreationTime>2026-07-31T00:00:00Z</situationRecordCreationTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        <groupOfLocations xsi:type="Linear"><linearExtension><linearExtended>
+          <gmlLineString><posList>${posList}</posList></gmlLineString>
+        </linearExtended></linearExtension></groupOfLocations>
+      </situationRecord>
+    </situation>
+  </payloadPublication>
+</d2LogicalModel>`
+    );
+
+  const POS = "33342865.72 6020207.51 33342859.99 6020464.00";
+
+  it("reprojects when the descriptor declares the grid the payload omits", () => {
+    const [event] = parseDatexSituations(utm33(POS), { ...SOURCE, srsName: "EPSG:5650" });
+
+    const geom = event!.geometry;
+    const coords = geom && "coordinates" in geom ? (geom.coordinates as [number, number][]) : [];
+    const [lon, lat] = coords[0]!;
+    // Near Rostock, which is where these records actually are.
+    expect(lon).toBeCloseTo(12.58, 1);
+    expect(lat).toBeCloseTo(54.31, 1);
+  });
+
+  it("drops grid values rather than storing them as degrees", () => {
+    // Without the declaration the numbers are unrecoverable once stored, so the
+    // record is dropped and counted instead of placed thousands of km away.
+    const events = parseDatexSituations(utm33(POS), SOURCE);
+
+    expect(events).toEqual([]);
+    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(1);
+  });
+});

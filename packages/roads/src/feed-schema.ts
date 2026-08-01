@@ -86,6 +86,7 @@ export const roadFeedSchema = z
     geojson: geoJsonMappingSchema.optional(),
     flowMap: geojsonFlowMappingSchema.optional(),
     posListLonLat: z.boolean().optional(),
+    srsName: z.string().min(1).optional(),
     siteTable: z
       .object({
         url: z.string().url(),

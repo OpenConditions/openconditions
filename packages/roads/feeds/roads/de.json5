@@ -586,6 +586,10 @@
     },
     cadenceSec: 300,
     freshnessWindowSec: 900,
+    // Publishes GML in UTM zone 33 with the zone as an easting prefix
+    // ("33342865" = zone 33, easting 342865) and declares no srsName, so the
+    // raw grid values were being stored as if they were degrees.
+    srsName: "EPSG:5650",
     license: "GeoNutzV",
     licenseUrl: "https://www.gesetze-im-internet.de/geonutzv/",
     attribution: "Landesamt für Straßenbau und Verkehr Mecklenburg-Vorpommern",

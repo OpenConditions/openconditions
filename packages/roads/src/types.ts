@@ -48,4 +48,10 @@ export interface SourceDescriptor {
    * unaffected.
    */
   posListLonLat?: boolean;
+  /**
+   * CRS of the feed's coordinates, for publishers using a projected grid that
+   * declare no `srsName` in the payload. Without it the raw grid values are
+   * indistinguishable from degrees until they have already been stored.
+   */
+  srsName?: string;
 }

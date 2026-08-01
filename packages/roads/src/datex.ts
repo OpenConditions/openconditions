@@ -4,7 +4,7 @@ import type { Geometry } from "geojson";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
-import { reprojectorFor } from "./reproject.js";
+import { isPlausibleWgs84, reprojectorFor } from "./reproject.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import { mapSourceType } from "./taxonomy.js";
 import { resolveAlertC, tmcTables, type AlertCReference } from "./tmc/index.js";
@@ -287,10 +287,17 @@ function resolveGeometryFrom(
     for (const p of displayCoordinates(locRef, reproject)) points.push(p);
   }
 
-  if (lines.length === 1) return { type: "LineString", coordinates: lines[0]! };
-  if (lines.length > 1) return { type: "MultiLineString", coordinates: lines };
-  if (points.length === 1) return { type: "Point", coordinates: points[0]! };
-  if (points.length > 1) return { type: "MultiPoint", coordinates: points };
+  // A feed publishing a projected grid it never declared looks identical to one
+  // publishing degrees until the numbers land in the database, where nothing can
+  // recover them. Dropping the record makes that visible in the skip count
+  // instead of placing it thousands of kilometres away.
+  const usableLines = lines.filter((l) => l.every(isPlausibleWgs84));
+  const usablePoints = points.filter(isPlausibleWgs84);
+
+  if (usableLines.length === 1) return { type: "LineString", coordinates: usableLines[0]! };
+  if (usableLines.length > 1) return { type: "MultiLineString", coordinates: usableLines };
+  if (usablePoints.length === 1) return { type: "Point", coordinates: usablePoints[0]! };
+  if (usablePoints.length > 1) return { type: "MultiPoint", coordinates: usablePoints };
   return null;
 }
 
@@ -856,8 +863,9 @@ export function parseDatexSituations(
   });
 
   // Feeds whose GML geometry is a projected national grid (e.g. Flanders
-  // EPSG:31370) declare it via srsName; reproject those to WGS84.
-  const reproject = detectReprojector(input);
+  // EPSG:31370) declare it via srsName; reproject those to WGS84. A feed that
+  // uses a grid but declares nothing can say so on its descriptor instead.
+  const reproject = detectReprojector(input) ?? reprojectorFor(src.srsName);
   // Some publishers emit GML posList in "lon lat" order (e.g. Trafikverket),
   // opposite the DATEX/WGS84 "lat lon" default.
   const lonFirst = src.posListLonLat ?? false;
