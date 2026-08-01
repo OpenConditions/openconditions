@@ -162,6 +162,48 @@ function resolveGeometry(
   );
 }
 
+/**
+ * Every coordinate in a subtree expressed as explicit latitude/longitude
+ * leaves, whatever element carries them.
+ *
+ * Deliberately name-agnostic: allow-listing element names one at a time is what
+ * lost `locationForDisplay`, and the next publisher will use a name nobody has
+ * seen. An element carrying both a finite latitude and longitude is a
+ * coordinate regardless of what it is called.
+ */
+function displayCoordinates(node: unknown, reproject?: Reprojector | null): [number, number][] {
+  const out: [number, number][] = [];
+  const seen = new Set<string>();
+
+  const walk = (n: unknown): void => {
+    if (Array.isArray(n)) {
+      n.forEach(walk);
+      return;
+    }
+    if (!isXmlObject(n)) return;
+
+    const lat = Number(getXmlChildText(n, "latitude"));
+    const lon = Number(getXmlChildText(n, "longitude"));
+    if (Number.isFinite(lat) && Number.isFinite(lon)) {
+      const p = reproject ? reproject([lon, lat]) : ([lon, lat] as [number, number]);
+      const key = `${p[0]},${p[1]}`;
+      // The same position is often repeated (an area's display point echoed by
+      // an extension); one place should not become several markers.
+      if (!seen.has(key)) {
+        seen.add(key);
+        out.push(p);
+      }
+      return;
+    }
+    for (const [key, value] of Object.entries(n)) {
+      if (!key.startsWith("@_")) walk(value);
+    }
+  };
+
+  walk(node);
+  return out;
+}
+
 /** Walk a location subtree (locationReference, groupOfLocations, alternativeRoute,
  * …) for any coordinate-bearing element and assemble a GeoJSON geometry. */
 function resolveGeometryFrom(
@@ -234,6 +276,16 @@ function resolveGeometryFrom(
     }
   };
   visit(locRef);
+
+  if (lines.length === 0 && points.length === 0) {
+    // Last resort. Some publishers give a record no primary geometry at all and
+    // hang a single coordinate off an extension instead — `locationForDisplay`
+    // on an area, or a point extension. That is a label position rather than a
+    // true extent, so it is used ONLY when nothing better was found and can
+    // never override real geometry. Whole publishers (Hessen,
+    // Schleswig-Holstein) were being dropped for want of reading it.
+    for (const p of displayCoordinates(locRef, reproject)) points.push(p);
+  }
 
   if (lines.length === 1) return { type: "LineString", coordinates: lines[0]! };
   if (lines.length > 1) return { type: "MultiLineString", coordinates: lines };
@@ -591,7 +643,21 @@ function locationShapeOf(rec: XmlObject): string {
   const type = getXmlAttribute(locRef, "type");
   const children = Object.keys(locRef)
     .filter((k) => !k.startsWith("@_"))
-    .map(stripXmlNamespace)
+    .map((k) => {
+      // One level in, because the child's own name rarely says whether the
+      // record is placeable — `linearWithinLinearElement` could hold a road
+      // reference or coordinates, and only its contents distinguish them.
+      const inner = locRef[k];
+      const grandchildren = isXmlObject(inner)
+        ? Object.keys(inner)
+            .filter((g) => !g.startsWith("@_"))
+            .map(stripXmlNamespace)
+            .sort()
+        : [];
+      return grandchildren.length > 0
+        ? `${stripXmlNamespace(k)}>${grandchildren.join(",")}`
+        : stripXmlNamespace(k);
+    })
     .sort();
   return `${type ? `${stripXmlNamespace(type)}:` : ""}${children.join("+") || "(empty)"}`;
 }
@@ -786,6 +852,8 @@ export function parseDatexSituations(
   // a publisher is being lost but not what to build; the shape names the
   // referencing scheme we do not yet read.
   const unreadableShapes = new Map<string, number>();
+  /** Table editions publishers named that we do not hold. */
+  const mismatchVersions = new Map<string, number>();
 
   for (const { rec: rawRec, situationSeverity } of records) {
     const { body: rec, className } = recordBody(rawRec);
@@ -821,6 +889,11 @@ export function parseDatexSituations(
         if (resolution.reason === "no-alertc") {
           const shape = locationShapeOf(rec);
           unreadableShapes.set(shape, (unreadableShapes.get(shape) ?? 0) + 1);
+        }
+        if (resolution.reason === "version-mismatch" && ref?.version) {
+          // Which edition the publisher actually names. Without it, "mismatch"
+          // says only that ours is not theirs — not whether theirs is obtainable.
+          mismatchVersions.set(ref.version, (mismatchVersions.get(ref.version) ?? 0) + 1);
         }
       }
     }
@@ -941,9 +1014,17 @@ export function parseDatexSituations(
     // licensing problem, "version-mismatch" means our table is the wrong
     // edition, and "unknown-code" means the publisher referenced something the
     // table does not contain. Collapsing them into one number would hide which.
+    const versions = [...mismatchVersions]
+      .sort((a, b) => b[1] - a[1])
+      .map(([v, n]) => `${v}×${n}`)
+      .join(",");
     const reasons = [...unresolvedReasons]
       .sort((a, b) => b[1] - a[1])
-      .map(([reason, n]) => `${reason}=${n}`)
+      .map(([reason, n]) =>
+        reason === "version-mismatch" && versions
+          ? `${reason}=${n}(theirs:${versions})`
+          : `${reason}=${n}`
+      )
       .join(" ");
     const shapes = [...unreadableShapes]
       .sort((a, b) => b[1] - a[1])

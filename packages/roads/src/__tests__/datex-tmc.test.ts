@@ -163,6 +163,75 @@ describe("DATEX records carrying only an Alert-C location", () => {
 });
 
 /**
+ * Publishers that give a record no primary geometry, only a coordinate hung off
+ * an extension. Hessen and Schleswig-Holstein publish every record this way and
+ * were losing all of them.
+ */
+describe("DATEX records located only by a display coordinate", () => {
+  beforeEach(() => __resetSkipMetrics());
+
+  const area = (inner: string) =>
+    Buffer.from(
+      `<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0">
+  <payloadPublication xsi:type="SituationPublication" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <situation id="S1">
+      <situationRecord xsi:type="Accident" id="R1">
+        <situationRecordCreationTime>2026-07-31T00:00:00Z</situationRecordCreationTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        <groupOfLocations xsi:type="Area">${inner}</groupOfLocations>
+      </situationRecord>
+    </situation>
+  </payloadPublication>
+</d2LogicalModel>`
+    );
+
+  const DISPLAY = `<locationForDisplay><latitude>50.1109</latitude><longitude>8.6821</longitude></locationForDisplay>`;
+
+  it("keeps a record whose only coordinate is a display position", () => {
+    const events = parseDatexSituations(area(`<areaExtension/>${DISPLAY}`), SOURCE);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]!.geometry).toEqual({ type: "Point", coordinates: [8.6821, 50.1109] });
+    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(0);
+  });
+
+  it("finds such a coordinate whatever element carries it", () => {
+    // Name-agnostic on purpose: allow-listing element names is what lost this
+    // in the first place, and the next publisher will invent another name.
+    const events = parseDatexSituations(
+      area(
+        `<pointExtension><somethingNobodyHasSeen><latitude>50.1</latitude><longitude>8.6</longitude></somethingNobodyHasSeen></pointExtension>`
+      ),
+      SOURCE
+    );
+
+    expect(events[0]!.geometry).toEqual({ type: "Point", coordinates: [8.6, 50.1] });
+  });
+
+  it("does not let a display position override real geometry", () => {
+    // A label position is not an extent; it must lose to anything better.
+    const events = parseDatexSituations(
+      area(
+        `<pointByCoordinates><pointCoordinates><latitude>52.0</latitude><longitude>13.0</longitude></pointCoordinates></pointByCoordinates>${DISPLAY}`
+      ),
+      SOURCE
+    );
+
+    expect(events[0]!.geometry).toEqual({ type: "Point", coordinates: [13.0, 52.0] });
+  });
+
+  it("collapses the same position repeated across elements into one point", () => {
+    const events = parseDatexSituations(
+      area(`${DISPLAY}<areaExtension>${DISPLAY}</areaExtension>`),
+      SOURCE
+    );
+
+    expect(events[0]!.geometry).toEqual({ type: "Point", coordinates: [8.6821, 50.1109] });
+  });
+});
+
+/**
  * A v2 `linearByCoordinates` carries its endpoints as latitude/longitude
  * directly under `start`/`end`, unlike v3 which nests a `pointCoordinates`.
  * Only the nested form was read, so a record whose whole geometry was its two
