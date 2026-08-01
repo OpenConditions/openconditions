@@ -686,7 +686,14 @@ function locationShapeOf(rec: XmlObject): string {
   collect(locRef, 0);
 
   const head = `${type ? `${stripXmlNamespace(type)}:` : ""}${children.join("+") || "(empty)"}`;
-  return leaves.size > 0 ? `${head}{${[...leaves].sort().join(",")}}` : head;
+  if (leaves.size === 0) return head;
+
+  // Where the leaves are as opaque as the wrappers (`any` inside `any`), names
+  // alone cannot say what the referencing scheme is. A short excerpt of the
+  // values can, and it is the difference between another guess and a fix.
+  const opaque = [...leaves].every((l) => /^(any|value|extension|content)$/i.test(l));
+  const detail = opaque ? ` ≈${JSON.stringify(locRef).slice(0, 160)}` : "";
+  return `${head}{${[...leaves].sort().join(",")}}${detail}`;
 }
 
 /** Alert-C/TMC reference (country + table + primary specific-location code). */
