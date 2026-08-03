@@ -1,0 +1,4 @@
+# npm package pages return a Cloudflare challenge to lychee; registry metadata is checked separately.
+^https://www\.npmjs\.com/package/hyparquet-writer$
+^https://www\.npmjs\.com/package/@divviup/prio3$
+^https://www\.npmjs\.com/package/@divviup/vdaf$

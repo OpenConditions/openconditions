@@ -7,7 +7,7 @@ a decoded OpenLR location and gets back a GeoJSON line.
 
 The service is built in Python on top of
 [`openlr-dereferencer`](https://github.com/tomtom-international/openlr-dereferencer-python)
-(the map-matching engine) and [`openlr`](https://github.com/tomtom-international/python-openlr)
+(the map-matching engine) and [`openlr`](https://github.com/tomtom-international/openlr-python)
 (the binary codec and location datatypes). It runs as a standalone Docker
 sidecar, separate from the TypeScript monorepo.
 

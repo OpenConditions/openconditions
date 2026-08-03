@@ -27,10 +27,61 @@ jobs:
             --no-progress --cache --max-cache-age 1d
             './**/*.md'
           fail: false # don't fail the run; we report via an issue instead
+      - name: Check npm registry metadata
+        id: npm-registry
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2
+        with:
+          args: >-
+            --no-progress --cache --max-cache-age 1d
+            'https://registry.npmjs.org/hyparquet-writer'
+            'https://registry.npmjs.org/@divviup%2Fprio3'
+            'https://registry.npmjs.org/@divviup%2Fvdaf'
+          output: ./lychee/npm-out.md
+          fail: false # don't fail the run; we report via an issue instead
+      - name: Combine link-check reports
+        if: steps.lychee.outputs.exit_code != 0 || steps.npm-registry.outputs.exit_code != 0
+        shell: bash
+        env:
+          LYCHEE_EXIT_CODE: ${{ steps.lychee.outputs.exit_code }}
+          NPM_REGISTRY_EXIT_CODE: ${{ steps.npm-registry.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          {
+            if [[ "$LYCHEE_EXIT_CODE" != "0" ]]; then
+              cat ./lychee/out.md
+            fi
+            if [[ "$NPM_REGISTRY_EXIT_CODE" != "0" ]]; then
+              if [[ "$LYCHEE_EXIT_CODE" != "0" ]]; then
+                printf '\n\n'
+              fi
+              cat ./lychee/npm-out.md
+            fi
+          } > ./lychee/combined-out.md
+      - name: Find existing broken-links issue
+        id: find-issue
+        if: steps.lychee.outputs.exit_code != 0 || steps.npm-registry.outputs.exit_code != 0
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const title = 'Broken links found by lychee';
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const existingIssue = issues.find(
+              (issue) => !issue.pull_request && issue.title === title,
+            );
+
+            if (existingIssue) {
+              core.setOutput('issue-number', String(existingIssue.number));
+            }
       - name: Open an issue on broken links
-        if: steps.lychee.outputs.exit_code != 0
+        if: steps.lychee.outputs.exit_code != 0 || steps.npm-registry.outputs.exit_code != 0
         uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6
         with:
           title: Broken links found by lychee
-          content-filepath: ./lychee/out.md
+          content-filepath: ./lychee/combined-out.md
+          issue-number: ${{ steps.find-issue.outputs.issue-number }}
           labels: documentation, broken-link
