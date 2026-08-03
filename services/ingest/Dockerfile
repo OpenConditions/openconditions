@@ -15,7 +15,7 @@
 # (see services/ingest/tsup.config.ts) and copies the migrations to dist/drizzle,
 # so only fastify, postgres and croner remain as external runtime dependencies.
 
-FROM node:24-alpine@sha256:156b55f92e98ccd5ef49578a8cea0df4679826564bad1c9d4ef04462b9f0ded6 AS base
+FROM node:24-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS base
 # Read the pnpm version from the repo root package.json so lockfile resolution
 # stays reproducible across local and CI Docker builds.
 COPY package.json /tmp/package.json
@@ -66,7 +66,7 @@ RUN pnpm --filter @openconditions/ingest... build
 # docs/plans/conditions/pbf-extract-source-design.md §3.1). Multi-stage so only
 # the tiny binary + its shared libs reach the runtime image. Pinned to git tags;
 # bump on a base-image change. Validated to build + run on musl (osmium 1.19.0).
-FROM node:24-alpine@sha256:156b55f92e98ccd5ef49578a8cea0df4679826564bad1c9d4ef04462b9f0ded6 AS osmium-build
+FROM node:24-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS osmium-build
 RUN apk add --no-cache cmake make g++ git boost-dev expat-dev bzip2-dev zlib-dev lz4-dev nlohmann-json
 RUN git clone --depth 1 -b v1.8.2 https://github.com/mapbox/protozero /src/protozero \
  && git clone --depth 1 -b v2.23.1 https://github.com/osmcode/libosmium /src/libosmium \
@@ -77,7 +77,7 @@ RUN cmake -S /src/osmium-tool -B /build -DCMAKE_BUILD_TYPE=Release \
  && cmake --build /build -j"$(nproc)"
 
 # Production image.
-FROM node:24-alpine@sha256:156b55f92e98ccd5ef49578a8cea0df4679826564bad1c9d4ef04462b9f0ded6 AS runner
+FROM node:24-alpine@sha256:a0b9bf06e4e6193cf7a0f58816cc935ff8c2a908f81e6f1a95432d679c54fbfd AS runner
 WORKDIR /app
 
 # curl backs the http healthcheck; the OpenMapX compose renderer falls back to
