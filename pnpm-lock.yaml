@@ -200,7 +200,7 @@ importers:
         version: 2.2.3
       undici:
         specifier: ^8.5.0
-        version: 8.9.0
+        version: 8.10.0
       zod:
         specifier: ^4.4.3
         version: 4.4.3
@@ -401,7 +401,7 @@ importers:
         version: 3.4.9
       undici:
         specifier: ^8.5.0
-        version: 8.9.0
+        version: 8.10.0
     devDependencies:
       '@openconditions/publishers':
         specifier: workspace:*
@@ -496,7 +496,7 @@ importers:
         version: 3.4.9
       undici:
         specifier: ^8.5.0
-        version: 8.9.0
+        version: 8.10.0
     devDependencies:
       '@types/node':
         specifier: ^24.0.0
@@ -2952,12 +2952,12 @@ packages:
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
 
-  undici@8.7.0:
-    resolution: {integrity: sha512-N7iQtfyLhIMOFgQubvmLV26svHpO0bqKnAiWotTQCVKCmWrcGbBotPuW1x+xwYZ2VHdSTVUfPQQnlEt1/LouTQ==}
+  undici@8.10.0:
+    resolution: {integrity: sha512-HvltHd7avK13QIw/oLe4qoOLyoVSoafqJ2jYOrtMRBkbYT31eiBQ8O0ehRKZiEZCMEyLFQNIADpgCWC5fALvYQ==}
     engines: {node: '>=22.19.0'}
 
-  undici@8.9.0:
-    resolution: {integrity: sha512-aWZpUj7XoGonMClx4gdDRfgBjqeA+F473aDmROQQbM9n6PRfK/u1q/a0X4wMTgcHfT8H6fpbt98PFuDUwFg2YA==}
+  undici@8.7.0:
+    resolution: {integrity: sha512-N7iQtfyLhIMOFgQubvmLV26svHpO0bqKnAiWotTQCVKCmWrcGbBotPuW1x+xwYZ2VHdSTVUfPQQnlEt1/LouTQ==}
     engines: {node: '>=22.19.0'}
 
   uri-js@4.4.1:
@@ -5497,9 +5497,9 @@ snapshots:
 
   undici-types@7.18.2: {}
 
-  undici@8.7.0: {}
+  undici@8.10.0: {}
 
-  undici@8.9.0: {}
+  undici@8.7.0: {}
 
   uri-js@4.4.1:
     dependencies:
