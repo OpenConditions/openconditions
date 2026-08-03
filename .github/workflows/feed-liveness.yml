@@ -30,10 +30,31 @@ jobs:
         # fails the job; it writes ./liveness/out.md and sets found=true when a
         # feed is down, and we report via an issue below (non-gating).
         run: node scripts/check-feed-liveness.ts
+      - name: Find existing failing-feed issue
+        id: find-issue
+        if: steps.liveness.outputs.found == 'true'
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const title = 'Keyless feed liveness check found failing feeds';
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const existingIssue = issues.find(
+              (issue) => !issue.pull_request && issue.title === title,
+            );
+
+            if (existingIssue) {
+              core.setOutput('issue-number', String(existingIssue.number));
+            }
       - name: Open an issue for failing feeds
         if: steps.liveness.outputs.found == 'true'
         uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6
         with:
           title: Keyless feed liveness check found failing feeds
           content-filepath: ./liveness/out.md
+          issue-number: ${{ steps.find-issue.outputs.issue-number }}
           labels: feed-issue
