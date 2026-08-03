@@ -301,6 +301,44 @@ describe("parseDatexSituations — GML geometry", () => {
     });
   });
 
+  it("reads nested untyped itinerary point locations as an ordered LineString", () => {
+    const xml = v3Record(
+      `<locationReference xsi:type="GroupOfLocations">` +
+        `<locationGroupByList><locationContainedInGroup><itineraryByIndexedLocations>` +
+        `<locationContainedInItinerary><index>1</index><location xsi:type="PointLocation"><pointByCoordinates><pointCoordinates><latitude>52.1</latitude><longitude>13.1</longitude></pointCoordinates></pointByCoordinates></location></locationContainedInItinerary>` +
+        `<locationContainedInItinerary><index>0</index><location xsi:type="PointLocation"><pointByCoordinates><pointCoordinates><latitude>52.0</latitude><longitude>13.0</longitude></pointCoordinates></pointByCoordinates></location></locationContainedInItinerary>` +
+        `</itineraryByIndexedLocations></locationContainedInGroup></locationGroupByList>` +
+        `</locationReference>`
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [13.0, 52.0],
+        [13.1, 52.1],
+      ],
+    });
+  });
+
+  it("reads point coordinates in a declared linear location as a LineString", () => {
+    const xml = v3Record(
+      `<locationReference xsi:type="Linear">` +
+        `<pointByCoordinates><pointCoordinates><latitude>52.0</latitude><longitude>13.0</longitude></pointCoordinates></pointByCoordinates>` +
+        `<pointByCoordinates><pointCoordinates><latitude>52.1</latitude><longitude>13.1</longitude></pointCoordinates></pointByCoordinates>` +
+        `<pointByCoordinates><pointCoordinates><latitude>52.2</latitude><longitude>13.2</longitude></pointCoordinates></pointByCoordinates>` +
+        `</locationReference>`
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [13.0, 52.0],
+        [13.1, 52.1],
+        [13.2, 52.2],
+      ],
+    });
+  });
+
   it("keeps LinearByCoordinates endpoints as a MultiPoint", () => {
     const xml = v3Record(
       `<locationReference xsi:type="LinearByCoordinates">` +

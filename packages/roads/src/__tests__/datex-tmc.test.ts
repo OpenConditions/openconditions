@@ -277,7 +277,7 @@ describe("DATEX linearByCoordinates endpoints", () => {
     expect(drainSkippedNoGeometry(SOURCE.id)).toBe(0);
   });
 
-  it("keeps the intermediate points that trace the road, alongside the endpoints", () => {
+  it("uses indexed intermediate points to build an ordered LineString", () => {
     const events = parseDatexSituations(
       linear(
         `${START_END}<intermediate index="1"><pointCoordinates><latitude>48.625</latitude><longitude>10.218</longitude></pointCoordinates></intermediate>`
@@ -285,11 +285,14 @@ describe("DATEX linearByCoordinates endpoints", () => {
       SOURCE
     );
 
-    const geom = events[0]!.geometry;
-    expect(geom?.type).toBe("MultiPoint");
-    const coords = geom && "coordinates" in geom ? geom.coordinates : [];
-    expect(coords).toHaveLength(3);
-    expect(coords).toContainEqual([10.218, 48.625]);
+    expect(events[0]!.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [10.2168311, 48.6206291],
+        [10.218, 48.625],
+        [10.2203178, 48.6304951],
+      ],
+    });
   });
 
   it("still walks a start/end that is not a coordinate pair", () => {

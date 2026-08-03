@@ -42,6 +42,16 @@ function elementType(rec: XmlObject): string {
   return colonIdx >= 0 ? raw.slice(colonIdx + 1) : raw;
 }
 
+/**
+ * DATEX types whose coordinate members describe a path in source order.
+ * `LinearByCoordinates` is intentionally excluded here: its `start` and
+ * `end` members describe endpoints, while indexed `intermediate` members
+ * promote the collection to an ordered polyline in the geometry walker.
+ */
+function isLinearPathType(type: string): boolean {
+  return type === "Linear" || type.endsWith("LinearLocation");
+}
+
 function recId(rec: XmlObject): string {
   // xsi-typed records carry an `id` attribute; substitution-group records (e.g.
   // National Highways) carry a stable `<idG>` leaf instead.
@@ -154,11 +164,14 @@ function detectReprojector(input: string | Buffer): Reprojector | null {
  * coordinate-bearing element — DATEX nests these at varying depths and shapes:
  *  - `pointByCoordinates > pointCoordinates` (latitude/longitude) → Point
  *  - GML `gmlPoint > pos` → Point; `gmlLineString > posList` → LineString
- *  - `ItineraryByIndexedLocations` → many `location`s, each with its own GML
- * Multiple lines → MultiLineString. Explicitly indexed point itineraries become
- * LineString; generic point collections remain MultiPoint because they may be
- * endpoints rather than a traversable path. Records with no coordinate geometry
- * (Alert-C/TMC only) return null (decoded in Phase 2).
+ *  - `ItineraryByIndexedLocations` / `locationContainedInItinerary` → ordered
+ *    locations, each with its own GML or point coordinates
+ * Multiple lines → MultiLineString. Explicitly ordered point itineraries,
+ * point members of declared linear locations, and LinearByCoordinates members
+ * with indexed intermediates become LineString; endpoint-only
+ * LinearByCoordinates and generic point collections remain MultiPoint because
+ * they may be endpoints rather than a traversable path. Records with no
+ * coordinate geometry (Alert-C/TMC only) return null (decoded in Phase 2).
  */
 function resolveGeometry(
   rec: XmlObject,
@@ -265,34 +278,86 @@ function resolveGeometryFrom(
 
   const lines: [number, number][][] = [];
   const points: [number, number][] = [];
+  const linearPathPoints: [number, number][] = [];
+  const linearByCoordinatesPoints: Array<{
+    point: [number, number];
+    order: number;
+    sequence: number;
+  }> = [];
   const indexedItineraryPoints: Array<{ index: number; point: [number, number] }> = [];
-  const isIndexedItinerary = elementType(locRef) === "ItineraryByIndexedLocations";
+  let hasOrderedItinerary = elementType(locRef) === "ItineraryByIndexedLocations";
+  let hasLinearPath = isLinearPathType(elementType(locRef));
+  let hasLinearByCoordinatesIntermediate = false;
+  let linearByCoordinatesSequence = 0;
 
-  const visit = (node: unknown, itineraryIndex?: number): void => {
+  const addLinearByCoordinatesPoint = (point: [number, number], order?: number): void => {
+    linearByCoordinatesPoints.push({
+      point,
+      order: order ?? linearByCoordinatesSequence,
+      sequence: linearByCoordinatesSequence++,
+    });
+  };
+
+  const visit = (
+    node: unknown,
+    itineraryIndex?: number,
+    linearPathContext = false,
+    linearByCoordinatesContext = false,
+    linearByCoordinatesOrder?: number
+  ): void => {
     if (Array.isArray(node)) {
-      node.forEach((child) => visit(child, itineraryIndex));
+      node.forEach((child) =>
+        visit(
+          child,
+          itineraryIndex,
+          linearPathContext,
+          linearByCoordinatesContext,
+          linearByCoordinatesOrder
+        )
+      );
       return;
     }
     if (!isXmlObject(node)) return;
+    const nodeType = elementType(node);
+    const inLinearByCoordinates = linearByCoordinatesContext || nodeType === "LinearByCoordinates";
+    const inLinearPath =
+      !inLinearByCoordinates && (linearPathContext || isLinearPathType(nodeType));
+    if (inLinearPath) hasLinearPath = true;
     for (const [key, value] of Object.entries(node)) {
       if (key.startsWith("@_")) continue;
-      if (isIndexedItinerary && stripXmlNamespace(key) === "locationContainedInItinerary") {
+      const childName = stripXmlNamespace(key);
+      if (childName === "locationContainedInItinerary") {
+        hasOrderedItinerary = true;
         xmlNodeToArray(value)
           .filter(isXmlObject)
           .forEach((entry, entryPosition) => {
             const rawIndex = getXmlAttribute(entry, "index") ?? getXmlChildText(entry, "index");
             const parsedIndex = rawIndex === undefined ? entryPosition : Number(rawIndex);
-            visit(entry, Number.isFinite(parsedIndex) ? parsedIndex : entryPosition);
+            visit(
+              entry,
+              Number.isFinite(parsedIndex) ? parsedIndex : entryPosition,
+              inLinearPath,
+              inLinearByCoordinates,
+              linearByCoordinatesOrder
+            );
           });
         continue;
       }
-      switch (stripXmlNamespace(key)) {
+      if (childName === "linearByCoordinates") {
+        visit(value, itineraryIndex, false, true);
+        continue;
+      }
+      switch (childName) {
         case "posList":
           for (const node of xmlNodeToArray(value)) {
             const coords = parseLatLonList(xmlText(node), reproject, lonFirst);
             if (coords.length >= 2) lines.push(coords);
             else if (coords.length === 1) {
               points.push(coords[0]!);
+              if (inLinearByCoordinates) {
+                addLinearByCoordinatesPoint(coords[0]!, linearByCoordinatesOrder);
+              }
+              if (inLinearPath) linearPathPoints.push(coords[0]!);
               if (itineraryIndex !== undefined) {
                 indexedItineraryPoints.push({ index: itineraryIndex, point: coords[0]! });
               }
@@ -304,6 +369,10 @@ function resolveGeometryFrom(
             const coords = parseLatLonList(xmlText(node), reproject, lonFirst);
             if (coords[0]) {
               points.push(coords[0]);
+              if (inLinearByCoordinates) {
+                addLinearByCoordinatesPoint(coords[0], linearByCoordinatesOrder);
+              }
+              if (inLinearPath) linearPathPoints.push(coords[0]);
               if (itineraryIndex !== undefined) {
                 indexedItineraryPoints.push({ index: itineraryIndex, point: coords[0] });
               }
@@ -323,9 +392,31 @@ function resolveGeometryFrom(
             // longitude/latitude fields; reproject. WGS84 feeds pass through.
             const point = reproject ? reproject([lon, lat]) : ([lon, lat] as [number, number]);
             points.push(point);
+            if (inLinearByCoordinates) {
+              addLinearByCoordinatesPoint(point, linearByCoordinatesOrder);
+            }
+            if (inLinearPath) linearPathPoints.push(point);
             if (itineraryIndex !== undefined) {
               indexedItineraryPoints.push({ index: itineraryIndex, point });
             }
+          }
+          break;
+        case "intermediate":
+          for (const node of xmlNodeToArray(value)) {
+            if (!inLinearByCoordinates) {
+              visit(node, itineraryIndex, inLinearPath, false);
+              continue;
+            }
+            hasLinearByCoordinatesIntermediate = true;
+            const rawIndex = getXmlAttribute(node, "index") ?? getXmlChildText(node, "index");
+            const parsedIndex = rawIndex === undefined ? 0 : Number(rawIndex);
+            visit(
+              node,
+              itineraryIndex,
+              false,
+              true,
+              Number.isFinite(parsedIndex) ? parsedIndex : 0
+            );
           }
           break;
         // A v2 `linearByCoordinates` puts latitude/longitude *directly* under
@@ -333,25 +424,44 @@ function resolveGeometryFrom(
         // Without this a record whose only geometry is its two endpoints —
         // no intermediate points, no GML — resolves to nothing and is dropped.
         case "start":
-        case "end":
+        case "end": {
+          const endpointOrder =
+            childName === "start" ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY;
           for (const node of xmlNodeToArray(value)) {
             const lat = Number(getXmlChildText(node, "latitude"));
             const lon = Number(getXmlChildText(node, "longitude"));
             if (Number.isFinite(lat) && Number.isFinite(lon)) {
               const point = reproject ? reproject([lon, lat]) : ([lon, lat] as [number, number]);
               points.push(point);
+              if (inLinearByCoordinates) {
+                addLinearByCoordinatesPoint(point, linearByCoordinatesOrder ?? endpointOrder);
+              }
+              if (inLinearPath) linearPathPoints.push(point);
               if (itineraryIndex !== undefined) {
                 indexedItineraryPoints.push({ index: itineraryIndex, point });
               }
             } else {
               // `start`/`end` also name non-coordinate things in DATEX; anything
               // that is not a coordinate pair keeps being walked as before.
-              visit(node, itineraryIndex);
+              visit(
+                node,
+                itineraryIndex,
+                inLinearPath,
+                inLinearByCoordinates,
+                linearByCoordinatesOrder ?? endpointOrder
+              );
             }
           }
           break;
+        }
         default:
-          visit(value, itineraryIndex);
+          visit(
+            value,
+            itineraryIndex,
+            inLinearPath,
+            inLinearByCoordinates,
+            linearByCoordinatesOrder
+          );
       }
     }
   };
@@ -377,11 +487,24 @@ function resolveGeometryFrom(
 
   if (usableLines.length === 1) return { type: "LineString", coordinates: usableLines[0]! };
   if (usableLines.length > 1) return { type: "MultiLineString", coordinates: usableLines };
-  if (isIndexedItinerary) {
+  if (hasOrderedItinerary) {
     const ordered = indexedItineraryPoints
       .filter(({ point }) => isPlausibleWgs84(point))
       .sort((a, b) => a.index - b.index)
       .map(({ point }) => point);
+    if (ordered.length === 1) return { type: "Point", coordinates: ordered[0]! };
+    if (ordered.length > 1) return { type: "LineString", coordinates: ordered };
+  }
+  if (hasLinearByCoordinatesIntermediate) {
+    const ordered = linearByCoordinatesPoints
+      .filter(({ point }) => isPlausibleWgs84(point))
+      .sort((a, b) => a.order - b.order || a.sequence - b.sequence)
+      .map(({ point }) => point);
+    if (ordered.length === 1) return { type: "Point", coordinates: ordered[0]! };
+    if (ordered.length > 1) return { type: "LineString", coordinates: ordered };
+  }
+  if (hasLinearPath) {
+    const ordered = linearPathPoints.filter(isPlausibleWgs84);
     if (ordered.length === 1) return { type: "Point", coordinates: ordered[0]! };
     if (ordered.length > 1) return { type: "LineString", coordinates: ordered };
   }
