@@ -53,6 +53,14 @@ function recId(rec: XmlObject): string {
   );
 }
 
+function situationIdOf(situation: XmlObject): string | undefined {
+  return (
+    getXmlAttribute(situation, "id") ||
+    getXmlChildText(situation, "idG") ||
+    getXmlChildText(situation, "id")
+  );
+}
+
 function text(node: unknown): string | undefined {
   return xmlText(node);
 }
@@ -147,8 +155,10 @@ function detectReprojector(input: string | Buffer): Reprojector | null {
  *  - `pointByCoordinates > pointCoordinates` (latitude/longitude) → Point
  *  - GML `gmlPoint > pos` → Point; `gmlLineString > posList` → LineString
  *  - `ItineraryByIndexedLocations` → many `location`s, each with its own GML
- * Multiple lines → MultiLineString; multiple points → MultiPoint. Records with
- * no coordinate geometry (Alert-C/TMC only) return null (decoded in Phase 2).
+ * Multiple lines → MultiLineString. Explicitly indexed point itineraries become
+ * LineString; generic point collections remain MultiPoint because they may be
+ * endpoints rather than a traversable path. Records with no coordinate geometry
+ * (Alert-C/TMC only) return null (decoded in Phase 2).
  */
 function resolveGeometry(
   rec: XmlObject,
@@ -255,27 +265,49 @@ function resolveGeometryFrom(
 
   const lines: [number, number][][] = [];
   const points: [number, number][] = [];
+  const indexedItineraryPoints: Array<{ index: number; point: [number, number] }> = [];
+  const isIndexedItinerary = elementType(locRef) === "ItineraryByIndexedLocations";
 
-  const visit = (node: unknown): void => {
+  const visit = (node: unknown, itineraryIndex?: number): void => {
     if (Array.isArray(node)) {
-      node.forEach(visit);
+      node.forEach((child) => visit(child, itineraryIndex));
       return;
     }
     if (!isXmlObject(node)) return;
     for (const [key, value] of Object.entries(node)) {
       if (key.startsWith("@_")) continue;
+      if (isIndexedItinerary && stripXmlNamespace(key) === "locationContainedInItinerary") {
+        xmlNodeToArray(value)
+          .filter(isXmlObject)
+          .forEach((entry, entryPosition) => {
+            const rawIndex = getXmlAttribute(entry, "index") ?? getXmlChildText(entry, "index");
+            const parsedIndex = rawIndex === undefined ? entryPosition : Number(rawIndex);
+            visit(entry, Number.isFinite(parsedIndex) ? parsedIndex : entryPosition);
+          });
+        continue;
+      }
       switch (stripXmlNamespace(key)) {
         case "posList":
           for (const node of xmlNodeToArray(value)) {
             const coords = parseLatLonList(xmlText(node), reproject, lonFirst);
             if (coords.length >= 2) lines.push(coords);
-            else if (coords.length === 1) points.push(coords[0]!);
+            else if (coords.length === 1) {
+              points.push(coords[0]!);
+              if (itineraryIndex !== undefined) {
+                indexedItineraryPoints.push({ index: itineraryIndex, point: coords[0]! });
+              }
+            }
           }
           break;
         case "pos":
           for (const node of xmlNodeToArray(value)) {
             const coords = parseLatLonList(xmlText(node), reproject, lonFirst);
-            if (coords[0]) points.push(coords[0]);
+            if (coords[0]) {
+              points.push(coords[0]);
+              if (itineraryIndex !== undefined) {
+                indexedItineraryPoints.push({ index: itineraryIndex, point: coords[0] });
+              }
+            }
           }
           break;
         // `pointCoordinates` (DATEX v2/v3) and `coordinatesForDisplay`
@@ -289,7 +321,11 @@ function resolveGeometryFrom(
             if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
             // Projected feeds (e.g. Flanders) carry grid easting/northing in the
             // longitude/latitude fields; reproject. WGS84 feeds pass through.
-            points.push(reproject ? reproject([lon, lat]) : [lon, lat]);
+            const point = reproject ? reproject([lon, lat]) : ([lon, lat] as [number, number]);
+            points.push(point);
+            if (itineraryIndex !== undefined) {
+              indexedItineraryPoints.push({ index: itineraryIndex, point });
+            }
           }
           break;
         // A v2 `linearByCoordinates` puts latitude/longitude *directly* under
@@ -302,16 +338,20 @@ function resolveGeometryFrom(
             const lat = Number(getXmlChildText(node, "latitude"));
             const lon = Number(getXmlChildText(node, "longitude"));
             if (Number.isFinite(lat) && Number.isFinite(lon)) {
-              points.push(reproject ? reproject([lon, lat]) : [lon, lat]);
+              const point = reproject ? reproject([lon, lat]) : ([lon, lat] as [number, number]);
+              points.push(point);
+              if (itineraryIndex !== undefined) {
+                indexedItineraryPoints.push({ index: itineraryIndex, point });
+              }
             } else {
               // `start`/`end` also name non-coordinate things in DATEX; anything
               // that is not a coordinate pair keeps being walked as before.
-              visit(node);
+              visit(node, itineraryIndex);
             }
           }
           break;
         default:
-          visit(value);
+          visit(value, itineraryIndex);
       }
     }
   };
@@ -337,6 +377,14 @@ function resolveGeometryFrom(
 
   if (usableLines.length === 1) return { type: "LineString", coordinates: usableLines[0]! };
   if (usableLines.length > 1) return { type: "MultiLineString", coordinates: usableLines };
+  if (isIndexedItinerary) {
+    const ordered = indexedItineraryPoints
+      .filter(({ point }) => isPlausibleWgs84(point))
+      .sort((a, b) => a.index - b.index)
+      .map(({ point }) => point);
+    if (ordered.length === 1) return { type: "Point", coordinates: ordered[0]! };
+    if (ordered.length > 1) return { type: "LineString", coordinates: ordered };
+  }
   if (usablePoints.length === 1) return { type: "Point", coordinates: usablePoints[0]! };
   if (usablePoints.length > 1) return { type: "MultiPoint", coordinates: usablePoints };
   return null;
@@ -762,6 +810,7 @@ function externalRefsOf(rec: XmlObject): RoadEvent["externalRefs"] {
 interface SituationRecord {
   rec: XmlObject;
   situationSeverity: string;
+  situationId?: string;
 }
 
 function listSituationRecords(doc: XmlObject): SituationRecord[] {
@@ -848,9 +897,11 @@ function listSituationRecords(doc: XmlObject): SituationRecord[] {
   const situations = getXmlChildren(publication, "situation");
   return situations.flatMap((sit) => {
     const sitSeverity = text(sit["overallSeverity"]) ?? "";
+    const situationId = situationIdOf(sit);
     return getXmlChildren(sit, "situationRecord").map((rec) => ({
       rec,
       situationSeverity: sitSeverity,
+      ...(situationId ? { situationId } : {}),
     }));
   });
 }
@@ -931,7 +982,7 @@ export function parseDatexSituations(
   /** Table editions publishers named that we do not hold. */
   const mismatchVersions = new Map<string, number>();
 
-  for (const { rec: rawRec, situationSeverity } of records) {
+  for (const { rec: rawRec, situationSeverity, situationId } of records) {
     const { body: rec, className } = recordBody(rawRec);
     let geometry = resolveGeometry(rec, reproject, lonFirst);
     let locationTable: RoadEvent["locationTable"];
@@ -1033,6 +1084,7 @@ export function parseDatexSituations(
       sourceFormat: "datex2" as const,
       domain: "roads" as const,
       kind: "event" as const,
+      ...(situationId ? { situationId } : {}),
       type,
       subtype: subtypeOf(rec) ?? recType ?? undefined,
       category,

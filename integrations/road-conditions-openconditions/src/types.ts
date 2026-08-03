@@ -83,6 +83,8 @@ export interface RoadConditionEvent {
   id: string;
   source: string;
   provider: string;
+  /** Provider-supplied identity of the source situation for display grouping. */
+  groupId?: string;
   type: RoadConditionType;
   severity: RoadConditionSeverity;
   geometry: Geometry;

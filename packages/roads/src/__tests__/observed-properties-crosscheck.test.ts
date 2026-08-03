@@ -56,7 +56,7 @@ describe("ObservedProperty registry ↔ roads taxonomy", () => {
   });
 
   it("matches roads/<event> expectedAttributeKeys to the roadAttributes mapper output", () => {
-    const event: RoadEvent = {
+    const event = {
       id: "s:1",
       source: "s",
       sourceFormat: "geojson",
@@ -98,7 +98,9 @@ describe("ObservedProperty registry ↔ roads taxonomy", () => {
       externalRefs: { openlr: "abc" },
       sourceRaw: { foo: "bar" },
       freeFlowSource: "native",
-    };
+      situationId: "SITUATION_1",
+    } as RoadEvent & { situationId: string };
+    expect(roadAttributes(event).situationId).toBe("SITUATION_1");
     const produced = Object.keys(roadAttributes(event)).sort();
     const registered = [
       ...(OBSERVED_PROPERTIES["roads/roadworks"]?.expectedAttributeKeys ?? []),

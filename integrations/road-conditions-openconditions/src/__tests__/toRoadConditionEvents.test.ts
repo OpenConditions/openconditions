@@ -78,6 +78,44 @@ describe("featureCollectionToRoadConditionEvents", () => {
     expect(events[0]!.roads).toEqual([{ name: "A2", direction: "north" }]);
   });
 
+  it("preserves the source situation id as the display group id", () => {
+    const events = featureCollectionToRoadConditionEvents({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [5, 52] },
+          properties: { id: "d:1", attributes: { situationId: "SITUATION_1" } },
+        },
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [5.001, 52] },
+          properties: { id: "d:2", attributes: { situationId: "SITUATION_1" } },
+        },
+      ],
+    } as unknown as FeatureCollection);
+
+    expect(events.map((event) => (event as { groupId?: string }).groupId)).toEqual([
+      "SITUATION_1",
+      "SITUATION_1",
+    ]);
+  });
+
+  it("does not synthesize a group id when the source omits situation identity", () => {
+    const [event] = featureCollectionToRoadConditionEvents({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [5, 52] },
+          properties: { id: "d:1", attributes: {} },
+        },
+      ],
+    } as unknown as FeatureCollection);
+
+    expect((event as { groupId?: string } | undefined)?.groupId).toBeUndefined();
+  });
+
   it("carries a finite attributes.delaySeconds (Verlustzeit) onto the event", () => {
     const [withDelay, withoutDelay] = featureCollectionToRoadConditionEvents({
       type: "FeatureCollection",

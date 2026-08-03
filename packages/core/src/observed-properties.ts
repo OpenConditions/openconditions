@@ -82,6 +82,7 @@ const ROAD_EVENT_ATTRIBUTE_KEYS = [
   "workZoneType",
   "regions",
   "relatedEvents",
+  "situationId",
   "externalRefs",
   "sourceRaw",
   "freeFlowSource",

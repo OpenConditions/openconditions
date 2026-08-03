@@ -189,6 +189,40 @@ describe("parseDatexSituations — v2/v3 root tolerance", () => {
     expect(events[0]!.roadState).toBe("closed");
     // id derived from the stable <idG> leaf, not a random fallback
     expect(events[0]!.id).toContain("1-1774361395-43d66771");
+    expect((events[0] as { situationId?: string }).situationId).toBe("473996");
+  });
+
+  it("carries one enclosing situation id to every sibling situation record", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3">
+  <payload xsi:type="SituationPublication">
+    <situation id="SITUATION_1">
+      <situationRecord xsi:type="Accident" id="R1" version="1">
+        <situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        ${POINT_LOC}
+      </situationRecord>
+      <situationRecord xsi:type="Accident" id="R2" version="1">
+        <situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        <locationReference xsi:type="PointLocation"><pointByCoordinates><pointCoordinates><latitude>52.1</latitude><longitude>13.1</longitude></pointCoordinates></pointByCoordinates></locationReference>
+      </situationRecord>
+    </situation>
+    <situation>
+      <situationRecord xsi:type="Accident" id="R3" version="1">
+        <situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        <locationReference xsi:type="PointLocation"><pointByCoordinates><pointCoordinates><latitude>52.2</latitude><longitude>13.2</longitude></pointCoordinates></pointByCoordinates></locationReference>
+      </situationRecord>
+    </situation>
+  </payload>
+</messageContainer>`;
+
+    const events = parseDatexSituations(xml, NDW_SOURCE);
+    expect(events).toHaveLength(3);
+    expect((events[0] as { situationId?: string }).situationId).toBe("SITUATION_1");
+    expect((events[1] as { situationId?: string }).situationId).toBe("SITUATION_1");
+    expect((events[2] as { situationId?: string }).situationId).toBeUndefined();
   });
 });
 
@@ -246,6 +280,40 @@ describe("parseDatexSituations — GML geometry", () => {
           [13.2, 52.2],
           [13.3, 52.3],
         ],
+      ],
+    });
+  });
+
+  it("reads indexed point locations as an ordered LineString", () => {
+    const xml = v3Record(
+      `<locationReference xsi:type="ItineraryByIndexedLocations">` +
+        `<locationContainedInItinerary><index>1</index><location xsi:type="PointLocation"><pointByCoordinates><pointCoordinates><latitude>52.1</latitude><longitude>13.1</longitude></pointCoordinates></pointByCoordinates></location></locationContainedInItinerary>` +
+        `<locationContainedInItinerary><index>0</index><location xsi:type="PointLocation"><pointByCoordinates><pointCoordinates><latitude>52.0</latitude><longitude>13.0</longitude></pointCoordinates></pointByCoordinates></location></locationContainedInItinerary>` +
+        `</locationReference>`
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.geometry).toEqual({
+      type: "LineString",
+      coordinates: [
+        [13.0, 52.0],
+        [13.1, 52.1],
+      ],
+    });
+  });
+
+  it("keeps LinearByCoordinates endpoints as a MultiPoint", () => {
+    const xml = v3Record(
+      `<locationReference xsi:type="LinearByCoordinates">` +
+        `<start><latitude>52.0</latitude><longitude>13.0</longitude></start>` +
+        `<end><latitude>52.1</latitude><longitude>13.1</longitude></end>` +
+        `</locationReference>`
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.geometry).toEqual({
+      type: "MultiPoint",
+      coordinates: [
+        [13.0, 52.0],
+        [13.1, 52.1],
       ],
     });
   });

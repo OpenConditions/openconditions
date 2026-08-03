@@ -37,11 +37,13 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
 
   const attrs = (p.attributes ?? {}) as Record<string, unknown>;
   const delay = Number(attrs.delaySeconds);
+  const groupId = str(attrs.situationId);
 
   return {
     id,
     source: str(p.source) ?? "",
     provider: "",
+    ...(groupId ? { groupId } : {}),
     type: (str(p.type) ?? "other") as RoadConditionType,
     severity: (str(p.severity) ?? "unknown") as RoadConditionSeverity,
     geometry: feature.geometry,

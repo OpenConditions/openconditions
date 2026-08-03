@@ -208,6 +208,8 @@ export interface RoadEvent extends ConditionEvent {
    * next-occurrence / first-occurrence / related-work-zone). `relatedIds` keeps
    * the bare ids; this preserves the relationship type alongside each id. */
   relatedEvents?: { id: string; type?: string }[];
+  /** Stable identity of the enclosing DATEX situation; not a record or lineage id. */
+  situationId?: string;
   externalRefs?: {
     openlr?: string;
     tmc?: {
@@ -319,6 +321,9 @@ export function roadAttributes(ev: RoadEvent): Record<string, unknown> {
   if (ev.regions != null && ev.regions.length > 0) attrs["regions"] = ev.regions;
   if (ev.relatedEvents != null && ev.relatedEvents.length > 0) {
     attrs["relatedEvents"] = ev.relatedEvents;
+  }
+  if (ev.situationId != null && ev.situationId.length > 0) {
+    attrs["situationId"] = ev.situationId;
   }
   if (ev.externalRefs != null) attrs["externalRefs"] = ev.externalRefs;
   // Keyed "sourceRaw" (not "source") so it never clobbers the top-level
