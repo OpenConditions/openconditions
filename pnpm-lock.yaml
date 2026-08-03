@@ -311,8 +311,8 @@ importers:
         specifier: ^2.0.0
         version: 2.2.0
       hyparquet:
-        specifier: 1.26.2
-        version: 1.26.2
+        specifier: 1.27.1
+        version: 1.27.1
       hyparquet-writer:
         specifier: 0.16.1
         version: 0.16.1
@@ -505,8 +505,8 @@ importers:
         specifier: ^2.0.0
         version: 2.2.0
       hyparquet:
-        specifier: 1.26.2
-        version: 1.26.2
+        specifier: 1.27.1
+        version: 1.27.1
       testcontainers:
         specifier: ^12.0.3
         version: 12.0.3
@@ -2099,8 +2099,8 @@ packages:
   hyparquet@1.26.1:
     resolution: {integrity: sha512-Me2psKksCqJGR8+TbalUYUyK4Ao+ReA6XmMSiOVPhOBswULbl3ojT06PQajyTafbNPW1vD0tCA7H6dXJAC1TPw==}
 
-  hyparquet@1.26.2:
-    resolution: {integrity: sha512-6qjyK7R2tZ4vnYP1J8NpcCeDPK1UIYk3xh5XgtQUnUM1iwkYbvI6Mz3xtmpMd6AfCCeoUoJVbEq29k5GReZRWA==}
+  hyparquet@1.27.1:
+    resolution: {integrity: sha512-kvMGVKlB/xa9UHxWLJkySJYGC436nPeBWC9Fzo/BZtMEzFUjmzD1KuLz67EOpA3Ci6V7yF/yTG7QRSDSx5EDSg==}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -4610,7 +4610,7 @@ snapshots:
 
   hyparquet@1.26.1: {}
 
-  hyparquet@1.26.2: {}
+  hyparquet@1.27.1: {}
 
   ieee754@1.2.1: {}
 
