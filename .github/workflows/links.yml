@@ -29,15 +29,38 @@ jobs:
           fail: false # don't fail the run; we report via an issue instead
       - name: Check npm registry metadata
         id: npm-registry
-        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2
-        with:
-          args: >-
-            --no-progress --cache --max-cache-age 1d
-            'https://registry.npmjs.org/hyparquet-writer'
-            'https://registry.npmjs.org/@divviup%2Fprio3'
-            'https://registry.npmjs.org/@divviup%2Fvdaf'
-          output: ./lychee/npm-out.md
-          fail: false # don't fail the run; we report via an issue instead
+        shell: bash
+        env:
+          NPM_REGISTRY_URLS: |
+            https://registry.npmjs.org/hyparquet-writer
+            https://registry.npmjs.org/@divviup%2Fprio3
+            https://registry.npmjs.org/@divviup%2Fvdaf
+        run: |
+          set -euo pipefail
+          failed=0
+          report=./lychee/npm-out.md
+          {
+            printf '# npm registry metadata check\n\n'
+            printf 'Registry endpoints are checked directly so package JSON is not recursively parsed as a document.\n\n'
+            printf '## Errors per input\n\n'
+            while IFS= read -r url; do
+              if [[ -z "$url" ]]; then
+                continue
+              fi
+              if http_code="$(curl --silent --show-error --location --retry 2 --connect-timeout 10 --max-time 30 --output /dev/null --write-out '%{http_code}' "$url")"; then
+                if [[ "$http_code" =~ ^2[0-9][0-9]$ ]]; then
+                  printf '* [%s] <%s>\n' "$http_code" "$url"
+                else
+                  failed=1
+                  printf '* [%s] <%s> | Rejected status code\n' "$http_code" "$url"
+                fi
+              else
+                failed=1
+                printf '* [000] <%s> | Request failed\n' "$url"
+              fi
+            done <<< "$NPM_REGISTRY_URLS"
+          } > "$report"
+          printf 'exit_code=%s\n' "$failed" >> "$GITHUB_OUTPUT"
       - name: Combine link-check reports
         if: steps.lychee.outputs.exit_code != 0 || steps.npm-registry.outputs.exit_code != 0
         shell: bash
