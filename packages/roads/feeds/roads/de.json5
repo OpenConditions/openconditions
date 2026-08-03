@@ -1183,27 +1183,25 @@
   },
   {
     // Autobahn GmbH BAB detector speed (v), per-lane, Bayern. MeasuredDataPublication.
-    // The live payload (2155 sites) carries NO inline geometry — it references an external
-    // MeasurementSiteTable (id "D2-C2VBA-LVE-Table"), so every site is skipped for lack of
-    // geometry and the feed produces no mappable data. This feed is NOT geolocatable from
-    // any public source today (researched 2026-07-24):
-    //   - No companion Verortung offer on Mobilithek: Die Autobahn GmbH publishes paired
-    //     dynamic+Verortung offers only for NL Nord (HH/SH), VZD (Hessen), NRW, NL Südwest
-    //     (BW); Bayern is the legacy VRZ München/Nürnberg system with no reference file.
-    //   - Offline id→coordinate join is not viable: the site ids are a patchwork of ~5
-    //     legacy VRZ-internal schemes (mq.mq92-310-deg_h, mq.mq_9_akneuf_0, mq.dzmq_a7_...,
-    //     mq.mq_93_196780, only ~3% the clean "mq.aNNN_station_dir" ASB form) with no
-    //     public dataset keyed by them; the Bayern VRZ operator (Bayerische Straßenbauver-
-    //     waltung ZVM) and BayernInfo publish no BAB-detector location/Stammdaten file.
-    // The only realistic fix is to request a Verortung/MeasurementSiteTable offer from Die
-    // Autobahn GmbH. Until then this feed stays credentialed-but-dormant (skips the swap
-    // each cycle, never crashes). Consider removing it if the offer is not forthcoming.
+    // The live payload references MeasurementSiteTable id "D2-C2VBA-LVE-Table" rather
+    // than carrying inline geometry. Mobilithek publishes the current site table as a
+    // public, versioned reference XML under the same offer; the maintenance check
+    // reports when a newer D2MSTPub_LVE_* file replaces this one.
     subdivision: "by",
     operator: "autobahn",
     name: "Autobahn GmbH BAB traffic data (Bayern, per lane)",
     format: "datex2",
     produces: "flow",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BY_AUTOBAHN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BY_AUTOBAHN_SUBSCRIPTION_ID}",
+    siteTable: {
+      url: "https://mobilithek.info/mdp-api/files/aux/748580849261105152/D2MSTPub_LVE_125_13.xml",
+      format: "datex-site-table",
+      reference: {
+        kind: "mobilithek",
+        offerId: "748580849261105152",
+        fileNamePrefix: "D2MSTPub_LVE_",
+      },
+    },
     expandEnv: "DE_BY_AUTOBAHN_SUBSCRIPTION_ID",
     auth: { kind: "mtls", certEnvVar: "MOBILITHEK_CERT", keyEnvVar: "MOBILITHEK_KEY" },
     requiredEnv: ["DE_BY_AUTOBAHN_SUBSCRIPTION_ID"],

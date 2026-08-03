@@ -92,6 +92,14 @@ export const roadFeedSchema = z
         url: z.string().url(),
         gzip: z.boolean().optional(),
         format: z.enum(["datex-site-table", "datex-predefined-locations"]).optional(),
+        reference: z
+          .object({
+            kind: z.literal("mobilithek"),
+            offerId: z.string().regex(/^\d+$/),
+            fileNamePrefix: z.string().min(1),
+          })
+          .strict()
+          .optional(),
       })
       .strict()
       .optional(),

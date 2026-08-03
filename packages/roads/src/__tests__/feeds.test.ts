@@ -413,8 +413,9 @@ describe("FEED_SOURCES", () => {
     // Selected by the certificate they share rather than by a substring of their
     // id: the municipal feeds are named for their city, so an id-based filter
     // silently stopped covering them when they were split apart. Autobahn GmbH's
-    // BAB feeds ride the same certificate but are a different publisher family,
-    // and legitimately need a second id for their location table.
+    // BAB feeds ride the same certificate but are a different publisher family;
+    // most use a second subscription id for their live location table, while
+    // Bayern uses a public versioned reference file.
     const regions = FEED_SOURCES.filter(
       (f) =>
         f.country === "DE" &&
@@ -489,19 +490,30 @@ describe("FEED_SOURCES", () => {
     }
   });
 
-  it("wires a companion Verortung site table for the six with external geometry (not Bayern)", () => {
+  it("wires a Verortung source for every Autobahn flow feed", () => {
     for (const id of [
       "de-hh-autobahn-nord",
       "de-nw-autobahn-fahrstreifen",
       "de-he-autobahn-vzd",
       "de-bw-autobahn-suedwest",
+      "de-by-autobahn",
       "de-nw-autobahn-loslane",
       "de-bw-autobahn-los",
     ]) {
       const f = FEED_SOURCES.find((s) => s.id === id)!;
       expect(typeof f.siteTable?.url, id).toBe("string");
     }
-    expect(FEED_SOURCES.find((s) => s.id === "de-by-autobahn")!.siteTable).toBeUndefined();
+
+    const bayern = FEED_SOURCES.find((s) => s.id === "de-by-autobahn")!;
+    expect(bayern.siteTable).toEqual({
+      url: "https://mobilithek.info/mdp-api/files/aux/748580849261105152/D2MSTPub_LVE_125_13.xml",
+      format: "datex-site-table",
+      reference: {
+        kind: "mobilithek",
+        offerId: "748580849261105152",
+        fileNamePrefix: "D2MSTPub_LVE_",
+      },
+    });
   });
 
   it("includes de-hh-polizei as a keyless open geojson police-incident feed", () => {

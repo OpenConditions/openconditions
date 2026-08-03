@@ -44,7 +44,7 @@ describe("Autobahn BAB MeasuredData (datex2) — live payload shape", () => {
     expect(f.sourceFormat).toBe("datex2");
   });
 
-  it("skips sites with no resolvable geometry (Bayern with no Verortung offer)", () => {
+  it("skips sites with no resolvable external geometry", () => {
     // No siteMap → the measurementSiteReference can't resolve → no flow emitted.
     const { flows } = parseDatexMeasuredData(readFileSync(join(dir, "measured.xml")), SRC);
     expect(flows).toHaveLength(0);

@@ -65,6 +65,7 @@ export type FeedSource = FeedSourceBase & {
     url: string;
     gzip?: boolean;
     format?: "datex-site-table" | "datex-predefined-locations";
+    reference?: SiteTableReference;
   };
   /**
    * A JSON/GeoJSON station registry supplying Point geometry for flow feeds
@@ -108,6 +109,13 @@ export type FeedSource = FeedSourceBase & {
    */
   openlrResolver?: boolean;
 };
+
+/** A provider-specific description of how to check a versioned site table. */
+export interface SiteTableReference {
+  kind: "mobilithek";
+  offerId: string;
+  fileNamePrefix: string;
+}
 
 /**
  * Resolves the feed data directory relative to the running module, tolerating
