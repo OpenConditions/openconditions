@@ -3,11 +3,22 @@ packages:
   - "services/*"
   - "integrations/*"
 
+# Supply-chain hardening. Keep these explicit so pnpm upgrades or local
+# defaults cannot silently relax install-time protections.
+strictDepBuilds: true
+dangerouslyAllowAllBuilds: false
+
 allowBuilds:
   cpu-features: false
   esbuild: true
   protobufjs: false
   ssh2: false
+
+blockExoticSubdeps: true
+minimumReleaseAge: 1440
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+trustPolicy: no-downgrade
 
 # Force the patched esbuild across the (dev-only) build toolchain — tsup,
 # vite/vitest and the legacy drizzle-kit esbuild-kit pull vulnerable 0.18/0.27
