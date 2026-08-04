@@ -70,14 +70,12 @@ export function observationsToGeoJSON(
   opts: GeoJsonOptions = {}
 ): ConditionsFeatureCollection {
   const includeRaw = opts.includeRaw ?? false;
-  const features = obs.map(
-    (o): Feature => ({
-      type: "Feature",
-      id: o.id,
-      geometry: o.geometry,
-      properties: properties(o, includeRaw),
-    })
-  );
+  const features = obs.map((o): Feature => ({
+    type: "Feature",
+    id: o.id,
+    geometry: o.geometry,
+    properties: properties(o, includeRaw),
+  }));
   const fc: ConditionsFeatureCollection = { type: "FeatureCollection", features };
   const bbox = computeBbox(features);
   if (bbox) fc.bbox = bbox;

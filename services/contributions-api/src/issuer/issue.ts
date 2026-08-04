@@ -28,8 +28,7 @@ export interface IssueLogger {
 export type IssueRefusalReason = "not-enrolled" | "blocked" | "over-quota" | "bad-request";
 
 export type IssueResult =
-  | { issued: true; tokenResponse: Uint8Array }
-  | { issued: false; reason: IssueRefusalReason };
+  { issued: true; tokenResponse: Uint8Array } | { issued: false; reason: IssueRefusalReason };
 
 export interface IssueDeps {
   log: IssueLogger;

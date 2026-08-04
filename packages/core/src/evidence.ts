@@ -9,11 +9,7 @@ import type { Confidence } from "./model.js";
  */
 
 export type EvidenceState =
-  | "self_reported"
-  | "corroborated"
-  | "externally_resolved"
-  | "negated"
-  | "expired";
+  "self_reported" | "corroborated" | "externally_resolved" | "negated" | "expired";
 
 export interface EvidenceEntry {
   id: string;

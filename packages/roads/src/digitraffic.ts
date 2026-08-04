@@ -271,8 +271,7 @@ function restrictionsFromFeatures(ann: DigitrafficAnnouncement | null): Restrict
 function directionFromAnnouncement(ann: DigitrafficAnnouncement | null): string | undefined {
   const ral = (
     ann?.["locationDetails"] as
-      | { roadAddressLocation?: { direction?: unknown; directionDescription?: unknown } }
-      | undefined
+      { roadAddressLocation?: { direction?: unknown; directionDescription?: unknown } } | undefined
   )?.roadAddressLocation;
   const desc = coerceString(ral?.directionDescription);
   if (desc) return desc;

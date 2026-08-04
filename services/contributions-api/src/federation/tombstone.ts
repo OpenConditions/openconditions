@@ -18,11 +18,7 @@ type Tx = postgres.TransactionSql;
 
 /** Why a row became a tombstone; the DB `obs_tombstone_reason_enum` mirror. */
 export type TombstoneReason =
-  | "deleted_by_source"
-  | "gdpr_erasure"
-  | "retracted_as_wrong"
-  | "expired"
-  | "legal_takedown";
+  "deleted_by_source" | "gdpr_erasure" | "retracted_as_wrong" | "expired" | "legal_takedown";
 
 /** The tombstone reasons accepted on the wire / at the emit entry points. */
 export const TOMBSTONE_REASONS: ReadonlySet<TombstoneReason> = new Set<TombstoneReason>([

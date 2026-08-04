@@ -18,9 +18,9 @@
     "@openconditions/core": "workspace:*"
   },
   "devDependencies": {
-    "@types/geojson": "^7946.0.14",
-    "postgres": "^3.4.0",
-    "tsup": "^8.0.0",
+    "@types/geojson": "^7946.0.16",
+    "postgres": "^3.4.9",
+    "tsup": "^8.5.1",
     "typescript": "^5.0.0",
     "vitest": "^4.1.10"
   }

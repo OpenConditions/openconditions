@@ -34,16 +34,16 @@
     "db:generate": "drizzle-kit generate"
   },
   "devDependencies": {
-    "@types/geojson": "^7946.0.14",
+    "@types/geojson": "^7946.0.16",
     "@types/tz-lookup": "^6.1.2",
-    "drizzle-kit": "^0.31.1",
-    "tsup": "^8.0.0",
+    "drizzle-kit": "^0.31.10",
+    "tsup": "^8.5.1",
     "typescript": "^5.0.0",
     "vitest": "^4.1.10"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
-    "postgres": "^3.4.0",
+    "postgres": "^3.4.9",
     "tz-lookup": "^6.1.25"
   }
 }

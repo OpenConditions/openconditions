@@ -32,15 +32,15 @@
   "dependencies": {
     "@openconditions/core": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
-    "fast-xml-parser": "^5.8.0",
-    "proj4": "^2.20.9",
+    "fast-xml-parser": "^5.10.1",
+    "proj4": "^2.21.0",
     "saxes": "^6.0.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@types/geojson": "^7946.0.14",
+    "@types/geojson": "^7946.0.16",
     "@types/proj4": "^2.19.0",
-    "tsup": "^8.0.0",
+    "tsup": "^8.5.1",
     "typescript": "^5.0.0",
     "vitest": "^4.1.10"
   }

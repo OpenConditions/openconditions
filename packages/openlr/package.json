@@ -31,8 +31,8 @@
     "openlr-js": "^3.3.0"
   },
   "devDependencies": {
-    "@types/geojson": "^7946.0.14",
-    "tsup": "^8.0.0",
+    "@types/geojson": "^7946.0.16",
+    "tsup": "^8.5.1",
     "typescript": "^5.0.0",
     "vitest": "^4.1.10"
   }

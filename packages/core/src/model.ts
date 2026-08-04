@@ -70,12 +70,7 @@ export type Confidence = "observed" | "likely" | "possible" | "unknown";
  * `*_unknown` values mark an open-ended or missing extent boundary.
  */
 export type Fuzziness =
-  | "exact"
-  | "low_res"
-  | "medium_res"
-  | "end_unknown"
-  | "start_unknown"
-  | "extent_unknown";
+  "exact" | "low_res" | "medium_res" | "end_unknown" | "start_unknown" | "extent_unknown";
 
 /**
  * The privacy tier an observation was produced under. Governs how it may be
@@ -83,11 +78,7 @@ export type Fuzziness =
  * intentionally NOT part of this enum — a defaulting seam assigns a real class.)
  */
 export type PrivacyClass =
-  | "authoritative"
-  | "aggregate"
-  | "k_anon"
-  | "dp_noised"
-  | "crowd_pseudonym";
+  "authoritative" | "aggregate" | "k_anon" | "dp_noised" | "crowd_pseudonym";
 
 /**
  * A recurring validity rule, shaped after schema.org `Schedule`

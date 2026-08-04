@@ -153,7 +153,7 @@ export async function rollupSpeedSamples(sql: Sql, opts: RollupOpts = {}): Promi
 
   let rows = 0;
   let hours = 0;
-  for (let from = start; from < end; ) {
+  for (let from = start; from < end;) {
     const to = new Date(Math.min(from.getTime() + batchHours * 3_600_000, end.getTime()));
     rows += await rollupRange(sql, from, to);
     hours += Math.round((to.getTime() - from.getTime()) / 3_600_000);

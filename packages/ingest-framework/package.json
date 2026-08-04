@@ -29,11 +29,11 @@
   "dependencies": {
     "@openconditions/core": "workspace:*",
     "json5": "^2.2.3",
-    "undici": "^8.5.0",
+    "undici": "^8.9.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "tsup": "^8.0.0",
+    "tsup": "^8.5.1",
     "typescript": "^5.0.0",
     "vitest": "^4.1.10"
   }
