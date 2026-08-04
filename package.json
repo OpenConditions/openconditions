@@ -14,7 +14,7 @@
     "test:coverage": "vitest run --passWithNoTests --coverage",
     "gen:credentials": "pnpm --filter @openconditions/ingest-framework build && pnpm --filter @openconditions/roads build && tsx scripts/gen-credentials.ts --write",
     "check-credentials": "pnpm --filter @openconditions/ingest-framework build && pnpm --filter @openconditions/roads build && tsx scripts/gen-credentials.ts",
-    "check:mobilithek-references": "pnpm --filter @openconditions/ingest-framework build && pnpm --filter @openconditions/roads build && tsx scripts/check-mobilithek-references.ts",
+    "check:mobilithek-references": "pnpm --filter @openconditions/roads... build && tsx scripts/check-mobilithek-references.ts",
     "prepare": "husky"
   },
   "devDependencies": {
