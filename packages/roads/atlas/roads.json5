@@ -1782,6 +1782,15 @@
         "description": "Numeric subscription id for Mobilithek offer 748580849261105152 (Dynamische Messdaten BAB Bayern fahrstreifenfein). Shared MOBILITHEK_CERT/KEY. GeoNutzV."
       }
     },
+    "siteTable": {
+      "url": "https://mobilithek.info/mdp-api/files/aux/748580849261105152/D2MSTPub_LVE_125_13.xml",
+      "format": "datex-site-table",
+      "reference": {
+        "kind": "mobilithek",
+        "offerId": "748580849261105152",
+        "fileNamePrefix": "D2MSTPub_LVE_"
+      }
+    },
     "id": "de-by-autobahn"
   },
   {
@@ -7405,6 +7414,45 @@
     "operator": "autobahn",
     "format": "autobahn",
     "url": "https://verkehr.autobahn.de/o/autobahn/A672/services/roadworks",
+    "cadenceSec": 900,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
+  },
+  {
+    "id": "autobahn-a831-warning",
+    "name": "Autobahn A831 — warning",
+    "operator": "autobahn",
+    "format": "autobahn",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A831/services/warning",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
+  },
+  {
+    "id": "autobahn-a831-closure",
+    "name": "Autobahn A831 — closure",
+    "operator": "autobahn",
+    "format": "autobahn",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A831/services/closure",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
+  },
+  {
+    "id": "autobahn-a831-roadworks",
+    "name": "Autobahn A831 — roadworks",
+    "operator": "autobahn",
+    "format": "autobahn",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A831/services/roadworks",
     "cadenceSec": 900,
     "freshnessWindowSec": 900,
     "license": "dl-de/by-2-0",
