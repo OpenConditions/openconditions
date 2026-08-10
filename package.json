@@ -33,7 +33,7 @@
     "tsup": "^8.5.1",
     "tsx": "^4.23.5",
     "turbo": "^2.10.8",
-    "typescript": "^5.0.0",
+    "typescript": "^7.0.2",
     "typescript-eslint": "^8.65.0",
     "vitest": "^4.1.10"
   },
