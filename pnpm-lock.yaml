@@ -311,8 +311,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       hyparquet:
-        specifier: 1.27.1
-        version: 1.27.1
+        specifier: 1.28.0
+        version: 1.28.0
       hyparquet-writer:
         specifier: 0.16.5
         version: 0.16.5
@@ -505,8 +505,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       hyparquet:
-        specifier: 1.27.1
-        version: 1.27.1
+        specifier: 1.28.0
+        version: 1.28.0
       testcontainers:
         specifier: ^12.0.4
         version: 12.1.0
@@ -2270,6 +2270,9 @@ packages:
 
   hyparquet@1.27.1:
     resolution: {integrity: sha512-kvMGVKlB/xa9UHxWLJkySJYGC436nPeBWC9Fzo/BZtMEzFUjmzD1KuLz67EOpA3Ci6V7yF/yTG7QRSDSx5EDSg==}
+
+  hyparquet@1.28.0:
+    resolution: {integrity: sha512-tc2QiRjK8K4atvuT54HtOv0xuSGoFWcz4//0DBG6iBHJB/DLMt+U+CSbb4JCEukEcybIZCFLtBScBEfNaJzKVA==}
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
@@ -4888,6 +4891,8 @@ snapshots:
       hyparquet: 1.27.1
 
   hyparquet@1.27.1: {}
+
+  hyparquet@1.28.0: {}
 
   ieee754@1.2.1: {}
 
