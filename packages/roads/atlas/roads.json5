@@ -1782,6 +1782,15 @@
         "description": "Numeric subscription id for Mobilithek offer 748580849261105152 (Dynamische Messdaten BAB Bayern fahrstreifenfein). Shared MOBILITHEK_CERT/KEY. GeoNutzV."
       }
     },
+    "siteTable": {
+      "url": "https://mobilithek.info/mdp-api/files/aux/748580849261105152/D2MSTPub_LVE_125_13.xml",
+      "format": "datex-site-table",
+      "reference": {
+        "kind": "mobilithek",
+        "offerId": "748580849261105152",
+        "fileNamePrefix": "D2MSTPub_LVE_"
+      }
+    },
     "id": "de-by-autobahn"
   },
   {
@@ -6828,6 +6837,45 @@
     "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
+    "id": "autobahn-a559-warning",
+    "name": "Autobahn A559 — warning",
+    "operator": "autobahn",
+    "format": "autobahn",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A559/services/warning",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
+  },
+  {
+    "id": "autobahn-a559-closure",
+    "name": "Autobahn A559 — closure",
+    "operator": "autobahn",
+    "format": "autobahn",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A559/services/closure",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
+  },
+  {
+    "id": "autobahn-a559-roadworks",
+    "name": "Autobahn A559 — roadworks",
+    "operator": "autobahn",
+    "format": "autobahn",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A559/services/roadworks",
+    "cadenceSec": 900,
+    "freshnessWindowSec": 900,
+    "license": "dl-de/by-2-0",
+    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+    "country": "DE",
+    "privacyUrl": "https://www.autobahn.de/datenschutz"
+  },
+  {
     "id": "autobahn-a560-warning",
     "name": "Autobahn A560 — warning",
     "operator": "autobahn",
@@ -7413,11 +7461,11 @@
     "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
-    "id": "autobahn-a861-warning",
-    "name": "Autobahn A861 — warning",
+    "id": "autobahn-a831-warning",
+    "name": "Autobahn A831 — warning",
     "operator": "autobahn",
     "format": "autobahn",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/warning",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A831/services/warning",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "dl-de/by-2-0",
@@ -7426,11 +7474,11 @@
     "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
-    "id": "autobahn-a861-closure",
-    "name": "Autobahn A861 — closure",
+    "id": "autobahn-a831-closure",
+    "name": "Autobahn A831 — closure",
     "operator": "autobahn",
     "format": "autobahn",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/closure",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A831/services/closure",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "dl-de/by-2-0",
@@ -7439,89 +7487,11 @@
     "privacyUrl": "https://www.autobahn.de/datenschutz"
   },
   {
-    "id": "autobahn-a861-roadworks",
-    "name": "Autobahn A861 — roadworks",
+    "id": "autobahn-a831-roadworks",
+    "name": "Autobahn A831 — roadworks",
     "operator": "autobahn",
     "format": "autobahn",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A861/services/roadworks",
-    "cadenceSec": 900,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz"
-  },
-  {
-    "id": "autobahn-a864-warning",
-    "name": "Autobahn A864 — warning",
-    "operator": "autobahn",
-    "format": "autobahn",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A864/services/warning",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz"
-  },
-  {
-    "id": "autobahn-a864-closure",
-    "name": "Autobahn A864 — closure",
-    "operator": "autobahn",
-    "format": "autobahn",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A864/services/closure",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz"
-  },
-  {
-    "id": "autobahn-a864-roadworks",
-    "name": "Autobahn A864 — roadworks",
-    "operator": "autobahn",
-    "format": "autobahn",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A864/services/roadworks",
-    "cadenceSec": 900,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz"
-  },
-  {
-    "id": "autobahn-a952-warning",
-    "name": "Autobahn A952 — warning",
-    "operator": "autobahn",
-    "format": "autobahn",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/warning",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz"
-  },
-  {
-    "id": "autobahn-a952-closure",
-    "name": "Autobahn A952 — closure",
-    "operator": "autobahn",
-    "format": "autobahn",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/closure",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "dl-de/by-2-0",
-    "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-    "country": "DE",
-    "privacyUrl": "https://www.autobahn.de/datenschutz"
-  },
-  {
-    "id": "autobahn-a952-roadworks",
-    "name": "Autobahn A952 — roadworks",
-    "operator": "autobahn",
-    "format": "autobahn",
-    "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/roadworks",
+    "url": "https://verkehr.autobahn.de/o/autobahn/A831/services/roadworks",
     "cadenceSec": 900,
     "freshnessWindowSec": 900,
     "license": "dl-de/by-2-0",
