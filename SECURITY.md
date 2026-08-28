@@ -93,9 +93,10 @@ If you self-host the OpenConditions ingest service, a few recommendations:
 - Use a strong, unique database password; do not expose PostGIS to the public
   internet — the ingest service should reach it over a private network.
 - The public emitter feeds are rate-limited (`RATE_LIMIT_MAX` /
-  `RATE_LIMIT_WINDOW_MS`); tune them for your traffic. Set `TRUST_PROXY_HOPS` to
-  match the number of reverse proxies in front of the service so per-client IP
-  limiting is accurate — never trust an arbitrary `X-Forwarded-For`.
+  `RATE_LIMIT_WINDOW_MS`); tune them for your traffic. `TRUST_PROXY_CIDRS`
+  controls which immediate reverse-proxy address ranges may supply the client
+  IP. The default accepts local and container networks and only one proxy hop;
+  use explicit CIDRs if your proxy is elsewhere.
 - Terminate TLS at your reverse proxy.
 - Subscribe to the repository's "Releases only" notifications so security
   releases reach you.

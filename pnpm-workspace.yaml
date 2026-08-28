@@ -19,9 +19,16 @@ minimumReleaseAge: 1440
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 trustPolicy: no-downgrade
+trustPolicyExclude:
+  # tsup 8.5.1 requires Chokidar 4, whose 4.0.3 release was signed by the
+  # established maintainer but published without the provenance used by 4.0.1.
+  - chokidar@4.0.3
 
 # Force the patched esbuild across the (dev-only) build toolchain — tsup,
 # vite/vitest and the legacy drizzle-kit esbuild-kit pull vulnerable 0.18/0.27
 # lines (GHSA-67mh / GHSA-g7r4).
 overrides:
   esbuild: "^0.28.1"
+  # @cloudflare/blindrsa-ts pins 1.0.8, which lacks elliptic-curve point
+  # validation (GHSA-2w8x-224x-785m). 1.0.9 is the focused upstream patch.
+  sjcl: "1.0.9"

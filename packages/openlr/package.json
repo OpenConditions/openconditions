@@ -28,12 +28,12 @@
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
-    "openlr-js": "^3.3.0"
+    "openlr-js": "^3.4.0"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",
     "tsup": "^8.5.1",
-    "typescript": "^5.0.0",
-    "vitest": "^4.1.10"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
   }
 }

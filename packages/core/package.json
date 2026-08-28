@@ -38,8 +38,8 @@
     "@types/tz-lookup": "^6.1.2",
     "drizzle-kit": "^0.31.10",
     "tsup": "^8.5.1",
-    "typescript": "^5.0.0",
-    "vitest": "^4.1.10"
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",

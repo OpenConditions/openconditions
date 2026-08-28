@@ -7,6 +7,7 @@ import { registerPublishRoutes } from "./publish-routes.js";
 import { RateLimiter } from "./rate-limit.js";
 import { startScheduler } from "./scheduler.js";
 import { startMemTelemetry } from "./mem.js";
+import { createTrustProxy } from "./trust-proxy.js";
 
 const PORT = parseInt(process.env["PORT"] || "4100", 10);
 const HOST = process.env["HOST"] || "0.0.0.0";
@@ -15,9 +16,7 @@ const HOST = process.env["HOST"] || "0.0.0.0";
 // commons feed; operators tune them via the service env.
 const RATE_LIMIT_MAX = parseInt(process.env["RATE_LIMIT_MAX"] || "120", 10);
 const RATE_LIMIT_WINDOW_MS = parseInt(process.env["RATE_LIMIT_WINDOW_MS"] || "60000", 10);
-// Hops of trusted reverse proxy in front of us (Traefik = 1), so `req.ip` is the
-// real client. 0 = directly exposed. Never the boolean `true` on a public host.
-const TRUST_PROXY_HOPS = parseInt(process.env["TRUST_PROXY_HOPS"] || "1", 10);
+const TRUST_PROXY_CIDRS = process.env["TRUST_PROXY_CIDRS"];
 
 // Internal callers (the container healthcheck, a co-located CLI) reach us over
 // the loopback peer and skip the limiter entirely.
@@ -28,7 +27,7 @@ async function boot() {
   await runMigrations(DATABASE_URL);
   console.info("[ingest] migrations applied");
 
-  const app = Fastify({ logger: true, trustProxy: TRUST_PROXY_HOPS });
+  const app = Fastify({ logger: true, trustProxy: createTrustProxy(TRUST_PROXY_CIDRS) });
 
   const limiter = new RateLimiter({ max: RATE_LIMIT_MAX, windowMs: RATE_LIMIT_WINDOW_MS });
   const rateLimit = limiter.hook();

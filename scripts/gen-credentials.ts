@@ -42,8 +42,9 @@ HOST=0.0.0.0
 RATE_LIMIT_MAX=120
 RATE_LIMIT_WINDOW_MS=60000
 
-# Number of proxy hops to trust for client IPs (optional; default 1)
-TRUST_PROXY_HOPS=1
+# Immediate reverse-proxy address ranges to trust for client IPs (optional).
+# Only one proxy hop is accepted. Defaults cover local and container networks.
+TRUST_PROXY_CIDRS=loopback,linklocal,uniquelocal
 
 # OpenLR map-match resolver service URL (optional). If unset, observations that
 # carry only OpenLR (no coordinates) are dropped rather than resolved.
