@@ -16,7 +16,7 @@
 # dist/drizzle, so only fastify, postgres and @cloudflare/privacypass-ts remain
 # as external runtime dependencies.
 
-FROM node:24-alpine@sha256:156b55f92e98ccd5ef49578a8cea0df4679826564bad1c9d4ef04462b9f0ded6 AS base
+FROM node:24-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS base
 # Read the pnpm version from the repo root package.json so lockfile resolution
 # stays reproducible across local and CI Docker builds.
 COPY package.json /tmp/package.json
@@ -70,7 +70,7 @@ COPY services/contributions-api/ services/contributions-api/
 RUN pnpm --filter @openconditions/contributions-api... build
 
 # Production image.
-FROM node:24-alpine@sha256:156b55f92e98ccd5ef49578a8cea0df4679826564bad1c9d4ef04462b9f0ded6 AS runner
+FROM node:24-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS runner
 WORKDIR /app
 
 # curl backs the http healthcheck; the OpenMapX compose renderer falls back to
