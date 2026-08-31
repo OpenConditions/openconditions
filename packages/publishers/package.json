@@ -32,7 +32,7 @@
     "fast-xml-parser": "^5.11.1",
     "gtfs-realtime-bindings": "^2.2.0",
     "hyparquet": "1.29.2",
-    "hyparquet-writer": "0.16.5"
+    "hyparquet-writer": "0.16.8"
   },
   "devDependencies": {
     "@openconditions/contrib-core": "workspace:*",
