@@ -84,6 +84,20 @@
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
+    "id": "wzdx-missouri",
+    "name": "WZDx — Missouri DOT (missouri)",
+    "operator": "wzdx",
+    "format": "wzdx",
+    "url": "https://traveler.modot.org/timconfig/feed/desktop/mo_wzdx.json",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Missouri DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
+  },
+  {
     "id": "wzdx-arizona",
     "name": "WZDx — Maricopa County DOT (arizona)",
     "operator": "wzdx",
@@ -108,20 +122,6 @@
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Wisconsin DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
-  },
-  {
-    "id": "wzdx-missouri",
-    "name": "WZDx — Missouri DOT (missouri)",
-    "operator": "wzdx",
-    "format": "wzdx",
-    "url": "https://traveler.modot.org/timconfig/feed/desktop/mo_wzdx.json",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attribution": "Missouri DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
@@ -196,20 +196,6 @@
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
-    "id": "wzdx-kentucky",
-    "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
-    "operator": "wzdx",
-    "format": "wzdx",
-    "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attribution": "Kentucky Transportation Cabinet",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
-  },
-  {
     "id": "wzdx-new-jersey",
     "name": "WZDx — New Jersey Institute of Technology (new jersey)",
     "operator": "wzdx",
@@ -220,6 +206,20 @@
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "New Jersey Institute of Technology",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
+  },
+  {
+    "id": "wzdx-kentucky",
+    "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
+    "operator": "wzdx",
+    "format": "wzdx",
+    "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Kentucky Transportation Cabinet",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
@@ -252,20 +252,6 @@
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
-    "id": "wzdx-delaware",
-    "name": "WZDx — Delaware DOT (delaware)",
-    "operator": "wzdx",
-    "format": "wzdx",
-    "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attribution": "Delaware DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
-  },
-  {
     "id": "wzdx-n-a",
     "name": "WZDx — Quebec City (n/a)",
     "operator": "wzdx",
@@ -276,6 +262,20 @@
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Quebec City",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
+  },
+  {
+    "id": "wzdx-delaware",
+    "name": "WZDx — Delaware DOT (delaware)",
+    "operator": "wzdx",
+    "format": "wzdx",
+    "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Delaware DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
   },
@@ -357,6 +357,20 @@
         "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one."
       }
     }
+  },
+  {
+    "id": "wzdx-new-hampshire-vermont-maine",
+    "name": "WZDx — NHDOT/VTAOT/MEDOT (New Hampshire, Vermont, Maine)",
+    "operator": "wzdx",
+    "format": "wzdx",
+    "url": "https://api.dx.ne-compass.com/wzdx-latest/",
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "NHDOT/VTAOT/MEDOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "wzdx-north-carolina",
