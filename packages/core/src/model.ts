@@ -80,6 +80,28 @@ export type Fuzziness =
 export type PrivacyClass =
   "authoritative" | "aggregate" | "k_anon" | "dp_noised" | "crowd_pseudonym";
 
+/** Outcome of binding an event to the directed segment spine (derived, never parser-supplied). */
+export type BindingStatus =
+  "exact" | "likely" | "ambiguous" | "unresolved" | "no_coverage" | "not_applicable";
+
+/** Whether the resolver could decide the travel direction. `both` = bound in both directions of a bidirectional way. */
+export type DirectionMode = "single" | "both" | "unknown";
+
+/** One directed segment an event occupies, with the occupied fraction range along its geometry. */
+export interface SegmentSpan {
+  segmentId: string;
+  wayId: number;
+  dir: "f" | "b";
+  startFraction: number;
+  endFraction: number;
+}
+
+export interface ObservationBinding {
+  status: BindingStatus;
+  confidence?: number;
+  directionMode?: DirectionMode;
+}
+
 /**
  * A recurring validity rule, shaped after schema.org `Schedule`
  * (https://schema.org/Schedule). The local wall-clock fields (`startTime`,
@@ -241,6 +263,10 @@ export interface Observation {
   sourceUri?: string;
   /** SPDX license the upstream source is published under. */
   sourceLicense?: string;
+  /** Graph-binding outcome. Derived by the ingest resolver; absent until bound. */
+  binding?: ObservationBinding;
+  /** Ordered directed segments this event occupies (only when `binding.status` is exact/likely/ambiguous). */
+  segments?: SegmentSpan[];
 }
 
 export interface ConditionEvent extends Observation {

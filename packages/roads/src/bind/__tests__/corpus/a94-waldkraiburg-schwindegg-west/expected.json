@@ -1,0 +1,65 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "130876790:f",
+      "startFraction": 0.26,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "1503897874:f"
+    },
+    {
+      "segmentId": "317289339:f"
+    },
+    {
+      "segmentId": "737786305:f"
+    },
+    {
+      "segmentId": "214456857:f"
+    },
+    {
+      "segmentId": "214456856:f"
+    },
+    {
+      "segmentId": "52731034:f"
+    },
+    {
+      "segmentId": "143978083:f"
+    },
+    {
+      "segmentId": "317289338:f"
+    },
+    {
+      "segmentId": "183370350:f"
+    },
+    {
+      "segmentId": "40748033:f"
+    },
+    {
+      "segmentId": "40748032:f"
+    },
+    {
+      "segmentId": "305189238:f"
+    },
+    {
+      "segmentId": "305189239:f"
+    },
+    {
+      "segmentId": "42352163:f"
+    },
+    {
+      "segmentId": "157012002:f"
+    },
+    {
+      "segmentId": "825911387:f"
+    },
+    {
+      "segmentId": "539351623:f",
+      "startFraction": 0,
+      "endFraction": 0.39
+    }
+  ],
+  "why": "The counter-carriageway of the same A94 works: Waldkraiburg/Ampfing -> Schwindegg, Passau -> Munchen (westbound); Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, closure id 2026-025173--vi-fbm.2026-09-16_20-00-00-000.devi-zus.2026-09-01_20-00-00-000_001.de4. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the Overpass tags (highway=motorway, ref='A 94', oneway) and that this chain is the set of ways the westbound line lies on at 0.0-2.4 m, disjoint from the eastbound chain of the sibling case."
+}

@@ -1,0 +1,29 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "27301159:f",
+      "startFraction": 0.65,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "27301158:f"
+    },
+    {
+      "segmentId": "26289733:f"
+    },
+    {
+      "segmentId": "26289735:f"
+    },
+    {
+      "segmentId": "25951695:f"
+    },
+    {
+      "segmentId": "10819518:f",
+      "startFraction": 0,
+      "endFraction": 0.77
+    }
+  ],
+  "why": "A52 full closure Essen-Sud -> Essen-Ost, carriageway Dusseldorf -> Essen (north-eastbound); Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, closure id 2026-007105--vi-fbm.2026-09-08_20-00-00-000.devi-zus.2026-03-03_20-00-00-000_005.de5. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the Overpass tags (highway=motorway, ref='A 52', oneway); the line lies 0.0 m on the six ways and the counter-carriageway is a separate way set."
+}

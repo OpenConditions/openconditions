@@ -27,6 +27,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "export:atlas": "node scripts/export-atlas.ts",
+    "bind:inspect": "tsx scripts/bind-inspect.ts",
+    "bind:spine": "tsx scripts/bind-corpus-spine.ts",
     "feeds:lint": "pnpm --filter @openconditions/ingest-framework build && pnpm --filter @openconditions/roads build && tsx scripts/feeds-lint.ts"
   },
   "dependencies": {

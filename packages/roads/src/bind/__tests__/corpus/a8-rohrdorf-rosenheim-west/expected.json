@@ -1,0 +1,50 @@
+{
+  "status": "ambiguous",
+  "directionMode": "unknown",
+  "segments": [
+    {
+      "segmentId": "24834359:f",
+      "startFraction": 0.82,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "288715182:f"
+    },
+    {
+      "segmentId": "194466676:f"
+    },
+    {
+      "segmentId": "24405828:f"
+    },
+    {
+      "segmentId": "288715185:f"
+    },
+    {
+      "segmentId": "328478884:f"
+    },
+    {
+      "segmentId": "24834385:f"
+    },
+    {
+      "segmentId": "24686038:f"
+    },
+    {
+      "segmentId": "288716123:f"
+    },
+    {
+      "segmentId": "278563509:f"
+    },
+    {
+      "segmentId": "278563529:f"
+    },
+    {
+      "segmentId": "288716129:f"
+    },
+    {
+      "segmentId": "326618978:f",
+      "startFraction": 0,
+      "endFraction": 0.22
+    }
+  ],
+  "why": "A8 full closure Rohrdorf -> Rosenheim, carriageway Salzburg -> Munchen (westbound); Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, closure id 2025-056130--vi-fbm.2026-09-20_20-00-00-000.devi-zus.2026-09-21_00-00-00-000.de21. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked in the spine geometry and Overpass tags that the chain is highway=motorway ref='A 8' oneway at 0.0 m from the event line, and that the parallel ways at 11-16 m (24834387, 278563546, 288716132 ...) run 174-180 deg the other way, i.e. the Munchen -> Salzburg carriageway, which the feed does not name. The gore ways 141511091/37641210 are motorway_link and are only brushed at their tips, so they are not part of the closed carriageway. The carriageway stays undecided because the parallel A8 way 24834360 sits 32-39 m away on the same heading with the same ref='A 8'."
+}

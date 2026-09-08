@@ -6,6 +6,7 @@ import {
   overpassSource,
   pbfExtractSource,
 } from "./osm-import.js";
+import { rebindAll } from "./rebind.js";
 import { buildSegments } from "./segment-build.js";
 import { encodeSegmentOpenlr } from "./segment-openlr.js";
 import { matchSensors } from "./sensor-match.js";
@@ -13,16 +14,17 @@ import { matchSensors } from "./sensor-match.js";
 type Sql = postgres.Sql;
 
 /**
- * The four rebuild stages as bound, sql-only thunks — the seam that lets a
- * test inject a stage that throws to exercise the catch-and-continue
- * resilience. Production never passes these; the defaults in
- * {@link runSegmentRebuild} bind the real pipeline functions to `deps`.
+ * The rebuild stages as bound, sql-only thunks — the seam that lets a test
+ * inject a stage that throws to exercise the catch-and-continue resilience.
+ * Production never passes these; the defaults in {@link runSegmentRebuild}
+ * bind the real pipeline functions to `deps`.
  */
 export interface SegmentRebuildSteps {
   importOsmRoads: (sql: Sql) => Promise<{ imported: number }>;
   buildSegments: (sql: Sql) => Promise<{ built: number }>;
   encodeSegmentOpenlr: (sql: Sql) => Promise<{ encoded: number }>;
   matchSensors: (sql: Sql) => Promise<{ matched: number }>;
+  rebindAll: (sql: Sql) => Promise<{ rebound: number; prunedSegments: number }>;
 }
 
 export interface RunSegmentRebuildDeps {
@@ -37,15 +39,18 @@ export interface RunSegmentRebuildResult {
   built: number;
   encoded: number;
   matched: number;
+  rebound: number;
 }
 
 /**
  * Weekly segment-spine rebuild: OSM import into `osm_road` -> directed
  * `road_segment` build (every region, plus the orphan sweep) -> OpenLR
- * encode -> sensor snap into `sensor_segment`, in that order — each stage
- * depends on the previous one's output (segments need fresh `osm_road`,
- * OpenLR needs fresh segments, sensor matching needs both segments and their
- * geometry). Every stage runs in its own try/catch so one stage's failure
+ * encode -> sensor snap into `sensor_segment` -> event rebind, in that order —
+ * each stage depends on the previous one's output (segments need fresh
+ * `osm_road`, OpenLR needs fresh segments, sensor matching needs both segments
+ * and their geometry, and the rebind needs the finished spine because segment
+ * ids move when the underlying ways change). Every stage runs in its own
+ * try/catch so one stage's failure
  * (Overpass down, an encode/match query error) never blocks the later stages
  * from running against whatever data already exists — it just contributes 0
  * to that stage's count instead of aborting the whole rebuild.
@@ -71,6 +76,7 @@ export async function runSegmentRebuild(
   const buildStep = deps.steps?.buildSegments ?? ((s: Sql) => buildSegments(s, deps.now));
   const encodeStep = deps.steps?.encodeSegmentOpenlr ?? ((s: Sql) => encodeSegmentOpenlr(s));
   const matchStep = deps.steps?.matchSensors ?? ((s: Sql) => matchSensors(s, deps.now));
+  const rebindStep = deps.steps?.rebindAll ?? ((s: Sql) => rebindAll(s, { now: deps.now }));
 
   let imported = 0;
   try {
@@ -104,5 +110,13 @@ export async function runSegmentRebuild(
     console.error("[ingest] segment-rebuild: sensor-match failed:", err);
   }
 
-  return { imported, built, encoded, matched };
+  let rebound = 0;
+  try {
+    const result = await rebindStep(sql);
+    rebound = result.rebound;
+  } catch (err) {
+    console.error("[ingest] segment-rebuild: rebind failed:", err);
+  }
+
+  return { imported, built, encoded, matched, rebound };
 }

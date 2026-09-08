@@ -1,0 +1,12 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "757709374:b",
+      "startFraction": 0.23,
+      "endFraction": 0.93
+    }
+  ],
+  "why": "Bundesstrasse B33 bridge works near Hausach; MobiData BW DATEX II roadworks feed (public, no credential), situation de-bw:88978047-88978049-88978052-88979848, fetched 2026-09-06, parsed with parseDatexSituations. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the spine: 757709374 is highway=primary ref='B 33' with both directions present (bidirectional way); the record's 324 m line lies 0.1-3.0 m from it along the ':b' heading, so this record covers the ':b' direction between fractions 0.23 and 0.93."
+}

@@ -9,12 +9,15 @@ import {
   eventsToExclusions,
   filterForPermissiveExport,
   flowToSegmentSpeedCsv,
+  isPermissiveLicense,
   matchesTypeFilter,
   observationsToDatexSituations,
   parseTypeFilter,
+  segmentConditionsToJson,
   segmentsToGeoJSON,
   sseFrame,
   type FeedInfo,
+  type SegmentConditionRow,
   type SegmentSpeedCsvRow,
   type SegmentSpeedRow,
   observationsToGeoJSON,
@@ -28,9 +31,15 @@ import {
   requiredEnvVars,
   type DomainRegistry,
 } from "@openconditions/ingest-framework";
+import { RESOLVER_VERSION } from "@openconditions/roads";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import type { FeedRunStatus, FeedStatusStore } from "./feed-status.js";
+import {
+  createBindingMetricsReader,
+  type BindingMetrics,
+  type BindingMetricsReader,
+} from "./pipeline/binding-metrics.js";
 
 type Sql = postgres.Sql;
 type BBox = [number, number, number, number];
@@ -145,6 +154,16 @@ type SegmentProfileBucketRow = {
   speedKph: number;
 };
 
+/**
+ * Half-width, in metres, of the geometry emitted for a POINT-located binding.
+ * A point event binds to a span with `start_fraction = end_fraction`, and
+ * `ST_LineSubstring` on a zero-length range returns a GeoJSON `Point`, which
+ * would break the emitter's `LineString | null` contract. Widening the CUT by
+ * 10 m either side keeps the consumer's map-matching input a line while the
+ * emitted fractions stay equal and truthful about where the event actually is.
+ */
+const POINT_SPAN_HALF_M = 10;
+
 /** First/last local hour (inclusive) of Valhalla's `constrained` window --
  * `constrained` applies strictly 07:00-19:00 local, `freeflow` at night. */
 const DAYTIME_START_HOUR = 7;
@@ -175,20 +194,33 @@ export type FeedStatusRow = {
   domain: string;
   hasCredentials: boolean;
   missingEnv: string[];
+  /** Binding outcomes of this feed's events; absent while it has no bindings. */
+  binding?: BindingMetrics;
 } & FeedRunStatus;
 
 /**
  * Registers `GET /feeds/status`: every feed registered across all domains,
- * joined with its runtime status (last run/success/error, row count). Mirrors
- * the scheduler's own credential check (a feed runs iff it has credentials) so
- * the two never disagree.
+ * joined with its runtime status (last run/success/error, row count) and with
+ * how well its events bind to the segment spine. Mirrors the scheduler's own
+ * credential check (a feed runs iff it has credentials) so the two never
+ * disagree.
+ *
+ * The binding metrics are a read-only extra, so a failing metrics query is
+ * logged and the listing is still served — just without `binding` keys.
  */
 export function registerFeedStatusRoute(
   app: FastifyInstance,
   statusStore: FeedStatusStore,
-  registry: DomainRegistry
+  registry: DomainRegistry,
+  bindingMetrics: BindingMetricsReader
 ): void {
   app.get("/feeds/status", async () => {
+    let metrics: Map<string, BindingMetrics> = new Map();
+    try {
+      metrics = await bindingMetrics();
+    } catch (err) {
+      app.log.error({ err }, "binding metrics unavailable for /feeds/status");
+    }
     const feeds: FeedStatusRow[] = [];
     for (const [domain, plugin] of Object.entries(registry)) {
       for (const feed of plugin.feeds) {
@@ -199,6 +231,7 @@ export function registerFeedStatusRoute(
         const missingEnv = [...requiredEnvVars(feed.auth), ...(feed.requiredEnv ?? [])].filter(
           (k) => !hasCredentials({ auth: undefined, requiredEnv: [k] })
         );
+        const binding = metrics.get(feed.id);
         feeds.push({
           id: feed.id,
           name: feed.name,
@@ -206,6 +239,7 @@ export function registerFeedStatusRoute(
           hasCredentials: hasCredentials(feed),
           missingEnv,
           ...(statusStore.get(feed.id) ?? {}),
+          ...(binding ? { binding } : {}),
         });
       }
     }
@@ -219,7 +253,8 @@ export function registerFeedStatusRoute(
  *   GET /observations.geojson · /observations.jsonld · /traff.xml ·
  *       /gtfs-rt/alerts.pb · /gtfs-rt/occupancy.pb · /datex2/situations.xml ·
  *       /valhalla/exclusions.json · /stream (SSE) · /feeds/status ·
- *       /segments.geojson · /segments/speed.csv · /segments/profiles.json
+ *       /segments.geojson · /segments/speed.csv · /segments/profiles.json ·
+ *       /segments/conditions.json
  * All bbox-filterable (?bbox=west,south,east,north[&domain=roads]); /stream also
  * takes an optional comma-separated &type= filter and pushes live deltas.
  *
@@ -266,6 +301,10 @@ export function registerPublishRoutes(
       ...(types ? { types } : {}),
       ...(minSeverity ? { minSeverity } : {}),
       ...(horizonDays != null ? { horizonDays } : {}),
+      // The GeoJSON export spreads the whole model, so bound events publish
+      // their binding + segments. The XML emitters and the Valhalla exclusions
+      // project named fields and ignore the extra ones.
+      includeBindings: true,
     });
     return filterForPermissiveExport(obs);
   };
@@ -470,6 +509,71 @@ export function registerPublishRoutes(
     return reply.send(segments);
   });
 
+  // Routing feed of BOUND conditions in effect at `at` (default now): closures
+  // and speed limits keyed by directed OSM way spans, for the OpenMapX live
+  // traffic writer. Share-alike records are dropped like every other export.
+  //
+  // Only `exact`/`likely`/`ambiguous` bindings are emitted -- everything below
+  // that has no span to key on. The per-span `geometry` is the occupied part of
+  // the directed segment cut in travel direction (`road_segment.geom` is
+  // already reversed for `dir = 'b'`); the binding tables have no FK to
+  // `road_segment`, so a span whose segment a spine rebuild has dropped comes
+  // through the LEFT JOIN as `geometry: null` rather than vanishing. A
+  // point-located event binds to a zero-length span, whose geometry is widened
+  // to a short line (see POINT_SPAN_HALF_M) so `geometry` is always a
+  // LineString or null, never a Point.
+  app.get("/segments/conditions.json", async (req, reply) => {
+    const q = req.query as Record<string, string | undefined>;
+    const at = q.at ? new Date(q.at) : new Date();
+    if (Number.isNaN(at.getTime())) {
+      return reply.status(400).send({ error: "at must be an ISO 8601 timestamp" });
+    }
+    const rows = await db.execute<SegmentConditionRow[]>(
+      `SELECT o.id, o.source, o.type, o.severity, o.attributes, o.origin, o.routing_eligible,
+              o.valid_from, o.valid_to, o.schedule, o.source_license,
+              b.status AS binding_status, b.confidence AS binding_confidence,
+              b.direction_mode AS binding_direction_mode,
+              COALESCE(seg.segments, '[]'::jsonb) AS segments
+       FROM conditions.observations o
+       JOIN conditions.observation_binding b ON b.observation_id = o.id
+       LEFT JOIN LATERAL (
+         SELECT jsonb_agg(jsonb_build_object('wayId', s.way_id, 'dir', s.dir,
+                  'startFraction', s.start_fraction, 'endFraction', s.end_fraction,
+                  'geometry', CASE
+                    WHEN rs.geom IS NULL THEN NULL
+                    WHEN s.start_fraction = s.end_fraction THEN
+                      CASE WHEN rs.length_m > 0
+                           THEN ST_AsGeoJSON(ST_LineSubstring(rs.geom,
+                                  GREATEST(0, s.start_fraction - (${POINT_SPAN_HALF_M})::double precision / rs.length_m),
+                                  LEAST(1, s.start_fraction + (${POINT_SPAN_HALF_M})::double precision / rs.length_m)))::jsonb
+                           ELSE NULL END
+                    ELSE ST_AsGeoJSON(ST_LineSubstring(rs.geom,
+                           LEAST(s.start_fraction, s.end_fraction),
+                           GREATEST(s.start_fraction, s.end_fraction)))::jsonb END)
+                  ORDER BY s.seq) AS segments
+         FROM conditions.observation_segment s
+         LEFT JOIN conditions.road_segment rs ON rs.segment_id = s.segment_id
+         WHERE s.observation_id = o.id) seg ON true
+       WHERE o.kind = 'event' AND o.domain = 'roads' AND o.status = 'active'
+         AND b.status IN ('exact','likely','ambiguous')
+         AND (o.valid_to IS NULL OR o.valid_to > $1::timestamptz)
+         AND (o.expires_at IS NULL OR o.expires_at > now())
+       ORDER BY o.id`,
+      [at.toISOString()]
+    );
+    const permissive = rows.filter((r) => isPermissiveLicense(r.source_license));
+    reply.header("Content-Type", "application/json");
+    reply.header("Cache-Control", "public, max-age=60");
+    // Same shape as `distinctLicenses`, but read off the `source_license`
+    // column rather than a parsed Observation -- including its "unknown"
+    // fallback, so the header is never sent as an empty string.
+    const licenses = new Set(permissive.map((r) => r.source_license ?? "unknown"));
+    reply.header("X-Data-License", licenses.size > 0 ? [...licenses].join(", ") : "unknown");
+    return reply.send(
+      segmentConditionsToJson(permissive, at, { resolverVersion: RESOLVER_VERSION })
+    );
+  });
+
   app.get("/stream", (req, reply) => {
     const q = req.query as Record<string, string | undefined>;
     const bbox = parseBbox(q.bbox);
@@ -521,5 +625,5 @@ export function registerPublishRoutes(
     return reply;
   });
 
-  registerFeedStatusRoute(app, statusStore, registry);
+  registerFeedStatusRoute(app, statusStore, registry, createBindingMetricsReader(sql));
 }

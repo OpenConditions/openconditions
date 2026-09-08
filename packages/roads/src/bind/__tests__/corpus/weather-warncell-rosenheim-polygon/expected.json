@@ -1,0 +1,5 @@
+{
+  "status": "not_applicable",
+  "segments": [],
+  "why": "Second area case, in Bayern: the DWD warn cell 'Kreis und Stadt Rosenheim' (WARNCELLID 909187999) as a MultiPolygon, fetched 2026-09-06 from the public DWD WFS (layer dwd:Warngebiete_Kreise, EPSG:4326). As above, no warning was active at capture time so the warn cell polygon stands in for the warning geometry. The frozen spine is a real A8 extract inside the cell, so the answer cannot be an artefact of an empty subgraph."
+}

@@ -477,7 +477,14 @@ describe("atomicSwap — bulk insert at volume", () => {
       ],
       300
     );
-    expect(first).toEqual({ inserted: 3, updated: 0, deleted: 0 });
+    expect(first.inserted).toBe(3);
+    expect(first.updated).toBe(0);
+    expect(first.deleted).toBe(0);
+    expect([...first.changedIds].sort()).toEqual([
+      "diffsrc:changed",
+      "diffsrc:removed",
+      "diffsrc:unchanged",
+    ]);
 
     const before = await sql<{ id: string; fetched_at: Date }[]>`
       SELECT id, fetched_at FROM conditions.observations WHERE source = 'diffsrc' ORDER BY id
@@ -494,7 +501,12 @@ describe("atomicSwap — bulk insert at volume", () => {
       ],
       300
     );
-    expect(second).toEqual({ inserted: 1, updated: 1, deleted: 1 });
+    expect(second.inserted).toBe(1);
+    expect(second.updated).toBe(1);
+    expect(second.deleted).toBe(1);
+    // Only the rows that really moved come back: the unchanged one is skipped
+    // by the diff-upsert, so a derived stage never revisits it.
+    expect([...second.changedIds].sort()).toEqual(["diffsrc:changed", "diffsrc:new"]);
 
     const after = await sql<{ id: string; fetched_at: Date }[]>`
       SELECT id, fetched_at FROM conditions.observations
@@ -542,7 +554,7 @@ describe("atomicSwap — bulk insert at volume", () => {
       [mkFlow("dupsrc:1", 10), mkFlow("dupsrc:1", 20)],
       300
     );
-    expect(counts).toEqual({ inserted: 1, updated: 0, deleted: 0 });
+    expect(counts).toEqual({ inserted: 1, updated: 0, deleted: 0, changedIds: ["dupsrc:1"] });
 
     const rows = await sql<{ id: string; value: string | null }[]>`
       SELECT id, value::text AS value FROM conditions.observations WHERE source = 'dupsrc'

@@ -2,9 +2,8 @@ import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { type OsmWay, parseOsmiumGeojsonSeq } from "@openconditions/roads";
+import { loadHighwayClasses, osmiumHighwayFilter } from "./highway-classes.js";
 
-// Same major-road set as the Overpass query, in osmium tags-filter syntax.
-const HIGHWAY_TAGS = "w/highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link";
 const DEFAULT_OSMIUM_TIMEOUT_MS = 20 * 60_000; // 20 min per invocation
 
 export interface OsmiumDeps {
@@ -78,7 +77,15 @@ export async function pbfToWays(
   // NO -R: osmium's `-R` means --omit-referenced. The default already KEEPS the
   // nodes referenced by matched ways, so `filtered` is self-contained and the
   // bbox `extract` can resolve geometry. (Omitting nodes yields empty output.)
-  await run(["tags-filter", "-O", pbfPath, HIGHWAY_TAGS, "-o", filtered]);
+  // Same major-road set as the Overpass query, in osmium tags-filter syntax.
+  await run([
+    "tags-filter",
+    "-O",
+    pbfPath,
+    osmiumHighwayFilter(loadHighwayClasses()),
+    "-o",
+    filtered,
+  ]);
   await run([
     "extract",
     "-O",

@@ -14,6 +14,7 @@ import { deriveBaselines } from "./pipeline/baseline-derive.js";
 import { pruneHourlyRollup, pruneRawSamples, rollupSpeedSamples } from "./pipeline/speed-rollup.js";
 import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js";
 import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
+import { rebindStale } from "./pipeline/rebind.js";
 import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
 import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
 import { deriveSegmentProfiles } from "./pipeline/segment-profile.js";
@@ -331,7 +332,7 @@ export function startScheduler(
         });
         console.info(
           `[scheduler] segment rebuild: imported ${counts.imported}, built ${counts.built}, ` +
-            `encoded ${counts.encoded}, matched ${counts.matched}`
+            `encoded ${counts.encoded}, matched ${counts.matched}, rebound ${counts.rebound}`
         );
       } catch (err) {
         console.error("[scheduler] segment rebuild failed", err);
@@ -344,6 +345,16 @@ export function startScheduler(
   } else {
     console.info("[scheduler] weekly segment rebuild disabled (SEGMENT_REBUILD_CRON=off)");
   }
+
+  // Bind whatever the last resolver version left unbound (a new deploy, or a
+  // first boot against an existing store), and drop the bindings of events that
+  // were deactivated in place. Fire-and-forget: feed pollers and server start
+  // are not blocked, and a failure here is never fatal.
+  void rebindStale(sql, { now: () => new Date().toISOString() })
+    .then((r) => {
+      if (r.rebound > 0) console.info(`[scheduler] startup rebind: ${r.rebound} events`);
+    })
+    .catch((err: unknown) => console.warn("[scheduler] startup rebind failed", err));
 
   return () => {
     for (const job of jobs) {

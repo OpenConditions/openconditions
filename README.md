@@ -21,6 +21,8 @@ Road domain, v0.1:
   See [docs/speed-coverage.md](docs/speed-coverage.md).
 - **Emitters:** GeoJSON, TraFF, DATEX II, GTFS-RT Alert, JSON-LD, Valhalla exclusions, and an SSE stream —
   all public, rate-limited, and bbox-filterable.
+- **Graph binding:** road events are bound to the directed OSM segment spine (`way_id:f|b` spans with
+  confidence); see [docs/graph-binding.md](docs/graph-binding.md).
 - **OpenMapX integration:** ships as an installable extension (a service + a provider integration).
 - **TMC location tables:** publishers that send Alert-C location codes instead of coordinates are placed
   against the published national table (Germany's LCL 22.0, CC BY 4.0), behind a strict table-version guard.
@@ -38,6 +40,7 @@ Three layers:
 packages/          reusable libraries (Apache-2.0)
   core/            canonical model, severity, freshness, read helpers, DB schema/migrations (./server)
   roads/           road-domain parsers (DATEX II / Open511 / WZDx) + feed registry + TMC location tables
+    bind/          event → segment resolver + evaluation corpus
   publishers/      outbound emitters (GeoJSON, TraFF, DATEX II, GTFS-RT, JSON-LD, Valhalla)
   openlr/          OpenLR binary decode + resolver client
 
@@ -68,18 +71,19 @@ The service applies its migrations, starts polling the enabled feeds, and serves
 
 ### Public emitter feeds
 
-All are bbox-filterable (`?bbox=west,south,east,north[&domain=roads]`) and rate-limited:
+Most are bbox-filterable (`?bbox=west,south,east,north[&domain=roads]`) and all are rate-limited:
 
-| Endpoint                        | Format                                                                 |
-| ------------------------------- | ---------------------------------------------------------------------- |
-| `GET /observations.geojson`     | GeoJSON FeatureCollection                                              |
-| `GET /observations.jsonld`      | JSON-LD (SOSA/Schema.org `@context`)                                   |
-| `GET /traff.xml`                | TraFF (CoMaps / Navit)                                                 |
-| `GET /datex2/situations.xml`    | DATEX II v3 SituationPublication ([status](docs/datex-conformance.md)) |
-| `GET /gtfs-rt/alerts.pb`        | GTFS-RT Alert (protobuf)                                               |
-| `GET /valhalla/exclusions.json` | Valhalla `exclude_locations` / `exclude_polygons`                      |
-| `GET /stream`                   | Server-Sent Events (snapshot + live deltas)                            |
-| `GET /status`                   | health (unlimited)                                                     |
+| Endpoint                        | Format                                                                                    |
+| ------------------------------- | ----------------------------------------------------------------------------------------- |
+| `GET /observations.geojson`     | GeoJSON FeatureCollection                                                                 |
+| `GET /observations.jsonld`      | JSON-LD (SOSA/Schema.org `@context`)                                                      |
+| `GET /traff.xml`                | TraFF (CoMaps / Navit)                                                                    |
+| `GET /datex2/situations.xml`    | DATEX II v3 SituationPublication ([status](docs/datex-conformance.md))                    |
+| `GET /gtfs-rt/alerts.pb`        | GTFS-RT Alert (protobuf)                                                                  |
+| `GET /valhalla/exclusions.json` | Valhalla `exclude_locations` / `exclude_polygons`                                         |
+| `GET /segments/conditions.json` | Bound, in-effect conditions keyed by directed OSM way spans (routing feed; instance-wide) |
+| `GET /stream`                   | Server-Sent Events (snapshot + live deltas)                                               |
+| `GET /status`                   | health (unlimited)                                                                        |
 
 ## Using OpenConditions with OpenMapX
 

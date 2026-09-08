@@ -1,0 +1,13 @@
+{
+  "status": "ambiguous",
+  "directionMode": "unknown",
+  "segments": [
+    {
+      "segmentId": "143309864:f",
+      "startFraction": 0.82,
+      "endFraction": 0.82
+    }
+  ],
+  "why": "A5 accident warning with a lane closed; Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, warning id NLW_2026_002931--vi-zus.2026-09-06_20-12-00-284.de0. The record carries no line (its LineString is two identical vertices), so the feed's own point/coordinate field is the geometry, which is what parseAutobahn emits for such a record. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). The feed text is unambiguous about the carriageway: 'A5: Frankfurt -> Kassel, 4.2 km vor Limes, aus Richtung Gambacher Kreuz', i.e. northbound. Checked every A5 way within 60 m in the frozen spine: 143309864 and 143309869 head 19 deg (northbound, 6.8 m / 7.3 m away), 143309866 and 143309867 head 199 deg (southbound, 5.5 m away). The reference point sits on the median, marginally closer to the southbound pair, so the truth is the nearest NORTHBOUND way 143309864:f; 143309869:f starts at the same node. A point carries no heading, so the carriageway stays undecided; the ways listed here are the ground truth from the feed's own direction text, which the resolver does not read.",
+  "knownResolverBug": "The resolver binds the median reference point to the nearest way, which is the southbound A5 carriageway (5.5 m) rather than the northbound one the feed names (6.8 m)."
+}

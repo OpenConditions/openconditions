@@ -1,0 +1,6 @@
+{
+  "status": "unresolved",
+  "segments": [],
+  "why": "Non-imported road class inside a covered region: B294 'Strassenausbau' at Pforzheimer Strasse; MobiData BW DATEX II roadworks feed (public, no credential), situation de-bw:52762983-52762985-52762988-52766555, fetched 2026-09-06, parsed with parseDatexSituations. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked Overpass around the line (48.96860,8.72868): the way carrying this stretch is 248898237 with highway=construction, construction=primary, ref='B 294', name='Pforzheimer Strasse' - a class the road import does not keep, so it is absent from the spine. Every vertex of the 301 m line is 17.9-190 m from the nearest imported B294 way (128810170, the old alignment), so there is nothing to bind to and the truth is no binding.",
+  "knownResolverBug": "The resolver still emits an ambiguous binding to the old B294 alignment from the single vertex that falls within 40 m, instead of reporting unresolved for a road held in OSM as highway=construction."
+}

@@ -1,0 +1,23 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "326049766:f",
+      "startFraction": 0.83,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "517180077:f"
+    },
+    {
+      "segmentId": "320366514:f"
+    },
+    {
+      "segmentId": "62746358:f",
+      "startFraction": 0,
+      "endFraction": 0.96
+    }
+  ],
+  "why": "A6 full closure Kaiserslautern-Ost -> Kaiserslautern-Zentrum/Mehlingen, carriageway Mannheim -> Kaiserslautern (westbound); Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, closure id 2026-044224--vi-fbm.2026-09-16_02-00-00-000.devi-zus.2026-09-17_17-00-00-000.de7. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the Overpass tags (highway=motorway, ref='A 6', oneway) for the four ways; the line runs 0.0 m along them, and the ramp 4527122 (motorway_link) is only touched at the gore point, so it is not part of the closed carriageway."
+}

@@ -1,0 +1,44 @@
+{
+  "status": "ambiguous",
+  "directionMode": "unknown",
+  "segments": [
+    {
+      "segmentId": "25130091:f",
+      "startFraction": 0.92,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "760778013:f"
+    },
+    {
+      "segmentId": "25130086:f"
+    },
+    {
+      "segmentId": "322457519:f"
+    },
+    {
+      "segmentId": "24926734:f"
+    },
+    {
+      "segmentId": "24926733:f"
+    },
+    {
+      "segmentId": "132364675:f"
+    },
+    {
+      "segmentId": "132364680:f"
+    },
+    {
+      "segmentId": "327274609:f"
+    },
+    {
+      "segmentId": "327274615:f"
+    },
+    {
+      "segmentId": "327274611:f",
+      "startFraction": 0,
+      "endFraction": 0.26
+    }
+  ],
+  "why": "A46 full closure Iserlohn-Seilersee -> Leckerhorst, carriageway Hemer -> Hagen (westbound); Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, closure id 2023-004607--vi-fbm.2026-09-18_18-00-00-000.devi-zus.2024-09-11_19-00-00-000_002.f.de38. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the Overpass tags: the chain is highway=motorway ref='A 46' oneway; the ways the resolver treats as rivals are the Iserlohn-Zentrum slip roads 146774402/175868157 (highway=motorway_link, destination=Iserlohn-Zentrum, no ref) and 322457512 (the second A46 carriageway 16 m away) - none of them carries the closure. Only the mainline chain is affected. The carriageway stays undecided because a second A46 way, 322457512, runs 16.4 m away on the same heading (1 deg apart) at the Seilersee junction and carries the same ref='A 46', so it is never dismissed; the refless slip roads 146774402/175868157 are dismissed on ref."
+}

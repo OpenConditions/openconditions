@@ -3,14 +3,19 @@ import Fastify from "fastify";
 import { FeedStatusStore } from "../feed-status.js";
 import { buildDomainRegistry } from "../domains.js";
 import { registerFeedStatusRoute } from "../publish-routes.js";
+import type { BindingMetricsReader } from "../pipeline/binding-metrics.js";
 
 const app = Fastify();
 const store = new FeedStatusStore();
 store.recordSuccess("nl-ndw", "2026-07-01T00:00:00.000Z", 5, 100);
 
+// Binding metrics are covered against a real database in binding-metrics.test.ts;
+// stubbing them keeps this suite a pure registry/credentials test.
+let readBindingMetrics: BindingMetricsReader = async () => new Map();
+
 beforeAll(async () => {
   const registry = await buildDomainRegistry();
-  registerFeedStatusRoute(app, store, registry);
+  registerFeedStatusRoute(app, store, registry, () => readBindingMetrics());
   await app.ready();
 });
 
@@ -56,6 +61,22 @@ describe("GET /feeds/status", () => {
       else process.env["HR_HC_USERNAME"] = prevUser;
       if (prevPass === undefined) delete process.env["HR_HC_PASSWORD"];
       else process.env["HR_HC_PASSWORD"] = prevPass;
+    }
+  });
+
+  it("still lists feeds when the binding metrics query fails", async () => {
+    const previous = readBindingMetrics;
+    readBindingMetrics = async () => {
+      throw new Error("relation does not exist");
+    };
+    try {
+      const res = await app.inject({ method: "GET", url: "/feeds/status" });
+      expect(res.statusCode).toBe(200);
+      const body = res.json() as { feeds: Record<string, unknown>[] };
+      expect(body.feeds.length).toBeGreaterThan(0);
+      expect(body.feeds.some((f) => "binding" in f)).toBe(false);
+    } finally {
+      readBindingMetrics = previous;
     }
   });
 });

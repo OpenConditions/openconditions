@@ -1,0 +1,38 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "268346361:f",
+      "startFraction": 0.36,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "266575186:f"
+    },
+    {
+      "segmentId": "266575187:f"
+    },
+    {
+      "segmentId": "33747468:f"
+    },
+    {
+      "segmentId": "266575184:f"
+    },
+    {
+      "segmentId": "33607676:f"
+    },
+    {
+      "segmentId": "33607677:f"
+    },
+    {
+      "segmentId": "266575175:f"
+    },
+    {
+      "segmentId": "515641465:f",
+      "startFraction": 0,
+      "endFraction": 0.22
+    }
+  ],
+  "why": "DATEX II endpoint pair (LinearByCoordinates -> MultiPoint of 2) for an NRW A2 roadworks, carriageway Oberhausen -> Dortmund (eastbound). Mobilithek NRW needs a certificate that is not available here, so the record was rebuilt as a DATEX II SituationPublication whose LinearByCoordinates start/end are the real endpoints of Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06 roadworks id 2026-042188--vi-fbm.2026-09-09_05-00-00-000.de0 (A2 | Oberhausen - Schwarze Heide) and parsed with parseDatexSituations; the event.json is that parser's output. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Ground truth was taken from the FULL Autobahn line for the same record (24 vertices), whose densified samples lie 0.0 m on exactly this chain of highway=motorway ref='A 2' oneway ways between the two endpoints."
+}

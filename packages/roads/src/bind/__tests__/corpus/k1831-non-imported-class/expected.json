@@ -1,0 +1,5 @@
+{
+  "status": "unresolved",
+  "segments": [],
+  "why": "Non-imported road class inside a covered region: a Kreisstrasse bridge rebuild on the K1831; MobiData BW DATEX II roadworks feed (public, no credential), situation de-bw:9980115-9980116-9981339-9981344, fetched 2026-09-06, parsed with parseDatexSituations. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the frozen spine over the event bbox + 600 m: the nearest imported way is the B328 at 455-812 m from every vertex of the 484 m line, far outside the 40 m candidate radius - the K1831 itself is not a motorway/trunk/primary class and so is never imported. The correct answer is therefore no binding at all."
+}

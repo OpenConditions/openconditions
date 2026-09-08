@@ -1,0 +1,35 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "4017667:f",
+      "startFraction": 0.97,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "329091772:f"
+    },
+    {
+      "segmentId": "92244986:f"
+    },
+    {
+      "segmentId": "92245016:f"
+    },
+    {
+      "segmentId": "329091773:f"
+    },
+    {
+      "segmentId": "329091774:f"
+    },
+    {
+      "segmentId": "27507458:f"
+    },
+    {
+      "segmentId": "19660701:f",
+      "startFraction": 0,
+      "endFraction": 0.32
+    }
+  ],
+  "why": "DATEX II endpoint pair for a Bayern A3 roadworks, carriageway Passau -> Nurnberg (westbound). Built as for the other DATEX cases from Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06 roadworks id 2025-063521--vi-bs.2026-01-26_00-00-00-000.devi-zus.2026-01-26_00-00-00-000.de3 (A3 | Neumarkt-Ost - Wolfstein) and parsed with parseDatexSituations. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Truth taken from the full 26-vertex Autobahn line, which lies 0.0 m on this chain of highway=motorway ref='A 3' oneway ways; the link 31973715 is only brushed at its gore tip."
+}

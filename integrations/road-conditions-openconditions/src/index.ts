@@ -37,6 +37,9 @@ export function setup(ctx: IntegrationContext): void {
         kind: "event",
         types: opts?.types,
         minSeverity: opts?.minSeverity,
+        // Carry the graph binding through to the host: routing consumes the
+        // exact/likely spans, the overlay labels the ambiguous ones.
+        includeBindings: true,
         // Only narrow when the caller asked: routing reads unfiltered so it can
         // evaluate future closures at the chosen travel time.
         ...(opts?.horizonDays != null ? { horizonDays: opts.horizonDays } : {}),

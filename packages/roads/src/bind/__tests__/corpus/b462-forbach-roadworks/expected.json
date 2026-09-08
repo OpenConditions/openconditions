@@ -1,0 +1,26 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "1044520658:f",
+      "startFraction": 0.88,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "23147463:f"
+    },
+    {
+      "segmentId": "29190765:f"
+    },
+    {
+      "segmentId": "311645012:f"
+    },
+    {
+      "segmentId": "29090869:f",
+      "startFraction": 0,
+      "endFraction": 0.05
+    }
+  ],
+  "why": "Bundesstrasse B462 carriageway renewal Forbach-Hilpertsau; MobiData BW DATEX II roadworks feed (public, no credential), situation de-bw:123487415-123524911-123524912-123524929, fetched 2026-09-06, parsed with parseDatexSituations. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the spine: all five ways are highway=primary ref='B 462' and bidirectional; the record's line lies 0.0-1.2 m along their ':f' heading. The B462 ways 844842623 and 4283123 at 16-37 m are the old alignment through Forbach and run 35-77 deg off, so they are not covered."
+}

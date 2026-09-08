@@ -1,0 +1,13 @@
+{
+  "id": "de-nw-verkehr:2023-004543--vi-bs.2026-07-02_19-00-00-000.devi-zus.2025-04-01_19-00-00-000.f_001.de17",
+  "geometry": {
+    "type": "MultiPoint",
+    "coordinates": [
+      [7.261018674, 51.410682778],
+      [7.272195548, 51.423815694]
+    ]
+  },
+  "type": "roadworks",
+  "refs": ["A43"],
+  "direction": "Wuppertal -> Recklinghausen"
+}

@@ -1,0 +1,83 @@
+{
+  "status": "ambiguous",
+  "directionMode": "unknown",
+  "segments": [
+    {
+      "segmentId": "539351625:f",
+      "startFraction": 0.61,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "539351624:f"
+    },
+    {
+      "segmentId": "727223652:f"
+    },
+    {
+      "segmentId": "283744318:f"
+    },
+    {
+      "segmentId": "839720740:f"
+    },
+    {
+      "segmentId": "839720741:f"
+    },
+    {
+      "segmentId": "130876232:f"
+    },
+    {
+      "segmentId": "40748030:f"
+    },
+    {
+      "segmentId": "317289334:f"
+    },
+    {
+      "segmentId": "1503906621:f"
+    },
+    {
+      "segmentId": "171940771:f"
+    },
+    {
+      "segmentId": "40748031:f"
+    },
+    {
+      "segmentId": "1503906619:f"
+    },
+    {
+      "segmentId": "214456859:f"
+    },
+    {
+      "segmentId": "138972910:f"
+    },
+    {
+      "segmentId": "130876225:f"
+    },
+    {
+      "segmentId": "214456858:f"
+    },
+    {
+      "segmentId": "214456855:f"
+    },
+    {
+      "segmentId": "130876789:f"
+    },
+    {
+      "segmentId": "130876634:f"
+    },
+    {
+      "segmentId": "214456853:f"
+    },
+    {
+      "segmentId": "326121559:f"
+    },
+    {
+      "segmentId": "288965292:f"
+    },
+    {
+      "segmentId": "4941966:f",
+      "startFraction": 0,
+      "endFraction": 0.25
+    }
+  ],
+  "why": "A94 full closure Schwindegg -> Waldkraiburg/Ampfing, carriageway Munchen -> Passau (eastbound); Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, closure id 2026-025173--vi-fbm.2026-09-15_20-00-00-000.devi-zus.2026-09-01_20-00-00-000_001.de2. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked in the Overpass way tags that every way on the chain is highway=motorway, ref='A 94' and oneway (the spine holds only the ':f' direction for them), and that the event line sits 0.0-2.8 m from those ways while the opposite carriageway (40748033, 52731034, 157012002 ...) is 9-16 m away with a heading 160-180 deg off, i.e. the other direction. The eastbound chain matches the feed's own 'Munchen -> Passau' text and the junction names in the title. The carriageway cannot be settled from geometry alone at every sample: the A94 slip road 171952820 (highway=motorway_link but tagged ref='A 94', destination B 12) runs 0.0-5.0 m from the event line where it leaves the mainline, and it carries the same ref, so it is never dismissed. The binding therefore stays ambiguous with an undecided direction even though the chain of ways is exactly the eastbound mainline."
+}

@@ -45,6 +45,19 @@ async function seedFlowSensor(): Promise<void> {
       ${NOW}, ${NOW})`;
 }
 
+/** A closure along the fixture way, so the rebind stage has something to bind. */
+async function seedClosureEvent(): Promise<void> {
+  await sql`
+    INSERT INTO conditions.observations
+      (id, source, source_format, domain, kind, type, status, geom, attributes, origin,
+       data_updated_at, fetched_at)
+    VALUES ('closure:1', 'test-src', 'test-fmt', 'roads', 'event', 'road_closure', 'active',
+      ST_SetSRID(ST_GeomFromText('LINESTRING(5.02 52.00001, 5.08 52.00001)'), 4326),
+      ${sql.json({ roads: [{ ref: "A12" }] })},
+      ${sql.json({ kind: "feed", attribution: { provider: "test" } })},
+      ${NOW}, ${NOW})`;
+}
+
 beforeAll(async () => {
   const container = await new GenericContainer("postgis/postgis:16-3.4")
     .withEnvironment({
@@ -75,12 +88,18 @@ afterEach(async () => {
 });
 
 describe("runSegmentRebuild", () => {
-  it("runs import -> build -> encode -> match in order and is idempotent", async () => {
+  it("runs import -> build -> encode -> match -> rebind in order and is idempotent", async () => {
     process.env["SEGMENT_REGIONS"] = ONE_REGION;
     await seedFlowSensor();
+    await seedClosureEvent();
 
     const first = await runSegmentRebuild(sql, { fetch: fetchFn, now: () => NOW });
-    expect(first).toMatchObject({ imported: 1, built: 1, encoded: 1, matched: 1 });
+    expect(first).toMatchObject({ imported: 1, built: 1, encoded: 1, matched: 1, rebound: 1 });
+
+    // The rebind stage ran against the freshly built spine, not a stale one.
+    const boundRows = await sql<{ segment_id: string }[]>`
+      SELECT segment_id FROM conditions.observation_segment WHERE observation_id = 'closure:1'`;
+    expect(boundRows.map((r) => r.segment_id)).toEqual(["9:f"]);
 
     const segRows = await sql<{ segment_id: string; openlr: string | null }[]>`
       SELECT segment_id, openlr FROM conditions.road_segment`;
@@ -99,6 +118,7 @@ describe("runSegmentRebuild", () => {
     expect(second.imported).toBe(1);
     expect(second.built).toBe(1);
     expect(second.matched).toBe(1);
+    expect(second.rebound).toBe(1);
 
     const segRowsAgain = await sql<{ segment_id: string; openlr: string | null }[]>`
       SELECT segment_id, openlr FROM conditions.road_segment`;
@@ -110,8 +130,8 @@ describe("runSegmentRebuild", () => {
     process.env["SEGMENT_REGIONS"] = ONE_REGION;
     await seedFlowSensor();
 
-    // Inject a throwing encode stage (the middle of the four); import, build,
-    // and match stay the real functions. A missing try/catch around any stage
+    // Inject a throwing encode stage in the middle; import, build, match and
+    // rebind stay the real functions. A missing try/catch around any stage
     // would let this throw propagate out and reject the whole rebuild, so this
     // asserts the per-stage catch-and-continue behavior directly.
     const result = await runSegmentRebuild(sql, {
@@ -136,5 +156,24 @@ describe("runSegmentRebuild", () => {
       await sql`SELECT segment_id FROM conditions.sensor_segment WHERE sensor_key = 'flow:1'`;
     expect(sensorRows).toHaveLength(1);
     expect(sensorRows[0]!.segment_id).toBe("9:f");
+  }, 30_000);
+
+  it("returns the rebuild's own counts when the rebind stage throws", async () => {
+    process.env["SEGMENT_REGIONS"] = ONE_REGION;
+    await seedFlowSensor();
+
+    // The rebind is a consumer of the spine, not part of building it: a
+    // resolver blow-up must not cost the rebuild the work it already did.
+    const result = await runSegmentRebuild(sql, {
+      fetch: fetchFn,
+      now: () => NOW,
+      steps: {
+        rebindAll: async () => {
+          throw new Error("rebind blew up");
+        },
+      },
+    });
+
+    expect(result).toMatchObject({ imported: 1, built: 1, encoded: 1, matched: 1, rebound: 0 });
   }, 30_000);
 });

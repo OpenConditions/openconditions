@@ -1,0 +1,13 @@
+{
+  "id": "de-by-mobilithek:2025-063521--vi-bs.2026-01-26_00-00-00-000.devi-zus.2026-01-26_00-00-00-000.de3",
+  "geometry": {
+    "type": "MultiPoint",
+    "coordinates": [
+      [11.514415205, 49.312992201],
+      [11.493047903, 49.314144213]
+    ]
+  },
+  "type": "roadworks",
+  "refs": ["A3"],
+  "direction": "Passau -> Nürnberg"
+}

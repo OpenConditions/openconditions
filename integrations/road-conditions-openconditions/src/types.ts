@@ -121,6 +121,16 @@ export interface RoadConditionEvent {
   isForecast?: boolean;
   /** Scheduled work rather than an unplanned incident. */
   isPlanned?: boolean;
+  /** Vehicle classes a restriction applies to (e.g. ["truck"]); empty/absent = all traffic. */
+  vehiclesAffected?: string[];
+  /** Graph-binding outcome for this event, when the instance has bound it. */
+  binding?: {
+    status: "exact" | "likely" | "ambiguous" | "unresolved" | "no_coverage" | "not_applicable";
+    confidence?: number;
+    directionMode?: "single" | "both" | "unknown";
+  };
+  /** Ordered directed OSM-way spans the event occupies (only for exact/likely/ambiguous). */
+  segments?: Array<{ wayId: number; dir: "f" | "b"; startFraction: number; endFraction: number }>;
 }
 
 export interface RoadConditionsQuery {

@@ -1,0 +1,17 @@
+{
+  "status": "exact",
+  "directionMode": "both",
+  "segments": [
+    {
+      "segmentId": "778646402:f",
+      "startFraction": 0.74,
+      "endFraction": 0.95
+    },
+    {
+      "segmentId": "778646402:b",
+      "startFraction": 0.05,
+      "endFraction": 0.26
+    }
+  ],
+  "why": "Sub-20 m Bundesstrasse case: a 10 m B3 lane closure for erecting an LED sign near Bruchsal; MobiData BW DATEX II roadworks feed (public, no credential), situation de-bw:121871097-121871103-121871106-121871107, fetched 2026-09-06, parsed with parseDatexSituations. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the spine: way 778646402 is highway=primary ref='B 3' with both directions present. A 10 m line has no usable heading and the single carriageway is occupied both ways, so both directed segments are the truth; the ':b' fractions mirror the ':f' ones."
+}

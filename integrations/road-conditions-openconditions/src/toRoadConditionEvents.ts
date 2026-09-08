@@ -25,6 +25,56 @@ function originKindOf(p: Record<string, unknown>): "feed" | "crowd" | undefined 
   return kind === "feed" || kind === "crowd" ? kind : undefined;
 }
 
+/** Vehicle classes a restriction applies to; a road-domain field, so it rides in `attributes`. */
+function vehiclesAffectedOf(attrs: Record<string, unknown>): string[] | undefined {
+  if (!Array.isArray(attrs.vehiclesAffected)) return undefined;
+  const classes = attrs.vehiclesAffected.filter((v): v is string => typeof v === "string");
+  return classes.length > 0 ? classes : undefined;
+}
+
+/**
+ * Graph-binding outcome, when the instance has bound the event. Only
+ * `exact`/`likely` are routing-relevant; `ambiguous` is carried for map/QA.
+ */
+function bindingOf(p: Record<string, unknown>): RoadConditionEvent["binding"] | undefined {
+  const b = p.binding as Record<string, unknown> | undefined;
+  const status = str(b?.status);
+  if (!status) return undefined;
+  const directionMode = str(b?.directionMode);
+  return {
+    status: status as NonNullable<RoadConditionEvent["binding"]>["status"],
+    ...(typeof b?.confidence === "number" ? { confidence: b.confidence } : {}),
+    ...(directionMode
+      ? {
+          directionMode: directionMode as NonNullable<
+            RoadConditionEvent["binding"]
+          >["directionMode"],
+        }
+      : {}),
+  };
+}
+
+/** The ordered directed way spans the event occupies; the internal segment id is dropped. */
+function segmentsOf(p: Record<string, unknown>): RoadConditionEvent["segments"] | undefined {
+  if (!Array.isArray(p.segments)) return undefined;
+  const spans = p.segments
+    .map((s) => s as Record<string, unknown>)
+    .filter(
+      (s) =>
+        typeof s?.wayId === "number" &&
+        (s.dir === "f" || s.dir === "b") &&
+        typeof s.startFraction === "number" &&
+        typeof s.endFraction === "number"
+    )
+    .map((s) => ({
+      wayId: s.wayId as number,
+      dir: s.dir as "f" | "b",
+      startFraction: s.startFraction as number,
+      endFraction: s.endFraction as number,
+    }));
+  return spans.length > 0 ? spans : undefined;
+}
+
 /**
  * Maps one `observationsByBbox` GeoJSON feature to a `RoadConditionEvent`. Road
  * specifics (roads, roadState) live in the feature's `attributes` payload; the
@@ -38,6 +88,9 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
   const attrs = (p.attributes ?? {}) as Record<string, unknown>;
   const delay = Number(attrs.delaySeconds);
   const groupId = str(attrs.situationId);
+  const vehiclesAffected = vehiclesAffectedOf(attrs);
+  const binding = bindingOf(p);
+  const segments = segmentsOf(p);
 
   return {
     id,
@@ -76,6 +129,9 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
     // rides in `attributes` because it is a road-domain field.
     ...(typeof p.is_forecast === "boolean" ? { isForecast: p.is_forecast } : {}),
     ...(typeof attrs.isPlanned === "boolean" ? { isPlanned: attrs.isPlanned } : {}),
+    ...(vehiclesAffected ? { vehiclesAffected } : {}),
+    ...(binding ? { binding } : {}),
+    ...(segments ? { segments } : {}),
   };
 }
 

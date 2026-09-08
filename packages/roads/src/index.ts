@@ -43,3 +43,4 @@ export * from "./feeds.js";
 export * from "./feed-schema.js";
 export * from "./dedupe.js";
 export * from "./catalog/index.js";
+export * from "./bind/index.js";

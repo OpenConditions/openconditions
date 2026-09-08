@@ -1,0 +1,26 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "197697279:f",
+      "startFraction": 0.79,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "280421286:f"
+    },
+    {
+      "segmentId": "251505061:f"
+    },
+    {
+      "segmentId": "143578406:f"
+    },
+    {
+      "segmentId": "280421998:f",
+      "startFraction": 0,
+      "endFraction": 0.11
+    }
+  ],
+  "why": "DATEX II endpoint pair for a Bayern A8 roadworks, carriageway Stuttgart -> Munchen (eastbound). Built as for the other DATEX cases from Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06 roadworks id 2026-043109--vi-bs.2026-09-07_08-00-00-000.devi-zus.2026-08-25_07-00-00-000_012.de21 (A8 | Odelzhausen - Fuchsberg) and parsed with parseDatexSituations. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Truth taken from the full Autobahn line, which lies 0.0 m on this chain of highway=motorway ref='A 8' oneway ways; note the westbound A8 warning case a8-fuchsberg-queue-point sits on the opposite carriageway at the same place."
+}

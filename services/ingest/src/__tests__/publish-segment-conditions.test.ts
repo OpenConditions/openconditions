@@ -1,0 +1,320 @@
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import Fastify from "fastify";
+import { GenericContainer, Wait } from "testcontainers";
+import postgres from "postgres";
+import { runMigrations } from "@openconditions/core/server";
+import { RESOLVER_VERSION } from "@openconditions/roads";
+import { FeedStatusStore } from "../feed-status.js";
+import { buildDomainRegistry } from "../domains.js";
+import { registerPublishRoutes } from "../publish-routes.js";
+
+let sql: postgres.Sql;
+let containerStop: () => Promise<unknown>;
+
+const NOW = "2026-09-06T00:00:00.000Z";
+const VALID_FROM = "2026-09-06T06:00:00.000Z";
+const VALID_TO = "2026-09-06T18:00:00.000Z";
+
+// A single west-to-east segment on the A57 near Krefeld, exactly 0.1 degrees
+// of longitude long, so ST_LineSubstring's fractions land on round coordinates.
+const SEGMENT_ID = "10:f";
+const SEGMENT_WKT = "LINESTRING(6.8 51.2, 6.9 51.2)";
+// The span bound to it starts 20 % along, i.e. at lon 6.82.
+const SPAN_START = 0.2;
+const SPAN_START_LON = 6.82;
+// A span pointing at a segment that is NOT in road_segment: the binding tables
+// carry no FK to the spine, so a rebuilt spine can drop a segment out from
+// under a live binding and the emitter must survive it with geometry: null.
+const VANISHED_SEGMENT_ID = "999:f";
+// The seeded `length_m` of that segment, and the half-width the route widens a
+// zero-length (point-located) span to. 10 m either side => a ~20 m line.
+const SEGMENT_LENGTH_M = 7000;
+const POINT_SPAN_HALF_M = 10;
+const POINT_SPAN_FRACTION = 0.5;
+
+async function insertEvent(
+  id: string,
+  license: string,
+  attributes: postgres.JSONValue,
+  validFrom: string = VALID_FROM
+): Promise<void> {
+  await sql`
+    INSERT INTO conditions.observations
+      (id, source, source_format, domain, kind, type, category, severity, severity_source,
+       headline, status, geom, attributes, valid_from, valid_to, origin,
+       data_updated_at, fetched_at, source_license)
+    VALUES (${id}, 'bind-test', 'datex2', 'roads', 'event', 'road_closure', 'incident',
+      'high', 'declared', 'Closure', 'active',
+      ST_SetSRID(ST_GeomFromText('POINT(6.85 51.2)'), 4326),
+      ${sql.json(attributes)}, ${validFrom}, ${VALID_TO},
+      ${sql.json({ kind: "feed", attribution: { provider: "bind-test", license } })},
+      ${NOW}, ${NOW}, ${license})`;
+}
+
+async function insertBinding(id: string, status: string, confidence: number): Promise<void> {
+  await sql`
+    INSERT INTO conditions.observation_binding
+      (observation_id, status, confidence, direction_mode, candidate_count,
+       alternative_confidence, reason, resolver_version, geom_hash, bound_at)
+    VALUES (${id}, ${status}, ${confidence}, 'single', 1, null, null,
+      ${RESOLVER_VERSION}, ${`hash-${id}`}, ${NOW})`;
+}
+
+async function insertSpan(
+  id: string,
+  seq: number,
+  segmentId: string,
+  wayId: number,
+  startFraction: number,
+  endFraction: number
+): Promise<void> {
+  await sql`
+    INSERT INTO conditions.observation_segment
+      (observation_id, seq, segment_id, way_id, dir, start_fraction, end_fraction)
+    VALUES (${id}, ${seq}, ${segmentId}, ${wayId}, 'f', ${startFraction}, ${endFraction})`;
+}
+
+beforeAll(async () => {
+  const container = await new GenericContainer("postgis/postgis:16-3.4")
+    .withEnvironment({
+      POSTGRES_DB: "conditions_test",
+      POSTGRES_USER: "oc",
+      POSTGRES_PASSWORD: "oc",
+    })
+    .withExposedPorts(5432)
+    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
+    .start();
+  containerStop = () => container.stop();
+  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
+  sql = postgres(url, { max: 3 });
+  await runMigrations(url);
+
+  await sql`
+    INSERT INTO conditions.road_segment
+      (segment_id, way_id, dir, geom, highway, ref, length_m, min_zoom, free_flow_kph, computed_at)
+    VALUES (${SEGMENT_ID}, 10, 'f',
+      ST_SetSRID(ST_GeomFromText(${SEGMENT_WKT}), 4326),
+      'motorway', 'A57', ${SEGMENT_LENGTH_M}, 5, 100, ${NOW})`;
+
+  // Bound, permissive, in effect at 10:00 -- the row the routing consumer wants.
+  await insertEvent("a:1", "CC0-1.0", { roadState: "closed", vehiclesAffected: ["truck"] });
+  await insertBinding("a:1", "exact", 0.96);
+  await insertSpan("a:1", 0, SEGMENT_ID, 10, SPAN_START, 1);
+
+  // Share-alike: bound exactly, but must never reach a permissive export.
+  await insertEvent("a:sa", "ODbL-1.0", { roadState: "closed" });
+  await insertBinding("a:sa", "exact", 0.94);
+  await insertSpan("a:sa", 0, SEGMENT_ID, 10, 0, 1);
+
+  // Ambiguous is still routing-relevant (the consumer decides what to trust),
+  // and its second span points at a segment the spine no longer has.
+  await insertEvent("a:amb", "CC0-1.0", { roadState: "closed" });
+  await insertBinding("a:amb", "ambiguous", 0.4);
+  await insertSpan("a:amb", 0, SEGMENT_ID, 10, 0, 0.5);
+  await insertSpan("a:amb", 1, VANISHED_SEGMENT_ID, 999, 0, 1);
+
+  // A point-located event: the resolver binds it to a ZERO-LENGTH span
+  // (start_fraction = end_fraction), which ST_LineSubstring would return as a
+  // GeoJSON Point unless the route widens the cut.
+  await insertEvent("a:pt", "CC0-1.0", { roadState: "obstruction" });
+  await insertBinding("a:pt", "exact", 0.9);
+  await insertSpan("a:pt", 0, SEGMENT_ID, 10, POINT_SPAN_FRACTION, POINT_SPAN_FRACTION);
+
+  // Announced for 12:00, so it survives every SQL predicate at ?at=10:00 and
+  // can only be excluded by the emitter's own isInEffectAt call.
+  await insertEvent("a:future", "CC0-1.0", { roadState: "closed" }, "2026-09-06T12:00:00.000Z");
+  await insertBinding("a:future", "exact", 0.95);
+  await insertSpan("a:future", 0, SEGMENT_ID, 10, 0, 1);
+
+  // Unbound: no observation_binding row at all -- the INNER JOIN drops it.
+  await insertEvent("a:unb", "CC0-1.0", { roadState: "closed" });
+
+  // Unresolved binding: a status outside ('exact','likely','ambiguous').
+  await insertEvent("a:unres", "CC0-1.0", { roadState: "closed" });
+  await insertBinding("a:unres", "unresolved", 0.1);
+}, 120_000);
+
+afterAll(async () => {
+  await sql?.end();
+  await containerStop?.();
+}, 30_000);
+
+async function withApp<T>(fn: (app: ReturnType<typeof Fastify>) => Promise<T>): Promise<T> {
+  const app = Fastify();
+  const registry = await buildDomainRegistry();
+  registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
+  await app.ready();
+  try {
+    return await fn(app);
+  } finally {
+    await app.close();
+  }
+}
+
+type ConditionsBody = {
+  generated_at: string;
+  at: string;
+  resolver_version: string;
+  conditions: {
+    id: string;
+    source: string;
+    type: string | null;
+    road_state: string | null;
+    speed_limit_kph: number | null;
+    vehicles_affected: string[];
+    origin_kind: string;
+    routing_eligible: boolean;
+    valid_from: string | null;
+    valid_to: string | null;
+    binding: { status: string; confidence: number | null; direction_mode: string };
+    segments: {
+      way_id: number;
+      dir: string;
+      start_fraction: number;
+      end_fraction: number;
+      geometry: { type: string; coordinates: [number, number][] } | null;
+    }[];
+  }[];
+};
+
+describe("GET /segments/conditions.json", () => {
+  it("emits only bound, permissive, in-effect conditions", async () => {
+    await withApp(async (app) => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/segments/conditions.json?at=2026-09-06T10:00:00Z",
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.headers["cache-control"]).toBe("public, max-age=60");
+      expect(res.headers["x-data-license"]).toBe("CC0-1.0");
+
+      const body = res.json() as ConditionsBody;
+      expect(body.at).toBe("2026-09-06T10:00:00.000Z");
+      expect(body.resolver_version).toBe(RESOLVER_VERSION);
+      // a:sa dropped by the license filter, a:unb has no binding, a:unres has
+      // a non-routing binding status, a:future is not in effect until 12:00.
+      expect(body.conditions.map((c) => c.id)).toEqual(["a:1", "a:amb", "a:pt"]);
+    });
+  }, 30_000);
+
+  it("carries the bound span with its geometry cut in travel direction", async () => {
+    await withApp(async (app) => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/segments/conditions.json?at=2026-09-06T10:00:00Z",
+      });
+      const body = res.json() as ConditionsBody;
+      const closure = body.conditions.find((c) => c.id === "a:1")!;
+      expect(closure).toMatchObject({
+        source: "bind-test",
+        type: "road_closure",
+        road_state: "closed",
+        speed_limit_kph: null,
+        vehicles_affected: ["truck"],
+        origin_kind: "feed",
+        // The column defaults to false for feed rows; the emitter forces true.
+        routing_eligible: true,
+        valid_from: VALID_FROM,
+        valid_to: VALID_TO,
+        binding: { status: "exact", confidence: 0.96, direction_mode: "single" },
+      });
+      expect(closure.segments).toHaveLength(1);
+      const span = closure.segments[0]!;
+      expect(span.way_id).toBe(10);
+      expect(span.dir).toBe("f");
+      expect(span.start_fraction).toBe(SPAN_START);
+      expect(span.end_fraction).toBe(1);
+      expect(span.geometry!.type).toBe("LineString");
+      const coords = span.geometry!.coordinates;
+      expect(coords[0]![0]).toBeCloseTo(SPAN_START_LON, 6);
+      expect(coords[0]![1]).toBeCloseTo(51.2, 6);
+      expect(coords.at(-1)).toEqual([6.9, 51.2]);
+    });
+  }, 30_000);
+
+  it("emits a null geometry for a span whose segment is gone from the spine", async () => {
+    await withApp(async (app) => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/segments/conditions.json?at=2026-09-06T10:00:00Z",
+      });
+      const body = res.json() as ConditionsBody;
+      const amb = body.conditions.find((c) => c.id === "a:amb")!;
+      // Spans keep their `seq` order: the live one first, the vanished one second.
+      expect(amb.segments.map((s) => s.way_id)).toEqual([10, 999]);
+      expect(amb.segments[0]!.geometry).not.toBeNull();
+      expect(amb.segments[1]!.geometry).toBeNull();
+      expect(amb.binding).toEqual({
+        status: "ambiguous",
+        confidence: 0.4,
+        direction_mode: "single",
+      });
+    });
+  }, 30_000);
+
+  it("widens a zero-length span's geometry to a short line instead of a Point", async () => {
+    await withApp(async (app) => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/segments/conditions.json?at=2026-09-06T10:00:00Z",
+      });
+      const body = res.json() as ConditionsBody;
+      const point = body.conditions.find((c) => c.id === "a:pt")!;
+      const span = point.segments[0]!;
+      // The fractions stay equal -- only the emitted geometry widens.
+      expect(span.start_fraction).toBe(POINT_SPAN_FRACTION);
+      expect(span.end_fraction).toBe(POINT_SPAN_FRACTION);
+      expect(span.geometry!.type).toBe("LineString");
+      const coords = span.geometry!.coordinates;
+      expect(coords.length).toBeGreaterThanOrEqual(2);
+      // The cut runs POINT_SPAN_HALF_M either side of the fraction, so its
+      // extent is ~2x that. Measured along the parallel at lat 51.2.
+      const metresPerDegreeLon = 111_320 * Math.cos((51.2 * Math.PI) / 180);
+      const extentM = (coords.at(-1)![0] - coords[0]![0]) * metresPerDegreeLon;
+      expect(extentM).toBeGreaterThan(2 * POINT_SPAN_HALF_M - 2);
+      expect(extentM).toBeLessThan(2 * POINT_SPAN_HALF_M + 2);
+    });
+  }, 30_000);
+
+  it("drops a condition that passes the SQL predicates but is not yet in effect", async () => {
+    await withApp(async (app) => {
+      // a:future starts at 12:00 with valid_to at 18:00, so the SQL
+      // `valid_to > at` predicate keeps it at 10:00 -- only isInEffectAt can
+      // exclude it.
+      const early = await app.inject({
+        method: "GET",
+        url: "/segments/conditions.json?at=2026-09-06T10:00:00Z",
+      });
+      expect((early.json() as ConditionsBody).conditions.map((c) => c.id)).not.toContain(
+        "a:future"
+      );
+
+      const later = await app.inject({
+        method: "GET",
+        url: "/segments/conditions.json?at=2026-09-06T13:00:00Z",
+      });
+      expect((later.json() as ConditionsBody).conditions.map((c) => c.id)).toContain("a:future");
+    });
+  }, 30_000);
+
+  it("returns nothing once every condition's validity has passed", async () => {
+    await withApp(async (app) => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/segments/conditions.json?at=2026-09-06T20:00:00Z",
+      });
+      expect(res.statusCode).toBe(200);
+      expect((res.json() as ConditionsBody).conditions).toEqual([]);
+    });
+  }, 30_000);
+
+  it("rejects a malformed `at`", async () => {
+    await withApp(async (app) => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/segments/conditions.json?at=not-a-date",
+      });
+      expect(res.statusCode).toBe(400);
+    });
+  }, 30_000);
+});

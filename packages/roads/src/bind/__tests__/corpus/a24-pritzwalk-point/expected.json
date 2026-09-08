@@ -1,0 +1,12 @@
+{
+  "status": "ambiguous",
+  "directionMode": "unknown",
+  "segments": [
+    {
+      "segmentId": "22662168:f",
+      "startFraction": 0.87,
+      "endFraction": 0.87
+    }
+  ],
+  "why": "A24 congestion warning Pritzwalk - Meyenburg; Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, warning id INRIX--vi-zus.2026-09-06_18-37-43-000.de0, bound at the feed's own point/coordinate. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Subtitle 'Pritzwalk -> Schwerin' means north-westbound; checked the spine: 22662168 (highway=motorway, ref='A 24', oneway, 2 lanes) heads 321 deg at 0.0 m, while 22662172 at 12.7 m heads 140 deg and is the opposite carriageway; 22662089 at 5.0 m is a motorway_link with no ref. A point carries no heading, so the opposite A24 carriageway 22662172 at 12.7 m with the same ref is never dismissed and the carriageway stays undecided; the nearest way is still the correct north-westbound one."
+}

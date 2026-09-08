@@ -1,6 +1,12 @@
 import type { FeatureCollection, Feature, Geometry } from "geojson";
 import { dedupeAcrossSources } from "./crossSourceDedupe.js";
-import type { Observation, Provenance } from "./model.js";
+import type {
+  BindingStatus,
+  DirectionMode,
+  Observation,
+  Provenance,
+  SegmentSpan,
+} from "./model.js";
 import { severityRank } from "./severity.js";
 
 /**
@@ -50,6 +56,12 @@ export interface ObservationsByBboxOpts {
    * itself, so it must keep seeing future closures.
    */
   horizonDays?: number;
+  /**
+   * Join the derived graph binding (`binding`, `segments`) onto every row. Off
+   * by default: binding is optional, so a caller that does not ask for it gets
+   * the exact same query and the exact same output as before.
+   */
+  includeBindings?: boolean;
 }
 
 interface ObservationRow {
@@ -76,6 +88,11 @@ interface ObservationRow {
   confidence_score: number | null;
   privacy_class: string | null;
   fuzziness: string | null;
+  // Only selected when `includeBindings` is set; absent otherwise.
+  binding_status?: BindingStatus | null;
+  binding_confidence?: number | null;
+  binding_direction_mode?: DirectionMode | null;
+  segments?: SegmentSpan[] | null;
 }
 
 /**
@@ -143,6 +160,18 @@ function rowToFeature(row: ObservationRow, mergedSources?: Observation["mergedSo
       confidenceScore: row.confidence_score ?? undefined,
       privacyClass: row.privacy_class ?? undefined,
       fuzziness: row.fuzziness ?? undefined,
+      // Derived graph binding, present only when the caller asked for it. Only
+      // exact/likely are routing-relevant; ambiguous is published for map/QA.
+      ...(row.binding_status
+        ? {
+            binding: {
+              status: row.binding_status,
+              confidence: row.binding_confidence ?? undefined,
+              directionMode: row.binding_direction_mode ?? undefined,
+            },
+          }
+        : {}),
+      ...(row.segments && row.segments.length > 0 ? { segments: row.segments } : {}),
       ...(mergedSources && mergedSources.length > 0 ? { mergedSources } : {}),
     },
   };
@@ -160,6 +189,19 @@ const SEVERITY_RANK_SQL =
 // row as stale even though its source just polled successfully.
 const IS_STALE_SQL =
   "(ss.last_success_at IS NULL OR ss.last_success_at + make_interval(secs => ss.freshness_window_sec) < now())";
+
+// Optional binding projection (see `includeBindings`): the header row plus the
+// ordered segment path aggregated to one jsonb array, so a bound event costs a
+// single row. Spliced in only when asked, keeping the default query untouched.
+const BINDING_SELECT_SQL =
+  ", b.status AS binding_status, b.confidence AS binding_confidence, b.direction_mode AS binding_direction_mode, seg.segments AS segments";
+
+const BINDING_JOIN_SQL = `
+    LEFT JOIN conditions.observation_binding b ON b.observation_id = o.id
+    LEFT JOIN LATERAL (
+      SELECT jsonb_agg(jsonb_build_object('segmentId', s.segment_id, 'wayId', s.way_id, 'dir', s.dir,
+                       'startFraction', s.start_fraction, 'endFraction', s.end_fraction) ORDER BY s.seq) AS segments
+      FROM conditions.observation_segment s WHERE s.observation_id = o.id) seg ON true`;
 
 /**
  * Query active observations within a bounding box and return a GeoJSON FeatureCollection.
@@ -216,6 +258,9 @@ export async function observationsByBbox(
     );
   }
 
+  const bindingSelect = opts.includeBindings === true ? BINDING_SELECT_SQL : "";
+  const bindingJoin = opts.includeBindings === true ? BINDING_JOIN_SQL : "";
+
   const query = `
     SELECT
       o.id, o.source, o.domain, o.kind, o.type, o.severity,
@@ -224,9 +269,9 @@ export async function observationsByBbox(
       ST_AsGeoJSON(o.geom) AS geojson,
       o.origin,
       o.evidence_state, o.routing_eligible, o.confidence_score, o.privacy_class, o.fuzziness,
-      ${IS_STALE_SQL} AS is_stale
+      ${IS_STALE_SQL} AS is_stale${bindingSelect}
     FROM conditions.observations o
-    LEFT JOIN conditions.source_status ss ON ss.source = o.source
+    LEFT JOIN conditions.source_status ss ON ss.source = o.source${bindingJoin}
     WHERE ${clauses.join(" AND ")}
     ORDER BY ${SEVERITY_RANK_SQL} DESC
     LIMIT 2000`;

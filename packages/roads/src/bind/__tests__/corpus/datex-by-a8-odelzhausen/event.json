@@ -1,0 +1,13 @@
+{
+  "id": "de-by-mobilithek:2026-043109--vi-bs.2026-09-07_08-00-00-000.devi-zus.2026-08-25_07-00-00-000_012.de21",
+  "geometry": {
+    "type": "MultiPoint",
+    "coordinates": [
+      [11.266588482, 48.282266525],
+      [11.277748934, 48.277013633]
+    ]
+  },
+  "type": "roadworks",
+  "refs": ["A8"],
+  "direction": "Stuttgart -> München"
+}

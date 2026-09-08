@@ -1,0 +1,38 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "13850292:f",
+      "startFraction": 0.56,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "13850293:f"
+    },
+    {
+      "segmentId": "242340060:f"
+    },
+    {
+      "segmentId": "474210208:f"
+    },
+    {
+      "segmentId": "242340059:f"
+    },
+    {
+      "segmentId": "242340066:f"
+    },
+    {
+      "segmentId": "242340065:f"
+    },
+    {
+      "segmentId": "474210201:f"
+    },
+    {
+      "segmentId": "474210204:f",
+      "startFraction": 0,
+      "endFraction": 0.15
+    }
+  ],
+  "why": "DATEX II endpoint pair for an NRW A43 roadworks, carriageway Wuppertal -> Recklinghausen. Built as for the other DATEX cases from Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06 roadworks id 2023-004543--vi-bs.2026-07-02_19-00-00-000.devi-zus.2025-04-01_19-00-00-000.f_001.de17 (A43 | Auf der Heide - Witten-Heven) and parsed with parseDatexSituations. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Truth taken from the full 27-vertex Autobahn line, which lies 0.0 m on this chain of highway=motorway ref='A 43' oneway ways; the Witten-Heven slip roads (24433698 ref='L 924', 762944704, 131725936, 4237399) are only near the straight chord between the two endpoints, not the road itself."
+}

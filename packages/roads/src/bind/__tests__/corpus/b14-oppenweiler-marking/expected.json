@@ -1,0 +1,35 @@
+{
+  "status": "ambiguous",
+  "directionMode": "unknown",
+  "segments": [
+    {
+      "segmentId": "542062884:b",
+      "startFraction": 0.17,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "542062545:b"
+    },
+    {
+      "segmentId": "1017109579:b"
+    },
+    {
+      "segmentId": "1017109578:b"
+    },
+    {
+      "segmentId": "542062544:b"
+    },
+    {
+      "segmentId": "1502769226:b"
+    },
+    {
+      "segmentId": "146252404:b"
+    },
+    {
+      "segmentId": "542062267:b",
+      "startFraction": 0,
+      "endFraction": 0.38
+    }
+  ],
+  "why": "Bundesstrasse B14 marking works in the Ortsdurchfahrt Oppenweiler; MobiData BW DATEX II roadworks feed (https://api.mobidata-bw.de/datasets/traffic/roadworks/roadworks_svzbw.datex2.xml, public, no credential), situation de-bw:138798868-138798870-138798875-138798876, fetched 2026-09-06 and parsed with parseDatexSituations. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the Overpass tags for every way on the chain: highway=primary, ref='B 14', name='Hauptstrasse', NO oneway tag - so the spine carries both an ':f' and a ':b' segment per way. The feed models the two directions as separate records (the sibling record ...-gegen-sperrung covers the counter direction), so this record is one direction only: the ':b' side, which is the side the record's own geometry runs along (0.0-1.0 m offset, headings within 10 deg). The direction stays undecided because 542062883 - the next B14 way but one along the same Hauptstrasse - is 3.1 m away with the same ref and is not node-adjacent to the way chosen at that sample, so it is not dismissed."
+}

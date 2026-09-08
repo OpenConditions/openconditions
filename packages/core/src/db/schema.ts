@@ -380,6 +380,56 @@ export const sensorSegment = conditionsSchema.table(
 );
 
 /**
+ * One row per event the resolver attempted. `status` records the outcome for
+ * every attempt (including non-bound ones) so per-source quality is measurable.
+ * Cascades with the observation; `geom_hash` lets an unchanged event skip
+ * rebinding when only its text changed.
+ */
+export const observationBinding = conditionsSchema.table(
+  "observation_binding",
+  {
+    observationId: text("observation_id")
+      .primaryKey()
+      .references(() => observations.id, { onDelete: "cascade" }),
+    status: text("status").notNull(),
+    confidence: doublePrecision("confidence"),
+    directionMode: text("direction_mode").notNull().default("single"),
+    candidateCount: integer("candidate_count").notNull().default(0),
+    alternativeConfidence: doublePrecision("alternative_confidence"),
+    reason: text("reason"),
+    resolverVersion: text("resolver_version").notNull(),
+    geomHash: text("geom_hash").notNull(),
+    boundAt: timestamp("bound_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [index("idx_observation_binding_status").on(t.status)]
+);
+
+/**
+ * Ordered path rows of a bound event. Deliberately NO foreign key to
+ * `road_segment`: the weekly rebuild deletes and reinserts a region's segments
+ * inside one transaction (ids stay stable), and a cascade would wipe every
+ * binding each week. The rebuild re-binds and prunes orphans itself.
+ */
+export const observationSegment = conditionsSchema.table(
+  "observation_segment",
+  {
+    observationId: text("observation_id")
+      .notNull()
+      .references(() => observations.id, { onDelete: "cascade" }),
+    seq: smallint("seq").notNull(),
+    segmentId: text("segment_id").notNull(),
+    wayId: bigint("way_id", { mode: "number" }).notNull(),
+    dir: text("dir").notNull(),
+    startFraction: doublePrecision("start_fraction").notNull(),
+    endFraction: doublePrecision("end_fraction").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.observationId, t.seq] }),
+    index("idx_observation_segment_segment").on(t.segmentId),
+  ]
+);
+
+/**
  * The multi-source/crowd/federation fusion seam: one row per (segment,
  * source), each source free to report on its own tier and cadence. A
  * `sensor` source is the freshest flow reading bound via `sensor_segment`;

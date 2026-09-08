@@ -1,0 +1,10 @@
+{
+  "id": "de-autobahn:NLW_2026_002931--vi-zus.2026-09-06_20-12-00-284.de0",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [8.732881262862971, 50.485835073637304]
+  },
+  "type": "hazard",
+  "refs": ["A5"],
+  "direction": "Frankfurt -> Kassel"
+}

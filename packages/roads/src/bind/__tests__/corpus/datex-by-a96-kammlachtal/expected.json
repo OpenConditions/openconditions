@@ -1,0 +1,38 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "294223134:f",
+      "startFraction": 0.84,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "294223127:f"
+    },
+    {
+      "segmentId": "294223123:f"
+    },
+    {
+      "segmentId": "294223116:f"
+    },
+    {
+      "segmentId": "40121120:f"
+    },
+    {
+      "segmentId": "40121121:f"
+    },
+    {
+      "segmentId": "993667466:f"
+    },
+    {
+      "segmentId": "993667465:f"
+    },
+    {
+      "segmentId": "294223113:f",
+      "startFraction": 0,
+      "endFraction": 0.43
+    }
+  ],
+  "why": "DATEX II endpoint pair for a Bayern A96 roadworks, carriageway Lindau -> Munchen (eastbound). Mobilithek Bayern needs a certificate that is not available here, so the record was rebuilt as a DATEX II SituationPublication over the real endpoints of Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06 roadworks id 2025-060252--vi-bs.2026-07-11_05-30-00-000.devi-zus.2026-05-04_20-00-00-000_001.de5 (A96 | Kammlachtal - Mindelheim) and parsed with parseDatexSituations. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Truth taken from the full 25-vertex Autobahn line, which lies 0.0 m on this chain of highway=motorway ref='A 96' oneway ways."
+}

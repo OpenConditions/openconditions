@@ -1,0 +1,12 @@
+{
+  "status": "ambiguous",
+  "directionMode": "unknown",
+  "segments": [
+    {
+      "segmentId": "146824333:f",
+      "startFraction": 0.43,
+      "endFraction": 0.43
+    }
+  ],
+  "why": "A4 hazard warning (Bruckenschaden) between Kirchheimer Dreieck and Bad Hersfeld; Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, warning id NLNW_2026_002263--vi-hind.2026-09-06_20-56-00-544.de0, bound at the feed's own point/coordinate. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Subtitle 'Kirchheimer Dreieck -> Erfurt' means eastbound; checked the spine: 146824333 (highway=motorway, ref='A 4', oneway, 3 lanes) heads 95 deg at the point and lies 3.1 m away, while 146536558 heads 275 deg at 13.0 m and is the westbound carriageway. Eastbound is therefore way 146824333. A point carries no heading, so the westbound way 146536558 at 13.0 m with the same ref='A 4' is never dismissed and the carriageway stays undecided; the nearest way is still the correct eastbound one."
+}

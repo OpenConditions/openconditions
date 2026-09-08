@@ -1,4 +1,5 @@
 import type { Observation } from "@openconditions/core";
+import { isInEffectAt } from "@openconditions/core";
 import type { Geometry } from "geojson";
 
 /**
@@ -33,10 +34,11 @@ export interface ValhallaExclusionOptions {
    */
   maxTotalPoints?: number;
   /**
-   * Wall-clock instant the feed is "active at": events whose `validFrom` is
-   * in the future relative to this are not yet in effect and are excluded, so
-   * planned-but-not-started closures don't block routing early. Default the
-   * current time — pass an explicit value for deterministic tests/replays.
+   * Wall-clock instant the feed is "active at": only events in effect at this
+   * instant contribute, so planned-but-not-started closures don't block routing
+   * early and a recurring closure only blocks inside one of its schedule's
+   * occurrences. Default the current time — pass an explicit value for
+   * deterministic tests/replays.
    */
   activeAt?: Date;
 }
@@ -75,19 +77,11 @@ function isExcludable(o: Observation, activeAt: Date): boolean {
   if (!routable) return false;
   const e = o as Observation & { severity?: string };
   if (!(isClosureType(o) || e.severity === "critical")) return false;
-  const t = activeAt.getTime();
-  if (o.validFrom != null) {
-    const from = Date.parse(o.validFrom);
-    if (!Number.isNaN(from) && t < from) return false; // not yet in effect
-  }
   // Belt-and-suspenders: readObservations already filters `valid_to > now()`
   // upstream, but a route-local check is cheap and keeps this projection
-  // correct even if called with pre-filtered or stale data.
-  if (o.validTo != null) {
-    const to = Date.parse(o.validTo);
-    if (!Number.isNaN(to) && t > to) return false; // already ended
-  }
-  return true;
+  // correct even if called with pre-filtered or stale data. A recurring
+  // closure only blocks routing inside one of its schedule's occurrences.
+  return isInEffectAt(o, activeAt);
 }
 
 function haversineMeters(a: [number, number], b: [number, number]): number {

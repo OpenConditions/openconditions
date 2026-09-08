@@ -1,0 +1,13 @@
+{
+  "id": "de-by-mobilithek:2025-060252--vi-bs.2026-07-11_05-30-00-000.devi-zus.2026-05-04_20-00-00-000_001.de5",
+  "geometry": {
+    "type": "MultiPoint",
+    "coordinates": [
+      [10.436859266, 48.032854122],
+      [10.469084079, 48.027050939]
+    ]
+  },
+  "type": "roadworks",
+  "refs": ["A96"],
+  "direction": "Lindau -> München"
+}

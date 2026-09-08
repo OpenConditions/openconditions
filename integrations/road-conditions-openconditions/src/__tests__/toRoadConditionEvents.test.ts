@@ -240,6 +240,52 @@ describe("featureCollectionToRoadConditionEvents", () => {
     expect(out[0]?.routingEligible).toBeUndefined();
   });
 
+  it("maps the graph binding, its segments and the affected vehicle classes", () => {
+    const out = featureCollectionToRoadConditionEvents({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: [
+              [5, 52],
+              [5.01, 52],
+            ],
+          },
+          properties: {
+            id: "ndw:3",
+            type: "road_closure",
+            binding: { status: "exact", confidence: 0.95, directionMode: "single" },
+            segments: [
+              { segmentId: "10:f", wayId: 10, dir: "f", startFraction: 0.2, endFraction: 1 },
+            ],
+            attributes: { vehiclesAffected: ["truck"] },
+          },
+        },
+      ],
+    } as unknown as FeatureCollection);
+    expect(out[0]?.binding).toEqual({ status: "exact", confidence: 0.95, directionMode: "single" });
+    expect(out[0]?.segments).toEqual([{ wayId: 10, dir: "f", startFraction: 0.2, endFraction: 1 }]);
+    expect(out[0]?.vehiclesAffected).toEqual(["truck"]);
+  });
+
+  it("leaves binding, segments and vehiclesAffected undefined when absent", () => {
+    const out = featureCollectionToRoadConditionEvents({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          geometry: { type: "Point", coordinates: [1, 1] },
+          properties: { id: "x", type: "road_closure" },
+        },
+      ],
+    } as unknown as FeatureCollection);
+    expect(out[0]?.binding).toBeUndefined();
+    expect(out[0]?.segments).toBeUndefined();
+    expect(out[0]?.vehiclesAffected).toBeUndefined();
+  });
+
   it("defaults type/severity when absent", () => {
     const out = featureCollectionToRoadConditionEvents({
       type: "FeatureCollection",

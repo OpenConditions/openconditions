@@ -219,6 +219,22 @@ describe("eventsToExclusions", () => {
     expect(ex.exclude_locations).toEqual([{ lon: 4.9, lat: 52.37 }]);
   });
 
+  it("does not exclude a closure outside its nightly schedule window", () => {
+    const ex = eventsToExclusions(
+      [
+        roadEvent({
+          type: "road_closure",
+          geometry: { type: "Point", coordinates: [13.4, 52.5] },
+          validFrom: "2026-09-01T00:00:00Z",
+          validTo: "2026-09-30T00:00:00Z",
+          schedule: [{ startTime: "20:00", duration: "PT9H", scheduleTimezone: "Europe/Berlin" }],
+        }),
+      ],
+      { activeAt: new Date("2026-09-08T10:00:00Z") }
+    );
+    expect(ex.exclude_locations).toEqual([]);
+  });
+
   it("does NOT exclude a self-reported crowd closure that is not routing-eligible", () => {
     const crowd = roadEvent({
       type: "road_closure",

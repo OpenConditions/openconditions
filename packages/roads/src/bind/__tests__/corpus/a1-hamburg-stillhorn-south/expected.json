@@ -1,0 +1,35 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "190594199:f",
+      "startFraction": 0.71,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "190594198:f"
+    },
+    {
+      "segmentId": "23555564:f"
+    },
+    {
+      "segmentId": "152832959:f"
+    },
+    {
+      "segmentId": "221671478:f"
+    },
+    {
+      "segmentId": "500853730:f"
+    },
+    {
+      "segmentId": "500853729:f"
+    },
+    {
+      "segmentId": "221671479:f",
+      "startFraction": 0,
+      "endFraction": 0.68
+    }
+  ],
+  "why": "A1 full closure Hamburg-Stillhorn -> Hamburg-Harburg, carriageway Hamburg -> Bremen (southbound); Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, closure id 2024-061546--vi-fbm.2026-09-18_22-00-00-000.devi-zus.2026-04-20_22-00-00-000.de5. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the Overpass tags (highway=motorway, ref='A 1', oneway) for the eight ways; the line lies 0.0 m on them and the northbound carriageway is a disjoint set of ways."
+}

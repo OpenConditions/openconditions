@@ -1,0 +1,18 @@
+{
+  "status": "likely",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "26279000:f",
+      "startFraction": 0.4,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "292732594:f",
+      "startFraction": 0,
+      "endFraction": 0.26
+    }
+  ],
+  "why": "Junction case: the on-ramp from AS Burscheid onto the A1 'aus Richtung Leverkusen' is closed; Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, closure id 2026-014896--vi-fbm.2026-09-04_20-00-00-000.devi-zus.2026-03-27_21-00-00-000_002.de11. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the Overpass tags and the frozen node geometry: 26279000 is a 1-lane highway=motorway_link with destination:ref='A 1'; it ENDS at node 7.1332191,51.0862225, where 292732594 (highway=motorway, ref='A 1', 4 lanes) starts, so the ramp merges straight into 292732594. Way 292732592 (highway=motorway, ref='A 1', 3 lanes, destination='Dortmund;Wermelskirchen') also ENDS at that node - it is the mainline running alongside the ramp BEFORE the merge and is not closed, so it must not appear in the binding.",
+  "knownResolverBug": "The 0.2-weight ref term lets the A1-refed mainline way 292732592 (6.8 m away, not closed) outscore the refless on-ramp the event line actually runs on, so it is added to the path."
+}

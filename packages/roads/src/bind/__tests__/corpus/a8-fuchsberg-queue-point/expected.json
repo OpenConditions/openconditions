@@ -1,0 +1,12 @@
+{
+  "status": "ambiguous",
+  "directionMode": "unknown",
+  "segments": [
+    {
+      "segmentId": "143575534:f",
+      "startFraction": 0.98,
+      "endFraction": 0.98
+    }
+  ],
+  "why": "A8 congestion warning Fuchsberg - Odelzhausen; Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, warning id INRIX--vi-avl.2026-09-06_20-19-00-000_003.de0, bound at the feed's own point/coordinate. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Subtitle 'Munchen -> Stuttgart' means westbound; checked the spine: 143575534 (highway=motorway, ref='A 8', oneway, 3 lanes) heads 305 deg and lies 0.0 m from the point, while 280421286 at 16.0 m heads 125 deg and is the eastbound carriageway. A point carries no heading, so the eastbound A8 way 280421286 at 16.0 m with the same ref is never dismissed and the carriageway stays undecided; the nearest way is still the correct westbound one."
+}

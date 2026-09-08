@@ -1,0 +1,13 @@
+{
+  "id": "de-nw-verkehr:2025-026656--vi-bs.2026-08-24_00-00-00-000.devi-zus.2025-06-12_00-00-00-000.de33",
+  "geometry": {
+    "type": "MultiPoint",
+    "coordinates": [
+      [7.085571382, 51.399744917],
+      [7.074799215, 51.40824759]
+    ]
+  },
+  "type": "roadworks",
+  "refs": ["A44"],
+  "direction": "Düsseldorf -> Essen"
+}

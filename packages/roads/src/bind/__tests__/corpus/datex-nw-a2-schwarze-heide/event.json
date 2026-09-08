@@ -1,0 +1,13 @@
+{
+  "id": "de-nw-verkehr:2026-042188--vi-fbm.2026-09-09_05-00-00-000.de0",
+  "geometry": {
+    "type": "MultiPoint",
+    "coordinates": [
+      [6.85367806, 51.538778329],
+      [6.884761582, 51.540346419]
+    ]
+  },
+  "type": "roadworks",
+  "refs": ["A2"],
+  "direction": "Oberhausen -> Dortmund"
+}

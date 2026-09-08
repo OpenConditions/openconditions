@@ -2,6 +2,7 @@ import { rm } from "node:fs/promises";
 import { downloadLargeArtifact } from "@openconditions/ingest-framework";
 import { type OsmWay, parseOverpassWays } from "@openconditions/roads";
 import type postgres from "postgres";
+import { loadHighwayClasses, overpassHighwayRegex } from "./highway-classes.js";
 import { pbfToWays } from "./osmium.js";
 
 type Sql = postgres.Sql;
@@ -122,9 +123,6 @@ export function overpassUrl(env: NodeJS.ProcessEnv = process.env): string {
   return raw != null && raw !== "" ? normalizeOverpassUrl(raw) : DEFAULT_OVERPASS_URL;
 }
 
-const HIGHWAY_FILTER =
-  '["highway"~"^(motorway|trunk|motorway_link|trunk_link|primary|primary_link)$"]';
-
 // Distinct from osm-maxspeed.ts's per-sensor `around()` lookups, so
 // overpass-api.de's operators can tell the two access patterns apart.
 const USER_AGENT =
@@ -132,7 +130,8 @@ const USER_AGENT =
 
 function overpassQuery(region: OsmRegion): string {
   const [w, s, e, n] = region.bbox;
-  return `[out:json][timeout:300];way${HIGHWAY_FILTER}(${s},${w},${n},${e});out geom;`;
+  const highwayFilter = `["highway"~"${overpassHighwayRegex(loadHighwayClasses())}"]`;
+  return `[out:json][timeout:300];way${highwayFilter}(${s},${w},${n},${e});out geom;`;
 }
 
 /**

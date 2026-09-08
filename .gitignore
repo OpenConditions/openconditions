@@ -33,8 +33,10 @@ coverage/
 fixtures/**/*.gz
 
 # Local planning docs — kept on disk, NOT committed (mirrors OpenMapX convention)
+docs/superpowers/
 docs/plans/
 plans/
+.superpowers/
 
 # Python virtualenvs and caches (the openlr-resolver service is Python)
 .venv/

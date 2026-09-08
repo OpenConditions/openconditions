@@ -250,6 +250,8 @@ export function toRow(obs: Observation) {
 export interface UpsertCounts {
   inserted: number;
   updated: number;
+  /** Ids the batch actually wrote — a new or genuinely changed row, never an unchanged one. */
+  ids: string[];
 }
 
 /**
@@ -265,17 +267,19 @@ export interface UpsertCounts {
  * `fetched_at`/`stale_after` keep their prior values) — only a row that is new
  * or genuinely changed gets rewritten, which is what makes it safe to derive
  * per-row freshness from `stale_after` no longer (see source_status) while
- * still refreshing it for rows that really were re-observed. `RETURNING
+ * still refreshing it for rows that really were re-observed. `RETURNING id,
  * (xmax = 0) AS inserted` distinguishes a fresh INSERT from an UPDATE so the
  * caller gets honest per-batch counts; a row skipped by the WHERE clause
- * (unchanged) returns nothing and counts as neither.
+ * (unchanged) returns nothing and counts as neither. The returned ids are the
+ * exact set of rows this batch changed, which is what downstream derived
+ * stages (graph binding) re-derive instead of rescanning the whole source.
  */
 export async function upsertRows(
   tx: TransactionSql,
   batch: Observation[],
   freshnessWindowSec?: number
 ): Promise<UpsertCounts> {
-  if (batch.length === 0) return { inserted: 0, updated: 0 };
+  if (batch.length === 0) return { inserted: 0, updated: 0, ids: [] };
 
   const rows = batch.map((obs) => {
     const r = toRow(obs);
@@ -288,7 +292,7 @@ export async function upsertRows(
     return { ...r, stale_after: staleAfter };
   });
 
-  const touched = await tx<{ inserted: boolean }[]>`
+  const touched = await tx<{ id: string; inserted: boolean }[]>`
     INSERT INTO conditions.observations (
       id, source, source_format, domain, kind,
       type, subtype, category, severity, severity_source,
@@ -390,7 +394,7 @@ export async function upsertRows(
       source_uri = excluded.source_uri,
       source_license = excluded.source_license
     WHERE conditions.observations.content_hash IS DISTINCT FROM excluded.content_hash
-    RETURNING (xmax = 0) AS inserted
+    RETURNING id, (xmax = 0) AS inserted
   `;
 
   let inserted = 0;
@@ -399,7 +403,7 @@ export async function upsertRows(
     if (row.inserted) inserted++;
     else updated++;
   }
-  return { inserted, updated };
+  return { inserted, updated, ids: touched.map((r) => r.id) };
 }
 
 /** Hard ceiling on rows written for a single source per swap. */
@@ -420,6 +424,11 @@ export interface SwapCounts {
   inserted: number;
   updated: number;
   deleted: number;
+  /**
+   * Ids inserted or updated by this swap. Feeds the derived stages that run
+   * after the transaction commits, so they only revisit rows that moved.
+   */
+  changedIds: string[];
 }
 
 /**
@@ -470,10 +479,12 @@ export async function atomicSwap(
 
     let inserted = 0;
     let updated = 0;
+    const changedIds: string[] = [];
     for (const batch of chunk(capped, CHUNK_SIZE)) {
       const counts = await upsertRows(tx, batch, freshnessWindowSec);
       inserted += counts.inserted;
       updated += counts.updated;
+      changedIds.push(...counts.ids);
     }
 
     // Delete-missing: rows for this source that are no longer in the fresh
@@ -505,6 +516,6 @@ export async function atomicSwap(
       });
     }
 
-    return { inserted, updated, deleted: removed.length };
+    return { inserted, updated, deleted: removed.length, changedIds };
   });
 }

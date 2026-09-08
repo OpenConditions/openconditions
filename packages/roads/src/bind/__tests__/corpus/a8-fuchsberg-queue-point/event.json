@@ -1,0 +1,10 @@
+{
+  "id": "de-autobahn:INRIX--vi-avl.2026-09-06_20-19-00-000_003.de0",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [11.271712692236429, 48.28004136409989]
+  },
+  "type": "congestion",
+  "refs": ["A8"],
+  "direction": "München -> Stuttgart"
+}

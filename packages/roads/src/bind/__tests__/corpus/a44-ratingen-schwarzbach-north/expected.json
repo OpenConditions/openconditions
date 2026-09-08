@@ -1,0 +1,23 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "283605825:f",
+      "startFraction": 0.85,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "283605826:f"
+    },
+    {
+      "segmentId": "289379448:f"
+    },
+    {
+      "segmentId": "35548673:f",
+      "startFraction": 0,
+      "endFraction": 0.98
+    }
+  ],
+  "why": "A44 full closure Ratingen-Schwarzbach -> Ratingen-Ost, carriageway Dusseldorf -> Essen (north-eastbound); Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, closure id 2026-035330--vi-fbm.2026-09-08_20-00-00-000.devi-zus.2026-07-21_20-00-00-000_001.de36. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the Overpass tags (highway=motorway, ref='A 44', oneway) and that the line lies 0.0 m on this chain; the Essen -> Dusseldorf carriageway is a separate set of ways ~14 m away with the opposite heading."
+}

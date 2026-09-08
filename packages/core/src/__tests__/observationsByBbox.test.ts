@@ -463,6 +463,51 @@ describe("observationsByBbox", () => {
       /NOT \(o\.origin->>'kind' = 'crowd' AND COALESCE\(o\.routing_eligible, false\) IS NOT TRUE\)/
     );
   });
+
+  it("attaches binding and segments when includeBindings is set", async () => {
+    let capturedQuery = "";
+    const boundRow = {
+      ...fakeRow,
+      binding_status: "exact",
+      binding_confidence: 0.95,
+      binding_direction_mode: "single",
+      segments: [{ segmentId: "10:f", wayId: 10, dir: "f", startFraction: 0.2, endFraction: 1 }],
+    };
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        return [boundRow] as T;
+      },
+    };
+    const fc = await observationsByBbox(db, {
+      domain: "roads",
+      bbox: [0, 0, 1, 1],
+      includeBindings: true,
+    });
+    expect(fc.features[0]!.properties?.binding).toEqual({
+      status: "exact",
+      confidence: 0.95,
+      directionMode: "single",
+    });
+    expect(fc.features[0]!.properties?.segments).toEqual([
+      { segmentId: "10:f", wayId: 10, dir: "f", startFraction: 0.2, endFraction: 1 },
+    ]);
+    expect(capturedQuery).toContain("observation_binding");
+  });
+
+  it("does not join bindings by default", async () => {
+    let capturedQuery = "";
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, _p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        return [fakeRow] as T;
+      },
+    };
+    const fc = await observationsByBbox(db, { domain: "roads", bbox: [0, 0, 1, 1] });
+    expect(capturedQuery).not.toContain("observation_binding");
+    expect(fc.features[0]!.properties?.binding).toBeUndefined();
+    expect(fc.features[0]!.properties?.segments).toBeUndefined();
+  });
 });
 
 describe("severityRank", () => {

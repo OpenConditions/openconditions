@@ -1,0 +1,41 @@
+{
+  "status": "exact",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "43852161:f",
+      "startFraction": 0.85,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "579977278:f"
+    },
+    {
+      "segmentId": "24621303:f"
+    },
+    {
+      "segmentId": "24650419:f"
+    },
+    {
+      "segmentId": "470695103:f"
+    },
+    {
+      "segmentId": "121613145:f"
+    },
+    {
+      "segmentId": "579977276:f"
+    },
+    {
+      "segmentId": "121613153:f"
+    },
+    {
+      "segmentId": "9345765:f"
+    },
+    {
+      "segmentId": "121613131:f",
+      "startFraction": 0,
+      "endFraction": 0.57
+    }
+  ],
+  "why": "DATEX II endpoint pair for an NRW A44 roadworks, carriageway Dusseldorf -> Essen. Built as for the other DATEX cases from Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06 roadworks id 2025-026656--vi-bs.2026-08-24_00-00-00-000.devi-zus.2025-06-12_00-00-00-000.de33 (A44 | Essen-Kupferdreh - Essen-Heisingen) and parsed with parseDatexSituations. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Truth taken from the full 30-vertex Autobahn line, which lies 0.0 m on this chain of highway=motorway ref='A 44' oneway ways; the link ways 579979146/121613132 are only brushed at their gore tips and are not part of the works."
+}

@@ -1,6 +1,14 @@
 import type { Geometry } from "geojson";
 import { dedupeAcrossSources } from "./crossSourceDedupe.js";
-import type { ConditionEvent, Measurement, Observation, Provenance } from "./model.js";
+import type {
+  BindingStatus,
+  ConditionEvent,
+  DirectionMode,
+  Measurement,
+  Observation,
+  Provenance,
+  SegmentSpan,
+} from "./model.js";
 import type { ObservationsByBboxOpts, QueryRunner } from "./observationsByBbox.js";
 import { severityRank } from "./severity.js";
 
@@ -11,6 +19,19 @@ const SEVERITY_RANK_SQL =
 // join rather than the row's own stale_after/fetched_at.
 const IS_STALE_SQL =
   "(ss.last_success_at IS NULL OR ss.last_success_at + make_interval(secs => ss.freshness_window_sec) < now())";
+
+// Optional binding projection, mirroring observationsByBbox's (kept per-file
+// like the SQL fragments above, since neither is part of the package surface).
+// Spliced in only for `includeBindings`, so the default query is unchanged.
+const BINDING_SELECT_SQL =
+  ", b.status AS binding_status, b.confidence AS binding_confidence, b.direction_mode AS binding_direction_mode, seg.segments AS segments";
+
+const BINDING_JOIN_SQL = `
+    LEFT JOIN conditions.observation_binding b ON b.observation_id = o.id
+    LEFT JOIN LATERAL (
+      SELECT jsonb_agg(jsonb_build_object('segmentId', s.segment_id, 'wayId', s.way_id, 'dir', s.dir,
+                       'startFraction', s.start_fraction, 'endFraction', s.end_fraction) ORDER BY s.seq) AS segments
+      FROM conditions.observation_segment s WHERE s.observation_id = o.id) seg ON true`;
 
 /** A `conditions.observations` row as selected by {@link readObservations};
  *  exported (with {@link rowToObservation}) so other readers of the same row
@@ -54,6 +75,11 @@ export interface ObservationRow {
   is_stale: boolean;
   evidence_state: string | null;
   routing_eligible: boolean | null;
+  // Only selected when `includeBindings` is set; absent otherwise.
+  binding_status?: BindingStatus | null;
+  binding_confidence?: number | null;
+  binding_direction_mode?: DirectionMode | null;
+  segments?: SegmentSpan[] | null;
 }
 
 /** Coerce a DB timestamp (Date from postgres-js, or string) to an ISO string. */
@@ -98,6 +124,18 @@ export function rowToObservation(row: ObservationRow): Observation {
           routingEligible: row.routing_eligible ?? false,
         }
       : {}),
+    // Derived graph binding, present only when the read asked for it (the
+    // columns are absent from the default query, so this never fires there).
+    ...(row.binding_status
+      ? {
+          binding: {
+            status: row.binding_status,
+            ...(row.binding_confidence != null ? { confidence: row.binding_confidence } : {}),
+            ...(row.binding_direction_mode ? { directionMode: row.binding_direction_mode } : {}),
+          },
+        }
+      : {}),
+    ...(row.segments && row.segments.length > 0 ? { segments: row.segments } : {}),
   };
   const specific =
     row.kind === "measurement"
@@ -171,6 +209,9 @@ export async function readObservations(
     );
   }
 
+  const bindingSelect = opts.includeBindings === true ? BINDING_SELECT_SQL : "";
+  const bindingJoin = opts.includeBindings === true ? BINDING_JOIN_SQL : "";
+
   const query = `
     SELECT
       o.id, o.source, o.source_format, o.domain, o.kind, o.type, o.subtype, o.category,
@@ -181,9 +222,9 @@ export async function readObservations(
       o.attributes, o.subject, o.informed, o.origin,
       o.evidence_state, o.routing_eligible,
       ST_AsGeoJSON(o.geom) AS geojson,
-      ${IS_STALE_SQL} AS is_stale
+      ${IS_STALE_SQL} AS is_stale${bindingSelect}
     FROM conditions.observations o
-    LEFT JOIN conditions.source_status ss ON ss.source = o.source
+    LEFT JOIN conditions.source_status ss ON ss.source = o.source${bindingJoin}
     WHERE ${clauses.join(" AND ")}
     ORDER BY ${SEVERITY_RANK_SQL} DESC
     LIMIT 2000`;

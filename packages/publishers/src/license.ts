@@ -20,6 +20,16 @@ export function isShareAlikeLicense(license: string | undefined): boolean {
 }
 
 /**
+ * The permissive-export predicate as a plain license check, for emitters that
+ * work off raw SQL rows rather than whole `Observation`s. An absent license is
+ * permissive here for the same reason it is in `filterForPermissiveExport`:
+ * an undeclared license means the feed's own terms apply, not copyleft.
+ */
+export function isPermissiveLicense(license: string | null | undefined): boolean {
+  return !isShareAlikeLicense(license ?? undefined);
+}
+
+/**
  * Removes the crowd reporter block from an observation's origin, leaving only
  * `{ kind, attribution }`. The reporter's pseudonymous `keyId` (an RFC 7638
  * thumbprint), signature, and reputation are identity-bearing and must never
@@ -58,12 +68,12 @@ function stripReporter(o: Observation): Observation {
  * object intact.
  */
 export function filterForPermissiveExport(obs: Observation[]): Observation[] {
-  const kept = obs.filter((o) => !isShareAlikeLicense(recordLicense(o)));
+  const kept = obs.filter((o) => isPermissiveLicense(recordLicense(o)));
   return kept.map((o) => {
     const stripped = stripReporter(o);
     const merged = stripped.mergedSources;
     if (!merged || merged.length === 0) return stripped;
-    const clean = merged.filter((m) => !isShareAlikeLicense(m.attribution.license));
+    const clean = merged.filter((m) => isPermissiveLicense(m.attribution.license));
     if (clean.length === merged.length) return stripped;
     return { ...stripped, mergedSources: clean };
   });

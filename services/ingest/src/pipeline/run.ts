@@ -23,6 +23,7 @@ import { resolveOpenLr } from "./resolve.js";
 import { loadSiteTable } from "./site-table.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
 import { loadStationRegistry } from "./station-registry.js";
+import { bindObservations } from "./bind-observations.js";
 import { atomicSwap } from "./write-postgis.js";
 import { loadBaselineMap, writeSpeedSamples } from "./baseline-store.js";
 import { getLastRowCount, upsertSourceStatus } from "./source-status.js";
@@ -419,6 +420,30 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       await writeSpeedSamples(deps.sql, src.id, toWrite, deps.now, src.cadenceSec);
     } catch (err) {
       console.warn(`[ingest] ${src.id}: speed-sample write failed:`, err);
+    }
+  }
+
+  if (src.produces !== "flow" && swapCounts.changedIds.length > 0) {
+    // Graph binding is derived and best-effort: it runs after the swap has
+    // committed so a slow resolve never holds the advisory lock, and a
+    // failure here never fails the poll.
+    try {
+      const bound = await bindObservations(deps.sql, swapCounts.changedIds, { now: deps.now });
+      if (bound.attempted > 0 || bound.cleared > 0) {
+        console.info(
+          `[ingest] ${src.id}: bound ${bound.bound}/${bound.attempted} events ` +
+            `(cleared ${bound.cleared}, write errors ${bound.writeErrors}) ` +
+            JSON.stringify(bound.byStatus)
+        );
+      }
+      if (bound.writeErrors > 0) {
+        console.warn(
+          `[ingest] ${src.id}: ${bound.writeErrors} binding writes failed; ` +
+            `those events keep their previous binding until the next pass`
+        );
+      }
+    } catch (err) {
+      console.warn(`[ingest] ${src.id}: graph binding failed:`, err);
     }
   }
 

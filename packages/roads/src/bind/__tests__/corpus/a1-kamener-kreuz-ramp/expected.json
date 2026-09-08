@@ -1,0 +1,12 @@
+{
+  "status": "ambiguous",
+  "directionMode": "unknown",
+  "segments": [
+    {
+      "segmentId": "4732022:f",
+      "startFraction": 0.06,
+      "endFraction": 0.85
+    }
+  ],
+  "why": "Junction case: works clearing an accident on a ramp of AK Kamener Kreuz, 'aus Richtung Kamen/Bergkamen'; Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn), fetched 2026-09-06, roadworks id 2026-044880--vi-bs.2026-09-07_20-00-00-000.devi-bs.2026-09-07_20-00-00-000_001.de3. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the Overpass tags: 4732022 is highway=motorway_link, 2 lanes, destination='Hannover;Bielefeld' (destination:ref='A 2'), and the 452 m event line lies 0.0 m along it. The parallel ramp 8451304 3.7 m away is the 1-lane link to 'Oberhausen' (the other A2 direction) and is a different ramp; the A1 mainline 91388384 is 20.6 m away. Only 4732022 carries the works. Both ramps are refless, so neither can dismiss the other and the direction stays undecided; the ways themselves are still unambiguous."
+}

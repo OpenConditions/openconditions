@@ -176,6 +176,13 @@
       "when": 1784284590315,
       "tag": "0024_sensor_speed_hourly_rollup",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1788710067631,
+      "tag": "0025_observation_binding",
+      "breakpoints": true
     }
   ]
 }

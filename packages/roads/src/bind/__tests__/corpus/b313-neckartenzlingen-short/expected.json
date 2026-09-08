@@ -1,0 +1,17 @@
+{
+  "status": "likely",
+  "directionMode": "both",
+  "segments": [
+    {
+      "segmentId": "747125003:f",
+      "startFraction": 0.19,
+      "endFraction": 0.81
+    },
+    {
+      "segmentId": "747125003:b",
+      "startFraction": 0.19,
+      "endFraction": 0.81
+    }
+  ],
+  "why": "Sub-20 m Bundesstrasse case: an 11 m B313 rebuild line at a junction near Neckartenzlingen; MobiData BW DATEX II roadworks feed (public, no credential), situation de-bw:134722978-134722980-134722983-134723304, fetched 2026-09-06, parsed with parseDatexSituations. spine frozen from Overpass on 2026-09-06 via bind:spine (motorway/trunk/primary + links, directed f/b as segment-build.ts builds them). Checked the spine: 747125003 is highway=primary ref='B 313' and bidirectional, 0.3-0.7 m from the line, so both directions are occupied. Status is 'likely' rather than 'exact' because two further B313 ways (747125002 and 31718062) start only 3.4 m away at the same junction, so the exact way is not settled by geometry alone."
+}

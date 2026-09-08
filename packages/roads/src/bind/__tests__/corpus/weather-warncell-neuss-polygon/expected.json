@@ -1,0 +1,5 @@
+{
+  "status": "not_applicable",
+  "segments": [],
+  "why": "Area geometry that never binds to a carriageway: the DWD warn cell 'Stadt Neuss' (WARNCELLID 805162024) as a MultiPolygon, fetched 2026-09-06 from the public DWD WFS (https://maps.dwd.de/geoserver/dwd/ows, layer dwd:Warngebiete_Gemeinden, EPSG:4326). No weather warning was active anywhere in Germany at capture time (dwd:Warnungen_Gemeinden returned 0 features), so the warn cell's own polygon is used as the geometry a weather warning for that cell would carry. The spine is a real A46 extract inside the cell, so the not_applicable answer has to come from the event type/geometry and not from an empty subgraph."
+}
