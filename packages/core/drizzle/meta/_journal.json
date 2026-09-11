@@ -218,6 +218,27 @@
       "when": 1789157396341,
       "tag": "0030_source_poll_retention",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1789160123293,
+      "tag": "0031_subscription_revisions",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1789160213840,
+      "tag": "0032_speed_bucket_finalization",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1789160888961,
+      "tag": "0033_speed_rollup_progress",
+      "breakpoints": true
     }
   ]
 }

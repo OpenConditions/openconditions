@@ -1,3 +1,5 @@
+import type { Observation } from "@openconditions/core";
+import { writeSpeedSamples } from "../pipeline/baseline-store.js";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
@@ -6,11 +8,20 @@ import { BASELINE_WINDOW_DAYS, deriveBaselines } from "../pipeline/baseline-deri
 import { SEGMENT_PROFILE_WINDOW_DAYS } from "../pipeline/segment-profile.js";
 import {
   HOURLY_RETENTION_DAYS,
+  SPEED_HISTORY_LOCK,
   pruneHourlyRollup,
   pruneRawSamples,
   rollupSpeedSamples,
   SPEED_BIN_WIDTH_KPH,
 } from "../pipeline/speed-rollup.js";
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -133,7 +144,7 @@ describe("rollupSpeedSamples", () => {
   }, 60_000);
 
   it("does not reach back past the rollup retention, however old the oldest raw row is", async () => {
-    await sql`TRUNCATE conditions.sensor_speed_hourly`;
+    await sql`TRUNCATE conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
     await sql`TRUNCATE conditions.sensor_speed_sample`;
     // Prod holds 38 rows stamped 2022 from a feed with broken clocks. Anchoring
     // the backfill to the oldest raw row walked the first run through ~1,500
@@ -177,7 +188,7 @@ describe("histogram accuracy against the percentile it replaces", () => {
   it("tracks percentile_cont(0.85) within one bin across a multi-hour window", async () => {
     // Isolated: the rollup advances from its watermark, so seeding history
     // behind one left by an earlier test would not be picked up.
-    await sql`TRUNCATE conditions.sensor_speed_hourly`;
+    await sql`TRUNCATE conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
     await sql`TRUNCATE conditions.sensor_speed_sample`;
     const sensor = "acc:p85";
     const speeds: number[] = [];
@@ -210,7 +221,7 @@ describe("histogram accuracy against the percentile it replaces", () => {
 
 describe("pruneRawSamples — never outruns the rollup", () => {
   it("deletes nothing while the rollup is empty, however old the samples are", async () => {
-    await sql`TRUNCATE conditions.sensor_speed_hourly`;
+    await sql`TRUNCATE conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
     await seedSamples("prune:norollup", [70, 71], hoursAgo(24 * 30));
 
     // Deleting here would discard samples no aggregate ever saw. Disk is
@@ -223,7 +234,7 @@ describe("pruneRawSamples — never outruns the rollup", () => {
   }, 60_000);
 
   it("keeps an un-aggregated sample stamped BEHIND the rollup watermark", async () => {
-    await sql`TRUNCATE conditions.sensor_speed_hourly`;
+    await sql`TRUNCATE conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
     await sql`TRUNCATE conditions.sensor_speed_sample`;
     // A current sample establishes a watermark...
     await seedSamples("prune:wm", [90], hoursAgo(2));
@@ -241,7 +252,7 @@ describe("pruneRawSamples — never outruns the rollup", () => {
   }, 60_000);
 
   it("deletes past-retention samples only once the rollup has passed them", async () => {
-    await sql`TRUNCATE conditions.sensor_speed_hourly`;
+    await sql`TRUNCATE conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
     await sql`TRUNCATE conditions.sensor_speed_sample`;
     const old = hoursAgo(24 * 10); // past a 3-day retention
     const recent = hoursAgo(2); // inside it
@@ -261,7 +272,7 @@ describe("pruneRawSamples — never outruns the rollup", () => {
   }, 60_000);
 
   it("drops raw older than the ROLLUP retention without waiting for a bucket that will never exist", async () => {
-    await sql`TRUNCATE conditions.sensor_speed_hourly`;
+    await sql`TRUNCATE conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
     await sql`TRUNCATE conditions.sensor_speed_sample`;
     // The rollup deliberately never reaches this far back, so demanding its
     // bucket would keep the row forever. Nothing can read it either — it is past
@@ -275,7 +286,7 @@ describe("pruneRawSamples — never outruns the rollup", () => {
   }, 60_000);
 
   it("deletes in bounded batches", async () => {
-    await sql`TRUNCATE conditions.sensor_speed_hourly`;
+    await sql`TRUNCATE conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
     await sql`TRUNCATE conditions.sensor_speed_sample`;
     await seedSamples("prune:batch", [60, 61, 62, 63, 64], hoursAgo(24 * 9));
     await rollupSpeedSamples(sql);
@@ -289,7 +300,7 @@ describe("pruneRawSamples — never outruns the rollup", () => {
 
 describe("pruneHourlyRollup", () => {
   it("drops rollup hours past the retention window", async () => {
-    await sql`TRUNCATE conditions.sensor_speed_hourly`;
+    await sql`TRUNCATE conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
     await sql`
       INSERT INTO conditions.sensor_speed_hourly
         (sensor_key, hour_utc, source, geom, sample_count, speed_bins, speed_counts)
@@ -313,5 +324,179 @@ describe("rollup retention vs consumer windows", () => {
   it("keeps the rollup at least as long as every window that reads it", () => {
     expect(BASELINE_WINDOW_DAYS).toBeLessThanOrEqual(HOURLY_RETENTION_DAYS);
     expect(SEGMENT_PROFILE_WINDOW_DAYS).toBeLessThanOrEqual(HOURLY_RETENTION_DAYS);
+  });
+});
+
+describe("speed hour finalization", () => {
+  function sample(id: string, at: string, speedKph = 120): Observation {
+    return {
+      id,
+      source: "src",
+      sourceFormat: "native",
+      domain: "roads",
+      kind: "measurement",
+      metric: "flow",
+      aggregation: "live",
+      status: "active",
+      speedKph,
+      geometry: { type: "Point", coordinates: [4.9, 52.4] },
+      origin: { kind: "feed", attribution: { provider: "t", license: "CC-BY-4.0" } },
+      dataUpdatedAt: at,
+      fetchedAt: at,
+      isStale: false,
+    } as Observation;
+  }
+
+  it("rejects arrivals to pruned hours without changing durable histograms, even with a stalled watermark", async () => {
+    await sql`TRUNCATE conditions.sensor_speed_sample, conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
+    const hour = hoursAgo(24 * 9);
+    await seedSamples("closed", [20, 20], hour);
+    await rollupSpeedSamples(sql);
+    await pruneRawSamples(sql);
+    const late = sample("closed", new Date(hour.getTime() + 120_000).toISOString());
+    expect(
+      await writeSpeedSamples(
+        sql,
+        "src",
+        [late, { ...late, id: "missing" }],
+        () => new Date().toISOString(),
+        60
+      )
+    ).toEqual({ inserted: 0, rejectedLate: 2 });
+    // Even a stale admission clock cannot reopen an explicitly finalized hour.
+    expect(
+      await writeSpeedSamples(
+        sql,
+        "src",
+        [late],
+        () => new Date(hour.getTime() + 3_600_000).toISOString(),
+        60
+      )
+    ).toEqual({ inserted: 0, rejectedLate: 1 });
+    await rollupSpeedSamples(sql);
+    expect(
+      await sql`SELECT sample_count, speed_bins, speed_counts, finalized FROM conditions.sensor_speed_hourly WHERE sensor_key = 'closed'`
+    ).toEqual([{ sample_count: 2, speed_bins: [10], speed_counts: [2], finalized: true }]);
+  });
+
+  it("admits the cutoff hour, rejects the preceding hour, and finalizes complete input after downtime", async () => {
+    await sql`TRUNCATE conditions.sensor_speed_sample, conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
+    const hour = hoursAgo(6);
+    const clock = new Date(hour.getTime() + 6 * 3_600_000 + 30 * 60_000);
+    const observations = [
+      sample("boundary", hour.toISOString(), 20),
+      sample("too-late", new Date(hour.getTime() - 60_000).toISOString()),
+    ];
+    expect(
+      await writeSpeedSamples(sql, "src", observations, () => clock.toISOString(), 60)
+    ).toEqual({ inserted: 1, rejectedLate: 1 });
+    await rollupSpeedSamples(sql, { now: () => clock });
+    const second = sample("boundary", new Date(hour.getTime() + 60_000).toISOString(), 40);
+    expect(await writeSpeedSamples(sql, "src", [second], () => clock.toISOString(), 60)).toEqual({
+      inserted: 1,
+      rejectedLate: 0,
+    });
+    expect(await writeSpeedSamples(sql, "src", [second], () => clock.toISOString(), 60)).toEqual({
+      inserted: 0,
+      rejectedLate: 0,
+    });
+    const later = new Date(clock.getTime() + 5 * 86_400_000);
+    // Retention alone cannot remove accepted input before its final recomputation.
+    expect((await pruneRawSamples(sql, { now: () => later })).deleted).toBe(0);
+    await rollupSpeedSamples(sql, { now: () => later });
+    expect(
+      await sql`SELECT sample_count, speed_bins, finalized FROM conditions.sensor_speed_hourly WHERE sensor_key = 'boundary'`
+    ).toEqual([{ sample_count: 2, speed_bins: [10, 20], finalized: true }]);
+    expect((await pruneRawSamples(sql, { now: () => later })).deleted).toBe(2);
+    await rollupSpeedSamples(sql, { now: () => later });
+    expect(
+      (
+        await sql`SELECT sample_count FROM conditions.sensor_speed_hourly WHERE sensor_key = 'boundary'`
+      )[0]!.sample_count
+    ).toBe(2);
+  });
+
+  it("keeps the entire raw hour when retention falls partway through it", async () => {
+    await sql`TRUNCATE conditions.sensor_speed_sample, conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
+    const hour = hoursAgo(72);
+    await seedSamples("whole-hour", [20, 40], hour);
+    await rollupSpeedSamples(sql);
+    const halfway = new Date(hour.getTime() + 72 * 3_600_000 + 30 * 60_000);
+    expect((await pruneRawSamples(sql, { now: () => halfway })).deleted).toBe(0);
+    expect(
+      (await pruneRawSamples(sql, { now: () => new Date(halfway.getTime() + 3_600_000) })).deleted
+    ).toBe(2);
+  });
+
+  it("evaluates admission after waiting for finalization's lock", async () => {
+    await sql`TRUNCATE conditions.sensor_speed_sample, conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
+    const hour = hoursAgo(6);
+    let clock = new Date(hour.getTime() + 6 * 3_600_000);
+    const locked = deferred<void>();
+    const release = deferred<void>();
+    const holding = sql.begin(async (tx) => {
+      await tx`SELECT pg_advisory_xact_lock(hashtextextended(${SPEED_HISTORY_LOCK}, 0))`;
+      locked.resolve();
+      await release.promise;
+    });
+    await locked.promise;
+    const pending = writeSpeedSamples(
+      sql,
+      "src",
+      [sample("race", hour.toISOString())],
+      () => clock.toISOString(),
+      60
+    );
+    try {
+      await expect
+        .poll(async () => {
+          const [row] = await sql<{ n: number }[]>`
+          SELECT count(*)::int AS n FROM pg_locks WHERE locktype = 'advisory' AND NOT granted`;
+          return row!.n;
+        })
+        .toBeGreaterThan(0);
+      clock = new Date(clock.getTime() + 3_600_000);
+    } finally {
+      release.resolve();
+      await holding;
+    }
+    expect(await pending).toEqual({ inserted: 0, rejectedLate: 1 });
+  });
+
+  it("includes an older admission that was uncommitted when rollup started", async () => {
+    await sql`TRUNCATE conditions.sensor_speed_sample, conditions.sensor_speed_hourly, conditions.speed_rollup_progress`;
+    await seedSamples("already-visible", [40], hoursAgo(8));
+    const locked = deferred<void>();
+    const release = deferred<void>();
+    const admitting = sql.begin(async (tx) => {
+      await tx`SELECT pg_advisory_xact_lock_shared(hashtextextended(${SPEED_HISTORY_LOCK}, 0))`;
+      await tx`INSERT INTO conditions.sensor_speed_sample
+        (sensor_key, source, observed_at, speed_kph, dow, tod_hour, geom)
+        VALUES ('in-flight', 'src', ${hoursAgo(9)}, 20, 1, 1, ST_SetSRID(ST_MakePoint(4.9,52.4),4326))`;
+      locked.resolve();
+      await release.promise;
+    });
+    await locked.promise;
+    const rolling = rollupSpeedSamples(sql);
+    try {
+      await expect
+        .poll(async () => {
+          const [row] = await sql<
+            { n: number }[]
+          >`SELECT count(*)::int AS n FROM pg_locks WHERE locktype = 'advisory' AND NOT granted`;
+          return row!.n;
+        })
+        .toBeGreaterThan(0);
+    } finally {
+      release.resolve();
+      await admitting;
+    }
+    await rolling;
+    expect(
+      await sql`SELECT sensor_key, sample_count, finalized FROM conditions.sensor_speed_hourly ORDER BY sensor_key`
+    ).toEqual([
+      { sensor_key: "already-visible", sample_count: 1, finalized: true },
+      { sensor_key: "in-flight", sample_count: 1, finalized: true },
+    ]);
   });
 });

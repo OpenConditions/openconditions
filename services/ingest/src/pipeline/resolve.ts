@@ -29,6 +29,8 @@ const RESOLVE_CONCURRENCY = 8;
  *   resolved via the map-match client; on success the resolved geometry is
  *   applied, yielding a full Observation; on failure (null return or thrown
  *   error) the item is dropped and the dropped counter is incremented.
+ *   Transport/validation failures also increment failed; callers must retain
+ *   their last-good snapshot rather than publish a partial resolution.
  * - When `client` is null (OPENLR_RESOLVER_URL unset) unresolved items are
  *   dropped silently.
  *
@@ -39,9 +41,10 @@ const RESOLVE_CONCURRENCY = 8;
 export async function resolveOpenLr(
   items: (Observation | UnresolvedRoadEvent)[],
   client: MapMatchClient | null
-): Promise<{ resolved: Observation[]; dropped: number }> {
+): Promise<{ resolved: Observation[]; dropped: number; failed: number }> {
   const out: Observation[] = [];
   let dropped = 0;
+  let failed = 0;
 
   const passThrough: Observation[] = [];
   const needsResolve: UnresolvedRoadEvent[] = [];
@@ -59,7 +62,7 @@ export async function resolveOpenLr(
   out.push(...passThrough);
 
   if (needsResolve.length === 0) {
-    return { resolved: out, dropped };
+    return { resolved: out, dropped, failed };
   }
 
   if (client === null) {
@@ -67,7 +70,7 @@ export async function resolveOpenLr(
     console.warn(
       `[resolve] dropped ${needsResolve.length} OpenLR observation(s): OPENLR_RESOLVER_URL not set`
     );
-    return { resolved: out, dropped };
+    return { resolved: out, dropped, failed };
   }
 
   const results: Array<Observation | null> = new Array(needsResolve.length).fill(null);
@@ -101,7 +104,7 @@ export async function resolveOpenLr(
   }
 
   async function worker(): Promise<void> {
-    while (cursor < needsResolve.length) {
+    while (cursor < needsResolve.length && failed === 0) {
       const idx = cursor++;
       const obs = needsResolve[idx]!;
       const openlr = obs.externalRefs!.openlr!;
@@ -116,6 +119,7 @@ export async function resolveOpenLr(
         const geom = await resolveOne(openlr, obs.id);
         results[idx] = geom !== null ? ({ ...obs, geometry: geom } as Observation) : null;
       } catch (err) {
+        failed++;
         console.warn(
           `[resolve] resolution failed for observation ${obs.id}:`,
           err instanceof Error ? err.message : err
@@ -136,7 +140,7 @@ export async function resolveOpenLr(
     }
   }
 
-  return { resolved: out, dropped };
+  return { resolved: out, dropped, failed };
 }
 
 /** Exposed for testing — clears the in-process resolution cache. */

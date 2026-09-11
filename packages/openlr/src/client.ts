@@ -11,12 +11,38 @@ export interface MapMatchClient {
    * Returns null when the resolver finds no match (HTTP 404) or when the
    * location cannot be projected onto the road network.
    */
-  resolve(loc: OpenLrLocation): Promise<GeoJsonGeometry | null>;
+  resolve(loc: OpenLrLocation, signal?: AbortSignal): Promise<GeoJsonGeometry | null>;
 }
 
-interface ResolveSuccessBody {
-  geometry: GeoJsonGeometry;
-  confidence: number;
+export interface ResolverClientOptions {
+  /** Total request deadline, including response body consumption. */
+  timeoutMs?: number;
+  maxResponseBytes?: number;
+}
+
+function readGeometry(body: unknown): GeoJsonGeometry {
+  const geometry = (body as { geometry?: unknown } | null)?.geometry;
+  if (geometry == null) {
+    throw new Error("openlr-resolver returned a 200 response with no geometry field");
+  }
+  const line = geometry as { type?: unknown; coordinates?: unknown };
+  if (
+    line.type !== "LineString" ||
+    !Array.isArray(line.coordinates) ||
+    line.coordinates.length < 2 ||
+    !line.coordinates.every(
+      (point: unknown) =>
+        Array.isArray(point) &&
+        point.length >= 2 &&
+        point.length <= 3 &&
+        point.every((n: unknown) => typeof n === "number" && Number.isFinite(n)) &&
+        Math.abs(point[0]) <= 180 &&
+        Math.abs(point[1]) <= 90
+    )
+  ) {
+    throw new Error("openlr-resolver returned invalid LineString geometry");
+  }
+  return geometry as GeoJsonGeometry;
 }
 
 /**
@@ -28,30 +54,79 @@ interface ResolveSuccessBody {
  *   response 200: { geometry: GeoJSON, confidence: number }
  *   response 404: no match
  */
-export function createResolverClient(baseUrl: string): MapMatchClient {
+export function createResolverClient(
+  baseUrl: string,
+  options: ResolverClientOptions = {}
+): MapMatchClient {
   const endpoint = `${baseUrl.replace(/\/$/, "")}/resolve`;
-
+  const timeoutMs = options.timeoutMs ?? 10_000;
+  const maxBytes = options.maxResponseBytes ?? 1_048_576;
+  if (
+    !Number.isSafeInteger(timeoutMs) ||
+    timeoutMs <= 0 ||
+    timeoutMs > 2_147_483_647 ||
+    !Number.isSafeInteger(maxBytes) ||
+    maxBytes <= 0
+  ) {
+    throw new Error("Invalid openlr-resolver request limits");
+  }
   return {
-    async resolve(loc: OpenLrLocation): Promise<GeoJsonGeometry | null> {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ location: loc }),
+    async resolve(loc, callerSignal) {
+      const controller = new AbortController();
+      const abort = () => controller.abort(callerSignal?.reason);
+      if (callerSignal?.aborted) abort();
+      else callerSignal?.addEventListener("abort", abort, { once: true });
+      const timer = setTimeout(
+        () => controller.abort(new Error("openlr-resolver deadline exceeded")),
+        timeoutMs
+      );
+      const signal = controller.signal;
+      let onAbort: () => void = () => {};
+      const aborted = new Promise<never>((_resolve, reject) => {
+        onAbort = () => reject(signal.reason);
+        signal.addEventListener("abort", onAbort, { once: true });
       });
-
-      if (res.status === 404) {
-        return null;
+      let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+      let res: Response | undefined;
+      try {
+        signal.throwIfAborted();
+        res = await Promise.race([
+          fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ location: loc }),
+            signal,
+          }),
+          aborted,
+        ]);
+        if (res.status === 404) return null;
+        if (!res.ok)
+          throw new Error(`openlr-resolver responded with ${res.status} ${res.statusText}`);
+        if (Number(res.headers.get("content-length")) > maxBytes) {
+          throw new Error("openlr-resolver response exceeds byte limit");
+        }
+        if (!res.body) throw new Error("openlr-resolver returned an empty body");
+        reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let bytes = 0;
+        let text = "";
+        for (;;) {
+          const chunk = await Promise.race([reader.read(), aborted]);
+          if (chunk.done) break;
+          bytes += chunk.value.byteLength;
+          if (bytes > maxBytes) throw new Error("openlr-resolver response exceeds byte limit");
+          text += decoder.decode(chunk.value, { stream: true });
+        }
+        text += decoder.decode();
+        return readGeometry(JSON.parse(text));
+      } finally {
+        clearTimeout(timer);
+        callerSignal?.removeEventListener("abort", abort);
+        signal.removeEventListener("abort", onAbort);
+        if (reader) void reader.cancel().catch(() => {});
+        else if (res?.body) void res.body.cancel().catch(() => {});
+        controller.abort();
       }
-
-      if (!res.ok) {
-        throw new Error(`openlr-resolver responded with ${res.status} ${res.statusText}`);
-      }
-
-      const body = (await res.json()) as ResolveSuccessBody;
-      if (body.geometry == null) {
-        throw new Error("openlr-resolver returned a 200 response with no geometry field");
-      }
-      return body.geometry;
     },
   };
 }

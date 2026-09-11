@@ -77,6 +77,7 @@ export interface DeliverWebhookOptions {
 }
 
 export type DeliverWebhookOutcome =
+  | { status: "obsolete" }
   | { status: "delivered"; delivered: number; advancedTo: string; httpStatus: number }
   | { status: "empty"; delivered: 0; advancedTo: string }
   | { status: "failed"; pushFailures: number; httpStatus?: number }
@@ -103,6 +104,9 @@ export async function deliverWebhook(
   subscription: FederationSubscription,
   opts: DeliverWebhookOptions
 ): Promise<DeliverWebhookOutcome> {
+  if (subscription.deliveryMode !== "webhook" || subscription.status !== "active") {
+    return { status: "obsolete" };
+  }
   const now = opts.now ?? new Date().toISOString();
   const threshold = opts.failureThreshold ?? PUSH_FAILURE_THRESHOLD;
 
@@ -126,10 +130,11 @@ export async function deliverWebhook(
     // advancing here only skips priority rows the subscriber filter dropped —
     // never a non-priority matching event (those are not scanned at all).
     if (page.highWaterMark !== subscription.cursor) {
-      await sql`
+      const updated = await sql`
         UPDATE conditions.federation_subscription
-        SET cursor = ${page.highWaterMark}, push_failures = 0, updated_at = ${new Date(now)}
-        WHERE id = ${subscription.id}`;
+        SET cursor = ${page.highWaterMark}, push_failures = 0, revision = revision + 1, updated_at = ${new Date(now)}
+        WHERE id = ${subscription.id} AND revision = ${subscription.revision}`;
+      if (updated.count === 0) return { status: "obsolete" };
     }
     return { status: "empty", delivered: 0, advancedTo: page.highWaterMark };
   }
@@ -167,11 +172,12 @@ export async function deliverWebhook(
   }
 
   if (httpStatus !== undefined && httpStatus >= 200 && httpStatus < 300) {
-    await sql`
+    const updated = await sql`
       UPDATE conditions.federation_subscription
-      SET cursor = ${page.highWaterMark}, push_failures = 0, status = 'active',
+      SET cursor = ${page.highWaterMark}, push_failures = 0, status = 'active', revision = revision + 1,
           updated_at = ${new Date(now)}
-      WHERE id = ${subscription.id}`;
+      WHERE id = ${subscription.id} AND revision = ${subscription.revision}`;
+    if (updated.count === 0) return { status: "obsolete" };
     return {
       status: "delivered",
       delivered: items.length,
@@ -182,11 +188,12 @@ export async function deliverWebhook(
 
   const pushFailures = subscription.pushFailures + 1;
   const disabled = pushFailures >= threshold;
-  await sql`
+  const updated = await sql`
     UPDATE conditions.federation_subscription
-    SET push_failures = ${pushFailures}, status = ${disabled ? "push_disabled" : subscription.status},
+    SET revision = revision + 1, push_failures = ${pushFailures}, status = ${disabled ? "push_disabled" : subscription.status},
         updated_at = ${new Date(now)}
-    WHERE id = ${subscription.id}`;
+    WHERE id = ${subscription.id} AND revision = ${subscription.revision}`;
+  if (updated.count === 0) return { status: "obsolete" };
   return {
     status: disabled ? "disabled" : "failed",
     pushFailures,
@@ -227,12 +234,13 @@ export async function runWebhookDeliveryCycle(
         cursor: string;
         priority_only: boolean;
         push_failures: number;
+        revision: number;
         status: FederationSubscription["status"];
         created_at: Date;
         updated_at: Date;
       }[]
     >`SELECT * FROM conditions.federation_subscription WHERE id = ${id}`;
-    if (!row) continue;
+    if (!row || row.delivery_mode !== "webhook" || row.status !== "active") continue;
     const subscription: FederationSubscription = {
       id: row.id,
       peerId: row.peer_id,
@@ -242,6 +250,7 @@ export async function runWebhookDeliveryCycle(
       cursor: row.cursor,
       priorityOnly: row.priority_only,
       pushFailures: row.push_failures,
+      revision: row.revision,
       status: row.status,
       createdAt: row.created_at.toISOString(),
       updatedAt: row.updated_at.toISOString(),

@@ -8,9 +8,18 @@ import { encodeOutboxCursor, readOutbox, type OutboxCursor, type OutboxEntry } f
 import {
   createSubscription,
   getSubscription,
+  updateSubscription,
   type FederationSubscription,
 } from "../subscriptions.js";
 import { deliverWebhook, PUSH_FAILURE_THRESHOLD } from "../push.js";
+
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((done) => {
+    resolve = done;
+  });
+  return { promise, resolve };
+}
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -451,4 +460,74 @@ describe("deliverWebhook — priorityOnly push (priority) + peer pull (all) = ev
     expect([...union].sort()).toEqual(["mix-n1", "mix-n2", "mix-p1", "mix-p2"]);
     for (const id of pushedPriority) expect(pulled).toContain(id); // push ⊆ pull
   }, 30_000);
+});
+
+describe("subscription edits during delivery", () => {
+  it.each([200, 503])(
+    "discards an obsolete %i completion and tries the repaired inbox",
+    async (status) => {
+      let sub = await webhookSubFromNow({ priorityOnly: true, bbox: [10, 40, 12, 60] });
+      await insertEvent(`repair-${status}`, { lon: 10.5 });
+      await sql`UPDATE conditions.federation_subscription SET push_failures = 4 WHERE id = ${sub.id}`;
+      sub = (await getSubscription(sql, sub.id))!;
+      const started = deferred<void>();
+      const response = deferred<Response>();
+      const pending = deliverWebhook(sql, sub, {
+        signingKey,
+        partOf: PARTOF,
+        now: NOW,
+        fetchImpl: async () => {
+          started.resolve();
+          return response.promise;
+        },
+      });
+      await started.promise;
+      const repaired = await updateSubscription(
+        sql,
+        sub,
+        { inboxUrl: "https://repaired.example.org/inbox" },
+        "2026-07-13T12:01:00Z"
+      );
+      response.resolve(new Response(null, { status }));
+      expect(await pending).toEqual({ status: "obsolete" });
+      expect(await getSubscription(sql, sub.id)).toEqual(repaired);
+      const destinations: string[] = [];
+      const outcome = await deliverWebhook(sql, repaired!, {
+        signingKey,
+        partOf: PARTOF,
+        now: NOW,
+        fetchImpl: async (url) => {
+          destinations.push(String(url));
+          return new Response(null, { status: 200 });
+        },
+      });
+      expect(outcome.status).toBe("delivered");
+      expect(destinations).toEqual(["https://repaired.example.org/inbox"]);
+    }
+  );
+
+  it("preserves disjoint concurrent edits and rejects stale empty-scan advancement", async () => {
+    const sub = await webhookSubFromNow({ priorityOnly: true, bbox: [10, 40, 12, 60] });
+    await insertEvent("empty-stale", { lon: 20 });
+    await Promise.all([
+      updateSubscription(sql, sub, { inboxUrl: "https://repaired.example.org/inbox" }, NOW),
+      updateSubscription(sql, sub, { priorityOnly: false }, NOW),
+    ]);
+    const current = (await getSubscription(sql, sub.id))!;
+    expect(current).toMatchObject({
+      inboxUrl: "https://repaired.example.org/inbox",
+      priorityOnly: false,
+      revision: sub.revision + 2,
+    });
+    const outcome = await deliverWebhook(sql, sub, {
+      signingKey,
+      partOf: PARTOF,
+      now: NOW,
+      fetchImpl: async () => {
+        throw new Error("empty scan must not post");
+      },
+    });
+    expect(outcome.status).toBe("obsolete");
+    expect(await getSubscription(sql, sub.id)).toEqual(current);
+  });
 });

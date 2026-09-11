@@ -43,3 +43,22 @@ Most feeds are credential-gated: the scheduler skips a feed until all of its
 variables are set. See [`docs/road-feed-credentials.md`](../../docs/road-feed-credentials.md)
 for how to obtain each key, and `.env.example` for the full list. Credential
 metadata is generated — run `pnpm gen:credentials` after changing a feed's auth.
+
+## Speed history finalization
+
+Speed history accepts samples from the current UTC hour and the preceding six
+hours. Older samples are rejected with a per-source count in the ingest log;
+this does not reject their live observation. The cutoff is aligned to an hour,
+so it does not split a histogram's raw input. Replayed samples inside the open
+window remain idempotent by sensor and observed timestamp.
+
+Completed open hours are recomputed from retained raw samples. After admission
+closes, a final recomputation marks the histogram immutable. Raw retention
+(default three days) deletes only whole finalized hours; a delayed aggregation
+job therefore retains its inputs until it catches up. A persisted finalization
+frontier advances atomically with each batch so routine rollups skip finalized
+raw history using the observation-time index. Samples beyond the entire
+35-day historical window can be removed without aggregation. Shared admission
+locks and exclusive rollup/prune locks keep concurrent arrivals out of a bucket
+after finalization. Historical backfill beyond admission is not supported by the
+live sample writer; do not widen its window over already-pruned history.

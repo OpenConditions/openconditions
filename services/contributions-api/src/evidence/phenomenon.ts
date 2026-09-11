@@ -192,48 +192,55 @@ export async function resolveSurvivor(
   observationId: string,
   tx?: Tx
 ): Promise<string | null> {
+  return (await resolveSurvivors(sql, [observationId], tx)).get(observationId) ?? null;
+}
+
+/** Resolve a neighborhood in bounded frontiers, sharing reads of common heads. */
+export async function resolveSurvivors(
+  sql: Sql,
+  observationIds: string[],
+  tx?: Tx
+): Promise<Map<string, string | null>> {
   const runner = tx ?? sql;
-  const visited = new Set<string>();
-  let currentId = observationId;
-
-  for (let hop = 0; hop < MAX_SURVIVOR_HOPS; hop++) {
-    if (visited.has(currentId)) {
-      return null;
+  const result = new Map<string, string | null>();
+  const paths = new Map(
+    [...new Set(observationIds)].map((id) => [
+      id,
+      {
+        current: id,
+        visited: new Set<string>(),
+      },
+    ])
+  );
+  for (let hop = 0; hop < MAX_SURVIVOR_HOPS && paths.size > 0; hop++) {
+    const ids = [...new Set([...paths.values()].map((path) => path.current))];
+    const rows = await runner<(SurvivorRow & { parent_id: string | null })[]>`
+      SELECT o.id, o.status, parent.id AS parent_id
+      FROM conditions.observations o
+      LEFT JOIN LATERAL (
+        SELECT p.id FROM conditions.observations p
+        WHERE o.status = 'inactive' AND p.corroborations @> jsonb_build_array(o.id)
+          AND p.kind = 'event' AND p.status IN ('active', 'inactive')
+        ORDER BY p.valid_from, p.id LIMIT 1
+      ) parent ON true
+      WHERE o.id = ANY(${ids})`;
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    for (const [root, path] of paths) {
+      const row = byId.get(path.current);
+      if (path.visited.has(path.current) || !row || row.status !== "inactive" || !row.parent_id) {
+        result.set(
+          root,
+          !path.visited.has(path.current) && row?.status === "active" ? row.id : null
+        );
+        paths.delete(root);
+      } else {
+        path.visited.add(path.current);
+        path.current = row.parent_id;
+      }
     }
-    visited.add(currentId);
-
-    const rows = await runner<SurvivorRow[]>`
-      SELECT id, status FROM conditions.observations WHERE id = ${currentId}
-    `;
-    const row = rows[0];
-    if (row === undefined) {
-      return null;
-    }
-    if (row.status === "active") {
-      return currentId;
-    }
-    if (row.status !== "inactive") {
-      // An archived tombstone (or any non-active, non-inactive state) is never a
-      // survivor and never a corroboration target.
-      return null;
-    }
-
-    const parents = await runner<{ id: string }[]>`
-      SELECT id FROM conditions.observations
-      WHERE corroborations @> ${runner.json([currentId] as never)}::jsonb
-        AND kind = 'event'
-        AND status IN ('active', 'inactive')
-      ORDER BY valid_from, id
-      LIMIT 1
-    `;
-    const parent = parents[0];
-    if (parent === undefined) {
-      return null;
-    }
-    currentId = parent.id;
   }
-
-  return null;
+  for (const root of paths.keys()) result.set(root, null);
+  return result;
 }
 
 interface LaterActorRow {

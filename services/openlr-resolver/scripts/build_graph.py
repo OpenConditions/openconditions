@@ -13,7 +13,7 @@ Form of Way (see :mod:`app.frc_fow`), and loads two tables:
   a kept way. Bidirectional ways produce both a forward and a reversed edge so
   travel direction is always explicit, which OpenLR matching requires.
 
-Both tables get a GiST index on ``geom``.
+Both tables get a GiST index on ``geom::geography`` for metre-based searches.
 
 Usage::
 
@@ -120,8 +120,8 @@ CREATE TABLE conditions.osm_lines (
 """
 
 INDEXES = """
-CREATE INDEX osm_nodes_geom_idx ON conditions.osm_nodes USING GIST (geom);
-CREATE INDEX osm_lines_geom_idx ON conditions.osm_lines USING GIST (geom);
+CREATE INDEX osm_nodes_geography_idx ON conditions.osm_nodes USING GIST ((geom::geography));
+CREATE INDEX osm_lines_geography_idx ON conditions.osm_lines USING GIST ((geom::geography));
 CREATE INDEX osm_lines_start_idx ON conditions.osm_lines (start_node);
 CREATE INDEX osm_lines_end_idx ON conditions.osm_lines (end_node);
 """

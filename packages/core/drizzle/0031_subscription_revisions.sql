@@ -1,0 +1,1 @@
+ALTER TABLE "conditions"."federation_subscription" ADD COLUMN "revision" integer DEFAULT 0 NOT NULL;

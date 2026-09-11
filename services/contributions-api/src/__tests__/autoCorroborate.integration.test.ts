@@ -10,6 +10,7 @@ import { recomputeEvidence } from "../evidence/recompute.js";
 const M_PER_DEG = 111_320;
 
 let sql: postgres.Sql;
+let queryCount = 0;
 let containerStop: () => Promise<unknown>;
 
 beforeAll(async () => {
@@ -24,7 +25,12 @@ beforeAll(async () => {
     .start();
   containerStop = () => container.stop();
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 5 });
+  sql = postgres(url, {
+    max: 5,
+    debug: () => {
+      queryCount++;
+    },
+  });
   await runMigrations(url);
 }, 120_000);
 
@@ -602,4 +608,35 @@ describe("autoCorroborateOnLanding — 3-way corroboration-chain re-crediting", 
     expect(await reporterPosterior("ei-b")).toEqual({ alpha: 2, beta: 2 });
     expect(await reporterPosterior("ei-c")).toEqual({ alpha: 2, beta: 2 });
   }, 60_000);
+});
+
+describe("batched neighborhood reads", () => {
+  it.each([
+    [10, false],
+    [100, false],
+    [10, true],
+    [100, true],
+  ] as const)("bounds reads for %i neighbors (inactive=%s)", async (size, inactive) => {
+    const prefix = `batch:${size}:${inactive}`;
+    const base = {
+      lon: 30 + size / 100 + (inactive ? 2 : 0),
+      lat: 40,
+      validFrom: "2026-07-10T12:00:00Z",
+    };
+    await insertCrowdEvent({ ...base, id: `${prefix}:target`, reporterKey: "batch-target" });
+    await insertCrowdEvent({ ...base, id: `${prefix}:head` });
+    const ids: string[] = [];
+    for (let i = 0; i < size; i++) {
+      const id = `${prefix}:${i}`;
+      ids.push(id);
+      await insertCrowdEvent({ ...base, id, status: inactive ? "inactive" : "active" });
+    }
+    await sql`UPDATE conditions.observations SET corroborations = ${sql.json(ids)} WHERE id = ${prefix + ":head"}`;
+    queryCount = 0;
+    expect(await autoCorroborateOnLanding(sql, `${prefix}:target`, "2026-07-10T12:01:00Z")).toEqual(
+      []
+    );
+    expect(queryCount).toBeGreaterThan(0);
+    expect(queryCount).toBeLessThanOrEqual(12);
+  });
 });

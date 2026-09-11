@@ -1,3 +1,4 @@
+import { SPEED_HISTORY_LOCK, speedSampleCutoff } from "./speed-rollup.js";
 import type postgres from "postgres";
 import { toIsoTimestamp, type Observation } from "@openconditions/core";
 import {
@@ -50,8 +51,8 @@ function isSpeedFlow(obs: Observation): obs is RoadFlow & { speedKph: number } {
  * filter, so a real standstill still surfaces as a congestion event; it simply
  * must not drag the derived p85 free-flow baseline down towards 0.
  *
- * Append-only: never deletes, independent of atomicSwap. Returns the number of
- * plausible-speed rows considered for insertion.
+ * Append-only: never deletes, independent of atomicSwap. Reports actual
+ * insertions and samples rejected after their hour closed.
  */
 export async function writeSpeedSamples(
   sql: Sql,
@@ -59,46 +60,63 @@ export async function writeSpeedSamples(
   observations: Observation[],
   now: () => string,
   cadenceSec: number
-): Promise<number> {
-  const nowIso = now();
-  const bucketMs = Math.max(1, cadenceSec) * 1000;
-  const rows = observations
-    .filter(isSpeedFlow)
-    .filter((f) => f.speedKph > 0 && f.speedKph < ABSURD_SPEED_KPH)
-    .map((f) => {
-      const raw = toIsoTimestamp(f.dataUpdatedAt) ?? toIsoTimestamp(f.fetchedAt) ?? nowIso;
-      // Floor to the cadence bucket so a now()-fallback timestamp cannot write a
-      // fresh row every poll; stable-timestamp feeds already collide here.
-      const observedAt = new Date(
-        Math.floor(new Date(raw).getTime() / bucketMs) * bucketMs
-      ).toISOString();
-      const d = new Date(observedAt);
-      const [lon, lat] = representativePoint(f.geometry);
-      return {
-        sensor_key: f.id,
-        source,
-        observed_at: observedAt,
-        speed_kph: f.speedKph,
-        dow: d.getUTCDay(),
-        tod_hour: d.getUTCHours(),
-        geometry_json: JSON.stringify({ type: "Point", coordinates: [lon, lat] }),
-      };
-    });
-  if (rows.length === 0) return 0;
-
-  for (const batch of chunk(rows, CHUNK_SIZE)) {
-    await sql`
+): Promise<{ inserted: number; rejectedLate: number }> {
+  return sql.begin(async (tx) => {
+    await tx`SELECT pg_advisory_xact_lock_shared(hashtextextended(${SPEED_HISTORY_LOCK}, 0))`;
+    const nowIso = now();
+    const cutoff = speedSampleCutoff(new Date(nowIso));
+    const bucketMs = Math.max(1, cadenceSec) * 1000;
+    const rows = observations
+      .filter(isSpeedFlow)
+      .filter((f) => f.speedKph > 0 && f.speedKph < ABSURD_SPEED_KPH)
+      .map((f) => {
+        const raw = toIsoTimestamp(f.dataUpdatedAt) ?? toIsoTimestamp(f.fetchedAt) ?? nowIso;
+        // Floor to the cadence bucket so a now()-fallback timestamp cannot write a
+        // fresh row every poll; stable-timestamp feeds already collide here.
+        const observedAt = new Date(
+          Math.floor(new Date(raw).getTime() / bucketMs) * bucketMs
+        ).toISOString();
+        const d = new Date(observedAt);
+        const [lon, lat] = representativePoint(f.geometry);
+        return {
+          sensor_key: f.id,
+          source,
+          observed_at: observedAt,
+          speed_kph: f.speedKph,
+          dow: d.getUTCDay(),
+          tod_hour: d.getUTCHours(),
+          geometry_json: JSON.stringify({ type: "Point", coordinates: [lon, lat] }),
+        };
+      });
+    let inserted = 0;
+    let rejectedLate = 0;
+    for (const batch of chunk(rows, CHUNK_SIZE)) {
+      const [result] = await tx<{ inserted: number; rejected_late: number }[]>`
+      WITH input AS (
+        SELECT * FROM jsonb_to_recordset(${tx.json(batch)}::jsonb) AS t(
+          sensor_key text, source text, observed_at timestamptz, speed_kph double precision,
+          dow smallint, tod_hour smallint, geometry_json text
+        )
+      ), admissible AS (
+        SELECT * FROM input s WHERE observed_at >= GREATEST(${cutoff}, COALESCE(
+          (SELECT finalized_before FROM conditions.speed_rollup_progress WHERE id = 1), ${cutoff}))
+          AND NOT EXISTS (SELECT 1 FROM conditions.sensor_speed_hourly h
+            WHERE h.sensor_key = s.sensor_key AND h.hour_utc = date_trunc('hour', s.observed_at)
+              AND h.finalized)
+      ), inserted AS (
       INSERT INTO conditions.sensor_speed_sample
         (sensor_key, source, observed_at, speed_kph, dow, tod_hour, geom)
       SELECT sensor_key, source, observed_at, speed_kph, dow, tod_hour,
         ST_SetSRID(ST_GeomFromGeoJSON(geometry_json), 4326)
-      FROM jsonb_to_recordset(${sql.json(batch)}::jsonb) AS t(
-        sensor_key text, source text, observed_at timestamptz, speed_kph double precision,
-        dow smallint, tod_hour smallint, geometry_json text
-      )
-      ON CONFLICT (sensor_key, observed_at) DO NOTHING`;
-  }
-  return rows.length;
+      FROM admissible
+      ON CONFLICT (sensor_key, observed_at) DO NOTHING RETURNING id
+      ) SELECT (SELECT count(*)::int FROM inserted) AS inserted,
+               ((SELECT count(*) FROM input) - (SELECT count(*) FROM admissible))::int AS rejected_late`;
+      inserted += result!.inserted;
+      rejectedLate += result!.rejected_late;
+    }
+    return { inserted, rejectedLate };
+  });
 }
 
 /**

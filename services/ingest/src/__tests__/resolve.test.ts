@@ -113,4 +113,23 @@ describe("resolveOpenLr", () => {
     expect(resolved).toHaveLength(0);
     expect(dropped).toBe(1);
   });
+  it("marks partial resolver failure unsafe and retries the uncached reference", async () => {
+    const ev = makeEvent("failed", {
+      geometry: undefined as unknown as Observation["geometry"],
+      externalRefs: { openlr: FAKE_OPENLR },
+    });
+    const client = {
+      resolve: vi
+        .fn()
+        .mockRejectedValueOnce(new Error("deadline exceeded"))
+        .mockResolvedValueOnce(LINE_GEOM),
+    };
+    const first = await resolveOpenLr([makeEvent("already-placed"), ev], client);
+    expect(first.failed).toBe(1);
+    expect(first.resolved).toHaveLength(1);
+    const retried = await resolveOpenLr([ev], client);
+    expect(retried.failed).toBe(0);
+    expect(retried.resolved[0]!.geometry).toEqual(LINE_GEOM);
+    expect(client.resolve).toHaveBeenCalledTimes(2);
+  });
 });

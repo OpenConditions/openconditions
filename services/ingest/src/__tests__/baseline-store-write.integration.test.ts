@@ -58,7 +58,7 @@ describe("writeSpeedSamples", () => {
       () => "2026-03-04T14:31:00Z",
       300
     );
-    expect(written).toBe(2);
+    expect(written).toEqual({ inserted: 2, rejectedLate: 0 });
     const rows = await sql<
       { sensor_key: string; dow: number; tod_hour: number; speed_kph: number }[]
     >`
@@ -93,7 +93,7 @@ describe("writeSpeedSamples", () => {
       () => "2026-03-04T14:31:00Z",
       300
     );
-    expect(written).toBe(1);
+    expect(written).toEqual({ inserted: 1, rejectedLate: 0 });
     const rows = await sql<{ sensor_key: string }[]>`
       SELECT sensor_key FROM conditions.sensor_speed_sample
       WHERE source = 'filt' ORDER BY sensor_key`;

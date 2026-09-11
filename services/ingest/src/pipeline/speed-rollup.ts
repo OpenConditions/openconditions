@@ -48,14 +48,15 @@ export const RAW_SAMPLE_RETENTION_DAYS = 3;
  */
 export const HOURLY_RETENTION_DAYS = 35;
 
-/**
- * Hours re-rolled on every run, counted back from the rollup watermark. A
- * sample can land slightly after its own hour closed (a feed publishing late),
- * and the upsert is idempotent, so re-rolling a short trailing window absorbs
- * that instead of losing it. Must stay well below RAW_SAMPLE_RETENTION_DAYS —
- * the raw rows it re-reads have to still exist.
- */
-export const ROLLUP_LOOKBACK_HOURS = 6;
+/** Completed hours remain open for late input until this whole-hour cutoff. */
+export const SPEED_SAMPLE_LATENESS_HOURS = 6;
+
+/** Shared by sample admission, rollup and pruning; readers may admit concurrently. */
+export const SPEED_HISTORY_LOCK = "openconditions:speed-history";
+
+export function speedSampleCutoff(now: Date): Date {
+  return new Date(floorToHour(now).getTime() - SPEED_SAMPLE_LATENESS_HOURS * 3_600_000);
+}
 
 /** Hours aggregated per statement. Bounds the backfill's memory and lock time. */
 export const ROLLUP_BATCH_HOURS = 24;
@@ -83,7 +84,6 @@ export interface RollupResult {
 }
 
 interface RollupOpts {
-  lookbackHours?: number;
   batchHours?: number;
   retentionDays?: number;
   /** Injected clock (tests). */
@@ -91,47 +91,31 @@ interface RollupOpts {
 }
 
 /**
- * Aggregate every COMPLETED hour that the rollup has not caught up with yet.
- *
- * The range starts at the rollup's watermark minus {@link ROLLUP_LOOKBACK_HOURS}
- * (re-rolling a short trailing window so late samples are not lost), or at the
- * oldest raw row when the rollup is empty — which is what makes the first run
- * after deploy a full backfill with no separate migration step. It ends at the
- * current hour, EXCLUSIVE: the in-progress hour is still receiving samples and
- * would be rolled up incomplete.
- *
- * The start never reaches further back than the rollup retention. Those hours
- * are past every consumer's window, so `pruneHourlyRollup` would delete them the
- * moment they were written — and without the floor a SINGLE stray sample anchors
- * the whole backfill to its timestamp: prod held 38 rows stamped 2022 (a feed
- * with broken timestamps), which walked the first run through ~1,500 empty daily
- * batches before it reached any real data. `pruneRawSamples` drops raw that old
- * without waiting for a rollup that will never come.
- *
- * Idempotent: re-running over the same range recomputes identical rows and
- * upserts them. Batched by {@link ROLLUP_BATCH_HOURS} so a long backfill never
- * builds one huge statement.
+ * Recompute completed, unfinalized hours from their complete raw input. An hour
+ * becomes immutable when admission closes; pruning must wait for that final
+ * recomputation. The oldest unfinished raw bucket drives recovery after downtime,
+ * independent of other sensors' progress.
  */
 export async function rollupSpeedSamples(sql: Sql, opts: RollupOpts = {}): Promise<RollupResult> {
-  const lookbackHours = opts.lookbackHours ?? ROLLUP_LOOKBACK_HOURS;
   const batchHours = opts.batchHours ?? ROLLUP_BATCH_HOURS;
   const retentionDays = opts.retentionDays ?? HOURLY_RETENTION_DAYS;
+  if (!Number.isInteger(batchHours) || batchHours < 1)
+    throw new Error("Invalid rollup batch hours");
   const now = opts.now?.() ?? new Date();
-
-  const [bounds] = await sql<{ watermark: Date | null; oldest_raw: Date | null }[]>`
-    SELECT (SELECT max(hour_utc) FROM conditions.sensor_speed_hourly) AS watermark,
-           (SELECT min(observed_at) FROM conditions.sensor_speed_sample) AS oldest_raw`;
-  if (bounds?.oldest_raw == null) {
-    return { hours: 0, rows: 0 };
-  }
-
   const end = floorToHour(now);
-  const unclamped =
-    bounds.watermark === null
-      ? floorToHour(new Date(bounds.oldest_raw))
-      : new Date(floorToHour(new Date(bounds.watermark)).getTime() - lookbackHours * 3_600_000);
   const retentionFloor = new Date(end.getTime() - retentionDays * 86_400_000);
-  const start = new Date(Math.max(unclamped.getTime(), retentionFloor.getTime()));
+  const bounds = await sql.begin(async (tx) => {
+    // Finish admissions already in flight before choosing the oldest input.
+    // Otherwise an older uncommitted row could land behind the new frontier.
+    await tx`SELECT pg_advisory_xact_lock(hashtextextended(${SPEED_HISTORY_LOCK}, 0))`;
+    const [row] = await tx<{ oldest_raw: Date | null }[]>`
+      SELECT min(s.observed_at) AS oldest_raw FROM conditions.sensor_speed_sample s
+      WHERE s.observed_at >= GREATEST(${retentionFloor}, COALESCE(
+        (SELECT finalized_before FROM conditions.speed_rollup_progress WHERE id = 1), ${retentionFloor}))`;
+    return row;
+  });
+  if (bounds?.oldest_raw == null) return { hours: 0, rows: 0 };
+  const start = floorToHour(new Date(bounds.oldest_raw));
   if (start >= end) {
     return { hours: 0, rows: 0 };
   }
@@ -140,7 +124,7 @@ export async function rollupSpeedSamples(sql: Sql, opts: RollupOpts = {}): Promi
   let hours = 0;
   for (let from = start; from < end;) {
     const to = new Date(Math.min(from.getTime() + batchHours * 3_600_000, end.getTime()));
-    rows += await rollupRange(sql, from, to);
+    rows += await rollupRange(sql, from, to, speedSampleCutoff(now));
     hours += Math.round((to.getTime() - from.getTime()) / 3_600_000);
     from = to;
   }
@@ -158,13 +142,15 @@ export async function rollupSpeedSamples(sql: Sql, opts: RollupOpts = {}): Promi
  *
  * `source`/`geom` are constant per sensor, so any sample's value will do.
  */
-async function rollupRange(sql: Sql, from: Date, to: Date): Promise<number> {
-  const result = await sql`
+async function rollupRange(sql: Sql, from: Date, to: Date, cutoff: Date): Promise<number> {
+  return sql.begin(async (tx) => {
+    await tx`SELECT pg_advisory_xact_lock(hashtextextended(${SPEED_HISTORY_LOCK}, 0))`;
+    const result = await tx`
     INSERT INTO conditions.sensor_speed_hourly
-      (sensor_key, hour_utc, source, geom, sample_count, speed_bins, speed_counts)
+      (sensor_key, hour_utc, source, geom, sample_count, speed_bins, speed_counts, finalized)
     SELECT b.sensor_key, b.hour_utc, min(b.source), (array_agg(b.geom))[1],
            sum(b.c)::int,
-           array_agg(b.bin ORDER BY b.bin), array_agg(b.c ORDER BY b.bin)
+           array_agg(b.bin ORDER BY b.bin), array_agg(b.c ORDER BY b.bin), b.hour_utc < ${cutoff}
     FROM (
       SELECT sensor_key,
              date_trunc('hour', observed_at) AS hour_utc,
@@ -173,8 +159,13 @@ async function rollupRange(sql: Sql, from: Date, to: Date): Promise<number> {
              count(*)::int AS c,
              min(source) AS source,
              (array_agg(geom))[1] AS geom
-      FROM conditions.sensor_speed_sample
+      FROM conditions.sensor_speed_sample s
       WHERE observed_at >= ${from} AND observed_at < ${to}
+        AND NOT EXISTS (
+          SELECT 1 FROM conditions.sensor_speed_hourly h
+          WHERE h.sensor_key = s.sensor_key AND h.hour_utc = date_trunc('hour', s.observed_at)
+            AND h.finalized
+        )
       GROUP BY 1, 2, 3
     ) b
     GROUP BY b.sensor_key, b.hour_utc
@@ -183,8 +174,20 @@ async function rollupRange(sql: Sql, from: Date, to: Date): Promise<number> {
       geom = EXCLUDED.geom,
       sample_count = EXCLUDED.sample_count,
       speed_bins = EXCLUDED.speed_bins,
-      speed_counts = EXCLUDED.speed_counts`;
-  return result.count;
+      speed_counts = EXCLUDED.speed_counts,
+      finalized = EXCLUDED.finalized
+    WHERE NOT sensor_speed_hourly.finalized`;
+    // Every sensor in this time range was recomputed while admission was blocked.
+    // A frontier avoids probing each retained raw row's histogram on the next run.
+    const finalizedBefore = new Date(Math.min(to.getTime(), cutoff.getTime()));
+    if (finalizedBefore > from) {
+      await tx`INSERT INTO conditions.speed_rollup_progress (id, finalized_before)
+        VALUES (1, ${finalizedBefore})
+        ON CONFLICT (id) DO UPDATE SET finalized_before = GREATEST(
+          speed_rollup_progress.finalized_before, EXCLUDED.finalized_before)`;
+    }
+    return result.count;
+  });
 }
 
 function floorToHour(d: Date): Date {
@@ -211,56 +214,46 @@ export async function pruneHourlyRollup(
 /** Rows deleted per prune statement — see {@link pruneRawSamples}. */
 export const RAW_PRUNE_BATCH_SIZE = 50_000;
 
-/**
- * Retention prune of the RAW samples, now that the rollup — not this table —
- * carries the history. Deletes rows past {@link RAW_SAMPLE_RETENTION_DAYS} that
- * the rollup has already absorbed.
- *
- * FAIL-SAFE: a row is deleted only when the rollup actually holds ITS OWN
- * (sensor, hour). Comparing against the rollup's watermark would NOT be enough:
- * the rollup only ever moves forward from that watermark, so samples stamped
- * further back than it (a feed republishing history) would sit before the
- * watermark having never been aggregated — precisely the rows a watermark check
- * would delete. Requiring the bucket to exist means un-aggregated samples pile
- * up, costing disk and visibly, instead of disappearing. Disk is recoverable;
- * they are not.
- *
- * Deletes in bounded chunks: the table takes ~20M rows/day, so a single
- * unbounded statement would hold one transaction open across an enormous delete
- * after any gap in the schedule.
- */
+/** Delete whole raw hours only after finalization, or beyond all history retention. */
 export async function pruneRawSamples(
   sql: Sql,
-  opts: { retentionDays?: number; hourlyRetentionDays?: number; batchSize?: number } = {}
+  opts: {
+    retentionDays?: number;
+    hourlyRetentionDays?: number;
+    batchSize?: number;
+    now?: () => Date;
+  } = {}
 ): Promise<{ deleted: number }> {
   const retentionDays = opts.retentionDays ?? RAW_SAMPLE_RETENTION_DAYS;
   const hourlyRetentionDays = opts.hourlyRetentionDays ?? HOURLY_RETENTION_DAYS;
   const batchSize = opts.batchSize ?? RAW_PRUNE_BATCH_SIZE;
 
+  const now = opts.now?.() ?? new Date();
+  const rawCutoff = new Date(floorToHour(now).getTime() - retentionDays * 86_400_000);
+  const historyCutoff = new Date(floorToHour(now).getTime() - hourlyRetentionDays * 86_400_000);
   let deleted = 0;
   for (;;) {
-    const result = await sql`
+    const count = await sql.begin(async (tx) => {
+      await tx`SELECT pg_advisory_xact_lock(hashtextextended(${SPEED_HISTORY_LOCK}, 0))`;
+      const result = await tx`
       DELETE FROM conditions.sensor_speed_sample
       WHERE id IN (
         SELECT s.id FROM conditions.sensor_speed_sample s
-        WHERE s.observed_at < now() - make_interval(days => ${retentionDays})
+        WHERE s.observed_at < ${rawCutoff}
           AND (
             EXISTS (
               SELECT 1 FROM conditions.sensor_speed_hourly h
               WHERE h.sensor_key = s.sensor_key
-                AND h.hour_utc = date_trunc('hour', s.observed_at)
+                AND h.hour_utc = date_trunc('hour', s.observed_at) AND h.finalized
             )
-            -- Past the rollup's own retention there is nothing to wait for: the
-            -- rollup does not reach back this far (those hours would be pruned
-            -- at once) and no consumer's window can see it, so requiring a
-            -- bucket that will never exist would keep it forever. Prod holds
-            -- exactly such rows — 38 stamped 2022 by a feed with broken clocks.
-            OR s.observed_at < now() - make_interval(days => ${hourlyRetentionDays})
+            OR s.observed_at < ${historyCutoff}
           )
         LIMIT ${batchSize}
       )`;
-    deleted += result.count;
-    if (result.count < batchSize) {
+      return result.count;
+    });
+    deleted += count;
+    if (count < batchSize) {
       return { deleted };
     }
   }

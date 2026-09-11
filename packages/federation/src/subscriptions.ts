@@ -43,6 +43,7 @@ export interface FederationSubscription {
   cursor: string;
   priorityOnly: boolean;
   pushFailures: number;
+  revision: number;
   status: SubscriptionStatus;
   createdAt: string;
   updatedAt: string;
@@ -255,6 +256,7 @@ interface SubscriptionRow {
   cursor: string;
   priority_only: boolean;
   push_failures: number;
+  revision: number;
   status: SubscriptionStatus;
   created_at: Date;
   updated_at: Date;
@@ -270,6 +272,7 @@ function rowToSubscription(row: SubscriptionRow): FederationSubscription {
     cursor: row.cursor,
     priorityOnly: row.priority_only,
     pushFailures: row.push_failures,
+    revision: row.revision,
     status: row.status,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
@@ -333,7 +336,7 @@ export async function getSubscription(
  * shape is validated (so a PATCH cannot leave the row over-broad or with a bad
  * inbox), and the effective values are written. Returns the updated row, or null
  * if it does not exist. `existing` is passed so the route can enforce ownership
- * and avoid a second read.
+ * before the locked read merges against current state.
  *
  * A PATCH also RE-ENABLES push: `status` resets to `active` and `push_failures`
  * to 0. A peer whose inbox went down (flipping the row to `push_disabled`) fixes
@@ -347,21 +350,25 @@ export async function updateSubscription(
   patch: UpdateSubscriptionInput,
   now: string
 ): Promise<FederationSubscription | null> {
-  const filter = patch.filter ?? existing.filter;
-  const deliveryMode = patch.deliveryMode ?? existing.deliveryMode;
-  const inboxUrl = patch.inboxUrl !== undefined ? patch.inboxUrl : existing.inboxUrl;
-  const priorityOnly = patch.priorityOnly ?? existing.priorityOnly;
-
-  validateSubscriptionShape({ filter, deliveryMode, inboxUrl, priorityOnly });
-
-  const [row] = await sql<SubscriptionRow[]>`
-    UPDATE conditions.federation_subscription
-    SET filter = ${sql.json(filter as never)}, delivery_mode = ${deliveryMode},
-        inbox_url = ${inboxUrl}, priority_only = ${priorityOnly},
-        status = 'active', push_failures = 0, updated_at = ${new Date(now)}
-    WHERE id = ${existing.id}
-    RETURNING *`;
-  return row ? rowToSubscription(row) : null;
+  return sql.begin(async (tx) => {
+    const [current] = await tx<SubscriptionRow[]>`
+      SELECT * FROM conditions.federation_subscription
+      WHERE id = ${existing.id} AND peer_id = ${existing.peerId} FOR UPDATE`;
+    if (!current) return null;
+    const filter = patch.filter ?? current.filter;
+    const deliveryMode = patch.deliveryMode ?? current.delivery_mode;
+    const inboxUrl = patch.inboxUrl !== undefined ? patch.inboxUrl : current.inbox_url;
+    const priorityOnly = patch.priorityOnly ?? current.priority_only;
+    validateSubscriptionShape({ filter, deliveryMode, inboxUrl, priorityOnly });
+    const [row] = await tx<SubscriptionRow[]>`
+      UPDATE conditions.federation_subscription
+      SET filter = ${tx.json(filter as never)}, delivery_mode = ${deliveryMode},
+          inbox_url = ${inboxUrl}, priority_only = ${priorityOnly},
+          status = 'active', push_failures = 0, revision = revision + 1,
+          updated_at = ${new Date(now)}
+      WHERE id = ${current.id} RETURNING *`;
+    return rowToSubscription(row!);
+  });
 }
 
 /** Deletes a subscription by id; returns whether a row was removed. */

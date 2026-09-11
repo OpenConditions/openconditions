@@ -26,7 +26,7 @@ import {
   applyCorroboration,
   findCandidates,
   loadPhenomenonCandidates,
-  resolveSurvivor,
+  resolveSurvivors,
 } from "./phenomenon.js";
 
 type Sql = postgres.Sql;
@@ -97,13 +97,12 @@ export async function autoCorroborateOnLanding(
   // never surfaced by findCandidates and `resolveSurvivor` never returns one.
   const neighborhood = await findCandidates(sql, observationId, { includeInactive: true });
   const survivorIds = new Set<string>();
-  for (const candidate of neighborhood) {
-    const survivorId = await resolveSurvivor(sql, candidate.id);
-    // Drop dead-end chains (null) and any resolution back onto the just-landed
-    // row (it can never corroborate itself).
-    if (survivorId !== null && survivorId !== observationId) {
-      survivorIds.add(survivorId);
-    }
+  const resolved = await resolveSurvivors(
+    sql,
+    neighborhood.map((candidate) => candidate.id)
+  );
+  for (const survivorId of resolved.values()) {
+    if (survivorId !== null && survivorId !== observationId) survivorIds.add(survivorId);
   }
   if (survivorIds.size === 0) {
     return [];

@@ -462,9 +462,12 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
 
   // resolveOpenLr narrows the union: items without geometry (UnresolvedRoadEvent)
   // are resolved to real geometry or dropped — resolved[] always has geometry.
-  const { resolved, dropped } = await resolveOpenLr(parsed, deps.openlrClient ?? null);
-  if ((snapshotInspection?.inputRecords ?? 0) > 0 && resolved.length === 0) {
-    const error = `structurally non-empty snapshot produced zero usable observations`;
+  const { resolved, dropped, failed } = await resolveOpenLr(parsed, deps.openlrClient ?? null);
+  if (failed > 0 || ((snapshotInspection?.inputRecords ?? 0) > 0 && resolved.length === 0)) {
+    const error =
+      failed > 0
+        ? `OpenLR resolution failed for ${failed} request(s)`
+        : `structurally non-empty snapshot produced zero usable observations`;
     await upsertSourceStatus(deps.sql, src.id, {
       freshnessWindowSec: src.freshnessWindowSec,
       outcome: "failed",
@@ -576,7 +579,10 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     // material the nightly baseline derivation consumes). Best-effort: a history
     // write must never fail the live swap that already succeeded.
     try {
-      await writeSpeedSamples(deps.sql, src.id, toWrite, deps.now, src.cadenceSec);
+      const samples = await writeSpeedSamples(deps.sql, src.id, toWrite, deps.now, src.cadenceSec);
+      if (samples.rejectedLate > 0) {
+        console.warn(`[ingest] ${src.id}: rejected ${samples.rejectedLate} late speed samples`);
+      }
     } catch (err) {
       console.warn(`[ingest] ${src.id}: speed-sample write failed:`, err);
     }

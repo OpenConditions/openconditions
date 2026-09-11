@@ -288,6 +288,16 @@ export const sensorSpeedSample = conditionsSchema.table(
   ]
 );
 
+/** Completed finalization frontier across all sensors, advanced with each rollup batch. */
+export const speedRollupProgress = conditionsSchema.table(
+  "speed_rollup_progress",
+  {
+    id: integer("id").primaryKey().default(1),
+    finalizedBefore: timestamp("finalized_before", { withTimezone: true }).notNull(),
+  },
+  (t) => [check("speed_rollup_progress_singleton", sql`${t.id} = 1`)]
+);
+
 /**
  * Per-(sensor, UTC hour) rollup of {@link sensorSpeedSample} — the durable speed
  * history. One row replaces ~25 raw rows, so the weeks of history the baseline
@@ -322,6 +332,7 @@ export const sensorSpeedHourly = conditionsSchema.table(
     sampleCount: integer("sample_count").notNull(),
     speedBins: smallint("speed_bins").array().notNull(),
     speedCounts: integer("speed_counts").array().notNull(),
+    finalized: boolean("finalized").notNull().default(false),
   },
   (t) => [
     primaryKey({ columns: [t.sensorKey, t.hourUtc] }),
@@ -889,6 +900,7 @@ export const federationSubscription = conditionsSchema.table(
     cursor: text("cursor").notNull().default("0.0"),
     priorityOnly: boolean("priority_only").notNull().default(true),
     pushFailures: integer("push_failures").notNull().default(0),
+    revision: integer("revision").notNull().default(0),
     status: text("status").notNull().default("active"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),

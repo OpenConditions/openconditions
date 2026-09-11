@@ -70,6 +70,13 @@ Responses:
   DNP-consistent path is found.
 - `400` — neither field supplied, or an invalid OpenLR binary.
 
+The TypeScript client uses a 10-second total deadline and a 1 MiB response limit
+by default. It validates LineString coordinates before caching. Callers can
+supply request limits and an AbortSignal. Transport or malformed-response errors
+make ingestion retain the last-good snapshot; a documented 404 remains a no-match
+result. Graph proximity queries use metre-based geography indexes created by the
+loader.
+
 ### `GET /health`
 
 Returns `200 { "status": "ok" }`.

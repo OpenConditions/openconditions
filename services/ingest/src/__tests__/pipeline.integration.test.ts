@@ -1,3 +1,5 @@
+import { encodeOpenlrLine } from "@openconditions/openlr";
+import { clearResolveCache } from "../pipeline/resolve.js";
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import path from "node:path";
@@ -1371,5 +1373,90 @@ describe("stable provenance refresh", () => {
     expect(unknown.origin.attribution.rights.commercial_use).toBe("unknown");
     expect(unknown.origin.attribution.parentSourceId).toBeUndefined();
     expect(headers).toEqual([null, "stable-content", null, "stable-content", null]);
+  });
+});
+
+describe("OpenLR publication failure", () => {
+  it("retains all last-good rows and retries the unaccepted snapshot after partial resolution fails", async () => {
+    const feed: DomainFeedSource = {
+      ...ndwFeed,
+      id: "openlr-transport-test",
+      url: "https://openlr-feed.test/events",
+      snapshot: undefined,
+      fetchIntervalSec: undefined,
+    };
+    const refs = [8, 8.1].map((lon) =>
+      encodeOpenlrLine({
+        coords: [
+          [lon, 50],
+          [lon + 0.01, 50],
+        ],
+        frc: 3,
+        fow: 3,
+      })
+    );
+    const xml = `<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3">
+      <payload xsi:type="SituationPublication"><situation id="s">
+      ${refs
+        .map(
+          (
+            ref,
+            i
+          ) => `<situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="r${i}" version="1">
+        <situationRecordVersionTime>2026-09-11T12:00:00Z</situationRecordVersionTime>
+        <validity><validityStatus>active</validityStatus></validity>
+        <locationReference xsi:type="OpenlrPointAlongLine"><openlrBinary>${ref}</openlrBinary></locationReference>
+      </situationRecord>`
+        )
+        .join("")}
+      </situation></payload></messageContainer>`;
+    let version = "v1";
+    let failing = false;
+    const validators: (string | null)[] = [];
+    const run = () =>
+      runSource(feed, {
+        sql,
+        lookup: fakeLookup,
+        now: () => new Date().toISOString(),
+        fetch: async (_url, init) => {
+          validators.push(new Headers(init?.headers).get("if-none-match"));
+          return new Response(xml, { headers: { etag: version } });
+        },
+        openlrClient: {
+          resolve: async (loc) => {
+            if (failing && loc.points[0]!.longitude > 8.05)
+              throw new Error("resolver deadline exceeded");
+            return {
+              type: "LineString",
+              coordinates: [
+                [8, 50],
+                [8.01, 50],
+              ],
+            };
+          },
+        },
+      });
+    const facts = async () => ({
+      rows: await sql`SELECT id, ST_AsGeoJSON(geom) AS geom FROM conditions.observations WHERE source = ${feed.id} ORDER BY id`,
+      status: (
+        await sql`SELECT publication_revision, last_network_success_at FROM conditions.source_status WHERE source = ${feed.id}`
+      )[0],
+    });
+    try {
+      expect((await run()).count).toBe(2);
+      const before = await facts();
+      version = "v2";
+      failing = true;
+      clearResolveCache();
+      const failed = await run();
+      expect(failed.outcome).toBe("failed");
+      expect(failed.error).toContain("OpenLR resolution failed");
+      expect(await facts()).toEqual(before);
+      failing = false;
+      expect(await run()).toMatchObject({ outcome: "changed", activeEvents: 2, deleted: 0 });
+      expect(validators.slice(-2)).toEqual(["v1", "v1"]);
+    } finally {
+      clearResolveCache();
+    }
   });
 });

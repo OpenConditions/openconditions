@@ -119,3 +119,45 @@ def test_postgis_reader_rejects_far_reference(pg_reader) -> None:
 
     with pytest.raises(NoMatchError):
         match(reference, pg_reader, config=Config(search_radius=100))
+
+
+def test_proximity_uses_geography_indexes_without_changing_results(pg_reader) -> None:
+    # A nontrivial graph lets the planner choose the access path naturally.
+    # Roll back the synthetic rows so the shared known-road fixture stays intact.
+    with pg_reader._pool.connection() as conn:
+        with conn.transaction(force_rollback=True):
+            conn.execute("""
+                INSERT INTO conditions.osm_nodes
+                SELECT 100000+i, ST_SetSRID(ST_MakePoint(
+                    8+(i%200)*0.001, 50+(i/200)*0.001),4326)
+                FROM generate_series(1,20000) i
+            """)
+            conn.execute("""
+                INSERT INTO conditions.osm_lines
+                    (line_id,way_id,start_node,end_node,frc,fow,oneway,geom)
+                SELECT node_id,1,node_id,node_id+1,3,3,true,
+                    ST_MakeLine(geom,ST_Translate(geom,0.0005,0))
+                FROM conditions.osm_nodes WHERE node_id > 100000
+            """)
+            for table, ident in [("osm_nodes", "node_id"), ("osm_lines", "line_id")]:
+                conn.execute(f"ANALYZE conditions.{table}")
+                query = (
+                    f"SELECT {ident} FROM conditions.{table} WHERE "
+                    "ST_DWithin(geom::geography, "
+                    "ST_SetSRID(ST_MakePoint(8.1,50.05),4326)::geography,100)"
+                )
+                plan = conn.execute("EXPLAIN (FORMAT JSON) " + query).fetchone()[0][0]
+
+                def indexes(node):
+                    yield node.get("Index Name")
+                    for child in node.get("Plans", []):
+                        yield from indexes(child)
+
+                assert f"{table}_geography_idx" in set(indexes(plan["Plan"]))
+                indexed = set(conn.execute(query).fetchall())
+                assert indexed
+                conn.execute("SET LOCAL enable_indexscan = off")
+                conn.execute("SET LOCAL enable_bitmapscan = off")
+                assert set(conn.execute(query).fetchall()) == indexed
+                conn.execute("SET LOCAL enable_indexscan = on")
+                conn.execute("SET LOCAL enable_bitmapscan = on")
