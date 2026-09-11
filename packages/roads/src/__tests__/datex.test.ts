@@ -444,7 +444,13 @@ describe("parseDatexSituations — deeper field extraction", () => {
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.vehiclesAffected).toContain("lorry");
-    expect(ev!.restrictions).toContainEqual({ type: "height", value: 4.5, unit: "m" });
+    expect(ev!.restrictions).toContainEqual({
+      type: "height",
+      value: 4.5,
+      unit: "m",
+      operator: "greaterThan",
+      raw: { value: "4.5", comparisonOperator: "greaterThan" },
+    });
     expect(ev!.lanesAffected?.total).toBe(3);
     expect(ev!.lanesAffected?.closed).toBe(1);
     expect(ev!.delaySeconds).toBe(600);

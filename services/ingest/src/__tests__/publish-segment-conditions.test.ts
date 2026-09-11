@@ -42,13 +42,13 @@ async function insertEvent(
     INSERT INTO conditions.observations
       (id, source, source_format, domain, kind, type, category, severity, severity_source,
        headline, status, geom, attributes, valid_from, valid_to, origin,
-       data_updated_at, fetched_at, source_license)
+       data_updated_at, fetched_at, source_license, content_hash)
     VALUES (${id}, 'bind-test', 'datex2', 'roads', 'event', 'road_closure', 'incident',
       'high', 'declared', 'Closure', 'active',
       ST_SetSRID(ST_GeomFromText('POINT(6.85 51.2)'), 4326),
       ${sql.json(attributes)}, ${validFrom}, ${VALID_TO},
       ${sql.json({ kind: "feed", attribution: { provider: "bind-test", license } })},
-      ${NOW}, ${NOW}, ${license})`;
+      ${NOW}, ${NOW}, ${license}, ${`revision-${id}`})`;
 }
 
 async function insertBinding(id: string, status: string, confidence: number): Promise<void> {
@@ -58,6 +58,9 @@ async function insertBinding(id: string, status: string, confidence: number): Pr
        alternative_confidence, reason, resolver_version, geom_hash, bound_at)
     VALUES (${id}, ${status}, ${confidence}, 'single', 1, null, null,
       ${RESOLVER_VERSION}, ${`hash-${id}`}, ${NOW})`;
+  await sql`UPDATE conditions.observation_binding
+    SET observation_revision=${`revision-${id}`}, graph_generation='graph-route-test'
+    WHERE observation_id=${id}`;
 }
 
 async function insertSpan(
@@ -88,6 +91,12 @@ beforeAll(async () => {
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
   sql = postgres(url, { max: 3 });
   await runMigrations(url);
+  await sql`INSERT INTO conditions.road_graph_state
+    (singleton,generation,regions,highway_classes,pbf_provenance,imported_at,activated_at)
+    VALUES (true,'graph-route-test','[]','["motorway"]','[]',${NOW},${NOW})`;
+  await sql`INSERT INTO conditions.source_status
+    (source,last_success_at,last_network_success_at,freshness_deadline,freshness_window_sec,updated_at)
+    VALUES ('bind-test',${NOW},${NOW},'2030-01-01T00:00:00Z',3600,${NOW})`;
 
   await sql`
     INSERT INTO conditions.road_segment
@@ -141,7 +150,37 @@ afterAll(async () => {
 
 async function withApp<T>(fn: (app: ReturnType<typeof Fastify>) => Promise<T>): Promise<T> {
   const app = Fastify();
-  const registry = await buildDomainRegistry();
+  const loaded = await buildDomainRegistry();
+  const registry = {
+    ...loaded,
+    roads: {
+      ...loaded.roads,
+      feeds: [
+        {
+          id: "bind-test",
+          name: "Binding test",
+          format: "datex2",
+          operator: "test",
+          country: "DE",
+          cadenceSec: 60,
+          freshnessWindowSec: 3600,
+          license: "CC0-1.0",
+          attribution: "bind-test",
+          privacyUrl: "https://example.test/privacy",
+          rights: {
+            sourceRedistribution: true,
+            derivedRedistribution: true,
+            commercialUse: true,
+            attributionRequired: false,
+            retention: true,
+            reviewedAt: NOW,
+            evidenceOrigin: "test",
+            evidenceVersion: "1",
+          },
+        },
+      ],
+    },
+  } as typeof loaded;
   registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
   await app.ready();
   try {
@@ -178,6 +217,28 @@ type ConditionsBody = {
 };
 
 describe("GET /segments/conditions.json", () => {
+  it("does not relabel an older resolver binding or a non-active graph as current evidence", async () => {
+    await sql`UPDATE conditions.observation_binding SET resolver_version='old-resolver' WHERE observation_id='a:1'`;
+    await withApp(async (app) => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/segments/conditions.json?at=2026-09-06T10:00:00Z",
+      });
+      const body = res.json() as ConditionsBody;
+      expect(body.conditions.some((condition) => condition.id === "a:1")).toBe(false);
+    });
+    await sql`UPDATE conditions.observation_binding SET resolver_version=${RESOLVER_VERSION} WHERE observation_id='a:1'`;
+    await sql`UPDATE conditions.road_graph_state SET status='rebuilding' WHERE singleton`;
+    await withApp(async (app) => {
+      const res = await app.inject({
+        method: "GET",
+        url: "/segments/conditions.json?at=2026-09-06T10:00:00Z",
+      });
+      expect((res.json() as ConditionsBody).conditions).toEqual([]);
+    });
+    await sql`UPDATE conditions.road_graph_state SET status='ready' WHERE singleton`;
+  }, 30_000);
+
   it("emits only bound, permissive, in-effect conditions", async () => {
     await withApp(async (app) => {
       const res = await app.inject({
@@ -193,7 +254,7 @@ describe("GET /segments/conditions.json", () => {
       expect(body.resolver_version).toBe(RESOLVER_VERSION);
       // a:sa dropped by the license filter, a:unb has no binding, a:unres has
       // a non-routing binding status, a:future is not in effect until 12:00.
-      expect(body.conditions.map((c) => c.id)).toEqual(["a:1", "a:amb", "a:pt"]);
+      expect(body.conditions.map((c) => c.id)).toEqual(["a:1", "a:pt"]);
     });
   }, 30_000);
 
@@ -232,23 +293,14 @@ describe("GET /segments/conditions.json", () => {
     });
   }, 30_000);
 
-  it("emits a null geometry for a span whose segment is gone from the spine", async () => {
+  it("drops ambiguous bindings and spans whose segment is gone from the spine", async () => {
     await withApp(async (app) => {
       const res = await app.inject({
         method: "GET",
         url: "/segments/conditions.json?at=2026-09-06T10:00:00Z",
       });
       const body = res.json() as ConditionsBody;
-      const amb = body.conditions.find((c) => c.id === "a:amb")!;
-      // Spans keep their `seq` order: the live one first, the vanished one second.
-      expect(amb.segments.map((s) => s.way_id)).toEqual([10, 999]);
-      expect(amb.segments[0]!.geometry).not.toBeNull();
-      expect(amb.segments[1]!.geometry).toBeNull();
-      expect(amb.binding).toEqual({
-        status: "ambiguous",
-        confidence: 0.4,
-        direction_mode: "single",
-      });
+      expect(body.conditions.find((c) => c.id === "a:amb")).toBeUndefined();
     });
   }, 30_000);
 

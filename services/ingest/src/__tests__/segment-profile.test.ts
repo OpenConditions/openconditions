@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
@@ -60,6 +60,14 @@ async function seedSpeedSamples(sensorKey: string, speeds: number[], base: Date)
   // retention — is told to cover them, matching the widened windowDays below.
   await rollupSpeedSamples(sql, { retentionDays: 3650 });
 }
+
+beforeEach(() =>
+  vi.stubEnv(
+    "SEGMENT_REGIONS",
+    JSON.stringify([{ id: "nl", bbox: [3.31, 50.75, 7.09, 53.51], tz: "Europe/Amsterdam" }])
+  )
+);
+afterEach(() => vi.unstubAllEnvs());
 
 beforeAll(async () => {
   const container = await new GenericContainer("postgis/postgis:16-3.4")
@@ -144,4 +152,13 @@ describe("deriveSegmentProfiles", () => {
       SELECT count(*)::int AS n FROM conditions.segment_profile WHERE segment_id = 'C:f'`;
     expect(rows[0]!.n).toBe(0);
   }, 30_000);
+});
+
+it("skips profile SQL when region coverage is not configured", async () => {
+  vi.stubEnv("SEGMENT_REGIONS", "");
+  const query = vi.fn();
+  expect(await deriveSegmentProfiles(query as unknown as postgres.Sql, () => NOW)).toEqual({
+    upserted: 0,
+  });
+  expect(query).not.toHaveBeenCalled();
 });

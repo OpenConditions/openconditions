@@ -59,6 +59,28 @@ export function lintFeed(feed: RoadFeed): string[] {
     );
   }
 
+  if (feed.parentSourceId && feed.selectionState === "approved") {
+    const rights = feed.rights;
+    if (
+      !rights ||
+      rights.sourceRedistribution !== true ||
+      rights.derivedRedistribution !== true ||
+      rights.commercialUse !== true ||
+      rights.retention !== true ||
+      !rights.termsUrl ||
+      !rights.reviewedAt ||
+      !rights.evidenceOrigin ||
+      !rights.evidenceVersion
+    ) {
+      problems.push(
+        `${feed.id}: approved catalogue child requires affirmative source/derived redistribution, commercial-use and retention evidence`
+      );
+    }
+    if (feed.policyIds?.[0] !== feed.parentSourceId || !feed.policyIds.includes(feed.id)) {
+      problems.push(`${feed.id}: approved catalogue child policyIds must include parent and child`);
+    }
+  }
+
   return problems;
 }
 

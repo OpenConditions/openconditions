@@ -29,6 +29,7 @@
   "dependencies": {
     "@openconditions/core": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
+    "@openconditions/roads": "workspace:*",
     "fast-xml-parser": "^5.11.1",
     "gtfs-realtime-bindings": "^2.2.0",
     "hyparquet": "1.29.2",
@@ -36,7 +37,6 @@
   },
   "devDependencies": {
     "@openconditions/contrib-core": "workspace:*",
-    "@openconditions/roads": "workspace:*",
     "@types/geojson": "^7946.0.16",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",

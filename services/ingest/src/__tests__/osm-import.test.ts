@@ -3,7 +3,6 @@ import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import {
-  DEFAULT_OSM_REGIONS,
   importOsmRoads,
   loadOsmRegions,
   overpassSource,
@@ -63,12 +62,26 @@ describe("importOsmRoads", () => {
     });
     expect(imported).toBe(1);
     const rows = await sql<
-      { way_id: string; highway: string; oneway: boolean; maxspeed_kph: number; ok: boolean }[]
+      {
+        way_id: string;
+        highway: string;
+        oneway: boolean;
+        maxspeed_kph: number;
+        import_config_hash: string;
+        import_provenance: { region_id: string; highway_classes: string[] };
+        ok: boolean;
+      }[]
     >`
-      SELECT way_id, highway, oneway, maxspeed_kph, ST_IsValid(geom) AS ok
+      SELECT way_id, highway, oneway, maxspeed_kph, import_config_hash, import_provenance,
+             ST_IsValid(geom) AS ok
       FROM conditions.osm_road WHERE region = 'nl'`;
     expect(rows[0]).toMatchObject({ way_id: "9", highway: "motorway", oneway: true, ok: true });
     expect(rows[0]!.maxspeed_kph).toBe(120);
+    expect(rows[0]!.import_config_hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(rows[0]!.import_provenance).toMatchObject({
+      region_id: "nl",
+      highway_classes: expect.arrayContaining(["motorway", "motorway_link"]),
+    });
   }, 30_000);
 
   it("re-imports an overlapping border way into a second region without a PK error", async () => {
@@ -184,22 +197,53 @@ describe("importOsmRoads", () => {
 });
 
 describe("loadOsmRegions", () => {
-  it("falls back to DEFAULT_OSM_REGIONS when SEGMENT_REGIONS is unset", () => {
-    expect(loadOsmRegions({})).toEqual(DEFAULT_OSM_REGIONS);
+  it("does not invent coverage when SEGMENT_REGIONS is unset", () => {
+    expect(loadOsmRegions({})).toEqual([]);
   });
 
-  it("falls back to DEFAULT_OSM_REGIONS on an empty SEGMENT_REGIONS value", () => {
-    expect(loadOsmRegions({ SEGMENT_REGIONS: "" })).toEqual(DEFAULT_OSM_REGIONS);
+  it("leaves graph coverage unconfigured for an empty value", () => {
+    expect(loadOsmRegions({ SEGMENT_REGIONS: "" })).toEqual([]);
   });
 
-  it("falls back to DEFAULT_OSM_REGIONS on unparseable SEGMENT_REGIONS JSON", () => {
-    expect(loadOsmRegions({ SEGMENT_REGIONS: "not json" })).toEqual(DEFAULT_OSM_REGIONS);
+  it("reports invalid explicit SEGMENT_REGIONS instead of claiming default coverage", () => {
+    expect(() => loadOsmRegions({ SEGMENT_REGIONS: "not json" })).toThrow(
+      /SEGMENT_REGIONS is invalid JSON/
+    );
   });
 
   it("parses a SEGMENT_REGIONS JSON array override", () => {
     const custom = [{ id: "de", bbox: [5.9, 47.3, 15.0, 55.1], tz: "Europe/Berlin" }];
     const regions = loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify(custom) });
     expect(regions).toEqual(custom);
+  });
+
+  it.each([
+    { id: "" },
+    { id: "   " },
+    { id: " padded " },
+    { tz: "" },
+    { tz: "not-a-timezone" },
+    { tz: "+01:00" },
+    { tz: " Europe/Berlin " },
+    { bbox: [-181, 0, 10, 20] },
+    { bbox: [0, 0, 181, 20] },
+    { bbox: [0, -91, 10, 20] },
+    { bbox: [0, 0, 10, 91] },
+    { bbox: [10, 0, 0, 20] },
+    { bbox: [0, 20, 10, 0] },
+    { bbox: [0, 0, 0, 20] },
+    { bbox: [0, 0, 10, 0] },
+    { bbox: [200, 95, 201, 96] },
+  ])("rejects invalid region semantics: %j", (patch) => {
+    const region = { id: "custom", bbox: [1, 2, 3, 4], tz: "UTC", ...patch };
+    expect(() => loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify([region]) })).toThrow(
+      /SEGMENT_REGIONS/
+    );
+  });
+
+  it("accepts WGS84 limits and a named timezone", () => {
+    const region = { id: "world", bbox: [-180, -90, 180, 90], tz: "America/St_Johns" };
+    expect(loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify([region]) })).toEqual([region]);
   });
 
   it("accepts a region carrying valid pbfUrls", () => {
@@ -215,10 +259,25 @@ describe("loadOsmRegions", () => {
   });
 
   it("rejects a region whose pbfUrls is empty or contains a non-string/blank", () => {
-    const empty = [{ id: "nl", bbox: [1, 2, 3, 4], tz: "T", pbfUrls: [] }];
-    const blank = [{ id: "nl", bbox: [1, 2, 3, 4], tz: "T", pbfUrls: [""] }];
-    expect(loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify(empty) })).toEqual(DEFAULT_OSM_REGIONS);
-    expect(loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify(blank) })).toEqual(DEFAULT_OSM_REGIONS);
+    const empty = [{ id: "nl", bbox: [1, 2, 3, 4], tz: "UTC", pbfUrls: [] }];
+    const blank = [{ id: "nl", bbox: [1, 2, 3, 4], tz: "UTC", pbfUrls: [""] }];
+    expect(() => loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify(empty) })).toThrow(
+      /contains no valid regions/
+    );
+    expect(() => loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify(blank) })).toThrow(
+      /contains no valid regions/
+    );
+  });
+
+  it("accepts an explicit empty region list", () => {
+    expect(loadOsmRegions({ SEGMENT_REGIONS: "[]" })).toEqual([]);
+  });
+
+  it("rejects duplicate region identities", () => {
+    const region = { id: "custom", bbox: [1, 2, 3, 4], tz: "UTC" };
+    expect(() => loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify([region, region]) })).toThrow(
+      /duplicate/
+    );
   });
 });
 

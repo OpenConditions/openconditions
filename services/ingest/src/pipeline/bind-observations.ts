@@ -60,6 +60,10 @@ interface EventRow {
   attributes: Record<string, unknown> | null;
   existing_hash: string | null;
   existing_version: string | null;
+  existing_status: string | null;
+  existing_observation_revision: string | null;
+  existing_graph_generation: string | null;
+  observation_revision: string | null;
 }
 
 /**
@@ -167,23 +171,38 @@ async function writeResult(
   id: string,
   hash: string,
   r: BindResult,
-  now: string
-): Promise<void> {
-  await sql.begin(async (tx) => {
+  now: string,
+  observationRevision: string,
+  expectedContentHash: string | null,
+  graphGeneration: string | null
+): Promise<boolean> {
+  return sql.begin(async (tx) => {
     // One writer per id at a time. Without this, two concurrent replacements
     // each delete the spans they can see and then upsert their own: the one
     // with fewer spans leaves the other's tail rows behind, and a later run
     // skips the id as unchanged, so the stale spans would never be cleaned up.
     await tx`SELECT pg_advisory_xact_lock(hashtext('observation_binding'), hashtext(${id}))`;
+    const [current] = await tx<{ content_hash: string | null }[]>`
+      SELECT content_hash FROM conditions.observations WHERE id = ${id} FOR UPDATE`;
+    if (!current || current.content_hash !== expectedContentHash) return false;
+    if (graphGeneration != null) {
+      const [graph] = await tx<{ generation: string; status: string }[]>`
+        SELECT generation, status FROM conditions.road_graph_state WHERE singleton`;
+      if (graph?.generation !== graphGeneration || graph.status !== "ready") return false;
+    }
     await tx`DELETE FROM conditions.observation_segment WHERE observation_id = ${id}`;
     await tx`
       INSERT INTO conditions.observation_binding
-        (observation_id, status, confidence, direction_mode, candidate_count, alternative_confidence, reason, resolver_version, geom_hash, bound_at)
-      VALUES (${id}, ${r.status}, ${r.confidence}, ${r.directionMode}, ${r.candidateCount}, ${r.alternativeConfidence}, ${r.reason ?? null}, ${RESOLVER_VERSION}, ${hash}, ${now})
+        (observation_id, status, confidence, direction_mode, candidate_count, alternative_confidence, reason,
+         resolver_version, geom_hash, observation_revision, graph_generation, bound_at)
+      VALUES (${id}, ${r.status}, ${r.confidence}, ${r.directionMode}, ${r.candidateCount}, ${r.alternativeConfidence},
+              ${r.reason ?? null}, ${RESOLVER_VERSION}, ${hash}, ${observationRevision}, ${graphGeneration}, ${now})
       ON CONFLICT (observation_id) DO UPDATE SET
         status = excluded.status, confidence = excluded.confidence, direction_mode = excluded.direction_mode,
         candidate_count = excluded.candidate_count, alternative_confidence = excluded.alternative_confidence,
-        reason = excluded.reason, resolver_version = excluded.resolver_version, geom_hash = excluded.geom_hash, bound_at = excluded.bound_at`;
+        reason = excluded.reason, resolver_version = excluded.resolver_version, geom_hash = excluded.geom_hash,
+        observation_revision = excluded.observation_revision, graph_generation = excluded.graph_generation,
+        bound_at = excluded.bound_at`;
     if (r.segments.length > 0) {
       const rows = r.segments.map((s, seq) => ({
         observation_id: id,
@@ -200,6 +219,43 @@ async function writeResult(
           segment_id = excluded.segment_id, way_id = excluded.way_id, dir = excluded.dir,
           start_fraction = excluded.start_fraction, end_fraction = excluded.end_fraction`;
     }
+    if (r.reason !== "resolver_error") {
+      await tx`DELETE FROM conditions.binding_queue WHERE observation_id = ${id}`;
+    } else {
+      await tx`
+        INSERT INTO conditions.binding_queue
+          (observation_id, observation_revision, attempts, next_attempt_at, last_error, updated_at)
+        VALUES (${id}, ${observationRevision}, 1, now() + interval '30 seconds', 'resolver_error', now())
+        ON CONFLICT (observation_id) DO UPDATE SET
+          observation_revision=excluded.observation_revision,
+          attempts=conditions.binding_queue.attempts+1,
+          next_attempt_at=now() + make_interval(secs => LEAST(3600,
+            30 * power(2, LEAST(conditions.binding_queue.attempts, 7))::int)),
+          last_error='resolver_error', updated_at=now()`;
+    }
+    return true;
+  });
+}
+
+/** Removes duplicate/stale retry work only while the observation and graph are
+ * still the snapshots already represented by the current binding. */
+async function acknowledgeCurrentQueue(
+  sql: Sql,
+  id: string,
+  observationRevision: string,
+  graphGeneration: string | null
+): Promise<void> {
+  await sql.begin(async (tx) => {
+    await tx`SELECT pg_advisory_xact_lock(hashtext('observation_binding'), hashtext(${id}))`;
+    const [current] = await tx<{ content_hash: string | null }[]>`
+      SELECT content_hash FROM conditions.observations WHERE id=${id} FOR UPDATE`;
+    if (!current || current.content_hash !== observationRevision) return;
+    if (graphGeneration != null) {
+      const [graph] = await tx<{ generation: string; status: string }[]>`
+        SELECT generation, status FROM conditions.road_graph_state WHERE singleton`;
+      if (graph?.generation !== graphGeneration || graph.status !== "ready") return;
+    }
+    await tx`DELETE FROM conditions.binding_queue WHERE observation_id=${id}`;
   });
 }
 
@@ -256,10 +312,18 @@ export async function bindObservations(
   const opts = bindOptionsFromEnv(deps.env);
   if (!opts.enabled || ids.length === 0) return result;
   const regions = loadOsmRegions(deps.env ?? process.env);
+  const [graph] = await sql<{ generation: string; status: string }[]>`
+    SELECT generation, status FROM conditions.road_graph_state WHERE singleton`;
+  if (!graph || graph.status !== "ready") return result;
+  const graphGeneration = graph.generation;
 
   const rows = await sql<EventRow[]>`
     SELECT o.id, o.type, ST_AsGeoJSON(o.geom) AS geojson, o.attributes,
-           b.geom_hash AS existing_hash, b.resolver_version AS existing_version
+           b.geom_hash AS existing_hash, b.resolver_version AS existing_version,
+           b.status AS existing_status,
+           b.observation_revision AS existing_observation_revision,
+           b.graph_generation AS existing_graph_generation,
+           o.content_hash AS observation_revision
     FROM conditions.observations o
     LEFT JOIN conditions.observation_binding b ON b.observation_id = o.id
     WHERE o.id = ANY(${sql.array(ids)}::text[]) AND o.kind = 'event' AND o.domain = 'roads' AND o.status = 'active'`;
@@ -281,8 +345,16 @@ export async function bindObservations(
         roadState: attrs["roadState"] as string | undefined,
       });
       const hash = bindInputHash(input);
-      if (row.existing_hash === hash && row.existing_version === RESOLVER_VERSION) {
+      const observationRevision = row.observation_revision ?? hash;
+      if (
+        row.existing_hash === hash &&
+        row.existing_version === RESOLVER_VERSION &&
+        row.existing_status !== "obsolete" &&
+        row.existing_observation_revision === observationRevision &&
+        row.existing_graph_generation === graphGeneration
+      ) {
         result.skippedUnchanged++;
+        await acknowledgeCurrentQueue(sql, row.id, observationRevision, graphGeneration);
         continue;
       }
       result.attempted++;
@@ -307,7 +379,20 @@ export async function bindObservations(
         r = failure("unresolved", "resolver_error");
       }
       try {
-        await writeResult(sql, row.id, hash, r, deps.now());
+        const persisted = await writeResult(
+          sql,
+          row.id,
+          hash,
+          r,
+          deps.now(),
+          observationRevision,
+          row.observation_revision,
+          graphGeneration
+        );
+        if (!persisted) {
+          result.writeErrors++;
+          continue;
+        }
       } catch (err) {
         // One event's write must not take the whole pass down with it: a
         // concurrent binder or a transient database error leaves this id on
@@ -324,4 +409,22 @@ export async function bindObservations(
     Array.from({ length: Math.min(opts.concurrency, rows.length) }, () => worker())
   );
   return result;
+}
+
+/** Drains due binding retries; failures remain queued with bounded backoff. */
+export async function drainBindingQueue(
+  sql: Sql,
+  deps: { now: () => string; env?: NodeJS.ProcessEnv; limit?: number }
+): Promise<BindObservationsResult> {
+  const limit = Math.max(1, Math.min(deps.limit ?? 500, 2_000));
+  const rows = await sql<{ observation_id: string }[]>`
+    SELECT observation_id FROM conditions.binding_queue
+    WHERE next_attempt_at <= now()
+    ORDER BY next_attempt_at, observation_id
+    LIMIT ${limit}`;
+  return bindObservations(
+    sql,
+    rows.map((row) => row.observation_id),
+    deps
+  );
 }

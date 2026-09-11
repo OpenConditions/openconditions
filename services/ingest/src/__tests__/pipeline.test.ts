@@ -10,7 +10,7 @@ import { recordSkippedNoGeometry } from "@openconditions/roads";
 import { FEED_SOURCES } from "@openconditions/roads";
 import type { RoadEvent, RoadFlow } from "@openconditions/roads";
 import type { LookupFn } from "@openconditions/ingest-framework";
-import { atomicSwap } from "../pipeline/write-postgis.js";
+import { atomicSwap, MAX_ROWS_PER_SOURCE } from "../pipeline/write-postgis.js";
 import { runSource } from "../pipeline/run.js";
 import type { DomainFeedSource } from "../pipeline/run.js";
 import { clearSiteTableCache } from "../pipeline/site-table.js";
@@ -448,6 +448,38 @@ describe("atomicSwap — bulk insert at volume", () => {
     expect(rows[0]!.id).toBe("bulk:new");
   }, 30_000);
 
+  it("rejects an over-limit snapshot before delete-missing can remove the retained tail", async () => {
+    const retained: RoadFlow = {
+      id: `overflow:${MAX_ROWS_PER_SOURCE}`,
+      source: "overflow",
+      sourceFormat: "native",
+      domain: "roads",
+      kind: "measurement",
+      metric: "flow",
+      geometry: { type: "Point", coordinates: [5, 52] },
+      los: "unknown",
+      aggregation: "live",
+      status: "active",
+      origin: { kind: "feed", attribution: { provider: "Overflow", license: "CC0-1.0" } },
+      dataUpdatedAt: "2026-06-24T11:00:00Z",
+      fetchedAt: "2026-06-24T11:00:00Z",
+      isStale: false,
+    };
+    await atomicSwap(sql, "overflow", [retained], 300);
+
+    const oversized = Array.from({ length: MAX_ROWS_PER_SOURCE + 1 }, (_, i) => ({
+      ...retained,
+      id: `overflow:${i}`,
+    }));
+    await expect(atomicSwap(sql, "overflow", oversized, 300)).rejects.toThrow(
+      /100001 rows.*limit 100000/
+    );
+
+    const rows = await sql<{ id: string }[]>`
+      SELECT id FROM conditions.observations WHERE source = 'overflow'`;
+    expect(rows.map((row) => row.id)).toEqual([retained.id]);
+  }, 60_000);
+
   it("diff-upserts on a second swap: unchanged row untouched, changed row updated, new row inserted, missing row deleted", async () => {
     const mkFlow = (id: string, speedKph: number, dataUpdatedAt: string): RoadFlow => ({
       id,
@@ -562,6 +594,53 @@ describe("atomicSwap — bulk insert at volume", () => {
     expect(rows.length).toBe(1);
     expect(rows[0]!.id).toBe("dupsrc:1");
     expect(Number(rows[0]!.value)).toBe(20); // last one in the fresh set wins
+  }, 30_000);
+
+  it("obsoletes the prior binding and queues the new observation revision atomically", async () => {
+    const mkAtomicEvent = (headline: string, dataUpdatedAt: string): RoadEvent => ({
+      id: "binding-atomic:event",
+      source: "binding-atomic",
+      sourceFormat: "datex2",
+      domain: "roads",
+      kind: "event",
+      type: "roadworks",
+      category: "planned",
+      isPlanned: true,
+      roads: [],
+      severity: "medium",
+      severitySource: "declared",
+      headline,
+      geometry: { type: "Point", coordinates: [7, 51] },
+      status: "active",
+      origin: { kind: "feed", attribution: { provider: "X", license: "CC0-1.0" } },
+      dataUpdatedAt,
+      fetchedAt: dataUpdatedAt,
+      isStale: false,
+    });
+    const first = mkAtomicEvent("first", "2026-09-11T10:00:00Z");
+    await atomicSwap(sql, "binding-atomic", [first], 900);
+    await sql`
+      INSERT INTO conditions.observation_binding
+        (observation_id, status, confidence, direction_mode, candidate_count,
+         resolver_version, geom_hash, observation_revision, graph_generation, bound_at)
+      SELECT id, 'exact', 0.95, 'single', 1, 'test', 'old-geom', content_hash,
+        'test-graph', now()
+      FROM conditions.observations WHERE id = 'binding-atomic:event'
+      ON CONFLICT (observation_id) DO UPDATE SET status = excluded.status
+    `;
+
+    const changed = mkAtomicEvent("changed", "2026-09-11T10:01:00Z");
+    await atomicSwap(sql, "binding-atomic", [changed], 900);
+
+    const [row] = await sql<{ status: string; queued: string; current: string }[]>`
+      SELECT b.status, q.observation_revision AS queued, o.content_hash AS current
+      FROM conditions.observations o
+      JOIN conditions.observation_binding b ON b.observation_id = o.id
+      JOIN conditions.binding_queue q ON q.observation_id = o.id
+      WHERE o.id = 'binding-atomic:event'
+    `;
+    expect(row?.status).toBe("obsolete");
+    expect(row?.queued).toBe(row?.current);
   }, 30_000);
 
   it("writes the success source_status row atomically with a brand-new source's rows", async () => {
@@ -905,12 +984,13 @@ describe("pipeline — shrink tripwire (event feed)", () => {
     ...drivebcFeed,
     id: "shrink-test-src",
     pagination: undefined,
+    snapshot: undefined,
   };
   const emptyEventsFetch = async (_url: string | URL | Request): Promise<Response> => {
     return new Response(JSON.stringify({ events: [] }), { status: 200 });
   };
 
-  it("shrink tripwire (events): seeds N rows, then a well-formed empty response is written as-is only once allowMassClear is set", async () => {
+  it("clears the last event only after the declared complete snapshot validates empty", async () => {
     // Seed N rows for this source from the real DriveBC fixture.
     const jsonPayload = readFileSync(DRIVEBC_FIXTURE_PATH);
     const seedFetch = async (_url: string | URL | Request): Promise<Response> => {
@@ -954,9 +1034,12 @@ describe("pipeline — shrink tripwire (event feed)", () => {
     `;
     expect(statusAfterGuarded[0]!.last_row_count).toBe(seededCount);
 
-    // allowMassClear:true opts this feed out of the tripwire — the same empty
-    // response now legitimately clears the source's rows.
-    const massClearFeed: DomainFeedSource = { ...shrinkFeed, allowMassClear: true };
+    // A structural complete-snapshot contract proves this is a real empty
+    // source response, so the same response now legitimately clears the rows.
+    const massClearFeed: DomainFeedSource = {
+      ...shrinkFeed,
+      snapshot: { completeness: "complete", recordsPath: "events" },
+    };
     const cleared = await runSource(massClearFeed, {
       sql,
       fetch: emptyEventsFetch as typeof fetch,
@@ -972,7 +1055,7 @@ describe("pipeline — shrink tripwire (event feed)", () => {
   }, 30_000);
 });
 
-describe("pipeline — fan-out partial-failure threshold", () => {
+describe("pipeline — partition-complete fan-out reconciliation", () => {
   /** Minimal well-formed open511 event, unique per url so each sub-feed's
    * contribution is distinguishable in the observations table. */
   function eventBodyFor(url: string): string {
@@ -1027,7 +1110,7 @@ describe("pipeline — fan-out partial-failure threshold", () => {
     });
     expect(guarded.count).toBe(0);
     expect(guarded.error).toBeDefined();
-    expect(guarded.error).toMatch(/fan-out/i);
+    expect(guarded.outcome).toBe("partial");
 
     const after = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'fanout-skip-test-src'
@@ -1065,7 +1148,7 @@ describe("pipeline — fan-out partial-failure threshold", () => {
     });
     expect(guarded.count).toBe(0);
     expect(guarded.error).toBeDefined();
-    expect(guarded.error).toMatch(/fan-out/i);
+    expect(guarded.outcome).toBe("partial");
 
     const after = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'fanout-boundary-test-src'
@@ -1073,7 +1156,7 @@ describe("pipeline — fan-out partial-failure threshold", () => {
     expect(parseInt(after[0]!.count, 10)).toBe(4);
   }, 30_000);
 
-  it("proceeds with the swap when the fan-out failure ratio is below the default threshold", async () => {
+  it("preserves every partition when even one fan-out partition fails", async () => {
     const urls = Array.from({ length: 4 }, (_, i) => `https://fanout-proceed.test/${i}`);
     const feed: DomainFeedSource = {
       ...drivebcFeed,
@@ -1093,21 +1176,20 @@ describe("pipeline — fan-out partial-failure threshold", () => {
     expect(seeded.error).toBeUndefined();
     expect(seeded.count).toBe(4);
 
-    // Only 1 of 4 sub-feeds fails this cycle (ratio 0.25 < the 0.5 default) —
-    // below threshold the swap proceeds as normal, accepting that the failed
-    // sub-feed's row is pruned as "missing" this cycle (the named trade-off).
+    // Even a minority failure is incomplete. No successful partition may make
+    // delete-missing prune rows owned by the failed partition.
     const proceeded = await runSource(feed, {
       sql,
       fetch: fanoutFetchFor(new Set([urls[0]!])),
       now: () => new Date().toISOString(),
       lookup: fakeLookup,
     });
-    expect(proceeded.error).toBeUndefined();
-    expect(proceeded.count).toBe(3);
+    expect(proceeded.outcome).toBe("partial");
+    expect(proceeded.count).toBe(0);
 
     const after = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'fanout-proceed-test-src'
     `;
-    expect(parseInt(after[0]!.count, 10)).toBe(3);
+    expect(parseInt(after[0]!.count, 10)).toBe(4);
   }, 30_000);
 });

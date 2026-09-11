@@ -15,6 +15,13 @@ const L = (i: LicenseInfo): [string, LicenseInfo] => [i.id.toLowerCase(), i];
 
 export const LICENSES: Record<string, LicenseInfo> = Object.fromEntries([
   L({
+    id: "UNKNOWN",
+    name: "Rights not verified",
+    attributionRequired: true,
+    shareAlike: false,
+    commercialOk: false,
+  }),
+  L({
     id: "CC0-1.0",
     name: "Creative Commons Zero 1.0",
     spdxId: "CC0-1.0",

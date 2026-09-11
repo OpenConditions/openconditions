@@ -409,15 +409,11 @@ export async function upsertRows(
 /** Hard ceiling on rows written for a single source per swap. */
 export const MAX_ROWS_PER_SOURCE = 100_000;
 
-/**
- * Caps a source's fresh row set. Pure + synchronous so it unit-tests without a
- * database; a truncation is logged so an upstream that starts returning an
- * absurd row count is visible in the ingest logs.
- */
+/** Rejects a source snapshot that cannot be published in full. Reconciliation
+ * must never delete rows against a locally truncated set. */
 export function capRows<T>(fresh: T[], max: number = MAX_ROWS_PER_SOURCE): T[] {
   if (fresh.length <= max) return fresh;
-  console.warn(`[ingest] row cap hit: truncating ${fresh.length} to ${max} rows for one source`);
-  return fresh.slice(0, max);
+  throw new Error(`source snapshot has ${fresh.length} rows, exceeding publication limit ${max}`);
 }
 
 export interface SwapCounts {
@@ -451,7 +447,8 @@ export async function atomicSwap(
   sourceId: string,
   fresh: Observation[],
   freshnessWindowSec?: number,
-  ctx?: WriterContext
+  ctx?: WriterContext,
+  statusContext?: { attemptAt?: string; rejected?: number; durationMs?: number }
 ): Promise<SwapCounts> {
   // The single defaulting seam: stamp the commons federation/privacy provenance
   // onto every row here — the one write choke point — before anything else, so
@@ -487,6 +484,33 @@ export async function atomicSwap(
       changedIds.push(...counts.ids);
     }
 
+    // A changed event and its old routing binding must never be observable as
+    // current at the same time. Obsolete the prior result and enqueue the new
+    // content revision before this publication transaction commits. New events
+    // have no binding yet but still enter the durable queue.
+    if (changedIds.length > 0) {
+      await tx`
+        UPDATE conditions.observation_binding
+        SET status = 'obsolete'
+        WHERE observation_id = ANY(${tx.array(changedIds)}::text[])
+      `;
+      await tx`
+        INSERT INTO conditions.binding_queue
+          (observation_id, observation_revision, attempts, next_attempt_at, last_error, updated_at)
+        SELECT id, content_hash, 0, now(), NULL, now()
+        FROM conditions.observations
+        WHERE id = ANY(${tx.array(changedIds)}::text[])
+          AND kind = 'event'
+          AND content_hash IS NOT NULL
+        ON CONFLICT (observation_id) DO UPDATE SET
+          observation_revision = excluded.observation_revision,
+          attempts = 0,
+          next_attempt_at = now(),
+          last_error = NULL,
+          updated_at = now()
+      `;
+    }
+
     // Delete-missing: rows for this source that are no longer in the fresh
     // set (an empty fresh set — genuinely no data this cycle — deletes every
     // remaining row for the source, same as the old delete-all behavior).
@@ -511,8 +535,18 @@ export async function atomicSwap(
     if (freshnessWindowSec != null) {
       await upsertSourceStatus(tx, sourceId, {
         freshnessWindowSec,
-        outcome: "success",
-        rowCount: fresh.length,
+        outcome: capped.length === 0 ? "complete_empty" : "changed",
+        attemptAt: statusContext?.attemptAt,
+        networkValidated: true,
+        durationMs: statusContext?.durationMs,
+        publication: {
+          activeEvents: capped.filter((row) => row.kind === "event").length,
+          rowCount: capped.length,
+          inserted,
+          updated,
+          deleted: removed.length,
+          rejected: statusContext?.rejected ?? Math.max(0, fresh.length - capped.length),
+        },
       });
     }
 

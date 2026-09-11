@@ -4,6 +4,7 @@ import { FeedStatusStore } from "../feed-status.js";
 import { buildDomainRegistry } from "../domains.js";
 import { registerFeedStatusRoute } from "../publish-routes.js";
 import type { BindingMetricsReader } from "../pipeline/binding-metrics.js";
+import type { SourceStatusReader } from "../pipeline/source-status.js";
 
 const app = Fastify();
 const store = new FeedStatusStore();
@@ -12,10 +13,39 @@ store.recordSuccess("nl-ndw", "2026-07-01T00:00:00.000Z", 5, 100);
 // Binding metrics are covered against a real database in binding-metrics.test.ts;
 // stubbing them keeps this suite a pure registry/credentials test.
 let readBindingMetrics: BindingMetricsReader = async () => new Map();
+const readSourceStatus: SourceStatusReader = async () =>
+  new Map([
+    [
+      "nl-ndw",
+      {
+        source: "nl-ndw",
+        lastAttemptAt: "2026-09-11T10:00:00.000Z",
+        lastNetworkSuccessAt: "2026-09-11T09:59:00.000Z",
+        freshnessDeadline: "2026-09-11T10:14:00.000Z",
+        lastPublicationAt: "2026-09-11T09:59:00.000Z",
+        publicationRevision: 7,
+        lastOutcome: "changed",
+        activeEvents: 3,
+        lastInserted: 1,
+        lastUpdated: 2,
+        lastDeleted: 4,
+        lastRejected: 0,
+        lastDurationMs: 90,
+        consecutiveFailures: 0,
+      },
+    ],
+  ]);
 
 beforeAll(async () => {
   const registry = await buildDomainRegistry();
-  registerFeedStatusRoute(app, store, registry, () => readBindingMetrics());
+  registerFeedStatusRoute(
+    app,
+    store,
+    registry,
+    () => readBindingMetrics(),
+    readSourceStatus,
+    async () => ({ generation: "graph-7", status: "ready", regions: ["DE"] })
+  );
   await app.ready();
 });
 
@@ -26,6 +56,9 @@ describe("GET /feeds/status", () => {
     const res = await app.inject({ method: "GET", url: "/feeds/status" });
     expect(res.statusCode).toBe(200);
     const body = res.json() as {
+      schemaVersion: string;
+      collectedAt: string;
+      graph: { generation: string; status: string; regions: string[] };
       feeds: {
         id: string;
         hasCredentials: boolean;
@@ -33,10 +66,19 @@ describe("GET /feeds/status", () => {
         lastRowCount?: number;
       }[];
     };
+    expect(body.schemaVersion).toBe("2.0");
+    expect(Date.parse(body.collectedAt)).not.toBeNaN();
+    expect(body.graph).toEqual({ generation: "graph-7", status: "ready", regions: ["DE"] });
     const ndw = body.feeds.find((f) => f.id === "nl-ndw");
     expect(ndw).toBeTruthy();
     expect(ndw?.hasCredentials).toBe(true);
-    expect(ndw?.lastRowCount).toBe(5);
+    expect(ndw?.lastRowCount).toBe(3);
+    expect(ndw).toMatchObject({
+      lastOutcome: "changed",
+      activeEvents: 3,
+      publicationRevision: 7,
+      lastSuccessAt: "2026-09-11T09:59:00.000Z",
+    });
     // a keyed feed with no creds set is listed but flagged
     const keyed = body.feeds.find((f) => f.hasCredentials === false);
     expect(keyed && keyed.missingEnv.length > 0).toBe(true);

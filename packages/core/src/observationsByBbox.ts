@@ -37,6 +37,8 @@ export interface ObservationsByBboxOpts {
    * `dedupeAcrossSources`.
    */
   dedupe?: boolean;
+  /** Routing requires all original observations: reject overflow, never deduplicate. */
+  requireComplete?: boolean;
   /**
    * Restrict to observations that may affect ROUTING. Feed observations are
    * authoritative and always kept; a crowd observation is kept only once it is
@@ -62,6 +64,8 @@ export interface ObservationsByBboxOpts {
    * the exact same query and the exact same output as before.
    */
   includeBindings?: boolean;
+  /** Source and parent-policy identities denied by the deployment policy. */
+  excludedSourceIds?: string[];
 }
 
 interface ObservationRow {
@@ -193,11 +197,22 @@ const IS_STALE_SQL =
 // Optional binding projection (see `includeBindings`): the header row plus the
 // ordered segment path aggregated to one jsonb array, so a bound event costs a
 // single row. Spliced in only when asked, keeping the default query untouched.
-const BINDING_SELECT_SQL =
-  ", b.status AS binding_status, b.confidence AS binding_confidence, b.direction_mode AS binding_direction_mode, seg.segments AS segments";
+const BINDING_CURRENT_SQL = `(b.observation_revision IS NOT NULL
+      AND b.observation_revision = o.content_hash
+      AND b.graph_generation IS NOT NULL
+      AND b.graph_generation = graph.generation
+      AND graph.status = 'ready')`;
+
+const BINDING_SELECT_SQL = `,
+    CASE WHEN b.observation_id IS NULL THEN NULL
+         WHEN ${BINDING_CURRENT_SQL} THEN b.status ELSE 'obsolete' END AS binding_status,
+    CASE WHEN ${BINDING_CURRENT_SQL} THEN b.confidence ELSE NULL END AS binding_confidence,
+    CASE WHEN ${BINDING_CURRENT_SQL} THEN b.direction_mode ELSE 'unknown' END AS binding_direction_mode,
+    CASE WHEN ${BINDING_CURRENT_SQL} THEN seg.segments ELSE NULL END AS segments`;
 
 const BINDING_JOIN_SQL = `
     LEFT JOIN conditions.observation_binding b ON b.observation_id = o.id
+    LEFT JOIN conditions.road_graph_state graph ON graph.singleton
     LEFT JOIN LATERAL (
       SELECT jsonb_agg(jsonb_build_object('segmentId', s.segment_id, 'wayId', s.way_id, 'dir', s.dir,
                        'startFraction', s.start_fraction, 'endFraction', s.end_fraction) ORDER BY s.seq) AS segments
@@ -249,6 +264,22 @@ export async function observationsByBbox(
       `(o.valid_from IS NULL OR o.valid_from <= now() + make_interval(days => $${params.length}))`
     );
   }
+  if (opts.excludedSourceIds && opts.excludedSourceIds.length > 0) {
+    params.push(opts.excludedSourceIds);
+    const p = `$${params.length}`;
+    clauses.push(`o.source <> ALL(${p}::text[])`);
+    clauses.push(`COALESCE(
+      o.attributes->>'parentSourceId',
+      o.origin#>>'{attribution,parentSourceId}',
+      ''
+    ) <> ALL(${p}::text[])`);
+    clauses.push(`NOT EXISTS (
+      SELECT 1 FROM jsonb_array_elements_text(
+        COALESCE(o.attributes->'policyIds', o.origin#>'{attribution,policyIds}', '[]'::jsonb)
+      ) policy_id
+      WHERE policy_id = ANY(${p}::text[])
+    )`);
+  }
   // Origin-aware routing gate: keep every feed row (authoritative), keep a crowd
   // row only once it is routing_eligible. A crowd row with routing_eligible
   // false/NULL is excluded here so a lone self-reported closure never routes.
@@ -274,11 +305,17 @@ export async function observationsByBbox(
     LEFT JOIN conditions.source_status ss ON ss.source = o.source${bindingJoin}
     WHERE ${clauses.join(" AND ")}
     ORDER BY ${SEVERITY_RANK_SQL} DESC
-    LIMIT 2000`;
+    LIMIT ${opts.requireComplete ? 100001 : 2000}`;
 
-  const rows = (await db.execute<ObservationRow[]>(query, params)) ?? [];
+  const result = await db.execute<ObservationRow[]>(query, params);
+  if (opts.requireComplete && !Array.isArray(result))
+    throw new Error("Complete observation query unavailable");
+  const rows = result ?? [];
 
-  if (opts.dedupe === false) {
+  if (opts.requireComplete && (!Array.isArray(rows) || rows.length > 100000))
+    throw new Error("Complete observation query exceeds routing limit");
+
+  if (opts.requireComplete || opts.dedupe === false) {
     return { type: "FeatureCollection", features: rows.map((row) => rowToFeature(row)) };
   }
 

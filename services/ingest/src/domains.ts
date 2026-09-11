@@ -13,6 +13,7 @@ import type { RoadEvent, RoadFlow } from "@openconditions/roads";
 import type { Observation } from "@openconditions/core";
 import {
   loadFeeds,
+  materializeApprovedCatalogChildren,
   registerFeedSchema,
   type DomainRegistry,
   type IngestDomain,
@@ -84,7 +85,14 @@ export async function buildDomainRegistry(
       snapshotPath: roadsRemoteSnapshotPath(),
     },
   });
-  return { roads: { ...roadsDispatch, feeds } };
+  const materialized = materializeApprovedCatalogChildren(feeds);
+  return {
+    roads: {
+      ...roadsDispatch,
+      feeds: materialized.scheduled,
+      discoveredFeeds: materialized.discovered,
+    },
+  };
 }
 
 export { feedToSourceDescriptor };

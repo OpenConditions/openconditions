@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { rm } from "node:fs/promises";
 import { downloadLargeArtifact } from "@openconditions/ingest-framework";
 import { type OsmWay, parseOverpassWays } from "@openconditions/roads";
@@ -8,7 +9,7 @@ import { pbfToWays } from "./osmium.js";
 type Sql = postgres.Sql;
 
 /**
- * One sensored region of the OSM highway import: an Overpass bbox and the
+ * One configured region of the OSM highway import: a bounding box and the
  * IANA tz used to bucket that region's segment speeds locally.
  */
 export interface OsmRegion {
@@ -24,77 +25,101 @@ export interface OsmRegion {
    * is deduped by the way_id upsert). Absent ⇒ Overpass.
    */
   pbfUrls?: string[];
+  /** Optional class restriction; otherwise uses SEGMENT_HIGHWAY_CLASSES. */
+  highwayClasses?: string[];
 }
 
-/**
- * v1 sensored regions. Bboxes are deliberately generous (whole-country, not
- * tight to sensor coverage) so a region's own segment spine has margin for
- * future sensor expansion without a re-import. Adding a region beyond these
- * four is a `SEGMENT_REGIONS` config change, not a deploy (see loadOsmRegions).
- */
-export const DEFAULT_OSM_REGIONS: OsmRegion[] = [
-  { id: "nl", bbox: [3.31, 50.75, 7.09, 53.51], tz: "Europe/Amsterdam" },
-  { id: "se", bbox: [11.03, 55.34, 24.18, 69.06], tz: "Europe/Stockholm" },
-  { id: "fi", bbox: [20.55, 59.75, 31.59, 70.09], tz: "Europe/Helsinki" },
-  { id: "us-ny", bbox: [-79.76, 40.48, -71.75, 45.02], tz: "America/New_York" },
-];
+/** Exact effective import configuration whose successful rows may attest graph readiness. */
+export function osmRegionImportProvenance(
+  region: OsmRegion,
+  env: NodeJS.ProcessEnv = process.env
+): Record<string, unknown> {
+  return {
+    region_id: region.id,
+    bbox: region.bbox,
+    timezone: region.tz,
+    pbf_urls: [...new Set(region.pbfUrls ?? [])].sort(),
+    highway_classes: [...(region.highwayClasses ?? loadHighwayClasses(env))].sort(),
+    source: region.pbfUrls && region.pbfUrls.length > 0 ? "pbf" : "overpass",
+  };
+}
+
+export function osmRegionImportFingerprint(
+  region: OsmRegion,
+  env: NodeJS.ProcessEnv = process.env
+): string {
+  return createHash("sha256")
+    .update(JSON.stringify(osmRegionImportProvenance(region, env)))
+    .digest("hex");
+}
 
 function isOsmRegion(value: unknown): value is OsmRegion {
   if (typeof value !== "object" || value === null) return false;
   const r = value as Record<string, unknown>;
   const baseOk =
     typeof r.id === "string" &&
+    r.id.trim().length > 0 &&
+    r.id === r.id.trim() &&
     typeof r.tz === "string" &&
+    r.tz.trim().length > 0 &&
+    r.tz === r.tz.trim() &&
     Array.isArray(r.bbox) &&
     r.bbox.length === 4 &&
     r.bbox.every((n) => typeof n === "number" && Number.isFinite(n));
   if (!baseOk) return false;
+  const [west, south, east, north] = r.bbox as number[];
+  // This importer uses ordinary rectangular boxes. Dateline coverage needs
+  // two explicitly configured regions, not a reversed longitude interval.
+  if (west < -180 || east > 180 || south < -90 || north > 90 || west >= east || south >= north)
+    return false;
+  try {
+    // PostgreSQL profiles need a named timezone; numeric Intl offset zones
+    // are not part of the region contract. IANA aliases and UTC are accepted.
+    if (/^[+-]/.test(r.tz as string)) return false;
+    new Intl.DateTimeFormat("en", { timeZone: r.tz as string });
+  } catch {
+    return false;
+  }
   // pbfUrls, when present, must be a non-empty array of non-empty strings.
   if (r.pbfUrls !== undefined) {
     if (!Array.isArray(r.pbfUrls) || r.pbfUrls.length === 0) return false;
     if (!r.pbfUrls.every((u) => typeof u === "string" && u.trim() !== "")) return false;
   }
+  if (r.highwayClasses !== undefined) {
+    if (!Array.isArray(r.highwayClasses) || r.highwayClasses.length === 0) return false;
+    if (!r.highwayClasses.every((c) => typeof c === "string" && /^[a-z_]+$/.test(c))) return false;
+  }
   return true;
 }
 
-/**
- * Loads the OSM import region list from `SEGMENT_REGIONS` (a JSON array of
- * {@link OsmRegion}), falling back to {@link DEFAULT_OSM_REGIONS} when the var
- * is unset, empty (Compose's `${VAR:-}` unset-injection), unparseable, or
- * parses to something with no valid region — adding a region is then a config
- * change an operator can make without a rebuild.
+/** One authoritative region list for import, binding coverage and local-time profiles.
+ * Unset/empty means no configured graph coverage; invalid explicit input fails closed.
  */
 export function loadOsmRegions(env: NodeJS.ProcessEnv = process.env): OsmRegion[] {
   const raw = env["SEGMENT_REGIONS"];
-  if (raw == null || raw === "") return DEFAULT_OSM_REGIONS;
+  if (raw == null || raw.trim() === "") return [];
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return DEFAULT_OSM_REGIONS;
+    throw new Error("SEGMENT_REGIONS is invalid JSON");
   }
-  if (!Array.isArray(parsed)) return DEFAULT_OSM_REGIONS;
+  if (!Array.isArray(parsed)) throw new Error("SEGMENT_REGIONS must be a JSON array");
   const regions = parsed.filter(isOsmRegion);
-  return regions.length > 0 ? regions : DEFAULT_OSM_REGIONS;
+  if (parsed.length > 0 && regions.length === 0)
+    throw new Error("SEGMENT_REGIONS contains no valid regions");
+  if (regions.length !== parsed.length)
+    throw new Error("SEGMENT_REGIONS contains an invalid region");
+  if (new Set(regions.map((region) => region.id)).size !== regions.length)
+    throw new Error("SEGMENT_REGIONS contains duplicate region IDs");
+  return regions;
 }
 
-/**
- * The import-source seam: `importOsmRoads` never knows where ways come from.
- * v1's only implementation is {@link overpassSource}; a later
- * `pbfExtractSource` (Geofabrik/planet PBF filtered with `osmium tags-filter`,
- * run by a downloader job) is a drop-in behind this same interface, needed
- * both for many-region scale and etiquette once a worldwide instance can no
- * longer fit overpass-api.de's fair-use budget.
- */
+/** Importer contract shared by the Overpass and PBF-extract implementations. */
 export interface OsmWaySource {
   fetchRegion(region: OsmRegion): Promise<OsmWay[]>;
 }
 
-// Upgrade path once cadence or region count outgrows overpass-api.de's
-// fair-use budget (empirically ~3% of it for a weekly 4-region pull, see the
-// plan): swap this fetcher for a `pbfExtractSource` reading Geofabrik/planet
-// PBF extracts filtered with `osmium tags-filter` — same `osm_road` sink,
-// different fetcher, behind the OsmWaySource interface above.
 const DEFAULT_OVERPASS_URL = "https://overpass-api.de/api/interpreter";
 
 /**
@@ -130,7 +155,7 @@ const USER_AGENT =
 
 function overpassQuery(region: OsmRegion): string {
   const [w, s, e, n] = region.bbox;
-  const highwayFilter = `["highway"~"${overpassHighwayRegex(loadHighwayClasses())}"]`;
+  const highwayFilter = `["highway"~"${overpassHighwayRegex(region.highwayClasses ?? loadHighwayClasses())}"]`;
   return `[out:json][timeout:300];way${highwayFilter}(${s},${w},${n},${e});out geom;`;
 }
 
@@ -203,7 +228,12 @@ export function pbfExtractSource(deps: PbfExtractSourceDeps = {}): OsmWaySource 
       for (const url of [...new Set(urls)]) {
         const dl = await download(url);
         try {
-          const extracted = await extract(dl.path, region.bbox, dl.dir);
+          const extracted =
+            deps.extract != null
+              ? await extract(dl.path, region.bbox, dl.dir)
+              : await pbfToWays(dl.path, region.bbox, dl.dir, {
+                  highwayClasses: region.highwayClasses,
+                });
           deps.logger?.info?.(
             `[ingest] pbf-extract: ${region.id} ${url} → ${extracted.length} ways`
           );
@@ -217,25 +247,10 @@ export function pbfExtractSource(deps: PbfExtractSourceDeps = {}): OsmWaySource 
   };
 }
 
-/**
- * Composite {@link OsmWaySource} that picks per region: `OSM_SOURCE=overpass|pbf`
- * forces one for all regions (testing / a deliberate override); otherwise it's
- * automatic — a region with `pbfUrls` uses the PBF extract source, else Overpass.
- * There is deliberately NO fallback to Overpass when the PBF path fails: Overpass
- * is the nondeterminism this replaces, and a silent shrink cascades downstream, so
- * a failed PBF region fails loudly and keeps its previous spine (undercoverage
- * guard) rather than being quietly re-fetched from Overpass.
- */
-export function autoOsmSource(
-  overpass: OsmWaySource,
-  pbf: OsmWaySource,
-  env: NodeJS.ProcessEnv = process.env
-): OsmWaySource {
-  const forced = env["OSM_SOURCE"]?.trim().toLowerCase();
+/** Select the import source from the same region configuration used for provenance. */
+export function autoOsmSource(overpass: OsmWaySource, pbf: OsmWaySource): OsmWaySource {
   return {
     fetchRegion(region: OsmRegion): Promise<OsmWay[]> {
-      if (forced === "overpass") return overpass.fetchRegion(region);
-      if (forced === "pbf") return pbf.fetchRegion(region);
       return (region.pbfUrls && region.pbfUrls.length > 0 ? pbf : overpass).fetchRegion(region);
     },
   };
@@ -279,10 +294,12 @@ interface OsmRoadRow {
   name: string | null;
   maxspeed_kph: number | null;
   region: string;
+  import_config_hash: string;
+  import_provenance: Record<string, unknown>;
   imported_at: string;
 }
 
-function toRow(way: OsmWay, regionId: string, importedAt: string): OsmRoadRow {
+function toRow(way: OsmWay, region: OsmRegion, importedAt: string): OsmRoadRow {
   return {
     way_id: way.wayId,
     geometry_json: JSON.stringify({ type: "LineString", coordinates: way.coords }),
@@ -291,7 +308,9 @@ function toRow(way: OsmWay, regionId: string, importedAt: string): OsmRoadRow {
     ref: way.ref ?? null,
     name: way.name ?? null,
     maxspeed_kph: way.maxspeedKph ?? null,
-    region: regionId,
+    region: region.id,
+    import_config_hash: osmRegionImportFingerprint(region),
+    import_provenance: osmRegionImportProvenance(region),
     imported_at: importedAt,
   };
 }
@@ -314,14 +333,16 @@ function toRow(way: OsmWay, regionId: string, importedAt: string): OsmRoadRow {
 export async function importOsmRoads(
   sql: Sql,
   deps: ImportOsmRoadsDeps
-): Promise<{ imported: number }> {
+): Promise<{ imported: number; succeededRegions: string[]; failedRegions: string[] }> {
   const swapThreshold = deps.swapThreshold ?? DEFAULT_SWAP_THRESHOLD;
   let imported = 0;
+  const succeededRegions: string[] = [];
+  const failedRegions: string[] = [];
   for (const region of deps.regions) {
     try {
       const ways = await deps.source.fetchRegion(region);
       const importedAt = deps.now();
-      const rows = ways.map((way) => toRow(way, region.id, importedAt));
+      const rows = ways.map((way) => toRow(way, region, importedAt));
 
       await sql.begin(async (tx) => {
         // Undercoverage guard: throwing here rolls back the transaction BEFORE
@@ -344,14 +365,16 @@ export async function importOsmRoads(
         for (const batch of chunk(rows, CHUNK_SIZE)) {
           await tx`
             INSERT INTO conditions.osm_road
-              (way_id, geom, highway, oneway, ref, name, maxspeed_kph, region, imported_at)
+              (way_id, geom, highway, oneway, ref, name, maxspeed_kph, region,
+               import_config_hash, import_provenance, imported_at)
             SELECT
               way_id, ST_SetSRID(ST_GeomFromGeoJSON(geometry_json), 4326),
-              highway, oneway, ref, name, maxspeed_kph, region, imported_at
+              highway, oneway, ref, name, maxspeed_kph, region,
+              import_config_hash, import_provenance, imported_at
             FROM jsonb_to_recordset(${tx.json(batch as AnyJson)}::jsonb) AS t(
               way_id bigint, geometry_json text, highway text, oneway boolean,
               ref text, name text, maxspeed_kph double precision, region text,
-              imported_at timestamptz
+              import_config_hash text, import_provenance jsonb, imported_at timestamptz
             )
             ON CONFLICT (way_id) DO UPDATE SET
               geom = excluded.geom,
@@ -361,13 +384,17 @@ export async function importOsmRoads(
               name = excluded.name,
               maxspeed_kph = excluded.maxspeed_kph,
               region = excluded.region,
+              import_config_hash = excluded.import_config_hash,
+              import_provenance = excluded.import_provenance,
               imported_at = excluded.imported_at`;
         }
       });
       imported += rows.length;
+      succeededRegions.push(region.id);
     } catch (err) {
+      failedRegions.push(region.id);
       console.warn(`[ingest] osm-import: region ${region.id} failed:`, err);
     }
   }
-  return { imported };
+  return { imported, succeededRegions, failedRegions };
 }

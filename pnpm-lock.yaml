@@ -305,6 +305,9 @@ importers:
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:../ingest-framework
+      '@openconditions/roads':
+        specifier: workspace:*
+        version: link:../roads
       fast-xml-parser:
         specifier: ^5.11.1
         version: 5.11.1
@@ -321,9 +324,6 @@ importers:
       '@openconditions/contrib-core':
         specifier: workspace:*
         version: link:../contrib-core
-      '@openconditions/roads':
-        specifier: workspace:*
-        version: link:../roads
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16

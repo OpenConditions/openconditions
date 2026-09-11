@@ -132,10 +132,47 @@ export function isInEffectAt(
   }
   if (obs.validTo) {
     const to = Date.parse(obs.validTo);
-    if (!Number.isNaN(to) && t > to) return false;
+    if (!Number.isNaN(to) && t >= to) return false;
   }
   if (obs.schedule && obs.schedule.length > 0) {
     return obs.schedule.some((s) => scheduleOccursAt(s, at));
   }
   return true;
+}
+
+/**
+ * Finds the next instant at which the aggregate schedule changes state. The
+ * search is bounded to one leap-year horizon; a schedule with no evaluable
+ * transition in that horizon returns null and therefore cannot manufacture a
+ * routing lease.
+ */
+export function nextScheduleTransition(schedules: Schedule[], at: Date): string | null {
+  if (schedules.length === 0 || Number.isNaN(at.getTime())) return null;
+  const candidates = new Set<number>();
+  for (const schedule of schedules) {
+    const startTime = normalizeStartTime(schedule.startTime ?? "00:00");
+    if (!startTime || !schedule.scheduleTimezone) continue;
+    let localDate: string;
+    try {
+      localDate = localDateInZone(at, schedule.scheduleTimezone);
+    } catch {
+      continue;
+    }
+    for (let delta = -1; delta <= 366; delta++) {
+      const day = addDaysLocal(localDate, delta);
+      if (!occurrenceStartsOn(schedule, day)) continue;
+      const start = zonedWallClockToInstant(schedule.scheduleTimezone, `${day}T${startTime}`);
+      if (!start) continue;
+      candidates.add(start.getTime());
+      candidates.add(start.getTime() + occurrenceDurationMs(schedule));
+    }
+  }
+  for (const candidate of [...candidates].filter((v) => v > at.getTime()).sort((a, b) => a - b)) {
+    const before = schedules.some((schedule) =>
+      scheduleOccursAt(schedule, new Date(candidate - 1))
+    );
+    const after = schedules.some((schedule) => scheduleOccursAt(schedule, new Date(candidate)));
+    if (before !== after) return new Date(candidate).toISOString();
+  }
+  return null;
 }

@@ -1,8 +1,10 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import { runSegmentRebuild } from "../pipeline/segment-rebuild.js";
+import { activateRoadGraph } from "../pipeline/graph-state.js";
+import { importOsmRoads, type OsmRegion } from "../pipeline/osm-import.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -58,6 +60,10 @@ async function seedClosureEvent(): Promise<void> {
       ${NOW}, ${NOW})`;
 }
 
+beforeEach(() => {
+  process.env["SEGMENT_REGIONS"] = ONE_REGION;
+});
+
 beforeAll(async () => {
   const container = await new GenericContainer("postgis/postgis:16-3.4")
     .withEnvironment({
@@ -96,6 +102,22 @@ describe("runSegmentRebuild", () => {
     const first = await runSegmentRebuild(sql, { fetch: fetchFn, now: () => NOW });
     expect(first).toMatchObject({ imported: 1, built: 1, encoded: 1, matched: 1, rebound: 1 });
 
+    const [graph] = await sql<
+      { generation: string; regions: Array<{ id: string }>; highway_classes: string[] }[]
+    >`SELECT generation, regions, highway_classes FROM conditions.road_graph_state WHERE singleton`;
+    expect(graph?.generation).toMatch(/^[0-9a-f-]{36}$/);
+    expect(graph?.regions).toEqual([
+      { id: "nl", bbox: [4.8, 51.9, 5.2, 52.1], tz: "Europe/Amsterdam" },
+    ]);
+    expect(graph?.highway_classes).toEqual([
+      "motorway",
+      "motorway_link",
+      "trunk",
+      "trunk_link",
+      "primary",
+      "primary_link",
+    ]);
+
     // The rebind stage ran against the freshly built spine, not a stale one.
     const boundRows = await sql<{ segment_id: string }[]>`
       SELECT segment_id FROM conditions.observation_segment WHERE observation_id = 'closure:1'`;
@@ -119,6 +141,10 @@ describe("runSegmentRebuild", () => {
     expect(second.built).toBe(1);
     expect(second.matched).toBe(1);
     expect(second.rebound).toBe(1);
+    const [nextGraph] = await sql<
+      { generation: string }[]
+    >`SELECT generation FROM conditions.road_graph_state WHERE singleton`;
+    expect(nextGraph?.generation).not.toBe(graph?.generation);
 
     const segRowsAgain = await sql<{ segment_id: string; openlr: string | null }[]>`
       SELECT segment_id, openlr FROM conditions.road_segment`;
@@ -176,4 +202,100 @@ describe("runSegmentRebuild", () => {
 
     expect(result).toMatchObject({ imported: 1, built: 1, encoded: 1, matched: 1, rebound: 0 });
   }, 30_000);
+
+  it("does not activate or rebind a graph built after a partial configured-region import", async () => {
+    process.env["SEGMENT_REGIONS"] = ONE_REGION;
+    const [before] = await sql<{ generation: string }[]>`
+      SELECT generation FROM conditions.road_graph_state WHERE singleton`;
+    let rebindCalled = false;
+    const result = await runSegmentRebuild(sql, {
+      fetch: fetchFn,
+      now: () => NOW,
+      steps: {
+        importOsmRoads: async () => ({ imported: 0, succeededRegions: [], failedRegions: ["nl"] }),
+        buildSegments: async () => ({ built: 7 }),
+        encodeSegmentOpenlr: async () => ({ encoded: 0 }),
+        matchSensors: async () => ({ matched: 0 }),
+        rebindAll: async () => {
+          rebindCalled = true;
+          return { rebound: 1, prunedSegments: 0 };
+        },
+      },
+    });
+
+    expect(result).toMatchObject({ imported: 0, built: 0, rebound: 0 });
+    expect(rebindCalled).toBe(false);
+    const [after] = await sql<{ generation: string; status: string }[]>`
+      SELECT generation, status FROM conditions.road_graph_state WHERE singleton`;
+    expect(after?.generation).toBe(before?.generation);
+    expect(after?.status).toBe("rebuilding");
+  }, 30_000);
+
+  it("rejects old rows when a same-id region changes bbox, PBF, or highway classes", async () => {
+    const original: OsmRegion = {
+      id: "de",
+      bbox: [5.8, 47.2, 15.1, 55.1],
+      tz: "Europe/Berlin",
+      pbfUrls: ["https://example.test/de-v1.osm.pbf"],
+      highwayClasses: ["motorway"],
+    };
+    const source = {
+      fetchRegion: async () => [
+        {
+          wayId: 44,
+          coords: [
+            [13.4, 52.5],
+            [13.41, 52.5],
+          ] as [number, number][],
+          highway: "motorway",
+          oneway: true,
+        },
+      ],
+    };
+    await importOsmRoads(sql, { source, now: () => NOW, regions: [original] });
+    const originalEnv = { SEGMENT_REGIONS: JSON.stringify([original]) };
+    await expect(activateRoadGraph(sql, { now: () => NOW, env: originalEnv })).resolves.toBeTypeOf(
+      "string"
+    );
+
+    const changed: OsmRegion = {
+      ...original,
+      bbox: [6, 47.2, 15.1, 55.1],
+      pbfUrls: ["https://example.test/de-v2.osm.pbf"],
+      highwayClasses: ["motorway", "motorway_link"],
+    };
+    await expect(
+      activateRoadGraph(sql, {
+        now: () => NOW,
+        env: { SEGMENT_REGIONS: JSON.stringify([changed]) },
+      })
+    ).rejects.toThrow(/missing current configured imports: de/);
+  }, 30_000);
+});
+
+it("rejects malformed regions before any graph mutation", async () => {
+  process.env["SEGMENT_REGIONS"] = JSON.stringify([
+    { id: "invalid", bbox: [200, 95, 201, 96], tz: "UTC" },
+  ]);
+  const query = vi.fn();
+  await expect(
+    runSegmentRebuild(query as unknown as postgres.Sql, { fetch: fetchFn, now: () => NOW })
+  ).rejects.toThrow(/SEGMENT_REGIONS/);
+  expect(query).not.toHaveBeenCalled();
+});
+
+it("does not import or activate a graph without configured regions", async () => {
+  delete process.env["SEGMENT_REGIONS"];
+  const fetch = vi.fn();
+  expect(await runSegmentRebuild(sql, { fetch, now: () => NOW })).toEqual({
+    imported: 0,
+    built: 0,
+    encoded: 0,
+    matched: 0,
+    rebound: 0,
+  });
+  expect(fetch).not.toHaveBeenCalled();
+  await expect(activateRoadGraph(sql, { now: () => NOW, env: {} })).rejects.toThrow(
+    /SEGMENT_REGIONS is not configured/
+  );
 });

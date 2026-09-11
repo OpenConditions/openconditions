@@ -27,6 +27,9 @@ beforeAll(async () => {
   ]);
   await sql`INSERT INTO conditions.road_segment (segment_id, way_id, dir, geom, highway, ref, length_m, min_zoom, computed_at) VALUES
     ('10:f', 10, 'f', ST_SetSRID(ST_GeomFromText('LINESTRING(6.80 51.2, 6.82 51.2)'),4326), 'motorway', 'A 46', 1400, 5, ${NOW})`;
+  await sql`INSERT INTO conditions.road_graph_state
+    (singleton,generation,status,regions,highway_classes,pbf_provenance,imported_at,activated_at)
+    VALUES (true,'graph-rebind-test','ready','[]','["motorway"]','[]',${NOW},${NOW})`;
   await sql`INSERT INTO conditions.observations (id, source, source_format, domain, kind, type, status, geom, attributes, origin, data_updated_at, fetched_at) VALUES
     ('a:1','autobahn-de','autobahn','roads','event','road_closure','active',
       ST_SetSRID(ST_GeomFromText('LINESTRING(6.805 51.20001, 6.815 51.20001)'),4326),

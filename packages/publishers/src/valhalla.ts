@@ -1,6 +1,7 @@
 import type { Observation } from "@openconditions/core";
-import { isInEffectAt } from "@openconditions/core";
+import { isInEffectAt, routingEvidenceReasons } from "@openconditions/core";
 import type { Geometry } from "geojson";
+import type { SegmentConditionJson } from "./segment-conditions.js";
 
 /**
  * Valhalla route-request exclusion geometry, ready to merge into a Valhalla
@@ -41,9 +42,10 @@ export interface ValhallaExclusionOptions {
    * deterministic tests/replays.
    */
   activeAt?: Date;
+  /** Present-time authority check, distinct from a future route's activeAt. */
+  evaluatedAt?: Date;
 }
 
-const CLOSURE_TYPES = new Set(["road_closure", "lane_closure"]);
 const DEFAULT_MAX_SPACING_M = 45;
 const DEFAULT_MAX_POINTS = 200;
 const DEFAULT_MAX_TOTAL_POINTS = 45;
@@ -57,15 +59,14 @@ function eventType(o: Observation): string | undefined {
  * (e.g. a region-sized weather warning) must not turn into a routing-blocking
  * polygon, even though its point/line geometry still contributes. */
 function isClosureType(o: Observation): boolean {
-  const type = eventType(o);
-  return type != null && CLOSURE_TYPES.has(type);
+  return eventType(o) === "road_closure";
 }
 
 /** A closure or otherwise route-blocking event worth feeding to Valhalla: an
  * active road/lane closure, or any active critical-severity event, currently
  * in effect at `activeAt` (not yet started, or already ended, closures don't
  * contribute). */
-function isExcludable(o: Observation, activeAt: Date): boolean {
+function isExcludable(o: Observation, activeAt: Date, evaluatedAt: Date): boolean {
   if (o.kind !== "event" || o.status !== "active") return false;
   // Origin-aware routing gate (the plan's #1 safety promise), fail-CLOSED to
   // match the SQL `routingEligibleOnly` filter: exclude for routing ONLY an
@@ -75,8 +76,16 @@ function isExcludable(o: Observation, activeAt: Date): boolean {
   const originKind = o.origin?.kind;
   const routable = originKind === "feed" || (originKind === "crowd" && o.routingEligible === true);
   if (!routable) return false;
-  const e = o as Observation & { severity?: string };
-  if (!(isClosureType(o) || e.severity === "critical")) return false;
+  if (!isClosureType(o)) return false;
+  const evidence = o.routingEvidence;
+  if (!evidence || routingEvidenceReasons(evidence, evaluatedAt).length > 0) return false;
+  if (evidence.applicability.kind !== "all" || evidence.direction_mode !== "both") return false;
+  if (
+    evidence.segments.length === 0 ||
+    evidence.segments.some((span) => span.from_fraction !== 0 || span.to_fraction !== 1)
+  ) {
+    return false;
+  }
   // Belt-and-suspenders: readObservations already filters `valid_to > now()`
   // upstream, but a route-local check is cheap and keeps this projection
   // correct even if called with pre-filtered or stale data. A recurring
@@ -205,10 +214,48 @@ export function eventsToExclusions(
   const cap = opts.maxPointsPerClosure ?? DEFAULT_MAX_POINTS;
   const maxTotal = opts.maxTotalPoints ?? DEFAULT_MAX_TOTAL_POINTS;
   const activeAt = opts.activeAt ?? new Date();
+  const evaluatedAt = opts.evaluatedAt ?? activeAt;
   const ex: ValhallaExclusions = { exclude_locations: [], exclude_polygons: [] };
   for (const o of obs) {
-    if (isExcludable(o, activeAt)) {
+    if (isExcludable(o, activeAt, evaluatedAt)) {
       addGeometry(o.geometry as Geometry, ex, maxSpacing, cap, isClosureType(o));
+    }
+  }
+  if (ex.exclude_locations.length > maxTotal) {
+    ex.exclude_locations = subsampleEvenly(ex.exclude_locations, maxTotal);
+  }
+  return ex;
+}
+
+/**
+ * Direct Valhalla exclusions from the already-gated segment contract. Coordinate
+ * avoidance cannot preserve direction or a partial span, so only full-way,
+ * bidirectional, all-vehicle road closures are representable here.
+ */
+export function segmentConditionsToExclusions(
+  conditions: SegmentConditionJson[],
+  opts: ValhallaExclusionOptions = {}
+): ValhallaExclusions {
+  const maxSpacing = opts.maxSpacingMeters ?? DEFAULT_MAX_SPACING_M;
+  const cap = opts.maxPointsPerClosure ?? DEFAULT_MAX_POINTS;
+  const maxTotal = opts.maxTotalPoints ?? DEFAULT_MAX_TOTAL_POINTS;
+  const activeAt = opts.activeAt ?? new Date();
+  const evaluatedAt = opts.evaluatedAt ?? activeAt;
+  const ex: ValhallaExclusions = { exclude_locations: [], exclude_polygons: [] };
+  for (const condition of conditions) {
+    const evidence = condition.routing_evidence;
+    if (condition.type !== "road_closure" || condition.road_state !== "closed") continue;
+    if (routingEvidenceReasons(evidence, evaluatedAt).length > 0) continue;
+    if (evidence.applicability.kind !== "all" || evidence.direction_mode !== "both") continue;
+    if (
+      !isInEffectAt({ validFrom: evidence.valid_from, validTo: evidence.valid_to }, activeAt) ||
+      evidence.segments.some((span) => span.from_fraction !== 0 || span.to_fraction !== 1)
+    ) {
+      continue;
+    }
+    for (const span of condition.segments) {
+      if (!span.geometry || span.start_fraction !== 0 || span.end_fraction !== 1) continue;
+      addGeometry(span.geometry, ex, maxSpacing, cap, true);
     }
   }
   if (ex.exclude_locations.length > maxTotal) {

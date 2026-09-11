@@ -56,7 +56,7 @@ async function fetchBuffers(
   fetchFn: typeof fetch
 ): Promise<Buffer[]> {
   const res = await fetchAll(src, fetchFn);
-  return res.status === "fetched" ? res.buffers : [];
+  return res.status === "fetched" || res.status === "partial" ? res.buffers : [];
 }
 
 /**
@@ -233,10 +233,10 @@ describe("fetchAll — catalog fan-out", () => {
         (u) => u.endsWith("/bad")
       )
     );
-    expect(res.status).toBe("fetched");
-    if (res.status !== "fetched") throw new Error("unreachable");
+    expect(res.status).toBe("partial");
+    if (res.status !== "partial") throw new Error("unreachable");
     expect(res.buffers).toHaveLength(2);
-    expect(res.partial).toEqual({ failures: 1, total: 3 });
+    expect(res.partitions).toEqual({ succeeded: 2, failed: 1, total: 3 });
   });
 
   it("drops a sub-feed that returns an HTML block/error page (200) and keeps the JSON ones", async () => {
@@ -306,7 +306,7 @@ describe("fetchAll — static url forms (regression)", () => {
     expect(bufs[0]!.toString("utf8")).toBe("body:https://x.test/one");
   });
 
-  it("leaves the partial-failure signal undefined on the non-fanout static path", async () => {
+  it("reports complete partition coverage on the non-fanout static path", async () => {
     const feed = makeFeed({ id: "s-no-partial", url: "https://x.test/one" });
     const res = await fetchAll(
       feed,
@@ -314,7 +314,7 @@ describe("fetchAll — static url forms (regression)", () => {
     );
     expect(res.status).toBe("fetched");
     if (res.status !== "fetched") throw new Error("unreachable");
-    expect(res.partial).toBeUndefined();
+    expect(res.partitions).toEqual({ succeeded: 1, failed: 0, total: 1 });
   });
 
   it("fetches every url of a string array", async () => {
@@ -439,10 +439,10 @@ describe("fetchAll — fanoutTolerant static url arrays", () => {
         (u) => u.endsWith("/bad")
       )
     );
-    expect(res.status).toBe("fetched");
-    if (res.status !== "fetched") throw new Error("unreachable");
+    expect(res.status).toBe("partial");
+    if (res.status !== "partial") throw new Error("unreachable");
     expect(res.buffers).toHaveLength(2);
-    expect(res.partial).toEqual({ failures: 1, total: 3 });
+    expect(res.partitions).toEqual({ succeeded: 2, failed: 1, total: 3 });
   });
 
   it("does not affect a static url array without the flag (one failure still throws)", async () => {
@@ -480,7 +480,7 @@ describe("fetchAll — fanoutTolerant static url arrays", () => {
     const first = await fetchAll(feed, fetchFn, { state });
     expect(first.status).toBe("fetched");
     const second = await fetchAll(feed, fetchFn, { state });
-    expect(second.status).toBe("unchanged");
+    expect(second).toMatchObject({ status: "not-modified", validatedAtNetwork: true });
   });
 });
 
@@ -615,7 +615,7 @@ describe("fetchAll — conditional GET", () => {
     expect(first.status === "fetched" && first.buffers[0]!.toString()).toBe("payload-v1");
 
     const second = await fetchAll(feed, fetchFn, { state });
-    expect(second.status).toBe("unchanged");
+    expect(second).toMatchObject({ status: "not-modified", validatedAtNetwork: true });
     expect(call).toBe(2);
   });
 
@@ -686,12 +686,53 @@ describe("fetchAll — fetchIntervalSec gating", () => {
 
     clock += 60_000; // +60s, inside the 300s window
     const second = await fetchAll(feed, fetchFn, { state, now: () => clock });
-    expect(second.status).toBe("unchanged");
+    expect(second).toMatchObject({
+      status: "skipped",
+      reason: "cadence",
+      validatedAtNetwork: false,
+    });
     expect(call).toBe(1); // no second network call
 
     clock += 300_000; // past the window
     const third = await fetchAll(feed, fetchFn, { state, now: () => clock });
     expect(third.status).toBe("fetched");
     expect(call).toBe(2);
+  });
+});
+
+describe("fetchAll — operational outcomes", () => {
+  it("reports a resolved feed with no endpoint as missing configuration", async () => {
+    const result = await fetchAll(
+      makeFeed({ id: "dormant", url: "https://h.test/${ENDPOINT}", expandEnv: "ENDPOINT" }),
+      vi.fn() as unknown as typeof fetch,
+      { state: createFetchState() }
+    );
+
+    expect(result).toEqual({
+      status: "no-endpoint",
+      reason: "missing-configuration",
+      validatedAtNetwork: false,
+    });
+  });
+
+  it("reports a tolerant fan-out with a failed partition as partial", async () => {
+    const result = await fetchAll(
+      makeFeed({
+        id: "partial-static",
+        url: ["https://h.test/ok", "https://h.test/fail"],
+        fanoutTolerant: true,
+      }),
+      (async (input: string | URL | Request) =>
+        String(input).endsWith("/fail")
+          ? new Response("bad", { status: 503 })
+          : new Response("ok", { status: 200 })) as typeof fetch,
+      { state: createFetchState() }
+    );
+
+    expect(result).toMatchObject({
+      status: "partial",
+      validatedAtNetwork: false,
+      partitions: { succeeded: 1, failed: 1, total: 2 },
+    });
   });
 });

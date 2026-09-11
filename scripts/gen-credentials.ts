@@ -15,7 +15,19 @@ export interface GenPaths {
 /** Splice generated configSchema.properties into service.json, preserving every other key. */
 function nextServiceJson(current: string, feeds: FeedSourceBase[]): string {
   const svc = JSON.parse(current) as { configSchema?: { properties?: unknown } };
-  svc.configSchema = { ...(svc.configSchema ?? {}), properties: configSchemaPropertiesFor(feeds) };
+  svc.configSchema = {
+    ...(svc.configSchema ?? {}),
+    properties: {
+      SEGMENT_REGIONS: {
+        type: "string",
+        title: "Road graph regions",
+        description:
+          "Complete JSON array of {id,bbox,tz,pbfUrls?,highwayClasses?}. Used by import, binding coverage and speed profiles. Unset or [] means no configured graph coverage. See graph-binding documentation.",
+        "x-openmapx-secret": false,
+      },
+      ...configSchemaPropertiesFor(feeds),
+    },
+  };
   return JSON.stringify(svc, null, 2) + "\n";
 }
 

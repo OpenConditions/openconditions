@@ -32,7 +32,8 @@ describe("binding tables", () => {
   it("creates observation_binding and observation_segment with the expected columns", async () => {
     const cols = await sql<{ table_name: string; column_name: string }[]>`
       SELECT table_name, column_name FROM information_schema.columns
-      WHERE table_schema = 'conditions' AND table_name IN ('observation_binding','observation_segment')`;
+      WHERE table_schema = 'conditions' AND table_name IN
+        ('observation_binding','observation_segment','binding_queue','road_graph_state','osm_road')`;
     const names = new Set(cols.map((c) => `${c.table_name}.${c.column_name}`));
     for (const n of [
       "observation_binding.observation_id",
@@ -45,6 +46,8 @@ describe("binding tables", () => {
       "observation_binding.resolver_version",
       "observation_binding.geom_hash",
       "observation_binding.bound_at",
+      "observation_binding.observation_revision",
+      "observation_binding.graph_generation",
       "observation_segment.observation_id",
       "observation_segment.seq",
       "observation_segment.segment_id",
@@ -52,6 +55,20 @@ describe("binding tables", () => {
       "observation_segment.dir",
       "observation_segment.start_fraction",
       "observation_segment.end_fraction",
+      "binding_queue.observation_id",
+      "binding_queue.observation_revision",
+      "binding_queue.attempts",
+      "binding_queue.next_attempt_at",
+      "road_graph_state.singleton",
+      "road_graph_state.generation",
+      "road_graph_state.status",
+      "road_graph_state.regions",
+      "road_graph_state.highway_classes",
+      "road_graph_state.pbf_provenance",
+      "road_graph_state.imported_at",
+      "road_graph_state.activated_at",
+      "osm_road.import_config_hash",
+      "osm_road.import_provenance",
     ])
       expect(names, n).toContain(n);
   }, 30_000);
@@ -93,13 +110,16 @@ describe("binding on the read path", () => {
   const bbox: [number, number, number, number] = [6, 51, 7, 52];
 
   beforeAll(async () => {
-    await sql`INSERT INTO conditions.observations (id, source, source_format, domain, kind, type, severity, headline, status, geom, origin, data_updated_at, fetched_at)
+    await sql`INSERT INTO conditions.observations (id, source, source_format, domain, kind, type, severity, headline, status, geom, origin, data_updated_at, fetched_at, content_hash)
       VALUES ('b:1','t','native','roads','event','road_closure','high','Closed','active', ST_SetSRID(ST_MakePoint(6.8,51.2),4326),
-              '{"kind":"feed","attribution":{"provider":"t","license":"CC0-1.0"}}', now(), now()),
+              '{"kind":"feed","attribution":{"provider":"t","license":"CC0-1.0"}}', now(), now(), 'rev-b1'),
              ('b:2','t','native','roads','event','roadworks','low','Works','active', ST_SetSRID(ST_MakePoint(6.9,51.3),4326),
-              '{"kind":"feed","attribution":{"provider":"t","license":"CC0-1.0"}}', now(), now())`;
-    await sql`INSERT INTO conditions.observation_binding (observation_id, status, confidence, direction_mode, candidate_count, resolver_version, geom_hash, bound_at)
-      VALUES ('b:1','exact',0.95,'single',1,'1.0.0','h',now())`;
+              '{"kind":"feed","attribution":{"provider":"t","license":"CC0-1.0"}}', now(), now(), 'rev-b2')`;
+    await sql`INSERT INTO conditions.road_graph_state
+      (singleton,generation,regions,highway_classes,pbf_provenance,imported_at,activated_at)
+      VALUES (true,'graph-binding-schema','[]','[]','[]',now(),now())`;
+    await sql`INSERT INTO conditions.observation_binding (observation_id, status, confidence, direction_mode, candidate_count, resolver_version, geom_hash, observation_revision, graph_generation, bound_at)
+      VALUES ('b:1','exact',0.95,'single',1,'1.0.0','h','rev-b1','graph-binding-schema',now())`;
     await sql`INSERT INTO conditions.observation_segment (observation_id, seq, segment_id, way_id, dir, start_fraction, end_fraction)
       VALUES ('b:1',1,'101:f',101,'f',0,0.5), ('b:1',0,'100:f',100,'f',0.2,1.0)`;
   }, 30_000);

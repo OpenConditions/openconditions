@@ -47,6 +47,47 @@ interface WzdxRegistryRow {
   apikeyurl?: unknown;
 }
 
+const UNKNOWN_RIGHTS = {
+  sourceRedistribution: null,
+  derivedRedistribution: null,
+  commercialUse: null,
+  attributionRequired: null,
+  retention: null,
+  evidenceOrigin: "WZDx registry metadata (no dataset grant verified)",
+  evidenceVersion: "wzdx-registry-2026-09-11",
+} as const;
+
+const VERIFIED_CHILD_GRANTS: Record<string, NonNullable<FeedSourceBase["rights"]>> = {
+  "wzdx-kansas": {
+    sourceRedistribution: true,
+    derivedRedistribution: true,
+    commercialUse: true,
+    attributionRequired: false,
+    retention: true,
+    termsUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+    reviewedAt: "2026-09-11T00:00:00.000Z",
+    evidenceOrigin: "Kansas WZDx road_event_feed_info.license",
+    evidenceVersion: "CC0-1.0",
+  },
+};
+
+function withChildEvidence(feed: FeedSourceBase): FeedSourceBase {
+  const rights = VERIFIED_CHILD_GRANTS[feed.id] ?? UNKNOWN_RIGHTS;
+  const approved = VERIFIED_CHILD_GRANTS[feed.id] != null;
+  return {
+    ...feed,
+    license: approved ? "CC0-1.0" : "UNKNOWN",
+    ...(approved
+      ? { licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/" }
+      : { licenseUrl: undefined }),
+    parentSourceId: "us-wzdx",
+    policyIds: ["us-wzdx", feed.id],
+    selectionState: approved ? "approved" : "discovered",
+    rights,
+    snapshot: { completeness: "complete", recordsPath: "features" },
+  };
+}
+
 function isActive(raw: unknown): boolean {
   if (typeof raw === "boolean") return raw;
   if (typeof raw === "string") return raw.trim().toLowerCase() === "true";
@@ -129,7 +170,7 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
     seenIds.add(id);
 
     const apikeyurl = str(row.apikeyurl);
-    const feed: FeedSourceBase = {
+    let feed: FeedSourceBase = {
       id,
       name: `WZDx — ${org || feedname || state || "feed"}${state ? ` (${state})` : ""}`,
       operator: "wzdx",
@@ -137,8 +178,7 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
       url,
       cadenceSec: 300,
       freshnessWindowSec: 900,
-      license: "CC0-1.0",
-      licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+      license: "UNKNOWN",
       attribution: org || "WZDx publishers",
       country: "US",
       privacyUrl: "https://www.transportation.gov/privacy",
@@ -158,6 +198,7 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
         },
       };
     }
+    feed = withChildEvidence(feed);
     feeds.push(feed);
   }
 
@@ -172,6 +213,6 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
 export const wzdxRegistryResolver: CatalogResolver = {
   id: "wzdx-registry",
   snapshotPath: path.resolve(import.meta.dirname, "snapshots/wzdx-registry.json"),
-  snapshot: wzdxSnapshot as FeedSourceBase[],
+  snapshot: (wzdxSnapshot as FeedSourceBase[]).map(withChildEvidence),
   resolve,
 };

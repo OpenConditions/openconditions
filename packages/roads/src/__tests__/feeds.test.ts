@@ -136,6 +136,24 @@ describe("FEED_SOURCES", () => {
     expect(feed!.format).toBe("datex2");
     expect(feed!.license).toBe("etalab-2.0");
     expect(feed!.country).toBe("FR");
+    expect(feed!.rights).toMatchObject({
+      sourceRedistribution: true,
+      derivedRedistribution: true,
+      commercialUse: true,
+      retention: true,
+      evidenceVersion: "etalab-2.0",
+    });
+  });
+
+  it("records CITA's exact reusable-source grant", () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "lu-cita");
+    expect(feed?.rights).toMatchObject({
+      sourceRedistribution: true,
+      derivedRedistribution: true,
+      commercialUse: true,
+      retention: true,
+      evidenceVersion: "CC0-1.0",
+    });
   });
 
   it("includes hc-hr (Croatia) as a Basic-auth DATEX II feed", () => {

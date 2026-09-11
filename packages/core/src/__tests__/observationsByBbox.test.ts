@@ -331,6 +331,45 @@ describe("observationsByBbox", () => {
     expect(capturedQuery).not.toMatch(/ORDER BY severity\b/);
   });
 
+  it("filters excluded concrete and parent source identities in SQL before dedupe", async () => {
+    let capturedQuery = "";
+    let capturedParams: unknown[] | undefined;
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
+        capturedQuery = q;
+        capturedParams = p;
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, {
+      domain: "roads",
+      bbox: [4, 51, 6, 53],
+      excludedSourceIds: ["de-parent", "de-child"],
+    });
+    expect(capturedQuery).toMatch(/o\.source <> ALL/);
+    expect(capturedQuery).toMatch(/attributes->'policyIds'/);
+    expect(capturedParams).toContainEqual(["de-parent", "de-child"]);
+  });
+
+  it("labels legacy or revision/graph-mismatched bindings obsolete and hides their spans", async () => {
+    let capturedQuery = "";
+    const db: QueryRunner = {
+      async execute<T = unknown>(q: string): Promise<T> {
+        capturedQuery = q;
+        return [] as T;
+      },
+    };
+    await observationsByBbox(db, {
+      domain: "roads",
+      bbox: [4, 51, 6, 53],
+      includeBindings: true,
+    });
+    expect(capturedQuery).toMatch(/observation_revision = o\.content_hash/);
+    expect(capturedQuery).toMatch(/graph_generation = graph\.generation/);
+    expect(capturedQuery).toMatch(/ELSE 'obsolete' END AS binding_status/);
+    expect(capturedQuery).toMatch(/THEN seg\.segments ELSE NULL/);
+  });
+
   it("projects the evidence-labeling fields (origin.kind + evidence/routing/confidence/privacy/fuzziness)", async () => {
     const crowd = {
       ...fakeRow,

@@ -36,6 +36,26 @@ describe("feeds-lint license rule", () => {
     expect(errors).toEqual([]);
   });
 
+  it("rejects an approved catalogue child without affirmative reusable-source evidence", () => {
+    const errors = lintFeed({
+      id: "wzdx-unverified",
+      name: "Unverified child",
+      operator: "wzdx",
+      format: "wzdx",
+      url: "https://x.test/wzdx",
+      cadenceSec: 300,
+      freshnessWindowSec: 900,
+      license: "UNKNOWN",
+      attribution: "Publisher",
+      country: "US",
+      privacyUrl: "https://x.test/privacy",
+      parentSourceId: "us-wzdx",
+      selectionState: "approved",
+      policyIds: ["us-wzdx", "wzdx-unverified"],
+    });
+    expect(errors.join("\n")).toContain("approved catalogue child requires affirmative");
+  });
+
   it("catches a private-IP siteTable.url", () => {
     const errors = lintFeed({
       id: "x",

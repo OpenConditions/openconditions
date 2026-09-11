@@ -1,5 +1,13 @@
 import type { LineString } from "geojson";
-import { isInEffectAt, type Schedule } from "@openconditions/core";
+import {
+  isInEffectAt,
+  nextScheduleTransition,
+  routingEvidenceReasons,
+  type RoadConditionRoutingEvidence,
+  type RoutingRights,
+  type Schedule,
+} from "@openconditions/core";
+import { normalizeVehicleApplicability } from "@openconditions/roads";
 
 /**
  * One bound road event as it comes back from the `/segments/conditions.json`
@@ -16,7 +24,10 @@ import { isInEffectAt, type Schedule } from "@openconditions/core";
  */
 export interface SegmentConditionRow {
   id: string;
+  /** Original independently polled source identity retained on the event row. */
   source: string;
+  /** Parent policy/licensing identity used in evidence, when source is a catalogue child. */
+  routing_source_id?: string;
   type: string | null;
   severity: string | null;
   attributes: Record<string, unknown> | null;
@@ -26,10 +37,23 @@ export interface SegmentConditionRow {
   valid_to: string | Date | null;
   schedule: unknown;
   source_license: string | null;
+  observation_revision: string | null;
+  binding_revision: string | null;
+  graph_generation: string | null;
+  child_source_id: string | null;
+  source_uri: string | null;
+  source_checked_at: string | Date | null;
+  fresh_until: string | Date | null;
+  expires_at: string | Date | null;
+  license_url: string | null;
+  attribution: string | null;
+  rights: RoutingRights | null;
   binding_status: string;
+  binding_resolver_version: string;
   binding_confidence: number | null;
   binding_direction_mode: string;
   segments: Array<{
+    segmentId: string;
     wayId: number;
     dir: "f" | "b";
     startFraction: number;
@@ -52,6 +76,7 @@ export interface SegmentConditionJson {
   valid_from: string | null;
   valid_to: string | null;
   binding: { status: string; confidence: number | null; direction_mode: string };
+  routing_evidence: RoadConditionRoutingEvidence;
   segments: Array<{
     way_id: number;
     dir: "f" | "b";
@@ -81,14 +106,17 @@ function iso(v: string | Date | null): string | null {
 export function segmentConditionsToJson(
   rows: SegmentConditionRow[],
   at: Date,
-  info: { resolverVersion: string }
+  info: { resolverVersion: string; evaluatedAt?: Date }
 ): {
+  schema_version: 1;
+  complete: true;
   generated_at: string;
   at: string;
   resolver_version: string;
   conditions: SegmentConditionJson[];
 } {
   const conditions: SegmentConditionJson[] = [];
+  const evaluatedAt = info.evaluatedAt ?? at;
   for (const r of rows) {
     const validFrom = iso(r.valid_from);
     const validTo = iso(r.valid_to);
@@ -99,6 +127,70 @@ export function segmentConditionsToJson(
     const vehicles = Array.isArray(a["vehiclesAffected"])
       ? (a["vehiclesAffected"] as unknown[]).filter((v): v is string => typeof v === "string")
       : [];
+    const nextTransition =
+      schedule && schedule.length > 0 ? nextScheduleTransition(schedule, at) : null;
+    if (
+      !r.observation_revision ||
+      !r.binding_revision ||
+      !r.graph_generation ||
+      !r.source_checked_at ||
+      !r.fresh_until ||
+      !r.source_license ||
+      !r.rights ||
+      r.binding_resolver_version !== info.resolverVersion ||
+      r.segments.length === 0 ||
+      r.segments.some((span) => !span.segmentId || span.geometry == null) ||
+      (schedule && schedule.length > 0 && !nextTransition)
+    ) {
+      continue;
+    }
+    if (r.origin.kind === "crowd" && r.routing_eligible !== true) continue;
+    const dirs = new Set(r.segments.map((span) => span.dir));
+    const directionMode: RoadConditionRoutingEvidence["direction_mode"] =
+      dirs.size > 1 ? "both" : dirs.has("f") ? "forward" : dirs.has("b") ? "reverse" : "unknown";
+    const evidence: RoadConditionRoutingEvidence = {
+      schema_version: 1,
+      observation_revision: r.observation_revision,
+      binding_revision: r.binding_revision,
+      graph_generation: r.graph_generation,
+      resolver_version: r.binding_resolver_version,
+      source_id: r.routing_source_id ?? r.source,
+      child_source_id: r.child_source_id,
+      source_license: r.source_license,
+      license_url: r.license_url,
+      attribution: r.attribution,
+      record_url: r.source_uri,
+      source_checked_at: iso(r.source_checked_at)!,
+      fresh_until: iso(r.fresh_until)!,
+      expires_at: iso(r.expires_at),
+      valid_from: validFrom,
+      valid_to: validTo,
+      next_transition_at: nextTransition,
+      direction_mode: directionMode,
+      applicability: normalizeVehicleApplicability(
+        vehicles.length > 0 ? vehicles : undefined,
+        Array.isArray(a["restrictions"])
+          ? (a["restrictions"] as Array<{
+              type: string;
+              value?: number;
+              unit?: string;
+              operator?: string;
+              raw?: Record<string, unknown>;
+            }>)
+          : undefined
+      ),
+      rights: r.rights,
+      segments: r.segments.map((span) => ({
+        segment_id: span.segmentId,
+        direction: span.dir === "f" ? "forward" : "reverse",
+        from_fraction: span.startFraction,
+        to_fraction: span.endFraction,
+      })),
+      binding_status: r.binding_status as RoadConditionRoutingEvidence["binding_status"],
+      reason_codes: [],
+      evaluated_at: evaluatedAt.toISOString(),
+    };
+    if (routingEvidenceReasons(evidence, evaluatedAt).length > 0) continue;
     conditions.push({
       id: r.id,
       source: r.source,
@@ -116,6 +208,7 @@ export function segmentConditionsToJson(
         confidence: r.binding_confidence,
         direction_mode: r.binding_direction_mode,
       },
+      routing_evidence: evidence,
       segments: r.segments.map((s) => ({
         way_id: s.wayId,
         dir: s.dir,
@@ -126,6 +219,8 @@ export function segmentConditionsToJson(
     });
   }
   return {
+    schema_version: 1,
+    complete: true,
     generated_at: new Date().toISOString(),
     at: at.toISOString(),
     resolver_version: info.resolverVersion,

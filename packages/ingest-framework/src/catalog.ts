@@ -53,6 +53,64 @@ export function __resetCatalogResolvers(): void {
   byId.clear();
 }
 
+/** Replaces configured catalogue parents with their explicitly approved child
+ * descriptors before the scheduler sees them. Unapproved snapshot children are
+ * returned for diagnostics only and can never be polled through this result. */
+export function materializeApprovedCatalogChildren(feeds: FeedSourceBase[]): {
+  scheduled: FeedSourceBase[];
+  discovered: FeedSourceBase[];
+} {
+  const scheduled: FeedSourceBase[] = [];
+  const discovered: FeedSourceBase[] = [];
+
+  for (const parent of feeds) {
+    const approvedIds = parent.catalog?.approvedChildren;
+    if (!parent.catalog || !approvedIds || approvedIds.length === 0) {
+      scheduled.push(parent);
+      continue;
+    }
+    const resolver = getCatalogResolverById(parent.catalog.resolver);
+    const snapshot = resolver.snapshot ?? [];
+    const byId = new Map(snapshot.map((child) => [child.id, child]));
+    for (const approvedId of approvedIds) {
+      const child = byId.get(approvedId);
+      if (!child) {
+        throw new Error(
+          `catalogue child ${approvedId} approved by ${parent.id} is absent from ${resolver.id} snapshot`
+        );
+      }
+      const rights = child.rights;
+      if (
+        child.selectionState !== "approved" ||
+        !rights ||
+        rights.sourceRedistribution !== true ||
+        rights.derivedRedistribution !== true ||
+        rights.commercialUse !== true ||
+        rights.retention !== true
+      ) {
+        throw new Error(`catalogue child ${approvedId} lacks affirmative admission evidence`);
+      }
+      scheduled.push({
+        ...parent,
+        ...child,
+        catalog: undefined,
+        auth: child.auth ?? parent.auth,
+        requiredEnv: child.requiredEnv ?? parent.requiredEnv,
+        parentSourceId: parent.id,
+        policyIds: [parent.id, child.id],
+        selectionState: "approved",
+      });
+    }
+    const approved = new Set(approvedIds);
+    discovered.push(...snapshot.filter((child) => !approved.has(child.id)));
+  }
+
+  const ids = scheduled.map((feed) => feed.id);
+  if (new Set(ids).size !== ids.length)
+    throw new Error("materialized catalogue produced duplicate ids");
+  return { scheduled, discovered };
+}
+
 /**
  * Resolves a catalog live, refreshing the vendored snapshot on success and
  * falling back to it on failure (Transitland's git-submodule resilience). Never

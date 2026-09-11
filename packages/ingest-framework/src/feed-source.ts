@@ -66,7 +66,20 @@ export interface FeedSourceBase {
    * registry and expanded into concrete feeds at fetch time; `filter` narrows the
    * resolved set (a shallow equality match on the resolved descriptors).
    */
-  catalog?: { resolver: string; filter?: Record<string, unknown> };
+  catalog?: {
+    resolver: string;
+    filter?: Record<string, unknown>;
+    /** Exact child ids selected for scheduling. Discovery alone never enables a child. */
+    approvedChildren?: string[];
+  };
+  /** Qualified catalogue lineage. Parent policy exclusions apply through policyIds. */
+  parentSourceId?: string;
+  policyIds?: string[];
+  selectionState?: "approved" | "discovered";
+  /** Exact dataset-use evidence. Null means unknown and cannot admit road-event reuse. */
+  rights?: DatasetRights;
+  /** Structural contract required before an empty response may clear retained rows. */
+  snapshot?: SnapshotContract;
   auth?: FeedAuth;
   method?: "GET" | "POST";
   /** POST-body template; `${VAR}` interpolated from resolvedEnv, same as `url`. */
@@ -128,4 +141,32 @@ export interface FeedSourceBase {
   maintainers?: { name: string; github: string }[];
   /** Per-env-var credential guide (title, description, acquisition steps). */
   setup?: Record<string, CredentialField>;
+}
+
+export interface DatasetRights {
+  sourceRedistribution: boolean | null;
+  derivedRedistribution: boolean | null;
+  commercialUse: boolean | null;
+  attributionRequired: boolean | null;
+  retention: boolean | null;
+  termsUrl?: string;
+  reviewedAt?: string;
+  evidenceOrigin?: string;
+  evidenceVersion?: string;
+}
+
+export interface SnapshotContract {
+  completeness: "complete";
+  /** Dot path to the source record array for structural empty/count validation. */
+  recordsPath?: string;
+  /** Required DATEX logical-model element; may sit below a SOAP envelope. */
+  rootElement?: string;
+  /** Element carrying the typed XML publication. */
+  publicationElement?: string;
+  /** Required XML publication discriminator, such as SituationPublication. */
+  publicationType?: string;
+  /** XML element name identifying each source record after namespace removal. */
+  recordElement?: string;
+  /** Optional dot path declaring the expected record count. */
+  totalCountPath?: string;
 }

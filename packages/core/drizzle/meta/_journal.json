@@ -183,6 +183,20 @@
       "when": 1788710067631,
       "tag": "0025_observation_binding",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1789126570589,
+      "tag": "0026_poll_facts",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1789126957750,
+      "tag": "0027_binding_currency",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,6 @@
 import type { Geometry, LineString, MultiLineString, Point } from "geojson";
 import type { EvidenceState } from "./evidence.js";
+import type { RoadConditionRoutingEvidence, RoutingRights } from "./routing-evidence.js";
 
 export type GeoJsonGeometry = Geometry;
 export type LineStringGeometry = LineString;
@@ -10,6 +11,10 @@ export interface Attribution {
   provider: string;
   license: string;
   url?: string;
+  parentSourceId?: string;
+  childSourceId?: string;
+  policyIds?: string[];
+  rights?: RoutingRights;
 }
 
 /**
@@ -82,7 +87,7 @@ export type PrivacyClass =
 
 /** Outcome of binding an event to the directed segment spine (derived, never parser-supplied). */
 export type BindingStatus =
-  "exact" | "likely" | "ambiguous" | "unresolved" | "no_coverage" | "not_applicable";
+  "exact" | "likely" | "ambiguous" | "unresolved" | "no_coverage" | "not_applicable" | "obsolete";
 
 /** Whether the resolver could decide the travel direction. `both` = bound in both directions of a bidirectional way. */
 export type DirectionMode = "single" | "both" | "unknown";
@@ -267,6 +272,8 @@ export interface Observation {
   binding?: ObservationBinding;
   /** Ordered directed segments this event occupies (only when `binding.status` is exact/likely/ambiguous). */
   segments?: SegmentSpan[];
+  /** Current, fail-closed routing authority; absent legacy rows remain display-only. */
+  routingEvidence?: RoadConditionRoutingEvidence;
 }
 
 export interface ConditionEvent extends Observation {

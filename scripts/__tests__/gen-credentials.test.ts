@@ -43,6 +43,10 @@ describe("gen-credentials", () => {
     const svc = JSON.parse(readFileSync(p.serviceJson, "utf8"));
     expect(svc.container.image).toBe("x");
     expect(svc.configSchema.properties.K_TOKEN["x-openmapx-secret"]).toBe(true);
+    expect(svc.configSchema.properties.SEGMENT_REGIONS).toMatchObject({
+      type: "string",
+      "x-openmapx-secret": false,
+    });
     // check mode is now a no-op (no drift):
     expect(applyOrCheck([feed], p, false).drift).toEqual([]);
   });

@@ -24,6 +24,7 @@ function makeCtx(
     noDb?: boolean;
     capture?: (query: string, params?: unknown[]) => void;
     fetchFc?: unknown;
+    fetchByUrl?: (url: string) => unknown;
     captureFetch?: (url: string, options?: { params?: Record<string, unknown> }) => void;
     serviceUrl?: string;
   }
@@ -44,7 +45,8 @@ function makeCtx(
         options?: { params?: Record<string, unknown> }
       ): Promise<T> {
         opts?.captureFetch?.(url, options);
-        return (opts?.fetchFc ?? { type: "FeatureCollection", features: [] }) as T;
+        return (opts?.fetchByUrl?.(url) ??
+          opts?.fetchFc ?? { type: "FeatureCollection", features: [] }) as T;
       },
     },
     cache: {
@@ -88,6 +90,136 @@ describe("road-conditions-openconditions provider", () => {
     });
     expect(events[0]!.roads).toEqual([{ name: "A2" }]);
     expect(events[0]!.attribution).toMatchObject({ provider: "NDW", license: "CC0-1.0" });
+  });
+
+  it("joins strictly published routing evidence onto its original observation", async () => {
+    const evidence = {
+      schema_version: 1 as const,
+      observation_revision: "rev-1",
+      binding_revision: "rev-1",
+      graph_generation: "graph-1",
+      resolver_version: "resolver-1",
+      source_id: "ndw",
+      child_source_id: null,
+      source_license: "CC0-1.0",
+      license_url: null,
+      attribution: "NDW",
+      record_url: null,
+      source_checked_at: "2026-09-11T10:00:00.000Z",
+      fresh_until: "2026-09-11T10:15:00.000Z",
+      expires_at: null,
+      valid_from: null,
+      valid_to: null,
+      next_transition_at: null,
+      direction_mode: "both" as const,
+      applicability: { kind: "all" as const },
+      rights: {
+        source_redistribution: "yes" as const,
+        derived_redistribution: "yes" as const,
+        commercial_use: "yes" as const,
+        attribution_required: "yes" as const,
+        retention: "yes" as const,
+        evidence_origin: "registry",
+        evidence_version: "1",
+        reviewed_at: "2026-09-01T00:00:00.000Z",
+      },
+      segments: [
+        { segment_id: "1:f", direction: "forward" as const, from_fraction: 0, to_fraction: 1 },
+      ],
+      binding_status: "exact" as const,
+      reason_codes: [],
+      evaluated_at: "2026-09-11T10:00:00.000Z",
+    };
+    const { ctx, registered } = makeCtx([fakeRow], {
+      fetchByUrl: (url) =>
+        url.endsWith("/segments/conditions.json")
+          ? {
+              schema_version: 1,
+              complete: true,
+              resolver_version: "resolver-1",
+              conditions: [{ id: "evt-001", routing_evidence: evidence }],
+            }
+          : undefined,
+    });
+    setup(ctx);
+    const events = await registered[0]!.getEvents([4, 51, 6, 53]);
+    expect(events[0]?.routingEvidence).toEqual(evidence);
+  });
+
+  it("maps bounded operational status and graph evidence", async () => {
+    const { ctx, registered } = makeCtx([], {
+      fetchByUrl: (url) =>
+        url.endsWith("/feeds/status")
+          ? {
+              schemaVersion: "2.0",
+              instanceId: "oc-eu-1",
+              collectedAt: "2026-09-11T10:00:00.000Z",
+              graph: { generation: "graph-1", status: "ready", regions: ["de"] },
+              feeds: [
+                {
+                  id: "de-child",
+                  parentSourceId: "de-parent",
+                  lastAttemptAt: "2026-09-11T09:59:00.000Z",
+                  lastOutcome: "changed",
+                  lastNetworkSuccessAt: "2026-09-11T09:59:00.000Z",
+                  lastPublicationAt: "2026-09-11T09:59:30.000Z",
+                  publicationRevision: 3,
+                  freshnessDeadline: "2026-09-11T10:14:00.000Z",
+                  freshnessWindowSec: 900,
+                  cadenceSec: 300,
+                  activeEvents: 8,
+                  lastInserted: 2,
+                  lastUpdated: 1,
+                  lastDeleted: 1,
+                  lastRejected: 4,
+                  consecutiveFailures: 0,
+                  binding: {
+                    exact: 5,
+                    likely: 1,
+                    ambiguous: 1,
+                    unresolved: 1,
+                    noCoverage: 0,
+                    unattempted: 0,
+                    obsolete: 0,
+                    notApplicable: 0,
+                  },
+                },
+              ],
+            }
+          : undefined,
+    });
+    setup(ctx);
+    const evidence = await registered[0]!.getOperationalEvidence!();
+    expect(evidence).toMatchObject({ schemaVersion: 1, instanceId: "oc-eu-1", truncated: false });
+    expect(evidence.feeds[0]).toMatchObject({
+      sourceId: "de-child",
+      parentSourceId: "de-parent",
+      lastSuccessfulCheckAt: "2026-09-11T09:59:00.000Z",
+      publicationRevision: "3",
+      expectedIntervalSeconds: 300,
+      activeEventCount: 8,
+      changedCount: 4,
+      rejectedCount: 4,
+      graph: { generation: "graph-1", status: "ready", regions: ["de"] },
+      bindingCounts: { exact: 5, likely: 1 },
+    });
+  });
+
+  it("pushes excluded source identities into the database read before dedupe", async () => {
+    let query = "";
+    let params: unknown[] | undefined;
+    const { ctx, registered } = makeCtx([], {
+      capture: (q, p) => {
+        query = q;
+        params = p;
+      },
+    });
+    setup(ctx);
+    await registered[0]!.getEvents([4, 51, 6, 53], { excludedSourceIds: ["parent", "child"] });
+    expect(query).toMatch(/o\.source <> ALL/);
+    expect(query).toMatch(/parentSourceId/);
+    expect(query).toMatch(/policyIds/);
+    expect(params).toContainEqual(["parent", "child"]);
   });
 
   it("getEvents returns [] when no database is available", async () => {
@@ -219,4 +351,55 @@ describe("road-conditions-openconditions provider", () => {
     expect(segments[0]).toMatchObject({ id: "700:f", los: "unknown", confidence: "typical" });
     expect(segments[0]!.speedRatio).toBeUndefined();
   });
+});
+
+describe("complete routing observations", () => {
+  const complete = { schema_version: 1, complete: true, conditions: [] };
+  it("preserves each source observation, including more than the display limit", async () => {
+    let query = "";
+    const rows = Array.from({ length: 2001 }, (_, i) => ({
+      ...fakeRow,
+      id: `evt-${i}`,
+      source: `source-${i}`,
+    }));
+    const { ctx, registered } = makeCtx(rows, {
+      fetchFc: complete,
+      capture: (q) => {
+        query = q;
+      },
+    });
+    setup(ctx);
+    const result = await registered[0]!.getRoutingEvents!([4, 51, 6, 53]);
+    expect(result.complete).toBe(true);
+    expect(result.events).toHaveLength(2001);
+    expect(query).toContain("LIMIT 100001");
+  });
+  it("rejects overflow before returning a partial observation set", async () => {
+    const { ctx, registered } = makeCtx(Array(100001).fill(fakeRow), { fetchFc: complete });
+    setup(ctx);
+    await expect(registered[0]!.getRoutingEvents!([4, 51, 6, 53])).rejects.toThrow(
+      /complete|limit/i
+    );
+  });
+  it("does not interpret unavailable storage or incomplete evidence as empty coverage", async () => {
+    for (const options of [
+      { noDb: true, fetchFc: complete },
+      { fetchFc: { ...complete, complete: false } },
+      { fetchFc: {} },
+    ]) {
+      const { ctx, registered } = makeCtx([], options);
+      setup(ctx);
+      await expect(registered[0]!.getRoutingEvents!([4, 51, 6, 53])).rejects.toThrow();
+    }
+  });
+});
+
+it("rejects lost or unrepresentable rows on the complete path", async () => {
+  for (const rows of [null, [{ ...fakeRow, geojson: "null" }]]) {
+    const { ctx, registered } = makeCtx(rows as never, {
+      fetchFc: { schema_version: 1, complete: true, conditions: [] },
+    });
+    setup(ctx);
+    await expect(registered[0]!.getRoutingEvents!([4, 51, 6, 53])).rejects.toThrow();
+  }
 });

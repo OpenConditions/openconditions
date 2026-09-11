@@ -1,4 +1,5 @@
 export * from "./model.js";
+export * from "./routing.js";
 export * from "./decay.js";
 export * from "./evidence-policy.js";
 export * from "./taxonomy.js";
@@ -33,6 +34,7 @@ export * from "./flow-turin.js";
 export * from "./hk.js";
 export * from "./open511.js";
 export * from "./wzdx.js";
+export * from "./xml.js";
 export * from "./geojson.js";
 export * from "./ibi511.js";
 export * from "./lta.js";

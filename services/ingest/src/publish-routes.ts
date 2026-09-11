@@ -2,11 +2,12 @@ import {
   type ConditionEvent,
   type Measurement,
   type Observation,
+  type RoutingRights,
   readObservations,
 } from "@openconditions/core";
 import {
   diffObservations,
-  eventsToExclusions,
+  segmentConditionsToExclusions,
   filterForPermissiveExport,
   flowToSegmentSpeedCsv,
   isPermissiveLicense,
@@ -30,11 +31,17 @@ import {
   hasCredentials,
   requiredEnvVars,
   type DomainRegistry,
+  type DatasetRights,
 } from "@openconditions/ingest-framework";
 import { RESOLVER_VERSION } from "@openconditions/roads";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import type { FeedRunStatus, FeedStatusStore } from "./feed-status.js";
+import {
+  readSourceOperationalStatus,
+  type SourceOperationalStatus,
+  type SourceStatusReader,
+} from "./pipeline/source-status.js";
 import {
   createBindingMetricsReader,
   type BindingMetrics,
@@ -43,6 +50,36 @@ import {
 
 type Sql = postgres.Sql;
 type BBox = [number, number, number, number];
+export interface FeedGraphStatus {
+  generation: string | null;
+  status: "ready" | "partial" | "missing" | "unknown";
+  regions: string[];
+}
+export type FeedGraphStatusReader = () => Promise<FeedGraphStatus>;
+
+export async function readFeedGraphStatus(sql: Sql): Promise<FeedGraphStatus> {
+  const rows = await sql<{ generation: string; status: string; regions: unknown }[]>`
+    SELECT generation, status, regions FROM conditions.road_graph_state WHERE singleton`;
+  const row = rows[0];
+  if (!row) return { generation: null, status: "missing", regions: [] };
+  const raw = Array.isArray(row.regions) ? row.regions : [];
+  const regions = raw
+    .map((region) =>
+      typeof region === "string"
+        ? region
+        : region &&
+            typeof region === "object" &&
+            typeof (region as { id?: unknown }).id === "string"
+          ? (region as { id: string }).id
+          : null
+    )
+    .filter((region): region is string => region != null);
+  return {
+    generation: row.generation,
+    status: row.status === "ready" && regions.length > 0 ? "ready" : "partial",
+    regions,
+  };
+}
 
 /** How often the SSE stream re-polls the store for changes + heartbeats. */
 const STREAM_POLL_MS = 15_000;
@@ -52,6 +89,69 @@ const FEED_BASE: Omit<FeedInfo, "timestamp"> = {
   url: "https://openconditions.org",
   license: "mixed (per source)",
 };
+
+function grant(value: boolean | null | undefined): "yes" | "no" | "unknown" {
+  return value === true ? "yes" : value === false ? "no" : "unknown";
+}
+
+function fullIso(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
+}
+
+function routingRights(rights: DatasetRights | RoutingRights | null | undefined) {
+  if (!rights) return null;
+  if ("source_redistribution" in rights) {
+    return {
+      ...rights,
+      reviewed_at: fullIso(rights.reviewed_at),
+    };
+  }
+  return {
+    source_redistribution: grant(rights.sourceRedistribution),
+    derived_redistribution: grant(rights.derivedRedistribution),
+    commercial_use: grant(rights.commercialUse),
+    attribution_required: grant(rights.attributionRequired),
+    retention: grant(rights.retention),
+    evidence_origin: rights.evidenceOrigin ?? null,
+    evidence_version: rights.evidenceVersion ?? null,
+    reviewed_at: fullIso(rights.reviewedAt),
+  } as const;
+}
+
+function hydrateSegmentRows(
+  rows: SegmentConditionRow[],
+  registry: DomainRegistry
+): SegmentConditionRow[] {
+  const feedById = new Map(
+    Object.values(registry).flatMap((domain) =>
+      domain.feeds.map((feed) => [feed.id, feed] as const)
+    )
+  );
+  return rows
+    .filter((row) => isPermissiveLicense(row.source_license))
+    .map((row) => {
+      const feed = feedById.get(row.source);
+      const attribution = row.origin.attribution as
+        | {
+            provider?: string;
+            url?: string;
+            rights?: DatasetRights | RoutingRights;
+            parentSourceId?: string;
+          }
+        | undefined;
+      const parentSourceId = feed?.parentSourceId ?? attribution?.parentSourceId;
+      return {
+        ...row,
+        routing_source_id: parentSourceId ?? row.source,
+        child_source_id: parentSourceId ? row.source : null,
+        license_url: feed?.licenseUrl ?? attribution?.url ?? null,
+        attribution: attribution?.provider ?? feed?.attribution ?? null,
+        rights: routingRights(attribution?.rights ?? feed?.rights),
+      };
+    });
+}
 
 /**
  * Parse a `west,south,east,north` query param into a BBox, rejecting malformed
@@ -194,9 +294,25 @@ export type FeedStatusRow = {
   domain: string;
   hasCredentials: boolean;
   missingEnv: string[];
+  selectionState: "approved" | "discovered" | "configured";
+  parentSourceId?: string;
+  cadenceSec: number;
+  freshnessWindowSec: number;
+  rights?: import("@openconditions/ingest-framework").DatasetRights;
   /** Binding outcomes of this feed's events; absent while it has no bindings. */
   binding?: BindingMetrics;
 } & FeedRunStatus;
+
+function legacyStatus(status: SourceOperationalStatus): FeedRunStatus {
+  return {
+    ...(status.lastAttemptAt ? { lastRunAt: status.lastAttemptAt } : {}),
+    ...(status.lastNetworkSuccessAt ? { lastSuccessAt: status.lastNetworkSuccessAt } : {}),
+    ...(status.lastError ? { lastError: status.lastError } : {}),
+    ...(status.lastErrorAt ? { lastErrorAt: status.lastErrorAt } : {}),
+    ...(status.activeEvents != null ? { lastRowCount: status.activeEvents } : {}),
+    ...(status.lastDurationMs != null ? { lastDurationMs: status.lastDurationMs } : {}),
+  };
+}
 
 /**
  * Registers `GET /feeds/status`: every feed registered across all domains,
@@ -212,9 +328,28 @@ export function registerFeedStatusRoute(
   app: FastifyInstance,
   statusStore: FeedStatusStore,
   registry: DomainRegistry,
-  bindingMetrics: BindingMetricsReader
+  bindingMetrics: BindingMetricsReader,
+  sourceStatus?: SourceStatusReader,
+  graphStatus?: FeedGraphStatusReader
 ): void {
   app.get("/feeds/status", async () => {
+    const collectedAt = new Date().toISOString();
+    let durable = new Map<string, SourceOperationalStatus>();
+    let graph: FeedGraphStatus = { generation: null, status: "unknown", regions: [] };
+    if (sourceStatus) {
+      try {
+        durable = await sourceStatus();
+      } catch (err) {
+        app.log.error({ err }, "source status unavailable for /feeds/status");
+      }
+    }
+    if (graphStatus) {
+      try {
+        graph = await graphStatus();
+      } catch (err) {
+        app.log.error({ err }, "graph status unavailable for /feeds/status");
+      }
+    }
     let metrics: Map<string, BindingMetrics> = new Map();
     try {
       metrics = await bindingMetrics();
@@ -232,18 +367,40 @@ export function registerFeedStatusRoute(
           (k) => !hasCredentials({ auth: undefined, requiredEnv: [k] })
         );
         const binding = metrics.get(feed.id);
+        const persisted = durable.get(feed.id);
         feeds.push({
           id: feed.id,
           name: feed.name,
           domain,
           hasCredentials: hasCredentials(feed),
           missingEnv,
-          ...(statusStore.get(feed.id) ?? {}),
+          selectionState: feed.selectionState ?? "configured",
+          parentSourceId: feed.parentSourceId,
+          cadenceSec: feed.cadenceSec,
+          freshnessWindowSec: feed.freshnessWindowSec,
+          rights: feed.rights,
+          ...(persisted
+            ? { ...legacyStatus(persisted), ...persisted }
+            : (statusStore.get(feed.id) ?? {})),
           ...(binding ? { binding } : {}),
         });
       }
+      for (const feed of plugin.discoveredFeeds ?? []) {
+        feeds.push({
+          id: feed.id,
+          name: feed.name,
+          domain,
+          hasCredentials: false,
+          missingEnv: [],
+          selectionState: "discovered",
+          parentSourceId: feed.parentSourceId,
+          cadenceSec: feed.cadenceSec,
+          freshnessWindowSec: feed.freshnessWindowSec,
+          rights: feed.rights,
+        });
+      }
     }
-    return { feeds };
+    return { schemaVersion: "2.0", instanceId: "openconditions", collectedAt, graph, feeds };
   });
 }
 
@@ -385,12 +542,81 @@ export function registerPublishRoutes(
   });
 
   app.get("/valhalla/exclusions.json", async (req, reply) => {
-    const obs = await read(req.query as Record<string, string | undefined>);
-    if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
+    const q = req.query as Record<string, string | undefined>;
+    const bbox = parseBbox(q.bbox);
+    if (!bbox) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
+    const at = q.at ? new Date(q.at) : new Date();
+    if (Number.isNaN(at.getTime())) {
+      return reply.status(400).send({ error: "at must be an ISO 8601 timestamp" });
+    }
+    const [west, south, east, north] = bbox;
+    const raw = await db.execute<SegmentConditionRow[]>(
+      `SELECT o.id, o.source, o.type, o.severity, o.attributes, o.origin, o.routing_eligible,
+              o.valid_from, o.valid_to, o.schedule, o.source_license, o.source_uri, o.expires_at,
+              o.content_hash AS observation_revision,
+              ss.last_network_success_at AS source_checked_at,
+              ss.freshness_deadline AS fresh_until,
+              b.status AS binding_status, b.confidence AS binding_confidence,
+              b.resolver_version AS binding_resolver_version,
+              b.direction_mode AS binding_direction_mode,
+              b.observation_revision AS binding_revision, b.graph_generation,
+              COALESCE(seg.segments, '[]'::jsonb) AS segments
+       FROM conditions.observations o
+       JOIN conditions.observation_binding b ON b.observation_id=o.id
+       JOIN conditions.road_graph_state graph ON graph.singleton AND graph.status='ready'
+         AND graph.generation=b.graph_generation
+       LEFT JOIN conditions.source_status ss ON ss.source=o.source
+       LEFT JOIN LATERAL (
+         SELECT jsonb_agg(jsonb_build_object('segmentId',s.segment_id,'wayId',s.way_id,
+                  'dir',s.dir,'startFraction',s.start_fraction,'endFraction',s.end_fraction,
+                  'geometry',CASE WHEN rs.geom IS NULL THEN NULL
+                    ELSE ST_AsGeoJSON(ST_LineSubstring(rs.geom,
+                      LEAST(s.start_fraction,s.end_fraction),GREATEST(s.start_fraction,s.end_fraction)))::jsonb END)
+                  ORDER BY s.seq) AS segments
+         FROM conditions.observation_segment s
+         LEFT JOIN conditions.road_segment rs ON rs.segment_id=s.segment_id
+         WHERE s.observation_id=o.id) seg ON true
+       WHERE o.kind='event' AND o.domain='roads' AND o.status='active'
+         AND o.geom && ST_MakeEnvelope($1,$2,$3,$4,4326)
+         AND b.status IN ('exact','likely') AND b.resolver_version=$6
+         AND (o.valid_to IS NULL OR o.valid_to > $5::timestamptz)
+         AND (o.expires_at IS NULL OR o.expires_at > now())
+       ORDER BY o.id`,
+      [west, south, east, north, at.toISOString(), RESOLVER_VERSION]
+    );
+    const evaluatedAt = new Date();
+    const rows = hydrateSegmentRows(raw, registry);
+    const projected = segmentConditionsToJson(rows, at, {
+      resolverVersion: RESOLVER_VERSION,
+      evaluatedAt,
+    });
+    const exclusions = segmentConditionsToExclusions(projected.conditions, {
+      activeAt: at,
+      evaluatedAt,
+    });
     reply.header("Content-Type", "application/json");
-    reply.header("Cache-Control", "public, max-age=90");
-    reply.header("X-Data-License", distinctLicenses(obs));
-    return reply.send(eventsToExclusions(obs));
+    const deadlines = projected.conditions.flatMap((condition) =>
+      [
+        condition.routing_evidence.fresh_until,
+        condition.routing_evidence.expires_at,
+        condition.routing_evidence.valid_to,
+        condition.routing_evidence.next_transition_at,
+      ]
+        .filter((value): value is string => value != null)
+        .map((value) => Date.parse(value))
+        .filter(Number.isFinite)
+    );
+    const maxAge =
+      deadlines.length === 0
+        ? 0
+        : Math.max(
+            0,
+            Math.min(90, Math.floor((Math.min(...deadlines) - evaluatedAt.getTime()) / 1000))
+          );
+    reply.header("Cache-Control", `public, max-age=${maxAge}`);
+    const licenses = new Set(projected.conditions.map((c) => c.routing_evidence.source_license));
+    reply.header("X-Data-License", licenses.size > 0 ? [...licenses].join(", ") : "unknown");
+    return reply.send({ ...exclusions, routing_evidence: projected });
   });
 
   app.get("/segments.geojson", async (req, reply) => {
@@ -530,14 +756,24 @@ export function registerPublishRoutes(
     }
     const rows = await db.execute<SegmentConditionRow[]>(
       `SELECT o.id, o.source, o.type, o.severity, o.attributes, o.origin, o.routing_eligible,
-              o.valid_from, o.valid_to, o.schedule, o.source_license,
+              o.valid_from, o.valid_to, o.schedule, o.source_license, o.source_uri, o.expires_at,
+              o.content_hash AS observation_revision,
+              ss.last_network_success_at AS source_checked_at,
+              ss.freshness_deadline AS fresh_until,
               b.status AS binding_status, b.confidence AS binding_confidence,
+              b.resolver_version AS binding_resolver_version,
               b.direction_mode AS binding_direction_mode,
+              b.observation_revision AS binding_revision,
+              b.graph_generation,
               COALESCE(seg.segments, '[]'::jsonb) AS segments
        FROM conditions.observations o
        JOIN conditions.observation_binding b ON b.observation_id = o.id
+       JOIN conditions.road_graph_state graph ON graph.singleton AND graph.status='ready'
+         AND graph.generation=b.graph_generation
+       LEFT JOIN conditions.source_status ss ON ss.source = o.source
        LEFT JOIN LATERAL (
-         SELECT jsonb_agg(jsonb_build_object('wayId', s.way_id, 'dir', s.dir,
+         SELECT jsonb_agg(jsonb_build_object('segmentId', s.segment_id,
+                  'wayId', s.way_id, 'dir', s.dir,
                   'startFraction', s.start_fraction, 'endFraction', s.end_fraction,
                   'geometry', CASE
                     WHEN rs.geom IS NULL THEN NULL
@@ -555,13 +791,13 @@ export function registerPublishRoutes(
          LEFT JOIN conditions.road_segment rs ON rs.segment_id = s.segment_id
          WHERE s.observation_id = o.id) seg ON true
        WHERE o.kind = 'event' AND o.domain = 'roads' AND o.status = 'active'
-         AND b.status IN ('exact','likely','ambiguous')
+         AND b.status IN ('exact','likely') AND b.resolver_version=$2
          AND (o.valid_to IS NULL OR o.valid_to > $1::timestamptz)
          AND (o.expires_at IS NULL OR o.expires_at > now())
        ORDER BY o.id`,
-      [at.toISOString()]
+      [at.toISOString(), RESOLVER_VERSION]
     );
-    const permissive = rows.filter((r) => isPermissiveLicense(r.source_license));
+    const permissive = hydrateSegmentRows(rows, registry);
     reply.header("Content-Type", "application/json");
     reply.header("Cache-Control", "public, max-age=60");
     // Same shape as `distinctLicenses`, but read off the `source_license`
@@ -570,7 +806,10 @@ export function registerPublishRoutes(
     const licenses = new Set(permissive.map((r) => r.source_license ?? "unknown"));
     reply.header("X-Data-License", licenses.size > 0 ? [...licenses].join(", ") : "unknown");
     return reply.send(
-      segmentConditionsToJson(permissive, at, { resolverVersion: RESOLVER_VERSION })
+      segmentConditionsToJson(permissive, at, {
+        resolverVersion: RESOLVER_VERSION,
+        evaluatedAt: new Date(),
+      })
     );
   });
 
@@ -625,5 +864,12 @@ export function registerPublishRoutes(
     return reply;
   });
 
-  registerFeedStatusRoute(app, statusStore, registry, createBindingMetricsReader(sql));
+  registerFeedStatusRoute(
+    app,
+    statusStore,
+    registry,
+    createBindingMetricsReader(sql),
+    () => readSourceOperationalStatus(sql),
+    () => readFeedGraphStatus(sql)
+  );
 }

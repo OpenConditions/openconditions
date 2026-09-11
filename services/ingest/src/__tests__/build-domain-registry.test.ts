@@ -27,7 +27,7 @@ describe("buildDomainRegistry", () => {
     const { buildDomainRegistry } = await import("../domains.js");
     const registry = await buildDomainRegistry({ bakedInDir: "/baked" });
 
-    expect(registry["roads"]?.feeds).toBe(loaded);
+    expect(registry["roads"]?.feeds).toStrictEqual(loaded);
     const opts = loadFeeds.mock.calls[0]?.[0];
     expect(opts).toMatchObject({
       domain: "roads",

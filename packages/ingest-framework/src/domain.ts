@@ -12,6 +12,8 @@ export type FlowParserFn = (input: string | Buffer, ...rest: never[]) => unknown
 export interface IngestDomain {
   name: string;
   feeds: FeedSourceBase[];
+  /** Catalogue children visible to operators but never handed to the scheduler. */
+  discoveredFeeds?: FeedSourceBase[];
   parserFor(format: string): ParserFn;
   flowParserFor?(format: string): FlowParserFn;
   attributes(obs: Observation): Record<string, unknown>;

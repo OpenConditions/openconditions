@@ -5,6 +5,7 @@ export * from "./freshness.js";
 export * from "./time.js";
 export * from "./timezone.js";
 export * from "./inEffect.js";
+export * from "./routing-evidence.js";
 export * from "./observationsByBbox.js";
 export * from "./readObservations.js";
 export { haversineMeters } from "./spatial.js";

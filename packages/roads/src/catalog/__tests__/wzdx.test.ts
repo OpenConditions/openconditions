@@ -39,10 +39,52 @@ describe("wzdxRegistryResolver", () => {
     for (const f of feeds) {
       expect(f.format).toBe("wzdx");
       expect(f.country).toBe("US");
-      expect(f.license).toBe("CC0-1.0");
+      expect(f.license).toBe("UNKNOWN");
+      expect(f.selectionState).toBe("discovered");
+      expect(f.rights?.sourceRedistribution).toBeNull();
       expect(f.id.startsWith("wzdx-")).toBe(true);
     }
     expect(new Set(feeds.map((f) => f.id)).size).toBe(feeds.length); // unique ids
+  });
+
+  it("admits Kansas under its verified child grant without relabelling other children", async () => {
+    const [kansas, washington] = await wzdxRegistryResolver.resolve(
+      jsonResponder([
+        {
+          feedname: "Kansas DOT",
+          state: "kansas",
+          issuingorganization: "Kansas DOT",
+          active: true,
+          format: "geojson",
+          version: "4.2",
+          url: "https://ks.carsprogram.org/carsapi_v1/api/wzdx",
+        },
+        {
+          feedname: "Washington DOT",
+          state: "washington",
+          issuingorganization: "Washington DOT",
+          active: true,
+          format: "geojson",
+          version: "4.2",
+          url: "https://example.test/washington",
+        },
+      ])
+    );
+
+    expect(kansas).toMatchObject({
+      id: "wzdx-kansas",
+      license: "CC0-1.0",
+      selectionState: "approved",
+      parentSourceId: "us-wzdx",
+      policyIds: ["us-wzdx", "wzdx-kansas"],
+      rights: {
+        sourceRedistribution: true,
+        derivedRedistribution: true,
+        commercialUse: true,
+        retention: true,
+      },
+    });
+    expect(washington).toMatchObject({ license: "UNKNOWN", selectionState: "discovered" });
   });
 
   it("drops inactive / non-v4 / other-format and empty/placeholder-key rows", async () => {

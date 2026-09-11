@@ -213,11 +213,50 @@ export const sourceStatus = conditionsSchema.table("source_status", {
   source: text("source").primaryKey(),
   lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }),
   lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
+  lastNetworkSuccessAt: timestamp("last_network_success_at", { withTimezone: true }),
+  freshnessDeadline: timestamp("freshness_deadline", { withTimezone: true }),
+  lastPublicationAt: timestamp("last_publication_at", { withTimezone: true }),
+  publicationRevision: bigint("publication_revision", { mode: "number" }).notNull().default(0),
+  lastOutcome: text("last_outcome"),
   freshnessWindowSec: integer("freshness_window_sec").notNull(),
   lastRowCount: integer("last_row_count"),
+  activeEventCount: integer("active_event_count"),
+  lastInserted: integer("last_inserted"),
+  lastUpdated: integer("last_updated"),
+  lastDeleted: integer("last_deleted"),
+  lastRejected: integer("last_rejected"),
+  lastDurationMs: integer("last_duration_ms"),
+  consecutiveFailures: integer("consecutive_failures").notNull().default(0),
   lastError: text("last_error"),
+  lastErrorAt: timestamp("last_error_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Bounded operational audit trail. Rows are pruned by the status writer after
+ * every attempt; source_status remains the current authority used by routing. */
+export const sourcePollAttempt = conditionsSchema.table(
+  "source_poll_attempt",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    source: text("source").notNull(),
+    attemptedAt: timestamp("attempted_at", { withTimezone: true }).notNull(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }).notNull(),
+    outcome: text("outcome").notNull(),
+    networkValidated: boolean("network_validated").notNull(),
+    published: boolean("published").notNull().default(false),
+    activeEventCount: integer("active_event_count"),
+    inserted: integer("inserted"),
+    updated: integer("updated"),
+    deleted: integer("deleted"),
+    rejected: integer("rejected"),
+    durationMs: integer("duration_ms"),
+    partitionsSucceeded: integer("partitions_succeeded"),
+    partitionsFailed: integer("partitions_failed"),
+    partitionsTotal: integer("partitions_total"),
+    error: text("error"),
+  },
+  (t) => [index("idx_source_poll_attempt_source_time").on(t.source, t.attemptedAt)]
+);
 
 /**
  * Append-only per-sensor speed history. One row per flow observation that
@@ -327,6 +366,8 @@ export const osmRoad = conditionsSchema.table(
     name: text("name"),
     maxspeedKph: doublePrecision("maxspeed_kph"),
     region: text("region").notNull(),
+    importConfigHash: text("import_config_hash"),
+    importProvenance: jsonb("import_provenance"),
     importedAt: timestamp("imported_at", { withTimezone: true }).notNull(),
   },
   (t) => [
@@ -399,9 +440,48 @@ export const observationBinding = conditionsSchema.table(
     reason: text("reason"),
     resolverVersion: text("resolver_version").notNull(),
     geomHash: text("geom_hash").notNull(),
+    /** Observation content revision this resolver attempt consumed. */
+    observationRevision: text("observation_revision"),
+    /** Active road graph generation this resolver attempt consumed. */
+    graphGeneration: text("graph_generation"),
     boundAt: timestamp("bound_at", { withTimezone: true }).notNull(),
   },
   (t) => [index("idx_observation_binding_status").on(t.status)]
+);
+
+/**
+ * Durable retry queue for binding work. The observation revision fences a
+ * delayed worker from publishing a result for a replaced event snapshot.
+ */
+export const bindingQueue = conditionsSchema.table(
+  "binding_queue",
+  {
+    observationId: text("observation_id")
+      .primaryKey()
+      .references(() => observations.id, { onDelete: "cascade" }),
+    observationRevision: text("observation_revision").notNull(),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+    lastError: text("last_error"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("idx_binding_queue_due").on(t.nextAttemptAt)]
+);
+
+/** Singleton identity and provenance of the segment spine currently active. */
+export const roadGraphState = conditionsSchema.table(
+  "road_graph_state",
+  {
+    singleton: boolean("singleton").primaryKey().default(true),
+    generation: text("generation").notNull(),
+    status: text("status").notNull().default("ready"),
+    regions: jsonb("regions").notNull(),
+    highwayClasses: jsonb("highway_classes").notNull(),
+    pbfProvenance: jsonb("pbf_provenance").notNull(),
+    importedAt: timestamp("imported_at", { withTimezone: true }).notNull(),
+    activatedAt: timestamp("activated_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [check("road_graph_state_singleton", sql`${t.singleton} IS TRUE`)]
 );
 
 /**

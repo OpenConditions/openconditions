@@ -752,13 +752,37 @@ function vehiclesAffectedOf(rec: XmlObject): string[] | undefined {
   return set.size > 0 ? [...set] : undefined;
 }
 
+/** Objects that directly carry a named value, so sibling comparator tokens stay associated with it. */
+function valueContexts(node: unknown, localName: string, out: XmlObject[] = []): XmlObject[] {
+  if (Array.isArray(node)) {
+    for (const item of node) valueContexts(item, localName, out);
+    return out;
+  }
+  if (!isXmlObject(node)) return out;
+  if (Object.keys(node).some((key) => stripXmlNamespace(key) === localName)) out.push(node);
+  for (const [key, value] of Object.entries(node)) {
+    if (!key.startsWith("@_")) valueContexts(value, localName, out);
+  }
+  return out;
+}
+
 /** Dimension/weight restrictions (vehicleHeight/Width/Length, gross weight). */
 function dimensionRestrictionsOf(rec: XmlObject): Restriction[] | undefined {
   const out: Restriction[] = [];
   const dim = (name: string, type: string, unit: string) => {
-    const raw = collectLeaf(rec, name)[0];
-    const n = raw != null ? Number(raw) : NaN;
-    if (Number.isFinite(n)) out.push({ type, value: n, unit });
+    for (const context of valueContexts(rec, name)) {
+      const raw = collectLeaf(context, name)[0];
+      const n = raw != null ? Number(raw) : NaN;
+      if (!Number.isFinite(n)) continue;
+      const operator = collectLeaf(context, "comparisonOperator")[0];
+      out.push({
+        type,
+        value: n,
+        unit,
+        ...(operator ? { operator } : {}),
+        raw: { value: raw, ...(operator ? { comparisonOperator: operator } : {}) },
+      });
+    }
   };
   dim("vehicleHeight", "height", "m");
   dim("vehicleWidth", "width", "m");

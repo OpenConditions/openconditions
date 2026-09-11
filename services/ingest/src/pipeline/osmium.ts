@@ -15,6 +15,8 @@ export interface OsmiumDeps {
   runOsmium?: (args: string[]) => Promise<void>;
   /** Test seam: read the exported geojsonseq file. */
   readGeojson?: (path: string) => Promise<string>;
+  /** Override global highway classes for an explicit region preset. */
+  highwayClasses?: string[];
 }
 
 /**
@@ -82,7 +84,7 @@ export async function pbfToWays(
     "tags-filter",
     "-O",
     pbfPath,
-    osmiumHighwayFilter(loadHighwayClasses()),
+    osmiumHighwayFilter(deps.highwayClasses ?? loadHighwayClasses()),
     "-o",
     filtered,
   ]);

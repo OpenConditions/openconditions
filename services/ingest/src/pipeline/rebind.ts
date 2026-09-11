@@ -31,9 +31,10 @@ async function rebindableIds(sql: Sql): Promise<string[]> {
 }
 
 /**
- * Binds `ids` in batches. `force` drops the stored binding rows first so
- * `bindObservations` cannot skip them as unchanged — only for a pass that knows
- * the spine moved under events whose own inputs did not. Returns the number of
+ * Binds `ids` in batches. `force` marks stored bindings obsolete first so
+ * `bindObservations` cannot skip them as unchanged, while readers immediately
+ * stop applying the old graph and the old diagnostic/spans survive until their
+ * transactional replacement succeeds. Returns the number of
  * ids the stage actually re-resolved, so an id it skipped as unchanged and one
  * it only cleared are both excluded.
  */
@@ -42,7 +43,8 @@ async function bindIds(sql: Sql, ids: string[], deps: RebindDeps, force: boolean
   for (let i = 0; i < ids.length; i += BATCH) {
     const slice = ids.slice(i, i + BATCH);
     if (force) {
-      await sql`DELETE FROM conditions.observation_binding WHERE observation_id = ANY(${sql.array(slice)}::text[])`;
+      await sql`UPDATE conditions.observation_binding SET status = 'obsolete'
+        WHERE observation_id = ANY(${sql.array(slice)}::text[])`;
     }
     const r = await bindObservations(sql, slice, deps);
     rebound += r.attempted;

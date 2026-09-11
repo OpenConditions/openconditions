@@ -25,8 +25,7 @@ export interface DeriveSegmentProfilesOpts {
  * outer query's placeholders — see the "Building queries" section of the
  * postgres.js README) rather than string concatenation, so `region.id`/
  * `region.tz` never touch raw SQL text even though they come from trusted
- * config. `loadOsmRegions` never returns an empty list (it falls back to
- * `DEFAULT_OSM_REGIONS`), so this always emits at least one WHEN.
+ * config. The caller skips derivation when no regions are configured.
  */
 function regionTzCase(sql: Sql, regions: OsmRegion[]) {
   return regions.reduce((acc, r) => sql`${acc} WHEN ${r.id} THEN ${r.tz}`, sql``);
@@ -47,7 +46,7 @@ function regionTzCase(sql: Sql, regions: OsmRegion[]) {
  * the rollup (see speed-rollup.ts).
  *
  * Bucketing whole UTC hours into local time is exact for every whole-hour zone,
- * which is all of SEGMENT_REGIONS (nl/se/fi/us-ny). A HALF-hour zone (e.g.
+ * such as Europe/Amsterdam. A HALF-hour zone (e.g.
  * Newfoundland, India) would put one UTC hour across two local hours; the rollup
  * assigns it wholly to the local hour its start falls in, where per-sample
  * bucketing would have split it. Revisit the rollup grain before adding one.
@@ -65,7 +64,9 @@ export async function deriveSegmentProfiles(
 ): Promise<{ upserted: number }> {
   const windowDays = opts.windowDays ?? SEGMENT_PROFILE_WINDOW_DAYS;
   const minSamples = opts.minSamples ?? 20;
-  const tzCase = regionTzCase(sql, loadOsmRegions(process.env));
+  const regions = loadOsmRegions(process.env);
+  if (regions.length === 0) return { upserted: 0 };
+  const tzCase = regionTzCase(sql, regions);
   const median = histogramPercentileKph(sql, 0.5);
 
   const rows = await sql<{ segment_id: string }[]>`

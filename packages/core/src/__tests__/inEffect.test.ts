@@ -12,6 +12,7 @@ describe("isInEffectAt", () => {
     const ev = { validFrom: "2026-09-06T08:00:00Z", validTo: "2026-09-06T16:00:00Z" };
     expect(isInEffectAt(ev, new Date("2026-09-06T07:59:00Z"))).toBe(false);
     expect(isInEffectAt(ev, new Date("2026-09-06T12:00:00Z"))).toBe(true);
+    expect(isInEffectAt(ev, new Date("2026-09-06T16:00:00Z"))).toBe(false);
     expect(isInEffectAt(ev, new Date("2026-09-06T16:01:00Z"))).toBe(false);
   });
 

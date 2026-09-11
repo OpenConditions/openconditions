@@ -46,17 +46,22 @@ export type FetchResult =
   | {
       status: "fetched";
       buffers: Buffer[];
-      /**
-       * Set only on a tolerant fan-out path (catalog or `fanoutTolerant`
-       * static arrays) — undefined on every other path, where every URL
-       * either succeeded or the whole fetch threw. `failures`/`total` count
-       * sub-feed URLs, not bytes, so the caller (`runSource`) can compute a
-       * failure ratio and decide whether a mostly-failed fan-out is too
-       * unreliable to swap in (see `OPENCONDITIONS_FANOUT_FAIL_SKIP_RATIO`).
-       */
-      partial?: { failures: number; total: number };
+      validatedAtNetwork: true;
+      partitions: { succeeded: number; failed: 0; total: number };
     }
-  | { status: "unchanged" };
+  | {
+      status: "partial";
+      buffers: Buffer[];
+      validatedAtNetwork: false;
+      partitions: { succeeded: number; failed: number; total: number };
+    }
+  | { status: "not-modified"; validatedAtNetwork: true }
+  | { status: "skipped"; reason: "cadence"; validatedAtNetwork: false }
+  | {
+      status: "no-endpoint";
+      reason: "missing-configuration";
+      validatedAtNetwork: false;
+    };
 
 interface FetchOptions {
   state?: FetchState;
@@ -365,10 +370,26 @@ export async function fetchAll(
     );
     const urls = feeds.flatMap((f) => (Array.isArray(f.url) ? f.url : f.url ? [f.url] : []));
     const fanout = await fetchFanout(urls, fetchFn, redact, requestInit(active));
+    if (fanout.total === 0) {
+      return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
+    }
+    if (fanout.failures > 0) {
+      return {
+        status: "partial",
+        buffers: fanout.buffers,
+        validatedAtNetwork: false,
+        partitions: {
+          succeeded: fanout.total - fanout.failures,
+          failed: fanout.failures,
+          total: fanout.total,
+        },
+      };
+    }
     return {
       status: "fetched",
       buffers: fanout.buffers,
-      partial: { failures: fanout.failures, total: fanout.total },
+      validatedAtNetwork: true,
+      partitions: { succeeded: fanout.total, failed: 0, total: fanout.total },
     };
   }
 
@@ -378,8 +399,15 @@ export async function fetchAll(
   if (active.pagination) {
     const baseUrls = resolveFeedUrls(active, resolvedEnv());
     state.lastFetchAt.set(active.id, now());
-    if (baseUrls.length === 0) return { status: "fetched", buffers: [] };
-    return { status: "fetched", buffers: await fetchPaginated(baseUrls, active, fetchFn, redact) };
+    if (baseUrls.length === 0) {
+      return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
+    }
+    return {
+      status: "fetched",
+      buffers: await fetchPaginated(baseUrls, active, fetchFn, redact),
+      validatedAtNetwork: true,
+      partitions: { succeeded: baseUrls.length, failed: 0, total: baseUrls.length },
+    };
   }
 
   // `fanoutTolerant` opts a large static multi-URL fan-out (e.g. WebTRIS's
@@ -394,10 +422,23 @@ export async function fetchAll(
     const fanoutUrls = resolveFeedUrls(active, resolvedEnv());
     if (fanoutUrls.length > 1) {
       const fanout = await fetchFanout(fanoutUrls, fetchFn, redact, requestInit(active));
+      if (fanout.failures > 0) {
+        return {
+          status: "partial",
+          buffers: fanout.buffers,
+          validatedAtNetwork: false,
+          partitions: {
+            succeeded: fanout.total - fanout.failures,
+            failed: fanout.failures,
+            total: fanout.total,
+          },
+        };
+      }
       return {
         status: "fetched",
         buffers: fanout.buffers,
-        partial: { failures: fanout.failures, total: fanout.total },
+        validatedAtNetwork: true,
+        partitions: { succeeded: fanout.total, failed: 0, total: fanout.total },
       };
     }
   }
@@ -405,7 +446,7 @@ export async function fetchAll(
   if (active.fetchIntervalSec != null) {
     const last = state.lastFetchAt.get(active.id);
     if (last != null && now() - last < active.fetchIntervalSec * 1000) {
-      return { status: "unchanged" };
+      return { status: "skipped", reason: "cadence", validatedAtNetwork: false };
     }
   }
 
@@ -414,7 +455,7 @@ export async function fetchAll(
     if (active.url == null) throw new Error(`feed ${active.id} has neither url nor catalog`);
     // expandEnv configured but no items yet — a dormant, uncredentialed feed.
     state.lastFetchAt.set(active.id, now());
-    return { status: "fetched", buffers: [] };
+    return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
   }
 
   const init = requestInit(active);
@@ -424,6 +465,13 @@ export async function fetchAll(
   const results = await fetchAllBounded(urls, fetchFn, init, state, urls.length > 1, redact);
   state.lastFetchAt.set(active.id, now());
 
-  if (results.every((r) => !r.changed)) return { status: "unchanged" };
-  return { status: "fetched", buffers: results.map((r) => r.buffer) };
+  if (results.every((r) => !r.changed)) {
+    return { status: "not-modified", validatedAtNetwork: true };
+  }
+  return {
+    status: "fetched",
+    buffers: results.map((r) => r.buffer),
+    validatedAtNetwork: true,
+    partitions: { succeeded: results.length, failed: 0, total: results.length },
+  };
 }

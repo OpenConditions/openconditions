@@ -74,4 +74,22 @@ describe("runFeedOnce", () => {
     });
     expect(store.get("demo")?.lastSkippedNoGeometry).toBeUndefined();
   });
+
+  it("drains durable binding work after a validated unchanged event poll", async () => {
+    const store = new FeedStatusStore();
+    let drained = 0;
+    await runFeedOnce(feed, { sql: {} as never, fetch, now: () => "x" }, store, {
+      runSource: vi.fn(async () => ({
+        count: 0,
+        durationMs: 8,
+        outcome: "validated_unchanged" as const,
+      })),
+      drainBindingQueue: async () => {
+        drained++;
+        return { attempted: 0, bound: 0, retained: 0 } as never;
+      },
+      now: () => "2026-09-11T10:00:00.000Z",
+    });
+    expect(drained).toBe(1);
+  });
 });

@@ -7,8 +7,7 @@
     "url": "https://oktraffic.org/api/Geojsons/workzones?&access_token=feOPynfHRJ5sdx8tf3IN5yOsGz89TAUuzHsN3V0jo1Fg41LcpoLhIRltaTPmDngD",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Oklahoma DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -21,8 +20,7 @@
     "url": "https://udottraffic.utah.gov/wzdx/udot/v40/data",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Utah DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -35,8 +33,7 @@
     "url": "https://iowa-atms.cloud-q-free.com/api/rest/dataprism/wzdx/wzdxfeed",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Iowa DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -49,8 +46,7 @@
     "url": "https://us-datacloud.one.network/fdot/feed.json?app_key=c4090b04-26de-c9ee-873b2bd9a38c",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Florida DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -63,8 +59,7 @@
     "url": "https://mn.carsprogram.org/carsapi_v1/api/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Minnesota DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -77,8 +72,7 @@
     "url": "https://filter.ritis.org/wzdx_v4.1/mdot.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Maryland DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -91,8 +85,7 @@
     "url": "https://traveler.modot.org/timconfig/feed/desktop/mo_wzdx.json",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Missouri DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -105,8 +98,7 @@
     "url": "https://wzdxapi.aztech.org/construction",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Maricopa County DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -119,8 +111,7 @@
     "url": "https://511wi.gov/api/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Wisconsin DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -133,8 +124,7 @@
     "url": "https://ai.blyncsy.io/wzdx/nmdot/feed",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "New Mexico DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -147,8 +137,7 @@
     "url": "https://ai.blyncsy.io/wzdx/hidot/feed",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Hawaii DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -161,8 +150,7 @@
     "url": "https://511ny.org/api/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "New York DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -175,8 +163,7 @@
     "url": "https://wzdx.wsdot.wa.gov/api/v4/WorkZoneFeed",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Washington State DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -189,8 +176,7 @@
     "url": "https://scc.ridsi-dash.com:5000/wzdx.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "St. Charles County",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -203,8 +189,7 @@
     "url": "https://smartworkzones.njit.edu/nj/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "New Jersey Institute of Technology",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -217,8 +202,7 @@
     "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Kentucky Transportation Cabinet",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -235,7 +219,22 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Kansas DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "wzdx-kansas"],
+    "selectionState": "approved",
+    "rights": {
+      "sourceRedistribution": true,
+      "derivedRedistribution": true,
+      "commercialUse": true,
+      "attributionRequired": false,
+      "retention": true,
+      "termsUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "reviewedAt": "2026-09-11T00:00:00.000Z",
+      "evidenceOrigin": "Kansas WZDx road_event_feed_info.license",
+      "evidenceVersion": "CC0-1.0"
+    },
+    "snapshot": { "completeness": "complete", "recordsPath": "features" }
   },
   {
     "id": "wzdx-texas",
@@ -245,8 +244,7 @@
     "url": "https://data.austintexas.gov/download/d9mm-cjw9",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "City of Austin",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -259,8 +257,7 @@
     "url": "https://quebec.gewi.com/wzdx/pull",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Quebec City",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -273,8 +270,7 @@
     "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Delaware DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -287,8 +283,7 @@
     "url": "https://wzdx.e-dot.com/la_dot_d_feed_wzdx_v4.1.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Louisiana DOTD",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -301,8 +296,7 @@
     "url": "https://511.idaho.gov/api/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Idaho DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -315,8 +309,7 @@
     "url": "https://in.carsprogram.org/carsapi_v1/api/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Indiana DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -329,8 +322,7 @@
     "url": "https://road-connect-community-bry7272.replit.app/api/wzdx/work-zones.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "CivicLink",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -343,8 +335,7 @@
     "url": "https://mdotridedata.state.mi.us//api/v1/organization/michigan_department_of_transportation/dataset/work_zone_information/query?limit=200&_format=json",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Michigan DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
@@ -366,8 +357,7 @@
     "url": "https://api.dx.ne-compass.com/wzdx-latest/",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "NHDOT/VTAOT/MEDOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -380,8 +370,7 @@
     "url": "https://drivenc.gov/api/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "North Carolina DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"
@@ -394,8 +383,7 @@
     "url": "https://api.odot.state.or.us/WZDx/v4.0/Workzones",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Oregon DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
@@ -417,8 +405,7 @@
     "url": "https://api.mdottraffic.com/prod/v3/data/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "license": "UNKNOWN",
     "attribution": "Mississippi DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy"

@@ -30,7 +30,6 @@
       "BIND_CONCURRENCY": "${BIND_CONCURRENCY:-}",
       "OPENCONDITIONS_FETCH_TIMEOUT_MS": "${OPENCONDITIONS_FETCH_TIMEOUT_MS:-}",
       "OPENCONDITIONS_EGRESS_ALLOWED_HOSTS": "${OPENCONDITIONS_EGRESS_ALLOWED_HOSTS:-}",
-      "OSM_SOURCE": "${OSM_SOURCE:-}",
       "OPENCONDITIONS_DOWNLOAD_MAX_BYTES": "${OPENCONDITIONS_DOWNLOAD_MAX_BYTES:-}",
       "OPENCONDITIONS_DOWNLOAD_TIMEOUT_MS": "${OPENCONDITIONS_DOWNLOAD_TIMEOUT_MS:-}",
       "RATE_LIMIT_MAX": "${OPENCONDITIONS_RATE_LIMIT_MAX:-120}",
@@ -61,6 +60,12 @@
   "ownsSchema": "conditions",
   "configSchema": {
     "properties": {
+      "SEGMENT_REGIONS": {
+        "type": "string",
+        "title": "Road graph regions",
+        "description": "Complete JSON array of {id,bbox,tz,pbfUrls?,highwayClasses?}. Used by import, binding coverage and speed profiles. Unset or [] means no configured graph coverage. See graph-binding documentation.",
+        "x-openmapx-secret": false
+      },
       "OPENCONDITIONS_FEEDS_DIR": {
         "type": "string",
         "title": "Mounted feed overrides directory",

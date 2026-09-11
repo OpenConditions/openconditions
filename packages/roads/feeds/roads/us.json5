@@ -5,10 +5,11 @@
     format: "wzdx",
     catalog: {
       resolver: "wzdx-registry",
+      approvedChildren: ["wzdx-kansas"],
     },
     cadenceSec: 300,
     freshnessWindowSec: 900,
-    license: "CC0-1.0",
+    license: "UNKNOWN",
     attribution: "WZDx publishers",
     country: "US",
     privacyUrl: "https://www.transportation.gov/privacy",
@@ -69,7 +70,7 @@
     privacyUrl: "https://511ny.org/privacy",
     // Winter feed: outside the season every segment reports a nominal condition
     // and the parser skips them all, so an empty result is the normal state.
-    allowMassClear: true,
+    snapshot: { completeness: "complete", recordsPath: "$" },
   },
   {
     subdivision: "nyc",

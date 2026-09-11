@@ -15,6 +15,7 @@ import { pruneHourlyRollup, pruneRawSamples, rollupSpeedSamples } from "./pipeli
 import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js";
 import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
 import { rebindStale } from "./pipeline/rebind.js";
+import { drainBindingQueue as defaultDrainBindingQueue } from "./pipeline/bind-observations.js";
 import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
 import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
 import { deriveSegmentProfiles } from "./pipeline/segment-profile.js";
@@ -22,12 +23,14 @@ import { runSegmentRebuild } from "./pipeline/segment-rebuild.js";
 import { refreshSegmentSpeed } from "./pipeline/segment-speed.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
 import { FeedStatusStore } from "./feed-status.js";
+import { upsertSourceStatus } from "./pipeline/source-status.js";
 
 type Sql = postgres.Sql;
 
 /** Overridable deps so the run body is unit-testable without cron. */
 export interface RunFeedOnceDeps {
   runSource?: typeof defaultRunSource;
+  drainBindingQueue?: typeof defaultDrainBindingQueue;
   now?: () => string;
 }
 
@@ -56,6 +59,13 @@ export async function runFeedOnce(
         result.durationMs,
         result.skippedNoGeometry
       );
+    }
+    if (src.produces !== "flow") {
+      try {
+        await (o.drainBindingQueue ?? defaultDrainBindingQueue)(deps.sql, { now: deps.now });
+      } catch (err) {
+        console.warn(`[scheduler] ${src.id}: binding queue drain failed`, err);
+      }
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -133,6 +143,13 @@ export function startScheduler(
         console.warn(
           `[scheduler] ${domainName}/${feed.id}: skipped — set ${needed.join(", ")} to enable`
         );
+        void upsertSourceStatus(sql, feed.id, {
+          freshnessWindowSec: feed.freshnessWindowSec,
+          outcome: "missing_configuration",
+          attemptAt: new Date().toISOString(),
+          networkValidated: false,
+          error: `missing required configuration: ${needed.join(", ")}`,
+        }).catch((err) => console.error(`[scheduler] ${feed.id}: status write failed`, err));
         continue;
       }
       // plugin.feeds is typed against the domain-generic FeedSourceBase; runSource
@@ -144,6 +161,12 @@ export function startScheduler(
       const job = new Cron(cronExpr, { catch: true }, async () => {
         if (running) {
           console.debug(`[scheduler] ${src.id}: skipping (previous run still active)`);
+          void upsertSourceStatus(sql, src.id, {
+            freshnessWindowSec: src.freshnessWindowSec,
+            outcome: "skipped_overlap",
+            attemptAt: new Date().toISOString(),
+            networkValidated: false,
+          }).catch((err) => console.error(`[scheduler] ${src.id}: overlap status failed`, err));
           return;
         }
         running = true;

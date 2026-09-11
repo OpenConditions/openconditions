@@ -378,12 +378,10 @@ The ratio to watch is `unresolved / attempted`. A sudden rise usually means the
 feed started publishing on a road class the spine does not import (see
 `SEGMENT_HIGHWAY_CLASSES`), not that the resolver regressed.
 
-`noCoverage` reads differently: it means the events fell outside every imported
-region, which is a configuration answer rather than a resolver one. The default
-`SEGMENT_REGIONS` covers NL, SE, FI and US-NY and does **not** include Germany,
-so a German feed binds nothing at all until the region is added — if `noCoverage`
-dominates a feed's counts, set `SEGMENT_REGIONS` to the regions that feed
-actually publishes in.
+`noCoverage` means an event lies outside the configured graph regions. Feed
+availability is not graph coverage: configure the regions that the selected feeds
+actually publish in, then import and activate that graph. No countries are imported
+implicitly.
 
 ## Configuration
 
@@ -393,8 +391,48 @@ actually publishes in.
 | `BIND_MAX_OFFSET_M`       | `40`                                                           | candidate search radius in metres                                                                |
 | `BIND_CONCURRENCY`        | `8`                                                            | events resolved in parallel per stage run                                                        |
 | `SEGMENT_HIGHWAY_CLASSES` | `motorway,motorway_link,trunk,trunk_link,primary,primary_link` | OSM `highway` values the spine imports, shared by the osmium filter and the Overpass query       |
-| `SEGMENT_REGIONS`         | NL, SE, FI, US-NY                                              | JSON array of the regions whose spine is imported; an event outside all of them is `no_coverage` |
+| `SEGMENT_REGIONS`         | none (`[]`)                                                    | JSON array of the regions whose spine is imported; an event outside all of them is `no_coverage` |
 | `SEGMENT_REBUILD_CRON`    | `0 4 * * 1`                                                    | when the spine rebuild (and with it the forced full rebind) runs; `off` disables it              |
+
+`SEGMENT_REGIONS` is the single region configuration used by import, binding,
+graph-readiness checks and local-time speed profiles. It is a JSON array of
+`{ id, bbox, tz, pbfUrls?, highwayClasses? }`. IDs must be nonblank, unpadded and
+unique. `bbox` must be a nonzero WGS84 rectangle ordered west/south/east/north,
+with west < east and south < north; split dateline coverage into two regions.
+`tz` must be a supported named timezone (IANA names/aliases or UTC), not a
+numeric offset. Invalid configuration is rejected before a rebuild mutates graph
+authority. The array is
+complete: replacing it replaces the configured coverage, rather than adding to
+hidden defaults. Unset, blank or `[]` means no graph coverage is configured;
+imports/profiles are skipped and graph activation is refused. Malformed input
+fails explicitly.
+
+For example, to import Germany's motorway network, set this in the deployment
+environment (or the service's `SEGMENT_REGIONS` setting):
+
+```sh
+SEGMENT_REGIONS='[{"id":"de","bbox":[5.866,47.27,15.042,55.059],"tz":"Europe/Berlin","pbfUrls":["https://download.geofabrik.de/europe/germany-latest.osm.pbf"],"highwayClasses":["motorway","motorway_link"]}]'
+```
+
+This is an operator example, not a built-in preset. Include additional region
+objects in the same array to retain other coverage. `pbfUrls` selects PBF import;
+without it, the region uses Overpass at `OVERPASS_URL`. There is no separate source
+selector. `SEGMENT_HIGHWAY_CLASSES` supplies the common road-class default;
+`highwayClasses` narrows or widens an individual region. Successful import
+fingerprints record that exact effective configuration.
+
+**Migration:** the old implicit NL/SE/FI/US-NY list and the newly introduced
+`OSM_REGION_PRESET` shortcut were removed. Deployments relying on either must set
+`SEGMENT_REGIONS` explicitly before rebuilding. The former `OSM_SOURCE` override
+was also removed: add/remove `pbfUrls` on each region instead. No legacy aliases
+or additional configuration files are introduced. Source ingestion/display remains
+independent of graph configuration; route effects require a ready imported graph.
+
+OpenMapX's downloaded extracts configure its own routing/map datasets. They do not
+configure a separately deployed OpenConditions service, which may serve multiple
+hosts. OpenMapX's coverage dashboard derives region evidence from those systems;
+selecting a dashboard region does not trigger an import. Feed catalogue geography
+is descriptive upstream scope, not authority to download a graph automatically.
 
 `SEGMENT_REGIONS`, `SEGMENT_HIGHWAY_CLASSES` and the three `BIND_*` knobs are
 all declared in `services/ingest/service.json`, so a Compose-rendered deployment

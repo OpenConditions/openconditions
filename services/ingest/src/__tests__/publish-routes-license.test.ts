@@ -96,7 +96,7 @@ describe("license enforcement on the redistributable export routes", () => {
     }
   });
 
-  it("excludes only the permissive closure's geometry from /valhalla/exclusions.json", async () => {
+  it("does not let unbound geometry bypass the direct Valhalla evidence gate", async () => {
     await atomicSwap(sql, "lic-test-valhalla", [
       baseEvent({
         id: "vh-sa-1",
@@ -135,8 +135,13 @@ describe("license enforcement on the redistributable export routes", () => {
       });
       expect(res.statusCode).toBe(200);
       const body = res.json() as { exclude_locations: { lon: number; lat: number }[] };
-      expect(body.exclude_locations).toEqual([{ lon: 13.45, lat: 52.55 }]);
-      expect(res.headers["x-data-license"]).toBe("CC-BY-4.0");
+      expect(body.exclude_locations).toEqual([]);
+      expect(
+        (body as { routing_evidence?: { schema_version?: number } }).routing_evidence
+      ).toMatchObject({
+        schema_version: 1,
+      });
+      expect(res.headers["x-data-license"]).toBe("unknown");
     } finally {
       await app.close();
     }

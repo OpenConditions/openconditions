@@ -6,6 +6,7 @@ import {
   drainSkippedNoGeometry,
   enrichEventSeverity,
   enrichFlowsWithBaseline,
+  parseXmlDocument,
 } from "@openconditions/roads";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
@@ -52,30 +53,6 @@ function shrinkTripwireRatioFromEnv(env: NodeJS.ProcessEnv = process.env): numbe
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
-/**
- * Ratio (0-1) of a tolerant fan-out's sub-feed URLs that must fail this cycle
- * before `runSource` skips the swap entirely, preserving every last-good row
- * for the source rather than reconciling against the surviving fragment.
- * `fetchFanout` (ingest-framework) already tolerates any number of failures
- * short of "every URL failed" and returns only the successful buffers — with
- * no ratio guard, a mass failure (e.g. 9 of 10 sub-feeds down) still produced
- * a tiny-but-nonempty fresh set, and the diff-upsert swap's delete-missing
- * step then deleted every row belonging to the 9 failed sub-feeds as "no
- * longer present". Default 0.5: a fan-out where half or more of its sub-feeds
- * failed is treated as too unreliable to trust this cycle. Below the
- * threshold the swap proceeds as usual, accepting that the minority of failed
- * sub-feeds' rows are pruned — the trade-off this default is tuned for.
- * Same env-read shape as the other tunables in this file (`""` from Compose's
- * `${VAR:-}` unset-injection treated as absent; read fresh per call, not
- * cached at module load).
- */
-function fanoutFailSkipRatioFromEnv(env: NodeJS.ProcessEnv = process.env): number {
-  const raw = env["OPENCONDITIONS_FANOUT_FAIL_SKIP_RATIO"];
-  if (raw == null || raw === "") return 0.5;
-  const n = Number(raw);
-  return Number.isFinite(n) && n >= 0 ? n : 0.5;
-}
-
 export interface RunResult {
   /**
    * Rows actually persisted this cycle: `inserted + updated` from the
@@ -103,6 +80,12 @@ export interface RunResult {
    * this field, not just whether the call threw.
    */
   error?: string;
+  outcome?: import("./source-status.js").SourcePollOutcome;
+  activeEvents?: number;
+  inserted?: number;
+  updated?: number;
+  deleted?: number;
+  rejected?: number;
 }
 
 export interface RunDeps {
@@ -126,6 +109,152 @@ export interface RunDeps {
  */
 export interface DomainFeedSource extends FeedSource {
   domain: string;
+}
+
+const grantState = (value: boolean | null): "yes" | "no" | "unknown" =>
+  value == null ? "unknown" : value ? "yes" : "no";
+
+/** Stamps the concrete feed/child grant at the ingestion boundary so later
+ * dedupe and projections never have to reconstruct child ownership by id. */
+export function stampSourceEvidence<T extends Observation>(obs: T, src: DomainFeedSource): T {
+  if (obs.origin.kind !== "feed" || !src.rights) return obs;
+  return {
+    ...obs,
+    origin: {
+      ...obs.origin,
+      attribution: {
+        ...obs.origin.attribution,
+        ...(src.parentSourceId
+          ? {
+              parentSourceId: src.parentSourceId,
+              childSourceId: src.id,
+              policyIds: src.policyIds ?? [src.parentSourceId, src.id],
+            }
+          : {}),
+        rights: {
+          source_redistribution: grantState(src.rights.sourceRedistribution),
+          derived_redistribution: grantState(src.rights.derivedRedistribution),
+          commercial_use: grantState(src.rights.commercialUse),
+          attribution_required: grantState(src.rights.attributionRequired),
+          retention: grantState(src.rights.retention),
+          evidence_origin: src.rights.evidenceOrigin ?? null,
+          evidence_version: src.rights.evidenceVersion ?? null,
+          reviewed_at: src.rights.reviewedAt ?? null,
+        },
+      },
+    },
+  };
+}
+
+function valueAtPath(value: unknown, path: string): unknown {
+  if (path === "$" || path === "") return value;
+  let current = value;
+  for (const key of path.split(".")) {
+    if (current == null || typeof current !== "object") return undefined;
+    current = (current as Record<string, unknown>)[key];
+  }
+  return current;
+}
+
+function countXmlRecordElements(value: unknown, element: string): number {
+  if (Array.isArray(value)) {
+    return value.reduce((count, child) => count + countXmlRecordElements(child, element), 0);
+  }
+  if (value == null || typeof value !== "object") return 0;
+  let count = 0;
+  for (const [key, child] of Object.entries(value)) {
+    if (key === element) count += Array.isArray(child) ? child.length : 1;
+    else count += countXmlRecordElements(child, element);
+  }
+  return count;
+}
+
+function findXmlElements(value: unknown, element: string): unknown[] {
+  if (Array.isArray(value)) return value.flatMap((child) => findXmlElements(child, element));
+  if (value == null || typeof value !== "object") return [];
+  const matches: unknown[] = [];
+  for (const [key, child] of Object.entries(value)) {
+    if (key === element) matches.push(...(Array.isArray(child) ? child : [child]));
+    matches.push(...findXmlElements(child, element));
+  }
+  return matches;
+}
+
+function xmlPublicationType(value: unknown): string | undefined {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const raw = (value as Record<string, unknown>)["@_type"];
+  if (typeof raw !== "string") return undefined;
+  return raw.slice(raw.lastIndexOf(":") + 1);
+}
+
+export function inspectSnapshotCompleteness(
+  src: DomainFeedSource,
+  buffers: Buffer[]
+): { complete: boolean; inputRecords?: number; completeEmpty: boolean } {
+  const contract = src.snapshot;
+  if (!contract) return { complete: false, completeEmpty: false };
+  if (contract.recordElement) {
+    let inputRecords = 0;
+    for (const buffer of buffers) {
+      const document = parseXmlDocument(buffer, {
+        removeNSPrefix: true,
+        validate: true,
+        isArray: () => false,
+      });
+      const roots = findXmlElements(document, contract.rootElement!);
+      if (roots.length === 0) {
+        throw new Error(`snapshot completeness: expected XML ${contract.rootElement} element`);
+      }
+      const publications = roots
+        .flatMap((root) => findXmlElements(root, contract.publicationElement!))
+        .filter((publication) => xmlPublicationType(publication) === contract.publicationType);
+      if (publications.length === 0) {
+        throw new Error(
+          `snapshot completeness: expected ${contract.publicationType} ${contract.publicationElement}`
+        );
+      }
+      for (const publication of publications) {
+        inputRecords += countXmlRecordElements(publication, contract.recordElement);
+      }
+    }
+    return { complete: true, inputRecords, completeEmpty: inputRecords === 0 };
+  }
+  if (!contract.recordsPath) return { complete: true, completeEmpty: buffers.length === 0 };
+
+  let inputRecords = 0;
+  let declaredTotal: number | undefined;
+  for (const buffer of buffers) {
+    let document: unknown;
+    try {
+      document = JSON.parse(buffer.toString("utf8"));
+    } catch {
+      throw new Error(
+        `snapshot completeness: ${contract.recordsPath} cannot be read from invalid JSON`
+      );
+    }
+    const records = valueAtPath(document, contract.recordsPath);
+    if (!Array.isArray(records)) {
+      throw new Error(`snapshot completeness: ${contract.recordsPath} must be an array`);
+    }
+    inputRecords += records.length;
+    if (contract.totalCountPath) {
+      const total = valueAtPath(document, contract.totalCountPath);
+      if (typeof total !== "number" || !Number.isSafeInteger(total) || total < 0) {
+        throw new Error(
+          `snapshot completeness: ${contract.totalCountPath} must be a non-negative integer`
+        );
+      }
+      declaredTotal ??= total;
+      if (declaredTotal !== total)
+        throw new Error("snapshot completeness: inconsistent declared totals");
+    }
+  }
+  if (declaredTotal != null && declaredTotal !== inputRecords) {
+    throw new Error(
+      `snapshot completeness: source declared ${declaredTotal} records but retrieved ${inputRecords}`
+    );
+  }
+  return { complete: true, inputRecords, completeEmpty: inputRecords === 0 };
 }
 
 /**
@@ -181,6 +310,7 @@ export function createOpenlrClient(): MapMatchClient | null {
  */
 export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<RunResult> {
   const start = Date.now();
+  const attemptAt = deps.now();
 
   // Guard every egress path (feed, catalog, site-table, OAuth, mTLS) at one seam:
   // validate URL + DNS, re-check each redirect hop, cap size + time. Authorize on top.
@@ -240,6 +370,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   }
 
   let parsed: (Observation | UnresolvedRoadEvent)[];
+  let snapshotInspection: ReturnType<typeof inspectSnapshotCompleteness> | undefined;
   if (isStreamingFlowFeed(src)) {
     // Large DATEX flow feed: stream fetch → gunzip → SAX so the ~50 MB document
     // is never buffered or DOM-parsed (the memory-cap OOM this path replaces).
@@ -259,60 +390,44 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     let buffers: Buffer[];
     try {
       const result = await fetchAll(src, fetchFn);
-      if (result.status === "unchanged") {
-        // 304 on every URL, or gated by fetchIntervalSec — keep last-good rows,
-        // no swap. Still a successful poll: advance last_success_at without
-        // touching last_row_count, so an orphan sweep keyed off source_status
-        // never treats this healthy source as gone.
+      if (result.status === "not-modified") {
         await upsertSourceStatus(deps.sql, src.id, {
           freshnessWindowSec: src.freshnessWindowSec,
-          outcome: "success",
+          outcome: "validated_unchanged",
+          attemptAt,
+          networkValidated: true,
+          durationMs: Date.now() - start,
         });
-        return { count: 0, durationMs: Date.now() - start };
+        return { count: 0, durationMs: Date.now() - start, outcome: "validated_unchanged" };
+      }
+      if (result.status === "skipped" || result.status === "no-endpoint") {
+        const outcome = result.status === "skipped" ? "skipped_cadence" : "missing_configuration";
+        await upsertSourceStatus(deps.sql, src.id, {
+          freshnessWindowSec: src.freshnessWindowSec,
+          outcome,
+          attemptAt,
+          networkValidated: false,
+          durationMs: Date.now() - start,
+        });
+        return { count: 0, durationMs: Date.now() - start, outcome };
+      }
+      if (result.status === "partial") {
+        const { failed, total } = result.partitions;
+        const error = `partial snapshot: ${failed}/${total} partitions failed — preserving last-good publication`;
+        console.warn(`[ingest] ${src.id}: ${error}`);
+        await upsertSourceStatus(deps.sql, src.id, {
+          freshnessWindowSec: src.freshnessWindowSec,
+          outcome: "partial",
+          attemptAt,
+          networkValidated: false,
+          durationMs: Date.now() - start,
+          partitions: result.partitions,
+          error,
+        });
+        return { count: 0, durationMs: Date.now() - start, outcome: "partial", error };
       }
       buffers = result.buffers;
-      if (buffers.length === 0) {
-        // A dormant/uncredentialed feed (e.g. an expandEnv fan-out with zero
-        // resolved URLs) resolves to `{status:"fetched", buffers:[]}` rather
-        // than "unchanged" — treat it the same way: a successful no-op, not a
-        // fresh (empty) set to swap in, which would otherwise wipe the
-        // source's last-good rows every cycle it stays dormant.
-        console.warn(
-          `[ingest] ${src.id}: fetch resolved zero URLs — no-op, preserving last-good rows`
-        );
-        await upsertSourceStatus(deps.sql, src.id, {
-          freshnessWindowSec: src.freshnessWindowSec,
-          outcome: "success",
-        });
-        return { count: 0, durationMs: Date.now() - start };
-      }
-      // Tolerant fan-out (catalog or `fanoutTolerant`) partial-failure guard:
-      // `result.partial` is only set on that path (see FetchResult's doc
-      // comment). A ratio at/above the threshold means too many sub-feeds
-      // failed to trust the surviving fragment — skip the swap so the
-      // diff-upsert's delete-missing step never runs against it, preserving
-      // every last-good row for the source instead. FUTURE refinement: once
-      // fetchFanout can thread a per-sub-feed last-good buffer through (it
-      // depends on the in-progress cacheBody plumbing in fetch.ts), a failed
-      // sub-feed could contribute its cached buffer instead, so no rows would
-      // be pruned even below this threshold.
-      if (result.partial && result.partial.total > 0) {
-        const { failures, total } = result.partial;
-        const ratio = failures / total;
-        const skipRatio = fanoutFailSkipRatioFromEnv();
-        if (ratio >= skipRatio) {
-          const error =
-            `fan-out fetch failed for ${failures}/${total} sub-feeds (ratio ${ratio.toFixed(2)} ` +
-            `>= skip threshold ${skipRatio}) — skipping swap to avoid a mass-failure wipe`;
-          console.warn(`[ingest] ${src.id}: ${error}`);
-          await upsertSourceStatus(deps.sql, src.id, {
-            freshnessWindowSec: src.freshnessWindowSec,
-            outcome: "error",
-            error,
-          });
-          return { count: 0, durationMs: Date.now() - start, error };
-        }
-      }
+      snapshotInspection = inspectSnapshotCompleteness(src, buffers);
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] fetch failed for source ${src.id}:`, err);
@@ -340,6 +455,18 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   // resolveOpenLr narrows the union: items without geometry (UnresolvedRoadEvent)
   // are resolved to real geometry or dropped — resolved[] always has geometry.
   const { resolved, dropped } = await resolveOpenLr(parsed, deps.openlrClient ?? null);
+  if ((snapshotInspection?.inputRecords ?? 0) > 0 && resolved.length === 0) {
+    const error = `structurally non-empty snapshot produced zero usable observations`;
+    await upsertSourceStatus(deps.sql, src.id, {
+      freshnessWindowSec: src.freshnessWindowSec,
+      outcome: "failed",
+      attemptAt,
+      networkValidated: false,
+      durationMs: Date.now() - start,
+      error,
+    });
+    return { count: 0, durationMs: Date.now() - start, outcome: "failed", error };
+  }
 
   // Stamp each flow's free-flow baseline (native > derived > osm_maxspeed) before
   // the swap so the enriched los/freeFlowKph and any newly derived congestion
@@ -364,7 +491,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   // feed at this one seam) so the map's severity ramp is meaningful for sources
   // that omit it, e.g. the German Mobilithek roadworks. No-op on declared
   // events and on flows.
-  toWrite = enrichEventSeverity(toWrite);
+  toWrite = enrichEventSeverity(toWrite).map((obs) => stampSourceEvidence(obs, src));
 
   // Shrink tripwire: the diff-upsert swap's delete-missing step deletes every
   // row absent from `toWrite`, so an empty/suspiciously-shrunk fresh set is as
@@ -385,7 +512,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       });
       return { count: 0, durationMs: Date.now() - start, error };
     }
-  } else if (!src.allowMassClear) {
+  } else if (!snapshotInspection?.completeEmpty) {
     const shrinkTripwireRatio = shrinkTripwireRatioFromEnv();
     const previousCount = await getLastRowCount(deps.sql, src.id);
     if (
@@ -410,7 +537,29 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   // transaction as the swap (see its doc comment) — this is what closes the
   // race where a brand-new source's rows commit before its status row exists
   // and the 5-min orphan sweep, keyed off source_status, deletes them again.
-  const swapCounts = await atomicSwap(deps.sql, src.id, toWrite, src.freshnessWindowSec);
+  const skippedNoGeometry = drainSkippedNoGeometry(src.id);
+  const rejected = dropped + skippedNoGeometry;
+  const preSwapDurationMs = Date.now() - start;
+  let swapCounts;
+  try {
+    swapCounts = await atomicSwap(deps.sql, src.id, toWrite, src.freshnessWindowSec, undefined, {
+      attemptAt,
+      rejected,
+      durationMs: preSwapDurationMs,
+    });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    console.error(`[ingest] publish failed for source ${src.id}:`, err);
+    await upsertSourceStatus(deps.sql, src.id, {
+      freshnessWindowSec: src.freshnessWindowSec,
+      outcome: "failed",
+      attemptAt,
+      networkValidated: true,
+      durationMs: Date.now() - start,
+      error,
+    });
+    return { count: 0, durationMs: Date.now() - start, outcome: "failed", error };
+  }
 
   if (src.produces === "flow") {
     // Append this cycle's speeds to the rolling per-sensor history (the raw
@@ -451,7 +600,6 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   // Records the parser dropped for want of a coordinate (DATEX Alert-C/TMC
   // only). Drained per run so the status page shows what this cycle lost, not
   // a total that keeps climbing after the cause is fixed.
-  const skippedNoGeometry = drainSkippedNoGeometry(src.id);
   const dropNote = dropped > 0 ? ` (${dropped} dropped — no geometry)` : "";
   console.info(
     `[ingest] ${src.id}: swap inserted=${swapCounts.inserted} updated=${swapCounts.updated} ` +
@@ -460,6 +608,12 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   return {
     count: swapCounts.inserted + swapCounts.updated,
     durationMs,
+    outcome: toWrite.length === 0 ? "complete_empty" : "changed",
+    activeEvents: toWrite.filter((row) => row.kind === "event").length,
+    inserted: swapCounts.inserted,
+    updated: swapCounts.updated,
+    deleted: swapCounts.deleted,
+    rejected,
     ...(skippedNoGeometry > 0 ? { skippedNoGeometry } : {}),
   };
 }

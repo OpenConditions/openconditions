@@ -7,9 +7,9 @@ describe("capRows", () => {
     expect(capRows(rows, 10)).toBe(rows);
   });
 
-  it("truncates to the cap when exceeded", () => {
+  it("rejects a complete snapshot when the cap is exceeded", () => {
     const rows = Array.from({ length: 5 }, (_, i) => i);
-    expect(capRows(rows, 2)).toEqual([0, 1]);
+    expect(() => capRows(rows, 2)).toThrow(/5.*limit.*2/);
   });
 
   it("defaults to a large positive MAX_ROWS_PER_SOURCE", () => {

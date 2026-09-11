@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { eventsToExclusions, flowToSegmentSpeedCsv } from "../valhalla.js";
+import {
+  eventsToExclusions,
+  flowToSegmentSpeedCsv,
+  segmentConditionsToExclusions,
+} from "../valhalla.js";
+import type { SegmentConditionJson } from "../segment-conditions.js";
 import { measurement, roadEvent } from "./fixture.js";
 
 describe("eventsToExclusions", () => {
@@ -97,9 +102,9 @@ describe("eventsToExclusions", () => {
     expect(ex.exclude_locations).toEqual([]);
   });
 
-  it("includes any active critical event, not just typed closures", () => {
+  it("does not turn critical severity alone into a road closure", () => {
     const ex = eventsToExclusions([roadEvent({ type: "accident", severity: "critical" })]);
-    expect(ex.exclude_locations).toHaveLength(1);
+    expect(ex.exclude_locations).toHaveLength(0);
   });
 
   it("suppresses the polygon ring of a critical non-closure event (e.g. a regional weather warning)", () => {
@@ -300,6 +305,50 @@ describe("eventsToExclusions", () => {
     } as never);
     expect(eventsToExclusions([missingOrigin]).exclude_locations).toEqual([]);
   });
+
+  it("requires current exact/likely evidence with all-vehicle, bidirectional, full-way spans", () => {
+    const base = roadEvent({ type: "road_closure" }) as never as {
+      routingEvidence: import("@openconditions/core").RoadConditionRoutingEvidence;
+    };
+    const variants = [
+      {
+        ...base,
+        routingEvidence: { ...base.routingEvidence, binding_status: "ambiguous" as const },
+      },
+      {
+        ...base,
+        routingEvidence: {
+          ...base.routingEvidence,
+          applicability: { kind: "classes" as const, classes: ["truck" as const] },
+        },
+      },
+      { ...base, routingEvidence: { ...base.routingEvidence, direction_mode: "forward" as const } },
+      {
+        ...base,
+        routingEvidence: {
+          ...base.routingEvidence,
+          segments: [{ ...base.routingEvidence.segments[0]!, from_fraction: 0.2 }],
+        },
+      },
+      {
+        ...base,
+        routingEvidence: { ...base.routingEvidence, fresh_until: "2026-06-22T09:59:00Z" },
+      },
+    ];
+    for (const event of variants) {
+      expect(
+        eventsToExclusions([event as never], { activeAt: new Date("2026-06-22T10:00:00Z") })
+      ).toEqual({ exclude_locations: [], exclude_polygons: [] });
+    }
+  });
+
+  it("does not treat a lane closure as a whole-road exclusion", () => {
+    expect(
+      eventsToExclusions([roadEvent({ type: "lane_closure" })], {
+        activeAt: new Date("2026-06-22T10:00:00Z"),
+      })
+    ).toEqual({ exclude_locations: [], exclude_polygons: [] });
+  });
 });
 
 describe("flowToSegmentSpeedCsv", () => {
@@ -321,5 +370,58 @@ describe("flowToSegmentSpeedCsv", () => {
       { wayId: 501, dir: "b", currentKph: null, freeFlowKph: null, los: "unknown" },
     ]);
     expect(csv.split("\n")[1]).toBe("501,b,,,unknown");
+  });
+});
+
+describe("segmentConditionsToExclusions", () => {
+  it("uses complete all-vehicle bidirectional full spans and rejects narrower semantics", () => {
+    const event = roadEvent({ type: "road_closure" });
+    const evidence = event.routingEvidence!;
+    const line = {
+      type: "LineString" as const,
+      coordinates: [
+        [13.4, 52.5],
+        [13.401, 52.5],
+      ],
+    };
+    const condition = {
+      id: event.id,
+      source: event.source,
+      type: "road_closure",
+      severity: "high",
+      road_state: "closed",
+      speed_limit_kph: null,
+      vehicles_affected: [],
+      origin_kind: "feed",
+      routing_eligible: true,
+      valid_from: null,
+      valid_to: null,
+      binding: { status: "exact", confidence: 0.99, direction_mode: "both" },
+      routing_evidence: evidence,
+      segments: [
+        { way_id: 1, dir: "f", start_fraction: 0, end_fraction: 1, geometry: line },
+        { way_id: 1, dir: "b", start_fraction: 0, end_fraction: 1, geometry: line },
+      ],
+    } satisfies SegmentConditionJson;
+    expect(
+      segmentConditionsToExclusions([condition], {
+        activeAt: new Date("2026-06-22T10:00:00Z"),
+        evaluatedAt: new Date("2026-06-22T10:00:00Z"),
+      }).exclude_locations.length
+    ).toBeGreaterThan(0);
+    expect(
+      segmentConditionsToExclusions(
+        [
+          {
+            ...condition,
+            routing_evidence: {
+              ...evidence,
+              applicability: { kind: "classes", classes: ["truck"] },
+            },
+          },
+        ],
+        { activeAt: new Date("2026-06-22T10:00:00Z") }
+      )
+    ).toEqual({ exclude_locations: [], exclude_polygons: [] });
   });
 });

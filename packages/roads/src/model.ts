@@ -156,6 +156,10 @@ export interface Restriction {
   type: string;
   value?: number;
   unit?: string;
+  /** Source comparison semantics, retained verbatim until every operator can be normalized safely. */
+  operator?: string;
+  /** Minimal source tokens used to derive this normalized restriction. */
+  raw?: Record<string, unknown>;
   /** Validity window for this specific restriction, when the source scopes it
    * to a sub-period of the event (e.g. a digitraffic roadwork-phase restriction
    * active only on certain dates). */

@@ -12,6 +12,7 @@
  */
 
 import type { Geometry, LineString } from "geojson";
+import type { RoadConditionRoutingEvidence } from "@openconditions/core";
 
 /** Matches OpenMapX `IntegrationContext.db` (DatabaseClient). */
 export interface DatabaseClient {
@@ -19,6 +20,9 @@ export interface DatabaseClient {
 }
 
 export interface HttpClientOptions {
+  cache?: { ttl: number };
+  timeoutMs?: number;
+  maxResponseBytes?: number;
   params?: Record<string, string | number | boolean | undefined>;
 }
 
@@ -125,12 +129,21 @@ export interface RoadConditionEvent {
   vehiclesAffected?: string[];
   /** Graph-binding outcome for this event, when the instance has bound it. */
   binding?: {
-    status: "exact" | "likely" | "ambiguous" | "unresolved" | "no_coverage" | "not_applicable";
+    status:
+      | "exact"
+      | "likely"
+      | "ambiguous"
+      | "unresolved"
+      | "no_coverage"
+      | "not_applicable"
+      | "obsolete";
     confidence?: number;
     directionMode?: "single" | "both" | "unknown";
   };
   /** Ordered directed OSM-way spans the event occupies (only for exact/likely/ambiguous). */
   segments?: Array<{ wayId: number; dir: "f" | "b"; startFraction: number; endFraction: number }>;
+  /** Current, source-authorized graph evidence. Inner keys intentionally stay snake_case on the host wire. */
+  routingEvidence?: RoadConditionRoutingEvidence;
 }
 
 export interface RoadConditionsQuery {
@@ -141,6 +154,8 @@ export interface RoadConditionsQuery {
    * Undefined means no temporal filter — the routing path depends on that.
    */
   horizonDays?: number;
+  /** Deployment-policy source identities removed before provider dedupe. */
+  excludedSourceIds?: string[];
 }
 
 /**
@@ -173,10 +188,49 @@ export interface RoadConditionsProvider {
   readonly attribution?: RoadConditionAttribution[];
   readonly coverage?: { bbox: BBox } | { all: true };
   getEvents(bbox: BBox, opts?: RoadConditionsQuery): Promise<RoadConditionEvent[]>;
+  /** Complete, uncollapsed observations for routing; reject overflow or unavailable data.
+   * Display-only lists cannot establish routing coverage. */
+  getRoutingEvents?(bbox: BBox): Promise<{ complete: true; events: RoadConditionEvent[] }>;
+
   /** Optional: colored-segment traffic-flow source. Undefined for providers
    * that only surface incidents (the orchestrator's `aggregateRoadFlow`
    * filters to providers that implement this). */
   getFlow?(bbox: BBox, opts?: RoadFlowQuery): Promise<RoadFlowSegment[]>;
+  getOperationalEvidence?(): Promise<RoadConditionsOperationalEvidence>;
+}
+
+export interface RoadConditionsOperationalFeedEvidence {
+  sourceId: string;
+  parentSourceId?: string;
+  lastAttemptAt: string | null;
+  lastOutcome: string | null;
+  lastSuccessfulCheckAt: string | null;
+  lastPublicationAt: string | null;
+  publicationRevision: string | null;
+  upstreamAsOf: string | null;
+  freshUntil: string | null;
+  expectedIntervalSeconds: number | null;
+  activeEventCount: number | null;
+  changedCount: number | null;
+  rejectedCount: number | null;
+  consecutiveFailures: number | null;
+  error: string | null;
+  bindingCounts: Record<string, number> | null;
+  graph: {
+    generation: string | null;
+    status: "ready" | "partial" | "missing" | "unknown";
+    regions: string[];
+  };
+  status: string;
+  action: string | null;
+}
+
+export interface RoadConditionsOperationalEvidence {
+  schemaVersion: 1;
+  collectedAt: string;
+  instanceId: string;
+  truncated?: boolean;
+  feeds: RoadConditionsOperationalFeedEvidence[];
 }
 
 export interface IntegrationContext {

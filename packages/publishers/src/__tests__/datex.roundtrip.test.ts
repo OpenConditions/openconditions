@@ -79,7 +79,13 @@ describe("DATEX II round-trip through the ingest parser", () => {
     expect(ev!.speedLimitKph).toBe(50);
     expect(ev!.detour).toBe("Use A4");
     expect(ev!.vehiclesAffected).toContain("lorry");
-    expect(ev!.restrictions).toContainEqual({ type: "height", value: 4.5, unit: "m" });
+    expect(ev!.restrictions).toContainEqual({
+      type: "height",
+      value: 4.5,
+      unit: "m",
+      operator: "greaterThan",
+      raw: { value: "4.5", comparisonOperator: "greaterThan" },
+    });
     expect(ev!.queueLengthMeters).toBe(1200);
     expect(ev!.externalRefs?.tmc?.code).toBe(7324);
     expect(ev!.confidence).toBe("likely");

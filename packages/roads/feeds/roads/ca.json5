@@ -8,6 +8,7 @@
     // The endpoint's own default page is 50 rows of the ~250 it holds, so an
     // unpaginated fetch silently dropped four fifths of British Columbia.
     pagination: { skipParam: "offset", pageSize: 500, recordsPath: "events" },
+    snapshot: { completeness: "complete", recordsPath: "events" },
     cadenceSec: 120,
     freshnessWindowSec: 600,
     license: "OGL-BC",
@@ -65,7 +66,7 @@
     privacyUrl: "https://www.ontario.ca/page/privacy-statement",
     // Winter feed: outside the season every segment reports a nominal condition
     // and the parser skips them all, so an empty result is the normal state.
-    allowMassClear: true,
+    snapshot: { completeness: "complete", recordsPath: "$" },
   },
   {
     subdivision: "qc",

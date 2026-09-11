@@ -86,8 +86,67 @@ export const feedSourceBaseShape = {
   url: z.union([z.string(), z.array(z.string()).nonempty()]).optional(),
   expandEnv: z.string().optional(),
   catalog: z
-    .object({ resolver: z.string().min(1), filter: z.record(z.string(), z.unknown()).optional() })
+    .object({
+      resolver: z.string().min(1),
+      filter: z.record(z.string(), z.unknown()).optional(),
+      approvedChildren: z.array(z.string().min(1)).optional(),
+    })
     .strict()
+    .optional(),
+  parentSourceId: z.string().min(1).optional(),
+  policyIds: z.array(z.string().min(1)).nonempty().optional(),
+  selectionState: z.enum(["approved", "discovered"]).optional(),
+  rights: z
+    .object({
+      sourceRedistribution: z.boolean().nullable(),
+      derivedRedistribution: z.boolean().nullable(),
+      commercialUse: z.boolean().nullable(),
+      attributionRequired: z.boolean().nullable(),
+      retention: z.boolean().nullable(),
+      termsUrl: z.string().url().optional(),
+      reviewedAt: z.string().datetime({ offset: true }).optional(),
+      evidenceOrigin: z.string().min(1).optional(),
+      evidenceVersion: z.string().min(1).optional(),
+    })
+    .strict()
+    .optional(),
+  snapshot: z
+    .object({
+      completeness: z.literal("complete"),
+      recordsPath: z.string().min(1).optional(),
+      rootElement: z.string().min(1).optional(),
+      publicationElement: z.string().min(1).optional(),
+      publicationType: z.string().min(1).optional(),
+      recordElement: z.string().min(1).optional(),
+      totalCountPath: z.string().min(1).optional(),
+    })
+    .strict()
+    .superRefine((snapshot, ctx) => {
+      if (snapshot.recordsPath && snapshot.recordElement) {
+        ctx.addIssue({
+          code: "custom",
+          message: "snapshot recordsPath and recordElement are mutually exclusive",
+        });
+      }
+      if (snapshot.recordElement) {
+        for (const field of ["rootElement", "publicationElement", "publicationType"] as const) {
+          if (!snapshot[field]) {
+            ctx.addIssue({
+              code: "custom",
+              path: [field],
+              message: `${field} is required for XML snapshot validation`,
+            });
+          }
+        }
+      }
+      if (snapshot.totalCountPath && !snapshot.recordsPath) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["totalCountPath"],
+          message: "totalCountPath requires recordsPath",
+        });
+      }
+    })
     .optional(),
   auth: feedAuthSchema.optional(),
   method: z.enum(["GET", "POST"]).optional(),

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
-import { bindObservations } from "../pipeline/bind-observations.js";
+import { bindObservations, drainBindingQueue } from "../pipeline/bind-observations.js";
 
 let sql: postgres.Sql;
 let stop: () => Promise<unknown>;
@@ -27,6 +27,9 @@ beforeAll(async () => {
   process.env["SEGMENT_REGIONS"] = JSON.stringify([
     { id: "de-nw", bbox: [5.8, 50.3, 9.5, 52.6], tz: "Europe/Berlin" },
   ]);
+  await sql`INSERT INTO conditions.road_graph_state
+    (singleton, generation, regions, highway_classes, pbf_provenance, imported_at, activated_at)
+    VALUES (true, 'graph-test', '[]', '["motorway"]', '[]', ${NOW}, ${NOW})`;
   await sql`INSERT INTO conditions.road_segment (segment_id, way_id, dir, geom, highway, ref, length_m, min_zoom, computed_at) VALUES
     ('10:f', 10, 'f', ST_SetSRID(ST_GeomFromText('LINESTRING(6.80 51.2, 6.81 51.2)'),4326), 'motorway', 'A 46', 700, 5, ${NOW}),
     ('11:f', 11, 'f', ST_SetSRID(ST_GeomFromText('LINESTRING(6.81 51.2, 6.82 51.2)'),4326), 'motorway', 'A 46', 700, 5, ${NOW}),
@@ -76,6 +79,45 @@ describe("bindObservations", () => {
       { segment_id: string }[]
     >`SELECT segment_id FROM conditions.observation_segment WHERE observation_id = 'a:1'`;
     expect(segs.map((s) => s.segment_id)).toEqual(["20:f"]);
+  }, 60_000);
+
+  it("persists binding currency and drains durable queued work", async () => {
+    await sql`UPDATE conditions.observations SET content_hash = 'snapshot-a' WHERE id = 'a:1'`;
+    await sql`INSERT INTO conditions.binding_queue (observation_id, observation_revision)
+      VALUES ('a:1', 'snapshot-a')
+      ON CONFLICT (observation_id) DO UPDATE SET observation_revision='snapshot-a', next_attempt_at=now()`;
+    await sql`UPDATE conditions.observation_binding SET status='obsolete' WHERE observation_id='a:1'`;
+
+    const result = await drainBindingQueue(sql, { now: () => NOW });
+    expect(result.attempted).toBe(1);
+    const [binding] = await sql<
+      { observation_revision: string; graph_generation: string; status: string }[]
+    >`SELECT observation_revision, graph_generation, status FROM conditions.observation_binding WHERE observation_id='a:1'`;
+    expect(binding).toMatchObject({
+      observation_revision: "snapshot-a",
+      graph_generation: "graph-test",
+    });
+    expect(binding?.status).not.toBe("obsolete");
+    expect(await sql`SELECT 1 FROM conditions.binding_queue WHERE observation_id='a:1'`).toEqual(
+      []
+    );
+  }, 60_000);
+
+  it("acknowledges a duplicate or stale queue row after proving the binding current", async () => {
+    const [observation] = await sql<{ content_hash: string }[]>`
+      SELECT content_hash FROM conditions.observations WHERE id='a:1'`;
+    await sql`INSERT INTO conditions.binding_queue (observation_id, observation_revision)
+      VALUES ('a:1', 'older-queued-revision')
+      ON CONFLICT (observation_id) DO UPDATE SET observation_revision='older-queued-revision', next_attempt_at=now()`;
+
+    const result = await drainBindingQueue(sql, { now: () => NOW });
+    expect(result.skippedUnchanged).toBe(1);
+    const [binding] = await sql<{ observation_revision: string }[]>`
+      SELECT observation_revision FROM conditions.observation_binding WHERE observation_id='a:1'`;
+    expect(binding?.observation_revision).toBe(observation?.content_hash);
+    expect(await sql`SELECT 1 FROM conditions.binding_queue WHERE observation_id='a:1'`).toEqual(
+      []
+    );
   }, 60_000);
 
   it("is a no-op when BIND_ENABLED=false", async () => {
