@@ -226,17 +226,26 @@ describe("bindObservations", () => {
     const released = new Promise<void>((resolve) => {
       release = resolve;
     });
+    let acquired!: () => void;
+    const locked = new Promise<void>((resolve) => {
+      acquired = resolve;
+    });
     const holder = sql.begin(async (tx) => {
       await tx`SELECT pg_advisory_xact_lock(hashtext('observation_binding'), hashtext('a:lock'))`;
+      acquired();
       await released;
     });
+    await Promise.race([locked, holder]);
     const run = bindObservations(sql, ["a:lock"], { now: () => NOW });
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    const before =
-      await sql`SELECT 1 FROM conditions.observation_binding WHERE observation_id = 'a:lock'`;
-    expect(before).toHaveLength(0);
-    release();
-    await holder;
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      const before =
+        await sql`SELECT 1 FROM conditions.observation_binding WHERE observation_id = 'a:lock'`;
+      expect(before).toHaveLength(0);
+    } finally {
+      release();
+      await Promise.all([holder, run]);
+    }
     const r = await run;
     expect(r.attempted).toBe(1);
     expect(r.writeErrors).toBe(0);
