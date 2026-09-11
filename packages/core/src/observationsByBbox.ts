@@ -1,3 +1,4 @@
+import { BINDING_JOIN_SQL, BINDING_SELECT_SQL } from "./observation-query.js";
 import type { FeatureCollection, Feature, Geometry } from "geojson";
 import { dedupeAcrossSources } from "./crossSourceDedupe.js";
 import type {
@@ -87,6 +88,7 @@ interface ObservationRow {
   category: string | null;
   is_forecast: boolean | null;
   is_stale: boolean;
+  content_hash?: string | null;
   evidence_state: string | null;
   routing_eligible: boolean | null;
   confidence_score: number | null;
@@ -134,6 +136,7 @@ function rowToFeature(row: ObservationRow, mergedSources?: Observation["mergedSo
     geometry,
     properties: {
       id: row.id,
+      observation_revision: row.content_hash ?? null,
       source: row.source,
       domain: row.domain,
       kind: row.kind,
@@ -197,26 +200,6 @@ const IS_STALE_SQL =
 // Optional binding projection (see `includeBindings`): the header row plus the
 // ordered segment path aggregated to one jsonb array, so a bound event costs a
 // single row. Spliced in only when asked, keeping the default query untouched.
-const BINDING_CURRENT_SQL = `(b.observation_revision IS NOT NULL
-      AND b.observation_revision = o.content_hash
-      AND b.graph_generation IS NOT NULL
-      AND b.graph_generation = graph.generation
-      AND graph.status = 'ready')`;
-
-const BINDING_SELECT_SQL = `,
-    CASE WHEN b.observation_id IS NULL THEN NULL
-         WHEN ${BINDING_CURRENT_SQL} THEN b.status ELSE 'obsolete' END AS binding_status,
-    CASE WHEN ${BINDING_CURRENT_SQL} THEN b.confidence ELSE NULL END AS binding_confidence,
-    CASE WHEN ${BINDING_CURRENT_SQL} THEN b.direction_mode ELSE 'unknown' END AS binding_direction_mode,
-    CASE WHEN ${BINDING_CURRENT_SQL} THEN seg.segments ELSE NULL END AS segments`;
-
-const BINDING_JOIN_SQL = `
-    LEFT JOIN conditions.observation_binding b ON b.observation_id = o.id
-    LEFT JOIN conditions.road_graph_state graph ON graph.singleton
-    LEFT JOIN LATERAL (
-      SELECT jsonb_agg(jsonb_build_object('segmentId', s.segment_id, 'wayId', s.way_id, 'dir', s.dir,
-                       'startFraction', s.start_fraction, 'endFraction', s.end_fraction) ORDER BY s.seq) AS segments
-      FROM conditions.observation_segment s WHERE s.observation_id = o.id) seg ON true`;
 
 /**
  * Query active observations within a bounding box and return a GeoJSON FeatureCollection.
@@ -296,7 +279,7 @@ export async function observationsByBbox(
     SELECT
       o.id, o.source, o.domain, o.kind, o.type, o.severity,
       o.headline, o.description, o.attributes, o.valid_from, o.valid_to, o.schedule, o.data_updated_at,
-      o.category, o.is_forecast,
+      o.category, o.is_forecast, o.content_hash,
       ST_AsGeoJSON(o.geom) AS geojson,
       o.origin,
       o.evidence_state, o.routing_eligible, o.confidence_score, o.privacy_class, o.fuzziness,

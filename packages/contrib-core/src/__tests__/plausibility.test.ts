@@ -264,6 +264,29 @@ describe("checkPlausibility", () => {
 });
 
 describe("checkGeometryPlausibility", () => {
+  it("accepts a valid point inside nested geometry collections", () => {
+    expect(
+      checkGeometryPlausibility({
+        type: "GeometryCollection",
+        geometries: [
+          { type: "GeometryCollection", geometries: [{ type: "Point", coordinates: [5, 52] }] },
+        ],
+      })
+    ).toEqual([]);
+  });
+
+  it("checks nested collection coordinates even when another member is valid", () => {
+    expect(
+      checkGeometryPlausibility({
+        type: "GeometryCollection",
+        geometries: [
+          { type: "Point", coordinates: [5, 52] },
+          { type: "GeometryCollection", geometries: [{ type: "Point", coordinates: [200, 52] }] },
+        ],
+      })
+    ).toContain("geometry_out_of_range");
+  });
+
   it("returns no reasons for a valid Point", () => {
     expect(checkGeometryPlausibility({ type: "Point", coordinates: [4.9, 52.37] })).toEqual([]);
   });

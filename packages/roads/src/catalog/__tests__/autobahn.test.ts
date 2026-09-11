@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { autobahnIndexResolver } from "../autobahn.js";
+import { roadFeedSchema } from "../../feed-schema.js";
 
 const INDEX = path.resolve(
   import.meta.dirname,
@@ -34,6 +35,9 @@ describe("autobahnIndexResolver", () => {
       expect(f.license).toBe("dl-de/by-2-0");
     }
     expect(new Set(feeds.map((f) => f.id)).size).toBe(feeds.length);
+    const reloaded = feeds.map((feed) => roadFeedSchema.parse(JSON.parse(JSON.stringify(feed))));
+    expect(reloaded).toEqual(feeds);
+    expect(reloaded.map((feed) => feed.id)).toContain("de-autobahn-a1-warning");
   });
 
   it("polls roadworks three times slower than the incident services", async () => {

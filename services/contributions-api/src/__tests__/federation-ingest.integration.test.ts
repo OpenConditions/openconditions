@@ -584,8 +584,97 @@ describe("replaces — supersession only", () => {
 });
 
 describe("page ingest — skip-and-report, cursor, shared pull path", () => {
+  it("keeps a committed landing successful when advisory auto-corroboration fails", async () => {
+    const id = "peer-a:advisory-failure";
+    const outcome = await ingestFederatedObservation(
+      sql,
+      fedEvent({
+        id,
+        canonicalId: "f0a1".repeat(16),
+        headline: "Advisory failure fixture",
+      }) as never,
+      PEER_A,
+      undefined,
+      {
+        autoCorroborateOnLanding: async () => {
+          throw new Error("local matcher failure");
+        },
+      }
+    );
+    expect(outcome).toMatchObject({ outcome: "inserted", observationId: id, corroborated: [] });
+    expect(await evidenceCount(id)).toEqual([{ kind: "report", actor: null }]);
+  });
+
   it("rejects a structurally invalid page", async () => {
     await expect(ingestFederatedPage(sql, { foo: 1 }, PEER_A)).rejects.toThrow(FederatedPageError);
+  });
+
+  it("permanently skips malformed fields while processing valid peers' data", async () => {
+    const entries = [
+      fedEvent({
+        id: "peer-a:bad-geometry",
+        canonicalId: "f0a2".repeat(16),
+        geometry: { type: "Point", coordinates: [[5, 52]] },
+      }),
+      fedEvent({
+        id: "peer-a:bad-status",
+        canonicalId: "f0a3".repeat(16),
+        status: "invalid-status",
+      }),
+      fedEvent({ id: "peer-a:valid-after-malformed", canonicalId: "f0a4".repeat(16) }),
+      fedEvent({
+        id: "peer-a:unsupported-altitude",
+        canonicalId: "f0a5".repeat(16),
+        geometry: { type: "Point", coordinates: [5, 52, 20] },
+      }),
+      fedEvent({
+        id: "peer-a:bad-measurement-value",
+        canonicalId: "f0a6".repeat(16),
+        kind: "measurement",
+        metric: "speed",
+        value: "not-a-number",
+      }),
+      fedEvent({
+        id: "peer-a:valid-nested-measurement",
+        canonicalId: "f0a7".repeat(16),
+        kind: "measurement",
+        metric: "speed",
+        value: 42,
+        geometry: {
+          type: "GeometryCollection",
+          geometries: [
+            { type: "GeometryCollection", geometries: [{ type: "Point", coordinates: [5, 52] }] },
+          ],
+        },
+      }),
+    ];
+    const result = await ingestFederatedPage(
+      sql,
+      {
+        orderedItems: entries.map((observation, i) => ({
+          operation: "create",
+          observation,
+          seq: i + 1,
+          txid: "902",
+        })),
+      },
+      PEER_A
+    );
+    expect(result.accepted).toBe(2);
+    expect(result.skipped.map((entry) => entry.objectId)).toEqual([
+      "peer-a:bad-geometry",
+      "peer-a:bad-status",
+      "peer-a:unsupported-altitude",
+      "peer-a:bad-measurement-value",
+    ]);
+    expect(result.maxCursor).toBe("902.6");
+    expect(result.skipped[0]?.reason).toMatch(/invalid federated geometry/);
+    expect(result.skipped[1]?.reason).toMatch(/invalid status/);
+    expect(result.skipped[2]?.reason).toMatch(/invalid federated geometry/);
+    expect(result.skipped[3]?.reason).toMatch(/value.*finite number/);
+    const measurement = await sql<{ value: number }[]>`
+      SELECT value FROM conditions.observations WHERE id = 'peer-a:valid-nested-measurement'`;
+    expect(measurement).toEqual([{ value: 42 }]);
   });
 
   it("skips bad events, reports reasons, and advances maxCursor over everything processed", async () => {

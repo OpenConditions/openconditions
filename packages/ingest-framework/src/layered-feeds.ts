@@ -41,11 +41,8 @@ export async function loadFeeds(
   const baked = loadFeedFiles(opts.bakedInDir, schema) as FeedSourceBase[];
   const mounted = loadMountedFeeds(opts.mountDir, schema);
   const remote = await loadRemoteFeeds(opts.domain, opts.remote, schema, deps);
-  // The baked-in set is authored (derived ids must be globally unique); a
-  // collision there would silently collapse two feeds in the merge, so fail
-  // loud. Later layers deliberately OVERRIDE earlier ones by id, so uniqueness
-  // is asserted on the shipped baked set, not across layers.
-  assertUniqueIds(baked, opts.domain);
+  assertUniqueIds(baked, `${opts.domain} baked-in`);
+  assertUniqueIds(mounted, `${opts.domain} mounted`);
   return mergeFeedsById([baked, remote, mounted]);
 }
 
@@ -65,7 +62,8 @@ function assertUniqueIds(feeds: FeedSourceBase[], domain: string): void {
 /** Later layers override earlier ones by `id`; a new id is appended in first-seen order. */
 export function mergeFeedsById(layers: FeedSourceBase[][]): FeedSourceBase[] {
   const byId = new Map<string, FeedSourceBase>();
-  for (const layer of layers) {
+  for (const [index, layer] of layers.entries()) {
+    assertUniqueIds(layer, `layer ${index}`);
     for (const f of layer) byId.set(f.id, f); // re-set keeps the slot, replaces the value
   }
   return [...byId.values()];
@@ -101,6 +99,7 @@ async function loadRemoteFeeds(
     if (!res.ok) throw new Error(`remote atlas ${res.status}`);
     const text = await res.text();
     const feeds = parseBundle(text, schema, assertUrl);
+    assertUniqueIds(feeds, `${domain} remote`);
     await writeSnapshot(remote.snapshotPath, feeds);
     return feeds;
   } catch (err) {
@@ -171,7 +170,9 @@ async function readSnapshot(
   try {
     const raw: unknown = JSON5.parse(await readFile(path, "utf8"));
     if (!Array.isArray(raw)) return undefined;
-    return raw.map((e) => schema.parse(e) as FeedSourceBase);
+    const feeds = raw.map((e) => schema.parse(e) as FeedSourceBase);
+    assertUniqueIds(feeds, "remote snapshot");
+    return feeds;
   } catch {
     return undefined; // a corrupt snapshot is treated as "no snapshot"
   }

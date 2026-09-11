@@ -23,7 +23,7 @@ import { runSegmentRebuild } from "./pipeline/segment-rebuild.js";
 import { refreshSegmentSpeed } from "./pipeline/segment-speed.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
 import { FeedStatusStore } from "./feed-status.js";
-import { upsertSourceStatus } from "./pipeline/source-status.js";
+import { pruneSourcePollAttempts, upsertSourceStatus } from "./pipeline/source-status.js";
 
 type Sql = postgres.Sql;
 
@@ -223,6 +223,23 @@ export function startScheduler(
   });
   console.info(`[scheduler] registered stale-observation sweep (${SWEEP_CRON})`);
   jobs.push(sweepJob);
+
+  // Poll history is independent of publishing a source's observations. Keep
+  // each cleanup bounded and single-flight, including during a catch-up backlog.
+  let pruningPollHistory = false;
+  const pollHistoryJob = new Cron(SWEEP_CRON, { catch: true }, async () => {
+    if (pruningPollHistory) return;
+    pruningPollHistory = true;
+    try {
+      const { deleted } = await pruneSourcePollAttempts(sql);
+      if (deleted > 0) console.info(`[scheduler] pruned ${deleted} old source-poll attempt(s)`);
+    } catch (err) {
+      console.error("[scheduler] source-poll retention failed", err);
+    } finally {
+      pruningPollHistory = false;
+    }
+  });
+  jobs.push(pollHistoryJob);
 
   // Roll raw speed samples into per-(sensor, hour) histograms. Hourly rather
   // than nightly so raw never has to hold more than a few hours of unaggregated

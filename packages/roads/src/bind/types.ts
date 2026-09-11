@@ -9,7 +9,7 @@ import type { BindingStatus, DirectionMode, SegmentSpan } from "@openconditions/
 import type { LngLat } from "./geo.js";
 
 /** Bumped whenever the resolver's inputs or maths change a stored binding. */
-export const RESOLVER_VERSION = "1.1.0";
+export const RESOLVER_VERSION = "1.2.0";
 
 export const BIND_DEFAULTS = {
   /** Candidate search radius around a sample, in metres. */

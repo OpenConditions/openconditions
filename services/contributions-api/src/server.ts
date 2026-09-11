@@ -11,7 +11,7 @@
  */
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type postgres from "postgres";
-import { centroid, reliabilityLowerBound } from "@openconditions/core";
+import { reliabilityLowerBound } from "@openconditions/core";
 import {
   checkGeometryPlausibility,
   checkPlausibility,
@@ -22,7 +22,7 @@ import {
   type SignedSubClaim,
 } from "@openconditions/contrib-core";
 import { resolveInstanceId } from "@openconditions/normalize";
-import { checkReportRate } from "./abuse/rate.js";
+import { ReportRateLimitError } from "./abuse/rate.js";
 import { enrollReporter } from "./attester/enroll.js";
 import { resolveGrantSecret, verifyReportingGrant } from "./attester/grant.js";
 import { ATTESTER_POLICY, type DeviceProof } from "./attester/policy.js";
@@ -362,14 +362,6 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       });
     }
 
-    // Per-key + per-(key, ~1km cell) insert-rate guard. The geometry passed
-    // plausibility above, so its centroid is well-defined.
-    const [lon, lat] = centroid(report.claim.geometry);
-    const rate = await checkReportRate(sql, report.keyId, lon, lat, nowIso);
-    if (!rate.ok) {
-      return reply.status(429).send({ error: "too many reports; slow down", reason: rate.reason });
-    }
-
     // 5. Map → central normalize seam → crowd insert + initial evidence +
     // recompute, all in one transaction.
     const landingCtx: LandingContext = {
@@ -382,6 +374,9 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     try {
       result = await landReport(sql, report, landingCtx);
     } catch (err) {
+      if (err instanceof ReportRateLimitError) {
+        return reply.status(429).send({ error: err.message, reason: err.reason });
+      }
       if (err instanceof GeometryInvalidError) {
         return reply
           .status(422)

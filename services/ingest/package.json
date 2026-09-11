@@ -1,16 +1,10 @@
 {
   "name": "@openconditions/ingest",
   "version": "0.1.0",
-  "description": "OpenConditions ingest service — fetch → parse → atomic PostGIS swap",
+  "description": "OpenConditions ingest service \u2014 fetch \u2192 parse \u2192 atomic PostGIS swap",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "private": true,
-  "exports": {
-    "./pipeline/write-postgis": {
-      "types": "./dist/pipeline/write-postgis.d.ts",
-      "import": "./dist/pipeline/write-postgis.js"
-    }
-  },
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
@@ -29,7 +23,9 @@
     "croner": "^10.0.1",
     "fastify": "^5.12.1",
     "postgres": "^3.4.9",
-    "undici": "^8.10.0"
+    "undici": "^8.10.0",
+    "@openconditions/storage": "workspace:*",
+    "hyparquet-writer": "0.16.9"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",

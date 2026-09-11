@@ -45,6 +45,17 @@ const ERASURE_REASONS: ReadonlySet<TombstoneReason> = new Set<TombstoneReason>([
   "legal_takedown",
 ]);
 
+/** Serialize the same identities in every create/delete path, before row locks. */
+export async function lockCanonicalRecords(
+  tx: Tx,
+  canonicalIds: readonly (string | null | undefined)[]
+): Promise<void> {
+  const ids = [...new Set(canonicalIds.filter((id): id is string => Boolean(id)))].sort();
+  for (const id of ids) {
+    await tx`SELECT pg_advisory_xact_lock(hashtextextended(${`federation:${id}`}, 0))`;
+  }
+}
+
 /**
  * Records (UPSERTs) the terminal deletion fact for a `canonicalId`: the tombstone
  * WINS over any later resupply/create of the same upstream record until
@@ -65,9 +76,12 @@ export async function recordTombstoneFact(
     INSERT INTO conditions.federation_tombstone (canonical_id, reason, tombstoned_at, expires_at)
     VALUES (${canonicalId}, ${reason}, ${now}, ${expiresAt.toISOString()})
     ON CONFLICT (canonical_id) DO UPDATE SET
-      reason = EXCLUDED.reason,
-      tombstoned_at = EXCLUDED.tombstoned_at,
-      expires_at = EXCLUDED.expires_at`;
+      reason = CASE
+        WHEN federation_tombstone.reason IN ('gdpr_erasure', 'legal_takedown')
+          THEN federation_tombstone.reason
+        ELSE EXCLUDED.reason END,
+      tombstoned_at = GREATEST(federation_tombstone.tombstoned_at, EXCLUDED.tombstoned_at),
+      expires_at = GREATEST(federation_tombstone.expires_at, EXCLUDED.expires_at)`;
 }
 
 /** Whether `canonicalId` has an ACTIVE (non-expired) terminal tombstone as of
@@ -119,8 +133,8 @@ export async function scrubJournalResidue(
  * itself PII, so it is kept; `id/canonical_id/instance_id/
  * phenomenon_fingerprint` are kept for federation dedup + tombstone propagation.
  *
- * Guarded by `status <> 'archived'` so a re-apply is a no-op (no duplicate
- * outbox tombstone). Returns whether a row was actually tombstoned.
+ * An erasure can strengthen an earlier archival reason. Other re-applications
+ * are no-ops, and an established erasure reason is never weakened.
  */
 export async function softTombstone(
   tx: Tx,
@@ -142,7 +156,12 @@ export async function softTombstone(
       severity_level = NULL,
       attributes = ${tx.json(marker)},
       origin = origin - 'reporter'
-    WHERE id = ${observationId} AND status <> 'archived'
+    WHERE id = ${observationId} AND (
+      status <> 'archived' OR (
+        ${ERASURE_REASONS.has(reason)}
+        AND COALESCE(tombstone_reason::text, '') NOT IN ('gdpr_erasure', 'legal_takedown')
+      )
+    )
     RETURNING id`;
   return rows.length > 0;
 }
@@ -150,8 +169,8 @@ export async function softTombstone(
 /**
  * The operator/reviewer/GDPR entry point: soft-tombstone the observation with a
  * reason in ONE transaction holding `FOR UPDATE`, so the outbox trigger emits a
- * signed federation `delete` tombstone carrying that reason. Idempotent — a
- * missing or already-archived row is a no-op (`tombstoned: false`).
+ * signed federation `delete` tombstone carrying that reason. An archived row
+ * still receives historical erasure; repeated requests do not duplicate events.
  */
 export async function emitTombstone(
   sql: Sql,
@@ -160,10 +179,13 @@ export async function emitTombstone(
   now: string
 ): Promise<{ tombstoned: boolean }> {
   return sql.begin(async (tx) => {
+    const [identity] = await tx<{ canonical_id: string | null }[]>`
+      SELECT canonical_id FROM conditions.observations WHERE id = ${observationId}`;
+    await lockCanonicalRecords(tx, [identity?.canonical_id]);
     const [row] = await tx<{ status: string; canonical_id: string | null }[]>`
       SELECT status, canonical_id FROM conditions.observations
       WHERE id = ${observationId} FOR UPDATE`;
-    if (row === undefined || row.status === "archived") {
+    if (row === undefined) {
       return { tombstoned: false };
     }
     const tombstoned = await softTombstone(tx, observationId, reason, now);

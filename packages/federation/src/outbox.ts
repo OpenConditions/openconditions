@@ -172,8 +172,7 @@ interface JournalRow {
 /**
  * Maps a journal payload snapshot (the reporter-stripped `to_jsonb` of the
  * observation row, geometry as GeoJSON) to the wire Observation:
- * `rowToObservation` for everything the read API also maps, plus the commons
- * substrate columns it does not carry (identity, privacy, provenance-URI).
+ * the shared canonical mapper restores identity, privacy, and provenance fields.
  */
 function snapshotToObservation(payload: Record<string, unknown>): Observation {
   const row = {
@@ -181,42 +180,7 @@ function snapshotToObservation(payload: Record<string, unknown>): Observation {
     geojson: JSON.stringify(payload["geom"]),
     is_stale: payload["is_stale"] ?? false,
   } as unknown as ObservationRow;
-  const observation = rowToObservation(row);
-  const extra = payload as {
-    instance_id?: string | null;
-    canonical_id?: string | null;
-    phenomenon_fingerprint?: string | null;
-    replaces?: string[] | null;
-    corroborations?: string[] | null;
-    fuzziness?: string | null;
-    confidence_score?: number | null;
-    severity_level?: number | null;
-    privacy_class?: string | null;
-    k_anonymity?: number | null;
-    dp_epsilon?: number | null;
-    dp_delta?: number | null;
-    source_uri?: string | null;
-    source_license?: string | null;
-  };
-  return {
-    ...observation,
-    ...(extra.instance_id != null ? { instanceId: extra.instance_id } : {}),
-    ...(extra.canonical_id != null ? { canonicalId: extra.canonical_id } : {}),
-    ...(extra.phenomenon_fingerprint != null
-      ? { phenomenonFingerprint: extra.phenomenon_fingerprint }
-      : {}),
-    ...(extra.replaces != null ? { replaces: extra.replaces } : {}),
-    ...(extra.corroborations != null ? { corroborations: extra.corroborations } : {}),
-    ...(extra.fuzziness != null ? { fuzziness: extra.fuzziness } : {}),
-    ...(extra.confidence_score != null ? { confidenceScore: extra.confidence_score } : {}),
-    ...(extra.severity_level != null ? { severityLevel: extra.severity_level } : {}),
-    ...(extra.privacy_class != null ? { privacyClass: extra.privacy_class } : {}),
-    ...(extra.k_anonymity != null ? { kAnonymity: extra.k_anonymity } : {}),
-    ...(extra.dp_epsilon != null ? { dpEpsilon: extra.dp_epsilon } : {}),
-    ...(extra.dp_delta != null ? { dpDelta: extra.dp_delta } : {}),
-    ...(extra.source_uri != null ? { sourceUri: extra.source_uri } : {}),
-    ...(extra.source_license != null ? { sourceLicense: extra.source_license } : {}),
-  } as unknown as Observation;
+  return rowToObservation(row);
 }
 
 function rowToEntry(row: JournalRow): OutboxEntry {

@@ -409,7 +409,7 @@ describe("terminal tombstone — a retraction is terminal for 30 days (no resurr
     expect(content!.headline).toBeNull();
   }, 30_000);
 
-  it("refuses a create of a canonicalId whose tombstone arrived BEFORE the object (the race)", async () => {
+  it("refuses a create of a canonicalId whose tombstone committed before the object", async () => {
     const canonicalId = "3c".repeat(32);
     // The tombstone lands first — no local row yet, but the fact is recorded.
     const t = await ingestFederatedPage(
@@ -419,7 +419,7 @@ describe("terminal tombstone — a retraction is terminal for 30 days (no resurr
     );
     expect(t.skipped).toEqual([{ objectId: "peer-a:race", reason: "tombstone-target-not-found" }]);
 
-    // The create races in afterwards — refused, never resurrected.
+    // The create arrives afterwards — refused, never resurrected.
     const c = await ingestFederatedPage(
       sql,
       createPage(fedEvent({ id: "peer-a:race", canonicalId })),
@@ -429,9 +429,125 @@ describe("terminal tombstone — a retraction is terminal for 30 days (no resurr
     expect(c.skipped).toEqual([{ objectId: "peer-a:race", reason: "tombstoned" }]);
     expect(await rowStatus("peer-a:race")).toBeUndefined();
   }, 30_000);
+
+  it("serializes deletion against a create paused after its tombstone check", async () => {
+    const id = "peer-a:concurrent-tombstone";
+    const canonicalId = "5e".repeat(32);
+    let releaseGate!: () => void;
+    let signalLocked!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      releaseGate = resolve;
+    });
+    const locked = new Promise<void>((resolve) => {
+      signalLocked = resolve;
+    });
+    await sql`CREATE FUNCTION conditions.pause_tombstone_test_insert() RETURNS trigger AS $$
+      BEGIN
+        IF NEW.id = 'peer-a:concurrent-tombstone' THEN
+          PERFORM pg_advisory_xact_lock(729001);
+        END IF;
+        RETURN NEW;
+      END;
+    $$ LANGUAGE plpgsql`;
+    await sql`CREATE TRIGGER pause_tombstone_test_insert BEFORE INSERT ON conditions.observations
+      FOR EACH ROW EXECUTE FUNCTION conditions.pause_tombstone_test_insert()`;
+    const blocker = sql.begin(async (tx) => {
+      await tx`SELECT pg_advisory_xact_lock(729001)`;
+      signalLocked();
+      await gate;
+    });
+    let create: ReturnType<typeof ingestFederatedPage> | undefined;
+    let deletion: ReturnType<typeof ingestFederatedPage> | undefined;
+    try {
+      await locked;
+      create = ingestFederatedPage(sql, createPage(fedEvent({ id, canonicalId })), PEER_A);
+      await expect
+        .poll(async () => {
+          const rows = await sql`SELECT 1 FROM pg_locks WHERE locktype = 'advisory'
+          AND objid = 729001 AND NOT granted`;
+          return rows.length;
+        })
+        .toBe(1);
+      let deleted = false;
+      deletion = ingestFederatedPage(sql, deletePage(id, canonicalId, "gdpr_erasure"), PEER_A).then(
+        (result) => {
+          deleted = true;
+          return result;
+        }
+      );
+      // Observe a second blocked database transaction, rather than relying on a sleep.
+      await expect
+        .poll(async () => {
+          const rows =
+            await sql`SELECT 1 FROM pg_locks WHERE locktype = 'advisory' AND NOT granted`;
+          return deleted || rows.length >= 2;
+        })
+        .toBe(true);
+      expect(deleted).toBe(false);
+      releaseGate();
+      await blocker;
+      await create;
+      expect((await deletion).tombstoned).toBe(1);
+      expect((await rowStatus(id))?.status).toBe("archived");
+      expect(await archiveIds()).not.toContain(id);
+      const facts = await sql`SELECT 1 FROM conditions.federation_tombstone
+        WHERE canonical_id = ${canonicalId}`;
+      expect(facts).toHaveLength(1);
+    } finally {
+      releaseGate();
+      await Promise.allSettled([blocker, create, deletion]);
+      await sql`DROP TRIGGER pause_tombstone_test_insert ON conditions.observations`;
+      await sql`DROP FUNCTION conditions.pause_tombstone_test_insert()`;
+    }
+  }, 30_000);
 });
 
 describe("GDPR journal residue — a gdpr_erasure scrubs historical outbox snapshots", () => {
+  it("strengthens an expired tombstone, scrubs history and preserves the stronger reason on retries", async () => {
+    const id = "peer-a:expired-then-erased";
+    const canonicalId = "6e".repeat(32);
+    await ingestFederatedPage(
+      sql,
+      createPage(fedEvent({ id, canonicalId, headline: "ERASE-ME" })),
+      PEER_A
+    );
+    expect(await emitTombstone(sql, id, "expired", NOW)).toEqual({ tombstoned: true });
+    expect(JSON.stringify(await journalFor(id))).toContain("ERASE-ME");
+    expect(await emitTombstone(sql, id, "gdpr_erasure", NOW)).toEqual({ tombstoned: true });
+    expect(await emitTombstone(sql, id, "gdpr_erasure", NOW)).toEqual({ tombstoned: false });
+    expect(await emitTombstone(sql, id, "expired", NOW)).toEqual({ tombstoned: false });
+    const journal = await journalFor(id);
+    expect(JSON.stringify(journal)).not.toContain("ERASE-ME");
+    expect(
+      journal
+        .filter((entry) => entry.operation === "delete")
+        .map((entry) => entry.payload_snapshot["reason"])
+    ).toEqual(["expired", "gdpr_erasure"]);
+    expect((await rowStatus(id))?.tombstone_reason).toBe("gdpr_erasure");
+    const [fact] = await sql<
+      { reason: string }[]
+    >`SELECT reason FROM conditions.federation_tombstone
+      WHERE canonical_id = ${canonicalId}`;
+    expect(fact?.reason).toBe("gdpr_erasure");
+    expect(
+      journal.find((entry) => entry.operation === "create")?.payload_snapshot["canonical_id"]
+    ).toBe(canonicalId);
+    // A later version may replace an old record, but cannot reopen its tombstone.
+    await ingestFederatedPage(
+      sql,
+      createPage(
+        fedEvent({
+          id: "peer-a:replacement-after-erasure",
+          canonicalId: "6f".repeat(32),
+          headline: "Replacement after erasure",
+          replaces: [id],
+        })
+      ),
+      PEER_A
+    );
+    expect((await rowStatus(id))?.status).toBe("archived");
+  }, 30_000);
+
   it("removes free-text from prior create/update snapshots while keeping the tombstone entry", async () => {
     const id = "crowd:residue";
     await sql`

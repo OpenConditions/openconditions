@@ -18,17 +18,8 @@ const roadsFeeds = fileURLToPath(new URL("../../packages/roads/feeds/roads", imp
 const bundledFeeds = fileURLToPath(new URL("./dist/feeds/roads", import.meta.url));
 
 export default defineConfig({
-  // The row mapping (toRow — the ONE content-hash implementation) is an extra
-  // entry so the contributions-api service can import it: the byte-equivalence
-  // hash is shared, never reimplemented. dts is emitted only for that public
-  // subpath. (The write-normalization seam now lives in @openconditions/normalize.)
-  entry: ["src/index.ts", "src/pipeline/write-postgis.ts"],
+  entry: ["src/index.ts"],
   format: ["esm"],
-  dts: {
-    entry: {
-      "pipeline/write-postgis": "src/pipeline/write-postgis.ts",
-    },
-  },
   sourcemap: true,
   clean: true,
   outDir: "dist",

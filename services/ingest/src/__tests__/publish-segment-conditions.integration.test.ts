@@ -4,6 +4,7 @@ import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import { RESOLVER_VERSION } from "@openconditions/roads";
+import type { DomainRegistry } from "@openconditions/ingest-framework";
 import { FeedStatusStore } from "../feed-status.js";
 import { buildDomainRegistry } from "../domains.js";
 import { registerPublishRoutes } from "../publish-routes.js";
@@ -148,7 +149,9 @@ afterAll(async () => {
   await containerStop?.();
 }, 30_000);
 
-async function withApp<T>(fn: (app: ReturnType<typeof Fastify>) => Promise<T>): Promise<T> {
+async function withApp<T>(
+  fn: (app: ReturnType<typeof Fastify>, registry: DomainRegistry) => Promise<T>
+): Promise<T> {
   const app = Fastify();
   const loaded = await buildDomainRegistry();
   const registry = {
@@ -184,7 +187,7 @@ async function withApp<T>(fn: (app: ReturnType<typeof Fastify>) => Promise<T>): 
   registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
   await app.ready();
   try {
-    return await fn(app);
+    return await fn(app, registry);
   } finally {
     await app.close();
   }
@@ -217,6 +220,142 @@ type ConditionsBody = {
 };
 
 describe("GET /segments/conditions.json", () => {
+  it("withdraws retained routing evidence when a catalogue child is no longer scheduled", async () => {
+    const original = (
+      await sql<
+        { origin: postgres.JSONValue }[]
+      >`SELECT origin FROM conditions.observations WHERE id='a:1'`
+    )[0]!.origin;
+    try {
+      await sql`UPDATE conditions.observations SET origin=jsonb_set(origin,'{attribution,rights}',${sql.json(
+        {
+          source_redistribution: "yes",
+          derived_redistribution: "yes",
+          commercial_use: "yes",
+          retention: "yes",
+          attribution_required: "no",
+          reviewed_at: NOW,
+          evidence_origin: "stored old grant",
+          evidence_version: "1",
+        }
+      )}) WHERE id='a:1'`;
+      await withApp(async (app, registry) => {
+        const publishedIds = async () => {
+          const conditions = await app.inject({
+            method: "GET",
+            url: "/segments/conditions.json?at=2026-09-06T10:00:00Z",
+          });
+          const exclusions = await app.inject({
+            method: "GET",
+            url: "/valhalla/exclusions.json?bbox=6.8,51.1,6.9,51.3&at=2026-09-06T10:00:00Z",
+          });
+          expect(conditions.statusCode).toBe(200);
+          expect(exclusions.statusCode).toBe(200);
+          return [
+            (conditions.json() as ConditionsBody).conditions.map((condition) => condition.id),
+            (
+              exclusions.json() as { routing_evidence: ConditionsBody }
+            ).routing_evidence.conditions.map((condition) => condition.id),
+          ];
+        };
+        for (const ids of await publishedIds()) expect(ids).toContain("a:1");
+
+        const child = registry.roads!.feeds[0]!;
+        child.parentSourceId = "catalog-parent";
+        // Discovery may still carry an approved evidence review after operators
+        // remove this child from the catalogue's selected scheduling ids.
+        child.selectionState = "approved";
+        registry.roads!.feeds = [];
+        registry.roads!.discoveredFeeds = [child];
+        for (const ids of await publishedIds()) expect(ids).not.toContain("a:1");
+
+        // A source absent from the local catalogue can be federated; its stored
+        // provenance remains authoritative, unlike an explicitly unselected child.
+        registry.roads!.discoveredFeeds = [];
+        for (const ids of await publishedIds()) expect(ids).toContain("a:1");
+      });
+    } finally {
+      await sql`UPDATE conditions.observations SET origin=${sql.json(original)} WHERE id='a:1'`;
+    }
+  });
+  it.each([false, undefined])(
+    "uses current registry rights instead of a stored grant: commercialUse=%s",
+    async (commercialUse) => {
+      const original = (
+        await sql<
+          { origin: postgres.JSONValue }[]
+        >`SELECT origin FROM conditions.observations WHERE id='a:1'`
+      )[0]!.origin;
+      try {
+        await sql`UPDATE conditions.observations SET origin=jsonb_set(origin,'{attribution,rights}',${sql.json(
+          {
+            source_redistribution: "yes",
+            derived_redistribution: "yes",
+            commercial_use: "yes",
+            retention: "yes",
+            attribution_required: "no",
+            reviewed_at: NOW,
+            evidence_origin: "stored old grant",
+            evidence_version: "1",
+          }
+        )}) WHERE id='a:1'`;
+        await withApp(async (app, registry) => {
+          const feed = registry.roads!.feeds[0]!;
+          feed.rights =
+            commercialUse === undefined ? undefined : { ...feed.rights!, commercialUse };
+          const res = await app.inject({
+            method: "GET",
+            url: "/segments/conditions.json?at=2026-09-06T10:00:00Z",
+          });
+          expect(res.statusCode).toBe(200);
+          expect(
+            (res.json() as ConditionsBody).conditions.some((condition) => condition.id === "a:1")
+          ).toBe(false);
+        });
+      } finally {
+        await sql`UPDATE conditions.observations SET origin=${sql.json(original)} WHERE id='a:1'`;
+      }
+    }
+  );
+  it("scopes optional bbox queries while keeping the unscoped routing snapshot complete", async () => {
+    await withApp(async (app) => {
+      const url = "/segments/conditions.json?at=2026-09-06T10:00:00Z";
+      const scopedUrl = `${url}&bbox=6.8,51.1,6.9,51.3`;
+      const ids = async (query: string) => {
+        const res = await app.inject({ method: "GET", url: query });
+        expect(res.statusCode).toBe(200);
+        return (res.json() as ConditionsBody).conditions.map((condition) => condition.id);
+      };
+      const before = await ids(scopedUrl);
+      const addedIds = Array.from({ length: 12 }, (_, index) => `bbox-outside:${index}`);
+      try {
+        for (const id of addedIds) {
+          await insertEvent(id, "CC0-1.0", { roadState: "closed" });
+          await sql`UPDATE conditions.observations SET geom=ST_SetSRID(ST_MakePoint(8,52),4326) WHERE id=${id}`;
+          await insertBinding(id, "exact", 1);
+          await insertSpan(id, 0, SEGMENT_ID, 10, 0, 1);
+        }
+        expect(await ids(scopedUrl)).toEqual(before);
+        expect(await ids(url)).toEqual(expect.arrayContaining(addedIds));
+        expect(await ids(`${url}&bbox=1,1,2,2`)).toEqual([]);
+      } finally {
+        await sql`DELETE FROM conditions.observations WHERE id = ANY(${addedIds})`;
+      }
+    });
+  }, 30_000);
+
+  it.each(["", "1,,3,4", "170,10,-170,20", "181,1,182,2", "1,2,3,4&bbox=2,3,4,5"])(
+    "rejects a malformed optional bbox: %s",
+    async (bbox) => {
+      await withApp(async (app) => {
+        const res = await app.inject({
+          method: "GET",
+          url: `/segments/conditions.json?bbox=${bbox}`,
+        });
+        expect(res.statusCode).toBe(400);
+      });
+    }
+  );
   it("does not relabel an older resolver binding or a non-active graph as current evidence", async () => {
     await sql`UPDATE conditions.observation_binding SET resolver_version='old-resolver' WHERE observation_id='a:1'`;
     await withApp(async (app) => {

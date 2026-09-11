@@ -80,7 +80,7 @@ export const feedSourceBaseShape = {
     .optional(),
   stream: z
     .string()
-    .regex(/^[a-z0-9]+$/, "lower-case alphanumeric slug (e.g. flow, speedbands)")
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "lower-case dash-joined slug (e.g. flow, a1-warning)")
     .optional(),
   produces: z.enum(["events", "flow"]).optional(),
   url: z.union([z.string(), z.array(z.string()).nonempty()]).optional(),

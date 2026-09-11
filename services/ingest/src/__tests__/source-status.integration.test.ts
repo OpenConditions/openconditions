@@ -1,8 +1,12 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
-import { readSourceOperationalStatus, upsertSourceStatus } from "../pipeline/source-status.js";
+import {
+  pruneSourcePollAttempts,
+  readSourceOperationalStatus,
+  upsertSourceStatus,
+} from "../pipeline/source-status.js";
 
 let sql: postgres.Sql;
 let stop: () => Promise<unknown>;
@@ -27,6 +31,10 @@ afterAll(async () => {
   await sql?.end();
   await stop?.();
 }, 30_000);
+
+beforeEach(async () => {
+  await sql`TRUNCATE conditions.source_poll_attempt, conditions.source_status`;
+});
 
 describe("durable source operational status", () => {
   it("does not renew network freshness for a cadence skip", async () => {
@@ -130,10 +138,18 @@ describe("durable source operational status", () => {
   });
 
   it("keeps a restart-safe seven-day attempt history", async () => {
+    for (const [index, outcome] of ["changed", "failed", "complete_empty"].entries()) {
+      await upsertSourceStatus(sql, "status-history", {
+        attemptAt: `2026-09-11T11:0${index}:00.000Z`,
+        freshnessWindowSec: 600,
+        outcome: outcome as "changed" | "failed" | "complete_empty",
+        networkValidated: outcome !== "failed",
+      });
+    }
     const rows = await sql<{ outcome: string; network_validated: boolean }[]>`
       SELECT outcome, network_validated
       FROM conditions.source_poll_attempt
-      WHERE source = 'status-stock'
+      WHERE source = 'status-history'
       ORDER BY attempted_at
     `;
     expect(rows).toEqual([
@@ -141,5 +157,55 @@ describe("durable source operational status", () => {
       { outcome: "failed", network_validated: false },
       { outcome: "complete_empty", network_validated: true },
     ]);
+  });
+
+  it("prunes only expired history in bounded batches and never while publishing status", async () => {
+    const now = "2026-09-11T12:00:00.000Z";
+    for (let index = 0; index < 4; index++) {
+      await upsertSourceStatus(sql, `old-${index}`, {
+        attemptAt: "2026-09-01T12:00:00.000Z",
+        freshnessWindowSec: 600,
+        outcome: "failed",
+      });
+    }
+    for (const [source, attemptAt] of [
+      ["boundary", "2026-09-03T12:00:00.000Z"],
+      ["recent", now],
+    ]) {
+      await upsertSourceStatus(sql, source!, {
+        attemptAt,
+        freshnessWindowSec: 600,
+        outcome: "validated_unchanged",
+      });
+    }
+    const count = async () =>
+      Number((await sql`SELECT count(*) AS n FROM conditions.source_poll_attempt`)[0]!.n);
+    expect(await count()).toBe(6); // status writes never perform retention
+    expect(await pruneSourcePollAttempts(sql, { now, batchSize: 2 })).toEqual({ deleted: 2 });
+    expect(await count()).toBe(4);
+    expect(await pruneSourcePollAttempts(sql, { now, batchSize: 2 })).toEqual({ deleted: 2 });
+    expect(await pruneSourcePollAttempts(sql, { now, batchSize: 2 })).toEqual({ deleted: 0 });
+    expect(
+      (await sql`SELECT source FROM conditions.source_poll_attempt ORDER BY source`).map(
+        (row) => row.source
+      )
+    ).toEqual(["boundary", "recent"]);
+    expect((await readSourceOperationalStatus(sql)).size).toBe(6);
+  });
+
+  it("rolls back publication status and its poll fact with the caller's transaction", async () => {
+    await expect(
+      sql.begin(async (tx) => {
+        await upsertSourceStatus(tx, "rolled-back", {
+          freshnessWindowSec: 600,
+          outcome: "changed",
+          networkValidated: true,
+          publication: { activeEvents: 1, inserted: 1, updated: 0, deleted: 0, rejected: 0 },
+        });
+        throw new Error("publication failed");
+      })
+    ).rejects.toThrow("publication failed");
+    expect(await sql`SELECT source FROM conditions.source_status`).toHaveLength(0);
+    expect(await sql`SELECT source FROM conditions.source_poll_attempt`).toHaveLength(0);
   });
 });

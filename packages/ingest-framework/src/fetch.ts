@@ -34,10 +34,11 @@ type FetchableFeed = FeedSourceBase;
 export interface FetchState {
   conditional: Map<string, { etag?: string; lastModified?: string; buffer?: Buffer }>;
   lastFetchAt: Map<string, number>;
+  sourceConfig: Map<string, string>;
 }
 
 export function createFetchState(): FetchState {
-  return { conditional: new Map(), lastFetchAt: new Map() };
+  return { conditional: new Map(), lastFetchAt: new Map(), sourceConfig: new Map() };
 }
 
 const sharedFetchState = createFetchState();
@@ -45,6 +46,8 @@ const sharedFetchState = createFetchState();
 export type FetchResult =
   | {
       status: "fetched";
+      /** Commit conditional validators only after the complete snapshot is published. */
+      accept: () => void;
       buffers: Buffer[];
       validatedAtNetwork: true;
       partitions: { succeeded: number; failed: 0; total: number };
@@ -245,8 +248,8 @@ const DEFAULT_MAX_PAGES = 100;
 /**
  * Count the records at `path` (dot-separated) in a JSON page body. Throws when
  * the body is not JSON so a corrupt page fails the whole cycle (last-good
- * preserved) rather than silently ending pagination early; a missing/non-array
- * node counts as zero — a page with no records, which ends pagination.
+ * preserved) rather than silently ending pagination early. The collection must
+ * exist and be an array, including on the terminal empty page.
  */
 function countJsonRecords(buffer: Buffer, path: string): number {
   let doc: unknown;
@@ -257,10 +260,13 @@ function countJsonRecords(buffer: Buffer, path: string): number {
   }
   let node: unknown = doc;
   for (const key of path.split(".")) {
-    if (node == null || typeof node !== "object") return 0;
+    if (node == null || typeof node !== "object") {
+      throw new Error(`pagination: missing collection ${path}`);
+    }
     node = (node as Record<string, unknown>)[key];
   }
-  return Array.isArray(node) ? node.length : 0;
+  if (!Array.isArray(node)) throw new Error(`pagination: expected array at ${path}`);
+  return node.length;
 }
 
 /**
@@ -305,9 +311,7 @@ async function fetchPaginated(
       }
     }
     if (!reachedEnd) {
-      console.warn(
-        `[ingest] ${src.id}: pagination reached maxPages=${maxPages} without a short page — coverage may be truncated`
-      );
+      throw new Error(`pagination: ${src.id} reached maxPages=${maxPages} without a terminal page`);
     }
   }
   return out;
@@ -387,6 +391,7 @@ export async function fetchAll(
     }
     return {
       status: "fetched",
+      accept: () => {},
       buffers: fanout.buffers,
       validatedAtNetwork: true,
       partitions: { succeeded: fanout.total, failed: 0, total: fanout.total },
@@ -404,6 +409,7 @@ export async function fetchAll(
     }
     return {
       status: "fetched",
+      accept: () => {},
       buffers: await fetchPaginated(baseUrls, active, fetchFn, redact),
       validatedAtNetwork: true,
       partitions: { succeeded: baseUrls.length, failed: 0, total: baseUrls.length },
@@ -436,11 +442,23 @@ export async function fetchAll(
       }
       return {
         status: "fetched",
+        accept: () => {},
         buffers: fanout.buffers,
         validatedAtNetwork: true,
         partitions: { succeeded: fanout.total, failed: 0, total: fanout.total },
       };
     }
+  }
+
+  // A changed parser or grant must be applied even when upstream content is unchanged.
+  // Invalidate the old conditional state so the next publication restamps provenance.
+  const config = JSON.stringify(active);
+  if (state.sourceConfig.get(active.id) !== config) {
+    for (const key of state.conditional.keys()) {
+      if (key.startsWith(`${active.id}\0`)) state.conditional.delete(key);
+    }
+    state.sourceConfig.set(active.id, config);
+    state.lastFetchAt.delete(active.id);
   }
 
   if (active.fetchIntervalSec != null) {
@@ -458,11 +476,24 @@ export async function fetchAll(
     return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
   }
 
+  const cacheKey = (url: string) => `${active.id}\0${url}`;
   const init = requestInit(active);
   // Retain last bodies only for multi-URL feeds — a single-URL feed skips whole
   // on 304 (below) and never re-reads its cached body, so caching it just holds
   // tens of MB of off-heap Buffer per feed for nothing.
-  const results = await fetchAllBounded(urls, fetchFn, init, state, urls.length > 1, redact);
+  // Downloads are provisional: a failed parse, completeness check or transaction
+  // must retry against the last published validators, including mixed 200/304 batches.
+  const provisional: FetchState = {
+    conditional: new Map(
+      urls.flatMap((url) => {
+        const prior = state.conditional.get(cacheKey(url));
+        return prior ? [[url, prior] as const] : [];
+      })
+    ),
+    lastFetchAt: state.lastFetchAt,
+    sourceConfig: state.sourceConfig,
+  };
+  const results = await fetchAllBounded(urls, fetchFn, init, provisional, urls.length > 1, redact);
   state.lastFetchAt.set(active.id, now());
 
   if (results.every((r) => !r.changed)) {
@@ -470,6 +501,12 @@ export async function fetchAll(
   }
   return {
     status: "fetched",
+    accept: () => {
+      for (const url of urls) {
+        const accepted = provisional.conditional.get(url);
+        if (accepted) state.conditional.set(cacheKey(url), accepted);
+      }
+    },
     buffers: results.map((r) => r.buffer),
     validatedAtNetwork: true,
     partitions: { succeeded: results.length, failed: 0, total: results.length },

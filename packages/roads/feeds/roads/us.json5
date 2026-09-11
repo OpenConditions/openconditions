@@ -5,7 +5,7 @@
     format: "wzdx",
     catalog: {
       resolver: "wzdx-registry",
-      approvedChildren: ["wzdx-kansas"],
+      approvedChildren: ["us-wzdx-fe9b3423ea03546f"],
     },
     cadenceSec: 300,
     freshnessWindowSec: 900,

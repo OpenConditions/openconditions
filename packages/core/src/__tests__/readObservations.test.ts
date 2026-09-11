@@ -231,3 +231,14 @@ describe("readObservations", () => {
     expect(obs!.segments).toBeUndefined();
   });
 });
+
+describe("complete canonical reads", () => {
+  it("rejects unavailable or overflowing results instead of returning a partial set", async () => {
+    const opts = { bbox: [0, 0, 1, 1] as [number, number, number, number], requireComplete: true };
+    await expect(readObservations(stubDb(Array(100001).fill(eventRow)), opts)).rejects.toThrow(
+      /exceeds routing limit/
+    );
+    const unavailable: QueryRunner = { execute: async <T>() => undefined as T };
+    await expect(readObservations(unavailable, opts)).rejects.toThrow(/unavailable/);
+  });
+});

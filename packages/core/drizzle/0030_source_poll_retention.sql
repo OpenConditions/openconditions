@@ -1,0 +1,1 @@
+CREATE INDEX "idx_source_poll_attempt_time" ON "conditions"."source_poll_attempt" USING btree ("attempted_at","id");

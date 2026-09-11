@@ -308,6 +308,9 @@ function bindEndpoints(
   maxOffsetM: number
 ): BindResult {
   const straightM = polylineLengthM([start, end]);
+  // Coincident endpoints carry no travel direction; use the point rules,
+  // including both directions on a bidirectional way.
+  if (straightM === 0) return bindPoint(start, input, spine, maxOffsetM);
   const cap = Math.min(MAX_ENDPOINT_PATH_M, 2.5 * straightM + 500);
   const starts = candidatesFor(start, null, input, spine.segments, maxOffsetM).slice(
     0,
@@ -328,15 +331,22 @@ function bindEndpoints(
   const routes: EndpointRoute[] = [];
   for (const s of starts) {
     for (const e of ends) {
+      // The graph's singleton path knows only the segment ID. Its projected
+      // endpoints must also run in travel direction before that shortcut is
+      // admissible; sorting the output fractions must never hide reversal.
+      if (s.segment.segmentId === e.segment.segmentId && s.fraction > e.fraction) continue;
       const path = graph.shortestPath(s.segment.segmentId, e.segment.segmentId, cap, onRef);
       if (!path) continue;
       const rs = path.reduce((m, p) => Math.min(m, refScore(input.refs, p.ref)), 1);
       const score = ((s.score + e.score) / 2) * (0.8 + 0.2 * rs);
-      routes.push({ path, score, refScore: rs, from: s, to: e });
+      const lengthM = [...coveredM(path, start, end).values()].reduce((sum, m) => sum + m, 0);
+      routes.push({ path, score, lengthM, refScore: rs, from: s, to: e });
     }
   }
   const best = routes.reduce<EndpointRoute | null>(
-    (m, r) => (!m || r.score > m.score ? r : m),
+    // A directed twin can also be reached by travelling to the end of the way
+    // and turning back. Equal endpoint scores must prefer the direct route.
+    (m, r) => (!m || r.score > m.score || (r.score === m.score && r.lengthM < m.lengthM) ? r : m),
     null
   );
   if (!best) return failure("unresolved", "no_path", candidateCount, samples);
@@ -373,6 +383,7 @@ function bindEndpoints(
 interface EndpointRoute {
   path: SpineSegment[];
   score: number;
+  lengthM: number;
   refScore: number;
   from: Candidate;
   to: Candidate;

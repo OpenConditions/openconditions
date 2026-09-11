@@ -1,11 +1,9 @@
 import { defineConfig } from "vitest/config";
 
-// Single source of truth for the whole repo's test run. The `node` project
-// covers all backend/library code under packages/*, services/*, integrations/*.
-// There are intentionally no per-package vitest configs — this file owns
-// discovery for every workspace package.
+// Explicit projects keep quick unit runs separate from disposable database suites.
 export default defineConfig({
   test: {
+    maxWorkers: 4,
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
@@ -22,7 +20,7 @@ export default defineConfig({
     projects: [
       {
         test: {
-          name: "node",
+          name: "unit",
           environment: "node",
           globals: true,
           include: [
@@ -30,6 +28,20 @@ export default defineConfig({
             "services/**/*.test.ts",
             "integrations/**/*.test.ts",
             "scripts/**/*.test.ts",
+          ],
+          exclude: ["**/node_modules/**", "**/*.integration.test.ts"],
+        },
+      },
+      {
+        test: {
+          name: "integration",
+          environment: "node",
+          globals: true,
+          include: [
+            "packages/**/*.integration.test.ts",
+            "services/**/*.integration.test.ts",
+            "integrations/**/*.integration.test.ts",
+            "scripts/**/*.integration.test.ts",
           ],
           exclude: ["**/node_modules/**"],
         },

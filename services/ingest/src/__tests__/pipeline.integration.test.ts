@@ -112,15 +112,22 @@ describe("pipeline — happy path", () => {
   }, 60_000);
 
   it("all inserted geometries are valid PostGIS geometries", async () => {
+    const seeded = await runSource(ndwFeed, {
+      sql,
+      fetch: async () => new Response(readFileSync(NDW_FIXTURE_PATH)),
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(seeded.error).toBeUndefined();
+    const total = await sql`SELECT id FROM conditions.observations WHERE source = ${ndwFeed.id}`;
+    expect(total.length).toBeGreaterThan(0);
     const invalid = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
       FROM conditions.observations
       WHERE NOT ST_IsValid(geom)
     `;
     expect(parseInt(invalid[0]!.count, 10)).toBe(0);
-  }, 30_000);
 
-  it("at least one row has road-specific attributes (isPlanned present)", async () => {
     const rows = await sql<{ attributes: unknown }[]>`
       SELECT attributes
       FROM conditions.observations
@@ -137,6 +144,13 @@ describe("pipeline — happy path", () => {
 
 describe("pipeline — feed downtime", () => {
   it("leaves existing rows intact when fetch throws", async () => {
+    const seeded = await runSource(ndwFeed, {
+      sql,
+      fetch: async () => new Response(readFileSync(NDW_FIXTURE_PATH)),
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(seeded.error).toBeUndefined();
     const beforeCount = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw'
     `;
@@ -1192,4 +1206,170 @@ describe("pipeline — partition-complete fan-out reconciliation", () => {
     `;
     expect(parseInt(after[0]!.count, 10)).toBe(4);
   }, 30_000);
+});
+
+describe("pipeline publication acceptance", () => {
+  function source(id: string): DomainFeedSource {
+    return {
+      ...drivebcFeed,
+      id,
+      url: `https://${id}.test/events`,
+      pagination: undefined,
+      fetchIntervalSec: undefined,
+      snapshot: { completeness: "complete", recordsPath: "events" },
+    };
+  }
+  const body = (description: string) =>
+    JSON.stringify({
+      events: [
+        {
+          id: "event",
+          event_type: "CONSTRUCTION",
+          description,
+          geography: { type: "Point", coordinates: [0, 0] },
+        },
+      ],
+    });
+  const facts = async (id: string) =>
+    (
+      await sql`SELECT publication_revision, last_network_success_at FROM conditions.source_status WHERE source=${id}`
+    )[0];
+
+  it("retries a downloaded revision after the publication transaction fails", async () => {
+    const feed = source("accept-db-failure");
+    let revision = "v1";
+    const validators: (string | null)[] = [];
+    const fetch = (async (_url, init) => {
+      const prior = new Headers(init?.headers).get("if-none-match");
+      validators.push(prior);
+      return prior === revision
+        ? new Response(null, { status: 304 })
+        : new Response(body(revision), { headers: { etag: revision } });
+    }) as typeof globalThis.fetch;
+    const run = () =>
+      runSource(feed, { sql, fetch, now: () => new Date().toISOString(), lookup: fakeLookup });
+    expect((await run()).count).toBe(1);
+    const before = await facts(feed.id);
+    await sql`CREATE FUNCTION conditions.reject_accept_test() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+      IF NEW.source = 'accept-db-failure' THEN RAISE EXCEPTION 'injected publication failure'; END IF;
+      RETURN NEW; END $$`;
+    await sql`CREATE TRIGGER reject_accept_test BEFORE INSERT OR UPDATE ON conditions.observations FOR EACH ROW EXECUTE FUNCTION conditions.reject_accept_test()`;
+    revision = "v2";
+    try {
+      expect((await run()).error).toContain("injected publication failure");
+      expect(await facts(feed.id)).toEqual(before);
+      const rows =
+        await sql`SELECT description FROM conditions.observations WHERE source=${feed.id}`;
+      expect(rows).toEqual([{ description: "v1" }]);
+    } finally {
+      await sql`DROP TRIGGER reject_accept_test ON conditions.observations`;
+      await sql`DROP FUNCTION conditions.reject_accept_test()`;
+    }
+    expect((await run()).updated).toBe(1);
+    expect(validators).toEqual([null, "v1", "v1"]);
+    expect((await run()).outcome).toBe("validated_unchanged");
+  });
+
+  it.each(["malformed", "ceiling"])(
+    "preserves publication and freshness on %s pagination",
+    async (failure) => {
+      const feed = source(`accept-pages-${failure}`);
+      const run = (fetch: typeof globalThis.fetch, src = feed) =>
+        runSource(src, { sql, fetch, now: () => new Date().toISOString(), lookup: fakeLookup });
+      expect((await run(async () => new Response(body("last good")))).count).toBe(1);
+      const before = await facts(feed.id);
+      let page = 0;
+      const result = await run(
+        async () =>
+          new Response(
+            ++page === 1 || failure === "ceiling"
+              ? body("partial new")
+              : JSON.stringify({ error: "not available" })
+          ),
+        {
+          ...feed,
+          pagination: { recordsPath: "events", pageSize: 1, skipParam: "offset", maxPages: 2 },
+        }
+      );
+      expect(result.error).toMatch(/pagination/);
+      expect(await facts(feed.id)).toEqual(before);
+      expect(
+        await sql`SELECT description FROM conditions.observations WHERE source=${feed.id}`
+      ).toEqual([{ description: "last good" }]);
+    }
+  );
+});
+
+describe("stable provenance refresh", () => {
+  it("refreshes changed rights and lineage without rewriting an unchanged poll", async () => {
+    let feed: DomainFeedSource = {
+      ...drivebcFeed,
+      id: "provenance-refresh",
+      url: "https://provenance-refresh.test/events",
+      pagination: undefined,
+      fetchIntervalSec: undefined,
+      parentSourceId: "parent-a",
+      rights: {
+        sourceRedistribution: true,
+        derivedRedistribution: true,
+        commercialUse: true,
+        attributionRequired: true,
+        retention: true,
+        evidenceVersion: "grant1",
+      },
+      snapshot: { completeness: "complete", recordsPath: "events" },
+    };
+    const headers: (string | null)[] = [];
+    const fetch = (async (_url, init) => {
+      const prior = new Headers(init?.headers).get("if-none-match");
+      headers.push(prior);
+      if (prior) return new Response(null, { status: 304 });
+      return new Response(
+        JSON.stringify({
+          events: [
+            {
+              id: "same",
+              updated: "2026-09-11T00:00:00.000Z",
+              event_type: "CONSTRUCTION",
+              geography: { type: "Point", coordinates: [0, 0] },
+            },
+          ],
+        }),
+        { headers: { etag: "stable-content" } }
+      );
+    }) as typeof globalThis.fetch;
+    const run = () =>
+      runSource(feed, { sql, fetch, now: () => new Date().toISOString(), lookup: fakeLookup });
+    const row = async () =>
+      (
+        await sql`SELECT content_hash, origin, xmin::text AS version FROM conditions.observations WHERE source=${feed.id}`
+      )[0]!;
+    expect((await run()).count).toBe(1);
+    const first = await row();
+    expect((await run()).outcome).toBe("validated_unchanged");
+    expect(await row()).toEqual(first);
+    feed = {
+      ...feed,
+      parentSourceId: "parent-b",
+      policyIds: ["parent-b", feed.id],
+      rights: { ...feed.rights!, commercialUse: false, evidenceVersion: "grant2" },
+    };
+    expect((await run()).updated).toBe(1);
+    const revoked = await row();
+    expect(revoked.content_hash).toBe(first.content_hash);
+    expect(revoked.version).not.toBe(first.version);
+    expect(revoked.origin.attribution).toMatchObject({
+      parentSourceId: "parent-b",
+      policyIds: ["parent-b", feed.id],
+      rights: { commercial_use: "no", evidence_version: "grant2" },
+    });
+    expect((await run()).outcome).toBe("validated_unchanged");
+    expect(await row()).toEqual(revoked);
+    feed = { ...feed, parentSourceId: undefined, policyIds: undefined, rights: undefined };
+    expect((await run()).updated).toBe(1);
+    const unknown = await row();
+    expect(unknown.origin.attribution.rights.commercial_use).toBe("unknown");
+    expect(unknown.origin.attribution.parentSourceId).toBeUndefined();
+    expect(headers).toEqual([null, "stable-content", null, "stable-content", null]);
+  });
 });

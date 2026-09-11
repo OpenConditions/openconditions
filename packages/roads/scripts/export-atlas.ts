@@ -6,17 +6,12 @@ import type { FeedSourceBase } from "@openconditions/ingest-framework";
 // under plain `node scripts/export-atlas.ts` — Node does not remap `.js` import
 // specifiers to `.ts` source, so importing the compiled `dist` is required. Run
 // `pnpm --filter @openconditions/roads build` first.
-import { FEED_SOURCES, autobahnIndexResolver, wzdxRegistryResolver } from "@openconditions/roads";
-
-/** Strip any field whose value is a function → pure, serialisable data only. */
-function toPureData(feed: FeedSourceBase): FeedSourceBase {
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(feed)) {
-    if (typeof v === "function") continue;
-    out[k] = v;
-  }
-  return out as FeedSourceBase;
-}
+import {
+  FEED_SOURCES,
+  autobahnIndexResolver,
+  wzdxRegistryResolver,
+  roadFeedSchema,
+} from "@openconditions/roads";
 
 /**
  * Flattens the curated feeds plus the resolved catalog outputs into one flat
@@ -29,9 +24,14 @@ export function buildAtlas(
   resolved: FeedSourceBase[][]
 ): FeedSourceBase[] {
   const byId = new Map<string, FeedSourceBase>();
-  for (const f of feeds) byId.set(f.id, toPureData(f));
-  for (const set of resolved) {
-    for (const f of set) if (!byId.has(f.id)) byId.set(f.id, toPureData(f));
+  for (const layer of [feeds, ...resolved]) {
+    const ids = new Set<string>();
+    for (const raw of layer) {
+      const feed = roadFeedSchema.parse(raw);
+      if (ids.has(feed.id)) throw new Error(`duplicate atlas feed id: ${feed.id}`);
+      ids.add(feed.id);
+      if (!byId.has(feed.id)) byId.set(feed.id, feed);
+    }
   }
   return [...byId.values()];
 }
@@ -58,16 +58,18 @@ async function main(): Promise<void> {
     },
   ];
 
+  // Validate the complete export before replacing either committed artifact.
+  const atlas = buildAtlas(
+    FEED_SOURCES,
+    resolved.map((r) => r.feeds)
+  );
+
   for (const { file, feeds } of resolved) {
     const snapPath = path.join(SNAPSHOT_DIR, file);
     await writeFile(snapPath, `${JSON.stringify(feeds, null, 2)}\n`);
     console.info(`[atlas] refreshed ${feeds.length} feed(s) → ${snapPath}`);
   }
 
-  const atlas = buildAtlas(
-    FEED_SOURCES,
-    resolved.map((r) => r.feeds)
-  );
   const out = path.resolve(import.meta.dirname, "../atlas/roads.json5");
   await writeFile(out, `${JSON.stringify(atlas, null, 2)}\n`);
   console.info(`[atlas] wrote ${atlas.length} feed descriptors → ${out}`);

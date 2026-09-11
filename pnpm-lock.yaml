@@ -374,8 +374,27 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
 
+  packages/storage:
+    dependencies:
+      '@openconditions/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+
   services/contributions-api:
     dependencies:
+      '@openconditions/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@cloudflare/privacypass-ts':
         specifier: 0.9.0
         version: 0.9.0
@@ -385,9 +404,6 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@openconditions/ingest':
-        specifier: workspace:*
-        version: link:../ingest
       '@openconditions/normalize':
         specifier: workspace:*
         version: link:../../packages/normalize
@@ -468,6 +484,12 @@ importers:
 
   services/ingest:
     dependencies:
+      hyparquet-writer:
+        specifier: 0.16.9
+        version: 0.16.9
+      '@openconditions/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       '@fastify/proxy-addr':
         specifier: ^5.1.0
         version: 5.1.0

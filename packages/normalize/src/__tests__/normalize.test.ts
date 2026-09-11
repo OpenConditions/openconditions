@@ -5,7 +5,12 @@ import {
   type ConditionEvent,
   type Observation,
 } from "@openconditions/core";
-import { normalizeObservation, resolveInstanceId, type WriterContext } from "../index.js";
+import {
+  FederatedObservationError,
+  normalizeObservation,
+  resolveInstanceId,
+  type WriterContext,
+} from "../index.js";
 
 const CTX: WriterContext = { kind: "feed", instanceId: "inst-x" };
 
@@ -433,6 +438,24 @@ describe("normalizeObservation — federation context preserves origin fields", 
       /kAnonymity/
     );
   });
+
+  it.each(["not-a-number", Number.NaN, Number.POSITIVE_INFINITY])(
+    "permanently rejects a malformed measurement value %s",
+    (value) => {
+      expect(() =>
+        normalizeObservation(federatedEvent({ kind: "measurement", value }), FED_CTX)
+      ).toThrow(FederatedObservationError);
+    }
+  );
+
+  it.each([{ headline: {} }, { metric: [] }, { relatedIds: "not-an-array" }])(
+    "permanently rejects malformed optional field shapes %j",
+    (fields) => {
+      expect(() => normalizeObservation(federatedEvent(fields), FED_CTX)).toThrow(
+        FederatedObservationError
+      );
+    }
+  );
 
   it("strips a present origin.reporter (never stores another instance's reporter identity)", () => {
     const out = normalizeObservation(

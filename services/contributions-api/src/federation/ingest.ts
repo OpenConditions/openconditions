@@ -34,12 +34,20 @@
  */
 import type postgres from "postgres";
 import type { Observation, OriginHop, Provenance } from "@openconditions/core";
-import { normalizeObservation } from "@openconditions/normalize";
-import { toRow } from "@openconditions/ingest/pipeline/write-postgis";
+import { checkGeometryPlausibility } from "@openconditions/contrib-core";
+import { FederatedObservationError, normalizeObservation } from "@openconditions/normalize";
+import { toRow } from "@openconditions/storage";
+import {
+  roadAttributes,
+  roadFlowAttributes,
+  type RoadEvent,
+  type RoadFlow,
+} from "@openconditions/roads";
 import { autoCorroborateOnLanding } from "../evidence/autoCorroborate.js";
 import { crossValidateAgainstFeeds } from "../evidence/crossValidate.js";
 import {
   hasActiveTombstone,
+  lockCanonicalRecords,
   isTombstoneReason,
   recordTombstoneFact,
   scrubJournalResidue,
@@ -65,6 +73,7 @@ export interface FederatedIngestContext {
 /** Injection seam for the federated cross-validation hook (defaults to the real fn). */
 export interface FederatedIngestDeps {
   crossValidateAgainstFeeds?: typeof crossValidateAgainstFeeds;
+  autoCorroborateOnLanding?: typeof autoCorroborateOnLanding;
 }
 
 export type FederatedEventOutcome =
@@ -135,6 +144,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
+/** Geometry collections must contain geometry objects before coordinate validation. */
+function hasGeometryObjects(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return (
+    value["type"] !== "GeometryCollection" ||
+    (Array.isArray(value["geometries"]) && value["geometries"].every(hasGeometryObjects))
+  );
+}
+
 /** Dedup key for an origin-chain hop: one hop per (origin instance, via-peer). */
 function hopKey(hop: OriginHop): string {
   return `${hop.instanceId}\u0000${hop.viaPeer ?? ""}`;
@@ -179,9 +197,8 @@ function mergeOriginChain(
 
 /**
  * Ingest one page of federated events (the OrderedCollectionPage shape the
- * outbox serves and the webhook pushes). Per-event failures SKIP that event
- * with a named reason and never abort the page; only a structurally invalid
- * page throws ({@link FederatedPageError}).
+ * outbox serves and the webhook pushes). Permanent validation failures skip
+ * an event; local failures reject the page so the sender retries its cursor.
  */
 export async function ingestFederatedPage(
   sql: Sql,
@@ -236,10 +253,11 @@ export async function ingestFederatedPage(
       try {
         outcomes.push(await applyFederatedTombstone(sql, { objectId, canonicalId, reason }, ctx));
       } catch (err) {
+        if (!(err instanceof FederatedObservationError)) throw err;
         outcomes.push({
           outcome: "skipped",
           objectId,
-          reason: err instanceof Error ? err.message : String(err),
+          reason: err.message,
         });
       }
       continue;
@@ -254,10 +272,11 @@ export async function ingestFederatedPage(
         await ingestFederatedObservation(sql, observation as unknown as Observation, ctx, objectId)
       );
     } catch (err) {
+      if (!(err instanceof FederatedObservationError)) throw err;
       outcomes.push({
         outcome: "skipped",
         objectId,
-        reason: err instanceof Error ? err.message : String(err),
+        reason: err.message,
       });
     }
   }
@@ -323,19 +342,36 @@ export async function ingestFederatedObservation(
   deps: FederatedIngestDeps = {}
 ): Promise<FederatedEventOutcome> {
   const crossValidate = deps.crossValidateAgainstFeeds ?? crossValidateAgainstFeeds;
+  if (!hasGeometryObjects(wire.geometry)) {
+    throw new FederatedObservationError("federated observation has no GeoJSON geometry");
+  }
+  // The shared store is 2D. Reject altitude explicitly rather than letting its
+  // PostGIS dimension error look like a retryable local database failure.
+  const geometryReasons = checkGeometryPlausibility(wire.geometry);
+  if (geometryReasons.length > 0) {
+    throw new FederatedObservationError(
+      `invalid federated geometry: ${geometryReasons.join(", ")}`
+    );
+  }
   const normalized = normalizeObservation(wire, {
     kind: "federation",
     instanceId: ctx.localInstanceId,
     peerInstanceId: ctx.peerInstanceId,
   });
   const oid = objectId ?? normalized.id;
-  const row = toRow(normalized);
+  const attributes =
+    normalized.domain === "roads"
+      ? normalized.kind === "measurement"
+        ? roadFlowAttributes(normalized as RoadFlow)
+        : roadAttributes(normalized as RoadEvent)
+      : {};
+  const row = toRow(normalized, attributes);
 
   const landed: LandedWithin = await sql.begin(async (tx): Promise<LandedWithin> => {
     // Serialize concurrent deliveries of the SAME upstream record (two peers
     // pushing one canonicalId at once): without this both would pass the
     // row lookup below and land duplicate rows. Released with the transaction.
-    await tx`SELECT pg_advisory_xact_lock(hashtext(${normalized.canonicalId!}))`;
+    await lockCanonicalRecords(tx, [normalized.canonicalId!]);
 
     // A terminal tombstone WINS: neither a re-discovered create nor a resupply of
     // a tombstoned canonicalId may resurrect it while the deletion fact is live.
@@ -453,8 +489,18 @@ export async function ingestFederatedObservation(
   // crowd landing route): the fingerprint neighborhood opens candidates, the
   // typed matcher decides, a match corroborates under the evidence rules and
   // NEVER auto-collapses. Measurements never fingerprint.
-  const corroborated =
-    normalized.kind === "event" ? await autoCorroborateOnLanding(sql, normalized.id, ctx.now) : [];
+  let corroborated: string[] = [];
+  if (normalized.kind === "event") {
+    try {
+      corroborated = await (deps.autoCorroborateOnLanding ?? autoCorroborateOnLanding)(
+        sql,
+        normalized.id,
+        ctx.now
+      );
+    } catch (err) {
+      console.warn(`[federation] auto-corroboration failed for ${normalized.id}: ${String(err)}`);
+    }
+  }
 
   // Federated CROWD → LOCAL feed cross-validation (route-without-training). A
   // federated crowd row (origin.kind='crowd', reporter stripped → keyId-less,
@@ -579,6 +625,10 @@ async function applyFederatedTombstone(
   ctx: FederatedIngestContext
 ): Promise<FederatedEventOutcome> {
   return sql.begin(async (tx): Promise<FederatedEventOutcome> => {
+    // Resolve identity without a row lock first, then use canonical-before-row
+    // lock order shared with creation and operator deletion.
+    const candidate = await resolveTombstoneTarget(tx, target, false);
+    await lockCanonicalRecords(tx, [target.canonicalId, candidate?.canonical_id]);
     const existing = await resolveTombstoneTarget(tx, target);
     if (existing === undefined) {
       // The object is not here YET. Record the terminal fact anyway so a
@@ -602,9 +652,7 @@ async function applyFederatedTombstone(
       return { outcome: "skipped", objectId: target.objectId, reason: "non-owned-collision" };
     }
 
-    if (existing.status !== "archived") {
-      await softTombstone(tx, existing.id, target.reason, ctx.now);
-    }
+    await softTombstone(tx, existing.id, target.reason, ctx.now);
     // The deletion fact is terminal (resurrection guard); an erasure/takedown
     // also strips this row's historical journal PII.
     await recordTombstoneFact(
@@ -631,7 +679,8 @@ async function applyFederatedTombstone(
  */
 async function resolveTombstoneTarget(
   tx: Tx,
-  target: TombstoneTarget
+  target: TombstoneTarget,
+  lock = true
 ): Promise<TombstoneRow | undefined> {
   if (target.canonicalId !== undefined) {
     const byCanonical = await tx<TombstoneRow[]>`
@@ -640,7 +689,7 @@ async function resolveTombstoneTarget(
       WHERE canonical_id = ${target.canonicalId}
       ORDER BY data_updated_at DESC
       LIMIT 1
-      FOR UPDATE`;
+      ${lock ? tx`FOR UPDATE` : tx``}`;
     if (byCanonical[0] !== undefined) return byCanonical[0];
   }
   const byId = await tx<TombstoneRow[]>`
@@ -648,7 +697,7 @@ async function resolveTombstoneTarget(
     FROM conditions.observations
     WHERE id = ${target.objectId}
     LIMIT 1
-    FOR UPDATE`;
+    ${lock ? tx`FOR UPDATE` : tx``}`;
   return byId[0];
 }
 
@@ -856,7 +905,7 @@ async function applySupersession(
            OR canonical_id = ANY(${tx.array(replaces)}::text[]))
       AND instance_id = ${normalized.instanceId!}
       AND id <> ${selfId ?? normalized.id}
-      AND status <> 'inactive'
+      AND status = 'active'
     RETURNING id`;
   return rows.map((r) => r.id);
 }

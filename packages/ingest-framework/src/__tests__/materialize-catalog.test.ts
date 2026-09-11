@@ -45,6 +45,23 @@ const child = (id: string, approved: boolean): FeedSourceBase => ({
 afterEach(() => __resetCatalogResolvers());
 
 describe("materializeApprovedCatalogChildren", () => {
+  it("does not admit child descriptors directly from an atlas or duplicate an approved child", () => {
+    const approved = child("wzdx-kansas", true);
+    const discovery = child("wzdx-washington", false);
+    registerCatalogResolver("roads", {
+      id: "test-catalog",
+      snapshotPath: "/unused",
+      snapshot: [approved, discovery],
+      resolve: async () => [],
+    });
+    const result = materializeApprovedCatalogChildren([parent, approved, discovery]);
+    expect(result.scheduled.map((feed) => feed.id)).toEqual([approved.id]);
+    expect(result.discovered.map((feed) => feed.id)).toEqual([discovery.id]);
+    expect(materializeApprovedCatalogChildren([approved, discovery])).toEqual({
+      scheduled: [],
+      discovered: [approved, discovery],
+    });
+  });
   it("schedules approved children independently and keeps discoveries visible", () => {
     registerCatalogResolver("roads", {
       id: "test-catalog",
@@ -62,6 +79,32 @@ describe("materializeApprovedCatalogChildren", () => {
     });
     expect(result.scheduled.some((feed) => feed.id === "us-wzdx")).toBe(false);
     expect(result.discovered.map((feed) => feed.id)).toEqual(["wzdx-washington"]);
+  });
+
+  it("revokes all child polling when the last approved child is removed", () => {
+    const snapshot = [child("wzdx-kansas", true), child("wzdx-washington", false)];
+    registerCatalogResolver("roads", {
+      id: "test-catalog",
+      snapshotPath: "/unused",
+      snapshot,
+      resolve: async () => [],
+    });
+    expect(materializeApprovedCatalogChildren([parent]).scheduled.map((feed) => feed.id)).toEqual([
+      "wzdx-kansas",
+    ]);
+
+    const revoked = { ...parent, catalog: { ...parent.catalog!, approvedChildren: [] } };
+    const result = materializeApprovedCatalogChildren([revoked, ...snapshot]);
+    expect(result.scheduled).toEqual([]);
+    expect(result.discovered).toEqual(snapshot);
+  });
+
+  it("preserves parent-managed catalogs when child approval is not configured", () => {
+    const parentManaged = { ...parent, catalog: { resolver: "test-catalog" } };
+    expect(materializeApprovedCatalogChildren([parentManaged])).toEqual({
+      scheduled: [parentManaged],
+      discovered: [],
+    });
   });
 
   it("fails startup when configuration approves a child absent from the snapshot", () => {

@@ -4,8 +4,8 @@ import { observationsToDatexSituations } from "../datex.js";
 import { roadEvent } from "./fixture.js";
 
 /**
- * The real interop proof: emit DATEX II, then re-ingest it with our own DATEX
- * parser. If a third party (an EU NAP) can read what we emit, so can our reader.
+ * Internal round-trip protection: emit DATEX II and re-ingest with our parser.
+ * External consumer interoperability requires independent conformance fixtures.
  */
 
 const SRC: SourceDescriptor = {

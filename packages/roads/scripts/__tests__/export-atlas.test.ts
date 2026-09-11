@@ -1,23 +1,22 @@
-import { describe, expect, it } from "vitest";
-import type { FeedSourceBase } from "@openconditions/ingest-framework";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import {
+  loadFeeds,
+  materializeApprovedCatalogChildren,
+  registerFeedSchema,
+} from "@openconditions/ingest-framework";
+import {
+  FEED_SOURCES,
+  autobahnIndexResolver,
+  roadFeedSchema,
+  wzdxRegistryResolver,
+} from "@openconditions/roads";
 import { buildAtlas } from "../export-atlas.js";
 
-// a curated feed carrying a function-valued url (defensive: pre-L6 closure shape)
-const withClosure = {
-  id: "mobilithek-x",
-  name: "X",
-  format: "datex2",
-  url: (env: Record<string, string | undefined>) => `https://x/${env["ID"] ?? ""}`,
-  cadenceSec: 300,
-  freshnessWindowSec: 900,
-  license: "dl-de/by-2-0",
-  attribution: "X",
-  country: "DE",
-  privacyUrl: "https://x",
-} as unknown as FeedSourceBase;
-
-const staticFeed: FeedSourceBase = {
-  id: "nl-ndw",
+const staticFeed = roadFeedSchema.parse({
+  operator: "ndw",
   name: "NDW",
   format: "datex2",
   url: "https://opendata.ndw.nu/actueel_beeld.xml.gz",
@@ -26,40 +25,115 @@ const staticFeed: FeedSourceBase = {
   license: "CC0-1.0",
   attribution: "NDW",
   country: "NL",
-  privacyUrl: "https://x",
-};
+  privacyUrl: "https://www.ndw.nu",
+});
 
-const resolvedWzdx: FeedSourceBase = {
-  id: "wzdx-alpha",
-  name: "WZDx — Alpha (alpha)",
-  format: "wzdx",
-  url: "https://alpha.example/api/wzdx",
-  cadenceSec: 300,
-  freshnessWindowSec: 900,
-  license: "CC0-1.0",
-  attribution: "Alpha DOT",
-  country: "US",
-  privacyUrl: "https://x",
-};
+const temporaryDirs: string[] = [];
+afterEach(() => {
+  for (const dir of temporaryDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
+const jsonResponder =
+  (payload: unknown): typeof fetch =>
+  async () =>
+    new Response(JSON.stringify(payload));
+
+const serialized = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
 
 describe("buildAtlas", () => {
-  it("drops function-valued fields, keeps static + resolved feeds, dedupes by id", () => {
-    const atlas = buildAtlas([staticFeed, withClosure], [[resolvedWzdx]]);
-    const ids = atlas.map((f) => f.id).sort();
-    expect(ids).toEqual(["mobilithek-x", "nl-ndw", "wzdx-alpha"].sort());
-    const x = atlas.find((f) => f.id === "mobilithek-x");
-    expect(typeof x?.url).not.toBe("function"); // closure dropped → undefined
-    // no descriptor holds any function-valued field
-    for (const f of atlas) {
-      for (const v of Object.values(f)) expect(typeof v).not.toBe("function");
-    }
-    expect(JSON.stringify(atlas)).toContain("wzdx-alpha"); // fully serialisable
+  it("preserves resolved fixture identities, URLs and grants through the real schema", async () => {
+    const autobahn = await autobahnIndexResolver.resolve(
+      jsonResponder(
+        JSON.parse(
+          readFileSync(
+            new URL("../../src/__tests__/fixtures/autobahn/road-index.json", import.meta.url),
+            "utf8"
+          )
+        )
+      )
+    );
+    const wzdx = await wzdxRegistryResolver.resolve(
+      jsonResponder(
+        JSON.parse(
+          readFileSync(
+            new URL("../../src/__tests__/fixtures/wzdx/registry.json", import.meta.url),
+            "utf8"
+          )
+        )
+      )
+    );
+    const atlas = buildAtlas([staticFeed], [autobahn, wzdx]);
+    const reloaded = serialized(atlas).map((feed) => roadFeedSchema.parse(feed));
+    expect(reloaded).toEqual(serialized([staticFeed, ...autobahn, ...wzdx]));
+    expect(new Set(reloaded.map((feed) => feed.id)).size).toBe(1 + autobahn.length + wzdx.length);
   });
 
-  it("prefers the curated feed over a resolved feed on id collision", () => {
-    const dupResolved = { ...resolvedWzdx, id: "nl-ndw", attribution: "resolved" };
-    const atlas = buildAtlas([staticFeed], [[dupResolved]]);
-    expect(atlas.filter((f) => f.id === "nl-ndw")).toHaveLength(1);
-    expect(atlas.find((f) => f.id === "nl-ndw")?.attribution).toBe("NDW");
+  it("rejects duplicate identities within an export layer while allowing curated overrides", () => {
+    expect(() => buildAtlas([staticFeed, staticFeed], [])).toThrow(/duplicate atlas feed id/);
+    expect(() => buildAtlas([], [[staticFeed, staticFeed]])).toThrow(/duplicate atlas feed id/);
+    expect(buildAtlas([staticFeed], [[{ ...staticFeed, attribution: "resolved" }]])).toEqual([
+      staticFeed,
+    ]);
+  });
+
+  it("rejects serialized identity drift instead of silently renaming the export", () => {
+    expect(() => buildAtlas([{ ...staticFeed, id: "old-ndw" }], [])).toThrow(
+      /does not match derived id/
+    );
+  });
+
+  it("loads the complete vendored atlas without collapsing identities or scheduling discoveries", async () => {
+    const atlas = buildAtlas(FEED_SOURCES, [
+      autobahnIndexResolver.snapshot!,
+      wzdxRegistryResolver.snapshot!,
+    ]);
+    const dir = mkdtempSync(join(tmpdir(), "oc-atlas-contract-"));
+    temporaryDirs.push(dir);
+    writeFileSync(join(dir, "baked.json5"), JSON.stringify(FEED_SOURCES));
+    registerFeedSchema("roads", roadFeedSchema);
+    const loaded = await loadFeeds(
+      {
+        domain: "roads",
+        bakedInDir: dir,
+        remote: {
+          enabled: true,
+          url: "https://atlas.example.test/roads.json5",
+          snapshotPath: join(dir, "remote.json"),
+        },
+      },
+      { remoteFetch: jsonResponder(atlas), assertUrl: () => {} }
+    );
+    expect(serialized(loaded)).toEqual(serialized(atlas));
+    expect(loaded).toHaveLength(
+      FEED_SOURCES.length +
+        autobahnIndexResolver.snapshot!.length +
+        wzdxRegistryResolver.snapshot!.length
+    );
+    expect(new Set(loaded.map((feed) => feed.id)).size).toBe(loaded.length);
+    const result = materializeApprovedCatalogChildren(loaded);
+    const children = result.scheduled.filter((feed) => feed.parentSourceId === "us-wzdx");
+    expect(children.map((feed) => feed.id)).toEqual(["us-wzdx-fe9b3423ea03546f"]);
+    expect(children[0]).toMatchObject({
+      url: "https://ks.carsprogram.org/carsapi_v1/api/wzdx",
+      license: "CC0-1.0",
+      selectionState: "approved",
+      parentSourceId: "us-wzdx",
+      policyIds: ["us-wzdx", "us-wzdx-fe9b3423ea03546f"],
+      rights: {
+        sourceRedistribution: true,
+        derivedRedistribution: true,
+        commercialUse: true,
+        retention: true,
+      },
+    });
+    expect(result.scheduled.some((feed) => feed.parentSourceId === "de-autobahn")).toBe(false);
+    expect(result.scheduled.filter((feed) => feed.id === "de-autobahn")).toHaveLength(1);
+    const discoveries = result.discovered.filter((feed) => feed.parentSourceId === "us-wzdx");
+    expect(discoveries).toHaveLength(wzdxRegistryResolver.snapshot!.length - 1);
+    expect(
+      discoveries.every(
+        (feed) => feed.license === "UNKNOWN" && feed.selectionState === "discovered"
+      )
+    ).toBe(true);
   });
 });

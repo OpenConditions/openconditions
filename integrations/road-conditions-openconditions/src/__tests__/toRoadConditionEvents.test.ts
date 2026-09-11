@@ -300,3 +300,23 @@ describe("featureCollectionToRoadConditionEvents", () => {
     expect(out[0]).toMatchObject({ type: "other", severity: "unknown", headline: "" });
   });
 });
+
+describe("host speed and freshness fields", () => {
+  it.each([40, 0, -1, Infinity, NaN, "40", null, undefined])(
+    "projects a finite positive speed cap (%s) and stale flag",
+    (speed) => {
+      const feature = structuredClone(fc.features[0]!);
+      feature.properties = {
+        ...feature.properties,
+        is_stale: true,
+        attributes: { speedLimitKph: speed },
+      };
+      const event = featureCollectionToRoadConditionEvents({
+        type: "FeatureCollection",
+        features: [feature],
+      })[0];
+      expect(event?.isStale).toBe(true);
+      expect(event?.speedLimitKph).toBe(speed === 40 ? 40 : undefined);
+    }
+  );
+});

@@ -10,6 +10,7 @@ import {
 } from "@openconditions/contrib-core";
 import { normalizeObservation } from "@openconditions/normalize";
 import { recomputeEvidence } from "../evidence/recompute.js";
+import { checkReportRate, ReportRateLimitError } from "../abuse/rate.js";
 
 type Sql = postgres.Sql;
 
@@ -107,6 +108,25 @@ async function landWithin(
   ctx: LandingContext
 ): Promise<LandingResult> {
   return sql.begin(async (tx) => {
+    // Admission and evidence insertion share this per-reporter transaction lock.
+    // Replays return before admission, including when the key has filled its quota.
+    await tx`SELECT pg_advisory_xact_lock(hashtextextended(${`report:${report.keyId}`}, 0))`;
+    const existing = await tx<
+      { evidence_state: EvidenceState | null; routing_eligible: boolean }[]
+    >`SELECT evidence_state, routing_eligible FROM conditions.observations WHERE id = ${obs.id}`;
+    if (existing[0]) {
+      return {
+        observationId: obs.id,
+        evidenceState: existing[0].evidence_state,
+        routingEligible: existing[0].routing_eligible,
+        inserted: false,
+        kinematicFlagged: false,
+      };
+    }
+    const [lon, lat] = centroid(obs.geometry);
+    const admission = await checkReportRate(tx, report.keyId, lon, lat, ctx.now);
+    if (!admission.ok) throw new ReportRateLimitError(admission.reason!);
+
     const insertedRows = await tx<{ id: string }[]>`
       INSERT INTO conditions.observations (
         id, source, source_format, domain, kind, type,
@@ -150,7 +170,6 @@ async function landWithin(
     // The evidence row carries the report's coarse area cell so the per-(key,
     // cell) rate limiter can count on `details->>'cell'` without a geometry
     // join (the landing already has the geometry in hand here).
-    const [lon, lat] = centroid(obs.geometry);
     await tx`
       INSERT INTO conditions.report_evidence
         (observation_id, evidence_kind, actor_key_id, occurred_at, details)

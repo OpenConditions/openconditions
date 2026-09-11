@@ -158,9 +158,43 @@ export function setup(ctx: IntegrationContext): void {
             )
             .map((condition) => [condition.id as string, condition.routing_evidence!])
         );
+        const revisions = new Map(
+          fc.features.map((feature) => [
+            feature.properties?.id,
+            feature.properties?.observation_revision,
+          ])
+        );
         for (const event of events) {
           const evidence = byId.get(event.id);
-          if (evidence) event.routingEvidence = evidence;
+          if (evidence) {
+            if (
+              typeof revisions.get(event.id) !== "string" ||
+              revisions.get(event.id) !== evidence.observation_revision
+            ) {
+              if (requireComplete)
+                throw new Error(`Observation changed during routing read: ${event.id}`);
+              continue;
+            }
+            const spansAgree =
+              event.binding?.status === evidence.binding_status &&
+              event.segments?.length === evidence.segments.length &&
+              evidence.segments.every((span, i) => {
+                const projected = event.segments?.[i];
+                return (
+                  projected &&
+                  span.segment_id === `${projected.wayId}:${projected.dir}` &&
+                  span.direction === (projected.dir === "f" ? "forward" : "reverse") &&
+                  span.from_fraction === projected.startFraction &&
+                  span.to_fraction === projected.endFraction
+                );
+              });
+            if (!spansAgree) {
+              if (requireComplete)
+                throw new Error(`Binding changed during routing read: ${event.id}`);
+              continue;
+            }
+            event.routingEvidence = evidence;
+          }
         }
       } else if (requireComplete) {
         throw new Error("Incomplete routing evidence snapshot");

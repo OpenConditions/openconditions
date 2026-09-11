@@ -4,6 +4,7 @@ import {
   phenomenonFingerprint,
   validateObserved,
   type ConditionEvent,
+  type Measurement,
   type Observation,
   type PrivacyClass,
 } from "@openconditions/core";
@@ -57,6 +58,14 @@ const KNOWN_EVIDENCE_STATES: ReadonlySet<string> = new Set([
   "negated",
   "expired",
 ]);
+
+/** A permanent rejection of a peer's observation, distinct from local failures. */
+export class FederatedObservationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FederatedObservationError";
+  }
+}
 
 /**
  * Fields each writer kind must never carry inbound. For a feed row that is the
@@ -248,7 +257,7 @@ function requireRange(
 ): void {
   if (value === undefined) return;
   if (typeof value !== "number" || !Number.isFinite(value) || !ok(value)) {
-    throw new Error(
+    throw new FederatedObservationError(
       `federated observation ${id} carries ${field} ${JSON.stringify(value)} outside ${range}`
     );
   }
@@ -283,44 +292,125 @@ function normalizeFederatedObservation(
   obs: Observation,
   ctx: { instanceId: string; peerInstanceId: string }
 ): Observation {
+  for (const field of ["id", "source", "sourceFormat", "domain", "kind", "status"] as const) {
+    if (typeof obs[field] !== "string" || obs[field].length === 0) {
+      throw new FederatedObservationError(`federated observation requires a non-empty ${field}`);
+    }
+  }
+  if (obs.kind !== "event" && obs.kind !== "measurement") {
+    throw new FederatedObservationError(`federated observation ${obs.id} has an invalid kind`);
+  }
+  if (!["active", "inactive", "archived", "cancelled"].includes(obs.status)) {
+    throw new FederatedObservationError(`federated observation ${obs.id} has an invalid status`);
+  }
+  if (
+    obs.fuzziness !== undefined &&
+    !["exact", "low_res", "medium_res", "end_unknown", "start_unknown", "extent_unknown"].includes(
+      obs.fuzziness
+    )
+  ) {
+    throw new FederatedObservationError(`federated observation ${obs.id} has invalid fuzziness`);
+  }
+  for (const field of ["isStale", "isForecast"] as const) {
+    if (obs[field] !== undefined && typeof obs[field] !== "boolean") {
+      throw new FederatedObservationError(
+        `federated observation ${obs.id} requires boolean ${field}`
+      );
+    }
+  }
+  for (const field of ["replaces", "corroborations", "relatedIds"] as const) {
+    const value = obs[field];
+    if (
+      value !== undefined &&
+      (!Array.isArray(value) || !value.every((id) => typeof id === "string"))
+    ) {
+      throw new FederatedObservationError(
+        `federated observation ${obs.id} requires an array of ${field} ids`
+      );
+    }
+  }
   if (!obs.instanceId) {
-    throw new Error(
+    throw new FederatedObservationError(
       `federated observation ${obs.id} carries no instanceId — a peer must send ` +
         `fully-normalized published views`
     );
   }
   if (obs.instanceId !== ctx.peerInstanceId) {
-    throw new Error(
+    throw new FederatedObservationError(
       `federated observation ${obs.id} carries instanceId "${obs.instanceId}" but the ` +
         `authenticated peer is "${ctx.peerInstanceId}" — relaying another instance's ` +
         `events is not supported`
     );
   }
-  if (!obs.canonicalId) {
-    throw new Error(
+  if (typeof obs.canonicalId !== "string" || obs.canonicalId.length === 0) {
+    throw new FederatedObservationError(
       `federated observation ${obs.id} carries no canonicalId — a peer must send ` +
         `fully-normalized published views`
     );
   }
   if (obs.privacyClass === undefined || !KNOWN_PRIVACY_CLASSES.has(obs.privacyClass)) {
-    throw new Error(
+    throw new FederatedObservationError(
       `federated observation ${obs.id} carries privacyClass ` +
         `${JSON.stringify(obs.privacyClass)} which is not a known privacy class`
     );
   }
   if (obs.evidenceState !== undefined && !KNOWN_EVIDENCE_STATES.has(obs.evidenceState)) {
-    throw new Error(
+    throw new FederatedObservationError(
       `federated observation ${obs.id} carries evidenceState ` +
         `${JSON.stringify(obs.evidenceState)} which is not a known evidence state`
     );
   }
   if (obs.origin == null || (obs.origin.kind !== "feed" && obs.origin.kind !== "crowd")) {
-    throw new Error(`federated observation ${obs.id} carries no feed/crowd origin provenance`);
+    throw new FederatedObservationError(
+      `federated observation ${obs.id} carries no feed/crowd origin provenance`
+    );
   }
+  const wire: Record<string, unknown> = {
+    ...obs,
+    sourceUri: obs.sourceUri ?? obs.origin.attribution?.url,
+    sourceLicense: obs.sourceLicense ?? obs.origin.attribution?.license,
+  };
+  for (const field of [
+    "type",
+    "subtype",
+    "category",
+    "severity",
+    "severitySource",
+    "headline",
+    "description",
+    "label",
+    "metric",
+    "level",
+    "unit",
+    "aggregation",
+    "confidence",
+    "sourceUri",
+    "sourceLicense",
+  ]) {
+    if (wire[field] !== undefined && typeof wire[field] !== "string") {
+      throw new FederatedObservationError(
+        `federated observation ${obs.id} requires string ${field}`
+      );
+    }
+  }
+  requireRange(obs.id, "value", (obs as Measurement).value, () => true, "finite number");
   requireRange(obs.id, "confidenceScore", obs.confidenceScore, (v) => v >= 0 && v <= 1, "[0, 1]");
   requireRange(obs.id, "dpEpsilon", obs.dpEpsilon, (v) => v >= 0, "[0, ∞)");
   requireRange(obs.id, "dpDelta", obs.dpDelta, (v) => v >= 0 && v < 1, "[0, 1)");
-  requireRange(obs.id, "kAnonymity", obs.kAnonymity, (v) => v > 0, "(0, ∞)");
+  requireRange(
+    obs.id,
+    "kAnonymity",
+    obs.kAnonymity,
+    (v) => Number.isInteger(v) && v > 0 && v <= 2_147_483_647,
+    "positive 32-bit integer"
+  );
+  requireRange(
+    obs.id,
+    "severityLevel",
+    (obs as ConditionEvent).severityLevel,
+    (v) => Number.isInteger(v) && v >= 1 && v <= 5,
+    "integer [1, 5]"
+  );
 
   const next: Observation = { ...obs };
   // UNCONDITIONAL reporter strip: another instance's reporter identity is never

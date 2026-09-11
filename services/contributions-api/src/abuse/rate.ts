@@ -1,7 +1,14 @@
 import type postgres from "postgres";
 import { coarseCell } from "@openconditions/core";
 
-type Sql = postgres.Sql;
+type Sql = postgres.Sql | postgres.TransactionSql;
+
+export class ReportRateLimitError extends Error {
+  constructor(readonly reason: "per-key" | "per-key-cell") {
+    super("too many reports; slow down");
+    this.name = "ReportRateLimitError";
+  }
+}
 
 /** Ceilings for one key's landed reports inside a trailing window. */
 export interface RateRule {

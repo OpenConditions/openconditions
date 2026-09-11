@@ -5,7 +5,7 @@ import { toRow } from "../pipeline/write-postgis.js";
 
 // The write-normalization seam lives in @openconditions/normalize, but its
 // content_hash impact is only observable through this service's toRow (the ONE
-// content-hash implementation, which stays in @openconditions/ingest). These
+// content-hash implementation, now in AGPL @openconditions/storage). These
 // tests pin that the normalize → toRow coupling stays byte-stable: the golden
 // hash behavior must not drift when the seam moves packages.
 

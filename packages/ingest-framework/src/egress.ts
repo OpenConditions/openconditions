@@ -162,7 +162,7 @@ export async function assertResolvesToPublicIp(
 export interface FetchGuardOptions {
   /** Max response-body bytes (declared + streamed). Aborts mid-stream when exceeded. */
   maxBytes: number;
-  /** Per-attempt timeout applied via an AbortSignal. */
+  /** Total deadline for DNS, redirects, headers and response body consumption. */
   timeoutMs: number;
   /** Cap on redirect hops before giving up. */
   maxRedirects: number;
@@ -188,29 +188,79 @@ function redact(url: string): string {
   }
 }
 
-/** Wrap a response body in a stream that errors once the running byte total passes `maxBytes`. */
-function capBody(res: Response, maxBytes: number, url: string): Response {
-  const declared = res.headers.get("content-length");
-  if (declared) {
-    const n = Number(declared);
-    if (Number.isFinite(n) && n > maxBytes) {
-      void res.body?.cancel().catch(() => {});
-      throw new Error(`Content-Length ${n} exceeds max ${maxBytes} for ${redact(url)}`);
-    }
+/** Wait for an operation without letting an unresponsive DNS resolver or body outlive the deadline. */
+function withinDeadline<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
+  signal.throwIfAborted();
+  return new Promise<T>((resolve, reject) => {
+    const aborted = () => reject(signal.reason);
+    signal.addEventListener("abort", aborted, { once: true });
+    operation.then(resolve, reject).finally(() => signal.removeEventListener("abort", aborted));
+  });
+}
+
+/** Bound streamed bytes and retain the request deadline until consumption or cancellation. */
+function capBody(
+  res: Response,
+  maxBytes: number,
+  url: string,
+  signal: AbortSignal,
+  finish: (failed?: boolean) => void
+): Response {
+  const declared = Number(res.headers.get("content-length"));
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    void res.body?.cancel().catch(() => {});
+    throw new Error(`Content-Length ${declared} exceeds max ${maxBytes} for ${redact(url)}`);
   }
-  if (!res.body) return res;
+  if (!res.body) {
+    finish();
+    return res;
+  }
+  const reader = res.body.getReader();
   let seen = 0;
-  const limiter = new TransformStream<Uint8Array, Uint8Array>({
-    transform(chunk, controller) {
-      seen += chunk.byteLength;
-      if (seen > maxBytes) {
-        controller.error(new Error(`response body exceeded ${maxBytes} bytes for ${redact(url)}`));
-        return;
+  let done = false;
+  let abort: () => void;
+  const end = (failed = false) => {
+    done = true;
+    signal.removeEventListener("abort", abort);
+    finish(failed);
+  };
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      abort = () => {
+        if (done) return;
+        controller.error(signal.reason);
+        void reader.cancel(signal.reason).catch(() => {});
+        end(true);
+      };
+      signal.addEventListener("abort", abort, { once: true });
+      if (signal.aborted) abort();
+    },
+    async pull(controller) {
+      try {
+        const chunk = await withinDeadline(reader.read(), signal);
+        if (done) return;
+        if (chunk.done) {
+          controller.close();
+          end();
+          return;
+        }
+        seen += chunk.value.byteLength;
+        if (seen > maxBytes)
+          throw new Error(`response body exceeded ${maxBytes} bytes for ${redact(url)}`);
+        controller.enqueue(chunk.value);
+      } catch (error) {
+        if (done) return;
+        controller.error(error);
+        void reader.cancel(error).catch(() => {});
+        end(true);
       }
-      controller.enqueue(chunk);
+    },
+    cancel(reason) {
+      end(true);
+      void reader.cancel(reason).catch(() => {});
     },
   });
-  return new Response(res.body.pipeThrough(limiter), {
+  return new Response(body, {
     status: res.status,
     statusText: res.statusText,
     headers: res.headers,
@@ -238,7 +288,7 @@ type PinnedInit = RequestInit & { dispatcher?: unknown };
  * Wraps `baseFetch` with the egress guard: validates the URL (scheme +
  * private-range + DNS), follows redirects manually so every `Location` is
  * re-validated (feeds rely on 302s, so this is the real SSRF bypass), applies a
- * timeout AbortSignal per hop, and caps the streamed body size.
+ * single end-to-end timeout AbortSignal, and caps the streamed body size.
  *
  * The guard PINS the connection: it resolves+validates the hostname ONCE, then
  * dials exactly that address via a per-hop undici Agent whose `connect.lookup`
@@ -260,81 +310,100 @@ export function guardedFetch(
     let currentUrl = startUrl;
     let currentInit: RequestInit = { ...(init ?? {}) };
 
-    for (let hop = 0; hop <= opts.maxRedirects; hop++) {
-      assertPublicUrl(currentUrl, opts.allowedHosts);
-      const rawHost = new URL(currentUrl).hostname;
-      // `URL.hostname` keeps the brackets on an IPv6 literal (e.g. "[::1]"),
-      // which dns.lookup cannot parse; strip them for the DNS check, mirroring
-      // the bracket-strip assertPublicUrl already does.
-      const host =
-        rawHost.startsWith("[") && rawHost.endsWith("]") ? rawHost.slice(1, -1) : rawHost;
-      const allowPrivate = opts.allowedHosts?.has(host.toLowerCase()) ?? false;
-      const addrs = await resolvePublicIps(host, lookup, { allowPrivate });
-      const pinned = addrs[0]!;
-
-      // Per-hop dispatcher that dials the exact validated IP. `connect.lookup`
-      // receives the ORIGINAL hostname (so Host/SNI stay correct) but resolves
-      // it to the pinned address — no second, unchecked DNS resolution happens.
-      const agent = new Agent({
-        connect: {
-          lookup: (
-            _h: string,
-            _o: unknown,
-            cb: (e: Error | null, addrs: LookupAddress[]) => void
-          ) => cb(null, [{ address: pinned.address, family: pinned.family }]),
-          ...(connect.cert ? { cert: connect.cert, key: connect.key, ca: connect.ca } : {}),
-        },
-      });
-
-      const controller = new AbortController();
-      const timer = setTimeout(
-        () => controller.abort(new Error(`fetch timed out after ${opts.timeoutMs}ms`)),
-        opts.timeoutMs
-      );
-      let res: Response;
-      try {
-        res = await baseFetch(currentUrl, {
-          ...currentInit,
-          redirect: "manual",
-          signal: controller.signal,
-          dispatcher: agent,
-        } as PinnedInit);
-      } finally {
-        clearTimeout(timer);
+    const controller = new AbortController();
+    const callerSignal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
+    const signal = callerSignal
+      ? AbortSignal.any([controller.signal, callerSignal])
+      : controller.signal;
+    const timer = setTimeout(
+      () => controller.abort(new Error(`fetch timed out after ${opts.timeoutMs}ms`)),
+      opts.timeoutMs
+    );
+    timer.unref();
+    let agent: Agent | undefined;
+    const finish = (failed = false) => {
+      clearTimeout(timer);
+      if (agent) {
+        void (failed ? agent.destroy() : agent.close()).catch(() => {});
+        agent = undefined;
       }
+    };
+    try {
+      signal.throwIfAborted();
+      for (let hop = 0; hop <= opts.maxRedirects; hop++) {
+        assertPublicUrl(currentUrl, opts.allowedHosts);
+        const rawHost = new URL(currentUrl).hostname;
+        // `URL.hostname` keeps the brackets on an IPv6 literal (e.g. "[::1]"),
+        // which dns.lookup cannot parse; strip them for the DNS check, mirroring
+        // the bracket-strip assertPublicUrl already does.
+        const host =
+          rawHost.startsWith("[") && rawHost.endsWith("]") ? rawHost.slice(1, -1) : rawHost;
+        const allowPrivate = opts.allowedHosts?.has(host.toLowerCase()) ?? false;
+        const addrs = await withinDeadline(
+          resolvePublicIps(host, lookup, { allowPrivate }),
+          signal
+        );
+        const pinned = addrs[0]!;
 
-      if (REDIRECT_STATUSES.has(res.status)) {
-        const location = res.headers.get("location");
-        void res.body?.cancel().catch(() => {});
-        void agent.close().catch(() => {}); // this hop is done — release its socket
-        if (!location) {
-          throw new Error(`redirect ${res.status} without Location from ${redact(currentUrl)}`);
+        // Per-hop dispatcher that dials the exact validated IP. `connect.lookup`
+        // receives the ORIGINAL hostname (so Host/SNI stay correct) but resolves
+        // it to the pinned address — no second, unchecked DNS resolution happens.
+        agent = new Agent({
+          connect: {
+            lookup: (
+              _h: string,
+              _o: unknown,
+              cb: (e: Error | null, addrs: LookupAddress[]) => void
+            ) => cb(null, [{ address: pinned.address, family: pinned.family }]),
+            ...(connect.cert ? { cert: connect.cert, key: connect.key, ca: connect.ca } : {}),
+          },
+        });
+
+        const res = await withinDeadline(
+          baseFetch(currentUrl, {
+            ...currentInit,
+            redirect: "manual",
+            signal,
+            dispatcher: agent,
+          } as PinnedInit),
+          signal
+        );
+
+        if (REDIRECT_STATUSES.has(res.status)) {
+          const location = res.headers.get("location");
+          void res.body?.cancel().catch(() => {});
+          void agent.destroy().catch(() => {});
+          agent = undefined;
+          if (!location) {
+            throw new Error(`redirect ${res.status} without Location from ${redact(currentUrl)}`);
+          }
+          const next = new URL(location, currentUrl).toString();
+          // Re-validate the hop before the next iteration checks DNS. The allowlist
+          // is passed too, so a redirect to a NON-allowed private host is still rejected.
+          assertPublicUrl(next, opts.allowedHosts);
+          // A 303 downgrades to GET and drops the body; 307/308 preserve method + body.
+          if (res.status === 303) currentInit = { ...currentInit, method: "GET", body: undefined };
+          // Mirror browser redirect behavior: a cross-origin hop must not replay
+          // credentials the outer caller (e.g. makeAuthorizedFetch) injected for the
+          // ORIGINAL host onto a DIFFERENT host.
+          if (new URL(next).host !== new URL(currentUrl).host) {
+            const h = new Headers(currentInit.headers);
+            h.delete("authorization");
+            h.delete("cookie");
+            h.delete("proxy-authorization");
+            currentInit = { ...currentInit, headers: h };
+          }
+          currentUrl = next;
+          continue;
         }
-        const next = new URL(location, currentUrl).toString();
-        // Re-validate the hop before the next iteration checks DNS. The allowlist
-        // is passed too, so a redirect to a NON-allowed private host is still rejected.
-        assertPublicUrl(next, opts.allowedHosts);
-        // A 303 downgrades to GET and drops the body; 307/308 preserve method + body.
-        if (res.status === 303) currentInit = { ...currentInit, method: "GET", body: undefined };
-        // Mirror browser redirect behavior: a cross-origin hop must not replay
-        // credentials the outer caller (e.g. makeAuthorizedFetch) injected for the
-        // ORIGINAL host onto a DIFFERENT host.
-        if (new URL(next).host !== new URL(currentUrl).host) {
-          const h = new Headers(currentInit.headers);
-          h.delete("authorization");
-          h.delete("cookie");
-          h.delete("proxy-authorization");
-          currentInit = { ...currentInit, headers: h };
-        }
-        currentUrl = next;
-        continue;
+
+        return capBody(res, opts.maxBytes, currentUrl, signal, finish);
       }
-
-      // Final hop: do NOT close the agent here — its socket still carries the
-      // body being returned. Left to GC + undici's keepAliveTimeout.
-      return capBody(res, opts.maxBytes, currentUrl);
+      throw new Error(`too many redirects (>${opts.maxRedirects}) fetching ${redact(startUrl)}`);
+    } catch (error) {
+      finish(true);
+      throw error;
     }
-    throw new Error(`too many redirects (>${opts.maxRedirects}) fetching ${redact(startUrl)}`);
   }) as typeof fetch;
 }
 

@@ -104,6 +104,33 @@ async function readFlaggedAt(observationId: string): Promise<Date | null> {
 }
 
 describe("report rate limiting — per key across all cells", () => {
+  it("admits only ten concurrent reports and returns quota-full replays without new evidence", async () => {
+    currentNow = "2026-07-12T07:00:00.000Z";
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const responses = await Promise.all(
+      Array.from({ length: 16 }, (_, i) =>
+        report(key, grant, `parallel-key-${String(i).padStart(8, "0")}`, 4.9 + i * 0.02, 52.37)
+      )
+    );
+    expect(responses.filter((r) => r.statusCode === 200)).toHaveLength(10);
+    expect(
+      responses.filter((r) => r.statusCode === 429 && r.body["reason"] === "per-key")
+    ).toHaveLength(6);
+    const accepted = responses.findIndex((r) => r.statusCode === 200);
+    const replay = await report(
+      key,
+      grant,
+      `parallel-key-${String(accepted).padStart(8, "0")}`,
+      4.9 + accepted * 0.02,
+      52.37
+    );
+    expect(replay.statusCode).toBe(200);
+    const [evidence] = await sql<{ count: number }[]>`SELECT count(*)::int AS count
+      FROM conditions.report_evidence WHERE actor_key_id = ${key.keyId} AND evidence_kind = 'report'`;
+    expect(evidence?.count).toBe(10);
+  }, 120_000);
+
   it("accepts 10 reports spread across cells inside 60s and 429s the 11th", async () => {
     currentNow = "2026-07-12T08:00:00.000Z";
     const key = await generateReporterKey();
@@ -129,6 +156,27 @@ describe("report rate limiting — per key across all cells", () => {
 });
 
 describe("report rate limiting — per key per coarse cell", () => {
+  it("enforces concurrent cell quotas independently for different reporters", async () => {
+    currentNow = "2026-07-12T07:30:00.000Z";
+    const keys = await Promise.all([generateReporterKey(), generateReporterKey()]);
+    const grants = await Promise.all(keys.map(enroll));
+    const perKey = await Promise.all(
+      keys.map((key, index) =>
+        Promise.all(
+          Array.from({ length: 8 }, (_, i) =>
+            report(key, grants[index]!, `parallel-cell-${String(i).padStart(8, "0")}`, 4.9, 52.37)
+          )
+        )
+      )
+    );
+    for (const responses of perKey) {
+      expect(responses.filter((r) => r.statusCode === 200)).toHaveLength(4);
+      expect(
+        responses.filter((r) => r.statusCode === 429 && r.body["reason"] === "per-key-cell")
+      ).toHaveLength(4);
+    }
+  }, 120_000);
+
   it("429s the 5th report in ONE cell even though the per-key total is under the cap", async () => {
     currentNow = "2026-07-12T09:00:00.000Z";
     const key = await generateReporterKey();
@@ -289,8 +337,24 @@ describe("co-reporting monitoring view", () => {
   }, 30_000);
 
   it("ignores reports older than sinceIso", async () => {
+    for (const fp of ["old-cluster-1", "old-cluster-2", "old-cluster-3"]) {
+      await insertReportWithFingerprint(
+        `obs:${fp}:x`,
+        "old-cluster-x",
+        fp,
+        "2026-07-12T15:00:00.000Z"
+      );
+      await insertReportWithFingerprint(
+        `obs:${fp}:y`,
+        "old-cluster-y",
+        fp,
+        "2026-07-12T15:00:00.000Z"
+      );
+    }
+    const before = await coReportingClusters(sql, "2026-07-12T14:59:00.000Z");
+    expect(before.some((c) => c.keyA === "old-cluster-x" && c.keyB === "old-cluster-y")).toBe(true);
     const clusters = await coReportingClusters(sql, "2026-07-12T15:01:00.000Z");
-    expect(clusters.some((c) => c.keyA === "colluder-x")).toBe(false);
+    expect(clusters.some((c) => c.keyA === "old-cluster-x")).toBe(false);
   }, 30_000);
 
   it("is observability only: no accept/reject path imports it", () => {

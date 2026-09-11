@@ -103,6 +103,12 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
     headline: str(p.headline) ?? "",
     description: str(p.description),
     ...(Number.isFinite(delay) ? { delaySeconds: delay } : {}),
+    ...(typeof attrs.speedLimitKph === "number" &&
+    Number.isFinite(attrs.speedLimitKph) &&
+    attrs.speedLimitKph > 0
+      ? { speedLimitKph: attrs.speedLimitKph }
+      : {}),
+    ...(typeof p.is_stale === "boolean" ? { isStale: p.is_stale } : {}),
     roadState: attrs.roadState as RoadState | undefined,
     roads: attrs.roads as RoadConditionRoadRef[] | undefined,
     validFrom:

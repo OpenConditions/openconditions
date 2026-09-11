@@ -64,8 +64,14 @@ export function materializeApprovedCatalogChildren(feeds: FeedSourceBase[]): {
   const discovered: FeedSourceBase[] = [];
 
   for (const parent of feeds) {
+    // An atlas contains both parents and discovered child descriptors. A child
+    // is admitted only through its parent's explicit allowlist below, never
+    // simply because loading the atlas made it a top-level array entry.
+    if (parent.parentSourceId) continue;
     const approvedIds = parent.catalog?.approvedChildren;
-    if (!parent.catalog || !approvedIds || approvedIds.length === 0) {
+    // Omission leaves a parent-managed catalog (for example Autobahn) intact;
+    // an explicit empty allowlist revokes every child and must never enable fanout.
+    if (!parent.catalog || approvedIds === undefined) {
       scheduled.push(parent);
       continue;
     }
@@ -103,6 +109,15 @@ export function materializeApprovedCatalogChildren(feeds: FeedSourceBase[]): {
     }
     const approved = new Set(approvedIds);
     discovered.push(...snapshot.filter((child) => !approved.has(child.id)));
+  }
+
+  const scheduledIds = new Set(scheduled.map((feed) => feed.id));
+  const discoveredIds = new Set(discovered.map((feed) => feed.id));
+  for (const child of feeds) {
+    if (!child.parentSourceId || scheduledIds.has(child.id) || discoveredIds.has(child.id))
+      continue;
+    discovered.push(child);
+    discoveredIds.add(child.id);
   }
 
   const ids = scheduled.map((feed) => feed.id);

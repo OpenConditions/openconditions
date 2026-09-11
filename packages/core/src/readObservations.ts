@@ -1,3 +1,4 @@
+import { BINDING_JOIN_SQL, BINDING_SELECT_SQL } from "./observation-query.js";
 import type { Geometry } from "geojson";
 import { dedupeAcrossSources } from "./crossSourceDedupe.js";
 import type {
@@ -9,7 +10,7 @@ import type {
   Provenance,
   SegmentSpan,
 } from "./model.js";
-import type { ObservationsByBboxOpts, QueryRunner } from "./observationsByBbox.js";
+import type { QueryRunner } from "./observationsByBbox.js";
 import { severityRank } from "./severity.js";
 
 const SEVERITY_RANK_SQL =
@@ -19,19 +20,6 @@ const SEVERITY_RANK_SQL =
 // join rather than the row's own stale_after/fetched_at.
 const IS_STALE_SQL =
   "(ss.last_success_at IS NULL OR ss.last_success_at + make_interval(secs => ss.freshness_window_sec) < now())";
-
-// Optional binding projection, mirroring observationsByBbox's (kept per-file
-// like the SQL fragments above, since neither is part of the package surface).
-// Spliced in only for `includeBindings`, so the default query is unchanged.
-const BINDING_SELECT_SQL =
-  ", b.status AS binding_status, b.confidence AS binding_confidence, b.direction_mode AS binding_direction_mode, seg.segments AS segments";
-
-const BINDING_JOIN_SQL = `
-    LEFT JOIN conditions.observation_binding b ON b.observation_id = o.id
-    LEFT JOIN LATERAL (
-      SELECT jsonb_agg(jsonb_build_object('segmentId', s.segment_id, 'wayId', s.way_id, 'dir', s.dir,
-                       'startFraction', s.start_fraction, 'endFraction', s.end_fraction) ORDER BY s.seq) AS segments
-      FROM conditions.observation_segment s WHERE s.observation_id = o.id) seg ON true`;
 
 /** A `conditions.observations` row as selected by {@link readObservations};
  *  exported (with {@link rowToObservation}) so other readers of the same row
@@ -75,6 +63,20 @@ export interface ObservationRow {
   is_stale: boolean;
   evidence_state: string | null;
   routing_eligible: boolean | null;
+  instance_id?: string | null;
+  canonical_id?: string | null;
+  phenomenon_fingerprint?: string | null;
+  replaces?: string[] | null;
+  corroborations?: string[] | null;
+  fuzziness?: Observation["fuzziness"] | null;
+  confidence_score?: number | null;
+  severity_level?: number | null;
+  privacy_class?: Observation["privacyClass"] | null;
+  k_anonymity?: number | null;
+  dp_epsilon?: number | null;
+  dp_delta?: number | null;
+  source_uri?: string | null;
+  source_license?: string | null;
   // Only selected when `includeBindings` is set; absent otherwise.
   binding_status?: BindingStatus | null;
   binding_confidence?: number | null;
@@ -104,6 +106,21 @@ export function rowToObservation(row: ObservationRow): Observation {
     expiresAt: iso(row.expires_at) ?? undefined,
     isStale: row.is_stale,
     origin: row.origin,
+    ...(row.instance_id != null ? { instanceId: row.instance_id } : {}),
+    ...(row.canonical_id != null ? { canonicalId: row.canonical_id } : {}),
+    ...(row.phenomenon_fingerprint != null
+      ? { phenomenonFingerprint: row.phenomenon_fingerprint }
+      : {}),
+    ...(row.replaces != null ? { replaces: row.replaces } : {}),
+    ...(row.corroborations != null ? { corroborations: row.corroborations } : {}),
+    ...(row.fuzziness != null ? { fuzziness: row.fuzziness } : {}),
+    ...(row.confidence_score != null ? { confidenceScore: row.confidence_score } : {}),
+    ...(row.privacy_class != null ? { privacyClass: row.privacy_class } : {}),
+    ...(row.k_anonymity != null ? { kAnonymity: row.k_anonymity } : {}),
+    ...(row.dp_epsilon != null ? { dpEpsilon: row.dp_epsilon } : {}),
+    ...(row.dp_delta != null ? { dpDelta: row.dp_delta } : {}),
+    ...(row.source_uri != null ? { sourceUri: row.source_uri } : {}),
+    ...(row.source_license != null ? { sourceLicense: row.source_license } : {}),
     ...(row.subject ? { subject: row.subject } : {}),
     ...(row.informed ? { informed: row.informed } : {}),
     ...(row.label != null ? { label: row.label } : {}),
@@ -151,6 +168,7 @@ export function rowToObservation(row: ObservationRow): Observation {
           subtype: row.subtype ?? undefined,
           category: (row.category ?? "conditions") as ConditionEvent["category"],
           severity: (row.severity ?? "unknown") as ConditionEvent["severity"],
+          ...(row.severity_level != null ? { severityLevel: row.severity_level } : {}),
           // NULL -> "derived" is safe only under the conjunct discriminator
           // (type==='congestion' AND severitySource==='derived'); severitySource
           // alone is stamped by nearly every severity-derivation path and must
@@ -161,26 +179,43 @@ export function rowToObservation(row: ObservationRow): Observation {
         };
   // Domain-specific fields (roads/roadState/direction/isPlanned/lanesAffected, …)
   // live in `attributes`; spread them back onto the reconstructed model.
-  return { ...base, ...specific, ...(row.attributes ?? {}) } as Observation;
+  return { ...(row.attributes ?? {}), ...base, ...specific } as Observation;
 }
 
-/**
- * Reads observations within a bounding box as the canonical `Observation[]`
- * model (the inverse of the ingest write), for emitters that project from the
- * model (TraFF, GeoJSON, JSON-LD). Same domain/bbox/type/severity + validity
- * filters as {@link observationsByBbox}.
- */
+/** A bounded display read, or an explicitly complete routing read. */
+export interface ReadObservationsOptions {
+  domain?: string;
+  bbox: [number, number, number, number];
+  types?: string[];
+  minSeverity?: string;
+  kind?: string;
+  horizonDays?: number;
+  dedupe?: boolean;
+  requireComplete?: boolean;
+  routingEligibleOnly?: boolean;
+  includeBindings?: boolean;
+  excludedSourceIds?: string[];
+}
+
+const OBSERVATION_SELECT_SQL = `
+  o.id, o.source, o.source_format, o.domain, o.kind, o.type, o.subtype, o.category,
+  o.severity, o.severity_source, o.headline, o.description, o.label,
+  o.metric, o.value, o.level, o.unit, o.aggregation,
+  o.status, o.valid_from, o.valid_to, o.data_updated_at, o.fetched_at, o.expires_at,
+  o.schedule, o.confidence, o.is_forecast, o.related_ids,
+  o.attributes, o.subject, o.informed, o.origin,
+  o.evidence_state, o.routing_eligible,
+  o.instance_id, o.canonical_id, o.phenomenon_fingerprint, o.replaces, o.corroborations,
+  o.fuzziness, o.confidence_score, o.severity_level, o.privacy_class,
+  o.k_anonymity, o.dp_epsilon, o.dp_delta, o.source_uri, o.source_license,
+  ST_AsGeoJSON(o.geom) AS geojson`;
+
 export async function readObservations(
   db: QueryRunner,
-  opts: Omit<ObservationsByBboxOpts, "domain"> & { domain?: string }
+  opts: ReadObservationsOptions
 ): Promise<Observation[]> {
   const { domain, bbox, types, minSeverity, horizonDays } = opts;
   const [west, south, east, north] = bbox;
-
-  // The GTFS-RT alerts export reads across ALL domains (a road-domain event can
-  // carry transit selectors), so `domain` is optional here; the emitter's
-  // selector gate decides what belongs in the feed. Every other caller passes a
-  // domain and gets the same single-domain filter as before.
   const params: unknown[] = [west, south, east, north];
   const clauses = [
     "o.geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)",
@@ -192,6 +227,10 @@ export async function readObservations(
     params.push(domain);
     clauses.push(`o.domain = $${params.length}`);
   }
+  if (opts.kind != null) {
+    params.push(opts.kind);
+    clauses.push(`o.kind = $${params.length}`);
+  }
   if (Array.isArray(types) && types.length > 0) {
     params.push(types);
     clauses.push(`o.type = ANY($${params.length}::text[])`);
@@ -200,36 +239,84 @@ export async function readObservations(
     params.push(severityRank(minSeverity));
     clauses.push(`${SEVERITY_RANK_SQL} >= $${params.length}`);
   }
-  // Same predicate as observationsByBbox: a NULL valid_from is already in
-  // effect, so the horizon only ever excludes announced future starts.
   if (horizonDays != null) {
     params.push(horizonDays);
     clauses.push(
       `(o.valid_from IS NULL OR o.valid_from <= now() + make_interval(days => $${params.length}))`
     );
   }
-
-  const bindingSelect = opts.includeBindings === true ? BINDING_SELECT_SQL : "";
-  const bindingJoin = opts.includeBindings === true ? BINDING_JOIN_SQL : "";
-
+  if (opts.excludedSourceIds?.length) {
+    params.push(opts.excludedSourceIds);
+    const p = `$${params.length}`;
+    clauses.push(`o.source <> ALL(${p}::text[])`);
+    clauses.push(
+      `COALESCE(o.attributes->>'parentSourceId', o.origin#>>'{attribution,parentSourceId}', '') <> ALL(${p}::text[])`
+    );
+    clauses.push(`NOT EXISTS (
+      SELECT 1 FROM jsonb_array_elements_text(
+        COALESCE(o.attributes->'policyIds', o.origin#>'{attribution,policyIds}', '[]'::jsonb)
+      ) policy_id WHERE policy_id = ANY(${p}::text[]))`);
+  }
+  if (opts.routingEligibleOnly) {
+    clauses.push(
+      "NOT (o.origin->>'kind' = 'crowd' AND COALESCE(o.routing_eligible, false) IS NOT TRUE)"
+    );
+  }
+  const bindingSelect = opts.includeBindings ? BINDING_SELECT_SQL : "";
+  const bindingJoin = opts.includeBindings ? BINDING_JOIN_SQL : "";
   const query = `
-    SELECT
-      o.id, o.source, o.source_format, o.domain, o.kind, o.type, o.subtype, o.category,
-      o.severity, o.severity_source, o.headline, o.description, o.label,
-      o.metric, o.value, o.level, o.unit, o.aggregation,
-      o.status, o.valid_from, o.valid_to, o.data_updated_at, o.fetched_at, o.expires_at,
-      o.schedule, o.confidence, o.is_forecast, o.related_ids,
-      o.attributes, o.subject, o.informed, o.origin,
-      o.evidence_state, o.routing_eligible,
-      ST_AsGeoJSON(o.geom) AS geojson,
-      ${IS_STALE_SQL} AS is_stale${bindingSelect}
+    SELECT ${OBSERVATION_SELECT_SQL}, ${IS_STALE_SQL} AS is_stale${bindingSelect}
     FROM conditions.observations o
     LEFT JOIN conditions.source_status ss ON ss.source = o.source${bindingJoin}
     WHERE ${clauses.join(" AND ")}
-    ORDER BY ${SEVERITY_RANK_SQL} DESC
-    LIMIT 2000`;
-
-  const rows = (await db.execute<ObservationRow[]>(query, params)) ?? [];
+    ORDER BY ${SEVERITY_RANK_SQL} DESC, o.id
+    LIMIT ${opts.requireComplete ? 100001 : 2000}`;
+  const result = await db.execute<ObservationRow[]>(query, params);
+  if (opts.requireComplete && !Array.isArray(result)) {
+    throw new Error("Complete observation query unavailable");
+  }
+  const rows = result ?? [];
+  if (opts.requireComplete && rows.length > 100000) {
+    throw new Error("Complete observation query exceeds routing limit");
+  }
   const observations = rows.map(rowToObservation);
-  return opts.dedupe === false ? observations : dedupeAcrossSources(observations);
+  return opts.requireComplete || opts.dedupe === false
+    ? observations
+    : dedupeAcrossSources(observations);
+}
+
+/** Complete keyset scan for exports. The caller must supply a repeatable-read
+ * transaction so membership/content stay fixed across pages. No display dedupe:
+ * every retained observation keeps its own source identity and provenance. */
+export async function* scanObservations(
+  db: QueryRunner,
+  opts: { asOf: string; pageSize?: number }
+): AsyncGenerator<Observation[], void> {
+  const pageSize = opts.pageSize ?? 1000;
+  if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 10000) {
+    throw new RangeError("Observation scan page size must be an integer from 1 to 10000");
+  }
+  if (!Number.isFinite(Date.parse(opts.asOf)))
+    throw new TypeError("Invalid observation scan cutoff");
+  let after: string | null = null;
+  for (;;) {
+    const rows: ObservationRow[] = await db.execute<ObservationRow[]>(
+      `
+      SELECT ${OBSERVATION_SELECT_SQL}, ${IS_STALE_SQL} AS is_stale
+      FROM conditions.observations o
+      LEFT JOIN conditions.source_status ss ON ss.source = o.source
+      WHERE o.status = 'active'
+        AND (o.valid_to IS NULL OR o.valid_to > $1::timestamptz)
+        AND (o.expires_at IS NULL OR o.expires_at > $1::timestamptz)
+        AND ($2::text IS NULL OR o.id > $2::text)
+      ORDER BY o.id
+      LIMIT $3`,
+      [opts.asOf, after, pageSize]
+    );
+    if (!Array.isArray(rows)) throw new Error("Complete observation scan unavailable");
+    if (rows.length === 0) return;
+    yield rows.map(rowToObservation);
+    after = rows[rows.length - 1]!.id;
+    if (rows.length < pageSize) return;
+  }
 }

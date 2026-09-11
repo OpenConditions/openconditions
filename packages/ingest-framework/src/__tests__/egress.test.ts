@@ -358,3 +358,47 @@ describe("boundedGunzip", () => {
     expect(out.toString("utf8")).toBe("hello world");
   });
 });
+
+describe("guardedFetch lifetime", () => {
+  const lookup = async () => [{ address: "93.184.216.34", family: 4 }];
+  const options = { maxBytes: 1000, timeoutMs: 25, maxRedirects: 3 };
+
+  it("times out stalled DNS before opening a connection", async () => {
+    const base = vi.fn();
+    await expect(
+      guardedFetch(base, options, {}, () => new Promise(() => {}))("https://example.test/feed")
+    ).rejects.toThrow(/timed out/);
+    expect(base).not.toHaveBeenCalled();
+  });
+
+  it("cancels a body that stalls after successful headers and permits the next fetch", async () => {
+    const cancel = vi.fn();
+    let calls = 0;
+    const base = (async () =>
+      ++calls === 1
+        ? new Response(new ReadableStream({ cancel }))
+        : new Response("recovered")) as typeof fetch;
+    const fetch = guardedFetch(base, options, {}, lookup);
+    const res = await fetch("https://example.test/feed");
+    await expect(res.text()).rejects.toThrow(/timed out/);
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(await (await fetch("https://example.test/feed")).text()).toBe("recovered");
+  });
+
+  it("preserves caller cancellation after headers", async () => {
+    const caller = new AbortController();
+    const cancel = vi.fn();
+    const base = (async () => new Response(new ReadableStream({ cancel }))) as typeof fetch;
+    const res = await guardedFetch(
+      base,
+      options,
+      {},
+      lookup
+    )("https://example.test/feed", {
+      signal: caller.signal,
+    });
+    caller.abort(new Error("caller stopped"));
+    await expect(res.text()).rejects.toThrow("caller stopped");
+    expect(cancel).toHaveBeenCalledOnce();
+  });
+});

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type postgres from "postgres";
 import type { LookupFn } from "@openconditions/ingest-framework";
 import type { DomainFeedSource } from "../pipeline/run.js";
@@ -8,9 +8,9 @@ import { runSource } from "../pipeline/run.js";
 const noSwapSql = Object.assign(
   ((..._args: unknown[]) => Promise.resolve([])) as unknown as Record<string, unknown>,
   {
-    begin: async () => {
+    begin: vi.fn(async () => {
       throw new Error("atomicSwap opened a transaction for a blocked feed");
-    },
+    }),
   }
 ) as unknown as postgres.Sql;
 
@@ -32,8 +32,7 @@ function blockedFeed(url: string): DomainFeedSource {
 
 describe("runSource egress guard", () => {
   it("blocks a feed pointing at the metadata IP and preserves last-good (no swap)", async () => {
-    const upstream = (async () =>
-      new Response("secret", { status: 200 })) as unknown as typeof fetch;
+    const upstream = vi.fn(async () => new Response("secret", { status: 200 }));
     const res = await runSource(blockedFeed("http://169.254.169.254/latest/meta-data"), {
       sql: noSwapSql,
       fetch: upstream,
@@ -41,6 +40,9 @@ describe("runSource egress guard", () => {
       openlrClient: null,
     });
     expect(res.count).toBe(0);
+    expect(res.error).toMatch(/internal\/private/);
+    expect(upstream).not.toHaveBeenCalled();
+    expect(noSwapSql.begin).not.toHaveBeenCalled();
   });
 
   it("uses an injected lookup instead of performing a real DNS resolution", async () => {

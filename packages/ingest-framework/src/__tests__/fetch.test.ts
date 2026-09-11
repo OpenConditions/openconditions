@@ -125,13 +125,14 @@ describe("fetchAll — offset pagination", () => {
     expect(calls).toHaveLength(1);
   });
 
-  it("caps at maxPages when the source never returns a short page", async () => {
+  it("rejects an incomplete snapshot at maxPages", async () => {
     const { fetchFn, calls } = pagedODataFetch([500, 500, 500, 500, 500]);
-    const bufs = await fetchBuffers(
-      pagedFeed({ pagination: { skipParam: "$skip", pageSize: 500, maxPages: 2 } }),
-      fetchFn
-    );
-    expect(bufs).toHaveLength(2);
+    await expect(
+      fetchBuffers(
+        pagedFeed({ pagination: { skipParam: "$skip", pageSize: 500, maxPages: 2 } }),
+        fetchFn
+      )
+    ).rejects.toThrow(/maxPages/);
     expect(calls).toHaveLength(2);
   });
 });
@@ -478,6 +479,7 @@ describe("fetchAll — fanoutTolerant static url arrays", () => {
     }) as unknown as typeof fetch;
 
     const first = await fetchAll(feed, fetchFn, { state });
+    if (first.status === "fetched") first.accept();
     expect(first.status).toBe("fetched");
     const second = await fetchAll(feed, fetchFn, { state });
     expect(second).toMatchObject({ status: "not-modified", validatedAtNetwork: true });
@@ -611,6 +613,7 @@ describe("fetchAll — conditional GET", () => {
     }) as unknown as typeof fetch;
 
     const first = await fetchAll(feed, fetchFn, { state });
+    if (first.status === "fetched") first.accept();
     expect(first.status).toBe("fetched");
     expect(first.status === "fetched" && first.buffers[0]!.toString()).toBe("payload-v1");
 
@@ -632,8 +635,9 @@ describe("fetchAll — conditional GET", () => {
       })) as unknown as typeof fetch;
 
     const res = await fetchAll(feed, fetchFn, { state });
+    if (res.status === "fetched") res.accept();
     expect(res.status).toBe("fetched");
-    const entry = state.conditional.get(url);
+    const entry = state.conditional.get(`${feed.id}\0${url}`);
     expect(entry?.etag).toBe('W/"v1"'); // validators kept → conditional GET still works
     expect(entry?.buffer).toBeUndefined(); // body NOT retained
   });
@@ -657,9 +661,10 @@ describe("fetchAll — conditional GET", () => {
     }) as unknown as typeof fetch;
 
     const first = await fetchAll(feed, fetchFn, { state });
+    if (first.status === "fetched") first.accept();
     expect(first.status).toBe("fetched");
-    expect(state.conditional.get(a)?.buffer?.toString()).toBe(`${a}-v1`); // both retained (multi-url)
-    expect(state.conditional.get(b)?.buffer?.toString()).toBe(`${b}-v1`);
+    expect(state.conditional.get(`${feed.id}\0${a}`)?.buffer?.toString()).toBe(`${a}-v1`); // both retained (multi-url)
+    expect(state.conditional.get(`${feed.id}\0${b}`)?.buffer?.toString()).toBe(`${b}-v1`);
 
     round = 1;
     const second = await fetchAll(feed, fetchFn, { state });
@@ -681,6 +686,7 @@ describe("fetchAll — fetchIntervalSec gating", () => {
     }) as unknown as typeof fetch;
 
     const first = await fetchAll(feed, fetchFn, { state, now: () => clock });
+    if (first.status === "fetched") first.accept();
     expect(first.status).toBe("fetched");
     expect(call).toBe(1);
 
@@ -734,5 +740,63 @@ describe("fetchAll — operational outcomes", () => {
       validatedAtNetwork: false,
       partitions: { succeeded: 1, failed: 1, total: 2 },
     });
+  });
+});
+
+describe("snapshot acceptance", () => {
+  it.each([{}, { value: null }, { value: {} }])(
+    "rejects a malformed terminal collection: %j",
+    async (terminal) => {
+      let page = 0;
+      const fetch = (async () =>
+        new Response(
+          JSON.stringify(++page === 1 ? { value: [{}] } : terminal)
+        )) as typeof globalThis.fetch;
+      await expect(
+        fetchAll(
+          makeFeed({
+            id: "malformed-page",
+            url: "https://pages.test/data",
+            pagination: { skipParam: "offset", pageSize: 1 },
+          }),
+          fetch
+        )
+      ).rejects.toThrow(/pagination/);
+    }
+  );
+
+  it("does not publish validators for an unaccepted mixed 200/304 snapshot", async () => {
+    const state = createFetchState();
+    const feed = makeFeed({
+      id: "accept-mixed",
+      url: ["https://accept.test/a", "https://accept.test/b"],
+    });
+    let revision = 1;
+    const seen: Array<[string, string | null]> = [];
+    const fetch = (async (url, init) => {
+      const tag = new Headers(init?.headers).get("if-none-match");
+      seen.push([String(url), tag]);
+      const current = String(url).endsWith("/a") ? "1" : String(revision);
+      return tag === current
+        ? new Response(null, { status: 304 })
+        : new Response(current, { headers: { etag: current } });
+    }) as typeof globalThis.fetch;
+    const first = await fetchAll(feed, fetch, { state });
+    if (first.status !== "fetched") throw new Error("expected first snapshot");
+    expect(state.conditional.size).toBe(0);
+    first.accept();
+    revision = 2;
+    const failed = await fetchAll(feed, fetch, { state });
+    expect(failed.status).toBe("fetched");
+    // Publication fails: the caller intentionally does not accept this result.
+    const retry = await fetchAll(feed, fetch, { state });
+    expect(seen.slice(-2)).toEqual([
+      ["https://accept.test/a", "1"],
+      ["https://accept.test/b", "1"],
+    ]);
+    if (retry.status !== "fetched") throw new Error("expected retry snapshot");
+    expect(retry.buffers.map(String)).toEqual(["1", "2"]);
+    retry.accept();
+    expect((await fetchAll(feed, fetch, { state })).status).toBe("not-modified");
   });
 });

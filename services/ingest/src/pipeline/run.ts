@@ -111,19 +111,25 @@ export interface DomainFeedSource extends FeedSource {
   domain: string;
 }
 
-const grantState = (value: boolean | null): "yes" | "no" | "unknown" =>
+const grantState = (value: boolean | null | undefined): "yes" | "no" | "unknown" =>
   value == null ? "unknown" : value ? "yes" : "no";
 
 /** Stamps the concrete feed/child grant at the ingestion boundary so later
  * dedupe and projections never have to reconstruct child ownership by id. */
 export function stampSourceEvidence<T extends Observation>(obs: T, src: DomainFeedSource): T {
-  if (obs.origin.kind !== "feed" || !src.rights) return obs;
+  if (obs.origin.kind !== "feed") return obs;
   return {
     ...obs,
     origin: {
       ...obs.origin,
       attribution: {
         ...obs.origin.attribution,
+        provider: src.attribution,
+        license: src.license,
+        url: src.licenseUrl ?? obs.origin.attribution?.url,
+        parentSourceId: undefined,
+        childSourceId: undefined,
+        policyIds: src.policyIds,
         ...(src.parentSourceId
           ? {
               parentSourceId: src.parentSourceId,
@@ -132,14 +138,14 @@ export function stampSourceEvidence<T extends Observation>(obs: T, src: DomainFe
             }
           : {}),
         rights: {
-          source_redistribution: grantState(src.rights.sourceRedistribution),
-          derived_redistribution: grantState(src.rights.derivedRedistribution),
-          commercial_use: grantState(src.rights.commercialUse),
-          attribution_required: grantState(src.rights.attributionRequired),
-          retention: grantState(src.rights.retention),
-          evidence_origin: src.rights.evidenceOrigin ?? null,
-          evidence_version: src.rights.evidenceVersion ?? null,
-          reviewed_at: src.rights.reviewedAt ?? null,
+          source_redistribution: grantState(src.rights?.sourceRedistribution),
+          derived_redistribution: grantState(src.rights?.derivedRedistribution),
+          commercial_use: grantState(src.rights?.commercialUse),
+          attribution_required: grantState(src.rights?.attributionRequired),
+          retention: grantState(src.rights?.retention),
+          evidence_origin: src.rights?.evidenceOrigin ?? null,
+          evidence_version: src.rights?.evidenceVersion ?? null,
+          reviewed_at: src.rights?.reviewedAt ?? null,
         },
       },
     },
@@ -369,6 +375,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     }
   }
 
+  let acceptFetch: (() => void) | undefined;
   let parsed: (Observation | UnresolvedRoadEvent)[];
   let snapshotInspection: ReturnType<typeof inspectSnapshotCompleteness> | undefined;
   if (isStreamingFlowFeed(src)) {
@@ -426,6 +433,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
         });
         return { count: 0, durationMs: Date.now() - start, outcome: "partial", error };
       }
+      acceptFetch = result.accept;
       buffers = result.buffers;
       snapshotInspection = inspectSnapshotCompleteness(src, buffers);
     } catch (err) {
@@ -554,12 +562,14 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       freshnessWindowSec: src.freshnessWindowSec,
       outcome: "failed",
       attemptAt,
-      networkValidated: true,
+      networkValidated: false,
       durationMs: Date.now() - start,
       error,
     });
     return { count: 0, durationMs: Date.now() - start, outcome: "failed", error };
   }
+
+  acceptFetch?.();
 
   if (src.produces === "flow") {
     // Append this cycle's speeds to the rolling per-sensor history (the raw

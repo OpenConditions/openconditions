@@ -75,21 +75,6 @@ export function histogramPercentileKph(sql: Sql, frac: number) {
              * ${SPEED_BIN_WIDTH_KPH} + ${SPEED_BIN_WIDTH_KPH / 2}`;
 }
 
-/** The bin a speed falls in, clamped into range. Mirrors the SQL in `rollupSpeedSamples`. */
-export function binForSpeed(kph: number): number {
-  const bin = Math.floor(kph / SPEED_BIN_WIDTH_KPH);
-  if (!Number.isFinite(bin) || bin < 0) return 0;
-  return Math.min(SPEED_BIN_COUNT - 1, bin);
-}
-
-/**
- * The speed a bin represents: its MIDPOINT, which is the least-biased estimate
- * for a value known only to lie within the bin.
- */
-export function kphForBin(bin: number): number {
-  return bin * SPEED_BIN_WIDTH_KPH + SPEED_BIN_WIDTH_KPH / 2;
-}
-
 export interface RollupResult {
   /** Hours of raw data aggregated. */
   hours: number;

@@ -5,13 +5,10 @@ import { runMigrations } from "@openconditions/core/server";
 import { BASELINE_WINDOW_DAYS, deriveBaselines } from "../pipeline/baseline-derive.js";
 import { SEGMENT_PROFILE_WINDOW_DAYS } from "../pipeline/segment-profile.js";
 import {
-  binForSpeed,
   HOURLY_RETENTION_DAYS,
-  kphForBin,
   pruneHourlyRollup,
   pruneRawSamples,
   rollupSpeedSamples,
-  SPEED_BIN_COUNT,
   SPEED_BIN_WIDTH_KPH,
 } from "../pipeline/speed-rollup.js";
 
@@ -60,27 +57,21 @@ afterAll(async () => {
   await containerStop?.();
 }, 30_000);
 
-describe("bin mapping", () => {
-  it("maps a speed to its bin and back to the bin midpoint", () => {
-    expect(binForSpeed(0)).toBe(0);
-    expect(binForSpeed(1.9)).toBe(0);
-    expect(binForSpeed(2)).toBe(1);
-    expect(binForSpeed(93)).toBe(46);
-    expect(kphForBin(46)).toBe(93);
-    // The midpoint is never more than half a bin from any speed in that bin.
-    for (const kph of [0.5, 37.2, 93.4, 180.9]) {
-      expect(Math.abs(kphForBin(binForSpeed(kph)) - kph)).toBeLessThanOrEqual(
-        SPEED_BIN_WIDTH_KPH / 2
-      );
-    }
-  });
-
-  it("clamps out-of-range speeds into the end bins instead of dropping them", () => {
-    // A bad reading should skew an estimate slightly, never silently vanish from
-    // the sample count.
-    expect(binForSpeed(-5)).toBe(0);
-    expect(binForSpeed(1e6)).toBe(SPEED_BIN_COUNT - 1);
-    expect(binForSpeed(Number.NaN)).toBe(0);
+describe("persisted histogram bin boundaries", () => {
+  it("retains every sample, floors boundaries, and clamps into the documented end bins", async () => {
+    const hour = hoursAgo(5);
+    await seedSamples("boundary:sql", [-5, 0, 1.9, 2, 93, 255.9, 256, 1e6], hour);
+    await rollupSpeedSamples(sql);
+    const [row] = await sql<
+      { sample_count: number; speed_bins: number[]; speed_counts: number[] }[]
+    >`
+      SELECT sample_count, speed_bins, speed_counts FROM conditions.sensor_speed_hourly
+      WHERE sensor_key = 'boundary:sql' AND hour_utc = ${hour}`;
+    expect(row).toMatchObject({
+      sample_count: 8,
+      speed_bins: [0, 1, 46, 127],
+      speed_counts: [3, 1, 1, 3],
+    });
   });
 });
 

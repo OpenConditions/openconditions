@@ -1,227 +1,493 @@
 [
   {
-    "id": "wzdx-oklahoma",
+    "id": "us-wzdx-bc2a79eda520c2d9",
     "name": "WZDx — Oklahoma DOT (oklahoma)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "bc2a79eda520c2d9",
     "url": "https://oktraffic.org/api/Geojsons/workzones?&access_token=feOPynfHRJ5sdx8tf3IN5yOsGz89TAUuzHsN3V0jo1Fg41LcpoLhIRltaTPmDngD",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Oklahoma DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-bc2a79eda520c2d9"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-utah",
+    "id": "us-wzdx-3bbdeede647cb1d3",
     "name": "WZDx — Utah DOT (utah)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "3bbdeede647cb1d3",
     "url": "https://udottraffic.utah.gov/wzdx/udot/v40/data",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Utah DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-3bbdeede647cb1d3"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-iowa",
+    "id": "us-wzdx-80f9ce9830b1b3cd",
     "name": "WZDx — Iowa DOT (iowa)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "80f9ce9830b1b3cd",
     "url": "https://iowa-atms.cloud-q-free.com/api/rest/dataprism/wzdx/wzdxfeed",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Iowa DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-80f9ce9830b1b3cd"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-florida",
+    "id": "us-wzdx-2ca8786df7b87bd2",
     "name": "WZDx — Florida DOT (florida)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "2ca8786df7b87bd2",
     "url": "https://us-datacloud.one.network/fdot/feed.json?app_key=c4090b04-26de-c9ee-873b2bd9a38c",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Florida DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-2ca8786df7b87bd2"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-minnesota",
+    "id": "us-wzdx-3c80d1115e4be5a7",
     "name": "WZDx — Minnesota DOT (minnesota)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "3c80d1115e4be5a7",
     "url": "https://mn.carsprogram.org/carsapi_v1/api/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Minnesota DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-3c80d1115e4be5a7"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-maryland",
+    "id": "us-wzdx-c1421db3e5cd2ebf",
     "name": "WZDx — Maryland DOT (maryland)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "c1421db3e5cd2ebf",
     "url": "https://filter.ritis.org/wzdx_v4.1/mdot.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Maryland DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-c1421db3e5cd2ebf"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-missouri",
+    "id": "us-wzdx-acad1adfe0ce4075",
     "name": "WZDx — Missouri DOT (missouri)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "acad1adfe0ce4075",
     "url": "https://traveler.modot.org/timconfig/feed/desktop/mo_wzdx.json",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Missouri DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-acad1adfe0ce4075"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-arizona",
+    "id": "us-wzdx-d863f1f7d976968f",
     "name": "WZDx — Maricopa County DOT (arizona)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "d863f1f7d976968f",
     "url": "https://wzdxapi.aztech.org/construction",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Maricopa County DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-d863f1f7d976968f"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-wisconsin",
+    "id": "us-wzdx-51e508db5ef42c5e",
     "name": "WZDx — Wisconsin DOT (wisconsin)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "51e508db5ef42c5e",
     "url": "https://511wi.gov/api/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Wisconsin DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-51e508db5ef42c5e"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-new-mexico",
+    "id": "us-wzdx-f29380f77502b8d2",
     "name": "WZDx — New Mexico DOT (new mexico)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "f29380f77502b8d2",
     "url": "https://ai.blyncsy.io/wzdx/nmdot/feed",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "New Mexico DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-f29380f77502b8d2"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-hawaii",
+    "id": "us-wzdx-f6ef7e235f145144",
     "name": "WZDx — Hawaii DOT (hawaii)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "f6ef7e235f145144",
     "url": "https://ai.blyncsy.io/wzdx/hidot/feed",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Hawaii DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-f6ef7e235f145144"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-new-york",
+    "id": "us-wzdx-159a484f7bdf80b1",
     "name": "WZDx — New York DOT (new york)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "159a484f7bdf80b1",
     "url": "https://511ny.org/api/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "New York DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-159a484f7bdf80b1"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-washington",
+    "id": "us-wzdx-3586d042d6855f24",
     "name": "WZDx — Washington State DOT (washington)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "3586d042d6855f24",
     "url": "https://wzdx.wsdot.wa.gov/api/v4/WorkZoneFeed",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Washington State DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-3586d042d6855f24"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-missouri-2",
+    "id": "us-wzdx-d7633b3852f44c44",
     "name": "WZDx — St. Charles County (missouri)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "d7633b3852f44c44",
     "url": "https://scc.ridsi-dash.com:5000/wzdx.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "St. Charles County",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-d7633b3852f44c44"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-new-jersey",
+    "id": "us-wzdx-e59bcc8615abf686",
     "name": "WZDx — New Jersey Institute of Technology (new jersey)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "e59bcc8615abf686",
     "url": "https://smartworkzones.njit.edu/nj/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "New Jersey Institute of Technology",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-e59bcc8615abf686"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-kentucky",
+    "id": "us-wzdx-d16873081377dbe4",
     "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "d16873081377dbe4",
     "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Kentucky Transportation Cabinet",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
-  },
-  {
-    "id": "wzdx-kansas",
-    "name": "WZDx — Kansas DOT (kansas)",
-    "operator": "wzdx",
-    "format": "wzdx",
-    "url": "https://ks.carsprogram.org/carsapi_v1/api/wzdx",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "CC0-1.0",
-    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
-    "attribution": "Kansas DOT",
-    "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
-    "policyIds": ["us-wzdx", "wzdx-kansas"],
+    "policyIds": ["us-wzdx", "us-wzdx-d16873081377dbe4"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
+  },
+  {
+    "id": "us-wzdx-fe9b3423ea03546f",
+    "name": "WZDx — Kansas DOT (kansas)",
+    "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "fe9b3423ea03546f",
+    "url": "https://ks.carsprogram.org/carsapi_v1/api/wzdx",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-fe9b3423ea03546f"],
     "selectionState": "approved",
     "rights": {
       "sourceRedistribution": true,
@@ -234,180 +500,394 @@
       "evidenceOrigin": "Kansas WZDx road_event_feed_info.license",
       "evidenceVersion": "CC0-1.0"
     },
-    "snapshot": { "completeness": "complete", "recordsPath": "features" }
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "attribution": "Kansas DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
-    "id": "wzdx-texas",
+    "id": "us-wzdx-9a127fccb3792eaa",
     "name": "WZDx — City of Austin (texas)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "9a127fccb3792eaa",
     "url": "https://data.austintexas.gov/download/d9mm-cjw9",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "City of Austin",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-9a127fccb3792eaa"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-n-a",
+    "id": "us-wzdx-914cf87008410abe",
     "name": "WZDx — Quebec City (n/a)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "914cf87008410abe",
     "url": "https://quebec.gewi.com/wzdx/pull",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Quebec City",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-914cf87008410abe"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-delaware",
+    "id": "us-wzdx-7945221f406463df",
     "name": "WZDx — Delaware DOT (delaware)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "7945221f406463df",
     "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Delaware DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-7945221f406463df"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-louisiana",
+    "id": "us-wzdx-d121834a77dfe583",
     "name": "WZDx — Louisiana DOTD (louisiana)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "d121834a77dfe583",
     "url": "https://wzdx.e-dot.com/la_dot_d_feed_wzdx_v4.1.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Louisiana DOTD",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-d121834a77dfe583"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-idaho",
+    "id": "us-wzdx-5c8f02944c0a6210",
     "name": "WZDx — Idaho DOT (idaho)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "5c8f02944c0a6210",
     "url": "https://511.idaho.gov/api/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Idaho DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-5c8f02944c0a6210"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-indiana",
+    "id": "us-wzdx-2b048f33ed9fb59e",
     "name": "WZDx — Indiana DOT (indiana)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "2b048f33ed9fb59e",
     "url": "https://in.carsprogram.org/carsapi_v1/api/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Indiana DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-2b048f33ed9fb59e"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-n-a-2",
+    "id": "us-wzdx-d9233a18b703f5a2",
     "name": "WZDx — CivicLink (n/a)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "d9233a18b703f5a2",
     "url": "https://road-connect-community-bry7272.replit.app/api/wzdx/work-zones.geojson",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "CivicLink",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-d9233a18b703f5a2"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-michigan",
+    "id": "us-wzdx-190f47cabfec450d",
     "name": "WZDx — Michigan DOT (michigan)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "190f47cabfec450d",
     "url": "https://mdotridedata.state.mi.us//api/v1/organization/michigan_department_of_transportation/dataset/work_zone_information/query?limit=200&_format=json",
+    "auth": {
+      "kind": "none"
+    },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Michigan DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
-    "auth": {
-      "kind": "none"
-    },
     "setup": {
       "WZDX_MICHIGAN_API_KEY": {
-        "title": "WZDx — Michigan DOT (michigan) — API key",
-        "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one."
+        "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one.",
+        "title": "WZDx — Michigan DOT (michigan) — API key"
       }
+    },
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-190f47cabfec450d"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
     }
   },
   {
-    "id": "wzdx-new-hampshire-vermont-maine",
+    "id": "us-wzdx-697dcbb13cf06e6d",
     "name": "WZDx — NHDOT/VTAOT/MEDOT (New Hampshire, Vermont, Maine)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "697dcbb13cf06e6d",
     "url": "https://api.dx.ne-compass.com/wzdx-latest/",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "NHDOT/VTAOT/MEDOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-697dcbb13cf06e6d"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-north-carolina",
+    "id": "us-wzdx-747cf39185dd5bc0",
     "name": "WZDx — North Carolina DOT (north carolina)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "747cf39185dd5bc0",
     "url": "https://drivenc.gov/api/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "North Carolina DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-747cf39185dd5bc0"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   },
   {
-    "id": "wzdx-oregon",
+    "id": "us-wzdx-6b29effa79d8e709",
     "name": "WZDx — Oregon DOT (oregon)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "6b29effa79d8e709",
     "url": "https://api.odot.state.or.us/WZDx/v4.0/Workzones",
+    "auth": {
+      "kind": "none"
+    },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Oregon DOT",
     "country": "US",
     "privacyUrl": "https://www.transportation.gov/privacy",
-    "auth": {
-      "kind": "none"
-    },
     "setup": {
       "WZDX_OREGON_API_KEY": {
-        "title": "WZDx — Oregon DOT (oregon) — API key",
-        "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one."
+        "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one.",
+        "title": "WZDx — Oregon DOT (oregon) — API key"
       }
+    },
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-6b29effa79d8e709"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
     }
   },
   {
-    "id": "wzdx-mississippi",
+    "id": "us-wzdx-7f7eac273a6af057",
     "name": "WZDx — Mississippi DOT (mississippi)",
-    "operator": "wzdx",
     "format": "wzdx",
+    "operator": "wzdx",
+    "stream": "7f7eac273a6af057",
     "url": "https://api.mdottraffic.com/prod/v3/data/wzdx",
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
     "license": "UNKNOWN",
     "attribution": "Mississippi DOT",
     "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy"
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "parentSourceId": "us-wzdx",
+    "policyIds": ["us-wzdx", "us-wzdx-7f7eac273a6af057"],
+    "selectionState": "discovered",
+    "rights": {
+      "sourceRedistribution": null,
+      "derivedRedistribution": null,
+      "commercialUse": null,
+      "attributionRequired": null,
+      "retention": null,
+      "evidenceOrigin": "WZDx registry metadata (no dataset grant verified)",
+      "evidenceVersion": "wzdx-registry-2026-09-11"
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    }
   }
 ]

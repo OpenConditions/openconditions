@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { wzdxRegistryResolver } from "../wzdx.js";
+import { roadFeedSchema } from "../../feed-schema.js";
 
 const REGISTRY = path.resolve(import.meta.dirname, "../../__tests__/fixtures/wzdx/registry.json");
 
@@ -42,9 +43,12 @@ describe("wzdxRegistryResolver", () => {
       expect(f.license).toBe("UNKNOWN");
       expect(f.selectionState).toBe("discovered");
       expect(f.rights?.sourceRedistribution).toBeNull();
-      expect(f.id.startsWith("wzdx-")).toBe(true);
+      expect(f.id.startsWith("us-wzdx-")).toBe(true);
     }
     expect(new Set(feeds.map((f) => f.id)).size).toBe(feeds.length); // unique ids
+    expect(feeds.map((feed) => roadFeedSchema.parse(JSON.parse(JSON.stringify(feed))))).toEqual(
+      feeds
+    );
   });
 
   it("admits Kansas under its verified child grant without relabelling other children", async () => {
@@ -72,11 +76,11 @@ describe("wzdxRegistryResolver", () => {
     );
 
     expect(kansas).toMatchObject({
-      id: "wzdx-kansas",
+      id: "us-wzdx-fe9b3423ea03546f",
       license: "CC0-1.0",
       selectionState: "approved",
       parentSourceId: "us-wzdx",
-      policyIds: ["us-wzdx", "wzdx-kansas"],
+      policyIds: ["us-wzdx", "us-wzdx-fe9b3423ea03546f"],
       rights: {
         sourceRedistribution: true,
         derivedRedistribution: true,
@@ -85,6 +89,39 @@ describe("wzdxRegistryResolver", () => {
       },
     });
     expect(washington).toMatchObject({ license: "UNKNOWN", selectionState: "discovered" });
+  });
+
+  it("keeps child identity stable across registry order and label changes without transferring grants", async () => {
+    const rows = [
+      {
+        active: true,
+        format: "geojson",
+        version: "4.2",
+        state: "Kansas",
+        url: "https://example.test/other-kansas",
+      },
+      {
+        active: true,
+        format: "geojson",
+        version: "4.2",
+        state: "Kansas",
+        url: "https://ks.carsprogram.org/carsapi_v1/api/wzdx",
+      },
+    ];
+    const first = await wzdxRegistryResolver.resolve(jsonResponder(rows));
+    const second = await wzdxRegistryResolver.resolve(
+      jsonResponder(
+        [...rows].reverse().map((row) => ({ ...row, state: "KS", feedname: "Renamed" }))
+      )
+    );
+    expect(Object.fromEntries(first.map((feed) => [String(feed.url), feed.id]))).toEqual(
+      Object.fromEntries(second.map((feed) => [String(feed.url), feed.id]))
+    );
+    expect(first[0]).toMatchObject({ license: "UNKNOWN", selectionState: "discovered" });
+    expect(first[1]).toMatchObject({ license: "CC0-1.0", selectionState: "approved" });
+    expect(
+      second.filter((feed) => feed.selectionState === "approved").map((feed) => feed.url)
+    ).toEqual(["https://ks.carsprogram.org/carsapi_v1/api/wzdx"]);
   });
 
   it("drops inactive / non-v4 / other-format and empty/placeholder-key rows", async () => {

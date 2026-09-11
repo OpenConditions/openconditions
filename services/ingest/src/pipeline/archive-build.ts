@@ -1,7 +1,9 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rename, rm, stat } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { fileWriter } from "hyparquet-writer";
 import path from "node:path";
-import { readObservations } from "@openconditions/core";
-import { dailyGeoParquet } from "@openconditions/publishers";
+import { scanObservations } from "@openconditions/core";
+import { writeDailyGeoParquet } from "@openconditions/publishers";
 import type postgres from "postgres";
 
 type Sql = postgres.Sql;
@@ -9,13 +11,6 @@ type Sql = postgres.Sql;
 /** Where dated archive files land when no dir is configured. Deliberately a
  * local path — object storage / S3 upload is operator infra, not wired here. */
 const DEFAULT_ARCHIVE_DIR = "./data/archive";
-
-/** Whole-planet bbox: the archive is the global published view, not bbox-scoped. */
-const WORLD_BBOX: [number, number, number, number] = [-180, -90, 180, 90];
-
-/** Mirrors `readObservations`' internal `LIMIT`; a full read here means the
- * archive is silently truncated and needs a paged read (documented follow-up). */
-const READ_LIMIT = 2000;
 
 export interface ArchiveBuildDeps {
   /** Injectable clock; defaults to the real wall clock (runtime, not pure). */
@@ -36,7 +31,7 @@ function resolveOutputDir(override?: string): string {
 }
 
 /** Adapt postgres-js to the QueryRunner (`execute`) interface the readers expect. */
-function runner(sql: Sql) {
+function runner(sql: Sql | postgres.TransactionSql) {
   return {
     async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
       const rows = p ? await sql.unsafe(q, p as never[]) : await sql.unsafe(q);
@@ -49,8 +44,8 @@ function runner(sql: Sql) {
  * Builds the nightly static archive — the mirrorable GeoParquet snapshot of the
  * published view across all domains, written to a dated file in the archive dir.
  *
- * `readObservations` already SQL-filters to the active, in-validity, unexpired
- * view; `dailyGeoParquet` then re-applies the authoritative published-view
+ * A repeatable-read transaction pages the active, in-validity, unexpired
+ * view; the streaming GeoParquet writer re-applies the authoritative published-view
  * filter (license, tombstone, expiry, privacy tier, crowd-identity strip), so
  * the artifact can never carry raw crowd evidence, probe staging, expired, or
  * tombstoned rows.
@@ -67,21 +62,20 @@ export async function buildDailyArchive(
   const dir = resolveOutputDir(deps.outputDir);
   const outPath = path.join(dir, `archive-${nowIso.slice(0, 10)}.parquet`);
 
-  const obs = await readObservations(runner(sql), { bbox: WORLD_BBOX });
-  if (obs.length >= READ_LIMIT) {
-    console.warn(
-      `[archive] read returned the ${READ_LIMIT}-row cap — the archive is likely truncated; a paged read is needed`
-    );
-  }
-  const buffer = await dailyGeoParquet(obs, nowIso);
-
+  const temporaryPath = `${outPath}.${randomUUID()}.tmp`;
   try {
     await mkdir(dir, { recursive: true });
-    await writeFile(outPath, buffer);
+    const writer = fileWriter(temporaryPath);
+    await sql.begin("isolation level repeatable read read only", async (tx) => {
+      await writeDailyGeoParquet(scanObservations(runner(tx), { asOf: nowIso }), nowIso, writer);
+    });
+    const { size: bytes } = await stat(temporaryPath);
+    await rename(temporaryPath, outPath);
+    console.info(`[archive] wrote ${outPath} (${bytes} bytes)`);
+    return { path: outPath, bytes };
   } catch (err) {
+    await rm(temporaryPath, { force: true }).catch(() => {});
     console.error(`[archive] failed to write ${outPath}`, err);
     return null;
   }
-  console.info(`[archive] wrote ${outPath} (${buffer.byteLength} bytes)`);
-  return { path: outPath, bytes: buffer.byteLength };
 }

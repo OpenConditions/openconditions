@@ -197,6 +197,27 @@
       "when": 1789126957750,
       "tag": "0027_binding_currency",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1789157357867,
+      "tag": "0028_segment_flow_function",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1789157372760,
+      "tag": "0029_tombstone_reason_escalation",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1789157396341,
+      "tag": "0030_source_poll_retention",
+      "breakpoints": true
     }
   ]
 }

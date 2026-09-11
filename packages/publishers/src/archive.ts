@@ -1,6 +1,6 @@
 import type { GeoJsonGeometry, Observation, PrivacyClass } from "@openconditions/core";
-import type { ColumnSource } from "hyparquet-writer";
-import { geojsonToWkb, parquetWriteBuffer } from "hyparquet-writer";
+import type { ColumnSource, Writer } from "hyparquet-writer";
+import { geojsonToWkb, parquetWriteBuffer, parquetWriteRows } from "hyparquet-writer";
 import { filterForPermissiveExport } from "./license.js";
 
 /**
@@ -37,6 +37,8 @@ export interface ArchiveRow {
   fuzziness: string | null;
   sourceLicense: string | null;
   instanceId: string | null;
+  canonicalId: string | null;
+  sourceUri: string | null;
   /** "feed" | "crowd" — the surviving `origin.kind`, never the reporter block. */
   originKind: string;
   attributionProvider: string;
@@ -92,6 +94,8 @@ function toRow(o: Observation): ArchiveRow {
     fuzziness: o.fuzziness ?? null,
     sourceLicense: o.sourceLicense ?? null,
     instanceId: o.instanceId ?? null,
+    canonicalId: o.canonicalId ?? null,
+    sourceUri: o.sourceUri ?? null,
     // Only `origin.kind` survives — `origin.reporter` (keyId/signature/
     // reputation) is never read here. `filterForPermissiveExport` already
     // stripped it upstream for every public projection; this flattening is
@@ -183,6 +187,8 @@ const COLUMN_SPECS: ColumnSpec[] = [
   { name: "fuzziness", type: "STRING", nullable: true, get: (r) => r.fuzziness },
   { name: "sourceLicense", type: "STRING", nullable: true, get: (r) => r.sourceLicense },
   { name: "instanceId", type: "STRING", nullable: true, get: (r) => r.instanceId },
+  { name: "canonicalId", type: "STRING", nullable: true, get: (r) => r.canonicalId },
+  { name: "sourceUri", type: "STRING", nullable: true, get: (r) => r.sourceUri },
   { name: "originKind", type: "STRING", get: (r) => r.originKind },
   { name: "attributionProvider", type: "STRING", get: (r) => r.attributionProvider },
   { name: "attributionLicense", type: "STRING", get: (r) => r.attributionLicense },
@@ -215,4 +221,33 @@ export async function dailyGeoParquet(obs: Observation[], now: string): Promise<
     kvMetadata: [{ key: "geo", value: JSON.stringify(geoMetadata(rows)) }],
   });
   return new Uint8Array(buffer);
+}
+
+/** Write a complete published archive one bounded row group at a time. The
+ * caller supplies the sink and a consistent paged observation snapshot. */
+export async function writeDailyGeoParquet(
+  pages: AsyncIterable<Observation[]>,
+  now: string,
+  writer: Writer
+): Promise<void> {
+  async function* rows(): AsyncGenerator<Record<string, unknown>> {
+    for await (const page of pages) {
+      for (const row of toPublishedArchiveRows(page, now)) {
+        yield Object.fromEntries(COLUMN_SPECS.map((spec) => [spec.name, spec.get(row)]));
+      }
+    }
+  }
+  await parquetWriteRows({
+    writer,
+    rows: rows(),
+    columns: COLUMN_SPECS.map((spec) => ({
+      name: spec.name,
+      type: spec.type,
+      nullable: spec.nullable ?? false,
+    })),
+    rowGroupSize: 1000,
+    // An empty geometry_types list is GeoParquet's explicit unknown/any type;
+    // determining every type up front would require buffering the whole export.
+    kvMetadata: [{ key: "geo", value: JSON.stringify(geoMetadata([])) }],
+  });
 }

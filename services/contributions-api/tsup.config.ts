@@ -11,10 +11,9 @@ import { defineConfig } from "tsup";
 const coreDrizzle = fileURLToPath(new URL("../../packages/core/drizzle", import.meta.url));
 const bundledDrizzle = fileURLToPath(new URL("./dist/drizzle", import.meta.url));
 
-// The federation ingest entry pulls the ingest pipeline's toRow, whose domain
-// dispatch inlines @openconditions/roads INCLUDING its module-level feed-file
-// load. Copy the feed data next to the bundle (same pattern as the ingest
-// service) so the inlined resolveFeedsDir() finds it at ./feeds/roads.
+// Domain attribute projection and evidence policies inline @openconditions/roads,
+// whose package entry still loads feed data. Keep its runtime data beside the
+// bundle so resolveFeedsDir() finds ./feeds/roads.
 const roadsFeeds = fileURLToPath(new URL("../../packages/roads/feeds/roads", import.meta.url));
 const bundledFeeds = fileURLToPath(new URL("./dist/feeds/roads", import.meta.url));
 

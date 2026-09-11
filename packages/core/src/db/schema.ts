@@ -232,8 +232,8 @@ export const sourceStatus = conditionsSchema.table("source_status", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-/** Bounded operational audit trail. Rows are pruned by the status writer after
- * every attempt; source_status remains the current authority used by routing. */
+/** Bounded operational audit trail. A separate scheduled task prunes old rows;
+ * source_status remains the current authority used by routing. */
 export const sourcePollAttempt = conditionsSchema.table(
   "source_poll_attempt",
   {
@@ -255,7 +255,10 @@ export const sourcePollAttempt = conditionsSchema.table(
     partitionsTotal: integer("partitions_total"),
     error: text("error"),
   },
-  (t) => [index("idx_source_poll_attempt_source_time").on(t.source, t.attemptedAt)]
+  (t) => [
+    index("idx_source_poll_attempt_source_time").on(t.source, t.attemptedAt),
+    index("idx_source_poll_attempt_time").on(t.attemptedAt, t.id),
+  ]
 );
 
 /**

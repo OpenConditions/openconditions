@@ -303,6 +303,116 @@ describe("bindEvent", () => {
     expect(["exact", "likely"]).toContain(r.status);
   });
 
+  it.each([
+    { from: 0.002, to: 0.008, status: "exact", direction: "f" },
+    { from: 0.008, to: 0.002, status: "unresolved", direction: undefined },
+  ])(
+    "respects same-segment one-way endpoint order: $from → $to",
+    ({ from, to, status, direction }) => {
+      const r = bindEvent(
+        toBindInput({
+          id: "same-way",
+          type: "road_closure",
+          roads: [{ ref: "A46" }],
+          geometry: {
+            type: "MultiPoint",
+            coordinates: [
+              [from, 0],
+              [to, 0],
+            ],
+          },
+        }),
+        {
+          segments: [
+            seg(
+              "10:f",
+              [
+                [0, 0],
+                [0.01, 0],
+              ],
+              { lengthM: 1112 }
+            ),
+          ],
+        }
+      );
+      expect(r.status).toBe(status);
+      expect(r.segments.map((s) => s.dir)).toEqual(direction ? [direction] : []);
+      if (direction) {
+        expect(r.segments[0]!.startFraction).toBeCloseTo(0.2);
+        expect(r.segments[0]!.endFraction).toBeCloseTo(0.8);
+      } else {
+        expect(r.reason).toBe("no_path");
+      }
+    }
+  );
+
+  it.each([
+    { from: 0.002, to: 0.008, direction: "f" },
+    { from: 0.008, to: 0.002, direction: "b" },
+  ])(
+    "chooses the correct directed twin for same-way endpoints: $from → $to",
+    ({ from, to, direction }) => {
+      const r = bindEvent(
+        toBindInput({
+          id: "same-way-twins",
+          type: "road_closure",
+          roads: [{ ref: "A46" }],
+          geometry: {
+            type: "MultiPoint",
+            coordinates: [
+              [from, 0],
+              [to, 0],
+            ],
+          },
+        }),
+        {
+          segments: [
+            seg(
+              "10:f",
+              [
+                [0, 0],
+                [0.01, 0],
+              ],
+              { lengthM: 1112 }
+            ),
+            seg(
+              "10:b",
+              [
+                [0.01, 0],
+                [0, 0],
+              ],
+              { lengthM: 1112 }
+            ),
+          ],
+        }
+      );
+      expect(r.status).toBe("exact");
+      expect(r.directionMode).toBe("single");
+      expect(r.segments.map((s) => s.dir)).toEqual([direction]);
+    }
+  );
+
+  it("treats coincident endpoints as a point without inventing travel direction", () => {
+    const r = bindEvent(
+      toBindInput({
+        id: "coincident",
+        type: "road_closure",
+        roads: [{ ref: "B9" }],
+        geometry: {
+          type: "MultiPoint",
+          coordinates: [
+            [6.815, 51.197],
+            [6.815, 51.197],
+          ],
+        },
+      }),
+      { segments: B }
+    );
+    expect(r.directionMode).toBe("both");
+    expect(r.segments.map((s) => s.dir).sort()).toEqual(["b", "f"]);
+    for (const s of r.segments) expect(s.startFraction).toBe(s.endFraction);
+  });
+
   it("a point on a bidirectional way binds both directions", () => {
     const r = bindEvent(
       toBindInput({

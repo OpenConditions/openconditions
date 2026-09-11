@@ -1,7 +1,7 @@
 {
   "name": "@openconditions/contributions-api",
   "version": "0.1.0",
-  "description": "OpenConditions contributions service — crowd report intake and evidence-state recompute",
+  "description": "OpenConditions contributions service \u2014 crowd report intake and evidence-state recompute",
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "private": true,
@@ -26,12 +26,12 @@
     "@cloudflare/privacypass-ts": "0.9.0",
     "@openconditions/contrib-core": "workspace:*",
     "@openconditions/core": "workspace:*",
-    "@openconditions/ingest": "workspace:*",
     "@openconditions/normalize": "workspace:*",
     "@openconditions/roads": "workspace:*",
     "fastify": "^5.12.1",
     "postgres": "^3.4.9",
-    "undici": "^8.10.0"
+    "undici": "^8.10.0",
+    "@openconditions/storage": "workspace:*"
   },
   "devDependencies": {
     "@openconditions/publishers": "workspace:*",

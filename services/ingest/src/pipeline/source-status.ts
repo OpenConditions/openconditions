@@ -200,8 +200,33 @@ export async function upsertSourceStatus(
         ELSE conditions.source_status.last_error_at END,
       updated_at = now()
   `;
+}
 
-  await sql`DELETE FROM conditions.source_poll_attempt WHERE attempted_at < now() - interval '8 days'`;
+/** Prune one bounded batch independently of source publication transactions.
+ * Skip locked rows so concurrent maintenance workers never wait on each other. */
+export async function pruneSourcePollAttempts(
+  sql: Sql,
+  options: { now?: string; batchSize?: number } = {}
+): Promise<{ deleted: number }> {
+  const batchSize = options.batchSize ?? 10_000;
+  if (!Number.isInteger(batchSize) || batchSize < 1 || batchSize > 10_000) {
+    throw new RangeError("source-poll retention batchSize must be an integer from 1 to 10000");
+  }
+  const now = new Date(options.now ?? new Date().toISOString());
+  const cutoff = new Date(now.getTime() - 8 * 86_400_000).toISOString();
+  const rows = await sql<{ id: string }[]>`
+    WITH expired AS (
+      SELECT id FROM conditions.source_poll_attempt
+      WHERE attempted_at < ${cutoff}::timestamptz
+      ORDER BY attempted_at, id
+      LIMIT ${batchSize}
+      FOR UPDATE SKIP LOCKED
+    )
+    DELETE FROM conditions.source_poll_attempt attempt
+    USING expired WHERE attempt.id = expired.id
+    RETURNING attempt.id
+  `;
+  return { deleted: rows.length };
 }
 
 export async function getLastRowCount(sql: Sql, sourceId: string): Promise<number | null> {

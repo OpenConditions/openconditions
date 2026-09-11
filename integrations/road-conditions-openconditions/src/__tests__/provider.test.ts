@@ -130,20 +130,41 @@ describe("road-conditions-openconditions provider", () => {
       reason_codes: [],
       evaluated_at: "2026-09-11T10:00:00.000Z",
     };
-    const { ctx, registered } = makeCtx([fakeRow], {
-      fetchByUrl: (url) =>
-        url.endsWith("/segments/conditions.json")
-          ? {
-              schema_version: 1,
-              complete: true,
-              resolver_version: "resolver-1",
-              conditions: [{ id: "evt-001", routing_evidence: evidence }],
-            }
-          : undefined,
-    });
+    const { ctx, registered } = makeCtx(
+      [
+        {
+          ...fakeRow,
+          content_hash: "rev-1",
+          binding_status: "exact",
+          segments: [{ segmentId: "1:f", wayId: 1, dir: "f", startFraction: 0, endFraction: 1 }],
+        },
+      ],
+      {
+        fetchByUrl: (url) =>
+          url.endsWith("/segments/conditions.json")
+            ? {
+                schema_version: 1,
+                complete: true,
+                resolver_version: "resolver-1",
+                conditions: [{ id: "evt-001", routing_evidence: evidence }],
+              }
+            : undefined,
+      }
+    );
     setup(ctx);
     const events = await registered[0]!.getEvents([4, 51, 6, 53]);
     expect(events[0]?.routingEvidence).toEqual(evidence);
+    evidence.segments[0]!.segment_id = "2:f";
+    await expect(registered[0]!.getRoutingEvents!([4, 51, 6, 53])).rejects.toThrow(
+      /Binding changed/
+    );
+    evidence.segments[0]!.segment_id = "1:f";
+    evidence.observation_revision = "new-body";
+    evidence.binding_revision = "new-body";
+    expect((await registered[0]!.getEvents([4, 51, 6, 53]))[0]?.routingEvidence).toBeUndefined();
+    await expect(registered[0]!.getRoutingEvents!([4, 51, 6, 53])).rejects.toThrow(
+      /changed during routing read/
+    );
   });
 
   it("maps bounded operational status and graph evidence", async () => {

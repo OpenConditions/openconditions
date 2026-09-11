@@ -52,6 +52,11 @@ beforeEach(() => {
 });
 
 describe("mergeFeedsById", () => {
+  it("rejects duplicates within a layer instead of silently keeping its last descriptor", () => {
+    expect(() => mergeFeedsById([[feed("a", "first"), feed("a", "second")]])).toThrow(
+      /duplicate feed id.*a/
+    );
+  });
   it("lets later layers override earlier by id and appends new ids", () => {
     const merged = mergeFeedsById([
       [feed("a", "baked-a"), feed("b", "baked-b")],
@@ -63,6 +68,13 @@ describe("mergeFeedsById", () => {
 });
 
 describe("loadFeeds", () => {
+  it.each(["baked", "mounted"])("rejects duplicate identities in the %s layer", async (layer) => {
+    const dir = layer === "baked" ? baked : mount;
+    writeFileSync(join(dir, "duplicates.json5"), bundle(feed("a", "first"), feed("a", "second")));
+    await expect(loadFeeds({ domain: "test", bakedInDir: baked, mountDir: mount })).rejects.toThrow(
+      /duplicate feed id.*a/
+    );
+  });
   it("merges baked-in + mounted with mounted winning; a mounted-only feed is added", async () => {
     writeFeed(baked, feed("a", "baked-a"));
     writeFeed(baked, feed("b", "baked-b"));
@@ -133,6 +145,36 @@ function bundle(...feeds: FeedSourceBase[]): string {
 }
 
 describe("loadFeeds remote-pull", () => {
+  it("rejects a duplicate remote layer without overwriting the last-good snapshot", async () => {
+    const snapshotPath = join(mount, "snap.json");
+    const original = bundle(feed("r", "last-good"));
+    writeFileSync(snapshotPath, original);
+    const feeds = await loadFeeds(
+      {
+        domain: "test",
+        bakedInDir: baked,
+        remote: { url: REMOTE_URL, enabled: true, snapshotPath },
+      },
+      { remoteFetch: async () => new Response(bundle(feed("r", "first"), feed("r", "second"))) }
+    );
+    expect(feeds.map((feed) => feed.name)).toEqual(["last-good"]);
+    expect(readFileSync(snapshotPath, "utf8")).toBe(original);
+  });
+
+  it("rejects duplicate identities in a fallback snapshot", async () => {
+    writeFeed(baked, feed("a", "baked-a"));
+    const snapshotPath = join(mount, "snap.json");
+    writeFileSync(snapshotPath, bundle(feed("r", "first"), feed("r", "second")));
+    const feeds = await loadFeeds(
+      {
+        domain: "test",
+        bakedInDir: baked,
+        remote: { url: REMOTE_URL, enabled: true, snapshotPath },
+      },
+      { remoteFetch: async () => new Response("unavailable", { status: 503 }) }
+    );
+    expect(feeds.map((feed) => feed.id)).toEqual(["a"]);
+  });
   it("pulls live, writes the snapshot, and uses the remote feeds", async () => {
     writeFeed(baked, feed("a", "baked-a"));
     const snapshotPath = join(mount, "snap.json");

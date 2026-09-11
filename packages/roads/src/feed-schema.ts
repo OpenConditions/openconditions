@@ -74,14 +74,14 @@ export function deriveFeedId(feed: {
  * The roads FeedSource schema: the base shape plus road-specific mapping/transport
  * fields. The `id` is DERIVED from country/subdivision/operator/stream by the
  * trailing transform, so feed data files omit it. A serialized feed (atlas /
- * remote snapshot) may still carry an `id`; it is accepted and then re-derived,
- * never trusted. Applied identically to every load layer via the schema, so the
+ * remote snapshot) may carry an `id` only when it matches these identity parts.
+ * A mismatch is rejected rather than silently renaming a source. Applied identically to every load layer via the schema, so the
  * baked-in, operator-mounted, and remote-pulled sets all derive ids the same way.
  */
 export const roadFeedSchema = z
   .object({
     ...feedSourceBaseShape,
-    // Derived — accept a serialized id round-trip, but always re-derive below.
+    // Derived — a serialized id must agree with the identity parts below.
     id: z.string().min(1).optional(),
     geojson: geoJsonMappingSchema.optional(),
     flowMap: geojsonFlowMappingSchema.optional(),
@@ -127,6 +127,14 @@ export const roadFeedSchema = z
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: `derived feed id "${id}" is not a valid slug (^[a-z0-9]+(-[a-z0-9]+)*$)`,
+      });
+      return z.NEVER;
+    }
+    if (feed.id != null && feed.id !== id) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["id"],
+        message: `serialized feed id "${feed.id}" does not match derived id "${id}"`,
       });
       return z.NEVER;
     }

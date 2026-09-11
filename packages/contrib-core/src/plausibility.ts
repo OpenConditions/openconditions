@@ -72,12 +72,15 @@ function scanGeometry(geometry: GeoJsonGeometry): GeometryScan {
     for (const child of coordinates) walk(child);
   };
 
-  const geom = geometry as { coordinates?: unknown; geometries?: GeoJsonGeometry[] };
-  if (Array.isArray(geom.geometries)) {
-    for (const sub of geom.geometries) walk((sub as { coordinates?: unknown }).coordinates);
-  } else {
-    walk(geom.coordinates);
-  }
+  const visitGeometry = (value: GeoJsonGeometry): void => {
+    const geom = value as { coordinates?: unknown; geometries?: GeoJsonGeometry[] };
+    if (Array.isArray(geom.geometries)) {
+      for (const sub of geom.geometries) visitGeometry(sub);
+    } else {
+      walk(geom.coordinates);
+    }
+  };
+  visitGeometry(geometry);
   return scan;
 }
 

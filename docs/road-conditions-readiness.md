@@ -25,7 +25,7 @@ The admitted pilot descriptors preserve exact evidence:
 - `fr-dir`: Licence Ouverte 2.0, source and derived redistribution, commercial
   reuse and retention permitted with attribution. Its declared scope is the
   non-conceded French national network.
-- `wzdx-kansas`: the concrete Kansas child of `us-wzdx`; its feed metadata
+- `us-wzdx-fe9b3423ea03546f`: the concrete Kansas child of `us-wzdx`; its feed metadata
   declared CC0 1.0. Parent and child policy identities are both retained.
 - `lu-cita`: CC0 1.0 evidence from the CITA DATEX II v3.6 dataset record.
 

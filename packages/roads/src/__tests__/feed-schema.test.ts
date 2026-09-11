@@ -32,6 +32,14 @@ describe("roadFeedSchema", () => {
     expect(roadFeedSchema.parse(berlin).id).toBe("de-be-berlin");
   });
 
+  it("preserves a serialized canonical id and rejects an id that would rename the source", () => {
+    const feed = roadFeedSchema.parse(berlin);
+    expect(roadFeedSchema.parse(JSON.parse(JSON.stringify(feed)))).toEqual(feed);
+    expect(() => roadFeedSchema.parse({ ...feed, id: "other-source" })).toThrow(
+      /serialized feed id.*does not match derived id/
+    );
+  });
+
   it("rejects a typeMap value that is not a RoadEventType", () => {
     const bad = { ...berlin, geojson: { ...berlin.geojson, typeMap: { Baustelle: "not-a-type" } } };
     expect(roadFeedSchema.safeParse(bad).success).toBe(false);

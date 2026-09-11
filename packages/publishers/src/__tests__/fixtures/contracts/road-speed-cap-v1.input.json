@@ -1,0 +1,65 @@
+{
+  "at": "2026-09-11T12:00:00.000Z",
+  "resolverVersion": "1.0.0",
+  "rows": [
+    {
+      "id": "contract:speed-cap-1",
+      "source": "test-child",
+      "routing_source_id": "test-parent",
+      "type": "restriction",
+      "severity": "high",
+      "attributes": {
+        "roadState": "open",
+        "speedLimitKph": 40
+      },
+      "origin": {
+        "kind": "feed"
+      },
+      "routing_eligible": true,
+      "valid_from": "2026-09-11T11:59:00.000Z",
+      "valid_to": "2026-09-11T12:15:00.000Z",
+      "schedule": [],
+      "source_license": "CC0-1.0",
+      "observation_revision": "revision-1",
+      "binding_revision": "revision-1",
+      "graph_generation": "graph-generation-1",
+      "child_source_id": "test-child",
+      "source_uri": "https://example.test/conditions/1",
+      "source_checked_at": "2026-09-11T11:59:00.000Z",
+      "fresh_until": "2026-09-11T12:15:00.000Z",
+      "expires_at": "2026-09-11T12:15:00.000Z",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "Example road authority",
+      "rights": {
+        "source_redistribution": "yes",
+        "derived_redistribution": "yes",
+        "commercial_use": "yes",
+        "attribution_required": "yes",
+        "retention": "yes",
+        "evidence_origin": "feed-descriptor",
+        "evidence_version": "1",
+        "reviewed_at": "2026-09-10T12:00:00.000Z"
+      },
+      "binding_status": "exact",
+      "binding_resolver_version": "1.0.0",
+      "binding_confidence": 0.99,
+      "binding_direction_mode": "single",
+      "segments": [
+        {
+          "segmentId": "123:f",
+          "wayId": 123,
+          "dir": "f",
+          "startFraction": 0,
+          "endFraction": 1,
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [13.4, 52.5],
+              [13.41, 52.5]
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

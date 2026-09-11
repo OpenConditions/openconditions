@@ -62,7 +62,7 @@ TypeScript / Node:
 ```bash
 pnpm lint        # eslint + prettier --check
 pnpm typecheck   # tsc across the workspace (turbo)
-pnpm test        # Vitest
+pnpm test        # build workspace dependencies, then all Vitest projects
 ```
 
 Python (the resolver):
@@ -80,21 +80,23 @@ Git hooks enforce a two-stage local gate (Husky):
 - **commit-msg** — validates the message against Conventional Commits
   (commitlint).
 - **pre-push** — the full test suite (`pnpm test`). The ingest's pipeline/sweep
-  suites use testcontainers and need Docker; set `SKIP_TESTCONTAINERS=1` to skip
-  them when the daemon isn't running.
+  suites use testcontainers and need Docker. Use `pnpm test:unit` for a local
+  check without Docker; the push gate and CI still run the full suite.
 
 CI re-runs lint, typecheck, and the full suite (plus the Python lint/tests) on
 every push and PR, so the safety net is always present.
 
 ### Testing
 
-Tests run from a single root `vitest.config.ts` (one `node` project covering
-`packages/*`, `services/*`, and `integrations/*`). There are no per-package
-Vitest configs — always run from the repo root:
+Tests run from one root `vitest.config.ts`, with `unit` and `integration`
+projects covering packages, services, integrations, and scripts. Integration
+suites use disposable PostGIS containers. Run from the repo root:
 
 ```bash
-pnpm test                                  # whole suite
-pnpm exec vitest run packages/core         # scope by path or test-name substring
+pnpm test                                  # build, then both projects
+pnpm test:unit                             # build, then tests without Docker
+pnpm test:integration                      # build, then disposable database tests
+pnpm exec vitest run --project unit packages/core # targeted run after building
 pnpm test:coverage                         # V8 coverage report (written to coverage/)
 ```
 
@@ -103,8 +105,11 @@ Conventions:
 - **Co-locate** tests as `*.test.ts` next to the code (or a sibling `__tests__/`).
 - **Keep parsers/emitters pure** and test them table-driven against captured
   fixtures — most of `roads` and `publishers` is tested this way.
-- **Database-backed suites** (the ingest) spin up a real PostGIS with
-  testcontainers; gate them behind Docker and keep them deterministic.
+- **Database-backed suites** use `*.integration.test.ts` and spin up disposable
+  PostGIS containers; keep them deterministic and independently seeded.
+- The scripts build dependencies first because workspace exports resolve to
+  `dist`. Direct `vitest` invocations assume an up-to-date build. Default runs
+  use four workers; use `--maxWorkers` to adjust for the available memory.
 
 ### Code style
 
@@ -141,8 +146,9 @@ docs(readme): document the public emitter feeds
 ## Licensing and the CLA
 
 OpenConditions uses a two-license split: the ingest service is
-AGPL-3.0-or-later and the reusable libraries (and the OpenMapX integration) are
-Apache-2.0. See [LICENSING.md](LICENSING.md) for the full breakdown.
+AGPL-3.0-or-later, as is the shared persistence projection in `packages/storage`.
+Other reusable libraries (and the OpenMapX integration) are Apache-2.0, except
+for the explicitly isolated AGPL probe spike. See [LICENSING.md](LICENSING.md) for the full breakdown.
 
 Contributions are accepted under a Contributor License Agreement
 ([CLA.md](CLA.md)). You keep ownership of your contributions; the CLA grants the

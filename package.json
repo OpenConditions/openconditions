@@ -9,14 +9,16 @@
     "typecheck": "turbo run typecheck && tsc -p scripts/tsconfig.json",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
-    "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --passWithNoTests --coverage",
+    "test": "pnpm build && vitest run",
+    "test:watch": "pnpm build && vitest",
+    "test:coverage": "pnpm build && vitest run --coverage",
     "gen:credentials": "pnpm --filter @openconditions/ingest-framework build && pnpm --filter @openconditions/roads build && tsx scripts/gen-credentials.ts --write",
     "check-credentials": "pnpm --filter @openconditions/ingest-framework build && pnpm --filter @openconditions/roads build && tsx scripts/gen-credentials.ts",
     "check:mobilithek-references": "pnpm --filter @openconditions/roads... build && tsx scripts/check-mobilithek-references.ts",
     "road-conditions:readiness": "pnpm --filter @openconditions/ingest exec tsx src/ops/road-conditions-readiness.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:unit": "pnpm build && vitest run --project unit",
+    "test:integration": "pnpm build && vitest run --project integration"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",

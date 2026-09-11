@@ -255,6 +255,72 @@ describe("POST /peer/inbox — the trust boundary", () => {
     }
   }, 30_000);
 
+  it.each(["40001", "23502", "22P02"])(
+    "retries a partially committed page after local SQL %s without penalizing the peer",
+    async (code) => {
+      const firstId = `peer-a:retry-first-${code}`;
+      const secondId = `peer-a:retry-second-${code}`;
+      const app = await build({ sql, env: enabledEnv, logger: false });
+      await sql`CREATE FUNCTION conditions.fail_inbox_retry_test() RETURNS trigger AS $$
+      BEGIN
+        IF NEW.id LIKE 'peer-a:retry-second-%' THEN
+          RAISE EXCEPTION 'temporary local failure' USING ERRCODE = TG_ARGV[0];
+        END IF;
+        RETURN NEW;
+      END;
+    $$ LANGUAGE plpgsql`;
+      await sql.unsafe(`CREATE TRIGGER fail_inbox_retry_test BEFORE INSERT ON conditions.observations
+      FOR EACH ROW EXECUTE FUNCTION conditions.fail_inbox_retry_test('${code}')`);
+      try {
+        const page = pageOf([
+          {
+            seq: 1,
+            txid: "290",
+            observation: fedEvent(firstId, "peer-a", `retry-first-${code}`),
+          },
+          {
+            seq: 2,
+            txid: "290",
+            observation: fedEvent(secondId, "peer-a", `retry-second-${code}`),
+          },
+        ]);
+        const before = await getPeerHealth(sql, "peer-a");
+        const first = await signed(peerA, "POST", "/peer/inbox", page);
+        const failed = await app.inject({ method: "POST", url: "/peer/inbox", ...first });
+        expect(failed.statusCode).toBe(500);
+        expect(failed.json()).not.toHaveProperty("maxCursor");
+        expect(await getPeerHealth(sql, "peer-a")).toEqual(before);
+        expect(await countRows(firstId)).toBe(1);
+        expect(await countRows(secondId)).toBe(0);
+
+        await sql`DROP TRIGGER fail_inbox_retry_test ON conditions.observations`;
+        const retry = await signed(peerA, "POST", "/peer/inbox", page);
+        const succeeded = await app.inject({ method: "POST", url: "/peer/inbox", ...retry });
+        expect(succeeded.statusCode).toBe(200);
+        expect(succeeded.json()).toMatchObject({
+          accepted: 1,
+          resupplied: 1,
+          skipped: [],
+          maxCursor: "290.2",
+        });
+        const evidence = await sql<{ observation_id: string; count: number }[]>`
+        SELECT observation_id, count(*)::int AS count FROM conditions.report_evidence
+        WHERE observation_id IN (${firstId}, ${secondId})
+        GROUP BY observation_id ORDER BY observation_id`;
+        expect(evidence).toEqual([
+          { observation_id: firstId, count: 1 },
+          { observation_id: secondId, count: 1 },
+        ]);
+        expect(await getPeerHealth(sql, "peer-a")).toEqual(before);
+      } finally {
+        await sql`DROP TRIGGER IF EXISTS fail_inbox_retry_test ON conditions.observations`;
+        await sql`DROP FUNCTION conditions.fail_inbox_retry_test()`;
+        await app.close();
+      }
+    },
+    30_000
+  );
+
   it("skips (and reports) an event whose instanceId is not the sending peer's", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false });
     try {

@@ -1,6 +1,8 @@
 import path from "node:path";
+import { createHash } from "node:crypto";
 import type { CatalogResolver, FeedSourceBase } from "@openconditions/ingest-framework";
 import wzdxSnapshot from "./snapshots/wzdx-registry.json" with { type: "json" };
+import { roadFeedSchema } from "../feed-schema.js";
 
 const WZDX_REGISTRY_URL = "https://datahub.transportation.gov/resource/69qe-yiui.json?$limit=5000";
 
@@ -58,7 +60,7 @@ const UNKNOWN_RIGHTS = {
 } as const;
 
 const VERIFIED_CHILD_GRANTS: Record<string, NonNullable<FeedSourceBase["rights"]>> = {
-  "wzdx-kansas": {
+  "https://ks.carsprogram.org/carsapi_v1/api/wzdx": {
     sourceRedistribution: true,
     derivedRedistribution: true,
     commercialUse: true,
@@ -72,8 +74,11 @@ const VERIFIED_CHILD_GRANTS: Record<string, NonNullable<FeedSourceBase["rights"]
 };
 
 function withChildEvidence(feed: FeedSourceBase): FeedSourceBase {
-  const rights = VERIFIED_CHILD_GRANTS[feed.id] ?? UNKNOWN_RIGHTS;
-  const approved = VERIFIED_CHILD_GRANTS[feed.id] != null;
+  // A grant belongs to the reviewed dataset URL, never to a state label or
+  // its position in the registry (several states publish multiple feeds).
+  const grant = typeof feed.url === "string" ? VERIFIED_CHILD_GRANTS[feed.url] : undefined;
+  const rights = grant ?? UNKNOWN_RIGHTS;
+  const approved = grant != null;
   return {
     ...feed,
     license: approved ? "CC0-1.0" : "UNKNOWN",
@@ -108,13 +113,6 @@ function str(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
-function slug(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
 function needsApiKey(v: unknown): boolean {
   if (typeof v === "boolean") return v;
   const s = str(v).toLowerCase();
@@ -137,7 +135,6 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
 
   const feeds: FeedSourceBase[] = [];
   const seenUrls = new Set<string>();
-  const seenIds = new Set<string>();
   let placeholderSkipped = 0;
 
   for (const row of rows as WzdxRegistryRow[]) {
@@ -164,16 +161,15 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
     const state = str(row.state);
     const feedname = str(row.feedname);
     const org = str(row.issuingorganization);
-    let id = `wzdx-${slug(state || feedname || url)}`;
-    let n = 1;
-    while (seenIds.has(id)) id = `wzdx-${slug(state || feedname || url)}-${++n}`;
-    seenIds.add(id);
+    // The registry has no stable dataset key: use the concrete URL so order,
+    // display-name changes and multiple feeds in one state cannot swap IDs.
+    const stream = createHash("sha256").update(url).digest("hex").slice(0, 16);
 
     const apikeyurl = str(row.apikeyurl);
-    let feed: FeedSourceBase = {
-      id,
+    let feed: FeedSourceBase = roadFeedSchema.parse({
       name: `WZDx — ${org || feedname || state || "feed"}${state ? ` (${state})` : ""}`,
       operator: "wzdx",
+      stream,
       format: "wzdx",
       url,
       cadenceSec: 300,
@@ -182,7 +178,7 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
       attribution: org || "WZDx publishers",
       country: "US",
       privacyUrl: "https://www.transportation.gov/privacy",
-    };
+    });
     if (needsApiKey(row.needapikey)) {
       // The concrete URL is used as published (placeholder rows are dropped
       // above); attach a documentation-only guide pointing operators at where a
@@ -213,6 +209,6 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
 export const wzdxRegistryResolver: CatalogResolver = {
   id: "wzdx-registry",
   snapshotPath: path.resolve(import.meta.dirname, "snapshots/wzdx-registry.json"),
-  snapshot: (wzdxSnapshot as FeedSourceBase[]).map(withChildEvidence),
+  snapshot: wzdxSnapshot.map((feed) => withChildEvidence(roadFeedSchema.parse(feed))),
   resolve,
 };

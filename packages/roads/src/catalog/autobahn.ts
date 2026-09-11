@@ -1,6 +1,7 @@
 import path from "node:path";
 import type { CatalogResolver, FeedSourceBase } from "@openconditions/ingest-framework";
 import autobahnSnapshot from "./snapshots/autobahn-index.json" with { type: "json" };
+import { roadFeedSchema } from "../feed-schema.js";
 
 const AUTOBAHN_BASE = "https://verkehr.autobahn.de/o/autobahn";
 
@@ -50,10 +51,10 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
   const feeds: FeedSourceBase[] = [];
   for (const road of roads) {
     for (const service of AUTOBAHN_SERVICES) {
-      feeds.push({
-        id: `autobahn-${slug(road)}-${service.name}`,
+      const feed = roadFeedSchema.parse({
         name: `Autobahn ${road} — ${service.name}`,
         operator: "autobahn",
+        stream: `${slug(road)}-${service.name}`,
         format: "autobahn",
         url: `${AUTOBAHN_BASE}/${encodeURIComponent(road)}/services/${service.name}`,
         cadenceSec: service.cadenceSec,
@@ -63,6 +64,7 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
         country: "DE",
         privacyUrl: "https://www.autobahn.de/datenschutz",
       });
+      feeds.push({ ...feed, parentSourceId: "de-autobahn", policyIds: ["de-autobahn", feed.id] });
     }
   }
   return feeds;
@@ -71,6 +73,6 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
 export const autobahnIndexResolver: CatalogResolver = {
   id: "autobahn-index",
   snapshotPath: path.resolve(import.meta.dirname, "snapshots/autobahn-index.json"),
-  snapshot: autobahnSnapshot as FeedSourceBase[],
+  snapshot: autobahnSnapshot.map((feed) => roadFeedSchema.parse(feed)),
   resolve,
 };

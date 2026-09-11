@@ -6,7 +6,6 @@ import {
   readObservations,
 } from "@openconditions/core";
 import {
-  diffObservations,
   segmentConditionsToExclusions,
   filterForPermissiveExport,
   flowToSegmentSpeedCsv,
@@ -16,7 +15,6 @@ import {
   parseTypeFilter,
   segmentConditionsToJson,
   segmentsToGeoJSON,
-  sseFrame,
   type FeedInfo,
   type SegmentConditionRow,
   type SegmentSpeedCsvRow,
@@ -36,6 +34,7 @@ import {
 import { RESOLVER_VERSION } from "@openconditions/roads";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
+import { startObservationStream } from "./observation-stream.js";
 import type { FeedRunStatus, FeedStatusStore } from "./feed-status.js";
 import {
   readSourceOperationalStatus,
@@ -82,7 +81,6 @@ export async function readFeedGraphStatus(sql: Sql): Promise<FeedGraphStatus> {
 }
 
 /** How often the SSE stream re-polls the store for changes + heartbeats. */
-const STREAM_POLL_MS = 15_000;
 
 const FEED_BASE: Omit<FeedInfo, "timestamp"> = {
   attribution: "OpenConditions",
@@ -129,8 +127,21 @@ function hydrateSegmentRows(
       domain.feeds.map((feed) => [feed.id, feed] as const)
     )
   );
+  // A discovered catalogue child is explicitly outside the scheduled selection.
+  // Its retained observations must not regain an old grant through the fallback
+  // for remote sources, which legitimately have no local feed descriptor.
+  const unscheduledSourceIds = new Set(
+    Object.values(registry).flatMap((domain) =>
+      (domain.discoveredFeeds ?? []).filter((feed) => !feedById.has(feed.id)).map((feed) => feed.id)
+    )
+  );
   return rows
-    .filter((row) => isPermissiveLicense(row.source_license))
+    .filter(
+      (row) =>
+        !unscheduledSourceIds.has(row.source) &&
+        isPermissiveLicense(row.source_license) &&
+        isPermissiveLicense(feedById.get(row.source)?.license ?? row.source_license)
+    )
     .map((row) => {
       const feed = feedById.get(row.source);
       const attribution = row.origin.attribution as
@@ -148,7 +159,7 @@ function hydrateSegmentRows(
         child_source_id: parentSourceId ? row.source : null,
         license_url: feed?.licenseUrl ?? attribution?.url ?? null,
         attribution: attribution?.provider ?? feed?.attribution ?? null,
-        rights: routingRights(attribution?.rights ?? feed?.rights),
+        rights: routingRights(feed ? feed.rights : attribution?.rights),
       };
     });
 }
@@ -162,7 +173,7 @@ function hydrateSegmentRows(
  * side imports from, so any future change here must be mirrored there too.
  */
 export function parseBbox(raw: string | undefined): BBox | null {
-  if (!raw) return null;
+  if (typeof raw !== "string" || !raw) return null;
   const segments = raw.split(",");
   // Reject blank segments explicitly — `Number("")` is `0` (finite), so
   // "1,,3,4" would otherwise silently parse to [1, 0, 3, 4] instead of
@@ -225,19 +236,6 @@ function distinctLicenses(obs: Observation[]): string {
     if (o.origin.attribution.license) licenses.add(o.origin.attribution.license);
   }
   return licenses.size > 0 ? [...licenses].join(", ") : "unknown";
-}
-
-/**
- * Shallow-copies an observation with `sourceRaw` omitted, mirroring the
- * GeoJSON route's `?raw=1` gating for `/stream`. Never mutates `o` — the SSE
- * diff poller (`prev`/`next` maps in the `/stream` handler) keeps reusing the
- * same observation objects across polls.
- */
-function withoutSourceRaw(o: Observation): Observation {
-  const withRaw = o as Observation & { sourceRaw?: unknown };
-  if (withRaw.sourceRaw === undefined) return o;
-  const { sourceRaw: _sourceRaw, ...rest } = withRaw;
-  return rest as Observation;
 }
 
 /** One `road_segment JOIN segment_profile` row: a single weekly-profile bucket
@@ -434,6 +432,10 @@ export function registerPublishRoutes(
   registry: DomainRegistry
 ): void {
   const db = runner(sql);
+  const streams = new Set<() => void>();
+  app.addHook("preClose", async () => {
+    for (const stop of streams) stop();
+  });
 
   // Every route funnelling through `read()` is a redistributable export
   // (see the module doc comment above), so share-alike records are dropped
@@ -750,6 +752,9 @@ export function registerPublishRoutes(
   // LineString or null, never a Point.
   app.get("/segments/conditions.json", async (req, reply) => {
     const q = req.query as Record<string, string | undefined>;
+    const bbox = q.bbox === undefined ? undefined : parseBbox(q.bbox);
+    if (bbox === null)
+      return reply.status(400).send({ error: "bbox must be west,south,east,north" });
     const at = q.at ? new Date(q.at) : new Date();
     if (Number.isNaN(at.getTime())) {
       return reply.status(400).send({ error: "at must be an ISO 8601 timestamp" });
@@ -791,11 +796,12 @@ export function registerPublishRoutes(
          LEFT JOIN conditions.road_segment rs ON rs.segment_id = s.segment_id
          WHERE s.observation_id = o.id) seg ON true
        WHERE o.kind = 'event' AND o.domain = 'roads' AND o.status = 'active'
+         ${bbox ? "AND o.geom && ST_MakeEnvelope($3,$4,$5,$6,4326)" : ""}
          AND b.status IN ('exact','likely') AND b.resolver_version=$2
          AND (o.valid_to IS NULL OR o.valid_to > $1::timestamptz)
          AND (o.expires_at IS NULL OR o.expires_at > now())
        ORDER BY o.id`,
-      [at.toISOString(), RESOLVER_VERSION]
+      [at.toISOString(), RESOLVER_VERSION, ...(bbox ?? [])]
     );
     const permissive = hydrateSegmentRows(rows, registry);
     reply.header("Content-Type", "application/json");
@@ -832,35 +838,17 @@ export function registerPublishRoutes(
       "X-Data-License": "permissive (share-alike filtered)",
     });
 
-    let prev = new Map<string, string>();
-    const tick = async () => {
-      try {
-        const obs = filterForPermissiveExport(await readObservations(db, { domain, bbox })).filter(
-          (o) => matchesTypeFilter(o, types)
-        );
-        const { changed, removed, next } = diffObservations(prev, obs);
-        prev = next;
-        for (const o of changed) {
-          // ?raw=1 includes the verbatim sourceRaw passthrough, mirroring the
-          // GeoJSON route's gating (larger payload).
-          const data = q.raw === "1" ? o : withoutSourceRaw(o);
-          reply.raw.write(sseFrame({ event: "condition", id: o.id, data }));
-        }
-        for (const id of removed) {
-          reply.raw.write(sseFrame({ event: "remove", data: { id } }));
-        }
-      } catch (err) {
-        req.log.error(err, "[stream] poll failed");
-      }
-    };
-
-    void tick(); // initial snapshot
-    const poll = setInterval(() => void tick(), STREAM_POLL_MS);
-    const heartbeat = setInterval(() => reply.raw.write(": ping\n\n"), STREAM_POLL_MS);
-    req.raw.on("close", () => {
-      clearInterval(poll);
-      clearInterval(heartbeat);
+    const stop = startObservationStream({
+      output: reply.raw,
+      includeRaw: q.raw === "1",
+      read: async () =>
+        filterForPermissiveExport(await readObservations(db, { domain, bbox })).filter((o) =>
+          matchesTypeFilter(o, types)
+        ),
+      onError: (err) => req.log.error(err, "[stream] poll failed"),
+      onStop: () => streams.delete(stop),
     });
+    streams.add(stop);
     return reply;
   });
 
