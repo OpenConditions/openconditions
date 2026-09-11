@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
-    "canonicalize": "3.0.0"
+    "canonicalize": "4.0.0"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",

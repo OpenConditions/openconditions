@@ -95,8 +95,8 @@ importers:
         specifier: workspace:*
         version: link:../core
       canonicalize:
-        specifier: 3.0.0
-        version: 3.0.0
+        specifier: 4.0.0
+        version: 4.0.0
     devDependencies:
       '@types/geojson':
         specifier: ^7946.0.16
@@ -1737,8 +1737,8 @@ packages:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
     engines: {node: '>=6'}
 
-  canonicalize@3.0.0:
-    resolution: {integrity: sha512-yYLfHyDMIXRyRqsKBRLX023riFLpXY2YOfdtqKXZRZy9qsfOJ9U+4F9YZL7MEzL5+ziN2x2nlBvY/Voi3EBljA==}
+  canonicalize@4.0.0:
+    resolution: {integrity: sha512-FEdXzwWs+N3rZqEqpqleiY9M1A6IAf9oo1zHFABnLW9FcJ/jzsu+G/Ks3Hq3FglmPKe80GeGBw8ZXLEnwPB0vQ==}
     engines: {node: '>=18'}
     hasBin: true
 
@@ -4346,7 +4346,7 @@ snapshots:
 
   callsites@3.1.0: {}
 
-  canonicalize@3.0.0: {}
+  canonicalize@4.0.0: {}
 
   catharsis@0.9.0:
     dependencies:
