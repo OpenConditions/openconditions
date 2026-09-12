@@ -34,17 +34,28 @@ const RESOLVE_CONCURRENCY = 8;
  * - When `client` is null (OPENLR_RESOLVER_URL unset) unresolved items are
  *   dropped silently.
  *
- * Returns the filtered+resolved array (real geometry only) and the count of
- * dropped events. After this stage every item in `resolved` has a geometry
- * field — UnresolvedRoadEvent never reaches write-postgis.
+ * Returns the filtered+resolved array (real geometry only), the count of
+ * dropped events, and the ids of records that were valid but could not be
+ * located. After this stage every item in `resolved` has a geometry field —
+ * UnresolvedRoadEvent never reaches write-postgis.
+ *
+ * `unlocatableIds` exists so a complete-snapshot source can tell "this record
+ * is gone upstream" apart from "we failed to place this record", which look
+ * identical from the resolved set alone.
  */
 export async function resolveOpenLr(
   items: (Observation | UnresolvedRoadEvent)[],
   client: MapMatchClient | null
-): Promise<{ resolved: Observation[]; dropped: number; failed: number }> {
+): Promise<{
+  resolved: Observation[];
+  dropped: number;
+  failed: number;
+  unlocatableIds: string[];
+}> {
   const out: Observation[] = [];
   let dropped = 0;
   let failed = 0;
+  const unlocatableIds: string[] = [];
 
   const passThrough: Observation[] = [];
   const needsResolve: UnresolvedRoadEvent[] = [];
@@ -56,21 +67,23 @@ export async function resolveOpenLr(
       needsResolve.push(item as UnresolvedRoadEvent);
     } else {
       dropped++;
+      unlocatableIds.push(item.id);
     }
   }
 
   out.push(...passThrough);
 
   if (needsResolve.length === 0) {
-    return { resolved: out, dropped, failed };
+    return { resolved: out, dropped, failed, unlocatableIds };
   }
 
   if (client === null) {
     dropped += needsResolve.length;
+    for (const item of needsResolve) unlocatableIds.push(item.id);
     console.warn(
       `[resolve] dropped ${needsResolve.length} OpenLR observation(s): OPENLR_RESOLVER_URL not set`
     );
-    return { resolved: out, dropped, failed };
+    return { resolved: out, dropped, failed, unlocatableIds };
   }
 
   const results: Array<Observation | null> = new Array(needsResolve.length).fill(null);
@@ -132,15 +145,16 @@ export async function resolveOpenLr(
   const workerCount = Math.min(RESOLVE_CONCURRENCY, needsResolve.length);
   await Promise.all(Array.from({ length: workerCount }, () => worker()));
 
-  for (const r of results) {
+  results.forEach((r, index) => {
     if (r !== null) {
       out.push(r);
     } else {
       dropped++;
+      unlocatableIds.push(needsResolve[index]!.id);
     }
-  }
+  });
 
-  return { resolved: out, dropped, failed };
+  return { resolved: out, dropped, failed, unlocatableIds };
 }
 
 /** Exposed for testing — clears the in-process resolution cache. */

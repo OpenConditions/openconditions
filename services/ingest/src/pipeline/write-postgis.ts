@@ -239,7 +239,16 @@ export async function atomicSwap(
   fresh: Observation[],
   freshnessWindowSec?: number,
   ctx?: WriterContext,
-  statusContext?: { attemptAt?: string; rejected?: number; durationMs?: number }
+  statusContext?: {
+    attemptAt?: string;
+    rejected?: number;
+    durationMs?: number;
+    /**
+     * Source-prefixed ids of records the publisher still serves but we could
+     * not place this cycle. Supplied only by complete-snapshot sources.
+     */
+    unlocatableIds?: readonly string[];
+  }
 ): Promise<SwapCounts> {
   // The single defaulting seam: stamp the commons federation/privacy provenance
   // onto every row here — the one write choke point — before anything else, so
@@ -264,6 +273,25 @@ export async function atomicSwap(
 
   return sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${sourceId}))`;
+
+    // A record the publisher still serves but we failed to locate is not a
+    // withdrawal. Rejecting the whole candidate publication keeps the existing
+    // row intact instead of deleting a fact that is still true upstream. The
+    // check runs under the source lock, before any mutation, so a concurrent
+    // poll cannot slip a delete in between.
+    const unavailable = statusContext?.unlocatableIds ?? [];
+    if (unavailable.length > 0) {
+      const retained = await tx<{ id: string }[]>`
+        SELECT id FROM conditions.observations
+        WHERE source = ${sourceId} AND id = ANY(${tx.array([...unavailable])}::text[])
+        LIMIT 1`;
+      if (retained.length > 0) {
+        throw new Error(
+          `snapshot unlocatable retained record: ${retained[0]!.id} ` +
+            `(${unavailable.length} unlocatable in source ${sourceId})`
+        );
+      }
+    }
 
     let inserted = 0;
     let updated = 0;

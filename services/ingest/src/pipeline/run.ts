@@ -1,11 +1,17 @@
 import { Readable } from "node:stream";
 import type postgres from "postgres";
 import type { Observation } from "@openconditions/core";
-import type { FeedSource, SiteGeometry, UnresolvedRoadEvent } from "@openconditions/roads";
+import type {
+  FeedSource,
+  RestrictionCarrier,
+  SiteGeometry,
+  UnresolvedRoadEvent,
+} from "@openconditions/roads";
 import {
   drainSkippedNoGeometry,
   enrichEventSeverity,
   enrichFlowsWithBaseline,
+  isRoadRestrictionDetails,
   parseXmlDocument,
 } from "@openconditions/roads";
 import type { MapMatchClient } from "@openconditions/openlr";
@@ -19,7 +25,7 @@ import {
 import type { LookupFn } from "@openconditions/ingest-framework";
 import { feedToSourceDescriptor } from "../domains.js";
 import { isStreamingFlowFeed, streamMeasuredData } from "./measured-data.js";
-import { parseFor } from "./parse.js";
+import { parseFor, parseRoadSnapshotFor } from "./parse.js";
 import { resolveOpenLr } from "./resolve.js";
 import { loadSiteTable } from "./site-table.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
@@ -86,6 +92,22 @@ export interface RunResult {
   updated?: number;
   deleted?: number;
   rejected?: number;
+  /**
+   * Per-run source-record accounting for a complete-snapshot source. Bounded
+   * counts only — never record ids as metric labels and never record bodies.
+   * Counted from the reconciled selected versions, so a record served by two
+   * partitions is counted once.
+   */
+  snapshot?: {
+    inputCount: number;
+    uniqueCount: number;
+    accepted: number;
+    terminal: number;
+    unlocatable: number;
+    duplicates: number;
+    restrictionFacts: number;
+    restrictionIssues: Record<string, number>;
+  };
 }
 
 export interface RunDeps {
@@ -378,6 +400,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   let acceptFetch: (() => void) | undefined;
   let parsed: (Observation | UnresolvedRoadEvent)[];
   let snapshotInspection: ReturnType<typeof inspectSnapshotCompleteness> | undefined;
+  let snapshotReport: ReturnType<typeof parseRoadSnapshotFor>;
   if (isStreamingFlowFeed(src)) {
     // Large DATEX flow feed: stream fetch → gunzip → SAX so the ~50 MB document
     // is never buffered or DOM-parsed (the memory-cap OOM this path replaces).
@@ -447,7 +470,16 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       return { count: 0, durationMs: Date.now() - start, error };
     }
     try {
-      parsed = buffers.flatMap((b) => parseFor(src, b, siteMap));
+      // A complete-snapshot road source goes through the reporting path, which
+      // reconciles partitions by source identity and refuses a candidate it
+      // cannot fully account for. Every other source keeps the tolerant path.
+      const reconciled = parseRoadSnapshotFor(src, buffers);
+      if (reconciled !== undefined) {
+        snapshotReport = reconciled;
+        parsed = reconciled.observations;
+      } else {
+        parsed = buffers.flatMap((b) => parseFor(src, b, siteMap));
+      }
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] parse failed for source ${src.id}:`, err);
@@ -462,8 +494,26 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
 
   // resolveOpenLr narrows the union: items without geometry (UnresolvedRoadEvent)
   // are resolved to real geometry or dropped — resolved[] always has geometry.
-  const { resolved, dropped, failed } = await resolveOpenLr(parsed, deps.openlrClient ?? null);
-  if (failed > 0 || ((snapshotInspection?.inputRecords ?? 0) > 0 && resolved.length === 0)) {
+  const { resolved, dropped, failed, unlocatableIds } = await resolveOpenLr(
+    parsed,
+    deps.openlrClient ?? null
+  );
+  // An accepted record missing from `resolved` is unlocatable only when the
+  // resolver itself did not fail: a transport/validation failure means we do not
+  // know where the record is, which is a whole-source failure, not a per-record
+  // disposition.
+  const snapshotUnlocatable =
+    snapshotReport === undefined
+      ? undefined
+      : [...new Set([...snapshotReport.unlocatableIds, ...(failed > 0 ? [] : unlocatableIds)])];
+  // For a reporting source the exhaustive disposition report — not the raw
+  // input count — decides whether an empty result is real. A snapshot of only
+  // terminal or explained unlocatable records legitimately has no active rows.
+  const zeroResultTripwire =
+    snapshotReport === undefined
+      ? (snapshotInspection?.inputRecords ?? 0) > 0 && resolved.length === 0
+      : snapshotReport.acceptedIds.length > 0 && resolved.length === 0;
+  if (failed > 0 || zeroResultTripwire) {
     const error =
       failed > 0
         ? `OpenLR resolution failed for ${failed} request(s)`
@@ -523,6 +573,10 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       });
       return { count: 0, durationMs: Date.now() - start, error };
     }
+  } else if (snapshotReport !== undefined) {
+    // Accounted snapshots need no ratio heuristic: every input record has an
+    // explicit disposition, and the retained-id check inside the publication
+    // transaction is what protects a still-published record.
   } else if (!snapshotInspection?.completeEmpty) {
     const shrinkTripwireRatio = shrinkTripwireRatioFromEnv();
     const previousCount = await getLastRowCount(deps.sql, src.id);
@@ -557,6 +611,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       attemptAt,
       rejected,
       durationMs: preSwapDurationMs,
+      ...(snapshotUnlocatable !== undefined ? { unlocatableIds: snapshotUnlocatable } : {}),
     });
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
@@ -631,5 +686,36 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     deleted: swapCounts.deleted,
     rejected,
     ...(skippedNoGeometry > 0 ? { skippedNoGeometry } : {}),
+    ...(snapshotReport !== undefined
+      ? { snapshot: snapshotCounts(snapshotReport, snapshotUnlocatable ?? [], toWrite) }
+      : {}),
+  };
+}
+
+/** Bounded per-run counts for a complete-snapshot source. */
+function snapshotCounts(
+  report: NonNullable<ReturnType<typeof parseRoadSnapshotFor>>,
+  unlocatable: readonly string[],
+  written: readonly Observation[]
+): NonNullable<RunResult["snapshot"]> {
+  let restrictionFacts = 0;
+  const restrictionIssues: Record<string, number> = {};
+  for (const row of written) {
+    const details = (row as Observation & RestrictionCarrier).restrictionDetails;
+    if (!isRoadRestrictionDetails(details)) continue;
+    restrictionFacts += details.facts.length;
+    for (const issue of details.issues) {
+      restrictionIssues[issue.code] = (restrictionIssues[issue.code] ?? 0) + 1;
+    }
+  }
+  return {
+    inputCount: report.inputCount,
+    uniqueCount: report.uniqueCount,
+    accepted: report.acceptedIds.length,
+    terminal: report.terminalIds.length,
+    unlocatable: unlocatable.length,
+    duplicates: report.duplicates,
+    restrictionFacts,
+    restrictionIssues,
   };
 }

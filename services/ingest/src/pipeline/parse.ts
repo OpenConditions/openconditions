@@ -5,7 +5,13 @@ import type {
   SourceDescriptor,
   UnresolvedRoadEvent,
 } from "@openconditions/roads";
-import { flowParserFor } from "@openconditions/roads";
+import {
+  flowParserFor,
+  parseDatexSnapshot,
+  parseDigitrafficSnapshot,
+  reconcileRoadSnapshots,
+  type ReconciledRoadSnapshot,
+} from "@openconditions/roads";
 import { feedToSourceDescriptor } from "../domains.js";
 import { DOMAIN_REGISTRY } from "../domains.js";
 
@@ -60,4 +66,36 @@ export function parseFor(
   ) => (Observation | UnresolvedRoadEvent)[];
   const descriptor = feedToSourceDescriptor(src);
   return parserFn(buf, descriptor);
+}
+
+/**
+ * The formats whose parsers can account for every input record. A format is
+ * listed here only once its reporting entry point exists; every other format
+ * keeps the tolerant array path untouched.
+ */
+const SNAPSHOT_REPORTERS = {
+  digitraffic: parseDigitrafficSnapshot,
+  datex2: parseDatexSnapshot,
+} as const;
+
+/**
+ * Parse a source that declares a *complete* snapshot through the reporting
+ * path, reconciling every partition by source identity before resolution.
+ *
+ * Returns `undefined` when the source does not declare a complete snapshot or
+ * its format has no reporting entry point — the caller then keeps the existing
+ * generic/flow path, so no other source's behaviour changes. Throws when the
+ * candidate snapshot cannot be accounted for; the caller turns that into a
+ * whole-source failure that preserves the last-good publication.
+ */
+export function parseRoadSnapshotFor(
+  src: FeedSource & { domain: string },
+  buffers: Buffer[]
+): ReconciledRoadSnapshot | undefined {
+  if (src.domain !== "roads" || src.produces === "flow") return undefined;
+  if (src.snapshot?.completeness !== "complete") return undefined;
+  const reporter = SNAPSHOT_REPORTERS[src.format as keyof typeof SNAPSHOT_REPORTERS];
+  if (reporter === undefined) return undefined;
+  const descriptor = feedToSourceDescriptor(src);
+  return reconcileRoadSnapshots(buffers.map((buffer) => reporter(buffer, descriptor)));
 }
