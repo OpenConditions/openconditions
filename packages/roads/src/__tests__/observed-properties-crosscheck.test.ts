@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { OBSERVED_PROPERTIES } from "@openconditions/core";
 import { ROAD_EVENT_TYPES, roadAttributes, roadFlowAttributes } from "../model.js";
 import type { RoadEvent, RoadFlow } from "../model.js";
+import { restrictionDetails } from "./fixtures/restriction-event.js";
 
 /**
  * Drift guard: this test lives in @openconditions/roads (which may import both
@@ -80,6 +81,8 @@ describe("ObservedProperty registry ↔ roads taxonomy", () => {
       lanesAffected: { total: 3, closed: 1 },
       speedLimitKph: 50,
       restrictions: [{ type: "width", value: 3, unit: "m" }],
+      restrictionDetails: restrictionDetails(),
+      restrictionDetailsUnsupported: true,
       vehiclesAffected: ["truck"],
       detour: "via B12",
       detourGeometry: {

@@ -6,6 +6,7 @@ import type {
   PointGeometry,
   Severity,
 } from "@openconditions/core";
+import type { RoadRestrictionDetailsV1 } from "./restriction-types.js";
 
 /**
  * Declarative field mapping for the generic GeoJSON parser. A feed serving a
@@ -182,6 +183,20 @@ export interface RoadEvent extends ConditionEvent {
   };
   speedLimitKph?: number;
   restrictions?: Restriction[];
+  /**
+   * The normalized vehicle-restriction display contract. Its presence — even
+   * of a partial or empty-fact envelope — is restriction evidence, so the
+   * record is withheld from shared routing and from exporters that cannot
+   * represent its scope. Legacy `restrictions` stays for existing parsers and
+   * is never the authority for these facts.
+   */
+  restrictionDetails?: RoadRestrictionDetailsV1;
+  /**
+   * Set when a present restriction envelope could not be validated. Consumers
+   * must treat it exactly like present details: an uninterpretable claim about
+   * vehicle applicability is not the same as no claim at all.
+   */
+  restrictionDetailsUnsupported?: true;
   vehiclesAffected?: string[];
   detour?: string;
   /** Diversion/alternative-route geometry, when the source provides one
@@ -312,6 +327,12 @@ export function roadAttributes(ev: RoadEvent): Record<string, unknown> {
   if (ev.speedLimitKph != null) attrs["speedLimitKph"] = ev.speedLimitKph;
   if (ev.restrictions != null && ev.restrictions.length > 0) {
     attrs["restrictions"] = ev.restrictions;
+  }
+  // Source semantics only: the publication-time evaluation (state, evaluatedAt,
+  // freshness) is added at the publisher edge and must never be persisted here.
+  if (ev.restrictionDetails != null) attrs["restrictionDetails"] = ev.restrictionDetails;
+  if (ev.restrictionDetailsUnsupported === true) {
+    attrs["restrictionDetailsUnsupported"] = true;
   }
   if (ev.vehiclesAffected != null && ev.vehiclesAffected.length > 0) {
     attrs["vehiclesAffected"] = ev.vehiclesAffected;

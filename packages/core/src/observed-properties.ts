@@ -73,6 +73,8 @@ const ROAD_EVENT_ATTRIBUTE_KEYS = [
   "lanesAffected",
   "speedLimitKph",
   "restrictions",
+  "restrictionDetails",
+  "restrictionDetailsUnsupported",
   "vehiclesAffected",
   "detour",
   "detourGeometry",

@@ -1,4 +1,6 @@
 export * from "./model.js";
+export * from "./restriction-types.js";
+export * from "./restrictions.js";
 export * from "./routing.js";
 export * from "./decay.js";
 export * from "./evidence-policy.js";
