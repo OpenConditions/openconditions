@@ -1,8 +1,14 @@
 import type { Confidence } from "@openconditions/core";
 import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
 import type { Geometry } from "geojson";
+import {
+  type DatexRestrictionContext,
+  datexApplicabilityVehicles,
+  datexRestrictionDetails,
+} from "./datex-restrictions.js";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { isPlausibleWgs84, reprojectorFor } from "./reproject.js";
+import type { RoadRestrictionDetailsV1 } from "./restriction-types.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
@@ -752,9 +758,14 @@ function collectLeaf(node: unknown, localName: string, out: string[] = []): stri
   return out;
 }
 
+/**
+ * Vehicles a measure applies to. Only the record's own applicability role
+ * counts: vehicles obstructing the road or involved in an accident are
+ * participants, and publishing them here would state that a closure applies to
+ * the breakdown truck that caused it.
+ */
 function vehiclesAffectedOf(rec: XmlObject): string[] | undefined {
-  const set = new Set([...collectLeaf(rec, "vehicleType"), ...collectLeaf(rec, "vehicleUsage")]);
-  return set.size > 0 ? [...set] : undefined;
+  return datexApplicabilityVehicles(rec);
 }
 
 /** Objects that directly carry a named value, so sibling comparator tokens stay associated with it. */
@@ -769,6 +780,46 @@ function valueContexts(node: unknown, localName: string, out: XmlObject[] = []):
     if (!key.startsWith("@_")) valueContexts(value, localName, out);
   }
   return out;
+}
+
+/**
+ * DATEX sources whose applicability has been verified against a real capture
+ * and may therefore publish normalized restriction evidence. A source is added
+ * here only with its own reviewed records, units and comparator semantics —
+ * never because the generic parser happens to recognize a similarly named leaf.
+ */
+const RESTRICTION_CONTRACT_SOURCES = new Set(["nl-ndw"]);
+
+function restrictionDetailsFor(
+  rec: XmlObject,
+  src: SourceDescriptor,
+  context: DatexRestrictionContext,
+): RoadRestrictionDetailsV1 | undefined {
+  if (!RESTRICTION_CONTRACT_SOURCES.has(src.id)) return undefined;
+  return datexRestrictionDetails(rec, src, context);
+}
+
+/**
+ * The legacy numeric `restrictions` array for a verified source, derived from
+ * the normalized facts so it can never carry a dimension whose unit was not
+ * established. An unsupported predicate stays absent here and visible as an
+ * issue on the envelope.
+ */
+function legacyRestrictionsOf(
+  details: RoadRestrictionDetailsV1 | undefined,
+): Restriction[] | undefined {
+  if (!details) return undefined;
+  const out: Restriction[] = [];
+  for (const fact of details.facts) {
+    if (fact.kind !== "dimension") continue;
+    out.push({
+      type: fact.dimension === "gross_weight" ? "weight" : fact.dimension,
+      value: fact.value,
+      unit: fact.unit,
+      operator: fact.operator,
+    });
+  }
+  return out.length > 0 ? out : undefined;
 }
 
 /** Dimension/weight restrictions (vehicleHeight/Width/Length, gross weight). */
@@ -1198,7 +1249,11 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
     const openlr = !geometry ? collectOpenLr(rec) : undefined;
     const recordId = recId(rec);
     const prefixedId = `${src.id}:${recordId}`;
-    const sourceVersion = Number(getXmlChildText(rec, "situationRecordVersion"));
+    // Publishers place the record version either in a child element or, as NDW
+    // does, in the `version` attribute of situationRecord itself.
+    const rawRecordVersion =
+      getXmlChildText(rec, "situationRecordVersion") ?? getXmlAttribute(rec, "version");
+    const sourceVersion = Number(rawRecordVersion);
     const version =
       Number.isSafeInteger(sourceVersion) && sourceVersion >= 0 ? sourceVersion : null;
     const rawVersionTime = text(rec["situationRecordVersionTime"]) ?? null;
@@ -1226,7 +1281,14 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
     }
 
     const recType = elementType(rec) || className || "";
-    const { type, category, isPlanned } = mapSourceType("datex2", recType);
+    const mapped = mapSourceType("datex2", recType);
+    // A management record that declares a full road closure is a closure, even
+    // when the publisher's record id or headline names something narrower.
+    const declaresRoadClosed =
+      getXmlChildText(rec, "roadOrCarriagewayOrLaneManagementType") === "roadClosed";
+    const { type, category, isPlanned } = declaresRoadClosed
+      ? { ...mapped, ...mapSourceType("datex2", "roadClosure") }
+      : mapped;
 
     const validity = getXmlChild(rec, "validity") ?? {};
     const validityStatus = text(validity["validityStatus"]);
@@ -1262,6 +1324,18 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
       multilingual(fallbackComment, "en") ??
       causeDesc;
 
+    const restrictionDetails = restrictionDetailsFor(rec, src, {
+      recordId,
+      recordVersion: rawRecordVersion ?? null,
+      sourceUpdatedAt: versionTime,
+      validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
+      validTo: text(timeSpec?.["overallEndTime"]) ?? null,
+      direction: { basis: "unknown", value: "unknown", description: null },
+      locationDescription: null,
+      sourceLocationRefs: {},
+      issues: [],
+    });
+
     const shared = {
       id: `${src.id}:${recId(rec)}`,
       source: src.id,
@@ -1281,8 +1355,11 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
       roadState: roadStateOf(rec),
       lanesAffected: lanesOf(rec),
       speedLimitKph: speedLimitOf(rec),
-      restrictions: dimensionRestrictionsOf(rec),
+      restrictions: RESTRICTION_CONTRACT_SOURCES.has(src.id)
+        ? legacyRestrictionsOf(restrictionDetails)
+        : dimensionRestrictionsOf(rec),
       vehiclesAffected: vehiclesAffectedOf(rec),
+      ...(restrictionDetails ? { restrictionDetails } : {}),
       detour: commentByType(/route|recommend|divers|detour|umleit/i) ?? detourOf(rec),
       detourGeometry: detourGeometryOf(rec, reproject, lonFirst),
       delaySeconds: leafNumber(rec, "delayTimeValue"),

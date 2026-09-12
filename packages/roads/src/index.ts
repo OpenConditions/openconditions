@@ -2,6 +2,7 @@ export * from "./autobahn.js";
 export * from "./bind/index.js";
 export * from "./catalog/index.js";
 export * from "./datex.js";
+export * from "./datex-restrictions.js";
 export * from "./decay.js";
 export * from "./dedupe.js";
 export * from "./digitraffic.js";

@@ -48,7 +48,9 @@ describe("DATEX II round-trip through the ingest parser", () => {
     ]);
     const [ev] = parseDatexSituations(xml, SRC);
     expect(ev).toBeDefined();
-    expect(ev!.type).toBe("lane_closure"); // DATEX models closures as management records
+    // DATEX models closures as management records, so the declared management
+    // type is what identifies a full closure — not the record's class name.
+    expect(ev!.type).toBe("road_closure");
     expect(ev!.roadState).toBe("closed");
   });
 

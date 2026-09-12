@@ -430,7 +430,7 @@ describe("parseDatexSituations — extended field extraction", () => {
 });
 
 describe("parseDatexSituations — deeper field extraction", () => {
-  it("maps vehicles, height restriction, lane total, delay, safety severity, alertC TMC", () => {
+  it("separates vehicle roles and maps height, lane total, delay, safety severity, alertC TMC", () => {
     const xml = v3Record(
       `<impact><numberOfLanesRestricted>1</numberOfLanesRestricted><delays><delayTimeValue>600</delayTimeValue></delays></impact>` +
         `<supplementaryPositionalDescription><carriageway><originalNumberOfLanes>3</originalNumberOfLanes></carriageway></supplementaryPositionalDescription>` +
@@ -443,14 +443,24 @@ describe("parseDatexSituations — deeper field extraction", () => {
         `<gmlLineString><posList>52 13 52.1 13.1</posList></gmlLineString></location></locationContainedInItinerary></locationReference>`,
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
-    expect(ev!.vehiclesAffected).toContain("lorry");
+    // The lorry is obstructing the road, not a vehicle the measure applies to.
+    expect(ev!.vehiclesAffected ?? []).not.toContain("lorry");
     expect(ev!.restrictions).toContainEqual({
       type: "height",
       value: 4.5,
       unit: "m",
-      operator: "greaterThan",
-      raw: { value: "4.5", comparisonOperator: "greaterThan" },
+      operator: "gt",
     });
+    expect(ev!.restrictionDetails?.facts).toEqual([
+      expect.objectContaining({
+        kind: "dimension",
+        dimension: "height",
+        value: 4.5,
+        unit: "m",
+        operator: "gt",
+        meaning: "event_applies_when",
+      }),
+    ]);
     expect(ev!.lanesAffected?.total).toBe(3);
     expect(ev!.lanesAffected?.closed).toBe(1);
     expect(ev!.delaySeconds).toBe(600);
