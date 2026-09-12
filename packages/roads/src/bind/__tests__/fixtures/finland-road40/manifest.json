@@ -5,9 +5,10 @@
   "capturedAt": "2026-09-12T10:17:09Z",
   "capturedWith": "packages/roads/scripts/bind-corpus-spine.ts (Overpass API)",
   "directedSegments": 24,
-  "fixtureSha256": "951d02fced97ef414d3cecc06651fce0d9c53409547a33dec4acde56fe52ac7c",
+  "fixtureSha256": "fcc4bf664bb8bed84f44f00a013a7900d0a9990ea3cbdb96a72616a310caf1dd",
   "attribution": "© OpenStreetMap contributors",
   "license": "ODbL-1.0",
   "licenseUrl": "https://www.openstreetmap.org/copyright",
-  "notice": "OpenStreetMap data is licensed under ODbL and is separate from the CC BY 4.0 Fintraffic source fixture it is tested alongside."
+  "notice": "OpenStreetMap data is licensed under ODbL and is separate from the CC BY 4.0 Fintraffic source fixture it is tested alongside.",
+  "note": "Held verbatim as captured; excluded from Prettier (see .prettierignore) so fixtureSha256 stays valid."
 }

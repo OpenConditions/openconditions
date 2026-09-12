@@ -109,7 +109,13 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
   const id = str(p.id);
   if (!feature.geometry || !id) return null;
 
-  const attrs = (p.attributes ?? {}) as Record<string, unknown>;
+  // Two producers emit this feature with different property layouts: the
+  // `observationsByBbox` projection nests road fields under `attributes`,
+  // while the lossless GeoJSON publisher spreads the whole model flat. Reading
+  // the nested bag first and falling back to the properties themselves keeps
+  // one projection correct for both instead of silently dropping road fields
+  // from whichever shape it was not written for.
+  const attrs = (p.attributes ?? p) as Record<string, unknown>;
   const delay = Number(attrs.delaySeconds);
   const groupId = str(attrs.situationId);
   const vehiclesAffected = vehiclesAffectedOf(attrs);
@@ -133,19 +139,27 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
     attrs.speedLimitKph > 0
       ? { speedLimitKph: attrs.speedLimitKph }
       : {}),
-    ...(typeof p.is_stale === "boolean" ? { isStale: p.is_stale } : {}),
+    ...(typeof p.is_stale === "boolean"
+      ? { isStale: p.is_stale }
+      : typeof p.isStale === "boolean"
+        ? { isStale: p.isStale }
+        : {}),
     roadState: attrs.roadState as RoadState | undefined,
     roads: attrs.roads as RoadConditionRoadRef[] | undefined,
     validFrom:
       (p.valid_from as string | null | undefined) ??
+      (p.validFrom as string | null | undefined) ??
       (attrs.validFrom as string | null | undefined) ??
       null,
-    validTo: (p.valid_to as string | null | undefined) ?? null,
+    validTo:
+      (p.valid_to as string | null | undefined) ?? (p.validTo as string | null | undefined) ?? null,
     ...(Array.isArray(p.schedule) && p.schedule.length > 0
       ? { schedule: p.schedule as RoadConditionSchedule[] }
       : {}),
-    dataUpdatedAt: str(p.data_updated_at),
-    attribution: p.attribution as RoadConditionEvent["attribution"],
+    dataUpdatedAt: str(p.data_updated_at) ?? str(p.dataUpdatedAt),
+    attribution: (p.attribution ??
+      (p.origin as { attribution?: unknown } | undefined)
+        ?.attribution) as RoadConditionEvent["attribution"],
     // Evidence provenance drives the host's routing gate + overlay labeling.
     // A feed observation → originKind "feed" and (from the projection) null
     // evidence fields, so it always routes. A crowd observation → originKind
@@ -158,7 +172,11 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
     // Planned-works labeling: the overlay dims and dashes works that have not
     // started yet. `is_forecast` is the upstream announcement flag; `isPlanned`
     // rides in `attributes` because it is a road-domain field.
-    ...(typeof p.is_forecast === "boolean" ? { isForecast: p.is_forecast } : {}),
+    ...(typeof p.is_forecast === "boolean"
+      ? { isForecast: p.is_forecast }
+      : typeof p.isForecast === "boolean"
+        ? { isForecast: p.isForecast }
+        : {}),
     ...(typeof attrs.isPlanned === "boolean" ? { isPlanned: attrs.isPlanned } : {}),
     ...(vehiclesAffected ? { vehiclesAffected } : {}),
     ...(binding ? { binding } : {}),

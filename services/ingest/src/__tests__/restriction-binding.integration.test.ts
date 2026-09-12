@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import Fastify from "fastify";
 import type postgres from "postgres";
 import type { OsmWay, SpineSubgraph } from "@openconditions/roads";
 import { bindObservations, drainBindingQueue } from "../pipeline/bind-observations.js";
@@ -7,6 +8,9 @@ import { buildSegments } from "../pipeline/segment-build.js";
 import { activateRoadGraph } from "../pipeline/graph-state.js";
 import { importOsmRoads } from "../pipeline/osm-import.js";
 import { atomicSwap } from "../pipeline/write-postgis.js";
+import { buildDomainRegistry } from "../domains.js";
+import { FeedStatusStore } from "../feed-status.js";
+import { registerPublishRoutes } from "../publish-routes.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 /**
@@ -103,10 +107,15 @@ afterAll(async () => {
   await db?.close();
 }, 30_000);
 
+/**
+ * Publish one road event. Road-domain fields are top-level model fields: the
+ * write path derives the attributes bag from the domain mapper, so a
+ * hand-built `attributes` object would never be persisted.
+ */
 async function seedEvent(
   id: string,
   geometry: unknown,
-  attributes: Record<string, unknown>
+  roadFields: Record<string, unknown>
 ): Promise<void> {
   await atomicSwap(
     sql,
@@ -136,7 +145,7 @@ async function seedEvent(
         dataUpdatedAt: CHECKED_AT,
         fetchedAt: CHECKED_AT,
         isStale: false,
-        attributes,
+        ...roadFields,
       } as never,
     ],
     600
@@ -278,4 +287,205 @@ describe("restriction event binding against the real graph", () => {
       WHERE observation_id = 'fi-digitraffic:GUID50470575'`;
     expect(after[0]!.graph_generation).not.toBe(state[0]!.generation);
   }, 60_000);
+});
+
+describe("stored restriction publication through the real HTTP and provider path", () => {
+  const CONDITIONAL_ID = "fi-digitraffic:GUID50465935";
+
+  const restrictionDetails = {
+    schemaVersion: 1,
+    vehicleScope: "specific",
+    completeness: "complete",
+    issues: [],
+    source: {
+      sourceId: "fi-digitraffic",
+      recordId: "GUID50465935",
+      recordVersion: "31",
+      sourceUpdatedAt: "2026-08-28T04:18:02.629Z",
+      feedUrls: ["https://tie.digitraffic.fi/api/traffic-message/v2/roadworks"],
+      publisher: "Fintraffic / Digitraffic",
+      license: "CC-BY-4.0",
+      licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+      attribution: "Fintraffic / Digitraffic",
+      modificationNotice:
+        "Normalized by OpenConditions; source units and structure may be transformed.",
+    },
+    facts: [
+      {
+        id: "GUID50465935:GUID50469933:roadwork_phase:restrictions[2]",
+        kind: "dimension",
+        dimension: "gross_weight",
+        meaning: "maximum_permitted",
+        value: 26000,
+        unit: "kg",
+        operator: "lte",
+        scope: {
+          kind: "roadwork_phase",
+          phaseId: "GUID50469933",
+          locationDescription: "Tie 104, Raasepori",
+          sourceLocationRefs: { scheme: "digitraffic_road_address", road: 104 },
+          restrictionBinding: "not_established",
+        },
+        direction: { basis: "road_reference", value: "both", description: null },
+        validFrom: "2026-07-19T21:00:00.000Z",
+        validTo: null,
+        sourceTokens: { type: "vehicle gross weight limit", quantity: 26, unit: "t" },
+        context: {
+          restrictionsLiftable: false,
+          compliance: "unknown",
+          operatorActionStatus: null,
+          validityStatus: null,
+        },
+      },
+    ],
+  };
+
+  async function seedConditional(): Promise<void> {
+    const event = road40Event();
+    await seedEvent(CONDITIONAL_ID, event.geometry, {
+      roads: [{ name: "Turun kehätie", ref: "40" }],
+      isPlanned: true,
+      roadState: "closed",
+      restrictionDetails,
+    });
+    await sql`UPDATE conditions.observations
+      SET valid_from = now() - interval '1 day', valid_to = NULL WHERE id = ${CONDITIONAL_ID}`;
+    await sql`UPDATE conditions.source_status
+      SET last_success_at = now(), freshness_window_sec = 600 WHERE source = 'fi-digitraffic'`;
+    await bindObservations(sql, [CONDITIONAL_ID], { now: () => CHECKED_AT, env: ENV });
+  }
+
+  async function app() {
+    const instance = Fastify();
+    const registry = await buildDomainRegistry();
+    registerPublishRoutes(instance, sql, new FeedStatusStore(), registry);
+    await instance.ready();
+    return instance;
+  }
+
+  it("publishes the evaluated restriction with freshness read from the database", async () => {
+    await seedConditional();
+    const instance = await app();
+    try {
+      const res = await instance.inject({
+        method: "GET",
+        url: "/observations.geojson?bbox=22.3,60.4,22.5,60.5",
+      });
+      expect(res.statusCode).toBe(200);
+      const body = res.json() as {
+        features: Array<{ id: string; properties: Record<string, unknown> }>;
+      };
+      const feature = body.features.find((f) => f.id === CONDITIONAL_ID)!;
+      expect(feature.properties["restrictionDetails"]).toBeDefined();
+      const view = feature.properties["restrictionDetails"] as {
+        facts: Array<{ value: number; unit: string; state: string }>;
+        source: Record<string, unknown>;
+        sourceCheckedAt: string | null;
+        freshUntil: string | null;
+        isStale: boolean;
+      };
+      expect(view.facts[0]).toMatchObject({ value: 26000, unit: "kg", state: "active" });
+      expect(view.source).toMatchObject({
+        license: "CC-BY-4.0",
+        licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+        publisher: "Fintraffic / Digitraffic",
+      });
+      // Freshness is computed from the database's source status, not from the
+      // observation row's own timestamps.
+      expect(view.sourceCheckedAt).not.toBeNull();
+      expect(view.freshUntil).not.toBeNull();
+      expect(view.isStale).toBe(false);
+    } finally {
+      await instance.close();
+    }
+  }, 120_000);
+
+  it("emits no conditional record into segments, Valhalla, DATEX or TraFF", async () => {
+    await seedConditional();
+    const instance = await app();
+    try {
+      const segments = await instance.inject({
+        method: "GET",
+        url: "/segments/conditions.json?bbox=22.3,60.4,22.5,60.5",
+      });
+      expect(segments.statusCode).toBe(200);
+      const conditions = (segments.json() as { conditions: Array<{ id: string }> }).conditions;
+      expect(conditions.map((c) => c.id)).not.toContain(CONDITIONAL_ID);
+
+      const exclusions = await instance.inject({
+        method: "GET",
+        url: "/valhalla/exclusions.json?bbox=22.3,60.4,22.5,60.5",
+      });
+      expect(exclusions.statusCode).toBe(200);
+      const body = exclusions.json() as {
+        exclude_locations: unknown[];
+        exclude_polygons: unknown[];
+      };
+      expect(body.exclude_locations).toEqual([]);
+      expect(body.exclude_polygons).toEqual([]);
+
+      for (const url of [
+        "/datex2/situations.xml?bbox=22.3,60.4,22.5,60.5",
+        "/traff.xml?bbox=22.3,60.4,22.5,60.5",
+      ]) {
+        const res = await instance.inject({ method: "GET", url });
+        expect(res.statusCode).toBe(200);
+        expect(res.body, url).not.toContain(CONDITIONAL_ID);
+        expect(res.body, url).not.toContain("26000");
+        expect(res.body, url).not.toContain("Painorajoitus");
+      }
+    } finally {
+      await instance.close();
+    }
+  }, 120_000);
+
+  it("still publishes an independently bound unconditional control", async () => {
+    await seedConditional();
+    const event = road40Event();
+    // A second source so the conditional swap cannot withdraw it.
+    await atomicSwap(
+      sql,
+      "control-source",
+      [
+        {
+          id: "control-source:closure",
+          source: "control-source",
+          sourceFormat: "native",
+          domain: "roads",
+          kind: "event",
+          type: "road_closure",
+          category: "incident",
+          severity: "high",
+          severitySource: "declared",
+          headline: "Road closed",
+          status: "active",
+          geometry: event.geometry,
+          origin: {
+            kind: "feed",
+            attribution: { provider: "control", license: "CC0-1.0" },
+          },
+          dataUpdatedAt: CHECKED_AT,
+          fetchedAt: CHECKED_AT,
+          isStale: false,
+          attributes: { roads: [{ name: "Turun kehätie", ref: "40" }], roadState: "closed" },
+        } as never,
+      ],
+      600
+    );
+    const instance = await app();
+    try {
+      const res = await instance.inject({
+        method: "GET",
+        url: "/observations.geojson?bbox=22.3,60.4,22.5,60.5",
+      });
+      const body = res.json() as { features: Array<{ id: string }> };
+      expect(body.features.map((f) => f.id)).toContain("control-source:closure");
+      // Two collocated records with different identities both survive.
+      expect(body.features.map((f) => f.id)).toContain(CONDITIONAL_ID);
+    } finally {
+      await instance.close();
+      await sql`DELETE FROM conditions.observations WHERE source = 'control-source'`;
+      await sql`DELETE FROM conditions.source_status WHERE source = 'control-source'`;
+    }
+  }, 120_000);
 });
