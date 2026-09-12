@@ -1,4 +1,5 @@
-import type { RoadEvent } from "@openconditions/roads";
+import { readFileSync } from "node:fs";
+import { FEED_SOURCES, type RoadEvent } from "@openconditions/roads";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { DomainFeedSource } from "../pipeline/run.js";
 import {
@@ -160,5 +161,51 @@ describe("inspectSnapshotCompleteness", () => {
     expect(() =>
       inspectSnapshotCompleteness(datex, [Buffer.from("<html><body>maintenance</body></html>")]),
     ).toThrow(/d2LogicalModel/);
+  });
+});
+
+describe("inspectSnapshotCompleteness — the real NDW descriptor", () => {
+  const xml = readFileSync(
+    new URL(
+      "../../../../packages/roads/src/__tests__/fixtures/ndw/restrictions-v3.xml",
+      import.meta.url,
+    ),
+  );
+  const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw") as unknown as DomainFeedSource;
+
+  it("accounts for every situation record in the reviewed capture", () => {
+    expect(inspectSnapshotCompleteness(ndw, [xml])).toEqual({
+      complete: true,
+      inputRecords: 6,
+      completeEmpty: false,
+    });
+  });
+
+  it("treats a valid publication with no situations as an explicit withdrawal", () => {
+    // Remove only the situations, keeping the real envelope and publication
+    // metadata: an empty publication is a withdrawal, not a malformed document.
+    const empty = Buffer.from(
+      xml.toString("utf8").replace(/<sit:situation\b[\s\S]*<\/sit:situation>/, ""),
+    );
+    expect(inspectSnapshotCompleteness(ndw, [empty])).toEqual({
+      complete: true,
+      inputRecords: 0,
+      completeEmpty: true,
+    });
+  });
+
+  it.each([
+    ["truncated XML", "<mc:messageContainer>"],
+    ["an HTML maintenance page", "<html><body>maintenance</body></html>"],
+    [
+      "the wrong publication type",
+      '<?xml version="1.0"?><messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><payload xsi:type="sit:SituationPublicationOther"/></messageContainer>',
+    ],
+    [
+      "the wrong root element",
+      '<?xml version="1.0"?><d2LogicalModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><payload xsi:type="sit:SituationPublication"/></d2LogicalModel>',
+    ],
+  ])("rejects %s rather than clearing the source", (_label, body) => {
+    expect(() => inspectSnapshotCompleteness(ndw, [Buffer.from(body)])).toThrow();
   });
 });

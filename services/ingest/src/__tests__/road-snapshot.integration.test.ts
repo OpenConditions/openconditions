@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 import type { LookupFn } from "@openconditions/ingest-framework";
+import { FEED_SOURCES } from "@openconditions/roads";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { type DomainFeedSource, runSource } from "../pipeline/run.js";
@@ -391,5 +393,197 @@ describe("complete road snapshot acceptance", () => {
     const queued = await sql<Array<{ observation_id: string }>>`
       SELECT observation_id FROM conditions.binding_queue WHERE observation_id = ${id}`;
     expect(queued).toHaveLength(1);
+  }, 120_000);
+});
+
+/**
+ * The same acceptance rules against the shipped NDW descriptor and the reviewed
+ * reduced capture, gzip-compressed exactly as the publisher serves it.
+ */
+describe("complete road snapshot acceptance — NDW", () => {
+  const ndwXml = readFileSync(
+    new URL(
+      "../../../../packages/roads/src/__tests__/fixtures/ndw/restrictions-v3.xml",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+  const ndwFeed = {
+    ...FEED_SOURCES.find((f) => f.id === "nl-ndw"),
+    domain: "roads",
+  } as unknown as DomainFeedSource;
+
+  /** Serve one gzip XML body, as the real endpoint does. */
+  function serveXml(body: string, status = 200): typeof fetch {
+    return (async () =>
+      new Response(status === 200 ? new Uint8Array(gzipSync(Buffer.from(body, "utf8"))) : null, {
+        status,
+        headers: { "content-type": "application/xml" },
+      })) as unknown as typeof fetch;
+  }
+
+  async function ndwRows(): Promise<Array<{ id: string; content_hash: string | null }>> {
+    return sql<Array<{ id: string; content_hash: string | null }>>`
+      SELECT id, content_hash FROM conditions.observations
+      WHERE source = 'nl-ndw' ORDER BY id`;
+  }
+
+  async function seedNdw(now: string): Promise<void> {
+    const result = await runSource(ndwFeed, {
+      sql,
+      fetch: serveXml(ndwXml),
+      lookup: fakeLookup,
+      now: () => now,
+    });
+    expect(result.error).toBeUndefined();
+  }
+
+  beforeEach(async () => {
+    await sql`DELETE FROM conditions.observations WHERE source = 'nl-ndw'`;
+    await sql`DELETE FROM conditions.source_status WHERE source = 'nl-ndw'`;
+  });
+
+  it("accepts every record of the reviewed capture and keeps the height condition", async () => {
+    const result = await runSource(ndwFeed, {
+      sql,
+      fetch: serveXml(ndwXml),
+      lookup: fakeLookup,
+      now: () => "2026-09-12T07:14:00.000Z",
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.snapshot).toMatchObject({
+      inputCount: 6,
+      uniqueCount: 6,
+      accepted: 6,
+      terminal: 0,
+      unlocatable: 0,
+      duplicates: 0,
+    });
+    expect((await ndwRows()).map((r) => r.id)).toEqual([
+      "nl-ndw:NDW08_2e188db4-9bff-492d-bf28-90e17bffac8c",
+      "nl-ndw:NLRWS_0005382945_1",
+      "nl-ndw:NLRWS_0005406494_1",
+      "nl-ndw:RWS01_M1080891_DISPLACEMENT_D2_WWA",
+      "nl-ndw:RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA",
+      "nl-ndw:RWS01_M1080891_NARROW_LANES_D2_WWA",
+    ]);
+    const stored = await sql<Array<{ attributes: Record<string, unknown> }>>`
+      SELECT attributes FROM conditions.observations
+      WHERE id = 'nl-ndw:RWS01_M1080891_NARROW_LANES_D2_WWA'`;
+    const details = stored[0]!.attributes["restrictionDetails"] as {
+      facts: Array<{ value: number; unit: string; operator: string }>;
+      source: { license: string; licenseUrl: string; attribution: string };
+    };
+    expect(details.facts[0]).toMatchObject({ value: 4.5, unit: "m", operator: "gt" });
+    // The trusted descriptor supplies rights, never the payload.
+    expect(details.source).toMatchObject({
+      license: "CC0-1.0",
+      licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+      attribution: "NDW / Rijkswaterstaat",
+    });
+  }, 120_000);
+
+  it("clears the source for a valid complete empty publication", async () => {
+    await seedNdw("2026-09-12T07:14:00.000Z");
+    const empty = await runSource(ndwFeed, {
+      sql,
+      fetch: serveXml(ndwXml.replace(/<sit:situation\b[\s\S]*<\/sit:situation>/, "")),
+      lookup: fakeLookup,
+      now: () => "2026-09-12T07:16:00.000Z",
+    });
+    expect(empty.error).toBeUndefined();
+    expect(await ndwRows()).toHaveLength(0);
+  }, 120_000);
+
+  it("withdraws only a record absent from an accepted snapshot", async () => {
+    await seedNdw("2026-09-12T07:14:00.000Z");
+    const withoutLorry = ndwXml.replace(
+      /<sit:situation id="NLRWS_0005382945">[\s\S]*?<\/sit:situation>/,
+      "",
+    );
+    const result = await runSource(ndwFeed, {
+      sql,
+      fetch: serveXml(withoutLorry),
+      lookup: fakeLookup,
+      now: () => "2026-09-12T07:16:00.000Z",
+    });
+    expect(result.error).toBeUndefined();
+    const ids = (await ndwRows()).map((r) => r.id);
+    expect(ids).not.toContain("nl-ndw:NLRWS_0005382945_1");
+    expect(ids).toContain("nl-ndw:RWS01_M1080891_NARROW_LANES_D2_WWA");
+  }, 120_000);
+
+  it.each([
+    ["truncated XML", "<mc:messageContainer>"],
+    ["an HTML body served with status 200", "<html><body>maintenance</body></html>"],
+  ])(
+    "preserves last-good data and checked time for %s",
+    async (_label, body) => {
+      await seedNdw("2026-09-12T07:14:00.000Z");
+      const before = await ndwRows();
+      const status = await sql<Array<{ last_success_at: Date | null }>>`
+      SELECT last_success_at FROM conditions.source_status WHERE source = 'nl-ndw'`;
+
+      const failed = await runSource(ndwFeed, {
+        sql,
+        fetch: serveXml(body),
+        lookup: fakeLookup,
+        now: () => "2026-09-12T07:16:00.000Z",
+      });
+      expect(failed.error).toBeDefined();
+      expect(await ndwRows()).toEqual(before);
+      const after = await sql<Array<{ last_success_at: Date | null }>>`
+      SELECT last_success_at FROM conditions.source_status WHERE source = 'nl-ndw'`;
+      expect(after[0]!.last_success_at?.toISOString()).toBe(
+        status[0]!.last_success_at?.toISOString(),
+      );
+    },
+    120_000,
+  );
+
+  it("preserves last-good data when a record loses its identity", async () => {
+    await seedNdw("2026-09-12T07:14:00.000Z");
+    const before = await ndwRows();
+    const anonymous = ndwXml.replace(' id="NLRWS_0005382945_1" version="536"', ' version="536"');
+    const failed = await runSource(ndwFeed, {
+      sql,
+      fetch: serveXml(anonymous),
+      lookup: fakeLookup,
+      now: () => "2026-09-12T07:16:00.000Z",
+    });
+    expect(failed.error).toBeDefined();
+    expect(await ndwRows()).toEqual(before);
+  }, 120_000);
+
+  it("keeps an unchanged restriction fresh across a 304 response", async () => {
+    await seedNdw("2026-09-12T07:14:00.000Z");
+    const before = await ndwRows();
+    const unchanged = await runSource(ndwFeed, {
+      sql,
+      fetch: serveXml("", 304),
+      lookup: fakeLookup,
+      now: () => "2026-09-12T07:16:00.000Z",
+    });
+    expect(unchanged.error).toBeUndefined();
+    expect(await ndwRows()).toEqual(before);
+  }, 120_000);
+
+  it("lets a healthy source publish while NDW fails", async () => {
+    const healthy = await runSource(feed, {
+      sql,
+      fetch: serve(roadworks()),
+      lookup: fakeLookup,
+      now: () => "2026-09-12T07:14:00.000Z",
+    });
+    const broken = await runSource(ndwFeed, {
+      sql,
+      fetch: serveXml("<mc:messageContainer>"),
+      lookup: fakeLookup,
+      now: () => "2026-09-12T07:14:00.000Z",
+    });
+    expect(healthy.error).toBeUndefined();
+    expect(broken.error).toBeDefined();
+    expect(await idsAndHashes()).toHaveLength(5);
+    expect(await ndwRows()).toHaveLength(0);
   }, 120_000);
 });

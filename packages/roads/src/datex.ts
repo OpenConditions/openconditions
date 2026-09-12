@@ -67,14 +67,16 @@ function isLinearPathType(type: string): boolean {
   return type === "Linear" || type.endsWith("LinearLocation");
 }
 
+/**
+ * The publisher's own record identity, or an empty string when it supplied
+ * none. Identity must never be invented: a generated id would look like a new
+ * record on every poll, and the previous one would look withdrawn.
+ */
 function recId(rec: XmlObject): string {
   // xsi-typed records carry an `id` attribute; substitution-group records (e.g.
   // National Highways) carry a stable `<idG>` leaf instead.
   return (
-    getXmlAttribute(rec, "id") ??
-    getXmlChildText(rec, "idG") ??
-    getXmlChildText(rec, "id") ??
-    `unknown-${Math.random().toString(36).slice(2)}`
+    getXmlAttribute(rec, "id") ?? getXmlChildText(rec, "idG") ?? getXmlChildText(rec, "id") ?? ""
   );
 }
 

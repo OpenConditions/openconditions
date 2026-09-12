@@ -38,6 +38,47 @@ describe("FEED_SOURCES", () => {
     expect(ndw.license).toBe("CC0-1.0");
   });
 
+  it("fetches the ndw event feed over the verified https endpoint", () => {
+    const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw")!;
+    expect(ndw.url).toBe("https://opendata.ndw.nu/actueel_beeld.xml.gz");
+  });
+
+  it("declares the ndw event feed as a complete DATEX situation publication", () => {
+    const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw")!;
+    expect(ndw.snapshot).toEqual({
+      completeness: "complete",
+      rootElement: "messageContainer",
+      publicationElement: "payload",
+      publicationType: "SituationPublication",
+      recordElement: "situationRecord",
+    });
+    expect(ndw.cadenceSec).toBe(60);
+    expect(ndw.freshnessWindowSec).toBe(300);
+  });
+
+  it("carries the reviewed ndw reuse evidence and canonical licence link", () => {
+    const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw")!;
+    expect(ndw.licenseUrl).toBe("https://creativecommons.org/publicdomain/zero/1.0/");
+    expect(ndw.attribution).toBe("NDW / Rijkswaterstaat");
+    expect(ndw.rights).toMatchObject({
+      sourceRedistribution: true,
+      derivedRedistribution: true,
+      commercialUse: true,
+      attributionRequired: false,
+      retention: true,
+      termsUrl: "https://www.ndw.nu/service/copyright",
+      evidenceOrigin: "publisher",
+      evidenceVersion: "CC0-1.0",
+    });
+  });
+
+  it("leaves the ndw flow feed and its site table untouched", () => {
+    const flow = FEED_SOURCES.find((f) => f.id === "nl-ndw-flow")!;
+    expect(flow.snapshot).toBeUndefined();
+    expect(flow.rights).toBeUndefined();
+    expect(flow.licenseUrl).toBe("https://www.ndw.nu");
+  });
+
   it("includes an ndw-flow entry that produces flow with a companion site table", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "nl-ndw-flow");
     expect(feed).toBeDefined();

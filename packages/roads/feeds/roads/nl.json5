@@ -3,15 +3,36 @@
     operator: "ndw",
     name: "NDW (Netherlands)",
     format: "datex2",
-    url: "http://opendata.ndw.nu/actueel_beeld.xml.gz",
+    url: "https://opendata.ndw.nu/actueel_beeld.xml.gz",
     gzip: true,
+    // The publisher's current national picture, so absence from an accepted
+    // snapshot is a withdrawal and every record is accounted for. Validated
+    // structurally against the DATEX II v3 envelope, not by counting records.
+    snapshot: {
+      completeness: "complete",
+      rootElement: "messageContainer",
+      publicationElement: "payload",
+      publicationType: "SituationPublication",
+      recordElement: "situationRecord",
+    },
     cadenceSec: 60,
     freshnessWindowSec: 300,
     license: "CC0-1.0",
-    licenseUrl: "https://www.ndw.nu",
+    licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
     attribution: "NDW / Rijkswaterstaat",
     country: "NL",
     privacyUrl: "https://www.ndw.nu/privacy",
+    rights: {
+      sourceRedistribution: true,
+      derivedRedistribution: true,
+      commercialUse: true,
+      attributionRequired: false,
+      retention: true,
+      termsUrl: "https://www.ndw.nu/service/copyright",
+      reviewedAt: "2026-09-12T16:50:00.000Z",
+      evidenceOrigin: "publisher",
+      evidenceVersion: "CC0-1.0",
+    },
   },
   {
     // Separate source id from "ndw" (events) so atomicSwap stays source-id-scoped
