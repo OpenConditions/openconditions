@@ -71,8 +71,12 @@ interface RequestRecord {
 
 export interface RestrictionSmokeReport {
   sourceId: string;
+  /** The descriptor's declared parser format, so a silent format swap is visible. */
+  sourceFormat: string;
   mode: "validation-only" | "disposable-database";
   checkedAt: string;
+  /** The source's own freshness window, never a shared default. */
+  freshnessWindowSec: number | null;
   feedUrls: string[];
   requests: RequestRecord[];
   snapshot: {
@@ -94,6 +98,8 @@ export interface RestrictionSmokeReport {
   };
   provenance: {
     sourceUpdatedAt: string | null;
+    recordId: string | null;
+    recordVersion: string | null;
     publisher: string | null;
     license: string | null;
     licenseUrl: string | null;
@@ -161,16 +167,18 @@ export async function runRestrictionSmoke(
   options: RunRestrictionSmokeOptions,
   deps: RunRestrictionSmokeDeps = {},
 ): Promise<RestrictionSmokeReport> {
-  if (options.sourceId === "nl-ndw") {
-    throw new Error(
-      "smoke: nl-ndw is not supported yet — the NDW restriction slice has not been implemented",
-    );
+  // Sources whose restriction normalization has been verified against a
+  // reviewed capture. Anything else would produce a report whose numbers nobody
+  // has checked, so it is refused rather than run.
+  const allowed = new Set(["fi-digitraffic", "nl-ndw"]);
+  if (!allowed.has(options.sourceId)) {
+    throw new Error(`smoke: unsupported restriction smoke source ${options.sourceId}`);
   }
   if (!options.outputDir || options.outputDir.trim() === "") {
     throw new Error("smoke: an output directory is required");
   }
   const descriptor = FEED_SOURCES.find((candidate) => candidate.id === options.sourceId);
-  if (!descriptor) throw new Error(`smoke: no feed descriptor for ${options.sourceId}`);
+  if (!descriptor) throw new Error(`smoke: restriction smoke source not configured`);
   const feed: DomainFeedSource = { ...descriptor, domain: "roads" };
   const checkedAt = (deps.now ?? (() => new Date().toISOString()))();
   if (!Number.isFinite(Date.parse(checkedAt))) throw new Error("smoke: invalid checked time");
@@ -297,8 +305,10 @@ export async function runRestrictionSmoke(
 
   const result: RestrictionSmokeReport = {
     sourceId: feed.id,
+    sourceFormat: feed.format,
     mode: "validation-only",
     checkedAt,
+    freshnessWindowSec: feed.freshnessWindowSec ?? null,
     feedUrls: Array.isArray(feed.url) ? feed.url : feed.url ? [feed.url] : [],
     requests,
     snapshot: {
@@ -312,6 +322,8 @@ export async function runRestrictionSmoke(
     restrictions,
     provenance: {
       sourceUpdatedAt: firstDetails?.source["sourceUpdatedAt"] ?? null,
+      recordId: firstDetails?.source["recordId"] ?? null,
+      recordVersion: firstDetails?.source["recordVersion"] ?? null,
       publisher: firstDetails?.source["publisher"] ?? null,
       license: feed.license ?? null,
       licenseUrl: feed.licenseUrl ?? null,

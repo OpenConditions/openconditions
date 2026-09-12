@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { gzipSync } from "node:zlib";
 import type { LookupFn } from "@openconditions/ingest-framework";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runRestrictionSmoke } from "../ops/smoke-road-restrictions.js";
@@ -172,8 +173,10 @@ describe("runRestrictionSmoke", () => {
 
   it("rejects an unsupported source and a missing output directory", async () => {
     await expect(
-      runRestrictionSmoke({ sourceId: "nl-ndw", outputDir }, { lookup: fakeLookup }),
-    ).rejects.toThrow(/nl-ndw is not supported/);
+      // Cast deliberately: the runtime guard must hold even when a caller
+      // bypasses the compile-time source union.
+      runRestrictionSmoke({ sourceId: "de-autobahn" as never, outputDir }, { lookup: fakeLookup }),
+    ).rejects.toThrow(/unsupported restriction smoke source/);
     await expect(
       runRestrictionSmoke(
         { sourceId: "fi-digitraffic", outputDir: "  " },
@@ -192,5 +195,127 @@ describe("runRestrictionSmoke", () => {
     expect(report.notes.some((note) => note.includes("frozen fixtures remain the gate"))).toBe(
       true,
     );
+  });
+});
+
+/**
+ * The same command against the shipped NDW descriptor, still offline: the
+ * reviewed reduced capture is served gzip-compressed exactly as the real
+ * endpoint serves it.
+ */
+describe("runRestrictionSmoke — nl-ndw", () => {
+  const ndwXml = readFileSync(
+    new URL(
+      "../../../../packages/roads/src/__tests__/fixtures/ndw/restrictions-v3.xml",
+      import.meta.url,
+    ),
+    "utf8",
+  );
+
+  function serveXml(body: string, status = 200): typeof fetch {
+    return (async () =>
+      new Response(status === 200 ? new Uint8Array(gzipSync(Buffer.from(body, "utf8"))) : null, {
+        status,
+        headers: {
+          "content-type": "application/xml",
+          etag: 'W/"ndw-smoke"',
+          "last-modified": "Sat, 12 Sep 2026 07:13:00 GMT",
+        },
+      })) as unknown as typeof fetch;
+  }
+
+  it("accounts for every record and reports the verified conditions", async () => {
+    const report = await runRestrictionSmoke(
+      { sourceId: "nl-ndw", outputDir },
+      { fetch: serveXml(ndwXml), lookup: fakeLookup, now: () => CHECKED_AT },
+    );
+    expect(report.sourceId).toBe("nl-ndw");
+    expect(report.sourceFormat).toBe("datex2");
+    expect(report.snapshot).toMatchObject({
+      inputCount: 6,
+      uniqueCount: 6,
+      accepted: 6,
+      terminal: 0,
+      unlocatable: 0,
+      duplicates: 0,
+    });
+    expect(report.restrictions.recordsWithDetails).toBe(4);
+    expect(report.restrictions.kinds["height:m"]).toBe(1);
+    expect(report.restrictions.kinds["vehicle_class:truck"]).toBe(2);
+    expect(report.restrictions.kinds["vehicle_usage:emergency_services"]).toBe(1);
+    expect(report.restrictions.scopes["event_road"]).toBe(4);
+    expect(report.restrictions.unsupportedEnvelopes).toBe(0);
+    // Weight, width and length have no verified live coverage for this source.
+    for (const kind of ["gross_weight:kg", "width:m", "length:m"]) {
+      expect(report.restrictions.kinds[kind]).toBeUndefined();
+      expect(report.notes).toContain(`not observed in this snapshot: ${kind}`);
+    }
+  });
+
+  it("reports the source rights, version and freshness the descriptor declares", async () => {
+    await runRestrictionSmoke(
+      { sourceId: "nl-ndw", outputDir },
+      { fetch: serveXml(ndwXml), lookup: fakeLookup, now: () => CHECKED_AT },
+    );
+    const report = JSON.parse(await readFile(join(outputDir, "report.json"), "utf8"));
+    expect(report.freshnessWindowSec).toBe(300);
+    expect(report.feedUrls).toEqual(["https://opendata.ndw.nu/actueel_beeld.xml.gz"]);
+    expect(report.provenance).toMatchObject({
+      license: "CC0-1.0",
+      licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+      termsUrl: "https://www.ndw.nu/service/copyright",
+      publisher: "NDW / Rijkswaterstaat",
+      rightsReviewedAt: "2026-09-12T16:50:00.000Z",
+    });
+    expect(report.provenance.recordVersion).not.toBeNull();
+    expect(report.provenance.sourceUpdatedAt).not.toBeNull();
+    expect(report.withheldExports).toEqual({
+      segmentConditions: 4,
+      valhallaExclusions: 4,
+      datexSituations: 4,
+      traffMessages: 4,
+    });
+    const display = await readFile(join(outputDir, "display.geojson"), "utf8");
+    expect(display).toContain("restrictionDetails");
+    expect(display).not.toContain("sourceRaw");
+    // The reduced capture carries no contact fields; assert none appear anyway.
+    expect(display).not.toContain("telephone");
+    expect(display).not.toContain("contactDetails");
+  });
+
+  it("reports a valid empty publication as empty rather than as a failure", async () => {
+    const report = await runRestrictionSmoke(
+      { sourceId: "nl-ndw", outputDir },
+      {
+        fetch: serveXml(ndwXml.replace(/<sit:situation\b[\s\S]*<\/sit:situation>/, "")),
+        lookup: fakeLookup,
+        now: () => CHECKED_AT,
+      },
+    );
+    expect(report.snapshot).toMatchObject({ inputCount: 0, accepted: 0 });
+    expect(report.restrictions.recordsWithDetails).toBe(0);
+    expect(report.notes.some((note) => note.includes("frozen fixtures remain the gate"))).toBe(
+      true,
+    );
+  });
+
+  it.each([
+    ["truncated gzip", "gzip"],
+    ["truncated XML", "xml"],
+  ])("fails %s rather than reporting an empty source", async (_label, kind) => {
+    const fetchImpl =
+      kind === "gzip"
+        ? ((async () =>
+            new Response(new Uint8Array(gzipSync(Buffer.from(ndwXml, "utf8"))).slice(0, 200), {
+              status: 200,
+              headers: { "content-type": "application/xml" },
+            })) as unknown as typeof fetch)
+        : serveXml("<mc:messageContainer>");
+    await expect(
+      runRestrictionSmoke(
+        { sourceId: "nl-ndw", outputDir },
+        { fetch: fetchImpl, lookup: fakeLookup, now: () => CHECKED_AT },
+      ),
+    ).rejects.toThrow();
   });
 });

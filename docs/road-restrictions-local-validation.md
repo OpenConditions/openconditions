@@ -94,7 +94,19 @@ pnpm exec tsx scripts/smoke-road-restrictions.ts \
   --source fi-digitraffic --output /tmp/oc-fi-restrictions-db-smoke \
   --database disposable \
   --spine packages/roads/src/bind/__tests__/fixtures/finland-road40/spine.json
+
+pnpm exec tsx scripts/smoke-road-restrictions.ts \
+  --source nl-ndw --output /tmp/oc-ndw-restrictions-smoke
+
+pnpm exec tsx scripts/smoke-road-restrictions.ts \
+  --source nl-ndw --output /tmp/oc-ndw-restrictions-db-smoke \
+  --database disposable \
+  --spine packages/roads/src/bind/__tests__/fixtures/ndw-a76/spine.json
 ```
+
+Each source uses its own reviewed spine. The disposable region takes its
+timezone from the supplied graph rather than from the source's country, and the
+read covers the whole throwaway database rather than one country's box.
 
 The first mode validates acquisition, parsing, normalization and export safety
 and writes `report.json` plus `display.geojson`. The second additionally creates

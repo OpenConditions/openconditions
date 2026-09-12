@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { readObservations } from "@openconditions/core";
+import { readObservations, scheduleTimezoneForGeometry } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import {
   eventsToExclusions,
@@ -91,12 +91,9 @@ function spineToWays(segments: SpineSegment[]): OsmWay[] {
 export async function runRestrictionSmokeWithDatabase(
   options: RunRestrictionSmokeOptions,
 ): Promise<RestrictionSmokeDatabaseReport> {
-  if (options.sourceId !== "fi-digitraffic") {
-    throw new Error(`smoke: disposable mode does not support ${options.sourceId} yet`);
-  }
   if (!options.spineFile) throw new Error("smoke: --spine is required in disposable mode");
   const descriptor = FEED_SOURCES.find((candidate) => candidate.id === options.sourceId);
-  if (!descriptor) throw new Error(`smoke: no feed descriptor for ${options.sourceId}`);
+  if (!descriptor) throw new Error(`smoke: restriction smoke source not configured`);
   const feed: DomainFeedSource = { ...descriptor, domain: "roads" };
 
   const spine = JSON.parse(await readFile(options.spineFile, "utf8")) as {
@@ -106,7 +103,14 @@ export async function runRestrictionSmokeWithDatabase(
     throw new Error("smoke: spine file has no segments");
   }
   const bbox = bboxOf(spine.segments);
-  const region = { id: "smoke-restriction-region", bbox, tz: "Europe/Helsinki" };
+  // The region's zone comes from the supplied graph, not from the source id: a
+  // spine can legitimately sit in a different zone from its publisher's country.
+  const tz =
+    scheduleTimezoneForGeometry({
+      type: "Point",
+      coordinates: [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2],
+    }) ?? "UTC";
+  const region = { id: "smoke-restriction-region", bbox, tz };
   const env = { SEGMENT_REGIONS: JSON.stringify([region]), BIND_ENABLED: "true" };
   const checkedAt = new Date().toISOString();
 
@@ -190,7 +194,10 @@ export async function runRestrictionSmokeWithDatabase(
           return (await sql.unsafe(query, params as never)) as T;
         },
       },
-      { domain: "roads", bbox: [19, 59, 32, 71], dedupe: false, includeBindings: true },
+      // The disposable database holds this source alone, so the read covers the
+      // whole world rather than a hard-coded national box that would silently
+      // drop every record of a source outside it.
+      { domain: "roads", bbox: [-180, -90, 180, 90], dedupe: false, includeBindings: true },
     );
     const display = observationsToGeoJSON(rows, {}, { at: new Date(checkedAt) });
     const events = rows.filter((row) => row.kind === "event");
