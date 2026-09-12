@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isInEffectAt, nextScheduleTransition } from "@openconditions/core";
 import { RESTRICTION_TEXT_LIMIT } from "./restriction-types.js";
 import type {
   PublishedRoadRestrictionDetailsV1,
@@ -343,4 +344,217 @@ export function isPublishedRoadRestrictionDetails(
  */
 export function parseRoadRestrictionDetails(value: unknown): RoadRestrictionDetailsV1 | null {
   return isRoadRestrictionDetails(value) ? value : null;
+}
+
+/** A source validity window, already normalized to ISO-UTC instants or null. */
+export interface RestrictionWindow {
+  validFrom: string | null;
+  validTo: string | null;
+}
+
+/**
+ * Intersect event → phase → restriction windows: known starts take the
+ * maximum, known ends the minimum. A malformed bound or an empty result is
+ * reported as `invalid_window` with null bounds, and the caller MUST retain
+ * that issue — null bounds alone would otherwise read as "applies always",
+ * i.e. the exact opposite of "we could not understand when this applies".
+ */
+export function intersectRestrictionWindows(windows: RestrictionWindow[]): {
+  window: RestrictionWindow;
+  issue?: "invalid_window";
+} {
+  const invalid = { window: { validFrom: null, validTo: null }, issue: "invalid_window" } as const;
+  let from: number | null = null;
+  let to: number | null = null;
+  for (const candidate of windows) {
+    if (candidate.validFrom !== null && candidate.validFrom !== undefined) {
+      const parsed = parseRestrictionInstant(candidate.validFrom);
+      if (parsed === null) return invalid;
+      from = from === null ? parsed : Math.max(from, parsed);
+    }
+    if (candidate.validTo !== null && candidate.validTo !== undefined) {
+      const parsed = parseRestrictionInstant(candidate.validTo);
+      if (parsed === null) return invalid;
+      to = to === null ? parsed : Math.min(to, parsed);
+    }
+  }
+  if (from !== null && to !== null && from >= to) return invalid;
+  return {
+    window: {
+      validFrom: from === null ? null : new Date(from).toISOString(),
+      validTo: to === null ? null : new Date(to).toISOString(),
+    },
+  };
+}
+
+/**
+ * Convert a source quantity to the contract's canonical unit. Lengths stay in
+ * metres; gross weight becomes kilograms. There is deliberately no numeric-string
+ * coercion, no rounding and no default unit: an unrecognized unit returns null so
+ * the caller records an issue rather than publishing a number with invented
+ * meaning.
+ */
+export function normalizeRestrictionDimension(input: {
+  dimension: "height" | "width" | "length" | "gross_weight";
+  value: unknown;
+  unit: unknown;
+}): { value: number; unit: "m" | "kg" } | null {
+  if (typeof input.value !== "number" || !Number.isFinite(input.value) || input.value <= 0) {
+    return null;
+  }
+  if (input.dimension !== "gross_weight") {
+    return input.unit === "m" ? { value: input.value, unit: "m" } : null;
+  }
+  const value = input.unit === "t" ? input.value * 1000 : input.unit === "kg" ? input.value : NaN;
+  return Number.isFinite(value) && value > 0 ? { value, unit: "kg" } : null;
+}
+
+/** Read metadata needed to evaluate a restriction view deterministically. */
+export interface RestrictionEvaluation {
+  /** Explicit evaluation instant; injected so tests never depend on wall time. */
+  at: Date;
+  /** When the source was last successfully checked, from generic source status. */
+  sourceCheckedAt: string | null;
+  /** The source's configured freshness window, in seconds. */
+  freshnessWindowSec: number | null;
+}
+
+/** Issue codes that make a fact's temporal interpretation unknown. */
+const TEMPORAL_BLOCKING_CODES: ReadonlySet<string> = new Set([
+  "invalid_window",
+  "unsupported_schedule",
+]);
+
+function factIssueCodes(
+  details: RoadRestrictionDetailsV1,
+  factId: string
+): { temporalUnknown: boolean; statusUnsupported: boolean } {
+  let temporalUnknown = false;
+  let statusUnsupported = false;
+  for (const issue of details.issues) {
+    // A null factId is a whole-record issue and therefore applies to every fact.
+    if (issue.factId !== null && issue.factId !== factId) continue;
+    if (TEMPORAL_BLOCKING_CODES.has(issue.code)) temporalUnknown = true;
+    if (issue.code === "unsupported_status") statusUnsupported = true;
+  }
+  return { temporalUnknown, statusUnsupported };
+}
+
+function scheduleState(
+  fact: RoadRestrictionFact,
+  at: Date
+): "active" | "scheduled" | "ended" | "unknown" {
+  const schedules = fact.schedule ?? [];
+  if (isInEffectAt({ validFrom: fact.validFrom, validTo: fact.validTo, schedule: schedules }, at)) {
+    return "active";
+  }
+  // Between occurrences: a future transition the existing helper can identify
+  // means scheduled; an exhausted recurrence with a passed final end is ended.
+  if (nextScheduleTransition(schedules, at) !== null) return "scheduled";
+  if (fact.validTo !== null && parseRestrictionInstant(fact.validTo)! <= at.getTime()) {
+    return "ended";
+  }
+  // The helpers could not establish the next state. Never label such a fact
+  // continuously active just because no end was found.
+  return "unknown";
+}
+
+/**
+ * The temporal state of one fact at `at`. End bounds are exclusive, so a fact
+ * is ended at its own end instant. Working hours are deliberately not consulted:
+ * a weight limit does not disappear when nobody is on site.
+ */
+function evaluateFactState(
+  details: RoadRestrictionDetailsV1,
+  fact: RoadRestrictionFact,
+  at: Date
+): "active" | "scheduled" | "ended" | "unknown" {
+  const { temporalUnknown, statusUnsupported } = factIssueCodes(details, fact.id);
+  if (temporalUnknown) return "unknown";
+  const from = fact.validFrom === null ? null : parseRestrictionInstant(fact.validFrom);
+  const to = fact.validTo === null ? null : parseRestrictionInstant(fact.validTo);
+  if (from === null && fact.validFrom !== null) return "unknown";
+  if (to === null && fact.validTo !== null) return "unknown";
+  const now = at.getTime();
+  if (!Number.isFinite(now)) return "unknown";
+  if (to !== null && now >= to) return "ended";
+  if (from !== null && now < from) return "scheduled";
+  if (statusUnsupported) return "unknown";
+  if (fact.schedule !== undefined && fact.schedule.length > 0) return scheduleState(fact, at);
+  // A known start that has passed is a fully understood open or closed interval.
+  return from !== null ? "active" : "unknown";
+}
+
+/** The earliest future start, end or represented recurrence transition. */
+function nextTransition(details: RoadRestrictionDetailsV1, at: Date): string | null {
+  const now = at.getTime();
+  if (!Number.isFinite(now)) return null;
+  const candidates: number[] = [];
+  for (const fact of details.facts) {
+    const { temporalUnknown } = factIssueCodes(details, fact.id);
+    if (temporalUnknown) continue;
+    for (const bound of [fact.validFrom, fact.validTo]) {
+      const epoch = bound === null ? null : parseRestrictionInstant(bound);
+      if (epoch !== null && epoch > now) candidates.push(epoch);
+    }
+    if (fact.schedule !== undefined && fact.schedule.length > 0) {
+      const transition = nextScheduleTransition(fact.schedule, at);
+      const epoch = transition === null ? null : parseRestrictionInstant(transition);
+      if (epoch !== null && epoch > now) candidates.push(epoch);
+    }
+  }
+  if (candidates.length === 0) return null;
+  return new Date(Math.min(...candidates)).toISOString();
+}
+
+/**
+ * Project persisted source semantics into the published view. The input is
+ * never mutated: evaluated state lives only in the returned object, so it can
+ * never reach the content hash or the attributes column.
+ *
+ * A present-but-invalid envelope becomes `{restrictionDetailsUnsupported:true}`
+ * — an uninterpretable restriction claim still blocks shared routing and still
+ * shows a generic notice, rather than quietly becoming an absent restriction.
+ */
+export function projectRoadRestrictionDetails(
+  value: unknown,
+  options: RestrictionEvaluation
+): {
+  restrictionDetails?: PublishedRoadRestrictionDetailsV1;
+  restrictionDetailsUnsupported?: true;
+} {
+  const details = parseRoadRestrictionDetails(value);
+  if (details === null) return { restrictionDetailsUnsupported: true };
+  const at = options.at;
+  // An unusable evaluation instant cannot produce a trustworthy view, and an
+  // untrustworthy view must degrade to "unsupported", never to "no restriction".
+  if (!(at instanceof Date) || !Number.isFinite(at.getTime())) {
+    return { restrictionDetailsUnsupported: true };
+  }
+  const evaluatedAt = at.toISOString();
+
+  const checked =
+    options.sourceCheckedAt === null ? null : parseRestrictionInstant(options.sourceCheckedAt);
+  const windowSec = options.freshnessWindowSec;
+  const freshUntilEpoch =
+    checked !== null && typeof windowSec === "number" && Number.isFinite(windowSec) && windowSec > 0
+      ? checked + windowSec * 1000
+      : null;
+  // Missing checked time or freshness window can never imply freshness.
+  const isStale = freshUntilEpoch === null || at.getTime() >= freshUntilEpoch;
+
+  return {
+    restrictionDetails: {
+      ...details,
+      facts: details.facts.map((fact) => ({
+        ...fact,
+        state: evaluateFactState(details, fact, at),
+      })),
+      evaluatedAt,
+      sourceCheckedAt: checked === null ? null : new Date(checked).toISOString(),
+      freshUntil: freshUntilEpoch === null ? null : new Date(freshUntilEpoch).toISOString(),
+      nextTransitionAt: nextTransition(details, at),
+      isStale,
+    },
+  };
 }
