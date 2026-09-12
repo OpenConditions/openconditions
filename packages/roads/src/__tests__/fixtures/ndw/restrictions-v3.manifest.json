@@ -1,0 +1,51 @@
+{
+  "sourceUrl": "https://opendata.ndw.nu/actueel_beeld.xml.gz",
+  "capturedAt": "2026-09-12, approximately 07:14 UTC",
+  "originalSha256": "f774a3df6befacfde2389f68d8a34edb6b3a30e61e8f1ce54b6519f2e657b7ce",
+  "fixtureSha256": "42bd2e4572d1dc8053bad809b2a5d3c741af4dcfd8503035dc63839fcc70fe65",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "termsUrl": "https://www.ndw.nu/service/copyright",
+  "termsReviewedAt": "2026-09-12T16:50:00.000Z",
+  "termsReviewNote": "The linked copyright page states Creative Commons Zero for site content unless a part declares an exception, and excepts only images. No exception was found for this traffic XML feed. Images are not part of this fixture.",
+  "attribution": "NDW / Rijkswaterstaat; individual record sourceName retained",
+  "modificationNotice": "Reduced by OpenConditions for parser validation; source values retained.",
+  "selectedRecords": [
+    {
+      "id": "NDW08_2e188db4-9bff-492d-bf28-90e17bffac8c",
+      "version": "1",
+      "purpose": "Obstruction participant: constructionOrMaintenanceVehicle appears under obstructingVehicle, not applicability. Must not become a restriction."
+    },
+    {
+      "id": "RWS01_M1080891_NARROW_LANES_D2_WWA",
+      "version": "133",
+      "purpose": "Live height condition: forVehiclesWithCharacteristicsOf/heightCharacteristic greaterThan 4.5 m on a mandatory implemented roadClosed measure."
+    },
+    {
+      "id": "RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA",
+      "version": "133",
+      "purpose": "Live vehicle usage applicability: emergencyServices on an advisory measure sharing the height record's location."
+    },
+    {
+      "id": "RWS01_M1080891_DISPLACEMENT_D2_WWA",
+      "version": "133",
+      "purpose": "Collocated nonconditional record with identical geometry; proves identity-based preservation against proximity deduplication."
+    },
+    {
+      "id": "NLRWS_0005382945_1",
+      "version": "536",
+      "purpose": "Live lorry class closure with Alert-C positive direction, open-ended validity and Dutch public comment."
+    },
+    {
+      "id": "NLRWS_0005406494_1",
+      "version": "190",
+      "purpose": "Live lorry class closure with Alert-C negative direction, open-ended validity and Dutch public comment."
+    }
+  ],
+  "reductions": [
+    "Selected six complete situationRecord elements; removed all other records and now-empty situations.",
+    "Original envelope, namespaces, publication metadata and selected situation wrappers retained.",
+    "Record text, locations, direction, sourceName, versions, windows and applicability/obstruction roles retained without normalized substitutions."
+  ],
+  "syntheticVariants": "None. Every value in the fixture is from the reviewed capture; synthetic status, recurrence, compound, conflicting-direction and invalid-value variants are constructed inline in tests and labelled there."
+}
