@@ -119,6 +119,15 @@ Docker server 29.7.2.
 | OpenMapX `pnpm check-types` / `check-translations`                | pass                       |
 | OpenMapX node + web road-condition suites                         | pass                       |
 | Provider bundle import (`dist/backend/index.mjs`)                 | `setup` is a function      |
+| Contract fixture byte comparison (`cmp`)                          | identical                  |
+| Both working trees (`git diff --check`, `git status`)             | clean                      |
+
+Suite counts from the release checkpoint: 41 focused OpenConditions unit files
+(655 tests), 9 disposable-PostGIS integration files (109 tests), 19 OpenMapX
+node files (225 tests) and 3 OpenMapX web files (42 tests) — all passing. The
+Open511, WZDx, DATEX-TMC and spatial-dedupe suites were rerun because the
+snapshot-reconciliation change touches shared parser dispatch; 4 files, 106
+tests, unchanged.
 
 Source terms rechecked at the Digitraffic terms-of-service page on 2026-09-12:
 Creative Commons 4.0 BY, distribution and commercial reuse permitted with
