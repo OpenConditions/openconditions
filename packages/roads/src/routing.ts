@@ -1,5 +1,7 @@
 import type { CanonicalVehicleClass, RoutingApplicability } from "@openconditions/core";
 import type { Restriction } from "./model.js";
+import type { RestrictionCarrier } from "./restriction-types.js";
+import { hasRestrictionEvidence } from "./restrictions.js";
 
 const VEHICLE_CLASSES: ReadonlyArray<[RegExp, CanonicalVehicleClass]> = [
   [/^(?:motorvehicle|motor_vehicle|allmotorvehicles)$/i, "motor_vehicle"],
@@ -20,11 +22,21 @@ function compact(value: string): string {
  * Unknown, negated and comparator-bearing predicates stay unknown; widening
  * one of those predicates to all traffic would turn a class restriction into
  * a global graph effect.
+ *
+ * `carrier` is the optional observation/attributes bag carrying the normalized
+ * restriction contract. Existing two-argument callers keep their behaviour.
  */
 export function normalizeVehicleApplicability(
   raw: string[] | undefined,
-  restrictions?: Restriction[]
+  restrictions?: Restriction[],
+  carrier?: RestrictionCarrier
 ): RoutingApplicability {
+  // Any normalized restriction evidence — valid, partial or unparseable — is
+  // an independent exclusion. Checked before the legacy array so dropping that
+  // array can never turn a vehicle-specific record into all-vehicle evidence.
+  if (carrier && hasRestrictionEvidence(carrier)) {
+    return { kind: "unknown", raw: ["normalized_restriction_details"] };
+  }
   if (restrictions && restrictions.length > 0) {
     return {
       kind: "unknown",

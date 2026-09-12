@@ -7,7 +7,7 @@ import {
   type RoutingRights,
   type Schedule,
 } from "@openconditions/core";
-import { normalizeVehicleApplicability } from "@openconditions/roads";
+import { hasRestrictionEvidence, normalizeVehicleApplicability } from "@openconditions/roads";
 
 /**
  * One bound road event as it comes back from the `/segments/conditions.json`
@@ -123,6 +123,10 @@ export function segmentConditionsToJson(
     const schedule = Array.isArray(r.schedule) ? (r.schedule as Schedule[]) : undefined;
     if (!isInEffectAt({ validFrom, validTo, ...(schedule ? { schedule } : {}) }, at)) continue;
     const a = r.attributes ?? {};
+    // A conditional record must never reach a shared routing consumer: the v1
+    // segment wire format cannot express phase/detour scope or a comparator, so
+    // emitting it would read as an unconditional effect on every vehicle.
+    if (hasRestrictionEvidence(a)) continue;
     const speed = Number(a["speedLimitKph"]);
     const vehicles = Array.isArray(a["vehiclesAffected"])
       ? (a["vehiclesAffected"] as unknown[]).filter((v): v is string => typeof v === "string")
@@ -177,7 +181,8 @@ export function segmentConditionsToJson(
               operator?: string;
               raw?: Record<string, unknown>;
             }>)
-          : undefined
+          : undefined,
+        a
       ),
       rights: r.rights,
       segments: r.segments.map((span) => ({

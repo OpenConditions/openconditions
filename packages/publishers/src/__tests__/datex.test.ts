@@ -1,7 +1,7 @@
 import { XMLParser } from "fast-xml-parser";
 import { describe, expect, it } from "vitest";
 import { observationsToDatexSituations, toDatexRecordType } from "../datex.js";
-import { roadEvent } from "./fixture.js";
+import { restrictionDetails, roadEvent } from "./fixture.js";
 
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -145,5 +145,18 @@ describe("observationsToDatexSituations", () => {
     const value = recs[0].generalPublicComment.comment.values.value[0];
     expect(value["#text"]).toBe("Accident on A2");
     expect(value["@_lang"]).toBe("en");
+  });
+
+  it("omits every record carrying restriction evidence, keeping unconditional siblings", () => {
+    const xml = observationsToDatexSituations([
+      roadEvent({ id: "fi:1", restrictionDetails: restrictionDetails() } as never),
+      roadEvent({ id: "fi:2", restrictionDetailsUnsupported: true } as never),
+      roadEvent({ id: "fi:3", restrictionDetails: { schemaVersion: 9 } } as never),
+      roadEvent({ id: "ndw:ok", type: "road_closure", roadState: "closed" }),
+    ]);
+    const recs = recordsOf(xml);
+    expect(recs).toHaveLength(1);
+    expect(xml).not.toContain("26000");
+    expect(xml).not.toContain("fi:1");
   });
 });

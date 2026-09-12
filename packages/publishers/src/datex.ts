@@ -1,5 +1,6 @@
 import type { ConditionEvent, Severity } from "@openconditions/core";
 import { XMLBuilder } from "fast-xml-parser";
+import { hasRestrictionEvidence } from "@openconditions/roads";
 import { type FeedInfo, type RoadFields, roadFields } from "./types.js";
 
 /**
@@ -268,7 +269,11 @@ export function observationsToDatexSituations(
     "com:country": country,
     "com:nationalIdentifier": info.attribution ?? "OpenConditions",
   };
-  payload["sit:situation"] = events.map(buildSituation);
+  // DATEX output hardcodes a comparator and cannot express phase or detour
+  // scope, so under the preserve-or-omit rule every restriction-bearing record
+  // is omitted rather than exported with a changed meaning.
+  const safeEvents = events.filter((event) => !hasRestrictionEvidence(event));
+  payload["sit:situation"] = safeEvents.map(buildSituation);
 
   const doc = {
     messageContainer: {

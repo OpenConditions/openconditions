@@ -5,7 +5,7 @@ import {
   segmentConditionsToExclusions,
 } from "../valhalla.js";
 import type { SegmentConditionJson } from "../segment-conditions.js";
-import { measurement, roadEvent } from "./fixture.js";
+import { measurement, restrictionDetails, roadEvent } from "./fixture.js";
 
 describe("eventsToExclusions", () => {
   it("returns empty arrays for no input", () => {
@@ -423,5 +423,24 @@ describe("segmentConditionsToExclusions", () => {
         { activeAt: new Date("2026-06-22T10:00:00Z") }
       )
     ).toEqual({ exclude_locations: [], exclude_polygons: [] });
+  });
+});
+
+describe("restriction evidence exclusion", () => {
+  it("produces no Valhalla effect for a record carrying restriction evidence", () => {
+    const geometry = { type: "Point" as const, coordinates: [4.9, 52.37] };
+    for (const carrier of [
+      { restrictionDetails: restrictionDetails() },
+      { restrictionDetailsUnsupported: true },
+      { restrictionDetails: { schemaVersion: 9 } },
+      { restrictionDetails: undefined },
+    ]) {
+      expect(
+        eventsToExclusions([roadEvent({ type: "road_closure", geometry, ...carrier } as never)])
+      ).toEqual({ exclude_locations: [], exclude_polygons: [] });
+    }
+    expect(
+      eventsToExclusions([roadEvent({ type: "road_closure", geometry })]).exclude_locations
+    ).toHaveLength(1);
   });
 });

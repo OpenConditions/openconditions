@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { segmentConditionsToJson, type SegmentConditionRow } from "../segment-conditions.js";
+import { restrictionDetails } from "./fixture.js";
 
 function row(over: Partial<SegmentConditionRow> = {}): SegmentConditionRow {
   return {
@@ -224,6 +225,47 @@ describe("segmentConditionsToJson", () => {
       ],
       at,
       { resolverVersion: "1.0.0", evaluatedAt: at }
+    );
+    expect(out.conditions).toEqual([]);
+  });
+});
+
+describe("segmentConditionsToJson restriction evidence", () => {
+  const at = new Date("2026-09-06T10:00:00Z");
+
+  it("emits no condition for a restriction-bearing row while keeping an unconditional row", () => {
+    for (const details of [
+      restrictionDetails(),
+      { schemaVersion: 9 },
+      { schemaVersion: 1, vehicleScope: "unknown", completeness: "partial", facts: [] },
+      undefined,
+    ]) {
+      const conditional = row({
+        id: "fi-digitraffic:GUID50465935",
+        source: "fi-digitraffic",
+        attributes: {
+          roadState: "closed",
+          vehiclesAffected: ["all"],
+          restrictionDetails: details,
+        },
+      });
+      const out = segmentConditionsToJson([conditional, row({ id: "a:2" })], at, {
+        resolverVersion: "1.0.0",
+      });
+      expect(out.conditions.map((c) => c.id)).toEqual(["a:2"]);
+    }
+  });
+
+  it("emits no condition for an unsupported-envelope marker", () => {
+    const out = segmentConditionsToJson(
+      [
+        row({
+          id: "fi-digitraffic:GUID50468844",
+          attributes: { roadState: "closed", restrictionDetailsUnsupported: true },
+        }),
+      ],
+      at,
+      { resolverVersion: "1.0.0" }
     );
     expect(out.conditions).toEqual([]);
   });

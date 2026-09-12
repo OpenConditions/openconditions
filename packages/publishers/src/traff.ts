@@ -1,5 +1,6 @@
 import type { ConditionEvent } from "@openconditions/core";
 import { XMLBuilder } from "fast-xml-parser";
+import { hasRestrictionEvidence } from "@openconditions/roads";
 import { type FeedInfo, type RoadFields, roadFields } from "./types.js";
 
 /**
@@ -57,6 +58,9 @@ function restrictionFromRoadState(rs: RoadFields["roadState"]): TraffEventCode |
  * generic congestion event when nothing else applies.
  */
 export function traffEvents(ev: ConditionEvent): TraffEventCode[] {
+  // A TraFF RESTRICTION code widens a vehicle-conditioned road state into an
+  // unconditional one, so a restriction-bearing record yields no codes at all.
+  if (hasRestrictionEvidence(ev)) return [];
   const rf = roadFields(ev);
   const out: TraffEventCode[] = [];
   let primary = PRIMARY[ev.type];
@@ -191,6 +195,7 @@ const builder = new XMLBuilder({
  * headers + the source license).
  */
 export function observationsToTraff(events: ConditionEvent[], _info: FeedInfo = {}): string {
-  const doc = { feed: { message: events.map(buildMessage) } };
+  const safeEvents = events.filter((event) => !hasRestrictionEvidence(event));
+  const doc = { feed: { message: safeEvents.map(buildMessage) } };
   return `<?xml version="1.0" encoding="UTF-8"?>\n${builder.build(doc)}`;
 }

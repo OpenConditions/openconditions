@@ -1,7 +1,7 @@
 import { XMLParser } from "fast-xml-parser";
 import { describe, expect, it } from "vitest";
 import { observationsToTraff, traffEvents } from "../traff.js";
-import { roadEvent } from "./fixture.js";
+import { restrictionDetails, roadEvent } from "./fixture.js";
 
 const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
 
@@ -132,5 +132,27 @@ describe("observationsToTraff", () => {
     expect(msgs).toHaveLength(2);
     expect(msgs[0]["@_expiration_time"]).toBe("2026-06-22T12:00:00Z");
     expect(msgs[1].events.event["@_type"]).toBe("CONGESTION_TRAFFIC_CONGESTION");
+  });
+
+  it("omits records carrying restriction evidence and emits no codes for them", () => {
+    const conditional = roadEvent({
+      id: "fi:1",
+      type: "dimension_restriction",
+      roadState: "closed",
+      restrictionDetails: restrictionDetails(),
+    } as never);
+    expect(traffEvents(conditional)).toEqual([]);
+    expect(
+      traffEvents(roadEvent({ id: "fi:2", restrictionDetailsUnsupported: true } as never))
+    ).toEqual([]);
+
+    const xml = observationsToTraff([
+      conditional,
+      roadEvent({ id: "ndw:ok", type: "road_closure", roadState: "closed" }),
+    ]);
+    const msgs = parse(xml).feed.message;
+    expect(Array.isArray(msgs) ? msgs : [msgs]).toHaveLength(1);
+    expect(xml).not.toContain("fi:1");
+    expect(xml).not.toContain("RESTRICTION_MAX_WEIGHT");
   });
 });

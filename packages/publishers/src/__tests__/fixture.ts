@@ -114,3 +114,58 @@ export function measurement(over: Partial<Measurement> = {}): Measurement {
     ...over,
   } as Measurement;
 }
+
+/**
+ * A minimal valid normalized restriction envelope. Publishers only need to know
+ * that restriction evidence is present and must be withheld — the authoritative
+ * contract fixture lives in @openconditions/roads.
+ */
+export function restrictionDetails(): Record<string, unknown> {
+  return {
+    schemaVersion: 1,
+    vehicleScope: "specific",
+    completeness: "complete",
+    issues: [],
+    source: {
+      sourceId: "fi-digitraffic",
+      recordId: "GUID50465935",
+      recordVersion: "31",
+      sourceUpdatedAt: "2026-08-28T04:18:02.629Z",
+      feedUrls: ["https://tie.digitraffic.fi/api/traffic-message/v2/roadworks"],
+      publisher: "Fintraffic / Digitraffic",
+      license: "CC-BY-4.0",
+      licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+      attribution: "Fintraffic / Digitraffic",
+      modificationNotice:
+        "Normalized by OpenConditions; source units and structure may be transformed.",
+    },
+    facts: [
+      {
+        id: "GUID50465935:GUID50469933:roadwork_phase:restrictions[2]",
+        kind: "dimension",
+        dimension: "gross_weight",
+        meaning: "maximum_permitted",
+        value: 26000,
+        unit: "kg",
+        operator: "lte",
+        scope: {
+          kind: "roadwork_phase",
+          phaseId: "GUID50469933",
+          locationDescription: null,
+          sourceLocationRefs: { scheme: "digitraffic_road_address", road: 104 },
+          restrictionBinding: "not_established",
+        },
+        direction: { basis: "road_reference", value: "both", description: null },
+        validFrom: "2026-07-19T21:00:00.000Z",
+        validTo: "2026-12-14T21:59:59.999Z",
+        sourceTokens: { type: "vehicle gross weight limit", quantity: 26, unit: "t" },
+        context: {
+          restrictionsLiftable: false,
+          compliance: "unknown",
+          operatorActionStatus: null,
+          validityStatus: null,
+        },
+      },
+    ],
+  };
+}

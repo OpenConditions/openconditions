@@ -1,5 +1,6 @@
 import type { Observation } from "@openconditions/core";
 import { isInEffectAt, routingEvidenceReasons } from "@openconditions/core";
+import { hasRestrictionEvidence } from "@openconditions/roads";
 import type { Geometry } from "geojson";
 import type { SegmentConditionJson } from "./segment-conditions.js";
 
@@ -216,7 +217,10 @@ export function eventsToExclusions(
   const activeAt = opts.activeAt ?? new Date();
   const evaluatedAt = opts.evaluatedAt ?? activeAt;
   const ex: ValhallaExclusions = { exclude_locations: [], exclude_polygons: [] };
-  for (const o of obs) {
+  // Coordinate avoidance cannot carry a vehicle condition, so a restriction
+  // -bearing record is withheld here rather than becoming a closure for all.
+  const safeEvents = obs.filter((o) => !hasRestrictionEvidence(o));
+  for (const o of safeEvents) {
     if (isExcludable(o, activeAt, evaluatedAt)) {
       addGeometry(o.geometry as Geometry, ex, maxSpacing, cap, isClosureType(o));
     }
