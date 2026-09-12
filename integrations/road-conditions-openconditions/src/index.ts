@@ -174,9 +174,11 @@ export function setup(ctx: IntegrationContext): void {
         `${ingestUrl}/segments/conditions.json`,
         {
           params: { bbox: bbox.join(",") },
-          ...(requireComplete
-            ? { cache: { ttl: 0 }, timeoutMs: 2000, maxResponseBytes: 32 * 1024 * 1024 }
-            : {}),
+          // Never cached: the evidence is attached to a freshly evaluated
+          // restriction view, so a cached snapshot could outlive the view's
+          // own freshness deadline.
+          cache: { ttl: 0 },
+          ...(requireComplete ? { timeoutMs: 2000, maxResponseBytes: 32 * 1024 * 1024 } : {}),
         }
       );
       if (

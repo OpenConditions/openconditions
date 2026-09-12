@@ -31,7 +31,11 @@ import {
   type DomainRegistry,
   type DatasetRights,
 } from "@openconditions/ingest-framework";
-import { RESOLVER_VERSION } from "@openconditions/roads";
+import {
+  isPublishedRoadRestrictionDetails,
+  RESOLVER_VERSION,
+  restrictionViewDeadline,
+} from "@openconditions/roads";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { startObservationStream } from "./observation-stream.js";
@@ -402,6 +406,36 @@ export function registerFeedStatusRoute(
   });
 }
 
+/** Cache lifetime for a live response that carries no restriction view. */
+const DEFAULT_CACHE_SECONDS = 90;
+
+/**
+ * Cache lifetime for a live road-event response, capped at the earliest
+ * producer deadline. A restriction view states when it stops being
+ * verified-current, so a fixed 90-second cache would keep an "active" label
+ * alive past the freshness window that justified it. An unsupported envelope
+ * is never cached at all.
+ */
+function restrictionCacheSeconds(
+  features: readonly { properties?: Record<string, unknown> | null }[],
+  at: Date
+): number {
+  const views = features
+    .map((feature) => feature.properties?.["restrictionDetails"])
+    .filter(isPublishedRoadRestrictionDetails);
+  const unsupported = features.some(
+    (feature) => feature.properties?.["restrictionDetailsUnsupported"] === true
+  );
+  if (views.length === 0 && !unsupported) return DEFAULT_CACHE_SECONDS;
+  if (unsupported) return 0;
+  const deadline = restrictionViewDeadline(views, at);
+  return Math.max(0, Math.floor((deadline.getTime() - at.getTime()) / 1000));
+}
+
+function cacheHeader(seconds: number): string {
+  return seconds <= 0 ? "no-store" : `public, max-age=${seconds}`;
+}
+
 /**
  * Public emitter endpoints — read-only projections of conditions.observations
  * into standard wire formats so the wider ecosystem can consume OpenConditions:
@@ -477,20 +511,24 @@ export function registerPublishRoutes(
     const q = req.query as Record<string, string | undefined>;
     const obs = await read(q);
     if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
-    reply.header("Content-Type", "application/geo+json");
-    reply.header("Cache-Control", "public, max-age=90");
-    reply.header("X-Data-License", distinctLicenses(obs));
+    const at = new Date();
     // ?raw=1 includes the verbatim sourceRaw passthrough (larger payload).
-    return reply.send(observationsToGeoJSON(obs, info(), { includeRaw: q.raw === "1" }));
+    const fc = observationsToGeoJSON(obs, info(), { includeRaw: q.raw === "1", at });
+    reply.header("Content-Type", "application/geo+json");
+    reply.header("Cache-Control", cacheHeader(restrictionCacheSeconds(fc.features, at)));
+    reply.header("X-Data-License", distinctLicenses(obs));
+    return reply.send(fc);
   });
 
   app.get("/observations.jsonld", async (req, reply) => {
     const obs = await read(req.query as Record<string, string | undefined>);
     if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
+    const at = new Date();
+    const doc = observationsToJsonLd(obs, info(), { at });
     reply.header("Content-Type", "application/ld+json");
-    reply.header("Cache-Control", "public, max-age=90");
+    reply.header("Cache-Control", cacheHeader(restrictionCacheSeconds(doc.features, at)));
     reply.header("X-Data-License", distinctLicenses(obs));
-    return reply.send(observationsToJsonLd(obs, info()));
+    return reply.send(doc);
   });
 
   app.get("/traff.xml", async (req, reply) => {

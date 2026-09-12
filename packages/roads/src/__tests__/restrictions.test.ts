@@ -7,6 +7,7 @@ import {
   normalizeRestrictionDimension,
   parseRestrictionInstant,
   projectRoadRestrictionDetails,
+  restrictionViewDeadline,
 } from "../restrictions.js";
 import type { RoadRestrictionFact } from "../restriction-types.js";
 import { restrictionDetails } from "./fixtures/restriction-event.js";
@@ -509,5 +510,63 @@ describe("restriction projection robustness", () => {
         freshnessWindowSec: 600,
       })
     ).toEqual({ restrictionDetailsUnsupported: true });
+  });
+});
+
+describe("restrictionViewDeadline", () => {
+  const at = new Date("2026-09-12T07:14:00.000Z");
+
+  function view(over: Record<string, unknown> = {}) {
+    return {
+      ...restrictionDetails(),
+      facts: restrictionDetails().facts.map((fact) => ({ ...fact, state: "active" as const })),
+      evaluatedAt: at.toISOString(),
+      sourceCheckedAt: "2026-09-12T07:13:00.000Z",
+      freshUntil: "2026-09-12T07:23:00.000Z",
+      nextTransitionAt: null,
+      isStale: false,
+      ...over,
+    } as Parameters<typeof restrictionViewDeadline>[0][number];
+  }
+
+  it("caps a distant deadline at one minute", () => {
+    expect(restrictionViewDeadline([view()], at).toISOString()).toBe("2026-09-12T07:15:00.000Z");
+  });
+
+  it("shortens to an imminent freshness or transition deadline", () => {
+    expect(
+      restrictionViewDeadline([view({ freshUntil: "2026-09-12T07:14:20.000Z" })], at).toISOString()
+    ).toBe("2026-09-12T07:14:20.000Z");
+    expect(
+      restrictionViewDeadline(
+        [view({ nextTransitionAt: "2026-09-12T07:14:05.000Z" })],
+        at
+      ).toISOString()
+    ).toBe("2026-09-12T07:14:05.000Z");
+  });
+
+  it("takes the earliest deadline across several views", () => {
+    expect(
+      restrictionViewDeadline(
+        [view(), view({ nextTransitionAt: "2026-09-12T07:14:10.000Z" })],
+        at
+      ).toISOString()
+    ).toBe("2026-09-12T07:14:10.000Z");
+  });
+
+  it("refuses to extend a cache for a stale, freshness-less or elapsed view", () => {
+    for (const over of [
+      { isStale: true },
+      { freshUntil: null },
+      { freshUntil: "2026-09-12T07:13:59.000Z" },
+    ]) {
+      expect(restrictionViewDeadline([view(over)], at).getTime(), JSON.stringify(over)).toBe(
+        at.getTime()
+      );
+    }
+  });
+
+  it("returns the ceiling when there is nothing to evaluate", () => {
+    expect(restrictionViewDeadline([], at).toISOString()).toBe("2026-09-12T07:15:00.000Z");
   });
 });

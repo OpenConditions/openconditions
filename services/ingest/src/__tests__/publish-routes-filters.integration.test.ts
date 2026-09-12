@@ -148,3 +148,115 @@ describe("query filters on the public read routes", () => {
     expect(await idsFor("&types=")).toEqual(all);
   });
 });
+
+describe("restriction view cache lifetime", () => {
+  const RESTRICTION_SOURCE = "restriction-cache-test";
+
+  function details(over: Record<string, unknown> = {}) {
+    return {
+      schemaVersion: 1,
+      vehicleScope: "specific",
+      completeness: "complete",
+      issues: [],
+      source: {
+        sourceId: RESTRICTION_SOURCE,
+        recordId: "GUID50465935",
+        recordVersion: "31",
+        sourceUpdatedAt: "2026-08-28T04:18:02.629Z",
+        feedUrls: ["https://tie.digitraffic.fi/api/traffic-message/v2/roadworks"],
+        publisher: "Fintraffic / Digitraffic",
+        license: "CC-BY-4.0",
+        licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+        attribution: "Fintraffic / Digitraffic",
+        modificationNotice: "Normalized by OpenConditions",
+      },
+      facts: [
+        {
+          id: "f1",
+          kind: "dimension",
+          dimension: "gross_weight",
+          meaning: "maximum_permitted",
+          value: 26000,
+          unit: "kg",
+          operator: "lte",
+          scope: {
+            kind: "roadwork_phase",
+            phaseId: "GUID50469933",
+            locationDescription: null,
+            sourceLocationRefs: { scheme: "digitraffic_road_address" },
+            restrictionBinding: "not_established",
+          },
+          direction: { basis: "road_reference", value: "both", description: null },
+          validFrom: "2026-07-19T21:00:00.000Z",
+          validTo: null,
+          sourceTokens: { type: "vehicle gross weight limit" },
+          context: {
+            restrictionsLiftable: false,
+            compliance: "unknown",
+            operatorActionStatus: null,
+            validityStatus: null,
+          },
+        },
+      ],
+      ...over,
+    };
+  }
+
+  async function cacheControl(): Promise<string | undefined> {
+    const app = Fastify();
+    const registry = await buildDomainRegistry();
+    registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
+    await app.ready();
+    try {
+      const res = await app.inject({
+        method: "GET",
+        url: `/observations.geojson?bbox=${BBOX}`,
+      });
+      expect(res.statusCode).toBe(200);
+      return res.headers["cache-control"] as string | undefined;
+    } finally {
+      await app.close();
+    }
+  }
+
+  it("caps a restriction-bearing response at 60 seconds and never caches an unsupported one", async () => {
+    const unconditional = await cacheControl();
+    expect(unconditional).toBe("public, max-age=90");
+
+    await atomicSwap(
+      sql,
+      RESTRICTION_SOURCE,
+      [
+        baseEvent({
+          id: `${RESTRICTION_SOURCE}:1`,
+          source: RESTRICTION_SOURCE,
+          validFrom: null,
+          restrictionDetails: details(),
+        } as never),
+      ],
+      600
+    );
+    await sql`UPDATE conditions.source_status SET last_success_at = now()
+      WHERE source = ${RESTRICTION_SOURCE}`;
+    const bounded = await cacheControl();
+    expect(bounded).toMatch(/^public, max-age=([1-9]|[1-5][0-9]|60)$/);
+
+    await atomicSwap(
+      sql,
+      RESTRICTION_SOURCE,
+      [
+        baseEvent({
+          id: `${RESTRICTION_SOURCE}:1`,
+          source: RESTRICTION_SOURCE,
+          validFrom: null,
+          restrictionDetails: { schemaVersion: 9 },
+        } as never),
+      ],
+      600
+    );
+    expect(await cacheControl()).toBe("no-store");
+
+    await sql`DELETE FROM conditions.observations WHERE source = ${RESTRICTION_SOURCE}`;
+    await sql`DELETE FROM conditions.source_status WHERE source = ${RESTRICTION_SOURCE}`;
+  }, 60_000);
+});

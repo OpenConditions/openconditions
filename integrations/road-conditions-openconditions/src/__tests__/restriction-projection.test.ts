@@ -2,6 +2,7 @@ import type { Feature } from "geojson";
 import { describe, expect, it } from "vitest";
 import { observationsToGeoJSON } from "@openconditions/publishers";
 import type { Observation } from "@openconditions/core";
+import { restrictionViewDeadline } from "@openconditions/roads";
 import { featureToRoadConditionEvent } from "../toRoadConditionEvents.js";
 
 /**
@@ -158,5 +159,26 @@ describe("host restriction projection", () => {
     )!;
     expect(stale.restrictionDetails!.isStale).toBe(true);
     expect(stale.restrictionDetails!.freshUntil).toBe("2026-09-12T06:10:00.000Z");
+  });
+});
+
+describe("provider restriction view lifetime", () => {
+  it("bounds a fresh view's deadline to at most one minute", () => {
+    const feature = publish(observation());
+    const view = feature.properties!["restrictionDetails"] as Parameters<
+      typeof restrictionViewDeadline
+    >[0][number];
+    expect(restrictionViewDeadline([view], AT).getTime() - AT.getTime()).toBeLessThanOrEqual(
+      60_000
+    );
+    expect(restrictionViewDeadline([view], AT).getTime()).toBeGreaterThan(AT.getTime());
+  });
+
+  it("refuses to extend a cache for a stale view", () => {
+    const stale = publish(observation({ sourceCheckedAt: "2026-09-12T06:00:00.000Z" }));
+    const view = stale.properties!["restrictionDetails"] as Parameters<
+      typeof restrictionViewDeadline
+    >[0][number];
+    expect(restrictionViewDeadline([view], AT).getTime()).toBe(AT.getTime());
   });
 });

@@ -558,3 +558,36 @@ export function projectRoadRestrictionDetails(
     },
   };
 }
+
+/** Maximum lifetime of a restriction view, in milliseconds. */
+export const RESTRICTION_VIEW_MAX_AGE_MS = 60_000;
+
+/**
+ * When a published restriction view stops being trustworthy: the earliest
+ * future freshness or transition deadline, capped at one minute.
+ *
+ * A stale or freshness-less view returns `at` itself, which callers translate
+ * into "do not cache". The cap exists because a long deadline would let a
+ * cached response outlive the poll that justified it.
+ */
+export function restrictionViewDeadline(
+  details: readonly PublishedRoadRestrictionDetailsV1[],
+  at: Date
+): Date {
+  const now = at.getTime();
+  if (!Number.isFinite(now)) return at;
+  const ceiling = now + RESTRICTION_VIEW_MAX_AGE_MS;
+  let earliest = ceiling;
+  for (const view of details) {
+    // A view that is already stale, or that has no freshness basis at all,
+    // must not extend any caller's cache lifetime.
+    if (view.isStale || view.freshUntil === null) return at;
+    for (const deadline of [view.freshUntil, view.nextTransitionAt]) {
+      const epoch = deadline === null ? null : parseRestrictionInstant(deadline);
+      if (epoch === null) continue;
+      if (epoch <= now) return at;
+      if (epoch < earliest) earliest = epoch;
+    }
+  }
+  return new Date(earliest);
+}
