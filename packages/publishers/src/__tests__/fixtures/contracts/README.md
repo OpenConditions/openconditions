@@ -44,7 +44,9 @@ than to rights, binding currency or evidence.
 The same payload is checked into OpenMapX at
 `services/data-manager/src/__tests__/fixtures/contracts/road-restrictions-v1.json`.
 Regenerate deliberately with `UPDATE_RESTRICTION_CONTRACT=1` (refused under
-`CI`), review the diff, copy it to OpenMapX and run both suites.
+`CI`), run `pnpm format` so the written file matches this repository's style,
+review the diff, copy it to OpenMapX and run both suites. As above, the two
+copies are compared as parsed JSON, not as bytes.
 
 The Fintraffic record is real reviewed source data under CC BY 4.0
 (https://creativecommons.org/licenses/by/4.0/); the control closure is authored

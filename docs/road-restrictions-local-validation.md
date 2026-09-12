@@ -119,7 +119,7 @@ Docker server 29.7.2.
 | OpenMapX `pnpm check-types` / `check-translations`                | pass                       |
 | OpenMapX node + web road-condition suites                         | pass                       |
 | Provider bundle import (`dist/backend/index.mjs`)                 | `setup` is a function      |
-| Contract fixture byte comparison (`cmp`)                          | identical                  |
+| Contract fixture copies compared as parsed JSON                   | equivalent                 |
 | Both working trees (`git diff --check`, `git status`)             | clean                      |
 
 Suite counts from the release checkpoint: 41 focused OpenConditions unit files
@@ -170,16 +170,20 @@ reductions and rights. The OSM spine is ODbL and is deliberately _not_ covered
 by the Fintraffic CC BY 4.0 grant, even though the two are exercised together.
 
 The cross-repository contract fixture `road-restrictions-v1.json` is generated
-from real producer code and copied to OpenMapX. Both copies are excluded from
-their repository's formatter so the two stay byte-identical:
+from real producer code and copied to OpenMapX. Each repository formats its own
+copy, so the two agree as parsed JSON rather than byte for byte. Compare them
+that way:
 
 ```sh
-cmp packages/publishers/src/__tests__/fixtures/contracts/road-restrictions-v1.json \
-    ../openmapx/services/data-manager/src/__tests__/fixtures/contracts/road-restrictions-v1.json
+diff <(jq -S . packages/publishers/src/__tests__/fixtures/contracts/road-restrictions-v1.json) \
+     <(jq -S . ../openmapx/services/data-manager/src/__tests__/fixtures/contracts/road-restrictions-v1.json)
 ```
 
+Both contract tests parse the file, so whitespace never reaches an assertion.
+
 Regenerate deliberately with `UPDATE_RESTRICTION_CONTRACT=1` (refused under
-`CI`), review the diff, then copy it across and run both suites.
+`CI`), run `pnpm format`, review the diff, then copy it across, format it in
+OpenMapX and run both suites.
 
 ## Known limits
 
