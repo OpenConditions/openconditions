@@ -1,4 +1,4 @@
-import type { Confidence } from "@openconditions/core";
+import type { Confidence, Schedule } from "@openconditions/core";
 import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import {
@@ -8,7 +8,11 @@ import {
 } from "./datex-restrictions.js";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { isPlausibleWgs84, reprojectorFor } from "./reproject.js";
-import type { RoadRestrictionDetailsV1 } from "./restriction-types.js";
+import type {
+  RestrictionIssue,
+  RoadRestrictionDetailsV1,
+  RoadRestrictionFact,
+} from "./restriction-types.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
@@ -556,6 +560,63 @@ function scheduleOf(timeSpec: XmlObject | undefined): LocalSchedule[] | undefine
   return out.length > 0 ? out : undefined;
 }
 
+/** Calendar fields `scheduleOf` actually consumes. */
+const SUPPORTED_TIME_SPEC_CHILDREN = new Set([
+  "overallStartTime",
+  "overallEndTime",
+  "overallBidirectionalReference",
+  "validPeriod",
+]);
+const SUPPORTED_VALID_PERIOD_CHILDREN = new Set([
+  "startOfPeriod",
+  "endOfPeriod",
+  "periodName",
+  "recurringTimePeriodOfDay",
+]);
+
+/**
+ * Does the source calendar contain structure the schedule model silently drops?
+ * Weekday recurrences, exception periods and unfamiliar members all change when
+ * a restriction applies, so carrying the rest as if it were the whole rule would
+ * publish a continuous restriction the source never declared.
+ */
+function unsupportedScheduleFields(timeSpec: XmlObject | undefined): string[] {
+  if (!timeSpec) return [];
+  const dropped = new Set<string>();
+  for (const key of Object.keys(timeSpec)) {
+    if (key.startsWith("@_")) continue;
+    const name = stripXmlNamespace(key);
+    if (!SUPPORTED_TIME_SPEC_CHILDREN.has(name)) dropped.add(name);
+  }
+  for (const period of getXmlChildren(timeSpec, "validPeriod")) {
+    for (const key of Object.keys(period)) {
+      if (key.startsWith("@_")) continue;
+      const name = stripXmlNamespace(key);
+      if (!SUPPORTED_VALID_PERIOD_CHILDREN.has(name)) dropped.add(name);
+    }
+  }
+  return [...dropped];
+}
+
+/**
+ * Recurrences that genuinely repeat, as opposed to a `validPeriod` that merely
+ * restates the overall window. Only a declared time of day makes a schedule a
+ * recurrence; without one the overall start and end already say everything.
+ */
+function restrictionScheduleOf(
+  timeSpec: XmlObject | undefined,
+  geometry: Geometry | null,
+): Schedule[] | undefined {
+  if (!timeSpec) return undefined;
+  const recurring = getXmlChildren(timeSpec, "validPeriod").some(
+    (period) => getXmlChild(period, "recurringTimePeriodOfDay") !== undefined,
+  );
+  if (!recurring || !geometry) return undefined;
+  const timezone = scheduleTimezoneForGeometry(geometry);
+  if (!timezone) return undefined;
+  return withTimezone(scheduleOf(timeSpec), timezone);
+}
+
 function directionOf(rec: XmlObject): string | undefined {
   const locRef = getXmlChild(rec, "locationReference");
   if (!locRef) return undefined;
@@ -568,6 +629,132 @@ function directionOf(rec: XmlObject): string | undefined {
 
   const alertCDir = getXmlChild(getXmlChild(locRef, "alertCPoint"), "alertCDirection");
   return text(alertCDir?.["alertCDirectionCoded"]);
+}
+
+const ALERT_C_DIRECTIONS: Record<string, "positive" | "negative" | "both"> = {
+  positive: "positive",
+  negative: "negative",
+  both: "both",
+  bothWays: "both",
+};
+
+/** One Alert-C reference block found in a selected location alternative. */
+interface AlertCDirectionRef {
+  value: "positive" | "negative" | "both" | "unknown";
+  directionCoded: string | null;
+  affectedDirection: string | null;
+  refs: Record<string, unknown>;
+}
+
+/**
+ * The record's own location alternatives. A DATEX itinerary lists them under
+ * `locationContainedInItinerary`; any other location reference is a single
+ * alternative. Reading these explicitly keeps direction tied to the location
+ * that declared it, instead of the first direction token found anywhere.
+ */
+function locationAlternatives(locRef: XmlObject): XmlObject[] {
+  const itinerary = getXmlChildren(locRef, "locationContainedInItinerary");
+  if (itinerary.length === 0) return [locRef];
+  return itinerary.map((entry) => getXmlChild(entry, "location") ?? entry);
+}
+
+function alertCDirectionIn(location: XmlObject): AlertCDirectionRef | null {
+  const block = getXmlChild(location, "alertCLinear") ?? getXmlChild(location, "alertCPoint");
+  if (!block) return null;
+  const direction = getXmlChild(block, "alertCDirection");
+  const directionCoded = getXmlChildText(direction, "alertCDirectionCoded") ?? null;
+  const affectedDirection = getXmlChildText(direction, "alertCAffectedDirection") ?? null;
+  const refs: Record<string, unknown> = { scheme: "alert_c" };
+  const put = (key: string, value: string | undefined) => {
+    if (value !== undefined) refs[key] = value;
+  };
+  put("countryCode", getXmlChildText(block, "alertCLocationCountryCode"));
+  // Table number and version are separate source fields; concatenating them
+  // would invent an identifier the publisher never issued.
+  put("tableNumber", getXmlChildText(block, "alertCLocationTableNumber"));
+  put("tableVersion", getXmlChildText(block, "alertCLocationTableVersion"));
+  put(
+    "primaryLocation",
+    getXmlChildText(
+      getXmlChild(getXmlChild(block, "alertCMethod4PrimaryPointLocation"), "alertCLocation"),
+      "specificLocation",
+    ),
+  );
+  put(
+    "secondaryLocation",
+    getXmlChildText(
+      getXmlChild(getXmlChild(block, "alertCMethod4SecondaryPointLocation"), "alertCLocation"),
+      "specificLocation",
+    ),
+  );
+  if (directionCoded !== null) refs["directionCoded"] = directionCoded;
+  if (affectedDirection !== null) refs["affectedDirection"] = affectedDirection;
+  return {
+    value: directionCoded === null ? "unknown" : (ALERT_C_DIRECTIONS[directionCoded] ?? "unknown"),
+    directionCoded,
+    affectedDirection,
+    refs,
+  };
+}
+
+/**
+ * Source direction for restriction facts, read from the record's own selected
+ * location alternatives. The value stays in its declared reference scheme: an
+ * Alert-C `positive` is not an OSM forward orientation, and mapping it to one
+ * would need the location table this parser does not consult.
+ */
+function restrictionDirectionOf(rec: XmlObject): {
+  direction: RoadRestrictionFact["direction"];
+  sourceLocationRefs: Record<string, unknown>;
+  issues: RestrictionIssue[];
+} {
+  const unknown = {
+    direction: { basis: "unknown" as const, value: "unknown" as const, description: null },
+    sourceLocationRefs: {} as Record<string, unknown>,
+    issues: [] as RestrictionIssue[],
+  };
+  const locRef = getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations");
+  if (!locRef) return unknown;
+
+  const found = locationAlternatives(locRef)
+    .map(alertCDirectionIn)
+    .filter((entry): entry is AlertCDirectionRef => entry !== null);
+  if (found.length === 0) {
+    const openlr = collectOpenLr(rec);
+    if (openlr === undefined) return unknown;
+    return { ...unknown, sourceLocationRefs: { scheme: "openlr", openlr } };
+  }
+
+  const refs = found[0]!.refs;
+  const declared = found.filter((entry) => entry.directionCoded !== null);
+  const distinct = new Set(declared.map((entry) => entry.value));
+  if (distinct.size > 1) {
+    return {
+      direction: { basis: "alert_c", value: "unknown", description: null },
+      sourceLocationRefs: refs,
+      issues: [
+        {
+          code: "conflicting_direction",
+          factId: null,
+          sourcePath: "situationRecord.locationReference",
+          sourceTokens: {
+            directionCoded: declared.map((entry) => entry.directionCoded),
+          },
+        },
+      ],
+    };
+  }
+
+  const chosen = declared[0] ?? found[0]!;
+  return {
+    direction: {
+      basis: "alert_c",
+      value: chosen.value,
+      description: chosen.affectedDirection,
+    },
+    sourceLocationRefs: refs,
+    issues: [],
+  };
 }
 
 function roadsOf(rec: XmlObject): import("./model.js").RoadRef[] {
@@ -1324,16 +1511,32 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
       multilingual(fallbackComment, "en") ??
       causeDesc;
 
+    const sourceDirection = restrictionDirectionOf(rec);
+    const droppedScheduleFields = unsupportedScheduleFields(timeSpec);
+    const restrictionSchedule = restrictionScheduleOf(timeSpec, geometry);
     const restrictionDetails = restrictionDetailsFor(rec, src, {
       recordId,
       recordVersion: rawRecordVersion ?? null,
       sourceUpdatedAt: versionTime,
       validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
       validTo: text(timeSpec?.["overallEndTime"]) ?? null,
-      direction: { basis: "unknown", value: "unknown", description: null },
-      locationDescription: null,
-      sourceLocationRefs: {},
-      issues: [],
+      direction: sourceDirection.direction,
+      locationDescription: roadsOf(rec)[0]?.name ?? null,
+      sourceLocationRefs: sourceDirection.sourceLocationRefs,
+      ...(restrictionSchedule ? { schedule: restrictionSchedule } : {}),
+      issues: [
+        ...sourceDirection.issues,
+        ...(droppedScheduleFields.length > 0
+          ? [
+              {
+                code: "unsupported_schedule" as const,
+                factId: null,
+                sourcePath: "situationRecord.validity.validityTimeSpecification",
+                sourceTokens: { unsupportedFields: droppedScheduleFields },
+              },
+            ]
+          : []),
+      ],
     });
 
     const shared = {

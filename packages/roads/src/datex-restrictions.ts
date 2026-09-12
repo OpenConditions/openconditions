@@ -55,6 +55,9 @@ const USAGE_MAP = { emergencyServices: "emergency_services" } as const;
  */
 const GROUP_WRAPPERS = new Set(["vehicleCharacteristics"]);
 
+/** Source validity statuses whose active meaning is established. */
+const ACTIVE_VALIDITY_STATUSES = new Set(["active", "definedByValidityTimeSpec"]);
+
 /**
  * The strict XML decimal lexical space. Hex, exponents, `Infinity`, `NaN`,
  * empty values and trailing junk are not decimals, so they never reach
@@ -244,6 +247,21 @@ export function datexRestrictionDetails(
     validityStatus,
     ...(comments !== undefined ? { comments } : {}),
   };
+
+  // Only a measure the operator says is in place, under a validity status this
+  // release recognizes, may be labelled active. `beingTerminated` is not proof
+  // that a restriction has already ended, and a missing status is not proof
+  // that it is in force — both stay explicitly uncertain.
+  const allowsActive =
+    operatorActionStatus === "implemented" && ACTIVE_VALIDITY_STATUSES.has(validityStatus ?? "");
+  if (!allowsActive) {
+    issues.push({
+      code: "unsupported_status",
+      factId: null,
+      sourcePath: "situationRecord.operatorActionStatus/validity.validityStatus",
+      sourceTokens: { operatorActionStatus, validityStatus },
+    });
+  }
 
   /** Groups needing AND/OR/exception semantics this release does not establish. */
   if (declaredGroups > 1) {
