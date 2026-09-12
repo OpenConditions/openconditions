@@ -1,8 +1,13 @@
-# Local validation: Finland restriction fidelity
+# Local validation: road restriction fidelity
 
-How to validate the Finnish vehicle-restriction slice on a developer machine,
-and what was observed when it was implemented. Nothing here needs a deployed
-stack, a national database or a routing engine.
+How to validate the vehicle-restriction slices on a developer machine, and what
+was observed when each was implemented. Nothing here needs a deployed stack, a
+national database or a routing engine.
+
+Two sources are covered. Finland's `fi-digitraffic` introduced the common
+contract; the Netherlands' `nl-ndw` is a separately releasable slice that reuses
+it without changing the wire version. Either source can run with the other
+disabled.
 
 ## What the slice does
 
@@ -12,10 +17,18 @@ normalized into an additive display contract, carried through OpenConditions'
 publishers and the OpenMapX host provider, and shown with their phase or detour
 scope, dates, source direction and rights.
 
+NDW's `nl-ndw` event feed reads the national current-events DATEX II v3
+snapshot. Verified vehicle applicability is taken only from a measure's own
+`forVehiclesWithCharacteristicsOf` role: a height comparison, the `lorry` class
+and the `emergencyServices` usage. Vehicles that are merely obstructing the road
+or involved in an accident are participants and never become applicability.
+
 A published number is a statement about the source, not a permission for a
-particular vehicle to pass. Every record carrying restriction evidence — valid,
-partial or unparseable — is withheld from shared routing and from the DATEX and
-TraFF exporters, which cannot represent its scope or comparator.
+particular vehicle to pass. NDW's height record says the event applies to
+vehicles **taller than** 4.5 m; it is not a 4.5 m permitted maximum. Every
+record carrying restriction evidence — valid, partial or unparseable — is
+withheld from shared routing and from the DATEX and TraFF exporters, which
+cannot represent its scope or comparator.
 
 ## Commands
 
@@ -118,7 +131,7 @@ A restriction kind the current snapshot does not contain is reported as "not
 observed", never as a failure: the pinned fixtures are the deterministic gate.
 Transport, schema, normalization and publication-safety failures exit nonzero.
 
-## Observed results, 2026-09-12
+## Observed results, Finland slice, 2026-09-12
 
 Runtime: Node v24.18.0, pnpm 11.1.3 (OpenConditions), pnpm 11.21.0 (OpenMapX),
 Docker server 29.7.2.
@@ -170,16 +183,101 @@ records withheld, container removed. Almost everything is unbound because the
 frozen graph covers about two kilometres of one road; that is the expected
 result, not a defect.
 
+## Observed results, NDW slice, 2026-09-12
+
+Runtime: Node v24.18.0, pnpm 11.1.3 (OpenConditions), pnpm 11.21.0 (OpenMapX),
+Docker server 29.7.2. OpenConditions `3f64c83`, OpenMapX `71606f76`.
+
+| Check                                                             | Result                     |
+| ----------------------------------------------------------------- | -------------------------- |
+| OpenConditions `pnpm build` / `typecheck` / `lint` / `feeds:lint` | pass                       |
+| OpenConditions unit suites (all packages/services/integrations)   | 218 files, 2512 tests pass |
+| OpenConditions integration suites (disposable PostGIS)            | 67 files, 744 tests pass   |
+| Focused NDW + shared unit set                                     | 40 files, 612 tests pass   |
+| Focused restriction integration set                               | 8 files, 115 tests pass    |
+| OpenMapX `check-types` (core, data-manager, api, web)             | pass                       |
+| OpenMapX `check-translations`                                     | pass                       |
+| OpenMapX node road-condition suites                               | 19 files, 240 tests pass   |
+| OpenMapX web road-condition suites                                | 3 files, 43 tests pass     |
+| Provider bundle import (`dist/backend/index.mjs`)                 | `setup` is a function      |
+| Contract fixture copies (`cmp`)                                   | byte-identical             |
+
+Source terms rechecked on 2026-09-12 at 16:50 UTC. The NDW copyright page
+states Creative Commons Zero for site content unless a part declares an
+exception, and excepts only images. No exception was found for this traffic XML
+feed, and this work uses no NDW images. The endpoint answered HTTP 200 over
+HTTPS without credentials.
+
+Live validation-only smoke against the production feed:
+
+| Field                                             | Value                                                   |
+| ------------------------------------------------- | ------------------------------------------------------- |
+| Input records                                     | 1443                                                    |
+| Accepted / terminal / unlocatable                 | 1421 / 0 / 22                                           |
+| Records with restriction details                  | 28                                                      |
+| Restriction facts                                 | 18                                                      |
+| By kind                                           | emergency-service usage 14, truck class 3, height 1     |
+| By scope                                          | event road 18                                           |
+| Issues                                            | conflicting direction 10, unknown vehicle 5, compound 1 |
+| Unsupported envelopes                             | 0                                                       |
+| Withheld from segments / Valhalla / DATEX / TraFF | 28 each                                                 |
+
+The 18 facts across 18 applicability records reproduce the design review's
+independent count of the same feed. The 22 unlocatable records are Alert-C-only
+records with no companion location table; they are counted and excluded from
+geometry-backed output rather than dropped silently.
+
+The record that motivated this slice survives the full national snapshot:
+`RWS01_M1080891_NARROW_LANES_D2_WWA` publishes as `road_closure` / `closed`
+with a single fact reading height `gt` 4.5 m, metres, `event_applies_when`,
+Alert-C `positive` / `aligned`, and `restrictionBinding: "not_established"`.
+Before this slice it parsed in isolation but disappeared from full-feed output.
+
+Weight, width and length are reported as "not observed in this snapshot". No
+structured NDW value for those dimensions appeared in either the design capture
+or this run, so the slice claims no live coverage for them.
+
+Disposable-database smoke against the same live feed and the frozen A76 spine:
+1416 rows published, 0 routable bindings (9 `ambiguous`, 10 `unresolved`, 1397
+`no_coverage`), 28 conditional records withheld, container removed. Almost
+everything is unbound because the frozen graph covers a few kilometres of one
+motorway area; that is the expected result, not a defect.
+
+Finland was revalidated after the shared smoke changes: validation-only run
+accepted 629 records with 102 facts across 80 records, and the disposable run
+published 629 rows with one `exact` binding and 80 conditional records withheld.
+Neither source's descriptor or state touched the other, and the `nl-ndw-flow`
+feed and its measurement-site table are unchanged.
+
+### Graph binding is ambiguous, and stays that way
+
+The height record supplies two GML endpoints, not a traced path. Against the
+frozen A76 spine the matcher reports `ambiguous`, reproducing the design
+review's probe. The tests assert that outcome rather than a candidate route, and
+no threshold was lowered to force an exact match. The record remains fully
+visible on the map with its binding status shown as unestablished.
+
 ## Fixtures and their provenance
 
 | Fixture                                                                  | SHA-256                                                            | Rights                                 |
 | ------------------------------------------------------------------------ | ------------------------------------------------------------------ | -------------------------------------- |
 | `packages/roads/src/__tests__/fixtures/digitraffic/v2-restrictions.json` | `859e917ace1c395132d8ff99e2db73b4eb0f645e425ac2023fa33110263b07da` | Fintraffic / Digitraffic, CC BY 4.0    |
 | `packages/roads/src/bind/__tests__/fixtures/finland-road40/spine.json`   | `fcc4bf664bb8bed84f44f00a013a7900d0a9990ea3cbdb96a72616a310caf1dd` | © OpenStreetMap contributors, ODbL 1.0 |
+| `packages/roads/src/__tests__/fixtures/ndw/restrictions-v3.xml`          | `42bd2e4572d1dc8053bad809b2a5d3c741af4dcfd8503035dc63839fcc70fe65` | NDW / Rijkswaterstaat, CC0 1.0         |
+| `packages/roads/src/bind/__tests__/fixtures/ndw-a76/spine.json`          | `d2927f6c9c33e6b9214f6819133a4e128da168ac52d89af01c60dfa2ceca9a07` | © OpenStreetMap contributors, ODbL 1.0 |
 
 Each has a companion `*.manifest.json` recording its source URL, capture time,
-reductions and rights. The OSM spine is ODbL and is deliberately _not_ covered
-by the Fintraffic CC BY 4.0 grant, even though the two are exercised together.
+reductions and rights. The OSM spines are ODbL and are deliberately _not_
+covered by the Fintraffic CC BY 4.0 or NDW CC0 grants, even though they are
+exercised together.
+
+The NDW fixture holds six real `situationRecord` elements reduced from the
+reviewed capture, whose full decompressed snapshot hashed
+`f774a3df6befacfde2389f68d8a34edb6b3a30e61e8f1ce54b6519f2e657b7ce`. Its six ids
+are distinct and include two records with identical geometry, so identity-based
+preservation is proved rather than assumed. Every status, recurrence, compound,
+conflicting-direction and invalid-value variant is built by mutating that XML
+inside a test and is labelled synthetic there.
 
 The cross-repository contract fixture `road-restrictions-v1.json` is generated
 from real producer code and copied to OpenMapX. Both repositories format with
@@ -218,6 +316,25 @@ suites.
 - Road 7840 in the source fixture sits outside the default imported road
   classes, so its height limit binds to nothing. Widening the national road
   classes is a separate decision.
+- NDW's live numeric coverage is height only. Weight, width and length appear in
+  no observed structured record, so they stay partial source context and the
+  legacy unconverted gross-weight number labelled kilograms is not carried
+  forward for this source.
+- NDW public comments mention truck and bus categories, 3500 kg and a
+  scheduled-bus exception. That prose is preserved verbatim as publisher
+  context; it is never converted into a weight threshold or an exemption rule.
+- Only `greaterThan` is a verified NDW comparison operator. Other operators are
+  exercised by labelled synthetic fixtures and remain `unsupported_operator`
+  until a real record and authoritative unit documentation establish them.
+- A DATEX measure is labelled active only when its operator action status is
+  `implemented` and its validity status is recognized. `beingTerminated`, a
+  missing status and an unfamiliar token all stay explicitly unknown.
+- A DATEX calendar the schedule model cannot fully represent — a weekday
+  recurrence or an exception period — yields `unsupported_schedule` and unknown
+  temporal state rather than a simplified continuous rule.
+- The NDW height record's two GML endpoints bind ambiguously against the frozen
+  A76 spine. That is the honest limit of endpoint-only geometry, not a threshold
+  to tune.
 
 ## Rollback
 
@@ -230,6 +347,14 @@ Source ids and existing rows are unchanged, so no data reset or migration is
 needed. Ship the OpenMapX consumer, display and refresh support and the rebuilt
 provider artifact before activating the producer, or restrictions travel with
 nothing able to show them. Finland operates with NDW disabled.
+
+For the NDW slice, roll back by disabling the `nl-ndw` event source or returning
+to a previously validated restriction-aware NDW release. Keep the conservative
+routing and export guards and the source freshness and orphan expiry in place: a
+rollback must never re-enable the legacy recursive gross-weight extraction or
+unconditional closure publication to restore apparent coverage. `nl-ndw` keeps
+its id and rows, and the `nl-ndw-flow` feed is untouched, so no reset is needed.
+NDW operates with Finland disabled and vice versa.
 
 ## Stop conditions
 
