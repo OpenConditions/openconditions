@@ -1,5 +1,5 @@
 import type { Feature, FeatureCollection } from "geojson";
-import { isPublishedRoadRestrictionDetails } from "@openconditions/roads";
+import { isPublishedRoadRestrictionDetails } from "@openconditions/roads/restrictions";
 import type {
   RoadConditionEvent,
   RoadConditionRoadRef,

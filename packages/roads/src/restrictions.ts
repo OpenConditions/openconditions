@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { isInEffectAt, nextScheduleTransition } from "@openconditions/core";
 import { RESTRICTION_TEXT_LIMIT } from "./restriction-types.js";
+// Re-exported so a consumer that needs only the contract can import this one
+// module without pulling in the feed catalogue through the package barrel.
+export * from "./restriction-types.js";
 import type {
   PublishedRoadRestrictionDetailsV1,
   RestrictionCarrier,

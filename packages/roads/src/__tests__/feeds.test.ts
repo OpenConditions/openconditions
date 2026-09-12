@@ -82,18 +82,16 @@ describe("FEED_SOURCES", () => {
   it("requests all four digitraffic situation families", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "fi-digitraffic")!;
     const urls = (Array.isArray(feed.url) ? feed.url : [feed.url]).map(String);
-    const familyOf = (u: string) => new URL(u).searchParams.get("situationType");
+    // v2 names each family as its own collection rather than a query
+    // parameter, and rejects the v1 filters entirely.
+    const familyOf = (u: string) => new URL(u).pathname.split("/").pop();
     expect(urls.map(familyOf).sort()).toEqual([
-      "EXEMPTED_TRANSPORT",
-      "ROAD_WORK",
-      "TRAFFIC_ANNOUNCEMENT",
-      "WEIGHT_RESTRICTION",
+      "exempted-transports",
+      "roadworks",
+      "traffic-announcements",
+      "weight-restrictions",
     ]);
-    // Only the municipality-located family asks for area geometry.
-    for (const u of urls) {
-      const wantsArea = new URL(u).searchParams.get("includeAreaGeometry") === "true";
-      expect(wantsArea).toBe(familyOf(u) === "EXEMPTED_TRANSPORT");
-    }
+    for (const u of urls) expect(new URL(u).search, u).toBe("");
   });
 
   it("includes autobahn-de resolving all motorways via the catalog (no static url)", () => {
@@ -696,5 +694,67 @@ describe("feedToSourceDescriptor", () => {
     const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw")!;
     const desc = feedToSourceDescriptor(ndw);
     expect(desc.licenseUrl).toBeDefined();
+  });
+});
+
+describe("fi-digitraffic v2 descriptor", () => {
+  const feed = FEED_SOURCES.find((f) => f.id === "fi-digitraffic");
+
+  it("polls the four supported v2 collections and no v1 endpoint", () => {
+    expect(feed).toBeDefined();
+    expect(feed!.url).toEqual([
+      "https://tie.digitraffic.fi/api/traffic-message/v2/traffic-announcements",
+      "https://tie.digitraffic.fi/api/traffic-message/v2/roadworks",
+      "https://tie.digitraffic.fi/api/traffic-message/v2/weight-restrictions",
+      "https://tie.digitraffic.fi/api/traffic-message/v2/exempted-transports",
+    ]);
+    const urls = Array.isArray(feed!.url) ? feed!.url : [feed!.url];
+    for (const url of urls) {
+      expect(url, url).not.toContain("/v1/");
+      // The v1 query parameters are rejected by v2, and the unfiltered
+      // collection is what keeps the snapshot nationally complete.
+      expect(url, url).not.toContain("includeAreaGeometry");
+      expect(url, url).not.toContain("situationType");
+      expect(url, url).not.toContain("inactiveHours");
+    }
+  });
+
+  it("declares the request headers the publisher requires", () => {
+    expect(feed!.requestHeaders).toEqual({
+      "Digitraffic-User": "OpenConditions/1.0",
+      "Accept-Encoding": "gzip",
+    });
+  });
+
+  it("declares a complete features snapshot at the reviewed cadence", () => {
+    expect(feed!.snapshot).toEqual({ completeness: "complete", recordsPath: "features" });
+    expect(feed!.cadenceSec).toBe(120);
+    expect(feed!.freshnessWindowSec).toBe(600);
+  });
+
+  it("carries the reviewed CC BY 4.0 rights evidence", () => {
+    expect(feed!.license).toBe("CC-BY-4.0");
+    expect(feed!.licenseUrl).toBe("https://creativecommons.org/licenses/by/4.0/");
+    expect(feed!.attribution).toBe("Fintraffic / Digitraffic");
+    expect(feed!.country).toBe("FI");
+    expect(feed!.rights).toMatchObject({
+      sourceRedistribution: true,
+      derivedRedistribution: true,
+      commercialUse: true,
+      attributionRequired: true,
+      retention: true,
+      termsUrl: "https://www.digitraffic.fi/en/terms-of-service/",
+      evidenceOrigin: "publisher",
+      evidenceVersion: "CC-BY-4.0",
+    });
+    expect(Number.isFinite(Date.parse(feed!.rights!.reviewedAt!))).toBe(true);
+  });
+
+  it("leaves the separate Fintraffic TMS flow feed unchanged", () => {
+    const tms = FEED_SOURCES.find((f) => f.format === "fintraffic-tms");
+    expect(tms).toBeDefined();
+    expect(tms!.url).toBe("https://tie.digitraffic.fi/api/tms/v1/stations/data");
+    expect(tms!.produces).toBe("flow");
+    expect(tms!.snapshot).toBeUndefined();
   });
 });

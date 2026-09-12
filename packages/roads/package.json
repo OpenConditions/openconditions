@@ -13,6 +13,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./restrictions": {
+      "types": "./dist/restrictions.d.ts",
+      "import": "./dist/restrictions.js",
+      "require": "./dist/restrictions.cjs"
     }
   },
   "main": "./dist/index.cjs",
