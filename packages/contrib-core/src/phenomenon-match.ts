@@ -1,8 +1,8 @@
 import {
   centroid,
+  type GeoJsonGeometry,
   haversineMeters,
   isoUtcEpochMs,
-  type GeoJsonGeometry,
 } from "@openconditions/core";
 
 /**
@@ -71,7 +71,7 @@ function readDirection(attributes: Record<string, unknown> | undefined): string 
 export function matchPhenomenonCandidates(
   target: PhenomenonCandidate,
   candidates: PhenomenonCandidate[],
-  opts: MatchOptions = {}
+  opts: MatchOptions = {},
 ): MatchDecision[] {
   const maxCentroidMeters = opts.maxCentroidMeters ?? DEFAULT_MAX_CENTROID_METERS;
   const maxValidFromDeltaSec = opts.maxValidFromDeltaSec ?? DEFAULT_MAX_VALID_FROM_DELTA_SEC;

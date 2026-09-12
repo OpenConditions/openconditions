@@ -23,7 +23,7 @@ function num(v: unknown): number {
  * the codebase), so it is folded in via a cast after the base builder.
  */
 function occ(
-  over: Partial<Measurement> & { attributes?: Record<string, unknown> } = {}
+  over: Partial<Measurement> & { attributes?: Record<string, unknown> } = {},
 ): Measurement {
   const { attributes, ...rest } = over;
   const m = measurement({
@@ -45,8 +45,8 @@ describe("observationsToOccupancy — feed envelope", () => {
     const feed = decode(
       observationsToOccupancy(
         [occ({ subject: [{ type: "gtfs-trip", id: "trip-1" }], attributes: { vehicleId: "v-1" } })],
-        { timestamp: "2026-06-23T10:00:00Z" }
-      )
+        { timestamp: "2026-06-23T10:00:00Z" },
+      ),
     );
     expect(feed.header?.gtfsRealtimeVersion).toBe("2.0");
     expect(feed.header?.incrementality).toBe(FeedHeader.Incrementality.FULL_DATASET);
@@ -59,7 +59,7 @@ describe("observationsToOccupancy — feed envelope", () => {
     ]);
     expect(() => decode(bytes)).not.toThrow();
     expect(
-      transit_realtime.FeedMessage.verify(transit_realtime.FeedMessage.decode(bytes))
+      transit_realtime.FeedMessage.verify(transit_realtime.FeedMessage.decode(bytes)),
     ).toBeNull();
   });
 });
@@ -75,7 +75,7 @@ describe("observationsToOccupancy — VehiclePosition path", () => {
           attributes: { vehicleId: "veh-42" },
           dataUpdatedAt: "2026-06-23T09:00:00Z",
         }),
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(1);
     const entity = feed.entity[0]!;
@@ -98,7 +98,7 @@ describe("observationsToOccupancy — VehiclePosition path", () => {
             { type: "gtfs-trip", id: "veh-7", role: "vehicle" },
           ],
         }),
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(1);
     expect(feed.entity[0]!.vehicle?.vehicle?.id).toBe("veh-7");
@@ -124,12 +124,12 @@ describe("observationsToOccupancy — VehiclePosition path", () => {
             level,
             subject: [{ type: "gtfs-trip", id: `trip-${i}` }],
             attributes: { vehicleId: `v-${i}` },
-          })
-        )
-      )
+          }),
+        ),
+      ),
     );
     expect(feed.entity.map((e) => e.vehicle?.occupancyStatus)).toEqual(
-      levels.map((l) => OccupancyStatus[l])
+      levels.map((l) => OccupancyStatus[l]),
     );
   });
 
@@ -143,7 +143,7 @@ describe("observationsToOccupancy — VehiclePosition path", () => {
           ...occ({ subject: [{ type: "gtfs-trip", id: "trip-top" }] }),
           vehicleId: "veh-top",
         } as unknown as Measurement,
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(1);
     expect(feed.entity[0]!.vehicle?.trip?.tripId).toBe("trip-top");
@@ -157,7 +157,7 @@ describe("observationsToOccupancy — VehiclePosition path", () => {
           subject: [{ type: "gtfs-trip", id: "trip-5" }],
           attributes: { vehicleId: "v-5", stopSequence: 4 },
         }),
-      ])
+      ]),
     );
     expect(feed.entity[0]!.vehicle).toBeTruthy();
     expect(feed.entity[0]!.tripUpdate).toBeFalsy();
@@ -174,7 +174,7 @@ describe("observationsToOccupancy — TripUpdate path", () => {
           subject: [{ type: "gtfs-trip", id: "trip-11" }],
           attributes: { stopSequence: 6 },
         }),
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(1);
     const entity = feed.entity[0]!;
@@ -197,7 +197,7 @@ describe("observationsToOccupancy — TripUpdate path", () => {
           }),
           stopSequence: 2,
         } as unknown as Measurement,
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(1);
     const stu = feed.entity[0]!.tripUpdate!.stopTimeUpdate![0]!;
@@ -209,21 +209,21 @@ describe("observationsToOccupancy — TripUpdate path", () => {
 describe("observationsToOccupancy — concrete-entity gate (exclusions)", () => {
   it("EXCLUDES an aggregate with only a gtfs-route subject", () => {
     const feed = decode(
-      observationsToOccupancy([occ({ subject: [{ type: "gtfs-route", id: "route-1" }] })])
+      observationsToOccupancy([occ({ subject: [{ type: "gtfs-route", id: "route-1" }] })]),
     );
     expect(feed.entity).toHaveLength(0);
   });
 
   it("EXCLUDES an aggregate with only a gtfs-stop subject", () => {
     const feed = decode(
-      observationsToOccupancy([occ({ subject: [{ type: "gtfs-stop", id: "stop-1" }] })])
+      observationsToOccupancy([occ({ subject: [{ type: "gtfs-stop", id: "stop-1" }] })]),
     );
     expect(feed.entity).toHaveLength(0);
   });
 
   it("EXCLUDES a bare trip with neither vehicleId nor stopSequence (no carrier)", () => {
     const feed = decode(
-      observationsToOccupancy([occ({ subject: [{ type: "gtfs-trip", id: "trip-1" }] })])
+      observationsToOccupancy([occ({ subject: [{ type: "gtfs-trip", id: "trip-1" }] })]),
     );
     expect(feed.entity).toHaveLength(0);
   });
@@ -236,7 +236,7 @@ describe("observationsToOccupancy — concrete-entity gate (exclusions)", () => 
           subject: [{ type: "gtfs-trip", id: "trip-1" }],
           attributes: { vehicleId: "v-1" },
         }),
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(0);
   });
@@ -249,7 +249,7 @@ describe("observationsToOccupancy — concrete-entity gate (exclusions)", () => 
           subject: [{ type: "gtfs-trip", id: "trip-1" }],
           attributes: { vehicleId: "v-1" },
         }),
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(0);
   });
@@ -262,7 +262,7 @@ describe("observationsToOccupancy — concrete-entity gate (exclusions)", () => 
           subject: [{ type: "gtfs-trip", id: "trip-1" }],
           attributes: { vehicleId: "v-1" },
         }),
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(0);
   });
@@ -275,7 +275,7 @@ describe("observationsToOccupancy — concrete-entity gate (exclusions)", () => 
           subject: [{ type: "gtfs-trip", id: "trip-1" }],
           attributes: { vehicleId: "v-1" },
         }),
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(0);
   });
@@ -290,7 +290,7 @@ describe("observationsToOccupancy — concrete-entity gate (exclusions)", () => 
           subject: [{ type: "gtfs-trip", id: "trip-1" }],
           attributes: { vehicleId: "v-1" },
         }),
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(0);
   });
@@ -299,7 +299,7 @@ describe("observationsToOccupancy — concrete-entity gate (exclusions)", () => 
     const feed = decode(
       observationsToOccupancy([
         occ({ subject: [{ type: "gtfs-trip", id: "  " }], attributes: { vehicleId: "v-1" } }),
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(0);
   });
@@ -319,7 +319,7 @@ describe("observationsToOccupancy — concrete-entity gate (exclusions)", () => 
           attributes: { stopSequence: 3 },
         }),
         occ({ id: "drop:badlevel", level: "NOPE", subject: [{ type: "gtfs-trip", id: "t3" }] }),
-      ])
+      ]),
     );
     expect(feed.entity.map((e) => e.id)).toEqual(["keep:vp", "keep:tu"]);
   });

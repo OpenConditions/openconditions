@@ -1,8 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
-import { phenomenonFingerprint, type ConditionEvent } from "@openconditions/core";
+import { type ConditionEvent, phenomenonFingerprint } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { autoCorroborateOnLanding } from "../evidence/autoCorroborate.js";
 import { resolveSurvivor } from "../evidence/phenomenon.js";
 import { recomputeEvidence } from "../evidence/recompute.js";
@@ -634,7 +634,7 @@ describe("batched neighborhood reads", () => {
     await sql`UPDATE conditions.observations SET corroborations = ${sql.json(ids)} WHERE id = ${prefix + ":head"}`;
     queryCount = 0;
     expect(await autoCorroborateOnLanding(sql, `${prefix}:target`, "2026-07-10T12:01:00Z")).toEqual(
-      []
+      [],
     );
     expect(queryCount).toBeGreaterThan(0);
     expect(queryCount).toBeLessThanOrEqual(12);

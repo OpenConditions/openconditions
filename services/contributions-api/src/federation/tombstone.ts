@@ -18,7 +18,11 @@ type Tx = postgres.TransactionSql;
 
 /** Why a row became a tombstone; the DB `obs_tombstone_reason_enum` mirror. */
 export type TombstoneReason =
-  "deleted_by_source" | "gdpr_erasure" | "retracted_as_wrong" | "expired" | "legal_takedown";
+  | "deleted_by_source"
+  | "gdpr_erasure"
+  | "retracted_as_wrong"
+  | "expired"
+  | "legal_takedown";
 
 /** The tombstone reasons accepted on the wire / at the emit entry points. */
 export const TOMBSTONE_REASONS: ReadonlySet<TombstoneReason> = new Set<TombstoneReason>([
@@ -48,7 +52,7 @@ const ERASURE_REASONS: ReadonlySet<TombstoneReason> = new Set<TombstoneReason>([
 /** Serialize the same identities in every create/delete path, before row locks. */
 export async function lockCanonicalRecords(
   tx: Tx,
-  canonicalIds: readonly (string | null | undefined)[]
+  canonicalIds: readonly (string | null | undefined)[],
 ): Promise<void> {
   const ids = [...new Set(canonicalIds.filter((id): id is string => Boolean(id)))].sort();
   for (const id of ids) {
@@ -68,7 +72,7 @@ export async function recordTombstoneFact(
   tx: Tx,
   canonicalId: string | null | undefined,
   reason: TombstoneReason,
-  now: string
+  now: string,
 ): Promise<void> {
   if (!canonicalId) return;
   const expiresAt = new Date(Date.parse(now) + TOMBSTONE_FACT_TTL_DAYS * 24 * 60 * 60 * 1000);
@@ -89,7 +93,7 @@ export async function recordTombstoneFact(
 export async function hasActiveTombstone(
   tx: Tx,
   canonicalId: string | null | undefined,
-  now: string
+  now: string,
 ): Promise<boolean> {
   if (!canonicalId) return false;
   const rows = await tx<{ one: number }[]>`
@@ -113,7 +117,7 @@ export async function hasActiveTombstone(
 export async function scrubJournalResidue(
   tx: Tx,
   objectId: string,
-  reason: TombstoneReason
+  reason: TombstoneReason,
 ): Promise<void> {
   if (!ERASURE_REASONS.has(reason)) return;
   await tx`
@@ -140,7 +144,7 @@ export async function softTombstone(
   tx: Tx,
   observationId: string,
   reason: TombstoneReason,
-  now: string
+  now: string,
 ): Promise<boolean> {
   const marker = { tombstone: true, reason, at: now };
   const rows = await tx<{ id: string }[]>`
@@ -176,7 +180,7 @@ export async function emitTombstone(
   sql: Sql,
   observationId: string,
   reason: TombstoneReason,
-  now: string
+  now: string,
 ): Promise<{ tombstoned: boolean }> {
   return sql.begin(async (tx) => {
     const [identity] = await tx<{ canonical_id: string | null }[]>`

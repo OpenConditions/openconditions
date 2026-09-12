@@ -55,7 +55,7 @@ export class SseStreamPump {
 
   constructor(
     private readonly deps: StreamPumpDeps,
-    startCursor: string
+    startCursor: string,
   ) {
     this.cursor = startCursor;
   }

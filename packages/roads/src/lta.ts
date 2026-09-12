@@ -1,6 +1,6 @@
 import { dedupeRoadEvents } from "./dedupe.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -57,7 +57,7 @@ function deriveId(ev: LtaIncident): string {
 
 export function parseLtaIncidents(
   input: string | Buffer | unknown,
-  src: SourceDescriptor
+  src: SourceDescriptor,
 ): RoadEvent[] {
   let data: unknown = input;
   if (typeof input === "string" || Buffer.isBuffer(input)) {
@@ -113,7 +113,7 @@ export function parseLtaIncidents(
 
   if (skippedNoGeometry > 0) {
     console.debug(
-      `[lta] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+      `[lta] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
     recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }

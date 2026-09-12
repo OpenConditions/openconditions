@@ -24,7 +24,7 @@ describe("pbfExtractSource", () => {
       dir: `/tmp/oc-pbfsrc-test-${url}`,
     }));
     const extract = vi.fn(async (path: string) =>
-      path.includes("test-A") ? [way(1), way(2)] : [way(3)]
+      path.includes("test-A") ? [way(1), way(2)] : [way(3)],
     );
 
     const ways = await pbfExtractSource({ download, extract }).fetchRegion(region(["A", "B", "A"]));
@@ -35,7 +35,7 @@ describe("pbfExtractSource", () => {
 
   it("throws for a region that has no pbfUrls", async () => {
     await expect(pbfExtractSource({}).fetchRegion(region(undefined))).rejects.toThrow(
-      /requires pbfUrls/
+      /requires pbfUrls/,
     );
   });
 
@@ -50,7 +50,7 @@ describe("pbfExtractSource", () => {
     });
 
     await expect(
-      pbfExtractSource({ download, extract }).fetchRegion(region(["A", "B"]))
+      pbfExtractSource({ download, extract }).fetchRegion(region(["A", "B"])),
     ).rejects.toThrow(/boom on B/);
   });
 });

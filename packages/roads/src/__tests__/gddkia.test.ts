@@ -15,7 +15,7 @@ describe("parseGddkia", () => {
   it("parses the utrdane.xml fixture into WGS84 point RoadEvents", () => {
     const events = parseGddkia(
       readFileSync(join(import.meta.dirname, "fixtures/gddkia-pl/utrdane.xml")),
-      SRC
+      SRC,
     );
     expect(events.length).toBeGreaterThan(0);
     expect(events.every((e) => e.geometry?.type === "Point")).toBe(true);
@@ -33,25 +33,25 @@ describe("parseGddkia", () => {
     const xml = (utr: string) => `<?xml version="1.0"?><utrudnienia>${utr}</utrudnienia>`;
     const closed = parseGddkia(
       xml(
-        "<utr><typ>U</typ><nr_drogi>A2</nr_drogi><geo_lat>52.2</geo_lat><geo_long>21.0</geo_long><droga_zamknieta>true</droga_zamknieta><awaria_mostu>false</awaria_mostu></utr>"
+        "<utr><typ>U</typ><nr_drogi>A2</nr_drogi><geo_lat>52.2</geo_lat><geo_long>21.0</geo_long><droga_zamknieta>true</droga_zamknieta><awaria_mostu>false</awaria_mostu></utr>",
       ),
-      SRC
+      SRC,
     );
     expect(closed[0]!.type).toBe("road_closure");
 
     const accident = parseGddkia(
       xml(
-        "<utr><typ>W</typ><nr_drogi>S8</nr_drogi><geo_lat>52.1</geo_lat><geo_long>21.1</geo_long><droga_zamknieta>false</droga_zamknieta><awaria_mostu>false</awaria_mostu></utr>"
+        "<utr><typ>W</typ><nr_drogi>S8</nr_drogi><geo_lat>52.1</geo_lat><geo_long>21.1</geo_long><droga_zamknieta>false</droga_zamknieta><awaria_mostu>false</awaria_mostu></utr>",
       ),
-      SRC
+      SRC,
     );
     expect(accident[0]!.type).toBe("accident");
 
     const works = parseGddkia(
       xml(
-        "<utr><typ>U</typ><nr_drogi>A1</nr_drogi><geo_lat>53.0</geo_lat><geo_long>18.5</geo_long><droga_zamknieta>false</droga_zamknieta><awaria_mostu>false</awaria_mostu></utr>"
+        "<utr><typ>U</typ><nr_drogi>A1</nr_drogi><geo_lat>53.0</geo_lat><geo_long>18.5</geo_long><droga_zamknieta>false</droga_zamknieta><awaria_mostu>false</awaria_mostu></utr>",
       ),
-      SRC
+      SRC,
     );
     expect(works[0]!.type).toBe("roadworks");
   });

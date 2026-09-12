@@ -14,7 +14,7 @@ describe("timeZoneAt", () => {
 describe("scheduleTimezoneForGeometry", () => {
   it("resolves from a Point", () => {
     expect(scheduleTimezoneForGeometry({ type: "Point", coordinates: [13, 52] })).toBe(
-      "Europe/Berlin"
+      "Europe/Berlin",
     );
   });
   it("resolves from a LineString's first vertex", () => {
@@ -25,7 +25,7 @@ describe("scheduleTimezoneForGeometry", () => {
           [-123, 49],
           [-123.1, 49.1],
         ],
-      })
+      }),
     ).toBe("America/Vancouver");
   });
   it("resolves from a Polygon ring", () => {
@@ -40,7 +40,7 @@ describe("scheduleTimezoneForGeometry", () => {
             [13, 52],
           ],
         ],
-      })
+      }),
     ).toBe("Europe/Berlin");
   });
   it("returns null for null/empty geometry", () => {

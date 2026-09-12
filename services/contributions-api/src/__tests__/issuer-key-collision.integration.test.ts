@@ -1,11 +1,11 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { publicVerif } from "@cloudflare/privacypass-ts";
 import { generateReporterKey } from "@openconditions/contrib-core";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { enrollReporter } from "../attester/enroll.js";
-import { redemptionContext, type PublicContext } from "../issuer/context.js";
+import { type PublicContext, redemptionContext } from "../issuer/context.js";
 import { issueToken } from "../issuer/issue.js";
 import {
   DEFAULT_ISSUER_NAME,
@@ -58,7 +58,7 @@ async function genKeyPair(): Promise<KeyPair> {
 async function truncByteOf(pair: KeyPair): Promise<number> {
   const pub = await getPublicKeyBytes(pair.publicKey);
   const digest = new Uint8Array(
-    await globalThis.crypto.subtle.digest("SHA-256", pub as BufferSource)
+    await globalThis.crypto.subtle.digest("SHA-256", pub as BufferSource),
   );
   return digest[digest.length - 1]!;
 }
@@ -66,7 +66,7 @@ async function truncByteOf(pair: KeyPair): Promise<number> {
 async function keyIdOf(pair: KeyPair): Promise<string> {
   const pub = await getPublicKeyBytes(pair.publicKey);
   const digest = new Uint8Array(
-    await globalThis.crypto.subtle.digest("SHA-256", pub as BufferSource)
+    await globalThis.crypto.subtle.digest("SHA-256", pub as BufferSource),
   );
   return Buffer.from(digest).toString("hex");
 }
@@ -205,7 +205,7 @@ describe("generateIssuerKey truncated-id collision avoidance", () => {
     const reserved = await overlappingTruncatedKeyIds(
       sql,
       new Date(window.notBefore),
-      new Date(window.notAfter)
+      new Date(window.notAfter),
     );
     expect(reserved.size).toBe(2);
     expect(reserved.has(await truncByteOf(k1!))).toBe(true);
@@ -228,7 +228,7 @@ describe("generateIssuerKey truncated-id collision avoidance", () => {
         ...window,
         generateKeyPair: stuck.generate,
         maxKeyGenAttempts: 3,
-      })
+      }),
     ).rejects.toThrow(/truncated token key id/i);
     expect(stuck.state.calls).toBe(3);
   }, 120_000);
@@ -246,7 +246,7 @@ describe("generateIssuerKey truncated-id collision avoidance", () => {
     const disjoint = await overlappingTruncatedKeyIds(
       sql,
       new Date("2034-01-01T00:00:00.000Z"),
-      new Date("2034-04-01T00:00:00.000Z")
+      new Date("2034-04-01T00:00:00.000Z"),
     );
     expect(disjoint.has(await truncByteOf(k1!))).toBe(false);
 
@@ -254,7 +254,7 @@ describe("generateIssuerKey truncated-id collision avoidance", () => {
     const overlapping = await overlappingTruncatedKeyIds(
       sql,
       new Date("2033-03-01T00:00:00.000Z"),
-      new Date("2033-06-01T00:00:00.000Z")
+      new Date("2033-06-01T00:00:00.000Z"),
     );
     expect(overlapping.has(await truncByteOf(k1!))).toBe(true);
   }, 120_000);
@@ -288,7 +288,7 @@ describe("generateIssuerKey concurrent generation is serialized", () => {
     }
 
     const results = await Promise.all(
-      generators.map((generate) => generateIssuerKey(sql, NOW, { generateKeyPair: generate }))
+      generators.map((generate) => generateIssuerKey(sql, NOW, { generateKeyPair: generate })),
     );
     expect(results).toHaveLength(N);
 
@@ -327,7 +327,7 @@ describe("overlapping keys with distinct bytes issue + redeem correctly", () => 
     const origin = new Origin(BlindRSAMode.PSS);
     const challenge = origin.createTokenChallenge(
       DEFAULT_ISSUER_NAME,
-      await redemptionContext(ctx)
+      await redemptionContext(ctx),
     );
     const request = await client.createTokenRequest(challenge, olderKey.publicKeyBytes);
     const result = await issueToken(sql, reporter.keyId, "2026-07-12", request.serialize(), ctx, {
@@ -336,7 +336,7 @@ describe("overlapping keys with distinct bytes issue + redeem correctly", () => 
     });
     expect(result.issued).toBe(true);
     const token = await client.finalize(
-      TokenResponse.deserialize((result as { tokenResponse: Uint8Array }).tokenResponse)
+      TokenResponse.deserialize((result as { tokenResponse: Uint8Array }).tokenResponse),
     );
 
     const verifier = new TokenVerifier({ issuerName: DEFAULT_ISSUER_NAME, log: noopLog });

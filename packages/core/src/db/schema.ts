@@ -158,9 +158,7 @@ export const observations = conditionsSchema.table(
     index("idx_conditions_obs_instance").on(t.instanceId),
     index("idx_conditions_obs_privacy").on(t.privacyClass),
     index("idx_conditions_obs_evidence_state").on(t.evidenceState),
-    index("idx_conditions_obs_flagged")
-      .on(t.flaggedAt)
-      .where(sql`${t.flaggedAt} IS NOT NULL`),
+    index("idx_conditions_obs_flagged").on(t.flaggedAt).where(sql`${t.flaggedAt} IS NOT NULL`),
     // Corroboration/version lineage is queried by containment (`corroborations
     // @> [id]`) during survivor resolution; GIN keeps that a index lookup rather
     // than a full scan as crowd volume grows.
@@ -168,35 +166,35 @@ export const observations = conditionsSchema.table(
     index("idx_conditions_obs_replaces").using("gin", t.replaces),
     check(
       "obs_confidence_score_range",
-      sql`${t.confidenceScore} IS NULL OR (${t.confidenceScore} >= 0 AND ${t.confidenceScore} <= 1)`
+      sql`${t.confidenceScore} IS NULL OR (${t.confidenceScore} >= 0 AND ${t.confidenceScore} <= 1)`,
     ),
     check("obs_dp_epsilon_nonneg", sql`${t.dpEpsilon} IS NULL OR ${t.dpEpsilon} >= 0`),
     check(
       "obs_dp_delta_range",
-      sql`${t.dpDelta} IS NULL OR (${t.dpDelta} >= 0 AND ${t.dpDelta} < 1)`
+      sql`${t.dpDelta} IS NULL OR (${t.dpDelta} >= 0 AND ${t.dpDelta} < 1)`,
     ),
     check("obs_k_anonymity_positive", sql`${t.kAnonymity} IS NULL OR ${t.kAnonymity} > 0`),
     check(
       "obs_severity_level_range",
-      sql`${t.severityLevel} IS NULL OR (${t.severityLevel} >= 1 AND ${t.severityLevel} <= 5)`
+      sql`${t.severityLevel} IS NULL OR (${t.severityLevel} >= 1 AND ${t.severityLevel} <= 5)`,
     ),
     check(
       "obs_fuzziness_enum",
-      sql`${t.fuzziness} IN ('exact','low_res','medium_res','end_unknown','start_unknown','extent_unknown')`
+      sql`${t.fuzziness} IN ('exact','low_res','medium_res','end_unknown','start_unknown','extent_unknown')`,
     ),
     check(
       "obs_privacy_class_enum",
-      sql`${t.privacyClass} IN ('unknown','authoritative','aggregate','k_anon','dp_noised','crowd_pseudonym')`
+      sql`${t.privacyClass} IN ('unknown','authoritative','aggregate','k_anon','dp_noised','crowd_pseudonym')`,
     ),
     check(
       "obs_evidence_state_enum",
-      sql`${t.evidenceState} IS NULL OR ${t.evidenceState} IN ('self_reported','corroborated','externally_resolved','negated','expired')`
+      sql`${t.evidenceState} IS NULL OR ${t.evidenceState} IN ('self_reported','corroborated','externally_resolved','negated','expired')`,
     ),
     check(
       "obs_tombstone_reason_enum",
-      sql`${t.tombstoneReason} IS NULL OR ${t.tombstoneReason} IN ('deleted_by_source','gdpr_erasure','retracted_as_wrong','expired','legal_takedown')`
+      sql`${t.tombstoneReason} IS NULL OR ${t.tombstoneReason} IN ('deleted_by_source','gdpr_erasure','retracted_as_wrong','expired','legal_takedown')`,
     ),
-  ]
+  ],
 );
 
 /**
@@ -258,7 +256,7 @@ export const sourcePollAttempt = conditionsSchema.table(
   (t) => [
     index("idx_source_poll_attempt_source_time").on(t.source, t.attemptedAt),
     index("idx_source_poll_attempt_time").on(t.attemptedAt, t.id),
-  ]
+  ],
 );
 
 /**
@@ -285,7 +283,7 @@ export const sensorSpeedSample = conditionsSchema.table(
     index("idx_sensor_sample_key_bucket").on(t.sensorKey, t.dow, t.todHour),
     index("idx_sensor_sample_observed").on(t.observedAt),
     unique("uq_sensor_sample_key_observed").on(t.sensorKey, t.observedAt),
-  ]
+  ],
 );
 
 /** Completed finalization frontier across all sensors, advanced with each rollup batch. */
@@ -295,7 +293,7 @@ export const speedRollupProgress = conditionsSchema.table(
     id: integer("id").primaryKey().default(1),
     finalizedBefore: timestamp("finalized_before", { withTimezone: true }).notNull(),
   },
-  (t) => [check("speed_rollup_progress_singleton", sql`${t.id} = 1`)]
+  (t) => [check("speed_rollup_progress_singleton", sql`${t.id} = 1`)],
 );
 
 /**
@@ -339,7 +337,7 @@ export const sensorSpeedHourly = conditionsSchema.table(
     // The derivations scan a trailing window across all sensors; the prune
     // deletes by the same key.
     index("idx_sensor_hourly_hour").on(t.hourUtc),
-  ]
+  ],
 );
 
 /**
@@ -362,7 +360,7 @@ export const sensorBaseline = conditionsSchema.table(
   (t) => [
     primaryKey({ columns: [t.sensorKey, t.dowBucket, t.todBucket, t.method] }),
     index("idx_sensor_baseline_source_bucket").on(t.source, t.dowBucket, t.todBucket),
-  ]
+  ],
 );
 
 /**
@@ -388,7 +386,7 @@ export const osmRoad = conditionsSchema.table(
     index("idx_osm_road_geom").using("gist", t.geom),
     index("idx_osm_road_highway").on(t.highway),
     index("idx_osm_road_ref").on(t.ref),
-  ]
+  ],
 );
 
 /**
@@ -414,7 +412,7 @@ export const roadSegment = conditionsSchema.table(
     index("idx_road_segment_geom").using("gist", t.geom),
     index("idx_road_segment_way").on(t.wayId),
     index("idx_road_segment_minzoom").on(t.minZoom),
-  ]
+  ],
 );
 
 /**
@@ -431,7 +429,7 @@ export const sensorSegment = conditionsSchema.table(
     bearingDeg: doublePrecision("bearing_deg"),
     matchedAt: timestamp("matched_at", { withTimezone: true }).notNull(),
   },
-  (t) => [index("idx_sensor_segment_segment").on(t.segmentId)]
+  (t) => [index("idx_sensor_segment_segment").on(t.segmentId)],
 );
 
 /**
@@ -460,7 +458,7 @@ export const observationBinding = conditionsSchema.table(
     graphGeneration: text("graph_generation"),
     boundAt: timestamp("bound_at", { withTimezone: true }).notNull(),
   },
-  (t) => [index("idx_observation_binding_status").on(t.status)]
+  (t) => [index("idx_observation_binding_status").on(t.status)],
 );
 
 /**
@@ -479,7 +477,7 @@ export const bindingQueue = conditionsSchema.table(
     lastError: text("last_error"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("idx_binding_queue_due").on(t.nextAttemptAt)]
+  (t) => [index("idx_binding_queue_due").on(t.nextAttemptAt)],
 );
 
 /** Singleton identity and provenance of the segment spine currently active. */
@@ -495,7 +493,7 @@ export const roadGraphState = conditionsSchema.table(
     importedAt: timestamp("imported_at", { withTimezone: true }).notNull(),
     activatedAt: timestamp("activated_at", { withTimezone: true }).notNull(),
   },
-  (t) => [check("road_graph_state_singleton", sql`${t.singleton} IS TRUE`)]
+  (t) => [check("road_graph_state_singleton", sql`${t.singleton} IS TRUE`)],
 );
 
 /**
@@ -520,7 +518,7 @@ export const observationSegment = conditionsSchema.table(
   (t) => [
     primaryKey({ columns: [t.observationId, t.seq] }),
     index("idx_observation_segment_segment").on(t.segmentId),
-  ]
+  ],
 );
 
 /**
@@ -549,7 +547,7 @@ export const segmentObservation = conditionsSchema.table(
   (t) => [
     primaryKey({ columns: [t.segmentId, t.source] }),
     index("idx_segment_observation_segment").on(t.segmentId),
-  ]
+  ],
 );
 
 /**
@@ -571,7 +569,7 @@ export const segmentProfile = conditionsSchema.table(
   (t) => [
     primaryKey({ columns: [t.segmentId, t.dow, t.todHour] }),
     index("idx_segment_profile_segment").on(t.segmentId),
-  ]
+  ],
 );
 
 /**
@@ -595,7 +593,7 @@ export const segmentSpeed = conditionsSchema.table(
     observedAt: timestamp("observed_at", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
-  (t) => [index("idx_segment_speed_los").on(t.los)]
+  (t) => [index("idx_segment_speed_los").on(t.los)],
 );
 
 /**
@@ -626,7 +624,7 @@ export const reporter = conditionsSchema.table(
     check("reporter_reputation_alpha_positive", sql`${t.reputationAlpha} > 0`),
     check("reporter_reputation_beta_positive", sql`${t.reputationBeta} > 0`),
     check("reporter_status_enum", sql`${t.status} IN ('active','blocked')`),
-  ]
+  ],
 );
 
 /**
@@ -651,7 +649,7 @@ export const subClaim = conditionsSchema.table(
     index("idx_sub_claim_subject").on(t.subjectId),
     index("idx_sub_claim_key").on(t.keyId),
     check("sub_claim_claim_type_enum", sql`${t.claimType} IN ('confirm','negate','flag')`),
-  ]
+  ],
 );
 
 /**
@@ -670,9 +668,7 @@ export const reportEvidence = conditionsSchema.table(
     actorKeyId: text("actor_key_id"),
     sourceId: text("source_id"),
     occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
-    details: jsonb("details")
-      .notNull()
-      .default(sql`'{}'::jsonb`),
+    details: jsonb("details").notNull().default(sql`'{}'::jsonb`),
   },
   (t) => [
     index("idx_report_evidence_observation").on(t.observationId, t.occurredAt),
@@ -680,9 +676,9 @@ export const reportEvidence = conditionsSchema.table(
     index("idx_report_evidence_actor").on(t.actorKeyId, t.occurredAt),
     check(
       "report_evidence_kind_enum",
-      sql`${t.evidenceKind} IN ('report','confirm','negate','official_match','reviewer_accept','reviewer_reject','expired')`
+      sql`${t.evidenceKind} IN ('report','confirm','negate','official_match','reviewer_accept','reviewer_reject','expired')`,
     ),
-  ]
+  ],
 );
 
 /**
@@ -696,7 +692,7 @@ export const tokenQuota = conditionsSchema.table(
     epoch: text("epoch").notNull(),
     issued: integer("issued").notNull().default(0),
   },
-  (t) => [primaryKey({ columns: [t.keyId, t.epoch] })]
+  (t) => [primaryKey({ columns: [t.keyId, t.epoch] })],
 );
 
 /**
@@ -715,7 +711,7 @@ export const spentToken = conditionsSchema.table(
     purpose: text("purpose").notNull(),
     spentAt: timestamp("spent_at", { withTimezone: true }).notNull(),
   },
-  (t) => [index("idx_spent_token_spent_at").on(t.spentAt)]
+  (t) => [index("idx_spent_token_spent_at").on(t.spentAt)],
 );
 
 /**
@@ -764,9 +760,7 @@ export const federationOutbox = conditionsSchema.table(
     canonicalId: text("canonical_id"),
     payloadSnapshot: jsonb("payload_snapshot").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    txid: xid8("txid")
-      .notNull()
-      .default(sql`pg_current_xact_id()`),
+    txid: xid8("txid").notNull().default(sql`pg_current_xact_id()`),
   },
   (t) => [
     index("idx_federation_outbox_object").on(t.objectId, t.seq),
@@ -776,7 +770,7 @@ export const federationOutbox = conditionsSchema.table(
     // keeps that a range scan instead of a full seq-scan as the journal grows.
     index("idx_federation_outbox_created_at").on(t.createdAt),
     check("federation_outbox_operation_enum", sql`${t.operation} IN ('create','update','delete')`),
-  ]
+  ],
 );
 
 /**
@@ -909,7 +903,7 @@ export const federationSubscription = conditionsSchema.table(
     index("idx_federation_subscription_peer").on(t.peerId),
     check(
       "federation_subscription_delivery_mode_enum",
-      sql`${t.deliveryMode} IN ('pull','webhook','sse')`
+      sql`${t.deliveryMode} IN ('pull','webhook','sse')`,
     ),
-  ]
+  ],
 );

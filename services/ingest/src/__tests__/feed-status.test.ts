@@ -47,7 +47,7 @@ describe("FeedStatusStore", () => {
     s.recordError(
       "k",
       "2026-07-01T00:00:00.000Z",
-      "fetch failed for https://api.example.com/v2/get?key=SECRET123&x=1"
+      "fetch failed for https://api.example.com/v2/get?key=SECRET123&x=1",
     );
     expect(s.get("k")?.lastError).not.toContain("SECRET123");
     expect(s.get("k")?.lastError).toContain("***");

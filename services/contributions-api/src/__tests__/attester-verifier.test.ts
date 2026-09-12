@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  UNVERIFIED_ATTESTATION,
-  UNVERIFIED_OSM_AUTH,
   type AttestationVerifier,
   type OsmAuthVerifier,
+  UNVERIFIED_ATTESTATION,
+  UNVERIFIED_OSM_AUTH,
 } from "../attester/verifier.js";
 
 const KINDS = ["android-keystore", "app-attest", "play-integrity"] as const;
@@ -13,7 +13,7 @@ describe("UNVERIFIED_ATTESTATION default verifier", () => {
     for (const kind of KINDS) {
       const result = await UNVERIFIED_ATTESTATION.verify(
         { kind, blob: "anything-a-sybil-sends" },
-        { keyId: "key-1" }
+        { keyId: "key-1" },
       );
       expect(result.verified).toBe(false);
       expect(result.reason).toBe("no-platform-verifier-configured");

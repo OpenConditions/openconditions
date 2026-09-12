@@ -126,7 +126,7 @@ describe("segmentsToGeoJSON", () => {
     ]);
     expect(fc.features).toHaveLength(2);
     expect(
-      (fc.features as { properties: Record<string, unknown> }[]).map((f) => f.properties["dir"])
+      (fc.features as { properties: Record<string, unknown> }[]).map((f) => f.properties["dir"]),
     ).toEqual(["f", "b"]);
   });
 });

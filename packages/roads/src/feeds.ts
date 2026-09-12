@@ -3,39 +3,39 @@ import { fileURLToPath } from "node:url";
 import type { SourceFormat } from "@openconditions/core";
 import type { FeedAuth, FeedSourceBase } from "@openconditions/ingest-framework";
 import { loadFeedFiles } from "@openconditions/ingest-framework";
-import type { GeoJsonMapping } from "./model.js";
-import type { SiteGeometry } from "./siteTable.js";
-import { roadFeedSchema } from "./feed-schema.js";
-import { parseDatexSituations } from "./datex.js";
-import { parseGeoJson } from "./geojson.js";
-import { parseFlatJson } from "./flatjson.js";
-import { parseTrafikverket } from "./trafikverket.js";
-import { parseIbi511, parseIbi511Conditions } from "./ibi511.js";
-import { parseGddkia } from "./gddkia.js";
-import { parseLtaIncidents } from "./lta.js";
-import { parseOpen511 } from "./open511.js";
-import { parseWzdx } from "./wzdx.js";
 import { parseAutobahn } from "./autobahn.js";
+import { parseDatexSituations } from "./datex.js";
 import { parseDigitraffic } from "./digitraffic.js";
-import { parseOhgoEvents } from "./ohgo-events.js";
-import { parseVicDisruptions } from "./vic-disruptions.js";
-import { parseDigitrafficFlow, parseDatexMeasuredData } from "./flow.js";
+import { roadFeedSchema } from "./feed-schema.js";
+import { parseFlatJson } from "./flatjson.js";
 import type { FlowParseResult } from "./flow.js";
+import { parseDatexMeasuredData, parseDigitrafficFlow } from "./flow.js";
+import { parseBcnTramsFlow } from "./flow-bcn.js";
+import { parseBonnFlow } from "./flow-bonn.js";
 import { parseElaboratedFlow } from "./flow-elaborated.js";
 import { parseFintrafficFlow } from "./flow-fintraffic.js";
-import { parseWebtrisFlow } from "./flow-webtris.js";
+import { parseGeojsonFlow } from "./flow-geojson.js";
+import { parseLtaSpeedBands } from "./flow-lta-speedbands.js";
+import { parseMadridFlow } from "./flow-madrid.js";
 import { parseNycDotFlow } from "./flow-nycdot.js";
 import { parseOhgoFlow } from "./flow-ohgo.js";
 import { parseTrafikverketFlow } from "./flow-trafikverket.js";
-import { parseBonnFlow } from "./flow-bonn.js";
-import { parseMadridFlow } from "./flow-madrid.js";
-import { parseLtaSpeedBands } from "./flow-lta-speedbands.js";
-import { parseMivFlow } from "./miv.js";
 import { parseTurinFlow } from "./flow-turin.js";
+import { parseWebtrisFlow } from "./flow-webtris.js";
+import { parseGddkia } from "./gddkia.js";
+import { parseGeoJson } from "./geojson.js";
 import { parseHkRawFlow } from "./hk.js";
-import { parseGeojsonFlow } from "./flow-geojson.js";
-import { parseBcnTramsFlow } from "./flow-bcn.js";
+import { parseIbi511, parseIbi511Conditions } from "./ibi511.js";
+import { parseLtaIncidents } from "./lta.js";
+import { parseMivFlow } from "./miv.js";
+import type { GeoJsonMapping } from "./model.js";
+import { parseOhgoEvents } from "./ohgo-events.js";
+import { parseOpen511 } from "./open511.js";
+import type { SiteGeometry } from "./siteTable.js";
+import { parseTrafikverket } from "./trafikverket.js";
 import type { GeojsonFlowMapping, SourceDescriptor } from "./types.js";
+import { parseVicDisruptions } from "./vic-disruptions.js";
+import { parseWzdx } from "./wzdx.js";
 
 // FeedAuth now lives in @openconditions/ingest-framework; re-exported here so
 // existing consumers of @openconditions/roads are unaffected.
@@ -127,7 +127,7 @@ export interface SiteTableReference {
  */
 function resolveFeedsDir(): string {
   const candidates = ["../feeds/roads", "./feeds/roads"].map((rel) =>
-    fileURLToPath(new URL(rel, import.meta.url))
+    fileURLToPath(new URL(rel, import.meta.url)),
   );
   const found = candidates.find(existsSync);
   if (!found) {
@@ -145,14 +145,14 @@ function resolveFeedsDir(): string {
  */
 export const FEED_SOURCES: FeedSource[] = loadFeedFiles(
   resolveFeedsDir(),
-  roadFeedSchema
+  roadFeedSchema,
 ) as FeedSource[];
 
 type ParserFn = typeof parseDatexSituations;
 type FlowParserFn = (
   input: string | Buffer,
   src: SourceDescriptor,
-  siteMap?: Map<string, SiteGeometry>
+  siteMap?: Map<string, SiteGeometry>,
 ) => FlowParseResult;
 
 /**

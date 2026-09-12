@@ -1,6 +1,6 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Observation } from "@openconditions/core";
 import { normalizeObservation, type WriterContext } from "@openconditions/normalize";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const CTX: WriterContext = { kind: "feed", instanceId: "inst-x" };
 
@@ -82,7 +82,7 @@ describe("normalizeObservation — soft observed-property validation", () => {
         fetchedAt: "2026-06-24T10:00:00Z",
         isStale: false,
       } as unknown as Observation,
-      CTX
+      CTX,
     );
     expect(warn).not.toHaveBeenCalled();
   });

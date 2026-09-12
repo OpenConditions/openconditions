@@ -1,7 +1,7 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { deriveSegmentProfiles } from "../pipeline/segment-profile.js";
 import { rollupSpeedSamples, SPEED_BIN_WIDTH_KPH } from "../pipeline/speed-rollup.js";
 
@@ -64,8 +64,8 @@ async function seedSpeedSamples(sensorKey: string, speeds: number[], base: Date)
 beforeEach(() =>
   vi.stubEnv(
     "SEGMENT_REGIONS",
-    JSON.stringify([{ id: "nl", bbox: [3.31, 50.75, 7.09, 53.51], tz: "Europe/Amsterdam" }])
-  )
+    JSON.stringify([{ id: "nl", bbox: [3.31, 50.75, 7.09, 53.51], tz: "Europe/Amsterdam" }]),
+  ),
 );
 afterEach(() => vi.unstubAllEnvs());
 

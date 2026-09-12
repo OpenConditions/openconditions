@@ -23,7 +23,7 @@ function referenceFeeds(feeds: readonly FeedSource[]): FeedSource[] {
 
 export async function checkMobilithekReferences(
   feeds: readonly FeedSource[] = FEED_SOURCES,
-  fetchOffer: OfferFetcher = (offerId) => fetchMobilithekOffer(offerId)
+  fetchOffer: OfferFetcher = (offerId) => fetchMobilithekOffer(offerId),
 ): Promise<MobilithekReferenceOutcome[]> {
   const outcomes: MobilithekReferenceOutcome[] = [];
   for (const feed of referenceFeeds(feeds)) {
@@ -72,7 +72,7 @@ export function renderMobilithekReferenceReport(outcomes: MobilithekReferenceOut
         : []),
       ...(check.latestFileName != null ? [`- Latest file: \`${check.latestFileName}\``] : []),
       ...(check.latestUrl != null ? [`- Suggested URL: ${check.latestUrl}`] : []),
-      ""
+      "",
     );
   }
 

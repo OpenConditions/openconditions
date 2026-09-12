@@ -1,4 +1,5 @@
 import type postgres from "postgres";
+import { activateRoadGraph, beginRoadGraphRebuild } from "./graph-state.js";
 import {
   autoOsmSource,
   importOsmRoads,
@@ -10,7 +11,6 @@ import { rebindAll } from "./rebind.js";
 import { buildSegments } from "./segment-build.js";
 import { encodeSegmentOpenlr } from "./segment-openlr.js";
 import { matchSensors } from "./sensor-match.js";
-import { activateRoadGraph, beginRoadGraphRebuild } from "./graph-state.js";
 
 type Sql = postgres.Sql;
 
@@ -62,7 +62,7 @@ export interface RunSegmentRebuildResult {
  */
 export async function runSegmentRebuild(
   sql: Sql,
-  deps: RunSegmentRebuildDeps
+  deps: RunSegmentRebuildDeps,
 ): Promise<RunSegmentRebuildResult> {
   // Reject malformed configuration before invalidating a previously usable graph.
   const regions = loadOsmRegions(process.env);
@@ -74,7 +74,7 @@ export async function runSegmentRebuild(
   }
   if (regions.length === 0) {
     console.warn(
-      "[ingest] segment-rebuild: SEGMENT_REGIONS is empty; graph coverage is not configured"
+      "[ingest] segment-rebuild: SEGMENT_REGIONS is empty; graph coverage is not configured",
     );
     return { imported: 0, built: 0, encoded: 0, matched: 0, rebound: 0 };
   }
@@ -86,7 +86,7 @@ export async function runSegmentRebuild(
         // source (deterministic, complete), the rest use Overpass. No fallback.
         source: autoOsmSource(
           overpassSource(deps.fetch),
-          pbfExtractSource({ logger: { info: (m) => console.info(m) } })
+          pbfExtractSource({ logger: { info: (m) => console.info(m) } }),
         ),
         now: deps.now,
         regions,

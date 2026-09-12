@@ -1,7 +1,7 @@
-import { describe, expect, it } from "vitest";
 import { OBSERVED_PROPERTIES } from "@openconditions/core";
-import { ROAD_EVENT_TYPES, roadAttributes, roadFlowAttributes } from "../model.js";
+import { describe, expect, it } from "vitest";
 import type { RoadEvent, RoadFlow } from "../model.js";
+import { ROAD_EVENT_TYPES, roadAttributes, roadFlowAttributes } from "../model.js";
 import { restrictionDetails } from "./fixtures/restriction-event.js";
 
 /**

@@ -1,8 +1,8 @@
-import type { RoadFlow } from "./model.js";
-import type { SourceDescriptor } from "./types.js";
-import type { SiteGeometry } from "./siteTable.js";
-import { makeOrigin } from "./flow.js";
 import type { FlowParseResult } from "./flow.js";
+import { makeOrigin } from "./flow.js";
+import type { RoadFlow } from "./model.js";
+import type { SiteGeometry } from "./siteTable.js";
+import type { SourceDescriptor } from "./types.js";
 
 const MPH_TO_KPH = 1.609344;
 
@@ -30,7 +30,7 @@ function siteToken(name: unknown): string | null {
 export function parseWebtrisFlow(
   input: string | Buffer,
   src: SourceDescriptor,
-  siteMap?: Map<string, SiteGeometry>
+  siteMap?: Map<string, SiteGeometry>,
 ): FlowParseResult {
   let payload: { Rows?: unknown };
   try {

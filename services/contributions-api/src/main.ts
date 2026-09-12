@@ -3,15 +3,16 @@
  * shared postgres pool, builds the Fastify app, and listens. Tests import
  * build() from server.ts instead of running this file.
  */
-import postgres from "postgres";
+
 import { runMigrations } from "@openconditions/core/server";
-import { build } from "./server.js";
+import postgres from "postgres";
 import {
   isCrossValidateSweepEnabled,
   singleFlight,
   sweepCrossValidate,
   sweepFederatedCrossValidate,
 } from "./evidence/crossValidateSweep.js";
+import { build } from "./server.js";
 
 const PORT = parseInt(process.env["PORT"] || "4200", 10);
 const HOST = process.env["HOST"] || "0.0.0.0";
@@ -52,7 +53,7 @@ async function boot() {
         });
         if (result.scanned > 0) {
           console.info(
-            `[contributions-api] cross-validate sweep: scanned ${result.scanned}, routed ${result.routed}`
+            `[contributions-api] cross-validate sweep: scanned ${result.scanned}, routed ${result.routed}`,
           );
         }
       } catch (err) {
@@ -64,7 +65,7 @@ async function boot() {
         });
         if (fed.scanned > 0) {
           console.info(
-            `[contributions-api] federated cross-validate sweep: scanned ${fed.scanned}, routed ${fed.routed}`
+            `[contributions-api] federated cross-validate sweep: scanned ${fed.scanned}, routed ${fed.routed}`,
           );
         }
       } catch (err) {

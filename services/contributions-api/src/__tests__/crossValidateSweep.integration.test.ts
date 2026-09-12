@@ -1,8 +1,8 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
-import { phenomenonFingerprint, type ConditionEvent } from "@openconditions/core";
+import { type ConditionEvent, phenomenonFingerprint } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { crossValidateAgainstFeeds } from "../evidence/crossValidate.js";
 import { sweepCrossValidate, sweepFederatedCrossValidate } from "../evidence/crossValidateSweep.js";
 import { recomputeEvidence } from "../evidence/recompute.js";
@@ -421,7 +421,7 @@ const T_LATE = "2026-07-12T08:50:00.000Z";
  * recompute resolves it the same way it would in production.
  */
 async function insertFederatedCrowdEvent(
-  opts: EventOpts & { expiresAt?: string | null }
+  opts: EventOpts & { expiresAt?: string | null },
 ): Promise<void> {
   const type = opts.type ?? "hazard";
   const fp = phenomenonFingerprint({
@@ -454,7 +454,7 @@ async function insertFederatedCrowdEvent(
 
 /** A keyless crowd row WITHOUT an originChain — a local anomaly, not genuinely federated. */
 async function insertKeylessLocalCrowdEvent(
-  opts: EventOpts & { expiresAt: string }
+  opts: EventOpts & { expiresAt: string },
 ): Promise<void> {
   const type = opts.type ?? "hazard";
   const fp = phenomenonFingerprint({

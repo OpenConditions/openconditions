@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  type ActorConfig,
   buildActorDocument,
   generateInstanceKey,
-  loadPeers,
-  verifyActorAgainstPin,
-  type ActorConfig,
   type InstanceKey,
+  loadPeers,
   type PeerRecord,
+  verifyActorAgainstPin,
 } from "../index.js";
 
 const NOW = "2026-01-01T00:00:00.000Z";
@@ -169,7 +169,7 @@ describe("verifyActorAgainstPin", () => {
     const actor = await actorWith([key]);
     const result = verifyActorAgainstPin(
       actor,
-      peer([key.publicKeyMultibase], { actorUrl: "https://evil.example.net/actor.json" })
+      peer([key.publicKeyMultibase], { actorUrl: "https://evil.example.net/actor.json" }),
     );
     expect(result.ok).toBe(false);
     expect(result.reason).toMatch(/actorUrl/);

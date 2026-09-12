@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import { parseVicDisruptions } from "../vic-disruptions.js";
 import type { SourceDescriptor } from "../types.js";
+import { parseVicDisruptions } from "../vic-disruptions.js";
 
 const PLANNED: SourceDescriptor = {
   id: "au-vic-transportvic-planned",

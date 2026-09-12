@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { parseWebtrisFlow } from "../flow-webtris.js";
+import type { SiteGeometry } from "../siteTable.js";
 import { parseWebtrisSites } from "../stations-webtris.js";
 import type { SourceDescriptor } from "../types.js";
-import type { SiteGeometry } from "../siteTable.js";
 
 const src = {
   id: "webtris-test",
@@ -18,7 +18,7 @@ describe("parseWebtrisSites", () => {
         sites: [
           { Id: 5607, Name: "MIDAS 5607", Longitude: -1.5, Latitude: 52.4, Status: "Active" },
         ],
-      })
+      }),
     );
     expect(map.get("5607")).toEqual({ type: "Point", coordinates: [-1.5, 52.4] });
   });
@@ -30,7 +30,7 @@ describe("parseWebtrisSites", () => {
           { Longitude: -1.5, Latitude: 52.4 },
           { Id: 42, Longitude: "not-a-number", Latitude: 52.4 },
         ],
-      })
+      }),
     );
     expect(map.size).toBe(0);
   });

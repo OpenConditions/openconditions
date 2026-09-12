@@ -6,19 +6,19 @@
  * logical actor URL and the check is independent of proxies/loopback sockets.
  */
 import type { TLSSocket } from "node:tls";
-import type { FastifyReply, FastifyRequest } from "fastify";
-import type postgres from "postgres";
 import {
   authenticatePeerRequest,
   checkMtls,
-  federationFailureHeaders,
-  isPeerBlocked,
   FEDERATION_REASON_HEADER,
   type FederationFailureReason,
+  federationFailureHeaders,
+  isPeerBlocked,
   type MtlsContext,
   type NonceStore,
   type PeerRecord,
 } from "@openconditions/federation";
+import type { FastifyReply, FastifyRequest } from "fastify";
+import type postgres from "postgres";
 
 export interface PeerRequestContext {
   /** The pinned peers registry (settings.peers). */
@@ -72,7 +72,7 @@ export function socketMtlsContext(req: FastifyRequest): MtlsContext | undefined 
 export async function respondIfBlocked(
   sql: postgres.Sql,
   peerId: string,
-  reply: FastifyReply
+  reply: FastifyReply,
 ): Promise<boolean> {
   if (await isPeerBlocked(sql, peerId)) {
     await reply.status(403).send({ error: "peer is blocked", reason: "blocked" });
@@ -96,7 +96,7 @@ export async function requirePeer(
   ctx: PeerRequestContext,
   req: FastifyRequest,
   reply: FastifyReply,
-  body?: Uint8Array
+  body?: Uint8Array,
 ): Promise<string | null> {
   const auth = await authenticatePeerRequest(
     { peers: ctx.peers, nonceStore: ctx.nonceStore },
@@ -105,7 +105,7 @@ export async function requirePeer(
       url: `${ctx.baseUrl}${req.url}`,
       headers: headerStrings(req.headers),
       ...(body !== undefined && body.byteLength > 0 ? { body } : {}),
-    }
+    },
   );
   if (!auth.ok) {
     if (ctx.onAuthFailure !== undefined) {
@@ -153,7 +153,7 @@ export async function optionalPeer(
   ctx: PeerRequestContext,
   req: FastifyRequest,
   reply: FastifyReply,
-  body?: Uint8Array
+  body?: Uint8Array,
 ): Promise<{ peerId: string | null; rejected: boolean }> {
   const signed =
     req.headers["signature"] !== undefined || req.headers["signature-input"] !== undefined;

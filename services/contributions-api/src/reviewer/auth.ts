@@ -22,7 +22,7 @@ import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from "fastif
  */
 export function resolveReviewerToken(
   env: Record<string, string | undefined>,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): string {
   const configured = env["OPENCONDITIONS_REVIEWER_TOKEN"];
   if (configured !== undefined && configured !== "") {
@@ -30,14 +30,14 @@ export function resolveReviewerToken(
   }
   if (env["NODE_ENV"] === "production") {
     throw new Error(
-      "OPENCONDITIONS_REVIEWER_TOKEN is required in production: refusing to start the reviewer surface with an ephemeral token (fail closed)"
+      "OPENCONDITIONS_REVIEWER_TOKEN is required in production: refusing to start the reviewer surface with an ephemeral token (fail closed)",
     );
   }
   const ephemeral = Buffer.from(globalThis.crypto.getRandomValues(new Uint8Array(32))).toString(
-    "base64url"
+    "base64url",
   );
   warn(
-    "OPENCONDITIONS_REVIEWER_TOKEN is not set; generated an EPHEMERAL reviewer token — it dies on restart and no operator can know it. Set the env var for anything beyond local development."
+    "OPENCONDITIONS_REVIEWER_TOKEN is not set; generated an EPHEMERAL reviewer token — it dies on restart and no operator can know it. Set the env var for anything beyond local development.",
   );
   return ephemeral;
 }

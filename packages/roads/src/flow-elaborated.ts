@@ -9,15 +9,16 @@
  * buildMeasuredSiteFlow.
  */
 import type { LineString, Point } from "geojson";
-import type { RoadEvent, RoadFlow } from "./model.js";
-import type { SourceDescriptor } from "./types.js";
 import {
   ABSURD_SPEED_KPH,
   buildMeasuredSiteFlow,
-  makeOrigin,
   type FlowGeometry,
   type FlowParseResult,
+  makeOrigin,
 } from "./flow.js";
+import type { RoadEvent, RoadFlow } from "./model.js";
+import type { SourceDescriptor } from "./types.js";
+import type { XmlObject } from "./xml.js";
 import {
   getXmlChild,
   getXmlChildText,
@@ -27,7 +28,6 @@ import {
   xmlNodeToArray,
   xmlText,
 } from "./xml.js";
-import type { XmlObject } from "./xml.js";
 
 /** Per-site accumulator across the elaboratedData items that share a location. */
 interface SiteAcc {
@@ -130,7 +130,7 @@ function num(v: unknown): number | undefined {
 export function parseElaboratedFlow(
   input: string | Buffer,
   src: SourceDescriptor,
-  siteMap?: Map<string, FlowGeometry>
+  siteMap?: Map<string, FlowGeometry>,
 ): FlowParseResult {
   let doc: ReturnType<typeof parseXmlDocument>;
   try {
@@ -236,7 +236,7 @@ export function parseElaboratedFlow(
       },
       src,
       origin,
-      now
+      now,
     );
     if (!built) continue;
     const flow: RoadFlow = {

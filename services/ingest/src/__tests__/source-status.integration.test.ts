@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   pruneSourcePollAttempts,
   readSourceOperationalStatus,
@@ -187,8 +187,8 @@ describe("durable source operational status", () => {
     expect(await pruneSourcePollAttempts(sql, { now, batchSize: 2 })).toEqual({ deleted: 0 });
     expect(
       (await sql`SELECT source FROM conditions.source_poll_attempt ORDER BY source`).map(
-        (row) => row.source
-      )
+        (row) => row.source,
+      ),
     ).toEqual(["boundary", "recent"]);
     expect((await readSourceOperationalStatus(sql)).size).toBe(6);
   });
@@ -203,7 +203,7 @@ describe("durable source operational status", () => {
           publication: { activeEvents: 1, inserted: 1, updated: 0, deleted: 0, rejected: 0 },
         });
         throw new Error("publication failed");
-      })
+      }),
     ).rejects.toThrow("publication failed");
     expect(await sql`SELECT source FROM conditions.source_status`).toHaveLength(0);
     expect(await sql`SELECT source FROM conditions.source_poll_attempt`).toHaveLength(0);

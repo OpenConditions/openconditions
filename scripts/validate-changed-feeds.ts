@@ -1,10 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import JSON5 from "json5";
 import type { FeedSourceBase } from "@openconditions/ingest-framework";
 import { roadFeedSchema } from "@openconditions/roads";
-import { validateFeed, type FeedValidation } from "./lib/validate-feed.ts";
+import JSON5 from "json5";
+import { type FeedValidation, validateFeed } from "./lib/validate-feed.ts";
 
 const FEED_FILE_RE = /(?:^|\/)feeds\/.+\.json5?$/;
 
@@ -162,13 +162,13 @@ export function formatAnnotations(summary: ChangedFeedSummary): string[] {
       case "upstream-flake":
         lines.push(
           `::warning ${loc}::${o.feedId}: upstream fetch failed (likely a transient flake; ` +
-            `this check is non-gating): ${o.detail ?? ""}`
+            `this check is non-gating): ${o.detail ?? ""}`,
         );
         break;
       case "parse-failure":
         lines.push(
           `::error ${loc}::${o.feedId}: fetched but did not parse into valid rows — this looks ` +
-            `like a feed-definition problem, please check the URL/format: ${o.detail ?? ""}`
+            `like a feed-definition problem, please check the URL/format: ${o.detail ?? ""}`,
         );
         break;
     }
@@ -176,7 +176,7 @@ export function formatAnnotations(summary: ChangedFeedSummary): string[] {
   lines.push(
     `::notice::changed-feed liveness: ${summary.ok} ok, ${summary.skipped} skipped (keyed), ` +
       `${summary.parseFailures} parse-failure(s), ${summary.upstreamFlakes} upstream flake(s). ` +
-      `This check is non-gating and never fails the PR.`
+      `This check is non-gating and never fails the PR.`,
   );
   return lines;
 }

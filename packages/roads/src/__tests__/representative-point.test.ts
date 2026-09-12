@@ -14,7 +14,7 @@ describe("representativePoint", () => {
           [10, 10],
           [20, 20],
         ],
-      })
+      }),
     ).toEqual([10, 10]);
   });
   it("returns the lower-middle vertex for an even-length LineString", () => {
@@ -25,7 +25,7 @@ describe("representativePoint", () => {
           [0, 0],
           [2, 2],
         ],
-      })
+      }),
     ).toEqual([2, 2]);
   });
 });

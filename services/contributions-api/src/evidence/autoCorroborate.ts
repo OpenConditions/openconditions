@@ -20,8 +20,9 @@
  * (the atomic merge + recompute). Corroboration NEVER sets `routing_eligible`
  * and NEVER trains reputation — only an external resolution routes.
  */
-import type postgres from "postgres";
+
 import { matchPhenomenonCandidates, type PhenomenonCandidate } from "@openconditions/contrib-core";
+import type postgres from "postgres";
 import {
   applyCorroboration,
   findCandidates,
@@ -69,7 +70,7 @@ function actorFor(row: TargetRow): { kind: "crowd" | "feed"; keyId?: string; sou
 export async function autoCorroborateOnLanding(
   sql: Sql,
   observationId: string,
-  now: string
+  now: string,
 ): Promise<string[]> {
   const rows = await sql<TargetRow[]>`
     SELECT domain, type, kind, ST_AsGeoJSON(geom) AS geojson, valid_from,
@@ -99,7 +100,7 @@ export async function autoCorroborateOnLanding(
   const survivorIds = new Set<string>();
   const resolved = await resolveSurvivors(
     sql,
-    neighborhood.map((candidate) => candidate.id)
+    neighborhood.map((candidate) => candidate.id),
   );
   for (const survivorId of resolved.values()) {
     if (survivorId !== null && survivorId !== observationId) survivorIds.add(survivorId);

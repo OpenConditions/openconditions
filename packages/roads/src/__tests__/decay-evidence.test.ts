@@ -1,5 +1,5 @@
+import { type EvidencePolicy, evaluateEvidence } from "@openconditions/core";
 import { describe, expect, it } from "vitest";
-import { evaluateEvidence, type EvidencePolicy } from "@openconditions/core";
 import { decayMaxLifetimeSec, decayTtlSec } from "../decay.js";
 
 describe("decay table feeding core's evidence policy", () => {
@@ -30,7 +30,7 @@ describe("decay table feeding core's evidence policy", () => {
         ],
         now: "2026-07-11T12:01:00.000Z",
       },
-      policy
+      policy,
     );
     // hazard crowd TTL is 900 s and the 7200 s max-lifetime ceiling does not
     // bind a single report, so expiry is exactly report time + TTL.

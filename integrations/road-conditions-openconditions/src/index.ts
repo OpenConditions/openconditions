@@ -1,14 +1,14 @@
-import type { FeatureCollection } from "geojson";
 import { observationsByBbox, type RoadConditionRoutingEvidence } from "@openconditions/core";
 import { projectRoadRestrictionDetails } from "@openconditions/roads/restrictions";
+import type { FeatureCollection } from "geojson";
 import { featureCollectionToRoadConditionEvents } from "./toRoadConditionEvents.js";
 import { featureCollectionToRoadFlowSegments } from "./toRoadFlowSegments.js";
 import type {
+  BBox,
   IntegrationContext,
   RoadConditionsOperationalFeedEvidence,
   RoadConditionsProvider,
   RoadConditionsQuery,
-  BBox,
 } from "./types.js";
 
 // Attribution is wired in the monorepo via the manifest dataSources.
@@ -68,7 +68,7 @@ function graphOf(raw: RawGraphStatus | undefined): RoadConditionsOperationalFeed
 function operationalState(
   feed: RawFeedStatus,
   graph: RoadConditionsOperationalFeedEvidence["graph"],
-  collectedAt: string
+  collectedAt: string,
 ): Pick<RoadConditionsOperationalFeedEvidence, "status" | "action"> {
   if (feed.selectionState === "discovered")
     return { status: "discovered", action: "approve_source" };
@@ -89,7 +89,7 @@ function operationalState(
 function bindingCounts(value: unknown): Record<string, number> | null {
   if (!value || typeof value !== "object") return null;
   const entries = Object.entries(value).filter(
-    (entry): entry is [string, number] => typeof entry[1] === "number" && Number.isFinite(entry[1])
+    (entry): entry is [string, number] => typeof entry[1] === "number" && Number.isFinite(entry[1]),
   );
   return entries.length > 0 ? Object.fromEntries(entries) : null;
 }
@@ -114,7 +114,7 @@ function evaluateRestrictionViews(fc: FeatureCollection, at: Date): void {
     const properties = feature.properties as Record<string, unknown> | null;
     if (properties === null) continue;
     const attributes = (properties["attributes"] ?? {}) as Record<string, unknown>;
-    const hasEnvelope = Object.prototype.hasOwnProperty.call(attributes, "restrictionDetails");
+    const hasEnvelope = Object.hasOwn(attributes, "restrictionDetails");
     const marked = attributes["restrictionDetailsUnsupported"] === true;
     if (!hasEnvelope && !marked) continue;
     const checked = properties["source_checked_at"];
@@ -179,7 +179,7 @@ export function setup(ctx: IntegrationContext): void {
           // own freshness deadline.
           cache: { ttl: 0 },
           ...(requireComplete ? { timeoutMs: 2000, maxResponseBytes: 32 * 1024 * 1024 } : {}),
-        }
+        },
       );
       if (
         snapshot.schema_version === 1 &&
@@ -189,15 +189,15 @@ export function setup(ctx: IntegrationContext): void {
         const byId = new Map(
           snapshot.conditions
             .filter(
-              (condition) => typeof condition.id === "string" && condition.routing_evidence != null
+              (condition) => typeof condition.id === "string" && condition.routing_evidence != null,
             )
-            .map((condition) => [condition.id as string, condition.routing_evidence!])
+            .map((condition) => [condition.id as string, condition.routing_evidence!]),
         );
         const revisions = new Map(
           fc.features.map((feature) => [
             feature.properties?.id,
             feature.properties?.observation_revision,
-          ])
+          ]),
         );
         for (const event of events) {
           const evidence = byId.get(event.id);

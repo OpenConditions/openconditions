@@ -10,5 +10,5 @@
   "license": "ODbL-1.0",
   "licenseUrl": "https://www.openstreetmap.org/copyright",
   "notice": "OpenStreetMap data is licensed under ODbL and is separate from the CC BY 4.0 Fintraffic source fixture it is tested alongside.",
-  "note": "Held verbatim as captured; excluded from Prettier (see .prettierignore) so fixtureSha256 stays valid."
+  "note": "Held verbatim as captured; excluded from the formatter (see biome.json) so fixtureSha256 stays valid."
 }

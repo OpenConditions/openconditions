@@ -44,7 +44,7 @@ describe("parseGeoJson", () => {
           },
         },
       ]),
-      SRC
+      SRC,
     );
     expect(out).toHaveLength(1);
     expect(out[0]).toMatchObject({
@@ -78,7 +78,7 @@ describe("parseGeoJson", () => {
           properties: { id: "c1" },
         },
       ]),
-      { ...SRC, geojson: { idField: "id", defaultType: "road_closure" } }
+      { ...SRC, geojson: { idField: "id", defaultType: "road_closure" } },
     );
     expect(out[0]!.type).toBe("road_closure");
     expect(out[0]!.category).toBe("incident");
@@ -94,7 +94,7 @@ describe("parseGeoJson", () => {
           properties: { id: "y", category: "roadworks" },
         },
       ]),
-      SRC
+      SRC,
     );
     expect(out).toHaveLength(1);
     expect(out[0]!.id).toBe("test-gj:y");
@@ -103,7 +103,7 @@ describe("parseGeoJson", () => {
   it("falls back to the feature index when no id field is present", () => {
     const out = parseGeoJson(
       fc([{ type: "Feature", geometry: { type: "Point", coordinates: [1, 2] }, properties: {} }]),
-      { ...SRC, geojson: { typeField: "category" } }
+      { ...SRC, geojson: { typeField: "category" } },
     );
     expect(out[0]!.id).toBe("test-gj:0");
     expect(out[0]!.type).toBe("other");
@@ -130,7 +130,7 @@ describe("parseGeoJson", () => {
           properties: { id: "g1", category: "roadworks" },
         },
       ]),
-      SRC
+      SRC,
     );
     expect(out).toHaveLength(1);
     expect(out[0]!.geometry!.type).toBe("GeometryCollection");
@@ -150,7 +150,7 @@ describe("parseGeoJson", () => {
           },
         ],
       }),
-      SRC
+      SRC,
     );
     const g = out[0]!.geometry;
     if (!g || g.type !== "Point") throw new Error("expected Point");
@@ -174,7 +174,7 @@ describe("parseGeoJson", () => {
           },
         ],
       }),
-      { ...SRC, geojson: { lonField: "X", latField: "Y", typeField: "kind" } }
+      { ...SRC, geojson: { lonField: "X", latField: "Y", typeField: "kind" } },
     );
     // Uses the WGS84 X/Y, not the raw 3057 geometry.
     expect(out[0]!.geometry).toEqual({ type: "Point", coordinates: [-22.49, 65.04] });
@@ -194,7 +194,7 @@ describe("parseGeoJson", () => {
           properties: { meta: { kind: "roadworks" } },
         },
       ]),
-      "utf8"
+      "utf8",
     );
     const out = parseGeoJson(buf, { ...SRC, geojson: { typeField: "meta.kind" } });
     expect(out[0]!.type).toBe("roadworks");
@@ -269,7 +269,7 @@ describe("parseGeoJson — Brussels fixture (per-geometry EPSG:3812 reprojection
   it("reprojects Lambert-2008 per-geometry coords to WGS84 via the registered mapping", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "be-brussels")!;
     const xml = readFileSync(
-      join(import.meta.dirname, "fixtures/brussels-be/traffic_events.geojson")
+      join(import.meta.dirname, "fixtures/brussels-be/traffic_events.geojson"),
     );
     const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
     expect(events.length).toBeGreaterThan(0);
@@ -288,7 +288,7 @@ describe("parseGeoJson — Vegagerðin Iceland fixture (lon/lat from properties)
   it("uses the WGS84 X/Y fields, not the EPSG:3057 geometry, via the registered mapping", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "is-vegagerdin")!;
     const xml = readFileSync(
-      join(import.meta.dirname, "fixtures/vegagerdin-is/pointincident.geojson")
+      join(import.meta.dirname, "fixtures/vegagerdin-is/pointincident.geojson"),
     );
     const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
     expect(events.length).toBeGreaterThan(0);
@@ -322,7 +322,7 @@ describe("parseGeoJson — Polizei Hamburg fixture (api.hamburg.de OGC API, real
   it("maps the `art` DATEX classes through the crosswalk via the registered de-hh-polizei mapping", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "de-hh-polizei")!;
     const json = readFileSync(
-      join(import.meta.dirname, "fixtures/polizei-hamburg-de/hauptmeldungen.geojson")
+      join(import.meta.dirname, "fixtures/polizei-hamburg-de/hauptmeldungen.geojson"),
     );
     const events = parseGeoJson(json, feedToSourceDescriptor(feed));
     expect(events).toHaveLength(5);
@@ -373,7 +373,7 @@ describe("parseGeoJson — validity dates", () => {
   it("reads a parseable date string into validFrom/validTo", () => {
     const [ev] = parseGeoJson(
       fc([point({ id: "b", debut: "2026-02-09T06:30:00Z", fin: "2026-03-01T18:00:00Z" })]),
-      DATED
+      DATED,
     );
     expect(ev!.validFrom).toBe("2026-02-09T06:30:00.000Z");
     expect(ev!.validTo).toBe("2026-03-01T18:00:00.000Z");
@@ -406,7 +406,7 @@ describe("parseGeoJson — record filter", () => {
   it("keeps only features whose value is in an include list", () => {
     const out = parseGeoJson(
       fc([point({ id: "a", state: "Closed" }), point({ id: "b", state: "Open" })]),
-      withFilter([{ field: "state", include: ["Closed"] }])
+      withFilter([{ field: "state", include: ["Closed"] }]),
     );
     expect(out.map((e) => e.id)).toEqual(["test-gj:a"]);
   });
@@ -414,7 +414,7 @@ describe("parseGeoJson — record filter", () => {
   it("drops features whose value is in an exclude list", () => {
     const out = parseGeoJson(
       fc([point({ id: "a", state: "Easily passable" }), point({ id: "b", state: "Closed" })]),
-      withFilter([{ field: "state", exclude: ["Easily passable"] }])
+      withFilter([{ field: "state", exclude: ["Easily passable"] }]),
     );
     expect(out.map((e) => e.id)).toEqual(["test-gj:b"]);
   });
@@ -422,13 +422,13 @@ describe("parseGeoJson — record filter", () => {
   it("passes a missing value through exclude but fails it through include", () => {
     const excluded = parseGeoJson(
       fc([point({ id: "a" })]),
-      withFilter([{ field: "state", exclude: ["Closed"] }])
+      withFilter([{ field: "state", exclude: ["Closed"] }]),
     );
     expect(excluded.map((e) => e.id)).toEqual(["test-gj:a"]);
 
     const included = parseGeoJson(
       fc([point({ id: "a" })]),
-      withFilter([{ field: "state", include: ["Closed"] }])
+      withFilter([{ field: "state", include: ["Closed"] }]),
     );
     expect(included).toEqual([]);
   });
@@ -442,7 +442,7 @@ describe("parseGeoJson — record filter", () => {
       withFilter([
         { field: "state", include: ["Closed"] },
         { field: "kind", exclude: ["weather"] },
-      ])
+      ]),
     );
     expect(out.map((e) => e.id)).toEqual(["test-gj:a"]);
   });
@@ -450,7 +450,7 @@ describe("parseGeoJson — record filter", () => {
   it("compares values as strings, so a numeric code matches its literal", () => {
     const out = parseGeoJson(
       fc([point({ id: "a", code: 3 }), point({ id: "b", code: 1 })]),
-      withFilter([{ field: "code", include: ["3"] }])
+      withFilter([{ field: "code", include: ["3"] }]),
     );
     expect(out.map((e) => e.id)).toEqual(["test-gj:a"]);
   });
@@ -476,7 +476,7 @@ describe("parseGeoJson — start/end coordinate LineString synthesis", () => {
   it("builds a LineString from four WGS84 coordinate properties", () => {
     const [ev] = parseGeoJson(
       fc([geomless({ id: "a", STARTX: -19.1, STARTY: 63.4, ENDX: -19.2, ENDY: 63.5 })]),
-      SYNTH
+      SYNTH,
     );
     expect(ev!.geometry).toEqual({
       type: "LineString",
@@ -493,7 +493,7 @@ describe("parseGeoJson — start/end coordinate LineString synthesis", () => {
         geomless({ id: "a", STARTX: -19.1, STARTY: 63.4, ENDX: "n/a", ENDY: 63.5 }),
         geomless({ id: "b", STARTX: -19.1, STARTY: 63.4, ENDX: -19.2 }),
       ]),
-      SYNTH
+      SYNTH,
     );
     expect(out).toEqual([]);
   });
@@ -507,7 +507,7 @@ describe("parseGeoJson — start/end coordinate LineString synthesis", () => {
           properties: { id: "a", STARTX: -19.1, STARTY: 63.4, ENDX: -19.2, ENDY: 63.5 },
         },
       ]),
-      SYNTH
+      SYNTH,
     );
     expect(ev!.geometry).toEqual({ type: "Point", coordinates: [-19.0, 63.0] });
   });
@@ -553,7 +553,7 @@ describe("parseGeoJson — Vegagerðin Iceland line-incident fixture", () => {
   const events = () => {
     const feed = FEED_SOURCES.find((f) => f.id === "is-vegagerdin-lines")!;
     const gj = readFileSync(
-      join(import.meta.dirname, "fixtures/vegagerdin-is/line-incidents.json")
+      join(import.meta.dirname, "fixtures/vegagerdin-is/line-incidents.json"),
     );
     return parseGeoJson(gj, feedToSourceDescriptor(feed));
   };

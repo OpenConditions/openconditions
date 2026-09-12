@@ -4,8 +4,8 @@
  * speak these shapes; nothing here has behaviour beyond the defaults.
  */
 
-import type { Geometry } from "geojson";
 import type { BindingStatus, DirectionMode, SegmentSpan } from "@openconditions/core";
+import type { Geometry } from "geojson";
 import type { LngLat } from "./geo.js";
 
 /** Bumped whenever the resolver's inputs or maths change a stored binding. */

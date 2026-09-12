@@ -1,22 +1,22 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseDatexMeasuredData } from "../flow.js";
 import type { FlowGeometry, FlowParseResult } from "../flow.js";
+import { parseDatexMeasuredData } from "../flow.js";
 import { createMeasuredDataParser } from "../measuredData.js";
-import { parseDatexSiteTable } from "../siteTable.js";
 import type { RoadEvent, RoadFlow } from "../model.js";
+import { parseDatexSiteTable } from "../siteTable.js";
 
 type SiteMap = Map<string, FlowGeometry>;
 
 const DATEX_FLOW_FIXTURE = join(
   import.meta.dirname,
-  "fixtures/datex-measured-data/measured_data.xml"
+  "fixtures/datex-measured-data/measured_data.xml",
 );
 const NDW_TRAFFICSPEED_FIXTURE = join(import.meta.dirname, "fixtures/ndw-flow/trafficspeed.xml");
 const NDW_SITE_TABLE_FIXTURE = join(
   import.meta.dirname,
-  "fixtures/ndw-flow/measurement_site_table.xml"
+  "fixtures/ndw-flow/measurement_site_table.xml",
 );
 
 const NDW_SOURCE = {
@@ -110,7 +110,7 @@ describe("createMeasuredDataParser — equivalence with the DOM parser", () => {
     expect(standstill).toBeDefined();
     expect(standstill!.speedKph).toBe(0);
     expect(
-      streamed.flows.find((f) => f.id === "nl-ndw-flow:PZH01_MST_ZEROCOUNT_00")
+      streamed.flows.find((f) => f.id === "nl-ndw-flow:PZH01_MST_ZEROCOUNT_00"),
     ).toBeUndefined();
     expect(streamed.flows.find((f) => f.id === "nl-ndw-flow:PZH01_MST_ABSURD_00")).toBeUndefined();
   });
@@ -151,7 +151,7 @@ describe("createMeasuredDataParser — robustness", () => {
     const parser = createMeasuredDataParser(
       NDW_SOURCE,
       undefined,
-      () => "2026-06-24T10:10:00.000Z"
+      () => "2026-06-24T10:10:00.000Z",
     );
     parser.write("<D2LogicalModel/>");
     const out = parser.close();
@@ -163,7 +163,7 @@ describe("createMeasuredDataParser — robustness", () => {
     const parser = createMeasuredDataParser(
       NDW_SOURCE,
       undefined,
-      () => "2026-06-24T10:10:00.000Z"
+      () => "2026-06-24T10:10:00.000Z",
     );
     parser.write("<D2LogicalModel/>");
     expect(parser.close().failed).toBe(true);
@@ -175,7 +175,7 @@ describe("createMeasuredDataParser — robustness", () => {
     const parser = createMeasuredDataParser(
       NDW_SOURCE,
       undefined,
-      () => "2026-06-24T10:10:00.000Z"
+      () => "2026-06-24T10:10:00.000Z",
     );
     let out: FlowParseResult | undefined;
     expect(() => {
@@ -191,7 +191,7 @@ describe("createMeasuredDataParser — robustness", () => {
     const parser = createMeasuredDataParser(
       NDW_SOURCE,
       undefined,
-      () => "2026-06-24T10:10:00.000Z"
+      () => "2026-06-24T10:10:00.000Z",
     );
     parser.write(truncated);
     const out = parser.close();

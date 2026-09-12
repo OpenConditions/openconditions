@@ -1,10 +1,9 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import type { RoadFlow, SourceDescriptor } from "@openconditions/roads";
 import { reclassifyFlow } from "@openconditions/roads";
-import type { RoadFlow } from "@openconditions/roads";
-import type { SourceDescriptor } from "@openconditions/roads";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { loadBaselineMap } from "../pipeline/baseline-store.js";
 
 const src: SourceDescriptor = {
@@ -42,7 +41,7 @@ async function seedBaseline(
   dowB: number,
   todB: number,
   ff: number,
-  method: string
+  method: string,
 ): Promise<void> {
   await sql`
     INSERT INTO conditions.sensor_baseline
@@ -129,7 +128,7 @@ describe("loadBaselineMap", () => {
       flow("src:d", 20),
       baseline!.kph,
       baseline!.method,
-      src
+      src,
     );
     expect(reclassified.los).not.toBe("free_flow");
     expect(reclassified.los).toBe("queuing");

@@ -39,9 +39,12 @@ describe("traffEvents", () => {
     expect(
       types(
         traffEvents(
-          roadEvent({ type: "dimension_restriction", restrictions: [{ type: "height", value: 4 }] })
-        )
-      )
+          roadEvent({
+            type: "dimension_restriction",
+            restrictions: [{ type: "height", value: 4 }],
+          }),
+        ),
+      ),
     ).toEqual(["RESTRICTION_MAX_HEIGHT"]);
   });
 });
@@ -143,7 +146,7 @@ describe("observationsToTraff", () => {
     } as never);
     expect(traffEvents(conditional)).toEqual([]);
     expect(
-      traffEvents(roadEvent({ id: "fi:2", restrictionDetailsUnsupported: true } as never))
+      traffEvents(roadEvent({ id: "fi:2", restrictionDetailsUnsupported: true } as never)),
     ).toEqual([]);
 
     const xml = observationsToTraff([

@@ -17,15 +17,15 @@
  * traces; only the data-bearing payloads (`values`, `rawCount`) and the emitted
  * rows differ.
  */
-import { BudgetLedger, type UnitBudget, type UnitSpend } from "./budget.js";
-import type { DpMechanism } from "./mechanism.js";
+import type { BudgetLedger, UnitBudget, UnitSpend } from "./budget.js";
 import {
   listPartitions,
-  partitionKey,
-  windowForTimestamp,
   type Partition,
+  partitionKey,
   type ReleaseManifest,
+  windowForTimestamp,
 } from "./manifest.js";
+import type { DpMechanism } from "./mechanism.js";
 
 /** Public speed bound floor — clamped BEFORE the mechanism is ever called. */
 export const SPEED_PUBLIC_LOWER = 0;
@@ -165,7 +165,7 @@ function shapeContributions(
   manifest: ReleaseManifest,
   params: ReleaseParams,
   ledger: BudgetLedger,
-  faults: ReleaseFaults
+  faults: ReleaseFaults,
 ): { byPartition: Map<string, CellTuple[]>; charges: Map<string, UnitSpend> } {
   const segmentDomain = new Set(manifest.segmentIds);
   const perCellCost: UnitSpend = {
@@ -193,7 +193,7 @@ function shapeContributions(
     (a, b) =>
       a.key.localeCompare(b.key) ||
       a.privacyUnitId.localeCompare(b.privacyUnitId) ||
-      a.clampedSpeed - b.clampedSpeed
+      a.clampedSpeed - b.clampedSpeed,
   );
   for (const item of stable) {
     if (!faults.skipContributionBound) {
@@ -278,7 +278,7 @@ export function releaseWithDp(
   mechanism: DpMechanism,
   ledger: BudgetLedger,
   store: ReleaseStore,
-  faults: ReleaseFaults = {}
+  faults: ReleaseFaults = {},
 ): ReleaseResult {
   if (!faults.ignoreRetryMarker && store.has(manifest.version)) {
     const committed = store.get(manifest.version)!;

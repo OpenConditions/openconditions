@@ -30,7 +30,7 @@ export class FeedStatusStore {
     at: string,
     rowCount: number,
     durationMs: number,
-    skippedNoGeometry?: number
+    skippedNoGeometry?: number,
   ): void {
     const prev = this.map.get(feedId) ?? {};
     this.map.set(feedId, {

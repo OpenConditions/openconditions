@@ -64,7 +64,7 @@ const DEFAULTS: Required<DetectAnomalyOptions> = {
 export function detectAnomaly(
   baseline: PeerBaseline,
   window: PeerWindowStats,
-  options: DetectAnomalyOptions = {}
+  options: DetectAnomalyOptions = {},
 ): AnomalyResult {
   const opts = { ...DEFAULTS, ...options };
   const signals: string[] = [];

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { validateSubscriptionShape, SubscriptionValidationError } from "../subscriptions.js";
-import { isPriorityEntry, PRIORITY_EVENT_TYPES } from "../push.js";
 import { applyFederationFilter, type FederationFilter } from "../filter.js";
 import type { OutboxEntry } from "../outbox.js";
+import { isPriorityEntry, PRIORITY_EVENT_TYPES } from "../push.js";
+import { SubscriptionValidationError, validateSubscriptionShape } from "../subscriptions.js";
 
 function shape(over: Partial<Parameters<typeof validateSubscriptionShape>[0]> = {}) {
   return {
@@ -21,14 +21,14 @@ describe("validateSubscriptionShape", () => {
 
   it("rejects an unknown delivery mode", () => {
     expect(() =>
-      validateSubscriptionShape(shape({ deliveryMode: "carrier-pigeon" as never }))
+      validateSubscriptionShape(shape({ deliveryMode: "carrier-pigeon" as never })),
     ).toThrow(SubscriptionValidationError);
   });
 
   it("rejects an over-broad webhook filter and recommends a narrower one", () => {
     try {
       validateSubscriptionShape(
-        shape({ deliveryMode: "webhook", inboxUrl: "https://peer.example.org/inbox", filter: {} })
+        shape({ deliveryMode: "webhook", inboxUrl: "https://peer.example.org/inbox", filter: {} }),
       );
       throw new Error("expected a validation error");
     } catch (err) {
@@ -41,7 +41,7 @@ describe("validateSubscriptionShape", () => {
 
   it("rejects an over-broad sse filter", () => {
     expect(() => validateSubscriptionShape(shape({ deliveryMode: "sse", filter: {} }))).toThrow(
-      /bounded filter/
+      /bounded filter/,
     );
   });
 
@@ -52,8 +52,8 @@ describe("validateSubscriptionShape", () => {
           deliveryMode: "webhook",
           inboxUrl: "https://peer.example.org/inbox",
           filter: { bbox: [4, 50, 6, 54] },
-        })
-      )
+        }),
+      ),
     ).not.toThrow();
   });
 
@@ -64,15 +64,15 @@ describe("validateSubscriptionShape", () => {
           deliveryMode: "webhook",
           inboxUrl: "https://peer.example.org/inbox",
           filter: { types: ["road_closure"] },
-        })
-      )
+        }),
+      ),
     ).not.toThrow();
   });
 
   it("requires an inboxUrl for a webhook", () => {
     try {
       validateSubscriptionShape(
-        shape({ deliveryMode: "webhook", inboxUrl: null, filter: { types: ["road_closure"] } })
+        shape({ deliveryMode: "webhook", inboxUrl: null, filter: { types: ["road_closure"] } }),
       );
       throw new Error("expected a validation error");
     } catch (err) {
@@ -87,7 +87,7 @@ describe("validateSubscriptionShape", () => {
           deliveryMode: "webhook",
           inboxUrl: "http://peer.example.org/inbox",
           filter: { types: ["road_closure"] },
-        })
+        }),
       );
       throw new Error("expected a validation error");
     } catch (err) {
@@ -104,7 +104,7 @@ describe("validateSubscriptionShape", () => {
     ]) {
       try {
         validateSubscriptionShape(
-          shape({ deliveryMode: "webhook", inboxUrl, filter: { types: ["road_closure"] } })
+          shape({ deliveryMode: "webhook", inboxUrl, filter: { types: ["road_closure"] } }),
         );
         throw new Error(`expected rejection for ${inboxUrl}`);
       } catch (err) {
@@ -116,8 +116,8 @@ describe("validateSubscriptionShape", () => {
   it("SSRF-checks an inbox even in a non-webhook mode when one is supplied", () => {
     expect(() =>
       validateSubscriptionShape(
-        shape({ deliveryMode: "pull", inboxUrl: "https://127.0.0.1/inbox" })
-      )
+        shape({ deliveryMode: "pull", inboxUrl: "https://127.0.0.1/inbox" }),
+      ),
     ).toThrow(/public address/);
   });
 });
@@ -209,14 +209,14 @@ describe("validateSubscriptionShape — filter VALUE validation (all delivery mo
             privacyClasses: ["authoritative"],
             maxAgeSec: 3600,
           },
-        })
-      )
+        }),
+      ),
     ).not.toThrow();
   });
 
   it("accepts a bbox at the exact coordinate extremes", () => {
     expect(() =>
-      validateSubscriptionShape(shape({ filter: { bbox: [-180, -90, 180, 90] } }))
+      validateSubscriptionShape(shape({ filter: { bbox: [-180, -90, 180, 90] } })),
     ).not.toThrow();
   });
 

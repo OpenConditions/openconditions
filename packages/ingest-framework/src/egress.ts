@@ -105,7 +105,7 @@ function isPrivateIpv6(address: string): boolean {
 export type LookupAddress = { address: string; family: number };
 export type LookupFn = (
   hostname: string,
-  opts: { all: true; verbatim: true }
+  opts: { all: true; verbatim: true },
 ) => Promise<LookupAddress[]>;
 
 const defaultLookup: LookupFn = (hostname, opts) =>
@@ -122,7 +122,7 @@ const defaultLookup: LookupFn = (hostname, opts) =>
 export async function resolvePublicIps(
   hostname: string,
   lookup: LookupFn = defaultLookup,
-  opts: { allowPrivate?: boolean } = {}
+  opts: { allowPrivate?: boolean } = {},
 ): Promise<LookupAddress[]> {
   const addresses = await lookup(hostname, { all: true, verbatim: true });
   if (!addresses.length) {
@@ -154,7 +154,7 @@ export async function resolvePublicIps(
  */
 export async function assertResolvesToPublicIp(
   hostname: string,
-  lookup: LookupFn = defaultLookup
+  lookup: LookupFn = defaultLookup,
 ): Promise<void> {
   await resolvePublicIps(hostname, lookup);
 }
@@ -204,7 +204,7 @@ function capBody(
   maxBytes: number,
   url: string,
   signal: AbortSignal,
-  finish: (failed?: boolean) => void
+  finish: (failed?: boolean) => void,
 ): Response {
   const declared = Number(res.headers.get("content-length"));
   if (Number.isFinite(declared) && declared > maxBytes) {
@@ -303,7 +303,7 @@ export function guardedFetch(
   baseFetch: typeof fetch = undiciFetch as unknown as typeof fetch,
   opts: FetchGuardOptions = guardOptionsFromEnv(),
   connect: GuardedConnectOptions = {},
-  lookup: LookupFn = defaultLookup
+  lookup: LookupFn = defaultLookup,
 ): typeof fetch {
   return (async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
     const startUrl = urlOf(input);
@@ -317,7 +317,7 @@ export function guardedFetch(
       : controller.signal;
     const timer = setTimeout(
       () => controller.abort(new Error(`fetch timed out after ${opts.timeoutMs}ms`)),
-      opts.timeoutMs
+      opts.timeoutMs,
     );
     timer.unref();
     let agent: Agent | undefined;
@@ -341,7 +341,7 @@ export function guardedFetch(
         const allowPrivate = opts.allowedHosts?.has(host.toLowerCase()) ?? false;
         const addrs = await withinDeadline(
           resolvePublicIps(host, lookup, { allowPrivate }),
-          signal
+          signal,
         );
         const pinned = addrs[0]!;
 
@@ -353,7 +353,7 @@ export function guardedFetch(
             lookup: (
               _h: string,
               _o: unknown,
-              cb: (e: Error | null, addrs: LookupAddress[]) => void
+              cb: (e: Error | null, addrs: LookupAddress[]) => void,
             ) => cb(null, [{ address: pinned.address, family: pinned.family }]),
             ...(connect.cert ? { cert: connect.cert, key: connect.key, ca: connect.ca } : {}),
           },
@@ -366,7 +366,7 @@ export function guardedFetch(
             signal,
             dispatcher: agent,
           } as PinnedInit),
-          signal
+          signal,
         );
 
         if (REDIRECT_STATUSES.has(res.status)) {

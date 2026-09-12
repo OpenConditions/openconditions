@@ -76,7 +76,7 @@ export function buildLocalSchedule(input: LocalScheduleInput): LocalSchedule {
  */
 export function withTimezone(
   schedules: LocalSchedule[] | undefined,
-  timeZone: string | null
+  timeZone: string | null,
 ): Schedule[] | undefined {
   if (!schedules || schedules.length === 0 || !timeZone) return undefined;
   return schedules.map((s) => ({ ...s, scheduleTimezone: timeZone }));

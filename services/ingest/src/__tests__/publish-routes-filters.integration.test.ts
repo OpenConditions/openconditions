@@ -1,13 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import Fastify from "fastify";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import type { RoadEvent } from "@openconditions/roads";
-import { FeedStatusStore } from "../feed-status.js";
+import Fastify from "fastify";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildDomainRegistry } from "../domains.js";
-import { registerPublishRoutes } from "../publish-routes.js";
+import { FeedStatusStore } from "../feed-status.js";
 import { atomicSwap } from "../pipeline/write-postgis.js";
+import { registerPublishRoutes } from "../publish-routes.js";
 
 const BBOX = "13,52,14,53";
 const SOURCE = "filter-test";
@@ -234,7 +234,7 @@ describe("restriction view cache lifetime", () => {
           restrictionDetails: details(),
         } as never),
       ],
-      600
+      600,
     );
     await sql`UPDATE conditions.source_status SET last_success_at = now()
       WHERE source = ${RESTRICTION_SOURCE}`;
@@ -252,7 +252,7 @@ describe("restriction view cache lifetime", () => {
           restrictionDetails: { schemaVersion: 9 },
         } as never),
       ],
-      600
+      600,
     );
     expect(await cacheControl()).toBe("no-store");
 

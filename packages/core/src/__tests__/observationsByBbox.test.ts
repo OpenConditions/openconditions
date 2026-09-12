@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import { observationsByBbox, type QueryRunner } from "../observationsByBbox.js";
 import { severityRank } from "../severity.js";
 
@@ -311,10 +311,10 @@ describe("observationsByBbox", () => {
     };
     await observationsByBbox(db, { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] });
     expect(capturedQuery).toMatch(
-      /LEFT JOIN conditions\.source_status ss ON ss\.source = o\.source/
+      /LEFT JOIN conditions\.source_status ss ON ss\.source = o\.source/,
     );
     expect(capturedQuery).toMatch(
-      /\(ss\.last_success_at IS NULL OR ss\.last_success_at \+ make_interval\(secs => ss\.freshness_window_sec\) < now\(\)\) AS is_stale/
+      /\(ss\.last_success_at IS NULL OR ss\.last_success_at \+ make_interval\(secs => ss\.freshness_window_sec\) < now\(\)\) AS is_stale/,
     );
   });
 
@@ -427,7 +427,7 @@ describe("observationsByBbox", () => {
     });
     // A null valid_from is "in effect now" — never filtered out.
     expect(capturedQuery).toMatch(
-      /\(o\.valid_from IS NULL OR o\.valid_from <= now\(\) \+ make_interval\(days => \$6\)\)/
+      /\(o\.valid_from IS NULL OR o\.valid_from <= now\(\) \+ make_interval\(days => \$6\)\)/,
     );
     expect(capturedParams[5]).toBe(0);
 
@@ -465,7 +465,7 @@ describe("observationsByBbox", () => {
 
     const fc = await observationsByBbox(
       makeStubDb([{ ...fakeRow, is_forecast: true, category: "planned" }]),
-      { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] }
+      { domain: "roads", bbox: [4.0, 51.0, 6.0, 53.0] },
     );
     expect(fc.features[0]?.properties?.is_forecast).toBe(true);
     expect(fc.features[0]?.properties?.category).toBe("planned");
@@ -499,7 +499,7 @@ describe("observationsByBbox", () => {
     });
     // Keep feed rows always; keep crowd rows only when routing_eligible.
     expect(capturedQuery).toMatch(
-      /NOT \(o\.origin->>'kind' = 'crowd' AND COALESCE\(o\.routing_eligible, false\) IS NOT TRUE\)/
+      /NOT \(o\.origin->>'kind' = 'crowd' AND COALESCE\(o\.routing_eligible, false\) IS NOT TRUE\)/,
     );
   });
 
@@ -611,7 +611,7 @@ describe("observationsByBbox source freshness metadata", () => {
           ] as T;
         },
       },
-      { domain: "roads", bbox: [19, 59, 32, 71], dedupe: false }
+      { domain: "roads", bbox: [19, 59, 32, 71], dedupe: false },
     );
     expect(sql).toContain("ss.last_success_at AS source_checked_at");
     expect(fc.features[0]!.properties).toMatchObject({

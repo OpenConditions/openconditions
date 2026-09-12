@@ -61,7 +61,7 @@ export function buildReleaseManifest(config: ReleaseManifestConfig): ReleaseMani
   for (const w of sorted) {
     if (!(w.endMs > w.startMs)) {
       throw new OverlappingWindowError(
-        `window "${w.windowId}" is empty or inverted (start ${w.startMs} >= end ${w.endMs})`
+        `window "${w.windowId}" is empty or inverted (start ${w.startMs} >= end ${w.endMs})`,
       );
     }
   }
@@ -76,7 +76,7 @@ export function buildReleaseManifest(config: ReleaseManifestConfig): ReleaseMani
       const prev = sorted[i - 1]!;
       if (w.startMs < prev.endMs) {
         throw new OverlappingWindowError(
-          `window "${w.windowId}" (start ${w.startMs}) overlaps "${prev.windowId}" (end ${prev.endMs})`
+          `window "${w.windowId}" (start ${w.startMs}) overlaps "${prev.windowId}" (end ${prev.endMs})`,
         );
       }
     }
@@ -112,7 +112,7 @@ export function partitionKey(partition: Partition): string {
 /** The window a timestamp falls in, or `undefined` if outside every window. */
 export function windowForTimestamp(
   manifest: ReleaseManifest,
-  timestampMs: number
+  timestampMs: number,
 ): ReleaseWindow | undefined {
   return manifest.windows.find((w) => timestampMs >= w.startMs && timestampMs < w.endMs);
 }

@@ -1,21 +1,21 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { afterEach, describe, expect, it, vi } from "vitest";
 import { httpbis } from "http-message-signatures";
 import { parseDictionary, serializeDictionary } from "structured-headers";
-import { generateInstanceKey, type InstanceKey } from "../keys.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CLOCK_SKEW_SEC,
   EXPIRES_WINDOW_SEC,
   FEDERATION_REASON_HEADER,
   FEDERATION_TAG,
+  federationFailureHeaders,
   InMemoryNonceStore,
   NONCE_TTL_SEC,
-  federationFailureHeaders,
+  type NonceStore,
   signMessage,
   verifyMessage,
-  type NonceStore,
 } from "../http-signature.js";
+import { generateInstanceKey, type InstanceKey } from "../keys.js";
 
 const ED25519 = { name: "Ed25519" } as const;
 
@@ -97,7 +97,7 @@ describe("signMessage", () => {
         keyId: key.keyId,
         privateKey: key.privateKey,
         isResponse: true,
-      })
+      }),
     ).rejects.toThrow(/status/);
   });
 });
@@ -143,7 +143,7 @@ describe("verifyMessage round-trip", () => {
     const key = await makeKey();
     const { headers } = await signedRequest(key);
     const result = await verifyMessage(
-      verifyInput(key, { ...headers, "Content-Type": "text/plain" })
+      verifyInput(key, { ...headers, "Content-Type": "text/plain" }),
     );
     expect(result).toEqual({ ok: false, reason: "bad-signature" });
   });
@@ -233,7 +233,7 @@ describe("verifyMessage round-trip", () => {
         privateKey: key.privateKey,
         isResponse: true,
         status: 304,
-      })
+      }),
     ).rejects.toThrow(/etag/);
   });
 
@@ -335,7 +335,7 @@ describe("verifyMessage replay and expiry policy", () => {
           alg: "ed25519",
           sign: async (data: Buffer) =>
             Buffer.from(
-              await globalThis.crypto.subtle.sign(ED25519, key.privateKey, new Uint8Array(data))
+              await globalThis.crypto.subtle.sign(ED25519, key.privateKey, new Uint8Array(data)),
             ),
         },
         name: "oc",
@@ -343,7 +343,7 @@ describe("verifyMessage replay and expiry policy", () => {
         params: ["keyid", "nonce", "tag"],
         paramValues: { created: null, nonce: "n-1", tag: FEDERATION_TAG },
       },
-      { method: "GET", url: URL_, headers: {} }
+      { method: "GET", url: URL_, headers: {} },
     );
     const result = await verifyMessage({
       method: "GET",
@@ -365,7 +365,7 @@ describe("verifyMessage replay and expiry policy", () => {
           alg: "ed25519",
           sign: async (data: Buffer) =>
             Buffer.from(
-              await globalThis.crypto.subtle.sign(ED25519, key.privateKey, new Uint8Array(data))
+              await globalThis.crypto.subtle.sign(ED25519, key.privateKey, new Uint8Array(data)),
             ),
         },
         name: "oc",
@@ -377,7 +377,7 @@ describe("verifyMessage replay and expiry policy", () => {
           tag: FEDERATION_TAG,
         },
       },
-      { method: "GET", url: URL_, headers: {} }
+      { method: "GET", url: URL_, headers: {} },
     );
     const result = await verifyMessage({
       method: "GET",
@@ -395,10 +395,10 @@ describe("verifyMessage digest, key, and tag policy", () => {
     const key = await makeKey();
     const { headers } = await signedRequest(key);
     const otherDigest = Buffer.from(
-      await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode("other"))
+      await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode("other")),
     ).toString("base64");
     const result = await verifyMessage(
-      verifyInput(key, { ...headers, "Content-Digest": `sha-256=:${otherDigest}:` })
+      verifyInput(key, { ...headers, "Content-Digest": `sha-256=:${otherDigest}:` }),
     );
     expect(result).toEqual({ ok: false, reason: "bad-digest" });
   });
@@ -419,7 +419,7 @@ describe("verifyMessage digest, key, and tag policy", () => {
   it("rejects a body whose content-digest is not a covered component", async () => {
     const key = await makeKey();
     const digest = Buffer.from(await globalThis.crypto.subtle.digest("SHA-256", BODY)).toString(
-      "base64"
+      "base64",
     );
     const now = Math.floor(Date.now() / 1000);
     const signed = await httpbis.signMessage(
@@ -429,7 +429,7 @@ describe("verifyMessage digest, key, and tag policy", () => {
           alg: "ed25519",
           sign: async (data: Buffer) =>
             Buffer.from(
-              await globalThis.crypto.subtle.sign(ED25519, key.privateKey, new Uint8Array(data))
+              await globalThis.crypto.subtle.sign(ED25519, key.privateKey, new Uint8Array(data)),
             ),
         },
         name: "oc",
@@ -442,7 +442,7 @@ describe("verifyMessage digest, key, and tag policy", () => {
           tag: FEDERATION_TAG,
         },
       },
-      { method: "POST", url: URL_, headers: { "Content-Digest": `sha-256=:${digest}:` } }
+      { method: "POST", url: URL_, headers: { "Content-Digest": `sha-256=:${digest}:` } },
     );
     const result = await verifyMessage({
       method: "POST",
@@ -534,7 +534,7 @@ describe("InMemoryNonceStore", () => {
   it("reserves a nonce atomically — concurrent reservations yield exactly one winner", async () => {
     const store = new InMemoryNonceStore();
     const outcomes = await Promise.all(
-      Array.from({ length: 32 }, () => store.reserve("peer-a", "n-race", NONCE_TTL_SEC))
+      Array.from({ length: 32 }, () => store.reserve("peer-a", "n-race", NONCE_TTL_SEC)),
     );
     expect(outcomes.filter(Boolean)).toHaveLength(1);
     expect(await store.seen("peer-a", "n-race")).toBe(true);
@@ -574,7 +574,7 @@ async function appendSignature(
     tag: string;
     sign: (data: Buffer) => Promise<Buffer>;
     fields?: string[];
-  }
+  },
 ): Promise<Record<string, string>> {
   const signed = await httpbis.signMessage(
     {
@@ -589,7 +589,7 @@ async function appendSignature(
         tag: opts.tag,
       },
     },
-    { method: opts.method, url: opts.url, headers }
+    { method: opts.method, url: opts.url, headers },
   );
   return flattenHeaders(signed.headers);
 }
@@ -683,7 +683,7 @@ describe("verify bypass hardening — multi-signature and coverage", () => {
           tag: "some-other-protocol",
         },
       },
-      { method: "GET", url: URL_, headers: {} }
+      { method: "GET", url: URL_, headers: {} },
     );
     // The lone federation-tagged signature is a garbage-signed decoy.
     const forged = await appendSignature(flattenHeaders(valid.headers), {
@@ -723,7 +723,7 @@ describe("verify bypass hardening — multi-signature and coverage", () => {
           tag: FEDERATION_TAG,
         },
       },
-      { method: "GET", url: URL_, headers: {} }
+      { method: "GET", url: URL_, headers: {} },
     );
     const result = await verifyMessage({
       method: "GET",
@@ -753,7 +753,7 @@ describe("verify bypass hardening — multi-signature and coverage", () => {
           tag: FEDERATION_TAG,
         },
       },
-      { method: "GET", url, headers: {} }
+      { method: "GET", url, headers: {} },
     );
     const result = await verifyMessage({
       method: "GET",
@@ -780,7 +780,7 @@ describe("RFC 9421 only (no Cavage draft path)", () => {
   it("never touches the library's cavage module", async () => {
     const source = await readFile(
       fileURLToPath(new URL("../http-signature.ts", import.meta.url)),
-      "utf8"
+      "utf8",
     );
     expect(source).not.toMatch(/cavage/i);
     expect(source).toMatch(/httpbis/);

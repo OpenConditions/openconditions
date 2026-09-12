@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
 import type { FeedSourceBase } from "@openconditions/ingest-framework";
+import { describe, expect, it, vi } from "vitest";
 import {
   changedFeedFiles,
   checkChangedFeeds,
@@ -39,13 +39,13 @@ describe("isKeyless", () => {
     expect(isKeyless(feed({}))).toBe(true); // no auth at all
     expect(isKeyless(feed({ requiredEnv: ["FOO"] }))).toBe(false);
     expect(
-      isKeyless(feed({ auth: { kind: "header-key", header: "X-Api-Key", envVar: "K" } }))
+      isKeyless(feed({ auth: { kind: "header-key", header: "X-Api-Key", envVar: "K" } })),
     ).toBe(false);
     // a query-key with a published default works with no env → still keyless
     expect(
       isKeyless(
-        feed({ auth: { kind: "query-key", param: "key", envVar: "K", defaultValue: "pub" } })
-      )
+        feed({ auth: { kind: "query-key", param: "key", envVar: "K", defaultValue: "pub" } }),
+      ),
     ).toBe(true);
   });
 });
@@ -53,7 +53,7 @@ describe("isKeyless", () => {
 describe("changedFeedFiles", () => {
   it("runs the diff against the base ref and keeps only feed files", () => {
     const git = vi.fn(
-      () => "packages/roads/feeds/roads/nl.json5\nREADME.md\npackages/roads/src/feeds.ts\n"
+      () => "packages/roads/feeds/roads/nl.json5\nREADME.md\npackages/roads/src/feeds.ts\n",
     );
     const files = changedFeedFiles("origin/main", git);
     expect(files).toEqual(["packages/roads/feeds/roads/nl.json5"]);
@@ -80,7 +80,7 @@ describe("checkChangedFeeds", () => {
     const validate = vi.fn(async (f: FeedSourceBase) =>
       f.id === "good-keyless"
         ? { ok: false, rowCount: 0, failureKind: "parse" as const, message: "0 records parsed" }
-        : { ok: true, rowCount: 5 }
+        : { ok: true, rowCount: 5 },
     );
 
     const summary = await checkChangedFeeds({

@@ -1,7 +1,7 @@
 import { toIsoTimestamp } from "@openconditions/core";
 import { dedupeRoadEvents } from "./dedupe.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { TypeMapping } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -88,7 +88,7 @@ function decodePolyline(encoded: string): [number, number][] {
 function geometryOf(ev: IbiEvent): RoadEvent["geometry"] | null {
   if (typeof ev.EncodedPolyline === "string" && ev.EncodedPolyline.length > 0) {
     const pts = decodePolyline(ev.EncodedPolyline).filter(
-      ([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat)
+      ([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat),
     );
     if (pts.length >= 2) return { type: "LineString", coordinates: pts };
     if (pts.length === 1) return { type: "Point", coordinates: pts[0]! };
@@ -185,7 +185,7 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
 
   if (skippedNoGeometry > 0) {
     console.debug(
-      `[ibi511] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+      `[ibi511] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
     recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }
@@ -264,11 +264,11 @@ function conditionValues(raw: IbiConditionRecord["Condition"]): string[] {
 function conditionGeometry(rec: IbiConditionRecord): RoadEvent["geometry"] | undefined {
   const raw = rec.EncodedPolyline ?? rec.Polyline;
   const encoded = (Array.isArray(raw) ? raw : [raw]).filter(
-    (p): p is string => typeof p === "string" && p.length > 0
+    (p): p is string => typeof p === "string" && p.length > 0,
   );
   const lines = encoded
     .map((p) =>
-      decodePolyline(p).filter(([lon, lat]) => Number.isFinite(lon) && Number.isFinite(lat))
+      decodePolyline(p).filter(([lon, lat]) => Number.isFinite(lon) && Number.isFinite(lat)),
     )
     .filter((pts) => pts.length >= 2);
   if (lines.length === 0) return undefined;
@@ -284,7 +284,7 @@ function conditionGeometry(rec: IbiConditionRecord): RoadEvent["geometry"] | und
  */
 export function parseIbi511Conditions(
   input: string | Buffer | unknown,
-  src: SourceDescriptor
+  src: SourceDescriptor,
 ): RoadEvent[] {
   let data: unknown = input;
   if (typeof input === "string" || Buffer.isBuffer(input)) {
@@ -349,7 +349,7 @@ export function parseIbi511Conditions(
 
   if (skippedNoGeometry > 0) {
     console.debug(
-      `[ibi511] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+      `[ibi511] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
     recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }

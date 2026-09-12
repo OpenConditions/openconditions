@@ -1,11 +1,11 @@
+import type { RoadEvent } from "@openconditions/roads";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import type { DomainFeedSource } from "../pipeline/run.js";
 import {
   createOpenlrClient,
   inspectSnapshotCompleteness,
   stampSourceEvidence,
 } from "../pipeline/run.js";
-import type { RoadEvent } from "@openconditions/roads";
-import type { DomainFeedSource } from "../pipeline/run.js";
 
 describe("createOpenlrClient", () => {
   let savedUrl: string | undefined;
@@ -93,7 +93,7 @@ describe("inspectSnapshotCompleteness", () => {
 
   it("rejects a 200 body missing the declared record collection", () => {
     expect(() => inspectSnapshotCompleteness(source, [Buffer.from('{"message":"ok"}')])).toThrow(
-      /events.*array/
+      /events.*array/,
     );
   });
 
@@ -101,8 +101,8 @@ describe("inspectSnapshotCompleteness", () => {
     expect(() =>
       inspectSnapshotCompleteness(
         { ...source, snapshot: { ...source.snapshot!, totalCountPath: "pagination.total" } },
-        [Buffer.from('{"events":[{}],"pagination":{"total":2}}')]
-      )
+        [Buffer.from('{"events":[{}],"pagination":{"total":2}}')],
+      ),
     ).toThrow(/declared 2.*retrieved 1/);
   });
 
@@ -118,7 +118,7 @@ describe("inspectSnapshotCompleteness", () => {
       },
     } as unknown as DomainFeedSource;
     const xml = Buffer.from(
-      '<?xml version="1.0"?><d2LogicalModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><payloadPublication xsi:type="SituationPublication"><publicationTime>2026-09-11T00:00:00Z</publicationTime></payloadPublication></d2LogicalModel>'
+      '<?xml version="1.0"?><d2LogicalModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><payloadPublication xsi:type="SituationPublication"><publicationTime>2026-09-11T00:00:00Z</publicationTime></payloadPublication></d2LogicalModel>',
     );
 
     expect(inspectSnapshotCompleteness(datex, [xml])).toEqual({
@@ -141,7 +141,7 @@ describe("inspectSnapshotCompleteness", () => {
     } as unknown as DomainFeedSource;
 
     expect(() => inspectSnapshotCompleteness(datex, [Buffer.from("<d2LogicalModel>")])).toThrow(
-      /Invalid XML/
+      /Invalid XML/,
     );
   });
 
@@ -158,7 +158,7 @@ describe("inspectSnapshotCompleteness", () => {
     } as unknown as DomainFeedSource;
 
     expect(() =>
-      inspectSnapshotCompleteness(datex, [Buffer.from("<html><body>maintenance</body></html>")])
+      inspectSnapshotCompleteness(datex, [Buffer.from("<html><body>maintenance</body></html>")]),
     ).toThrow(/d2LogicalModel/);
   });
 });

@@ -164,7 +164,7 @@ function hasValidStructure(geometry: GeoJsonGeometry): boolean {
  */
 export function checkGeometryPlausibility(
   geometry: GeoJsonGeometry,
-  opts?: { requireType?: string }
+  opts?: { requireType?: string },
 ): PlausibilityReason[] {
   if (
     opts?.requireType !== undefined &&

@@ -21,8 +21,8 @@
  */
 import type { LineString } from "geojson";
 import { SaxesParser } from "saxes";
-import { ABSURD_SPEED_KPH, buildMeasuredSiteFlow, makeOrigin } from "./flow.js";
 import type { FlowGeometry, FlowParseResult } from "./flow.js";
+import { ABSURD_SPEED_KPH, buildMeasuredSiteFlow, makeOrigin } from "./flow.js";
 import type { RoadEvent, RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
 import { flattenString, stripXmlNamespace } from "./xml.js";
@@ -89,7 +89,7 @@ type TextTarget =
 export function createMeasuredDataParser(
   src: SourceDescriptor,
   siteMap?: Map<string, FlowGeometry>,
-  now: () => string = () => new Date().toISOString()
+  now: () => string = () => new Date().toISOString(),
 ): MeasuredDataParser {
   const flows: RoadFlow[] = [];
   const events: RoadEvent[] = [];
@@ -300,7 +300,7 @@ export function createMeasuredDataParser(
             },
             src,
             origin,
-            nowIso
+            nowIso,
           );
           if (built) {
             flows.push(built.flow);

@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   crowdObservationId,
-  reportToObservation,
   type LandingContext,
+  reportToObservation,
 } from "../report-to-observation.js";
 import type { ReportClaim, SignedReport } from "../types.js";
 
@@ -77,7 +77,7 @@ describe("reportToObservation", () => {
         severityLevel: 3,
         attributes: { note: "black ice" },
       }),
-      CTX
+      CTX,
     );
     expect(obs.domain).toBe("transit");
     expect(obs.type).toBe("hazard");
@@ -101,7 +101,7 @@ describe("reportToObservation", () => {
           severityLevel: 5,
         },
       }),
-      CTX
+      CTX,
     );
     // Only the genuine extra survives; every model-owned key is dropped.
     expect(obs.attributes).toEqual({ note: "genuine extra" });

@@ -5,8 +5,8 @@ import {
   assertResolvesToPublicIp,
   boundedGunzip,
   DEFAULT_MAX_FEED_BYTES,
-  guardOptionsFromEnv,
   guardedFetch,
+  guardOptionsFromEnv,
   isPublicUrl,
   parseAllowedHosts,
   resolvePublicIps,
@@ -21,7 +21,7 @@ describe("assertPublicUrl", () => {
 
   it("rejects the cloud-metadata endpoint and other private/loopback addresses", () => {
     expect(() => assertPublicUrl("http://169.254.169.254/latest/meta-data")).toThrow(
-      /internal\/private/
+      /internal\/private/,
     );
     expect(() => assertPublicUrl("http://127.0.0.1")).toThrow(/internal\/private/);
     expect(() => assertPublicUrl("http://10.1.2.3")).toThrow(/internal\/private/);
@@ -53,19 +53,25 @@ const fakeLookup = (addrs: LookupAddr[]) =>
 describe("assertResolvesToPublicIp", () => {
   it("rejects a hostname that resolves to a private IPv4 (DNS rebinding)", async () => {
     await expect(
-      assertResolvesToPublicIp("evil.example.com", fakeLookup([{ address: "10.0.0.5", family: 4 }]))
+      assertResolvesToPublicIp(
+        "evil.example.com",
+        fakeLookup([{ address: "10.0.0.5", family: 4 }]),
+      ),
     ).rejects.toThrow(/private IP/);
   });
 
   it("rejects the metadata IP even reached via DNS", async () => {
     await expect(
-      assertResolvesToPublicIp("meta.evil", fakeLookup([{ address: "169.254.169.254", family: 4 }]))
+      assertResolvesToPublicIp(
+        "meta.evil",
+        fakeLookup([{ address: "169.254.169.254", family: 4 }]),
+      ),
     ).rejects.toThrow(/private IP/);
   });
 
   it("rejects a hostname resolving to IPv6 loopback", async () => {
     await expect(
-      assertResolvesToPublicIp("evil6", fakeLookup([{ address: "::1", family: 6 }]))
+      assertResolvesToPublicIp("evil6", fakeLookup([{ address: "::1", family: 6 }])),
     ).rejects.toThrow(/private IP/);
   });
 
@@ -73,8 +79,8 @@ describe("assertResolvesToPublicIp", () => {
     await expect(
       assertResolvesToPublicIp(
         "ok.example.com",
-        fakeLookup([{ address: "93.184.216.34", family: 4 }])
-      )
+        fakeLookup([{ address: "93.184.216.34", family: 4 }]),
+      ),
     ).resolves.toBeUndefined();
   });
 
@@ -84,7 +90,7 @@ describe("assertResolvesToPublicIp", () => {
 
   it("rejects a hostname resolving into the fe80::/10 range beyond the fe80: prefix", async () => {
     await expect(
-      assertResolvesToPublicIp("evil-linklocal", fakeLookup([{ address: "fea0::1", family: 6 }]))
+      assertResolvesToPublicIp("evil-linklocal", fakeLookup([{ address: "fea0::1", family: 6 }])),
     ).rejects.toThrow(/private IP/);
   });
 });
@@ -105,8 +111,8 @@ describe("resolvePublicIps", () => {
         fakeLookup([
           { address: "93.184.216.34", family: 4 },
           { address: "10.0.0.5", family: 4 },
-        ])
-      )
+        ]),
+      ),
     ).rejects.toThrow(/private IP/);
   });
 
@@ -117,7 +123,7 @@ describe("resolvePublicIps", () => {
   it("returns private addresses (no rejection) when allowPrivate is set", async () => {
     const addrs = [{ address: "172.18.0.13", family: 4 }];
     await expect(
-      resolvePublicIps("overpass", fakeLookup(addrs), { allowPrivate: true })
+      resolvePublicIps("overpass", fakeLookup(addrs), { allowPrivate: true }),
     ).resolves.toEqual(addrs);
     // Same host is still rejected without the flag.
     await expect(resolvePublicIps("overpass", fakeLookup(addrs))).rejects.toThrow(/private IP/);
@@ -136,7 +142,7 @@ describe("allowlist (parseAllowedHosts + assertPublicUrl)", () => {
     expect(
       guardOptionsFromEnv({
         OPENCONDITIONS_EGRESS_ALLOWED_HOSTS: "overpass",
-      } as unknown as NodeJS.ProcessEnv).allowedHosts
+      } as unknown as NodeJS.ProcessEnv).allowedHosts,
     ).toEqual(new Set(["overpass"]));
     expect(guardOptionsFromEnv({} as unknown as NodeJS.ProcessEnv).allowedHosts).toBeUndefined();
   });
@@ -177,7 +183,7 @@ describe("guardedFetch", () => {
       base,
       opts,
       {},
-      pinLookup([{ address: "172.18.0.13", family: 4 }])
+      pinLookup([{ address: "172.18.0.13", family: 4 }]),
     )("http://overpass/api/interpreter");
     expect(await res.text()).toBe("osm");
   });
@@ -198,8 +204,8 @@ describe("guardedFetch", () => {
         base,
         opts,
         {},
-        pinLookup([{ address: "172.18.0.13", family: 4 }])
-      )("http://overpass/")
+        pinLookup([{ address: "172.18.0.13", family: 4 }]),
+      )("http://overpass/"),
     ).rejects.toThrow(/internal\/private/);
   });
 
@@ -286,7 +292,7 @@ describe("guardedFetch", () => {
         headers: { location: "http://93.184.216.34/loop" },
       })) as unknown as typeof fetch;
     await expect(guardedFetch(base, { ...OPTS, maxRedirects: 2 })(PUBLIC)).rejects.toThrow(
-      /too many redirects/
+      /too many redirects/,
     );
   });
 
@@ -306,7 +312,7 @@ describe("guardedFetch", () => {
       base,
       OPTS,
       {},
-      pinLookup([{ address: "93.184.216.34", family: 4 }])
+      pinLookup([{ address: "93.184.216.34", family: 4 }]),
     )("https://rebind.example.com/");
     expect(await res.text()).toBe("ok");
     // undici's Agent exposes a `dispatch` method — a plain object would not.
@@ -321,8 +327,8 @@ describe("guardedFetch", () => {
         base,
         OPTS,
         {},
-        pinLookup([{ address: "10.0.0.5", family: 4 }])
-      )("https://rebind.example.com/")
+        pinLookup([{ address: "10.0.0.5", family: 4 }]),
+      )("https://rebind.example.com/"),
     ).rejects.toThrow(/private IP/);
     expect(base).not.toHaveBeenCalled();
   });
@@ -341,7 +347,7 @@ describe("guardedFetch", () => {
       guardOptionsFromEnv({
         OPENCONDITIONS_MAX_FEED_BYTES: "1024",
         OPENCONDITIONS_FETCH_TIMEOUT_MS: "",
-      }).maxBytes
+      }).maxBytes,
     ).toBe(1024);
   });
 });
@@ -366,7 +372,7 @@ describe("guardedFetch lifetime", () => {
   it("times out stalled DNS before opening a connection", async () => {
     const base = vi.fn();
     await expect(
-      guardedFetch(base, options, {}, () => new Promise(() => {}))("https://example.test/feed")
+      guardedFetch(base, options, {}, () => new Promise(() => {}))("https://example.test/feed"),
     ).rejects.toThrow(/timed out/);
     expect(base).not.toHaveBeenCalled();
   });
@@ -393,7 +399,7 @@ describe("guardedFetch lifetime", () => {
       base,
       options,
       {},
-      lookup
+      lookup,
     )("https://example.test/feed", {
       signal: caller.signal,
     });

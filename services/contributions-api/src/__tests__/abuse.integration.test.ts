@@ -1,17 +1,17 @@
 import { readFileSync } from "node:fs";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
-import type { FastifyInstance } from "fastify";
 import {
   crowdObservationId,
   generateReporterKey,
-  signReport,
   type ReportClaim,
   type ReporterKey,
   type SignedReport,
+  signReport,
 } from "@openconditions/contrib-core";
 import { runMigrations } from "@openconditions/core/server";
+import type { FastifyInstance } from "fastify";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { coReportingClusters } from "../abuse/coreporting.js";
 import { checkReportRate, type RateRule } from "../abuse/rate.js";
 import { build } from "../server.js";
@@ -77,7 +77,7 @@ async function report(
   grant: string,
   nonce: string,
   lon: number,
-  lat: number
+  lat: number,
 ): Promise<{ statusCode: number; body: Record<string, unknown> }> {
   const claim: ReportClaim = {
     domain: "roads",
@@ -110,12 +110,12 @@ describe("report rate limiting — per key across all cells", () => {
     const grant = await enroll(key);
     const responses = await Promise.all(
       Array.from({ length: 16 }, (_, i) =>
-        report(key, grant, `parallel-key-${String(i).padStart(8, "0")}`, 4.9 + i * 0.02, 52.37)
-      )
+        report(key, grant, `parallel-key-${String(i).padStart(8, "0")}`, 4.9 + i * 0.02, 52.37),
+      ),
     );
     expect(responses.filter((r) => r.statusCode === 200)).toHaveLength(10);
     expect(
-      responses.filter((r) => r.statusCode === 429 && r.body["reason"] === "per-key")
+      responses.filter((r) => r.statusCode === 429 && r.body["reason"] === "per-key"),
     ).toHaveLength(6);
     const accepted = responses.findIndex((r) => r.statusCode === 200);
     const replay = await report(
@@ -123,7 +123,7 @@ describe("report rate limiting — per key across all cells", () => {
       grant,
       `parallel-key-${String(accepted).padStart(8, "0")}`,
       4.9 + accepted * 0.02,
-      52.37
+      52.37,
     );
     expect(replay.statusCode).toBe(200);
     const [evidence] = await sql<{ count: number }[]>`SELECT count(*)::int AS count
@@ -144,7 +144,7 @@ describe("report rate limiting — per key across all cells", () => {
         grant,
         `spread-${String(i).padStart(12, "0")}`,
         4.9 + i * 0.02,
-        52.37
+        52.37,
       );
       codes.push(res.statusCode);
       if (res.statusCode === 429) reason = res.body["reason"];
@@ -164,15 +164,15 @@ describe("report rate limiting — per key per coarse cell", () => {
       keys.map((key, index) =>
         Promise.all(
           Array.from({ length: 8 }, (_, i) =>
-            report(key, grants[index]!, `parallel-cell-${String(i).padStart(8, "0")}`, 4.9, 52.37)
-          )
-        )
-      )
+            report(key, grants[index]!, `parallel-cell-${String(i).padStart(8, "0")}`, 4.9, 52.37),
+          ),
+        ),
+      ),
     );
     for (const responses of perKey) {
       expect(responses.filter((r) => r.statusCode === 200)).toHaveLength(4);
       expect(
-        responses.filter((r) => r.statusCode === 429 && r.body["reason"] === "per-key-cell")
+        responses.filter((r) => r.statusCode === 429 && r.body["reason"] === "per-key-cell"),
       ).toHaveLength(4);
     }
   }, 120_000);
@@ -237,7 +237,7 @@ describe("checkReportRate — reusable limiter contract", () => {
       4.9,
       52.37,
       "2026-07-12T12:00:00.000Z",
-      zeroRule
+      zeroRule,
     );
     expect(blocked.ok).toBe(false);
     expect(blocked.reason).toBe("per-key");
@@ -288,10 +288,10 @@ describe("kinematic plausibility — post-hoc flag, never a block", () => {
     expect(second.statusCode).toBe(200);
 
     expect(
-      await readFlaggedAt(await crowdObservationId(key.keyId, "drive-a-00000000001"))
+      await readFlaggedAt(await crowdObservationId(key.keyId, "drive-a-00000000001")),
     ).toBeNull();
     expect(
-      await readFlaggedAt(await crowdObservationId(key.keyId, "drive-b-00000000001"))
+      await readFlaggedAt(await crowdObservationId(key.keyId, "drive-b-00000000001")),
     ).toBeNull();
   }, 120_000);
 });
@@ -301,7 +301,7 @@ describe("co-reporting monitoring view", () => {
     id: string,
     keyId: string,
     fingerprint: string,
-    occurredAt: string
+    occurredAt: string,
   ): Promise<void> {
     await sql`
       INSERT INTO conditions.observations
@@ -342,13 +342,13 @@ describe("co-reporting monitoring view", () => {
         `obs:${fp}:x`,
         "old-cluster-x",
         fp,
-        "2026-07-12T15:00:00.000Z"
+        "2026-07-12T15:00:00.000Z",
       );
       await insertReportWithFingerprint(
         `obs:${fp}:y`,
         "old-cluster-y",
         fp,
-        "2026-07-12T15:00:00.000Z"
+        "2026-07-12T15:00:00.000Z",
       );
     }
     const before = await coReportingClusters(sql, "2026-07-12T14:59:00.000Z");

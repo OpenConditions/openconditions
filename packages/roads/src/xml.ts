@@ -66,7 +66,7 @@ export function flattenString(s: string): string {
 
 export function parseXmlDocument(
   content: string | Buffer,
-  options: XmlParseOptions = {}
+  options: XmlParseOptions = {},
 ): XmlObject {
   const str = Buffer.isBuffer(content) ? content.toString("utf8") : content;
 

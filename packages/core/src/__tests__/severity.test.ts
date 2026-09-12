@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { normaliseSeverity, deriveSeverity } from "../severity.js";
+import { describe, expect, it } from "vitest";
+import { deriveSeverity, normaliseSeverity } from "../severity.js";
 
 describe("normaliseSeverity", () => {
   it("maps Open511 MAJOR to high with severitySource declared", () => {

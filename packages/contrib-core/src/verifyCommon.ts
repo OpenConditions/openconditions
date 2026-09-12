@@ -44,7 +44,7 @@ export function assertPublicP256Jwk(jwk: JsonWebKey, label: string): void {
 export async function resolveVerificationJwk(
   keyId: string,
   pubJwk: JsonWebKey | undefined,
-  knownJwk: JsonWebKey | undefined
+  knownJwk: JsonWebKey | undefined,
 ): Promise<{ jwk: JsonWebKey } | { error: string }> {
   if (pubJwk !== undefined) assertPublicP256Jwk(pubJwk, "pubJwk");
   if (knownJwk !== undefined) assertPublicP256Jwk(knownJwk, "knownJwk");
@@ -77,7 +77,7 @@ export async function importVerifyKey(jwk: JsonWebKey): Promise<CryptoKey> {
     { crv: jwk.crv, kty: jwk.kty, x: jwk.x, y: jwk.y },
     ECDSA_IMPORT_PARAMS,
     false,
-    ["verify"]
+    ["verify"],
   );
 }
 
@@ -95,11 +95,11 @@ export function decodeRawSignature(signature: string): Uint8Array<ArrayBuffer> {
   if (bytes.length !== 64) {
     if (bytes[0] === 0x30) {
       throw new TypeError(
-        "signature appears DER-encoded; ES256 signatures must be the raw 64-byte r||s concatenation"
+        "signature appears DER-encoded; ES256 signatures must be the raw 64-byte r||s concatenation",
       );
     }
     throw new TypeError(
-      `signature must decode to exactly 64 bytes (raw r||s), got ${bytes.length}`
+      `signature must decode to exactly 64 bytes (raw r||s), got ${bytes.length}`,
     );
   }
   assertCanonicalSignature(bytes);

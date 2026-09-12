@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
 import type { Observation } from "@openconditions/core";
 import { normalizeObservation, type WriterContext } from "@openconditions/normalize";
+import { describe, expect, it } from "vitest";
 import { toRow } from "../pipeline/write-postgis.js";
 
 // The write-normalization seam lives in @openconditions/normalize, but its

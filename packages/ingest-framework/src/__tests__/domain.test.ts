@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { IngestDomain, FeedSourceBase } from "../index.js";
+import type { FeedSourceBase, IngestDomain } from "../index.js";
 
 describe("IngestDomain", () => {
   it("accepts a minimal domain plugin shape", () => {

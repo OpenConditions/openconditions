@@ -3,10 +3,10 @@ import {
   canonicalClaimBytes,
   generateReporterKey,
   maresiUri,
-  signReport,
-  verifyReport,
   type ReportClaim,
   type SignedReport,
+  signReport,
+  verifyReport,
 } from "../index.js";
 import { P256_HALF_ORDER, P256_ORDER } from "../lowS.js";
 
@@ -142,7 +142,7 @@ describe("signReport / verifyReport", () => {
     for (let i = 0; i < 25; i++) {
       const report = await signReport(
         makeClaim({ nonce: `propertyrun${String(i).padStart(5, "0")}` }),
-        key
+        key,
       );
       const s = bytesToBig(fromB64url(report.signature).subarray(32));
       expect(s > 0n && s <= P256_HALF_ORDER).toBe(true);
@@ -234,7 +234,7 @@ describe("signReport / verifyReport", () => {
     it("rejects non-finite numbers anywhere in the claim tree", async () => {
       await expectInvalid(
         makeClaim({ attributes: { nested: [{ speed: Number.POSITIVE_INFINITY }] } }),
-        /non-finite/
+        /non-finite/,
       );
       await expectInvalid(makeClaim({ attributes: { speed: Number.NaN } }), /non-finite/);
     });
@@ -292,22 +292,22 @@ describe("signReport / verifyReport", () => {
     it("rejects a severityLevel outside 1..5", async () => {
       await expectInvalid(
         makeClaim({ severityLevel: 6 as ReportClaim["severityLevel"] }),
-        /severityLevel/
+        /severityLevel/,
       );
       await expectInvalid(
         makeClaim({ severityLevel: 2.5 as unknown as ReportClaim["severityLevel"] }),
-        /severityLevel/
+        /severityLevel/,
       );
     });
 
     it("rejects an invalid fuzziness and a malformed geometry", async () => {
       await expectInvalid(
         makeClaim({ fuzziness: "fuzzy" as ReportClaim["fuzziness"] }),
-        /fuzziness/
+        /fuzziness/,
       );
       await expectInvalid(
         makeClaim({ geometry: { type: "Circle" } as unknown as ReportClaim["geometry"] }),
-        /geometry/
+        /geometry/,
       );
     });
 
@@ -335,7 +335,7 @@ describe("maresiUri", () => {
 
   it("throws on a report without a base64url signature", () => {
     expect(() => maresiUri({ signature: "not/base64url+chars" } as SignedReport)).toThrow(
-      TypeError
+      TypeError,
     );
   });
 });

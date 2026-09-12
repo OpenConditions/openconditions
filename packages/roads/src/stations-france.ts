@@ -1,5 +1,5 @@
-import type { SiteGeometry } from "./siteTable.js";
 import { reprojectorFor } from "./reproject.js";
+import type { SiteGeometry } from "./siteTable.js";
 
 /**
  * Build a `code_pme → LineString` map from the French national road counting-

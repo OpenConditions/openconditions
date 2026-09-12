@@ -33,7 +33,7 @@ const geoJsonMappingSchema = z
             include: z.array(z.string()).optional(),
             exclude: z.array(z.string()).optional(),
           })
-          .strict()
+          .strict(),
       )
       .optional(),
     startLonField: z.string().optional(),

@@ -1,23 +1,23 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import {
-  parserFor,
-  flowParserFor,
-  feedToSourceDescriptor,
-  roadAttributes,
-  roadFlowAttributes,
-  roadFeedSchema,
-} from "@openconditions/roads";
-import type { RoadEvent, RoadFlow } from "@openconditions/roads";
 import type { Observation } from "@openconditions/core";
 import {
+  type DomainRegistry,
+  type IngestDomain,
   loadFeeds,
   materializeApprovedCatalogChildren,
   registerFeedSchema,
-  type DomainRegistry,
-  type IngestDomain,
 } from "@openconditions/ingest-framework";
+import type { RoadEvent, RoadFlow } from "@openconditions/roads";
+import {
+  feedToSourceDescriptor,
+  flowParserFor,
+  parserFor,
+  roadAttributes,
+  roadFeedSchema,
+  roadFlowAttributes,
+} from "@openconditions/roads";
 
 // The roads schema is registered once so the framework's loadFeeds can validate
 // mounted/remote descriptors without depending on @openconditions/roads.
@@ -73,7 +73,7 @@ function roadsRemoteSnapshotPath(): string {
  * Called once in boot(), before the scheduler starts.
  */
 export async function buildDomainRegistry(
-  opts: { bakedInDir?: string } = {}
+  opts: { bakedInDir?: string } = {},
 ): Promise<DomainRegistry> {
   const feeds = await loadFeeds({
     domain: "roads",

@@ -38,8 +38,8 @@ describe("parseOverpassWays", () => {
             { type: "node", id: 1 },
             { type: "way", id: 2, geometry: [{ lat: 1, lon: 1 }] },
           ],
-        })
-      )
+        }),
+      ),
     ).toEqual([]);
   });
 
@@ -66,7 +66,7 @@ describe("parseOverpassWays", () => {
             tags: { highway: "primary" },
           },
         ],
-      })
+      }),
     );
     expect(ways).toEqual([
       {

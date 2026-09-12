@@ -1,20 +1,20 @@
-import type postgres from "postgres";
-import { centroid, coarseCell, type EvidenceState } from "@openconditions/core";
 import {
-  isKinematicallyPlausible,
-  reportToObservation,
   type CrowdLandingObservation,
+  isKinematicallyPlausible,
   type LandingContext,
   type PriorReport,
+  reportToObservation,
   type SignedReport,
 } from "@openconditions/contrib-core";
+import { centroid, coarseCell, type EvidenceState } from "@openconditions/core";
 import { normalizeObservation } from "@openconditions/normalize";
-import { recomputeEvidence } from "../evidence/recompute.js";
+import type postgres from "postgres";
 import { checkReportRate, ReportRateLimitError } from "../abuse/rate.js";
+import { recomputeEvidence } from "../evidence/recompute.js";
 
 type Sql = postgres.Sql;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: the driver's JSONB parameter type is intentionally open
 type Jsonb = any;
 
 export interface LandingResult {
@@ -55,7 +55,7 @@ export class GeometryInvalidError extends Error {
 export function isGeometryError(err: unknown): boolean {
   const message = err instanceof Error ? err.message : String(err);
   return /geojson|geometry|geometrycollection|lwgeom|geos|linestring|multiline|polygon|multipolygon|multipoint|linearring|\bring\b|ordinate|coordinate|dimension|closed linestring|requires more|too few points/i.test(
-    message
+    message,
   );
 }
 
@@ -83,7 +83,7 @@ export function isGeometryError(err: unknown): boolean {
 export async function landReport(
   sql: Sql,
   report: SignedReport,
-  ctx: LandingContext
+  ctx: LandingContext,
 ): Promise<LandingResult> {
   const mapped: CrowdLandingObservation = await reportToObservation(report, ctx);
   const obs = normalizeObservation(mapped, {
@@ -105,7 +105,7 @@ async function landWithin(
   sql: Sql,
   obs: CrowdLandingObservation,
   report: SignedReport,
-  ctx: LandingContext
+  ctx: LandingContext,
 ): Promise<LandingResult> {
   return sql.begin(async (tx) => {
     // Admission and evidence insertion share this per-reporter transaction lock.
@@ -202,7 +202,7 @@ async function flagIfKinematicallyImplausible(
   tx: postgres.TransactionSql,
   obs: CrowdLandingObservation,
   keyId: string,
-  now: string
+  now: string,
 ): Promise<boolean> {
   const previousRows = await tx<{ geometry: string; occurred_at: Date }[]>`
     SELECT ST_AsGeoJSON(o.geom) AS geometry, e.occurred_at

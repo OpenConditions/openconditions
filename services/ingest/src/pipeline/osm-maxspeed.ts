@@ -1,5 +1,5 @@
-import type postgres from "postgres";
 import { parseMaxspeedKph } from "@openconditions/roads";
+import type postgres from "postgres";
 
 type Sql = postgres.Sql;
 
@@ -31,7 +31,7 @@ interface OverpassElement {
  */
 export async function resolveOsmMaxspeed(
   sql: Sql,
-  deps: OsmMaxspeedDeps
+  deps: OsmMaxspeedDeps,
 ): Promise<{ updated: number }> {
   if (!osmFallbackEnabled()) return { updated: 0 };
 

@@ -58,7 +58,7 @@ export interface SweepResult {
 export async function sweepCrossValidate(
   sql: Sql,
   now: string,
-  deps: SweepCrossValidateDeps = {}
+  deps: SweepCrossValidateDeps = {},
 ): Promise<SweepResult> {
   const crossValidate = deps.crossValidateAgainstFeeds ?? defaultCrossValidate;
   const maxBatch = deps.maxBatch ?? DEFAULT_SWEEP_MAX_BATCH;
@@ -104,7 +104,7 @@ export async function sweepCrossValidate(
     `;
     log(
       `[cross-validate-sweep] candidate batch capped at ${maxBatch}; ` +
-        `deferring ${total - maxBatch} candidate(s) to a later cycle`
+        `deferring ${total - maxBatch} candidate(s) to a later cycle`,
     );
   }
 
@@ -161,7 +161,7 @@ export async function sweepCrossValidate(
 export async function sweepFederatedCrossValidate(
   sql: Sql,
   now: string,
-  deps: SweepCrossValidateDeps = {}
+  deps: SweepCrossValidateDeps = {},
 ): Promise<SweepResult> {
   const crossValidate = deps.crossValidateAgainstFeeds ?? defaultCrossValidate;
   const maxBatch = deps.maxBatch ?? DEFAULT_SWEEP_MAX_BATCH;
@@ -209,7 +209,7 @@ export async function sweepFederatedCrossValidate(
     `;
     log(
       `[federated-cross-validate-sweep] candidate batch capped at ${maxBatch}; ` +
-        `deferring ${total - maxBatch} candidate(s) to a later cycle`
+        `deferring ${total - maxBatch} candidate(s) to a later cycle`,
     );
   }
 

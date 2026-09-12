@@ -44,7 +44,7 @@ describe("keyIdFromJwk (RFC 7638)", () => {
 
   it("is insensitive to JWK member order", async () => {
     const reordered = JSON.parse(
-      `{"y":"${P256_JWK.y}","x":"${P256_JWK.x}","crv":"P-256","kty":"EC"}`
+      `{"y":"${P256_JWK.y}","x":"${P256_JWK.x}","crv":"P-256","kty":"EC"}`,
     ) as JsonWebKey;
     await expect(keyIdFromJwk(reordered)).resolves.toBe(P256_THUMBPRINT);
   });

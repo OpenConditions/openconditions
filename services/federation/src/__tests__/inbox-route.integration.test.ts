@@ -1,17 +1,17 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import {
   blockPeer,
   createInMemoryRateLimiter,
   generateInstanceKey,
   getPeerHealth,
-  signMessage,
-  unblockPeer,
   type InstanceKey,
   type PeerRatePolicy,
+  signMessage,
+  unblockPeer,
 } from "@openconditions/federation";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
 
 /** A deliberately tiny budget so a second event trips the limiter in-test. */
@@ -54,7 +54,7 @@ async function signed(
   key: InstanceKey,
   method: string,
   path: string,
-  bodyObj?: unknown
+  bodyObj?: unknown,
 ): Promise<{ headers: Record<string, string>; payload?: Buffer }> {
   const body = bodyObj === undefined ? undefined : Buffer.from(JSON.stringify(bodyObj));
   const s = await signMessage({
@@ -95,7 +95,7 @@ function fedEvent(id: string, instanceId: string, canonicalId: string): Record<s
 }
 
 function pageOf(
-  entries: { seq: number; txid: string; observation: Record<string, unknown> }[]
+  entries: { seq: number; txid: string; observation: Record<string, unknown> }[],
 ): Record<string, unknown> {
   return {
     type: "OrderedCollectionPage",
@@ -318,7 +318,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
         await app.close();
       }
     },
-    30_000
+    30_000,
   );
 
   it("skips (and reports) an event whose instanceId is not the sending peer's", async () => {

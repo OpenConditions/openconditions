@@ -1,10 +1,10 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { observationsByBbox, type QueryRunner } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
-import { sweepStaleObservations } from "../pipeline/sweep.js";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { upsertSourceStatus } from "../pipeline/source-status.js";
+import { sweepStaleObservations } from "../pipeline/sweep.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -30,7 +30,7 @@ async function insertRow(
     validTo?: Date | null;
     expiresAt?: Date | null;
     staleAfter?: Date | null;
-  }
+  },
 ): Promise<void> {
   const origin =
     opts.originKind === "crowd"
@@ -58,7 +58,7 @@ async function insertEvidence(observationId: string, keyId: string): Promise<voi
  * simulate "this source's last success was N hours ago" without waiting. */
 async function setSourceStatus(
   source: string,
-  opts: { lastSuccessAt: Date | null; freshnessWindowSec: number }
+  opts: { lastSuccessAt: Date | null; freshnessWindowSec: number },
 ): Promise<void> {
   await sql`
     INSERT INTO conditions.source_status (source, last_attempt_at, last_success_at, freshness_window_sec)

@@ -143,7 +143,7 @@ function resolveFloorSec(retentionSec: number | undefined, governanceWindowSec: 
  */
 export async function pruneOutbox(
   sql: postgres.Sql,
-  opts: PruneOutboxOptions
+  opts: PruneOutboxOptions,
 ): Promise<PruneOutboxResult> {
   const floorSec = resolveFloorSec(opts.retentionSec, opts.governanceWindowSec ?? 0);
   const nowMs = Date.parse(opts.now);
@@ -163,7 +163,7 @@ export async function pruneOutbox(
     if (!Number.isFinite(archiveMs)) {
       throw new TypeError(
         `pruneOutbox: archiveHighWaterIso must be a valid ISO 8601 instant, got ` +
-          `"${opts.archiveHighWaterIso}"`
+          `"${opts.archiveHighWaterIso}"`,
       );
     }
     if (archiveMs < floorMs) {

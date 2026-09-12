@@ -13,7 +13,7 @@ import type { SourceDescriptor } from "../types.js";
  * labelled synthetic; none of them claims to have appeared in the live feed.
  */
 const raw = JSON.parse(
-  readFileSync(new URL("./fixtures/digitraffic/v2-restrictions.json", import.meta.url), "utf8")
+  readFileSync(new URL("./fixtures/digitraffic/v2-restrictions.json", import.meta.url), "utf8"),
 ) as { features: Array<{ properties: Record<string, unknown> }> };
 
 const src: SourceDescriptor = {
@@ -194,7 +194,7 @@ describe("digitraffic v2 restriction extraction", () => {
 describe("digitraffic v2 restriction edge cases", () => {
   function withRestriction(
     entry: unknown,
-    patchPhase: Record<string, unknown> = {}
+    patchPhase: Record<string, unknown> = {},
   ): Record<string, unknown> {
     // Synthetic envelope built around the real GUID50470575 record.
     const props = propsOf("GUID50470575");
@@ -219,7 +219,7 @@ describe("digitraffic v2 restriction edge cases", () => {
           },
         },
       }),
-      src
+      src,
     )!;
     expect(details.facts[0]!.validFrom).toBe("2026-09-12T21:00:00.000Z");
     expect(details.facts[0]!.validTo).toBe("2026-09-18T20:59:59.999Z");
@@ -236,7 +236,7 @@ describe("digitraffic v2 restriction edge cases", () => {
           timeAndDuration: { startTime: "2027-01-01T00:00:00.000Z", endTime: null },
         },
       }),
-      src
+      src,
     )!;
     expect(details.completeness).toBe("partial");
     expect(details.facts[0]!.validFrom).toBeNull();
@@ -249,9 +249,9 @@ describe("digitraffic v2 restriction edge cases", () => {
     const details = digitrafficRestrictionDetails(
       withRestriction(
         { type: "vehicle height limit", restriction: { quantity: 4, unit: "m" } },
-        { timeAndDuration: { startTime: "2026-13-45T00:00:00Z", endTime: null } }
+        { timeAndDuration: { startTime: "2026-13-45T00:00:00Z", endTime: null } },
       ),
-      src
+      src,
     )!;
     expect(details.issues.map((i) => i.code)).toContain("invalid_window");
     expect(details.facts[0]!.validFrom).toBeNull();
@@ -260,7 +260,7 @@ describe("digitraffic v2 restriction edge cases", () => {
   it("reports an unsupported unit and an absent quantity", () => {
     const badUnit = digitrafficRestrictionDetails(
       withRestriction({ type: "vehicle height limit", restriction: { quantity: 550, unit: "cm" } }),
-      src
+      src,
     )!;
     expect(badUnit.facts).toEqual([]);
     expect(badUnit.vehicleScope).toBe("unknown");
@@ -270,7 +270,7 @@ describe("digitraffic v2 restriction edge cases", () => {
 
     const noQuantity = digitrafficRestrictionDetails(
       withRestriction({ type: "vehicle height limit", restriction: { name: "Korkeus" } }),
-      src
+      src,
     )!;
     expect(noQuantity.issues[0]).toMatchObject({ code: "invalid_value" });
   });
@@ -282,7 +282,7 @@ describe("digitraffic v2 restriction edge cases", () => {
           type: "vehicle width limit",
           restriction: { quantity, unit: "m" },
         }),
-        src
+        src,
       )!;
       expect(details.facts, String(quantity)).toEqual([]);
       expect(details.issues.length).toBeGreaterThan(0);
@@ -295,7 +295,7 @@ describe("digitraffic v2 restriction edge cases", () => {
         type: "vehicle axle weight limit",
         restriction: { name: "Akselipaino", quantity: 10, unit: "t" },
       }),
-      src
+      src,
     )!;
     expect(details.facts).toEqual([]);
     expect(details.issues[0]).toMatchObject({
@@ -310,7 +310,7 @@ describe("digitraffic v2 restriction edge cases", () => {
         type: "VEHICLE_GROSS_WEIGHT_LIMIT",
         restriction: { quantity: 26, unit: "t" },
       }),
-      src
+      src,
     )!;
     expect(v1.facts[0]).toMatchObject({ dimension: "gross_weight", value: 26000, unit: "kg" });
   });
@@ -340,7 +340,7 @@ describe("digitraffic v2 restriction edge cases", () => {
   it("makes no claim when the source carries no licence URL", () => {
     const { licenseUrl: _licenseUrl, ...noRights } = src;
     expect(
-      digitrafficRestrictionDetails(propsOf("GUID50465935"), noRights as SourceDescriptor)
+      digitrafficRestrictionDetails(propsOf("GUID50465935"), noRights as SourceDescriptor),
     ).toBeUndefined();
   });
 });
@@ -367,7 +367,7 @@ describe("digitraffic v2 event fields", () => {
   it("uses versionTime as the source update timestamp", () => {
     const events = parseDigitraffic(raw, src);
     expect(events.find((e) => e.id === "fi-digitraffic:GUID50465935")!.dataUpdatedAt).toBe(
-      "2026-08-28T04:18:02.629Z"
+      "2026-08-28T04:18:02.629Z",
     );
   });
 
@@ -387,7 +387,7 @@ describe("digitraffic v2 event fields", () => {
         ],
       },
       src,
-      { fetchedAt: FETCHED_AT }
+      { fetchedAt: FETCHED_AT },
     );
     expect(withData.records[0]!.event!.dataUpdatedAt).toBe("2026-09-01T00:00:00.000Z");
 
@@ -404,7 +404,7 @@ describe("digitraffic v2 event fields", () => {
         ],
       },
       src,
-      { fetchedAt: FETCHED_AT }
+      { fetchedAt: FETCHED_AT },
     );
     expect(withRelease.records[0]!.event!.dataUpdatedAt).toBe("2026-06-15T10:48:25.057Z");
   });
@@ -425,7 +425,7 @@ describe("digitraffic v2 event fields", () => {
           type: "FeatureCollection",
           features: [{ type: "Feature", geometry: null, properties: props }],
         },
-        src
+        src,
       );
       expect(report.errors).toEqual([]);
       expect(report.records[0]!.disposition).toBe("terminal");
@@ -434,7 +434,10 @@ describe("digitraffic v2 event fields", () => {
 
   it("treats a valid empty weight or exempted collection as a complete empty partition", () => {
     const empty = JSON.parse(
-      readFileSync(new URL("./fixtures/digitraffic/empty-collection.json", import.meta.url), "utf8")
+      readFileSync(
+        new URL("./fixtures/digitraffic/empty-collection.json", import.meta.url),
+        "utf8",
+      ),
     );
     const report = parseDigitrafficSnapshot(empty, src);
     expect(report).toEqual({ inputCount: 0, records: [], errors: [] });
@@ -474,7 +477,7 @@ describe("digitraffic v2 event fields", () => {
             },
           ],
         },
-        src
+        src,
       );
       expect(report.errors).toEqual([]);
       expect(report.records[0]!.event!.type, situationType).toBe(expected);

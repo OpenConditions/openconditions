@@ -21,10 +21,7 @@
       "type": "Feature",
       "geometry": {
         "type": "LineString",
-        "coordinates": [
-          [143.8503, -37.5622],
-          [143.8712, -37.5701]
-        ]
+        "coordinates": [[143.8503, -37.5622], [143.8712, -37.5701]]
       },
       "properties": {
         "id": "UNP-5002",

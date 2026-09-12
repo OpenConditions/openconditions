@@ -75,7 +75,12 @@ export type Confidence = "observed" | "likely" | "possible" | "unknown";
  * `*_unknown` values mark an open-ended or missing extent boundary.
  */
 export type Fuzziness =
-  "exact" | "low_res" | "medium_res" | "end_unknown" | "start_unknown" | "extent_unknown";
+  | "exact"
+  | "low_res"
+  | "medium_res"
+  | "end_unknown"
+  | "start_unknown"
+  | "extent_unknown";
 
 /**
  * The privacy tier an observation was produced under. Governs how it may be
@@ -83,11 +88,21 @@ export type Fuzziness =
  * intentionally NOT part of this enum — a defaulting seam assigns a real class.)
  */
 export type PrivacyClass =
-  "authoritative" | "aggregate" | "k_anon" | "dp_noised" | "crowd_pseudonym";
+  | "authoritative"
+  | "aggregate"
+  | "k_anon"
+  | "dp_noised"
+  | "crowd_pseudonym";
 
 /** Outcome of binding an event to the directed segment spine (derived, never parser-supplied). */
 export type BindingStatus =
-  "exact" | "likely" | "ambiguous" | "unresolved" | "no_coverage" | "not_applicable" | "obsolete";
+  | "exact"
+  | "likely"
+  | "ambiguous"
+  | "unresolved"
+  | "no_coverage"
+  | "not_applicable"
+  | "obsolete";
 
 /** Whether the resolver could decide the travel direction. `both` = bound in both directions of a bidirectional way. */
 export type DirectionMode = "single" | "both" | "unknown";

@@ -14,25 +14,26 @@
  * baseUrl (not the request Host), so a peer signs the logical actor URL and the
  * check is independent of proxies/loopback test sockets.
  */
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import type postgres from "postgres";
+
 import {
+  type CreateSubscriptionInput,
   createSubscription,
   deleteSubscription,
   encodeOutboxCursor,
+  type FederationSubscription,
   getSubscription,
   listSubscriptions,
-  readOutbox,
-  updateSubscription,
-  PRIORITY_EVENT_TYPES,
-  SubscriptionValidationError,
-  type CreateSubscriptionInput,
-  type FederationSubscription,
   type MtlsContext,
   type NonceStore,
   type PeerRecord,
+  PRIORITY_EVENT_TYPES,
+  readOutbox,
+  SubscriptionValidationError,
   type UpdateSubscriptionInput,
+  updateSubscription,
 } from "@openconditions/federation";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type postgres from "postgres";
 import { backfillFloorIso } from "./backfill.js";
 import { requirePeer, respondIfBlocked } from "./peer-request.js";
 import { SseStreamPump } from "./stream-pump.js";
@@ -81,7 +82,7 @@ function parseJsonBody(reply: FastifyReply, body: Buffer): Record<string, unknow
 
 export function registerSubscriptionRoutes(
   app: FastifyInstance,
-  ctx: SubscriptionRouteContext
+  ctx: SubscriptionRouteContext,
 ): void {
   app.post(SUBSCRIPTIONS_PATH, async (req, reply) => {
     const body = (req.body as Buffer | undefined) ?? Buffer.alloc(0);
@@ -97,7 +98,7 @@ export function registerSubscriptionRoutes(
         ctx.sql,
         peerId,
         parsed as CreateSubscriptionInput,
-        ctx.now()
+        ctx.now(),
       );
       return reply.status(201).send(subscription);
     } catch (err) {
@@ -144,7 +145,7 @@ export function registerSubscriptionRoutes(
         ctx.sql,
         owned,
         parsed as UpdateSubscriptionInput,
-        ctx.now()
+        ctx.now(),
       );
       return reply.send(updated);
     } catch (err) {
@@ -231,7 +232,7 @@ export function registerSubscriptionRoutes(
         },
         onError: (err) => req.log.error(err, "[peer/stream] poll failed"),
       },
-      subscription.cursor
+      subscription.cursor,
     );
 
     await pump.tick(); // initial snapshot from the subscription's cursor
@@ -259,7 +260,7 @@ async function loadOwned(
   ctx: SubscriptionRouteContext,
   id: string,
   peerId: string,
-  reply: FastifyReply
+  reply: FastifyReply,
 ): Promise<FederationSubscription | null> {
   const subscription = await getSubscription(ctx.sql, id);
   if (subscription === null) {

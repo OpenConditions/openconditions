@@ -1,8 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
-import { generateInstanceKey, signMessage, type InstanceKey } from "@openconditions/federation";
+import { generateInstanceKey, type InstanceKey, signMessage } from "@openconditions/federation";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
 
 let sql: postgres.Sql;
@@ -41,7 +41,7 @@ async function signed(
   key: InstanceKey,
   method: string,
   path: string,
-  bodyObj?: unknown
+  bodyObj?: unknown,
 ): Promise<{ headers: Record<string, string>; payload?: Buffer }> {
   const body = bodyObj === undefined ? undefined : Buffer.from(JSON.stringify(bodyObj));
   const s = await signMessage({
@@ -261,7 +261,7 @@ describe("subscription CRUD and ownership", () => {
             url: `/peer/subscriptions/${id}`,
             headers: getA.headers,
           })
-        ).statusCode
+        ).statusCode,
       ).toBe(200);
 
       const patchA = await signed(peerA, "PATCH", `/peer/subscriptions/${id}`, {
@@ -284,7 +284,7 @@ describe("subscription CRUD and ownership", () => {
             url: `/peer/subscriptions/${id}`,
             headers: delA.headers,
           })
-        ).statusCode
+        ).statusCode,
       ).toBe(204);
     } finally {
       await app.close();
@@ -363,7 +363,8 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
     try {
       const noId = await signed(peerA, "GET", "/peer/stream");
       expect(
-        (await app.inject({ method: "GET", url: "/peer/stream", headers: noId.headers })).statusCode
+        (await app.inject({ method: "GET", url: "/peer/stream", headers: noId.headers }))
+          .statusCode,
       ).toBe(400);
 
       // A subscription owned by peer B cannot be streamed by peer A.
@@ -374,7 +375,7 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
       const crossPath = `/peer/stream?subscriptionId=${bId}`;
       const cross = await signed(peerA, "GET", crossPath);
       expect(
-        (await app.inject({ method: "GET", url: crossPath, headers: cross.headers })).statusCode
+        (await app.inject({ method: "GET", url: crossPath, headers: cross.headers })).statusCode,
       ).toBe(403);
     } finally {
       await app.close();
@@ -589,7 +590,7 @@ async function setAge(objectId: string, msAgo: number): Promise<void> {
 async function createSub(
   app: Awaited<ReturnType<typeof build>>,
   key: InstanceKey,
-  input: unknown
+  input: unknown,
 ): Promise<string> {
   const req = await signed(key, "POST", "/peer/subscriptions", input);
   const res = await app.inject({
@@ -613,7 +614,7 @@ async function readEvents(
   reader: ReadableStreamDefaultReader<Uint8Array>,
   count: number,
   timeoutMs: number,
-  predicate: (e: SseEvent) => boolean = () => true
+  predicate: (e: SseEvent) => boolean = () => true,
 ): Promise<SseEvent[]> {
   const decoder = new TextDecoder();
   let buffer = "";
@@ -623,7 +624,7 @@ async function readEvents(
     const chunk = await Promise.race([
       reader.read(),
       new Promise<{ done: true; value: undefined }>((resolve) =>
-        setTimeout(() => resolve({ done: true, value: undefined }), deadline - Date.now())
+        setTimeout(() => resolve({ done: true, value: undefined }), deadline - Date.now()),
       ),
     ]);
     if (chunk.done || chunk.value === undefined) break;

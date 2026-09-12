@@ -38,7 +38,7 @@ export class SegmentGraph {
     const s = this.segments.get(id);
     if (!s) return [];
     return (this.outByStart.get(nodeKey(s.coords[s.coords.length - 1]!)) ?? []).filter(
-      (n) => n.segmentId !== id
+      (n) => n.segmentId !== id,
     );
   }
 
@@ -53,7 +53,7 @@ export class SegmentGraph {
     from: string,
     to: string,
     maxLengthM: number,
-    allow: (s: SpineSegment) => boolean = () => true
+    allow: (s: SpineSegment) => boolean = () => true,
   ): SpineSegment[] | null {
     if (!this.segments.has(from) || !this.segments.has(to)) return null;
     if (from === to) return [this.segments.get(from)!];

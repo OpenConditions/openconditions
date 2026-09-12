@@ -1,13 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import Fastify from "fastify";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import type { RoadEvent } from "@openconditions/roads";
-import { FeedStatusStore } from "../feed-status.js";
+import Fastify from "fastify";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildDomainRegistry } from "../domains.js";
-import { registerPublishRoutes } from "../publish-routes.js";
+import { FeedStatusStore } from "../feed-status.js";
 import { atomicSwap } from "../pipeline/write-postgis.js";
+import { registerPublishRoutes } from "../publish-routes.js";
 
 const BBOX = "13,52,14,53";
 
@@ -137,7 +137,7 @@ describe("license enforcement on the redistributable export routes", () => {
       const body = res.json() as { exclude_locations: { lon: number; lat: number }[] };
       expect(body.exclude_locations).toEqual([]);
       expect(
-        (body as { routing_evidence?: { schema_version?: number } }).routing_evidence
+        (body as { routing_evidence?: { schema_version?: number } }).routing_evidence,
       ).toMatchObject({
         schema_version: 1,
       });

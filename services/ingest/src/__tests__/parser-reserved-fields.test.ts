@@ -26,12 +26,12 @@ const FIELDS = RESERVED.join("|");
 // `["privacyClass"]:`) so a parser cannot smuggle a reserved field past the seam
 // through computed access.
 const RESERVED_ASSIGNMENT = new RegExp(
-  `(?:\\b(?:${FIELDS})\\s*[:=])|(?:\\[\\s*["'](?:${FIELDS})["']\\s*\\]\\s*[:=])`
+  `(?:\\b(?:${FIELDS})\\s*[:=])|(?:\\[\\s*["'](?:${FIELDS})["']\\s*\\]\\s*[:=])`,
 );
 
 const ROADS_SRC = resolve(
   dirname(fileURLToPath(import.meta.url)),
-  "../../../../packages/roads/src"
+  "../../../../packages/roads/src",
 );
 
 /**
@@ -68,7 +68,7 @@ describe("parsers never assign commons provenance fields", () => {
       offenders,
       `A parser assigns a reserved commons field. These are set centrally in ` +
         `normalizeObservation (see packages/normalize/src/normalize.ts), never by a parser:\n` +
-        offenders.join("\n")
+        offenders.join("\n"),
     ).toEqual([]);
   });
 });

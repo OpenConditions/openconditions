@@ -1,9 +1,9 @@
-import { mkdir, rename, rm, stat } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
-import { fileWriter } from "hyparquet-writer";
+import { mkdir, rename, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { scanObservations } from "@openconditions/core";
 import { writeDailyGeoParquet } from "@openconditions/publishers";
+import { fileWriter } from "hyparquet-writer";
 import type postgres from "postgres";
 
 type Sql = postgres.Sql;
@@ -55,7 +55,7 @@ function runner(sql: Sql | postgres.TransactionSql) {
  */
 export async function buildDailyArchive(
   sql: Sql,
-  deps: ArchiveBuildDeps = {}
+  deps: ArchiveBuildDeps = {},
 ): Promise<ArchiveBuildResult | null> {
   const now = (deps.now ?? (() => new Date()))();
   const nowIso = now.toISOString();

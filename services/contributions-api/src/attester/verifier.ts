@@ -39,7 +39,7 @@ export interface AttestationVerificationResult {
 export interface AttestationVerifier {
   verify(
     attestation: AttestationClaim,
-    ctx: AttestationVerifierCtx
+    ctx: AttestationVerifierCtx,
   ): Promise<AttestationVerificationResult>;
 }
 

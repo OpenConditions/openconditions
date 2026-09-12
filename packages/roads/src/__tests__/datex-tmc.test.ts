@@ -33,7 +33,7 @@ function alertCOnly(inner: string): Buffer {
       </situationRecord>
     </situation>
   </payloadPublication>
-</d2LogicalModel>`
+</d2LogicalModel>`,
   );
 }
 
@@ -100,7 +100,7 @@ describe("DATEX records carrying only an Alert-C location", () => {
       </situationRecord>
     </situation>
   </payloadPublication>
-</d2LogicalModel>`
+</d2LogicalModel>`,
     );
 
     const [event] = parseDatexSituations(xml, SOURCE);
@@ -183,7 +183,7 @@ describe("DATEX records located only by a display coordinate", () => {
       </situationRecord>
     </situation>
   </payloadPublication>
-</d2LogicalModel>`
+</d2LogicalModel>`,
     );
 
   const DISPLAY = `<locationForDisplay><latitude>50.1109</latitude><longitude>8.6821</longitude></locationForDisplay>`;
@@ -201,9 +201,9 @@ describe("DATEX records located only by a display coordinate", () => {
     // in the first place, and the next publisher will invent another name.
     const events = parseDatexSituations(
       area(
-        `<pointExtension><somethingNobodyHasSeen><latitude>50.1</latitude><longitude>8.6</longitude></somethingNobodyHasSeen></pointExtension>`
+        `<pointExtension><somethingNobodyHasSeen><latitude>50.1</latitude><longitude>8.6</longitude></somethingNobodyHasSeen></pointExtension>`,
       ),
-      SOURCE
+      SOURCE,
     );
 
     expect(events[0]!.geometry).toEqual({ type: "Point", coordinates: [8.6, 50.1] });
@@ -213,9 +213,9 @@ describe("DATEX records located only by a display coordinate", () => {
     // A label position is not an extent; it must lose to anything better.
     const events = parseDatexSituations(
       area(
-        `<pointByCoordinates><pointCoordinates><latitude>52.0</latitude><longitude>13.0</longitude></pointCoordinates></pointByCoordinates>${DISPLAY}`
+        `<pointByCoordinates><pointCoordinates><latitude>52.0</latitude><longitude>13.0</longitude></pointCoordinates></pointByCoordinates>${DISPLAY}`,
       ),
-      SOURCE
+      SOURCE,
     );
 
     expect(events[0]!.geometry).toEqual({ type: "Point", coordinates: [13.0, 52.0] });
@@ -224,7 +224,7 @@ describe("DATEX records located only by a display coordinate", () => {
   it("collapses the same position repeated across elements into one point", () => {
     const events = parseDatexSituations(
       area(`${DISPLAY}<areaExtension>${DISPLAY}</areaExtension>`),
-      SOURCE
+      SOURCE,
     );
 
     expect(events[0]!.geometry).toEqual({ type: "Point", coordinates: [8.6821, 50.1109] });
@@ -253,7 +253,7 @@ describe("DATEX linearByCoordinates endpoints", () => {
       </situationRecord>
     </situation>
   </payloadPublication>
-</d2LogicalModel>`
+</d2LogicalModel>`,
     );
 
   const START_END = `
@@ -280,9 +280,9 @@ describe("DATEX linearByCoordinates endpoints", () => {
   it("uses indexed intermediate points to build an ordered LineString", () => {
     const events = parseDatexSituations(
       linear(
-        `${START_END}<intermediate index="1"><pointCoordinates><latitude>48.625</latitude><longitude>10.218</longitude></pointCoordinates></intermediate>`
+        `${START_END}<intermediate index="1"><pointCoordinates><latitude>48.625</latitude><longitude>10.218</longitude></pointCoordinates></intermediate>`,
       ),
-      SOURCE
+      SOURCE,
     );
 
     expect(events[0]!.geometry).toEqual({
@@ -300,9 +300,9 @@ describe("DATEX linearByCoordinates endpoints", () => {
     // intercepting the name must not stop the search for nested geometry.
     const events = parseDatexSituations(
       linear(
-        `<start><pointCoordinates><latitude>48.62</latitude><longitude>10.21</longitude></pointCoordinates></start>`
+        `<start><pointCoordinates><latitude>48.62</latitude><longitude>10.21</longitude></pointCoordinates></start>`,
       ),
-      SOURCE
+      SOURCE,
     );
 
     expect(events[0]!.geometry).toEqual({ type: "Point", coordinates: [10.21, 48.62] });
@@ -332,7 +332,7 @@ describe("DATEX feeds publishing an undeclared projected grid", () => {
       </situationRecord>
     </situation>
   </payloadPublication>
-</d2LogicalModel>`
+</d2LogicalModel>`,
     );
 
   const POS = "33342865.72 6020207.51 33342859.99 6020464.00";
@@ -379,15 +379,15 @@ describe("DATEX geometry under an unnamed element", () => {
       </situationRecord>
     </situation>
   </payloadPublication>
-</d2LogicalModel>`
+</d2LogicalModel>`,
     );
 
   it("reads a coordinate list whatever element wraps it", () => {
     const events = parseDatexSituations(
       wrapped(
-        "<any>53.6264266786748 10.032114432636327 53.626490917876176 10.032202936906385</any>"
+        "<any>53.6264266786748 10.032114432636327 53.626490917876176 10.032202936906385</any>",
       ),
-      SOURCE
+      SOURCE,
     );
 
     expect(events).toHaveLength(1);
@@ -414,9 +414,9 @@ describe("DATEX geometry under an unnamed element", () => {
     const events = parseDatexSituations(
       wrapped(
         `<linearExtended><gmlLineString><posList>52.0 13.0 52.1 13.1</posList></gmlLineString></linearExtended>` +
-          `<any>53.62 10.03 53.63 10.04</any>`
+          `<any>53.62 10.03 53.63 10.04</any>`,
       ),
-      SOURCE
+      SOURCE,
     );
 
     expect(events[0]!.geometry).toEqual({

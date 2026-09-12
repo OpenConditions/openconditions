@@ -1,9 +1,9 @@
 import type { Point } from "geojson";
+import type { FlowParseResult } from "./flow.js";
+import { makeOrigin } from "./flow.js";
 import type { RoadFlow } from "./model.js";
 import type { SiteGeometry } from "./siteTable.js";
 import type { SourceDescriptor } from "./types.js";
-import { makeOrigin } from "./flow.js";
-import type { FlowParseResult } from "./flow.js";
 import { getXmlChild, getXmlChildren, isXmlObject, parseXmlDocument, xmlText } from "./xml.js";
 
 // MIV's no-data speed sentinel is 252 km/h; anything at/above this plausibility
@@ -66,7 +66,7 @@ export function parseMivConfig(input: string | Buffer): Map<string, SiteGeometry
 export function parseMivFlow(
   input: string | Buffer,
   src: SourceDescriptor,
-  siteMap?: Map<string, SiteGeometry>
+  siteMap?: Map<string, SiteGeometry>,
 ): FlowParseResult {
   let doc: ReturnType<typeof parseXmlDocument>;
   try {

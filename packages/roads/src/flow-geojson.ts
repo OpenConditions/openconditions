@@ -1,8 +1,8 @@
 import type { LineString, Point } from "geojson";
+import type { FlowGeometry, FlowParseResult } from "./flow.js";
+import { ABSURD_SPEED_KPH, buildMeasuredSiteFlow, makeOrigin } from "./flow.js";
 import type { RoadEvent, RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
-import { ABSURD_SPEED_KPH, buildMeasuredSiteFlow, makeOrigin } from "./flow.js";
-import type { FlowGeometry, FlowParseResult } from "./flow.js";
 
 function num(raw: unknown): number | undefined {
   if (raw == null || raw === "") return undefined;
@@ -125,7 +125,7 @@ export function parseGeojsonFlow(input: string | Buffer, src: SourceDescriptor):
         },
         src,
         origin,
-        now
+        now,
       );
       if (!built) continue;
       flows.push({ ...built.flow, sourceFormat: "geojson-flow" });

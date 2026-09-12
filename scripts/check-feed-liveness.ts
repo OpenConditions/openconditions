@@ -1,13 +1,13 @@
 import { appendFile, mkdir, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { hasCredentials } from "@openconditions/ingest-framework";
 import type { FeedSourceBase } from "@openconditions/ingest-framework";
+import { hasCredentials } from "@openconditions/ingest-framework";
 // buildDomainRegistry lives in the ingest service; it imports only built
 // package names, so Node's native .ts execution resolves this explicit-.ts
 // specifier. The feed set now comes from the built registry (baked-in +
 // mounted + optional remote), not the dispatch-only static DOMAIN_REGISTRY.
 import { buildDomainRegistry } from "../services/ingest/src/domains.ts";
-import { renderReport, type FeedFailure } from "./lib/liveness-report.ts";
+import { type FeedFailure, renderReport } from "./lib/liveness-report.ts";
 import { validateFeed } from "./lib/validate-feed.ts";
 
 const REPORT_PATH = "liveness/out.md";

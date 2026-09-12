@@ -123,8 +123,8 @@ describe("no-geometry accounting is instrumented for every event format in use",
       expect(events, `${format} should emit no event for a geometry-less record`).toEqual([]);
       expect(
         drainSkippedNoGeometry(id),
-        `${format} dropped a record without reporting it — an absent count reads as "loses nothing"`
+        `${format} dropped a record without reporting it — an absent count reads as "loses nothing"`,
       ).toBeGreaterThan(0);
-    }
+    },
   );
 });

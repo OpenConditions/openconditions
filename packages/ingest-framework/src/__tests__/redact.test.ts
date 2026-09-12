@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { redactUrl, redactSecrets, feedSecretValues } from "../redact.js";
+import { feedSecretValues, redactSecrets, redactUrl } from "../redact.js";
 
 describe("redactUrl", () => {
   it("blanks query-string values but keeps param names and the path", () => {
@@ -9,7 +9,7 @@ describe("redactUrl", () => {
 
   it("is path-blind: a secret duplicated into the URL PATH survives (Mobilithek shape)", () => {
     const out = redactUrl(
-      "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/999999secretid/clientPullService?subscriptionID=999999secretid"
+      "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/999999secretid/clientPullService?subscriptionID=999999secretid",
     );
     // The query copy is blanked...
     expect(out).not.toContain("subscriptionID=999999secretid");
@@ -26,7 +26,7 @@ describe("redactSecrets", () => {
     const out = redactSecrets(text, ["999999secretid"]);
     expect(out).not.toContain("999999secretid");
     expect(out).toBe(
-      "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/***/clientPullService?subscriptionID=***"
+      "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/***/clientPullService?subscriptionID=***",
     );
   });
 
@@ -80,7 +80,7 @@ describe("feedSecretValues", () => {
   it("collects resolved values of the feed's allowed template vars, filtered by length", () => {
     const values = feedSecretValues(
       { auth: { kind: "bearer", envVar: "TOKEN" }, requiredEnv: ["SUB_ID", "SHORT"] },
-      { TOKEN: "longenoughtoken", SUB_ID: "999999secretid", SHORT: "ab" }
+      { TOKEN: "longenoughtoken", SUB_ID: "999999secretid", SHORT: "ab" },
     );
     expect(values.sort()).toEqual(["999999secretid", "longenoughtoken"].sort());
   });

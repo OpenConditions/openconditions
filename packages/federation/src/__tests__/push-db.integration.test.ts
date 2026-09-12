@@ -1,17 +1,17 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
-import { ensureInstanceKey, loadActiveKeys, type InstanceKey } from "../keys.js";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { InMemoryNonceStore, verifyMessage } from "../http-signature.js";
-import { encodeOutboxCursor, readOutbox, type OutboxCursor, type OutboxEntry } from "../outbox.js";
+import { ensureInstanceKey, type InstanceKey, loadActiveKeys } from "../keys.js";
+import { encodeOutboxCursor, type OutboxCursor, type OutboxEntry, readOutbox } from "../outbox.js";
+import { deliverWebhook, PUSH_FAILURE_THRESHOLD } from "../push.js";
 import {
   createSubscription,
+  type FederationSubscription,
   getSubscription,
   updateSubscription,
-  type FederationSubscription,
 } from "../subscriptions.js";
-import { deliverWebhook, PUSH_FAILURE_THRESHOLD } from "../push.js";
 
 function deferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void;
@@ -121,7 +121,7 @@ async function webhookSubFromNow(opts: {
       priorityOnly: opts.priorityOnly,
       filter: { bbox: opts.bbox, permissiveOnly: false },
     },
-    NOW
+    NOW,
   );
   const start = encodeOutboxCursor(await frontier());
   await sql`UPDATE conditions.federation_subscription SET cursor = ${start} WHERE id = ${sub.id}`;
@@ -187,7 +187,7 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
       sql,
       PEER_ID,
       { deliveryMode: "webhook", inboxUrl: INBOX_URL, priorityOnly: true, filter },
-      NOW
+      NOW,
     );
     const start = encodeOutboxCursor(await frontier());
     await sql`UPDATE conditions.federation_subscription SET cursor = ${start} WHERE id = ${sub.id}`;
@@ -227,7 +227,7 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
       sql,
       PEER_ID,
       { deliveryMode: "webhook", inboxUrl: INBOX_URL, priorityOnly: true, filter },
-      NOW
+      NOW,
     );
     const start = encodeOutboxCursor(await frontier());
     await sql`UPDATE conditions.federation_subscription SET cursor = ${start} WHERE id = ${sub.id}`;
@@ -394,7 +394,7 @@ describe("deliverWebhook — priorityOnly push (priority) + peer pull (all) = ev
       sql,
       PEER_ID,
       { deliveryMode: "webhook", inboxUrl: INBOX_URL, priorityOnly: true, filter },
-      NOW
+      NOW,
     );
     const startCursor = encodeOutboxCursor(await frontier());
     await sql`UPDATE conditions.federation_subscription SET cursor = ${startCursor} WHERE id = ${sub.id}`;
@@ -486,7 +486,7 @@ describe("subscription edits during delivery", () => {
         sql,
         sub,
         { inboxUrl: "https://repaired.example.org/inbox" },
-        "2026-07-13T12:01:00Z"
+        "2026-07-13T12:01:00Z",
       );
       response.resolve(new Response(null, { status }));
       expect(await pending).toEqual({ status: "obsolete" });
@@ -503,7 +503,7 @@ describe("subscription edits during delivery", () => {
       });
       expect(outcome.status).toBe("delivered");
       expect(destinations).toEqual(["https://repaired.example.org/inbox"]);
-    }
+    },
   );
 
   it("preserves disjoint concurrent edits and rejects stale empty-scan advancement", async () => {

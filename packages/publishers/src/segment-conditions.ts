@@ -1,13 +1,13 @@
-import type { LineString } from "geojson";
 import {
   isInEffectAt,
   nextScheduleTransition,
-  routingEvidenceReasons,
   type RoadConditionRoutingEvidence,
   type RoutingRights,
+  routingEvidenceReasons,
   type Schedule,
 } from "@openconditions/core";
 import { hasRestrictionEvidence, normalizeVehicleApplicability } from "@openconditions/roads";
+import type { LineString } from "geojson";
 
 /**
  * One bound road event as it comes back from the `/segments/conditions.json`
@@ -106,7 +106,7 @@ function iso(v: string | Date | null): string | null {
 export function segmentConditionsToJson(
   rows: SegmentConditionRow[],
   at: Date,
-  info: { resolverVersion: string; evaluatedAt?: Date }
+  info: { resolverVersion: string; evaluatedAt?: Date },
 ): {
   schema_version: 1;
   complete: true;
@@ -182,7 +182,7 @@ export function segmentConditionsToJson(
               raw?: Record<string, unknown>;
             }>)
           : undefined,
-        a
+        a,
       ),
       rights: r.rights,
       segments: r.segments.map((span) => ({

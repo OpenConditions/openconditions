@@ -47,7 +47,7 @@ export function lintFeed(feed: RoadFeed): string[] {
     for (const name of templateTokens(template)) {
       if (!allowed.has(name)) {
         problems.push(
-          `${feed.id}: template references undeclared variable \${${name}} — add it to requiredEnv`
+          `${feed.id}: template references undeclared variable \${${name}} — add it to requiredEnv`,
         );
       }
     }
@@ -55,7 +55,7 @@ export function lintFeed(feed: RoadFeed): string[] {
 
   if (!licenseInfo(feed.license)) {
     problems.push(
-      `${feed.id}: unknown license id '${feed.license}' — add it to packages/ingest-framework/src/licenses.ts`
+      `${feed.id}: unknown license id '${feed.license}' — add it to packages/ingest-framework/src/licenses.ts`,
     );
   }
 
@@ -73,7 +73,7 @@ export function lintFeed(feed: RoadFeed): string[] {
       !rights.evidenceVersion
     ) {
       problems.push(
-        `${feed.id}: approved catalogue child requires affirmative source/derived redistribution, commercial-use and retention evidence`
+        `${feed.id}: approved catalogue child requires affirmative source/derived redistribution, commercial-use and retention evidence`,
       );
     }
     if (feed.policyIds?.[0] !== feed.parentSourceId || !feed.policyIds.includes(feed.id)) {

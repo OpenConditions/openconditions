@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   checkMobilithekReference,
-  mobilithekReferenceFileUrl,
   type MobilithekOfferMetadata,
+  mobilithekReferenceFileUrl,
 } from "../lib/mobilithek-reference.js";
 
 const latestOffer: MobilithekOfferMetadata = {
@@ -38,7 +38,7 @@ describe("checkMobilithekReference", () => {
         url: mobilithekReferenceFileUrl(reference.offerId, "D2MSTPub_LVE_125_13.xml"),
         reference,
       },
-      latestOffer
+      latestOffer,
     );
 
     expect(result).toMatchObject({
@@ -55,7 +55,7 @@ describe("checkMobilithekReference", () => {
         url: mobilithekReferenceFileUrl(reference.offerId, "D2MSTPub_LVE_123_11.xml"),
         reference,
       },
-      latestOffer
+      latestOffer,
     );
 
     expect(result).toMatchObject({
@@ -72,7 +72,7 @@ describe("checkMobilithekReference", () => {
         url: mobilithekReferenceFileUrl(reference.offerId, "D2MSTPub_LVE_125_13.xml"),
         reference,
       },
-      { contentStandard: [{ instance: { fileName: "MeasuredData.xsd" } }] }
+      { contentStandard: [{ instance: { fileName: "MeasuredData.xsd" } }] },
     );
 
     expect(result.status).toBe("missing");

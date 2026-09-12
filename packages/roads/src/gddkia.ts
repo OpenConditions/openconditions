@@ -1,8 +1,8 @@
 import { dedupeRoadEvents } from "./dedupe.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
-import { getXmlChild, getXmlChildText, getXmlChildren, parseXmlDocument } from "./xml.js";
+import { getXmlChild, getXmlChildren, getXmlChildText, parseXmlDocument } from "./xml.js";
 
 /**
  * Parser for Poland's GDDKiA `utrdane.xml` road-obstructions feed (CC0). A flat
@@ -100,7 +100,7 @@ export function parseGddkia(input: string | Buffer, src: SourceDescriptor): Road
 
   if (skippedNoGeometry > 0) {
     console.debug(
-      `[gddkia] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+      `[gddkia] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
     recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }

@@ -9,11 +9,10 @@ import {
   flowParserFor,
   parseDatexSnapshot,
   parseDigitrafficSnapshot,
-  reconcileRoadSnapshots,
   type ReconciledRoadSnapshot,
+  reconcileRoadSnapshots,
 } from "@openconditions/roads";
-import { feedToSourceDescriptor } from "../domains.js";
-import { DOMAIN_REGISTRY } from "../domains.js";
+import { DOMAIN_REGISTRY, feedToSourceDescriptor } from "../domains.js";
 
 /**
  * Dispatches a single buffer to the correct domain parser based on
@@ -34,7 +33,7 @@ import { DOMAIN_REGISTRY } from "../domains.js";
 export function parseFor(
   src: FeedSource & { domain: string },
   buf: Buffer,
-  siteMap?: Map<string, SiteGeometry>
+  siteMap?: Map<string, SiteGeometry>,
 ): (Observation | UnresolvedRoadEvent)[] {
   const plugin = DOMAIN_REGISTRY[src.domain];
   if (!plugin) {
@@ -62,7 +61,7 @@ export function parseFor(
   // registered roads parser actually has.
   const parserFn = plugin.parserFor(src.format) as (
     buf: Buffer,
-    descriptor: SourceDescriptor
+    descriptor: SourceDescriptor,
   ) => (Observation | UnresolvedRoadEvent)[];
   const descriptor = feedToSourceDescriptor(src);
   return parserFn(buf, descriptor);
@@ -90,7 +89,7 @@ const SNAPSHOT_REPORTERS = {
  */
 export function parseRoadSnapshotFor(
   src: FeedSource & { domain: string },
-  buffers: Buffer[]
+  buffers: Buffer[],
 ): ReconciledRoadSnapshot | undefined {
   if (src.domain !== "roads" || src.produces === "flow") return undefined;
   if (src.snapshot?.completeness !== "complete") return undefined;

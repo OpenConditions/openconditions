@@ -1,8 +1,8 @@
+import type { Observation } from "@openconditions/core";
+import { observationsToGeoJSON } from "@openconditions/publishers";
+import { restrictionViewDeadline } from "@openconditions/roads";
 import type { Feature } from "geojson";
 import { describe, expect, it } from "vitest";
-import { observationsToGeoJSON } from "@openconditions/publishers";
-import type { Observation } from "@openconditions/core";
-import { restrictionViewDeadline } from "@openconditions/roads";
 import { featureToRoadConditionEvent } from "../toRoadConditionEvents.js";
 
 /**
@@ -122,7 +122,7 @@ describe("host restriction projection", () => {
 
   it("marks an invalid envelope unsupported instead of dropping the claim", () => {
     const event = featureToRoadConditionEvent(
-      publish(observation({ restrictionDetails: { schemaVersion: 9 } }))
+      publish(observation({ restrictionDetails: { schemaVersion: 9 } })),
     )!;
     expect(event.restrictionDetailsUnsupported).toBe(true);
     expect(event.restrictionDetails).toBeUndefined();
@@ -141,7 +141,7 @@ describe("host restriction projection", () => {
 
   it("makes no restriction claim for an ordinary event", () => {
     const event = featureToRoadConditionEvent(
-      publish(observation({ restrictionDetails: undefined, type: "roadworks" }))
+      publish(observation({ restrictionDetails: undefined, type: "roadworks" })),
     )!;
     // An explicitly present-but-undefined envelope is still a claim.
     expect(event.restrictionDetailsUnsupported).toBe(true);
@@ -155,7 +155,7 @@ describe("host restriction projection", () => {
 
   it("carries the stale flag and freshness deadline the producer computed", () => {
     const stale = featureToRoadConditionEvent(
-      publish(observation({ sourceCheckedAt: "2026-09-12T06:00:00.000Z" }))
+      publish(observation({ sourceCheckedAt: "2026-09-12T06:00:00.000Z" })),
     )!;
     expect(stale.restrictionDetails!.isStale).toBe(true);
     expect(stale.restrictionDetails!.freshUntil).toBe("2026-09-12T06:10:00.000Z");
@@ -169,7 +169,7 @@ describe("provider restriction view lifetime", () => {
       typeof restrictionViewDeadline
     >[0][number];
     expect(restrictionViewDeadline([view], AT).getTime() - AT.getTime()).toBeLessThanOrEqual(
-      60_000
+      60_000,
     );
     expect(restrictionViewDeadline([view], AT).getTime()).toBeGreaterThan(AT.getTime());
   });

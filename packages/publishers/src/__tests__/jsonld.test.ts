@@ -27,7 +27,7 @@ describe("observationsToJsonLd", () => {
   it("types measurements as sosa:Observation", () => {
     const doc = observationsToJsonLd([measurement()]);
     expect((doc.features[0]!.properties as Record<string, unknown>)["@type"]).toBe(
-      "sosa:Observation"
+      "sosa:Observation",
     );
   });
 });

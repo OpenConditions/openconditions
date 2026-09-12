@@ -1,12 +1,12 @@
-import { SPEED_HISTORY_LOCK, speedSampleCutoff } from "./speed-rollup.js";
-import type postgres from "postgres";
-import { toIsoTimestamp, type Observation } from "@openconditions/core";
+import { type Observation, toIsoTimestamp } from "@openconditions/core";
 import {
   ABSURD_SPEED_KPH,
-  representativePoint,
   type BaselineMethod,
   type RoadFlow,
+  representativePoint,
 } from "@openconditions/roads";
+import type postgres from "postgres";
+import { SPEED_HISTORY_LOCK, speedSampleCutoff } from "./speed-rollup.js";
 
 type Sql = postgres.Sql;
 
@@ -59,7 +59,7 @@ export async function writeSpeedSamples(
   source: string,
   observations: Observation[],
   now: () => string,
-  cadenceSec: number
+  cadenceSec: number,
 ): Promise<{ inserted: number; rejectedLate: number }> {
   return sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock_shared(hashtextextended(${SPEED_HISTORY_LOCK}, 0))`;
@@ -74,7 +74,7 @@ export async function writeSpeedSamples(
         // Floor to the cadence bucket so a now()-fallback timestamp cannot write a
         // fresh row every poll; stable-timestamp feeds already collide here.
         const observedAt = new Date(
-          Math.floor(new Date(raw).getTime() / bucketMs) * bucketMs
+          Math.floor(new Date(raw).getTime() / bucketMs) * bucketMs,
         ).toISOString();
         const d = new Date(observedAt);
         const [lon, lat] = representativePoint(f.geometry);
@@ -137,7 +137,7 @@ export async function writeSpeedSamples(
  */
 export async function loadBaselineMap(
   sql: Sql,
-  source: string
+  source: string,
 ): Promise<Map<string, { kph: number; method: BaselineMethod }>> {
   const rows = await sql<{ sensor_key: string; free_flow_kph: number; method: BaselineMethod }[]>`
     SELECT DISTINCT ON (sensor_key) sensor_key, free_flow_kph, method

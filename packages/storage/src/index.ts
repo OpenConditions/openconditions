@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Extracted from services/ingest/src/pipeline/write-postgis.ts; original license retained.
 import { createHash } from "node:crypto";
-import { toIsoTimestamp, type Observation } from "@openconditions/core";
+import { type Observation, toIsoTimestamp } from "@openconditions/core";
 
 /**
  * Recursively sorts object keys (arrays keep their order) so `JSON.stringify`

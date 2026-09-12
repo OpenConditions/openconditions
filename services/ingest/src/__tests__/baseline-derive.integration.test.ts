@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { deriveBaselines } from "../pipeline/baseline-derive.js";
 import { rollupSpeedSamples, SPEED_BIN_WIDTH_KPH } from "../pipeline/speed-rollup.js";
 

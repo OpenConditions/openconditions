@@ -17,7 +17,7 @@ const TOKEN = /\$\{([A-Za-z0-9_]+)\}/g;
 export function resolveUrlTemplate(
   template: string,
   env: Env,
-  allowed: ReadonlySet<string>
+  allowed: ReadonlySet<string>,
 ): string {
   return template.replace(TOKEN, (_match, name: string) => {
     if (!allowed.has(name)) {
@@ -40,7 +40,7 @@ export function resolveUrlTemplate(
  * rather than silently resolving from the full process env.
  */
 export function allowedTemplateVars(
-  src: Pick<FeedSourceBase, "auth" | "requiredEnv">
+  src: Pick<FeedSourceBase, "auth" | "requiredEnv">,
 ): Set<string> {
   return new Set([...requiredEnvVars(src.auth), ...(src.requiredEnv ?? [])]);
 }
@@ -62,7 +62,7 @@ function overlay(base: Env, key: string, value: string): Env {
  */
 export function resolveFeedUrls(
   src: Pick<FeedSourceBase, "url" | "expandEnv" | "id" | "auth" | "requiredEnv">,
-  env: Env
+  env: Env,
 ): string[] {
   const templates = src.url == null ? [] : Array.isArray(src.url) ? src.url : [src.url];
   if (templates.length === 0) return [];
@@ -75,6 +75,6 @@ export function resolveFeedUrls(
     .map((s) => s.trim())
     .filter(Boolean);
   return items.flatMap((item) =>
-    templates.map((t) => resolveUrlTemplate(t, overlay(env, listVar, item), allowed))
+    templates.map((t) => resolveUrlTemplate(t, overlay(env, listVar, item), allowed)),
   );
 }

@@ -1,17 +1,17 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
+import type { CanonicalIdentityParts } from "../canonical.js";
 import {
   canonicalId,
   canonicalIdentityParts,
-  normalizeNamespace,
-  phenomenonFingerprint,
-  phenomenonFingerprintNeighborhood,
   centroid,
   coarseCell,
   gridCell,
-  truncateType,
+  normalizeNamespace,
+  phenomenonFingerprint,
+  phenomenonFingerprintNeighborhood,
   timeBucket,
+  truncateType,
 } from "../canonical.js";
-import type { CanonicalIdentityParts } from "../canonical.js";
 import type { ConditionEvent, Measurement, Observation } from "../model.js";
 
 function makeObservation(overrides: Partial<Observation> = {}): Observation {
@@ -157,22 +157,22 @@ describe("canonicalId", () => {
       },
     });
     expect(canonicalId(crowd)).toBe(
-      canonicalId({ namespace: "maps.example.org", recordId: "crowd:key-1:nonce-abcdefghij" })
+      canonicalId({ namespace: "maps.example.org", recordId: "crowd:key-1:nonce-abcdefghij" }),
     );
     expect(canonicalId(crowd)).not.toBe(
-      canonicalId({ namespace: "crowd", recordId: "crowd:key-1:nonce-abcdefghij" })
+      canonicalId({ namespace: "crowd", recordId: "crowd:key-1:nonce-abcdefghij" }),
     );
   });
 
   it("is immune to separator injection between namespace and record id", () => {
     expect(canonicalId({ namespace: "a:b", recordId: "c" })).not.toBe(
-      canonicalId({ namespace: "a", recordId: "b:c" })
+      canonicalId({ namespace: "a", recordId: "b:c" }),
     );
   });
 
   it("normalizes namespace case and whitespace", () => {
     expect(canonicalId({ namespace: "NDW ", recordId: "situation-123" })).toBe(
-      canonicalId({ namespace: "ndw", recordId: "situation-123" })
+      canonicalId({ namespace: "ndw", recordId: "situation-123" }),
     );
   });
 
@@ -180,25 +180,28 @@ describe("canonicalId", () => {
     const rawNamespace = "J" + String.fromCharCode(0x030c) + "ndw";
     const obs = makeObservation({ source: rawNamespace });
     expect(canonicalId(obs)).toBe(
-      canonicalId({ namespace: rawNamespace, recordId: "situation-123" })
+      canonicalId({ namespace: rawNamespace, recordId: "situation-123" }),
     );
   });
 
   it("throws a TypeError when namespace or recordId is not a string", () => {
     expect(() =>
-      canonicalId({ namespace: "ndw", recordId: 123 } as unknown as CanonicalIdentityParts)
+      canonicalId({ namespace: "ndw", recordId: 123 } as unknown as CanonicalIdentityParts),
     ).toThrow(TypeError);
     expect(() =>
-      canonicalId({ namespace: 42, recordId: "situation-123" } as unknown as CanonicalIdentityParts)
+      canonicalId({
+        namespace: 42,
+        recordId: "situation-123",
+      } as unknown as CanonicalIdentityParts),
     ).toThrow(TypeError);
   });
 
   it("matches the pinned known-answer digest", () => {
     expect(canonicalId({ namespace: "ndw", recordId: "situation-123" })).toBe(
-      "fbd61b25e9b770e2f17402764326a8bcb22304148c01261123cd348ec95f8c29"
+      "fbd61b25e9b770e2f17402764326a8bcb22304148c01261123cd348ec95f8c29",
     );
     expect(canonicalId(makeObservation())).toBe(
-      "fbd61b25e9b770e2f17402764326a8bcb22304148c01261123cd348ec95f8c29"
+      "fbd61b25e9b770e2f17402764326a8bcb22304148c01261123cd348ec95f8c29",
     );
   });
 });
@@ -229,10 +232,10 @@ describe("phenomenonFingerprint", () => {
   it("separates events with a different type or domain", () => {
     const a = makeEvent();
     expect(phenomenonFingerprint(a)).not.toBe(
-      phenomenonFingerprint(makeEvent({ type: "roadwork" }))
+      phenomenonFingerprint(makeEvent({ type: "roadwork" })),
     );
     expect(phenomenonFingerprint(a)).not.toBe(
-      phenomenonFingerprint(makeEvent({ domain: "transit" }))
+      phenomenonFingerprint(makeEvent({ domain: "transit" })),
     );
   });
 
@@ -266,7 +269,7 @@ describe("phenomenonFingerprint", () => {
       aggregation: "live",
     };
     expect(() => phenomenonFingerprint(measurement as unknown as ConditionEvent)).toThrow(
-      TypeError
+      TypeError,
     );
   });
 
@@ -278,7 +281,7 @@ describe("phenomenonFingerprint", () => {
 
   it("matches the pinned known-answer digest", () => {
     expect(phenomenonFingerprint(makeEvent())).toBe(
-      "54f9e59c114a96807ab5818a9f4a8420a7b86802db3a4f1a91c2dea54f464f8b"
+      "54f9e59c114a96807ab5818a9f4a8420a7b86802db3a4f1a91c2dea54f464f8b",
     );
   });
 
@@ -298,7 +301,7 @@ describe("phenomenonFingerprint", () => {
     expect(() => phenomenonFingerprint(evt, { gridMeters: 0 })).toThrow(TypeError);
     expect(() => phenomenonFingerprint(evt, { gridMeters: -5 })).toThrow(TypeError);
     expect(() => phenomenonFingerprint(evt, { gridMeters: Number.POSITIVE_INFINITY })).toThrow(
-      TypeError
+      TypeError,
     );
     expect(() => phenomenonFingerprint(evt, { timeBucketSec: 0 })).toThrow(TypeError);
     expect(() => phenomenonFingerprint(evt, { timeBucketSec: Number.NaN })).toThrow(TypeError);
@@ -312,7 +315,7 @@ describe("phenomenonFingerprint", () => {
     const b = makeEvent({ geometry: { type: "Point", coordinates: [6.502, 52.0] } });
     expect(phenomenonFingerprint(a)).not.toBe(phenomenonFingerprint(b));
     expect(phenomenonFingerprint(a, { gridMeters: 1000 })).toBe(
-      phenomenonFingerprint(b, { gridMeters: 1000 })
+      phenomenonFingerprint(b, { gridMeters: 1000 }),
     );
   });
 
@@ -321,7 +324,7 @@ describe("phenomenonFingerprint", () => {
     const b = makeEvent({ validFrom: "2026-07-10T12:02:00Z" });
     expect(phenomenonFingerprint(a)).toBe(phenomenonFingerprint(b));
     expect(phenomenonFingerprint(a, { timeBucketSec: 60 })).not.toBe(
-      phenomenonFingerprint(b, { timeBucketSec: 60 })
+      phenomenonFingerprint(b, { timeBucketSec: 60 }),
     );
   });
 
@@ -329,7 +332,7 @@ describe("phenomenonFingerprint", () => {
     const a = makeEvent({ type: "incident" });
     const b = makeEvent({ type: "roadwork" });
     expect(phenomenonFingerprint(a, { typeDepth: 1 })).toBe(
-      phenomenonFingerprint(b, { typeDepth: 1 })
+      phenomenonFingerprint(b, { typeDepth: 1 }),
     );
   });
 });
@@ -463,18 +466,18 @@ describe("phenomenonFingerprintNeighborhood", () => {
 
   it("carries the same TypeError guards as phenomenonFingerprint", () => {
     expect(() => phenomenonFingerprintNeighborhood(makeEvent({ validFrom: null }))).toThrow(
-      TypeError
+      TypeError,
     );
     expect(() =>
       phenomenonFingerprintNeighborhood(
-        makeEvent({ geometry: { type: "Point", coordinates: [Number.NaN, 52.0] } })
-      )
+        makeEvent({ geometry: { type: "Point", coordinates: [Number.NaN, 52.0] } }),
+      ),
     ).toThrow(TypeError);
     expect(() => phenomenonFingerprintNeighborhood(makeEvent(), { gridMeters: 0 })).toThrow(
-      TypeError
+      TypeError,
     );
     expect(() => phenomenonFingerprintNeighborhood(makeEvent(), { typeDepth: 3 })).toThrow(
-      TypeError
+      TypeError,
     );
     const measurement: Measurement = {
       ...makeObservation(),
@@ -485,7 +488,7 @@ describe("phenomenonFingerprintNeighborhood", () => {
       aggregation: "live",
     };
     expect(() =>
-      phenomenonFingerprintNeighborhood(measurement as unknown as ConditionEvent)
+      phenomenonFingerprintNeighborhood(measurement as unknown as ConditionEvent),
     ).toThrow(TypeError);
   });
 });
@@ -505,7 +508,7 @@ describe("centroid", () => {
             [6, 4],
           ],
         ],
-      })
+      }),
     ).toEqual([3, 2]);
   });
 
@@ -523,7 +526,7 @@ describe("centroid", () => {
             ],
           },
         ],
-      })
+      }),
     ).toEqual([2, 2]);
   });
 
@@ -539,7 +542,7 @@ describe("centroid", () => {
             [0, 2],
           ],
         ],
-      })
+      }),
     ).toEqual([1, 1]);
   });
 
@@ -625,10 +628,10 @@ describe("timeBucket", () => {
 
   it("respects explicit UTC offsets", () => {
     expect(timeBucket("2026-07-10T14:00:00+02:00", 300)).toBe(
-      timeBucket("2026-07-10T12:00:00Z", 300)
+      timeBucket("2026-07-10T12:00:00Z", 300),
     );
     expect(timeBucket("2026-07-10T14:00:00+0200", 300)).toBe(
-      timeBucket("2026-07-10T12:00:00Z", 300)
+      timeBucket("2026-07-10T12:00:00Z", 300),
     );
   });
 

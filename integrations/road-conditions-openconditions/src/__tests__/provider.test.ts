@@ -27,7 +27,7 @@ function makeCtx(
     fetchByUrl?: (url: string) => unknown;
     captureFetch?: (url: string, options?: { params?: Record<string, unknown> }) => void;
     serviceUrl?: string;
-  }
+  },
 ): { ctx: IntegrationContext; registered: RoadConditionsProvider[] } {
   const registered: RoadConditionsProvider[] = [];
   const ctx: IntegrationContext = {
@@ -42,7 +42,7 @@ function makeCtx(
     http: {
       async get<T = unknown>(
         url: string,
-        options?: { params?: Record<string, unknown> }
+        options?: { params?: Record<string, unknown> },
       ): Promise<T> {
         opts?.captureFetch?.(url, options);
         return (opts?.fetchByUrl?.(url) ??
@@ -149,21 +149,21 @@ describe("road-conditions-openconditions provider", () => {
                 conditions: [{ id: "evt-001", routing_evidence: evidence }],
               }
             : undefined,
-      }
+      },
     );
     setup(ctx);
     const events = await registered[0]!.getEvents([4, 51, 6, 53]);
     expect(events[0]?.routingEvidence).toEqual(evidence);
     evidence.segments[0]!.segment_id = "2:f";
     await expect(registered[0]!.getRoutingEvents!([4, 51, 6, 53])).rejects.toThrow(
-      /Binding changed/
+      /Binding changed/,
     );
     evidence.segments[0]!.segment_id = "1:f";
     evidence.observation_revision = "new-body";
     evidence.binding_revision = "new-body";
     expect((await registered[0]!.getEvents([4, 51, 6, 53]))[0]?.routingEvidence).toBeUndefined();
     await expect(registered[0]!.getRoutingEvents!([4, 51, 6, 53])).rejects.toThrow(
-      /changed during routing read/
+      /changed during routing read/,
     );
   });
 
@@ -399,7 +399,7 @@ describe("complete routing observations", () => {
     const { ctx, registered } = makeCtx(Array(100001).fill(fakeRow), { fetchFc: complete });
     setup(ctx);
     await expect(registered[0]!.getRoutingEvents!([4, 51, 6, 53])).rejects.toThrow(
-      /complete|limit/i
+      /complete|limit/i,
     );
   });
   it("does not interpret unavailable storage or incomplete evidence as empty coverage", async () => {

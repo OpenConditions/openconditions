@@ -1,10 +1,10 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import Fastify from "fastify";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
-import { FeedStatusStore } from "../feed-status.js";
+import Fastify from "fastify";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildDomainRegistry } from "../domains.js";
+import { FeedStatusStore } from "../feed-status.js";
 import { registerPublishRoutes } from "../publish-routes.js";
 
 let sql: postgres.Sql;

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   createInMemoryRateLimiter,
-  ratePolicyForTier,
   RATE_DOWNGRADE_COOLDOWN_SEC,
   RATE_DOWNGRADE_WINDOWS,
   RATE_MAX_PAGE_SIZE,
+  ratePolicyForTier,
 } from "../rate.js";
 
 const MIN = 60_000;
@@ -16,7 +16,7 @@ function burstOverCap(
   peerId: string,
   tier: 0 | 1 | 2,
   cap: number,
-  now: number
+  now: number,
 ): void {
   const page = Math.min(200, cap);
   let admitted = 0;

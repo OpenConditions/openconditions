@@ -21,7 +21,7 @@ describe("loadFeedFiles", () => {
     writeFileSync(join(dir, "a.json5"), `[{ id: "a1", cadenceSec: 60 /* fast */ }]`);
     writeFileSync(
       join(dir, "b.json5"),
-      `[{ id: "b1", cadenceSec: 300 }, { id: "b2", cadenceSec: 300 },]`
+      `[{ id: "b1", cadenceSec: 300 }, { id: "b2", cadenceSec: 300 },]`,
     );
     // A non-json5 file is ignored.
     writeFileSync(join(dir, "README.md"), "ignore me");

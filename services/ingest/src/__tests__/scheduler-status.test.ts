@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { FeedStatusStore } from "../feed-status.js";
-import { runFeedOnce } from "../scheduler.js";
 import type { DomainFeedSource } from "../pipeline/run.js";
+import { runFeedOnce } from "../scheduler.js";
 
 const feed = { id: "demo", domain: "roads" } as unknown as DomainFeedSource;
 
@@ -16,7 +16,7 @@ describe("runFeedOnce", () => {
       {
         runSource,
         now: () => "2026-07-01T00:00:00.000Z",
-      }
+      },
     );
     expect(store.get("demo")).toMatchObject({
       lastRowCount: 7,

@@ -13,8 +13,9 @@
  * Delete tombstones always pass: a retraction must reach every subscriber that
  * might still hold the object, and it carries no content to filter on.
  */
-import type { Geometry, Position } from "geojson";
+
 import { filterForPermissiveExport } from "@openconditions/publishers";
+import type { Geometry, Position } from "geojson";
 import type { OutboxEntry } from "./outbox.js";
 
 export interface FederationFilter {
@@ -39,7 +40,7 @@ export const EVIDENCE_TIERS = ["self_reported", "corroborated", "externally_reso
 export const DEFAULT_MIN_EVIDENCE_TIER = "corroborated";
 
 const TIER_RANK: Record<string, number> = Object.fromEntries(
-  EVIDENCE_TIERS.map((tier, rank) => [tier, rank])
+  EVIDENCE_TIERS.map((tier, rank) => [tier, rank]),
 );
 
 function bboxOfPositions(positions: Position[], acc: number[]): void {
@@ -96,7 +97,7 @@ function intersectsBbox(geometry: Geometry, bbox: [number, number, number, numbe
 export function applyFederationFilter(
   entries: OutboxEntry[],
   filter: FederationFilter | undefined,
-  now: string
+  now: string,
 ): OutboxEntry[] {
   const permissiveOnly = filter?.permissiveOnly ?? true;
   const minTier = filter?.minEvidenceTier ?? DEFAULT_MIN_EVIDENCE_TIER;

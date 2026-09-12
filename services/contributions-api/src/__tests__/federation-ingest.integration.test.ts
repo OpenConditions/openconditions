@@ -1,14 +1,14 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
-import { phenomenonFingerprint, type ConditionEvent, type OriginHop } from "@openconditions/core";
+import { type ConditionEvent, type OriginHop, phenomenonFingerprint } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
+  type FederatedIngestContext,
   FederatedPageError,
   ingestFederatedObservation,
   ingestFederatedPage,
   ingestPeerOutbox,
-  type FederatedIngestContext,
 } from "../federation/ingest.js";
 
 let sql: postgres.Sql;
@@ -136,7 +136,7 @@ describe("federation context preserves origin (landing)", () => {
           reporter: { keyId: "leaked-reporter-key" },
         },
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome.outcome).toBe("inserted");
 
@@ -168,7 +168,7 @@ describe("federation context preserves origin (landing)", () => {
           reporter: { keyId: "smuggled-feed-key" },
         },
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome.outcome).toBe("inserted");
 
@@ -197,7 +197,7 @@ describe("federation context preserves origin (landing)", () => {
           },
         ],
       },
-      PEER_A
+      PEER_A,
     );
     expect(result.accepted).toBe(0);
     expect(result.skipped).toHaveLength(1);
@@ -213,14 +213,14 @@ describe("exact resupply collapse on canonicalId", () => {
     const first = await ingestFederatedObservation(
       sql,
       fedEvent({ id: "ndw:situation-2", canonicalId, instanceId: "peer-a" }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(first.outcome).toBe("inserted");
 
     const second = await ingestFederatedObservation(
       sql,
       fedEvent({ id: "ndw:situation-2", canonicalId, instanceId: "peer-b" }) as never,
-      PEER_B
+      PEER_B,
     );
     expect(second.outcome).toBe("resupplied");
 
@@ -237,7 +237,7 @@ describe("exact resupply collapse on canonicalId", () => {
     const again = await ingestFederatedObservation(
       sql,
       fedEvent({ id: "ndw:situation-2", canonicalId, instanceId: "peer-b" }) as never,
-      PEER_B
+      PEER_B,
     );
     expect(again.outcome).toBe("resupplied");
     const rows = await rowsByCanonical(canonicalId);
@@ -255,7 +255,7 @@ describe("exact resupply collapse on canonicalId", () => {
         headline: "Obstruction on A2 — lane reopened",
         dataUpdatedAt: newer,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome).toMatchObject({ outcome: "resupplied", contentUpdated: true });
     const rows = await rowsByCanonical(canonicalId);
@@ -275,7 +275,7 @@ describe("exact resupply collapse on canonicalId", () => {
         headline: "stale headline",
         dataUpdatedAt: older,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome).toMatchObject({ outcome: "resupplied", contentUpdated: false });
     const rows = await rowsByCanonical(canonicalId);
@@ -293,7 +293,7 @@ describe("exact resupply collapse on canonicalId", () => {
         headline: "peer-b's rewrite attempt",
         dataUpdatedAt: newest,
       }) as never,
-      PEER_B
+      PEER_B,
     );
     expect(outcome).toMatchObject({ outcome: "resupplied", contentUpdated: false });
     const rows = await rowsByCanonical(canonicalId);
@@ -323,7 +323,7 @@ describe("exact resupply collapse on canonicalId", () => {
         headline: "peer version",
         dataUpdatedAt: newer,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome).toMatchObject({ outcome: "skipped", reason: "non-owned-collision" });
 
@@ -340,7 +340,7 @@ describe("exact resupply collapse on canonicalId", () => {
     await ingestFederatedObservation(
       sql,
       fedEvent({ id: "peer-a:feed-x", instanceId: "peer-a", canonicalId: feedCanonical }) as never,
-      PEER_A
+      PEER_A,
     );
     // Peer B independently ingested the SAME upstream NDW record (feed
     // canonicalId is source-derived) → legitimate cross-peer resupply, joins
@@ -353,7 +353,7 @@ describe("exact resupply collapse on canonicalId", () => {
         canonicalId: feedCanonical,
         headline: "peer-b restatement",
       }) as never,
-      PEER_B
+      PEER_B,
     );
     expect(outcome).toMatchObject({ outcome: "resupplied", contentUpdated: false });
     const rows = await rowsByCanonical(feedCanonical);
@@ -377,7 +377,7 @@ describe("exact resupply collapse on canonicalId", () => {
         privacyClass: "crowd_pseudonym",
         origin: crowdOrigin,
       }) as never,
-      PEER_A
+      PEER_A,
     );
 
     const outcome = await ingestFederatedObservation(
@@ -390,7 +390,7 @@ describe("exact resupply collapse on canonicalId", () => {
         origin: crowdOrigin,
         headline: "forged crowd collision",
       }) as never,
-      PEER_B
+      PEER_B,
     );
     expect(outcome).toMatchObject({ outcome: "skipped", reason: "non-owned-collision" });
     const row = await rowById("peer-a:crowd-1");
@@ -466,7 +466,7 @@ describe("phenomenonFingerprint feeds the typed matcher — never auto-collapse"
         validFrom: VALID_FROM,
         dataUpdatedAt: VALID_FROM,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome.outcome).toBe("inserted");
     expect(outcome.outcome === "inserted" && outcome.corroborated).toEqual(["crowd:local-1"]);
@@ -518,7 +518,7 @@ describe("phenomenonFingerprint feeds the typed matcher — never auto-collapse"
         validFrom: VALID_FROM,
         dataUpdatedAt: VALID_FROM,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome.outcome).toBe("inserted");
     expect(outcome.outcome === "inserted" && outcome.corroborated).toEqual([]);
@@ -535,7 +535,7 @@ describe("replaces — supersession only", () => {
     const v1 = await ingestFederatedObservation(
       sql,
       fedEvent({ id: "peer-a:versioned-1", canonicalId: "f2".repeat(32) }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(v1.outcome).toBe("inserted");
 
@@ -547,7 +547,7 @@ describe("replaces — supersession only", () => {
         headline: "superseding version",
         replaces: ["peer-a:versioned-1"],
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(v2.outcome).toBe("inserted");
     expect(v2.outcome === "inserted" && v2.superseded).toEqual(["peer-a:versioned-1"]);
@@ -575,7 +575,7 @@ describe("replaces — supersession only", () => {
         canonicalId: "c5".repeat(32),
         replaces: ["local:protected-1"],
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome.outcome).toBe("inserted");
     expect(outcome.outcome === "inserted" && outcome.superseded).toEqual([]);
@@ -599,7 +599,7 @@ describe("page ingest — skip-and-report, cursor, shared pull path", () => {
         autoCorroborateOnLanding: async () => {
           throw new Error("local matcher failure");
         },
-      }
+      },
     );
     expect(outcome).toMatchObject({ outcome: "inserted", observationId: id, corroborated: [] });
     expect(await evidenceCount(id)).toEqual([{ kind: "report", actor: null }]);
@@ -658,7 +658,7 @@ describe("page ingest — skip-and-report, cursor, shared pull path", () => {
           txid: "902",
         })),
       },
-      PEER_A
+      PEER_A,
     );
     expect(result.accepted).toBe(2);
     expect(result.skipped.map((entry) => entry.objectId)).toEqual([
@@ -701,7 +701,7 @@ describe("page ingest — skip-and-report, cursor, shared pull path", () => {
           { seq: 4, txid: "901", operation: "create", objectId: "no-obs" },
         ],
       },
-      PEER_A
+      PEER_A,
     );
     expect(result.accepted).toBe(1);
     expect(result.skipped.map((s) => s.objectId).sort()).toEqual([
@@ -755,7 +755,7 @@ describe("page ingest — skip-and-report, cursor, shared pull path", () => {
     const outcome = await ingestFederatedObservation(
       sql,
       fedEvent({ id: "shared:id-1", canonicalId: "a9".repeat(32), headline: "clobber" }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome).toMatchObject({
       outcome: "skipped",
@@ -799,7 +799,7 @@ describe("federated CROWD → LOCAL feed route-without-training", () => {
              .replace(/[^a-f0-9]/gi, "")
              .slice(0, 30)
              .padEnd(30, "0")
-         },
+},
          'authoritative')`;
   }
 
@@ -882,7 +882,7 @@ describe("federated CROWD → LOCAL feed route-without-training", () => {
              .replace(/[^a-f0-9]/gi, "")
              .slice(0, 30)
              .padEnd(30, "0")
-         },
+},
          'crowd_pseudonym')`;
     await sql`
       INSERT INTO conditions.report_evidence
@@ -904,7 +904,7 @@ describe("federated CROWD → LOCAL feed route-without-training", () => {
         validFrom: VALID_FROM,
         dataUpdatedAt: VALID_FROM,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome.outcome).toBe("inserted");
 
@@ -947,7 +947,7 @@ describe("federated CROWD → LOCAL feed route-without-training", () => {
         validFrom: VALID_FROM,
         dataUpdatedAt: VALID_FROM,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome.outcome).toBe("inserted");
 
@@ -1003,7 +1003,7 @@ describe("federated CROWD → LOCAL feed route-without-training", () => {
         validFrom: fValidFrom,
         dataUpdatedAt: fValidFrom,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome.outcome).toBe("inserted");
 
@@ -1055,7 +1055,7 @@ describe("federated CROWD → LOCAL feed route-without-training", () => {
         validFrom: VALID_FROM,
         dataUpdatedAt: VALID_FROM,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(outcome.outcome).toBe("inserted");
     const row = await rowById("peer-a:fedcrowd-vs-fedfeed");
@@ -1090,7 +1090,7 @@ describe("federated CROWD → LOCAL feed route-without-training", () => {
             validFrom: VALID_FROM,
             dataUpdatedAt: VALID_FROM,
           }) as never,
-          PEER_A
+          PEER_A,
         );
         expect(outcome.outcome).toBe("inserted");
       }
@@ -1109,7 +1109,7 @@ describe("federated CROWD → LOCAL feed route-without-training", () => {
     const routeLogs = logged.filter((m) => m.includes("routed federated crowd"));
     expect(routeLogs.length).toBe(ids.length);
     expect(routeLogs.every((m) => m.includes("peer peer-a") && m.includes("route:spam-feed"))).toBe(
-      true
+      true,
     );
     // No reputation trained by any of the spam routes — the deterrent is the
     // per-peer kill-switch, not per-report throttling.
@@ -1168,7 +1168,7 @@ describe("re-cross-validate on a content-updating federated resupply", () => {
              .replace(/[^a-f0-9]/gi, "")
              .slice(0, 30)
              .padEnd(30, "0")
-         },
+},
          'authoritative')`;
   }
 
@@ -1218,7 +1218,7 @@ describe("re-cross-validate on a content-updating federated resupply", () => {
         validFrom: VALID_FROM,
         dataUpdatedAt: VALID_FROM,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(first.outcome).toBe("inserted");
     expect((await rowById("peer-a:resup-route"))!.routing_eligible).toBe(false);
@@ -1239,7 +1239,7 @@ describe("re-cross-validate on a content-updating federated resupply", () => {
         validFrom: VALID_FROM,
         dataUpdatedAt: newer,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(resup).toMatchObject({ outcome: "resupplied", contentUpdated: true });
 
@@ -1263,7 +1263,7 @@ describe("re-cross-validate on a content-updating federated resupply", () => {
         validFrom: VALID_FROM,
         dataUpdatedAt: VALID_FROM,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(first.outcome).toBe("inserted");
 
@@ -1288,7 +1288,7 @@ describe("re-cross-validate on a content-updating federated resupply", () => {
         validFrom: VALID_FROM,
         dataUpdatedAt: older,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(resup).toMatchObject({ outcome: "resupplied", contentUpdated: false });
 
@@ -1309,7 +1309,7 @@ describe("re-cross-validate on a content-updating federated resupply", () => {
         validFrom: VALID_FROM,
         dataUpdatedAt: VALID_FROM,
       }) as never,
-      PEER_A
+      PEER_A,
     );
     expect(first.outcome).toBe("inserted");
     await seedLocalFeed({
@@ -1336,7 +1336,7 @@ describe("re-cross-validate on a content-updating federated resupply", () => {
         crossValidateAgainstFeeds: async () => {
           throw new Error("boom");
         },
-      }
+      },
     );
     // The resupply still succeeded despite the thrown cross-validate.
     expect(resup).toMatchObject({ outcome: "resupplied", contentUpdated: true });

@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   BudgetLedger,
   plannedPartitions,
-  releaseWithDp,
-  ReleaseStore,
   type ReleaseFaults,
+  ReleaseStore,
+  releaseWithDp,
   type SpeedTuple,
 } from "../index.js";
 import {
@@ -86,7 +86,7 @@ describe("invariant 6: grey-box add/remove-one-device-epoch audit", () => {
       ];
       const clean = run(dirtyData);
       expect(
-        allSumValues(clean.mechanism).every((v) => Number.isFinite(v) && v >= 0 && v <= 200)
+        allSumValues(clean.mechanism).every((v) => Number.isFinite(v) && v >= 0 && v <= 200),
       ).toBe(true);
 
       const buggy = run(dirtyData, { skipClamp: true });

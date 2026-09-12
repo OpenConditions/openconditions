@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import type { FeedSource } from "@openconditions/roads";
+import { describe, expect, it } from "vitest";
 import { clearSiteTableCache, loadSiteTable } from "../site-table.js";
 
 describe("loadSiteTable — URL template expansion", () => {

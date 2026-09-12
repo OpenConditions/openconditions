@@ -1,8 +1,8 @@
 import {
   centroid,
+  type GeoJsonGeometry,
   haversineMeters,
   isoUtcEpochMs,
-  type GeoJsonGeometry,
 } from "@openconditions/core";
 
 /**
@@ -46,7 +46,7 @@ export function impliedSpeedKmh(prev: PriorReport, next: PriorReport): number | 
 export function isKinematicallyPlausible(
   prev: PriorReport,
   next: PriorReport,
-  maxKmh = 400
+  maxKmh = 400,
 ): boolean {
   const speed = impliedSpeedKmh(prev, next);
   return speed === null || speed <= maxKmh;

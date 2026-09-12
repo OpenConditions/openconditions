@@ -41,7 +41,7 @@ describe("lintFeedDir", () => {
     // 169.254.169.254 is the cloud-metadata SSRF target — a literal IP, so no DNS.
     writeFileSync(
       join(dir, "ssrf.json5"),
-      JSON.stringify([{ ...ok, url: "http://169.254.169.254/latest/meta-data" }])
+      JSON.stringify([{ ...ok, url: "http://169.254.169.254/latest/meta-data" }]),
     );
     expect(lintFeedDir(dir).join("\n")).toMatch(/169\.254\.169\.254/);
   });
@@ -49,7 +49,7 @@ describe("lintFeedDir", () => {
   it("catches a private / link-local siteTable.url", () => {
     writeFileSync(
       join(dir, "ssrf-sitetable.json5"),
-      JSON.stringify([{ ...ok, siteTable: { url: "http://169.254.169.254/latest/meta-data" } }])
+      JSON.stringify([{ ...ok, siteTable: { url: "http://169.254.169.254/latest/meta-data" } }]),
     );
     expect(lintFeedDir(dir).join("\n")).toMatch(/169\.254\.169\.254/);
   });
@@ -65,7 +65,7 @@ describe("lintFeedDir", () => {
             format: "webtris-sites",
           },
         },
-      ])
+      ]),
     );
     expect(lintFeedDir(dir).join("\n")).toMatch(/169\.254\.169\.254/);
   });
@@ -73,7 +73,7 @@ describe("lintFeedDir", () => {
   it("catches a url template referencing a var outside requiredEnv/auth (undeclared)", () => {
     writeFileSync(
       join(dir, "leaky.json5"),
-      JSON.stringify([{ ...ok, url: "https://x.test/a?x=${DATABASE_URL}" }])
+      JSON.stringify([{ ...ok, url: "https://x.test/a?x=${DATABASE_URL}" }]),
     );
     expect(lintFeedDir(dir).join("\n")).toMatch(/undeclared variable \$\{DATABASE_URL\}/);
   });
@@ -83,7 +83,7 @@ describe("lintFeedDir", () => {
       join(dir, "leaky-body.json5"),
       JSON.stringify([
         { ...ok, method: "POST", bodyTemplate: '<r key="${API_KEY}"/>', requiredEnv: undefined },
-      ])
+      ]),
     );
     expect(lintFeedDir(dir).join("\n")).toMatch(/undeclared variable \$\{API_KEY\}/);
   });
@@ -91,7 +91,7 @@ describe("lintFeedDir", () => {
   it("accepts a url template whose var is declared in requiredEnv", () => {
     writeFileSync(
       join(dir, "declared.json5"),
-      JSON.stringify([{ ...ok, url: "https://x.test/a?x=${MY_VAR}", requiredEnv: ["MY_VAR"] }])
+      JSON.stringify([{ ...ok, url: "https://x.test/a?x=${MY_VAR}", requiredEnv: ["MY_VAR"] }]),
     );
     expect(lintFeedDir(dir)).toEqual([]);
   });

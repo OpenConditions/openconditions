@@ -1,7 +1,13 @@
 export type GrantState = "yes" | "no" | "unknown";
 
 export type CanonicalVehicleClass =
-  "motor_vehicle" | "car" | "truck" | "bus" | "motorcycle" | "bicycle" | "pedestrian";
+  | "motor_vehicle"
+  | "car"
+  | "truck"
+  | "bus"
+  | "motorcycle"
+  | "bicycle"
+  | "pedestrian";
 
 export interface RoutingApplicability {
   kind: "all" | "classes" | "unknown";
@@ -81,7 +87,7 @@ function finiteInstant(value: string | null): number | null {
  */
 export function routingEvidenceReasons(
   evidence: RoadConditionRoutingEvidence,
-  evaluatedAt: Date
+  evaluatedAt: Date,
 ): string[] {
   const reasons: string[] = [];
   const now = evaluatedAt.getTime();
@@ -150,7 +156,7 @@ export function routingEvidenceReasons(
         !Number.isFinite(span.to_fraction) ||
         span.from_fraction < 0 ||
         span.to_fraction > 1 ||
-        span.from_fraction > span.to_fraction
+        span.from_fraction > span.to_fraction,
     )
   ) {
     reasons.push("invalid_segment_span");

@@ -317,6 +317,6 @@ describe("host speed and freshness fields", () => {
       })[0];
       expect(event?.isStale).toBe(true);
       expect(event?.speedLimitKph).toBe(speed === 40 ? 40 : undefined);
-    }
+    },
   );
 });

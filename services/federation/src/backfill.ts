@@ -19,15 +19,16 @@
  * cursor and the xmin fence — pre-floor entries are never scanned, so they never
  * count against the page limit and never break gap-freeness within the window.
  */
-import type postgres from "postgres";
+
 import {
-  OUTBOX_CURSOR_START,
   decodeOutboxCursor,
-  readOutbox,
   type FederationFilter,
+  OUTBOX_CURSOR_START,
   type OutboxCursor,
   type OutboxPage,
+  readOutbox,
 } from "@openconditions/federation";
+import type postgres from "postgres";
 
 /** Tier 0 (public) serves the last 24 hours. */
 export const BACKFILL_WINDOW_TIER_0_SEC = 86_400;
@@ -48,7 +49,7 @@ export interface BackfillWindow {
  */
 export function backfillWindowForTier(
   tier: 0 | 1 | 2,
-  governanceWindowSec: number = BACKFILL_WINDOW_TIER_2_SEC
+  governanceWindowSec: number = BACKFILL_WINDOW_TIER_2_SEC,
 ): BackfillWindow {
   switch (tier) {
     case 0:
@@ -76,7 +77,7 @@ export function backfillWindowForTier(
 export function backfillFloorIso(
   tier: 0 | 1 | 2,
   now: string,
-  governanceWindowSec?: number
+  governanceWindowSec?: number,
 ): string {
   const window = backfillWindowForTier(tier, governanceWindowSec);
   return new Date(Date.parse(now) - window.maxAgeSec * 1000).toISOString();
@@ -124,7 +125,7 @@ function normalizeCursor(after: OutboxCursor | string | undefined): OutboxCursor
 async function hasPreFloorEntries(
   sql: postgres.Sql,
   after: OutboxCursor,
-  floorIso: string
+  floorIso: string,
 ): Promise<boolean> {
   const rows = await sql<{ exists: boolean }[]>`
     SELECT EXISTS (

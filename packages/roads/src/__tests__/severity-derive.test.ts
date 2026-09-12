@@ -1,7 +1,7 @@
 import type { Observation } from "@openconditions/core";
 import { describe, expect, it } from "vitest";
-import { enrichEventSeverity } from "../severity-derive.js";
 import type { RoadEvent } from "../model.js";
+import { enrichEventSeverity } from "../severity-derive.js";
 
 const ev = (over: Record<string, unknown>): Observation =>
   ({

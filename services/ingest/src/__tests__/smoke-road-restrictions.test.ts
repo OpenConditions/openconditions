@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import type { LookupFn } from "@openconditions/ingest-framework";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runRestrictionSmoke } from "../ops/smoke-road-restrictions.js";
 
 /**
@@ -14,7 +14,7 @@ import { runRestrictionSmoke } from "../ops/smoke-road-restrictions.js";
 
 const FIXTURE_URL = new URL(
   "../../../../packages/roads/src/__tests__/fixtures/digitraffic/v2-restrictions.json",
-  import.meta.url
+  import.meta.url,
 );
 
 const V2 = "https://tie.digitraffic.fi/api/traffic-message/v2";
@@ -63,7 +63,7 @@ describe("runRestrictionSmoke", () => {
   it("accounts for a four-partition run and reports the verified restrictions", async () => {
     const report = await runRestrictionSmoke(
       { sourceId: "fi-digitraffic", outputDir },
-      { fetch: serve(roadworks()), lookup: fakeLookup, now: () => CHECKED_AT }
+      { fetch: serve(roadworks()), lookup: fakeLookup, now: () => CHECKED_AT },
     );
     expect(report.mode).toBe("validation-only");
     expect(report.checkedAt).toBe(CHECKED_AT);
@@ -100,7 +100,7 @@ describe("runRestrictionSmoke", () => {
   it("writes a report and a display artifact without the raw national payload", async () => {
     await runRestrictionSmoke(
       { sourceId: "fi-digitraffic", outputDir },
-      { fetch: serve(roadworks()), lookup: fakeLookup, now: () => CHECKED_AT }
+      { fetch: serve(roadworks()), lookup: fakeLookup, now: () => CHECKED_AT },
     );
     const report = JSON.parse(await readFile(join(outputDir, "report.json"), "utf8"));
     expect(report.sourceId).toBe("fi-digitraffic");
@@ -114,11 +114,11 @@ describe("runRestrictionSmoke", () => {
     const withoutWeights = roadworks();
     withoutWeights.features = withoutWeights.features.filter(
       (feature) =>
-        (feature["properties"] as Record<string, unknown>)["situationId"] === "GUID50468844"
+        (feature["properties"] as Record<string, unknown>)["situationId"] === "GUID50468844",
     );
     const report = await runRestrictionSmoke(
       { sourceId: "fi-digitraffic", outputDir },
-      { fetch: serve(withoutWeights), lookup: fakeLookup, now: () => CHECKED_AT }
+      { fetch: serve(withoutWeights), lookup: fakeLookup, now: () => CHECKED_AT },
     );
     expect(report.restrictions.kinds["height:m"]).toBe(1);
     expect(report.restrictions.kinds["gross_weight:kg"]).toBeUndefined();
@@ -133,8 +133,8 @@ describe("runRestrictionSmoke", () => {
           fetch: serve(roadworks(), { failWeights: true }),
           lookup: fakeLookup,
           now: () => CHECKED_AT,
-        }
-      )
+        },
+      ),
       // A failed partition surfaces as the transport error itself; either way
       // the run fails rather than reporting a smaller feed.
     ).rejects.toThrow(/503|acquisition/);
@@ -150,8 +150,8 @@ describe("runRestrictionSmoke", () => {
     await expect(
       runRestrictionSmoke(
         { sourceId: "fi-digitraffic", outputDir },
-        { fetch: broken, lookup: fakeLookup, now: () => CHECKED_AT }
-      )
+        { fetch: broken, lookup: fakeLookup, now: () => CHECKED_AT },
+      ),
     ).rejects.toThrow();
   });
 
@@ -160,37 +160,37 @@ describe("runRestrictionSmoke", () => {
     malformed.features = malformed.features.map((feature, index) =>
       index === 0
         ? { ...feature, properties: { ...(feature["properties"] as object), situationId: null } }
-        : feature
+        : feature,
     );
     await expect(
       runRestrictionSmoke(
         { sourceId: "fi-digitraffic", outputDir },
-        { fetch: serve(malformed), lookup: fakeLookup, now: () => CHECKED_AT }
-      )
+        { fetch: serve(malformed), lookup: fakeLookup, now: () => CHECKED_AT },
+      ),
     ).rejects.toThrow(/missing_identity/);
   });
 
   it("rejects an unsupported source and a missing output directory", async () => {
     await expect(
-      runRestrictionSmoke({ sourceId: "nl-ndw", outputDir }, { lookup: fakeLookup })
+      runRestrictionSmoke({ sourceId: "nl-ndw", outputDir }, { lookup: fakeLookup }),
     ).rejects.toThrow(/nl-ndw is not supported/);
     await expect(
       runRestrictionSmoke(
         { sourceId: "fi-digitraffic", outputDir: "  " },
-        { fetch: serve(roadworks()), lookup: fakeLookup }
-      )
+        { fetch: serve(roadworks()), lookup: fakeLookup },
+      ),
     ).rejects.toThrow(/output directory/);
   });
 
   it("accepts a valid complete empty snapshot as an honest empty observation", async () => {
     const report = await runRestrictionSmoke(
       { sourceId: "fi-digitraffic", outputDir },
-      { fetch: serve(EMPTY), lookup: fakeLookup, now: () => CHECKED_AT }
+      { fetch: serve(EMPTY), lookup: fakeLookup, now: () => CHECKED_AT },
     );
     expect(report.snapshot).toMatchObject({ inputCount: 0, accepted: 0 });
     expect(report.restrictions.recordsWithDetails).toBe(0);
     expect(report.notes.some((note) => note.includes("frozen fixtures remain the gate"))).toBe(
-      true
+      true,
     );
   });
 });

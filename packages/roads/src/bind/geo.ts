@@ -115,7 +115,7 @@ export function projectOntoPolyline(p: LngLat, coords: LngLat[]): Projection {
         ? 0
         : Math.max(
             0,
-            Math.min(1, ((planarP[0] - planarA[0]) * dx + (planarP[1] - planarA[1]) * dy) / len2)
+            Math.min(1, ((planarP[0] - planarA[0]) * dx + (planarP[1] - planarA[1]) * dy) / len2),
           );
     const q: LngLat = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
     const segLen = haversineMeters(a, b);
@@ -156,7 +156,7 @@ export function bboxOf(coords: LngLat[]): [number, number, number, number] {
 /** Grow a bbox by `meters` on all four sides, widening longitude by latitude. */
 export function expandBbox(
   b: [number, number, number, number],
-  meters: number
+  meters: number,
 ): [number, number, number, number] {
   const dLat = meters / METERS_PER_DEG_LAT;
   const midLat = (b[1] + b[3]) / 2;

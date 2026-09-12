@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rebindAll, rebindStale } from "../pipeline/rebind.js";
 
 let sql: postgres.Sql;
@@ -70,10 +70,10 @@ describe("rebind", () => {
     // The disabled stage returns before it can replace anything, so a pass that
     // deleted first would leave the event bindingless with parentless spans.
     expect(
-      await sql`SELECT observation_id FROM conditions.observation_binding WHERE observation_id='a:1'`
+      await sql`SELECT observation_id FROM conditions.observation_binding WHERE observation_id='a:1'`,
     ).toHaveLength(1);
     expect(
-      await sql`SELECT segment_id FROM conditions.observation_segment WHERE observation_id='a:1'`
+      await sql`SELECT segment_id FROM conditions.observation_segment WHERE observation_id='a:1'`,
     ).not.toHaveLength(0);
   }, 30_000);
 
@@ -96,7 +96,7 @@ describe("rebind", () => {
     >`SELECT segment_id FROM conditions.observation_segment WHERE observation_id='a:1'`;
     expect(segs.map((s) => s.segment_id)).toEqual(["10:f"]);
     expect(
-      await sql`SELECT segment_id FROM conditions.observation_segment WHERE observation_id='a:orphan'`
+      await sql`SELECT segment_id FROM conditions.observation_segment WHERE observation_id='a:orphan'`,
     ).toHaveLength(0);
   }, 60_000);
 
@@ -107,17 +107,17 @@ describe("rebind", () => {
         '{"roads":[{"ref":"A 46"}]}', '{"kind":"feed","attribution":{"provider":"a","license":"CC0"}}', now(), now())`;
     await rebindStale(sql, { now: () => NOW });
     expect(
-      await sql`SELECT observation_id FROM conditions.observation_binding WHERE observation_id='a:ended'`
+      await sql`SELECT observation_id FROM conditions.observation_binding WHERE observation_id='a:ended'`,
     ).toHaveLength(1);
 
     // A rebuild must not leave it claiming 'exact' with zero spans.
     await sql`UPDATE conditions.observations SET status = 'inactive' WHERE id = 'a:ended'`;
     await rebindAll(sql, { now: () => NOW });
     expect(
-      await sql`SELECT observation_id FROM conditions.observation_binding WHERE observation_id='a:ended'`
+      await sql`SELECT observation_id FROM conditions.observation_binding WHERE observation_id='a:ended'`,
     ).toHaveLength(0);
     expect(
-      await sql`SELECT segment_id FROM conditions.observation_segment WHERE observation_id='a:ended'`
+      await sql`SELECT segment_id FROM conditions.observation_segment WHERE observation_id='a:ended'`,
     ).toHaveLength(0);
   }, 60_000);
 
@@ -137,10 +137,10 @@ describe("rebind", () => {
     await sql`UPDATE conditions.observations SET status = 'inactive' WHERE id = 'a:2'`;
     expect((await rebindStale(sql, { now: () => NOW })).rebound).toBe(0);
     expect(
-      await sql`SELECT observation_id FROM conditions.observation_binding WHERE observation_id='a:2'`
+      await sql`SELECT observation_id FROM conditions.observation_binding WHERE observation_id='a:2'`,
     ).toHaveLength(0);
     expect(
-      await sql`SELECT observation_id FROM conditions.observation_segment WHERE observation_id='a:2'`
+      await sql`SELECT observation_id FROM conditions.observation_segment WHERE observation_id='a:2'`,
     ).toHaveLength(0);
   }, 60_000);
 });

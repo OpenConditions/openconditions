@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseBcnTramsFlow } from "../flow-bcn.js";
-import { parseBcnTramsStations } from "../stations-bcn.js";
 import type { SiteGeometry } from "../siteTable.js";
+import { parseBcnTramsStations } from "../stations-bcn.js";
 import type { SourceDescriptor } from "../types.js";
 
 const src = {

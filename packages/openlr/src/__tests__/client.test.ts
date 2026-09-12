@@ -55,7 +55,7 @@ describe("createResolverClient", () => {
 
   it("POSTs to <baseUrl>/resolve with the location body and returns geometry on 200", async () => {
     fetchMock.mockResolvedValue(
-      Response.json({ geometry: DUMMY_GEOMETRY, confidence: 0.95 }, { status: 200 })
+      Response.json({ geometry: DUMMY_GEOMETRY, confidence: 0.95 }, { status: 200 }),
     );
 
     const client = createResolverClient("https://resolver.example.com");
@@ -72,7 +72,7 @@ describe("createResolverClient", () => {
 
   it("strips a trailing slash from baseUrl before appending /resolve", async () => {
     fetchMock.mockResolvedValue(
-      Response.json({ geometry: DUMMY_GEOMETRY, confidence: 0.8 }, { status: 200 })
+      Response.json({ geometry: DUMMY_GEOMETRY, confidence: 0.8 }, { status: 200 }),
     );
 
     const client = createResolverClient("https://resolver.example.com/");
@@ -103,7 +103,7 @@ describe("createResolverClient", () => {
 
     const client = createResolverClient("https://resolver.example.com");
     await expect(client.resolve(DUMMY_LOCATION)).rejects.toThrow(
-      "openlr-resolver returned a 200 response with no geometry field"
+      "openlr-resolver returned a 200 response with no geometry field",
     );
   });
 
@@ -143,7 +143,7 @@ describe("createResolverClient", () => {
   ])("rejects malformed geometry: %j", async (geometry) => {
     fetchMock.mockResolvedValue(Response.json({ geometry }));
     await expect(createResolverClient("http://resolver").resolve(DUMMY_LOCATION)).rejects.toThrow(
-      "invalid LineString"
+      "invalid LineString",
     );
   });
 
@@ -158,11 +158,11 @@ describe("createResolverClient", () => {
           cancel() {
             cancelled = true;
           },
-        })
-      )
+        }),
+      ),
     );
     await expect(
-      createResolverClient("http://resolver", { maxResponseBytes: 32 }).resolve(DUMMY_LOCATION)
+      createResolverClient("http://resolver", { maxResponseBytes: 32 }).resolve(DUMMY_LOCATION),
     ).rejects.toThrow("byte limit");
     expect(cancelled).toBe(true);
   });
@@ -196,7 +196,7 @@ describe("createResolverClient", () => {
     } finally {
       server.closeAllConnections();
       await new Promise<void>((resolve, reject) =>
-        server.close((err) => (err ? reject(err) : resolve()))
+        server.close((err) => (err ? reject(err) : resolve())),
       );
     }
   });

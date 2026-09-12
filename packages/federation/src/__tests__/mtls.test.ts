@@ -20,7 +20,7 @@ describe("checkMtls", () => {
 
   it("rejects a mtlsRequired peer whose presented cert the TLS layer did not authorize", () => {
     expect(
-      checkMtls({ mtlsRequired: true }, { authorized: false, fingerprint: "AA:BB:CC" })
+      checkMtls({ mtlsRequired: true }, { authorized: false, fingerprint: "AA:BB:CC" }),
     ).toEqual({ ok: false, reason: "mtls-required" });
   });
 
@@ -34,17 +34,17 @@ describe("checkMtls", () => {
 
   it("accepts a mtlsRequired peer whose authorized cert matches a pinned fingerprint", () => {
     expect(
-      checkMtls({ mtlsRequired: true, mtlsFingerprints: ["11:22", "AA:BB:CC"] }, AUTHORIZED)
+      checkMtls({ mtlsRequired: true, mtlsFingerprints: ["11:22", "AA:BB:CC"] }, AUTHORIZED),
     ).toEqual({ ok: true });
   });
 
   it("rejects a mtlsRequired peer whose authorized cert is not in the pin set (mtls-fingerprint-mismatch)", () => {
     expect(
-      checkMtls({ mtlsRequired: true, mtlsFingerprints: ["11:22", "33:44"] }, AUTHORIZED)
+      checkMtls({ mtlsRequired: true, mtlsFingerprints: ["11:22", "33:44"] }, AUTHORIZED),
     ).toEqual({ ok: false, reason: "mtls-fingerprint-mismatch" });
     // Pinned but the authorized cert carried no fingerprint at all → mismatch.
     expect(
-      checkMtls({ mtlsRequired: true, mtlsFingerprints: ["11:22"] }, { authorized: true })
+      checkMtls({ mtlsRequired: true, mtlsFingerprints: ["11:22"] }, { authorized: true }),
     ).toEqual({ ok: false, reason: "mtls-fingerprint-mismatch" });
   });
 });

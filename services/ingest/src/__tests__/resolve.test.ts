@@ -1,7 +1,7 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Observation } from "@openconditions/core";
 import type { MapMatchClient } from "@openconditions/openlr";
-import { resolveOpenLr, clearResolveCache } from "../pipeline/resolve.js";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { clearResolveCache, resolveOpenLr } from "../pipeline/resolve.js";
 
 vi.mock("@openconditions/openlr", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@openconditions/openlr")>();

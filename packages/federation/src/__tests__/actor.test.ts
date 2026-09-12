@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  type ActorConfig,
   buildActorDocument,
   generateInstanceKey,
   parseActorConfig,
-  type ActorConfig,
 } from "../index.js";
 
 const NOW = "2026-01-01T00:00:00.000Z";
@@ -108,7 +108,7 @@ describe("buildActorDocument", () => {
         policyDocument: "https://conditions.example.org/policy",
         trustAnchors: ["z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"],
       }),
-      [key]
+      [key],
     );
     expect(full.transparencyReportUrl).toBe("https://conditions.example.org/transparency");
     expect(full.policyDocument).toBe("https://conditions.example.org/policy");
@@ -134,7 +134,7 @@ describe("parseActorConfig", () => {
     expect(() => parseActorConfig({ ...config(), trustTier: 3 })).toThrow(TypeError);
     expect(() => parseActorConfig({ ...config(), supportedTypes: "incident" })).toThrow(TypeError);
     expect(() =>
-      parseActorConfig({ ...config(), capabilities: { protocolVersion: "0.1" } })
+      parseActorConfig({ ...config(), capabilities: { protocolVersion: "0.1" } }),
     ).toThrow(TypeError);
   });
 });

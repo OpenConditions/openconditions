@@ -10,7 +10,7 @@ describe("generateInstanceKey", () => {
     expect(key.publicKeyMultibase).toMatch(/^z6Mk/);
     expect(key.publicKeyRaw).toHaveLength(32);
     expect(Array.from(rawEd25519FromMultibase(key.publicKeyMultibase))).toEqual(
-      Array.from(key.publicKeyRaw)
+      Array.from(key.publicKeyRaw),
     );
     expect(key.privateKey.algorithm.name).toBe("Ed25519");
     expect(key.privateKey.usages).toContain("sign");
@@ -23,14 +23,14 @@ describe("generateInstanceKey", () => {
     const signature = await globalThis.crypto.subtle.sign(
       { name: "Ed25519" },
       key.privateKey,
-      message
+      message,
     );
     await expect(
-      globalThis.crypto.subtle.verify({ name: "Ed25519" }, key.publicKey, signature, message)
+      globalThis.crypto.subtle.verify({ name: "Ed25519" }, key.publicKey, signature, message),
     ).resolves.toBe(true);
     const tampered = new TextEncoder().encode("federated event payload!");
     await expect(
-      globalThis.crypto.subtle.verify({ name: "Ed25519" }, key.publicKey, signature, tampered)
+      globalThis.crypto.subtle.verify({ name: "Ed25519" }, key.publicKey, signature, tampered),
     ).resolves.toBe(false);
   });
 
@@ -40,17 +40,17 @@ describe("generateInstanceKey", () => {
     const signature = await globalThis.crypto.subtle.sign(
       { name: "Ed25519" },
       key.privateKey,
-      message
+      message,
     );
     const reimported = await globalThis.crypto.subtle.importKey(
       "raw",
       key.publicKeyRaw as BufferSource,
       { name: "Ed25519" },
       true,
-      ["verify"]
+      ["verify"],
     );
     await expect(
-      globalThis.crypto.subtle.verify({ name: "Ed25519" }, reimported, signature, message)
+      globalThis.crypto.subtle.verify({ name: "Ed25519" }, reimported, signature, message),
     ).resolves.toBe(true);
   });
 

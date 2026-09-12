@@ -11,9 +11,9 @@
  * monorepo-wired: swap types.ts for the @openmapx/extension-sdk IntegrationContext
  */
 
-import type { Geometry, LineString } from "geojson";
 import type { RoadConditionRoutingEvidence } from "@openconditions/core";
 import type { PublishedRoadRestrictionDetailsV1 } from "@openconditions/roads/restrictions";
+import type { Geometry, LineString } from "geojson";
 
 /** Matches OpenMapX `IntegrationContext.db` (DatabaseClient). */
 export interface DatabaseClient {

@@ -1,7 +1,7 @@
 import path from "node:path";
 import type { CatalogResolver, FeedSourceBase } from "@openconditions/ingest-framework";
-import autobahnSnapshot from "./snapshots/autobahn-index.json" with { type: "json" };
 import { roadFeedSchema } from "../feed-schema.js";
+import autobahnSnapshot from "./snapshots/autobahn-index.json" with { type: "json" };
 
 const AUTOBAHN_BASE = "https://verkehr.autobahn.de/o/autobahn";
 

@@ -1,5 +1,5 @@
-import type postgres from "postgres";
 import { redactSecrets, redactUrl } from "@openconditions/ingest-framework";
+import type postgres from "postgres";
 
 type Sql = postgres.Sql | postgres.TransactionSql;
 
@@ -75,7 +75,7 @@ function sanitizeError(raw: string | undefined): string | undefined {
   }
   return redactSecrets(
     raw.replace(/https?:\/\/\S+/g, (url) => redactUrl(url)),
-    values
+    values,
   ).slice(0, 1_000);
 }
 
@@ -87,7 +87,7 @@ const iso = (value: Date | string | null): string | undefined =>
 export async function upsertSourceStatus(
   sql: Sql,
   sourceId: string,
-  update: SourceStatusUpdate
+  update: SourceStatusUpdate,
 ): Promise<void> {
   const attemptedAt = update.attemptAt ?? new Date().toISOString();
   const outcome = normalizedOutcome(update);
@@ -206,7 +206,7 @@ export async function upsertSourceStatus(
  * Skip locked rows so concurrent maintenance workers never wait on each other. */
 export async function pruneSourcePollAttempts(
   sql: Sql,
-  options: { now?: string; batchSize?: number } = {}
+  options: { now?: string; batchSize?: number } = {},
 ): Promise<{ deleted: number }> {
   const batchSize = options.batchSize ?? 10_000;
   if (!Number.isInteger(batchSize) || batchSize < 1 || batchSize > 10_000) {
@@ -237,7 +237,7 @@ export async function getLastRowCount(sql: Sql, sourceId: string): Promise<numbe
 }
 
 export async function readSourceOperationalStatus(
-  sql: Sql
+  sql: Sql,
 ): Promise<Map<string, SourceOperationalStatus>> {
   const rows = await sql<
     {
@@ -289,6 +289,6 @@ export async function readSourceOperationalStatus(
         ...(row.last_error ? { lastError: row.last_error } : {}),
         ...(iso(row.last_error_at) ? { lastErrorAt: iso(row.last_error_at) } : {}),
       },
-    ])
+    ]),
   );
 }

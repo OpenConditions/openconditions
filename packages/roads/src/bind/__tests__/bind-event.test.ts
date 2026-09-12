@@ -9,7 +9,7 @@ const offsetTo = (s: SpineSegment, p: [number, number]): number =>
 function seg(
   id: string,
   coords: [number, number][],
-  opts: Partial<SpineSegment> = {}
+  opts: Partial<SpineSegment> = {},
 ): SpineSegment {
   const [wayId, dir] = id.split(":");
   return {
@@ -62,7 +62,7 @@ const B = [
       [6.8, 51.197],
       [6.83, 51.197],
     ],
-    { highway: "primary", ref: "B 9" }
+    { highway: "primary", ref: "B 9" },
   ),
   seg(
     "30:b",
@@ -70,7 +70,7 @@ const B = [
       [6.83, 51.197],
       [6.8, 51.197],
     ],
-    { highway: "primary", ref: "B 9" }
+    { highway: "primary", ref: "B 9" },
   ),
 ];
 // A different road 22 m north of the Bundesstraße: same class, same heading,
@@ -82,7 +82,7 @@ const L = [
       [6.8, 51.1974],
       [6.83, 51.1974],
     ],
-    { highway: "primary", ref: "L 137" }
+    { highway: "primary", ref: "L 137" },
   ),
 ];
 for (const s of [...E, ...W, ...B, ...L])
@@ -128,7 +128,7 @@ const parallelOtherRef: SpineSubgraph = {
         [7.0, 51.00027],
         [7.02, 51.00027],
       ],
-      { ref: "L 5" }
+      { ref: "L 5" },
     ),
   ],
 };
@@ -145,7 +145,7 @@ const midway: SpineSubgraph = {
         [7.0, 51.00027],
         [7.02, 51.00027],
       ],
-      { ref: "L 5" }
+      { ref: "L 5" },
     ),
   ],
 };
@@ -162,7 +162,7 @@ const midwayRefless: SpineSubgraph = {
         [7.0, 51.00027],
         [7.02, 51.00027],
       ],
-      { ref: null }
+      { ref: null },
     ),
   ],
 };
@@ -247,7 +247,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      spine
+      spine,
     );
     expect(r.status).toBe("exact");
     expect(r.directionMode).toBe("single");
@@ -273,7 +273,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      spine
+      spine,
     );
     // The wrong carriageway is the nearer one here, so only the heading can
     // explain the answer.
@@ -297,7 +297,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      spine
+      spine,
     );
     expect(r.segments.map((s) => s.segmentId)).toEqual(["10:f", "11:f", "12:f"]);
     expect(["exact", "likely"]).toContain(r.status);
@@ -330,10 +330,10 @@ describe("bindEvent", () => {
                 [0, 0],
                 [0.01, 0],
               ],
-              { lengthM: 1112 }
+              { lengthM: 1112 },
             ),
           ],
-        }
+        },
       );
       expect(r.status).toBe(status);
       expect(r.segments.map((s) => s.dir)).toEqual(direction ? [direction] : []);
@@ -343,7 +343,7 @@ describe("bindEvent", () => {
       } else {
         expect(r.reason).toBe("no_path");
       }
-    }
+    },
   );
 
   it.each([
@@ -373,7 +373,7 @@ describe("bindEvent", () => {
                 [0, 0],
                 [0.01, 0],
               ],
-              { lengthM: 1112 }
+              { lengthM: 1112 },
             ),
             seg(
               "10:b",
@@ -381,15 +381,15 @@ describe("bindEvent", () => {
                 [0.01, 0],
                 [0, 0],
               ],
-              { lengthM: 1112 }
+              { lengthM: 1112 },
             ),
           ],
-        }
+        },
       );
       expect(r.status).toBe("exact");
       expect(r.directionMode).toBe("single");
       expect(r.segments.map((s) => s.dir)).toEqual([direction]);
-    }
+    },
   );
 
   it("treats coincident endpoints as a point without inventing travel direction", () => {
@@ -406,7 +406,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      { segments: B }
+      { segments: B },
     );
     expect(r.directionMode).toBe("both");
     expect(r.segments.map((s) => s.dir).sort()).toEqual(["b", "f"]);
@@ -421,7 +421,7 @@ describe("bindEvent", () => {
         roads: [{ name: "B9", ref: "B 9" }],
         geometry: { type: "Point", coordinates: [6.815, 51.19701] },
       }),
-      spine
+      spine,
     );
     expect(r.directionMode).toBe("both");
     expect(r.segments.map((s) => s.segmentId).sort()).toEqual(["30:b", "30:f"]);
@@ -436,7 +436,7 @@ describe("bindEvent", () => {
         roads: [{ name: "A46", ref: "A 46" }],
         geometry: { type: "Point", coordinates: [6.815, 51.20015] },
       }),
-      spine
+      spine,
     );
     expect(r.status).toBe("ambiguous");
     expect(r.directionMode).toBe("unknown");
@@ -462,8 +462,8 @@ describe("bindEvent", () => {
             ],
           },
         }),
-        spine
-      ).status
+        spine,
+      ).status,
     ).toBe("not_applicable");
     expect(
       bindEvent(
@@ -472,8 +472,8 @@ describe("bindEvent", () => {
           type: "weather",
           geometry: { type: "Point", coordinates: [6.815, 51.2] },
         }),
-        spine
-      ).status
+        spine,
+      ).status,
     ).toBe("not_applicable");
     const far = bindEvent(
       toBindInput({
@@ -481,7 +481,7 @@ describe("bindEvent", () => {
         type: "road_closure",
         geometry: { type: "Point", coordinates: [7.5, 51.5] },
       }),
-      spine
+      spine,
     );
     expect(far.status).toBe("unresolved");
     expect(far.reason).toBe("no_candidates");
@@ -501,7 +501,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      spine
+      spine,
     );
     // Both roads sit 22 m away with the same class and heading, so the ref is
     // the only thing between them.
@@ -532,12 +532,12 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      spine
+      spine,
     );
     const atNode = r.debug.samples.filter(
       (s) =>
         s.candidates.filter((c) => r.segments.some((x) => x.segmentId === c.segment.segmentId))
-          .length > 1
+          .length > 1,
     );
     expect(atNode.length).toBeGreaterThan(0);
     expect(r.debug.ambiguity).toBe(0);
@@ -553,7 +553,7 @@ describe("bindEvent", () => {
         roads: [{ ref: "A 46" }],
         geometry: { type: "Point", coordinates: [6.815, 51.20015] },
       }),
-      spine
+      spine,
     );
     expect(r.debug.ambiguity).toBeCloseTo(1, 5);
     expect(r.alternativeConfidence).toBeCloseTo(r.debug.ambiguity! * r.confidence!, 10);
@@ -574,7 +574,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      spine
+      spine,
     );
     // The end point is 1.1 m from the westbound carriageway but 34.5 m from
     // the eastbound one the reconstructed path actually runs along.
@@ -591,7 +591,7 @@ describe("bindEvent", () => {
         roads: [{ ref: "A 46" }],
         geometry: { type: "Point", coordinates: [7.01, 51.00001] },
       }),
-      chain
+      chain,
     );
     expect(r.debug.samples[0]!.candidates).toHaveLength(2);
     expect(r.directionMode).toBe("single");
@@ -607,7 +607,7 @@ describe("bindEvent", () => {
         roads: [{ ref: "A 46" }],
         geometry: { type: "Point", coordinates: [6.81, 51.20001] },
       }),
-      spine
+      spine,
     );
     // Ways 10 and 11 meet here, but the westbound carriageway is 32 m away
     // and shares no node, so the side of the road stays undecided.
@@ -629,7 +629,7 @@ describe("bindEvent", () => {
     for (const geometry of geometries) {
       const r = bindEvent(
         toBindInput({ id: "short", type: "hazard", roads: [{ ref: "A 46" }], geometry }),
-        spine
+        spine,
       );
       expect(r.directionMode).toBe("unknown");
       expect(r.status).toBe("ambiguous");
@@ -651,7 +651,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      parallel
+      parallel,
     );
     expect(r.segments.map((s) => s.segmentId)).toEqual(["60:f"]);
     expect(r.directionMode).toBe("unknown");
@@ -672,7 +672,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      parallel
+      parallel,
     );
     const mid: [number, number] = [7.01, 51.00001];
     expect(offsetTo(parallel.segments[1]!, mid)).toBeLessThan(40);
@@ -694,7 +694,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      parallelOtherRef
+      parallelOtherRef,
     );
     // Same geometry as the fixture above; only the neighbour's ref differs.
     const mid: [number, number] = [7.01, 51.00001];
@@ -718,7 +718,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      parallelOtherRef
+      parallelOtherRef,
     );
     expect(refless.directionMode).toBe("unknown");
     expect(refless.debug.ambiguity).toBeGreaterThan(0);
@@ -738,12 +738,12 @@ describe("bindEvent", () => {
           ...(c.roads ? { roads: c.roads } : {}),
           geometry: { type: "Point", coordinates: [7.01, 51.000135] },
         }),
-        c.spine
+        c.spine,
       );
       const mid: [number, number] = [7.01, 51.000135];
       expect(offsetTo(c.spine.segments[0]!, mid)).toBeCloseTo(
         offsetTo(c.spine.segments[1]!, mid),
-        1
+        1,
       );
       expect(r.directionMode).toBe("unknown");
       expect(r.status).toBe("ambiguous");
@@ -765,7 +765,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      masked
+      masked,
     );
     // The 44°-off rival outscores the parallel one, so the strongest rival
     // alone would say the heading decides; the parallel rival says otherwise.
@@ -788,7 +788,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      maskedAcross
+      maskedAcross,
     );
     // The angled rival wins the ambiguity contest at its own sample; the
     // parallel stub, several samples away, is what actually decides direction.
@@ -811,7 +811,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      angled
+      angled,
     );
     expect(r.segments.map((s) => s.segmentId)).toEqual(["70:f"]);
     expect(r.debug.ambiguity).toBeGreaterThan(0);
@@ -832,7 +832,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      spine
+      spine,
     );
     expect(r.status).toBe("unresolved");
     expect(r.reason).toBe("no_path");
@@ -853,7 +853,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      spine
+      spine,
     );
     expect(r.status).toBe("unresolved");
     expect(r.reason).toBe("no_candidates");
@@ -865,7 +865,7 @@ describe("bindEvent", () => {
         seg(`${100000 + i}:f`, [
           [6.8, 51.2],
           [6.81, 51.2],
-        ])
+        ]),
       ),
     };
     const r = bindEvent(
@@ -874,7 +874,7 @@ describe("bindEvent", () => {
         type: "road_closure",
         geometry: { type: "Point", coordinates: [6.805, 51.2] },
       }),
-      many
+      many,
     );
     expect(r.status).toBe("unresolved");
     expect(r.reason).toBe("subgraph_too_large");
@@ -887,7 +887,7 @@ describe("bindEvent", () => {
         type: "road_closure",
         geometry: { type: "LineString", coordinates: [] },
       }),
-      spine
+      spine,
     );
     expect(empty.status).toBe("unresolved");
     expect(empty.reason).toBe("no_candidates");
@@ -899,7 +899,7 @@ describe("bindEvent", () => {
         roads: [{ ref: "B 9" }],
         geometry: { type: "LineString", coordinates: [[6.815, 51.19701]] },
       }),
-      spine
+      spine,
     );
     expect(single.directionMode).toBe("both");
     expect(single.segments.map((s) => s.segmentId).sort()).toEqual(["30:b", "30:f"]);
@@ -920,7 +920,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      parallel
+      parallel,
     );
     expect(r.debug.ambiguity).toBeCloseTo(1, 5);
     expect(r.confidence).toBeGreaterThanOrEqual(0.7);
@@ -945,7 +945,7 @@ describe("bindEvent", () => {
           ],
         },
       }),
-      spine
+      spine,
     );
     expect(r.debug.samples[0]!.candidates.map((c) => c.segment.segmentId)).toContain("10:f");
     expect(r.segments.map((s) => s.segmentId)).toEqual(["11:f", "12:f"]);

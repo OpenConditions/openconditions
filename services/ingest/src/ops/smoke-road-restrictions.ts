@@ -1,14 +1,13 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { fetch as undiciFetch } from "undici";
 import type { Observation } from "@openconditions/core";
 import {
   createFetchState,
   fetchAll,
-  guardOptionsFromEnv,
   guardedFetch,
-  makeAuthorizedFetch,
+  guardOptionsFromEnv,
   type LookupFn,
+  makeAuthorizedFetch,
 } from "@openconditions/ingest-framework";
 import { normalizeObservation } from "@openconditions/normalize";
 import {
@@ -22,12 +21,13 @@ import {
   hasRestrictionEvidence,
   isRoadRestrictionDetails,
 } from "@openconditions/roads";
+import { fetch as undiciFetch } from "undici";
 import { parseRoadSnapshotFor } from "../pipeline/parse.js";
 import { resolveOpenLr } from "../pipeline/resolve.js";
 import {
+  type DomainFeedSource,
   inspectSnapshotCompleteness,
   stampSourceEvidence,
-  type DomainFeedSource,
 } from "../pipeline/run.js";
 
 /**
@@ -159,11 +159,11 @@ function tally(into: Record<string, number>, key: string): void {
  */
 export async function runRestrictionSmoke(
   options: RunRestrictionSmokeOptions,
-  deps: RunRestrictionSmokeDeps = {}
+  deps: RunRestrictionSmokeDeps = {},
 ): Promise<RestrictionSmokeReport> {
   if (options.sourceId === "nl-ndw") {
     throw new Error(
-      "smoke: nl-ndw is not supported yet — the NDW restriction slice has not been implemented"
+      "smoke: nl-ndw is not supported yet — the NDW restriction slice has not been implemented",
     );
   }
   if (!options.outputDir || options.outputDir.trim() === "") {
@@ -185,7 +185,7 @@ export async function runRestrictionSmoke(
     recordingFetch(baseFetch, requests),
     guardOptionsFromEnv(),
     {},
-    deps.lookup
+    deps.lookup,
   );
   const acquired = await fetchAll(feed, makeAuthorizedFetch(feed, guarded), {
     state: createFetchState(),
@@ -212,7 +212,7 @@ export async function runRestrictionSmoke(
     normalizeObservation(stampSourceEvidence(observation, feed), {
       kind: "feed",
       instanceId: "local-restriction-smoke",
-    })
+    }),
   );
 
   const forPublication = normalized.map((observation) => ({
@@ -281,7 +281,8 @@ export async function runRestrictionSmoke(
   const firstDetails = display.features
     .map((feature) => feature.properties?.["restrictionDetails"])
     .find((details) => isRoadRestrictionDetails(details)) as
-    { source: Record<string, string | null> } | undefined;
+    | { source: Record<string, string | null> }
+    | undefined;
 
   const notes: string[] = [];
   for (const kind of ["height:m", "width:m", "length:m", "gross_weight:kg"]) {
@@ -331,12 +332,12 @@ export async function runRestrictionSmoke(
   await writeFile(
     join(options.outputDir, "report.json"),
     `${JSON.stringify(result, null, 2)}\n`,
-    "utf8"
+    "utf8",
   );
   await writeFile(
     join(options.outputDir, "display.geojson"),
     `${JSON.stringify(redact(display), null, 2)}\n`,
-    "utf8"
+    "utf8",
   );
   return result;
 }
@@ -350,7 +351,7 @@ function parseArgs(args: string[]): RunRestrictionSmokeOptions {
   const outputDir = read("--output");
   if (sourceId !== "fi-digitraffic" && sourceId !== "nl-ndw") {
     throw new Error(
-      "usage: --source <fi-digitraffic|nl-ndw> --output <dir> [--database disposable]"
+      "usage: --source <fi-digitraffic|nl-ndw> --output <dir> [--database disposable]",
     );
   }
   if (!outputDir) throw new Error("usage: --source <id> --output <dir>");
@@ -376,12 +377,13 @@ export async function main(args: string[]): Promise<void> {
     // Loaded lazily so the default path never pulls the container runtime into
     // the ops bundle. One requested smoke is one complete acquisition, so the
     // non-database path is not run first.
-    const { runRestrictionSmokeWithDatabase } =
-      await import("./smoke-road-restrictions-database.integration.js");
+    const { runRestrictionSmokeWithDatabase } = await import(
+      "./smoke-road-restrictions-database.integration.js"
+    );
     const databaseReport = await runRestrictionSmokeWithDatabase(options);
     console.info(
       `[smoke] ${databaseReport.sourceId}: published ${databaseReport.published} row(s), ` +
-        `bound ${databaseReport.bound}, withheld ${databaseReport.withheldConditional} conditional record(s)`
+        `bound ${databaseReport.bound}, withheld ${databaseReport.withheldConditional} conditional record(s)`,
     );
     for (const note of databaseReport.notes) console.info(`[smoke] ${note}`);
     return;
@@ -391,7 +393,7 @@ export async function main(args: string[]): Promise<void> {
     `[smoke] ${report.sourceId}: ${report.snapshot.accepted} accepted, ` +
       `${report.snapshot.terminal} terminal, ${report.snapshot.unlocatable} unlocatable, ` +
       `${report.restrictions.facts} restriction fact(s) across ` +
-      `${report.restrictions.recordsWithDetails} record(s)`
+      `${report.restrictions.recordsWithDetails} record(s)`,
   );
   for (const note of report.notes) console.info(`[smoke] ${note}`);
 }

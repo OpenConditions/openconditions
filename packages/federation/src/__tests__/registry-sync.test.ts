@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { REGISTRY_SYNC_INTERVAL_HOURS, mergePeerRecords, syncRegistry } from "../registry-sync.js";
-import { TestRootInProductionError } from "../tuf/verify.js";
 import type { PeerRecord } from "../peers.js";
+import { mergePeerRecords, REGISTRY_SYNC_INTERVAL_HOURS, syncRegistry } from "../registry-sync.js";
+import { TestRootInProductionError } from "../tuf/verify.js";
 import {
   buildRepo,
   randomMultibase,
@@ -77,7 +77,7 @@ describe("syncRegistry", () => {
       syncRegistry(repo.repoDir, repo.rootBytes, {
         cacheDir: tempDir("oc-sync-cache-"),
         env: "production",
-      })
+      }),
     ).rejects.toThrow(TestRootInProductionError);
   });
 

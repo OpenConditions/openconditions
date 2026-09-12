@@ -95,7 +95,7 @@ function toSegment(p: [number, number], a: [number, number], b: [number, number]
   if (dx === 0 && dy === 0) return haversine(p, a);
   const t = Math.max(
     0,
-    Math.min(1, ((p[0] - a[0]) * k * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy))
+    Math.min(1, ((p[0] - a[0]) * k * dx + (p[1] - a[1]) * dy) / (dx * dx + dy * dy)),
   );
   return haversine(p, [a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]);
 }
@@ -138,7 +138,7 @@ function main() {
         primary: Number(r.prim) || undefined,
         secondary: Number(r.sec) || undefined,
       },
-      tables
+      tables,
     );
     if (!resolution.ok) {
       reasons.set(resolution.reason, (reasons.get(resolution.reason) ?? 0) + 1);
@@ -158,7 +158,7 @@ function main() {
       .map((p) =>
         line.length === 1
           ? haversine(p, line[0]!)
-          : Math.min(...line.slice(1).map((_, i) => toSegment(p, line[i]!, line[i + 1]!)))
+          : Math.min(...line.slice(1).map((_, i) => toSegment(p, line[i]!, line[i + 1]!))),
       )
       .sort((x, y) => x - y);
     errors.push(quantile(d, 0.5));
@@ -168,7 +168,7 @@ function main() {
   const total = errors.length + [...reasons.values()].reduce((a, b) => a + b, 0);
   console.log(`ground-truth records : ${total}`);
   console.log(
-    `resolved             : ${errors.length} (${((errors.length / total) * 100).toFixed(1)}%)`
+    `resolved             : ${errors.length} (${((errors.length / total) * 100).toFixed(1)}%)`,
   );
   for (const [reason, n] of [...reasons].sort((a, b) => b[1] - a[1])) {
     console.log(`  unresolved ${reason.padEnd(17)} ${n}`);
@@ -176,7 +176,7 @@ function main() {
   if (errors.length === 0) return;
   console.log(
     `\nplacement error      : median=${quantile(errors, 0.5).toFixed(0)}m ` +
-      `p90=${quantile(errors, 0.9).toFixed(0)}m p99=${quantile(errors, 0.99).toFixed(0)}m`
+      `p90=${quantile(errors, 0.9).toFixed(0)}m p99=${quantile(errors, 0.99).toFixed(0)}m`,
   );
   for (const t of [100, 250, 500, 1000, 2000]) {
     const share = (errors.filter((e) => e < t).length / errors.length) * 100;

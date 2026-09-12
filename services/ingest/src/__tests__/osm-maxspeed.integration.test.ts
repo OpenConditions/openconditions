@@ -1,7 +1,7 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { resolveOsmMaxspeed } from "../pipeline/osm-maxspeed.js";
 import { rollupSpeedSamples } from "../pipeline/speed-rollup.js";
 

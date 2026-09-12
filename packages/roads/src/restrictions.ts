@@ -1,9 +1,11 @@
-import { z } from "zod";
 import { isInEffectAt, nextScheduleTransition } from "@openconditions/core";
+import { z } from "zod";
 import { RESTRICTION_TEXT_LIMIT } from "./restriction-types.js";
+
 // Re-exported so a consumer that needs only the contract can import this one
 // module without pulling in the feed catalogue through the package barrel.
 export * from "./restriction-types.js";
+
 import type {
   PublishedRoadRestrictionDetailsV1,
   RestrictionCarrier,
@@ -28,7 +30,7 @@ import type {
  */
 export function hasRestrictionEvidence(value: object): boolean {
   return (
-    Object.prototype.hasOwnProperty.call(value, "restrictionDetails") ||
+    Object.hasOwn(value, "restrictionDetails") ||
     (value as RestrictionCarrier).restrictionDetailsUnsupported === true
   );
 }
@@ -101,7 +103,7 @@ function isFiniteJsonValue(value: unknown, depth: number): boolean {
   if (Array.isArray(value)) return value.every((entry) => isFiniteJsonValue(entry, depth + 1));
   if (Object.getPrototypeOf(value) !== Object.prototype) return false;
   return Object.values(value as Record<string, unknown>).every((entry) =>
-    isFiniteJsonValue(entry, depth + 1)
+    isFiniteJsonValue(entry, depth + 1),
   );
 }
 
@@ -112,7 +114,7 @@ const tokensSchema = z.custom<Record<string, unknown>>(
     !Array.isArray(value) &&
     Object.getPrototypeOf(value) === Object.prototype &&
     isFiniteJsonValue(value, 0),
-  { message: "expected a bounded finite-JSON token object" }
+  { message: "expected a bounded finite-JSON token object" },
 );
 
 const boundedText = z.string().max(RESTRICTION_TEXT_LIMIT);
@@ -336,7 +338,7 @@ export function isRoadRestrictionDetails(value: unknown): value is RoadRestricti
 
 /** Strict validation of a published (evaluated) restriction envelope. */
 export function isPublishedRoadRestrictionDetails(
-  value: unknown
+  value: unknown,
 ): value is PublishedRoadRestrictionDetailsV1 {
   return publishedDetailsSchema.safeParse(value).success;
 }
@@ -430,7 +432,7 @@ const TEMPORAL_BLOCKING_CODES: ReadonlySet<string> = new Set([
 
 function factIssueCodes(
   details: RoadRestrictionDetailsV1,
-  factId: string
+  factId: string,
 ): { temporalUnknown: boolean; statusUnsupported: boolean } {
   let temporalUnknown = false;
   let statusUnsupported = false;
@@ -445,7 +447,7 @@ function factIssueCodes(
 
 function scheduleState(
   fact: RoadRestrictionFact,
-  at: Date
+  at: Date,
 ): "active" | "scheduled" | "ended" | "unknown" {
   const schedules = fact.schedule ?? [];
   if (isInEffectAt({ validFrom: fact.validFrom, validTo: fact.validTo, schedule: schedules }, at)) {
@@ -470,7 +472,7 @@ function scheduleState(
 function evaluateFactState(
   details: RoadRestrictionDetailsV1,
   fact: RoadRestrictionFact,
-  at: Date
+  at: Date,
 ): "active" | "scheduled" | "ended" | "unknown" {
   const { temporalUnknown, statusUnsupported } = factIssueCodes(details, fact.id);
   if (temporalUnknown) return "unknown";
@@ -521,7 +523,7 @@ function nextTransition(details: RoadRestrictionDetailsV1, at: Date): string | n
  */
 export function projectRoadRestrictionDetails(
   value: unknown,
-  options: RestrictionEvaluation
+  options: RestrictionEvaluation,
 ): {
   restrictionDetails?: PublishedRoadRestrictionDetailsV1;
   restrictionDetailsUnsupported?: true;
@@ -575,7 +577,7 @@ export const RESTRICTION_VIEW_MAX_AGE_MS = 60_000;
  */
 export function restrictionViewDeadline(
   details: readonly PublishedRoadRestrictionDetailsV1[],
-  at: Date
+  at: Date,
 ): Date {
   const now = at.getTime();
   if (!Number.isFinite(now)) return at;

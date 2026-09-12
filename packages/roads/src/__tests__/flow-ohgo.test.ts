@@ -42,7 +42,7 @@ describe("parseOhgoFlow", () => {
     expect(slow.direction).toBe("EB");
     expect(slow.los).toBe("queuing"); // ratio 20/65 ≈ 0.31
     expect(events.some((e) => e.id === "us-oh-ohgo:d1:congestion" && e.direction === "EB")).toBe(
-      true
+      true,
     );
     const ok = flows.find((f) => f.id === "us-oh-ohgo:d2")!;
     expect(ok.los).toBe("free_flow"); // 62/65 ≈ 0.95

@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { Readable, Transform } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { fetch as undiciFetch } from "undici";
-import { guardOptionsFromEnv, guardedFetch } from "./egress.js";
+import { guardedFetch, guardOptionsFromEnv } from "./egress.js";
 
 const GB = 1024 * 1024 * 1024;
 
@@ -69,7 +69,7 @@ export interface DownloadedArtifact {
  */
 export async function downloadLargeArtifact(
   url: string,
-  deps: DownloadArtifactDeps = {}
+  deps: DownloadArtifactDeps = {},
 ): Promise<DownloadedArtifact> {
   const env = deps.env ?? process.env;
   const maxBytes = deps.maxBytes ?? envInt(env, "OPENCONDITIONS_DOWNLOAD_MAX_BYTES", 8 * GB);
@@ -87,7 +87,7 @@ export async function downloadLargeArtifact(
   const controller = new AbortController();
   const timer = setTimeout(
     () => controller.abort(new Error(`download timed out after ${timeoutMs}ms`)),
-    timeoutMs
+    timeoutMs,
   );
   const hash = createHash("md5");
   try {
@@ -104,7 +104,7 @@ export async function downloadLargeArtifact(
       Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]),
       hasher,
       createWriteStream(path),
-      { signal: controller.signal }
+      { signal: controller.signal },
     );
   } catch (err) {
     await rm(dir, { recursive: true, force: true });
@@ -134,7 +134,7 @@ export async function downloadLargeArtifact(
 async function verifyMd5Sidecar(
   url: string,
   actualMd5: string,
-  fetchImpl: typeof fetch
+  fetchImpl: typeof fetch,
 ): Promise<void> {
   let res: Response;
   try {

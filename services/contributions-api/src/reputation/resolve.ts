@@ -1,5 +1,5 @@
+import { type EvidenceState, updateReliability } from "@openconditions/core";
 import type postgres from "postgres";
-import { updateReliability, type EvidenceState } from "@openconditions/core";
 import { recomputeEvidence } from "../evidence/recompute.js";
 
 type Sql = postgres.Sql;
@@ -34,7 +34,7 @@ export interface ResolutionResult {
  * rejection stored as `reviewer_reject` stays fully reconstructable.
  */
 function evidenceKindFor(
-  resolution: ExternalResolution
+  resolution: ExternalResolution,
 ): "official_match" | "reviewer_accept" | "reviewer_reject" {
   if (resolution.outcome === "rejected") {
     return "reviewer_reject";
@@ -90,7 +90,7 @@ export async function applyExternalResolution(
   observationId: string,
   resolution: ExternalResolution,
   now: string,
-  tx?: Tx
+  tx?: Tx,
 ): Promise<ResolutionResult | null> {
   if (tx !== undefined) {
     return resolveWithin(tx, sql, observationId, resolution, now);
@@ -103,7 +103,7 @@ async function resolveWithin(
   sql: Sql,
   observationId: string,
   resolution: ExternalResolution,
-  now: string
+  now: string,
 ): Promise<ResolutionResult | null> {
   const observationRows = await tx<{ id: string }[]>`
     SELECT id FROM conditions.observations WHERE id = ${observationId} FOR UPDATE
@@ -205,7 +205,7 @@ async function resolveWithin(
     for (const reporter of reporters) {
       const posterior = updateReliability(
         { alpha: reporter.reputation_alpha, beta: reporter.reputation_beta },
-        resolution.outcome
+        resolution.outcome,
       );
       await tx`
         UPDATE conditions.reporter

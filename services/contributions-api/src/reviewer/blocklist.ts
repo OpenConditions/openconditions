@@ -34,7 +34,7 @@ export async function blockKey(
   sql: Sql,
   keyId: string,
   reason: string | null,
-  now: string
+  now: string,
 ): Promise<void> {
   await sql.begin(async (tx) => {
     await tx`

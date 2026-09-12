@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import type postgres from "postgres";
 import type { LookupFn } from "@openconditions/ingest-framework";
-import { runSource, type DomainFeedSource } from "../pipeline/run.js";
+import type postgres from "postgres";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { type DomainFeedSource, runSource } from "../pipeline/run.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 /**
@@ -13,7 +13,7 @@ import { createRestrictionDatabase } from "./helpers/restriction-database.integr
 
 const FIXTURE_URL = new URL(
   "../../../../packages/roads/src/__tests__/fixtures/digitraffic/v2-restrictions.json",
-  import.meta.url
+  import.meta.url,
 );
 
 const V2_BASE = "https://tie.digitraffic.fi/api/traffic-message/v2";
@@ -146,7 +146,7 @@ describe("complete road snapshot acceptance", () => {
     lostGeometry.features = lostGeometry.features.map((feature) =>
       (feature["properties"] as Record<string, unknown>)["situationId"] === "GUID50465935"
         ? { ...feature, geometry: null }
-        : feature
+        : feature,
     );
     const failed = await runSource(feed, {
       sql,
@@ -159,7 +159,7 @@ describe("complete road snapshot acceptance", () => {
     const after = await sql<Array<{ last_success_at: Date | null }>>`
       SELECT last_success_at FROM conditions.source_status WHERE source = 'fi-digitraffic'`;
     expect(after[0]!.last_success_at?.toISOString()).toBe(
-      status[0]!.last_success_at?.toISOString()
+      status[0]!.last_success_at?.toISOString(),
     );
   }, 120_000);
 
@@ -168,7 +168,7 @@ describe("complete road snapshot acceptance", () => {
     const removed = roadworks();
     removed.features = removed.features.filter(
       (feature) =>
-        (feature["properties"] as Record<string, unknown>)["situationId"] !== "GUID50465935"
+        (feature["properties"] as Record<string, unknown>)["situationId"] !== "GUID50465935",
     );
     const result = await runSource(feed, {
       sql,
@@ -249,7 +249,7 @@ describe("complete road snapshot acceptance", () => {
           lookup: fakeLookup,
           now: () => "2026-09-12T07:16:00.000Z",
         })
-      ).error
+      ).error,
     ).toBeDefined();
     expect(await idsAndHashes()).toEqual(before);
 
@@ -257,7 +257,7 @@ describe("complete road snapshot acceptance", () => {
     malformed.features = malformed.features.map((feature, index) =>
       index === 0
         ? { ...feature, properties: { ...(feature["properties"] as object), situationId: null } }
-        : feature
+        : feature,
     );
     expect(
       (
@@ -267,7 +267,7 @@ describe("complete road snapshot acceptance", () => {
           lookup: fakeLookup,
           now: () => "2026-09-12T07:17:00.000Z",
         })
-      ).error
+      ).error,
     ).toMatch(/missing_identity/);
     expect(await idsAndHashes()).toEqual(before);
   }, 120_000);
@@ -309,7 +309,7 @@ describe("complete road snapshot acceptance", () => {
     withUnlocatable.features = withUnlocatable.features.map((feature) =>
       (feature["properties"] as Record<string, unknown>)["situationId"] === "GUID50466626"
         ? { ...feature, geometry: null }
-        : feature
+        : feature,
     );
     const result = await runSource(feed, {
       sql,
@@ -342,7 +342,7 @@ describe("complete road snapshot acceptance", () => {
     const afterQueue = await sql<Array<{ observation_id: string }>>`
       SELECT observation_id FROM conditions.binding_queue ORDER BY observation_id`;
     expect(afterQueue.map((r) => r.observation_id)).toEqual(
-      beforeQueue.map((r) => r.observation_id)
+      beforeQueue.map((r) => r.observation_id),
     );
     const status = await sql<Array<{ last_success_at: Date | null }>>`
       SELECT last_success_at FROM conditions.source_status WHERE source = 'fi-digitraffic'`;
@@ -386,7 +386,7 @@ describe("complete road snapshot acceptance", () => {
     const after = await idsAndHashes();
     const id = "fi-digitraffic:GUID50465935";
     expect(after.find((r) => r.id === id)!.content_hash).not.toBe(
-      before.find((r) => r.id === id)!.content_hash
+      before.find((r) => r.id === id)!.content_hash,
     );
     const queued = await sql<Array<{ observation_id: string }>>`
       SELECT observation_id FROM conditions.binding_queue WHERE observation_id = ${id}`;

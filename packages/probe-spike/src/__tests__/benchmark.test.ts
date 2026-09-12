@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runEncodeBenchmark, type RegionSpec } from "../index.js";
+import { type RegionSpec, runEncodeBenchmark } from "../index.js";
 
 const REGION: RegionSpec = {
   regionId: "region-nl-utrecht-coarse",

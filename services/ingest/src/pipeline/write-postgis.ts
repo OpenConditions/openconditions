@@ -1,18 +1,18 @@
-import type postgres from "postgres";
 import type { Observation } from "@openconditions/core";
-import { toRow as projectObservationRow } from "@openconditions/storage";
-import { DOMAIN_REGISTRY } from "../domains.js";
 import {
   normalizeObservation,
   resolveInstanceId,
   type WriterContext,
 } from "@openconditions/normalize";
+import { toRow as projectObservationRow } from "@openconditions/storage";
+import type postgres from "postgres";
+import { DOMAIN_REGISTRY } from "../domains.js";
 import { upsertSourceStatus } from "./source-status.js";
 
 type Sql = postgres.Sql;
 type TransactionSql = postgres.TransactionSql;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: the driver's JSONB parameter type is intentionally open
 type AnyJson = any;
 
 // Rows per bulk INSERT. Each chunk is one round-trip (a single
@@ -63,7 +63,7 @@ export interface UpsertCounts {
 export async function upsertRows(
   tx: TransactionSql,
   batch: Observation[],
-  freshnessWindowSec?: number
+  freshnessWindowSec?: number,
 ): Promise<UpsertCounts> {
   if (batch.length === 0) return { inserted: 0, updated: 0, ids: [] };
 
@@ -248,7 +248,7 @@ export async function atomicSwap(
      * not place this cycle. Supplied only by complete-snapshot sources.
      */
     unlocatableIds?: readonly string[];
-  }
+  },
 ): Promise<SwapCounts> {
   // The single defaulting seam: stamp the commons federation/privacy provenance
   // onto every row here — the one write choke point — before anything else, so
@@ -288,7 +288,7 @@ export async function atomicSwap(
       if (retained.length > 0) {
         throw new Error(
           `snapshot unlocatable retained record: ${retained[0]!.id} ` +
-            `(${unavailable.length} unlocatable in source ${sourceId})`
+            `(${unavailable.length} unlocatable in source ${sourceId})`,
         );
       }
     }

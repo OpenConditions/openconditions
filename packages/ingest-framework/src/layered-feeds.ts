@@ -4,9 +4,9 @@ import { dirname } from "node:path";
 import JSON5 from "json5";
 import type { ZodTypeAny } from "zod";
 import { assertPublicUrl, guardedFetch } from "./egress.js";
-import { loadFeedFiles } from "./load-feeds.js";
 import { feedSchemaFor } from "./feed-schema-registry.js";
 import type { FeedSourceBase } from "./feed-source.js";
+import { loadFeedFiles } from "./load-feeds.js";
 
 export interface LoadFeedsOptions {
   domain: string;
@@ -35,7 +35,7 @@ const REMOTE_MAX_REDIRECTS = 3;
  */
 export async function loadFeeds(
   opts: LoadFeedsOptions,
-  deps: LoadFeedsDeps = {}
+  deps: LoadFeedsDeps = {},
 ): Promise<FeedSourceBase[]> {
   const schema = feedSchemaFor(opts.domain);
   const baked = loadFeedFiles(opts.bakedInDir, schema) as FeedSourceBase[];
@@ -81,7 +81,7 @@ async function loadRemoteFeeds(
   domain: string,
   remote: LoadFeedsOptions["remote"],
   schema: ZodTypeAny,
-  deps: LoadFeedsDeps
+  deps: LoadFeedsDeps,
 ): Promise<FeedSourceBase[]> {
   if (!remote?.enabled) return []; // default off
   const assertUrl = deps.assertUrl ?? assertPublicUrl;
@@ -104,7 +104,7 @@ async function loadRemoteFeeds(
     return feeds;
   } catch (err) {
     console.warn(
-      `[loadFeeds] ${domain}: remote pull failed (${String(err)}); falling back to snapshot`
+      `[loadFeeds] ${domain}: remote pull failed (${String(err)}); falling back to snapshot`,
     );
     const snap = await readSnapshot(remote.snapshotPath, schema);
     if (snap) {
@@ -120,7 +120,7 @@ async function loadRemoteFeeds(
 function parseBundle(
   text: string,
   schema: ZodTypeAny,
-  assertUrl: (url: string) => void
+  assertUrl: (url: string) => void,
 ): FeedSourceBase[] {
   const raw: unknown = JSON5.parse(text);
   const feedsField =
@@ -164,7 +164,7 @@ async function writeSnapshot(path: string, feeds: FeedSourceBase[]): Promise<voi
 
 async function readSnapshot(
   path: string,
-  schema: ZodTypeAny
+  schema: ZodTypeAny,
 ): Promise<FeedSourceBase[] | undefined> {
   if (!existsSync(path)) return undefined;
   try {

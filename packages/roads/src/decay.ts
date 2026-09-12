@@ -97,7 +97,7 @@ function resolveEntry(type: string, overrides?: Record<string, Partial<DecayEntr
     }
     if (!Number.isFinite(value) || value < 0) {
       throw new TypeError(
-        `decay override ${type}.${field} must be a finite number >= 0, got: ${String(value)}`
+        `decay override ${type}.${field} must be a finite number >= 0, got: ${String(value)}`,
       );
     }
     merged[field] = value;
@@ -109,7 +109,7 @@ function resolveEntry(type: string, overrides?: Record<string, Partial<DecayEntr
 export function decayTtlSec(
   type: string,
   origin: DecayOrigin,
-  overrides?: Record<string, Partial<DecayEntry>>
+  overrides?: Record<string, Partial<DecayEntry>>,
 ): number {
   assertOrigin(origin);
   const entry = resolveEntry(type, overrides);
@@ -119,7 +119,7 @@ export function decayTtlSec(
 /** The corroboration-extension ceiling in seconds for a type (see module JSDoc). */
 export function decayMaxLifetimeSec(
   type: string,
-  overrides?: Record<string, Partial<DecayEntry>>
+  overrides?: Record<string, Partial<DecayEntry>>,
 ): number {
   return resolveEntry(type, overrides).maxLifetimeSec;
 }
@@ -149,7 +149,7 @@ function parseInstantMs(value: string): number {
   }
   if (!ISO_CALENDAR_DATE.test(value)) {
     throw new TypeError(
-      `expiresAtFor requires an ISO calendar date (YYYY-MM-DD, optionally with a T time part): ${value}`
+      `expiresAtFor requires an ISO calendar date (YYYY-MM-DD, optionally with a T time part): ${value}`,
     );
   }
   const pinned = value.includes("T") && !HAS_ZONE_DESIGNATOR.test(value) ? `${value}Z` : value;
@@ -172,7 +172,7 @@ export function expiresAtFor(
   dataUpdatedAt: string,
   type: string,
   origin: DecayOrigin,
-  overrides?: Record<string, Partial<DecayEntry>>
+  overrides?: Record<string, Partial<DecayEntry>>,
 ): string {
   const ttlSec = decayTtlSec(type, origin, overrides);
   const startMs = parseInstantMs(dataUpdatedAt);

@@ -17,14 +17,14 @@ import type { SpineSubgraph } from "../types.js";
  */
 
 const spine = JSON.parse(
-  readFileSync(new URL("./fixtures/finland-road40/spine.json", import.meta.url), "utf8")
+  readFileSync(new URL("./fixtures/finland-road40/spine.json", import.meta.url), "utf8"),
 ) as SpineSubgraph;
 
 const raw = JSON.parse(
   readFileSync(
     new URL("../../__tests__/fixtures/digitraffic/v2-restrictions.json", import.meta.url),
-    "utf8"
-  )
+    "utf8",
+  ),
 );
 
 const src: SourceDescriptor = {
@@ -140,7 +140,7 @@ describe("disconnected linear geometry", () => {
   it("leaves points and polygons on their existing behaviour", () => {
     const point = bindEvent(
       { ...base(), geometry: { type: "Point", coordinates: [22.4, 60.4652] } },
-      spine
+      spine,
     );
     expect(point.reason).not.toBe("disconnected_geometry");
 
@@ -160,7 +160,7 @@ describe("disconnected linear geometry", () => {
           ],
         },
       },
-      spine
+      spine,
     );
     expect(polygon.status).toBe("not_applicable");
     expect(polygon.reason).toBe("polygon_geometry");
@@ -177,7 +177,7 @@ describe("disconnected linear geometry", () => {
           coordinates: [original.coordinates[0]!, []],
         },
       },
-      spine
+      spine,
     );
     expect(result.reason).toBe("disconnected_geometry");
   });

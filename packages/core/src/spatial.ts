@@ -95,7 +95,7 @@ export class UnionFind {
 export function clusterIndices(
   n: number,
   neighborsOf: (i: number) => Iterable<number>,
-  shouldMerge: (i: number, j: number) => boolean
+  shouldMerge: (i: number, j: number) => boolean,
 ): Map<number, number[]> {
   const uf = new UnionFind(n);
   const clusterMembers = new Map<number, number[]>();

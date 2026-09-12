@@ -91,7 +91,7 @@ function pointToSegmentMeters(
   p: [number, number],
   a: [number, number],
   b: [number, number],
-  cosRefLat: number
+  cosRefLat: number,
 ): number {
   const [px, py] = toLocal(p, cosRefLat);
   const [ax, ay] = toLocal(a, cosRefLat);
@@ -106,7 +106,7 @@ function pointToSegmentMeters(
 function pointToPolylineMeters(
   p: [number, number],
   verts: [number, number][],
-  cosRefLat: number
+  cosRefLat: number,
 ): number {
   if (verts.length === 1) return pointToSegmentMeters(p, verts[0]!, verts[0]!, cosRefLat);
   let min = Infinity;
@@ -224,7 +224,7 @@ export interface CrossSourceDedupeOpts {
  */
 export function dedupeAcrossSources(
   items: Observation[],
-  opts?: CrossSourceDedupeOpts
+  opts?: CrossSourceDedupeOpts,
 ): Observation[] {
   const n = items.length;
   if (n === 0) return [];

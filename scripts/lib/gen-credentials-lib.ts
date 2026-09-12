@@ -1,4 +1,4 @@
-import type { FeedAuth, FeedSourceBase, CredentialField } from "@openconditions/ingest-framework";
+import type { CredentialField, FeedAuth, FeedSourceBase } from "@openconditions/ingest-framework";
 
 /** Every env var a feed names, via its auth kind + requiredEnv, in declaration order. */
 export function feedEnvVars(feed: FeedSourceBase): string[] {

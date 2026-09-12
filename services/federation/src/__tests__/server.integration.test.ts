@@ -1,8 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
-import { verifyActorAgainstPin, type ActorDocument } from "@openconditions/federation";
+import { type ActorDocument, verifyActorAgainstPin } from "@openconditions/federation";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
 
 let sql: postgres.Sql;
@@ -98,7 +98,7 @@ describe("federation disabled (the default)", () => {
 describe("federation enabled", () => {
   it("fails the boot closed when enabled without an actor config", async () => {
     await expect(
-      build({ sql, env: { OPENCONDITIONS_FEDERATION_ENABLED: "true" }, logger: false })
+      build({ sql, env: { OPENCONDITIONS_FEDERATION_ENABLED: "true" }, logger: false }),
     ).rejects.toThrow(/OPENCONDITIONS_FEDERATION_ACTOR/);
   }, 30_000);
 

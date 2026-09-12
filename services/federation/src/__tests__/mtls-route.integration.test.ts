@@ -1,14 +1,14 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import {
   generateInstanceKey,
-  signMessage,
   type InstanceKey,
   type MtlsContext,
+  signMessage,
 } from "@openconditions/federation";
 import type { FastifyRequest } from "fastify";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
 
 let sql: postgres.Sql;
@@ -62,7 +62,7 @@ async function signed(
   key: InstanceKey,
   method: string,
   path: string,
-  bodyObj?: unknown
+  bodyObj?: unknown,
 ): Promise<{ headers: Record<string, string>; payload?: Buffer }> {
   const body = bodyObj === undefined ? undefined : Buffer.from(JSON.stringify(bodyObj));
   const s = await signMessage({
@@ -102,7 +102,7 @@ function fedEvent(id: string, instanceId: string, canonicalId: string): Record<s
 }
 
 function pageOf(
-  entries: { seq: number; txid: string; observation: Record<string, unknown> }[]
+  entries: { seq: number; txid: string; observation: Record<string, unknown> }[],
 ): Record<string, unknown> {
   return {
     type: "OrderedCollectionPage",

@@ -15,7 +15,7 @@
  */
 
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { buildTmcTable, toSnapshot } from "../packages/roads/src/tmc/lcl.js";
@@ -75,7 +75,7 @@ async function main() {
       roads: read(datDir, "ROADS.DAT"),
       segments: read(datDir, "SEGMENTS.DAT"),
     },
-    { attribution: SOURCE.attribution, license: SOURCE.license }
+    { attribution: SOURCE.attribution, license: SOURCE.license },
   );
 
   const snapshot = toSnapshot(table);
@@ -83,7 +83,7 @@ async function main() {
   writeFileSync(out, `${JSON.stringify(snapshot)}\n`);
   console.log(
     `wrote ${out}\n  cid=${snapshot.cid} tabcd=${snapshot.tabcd} version=${snapshot.version} ` +
-      `ccd=${snapshot.ccd ?? "-"}\n  ${snapshot.points.length} coded points`
+      `ccd=${snapshot.ccd ?? "-"}\n  ${snapshot.points.length} coded points`,
   );
 }
 

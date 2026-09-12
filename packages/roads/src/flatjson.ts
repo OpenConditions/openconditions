@@ -23,7 +23,7 @@ function recordsAt(data: unknown, path: string | undefined): Record<string, unkn
 
 export function parseFlatJson(
   input: string | Buffer | unknown,
-  src: SourceDescriptor
+  src: SourceDescriptor,
 ): RoadEvent[] {
   let data: unknown = input;
   if (typeof input === "string" || Buffer.isBuffer(input)) {

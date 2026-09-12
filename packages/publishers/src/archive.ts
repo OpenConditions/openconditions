@@ -228,7 +228,7 @@ export async function dailyGeoParquet(obs: Observation[], now: string): Promise<
 export async function writeDailyGeoParquet(
   pages: AsyncIterable<Observation[]>,
   now: string,
-  writer: Writer
+  writer: Writer,
 ): Promise<void> {
   async function* rows(): AsyncGenerator<Record<string, unknown>> {
     for await (const page of pages) {

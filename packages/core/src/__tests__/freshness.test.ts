@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { isStale, freshnessNow } from "../freshness.js";
+import { describe, expect, it } from "vitest";
+import { freshnessNow, isStale } from "../freshness.js";
 
 describe("isStale", () => {
   const BASE = "2026-01-01T12:00:00Z";

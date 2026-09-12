@@ -51,7 +51,7 @@ interface RetryOpts {
 export async function withStreamRetry<T>(
   fn: () => Promise<T>,
   label: string,
-  { retries = 2, baseDelayMs = 250 }: RetryOpts = {}
+  { retries = 2, baseDelayMs = 250 }: RetryOpts = {},
 ): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     try {
@@ -61,7 +61,7 @@ export async function withStreamRetry<T>(
       const delayMs = baseDelayMs * 2 ** attempt;
       console.warn(
         `[ingest] ${label}: transient stream error on attempt ${attempt + 1}/${retries + 1}, retrying in ${delayMs}ms:`,
-        err instanceof Error ? err.message : err
+        err instanceof Error ? err.message : err,
       );
       await sleep(delayMs);
     }

@@ -95,7 +95,7 @@ function assertIJsonTree(value: unknown, path: string, depth = 0): void {
       const element = value[i] as unknown;
       if (element === undefined || typeof element === "symbol") {
         throw new TypeError(
-          `array element at ${path}[${i}] is not JSON-serializable (JCS would coerce it to null)`
+          `array element at ${path}[${i}] is not JSON-serializable (JCS would coerce it to null)`,
         );
       }
       assertIJsonTree(element, `${path}[${i}]`, depth + 1);
@@ -123,7 +123,7 @@ function assertReportedAt(reportedAt: unknown, path: string): void {
     !Number.isFinite(Date.parse(reportedAt))
   ) {
     throw new TypeError(
-      `${path}: reportedAt must be an ISO-8601 instant with a zone designator (e.g. "2026-07-11T12:00:00Z")`
+      `${path}: reportedAt must be an ISO-8601 instant with a zone designator (e.g. "2026-07-11T12:00:00Z")`,
     );
   }
   // V8 rolls impossible days-of-month within 01..31 ("2026-02-30" parses as
@@ -225,7 +225,7 @@ export function validateSubClaimBody(body: SubClaimBody): void {
   if (body.reason !== undefined) {
     if (typeof body.reason !== "string" || body.reason.length > MAX_REASON_CHARS) {
       throw new TypeError(
-        `subClaim.reason must be a string of at most ${MAX_REASON_CHARS} characters`
+        `subClaim.reason must be a string of at most ${MAX_REASON_CHARS} characters`,
       );
     }
   }

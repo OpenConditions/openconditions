@@ -47,7 +47,7 @@ describe("computePeerHealth", () => {
         "replay_failures",
         "schema_failures",
         "rate_violations",
-      ])
+      ]),
     );
   });
 

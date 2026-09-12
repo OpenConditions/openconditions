@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { recomputeEvidence } from "../evidence/recompute.js";
 
 let sql: postgres.Sql;
@@ -44,7 +44,7 @@ async function addEvidence(
   kind: string,
   occurredAt: string,
   actorKeyId: string | null,
-  details: Record<string, unknown> = {}
+  details: Record<string, unknown> = {},
 ): Promise<void> {
   await sql`
     INSERT INTO conditions.report_evidence
@@ -178,7 +178,7 @@ describe("recomputeEvidence — concurrency (FOR UPDATE)", () => {
       (result) => {
         recomputeSettled = true;
         return result;
-      }
+      },
     );
 
     // While tx1 holds the row lock the recompute must be blocked, not running

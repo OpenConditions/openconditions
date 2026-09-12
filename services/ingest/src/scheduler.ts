@@ -1,29 +1,29 @@
-import { Cron } from "croner";
-import type postgres from "postgres";
-import { fetch as undiciFetch } from "undici";
 import {
+  type DomainRegistry,
   guardedFetch,
   guardOptionsFromEnv,
   hasCredentials,
   requiredEnvVars,
-  type DomainRegistry,
 } from "@openconditions/ingest-framework";
 import type { FeedSource } from "@openconditions/roads";
+import { Cron } from "croner";
+import type postgres from "postgres";
+import { fetch as undiciFetch } from "undici";
+import type { FeedStatusStore } from "./feed-status.js";
 import { buildDailyArchive } from "./pipeline/archive-build.js";
 import { deriveBaselines } from "./pipeline/baseline-derive.js";
-import { pruneHourlyRollup, pruneRawSamples, rollupSpeedSamples } from "./pipeline/speed-rollup.js";
+import { drainBindingQueue as defaultDrainBindingQueue } from "./pipeline/bind-observations.js";
 import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js";
 import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
 import { rebindStale } from "./pipeline/rebind.js";
-import { drainBindingQueue as defaultDrainBindingQueue } from "./pipeline/bind-observations.js";
-import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
 import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
+import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
 import { deriveSegmentProfiles } from "./pipeline/segment-profile.js";
 import { runSegmentRebuild } from "./pipeline/segment-rebuild.js";
 import { refreshSegmentSpeed } from "./pipeline/segment-speed.js";
-import { sweepStaleObservations } from "./pipeline/sweep.js";
-import { FeedStatusStore } from "./feed-status.js";
 import { pruneSourcePollAttempts, upsertSourceStatus } from "./pipeline/source-status.js";
+import { pruneHourlyRollup, pruneRawSamples, rollupSpeedSamples } from "./pipeline/speed-rollup.js";
+import { sweepStaleObservations } from "./pipeline/sweep.js";
 
 type Sql = postgres.Sql;
 
@@ -39,7 +39,7 @@ export async function runFeedOnce(
   src: DomainFeedSource,
   deps: RunDeps,
   statusStore: FeedStatusStore,
-  o: RunFeedOnceDeps = {}
+  o: RunFeedOnceDeps = {},
 ): Promise<void> {
   const run = o.runSource ?? defaultRunSource;
   const now = o.now ?? (() => new Date().toISOString());
@@ -57,7 +57,7 @@ export async function runFeedOnce(
         now(),
         result.count,
         result.durationMs,
-        result.skippedNoGeometry
+        result.skippedNoGeometry,
       );
     }
     if (src.produces !== "flow") {
@@ -124,7 +124,7 @@ function pickCronExpression(env: NodeJS.ProcessEnv, key: string, fallback: strin
 export function startScheduler(
   sql: Sql,
   statusStore: FeedStatusStore,
-  registry: DomainRegistry
+  registry: DomainRegistry,
 ): () => void {
   const jobs: Cron[] = [];
   const openlrClient = createOpenlrClient();
@@ -141,7 +141,7 @@ export function startScheduler(
       if (!hasCredentials(feed)) {
         const needed = [...requiredEnvVars(feed.auth), ...(feed.requiredEnv ?? [])];
         console.warn(
-          `[scheduler] ${domainName}/${feed.id}: skipped — set ${needed.join(", ")} to enable`
+          `[scheduler] ${domainName}/${feed.id}: skipped — set ${needed.join(", ")} to enable`,
         );
         void upsertSourceStatus(sql, feed.id, {
           freshnessWindowSec: feed.freshnessWindowSec,
@@ -181,7 +181,7 @@ export function startScheduler(
               now: () => new Date().toISOString(),
               openlrClient,
             },
-            statusStore
+            statusStore,
           );
         } finally {
           running = false;
@@ -189,7 +189,7 @@ export function startScheduler(
       });
 
       console.info(
-        `[scheduler] registered ${domainName}/${src.id} every ${feed.cadenceSec}s (${cronExpr})`
+        `[scheduler] registered ${domainName}/${src.id} every ${feed.cadenceSec}s (${cronExpr})`,
       );
       jobs.push(job);
     }
@@ -274,7 +274,7 @@ export function startScheduler(
           const { updated } = await updateFintrafficNativeBaselines(
             sql,
             feed as unknown as FeedSource,
-            { fetch: guarded, now: () => new Date(), batchCap: 200 }
+            { fetch: guarded, now: () => new Date(), batchCap: 200 },
           );
           console.info(`[scheduler] fintraffic native baselines: ${updated} updated`);
         }
@@ -288,7 +288,7 @@ export function startScheduler(
       const prunedHours = await pruneHourlyRollup(sql);
       console.info(
         `[scheduler] baselines: rolled up ${rolled.rows} hour-row(s) over ${rolled.hours}h, ` +
-          `upserted ${upserted}, pruned ${deleted} raw sample(s) and ${prunedHours.deleted} rollup hour(s)`
+          `upserted ${upserted}, pruned ${deleted} raw sample(s) and ${prunedHours.deleted} rollup hour(s)`,
       );
 
       // Fills sensors that still lack any baseline (native/derived always win —
@@ -333,7 +333,7 @@ export function startScheduler(
   const segmentProfileCron = pickCronExpression(
     process.env,
     "SEGMENT_PROFILE_CRON",
-    SEGMENT_PROFILE_CRON
+    SEGMENT_PROFILE_CRON,
   );
   if (segmentProfileCron) {
     let derivingProfiles = false;
@@ -350,12 +350,12 @@ export function startScheduler(
       }
     });
     console.info(
-      `[scheduler] registered weekly segment profile derivation (${segmentProfileCron})`
+      `[scheduler] registered weekly segment profile derivation (${segmentProfileCron})`,
     );
     jobs.push(segmentProfileJob);
   } else {
     console.info(
-      "[scheduler] weekly segment profile derivation disabled (SEGMENT_PROFILE_CRON=off)"
+      "[scheduler] weekly segment profile derivation disabled (SEGMENT_PROFILE_CRON=off)",
     );
   }
 
@@ -372,7 +372,7 @@ export function startScheduler(
         });
         console.info(
           `[scheduler] segment rebuild: imported ${counts.imported}, built ${counts.built}, ` +
-            `encoded ${counts.encoded}, matched ${counts.matched}, rebound ${counts.rebound}`
+            `encoded ${counts.encoded}, matched ${counts.matched}, rebound ${counts.rebound}`,
         );
       } catch (err) {
         console.error("[scheduler] segment rebuild failed", err);

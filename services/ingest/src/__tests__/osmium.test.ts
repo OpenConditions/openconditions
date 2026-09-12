@@ -79,7 +79,7 @@ describe("pbfToWays", () => {
           if (args[0] === "extract") throw new Error("osmium extract killed by SIGKILL (OOM ...)");
         },
         readGeojson: async () => "",
-      })
+      }),
     ).rejects.toThrow(/SIGKILL/);
     expect(seen).toEqual(["tags-filter", "extract"]); // never reached export
   });

@@ -1,13 +1,13 @@
-import { Readable } from "node:stream";
+import type { Readable } from "node:stream";
 import { createGunzip } from "node:zlib";
 import type { Observation } from "@openconditions/core";
-import { createMeasuredDataParser, feedToSourceDescriptor } from "@openconditions/roads";
-import type { SiteGeometry } from "@openconditions/roads";
 import {
-  resolveFeedUrls,
-  resolvedEnv,
   DEFAULT_MAX_FEED_BYTES,
+  resolvedEnv,
+  resolveFeedUrls,
 } from "@openconditions/ingest-framework";
+import type { SiteGeometry } from "@openconditions/roads";
+import { createMeasuredDataParser, feedToSourceDescriptor } from "@openconditions/roads";
 import type { DomainFeedSource } from "./run.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
 import { withStreamRetry } from "./stream-retry.js";
@@ -24,7 +24,7 @@ export function isStreamingFlowFeed(src: DomainFeedSource): boolean {
 
 /** Ceiling on a single flow feed's decompressed bytes; matches the guard's byte cap. */
 const MAX_DECOMPRESSED_BYTES = Number(
-  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES
+  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES,
 );
 
 /** Resolves the single feed URL for a streaming flow source from its template(s). */
@@ -49,7 +49,7 @@ export async function streamMeasuredData(
   src: DomainFeedSource,
   streamFactory: SiteTableStreamFactory,
   siteMap: Map<string, SiteGeometry> | undefined,
-  now: () => string
+  now: () => string,
 ): Promise<Observation[]> {
   const descriptor = feedToSourceDescriptor(src);
   const url = resolveUrl(src);

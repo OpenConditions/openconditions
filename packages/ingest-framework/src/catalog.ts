@@ -1,6 +1,6 @@
 import { readFile, writeFile } from "node:fs/promises";
-import type { FeedSourceBase } from "./feed-source.js";
 import { guardedFetch } from "./egress.js";
+import type { FeedSourceBase } from "./feed-source.js";
 
 /**
  * Expands a catalog/registry reference into concrete feeds. Fetches the registry
@@ -82,7 +82,7 @@ export function materializeApprovedCatalogChildren(feeds: FeedSourceBase[]): {
       const child = byId.get(approvedId);
       if (!child) {
         throw new Error(
-          `catalogue child ${approvedId} approved by ${parent.id} is absent from ${resolver.id} snapshot`
+          `catalogue child ${approvedId} approved by ${parent.id} is absent from ${resolver.id} snapshot`,
         );
       }
       const rights = child.rights;
@@ -138,7 +138,7 @@ export function materializeApprovedCatalogChildren(feeds: FeedSourceBase[]): {
  */
 export async function resolveWithSnapshot(
   resolver: CatalogResolver,
-  fetchFn: typeof fetch = guardedFetch()
+  fetchFn: typeof fetch = guardedFetch(),
 ): Promise<FeedSourceBase[]> {
   try {
     const feeds = await resolver.resolve(fetchFn);
@@ -147,7 +147,7 @@ export async function resolveWithSnapshot(
     } catch (writeErr) {
       console.warn(
         `[catalog] ${resolver.id}: could not refresh snapshot ${resolver.snapshotPath}:`,
-        writeErr instanceof Error ? writeErr.message : writeErr
+        writeErr instanceof Error ? writeErr.message : writeErr,
       );
     }
     return feeds;
@@ -158,13 +158,13 @@ export async function resolveWithSnapshot(
         resolver.snapshot ??
         (JSON.parse(await readFile(resolver.snapshotPath, "utf8")) as FeedSourceBase[]);
       console.warn(
-        `[catalog] ${resolver.id}: live resolve failed (${why}); using vendored snapshot`
+        `[catalog] ${resolver.id}: live resolve failed (${why}); using vendored snapshot`,
       );
       return snapshot;
     } catch (snapErr) {
       console.error(
         `[catalog] ${resolver.id}: live resolve failed (${why}) and no usable snapshot at ${resolver.snapshotPath}:`,
-        snapErr instanceof Error ? snapErr.message : snapErr
+        snapErr instanceof Error ? snapErr.message : snapErr,
       );
       return [];
     }

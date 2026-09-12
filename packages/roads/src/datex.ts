@@ -1,30 +1,30 @@
-import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
 import type { Confidence } from "@openconditions/core";
+import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
+import { isPlausibleWgs84, reprojectorFor } from "./reproject.js";
+import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
   compareSnapshotRank,
-  snapshotFingerprint,
   type RoadSnapshotRecord,
   type RoadSnapshotReport,
+  snapshotFingerprint,
 } from "./snapshot.js";
-import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
-import { isPlausibleWgs84, reprojectorFor } from "./reproject.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import { mapSourceType } from "./taxonomy.js";
-import { resolveAlertC, tmcTables, type AlertCReference } from "./tmc/index.js";
+import { type AlertCReference, resolveAlertC, tmcTables } from "./tmc/index.js";
 import type { SourceDescriptor } from "./types.js";
 import {
   getXmlAttribute,
   getXmlChild,
-  getXmlChildText,
   getXmlChildren,
+  getXmlChildText,
   isXmlObject,
   parseXmlDocument,
   stripXmlNamespace,
+  type XmlObject,
   xmlNodeToArray,
   xmlText,
-  type XmlObject,
 } from "./xml.js";
 
 type ValidityStatus = "active" | "inactive" | "archived" | "cancelled";
@@ -89,7 +89,7 @@ function multilingual(node: unknown, lang: string): string | undefined {
   if (values) {
     const valueNodes = xmlNodeToArray(values["value"]).filter(isXmlObject);
     const match = valueNodes.find(
-      (v) => getXmlAttribute(v, "lang") === lang || getXmlAttribute(v, "lang")?.startsWith(lang)
+      (v) => getXmlAttribute(v, "lang") === lang || getXmlAttribute(v, "lang")?.startsWith(lang),
     );
     if (match) return text(match);
     const first = valueNodes[0];
@@ -137,7 +137,7 @@ type Reprojector = (p: [number, number]) => [number, number];
 function parseLatLonList(
   raw: string | undefined,
   reproject?: Reprojector | null,
-  lonFirst = false
+  lonFirst = false,
 ): [number, number][] {
   if (!raw) return [];
   const nums = raw.trim().split(/\s+/).map(Number);
@@ -181,12 +181,12 @@ function detectReprojector(input: string | Buffer): Reprojector | null {
 function resolveGeometry(
   rec: XmlObject,
   reproject?: Reprojector | null,
-  lonFirst = false
+  lonFirst = false,
 ): Geometry | null {
   return resolveGeometryFrom(
     getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations"),
     reproject,
-    lonFirst
+    lonFirst,
   );
 }
 
@@ -203,7 +203,7 @@ function resolveGeometry(
 function unnamedCoordinateLists(
   node: unknown,
   reproject?: Reprojector | null,
-  lonFirst = false
+  lonFirst = false,
 ): [number, number][][] {
   const out: [number, number][][] = [];
 
@@ -277,7 +277,7 @@ function displayCoordinates(node: unknown, reproject?: Reprojector | null): [num
 function resolveGeometryFrom(
   locRef: XmlObject | undefined,
   reproject?: Reprojector | null,
-  lonFirst = false
+  lonFirst = false,
 ): Geometry | null {
   if (!locRef) return null;
 
@@ -308,18 +308,18 @@ function resolveGeometryFrom(
     itineraryIndex?: number,
     linearPathContext = false,
     linearByCoordinatesContext = false,
-    linearByCoordinatesOrder?: number
+    linearByCoordinatesOrder?: number,
   ): void => {
     if (Array.isArray(node)) {
-      node.forEach((child) =>
+      node.forEach((child) => {
         visit(
           child,
           itineraryIndex,
           linearPathContext,
           linearByCoordinatesContext,
-          linearByCoordinatesOrder
-        )
-      );
+          linearByCoordinatesOrder,
+        );
+      });
       return;
     }
     if (!isXmlObject(node)) return;
@@ -343,7 +343,7 @@ function resolveGeometryFrom(
               Number.isFinite(parsedIndex) ? parsedIndex : entryPosition,
               inLinearPath,
               inLinearByCoordinates,
-              linearByCoordinatesOrder
+              linearByCoordinatesOrder,
             );
           });
         continue;
@@ -420,7 +420,7 @@ function resolveGeometryFrom(
               itineraryIndex,
               false,
               true,
-              Number.isFinite(parsedIndex) ? parsedIndex : 0
+              Number.isFinite(parsedIndex) ? parsedIndex : 0,
             );
           }
           break;
@@ -453,7 +453,7 @@ function resolveGeometryFrom(
                 itineraryIndex,
                 inLinearPath,
                 inLinearByCoordinates,
-                linearByCoordinatesOrder ?? endpointOrder
+                linearByCoordinatesOrder ?? endpointOrder,
               );
             }
           }
@@ -465,7 +465,7 @@ function resolveGeometryFrom(
             itineraryIndex,
             inLinearPath,
             inLinearByCoordinates,
-            linearByCoordinatesOrder
+            linearByCoordinatesOrder,
           );
       }
     }
@@ -522,7 +522,7 @@ function resolveGeometryFrom(
 function detourGeometryOf(
   rec: XmlObject,
   reproject?: Reprojector | null,
-  lonFirst = false
+  lonFirst = false,
 ): RoadEvent["detourGeometry"] {
   const g = resolveGeometryFrom(getXmlChild(rec, "alternativeRoute"), reproject, lonFirst);
   return g && (g.type === "LineString" || g.type === "MultiLineString") ? g : undefined;
@@ -672,7 +672,7 @@ function publicComments(rec: XmlObject, lang = "en"): { type?: string; text: str
     if (!t) continue;
     const type = getXmlChildText(
       getXmlChild(getXmlChild(gpc, "commentExtension"), "commentExtended"),
-      "commentType2"
+      "commentType2",
     );
     out.push(type ? { type, text: t } : { text: t });
   }
@@ -857,12 +857,12 @@ function alertCRefOf(rec: XmlObject): AlertCReference | undefined {
   // them into one silent absence is what hid this loss in the first place.
   const primary = specificLocationOf(
     findFirst(alertC, "alertCMethod4PrimaryPointLocation") ??
-      findFirst(alertC, "alertCMethod2PrimaryPointLocation")
+      findFirst(alertC, "alertCMethod2PrimaryPointLocation"),
   );
 
   const secondary = specificLocationOf(
     findFirst(alertC, "alertCMethod4SecondaryPointLocation") ??
-      findFirst(alertC, "alertCMethod2SecondaryPointLocation")
+      findFirst(alertC, "alertCMethod2SecondaryPointLocation"),
   );
 
   return {
@@ -914,7 +914,9 @@ function locationShapeOf(rec: XmlObject): string {
   const collect = (n: unknown, depth: number): void => {
     if (depth > 6 || leaves.size > 12) return;
     if (Array.isArray(n)) {
-      n.forEach((x) => collect(x, depth));
+      n.forEach((x) => {
+        collect(x, depth);
+      });
       return;
     }
     if (!isXmlObject(n)) return;
@@ -1157,7 +1159,7 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
       const resolution = ref
         ? resolveAlertC(
             { ...ref, ...(road?.ref || road?.name ? { road: road.ref ?? road.name } : {}) },
-            tmcTables()
+            tmcTables(),
           )
         : // Not an Alert-C record at all — it locates itself some other way (or
           // not at all). Counted like any other reason so no dropped record is
@@ -1179,7 +1181,7 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
       } else {
         unresolvedReasons.set(
           resolution.reason,
-          (unresolvedReasons.get(resolution.reason) ?? 0) + 1
+          (unresolvedReasons.get(resolution.reason) ?? 0) + 1,
         );
         if (resolution.reason === "no-alertc") {
           const shape = locationShapeOf(rec);
@@ -1350,7 +1352,7 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
       .map(([reason, n]) =>
         reason === "version-mismatch" && versions
           ? `${reason}=${n}(theirs:${versions})`
-          : `${reason}=${n}`
+          : `${reason}=${n}`,
       )
       .join(" ");
     const shapes = [...unreadableShapes]
@@ -1361,7 +1363,7 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
     console.debug(
       `[datex] ${src.id}: skipped ${skippedAlertCOnly} record(s) with no usable geometry` +
         (reasons ? ` (${reasons})` : "") +
-        (shapes ? ` [${shapes}]` : "")
+        (shapes ? ` [${shapes}]` : ""),
     );
     // Also counted per source, so the loss is measurable in GET /feeds/status
     // rather than visible only in a debug log line.
@@ -1382,7 +1384,7 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
  */
 export function parseDatexSituations(
   input: string | Buffer,
-  src: SourceDescriptor
+  src: SourceDescriptor,
 ): (RoadEvent | UnresolvedRoadEvent)[] {
   const parsed = parseDatexInternal(input, src);
   return [
@@ -1398,7 +1400,7 @@ export function parseDatexSituations(
  */
 function collapseByIdentity<T extends { id: string }>(
   events: T[],
-  records: RoadSnapshotRecord[]
+  records: RoadSnapshotRecord[],
 ): T[] {
   const best = new Map<string, RoadSnapshotRecord>();
   for (const record of records) {
@@ -1424,7 +1426,7 @@ function collapseByIdentity<T extends { id: string }>(
  */
 export function parseDatexSnapshot(
   input: string | Buffer,
-  src: SourceDescriptor
+  src: SourceDescriptor,
 ): RoadSnapshotReport {
   try {
     const parsed = parseDatexInternal(input, src);

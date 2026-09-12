@@ -1,27 +1,27 @@
 import { describe, expect, it } from "vitest";
 import {
+  type BetaPosterior,
+  type CanonicalIdentityParts,
+  type ConditionEvent,
   canonicalId,
   canonicalIdentityParts,
-  normalizeNamespace,
-  phenomenonFingerprint,
   centroid,
-  gridCell,
-  truncateType,
-  timeBucket,
-  evaluateEvidence,
-  updateReliability,
-  reliabilityLowerBound,
-  shrinkToward,
   confidenceEnum,
-  OBSERVED_PROPERTIES,
-  validateObserved,
-  observedKey,
-  type CanonicalIdentityParts,
   type EvidenceLedger,
   type EvidencePolicy,
-  type BetaPosterior,
-  type ConditionEvent,
+  evaluateEvidence,
+  gridCell,
+  normalizeNamespace,
+  OBSERVED_PROPERTIES,
   type Observation,
+  observedKey,
+  phenomenonFingerprint,
+  reliabilityLowerBound,
+  shrinkToward,
+  timeBucket,
+  truncateType,
+  updateReliability,
+  validateObserved,
 } from "../index.js";
 
 /**
@@ -122,7 +122,7 @@ describe("commons substrate public contract (packages/core barrel)", () => {
     const result = evaluateEvidence(ledger, policy);
     expect(result.state).toBe("self_reported");
     expect(["observed", "likely", "possible", "unknown"]).toContain(
-      confidenceEnum(result.confidenceScore)
+      confidenceEnum(result.confidenceScore),
     );
   });
 

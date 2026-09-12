@@ -131,7 +131,7 @@ describe("readObservations", () => {
     };
     const obs = await readObservations(
       stubDb([withInformed], (query) => (q = query)),
-      { domain: "roads", bbox: [4, 51, 6, 53] }
+      { domain: "roads", bbox: [4, 51, 6, 53] },
     );
     expect(q).toMatch(/o\.informed/);
     expect(obs[0]!.informed).toEqual({
@@ -158,7 +158,7 @@ describe("readObservations", () => {
         q = query;
         params = p;
       }),
-      { bbox: [4, 51, 6, 53] }
+      { bbox: [4, 51, 6, 53] },
     );
     expect(q).not.toMatch(/o\.domain =/);
     expect(params).not.toContain("roads");
@@ -168,12 +168,12 @@ describe("readObservations", () => {
     let q = "";
     await readObservations(
       stubDb([], (query) => (q = query)),
-      { domain: "roads", bbox: [4, 51, 6, 53] }
+      { domain: "roads", bbox: [4, 51, 6, 53] },
     );
     expect(q).toMatch(/ST_AsGeoJSON\(o\.geom\) AS geojson/);
     expect(q).toMatch(/LEFT JOIN conditions\.source_status ss ON ss\.source = o\.source/);
     expect(q).toMatch(
-      /ss\.last_success_at \+ make_interval\(secs => ss\.freshness_window_sec\) < now\(\)\) AS is_stale/
+      /ss\.last_success_at \+ make_interval\(secs => ss\.freshness_window_sec\) < now\(\)\) AS is_stale/,
     );
     expect(q).toMatch(/valid_to IS NULL OR o\.valid_to > now\(\)/);
   });
@@ -186,16 +186,16 @@ describe("readObservations", () => {
         q = query;
         params = p;
       }),
-      { domain: "roads", bbox: [4, 51, 6, 53], horizonDays: 7 }
+      { domain: "roads", bbox: [4, 51, 6, 53], horizonDays: 7 },
     );
     expect(q).toMatch(
-      /\(o\.valid_from IS NULL OR o\.valid_from <= now\(\) \+ make_interval\(days => \$6\)\)/
+      /\(o\.valid_from IS NULL OR o\.valid_from <= now\(\) \+ make_interval\(days => \$6\)\)/,
     );
     expect(params?.[5]).toBe(7);
 
     await readObservations(
       stubDb([], (query) => (q = query)),
-      { domain: "roads", bbox: [4, 51, 6, 53] }
+      { domain: "roads", bbox: [4, 51, 6, 53] },
     );
     expect(q).not.toMatch(/make_interval\(days =>/);
   });
@@ -211,7 +211,7 @@ describe("readObservations", () => {
     };
     const [obs] = await readObservations(
       stubDb([boundRow], (query) => (q = query)),
-      { domain: "roads", bbox: [0, 0, 1, 1], includeBindings: true }
+      { domain: "roads", bbox: [0, 0, 1, 1], includeBindings: true },
     );
     expect(obs!.binding).toEqual({ status: "exact", confidence: 0.95, directionMode: "single" });
     expect(obs!.segments).toEqual([
@@ -224,7 +224,7 @@ describe("readObservations", () => {
     let q = "";
     const [obs] = await readObservations(
       stubDb([eventRow], (query) => (q = query)),
-      { domain: "roads", bbox: [0, 0, 1, 1] }
+      { domain: "roads", bbox: [0, 0, 1, 1] },
     );
     expect(q).not.toContain("observation_binding");
     expect(obs!.binding).toBeUndefined();
@@ -236,7 +236,7 @@ describe("complete canonical reads", () => {
   it("rejects unavailable or overflowing results instead of returning a partial set", async () => {
     const opts = { bbox: [0, 0, 1, 1] as [number, number, number, number], requireComplete: true };
     await expect(readObservations(stubDb(Array(100001).fill(eventRow)), opts)).rejects.toThrow(
-      /exceeds routing limit/
+      /exceeds routing limit/,
     );
     const unavailable: QueryRunner = { execute: async <T>() => undefined as T };
     await expect(readObservations(unavailable, opts)).rejects.toThrow(/unavailable/);
@@ -257,9 +257,9 @@ describe("readObservations source freshness metadata", () => {
         ],
         (q) => {
           sql = q;
-        }
+        },
       ),
-      { domain: "roads", bbox: [4, 51, 6, 53] }
+      { domain: "roads", bbox: [4, 51, 6, 53] },
     );
     expect(sql).toContain("ss.last_success_at AS source_checked_at");
     expect(sql).toContain("ss.freshness_window_sec");
@@ -272,7 +272,7 @@ describe("readObservations source freshness metadata", () => {
   it("never implies freshness when the source has no successful poll", async () => {
     const obs = await readObservations(
       stubDb([{ ...eventRow, source_checked_at: null, freshness_window_sec: null }]),
-      { domain: "roads", bbox: [4, 51, 6, 53] }
+      { domain: "roads", bbox: [4, 51, 6, 53] },
     );
     expect(obs[0]!.sourceCheckedAt).toBeNull();
     expect(obs[0]!.freshnessWindowSec).toBeNull();

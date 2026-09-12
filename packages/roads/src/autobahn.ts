@@ -1,8 +1,8 @@
-import { deriveSeverity } from "@openconditions/core";
 import type { GeoJsonGeometry, Schedule } from "@openconditions/core";
-import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
-import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
+import { deriveSeverity } from "@openconditions/core";
 import { dedupeRoadEvents } from "./dedupe.js";
+import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
+import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
@@ -130,7 +130,7 @@ function joinDescription(raw: unknown): string | undefined {
     return typeof raw === "string" && raw ? raw : undefined;
   }
   const parts = (raw as unknown[]).filter(
-    (s): s is string => typeof s === "string" && s.trim() !== ""
+    (s): s is string => typeof s === "string" && s.trim() !== "",
   );
   return parts.length > 0 ? parts.join("\n") : undefined;
 }
@@ -167,7 +167,7 @@ function berlinWallClockToISO(
   month: string,
   day: string,
   hour: string,
-  minute: string
+  minute: string,
 ): string | null {
   const y = year.length === 2 ? 2000 + Number(year) : Number(year);
   const mo = Number(month);
@@ -279,7 +279,7 @@ function windowsToSchedule(windows: ParsedWindow[]): LocalSchedule[] {
         endDate: dates[dates.length - 1],
         startTime: group[0]!.timeStart,
         endTime: group[0]!.timeEnd,
-      })
+      }),
     );
   }
   return out;
@@ -364,7 +364,7 @@ function detectService(payload: AutobahnPayload): AutobahnService | undefined {
 export function parseAutobahn(
   json: string | Buffer | object,
   src: SourceDescriptor,
-  service?: "warning" | "closure" | "roadworks"
+  service?: "warning" | "closure" | "roadworks",
 ): RoadEvent[] {
   let payload: AutobahnPayload;
   try {
@@ -391,7 +391,7 @@ export function parseAutobahn(
       if (!geometry) {
         skippedNoGeometry++;
         console.debug(
-          `[autobahn] skipped item with no usable geometry: ${String(item.identifier ?? item.id ?? "unknown")}`
+          `[autobahn] skipped item with no usable geometry: ${String(item.identifier ?? item.id ?? "unknown")}`,
         );
         continue;
       }

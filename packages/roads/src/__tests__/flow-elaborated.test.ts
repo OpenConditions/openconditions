@@ -13,7 +13,7 @@ const SRC: SourceDescriptor = {
 };
 
 const siteMap = parsePredefinedLocations(
-  readFileSync(join(import.meta.dirname, "fixtures/autobahn-bab/verortung.xml"))
+  readFileSync(join(import.meta.dirname, "fixtures/autobahn-bab/verortung.xml")),
 );
 const xml = readFileSync(join(import.meta.dirname, "fixtures/autobahn-bab/elaborated.xml"));
 
@@ -118,7 +118,7 @@ describe("parseElaboratedFlow", () => {
 
 describe("parseElaboratedFlow — Verkehrslage (TrafficStatus only)", () => {
   const losSiteMap = parsePredefinedLocations(
-    readFileSync(join(import.meta.dirname, "fixtures/autobahn-bab/verortung.xml"))
+    readFileSync(join(import.meta.dirname, "fixtures/autobahn-bab/verortung.xml")),
   );
   const losXml = readFileSync(join(import.meta.dirname, "fixtures/autobahn-bab/verkehrslage.xml"));
 

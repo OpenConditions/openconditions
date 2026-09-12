@@ -12,13 +12,13 @@
  * docs/federation-onboarding.md), not a code path here.
  */
 import { createHash } from "node:crypto";
-import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { canonicalize } from "@tufjs/canonical-json";
 import {
-  Key,
-  MetaFile,
+  type Key,
   Metadata,
+  MetaFile,
   Root,
   Snapshot,
   TargetFile,
@@ -27,8 +27,8 @@ import {
 } from "@tufjs/models";
 import { Role } from "@tufjs/models/dist/role.js";
 import { parseRegistryEntry, registryEntryFileName } from "../registry.js";
-import { TEST_ROOT_MARKER } from "./verify.js";
 import type { TufSigner } from "./signing.js";
+import { TEST_ROOT_MARKER } from "./verify.js";
 
 /** TUF specification version stamped into every metadata file. */
 export const TUF_SPEC_VERSION = "1.0.31";
@@ -114,7 +114,7 @@ function hashesFor(bytes: Buffer): Record<string, string> {
 export async function signRegistry(options: SignRegistryOptions): Promise<SignedRegistry> {
   if (options.testRoot !== true) {
     throw new Error(
-      "signRegistry only produces marked TEST roots; a production trust root requires the offline key ceremony described in docs/federation-onboarding.md"
+      "signRegistry only produces marked TEST roots; a production trust root requires the offline key ceremony described in docs/federation-onboarding.md",
     );
   }
   const now = options.now ?? new Date().toISOString();
@@ -142,14 +142,14 @@ export async function signRegistry(options: SignRegistryOptions): Promise<Signed
     const entry = parseRegistryEntry(bytes.toString("utf8"));
     if (registryEntryFileName(entry.id) !== file) {
       throw new TypeError(
-        `registry file ${file} does not match its entry id "${entry.id}" (expected ${registryEntryFileName(entry.id)})`
+        `registry file ${file} does not match its entry id "${entry.id}" (expected ${registryEntryFileName(entry.id)})`,
       );
     }
     if (resolve(options.registryDir) !== resolve(targetsDir)) {
       copyFileSync(sourcePath, join(targetsDir, file));
     }
     targets.addTarget(
-      new TargetFile({ length: bytes.length, path: file, hashes: hashesFor(bytes) })
+      new TargetFile({ length: bytes.length, path: file, hashes: hashesFor(bytes) }),
     );
   }
 

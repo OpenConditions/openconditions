@@ -7,9 +7,10 @@
  * emits directed `f`/`b` segments exactly as `segment-build.ts` produces
  * them, so a case replays offline against the shape the database would hold.
  */
-import { parseOverpassWays, segmentsForWay } from "../src/index.js";
-import type { SpineSegment } from "../src/bind/types.js";
+
 import { polylineLengthM } from "../src/bind/geo.js";
+import type { SpineSegment } from "../src/bind/types.js";
+import { parseOverpassWays, segmentsForWay } from "../src/index.js";
 
 const [w, s, e, n] = process.argv.slice(2, 6).map(Number);
 if ([w, s, e, n].some((v) => !Number.isFinite(v))) {

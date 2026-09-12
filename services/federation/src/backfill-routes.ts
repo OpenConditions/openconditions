@@ -9,19 +9,20 @@
  * signature's key — never a client-supplied field. An unsigned, bad-signature,
  * or unpinned request is a 401 on the whole page.
  */
-import type { FastifyInstance, FastifyRequest } from "fastify";
-import type postgres from "postgres";
+
 import {
   ACTIVITY_JSON,
   FEDERATION_REASON_HEADER,
-  recordPeerFailure,
-  signMessage,
   type InstanceKey,
   type MtlsContext,
   type NonceStore,
   type PeerRecord,
   type RateLimiter,
+  recordPeerFailure,
+  signMessage,
 } from "@openconditions/federation";
+import type { FastifyInstance, FastifyRequest } from "fastify";
+import type postgres from "postgres";
 import { readBackfill } from "./backfill.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
 import { requirePeer, respondIfBlocked } from "./peer-request.js";
@@ -69,7 +70,7 @@ export function registerBackfillRoutes(app: FastifyInstance, ctx: BackfillRouteC
       "backfill",
       peer.trustTier,
       1,
-      Date.parse(ctx.now())
+      Date.parse(ctx.now()),
     );
     if (!rate.ok) {
       await recordPeerFailure(ctx.sql, peerId, "rate", ctx.now());
@@ -80,7 +81,7 @@ export function registerBackfillRoutes(app: FastifyInstance, ctx: BackfillRouteC
         .send({ error: "backfill rate limit exceeded", retryAfterSec: rate.retryAfterSec });
     }
 
-    let parsed;
+    let parsed: ReturnType<typeof parseOutboxQuery>;
     try {
       parsed = parseOutboxQuery(req.query as Record<string, unknown>);
     } catch (err) {

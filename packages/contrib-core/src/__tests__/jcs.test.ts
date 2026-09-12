@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_CANONICAL_BYTES, canonicalClaimBytes } from "../index.js";
+import { canonicalClaimBytes, MAX_CANONICAL_BYTES } from "../index.js";
 
 const decode = (bytes: Uint8Array): string => new TextDecoder().decode(bytes);
 
@@ -12,7 +12,7 @@ describe("canonicalClaimBytes (RFC 8785 JCS)", () => {
         '  "numbers": [333333333.33333329, 1E30, 4.50, 2e-3, 0.000000000000000000000000001],\n' +
         '  "string": "\\u20ac$\\u000F\\u000aA\'\\u0042\\u0022\\u005c\\\\\\"\\/",\n' +
         '  "literals": [null, true, false]\n' +
-        "}"
+        "}",
     ) as unknown;
     const expected =
       '{"literals":[null,true,false],' +
@@ -25,7 +25,7 @@ describe("canonicalClaimBytes (RFC 8785 JCS)", () => {
     const input = JSON.parse(
       '{"\\u20ac":"Euro Sign","\\r":"Carriage Return","\\ufb33":"Hebrew Letter Dalet With Dagesh",' +
         '"1":"One","\\ud83d\\ude00":"Emoji: Grinning Face","\\u0080":"Control",' +
-        '"\\u00f6":"Latin Small Letter O With Diaeresis"}'
+        '"\\u00f6":"Latin Small Letter O With Diaeresis"}',
     ) as unknown;
     // Note: the "Control" key below is a literal, invisible U+0080 character;
     // JCS emits it raw (only C0 controls are escaped in canonical form).
@@ -38,7 +38,7 @@ describe("canonicalClaimBytes (RFC 8785 JCS)", () => {
 
   it("serializes numbers with the ECMAScript shortest round-trip form", () => {
     expect(decode(canonicalClaimBytes([0, -0, 1e21, 9007199254740994, 1e-7]))).toBe(
-      "[0,0,1e+21,9007199254740994,1e-7]"
+      "[0,0,1e+21,9007199254740994,1e-7]",
     );
   });
 

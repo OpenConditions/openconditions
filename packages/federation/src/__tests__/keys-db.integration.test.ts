@@ -1,13 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
+  type ActorConfig,
   buildActorDocument,
   ensureInstanceKey,
   loadActiveKeys,
   rotateInstanceKey,
-  type ActorConfig,
 } from "../index.js";
 
 let sql: postgres.Sql;
@@ -73,7 +73,7 @@ describe("migration 0013 — federation_instance_key", () => {
         "not_before",
         "not_after",
         "created_at",
-      ])
+      ]),
     );
   }, 30_000);
 });
@@ -99,10 +99,10 @@ describe("instance key lifecycle", () => {
     const signature = await globalThis.crypto.subtle.sign(
       { name: "Ed25519" },
       key!.privateKey,
-      message
+      message,
     );
     await expect(
-      globalThis.crypto.subtle.verify({ name: "Ed25519" }, key!.publicKey, signature, message)
+      globalThis.crypto.subtle.verify({ name: "Ed25519" }, key!.publicKey, signature, message),
     ).resolves.toBe(true);
   }, 30_000);
 

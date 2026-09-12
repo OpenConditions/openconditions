@@ -98,7 +98,7 @@ export async function crowdObservationId(keyId: string, nonce: string): Promise<
  */
 export async function reportToObservation(
   report: SignedReport,
-  ctx: LandingContext
+  ctx: LandingContext,
 ): Promise<CrowdLandingObservation> {
   const { claim } = report;
   const obs: CrowdLandingObservation = {

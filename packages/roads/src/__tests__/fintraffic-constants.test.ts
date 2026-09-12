@@ -76,7 +76,7 @@ describe("parseFintrafficSensorConstants", () => {
       parseFintrafficSensorConstants(JSON.stringify({ id: 1 }), {
         stationId: "1",
         on: new Date(),
-      })
+      }),
     ).toEqual([]);
   });
 
@@ -88,7 +88,7 @@ describe("parseFintrafficSensorConstants", () => {
       ],
     });
     expect(
-      parseFintrafficSensorConstants(bad, { stationId: "1", on: new Date("2026-01-15") })
+      parseFintrafficSensorConstants(bad, { stationId: "1", on: new Date("2026-01-15") }),
     ).toEqual([]);
   });
 });

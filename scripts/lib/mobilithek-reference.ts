@@ -73,7 +73,7 @@ export function mobilithekOfferMetadataUrl(offerId: string): string {
  */
 export function checkMobilithekReference(
   siteTable: SiteTableReferenceConfig,
-  metadata: MobilithekOfferMetadata
+  metadata: MobilithekOfferMetadata,
 ): MobilithekReferenceCheck {
   const configuredFileName = fileNameFromUrl(siteTable.url);
   if (configuredFileName == null) {
@@ -128,7 +128,7 @@ export function checkMobilithekReference(
 
 export async function fetchMobilithekOffer(
   offerId: string,
-  fetchFn: typeof fetch = fetch
+  fetchFn: typeof fetch = fetch,
 ): Promise<MobilithekOfferMetadata> {
   const response = await fetchFn(mobilithekOfferMetadataUrl(offerId));
   if (!response.ok) throw new Error(`HTTP ${response.status} fetching Mobilithek offer ${offerId}`);

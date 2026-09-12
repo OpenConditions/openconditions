@@ -9,45 +9,46 @@
  * imports these to bind an admitted token to a VDAF report without rebuilding
  * the Privacy Pass exchange.
  */
+
+export { enrollReporter } from "./attester/enroll.js";
+export {
+  createReportingGrant,
+  type GrantVerification,
+  resolveGrantSecret,
+  verifyReportingGrant,
+} from "./attester/grant.js";
 export {
   ATTESTER_POLICY,
-  assessEntitlement,
   type AttesterCtx,
+  assessEntitlement,
   type DeviceProof,
   type Entitlement,
   type ReporterRow,
 } from "./attester/policy.js";
 export {
-  createReportingGrant,
-  resolveGrantSecret,
-  verifyReportingGrant,
-  type GrantVerification,
-} from "./attester/grant.js";
-export { enrollReporter } from "./attester/enroll.js";
-export {
-  UNVERIFIED_ATTESTATION,
-  UNVERIFIED_OSM_AUTH,
-  type AttestationVerifier,
   type AttestationClaim,
-  type AttestationVerifierCtx,
   type AttestationVerificationResult,
+  type AttestationVerifier,
+  type AttestationVerifierCtx,
+  type OsmAuthVerificationResult,
   type OsmAuthVerifier,
   type OsmAuthVerifierCtx,
-  type OsmAuthVerificationResult,
+  UNVERIFIED_ATTESTATION,
+  UNVERIFIED_OSM_AUTH,
 } from "./attester/verifier.js";
 export {
   isValidContextPart,
+  type PublicContext,
   publicContextString,
   redemptionContext,
   reportEpoch,
-  type PublicContext,
 } from "./issuer/context.js";
+export { type IssueLogger, type IssueResult, issueToken } from "./issuer/issue.js";
 export {
+  type ActiveIssuerKey,
   DEFAULT_ISSUER_NAME,
   ensureIssuerKeys,
   generateIssuerKey,
   loadActiveIssuerKeys,
-  type ActiveIssuerKey,
 } from "./issuer/keys.js";
-export { issueToken, type IssueResult, type IssueLogger } from "./issuer/issue.js";
 export { TokenVerifier, type TokenVerifierOptions } from "./issuer/verify.js";

@@ -36,7 +36,7 @@ describe("toDatexRecordType", () => {
     expect(toDatexRecordType(roadEvent({ type: "roadworks" }))).toBe("MaintenanceWorks");
     expect(toDatexRecordType(roadEvent({ type: "congestion" }))).toBe("AbnormalTraffic");
     expect(toDatexRecordType(roadEvent({ type: "road_closure" }))).toBe(
-      "RoadOrCarriagewayOrLaneManagement"
+      "RoadOrCarriagewayOrLaneManagement",
     );
   });
 });
@@ -56,7 +56,7 @@ describe("observationsToDatexSituations", () => {
 
   it("emits one situationRecord per event with the right xsi:type and id", () => {
     const recs = recordsOf(
-      observationsToDatexSituations([roadEvent({ id: "ndw:5", type: "accident" })])
+      observationsToDatexSituations([roadEvent({ id: "ndw:5", type: "accident" })]),
     );
     expect(recs).toHaveLength(1);
     expect(local(recs[0]["@_type"])).toBe("Accident");
@@ -67,7 +67,7 @@ describe("observationsToDatexSituations", () => {
     const recs = recordsOf(
       observationsToDatexSituations([
         roadEvent({ geometry: { type: "Point", coordinates: [13.4, 52.5] } }),
-      ])
+      ]),
     );
     const coords = recs[0].locationReference.pointByCoordinates.pointCoordinates;
     expect(Number(coords.latitude)).toBe(52.5);
@@ -81,7 +81,7 @@ describe("observationsToDatexSituations", () => {
           type: "congestion",
           geometry: { type: "Point", coordinates: [13.4, 52.5] },
         }),
-      ])
+      ]),
     );
     const loc = recs[0].locationReference;
     expect(local(loc["@_type"])).toBe("PointLocation");
@@ -104,7 +104,7 @@ describe("observationsToDatexSituations", () => {
             ],
           },
         }),
-      ])
+      ]),
     );
     const loc = recs[0].locationReference;
     expect(local(loc["@_type"])).toBe("PointLocation");
@@ -122,7 +122,7 @@ describe("observationsToDatexSituations", () => {
           validFrom: "2026-06-23T08:00:00Z",
           validTo: "2026-06-23T12:00:00Z",
         }),
-      ])
+      ]),
     );
     expect(recs[0].severity).toBe("highest");
     const spec = recs[0].validity.validityTimeSpecification;
@@ -132,7 +132,7 @@ describe("observationsToDatexSituations", () => {
 
   it("emits a management type for closures (text contains 'closed')", () => {
     const recs = recordsOf(
-      observationsToDatexSituations([roadEvent({ type: "road_closure", roadState: "closed" })])
+      observationsToDatexSituations([roadEvent({ type: "road_closure", roadState: "closed" })]),
     );
     expect(local(recs[0]["@_type"])).toBe("RoadOrCarriagewayOrLaneManagement");
     expect(String(recs[0].roadOrCarriagewayOrLaneManagementType).toLowerCase()).toContain("closed");
@@ -140,7 +140,7 @@ describe("observationsToDatexSituations", () => {
 
   it("carries the headline as an English public comment", () => {
     const recs = recordsOf(
-      observationsToDatexSituations([roadEvent({ headline: "Accident on A2" })])
+      observationsToDatexSituations([roadEvent({ headline: "Accident on A2" })]),
     );
     const value = recs[0].generalPublicComment.comment.values.value[0];
     expect(value["#text"]).toBe("Accident on A2");

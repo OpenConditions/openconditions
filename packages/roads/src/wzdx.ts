@@ -1,8 +1,7 @@
+import type { Confidence, GeoJsonGeometry } from "@openconditions/core";
 import { deriveSeverity } from "@openconditions/core";
-import type { GeoJsonGeometry } from "@openconditions/core";
-import type { Confidence } from "@openconditions/core";
-import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
 import { dedupeRoadEvents } from "./dedupe.js";
+import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
@@ -133,7 +132,7 @@ function statusFromEventStatus(raw: string | undefined): RoadEvent["status"] {
 }
 
 function vehicleImpactToRoadState(
-  vehicleImpact: string | undefined
+  vehicleImpact: string | undefined,
 ): RoadEvent["roadState"] | undefined {
   switch (vehicleImpact) {
     case "all-lanes-closed":
@@ -186,7 +185,7 @@ function relatedIdsOf(coreDetails: WzdxCoreDetails): string[] | undefined {
 }
 
 function relatedEventsOf(
-  coreDetails: WzdxCoreDetails
+  coreDetails: WzdxCoreDetails,
 ): { id: string; type?: string }[] | undefined {
   const events = (coreDetails.related_road_events ?? [])
     .filter((r): r is WzdxRelatedEvent => !!r && typeof r.id === "string")
@@ -344,7 +343,7 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
         severity,
         severitySource: "derived",
         status: statusFromEventStatus(
-          typeof props.event_status === "string" ? props.event_status : undefined
+          typeof props.event_status === "string" ? props.event_status : undefined,
         ),
         geometry: geometry as GeoJsonGeometry,
         direction: typeof coreDetails.direction === "string" ? coreDetails.direction : undefined,

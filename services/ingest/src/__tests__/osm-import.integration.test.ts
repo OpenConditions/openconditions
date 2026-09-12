@@ -1,7 +1,7 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
   importOsmRoads,
   loadOsmRegions,
@@ -207,7 +207,7 @@ describe("loadOsmRegions", () => {
 
   it("reports invalid explicit SEGMENT_REGIONS instead of claiming default coverage", () => {
     expect(() => loadOsmRegions({ SEGMENT_REGIONS: "not json" })).toThrow(
-      /SEGMENT_REGIONS is invalid JSON/
+      /SEGMENT_REGIONS is invalid JSON/,
     );
   });
 
@@ -237,7 +237,7 @@ describe("loadOsmRegions", () => {
   ])("rejects invalid region semantics: %j", (patch) => {
     const region = { id: "custom", bbox: [1, 2, 3, 4], tz: "UTC", ...patch };
     expect(() => loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify([region]) })).toThrow(
-      /SEGMENT_REGIONS/
+      /SEGMENT_REGIONS/,
     );
   });
 
@@ -262,10 +262,10 @@ describe("loadOsmRegions", () => {
     const empty = [{ id: "nl", bbox: [1, 2, 3, 4], tz: "UTC", pbfUrls: [] }];
     const blank = [{ id: "nl", bbox: [1, 2, 3, 4], tz: "UTC", pbfUrls: [""] }];
     expect(() => loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify(empty) })).toThrow(
-      /contains no valid regions/
+      /contains no valid regions/,
     );
     expect(() => loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify(blank) })).toThrow(
-      /contains no valid regions/
+      /contains no valid regions/,
     );
   });
 
@@ -276,7 +276,7 @@ describe("loadOsmRegions", () => {
   it("rejects duplicate region identities", () => {
     const region = { id: "custom", bbox: [1, 2, 3, 4], tz: "UTC" };
     expect(() => loadOsmRegions({ SEGMENT_REGIONS: JSON.stringify([region, region]) })).toThrow(
-      /duplicate/
+      /duplicate/,
     );
   });
 });
@@ -292,19 +292,19 @@ describe("overpassUrl", () => {
 
   it("uses a configured OVERPASS_URL override", () => {
     expect(overpassUrl({ OVERPASS_URL: "http://overpass/api/interpreter" })).toBe(
-      "http://overpass/api/interpreter"
+      "http://overpass/api/interpreter",
     );
   });
 
   it("normalizes a bare-origin OVERPASS_URL to the interpreter path", () => {
     expect(overpassUrl({ OVERPASS_URL: "http://overpass" })).toBe(
-      "http://overpass/api/interpreter"
+      "http://overpass/api/interpreter",
     );
   });
 
   it("normalizes a trailing-slash OVERPASS_URL", () => {
     expect(overpassUrl({ OVERPASS_URL: "http://overpass/" })).toBe(
-      "http://overpass/api/interpreter"
+      "http://overpass/api/interpreter",
     );
   });
 });

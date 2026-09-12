@@ -1,10 +1,10 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import Fastify from "fastify";
-import { FeedStatusStore } from "../feed-status.js";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildDomainRegistry } from "../domains.js";
-import { registerFeedStatusRoute } from "../publish-routes.js";
+import { FeedStatusStore } from "../feed-status.js";
 import type { BindingMetricsReader } from "../pipeline/binding-metrics.js";
 import type { SourceStatusReader } from "../pipeline/source-status.js";
+import { registerFeedStatusRoute } from "../publish-routes.js";
 
 const app = Fastify();
 const store = new FeedStatusStore();
@@ -44,7 +44,7 @@ beforeAll(async () => {
     registry,
     () => readBindingMetrics(),
     readSourceStatus,
-    async () => ({ generation: "graph-7", status: "ready", regions: ["DE"] })
+    async () => ({ generation: "graph-7", status: "ready", regions: ["DE"] }),
   );
   await app.ready();
 });

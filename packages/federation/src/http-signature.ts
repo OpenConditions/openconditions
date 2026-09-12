@@ -16,10 +16,10 @@
  */
 import { httpbis } from "http-message-signatures";
 import {
+  type InnerList,
   isInnerList,
   parseDictionary,
   serializeDictionary,
-  type InnerList,
 } from "structured-headers";
 
 /** The RFC 9421 `tag` parameter every OpenConditions federation signature carries. */
@@ -80,7 +80,7 @@ async function reserveNonce(
   store: NonceStore,
   peerId: string,
   nonce: string,
-  ttlSec: number
+  ttlSec: number,
 ): Promise<boolean> {
   if (store.reserve) return store.reserve(peerId, nonce, ttlSec);
   if (await store.seen(peerId, nonce)) return false;
@@ -261,7 +261,7 @@ export async function signMessage(p: SignParams): Promise<{ headers: Record<stri
       alg: "ed25519",
       sign: async (data: Buffer) =>
         Buffer.from(
-          await globalThis.crypto.subtle.sign(ED25519, p.privateKey, new Uint8Array(data))
+          await globalThis.crypto.subtle.sign(ED25519, p.privateKey, new Uint8Array(data)),
         ),
     },
     name: SIGNATURE_NAME,
@@ -287,7 +287,7 @@ export async function signMessage(p: SignParams): Promise<{ headers: Record<stri
 }
 
 async function digestMatchesBody(headerValue: string, body: Uint8Array): Promise<boolean> {
-  let dictionary;
+  let dictionary: ReturnType<typeof parseDictionary>;
   try {
     dictionary = parseDictionary(headerValue);
   } catch {
@@ -318,7 +318,7 @@ interface ParsedSignatureInput {
 }
 
 function parseSignatureInputs(headerValue: string): ParsedSignatureInput[] | null {
-  let dictionary;
+  let dictionary: ReturnType<typeof parseDictionary>;
   try {
     dictionary = parseDictionary(headerValue);
   } catch {
@@ -374,13 +374,13 @@ function coversRequiredComponents(input: ParsedSignatureInput, p: VerifyParams):
  */
 function restrictToLabel(
   headers: Record<string, string>,
-  label: string
+  label: string,
 ): Record<string, string> | null {
   const inputName = Object.keys(headers).find((k) => k.toLowerCase() === "signature-input");
   const sigName = Object.keys(headers).find((k) => k.toLowerCase() === "signature");
   if (inputName === undefined || sigName === undefined) return null;
-  let inputDict;
-  let sigDict;
+  let inputDict: ReturnType<typeof parseDictionary>;
+  let sigDict: ReturnType<typeof parseDictionary>;
   try {
     inputDict = parseDictionary(headers[inputName]);
     sigDict = parseDictionary(headers[sigName]);
@@ -464,7 +464,7 @@ export async function verifyMessage(p: VerifyParams): Promise<VerifyResult> {
                 ED25519,
                 publicKey,
                 new Uint8Array(signature),
-                new Uint8Array(data)
+                new Uint8Array(data),
               ),
           }
         : null,

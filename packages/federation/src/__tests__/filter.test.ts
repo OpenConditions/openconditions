@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import type { Observation, Provenance } from "@openconditions/core";
+import { describe, expect, it } from "vitest";
 import { applyFederationFilter, type FederationFilter } from "../filter.js";
 import type { OutboxEntry } from "../outbox.js";
 
@@ -80,7 +80,7 @@ describe("applyFederationFilter — the safe default (no filter)", () => {
         origin: CROWD_ORIGIN,
         privacyClass: "crowd_pseudonym",
         evidenceState: "self_reported",
-      })
+      }),
     );
     const corroborated = entry(
       obs({
@@ -88,7 +88,7 @@ describe("applyFederationFilter — the safe default (no filter)", () => {
         origin: CROWD_ORIGIN,
         privacyClass: "crowd_pseudonym",
         evidenceState: "corroborated",
-      })
+      }),
     );
     const resolved = entry(
       obs({
@@ -96,7 +96,7 @@ describe("applyFederationFilter — the safe default (no filter)", () => {
         origin: CROWD_ORIGIN,
         privacyClass: "crowd_pseudonym",
         evidenceState: "externally_resolved",
-      })
+      }),
     );
     const out = applyFederationFilter([feed, selfReported, corroborated, resolved], undefined, NOW);
     expect(ids(out)).toEqual(["feed-1", "crowd-corr", "crowd-res"]);
@@ -108,7 +108,7 @@ describe("applyFederationFilter — the safe default (no filter)", () => {
       obs({
         id: "odbl",
         origin: { kind: "feed", attribution: { provider: "SA", license: "ODbL-1.0" } },
-      })
+      }),
     );
     const out = applyFederationFilter([permissive, shareAlike], undefined, NOW);
     expect(ids(out)).toEqual(["cc-by"]);
@@ -120,7 +120,7 @@ describe("applyFederationFilter — the safe default (no filter)", () => {
     const out = applyFederationFilter(
       [negated, expired],
       { minEvidenceTier: "self_reported" },
-      NOW
+      NOW,
     );
     expect(out).toEqual([]);
   });
@@ -129,7 +129,7 @@ describe("applyFederationFilter — the safe default (no filter)", () => {
 describe("applyFederationFilter — explicit opt-ins", () => {
   it("an explicit self_reported opt-in includes self_reported crowd rows", () => {
     const selfReported = entry(
-      obs({ id: "crowd-self", origin: CROWD_ORIGIN, evidenceState: "self_reported" })
+      obs({ id: "crowd-self", origin: CROWD_ORIGIN, evidenceState: "self_reported" }),
     );
     const out = applyFederationFilter([selfReported], { minEvidenceTier: "self_reported" }, NOW);
     expect(ids(out)).toEqual(["crowd-self"]);
@@ -140,7 +140,7 @@ describe("applyFederationFilter — explicit opt-ins", () => {
       obs({
         id: "odbl",
         origin: { kind: "feed", attribution: { provider: "SA", license: "ODbL-1.0" } },
-      })
+      }),
     );
     const out = applyFederationFilter([shareAlike], { permissiveOnly: false }, NOW);
     expect(ids(out)).toEqual(["odbl"]);
@@ -149,15 +149,15 @@ describe("applyFederationFilter — explicit opt-ins", () => {
   it("minEvidenceTier: externally_resolved drops corroborated but never gates feed rows", () => {
     const feed = entry(obs({ id: "feed-1" }));
     const corroborated = entry(
-      obs({ id: "crowd-corr", origin: CROWD_ORIGIN, evidenceState: "corroborated" })
+      obs({ id: "crowd-corr", origin: CROWD_ORIGIN, evidenceState: "corroborated" }),
     );
     const resolved = entry(
-      obs({ id: "crowd-res", origin: CROWD_ORIGIN, evidenceState: "externally_resolved" })
+      obs({ id: "crowd-res", origin: CROWD_ORIGIN, evidenceState: "externally_resolved" }),
     );
     const out = applyFederationFilter(
       [feed, corroborated, resolved],
       { minEvidenceTier: "externally_resolved" },
-      NOW
+      NOW,
     );
     expect(ids(out)).toEqual(["feed-1", "crowd-res"]);
   });
@@ -169,7 +169,7 @@ describe("applyFederationFilter — content filters", () => {
   it("bbox keeps intersecting geometries and drops the rest", () => {
     const inside = entry(obs({ id: "in", geometry: { type: "Point", coordinates: [5.1, 52.1] } }));
     const outside = entry(
-      obs({ id: "out", geometry: { type: "Point", coordinates: [13.4, 52.5] } })
+      obs({ id: "out", geometry: { type: "Point", coordinates: [13.4, 52.5] } }),
     );
     const crossing = entry(
       obs({
@@ -181,12 +181,12 @@ describe("applyFederationFilter — content filters", () => {
             [6.0, 52.2],
           ],
         },
-      })
+      }),
     );
     const out = applyFederationFilter(
       [inside, outside, crossing],
       filter({ bbox: [5.0, 52.0, 5.5, 52.5] }),
-      NOW
+      NOW,
     );
     expect(ids(out)).toEqual(["in", "cross"]);
   });
@@ -204,7 +204,7 @@ describe("applyFederationFilter — content filters", () => {
     const out = applyFederationFilter(
       [authoritative, kAnon],
       filter({ privacyClasses: ["authoritative"] }),
-      NOW
+      NOW,
     );
     expect(ids(out)).toEqual(["auth-1"]);
   });

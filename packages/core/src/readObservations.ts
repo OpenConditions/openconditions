@@ -1,4 +1,3 @@
-import { BINDING_JOIN_SQL, BINDING_SELECT_SQL } from "./observation-query.js";
 import type { Geometry } from "geojson";
 import { dedupeAcrossSources } from "./crossSourceDedupe.js";
 import type {
@@ -10,6 +9,7 @@ import type {
   Provenance,
   SegmentSpan,
 } from "./model.js";
+import { BINDING_JOIN_SQL, BINDING_SELECT_SQL } from "./observation-query.js";
 import type { QueryRunner } from "./observationsByBbox.js";
 import { severityRank } from "./severity.js";
 
@@ -218,7 +218,7 @@ const OBSERVATION_SELECT_SQL = `
 
 export async function readObservations(
   db: QueryRunner,
-  opts: ReadObservationsOptions
+  opts: ReadObservationsOptions,
 ): Promise<Observation[]> {
   const { domain, bbox, types, minSeverity, horizonDays } = opts;
   const [west, south, east, north] = bbox;
@@ -248,7 +248,7 @@ export async function readObservations(
   if (horizonDays != null) {
     params.push(horizonDays);
     clauses.push(
-      `(o.valid_from IS NULL OR o.valid_from <= now() + make_interval(days => $${params.length}))`
+      `(o.valid_from IS NULL OR o.valid_from <= now() + make_interval(days => $${params.length}))`,
     );
   }
   if (opts.excludedSourceIds?.length) {
@@ -256,7 +256,7 @@ export async function readObservations(
     const p = `$${params.length}`;
     clauses.push(`o.source <> ALL(${p}::text[])`);
     clauses.push(
-      `COALESCE(o.attributes->>'parentSourceId', o.origin#>>'{attribution,parentSourceId}', '') <> ALL(${p}::text[])`
+      `COALESCE(o.attributes->>'parentSourceId', o.origin#>>'{attribution,parentSourceId}', '') <> ALL(${p}::text[])`,
     );
     clauses.push(`NOT EXISTS (
       SELECT 1 FROM jsonb_array_elements_text(
@@ -265,7 +265,7 @@ export async function readObservations(
   }
   if (opts.routingEligibleOnly) {
     clauses.push(
-      "NOT (o.origin->>'kind' = 'crowd' AND COALESCE(o.routing_eligible, false) IS NOT TRUE)"
+      "NOT (o.origin->>'kind' = 'crowd' AND COALESCE(o.routing_eligible, false) IS NOT TRUE)",
     );
   }
   const bindingSelect = opts.includeBindings ? BINDING_SELECT_SQL : "";
@@ -296,7 +296,7 @@ export async function readObservations(
  * every retained observation keeps its own source identity and provenance. */
 export async function* scanObservations(
   db: QueryRunner,
-  opts: { asOf: string; pageSize?: number }
+  opts: { asOf: string; pageSize?: number },
 ): AsyncGenerator<Observation[], void> {
   const pageSize = opts.pageSize ?? 1000;
   if (!Number.isSafeInteger(pageSize) || pageSize < 1 || pageSize > 10000) {
@@ -317,7 +317,7 @@ export async function* scanObservations(
         AND ($2::text IS NULL OR o.id > $2::text)
       ORDER BY o.id
       LIMIT $3`,
-      [opts.asOf, after, pageSize]
+      [opts.asOf, after, pageSize],
     );
     if (!Array.isArray(rows)) throw new Error("Complete observation scan unavailable");
     if (rows.length === 0) return;

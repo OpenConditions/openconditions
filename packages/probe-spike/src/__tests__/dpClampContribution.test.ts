@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BudgetLedger, releaseWithDp, ReleaseStore, type SpeedTuple } from "../index.js";
+import { BudgetLedger, ReleaseStore, releaseWithDp, type SpeedTuple } from "../index.js";
 import { allSumValues, standardManifest, standardMechanism, standardParams } from "./dpFixtures.js";
 
 describe("invariant 1: clamp + contribution-bound before the mechanism is called", () => {

@@ -1,14 +1,14 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
-import type { FastifyInstance } from "fastify";
 import { publicVerif, type Token } from "@cloudflare/privacypass-ts";
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
 import { runMigrations } from "@openconditions/core/server";
+import type { FastifyInstance } from "fastify";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { enrollReporter } from "../attester/enroll.js";
 import { verifyReportingGrant } from "../attester/grant.js";
 import type { DeviceProof } from "../attester/policy.js";
-import { publicContextString, redemptionContext, type PublicContext } from "../issuer/context.js";
+import { type PublicContext, publicContextString, redemptionContext } from "../issuer/context.js";
 import { issueToken } from "../issuer/issue.js";
 import { DEFAULT_ISSUER_NAME, generateIssuerKey, loadActiveIssuerKeys } from "../issuer/keys.js";
 import { TokenVerifier } from "../issuer/verify.js";
@@ -105,7 +105,7 @@ describe("enrollReporter", () => {
       key.publicJwk,
       proofFor(key, { accountAgeDays: 30 }),
       later,
-      { grantSecret: GRANT_SECRET, log: noopLog }
+      { grantSecret: GRANT_SECRET, log: noopLog },
     );
 
     const rows = await sql<
@@ -154,7 +154,7 @@ describe("enrollReporter", () => {
       enrollReporter(sql, key.publicJwk, { keyId: "not-the-thumbprint" }, NOW, {
         grantSecret: GRANT_SECRET,
         log: noopLog,
-      })
+      }),
     ).rejects.toThrow(/keyId/);
   }, 30_000);
 
@@ -178,7 +178,7 @@ describe("enrollReporter", () => {
       key.publicJwk,
       proofFor(key, { attestation: { kind: "play-integrity", blob: "forged" } }),
       NOW,
-      { grantSecret: GRANT_SECRET, log: noopLog }
+      { grantSecret: GRANT_SECRET, log: noopLog },
     );
     expect(entitlement.grantTokens).toBe(20);
     const rows = await sql<{ trust_signal: number | null }[]>`
@@ -196,7 +196,7 @@ describe("enrollReporter", () => {
       key.publicJwk,
       proofFor(key, { attestation: { kind: "play-integrity", blob: "opaque" } }),
       NOW,
-      { grantSecret: GRANT_SECRET, log: noopLog, attestationVerifier: confirming }
+      { grantSecret: GRANT_SECRET, log: noopLog, attestationVerifier: confirming },
     );
     expect(entitlement.grantTokens).toBe(20);
     expect(entitlement.trustSignal).toBeCloseTo(0.4, 10);
@@ -217,7 +217,7 @@ describe("enrollReporter", () => {
       key.publicJwk,
       proofFor(key, { attestation: { kind: "app-attest", blob: "opaque" } }),
       NOW,
-      { grantSecret: GRANT_SECRET, log: noopLog, attestationVerifier: faulty }
+      { grantSecret: GRANT_SECRET, log: noopLog, attestationVerifier: faulty },
     );
     expect(entitlement.grantTokens).toBe(20);
     expect(entitlement.reportingGrant).not.toBe("");
@@ -231,7 +231,7 @@ describe("enrollReporter", () => {
       key.publicJwk,
       proofFor(key, { osmAuth: "osm-token" }),
       NOW,
-      { grantSecret: GRANT_SECRET, log: noopLog }
+      { grantSecret: GRANT_SECRET, log: noopLog },
     );
     expect(entitlement.grantTokens).toBe(20);
     expect(entitlement.trustSignal).toBeCloseTo(0.3, 10);
@@ -250,7 +250,7 @@ describe("enrollReporter", () => {
       key.publicJwk,
       proofFor(key, { osmAuth: "osm-token" }),
       NOW,
-      { grantSecret: GRANT_SECRET, log: noopLog, osmAuthVerifier: confirming }
+      { grantSecret: GRANT_SECRET, log: noopLog, osmAuthVerifier: confirming },
     );
     expect(entitlement.grantTokens).toBe(20);
     expect(entitlement.trustSignal).toBeCloseTo(0.4, 10);
@@ -279,7 +279,7 @@ describe("enrollReporter", () => {
       key.publicJwk,
       proofFor(key, { osmAuth: OSM_TOKEN }),
       NOW,
-      { grantSecret: GRANT_SECRET, log: capturingLog, osmAuthVerifier: faulty }
+      { grantSecret: GRANT_SECRET, log: capturingLog, osmAuthVerifier: faulty },
     );
     // Fail-safe: still fully eligible, no bump.
     expect(entitlement.grantTokens).toBe(20);
@@ -322,7 +322,7 @@ describe("enrollReporter", () => {
       key.publicJwk,
       proofFor(key, { attestation: { kind: "play-integrity", blob: BLOB } }),
       NOW,
-      { grantSecret: GRANT_SECRET, log: capturingLog, attestationVerifier: faulty }
+      { grantSecret: GRANT_SECRET, log: capturingLog, attestationVerifier: faulty },
     );
     expect(entitlement.grantTokens).toBe(20);
     expect(entitlement.trustSignal).toBeCloseTo(0.3, 10);
@@ -346,7 +346,7 @@ async function mintDirect(
   keyId: string,
   epoch: string,
   ctx: PublicContext,
-  opts: { pickKeyId?: string } = {}
+  opts: { pickKeyId?: string } = {},
 ): Promise<MintedToken> {
   const keys = await loadActiveIssuerKeys(sql, NOW, DEFAULT_ISSUER_NAME);
   const issuerKey =
@@ -416,7 +416,7 @@ describe("issuance + redemption round-trip (real privacypass-ts client)", () => 
     const verifier = new TokenVerifier({ issuerName: DEFAULT_ISSUER_NAME, log: noopLog });
     const garbage = globalThis.crypto.getRandomValues(new Uint8Array(64));
     await expect(
-      verifier.verify(sql, garbage, { purpose: "report", epoch: "x" }, NOW)
+      verifier.verify(sql, garbage, { purpose: "report", epoch: "x" }, NOW),
     ).resolves.toBe(false);
   }, 30_000);
 
@@ -425,7 +425,7 @@ describe("issuance + redemption round-trip (real privacypass-ts client)", () => 
     await enroll(key);
     await sql`UPDATE conditions.reporter SET status = 'blocked' WHERE key_id = ${key.keyId}`;
     await expect(
-      mintDirect(key.keyId, "2026-07-12", { purpose: "report", epoch: "2026-07-12" })
+      mintDirect(key.keyId, "2026-07-12", { purpose: "report", epoch: "2026-07-12" }),
     ).rejects.toThrow(/refused/);
   }, 60_000);
 });
@@ -441,7 +441,7 @@ describe("quota under concurrency", () => {
     const origin = new Origin(BlindRSAMode.PSS);
     const challenge = origin.createTokenChallenge(
       DEFAULT_ISSUER_NAME,
-      await redemptionContext(ctx)
+      await redemptionContext(ctx),
     );
 
     const requests = await Promise.all(
@@ -449,13 +449,13 @@ describe("quota under concurrency", () => {
         const client = new Client(BlindRSAMode.PSS);
         const request = await client.createTokenRequest(challenge, issuerKey.publicKeyBytes);
         return request.serialize();
-      })
+      }),
     );
 
     const results = await Promise.all(
       requests.map((bytes) =>
-        issueToken(sql, key.keyId, epoch, bytes, ctx, { log: noopLog, now: NOW })
-      )
+        issueToken(sql, key.keyId, epoch, bytes, ctx, { log: noopLog, now: NOW }),
+      ),
     );
     const succeeded = results.filter((r) => r.issued);
     const refused = results.filter((r) => !r.issued);
@@ -495,7 +495,7 @@ describe("issuer key rotation", () => {
 describe("build() fail-closed", () => {
   it("throws in production when OPENCONDITIONS_GRANT_SECRET is unset", async () => {
     await expect(build({ sql, env: { NODE_ENV: "production" } })).rejects.toThrow(
-      /OPENCONDITIONS_GRANT_SECRET/
+      /OPENCONDITIONS_GRANT_SECRET/,
     );
   }, 30_000);
 });
@@ -636,7 +636,7 @@ describe("HTTP surface + end-to-end flow with log separation", () => {
     const origin = new Origin(BlindRSAMode.PSS);
     const challenge = origin.createTokenChallenge(
       DEFAULT_ISSUER_NAME,
-      await redemptionContext(ctx)
+      await redemptionContext(ctx),
     );
     const request = await client.createTokenRequest(challenge, publicKeyBytes);
 
@@ -651,7 +651,7 @@ describe("HTTP surface + end-to-end flow with log separation", () => {
     expect(tokensRes.statusCode).toBe(200);
     const { token: tokenResponseB64 } = tokensRes.json() as { token: string };
     const token = await client.finalize(
-      TokenResponse.deserialize(new Uint8Array(Buffer.from(tokenResponseB64, "base64url")))
+      TokenResponse.deserialize(new Uint8Array(Buffer.from(tokenResponseB64, "base64url"))),
     );
 
     const verified = await app.tokenVerifier.verify(sql, token.serialize(), ctx, NOW);
@@ -670,7 +670,7 @@ describe("HTTP surface + end-to-end flow with log separation", () => {
     expect(tokensReqIds.length).toBeGreaterThan(0);
 
     const issuerOrigin = capture.lines.filter(
-      (l) => l.parsed["component"] === "issuer" || l.parsed["component"] === "origin"
+      (l) => l.parsed["component"] === "issuer" || l.parsed["component"] === "origin",
     );
     expect(issuerOrigin.some((l) => l.parsed["component"] === "issuer")).toBe(true);
     expect(issuerOrigin.some((l) => l.parsed["component"] === "origin")).toBe(true);
@@ -708,11 +708,11 @@ describe("HTTP surface + end-to-end flow with log separation", () => {
     const origin = new Origin(BlindRSAMode.PSS);
     const challenge = origin.createTokenChallenge(
       DEFAULT_ISSUER_NAME,
-      await redemptionContext(SERVER_REPORT_CTX)
+      await redemptionContext(SERVER_REPORT_CTX),
     );
     const request = await client.createTokenRequest(
       challenge,
-      new Uint8Array(Buffer.from(keys[0]!.publicKey, "base64url"))
+      new Uint8Array(Buffer.from(keys[0]!.publicKey, "base64url")),
     );
     return Buffer.from(request.serialize()).toString("base64url");
   }
@@ -778,11 +778,11 @@ describe("HTTP surface + end-to-end flow with log separation", () => {
     // Client blinds against the SERVER context, but the body lies about epoch/taskId.
     const challenge = origin.createTokenChallenge(
       DEFAULT_ISSUER_NAME,
-      await redemptionContext(SERVER_REPORT_CTX)
+      await redemptionContext(SERVER_REPORT_CTX),
     );
     const request = await client.createTokenRequest(
       challenge,
-      new Uint8Array(Buffer.from(keys[0]!.publicKey, "base64url"))
+      new Uint8Array(Buffer.from(keys[0]!.publicKey, "base64url")),
     );
 
     const res = await app.inject({
@@ -798,8 +798,8 @@ describe("HTTP surface + end-to-end flow with log separation", () => {
     expect(res.statusCode).toBe(200);
     const token = await client.finalize(
       TokenResponse.deserialize(
-        new Uint8Array(Buffer.from((res.json() as { token: string }).token, "base64url"))
-      )
+        new Uint8Array(Buffer.from((res.json() as { token: string }).token, "base64url")),
+      ),
     );
     // Quota never landed on the client's 2099 epoch — the server day owns it.
     const rows = await sql<{ epoch: string }[]>`
@@ -807,7 +807,7 @@ describe("HTTP surface + end-to-end flow with log separation", () => {
     expect(rows).toHaveLength(0);
     // And the token verifies under the server-derived context.
     await expect(
-      app.tokenVerifier.verify(sql, token.serialize(), SERVER_REPORT_CTX, NOW)
+      app.tokenVerifier.verify(sql, token.serialize(), SERVER_REPORT_CTX, NOW),
     ).resolves.toBe(true);
   }, 60_000);
 

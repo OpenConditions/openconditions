@@ -25,7 +25,7 @@ describe("parseIbi511", () => {
           LastUpdated: "2026-06-25T10:00:00Z",
         },
       ]),
-      SRC
+      SRC,
     );
     expect(out).toHaveLength(1);
     expect(out[0]).toMatchObject({
@@ -50,7 +50,7 @@ describe("parseIbi511", () => {
           Longitude: -79.38,
         },
       ],
-      SRC
+      SRC,
     );
     expect(out[0]!.type).toBe("road_closure");
     expect(out[0]!.geometry).toEqual({ type: "Point", coordinates: [-79.38, 43.65] });
@@ -68,7 +68,7 @@ describe("parseIbi511", () => {
           LongitudeSecondary: -79.41,
         },
       ],
-      SRC
+      SRC,
     );
     expect(out[0]!.type).toBe("accident");
     expect(out[0]!.geometry!.type).toBe("LineString");
@@ -90,7 +90,7 @@ describe("parseIbi511", () => {
           LastUpdated: 1757532060,
         },
       ],
-      SRC
+      SRC,
     );
     expect(out[0]!.validFrom).toBe("2025-09-10T11:00:00.000Z");
     expect(out[0]!.validTo).toBe(new Date(1785538800 * 1000).toISOString());
@@ -179,7 +179,7 @@ describe("parseIbi511Conditions", () => {
           LastUpdated: 1779729425,
         },
       ],
-      ON
+      ON,
     );
     expect(ev).toBeDefined();
     expect(ev!.type).toBe("weather");
@@ -194,7 +194,7 @@ describe("parseIbi511Conditions", () => {
   it("emits a LineString when only one polyline is given", () => {
     const [ev] = parseIbi511Conditions(
       [{ RoadwayName: "17", Condition: ["Slushy"], EncodedPolyline: [LINE] }],
-      ON
+      ON,
     );
     expect(ev!.geometry.type).toBe("LineString");
     expect(ev!.severity).toBe("medium");
@@ -212,7 +212,7 @@ describe("parseIbi511Conditions", () => {
           LastUpdated: 1785482707,
         },
       ],
-      NY
+      NY,
     );
     expect(ev).toBeDefined();
     expect(ev!.geometry.type).toBe("LineString");
@@ -223,7 +223,7 @@ describe("parseIbi511Conditions", () => {
   it("treats a closed road as a critical closure rather than a weather note", () => {
     const [ev] = parseIbi511Conditions(
       [{ RoadwayName: "11", Condition: ["Closed"], EncodedPolyline: [LINE] }],
-      ON
+      ON,
     );
     expect(ev!.type).toBe("road_closure");
     expect(ev!.category).toBe("incident");
@@ -240,7 +240,7 @@ describe("parseIbi511Conditions", () => {
         { RoadwayName: "I-90", Condition: "Update Pending", Polyline: LINE },
         { RoadwayName: "17", Condition: ["Bare and Dry"], EncodedPolyline: [LINE] },
       ],
-      ON
+      ON,
     );
     expect(out).toEqual([]);
   });
@@ -248,7 +248,7 @@ describe("parseIbi511Conditions", () => {
   it("skips records with no usable geometry and tolerates malformed input", () => {
     expect(parseIbi511Conditions([{ RoadwayName: "9", Condition: ["Icy"] }], ON)).toEqual([]);
     expect(
-      parseIbi511Conditions([{ RoadwayName: "9", Condition: ["Icy"], Polyline: null }], ON)
+      parseIbi511Conditions([{ RoadwayName: "9", Condition: ["Icy"], Polyline: null }], ON),
     ).toEqual([]);
     expect(parseIbi511Conditions("not json", ON)).toEqual([]);
     expect(parseIbi511Conditions(JSON.stringify({ not: "an array" }), ON)).toEqual([]);

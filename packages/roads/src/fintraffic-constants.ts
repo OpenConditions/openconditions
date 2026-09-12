@@ -24,7 +24,7 @@ function inSeason(mmdd: string, from: string, to: string): boolean {
  */
 export function parseFintrafficSensorConstants(
   input: string | Buffer,
-  opts: { stationId: string; on: Date }
+  opts: { stationId: string; on: Date },
 ): { sensorKey: string; freeFlowKph: number }[] {
   let payload: { sensorConstantValues?: unknown };
   try {
@@ -35,7 +35,7 @@ export function parseFintrafficSensorConstants(
   const values = payload.sensorConstantValues;
   if (!Array.isArray(values)) return [];
   const mmdd = `${String(opts.on.getUTCMonth() + 1).padStart(2, "0")}-${String(
-    opts.on.getUTCDate()
+    opts.on.getUTCDate(),
   ).padStart(2, "0")}`;
 
   const chosen = new Map<string, number>();

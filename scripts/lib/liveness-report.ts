@@ -16,12 +16,15 @@ export interface FeedFailure {
  * can't break out of inline code formatting.
  */
 function sanitizeUntrusted(value: string): string {
-  return value
-    .replace(/[\r\n\t\x00-\x1f\x7f]+/g, " ")
-    .replace(/\\/g, "\\\\")
-    .replace(/`/g, "\\`")
-    .replace(/@/g, "@​")
-    .trim();
+  return (
+    value
+      // biome-ignore lint/suspicious/noControlCharactersInRegex: removing control characters from untrusted text is this function's purpose
+      .replace(/[\r\n\t\x00-\x1f\x7f]+/g, " ")
+      .replace(/\\/g, "\\\\")
+      .replace(/`/g, "\\`")
+      .replace(/@/g, "@​")
+      .trim()
+  );
 }
 
 /**
@@ -55,7 +58,7 @@ export function renderReport(failures: FeedFailure[]): string {
       `- Country: ${country}`,
       `- Error: ${message}`,
       `- Maintainers: ${maintainersLine}`,
-      ""
+      "",
     );
   }
   return lines.join("\n");

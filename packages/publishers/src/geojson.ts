@@ -1,7 +1,7 @@
 import type { Observation } from "@openconditions/core";
 import { projectRoadRestrictionDetails, type RestrictionCarrier } from "@openconditions/roads";
 import type { BBox, Feature, FeatureCollection } from "geojson";
-import { type FeedInfo } from "./types.js";
+import type { FeedInfo } from "./types.js";
 
 /** A FeatureCollection plus the optional `feed_info` foreign member (RFC 7946 §6.1). */
 export type ConditionsFeatureCollection = FeatureCollection & { feed_info?: FeedInfo };
@@ -39,7 +39,7 @@ function properties(o: Observation, includeRaw: boolean, at: Date): Record<strin
   // observation that says nothing about vehicles gets no marker at all.
   const carrier = o as Observation & RestrictionCarrier;
   if (
-    Object.prototype.hasOwnProperty.call(carrier, "restrictionDetails") ||
+    Object.hasOwn(carrier, "restrictionDetails") ||
     carrier.restrictionDetailsUnsupported === true
   ) {
     delete out["restrictionDetails"];
@@ -50,7 +50,7 @@ function properties(o: Observation, includeRaw: boolean, at: Date): Record<strin
         at,
         sourceCheckedAt: o.sourceCheckedAt ?? null,
         freshnessWindowSec: o.freshnessWindowSec ?? null,
-      })
+      }),
     );
     // A producer-supplied unsupported marker survives its own projection.
     if (carrier.restrictionDetailsUnsupported === true) {
@@ -101,16 +101,18 @@ function computeBbox(features: Feature[]): BBox | undefined {
 export function observationsToGeoJSON(
   obs: Observation[],
   info: FeedInfo = {},
-  opts: GeoJsonOptions = {}
+  opts: GeoJsonOptions = {},
 ): ConditionsFeatureCollection {
   const includeRaw = opts.includeRaw ?? false;
   const at = opts.at ?? new Date();
-  const features = obs.map((o): Feature => ({
-    type: "Feature",
-    id: o.id,
-    geometry: o.geometry,
-    properties: properties(o, includeRaw, at),
-  }));
+  const features = obs.map(
+    (o): Feature => ({
+      type: "Feature",
+      id: o.id,
+      geometry: o.geometry,
+      properties: properties(o, includeRaw, at),
+    }),
+  );
   const fc: ConditionsFeatureCollection = { type: "FeatureCollection", features };
   const bbox = computeBbox(features);
   if (bbox) fc.bbox = bbox;

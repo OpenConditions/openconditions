@@ -1,20 +1,20 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
-import type { FastifyInstance } from "fastify";
 import {
   crowdObservationId,
   generateReporterKey,
-  signReport,
-  signSubClaim,
   type ReportClaim,
   type ReporterKey,
   type SignedReport,
   type SignedSubClaim,
   type SubClaimBody,
   type SubClaimType,
+  signReport,
+  signSubClaim,
 } from "@openconditions/contrib-core";
 import { runMigrations } from "@openconditions/core/server";
+import type { FastifyInstance } from "fastify";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createReportingGrant } from "../attester/grant.js";
 import { build } from "../server.js";
 
@@ -108,7 +108,7 @@ function nextLandGeometry(): ReportClaim["geometry"] {
 /** Enroll a key and land a fresh active crowd observation from it; returns id + grant. */
 async function landObs(
   nonce: string,
-  overrides: Partial<ReportClaim> = {}
+  overrides: Partial<ReportClaim> = {},
 ): Promise<{ key: ReporterKey; grant: string; id: string }> {
   const key = await generateReporterKey();
   const grant = await enroll(key);
@@ -127,7 +127,7 @@ async function signSub(
   key: ReporterKey,
   subject: string,
   claimType: SubClaimType,
-  overrides: Partial<SubClaimBody> = {}
+  overrides: Partial<SubClaimBody> = {},
 ): Promise<SignedSubClaim> {
   const body: SubClaimBody = {
     subject,
@@ -244,7 +244,7 @@ describe("POST /contrib/reports/:id/confirm — corroboration never routes", () 
     const grantB = await enroll(keyB);
     const grantC = await enroll(keyC);
     expect((await vote(id, "confirm", await signSub(keyB, id, "confirm"), grantB)).statusCode).toBe(
-      200
+      200,
     );
     const third = await vote(id, "confirm", await signSub(keyC, id, "confirm"), grantC);
     expect(third.statusCode).toBe(200);
@@ -304,7 +304,7 @@ describe("POST /contrib/reports/:id/confirm — idempotency", () => {
     const grantB = await enroll(keyB);
 
     expect((await vote(id, "confirm", await signSub(keyB, id, "confirm"), grantB)).statusCode).toBe(
-      200
+      200,
     );
     const again = await vote(id, "confirm", await signSub(keyB, id, "confirm"), grantB);
     expect(again.statusCode).toBe(200);
@@ -621,7 +621,7 @@ describe("POST /contrib/reports/:id/:action — a settled observation is closed 
       id,
       "flag",
       await signSub(keyB, id, "flag", { reason: "stale" }),
-      grantB
+      grantB,
     );
     expect(res.statusCode).toBe(200);
     expect(res.json()).toEqual({ flagged: true });

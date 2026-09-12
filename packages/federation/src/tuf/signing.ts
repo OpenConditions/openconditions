@@ -9,9 +9,10 @@
  * TUF derivation (SHA-256 over the canonical JSON of the public key object),
  * matching python-tuf and go-tuf repository tooling.
  */
+
+import { createHash, KeyObject, sign as signWithNodeCrypto } from "node:crypto";
 import { canonicalize } from "@tufjs/canonical-json";
 import { Key, Signature } from "@tufjs/models";
-import { KeyObject, createHash, sign as signWithNodeCrypto } from "node:crypto";
 
 const ED25519 = { name: "Ed25519" } as const;
 const KEY_TYPE = "ed25519";
@@ -74,7 +75,7 @@ export async function generateTufSigner(): Promise<TufSigner> {
     "verify",
   ])) as CryptoKeyPair;
   const publicKeyRaw = new Uint8Array(
-    await globalThis.crypto.subtle.exportKey("raw", pair.publicKey)
+    await globalThis.crypto.subtle.exportKey("raw", pair.publicKey),
   );
   return tufSignerFromKeyPair({ publicKeyRaw, privateKey: pair.privateKey });
 }

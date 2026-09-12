@@ -29,7 +29,7 @@ function makeFeed(overrides: Partial<TestFeedSource> & Pick<TestFeedSource, "id"
 function catalogFeed(
   id: string,
   urls: string[],
-  extra: Partial<TestFeedSource> = {}
+  extra: Partial<TestFeedSource> = {},
 ): TestFeedSource {
   const resolverId = `res-${id}`;
   registerCatalogResolver("test", {
@@ -42,7 +42,7 @@ function catalogFeed(
 
 const okFor = (
   body: (url: string) => string,
-  fail: (url: string) => boolean = () => false
+  fail: (url: string) => boolean = () => false,
 ): typeof fetch =>
   (async (input: string | URL | Request) => {
     const url = String(input);
@@ -53,7 +53,7 @@ const okFor = (
 /** Fetch and unwrap the buffers, treating an "unchanged" result as no buffers. */
 async function fetchBuffers(
   src: Parameters<typeof fetchAll>[0],
-  fetchFn: typeof fetch
+  fetchFn: typeof fetch,
 ): Promise<Buffer[]> {
   const res = await fetchAll(src, fetchFn);
   return res.status === "fetched" || res.status === "partial" ? res.buffers : [];
@@ -66,7 +66,7 @@ async function fetchBuffers(
  */
 function pagedODataFetch(
   pageRows: number[],
-  pageSize = 500
+  pageSize = 500,
 ): { fetchFn: typeof fetch; calls: string[] } {
   const calls: string[] = [];
   const fetchFn = (async (input: string | URL | Request) => {
@@ -84,7 +84,7 @@ function pagedODataFetch(
 function rowsIn(buffers: Buffer[]): number {
   return buffers.reduce(
     (sum, b) => sum + (JSON.parse(b.toString("utf8")).value as unknown[]).length,
-    0
+    0,
   );
 }
 
@@ -130,8 +130,8 @@ describe("fetchAll — offset pagination", () => {
     await expect(
       fetchBuffers(
         pagedFeed({ pagination: { skipParam: "$skip", pageSize: 500, maxPages: 2 } }),
-        fetchFn
-      )
+        fetchFn,
+      ),
     ).rejects.toThrow(/maxPages/);
     expect(calls).toHaveLength(2);
   });
@@ -145,7 +145,7 @@ describe("fetchAll — Open511 offset pagination", () => {
    */
   function pagedOpen511Fetch(
     pageRows: number[],
-    pageSize = 500
+    pageSize = 500,
   ): { fetchFn: typeof fetch; calls: string[] } {
     const calls: string[] = [];
     const fetchFn = (async (input: string | URL | Request) => {
@@ -168,13 +168,13 @@ describe("fetchAll — Open511 offset pagination", () => {
         url: "https://api.open511.gov.bc.ca/events?format=json&limit=500",
         pagination: { skipParam: "offset", pageSize: 500, recordsPath: "events" },
       }),
-      fetchFn
+      fetchFn,
     );
 
     expect(bufs).toHaveLength(2);
     const total = bufs.reduce(
       (sum, b) => sum + (JSON.parse(b.toString("utf8")).events as unknown[]).length,
-      0
+      0,
     );
     expect(total).toBe(761);
     expect(calls).toHaveLength(2);
@@ -193,7 +193,7 @@ describe("fetchAll — catalog fan-out", () => {
     const feed = catalogFeed("disc", urls);
     const bufs = await fetchBuffers(
       feed,
-      okFor((u) => `body:${u}`)
+      okFor((u) => `body:${u}`),
     );
     expect(bufs.map((b) => b.toString("utf8")).sort()).toEqual(urls.map((u) => `body:${u}`).sort());
   });
@@ -204,7 +204,7 @@ describe("fetchAll — catalog fan-out", () => {
     });
     const bufs = await fetchBuffers(
       feed,
-      okFor((u) => u)
+      okFor((u) => u),
     );
     expect(bufs).toHaveLength(1);
     expect(bufs[0]!.toString("utf8")).toBe("https://x.test/a");
@@ -217,8 +217,8 @@ describe("fetchAll — catalog fan-out", () => {
       feed,
       okFor(
         (u) => `body:${u}`,
-        (u) => u.endsWith("/bad")
-      )
+        (u) => u.endsWith("/bad"),
+      ),
     );
     expect(bufs).toHaveLength(2);
     expect(bufs.map((b) => b.toString("utf8"))).not.toContain("body:https://x.test/bad");
@@ -231,8 +231,8 @@ describe("fetchAll — catalog fan-out", () => {
       feed,
       okFor(
         (u) => `body:${u}`,
-        (u) => u.endsWith("/bad")
-      )
+        (u) => u.endsWith("/bad"),
+      ),
     );
     expect(res.status).toBe("partial");
     if (res.status !== "partial") throw new Error("unreachable");
@@ -248,8 +248,8 @@ describe("fetchAll — catalog fan-out", () => {
       okFor((u) =>
         u.endsWith("/html")
           ? "  <!DOCTYPE html><html>blocked</html>"
-          : `{"feed":${JSON.stringify(u)}}`
-      )
+          : `{"feed":${JSON.stringify(u)}}`,
+      ),
     );
     expect(bufs).toHaveLength(1);
     expect(bufs[0]!.toString("utf8")).toContain('"feed"');
@@ -262,9 +262,9 @@ describe("fetchAll — catalog fan-out", () => {
         feed,
         okFor(
           (u) => u,
-          () => true
-        )
-      )
+          () => true,
+        ),
+      ),
     ).rejects.toThrow(/all .*sub-feed/);
   });
 
@@ -272,7 +272,7 @@ describe("fetchAll — catalog fan-out", () => {
     const feed = catalogFeed("empty", []);
     const bufs = await fetchBuffers(
       feed,
-      okFor((u) => u)
+      okFor((u) => u),
     );
     expect(bufs).toEqual([]);
   });
@@ -301,7 +301,7 @@ describe("fetchAll — static url forms (regression)", () => {
     const feed = makeFeed({ id: "s", url: "https://x.test/one" });
     const bufs = await fetchBuffers(
       feed,
-      okFor((u) => `body:${u}`)
+      okFor((u) => `body:${u}`),
     );
     expect(bufs).toHaveLength(1);
     expect(bufs[0]!.toString("utf8")).toBe("body:https://x.test/one");
@@ -311,7 +311,7 @@ describe("fetchAll — static url forms (regression)", () => {
     const feed = makeFeed({ id: "s-no-partial", url: "https://x.test/one" });
     const res = await fetchAll(
       feed,
-      okFor((u) => `body:${u}`)
+      okFor((u) => `body:${u}`),
     );
     expect(res.status).toBe("fetched");
     if (res.status !== "fetched") throw new Error("unreachable");
@@ -322,7 +322,7 @@ describe("fetchAll — static url forms (regression)", () => {
     const feed = makeFeed({ id: "arr", url: ["https://x.test/a", "https://x.test/b"] });
     const bufs = await fetchBuffers(
       feed,
-      okFor((u) => u)
+      okFor((u) => u),
     );
     expect(bufs.map((b) => b.toString("utf8")).sort()).toEqual([
       "https://x.test/a",
@@ -334,7 +334,7 @@ describe("fetchAll — static url forms (regression)", () => {
     const feed = makeFeed({ id: "xml", url: "https://x.test/ndw.xml" });
     const bufs = await fetchBuffers(
       feed,
-      okFor(() => '<?xml version="1.0"?><d2:payload/>')
+      okFor(() => '<?xml version="1.0"?><d2:payload/>'),
     );
     expect(bufs).toHaveLength(1);
     expect(bufs[0]!.toString("utf8")).toContain("<?xml");
@@ -345,8 +345,8 @@ describe("fetchAll — static url forms (regression)", () => {
     await expect(
       fetchAll(
         feed,
-        okFor((u) => u)
-      )
+        okFor((u) => u),
+      ),
     ).rejects.toThrow(/neither url nor catalog/);
   });
 
@@ -381,7 +381,7 @@ describe("fetchAll — fanoutTolerant static url arrays", () => {
     const feed = makeFeed({ id: "fanout-xml", url: urls, fanoutTolerant: true });
     const bufs = await fetchBuffers(
       feed,
-      okFor(() => '<?xml version="1.0" encoding="UTF-8"?><d2LogicalModel/>')
+      okFor(() => '<?xml version="1.0" encoding="UTF-8"?><d2LogicalModel/>'),
     );
     expect(bufs).toHaveLength(2);
   });
@@ -392,8 +392,8 @@ describe("fetchAll — fanoutTolerant static url arrays", () => {
     await expect(
       fetchBuffers(
         feed,
-        okFor(() => "<!DOCTYPE html><html><body>Sign in</body></html>")
-      )
+        okFor(() => "<!DOCTYPE html><html><body>Sign in</body></html>"),
+      ),
     ).rejects.toThrow(/sub-feeds failed/);
   });
 
@@ -423,8 +423,8 @@ describe("fetchAll — fanoutTolerant static url arrays", () => {
       feed,
       okFor(
         (u) => `body:${u}`,
-        (u) => u.endsWith("/bad")
-      )
+        (u) => u.endsWith("/bad"),
+      ),
     );
     expect(bufs).toHaveLength(2);
     expect(bufs.map((b) => b.toString("utf8"))).not.toContain("body:https://x.test/bad");
@@ -437,8 +437,8 @@ describe("fetchAll — fanoutTolerant static url arrays", () => {
       feed,
       okFor(
         (u) => `body:${u}`,
-        (u) => u.endsWith("/bad")
-      )
+        (u) => u.endsWith("/bad"),
+      ),
     );
     expect(res.status).toBe("partial");
     if (res.status !== "partial") throw new Error("unreachable");
@@ -454,9 +454,9 @@ describe("fetchAll — fanoutTolerant static url arrays", () => {
         feed,
         okFor(
           (u) => `body:${u}`,
-          (u) => u.endsWith("/bad")
-        )
-      )
+          (u) => u.endsWith("/bad"),
+        ),
+      ),
     ).rejects.toThrow();
   });
 
@@ -559,8 +559,8 @@ describe("fetchAll — POST body template", () => {
       await expect(
         fetchAll(
           feed,
-          (async () => new Response("<ok/>", { status: 200 })) as unknown as typeof fetch
-        )
+          (async () => new Response("<ok/>", { status: 200 })) as unknown as typeof fetch,
+        ),
       ).rejects.toThrow(/undeclared variable DATABASE_URL/);
     } finally {
       delete process.env.DATABASE_URL;
@@ -575,15 +575,15 @@ describe("fetchAll — redaction", () => {
       const feed = catalogFeed(
         "path-secret",
         ["https://mobilithek.test/subscription/999999secretid/clientPullService"],
-        { requiredEnv: ["SUBSCRIPTION_ID"] }
+        { requiredEnv: ["SUBSCRIPTION_ID"] },
       );
       process.env.SUBSCRIPTION_ID = "999999secretid";
       try {
         await expect(
           fetchAll(
             feed,
-            (async () => new Response("err", { status: 500 })) as unknown as typeof fetch
-          )
+            (async () => new Response("err", { status: 500 })) as unknown as typeof fetch,
+          ),
         ).rejects.toThrow();
       } finally {
         delete process.env.SUBSCRIPTION_ID;
@@ -711,7 +711,7 @@ describe("fetchAll — operational outcomes", () => {
     const result = await fetchAll(
       makeFeed({ id: "dormant", url: "https://h.test/${ENDPOINT}", expandEnv: "ENDPOINT" }),
       vi.fn() as unknown as typeof fetch,
-      { state: createFetchState() }
+      { state: createFetchState() },
     );
 
     expect(result).toEqual({
@@ -732,7 +732,7 @@ describe("fetchAll — operational outcomes", () => {
         String(input).endsWith("/fail")
           ? new Response("bad", { status: 503 })
           : new Response("ok", { status: 200 })) as typeof fetch,
-      { state: createFetchState() }
+      { state: createFetchState() },
     );
 
     expect(result).toMatchObject({
@@ -750,7 +750,7 @@ describe("snapshot acceptance", () => {
       let page = 0;
       const fetch = (async () =>
         new Response(
-          JSON.stringify(++page === 1 ? { value: [{}] } : terminal)
+          JSON.stringify(++page === 1 ? { value: [{}] } : terminal),
         )) as typeof globalThis.fetch;
       await expect(
         fetchAll(
@@ -759,10 +759,10 @@ describe("snapshot acceptance", () => {
             url: "https://pages.test/data",
             pagination: { skipParam: "offset", pageSize: 1 },
           }),
-          fetch
-        )
+          fetch,
+        ),
       ).rejects.toThrow(/pagination/);
-    }
+    },
   );
 
   it("does not publish validators for an unaccepted mixed 200/304 snapshot", async () => {

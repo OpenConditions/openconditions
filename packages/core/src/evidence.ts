@@ -9,7 +9,11 @@ import type { Confidence } from "./model.js";
  */
 
 export type EvidenceState =
-  "self_reported" | "corroborated" | "externally_resolved" | "negated" | "expired";
+  | "self_reported"
+  | "corroborated"
+  | "externally_resolved"
+  | "negated"
+  | "expired";
 
 export interface EvidenceEntry {
   id: string;
@@ -111,8 +115,8 @@ function clamp01(value: number): number {
 function crowdConfidence(policy: EvidencePolicy, confirmers: number, negators: number): number {
   const base = policy.scoreByState.self_reported;
   const gap = policy.peerConfidenceCap - base;
-  const confIncrement = gap * (1 - Math.pow(policy.confirmDecay, confirmers));
-  const negPenalty = policy.negateAsymmetry * gap * (1 - Math.pow(policy.confirmDecay, negators));
+  const confIncrement = gap * (1 - policy.confirmDecay ** confirmers);
+  const negPenalty = policy.negateAsymmetry * gap * (1 - policy.confirmDecay ** negators);
   return clamp01(base + confIncrement - negPenalty);
 }
 
@@ -130,7 +134,7 @@ function shrinkExpiryForNegations(
   expiryMs: number,
   negateAtMs: number,
   negators: number,
-  shrinkFactor: number
+  shrinkFactor: number,
 ): number {
   if (negators <= 0) {
     return expiryMs;
@@ -139,7 +143,7 @@ function shrinkExpiryForNegations(
   if (remaining <= 0) {
     return expiryMs;
   }
-  const shrunk = negateAtMs + remaining * Math.pow(shrinkFactor, negators);
+  const shrunk = negateAtMs + remaining * shrinkFactor ** negators;
   return Math.min(expiryMs, shrunk);
 }
 
@@ -190,7 +194,7 @@ const EVIDENCE_STATES: readonly EvidenceState[] = [
  */
 export function evaluateEvidence(
   input: EvidenceLedger,
-  policy: EvidencePolicy
+  policy: EvidencePolicy,
 ): EvidencePolicyResult {
   if (
     input.reporterLowerBound !== undefined &&
@@ -223,12 +227,12 @@ export function evaluateEvidence(
     policy.peerConfidenceCap >= policy.scoreByState.externally_resolved
   ) {
     throw new TypeError(
-      "evaluateEvidence: policy.peerConfidenceCap must be > 0 and strictly less than scoreByState.externally_resolved"
+      "evaluateEvidence: policy.peerConfidenceCap must be > 0 and strictly less than scoreByState.externally_resolved",
     );
   }
   if (!(policy.confirmDecay > 0 && policy.confirmDecay < 1)) {
     throw new TypeError(
-      "evaluateEvidence: policy.confirmDecay must be in the open interval (0, 1)"
+      "evaluateEvidence: policy.confirmDecay must be in the open interval (0, 1)",
     );
   }
   if (!(policy.negateAsymmetry >= 0)) {
@@ -335,7 +339,7 @@ export function evaluateEvidence(
       decayExpiryMs,
       lastPeerNegate?.atMs ?? decayExpiryMs,
       negatorKeys.size,
-      policy.negateShrinkFactor
+      policy.negateShrinkFactor,
     );
   } else {
     state = "self_reported";
@@ -343,7 +347,7 @@ export function evaluateEvidence(
       decayExpiryMs,
       lastPeerNegate?.atMs ?? decayExpiryMs,
       negatorKeys.size,
-      policy.negateShrinkFactor
+      policy.negateShrinkFactor,
     );
   }
 
@@ -403,7 +407,7 @@ function assertPosterior(posterior: BetaPosterior, name: string): void {
  */
 export function updateReliability(
   prior: BetaPosterior,
-  outcome: "confirmed" | "rejected"
+  outcome: "confirmed" | "rejected",
 ): BetaPosterior {
   assertPosterior(prior, "updateReliability");
   return outcome === "confirmed"
@@ -517,7 +521,7 @@ export function reliabilityLowerBound(posterior: BetaPosterior, credibleLevel: n
 export function shrinkToward(
   posterior: BetaPosterior,
   cohortPrior: BetaPosterior,
-  factor: number
+  factor: number,
 ): BetaPosterior {
   assertPosterior(posterior, "shrinkToward");
   assertPosterior(cohortPrior, "shrinkToward");

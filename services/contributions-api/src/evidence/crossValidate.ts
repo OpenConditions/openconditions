@@ -48,10 +48,11 @@
  * retroactively validate it in v1 (a feed-side hook or a periodic cross-match
  * job is a tracked follow-on).
  */
-import type postgres from "postgres";
+
 import { matchPhenomenonCandidates, type PhenomenonCandidate } from "@openconditions/contrib-core";
-import { findCandidates } from "./phenomenon.js";
+import type postgres from "postgres";
 import { applyExternalResolution } from "../reputation/resolve.js";
+import { findCandidates } from "./phenomenon.js";
 
 type Sql = postgres.Sql;
 
@@ -121,7 +122,7 @@ export async function crossValidateAgainstFeeds(
   sql: Sql,
   observationId: string,
   now: string,
-  deps: CrossValidateDeps = {}
+  deps: CrossValidateDeps = {},
 ): Promise<string | null> {
   const resolve = deps.applyExternalResolution ?? applyExternalResolution;
 
@@ -215,7 +216,7 @@ export async function crossValidateAgainstFeeds(
   };
 
   const match = matchPhenomenonCandidates(target, feedCandidates).find(
-    (decision) => decision.compatible
+    (decision) => decision.compatible,
   );
   if (match === undefined) {
     return null;
@@ -237,7 +238,7 @@ export async function crossValidateAgainstFeeds(
         ? { matchedObservation: { id: matched.id, source: matched.actor.source } }
         : {}),
     },
-    now
+    now,
   );
   return match.candidateId;
 }

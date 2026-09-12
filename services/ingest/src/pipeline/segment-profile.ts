@@ -1,6 +1,6 @@
 import type postgres from "postgres";
-import { histogramPercentileKph, HOURLY_RETENTION_DAYS } from "./speed-rollup.js";
 import { loadOsmRegions, type OsmRegion } from "./osm-import.js";
+import { HOURLY_RETENTION_DAYS, histogramPercentileKph } from "./speed-rollup.js";
 
 type Sql = postgres.Sql;
 
@@ -60,7 +60,7 @@ function regionTzCase(sql: Sql, regions: OsmRegion[]) {
 export async function deriveSegmentProfiles(
   sql: Sql,
   now: () => string,
-  opts: DeriveSegmentProfilesOpts = {}
+  opts: DeriveSegmentProfilesOpts = {},
 ): Promise<{ upserted: number }> {
   const windowDays = opts.windowDays ?? SEGMENT_PROFILE_WINDOW_DAYS;
   const minSamples = opts.minSamples ?? 20;

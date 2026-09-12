@@ -14,7 +14,7 @@ describe("decay.ts public contract (packages/roads barrel)", () => {
     expect(decayTtlSec("hazard", "crowd")).toBe(900);
     expect(decayMaxLifetimeSec("hazard")).toBe(7200);
     expect(expiresAtFor("2026-07-11T12:00:00.000Z", "hazard", "crowd")).toBe(
-      "2026-07-11T12:15:00.000Z"
+      "2026-07-11T12:15:00.000Z",
     );
   });
 });

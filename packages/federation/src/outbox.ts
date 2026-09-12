@@ -27,8 +27,8 @@
  * order) — which the plan explicitly does not require.
  */
 import { createHash } from "node:crypto";
+import { type Observation, type ObservationRow, rowToObservation } from "@openconditions/core";
 import type postgres from "postgres";
-import { rowToObservation, type Observation, type ObservationRow } from "@openconditions/core";
 import { applyFederationFilter, type FederationFilter } from "./filter.js";
 
 export type OutboxOperation = "create" | "update" | "delete";
@@ -304,7 +304,7 @@ export function outboxEtag(
   after: OutboxCursor,
   limit: number,
   filter: FederationFilter | undefined,
-  tier?: 0 | 1 | 2
+  tier?: 0 | 1 | 2,
 ): string {
   const canon = JSON.stringify(
     sortedCanonical({
@@ -312,7 +312,7 @@ export function outboxEtag(
       limit,
       filter: filter ?? null,
       tier: tier ?? null,
-    })
+    }),
   );
   const hash = createHash("sha256").update(canon).digest("hex").slice(0, 16);
   return `"${height}-${hash}"`;

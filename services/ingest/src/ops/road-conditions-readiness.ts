@@ -61,7 +61,7 @@ export function assessReadiness(rows: PollAttempt[], now: Date = new Date()): So
         networkAttempts.length > 0 ? successful.length / networkAttempts.length : null;
       const freshnessWindowSec = Math.max(
         0,
-        ...attempts.map((attempt) => Number(attempt.freshnessWindowSec) || 0)
+        ...attempts.map((attempt) => Number(attempt.freshnessWindowSec) || 0),
       );
       const freshnessWindowMs = freshnessWindowSec * 1_000;
       const nowMs = now.getTime();
@@ -131,7 +131,7 @@ async function main(): Promise<void> {
       freshnessWindowSec: row.freshness_window_sec,
     }));
     process.stdout.write(
-      `${JSON.stringify({ windowDays: 7, sources: assessReadiness(attempts) }, null, 2)}\n`
+      `${JSON.stringify({ windowDays: 7, sources: assessReadiness(attempts) }, null, 2)}\n`,
     );
   } finally {
     await sql.end();

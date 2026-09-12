@@ -68,7 +68,7 @@ const ED25519 = { name: "Ed25519" } as const;
  */
 export async function generateInstanceKey(
   now: string,
-  validityMonths = INSTANCE_KEY_VALIDITY_MONTHS
+  validityMonths = INSTANCE_KEY_VALIDITY_MONTHS,
 ): Promise<InstanceKey> {
   if (Number.isNaN(new Date(now).getTime())) {
     throw new TypeError(`now must be a valid ISO 8601 timestamp, got ${JSON.stringify(now)}`);
@@ -81,7 +81,7 @@ export async function generateInstanceKey(
     "verify",
   ])) as CryptoKeyPair;
   const publicKeyRaw = new Uint8Array(
-    await globalThis.crypto.subtle.exportKey("raw", pair.publicKey)
+    await globalThis.crypto.subtle.exportKey("raw", pair.publicKey),
   );
   const publicKeyMultibase = multibaseFromRawEd25519(publicKeyRaw);
   const notBefore = new Date(now);
@@ -99,10 +99,10 @@ export async function generateInstanceKey(
 async function insertInstanceKey(
   sql: postgres.Sql,
   key: InstanceKey,
-  createdAt: string
+  createdAt: string,
 ): Promise<void> {
   const privatePkcs8 = new Uint8Array(
-    await globalThis.crypto.subtle.exportKey("pkcs8", key.privateKey)
+    await globalThis.crypto.subtle.exportKey("pkcs8", key.privateKey),
   );
   await sql`
     INSERT INTO conditions.federation_instance_key
@@ -133,7 +133,7 @@ export async function loadActiveKeys(sql: postgres.Sql, now: string): Promise<In
       const recomputed = multibaseFromRawEd25519(publicKeyRaw);
       if (recomputed !== row.multibase || row.key_id !== row.multibase) {
         throw new Error(
-          `federation_instance_key row ${row.key_id} is inconsistent with its public key bytes`
+          `federation_instance_key row ${row.key_id} is inconsistent with its public key bytes`,
         );
       }
       const publicKey = await globalThis.crypto.subtle.importKey(
@@ -141,14 +141,14 @@ export async function loadActiveKeys(sql: postgres.Sql, now: string): Promise<In
         publicKeyRaw as BufferSource,
         ED25519,
         true,
-        ["verify"]
+        ["verify"],
       );
       const privateKey = await globalThis.crypto.subtle.importKey(
         "pkcs8",
         new Uint8Array(row.private_key) as BufferSource,
         ED25519,
         false,
-        ["sign"]
+        ["sign"],
       );
       return {
         keyId: row.key_id,
@@ -159,7 +159,7 @@ export async function loadActiveKeys(sql: postgres.Sql, now: string): Promise<In
         notBefore: row.not_before,
         notAfter: row.not_after,
       };
-    })
+    }),
   );
 }
 
@@ -183,7 +183,7 @@ export async function ensureInstanceKey(sql: postgres.Sql, now: string): Promise
 export async function rotateInstanceKey(
   sql: postgres.Sql,
   now: string,
-  validityMonths = INSTANCE_KEY_VALIDITY_MONTHS
+  validityMonths = INSTANCE_KEY_VALIDITY_MONTHS,
 ): Promise<InstanceKey> {
   const key = await generateInstanceKey(now, validityMonths);
   await insertInstanceKey(sql, key, now);

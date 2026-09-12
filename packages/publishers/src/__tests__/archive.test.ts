@@ -73,7 +73,7 @@ describe("toPublishedArchiveRows", () => {
         roadEvent({ id: "gone", expiresAt: "2026-06-30T23:59:59Z" }),
         roadEvent({ id: "live", expiresAt: "2026-07-02T00:00:00Z" }),
       ],
-      NOW
+      NOW,
     );
     expect(rows.map((r) => r.id)).toEqual(["live"]);
   });
@@ -86,7 +86,7 @@ describe("toPublishedArchiveRows", () => {
   it("excludes rows whose validTo has passed", () => {
     const rows = toPublishedArchiveRows(
       [roadEvent({ id: "over", validTo: "2026-06-01T00:00:00Z" })],
-      NOW
+      NOW,
     );
     expect(rows).toHaveLength(0);
   });
@@ -98,7 +98,7 @@ describe("toPublishedArchiveRows", () => {
         roadEvent({ id: "cancel", status: "cancelled" }),
         roadEvent({ id: "ok", status: "active" }),
       ],
-      NOW
+      NOW,
     );
     expect(rows.map((r) => r.id)).toEqual(["ok"]);
   });
@@ -112,7 +112,7 @@ describe("toPublishedArchiveRows", () => {
         }),
         roadEvent({ id: "perm" }),
       ],
-      NOW
+      NOW,
     );
     expect(rows.map((r) => r.id)).toEqual(["perm"]);
   });
@@ -132,7 +132,7 @@ describe("toPublishedArchiveRows", () => {
   it("includes legacy feed rows with no explicit privacyClass", () => {
     const rows = toPublishedArchiveRows(
       [roadEvent({ id: "legacy", privacyClass: undefined })],
-      NOW
+      NOW,
     );
     expect(rows.map((r) => r.id)).toEqual(["legacy"]);
   });

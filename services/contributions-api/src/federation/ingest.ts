@@ -32,23 +32,24 @@
  *     instance — an instance may only supersede ITS OWN records, and
  *     supersession is never provenance and never corroboration.
  */
-import type postgres from "postgres";
-import type { Observation, OriginHop, Provenance } from "@openconditions/core";
+
 import { checkGeometryPlausibility } from "@openconditions/contrib-core";
+import type { Observation, OriginHop, Provenance } from "@openconditions/core";
 import { FederatedObservationError, normalizeObservation } from "@openconditions/normalize";
-import { toRow } from "@openconditions/storage";
 import {
-  roadAttributes,
-  roadFlowAttributes,
   type RoadEvent,
   type RoadFlow,
+  roadAttributes,
+  roadFlowAttributes,
 } from "@openconditions/roads";
+import { toRow } from "@openconditions/storage";
+import type postgres from "postgres";
 import { autoCorroborateOnLanding } from "../evidence/autoCorroborate.js";
 import { crossValidateAgainstFeeds } from "../evidence/crossValidate.js";
 import {
   hasActiveTombstone,
-  lockCanonicalRecords,
   isTombstoneReason,
+  lockCanonicalRecords,
   recordTombstoneFact,
   scrubJournalResidue,
   softTombstone,
@@ -58,7 +59,7 @@ import {
 type Sql = postgres.Sql;
 type Tx = postgres.TransactionSql;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: the driver's JSONB parameter type is intentionally open
 type Jsonb = any;
 
 export interface FederatedIngestContext {
@@ -175,7 +176,7 @@ function isOriginHop(value: unknown): value is OriginHop {
 function mergeOriginChain(
   existing: OriginHop[] | undefined,
   incoming: unknown,
-  receipt: OriginHop
+  receipt: OriginHop,
 ): OriginHop[] {
   const merged: OriginHop[] = [];
   const seen = new Set<string>();
@@ -203,11 +204,11 @@ function mergeOriginChain(
 export async function ingestFederatedPage(
   sql: Sql,
   page: unknown,
-  ctx: FederatedIngestContext
+  ctx: FederatedIngestContext,
 ): Promise<FederatedPageResult> {
   if (!isRecord(page) || !Array.isArray(page["orderedItems"])) {
     throw new FederatedPageError(
-      "federated page must be an object with an orderedItems array (OrderedCollectionPage)"
+      "federated page must be an object with an orderedItems array (OrderedCollectionPage)",
     );
   }
 
@@ -269,7 +270,7 @@ export async function ingestFederatedPage(
 
     try {
       outcomes.push(
-        await ingestFederatedObservation(sql, observation as unknown as Observation, ctx, objectId)
+        await ingestFederatedObservation(sql, observation as unknown as Observation, ctx, objectId),
       );
     } catch (err) {
       if (!(err instanceof FederatedObservationError)) throw err;
@@ -282,7 +283,7 @@ export async function ingestFederatedPage(
   }
 
   const skipped = outcomes.flatMap((o) =>
-    o.outcome === "skipped" ? [{ objectId: o.objectId, reason: o.reason }] : []
+    o.outcome === "skipped" ? [{ objectId: o.objectId, reason: o.reason }] : [],
   );
   return {
     accepted: outcomes.filter((o) => o.outcome === "inserted").length,
@@ -304,7 +305,7 @@ export async function ingestPeerOutbox(
   sql: Sql,
   peer: { instanceId: string },
   page: unknown,
-  opts: { localInstanceId: string; now?: string }
+  opts: { localInstanceId: string; now?: string },
 ): Promise<FederatedPageResult> {
   return ingestFederatedPage(sql, page, {
     localInstanceId: opts.localInstanceId,
@@ -339,7 +340,7 @@ export async function ingestFederatedObservation(
   wire: Observation,
   ctx: FederatedIngestContext,
   objectId?: string,
-  deps: FederatedIngestDeps = {}
+  deps: FederatedIngestDeps = {},
 ): Promise<FederatedEventOutcome> {
   const crossValidate = deps.crossValidateAgainstFeeds ?? crossValidateAgainstFeeds;
   if (!hasGeometryObjects(wire.geometry)) {
@@ -350,7 +351,7 @@ export async function ingestFederatedObservation(
   const geometryReasons = checkGeometryPlausibility(wire.geometry);
   if (geometryReasons.length > 0) {
     throw new FederatedObservationError(
-      `invalid federated geometry: ${geometryReasons.join(", ")}`
+      `invalid federated geometry: ${geometryReasons.join(", ")}`,
     );
   }
   const normalized = normalizeObservation(wire, {
@@ -467,13 +468,13 @@ export async function ingestFederatedObservation(
         if (matchedFeedId !== null) {
           console.info(
             `[federation] routed resupplied federated crowd ${landed.observationId} ` +
-              `on local feed ${matchedFeedId} (peer ${ctx.peerInstanceId})`
+              `on local feed ${matchedFeedId} (peer ${ctx.peerInstanceId})`,
           );
         }
       } catch (err) {
         console.warn(
           `[federation] federated cross-validate failed for resupplied ${landed.observationId} ` +
-            `(peer ${ctx.peerInstanceId}): ${String(err)}`
+            `(peer ${ctx.peerInstanceId}): ${String(err)}`,
         );
       }
     }
@@ -495,7 +496,7 @@ export async function ingestFederatedObservation(
       corroborated = await (deps.autoCorroborateOnLanding ?? autoCorroborateOnLanding)(
         sql,
         normalized.id,
-        ctx.now
+        ctx.now,
       );
     } catch (err) {
       console.warn(`[federation] auto-corroboration failed for ${normalized.id}: ${String(err)}`);
@@ -561,13 +562,13 @@ export async function ingestFederatedObservation(
       if (matchedFeedId !== null) {
         console.info(
           `[federation] routed federated crowd ${normalized.id} on local feed ${matchedFeedId} ` +
-            `(peer ${ctx.peerInstanceId})`
+            `(peer ${ctx.peerInstanceId})`,
         );
       }
     } catch (err) {
       console.warn(
         `[federation] federated cross-validate failed for ${normalized.id} ` +
-          `(peer ${ctx.peerInstanceId}): ${String(err)}`
+          `(peer ${ctx.peerInstanceId}): ${String(err)}`,
       );
     }
   }
@@ -622,7 +623,7 @@ interface TombstoneRow {
 async function applyFederatedTombstone(
   sql: Sql,
   target: TombstoneTarget,
-  ctx: FederatedIngestContext
+  ctx: FederatedIngestContext,
 ): Promise<FederatedEventOutcome> {
   return sql.begin(async (tx): Promise<FederatedEventOutcome> => {
     // Resolve identity without a row lock first, then use canonical-before-row
@@ -659,7 +660,7 @@ async function applyFederatedTombstone(
       tx,
       existing.canonical_id ?? target.canonicalId,
       target.reason,
-      ctx.now
+      ctx.now,
     );
     await scrubJournalResidue(tx, existing.id, target.reason);
     return {
@@ -680,7 +681,7 @@ async function applyFederatedTombstone(
 async function resolveTombstoneTarget(
   tx: Tx,
   target: TombstoneTarget,
-  lock = true
+  lock = true,
 ): Promise<TombstoneRow | undefined> {
   if (target.canonicalId !== undefined) {
     const byCanonical = await tx<TombstoneRow[]>`
@@ -731,7 +732,7 @@ async function collapseResupply(
   existing: ExistingRow,
   normalized: Observation,
   row: ReturnType<typeof toRow>,
-  ctx: FederatedIngestContext
+  ctx: FederatedIngestContext,
 ): Promise<LandedWithin> {
   const sameOriginInstance = existing.instance_id === normalized.instanceId;
   const existingLocallyOwned = existing.instance_id === ctx.localInstanceId;
@@ -755,7 +756,7 @@ async function collapseResupply(
   const chain = mergeOriginChain(
     existing.origin.originChain,
     (normalized.origin as { originChain?: unknown }).originChain,
-    receipt
+    receipt,
   );
   const origin: Provenance = { ...existing.origin, originChain: chain };
 
@@ -827,7 +828,7 @@ async function insertFederatedRow(
   tx: Tx,
   normalized: Observation,
   row: ReturnType<typeof toRow>,
-  ctx: FederatedIngestContext
+  ctx: FederatedIngestContext,
 ): Promise<boolean> {
   const receipt: OriginHop = {
     instanceId: normalized.instanceId!,
@@ -839,7 +840,7 @@ async function insertFederatedRow(
     originChain: mergeOriginChain(
       undefined,
       (normalized.origin as { originChain?: unknown }).originChain,
-      receipt
+      receipt,
     ),
   };
 
@@ -895,7 +896,7 @@ async function insertFederatedRow(
 async function applySupersession(
   tx: Tx,
   normalized: Observation,
-  selfId?: string
+  selfId?: string,
 ): Promise<string[]> {
   const replaces = normalized.replaces ?? [];
   if (replaces.length === 0) return [];

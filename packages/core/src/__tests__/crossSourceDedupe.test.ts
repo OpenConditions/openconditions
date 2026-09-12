@@ -1,7 +1,7 @@
-import { describe, it, expect } from "vitest";
 import type { Geometry } from "geojson";
-import type { Observation } from "../model.js";
+import { describe, expect, it } from "vitest";
 import { dedupeAcrossSources } from "../crossSourceDedupe.js";
+import type { Observation } from "../model.js";
 
 /** Build an event Observation. `roads` may be string[] or RoadRef-like objects. */
 function evt(
@@ -11,7 +11,7 @@ function evt(
     geometry: Geometry;
     type?: string;
     roads?: unknown;
-  }
+  },
 ): Observation {
   const { type = "accident", roads, ...rest } = o;
   return {

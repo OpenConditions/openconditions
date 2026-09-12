@@ -1,5 +1,5 @@
-import type postgres from "postgres";
 import { coarseCell } from "@openconditions/core";
+import type postgres from "postgres";
 
 type Sql = postgres.Sql | postgres.TransactionSql;
 
@@ -50,7 +50,7 @@ export async function checkReportRate(
   lon: number,
   lat: number,
   now: string,
-  rule: RateRule = REPORT_RATE_RULE
+  rule: RateRule = REPORT_RATE_RULE,
 ): Promise<RateDecision> {
   const cell = coarseCell(lon, lat);
   const rows = await sql<{ total: number; in_cell: number }[]>`

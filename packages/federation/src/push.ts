@@ -28,7 +28,7 @@ import type postgres from "postgres";
 import type { FederationFilter } from "./filter.js";
 import { signMessage } from "./http-signature.js";
 import type { InstanceKey } from "./keys.js";
-import { readOutbox, type OutboxEntry, type OutboxPage } from "./outbox.js";
+import { type OutboxEntry, type OutboxPage, readOutbox } from "./outbox.js";
 import type { FederationSubscription } from "./subscriptions.js";
 
 /** ActivityStreams content type the pushed page (and the pull outbox) use. */
@@ -52,7 +52,7 @@ const PRIORITY_EVENT_TYPE_SET: ReadonlySet<string> = new Set(PRIORITY_EVENT_TYPE
  *  (whose live poll post-filters) — the webhook channel restricts at SQL instead. */
 export function isPriorityEntry(
   entry: OutboxEntry,
-  priorityTypes: ReadonlySet<string> = PRIORITY_EVENT_TYPE_SET
+  priorityTypes: ReadonlySet<string> = PRIORITY_EVENT_TYPE_SET,
 ): boolean {
   if (entry.operation === "delete") return true;
   const type = (entry.observation as { type?: string } | undefined)?.type;
@@ -102,7 +102,7 @@ export type DeliverWebhookOutcome =
 export async function deliverWebhook(
   sql: postgres.Sql,
   subscription: FederationSubscription,
-  opts: DeliverWebhookOptions
+  opts: DeliverWebhookOptions,
 ): Promise<DeliverWebhookOutcome> {
   if (subscription.deliveryMode !== "webhook" || subscription.status !== "active") {
     return { status: "obsolete" };
@@ -215,7 +215,7 @@ export interface WebhookCycleResult {
  */
 export async function runWebhookDeliveryCycle(
   sql: postgres.Sql,
-  opts: DeliverWebhookOptions
+  opts: DeliverWebhookOptions,
 ): Promise<WebhookCycleResult> {
   const rows = await sql<{ id: string }[]>`
     SELECT id FROM conditions.federation_subscription

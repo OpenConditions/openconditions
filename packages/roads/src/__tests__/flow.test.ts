@@ -1,23 +1,23 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseDigitrafficFlow, parseDatexMeasuredData } from "../flow.js";
-import { createSiteTableParser, parseDatexSiteTable } from "../siteTable.js";
-import type { SiteGeometry } from "../siteTable.js";
-import { parseDigitraffic } from "../digitraffic.js";
 import { parseDatexSituations } from "../datex.js";
+import { parseDigitraffic } from "../digitraffic.js";
+import { parseDatexMeasuredData, parseDigitrafficFlow } from "../flow.js";
 import { roadFlowAttributes } from "../model.js";
+import type { SiteGeometry } from "../siteTable.js";
+import { createSiteTableParser, parseDatexSiteTable } from "../siteTable.js";
 
 const DT_FLOW_FIXTURE = join(import.meta.dirname, "fixtures/digitraffic-flow/flow.json");
 const DATEX_FLOW_FIXTURE = join(
   import.meta.dirname,
-  "fixtures/datex-measured-data/measured_data.xml"
+  "fixtures/datex-measured-data/measured_data.xml",
 );
 const DT_EVENTS_FIXTURE = join(import.meta.dirname, "fixtures/digitraffic/messages.json");
 const NDW_FIXTURE = join(import.meta.dirname, "fixtures/ndw/actueel_beeld.xml");
 const NDW_SITE_TABLE_FIXTURE = join(
   import.meta.dirname,
-  "fixtures/ndw-flow/measurement_site_table.xml"
+  "fixtures/ndw-flow/measurement_site_table.xml",
 );
 const NDW_TRAFFICSPEED_FIXTURE = join(import.meta.dirname, "fixtures/ndw-flow/trafficspeed.xml");
 
@@ -367,7 +367,7 @@ describe("parseDatexMeasuredData — fixture", () => {
 
   it("never throws on empty XML", () => {
     expect(() =>
-      parseDatexMeasuredData(Buffer.from("<D2LogicalModel/>"), NDW_SOURCE)
+      parseDatexMeasuredData(Buffer.from("<D2LogicalModel/>"), NDW_SOURCE),
     ).not.toThrow();
     expect(parseDatexMeasuredData(Buffer.from("<D2LogicalModel/>"), NDW_SOURCE).flows).toEqual([]);
   });
@@ -382,7 +382,7 @@ describe("parseDatexMeasuredData — fixture", () => {
     // a deterministic, always-throwing "XML parse failed" trigger.
     const result = parseDatexMeasuredData(
       Buffer.from(`<!ENTITY x "y"><D2LogicalModel/>`),
-      NDW_SOURCE
+      NDW_SOURCE,
     );
     expect(result.flows).toEqual([]);
     expect(result.failed).toBe(true);
@@ -676,7 +676,7 @@ describe("createSiteTableParser — streaming state machine", () => {
       `<measurementSiteRecord id="P1"><measurementSiteLocation>` +
         `<locationForDisplay><latitude>9</latitude><longitude>9</longitude></locationForDisplay>` +
         `<gml:posList>52.0 4.0 52.1 4.1</gml:posList>` +
-        `</measurementSiteLocation></measurementSiteRecord>`
+        `</measurementSiteLocation></measurementSiteRecord>`,
     );
     const map = parser.close();
     expect(map.get("P1")).toEqual({
@@ -691,7 +691,7 @@ describe("createSiteTableParser — streaming state machine", () => {
   it("skips a record with no resolvable location", () => {
     const parser = createSiteTableParser();
     parser.write(
-      `<measurementSiteRecord id="N1"><measurementSiteName>x</measurementSiteName></measurementSiteRecord>`
+      `<measurementSiteRecord id="N1"><measurementSiteName>x</measurementSiteName></measurementSiteRecord>`,
     );
     expect(parser.close().has("N1")).toBe(false);
   });

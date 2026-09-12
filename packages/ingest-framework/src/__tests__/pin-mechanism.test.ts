@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Agent, fetch as undiciFetch } from "undici";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 // guardedFetch's connection-pinning (see egress.ts) relies on undici honoring
 // `Agent({ connect: { lookup } })`: dial the address the lookup returns while
@@ -36,7 +36,7 @@ describe("undici connect.lookup pinning mechanism", () => {
         lookup: (
           _hostname: string,
           _opts: unknown,
-          cb: (err: Error | null, addrs: Array<{ address: string; family: number }>) => void
+          cb: (err: Error | null, addrs: Array<{ address: string; family: number }>) => void,
         ) => cb(null, [{ address: "127.0.0.1", family: 4 }]),
       },
     });

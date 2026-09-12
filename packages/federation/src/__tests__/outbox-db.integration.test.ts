@@ -1,10 +1,10 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import type { Observation } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import { filterForPermissiveExport } from "@openconditions/publishers";
-import { encodeOutboxCursor, readOutbox, type OutboxCursor, type OutboxEntry } from "../outbox.js";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { encodeOutboxCursor, type OutboxCursor, type OutboxEntry, readOutbox } from "../outbox.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -63,7 +63,7 @@ async function insertObservation(
     lon?: number;
     privacyClass?: string;
     evidenceState?: string | null;
-  } = {}
+  } = {},
 ): Promise<void> {
   const geometry = { type: "Point", coordinates: [opts.lon ?? 5.1, 52.1] };
   await db`
@@ -231,7 +231,7 @@ describe("federation_outbox trigger — transactional capture", () => {
       sql.begin(async (tx) => {
         await insertObservation(tx, "obs-rollback");
         throw new Error("boom");
-      })
+      }),
     ).rejects.toThrow("boom");
 
     expect(await journalFor("obs-rollback")).toEqual([]);

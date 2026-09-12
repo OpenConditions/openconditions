@@ -1,13 +1,13 @@
-import { describe, it, expect } from "vitest";
+import { describe, expect, it } from "vitest";
 import {
-  evaluateEvidence,
-  updateReliability,
-  reliabilityLowerBound,
-  shrinkToward,
   confidenceEnum,
   type EvidenceEntry,
   type EvidenceLedger,
   type EvidencePolicy,
+  evaluateEvidence,
+  reliabilityLowerBound,
+  shrinkToward,
+  updateReliability,
 } from "../evidence.js";
 
 const T0 = Date.parse("2026-07-01T10:00:00.000Z");
@@ -21,7 +21,7 @@ function entry(
   id: string,
   minutes: number,
   kind: EvidenceEntry["kind"],
-  reporterKey?: string
+  reporterKey?: string,
 ): EvidenceEntry {
   return { id, at: iso(minutes), kind, ...(reporterKey !== undefined ? { reporterKey } : {}) };
 }
@@ -30,7 +30,7 @@ function external(
   id: string,
   minutes: number,
   outcome: "confirmed" | "rejected",
-  source: "official" | "reviewer" | "objective" = "official"
+  source: "official" | "reviewer" | "objective" = "official",
 ): EvidenceEntry {
   return { id, at: iso(minutes), kind: "external", external: { source, outcome } };
 }
@@ -58,7 +58,7 @@ const TEST_POLICY: EvidencePolicy = {
 function ledger(
   entries: EvidenceEntry[],
   nowMinutes: number,
-  reporterLowerBound?: number
+  reporterLowerBound?: number,
 ): EvidenceLedger {
   return {
     entries,
@@ -125,7 +125,7 @@ describe("evaluateEvidence corroboration rules", () => {
   it("a same-key confirm does NOT corroborate (the original reporter cannot corroborate their own report)", () => {
     const result = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), entry("c1", 5, "confirm", "keyA")], 10),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("self_reported");
   });
@@ -133,7 +133,7 @@ describe("evaluateEvidence corroboration rules", () => {
   it("a keyless confirm does NOT corroborate", () => {
     const result = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), entry("c1", 5, "confirm")], 10),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("self_reported");
   });
@@ -141,7 +141,7 @@ describe("evaluateEvidence corroboration rules", () => {
   it("a second distinct-key report counts toward corroboration", () => {
     const result = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), entry("r2", 5, "report", "keyB")], 10),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("corroborated");
   });
@@ -149,7 +149,7 @@ describe("evaluateEvidence corroboration rules", () => {
   it("corroboration extends expiry from the confirm's observation time but never beyond firstReportAt+maxLifetime", () => {
     const result = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), entry("c1", 330, "confirm", "keyB")], 335),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("corroborated");
     expect(result.expiresAt).toBe(iso(360));
@@ -193,7 +193,7 @@ describe("evaluateEvidence incremental crowd confidence (asymmetric peer trust)"
     // Saturates strictly below the peer cap, which is strictly below 0.9.
     expect(c3).toBeLessThan(TEST_POLICY.peerConfidenceCap);
     expect(TEST_POLICY.peerConfidenceCap).toBeLessThan(
-      TEST_POLICY.scoreByState.externally_resolved
+      TEST_POLICY.scoreByState.externally_resolved,
     );
   });
 
@@ -211,7 +211,7 @@ describe("evaluateEvidence incremental crowd confidence (asymmetric peer trust)"
   it("a self-confirm by the originating key does not raise confidence (exclusion holds)", () => {
     const result = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), entry("c1", 5, "confirm", "keyA")], 10),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("self_reported");
     expect(result.confidenceScore).toBe(0.3);
@@ -222,7 +222,7 @@ describe("evaluateEvidence asymmetric sub-quorum negation", () => {
   it("one sub-quorum negation erodes more confidence than one confirmation built, without negating or removing", () => {
     const oneConfirm = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), entry("c1", 5, "confirm", "keyB")], 10),
-      TEST_POLICY
+      TEST_POLICY,
     );
     const confirmThenNegate = evaluateEvidence(
       ledger(
@@ -231,9 +231,9 @@ describe("evaluateEvidence asymmetric sub-quorum negation", () => {
           entry("c1", 5, "confirm", "keyB"),
           entry("n1", 8, "negate", "keyC"),
         ],
-        10
+        10,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(oneConfirm.confidenceScore).toBeCloseTo(0.525, 12);
     // Still corroborated (1 confirmer, 1 sub-quorum negator < peerNegationMinKeys),
@@ -270,7 +270,7 @@ describe("evaluateEvidence asymmetric sub-quorum negation", () => {
   it("a sub-quorum negation on a lone self-report drops confidence and shrinks TTL but stays self_reported and live", () => {
     const result = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), entry("n1", 10, "negate", "keyB")], 15),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("self_reported");
     // 0.3 + 0 - 0.9*(1 - 0.5^1) = -0.15 → clamped to 0.
@@ -290,9 +290,9 @@ describe("evaluateEvidence asymmetric sub-quorum negation", () => {
           entry("n1", 10, "negate", "keyC"),
           entry("n2", 12, "negate", "keyD"),
         ],
-        20
+        20,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("negated");
     expect(result.confidenceScore).toBe(0.1);
@@ -321,9 +321,9 @@ describe("evaluateEvidence asymmetric-trust ADR guardrails", () => {
           entry("c2", 6, "confirm", "keyC"),
           external("x1", 30, "confirmed"),
         ],
-        40
+        40,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("externally_resolved");
     expect(result.routingEligible).toBe(true);
@@ -340,9 +340,9 @@ describe("evaluateEvidence asymmetric-trust ADR guardrails", () => {
           entry("c2", 2, "confirm", "keyC"),
           entry("n1", 3, "negate", "keyD"),
         ],
-        5
+        5,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(Object.keys(result).sort()).toEqual([
       "confidenceScore",
@@ -362,7 +362,7 @@ describe("evaluateEvidence asymmetric-trust ADR guardrails", () => {
         entry("n1", 8, "negate", "keyD"),
       ],
       12,
-      0.7
+      0.7,
     );
     expect(evaluateEvidence(input, TEST_POLICY)).toEqual(evaluateEvidence(input, TEST_POLICY));
   });
@@ -398,7 +398,7 @@ describe("evaluateEvidence asymmetric-trust ADR guardrails", () => {
     ] as const) {
       const badPolicy: EvidencePolicy = { ...TEST_POLICY, [field]: NaN };
       expect(() =>
-        evaluateEvidence(ledger([entry("r1", 0, "report", "keyA")], 5), badPolicy)
+        evaluateEvidence(ledger([entry("r1", 0, "report", "keyA")], 5), badPolicy),
       ).toThrow(TypeError);
     }
   });
@@ -424,9 +424,9 @@ describe("evaluateEvidence asymmetric-trust ADR guardrails", () => {
     ({ field, value }) => {
       const badPolicy: EvidencePolicy = { ...TEST_POLICY, [field]: value };
       expect(() =>
-        evaluateEvidence(ledger([entry("r1", 0, "report", "keyA")], 5), badPolicy)
+        evaluateEvidence(ledger([entry("r1", 0, "report", "keyA")], 5), badPolicy),
       ).toThrow(TypeError);
-    }
+    },
   );
 
   it("a finite-but-malformed policy cannot breach the peer-cap ceiling: peerConfidenceCap >= externally_resolved is rejected before any confidence is derived", () => {
@@ -443,7 +443,7 @@ describe("evaluateEvidence negative evidence", () => {
   it("external rejection negates and ends expiry at the resolution time (even when now is far past it)", () => {
     const result = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), external("x1", 30, "rejected", "reviewer")], 120),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result).toEqual({
       state: "negated",
@@ -462,9 +462,9 @@ describe("evaluateEvidence negative evidence", () => {
           entry("c2", 6, "confirm", "keyC"),
           external("x1", 30, "rejected", "objective"),
         ],
-        40
+        40,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("negated");
   });
@@ -477,9 +477,9 @@ describe("evaluateEvidence negative evidence", () => {
           external("x1", 30, "rejected"),
           external("x2", 40, "confirmed"),
         ],
-        50
+        50,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("externally_resolved");
     expect(result.routingEligible).toBe(true);
@@ -493,9 +493,9 @@ describe("evaluateEvidence negative evidence", () => {
           external("x1", 30, "confirmed"),
           external("x2", 40, "rejected"),
         ],
-        50
+        50,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("negated");
     expect(result.expiresAt).toBe(iso(40));
@@ -509,9 +509,9 @@ describe("evaluateEvidence negative evidence", () => {
           external("xa", 30, "confirmed"),
           external("xb", 30, "rejected"),
         ],
-        40
+        40,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("negated");
   });
@@ -519,7 +519,7 @@ describe("evaluateEvidence negative evidence", () => {
   it("an originating-key cancel is a retraction, negating at the cancel time", () => {
     const result = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), entry("k1", 15, "cancel", "keyA")], 20),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result).toEqual({
       state: "negated",
@@ -532,7 +532,7 @@ describe("evaluateEvidence negative evidence", () => {
   it("an originating-key negate is treated as a retraction (negates regardless of the peer-negation threshold)", () => {
     const result = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), entry("n1", 10, "negate", "keyA")], 20),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("negated");
     expect(result.expiresAt).toBe(iso(10));
@@ -541,7 +541,7 @@ describe("evaluateEvidence negative evidence", () => {
   it("a single foreign-key cancel is peer evidence, not an instant kill (cannot negate below the peer threshold)", () => {
     const result = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), entry("k1", 10, "cancel", "keyB")], 20),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("self_reported");
   });
@@ -554,9 +554,9 @@ describe("evaluateEvidence negative evidence", () => {
           entry("k1", 10, "cancel", "keyB"),
           entry("n1", 12, "negate", "keyC"),
         ],
-        20
+        20,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("negated");
     expect(result.expiresAt).toBe(iso(12));
@@ -570,9 +570,9 @@ describe("evaluateEvidence negative evidence", () => {
           entry("k1", 10, "cancel", "keyB"),
           entry("n1", 12, "negate", "keyB"),
         ],
-        20
+        20,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("self_reported");
   });
@@ -580,7 +580,7 @@ describe("evaluateEvidence negative evidence", () => {
   it("a keyless cancel is ignored (accountable all-clears use kind external)", () => {
     const result = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), entry("k1", 10, "cancel")], 20),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result).toEqual({
       state: "self_reported",
@@ -599,9 +599,9 @@ describe("evaluateEvidence negative evidence", () => {
           entry("n1", 10, "negate", "keyC"),
           entry("n2", 12, "negate", "keyD"),
         ],
-        20
+        20,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("negated");
     expect(result.expiresAt).toBe(iso(12));
@@ -617,9 +617,9 @@ describe("evaluateEvidence negative evidence", () => {
           entry("n1", 10, "negate", "keyD"),
           entry("n2", 12, "negate", "keyE"),
         ],
-        20
+        20,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("corroborated");
   });
@@ -632,9 +632,9 @@ describe("evaluateEvidence negative evidence", () => {
           entry("n1", 10, "negate", "keyB"),
           entry("n2", 12, "negate", "keyB"),
         ],
-        20
+        20,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("self_reported");
   });
@@ -657,10 +657,10 @@ describe("evaluateEvidence determinism and admissibility", () => {
 
   it("throws TypeError when no report entry is admissible", () => {
     expect(() =>
-      evaluateEvidence(ledger([entry("c1", 5, "confirm", "keyB")], 10), TEST_POLICY)
+      evaluateEvidence(ledger([entry("c1", 5, "confirm", "keyB")], 10), TEST_POLICY),
     ).toThrow(TypeError);
     expect(() =>
-      evaluateEvidence(ledger([entry("r1", 20, "report", "keyA")], 10), TEST_POLICY)
+      evaluateEvidence(ledger([entry("r1", 20, "report", "keyA")], 10), TEST_POLICY),
     ).toThrow(TypeError);
     expect(() => evaluateEvidence(ledger([], 10), TEST_POLICY)).toThrow(TypeError);
   });
@@ -687,10 +687,10 @@ describe("evaluateEvidence determinism and admissibility", () => {
     const confirmedX = external("x", 30, "confirmed");
     const rejectedX = external("x", 30, "rejected");
     expect(() =>
-      evaluateEvidence(ledger([report, confirmedX, rejectedX], 40), TEST_POLICY)
+      evaluateEvidence(ledger([report, confirmedX, rejectedX], 40), TEST_POLICY),
     ).toThrow(TypeError);
     expect(() =>
-      evaluateEvidence(ledger([report, rejectedX, confirmedX], 40), TEST_POLICY)
+      evaluateEvidence(ledger([report, rejectedX, confirmedX], 40), TEST_POLICY),
     ).toThrow(TypeError);
   });
 
@@ -703,7 +703,7 @@ describe("evaluateEvidence determinism and admissibility", () => {
     };
     const result = evaluateEvidence(
       ledger([entry("r1", 0, "report", "keyA"), garbage], 10),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("self_reported");
     expect(result.expiresAt).toBe(iso(60));
@@ -717,7 +717,7 @@ describe("evaluateEvidence input validation", () => {
     "throws TypeError for reporterLowerBound %s",
     (value) => {
       expect(() => evaluateEvidence(ledger([report], 10, value), TEST_POLICY)).toThrow(TypeError);
-    }
+    },
   );
 
   it("throws TypeError for a non-finite scoreByState value", () => {
@@ -753,11 +753,11 @@ describe("evaluateEvidence reporterLowerBound adjustment", () => {
   it("adjusts by reliabilityWeight * (reporterLowerBound - 0.5), bounded by the weight", () => {
     expect(evaluateEvidence(ledger([report], 10, 1), TEST_POLICY).confidenceScore).toBeCloseTo(
       0.35,
-      12
+      12,
     );
     expect(evaluateEvidence(ledger([report], 10, 0), TEST_POLICY).confidenceScore).toBeCloseTo(
       0.25,
-      12
+      12,
     );
     expect(evaluateEvidence(ledger([report], 10, 0.5), TEST_POLICY).confidenceScore).toBe(0.3);
   });
@@ -807,9 +807,9 @@ describe("updateReliability", () => {
           entry("c1", 1, "confirm", "colluderB"),
           entry("c2", 2, "confirm", "colluderC"),
         ],
-        5
+        5,
       ),
-      TEST_POLICY
+      TEST_POLICY,
     );
     expect(result.state).toBe("corroborated");
     expect(Object.keys(result).sort()).toEqual([
@@ -843,7 +843,7 @@ describe("reliabilityLowerBound", () => {
     "Beta($alpha, $beta) lower bound at credible level $level matches scipy ($expected)",
     ({ alpha, beta, level, expected }) => {
       expect(reliabilityLowerBound({ alpha, beta }, level)).toBeCloseTo(expected, 9);
-    }
+    },
   );
 
   it("increases with each added confirmed outcome and decreases with each rejected", () => {
@@ -921,19 +921,19 @@ describe("shrinkToward", () => {
 
   it("throws TypeError on invalid factor or posteriors", () => {
     expect(() => shrinkToward({ alpha: 1, beta: 1 }, { alpha: 2, beta: 2 }, -0.1)).toThrow(
-      TypeError
+      TypeError,
     );
     expect(() => shrinkToward({ alpha: 1, beta: 1 }, { alpha: 2, beta: 2 }, 1.1)).toThrow(
-      TypeError
+      TypeError,
     );
     expect(() => shrinkToward({ alpha: 1, beta: 1 }, { alpha: 2, beta: 2 }, NaN)).toThrow(
-      TypeError
+      TypeError,
     );
     expect(() => shrinkToward({ alpha: 0, beta: 1 }, { alpha: 2, beta: 2 }, 0.5)).toThrow(
-      TypeError
+      TypeError,
     );
     expect(() => shrinkToward({ alpha: 1, beta: 1 }, { alpha: 2, beta: 0 }, 0.5)).toThrow(
-      TypeError
+      TypeError,
     );
   });
 });

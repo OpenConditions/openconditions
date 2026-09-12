@@ -9,13 +9,13 @@ import {
 describe("publicContextString", () => {
   it("joins purpose, taskId, epoch with colons", () => {
     expect(publicContextString({ purpose: "probe", taskId: "task-abc", epoch: "epoch-42" })).toBe(
-      "probe:task-abc:epoch-42"
+      "probe:task-abc:epoch-42",
     );
   });
 
   it("substitutes '-' for a missing taskId", () => {
     expect(publicContextString({ purpose: "report", epoch: "2026-07-12" })).toBe(
-      "report:-:2026-07-12"
+      "report:-:2026-07-12",
     );
   });
 });

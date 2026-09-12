@@ -3,12 +3,12 @@ import {
   canonicalClaimBytes,
   generateReporterKey,
   maresiUri,
-  signReport,
-  signSubClaim,
-  verifySubClaim,
   type ReportClaim,
   type SignedSubClaim,
   type SubClaimBody,
+  signReport,
+  signSubClaim,
+  verifySubClaim,
 } from "../index.js";
 import { P256_ORDER } from "../lowS.js";
 
@@ -48,13 +48,13 @@ describe("signSubClaim / verifySubClaim", () => {
       key.publicJwk,
       { name: "ECDSA", namedCurve: "P-256" },
       false,
-      ["verify"]
+      ["verify"],
     );
     const ok = await crypto.subtle.verify(
       { name: "ECDSA", hash: "SHA-256" },
       publicKey,
       Buffer.from(sub.signature, "base64url"),
-      canonicalClaimBytes(body)
+      canonicalClaimBytes(body),
     );
     // The envelope fields (alg/keyId/pubJwk/signature) are NOT in the signed
     // bytes: the body alone reproduces the signature input.
@@ -106,7 +106,7 @@ describe("signSubClaim / verifySubClaim", () => {
   it("rejects an invalid claimType", async () => {
     const key = await generateReporterKey();
     await expect(
-      signSubClaim(makeBody({ claimType: "deny" as SubClaimBody["claimType"] }), key)
+      signSubClaim(makeBody({ claimType: "deny" as SubClaimBody["claimType"] }), key),
     ).rejects.toThrow(/claimType/);
   });
 
@@ -118,11 +118,11 @@ describe("signSubClaim / verifySubClaim", () => {
   it("caps reason at 2000 characters", async () => {
     const key = await generateReporterKey();
     await expect(
-      signSubClaim(makeBody({ claimType: "flag", reason: "r".repeat(2001) }), key)
+      signSubClaim(makeBody({ claimType: "flag", reason: "r".repeat(2001) }), key),
     ).rejects.toThrow(/reason/);
     const atLimit = await signSubClaim(
       makeBody({ claimType: "flag", reason: "r".repeat(2000) }),
-      key
+      key,
     );
     await expect(verifySubClaim(atLimit)).resolves.toMatchObject({ ok: true });
   });
@@ -131,7 +131,7 @@ describe("signSubClaim / verifySubClaim", () => {
     const key = await generateReporterKey();
     await expect(signSubClaim(makeBody({ nonce: "short" }), key)).rejects.toThrow(/nonce/);
     await expect(
-      signSubClaim(makeBody({ reportedAt: "2026-07-11T12:05:00" }), key)
+      signSubClaim(makeBody({ reportedAt: "2026-07-11T12:05:00" }), key),
     ).rejects.toThrow(/zone designator/);
   });
 

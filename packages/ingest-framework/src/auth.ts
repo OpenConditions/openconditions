@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { fetch as undiciFetch } from "undici";
-import { guardOptionsFromEnv, guardedFetch } from "./egress.js";
+import { guardedFetch, guardOptionsFromEnv } from "./egress.js";
 import type { FeedAuth, FeedSourceBase } from "./feed-source.js";
 
 /**
@@ -78,7 +78,7 @@ export function requiredEnvVars(auth: FeedAuth | undefined): string[] {
  * feed embeds in its POST body). */
 export function hasCredentials(
   src: Pick<FeedSourceBase, "auth" | "requiredEnv">,
-  env: Env = process.env
+  env: Env = process.env,
 ): boolean {
   const required = [...requiredEnvVars(src.auth), ...(src.requiredEnv ?? [])];
   return required.every((k) => resolveCredential(env, k) !== undefined);
@@ -135,7 +135,7 @@ function oauthClientCredentialsFetch(
   auth: Extract<FeedAuth, { kind: "oauth2-client-credentials" }>,
   baseFetch: typeof fetch,
   env: Env,
-  now: () => number
+  now: () => number,
 ): typeof fetch {
   let cache: { token: string; expiresAt: number } | null = null;
 
@@ -178,7 +178,7 @@ export function makeAuthorizedFetch(
   src: Pick<FeedSourceBase, "auth">,
   baseFetch: typeof fetch,
   env: Env = process.env,
-  now: () => number = Date.now
+  now: () => number = Date.now,
 ): typeof fetch {
   const auth = src.auth;
   if (!auth || auth.kind === "none") return baseFetch;
@@ -197,7 +197,7 @@ export function makeAuthorizedFetch(
       return withHeader(baseFetch, "Authorization", `Bearer ${need(env, auth.envVar)}`);
     case "basic": {
       const creds = Buffer.from(
-        `${need(env, auth.userEnvVar)}:${need(env, auth.passEnvVar)}`
+        `${need(env, auth.userEnvVar)}:${need(env, auth.passEnvVar)}`,
       ).toString("base64");
       return withHeader(baseFetch, "Authorization", `Basic ${creds}`);
     }

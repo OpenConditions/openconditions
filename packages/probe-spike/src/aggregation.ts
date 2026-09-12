@@ -10,9 +10,10 @@
  * or out-of-range) and confirm the aggregators reject it — the security property
  * a client-side range check cannot provide.
  */
-import type { Prio3 } from "@divviup/prio3";
+
 import { Buffer } from "node:buffer";
 import { randomBytes } from "node:crypto";
+import type { Prio3 } from "@divviup/prio3";
 
 /** A single report's structured shares, ready for aggregation. */
 export interface ShardedReport<InputShare, PublicShare> {
@@ -23,7 +24,7 @@ export interface ShardedReport<InputShare, PublicShare> {
 
 // The @divviup Prio3 input/public share types are module-internal (not generic
 // parameters); recover them from the concrete instance's shard() return type.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: the library's share types are module-internal, so only `any` can name the instance here
 type AnyPrio3 = Prio3<any, any>;
 type ShardResult<V extends AnyPrio3> = Awaited<ReturnType<V["shard"]>>;
 type InputShareOf<V extends AnyPrio3> = ShardResult<V>["inputShares"][number];
@@ -33,7 +34,7 @@ type PublicShareOf<V extends AnyPrio3> = ShardResult<V>["publicShare"];
 export async function shardStructured<V extends AnyPrio3>(
   vdaf: V,
   measurement: Parameters<V["shard"]>[0],
-  nonce: Buffer = Buffer.from(randomBytes(vdaf.nonceSize))
+  nonce: Buffer = Buffer.from(randomBytes(vdaf.nonceSize)),
 ): Promise<ShardedReport<InputShareOf<V>, PublicShareOf<V>>> {
   const rand = Buffer.from(randomBytes(vdaf.randSize));
   const { publicShare, inputShares } = await vdaf.shard(measurement, nonce, rand);
@@ -55,20 +56,20 @@ export async function prepareReport<V extends AnyPrio3>(
   vdaf: V,
   verifyKey: Buffer,
   report: ShardedReport<InputShareOf<V>, PublicShareOf<V>>,
-  tamper?: (inputShares: InputShareOf<V>[]) => void
+  tamper?: (inputShares: InputShareOf<V>[]) => void,
 ): Promise<PreparedReport> {
   const inputShares = report.inputShares.slice();
   if (tamper) tamper(inputShares);
 
   const prepared = await Promise.all(
     inputShares.map((inputShare, aggregatorId) =>
-      vdaf.prepareInit(verifyKey, aggregatorId, null, report.nonce, report.publicShare, inputShare)
-    )
+      vdaf.prepareInit(verifyKey, aggregatorId, null, report.nonce, report.publicShare, inputShare),
+    ),
   );
   // Combining the preparation shares runs the FLP verifier — a bad proof throws.
   const message = await vdaf.unshardPreparationShares(
     null,
-    prepared.map((p) => p.preparationShare)
+    prepared.map((p) => p.preparationShare),
   );
   const outputShares = prepared.map((p) => {
     const out = vdaf.prepareNext(p.preparationState, message);
@@ -87,7 +88,7 @@ export async function prepareReport<V extends AnyPrio3>(
  */
 export function aggregateBatch<V extends AnyPrio3>(
   vdaf: V,
-  prepared: PreparedReport[]
+  prepared: PreparedReport[],
 ): ReturnType<V["unshard"]> {
   if (prepared.length === 0) {
     throw new Error("cannot aggregate an empty batch");
@@ -96,8 +97,8 @@ export function aggregateBatch<V extends AnyPrio3>(
   const aggregatorShares = Array.from({ length: numAggregators }, (_, aggId) =>
     vdaf.aggregate(
       null,
-      prepared.map((p) => p.outputShares[aggId]!)
-    )
+      prepared.map((p) => p.outputShares[aggId]!),
+    ),
   );
   return vdaf.unshard(null, aggregatorShares, prepared.length) as ReturnType<V["unshard"]>;
 }

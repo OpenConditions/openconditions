@@ -9,7 +9,7 @@ describe("normalizeVehicleApplicability", () => {
 
   it("maps supported DATEX and WZDx vehicle terms to canonical classes", () => {
     expect(
-      normalizeVehicleApplicability(["passengerCar", "heavyGoodsVehicle", "publicTransport"])
+      normalizeVehicleApplicability(["passengerCar", "heavyGoodsVehicle", "publicTransport"]),
     ).toEqual({
       kind: "classes",
       classes: ["car", "truck", "bus"],
@@ -32,8 +32,8 @@ describe("normalizeVehicleApplicability", () => {
     expect(
       normalizeVehicleApplicability(
         ["lorry"],
-        [{ type: "height", value: 4.5, unit: "m", operator: "greaterThan" }]
-      )
+        [{ type: "height", value: 4.5, unit: "m", operator: "greaterThan" }],
+      ),
     ).toMatchObject({ kind: "unknown" });
   });
 });
@@ -43,7 +43,7 @@ describe("normalizeVehicleApplicability restriction carrier", () => {
     expect(
       normalizeVehicleApplicability(undefined, undefined, {
         restrictionDetails: { schemaVersion: 9 },
-      }).kind
+      }).kind,
     ).toBe("unknown");
     expect(normalizeVehicleApplicability(undefined, undefined, {}).kind).toBe("all");
   });
@@ -52,17 +52,17 @@ describe("normalizeVehicleApplicability restriction carrier", () => {
     expect(
       normalizeVehicleApplicability(undefined, undefined, {
         restrictionDetails: restrictionDetails(),
-      })
+      }),
     ).toEqual({ kind: "unknown", raw: ["normalized_restriction_details"] });
     expect(
       normalizeVehicleApplicability(undefined, undefined, {
         restrictionDetailsUnsupported: true,
-      }).kind
+      }).kind,
     ).toBe("unknown");
     expect(
       normalizeVehicleApplicability(["all"], undefined, {
         restrictionDetails: restrictionDetails(),
-      }).kind
+      }).kind,
     ).toBe("unknown");
   });
 

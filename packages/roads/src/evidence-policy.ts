@@ -1,5 +1,5 @@
 import type { EvidencePolicy, EvidenceState } from "@openconditions/core";
-import { decayMaxLifetimeSec, decayTtlSec, type DecayEntry, type DecayOrigin } from "./decay.js";
+import { type DecayEntry, type DecayOrigin, decayMaxLifetimeSec, decayTtlSec } from "./decay.js";
 
 /**
  * The production evidence policy constants: the corroboration/negation
@@ -42,7 +42,7 @@ export const EVIDENCE_POLICY_DEFAULTS = {
 export function evidencePolicyFor(
   type: string,
   origin: DecayOrigin,
-  opts?: { overrides?: Record<string, Partial<DecayEntry>>; policyVersion?: string }
+  opts?: { overrides?: Record<string, Partial<DecayEntry>>; policyVersion?: string },
 ): EvidencePolicy {
   return {
     policyVersion: opts?.policyVersion ?? EVIDENCE_POLICY_DEFAULTS.policyVersion,

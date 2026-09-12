@@ -1,15 +1,15 @@
 import { readFileSync } from "node:fs";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import type { OsmWay, SpineSubgraph } from "@openconditions/roads";
 import Fastify from "fastify";
 import type postgres from "postgres";
-import type { OsmWay, SpineSubgraph } from "@openconditions/roads";
-import { bindObservations, drainBindingQueue } from "../pipeline/bind-observations.js";
-import { buildSegments } from "../pipeline/segment-build.js";
-import { activateRoadGraph } from "../pipeline/graph-state.js";
-import { importOsmRoads } from "../pipeline/osm-import.js";
-import { atomicSwap } from "../pipeline/write-postgis.js";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildDomainRegistry } from "../domains.js";
 import { FeedStatusStore } from "../feed-status.js";
+import { bindObservations, drainBindingQueue } from "../pipeline/bind-observations.js";
+import { activateRoadGraph } from "../pipeline/graph-state.js";
+import { importOsmRoads } from "../pipeline/osm-import.js";
+import { buildSegments } from "../pipeline/segment-build.js";
+import { atomicSwap } from "../pipeline/write-postgis.js";
 import { registerPublishRoutes } from "../publish-routes.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
@@ -35,20 +35,20 @@ const spine = JSON.parse(
   readFileSync(
     new URL(
       "../../../../packages/roads/src/bind/__tests__/fixtures/finland-road40/spine.json",
-      import.meta.url
+      import.meta.url,
     ),
-    "utf8"
-  )
+    "utf8",
+  ),
 ) as SpineSubgraph;
 
 const sourceFixture = JSON.parse(
   readFileSync(
     new URL(
       "../../../../packages/roads/src/__tests__/fixtures/digitraffic/v2-restrictions.json",
-      import.meta.url
+      import.meta.url,
     ),
-    "utf8"
-  )
+    "utf8",
+  ),
 ) as { features: Array<{ geometry: unknown; properties: Record<string, unknown> }> };
 
 /**
@@ -59,7 +59,7 @@ const sourceFixture = JSON.parse(
  */
 function spineToWays(subgraph: SpineSubgraph): OsmWay[] {
   const backward = new Set(
-    subgraph.segments.filter((s) => s.dir === "b").map((s) => String(s.wayId))
+    subgraph.segments.filter((s) => s.dir === "b").map((s) => String(s.wayId)),
   );
   const ways: OsmWay[] = [];
   for (const segment of subgraph.segments) {
@@ -79,7 +79,7 @@ const ways = spineToWays(spine);
 
 function road40Event() {
   const feature = sourceFixture.features.find(
-    (f) => f.properties["situationId"] === "GUID50470575"
+    (f) => f.properties["situationId"] === "GUID50470575",
   )!;
   return feature;
 }
@@ -115,7 +115,7 @@ afterAll(async () => {
 async function seedEvent(
   id: string,
   geometry: unknown,
-  roadFields: Record<string, unknown>
+  roadFields: Record<string, unknown>,
 ): Promise<void> {
   await atomicSwap(
     sql,
@@ -148,7 +148,7 @@ async function seedEvent(
         ...roadFields,
       } as never,
     ],
-    600
+    600,
   );
 }
 
@@ -213,7 +213,7 @@ describe("restriction event binding against the real graph", () => {
     await seedEvent(
       "fi-digitraffic:GUID50470575",
       { type: "Point", coordinates: [24.249493, 64.264338] },
-      { roads: [{ name: "7840", ref: "7840" }], isPlanned: true }
+      { roads: [{ name: "7840", ref: "7840" }], isPlanned: true },
     );
     await bindObservations(sql, ["fi-digitraffic:GUID50470575"], {
       now: () => CHECKED_AT,
@@ -244,7 +244,7 @@ describe("restriction event binding against the real graph", () => {
           component.slice(half).map(([lon, lat]) => [lon! + 0.01, lat! + 0.005]),
         ],
       },
-      { roads: [{ name: "Turun kehätie", ref: "40" }], isPlanned: true }
+      { roads: [{ name: "Turun kehätie", ref: "40" }], isPlanned: true },
     );
     await bindObservations(sql, ["fi-digitraffic:gapped"], { now: () => CHECKED_AT, env: ENV });
     const binding = await sql<{ status: string; reason: string | null }[]>`
@@ -256,7 +256,7 @@ describe("restriction event binding against the real graph", () => {
     });
     expect(
       await sql`SELECT segment_id FROM conditions.observation_segment
-        WHERE observation_id = 'fi-digitraffic:gapped'`
+        WHERE observation_id = 'fi-digitraffic:gapped'`,
     ).toHaveLength(0);
   }, 60_000);
 
@@ -470,7 +470,7 @@ describe("stored restriction publication through the real HTTP and provider path
           attributes: { roads: [{ name: "Turun kehätie", ref: "40" }], roadState: "closed" },
         } as never,
       ],
-      600
+      600,
     );
     const instance = await app();
     try {

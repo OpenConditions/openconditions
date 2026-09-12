@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DOMAIN_REGISTRY, buildDomainRegistry } from "../domains.js";
+import { buildDomainRegistry, DOMAIN_REGISTRY } from "../domains.js";
 
 describe("DOMAIN_REGISTRY", () => {
   it("registers roads as an IngestDomain with name + parser dispatch", () => {

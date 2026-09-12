@@ -1,7 +1,7 @@
+import type { FlowParseResult } from "./flow.js";
+import { makeOrigin, reclassifyFlow } from "./flow.js";
 import type { RoadEvent, RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
-import { makeOrigin, reclassifyFlow } from "./flow.js";
-import type { FlowParseResult } from "./flow.js";
 
 const MPH_TO_KPH = 1.609344;
 

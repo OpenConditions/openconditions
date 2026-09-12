@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   nextScheduleTransition,
-  routingEvidenceReasons,
   type RoadConditionRoutingEvidence,
+  routingEvidenceReasons,
 } from "../index.js";
 
 const base: RoadConditionRoutingEvidence = {
@@ -66,8 +66,8 @@ describe("routingEvidenceReasons", () => {
           rights: { ...base.rights, source_redistribution: "unknown" },
           segments: [{ ...base.segments[0]!, to_fraction: 1.2 }],
         },
-        new Date("2026-09-11T10:00:00.000Z")
-      )
+        new Date("2026-09-11T10:00:00.000Z"),
+      ),
     ).toEqual([
       "binding_revision_mismatch",
       "binding_ambiguous",
@@ -83,8 +83,8 @@ describe("routingEvidenceReasons", () => {
     expect(
       routingEvidenceReasons(
         { ...base, source_checked_at: "invalid", fresh_until: "infinity" },
-        new Date("2026-09-11T10:00:00.000Z")
-      )
+        new Date("2026-09-11T10:00:00.000Z"),
+      ),
     ).toEqual(["source_check_invalid", "freshness_deadline_invalid"]);
   });
 
@@ -97,8 +97,8 @@ describe("routingEvidenceReasons", () => {
           valid_from: "yesterday-ish",
           next_transition_at: "never",
         },
-        new Date("2026-09-11T10:00:00.000Z")
-      )
+        new Date("2026-09-11T10:00:00.000Z"),
+      ),
     ).toEqual(["observation_expired", "valid_from_invalid", "next_transition_invalid"]);
   });
 
@@ -110,8 +110,8 @@ describe("routingEvidenceReasons", () => {
           evaluated_at: "2026-09-11",
           rights: { ...base.rights, reviewed_at: "2026-09-01" },
         },
-        new Date("2026-09-11T10:00:00.000Z")
-      )
+        new Date("2026-09-11T10:00:00.000Z"),
+      ),
     ).toEqual(["evaluated_at_invalid", "rights_reviewed_at_invalid"]);
   });
 
@@ -123,8 +123,8 @@ describe("routingEvidenceReasons", () => {
           direction_mode: "forward",
           segments: [{ ...base.segments[0]!, direction: "reverse" }],
         },
-        new Date("2026-09-11T10:00:00.000Z")
-      )
+        new Date("2026-09-11T10:00:00.000Z"),
+      ),
     ).toContain("segment_direction_mismatch");
   });
 });
@@ -134,13 +134,13 @@ describe("nextScheduleTransition", () => {
 
   it("finds the next inactive-to-active transition in the schedule timezone", () => {
     expect(nextScheduleTransition(nightly, new Date("2026-09-11T10:00:00.000Z"))).toBe(
-      "2026-09-11T18:00:00.000Z"
+      "2026-09-11T18:00:00.000Z",
     );
   });
 
   it("finds the end of the current half-open occurrence", () => {
     expect(nextScheduleTransition(nightly, new Date("2026-09-11T20:00:00.000Z"))).toBe(
-      "2026-09-12T03:00:00.000Z"
+      "2026-09-12T03:00:00.000Z",
     );
   });
 });

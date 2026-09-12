@@ -1,8 +1,8 @@
-import type { RoadFlow } from "./model.js";
-import type { SourceDescriptor } from "./types.js";
-import type { SiteGeometry } from "./siteTable.js";
-import { makeOrigin } from "./flow.js";
 import type { FlowParseResult } from "./flow.js";
+import { makeOrigin } from "./flow.js";
+import type { RoadFlow } from "./model.js";
+import type { SiteGeometry } from "./siteTable.js";
+import type { SourceDescriptor } from "./types.js";
 
 const SPEED_SENSORS: Record<string, "1" | "2"> = {
   KESKINOPEUS_5MIN_LIUKUVA_SUUNTA1: "1",
@@ -32,7 +32,7 @@ interface Station {
 export function parseFintrafficFlow(
   input: string | Buffer,
   src: SourceDescriptor,
-  siteMap?: Map<string, SiteGeometry>
+  siteMap?: Map<string, SiteGeometry>,
 ): FlowParseResult {
   let payload: { stations?: unknown };
   try {

@@ -3,17 +3,18 @@
  * shared postgres pool, builds the Fastify app, and listens. Tests import
  * build() from server.ts instead of running this file.
  */
-import postgres from "postgres";
+
 import { runMigrations } from "@openconditions/core/server";
 import {
-  OUTBOX_PRUNE_INTERVAL_HOURS,
   loadActiveKeys,
+  OUTBOX_PRUNE_INTERVAL_HOURS,
   pruneOutbox,
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
 import { guardedFetch } from "@openconditions/ingest-framework";
-import { build } from "./server.js";
+import postgres from "postgres";
 import { resolveFederationSettings } from "./config.js";
+import { build } from "./server.js";
 
 const PORT = parseInt(process.env["PORT"] || "4300", 10);
 const HOST = process.env["HOST"] || "0.0.0.0";
@@ -77,7 +78,7 @@ async function boot() {
       const { deleted, floorIso } = await pruneOutbox(sql, { now: new Date().toISOString() });
       if (deleted > 0) {
         console.info(
-          `[federation-api] outbox prune: deleted ${deleted} rows older than ${floorIso}`
+          `[federation-api] outbox prune: deleted ${deleted} rows older than ${floorIso}`,
         );
       }
     } catch (err) {

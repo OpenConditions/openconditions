@@ -25,7 +25,7 @@ export interface CoReportingPair {
 export async function coReportingClusters(
   sql: Sql,
   sinceIso: string,
-  minShared = 3
+  minShared = 3,
 ): Promise<CoReportingPair[]> {
   return sql<CoReportingPair[]>`
     WITH reports AS (

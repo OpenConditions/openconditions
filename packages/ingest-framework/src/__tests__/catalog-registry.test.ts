@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
-import type { CatalogResolver, FeedSourceBase } from "../index.js";
 import {
   __resetCatalogResolvers,
   getCatalogResolver,
   getCatalogResolverById,
   registerCatalogResolver,
 } from "../catalog.js";
+import type { CatalogResolver, FeedSourceBase } from "../index.js";
 
 const stub: CatalogResolver = {
   id: "wzdx-registry",

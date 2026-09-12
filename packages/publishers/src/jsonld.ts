@@ -52,7 +52,7 @@ function nodeType(kind: unknown): string {
 export function observationsToJsonLd(
   obs: Observation[],
   info: FeedInfo = {},
-  opts: GeoJsonOptions = {}
+  opts: GeoJsonOptions = {},
 ): JsonLdFeatureCollection {
   const fc = observationsToGeoJSON(obs, info, opts);
   const features = fc.features.map((f) => {

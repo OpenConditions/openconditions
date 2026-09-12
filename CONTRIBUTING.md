@@ -60,7 +60,7 @@ Every PR must pass the same checks CI runs.
 TypeScript / Node:
 
 ```bash
-pnpm lint        # eslint + prettier --check
+pnpm lint        # Biome + the import-boundary gate
 pnpm typecheck   # tsc across the workspace (turbo)
 pnpm test        # build workspace dependencies, then all Vitest projects
 ```
@@ -113,9 +113,21 @@ Conventions:
 
 ### Code style
 
-- eslint + prettier handle linting and formatting; configuration lives in
-  `eslint.config.js` and `.prettierrc.json`. Don't reformat unrelated code in a
+- Biome handles formatting and linting; configuration lives in `biome.json`.
+  `pnpm format` writes formatting; `pnpm exec biome check --write .` also
+  applies safe lint fixes and sorts imports. Don't reformat unrelated code in a
   feature PR.
+- Biome does not format Markdown, YAML or JSON5, so those file types are no
+  longer formatted automatically. Feed definitions are still validated by
+  `pnpm --filter @openconditions/roads feeds:lint`.
+- Two recommended rules are relaxed, both for reasons specific to this
+  codebase: `useLiteralKeys` is off because untyped source payloads are read
+  through index access on purpose, and `noNonNullAssertion` is off in tests,
+  where asserting on a known fixture value is the point.
+- Architecture import boundaries live in `scripts/check-import-boundaries.ts`
+  rather than in the linter, because Biome has no `no-restricted-syntax`
+  equivalent. `scripts/__tests__/architecture-guards.test.ts` is their
+  specification.
 - TypeScript everywhere on the Node side. Avoid `any`; prefer `unknown` plus a
   narrowing type guard at the boundary.
 - Don't add divider comments (`// ----` or `// ====`).

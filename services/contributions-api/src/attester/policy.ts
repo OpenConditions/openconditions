@@ -74,7 +74,7 @@ export function validateDeviceProof(proof: DeviceProof): void {
     const { kind, blob } = attestation as { kind?: unknown; blob?: unknown };
     if (typeof kind !== "string" || !ATTESTATION_KINDS.includes(kind as never)) {
       throw new TypeError(
-        "proof.attestation.kind must be one of android-keystore, app-attest, play-integrity"
+        "proof.attestation.kind must be one of android-keystore, app-attest, play-integrity",
       );
     }
     if (typeof blob !== "string" || blob.length === 0) {

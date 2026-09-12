@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import type { RoadEvent } from "../model.js";
+import { describe, expect, it } from "vitest";
 import { dedupeRoadEvents } from "../dedupe.js";
+import type { RoadEvent } from "../model.js";
 
 function makeRoadEvent(overrides: Partial<RoadEvent> & { lng: number; lat: number }): RoadEvent {
   const { lng, lat, ...rest } = overrides;

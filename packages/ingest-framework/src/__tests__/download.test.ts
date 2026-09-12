@@ -37,7 +37,7 @@ describe("downloadLargeArtifact", () => {
       "http://x/a.pbf.md5": { body: `${md5("OTHER")}  a.pbf` },
     });
     await expect(downloadLargeArtifact("http://x/a.pbf", { fetchImpl: f })).rejects.toThrow(
-      /md5 mismatch/
+      /md5 mismatch/,
     );
   });
 
@@ -67,7 +67,7 @@ describe("downloadLargeArtifact", () => {
   it("throws on a non-ok download response", async () => {
     const f = fakeFetch({ "http://x/a.pbf": { status: 500, body: "" } });
     await expect(downloadLargeArtifact("http://x/a.pbf", { fetchImpl: f })).rejects.toThrow(
-      /HTTP 500/
+      /HTTP 500/,
     );
   });
 });

@@ -3,9 +3,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { loadFeeds, mergeFeedsById } from "../layered-feeds.js";
 import { registerFeedSchema } from "../feed-schema-registry.js";
 import type { FeedSourceBase } from "../feed-source.js";
+import { loadFeeds, mergeFeedsById } from "../layered-feeds.js";
 
 // A permissive schema for the test domain (a real domain narrows this).
 const testSchema = z
@@ -54,7 +54,7 @@ beforeEach(() => {
 describe("mergeFeedsById", () => {
   it("rejects duplicates within a layer instead of silently keeping its last descriptor", () => {
     expect(() => mergeFeedsById([[feed("a", "first"), feed("a", "second")]])).toThrow(
-      /duplicate feed id.*a/
+      /duplicate feed id.*a/,
     );
   });
   it("lets later layers override earlier by id and appends new ids", () => {
@@ -72,7 +72,7 @@ describe("loadFeeds", () => {
     const dir = layer === "baked" ? baked : mount;
     writeFileSync(join(dir, "duplicates.json5"), bundle(feed("a", "first"), feed("a", "second")));
     await expect(loadFeeds({ domain: "test", bakedInDir: baked, mountDir: mount })).rejects.toThrow(
-      /duplicate feed id.*a/
+      /duplicate feed id.*a/,
     );
   });
   it("merges baked-in + mounted with mounted winning; a mounted-only feed is added", async () => {
@@ -101,7 +101,7 @@ describe("loadFeeds", () => {
     writeFeed(baked, feed("a", "baked-a"));
     writeFileSync(join(mount, "broken.json5"), "{ this is : not, valid", "utf8");
     await expect(
-      loadFeeds({ domain: "test", bakedInDir: baked, mountDir: mount })
+      loadFeeds({ domain: "test", bakedInDir: baked, mountDir: mount }),
     ).rejects.toThrow();
   });
 
@@ -109,7 +109,7 @@ describe("loadFeeds", () => {
     writeFeed(baked, feed("a", "baked-a"));
     writeFileSync(join(mount, "bad.json5"), JSON.stringify([{ id: "z" }]), "utf8");
     await expect(
-      loadFeeds({ domain: "test", bakedInDir: baked, mountDir: mount })
+      loadFeeds({ domain: "test", bakedInDir: baked, mountDir: mount }),
     ).rejects.toThrow();
   });
 
@@ -131,7 +131,7 @@ describe("loadFeeds", () => {
           fetched = true;
           return new Response("[]");
         },
-      }
+      },
     );
     expect(fetched).toBe(false);
     expect(feeds.map((f) => f.id)).toEqual(["a"]);
@@ -155,7 +155,7 @@ describe("loadFeeds remote-pull", () => {
         bakedInDir: baked,
         remote: { url: REMOTE_URL, enabled: true, snapshotPath },
       },
-      { remoteFetch: async () => new Response(bundle(feed("r", "first"), feed("r", "second"))) }
+      { remoteFetch: async () => new Response(bundle(feed("r", "first"), feed("r", "second"))) },
     );
     expect(feeds.map((feed) => feed.name)).toEqual(["last-good"]);
     expect(readFileSync(snapshotPath, "utf8")).toBe(original);
@@ -171,7 +171,7 @@ describe("loadFeeds remote-pull", () => {
         bakedInDir: baked,
         remote: { url: REMOTE_URL, enabled: true, snapshotPath },
       },
-      { remoteFetch: async () => new Response("unavailable", { status: 503 }) }
+      { remoteFetch: async () => new Response("unavailable", { status: 503 }) },
     );
     expect(feeds.map((feed) => feed.id)).toEqual(["a"]);
   });
@@ -186,7 +186,7 @@ describe("loadFeeds remote-pull", () => {
         bakedInDir: baked,
         remote: { url: REMOTE_URL, enabled: true, snapshotPath },
       },
-      { remoteFetch: async () => new Response(bundle(remoteFeed)) }
+      { remoteFetch: async () => new Response(bundle(remoteFeed)) },
     );
 
     expect(feeds.map((f) => f.id).sort()).toEqual(["a", "r"]);
@@ -209,7 +209,7 @@ describe("loadFeeds remote-pull", () => {
         remoteFetch: async () => {
           throw new Error("network down");
         },
-      }
+      },
     );
 
     const r = feeds.find((f) => f.id === "r");
@@ -228,7 +228,7 @@ describe("loadFeeds remote-pull", () => {
         remoteFetch: async () => {
           throw new Error("network down");
         },
-      }
+      },
     );
     expect(feeds.map((f) => f.id)).toEqual(["a"]);
   });
@@ -249,7 +249,7 @@ describe("loadFeeds remote-pull", () => {
         assertUrl: (u) => {
           seen.push(u);
         },
-      }
+      },
     );
 
     expect(seen).toContain(REMOTE_URL);
@@ -273,7 +273,7 @@ describe("loadFeeds remote-pull", () => {
           if (u.includes("169.254")) throw new Error("blocked private/metadata host");
         },
         remoteFetch: async () => new Response(bundle(feed("r", "remote-r"))),
-      }
+      },
     );
     // guard threw before fetch → remote contributes nothing → baked-in only
     expect(feeds.map((f) => f.id)).toEqual(["a"]);
@@ -296,7 +296,7 @@ describe("loadFeeds remote-pull", () => {
           if (u.includes("169.254")) throw new Error("blocked private/metadata host");
         },
         remoteFetch: async () => new Response(bundle(remoteFeed)),
-      }
+      },
     );
     // the siteTable.url guard rejects the descriptor at parse-time → remote
     // contributes nothing → baked-in only
@@ -320,7 +320,7 @@ describe("loadFeeds remote-pull", () => {
           if (u.includes("169.254")) throw new Error("blocked private/metadata host");
         },
         remoteFetch: async () => new Response(bundle(remoteFeed)),
-      }
+      },
     );
     // the stationRegistry.url guard rejects the descriptor at parse-time →
     // remote contributes nothing → baked-in only
@@ -337,7 +337,7 @@ describe("loadFeeds remote-pull", () => {
         bakedInDir: baked,
         remote: { url: REMOTE_URL, enabled: true, snapshotPath: join(mount, "missing.json") },
       },
-      { remoteFetch: async () => new Response("null") }
+      { remoteFetch: async () => new Response("null") },
     );
 
     expect(feeds.map((f) => f.id)).toEqual(["a"]); // no snapshot → baked-in only

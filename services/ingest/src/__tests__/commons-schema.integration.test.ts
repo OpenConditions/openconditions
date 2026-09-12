@@ -1,9 +1,9 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
-import { canonicalId, phenomenonFingerprint } from "@openconditions/core";
 import type { ConditionEvent, Observation } from "@openconditions/core";
+import { canonicalId, phenomenonFingerprint } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { atomicSwap } from "../pipeline/write-postgis.js";
 
 let sql: postgres.Sql;
@@ -107,7 +107,7 @@ describe("commons observation columns", () => {
         "idx_conditions_obs_phenomenon",
         "idx_conditions_obs_instance",
         "idx_conditions_obs_privacy",
-      ])
+      ]),
     );
   }, 30_000);
 });
@@ -123,13 +123,13 @@ describe("commons CHECK constraints", () => {
   async function insertInvalid(id: string, col: string, value: string) {
     return sql.unsafe(
       `INSERT INTO conditions.observations (${BASE_COLS}, ${col})
-       VALUES (${baseVals(id)}, ${value})`
+       VALUES (${baseVals(id)}, ${value})`,
     );
   }
 
   it("rejects confidence_score outside [0,1]", async () => {
     await expect(insertInvalid("chk:cs", "confidence_score", "1.5")).rejects.toThrow(
-      /obs_confidence_score_range/
+      /obs_confidence_score_range/,
     );
   }, 30_000);
 
@@ -139,31 +139,31 @@ describe("commons CHECK constraints", () => {
 
   it("rejects dp_epsilon < 0", async () => {
     await expect(insertInvalid("chk:de", "dp_epsilon", "-0.1")).rejects.toThrow(
-      /obs_dp_epsilon_nonneg/
+      /obs_dp_epsilon_nonneg/,
     );
   }, 30_000);
 
   it("rejects k_anonymity = 0", async () => {
     await expect(insertInvalid("chk:k", "k_anonymity", "0")).rejects.toThrow(
-      /obs_k_anonymity_positive/
+      /obs_k_anonymity_positive/,
     );
   }, 30_000);
 
   it("rejects severity_level = 6", async () => {
     await expect(insertInvalid("chk:sl", "severity_level", "6")).rejects.toThrow(
-      /obs_severity_level_range/
+      /obs_severity_level_range/,
     );
   }, 30_000);
 
   it("rejects an unknown fuzziness value", async () => {
     await expect(insertInvalid("chk:fz", "fuzziness", "'bogus'")).rejects.toThrow(
-      /obs_fuzziness_enum/
+      /obs_fuzziness_enum/,
     );
   }, 30_000);
 
   it("rejects an unknown privacy_class value", async () => {
     await expect(insertInvalid("chk:pc", "privacy_class", "'bogus'")).rejects.toThrow(
-      /obs_privacy_class_enum/
+      /obs_privacy_class_enum/,
     );
   }, 30_000);
 
@@ -194,7 +194,7 @@ describe("commons CHECK constraints", () => {
        VALUES (
          ${baseVals("chk:ok")},
          0.5, 0.9, 0.1, 2, 3, 'low_res', 'authoritative'
-       )`
+       )`,
     );
     const rows = await sql<{ id: string }[]>`
       SELECT id FROM conditions.observations WHERE id = 'chk:ok'`;

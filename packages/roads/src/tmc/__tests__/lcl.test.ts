@@ -35,7 +35,7 @@ describe("buildTmcTable", () => {
       locationDatasets: LOCATION_DATASETS,
       countries: COUNTRIES,
     },
-    META
+    META,
   );
 
   it("takes the table's identity and version from LOCATIONDATASETS", () => {
@@ -58,8 +58,8 @@ describe("buildTmcTable", () => {
     expect(() =>
       buildTmcTable(
         { points: POINTS, locationDatasets: "CID;TABCD;VERSION\r\n", countries: COUNTRIES },
-        META
-      )
+        META,
+      ),
     ).toThrow(/version/i);
   });
 });
@@ -73,7 +73,7 @@ describe("snapshot round-trip", () => {
         locationDatasets: LOCATION_DATASETS,
         countries: COUNTRIES,
       },
-      META
+      META,
     );
     const restored = fromSnapshot(toSnapshot(table));
     expect(restored.points).toEqual(table.points);

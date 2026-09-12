@@ -27,7 +27,7 @@ export interface DpMechanism {
     values: number[],
     lower: number,
     upper: number,
-    epsilon: number
+    epsilon: number,
   ): { value: number; epsilonSpent: number };
   /**
    * Private partition selection: does this partition survive the DP threshold?
@@ -37,7 +37,7 @@ export interface DpMechanism {
   selectPartition(
     rawCount: number,
     epsilon: number,
-    delta: number
+    delta: number,
   ): { released: boolean; epsilonSpent: number; deltaSpent: number };
 }
 
@@ -124,7 +124,7 @@ export class RecordingDpMechanism implements DpMechanism {
     values: number[],
     lower: number,
     upper: number,
-    epsilon: number
+    epsilon: number,
   ): { value: number; epsilonSpent: number } {
     this.calls.push({ method: "boundedSum", values: [...values], lower, upper, epsilon });
     return { value: this.sumStandIn, epsilonSpent: this.epsilonSpentPerSum };
@@ -133,7 +133,7 @@ export class RecordingDpMechanism implements DpMechanism {
   selectPartition(
     rawCount: number,
     epsilon: number,
-    delta: number
+    delta: number,
   ): { released: boolean; epsilonSpent: number; deltaSpent: number } {
     this.calls.push({ method: "selectPartition", rawCount, epsilon, delta });
     return {

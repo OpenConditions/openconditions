@@ -6,8 +6,9 @@
  * Auto-flags (kinematic/StreetComplete) set `flagged_at` with no sub_claim, so
  * an item's `flagCount` can legitimately be 0 with an empty `flagReasons`.
  */
+
+import { type GeoJsonGeometry, reliabilityLowerBound } from "@openconditions/core";
 import type postgres from "postgres";
-import { reliabilityLowerBound, type GeoJsonGeometry } from "@openconditions/core";
 
 type Sql = postgres.Sql;
 
@@ -152,7 +153,7 @@ function reporterSignalFrom(row: FlaggedRow, nowMs: number): ReporterSignal | nu
     trustSignal: row.reporter_trust_signal,
     reliabilityLowerBound: reliabilityLowerBound(
       { alpha: row.reporter_alpha, beta: row.reporter_beta },
-      ADVISORY_CREDIBLE_LEVEL
+      ADVISORY_CREDIBLE_LEVEL,
     ),
     corroboratedCount: row.reporter_corroborated_count ?? 0,
     tenureDays: (nowMs - createdMs) / MILLIS_PER_DAY,

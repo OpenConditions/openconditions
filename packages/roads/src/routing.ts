@@ -29,7 +29,7 @@ function compact(value: string): string {
 export function normalizeVehicleApplicability(
   raw: string[] | undefined,
   restrictions?: Restriction[],
-  carrier?: RestrictionCarrier
+  carrier?: RestrictionCarrier,
 ): RoutingApplicability {
   // Any normalized restriction evidence — valid, partial or unparseable — is
   // an independent exclusion. Checked before the legacy array so dropping that

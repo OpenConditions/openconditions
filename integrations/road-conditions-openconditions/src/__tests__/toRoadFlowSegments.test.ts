@@ -127,7 +127,7 @@ describe("featureCollectionToRoadFlowSegments", () => {
           },
         ],
       } as unknown as FeatureCollection,
-      "road-conditions-openconditions"
+      "road-conditions-openconditions",
     );
     expect(segments[0]!.los).toBe("unknown");
     expect(segments[0]!.confidence).toBe("typical");
@@ -151,7 +151,7 @@ describe("featureCollectionToRoadFlowSegments", () => {
           },
         ],
       },
-      "road-conditions-openconditions"
+      "road-conditions-openconditions",
     );
     expect(segments[0]!.direction).toBe("b");
   });

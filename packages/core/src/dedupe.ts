@@ -37,7 +37,7 @@ function representativePoint(geometry: Geometry): [number, number] {
   }
   if (geometry.type === "MultiPolygon") {
     const all = (geometry.coordinates as [number, number][][][]).flatMap((poly) =>
-      (poly[0] ?? []).slice(0, -1)
+      (poly[0] ?? []).slice(0, -1),
     );
     const lng = all.reduce((s, c) => s + c[0]!, 0) / all.length;
     const lat = all.reduce((s, c) => s + c[1]!, 0) / all.length;
@@ -68,7 +68,7 @@ function jaccardOverlap(a: string, b: string): number {
 function labelsCompatible(
   a: Observation,
   b: Observation,
-  textOf: (o: Observation) => string | undefined
+  textOf: (o: Observation) => string | undefined,
 ): boolean {
   const la = textOf(a)?.trim();
   const lb = textOf(b)?.trim();
@@ -102,7 +102,7 @@ export function dedupeObservations(
      * guard is a no-op and distinct works at one coordinate over-merge.
      */
     textOf?: (o: Observation) => string | undefined;
-  }
+  },
 ): Observation[] {
   const n = items.length;
   if (n === 0) return [];
@@ -144,7 +144,7 @@ export function dedupeObservations(
   const out: Observation[] = [];
   for (const idxs of clusters.values()) {
     out.push(
-      idxs.length === 1 ? items[idxs[0]!]! : newestByDataUpdatedAt(idxs.map((k) => items[k]!))
+      idxs.length === 1 ? items[idxs[0]!]! : newestByDataUpdatedAt(idxs.map((k) => items[k]!)),
     );
   }
   return out;

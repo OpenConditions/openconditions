@@ -2,8 +2,8 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { CatalogResolver, FeedSourceBase } from "../index.js";
 import { resolveWithSnapshot } from "../catalog.js";
+import type { CatalogResolver, FeedSourceBase } from "../index.js";
 
 const feed = (id: string): FeedSourceBase => ({
   id,

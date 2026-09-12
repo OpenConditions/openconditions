@@ -6,11 +6,7 @@
       "type": "Feature",
       "geometry": {
         "type": "LineString",
-        "coordinates": [
-          [24.9355, 60.1699],
-          [24.938, 60.1712],
-          [24.9405, 60.1725]
-        ]
+        "coordinates": [[24.9355, 60.1699], [24.938, 60.1712], [24.9405, 60.1725]]
       },
       "properties": {
         "id": "DT_FLOW_FREE",
@@ -29,10 +25,7 @@
       "type": "Feature",
       "geometry": {
         "type": "LineString",
-        "coordinates": [
-          [25.01, 60.25],
-          [25.015, 60.252]
-        ]
+        "coordinates": [[25.01, 60.25], [25.015, 60.252]]
       },
       "properties": {
         "id": "DT_FLOW_HEAVY",
@@ -51,11 +44,7 @@
       "type": "Feature",
       "geometry": {
         "type": "LineString",
-        "coordinates": [
-          [25.02, 60.26],
-          [25.025, 60.262],
-          [25.03, 60.264]
-        ]
+        "coordinates": [[25.02, 60.26], [25.025, 60.262], [25.03, 60.264]]
       },
       "properties": {
         "id": "DT_FLOW_STATIONARY",
@@ -75,11 +64,7 @@
       "type": "Feature",
       "geometry": {
         "type": "LineString",
-        "coordinates": [
-          [25.04, 60.27],
-          [25.045, 60.272],
-          [25.05, 60.274]
-        ]
+        "coordinates": [[25.04, 60.27], [25.045, 60.272], [25.05, 60.274]]
       },
       "properties": {
         "id": "DT_FLOW_QUEUING",

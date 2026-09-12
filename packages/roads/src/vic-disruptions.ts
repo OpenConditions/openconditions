@@ -1,8 +1,8 @@
-import { toIsoTimestamp, type Schedule } from "@openconditions/core";
+import { type Schedule, toIsoTimestamp } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -114,7 +114,7 @@ function baseEvent(
   src: SourceDescriptor,
   id: string,
   geometry: Geometry,
-  now: string
+  now: string,
 ): Pick<
   RoadEvent,
   | "id"
@@ -168,7 +168,7 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
     const recurrences = Array.isArray(duration?.recurrences) ? duration.recurrences : [];
     const schedule = recurrences
       .map((rec) =>
-        obj(rec) ? toSchedule(obj(rec)!, str(duration?.start), str(duration?.end)) : undefined
+        obj(rec) ? toSchedule(obj(rec)!, str(duration?.start), str(duration?.end)) : undefined,
       )
       .filter((s): s is Schedule => s !== undefined);
 
@@ -202,7 +202,7 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
   }
   if (skippedNoGeometry > 0) {
     console.debug(
-      `[vic-disruptions] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+      `[vic-disruptions] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
     recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }
@@ -247,7 +247,7 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
   }
   if (skippedNoGeometry > 0) {
     console.debug(
-      `[vic-disruptions] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`
+      `[vic-disruptions] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
     recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }
@@ -276,7 +276,7 @@ export function parseVicDisruptions(input: string | Buffer, src: SourceDescripto
   const nextPage = obj(body.nextPageDetails);
   if (nextPage?.hasMoreRecords === true) {
     console.warn(
-      `[vic-disruptions] ${src.id}: the response reports more records than one page returns; token pagination is not wired, so coverage is truncated`
+      `[vic-disruptions] ${src.id}: the response reports more records than one page returns; token pagination is not wired, so coverage is truncated`,
     );
   }
 

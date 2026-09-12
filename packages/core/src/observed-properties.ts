@@ -359,12 +359,12 @@ export function validateObserved(obs: Observation): { warnings: string[] } {
     if (attributes !== null && typeof attributes === "object" && !Array.isArray(attributes)) {
       const expected = new Set(entry.expectedAttributeKeys);
       const unexpected = Object.keys(attributes as Record<string, unknown>).filter(
-        (k) => !expected.has(k)
+        (k) => !expected.has(k),
       );
       if (unexpected.length > 0) {
         warnings.push(
           `observed property "${key}" carries unexpected attribute key(s) [${unexpected.join(", ")}] ` +
-            `not in its registered expectedAttributeKeys — ${REGISTRY_HINT}`
+            `not in its registered expectedAttributeKeys — ${REGISTRY_HINT}`,
         );
       }
     }
@@ -375,7 +375,7 @@ export function validateObserved(obs: Observation): { warnings: string[] } {
     if (unit != null && unit !== entry.unit) {
       warnings.push(
         `observed property "${key}" measurement carries unit "${unit}" but the registry expects ` +
-          `"${entry.unit}" — ${REGISTRY_HINT}`
+          `"${entry.unit}" — ${REGISTRY_HINT}`,
       );
     }
   }

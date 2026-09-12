@@ -14,7 +14,7 @@ describe("highway classes", () => {
   });
   it("parses a comma list, trims, dedupes and rejects garbage tokens", () => {
     expect(
-      loadHighwayClasses({ SEGMENT_HIGHWAY_CLASSES: " motorway, secondary,secondary, bad token " })
+      loadHighwayClasses({ SEGMENT_HIGHWAY_CLASSES: " motorway, secondary,secondary, bad token " }),
     ).toEqual(["motorway", "secondary"]);
   });
   it("renders the Overpass regex and osmium filter", () => {
@@ -30,7 +30,7 @@ describe("corpus spine script", () => {
   it("captures the same classes as the import default", () => {
     const src = readFileSync(
       new URL("../../../../packages/roads/scripts/bind-corpus-spine.ts", import.meta.url),
-      "utf8"
+      "utf8",
     );
     expect(src).toContain(`"${DEFAULT_HIGHWAY_CLASSES.join("|")}"`);
   });

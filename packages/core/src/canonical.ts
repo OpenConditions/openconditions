@@ -205,7 +205,7 @@ export function timeBucket(validFrom: string | null | undefined, bucketSec: numb
   const epochMs = isoUtcEpochMs(validFrom);
   if (!Number.isFinite(epochMs)) {
     throw new TypeError(
-      `timeBucket requires a parseable ISO calendar date (YYYY-MM-DD, optionally with a T time part): ${validFrom}`
+      `timeBucket requires a parseable ISO calendar date (YYYY-MM-DD, optionally with a T time part): ${validFrom}`,
     );
   }
   return Math.floor(epochMs / 1000 / bucketSec);
@@ -238,7 +238,7 @@ function fingerprintDigest(
   domain: string,
   type: string,
   typeDepth: number,
-  bucket: number
+  bucket: number,
 ): string {
   return sha256Hex([cell, ...truncateType(domain, type, typeDepth), String(bucket)]);
 }
@@ -246,7 +246,7 @@ function fingerprintDigest(
 export function phenomenonFingerprint(evt: ConditionEvent, opts: FingerprintOptions = {}): string {
   if (evt.kind !== "event") {
     throw new TypeError(
-      "phenomenonFingerprint is events-only: measurements carry no validFrom and would collapse distinct sensors onto one key"
+      "phenomenonFingerprint is events-only: measurements carry no validFrom and would collapse distinct sensors onto one key",
     );
   }
   const { gridMeters, typeDepth, timeBucketSec } = resolveFingerprintOptions(opts);
@@ -255,7 +255,7 @@ export function phenomenonFingerprint(evt: ConditionEvent, opts: FingerprintOpti
     evt.domain,
     evt.type,
     typeDepth,
-    timeBucket(evt.validFrom, timeBucketSec)
+    timeBucket(evt.validFrom, timeBucketSec),
   );
 }
 
@@ -285,11 +285,11 @@ export function phenomenonFingerprint(evt: ConditionEvent, opts: FingerprintOpti
  */
 export function phenomenonFingerprintNeighborhood(
   evt: ConditionEvent,
-  opts: NeighborhoodOptions = {}
+  opts: NeighborhoodOptions = {},
 ): string[] {
   if (evt.kind !== "event") {
     throw new TypeError(
-      "phenomenonFingerprintNeighborhood is events-only: measurements carry no validFrom and would collapse distinct sensors onto one key"
+      "phenomenonFingerprintNeighborhood is events-only: measurements carry no validFrom and would collapse distinct sensors onto one key",
     );
   }
   const { gridMeters, typeDepth, timeBucketSec } = resolveFingerprintOptions(opts);
@@ -323,7 +323,7 @@ export function phenomenonFingerprintNeighborhood(
       const cell = cellKey(x + dx, y + dy);
       for (let dBucket = -radiusBucket; dBucket <= radiusBucket; dBucket++) {
         fingerprints.add(
-          fingerprintDigest(cell, evt.domain, evt.type, typeDepth, baseBucket + dBucket)
+          fingerprintDigest(cell, evt.domain, evt.type, typeDepth, baseBucket + dBucket),
         );
       }
     }

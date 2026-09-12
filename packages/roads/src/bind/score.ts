@@ -25,7 +25,7 @@ export function highwayPrior(highway: string): number {
  */
 export function scoreCandidate(
   c: { offsetM: number; bearingDelta: number | null; refScore: number; highway: string },
-  maxOffsetM: number
+  maxOffsetM: number,
 ): number {
   const offset = Math.max(0, 1 - c.offsetM / maxOffsetM);
   const cls = highwayPrior(c.highway);

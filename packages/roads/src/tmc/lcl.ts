@@ -82,7 +82,9 @@ export function parseDatFile(text: string): Record<string, string>[] {
     if (!line.trim()) continue;
     const cells = line.split(";");
     const row: Record<string, string> = {};
-    cols.forEach((c, i) => (row[c] = (cells[i] ?? "").trim()));
+    cols.forEach((c, i) => {
+      row[c] = (cells[i] ?? "").trim();
+    });
     rows.push(row);
   }
   return rows;
@@ -126,7 +128,7 @@ export interface LclFiles {
  */
 export function buildTmcTable(
   files: LclFiles,
-  meta: { attribution: string; license: string }
+  meta: { attribution: string; license: string },
 ): TmcLocationTable {
   const dataset = parseDatFile(files.locationDatasets)[0];
   if (!dataset) throw new Error("LOCATIONDATASETS.DAT is empty — cannot determine table version");
@@ -197,7 +199,7 @@ export function toSnapshot(table: TmcLocationTable): TmcTableSnapshot {
           number,
           number,
           string,
-        ]
+        ],
     );
   return {
     cid: table.cid,

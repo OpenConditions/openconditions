@@ -1,19 +1,19 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
-import type { FastifyInstance } from "fastify";
 import {
   generateReporterKey,
-  signReport,
-  signSubClaim,
   type ReportClaim,
   type ReporterKey,
   type SignedReport,
   type SignedSubClaim,
   type SubClaimBody,
   type SubClaimType,
+  signReport,
+  signSubClaim,
 } from "@openconditions/contrib-core";
 import { runMigrations } from "@openconditions/core/server";
+import type { FastifyInstance } from "fastify";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { build } from "../server.js";
 
 const NOW = "2026-07-12T08:00:00.000Z";
@@ -94,7 +94,7 @@ async function enroll(key: ReporterKey): Promise<string> {
 async function landReportFrom(
   key: ReporterKey,
   grant: string,
-  overrides: Partial<ReportClaim>
+  overrides: Partial<ReportClaim>,
 ): Promise<{ statusCode: number; id?: string }> {
   const report: SignedReport = await signReport(makeClaim(overrides), key);
   const res = await app.inject({
@@ -111,7 +111,7 @@ async function landReportFrom(
 
 /** Enroll a key and land a fresh active crowd observation from it. */
 async function landObs(
-  overrides: Partial<ReportClaim>
+  overrides: Partial<ReportClaim>,
 ): Promise<{ key: ReporterKey; grant: string; id: string }> {
   const key = await generateReporterKey();
   const grant = await enroll(key);
@@ -124,7 +124,7 @@ async function signSub(
   key: ReporterKey,
   subject: string,
   claimType: SubClaimType,
-  overrides: Partial<SubClaimBody> = {}
+  overrides: Partial<SubClaimBody> = {},
 ): Promise<SignedSubClaim> {
   const body: SubClaimBody = {
     subject,
@@ -152,7 +152,7 @@ async function flagObs(id: string, reason?: string): Promise<void> {
 function reviewerInject(
   method: "GET" | "POST" | "DELETE",
   url: string,
-  opts: { token?: string; payload?: unknown } = {}
+  opts: { token?: string; payload?: unknown } = {},
 ) {
   const headers: Record<string, string> =
     opts.token === undefined ? {} : { authorization: `Bearer ${opts.token}` };
@@ -229,7 +229,7 @@ async function insertFlaggedRow(id: string, lon: number, flaggedAt: string): Pro
 async function seedReportEvidence(
   obsId: string,
   keyId: string | null,
-  occurredAt: string
+  occurredAt: string,
 ): Promise<void> {
   await sql`
     INSERT INTO conditions.report_evidence
@@ -272,7 +272,7 @@ interface ReporterSignalShape {
 }
 
 async function fetchFlaggedItem(
-  obsId: string
+  obsId: string,
 ): Promise<{ observationId: string; reporter: ReporterSignalShape | null } | undefined> {
   const res = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=200", {
     token: REVIEWER_TOKEN,
@@ -324,7 +324,7 @@ describe("reviewer auth — operator bearer token", () => {
         },
         logger: false,
         now: () => nowValue,
-      })
+      }),
     ).rejects.toThrow(/OPENCONDITIONS_REVIEWER_TOKEN/);
   }, 30_000);
 });
@@ -380,7 +380,7 @@ describe("GET /contrib/reviewer/flagged — the anomaly queue", () => {
     const second = await reviewerInject(
       "GET",
       `/contrib/reviewer/flagged?limit=1&before=${encodeURIComponent(firstBody.nextBefore)}&beforeId=${encodeURIComponent(firstBody.nextBeforeId)}`,
-      { token: REVIEWER_TOKEN }
+      { token: REVIEWER_TOKEN },
     );
     const secondBody = second.json() as { items: { observationId: string }[] };
     const ids = secondBody.items.map((i) => i.observationId);
@@ -476,7 +476,7 @@ describe("GET /contrib/reviewer/flagged — composite (flagged_at, id) keyset cu
     const p2 = await reviewerInject(
       "GET",
       `/contrib/reviewer/flagged?limit=2&before=${encodeURIComponent(b1.nextBefore!)}&beforeId=${encodeURIComponent(b1.nextBeforeId!)}`,
-      { token: REVIEWER_TOKEN }
+      { token: REVIEWER_TOKEN },
     );
     expect(p2.statusCode).toBe(200);
     const b2 = p2.json() as { items: { observationId: string }[] };
@@ -495,7 +495,7 @@ describe("GET /contrib/reviewer/flagged — composite (flagged_at, id) keyset cu
     const res = await reviewerInject(
       "GET",
       `/contrib/reviewer/flagged?before=${encodeURIComponent("2027-01-01T00:00:01.000Z")}`,
-      { token: REVIEWER_TOKEN }
+      { token: REVIEWER_TOKEN },
     );
     expect(res.statusCode).toBe(400);
   });
@@ -550,7 +550,7 @@ describe("POST /contrib/reviewer/observations/:id/accept", () => {
         await reviewerInject("POST", `/contrib/reviewer/observations/${id}/accept`, {
           token: REVIEWER_TOKEN,
         })
-      ).statusCode
+      ).statusCode,
     ).toBe(200);
     const again = await reviewerInject("POST", `/contrib/reviewer/observations/${id}/accept`, {
       token: REVIEWER_TOKEN,
@@ -562,7 +562,7 @@ describe("POST /contrib/reviewer/observations/:id/accept", () => {
     const res = await reviewerInject(
       "POST",
       "/contrib/reviewer/observations/crowd:none:missing0001/accept",
-      { token: REVIEWER_TOKEN }
+      { token: REVIEWER_TOKEN },
     );
     expect(res.statusCode).toBe(404);
   });
@@ -631,7 +631,7 @@ describe("POST /contrib/reviewer/observations/:id/reject — tombstone", () => {
         await reviewerInject("POST", `/contrib/reviewer/observations/${id}/reject`, {
           token: REVIEWER_TOKEN,
         })
-      ).statusCode
+      ).statusCode,
     ).toBe(200);
     const again = await reviewerInject("POST", `/contrib/reviewer/observations/${id}/reject`, {
       token: REVIEWER_TOKEN,
@@ -643,7 +643,7 @@ describe("POST /contrib/reviewer/observations/:id/reject — tombstone", () => {
     const res = await reviewerInject(
       "POST",
       "/contrib/reviewer/observations/crowd:none:missing0002/reject",
-      { token: REVIEWER_TOKEN }
+      { token: REVIEWER_TOKEN },
     );
     expect(res.statusCode).toBe(404);
   });
@@ -662,7 +662,7 @@ describe("POST /contrib/reviewer/observations/:id/reject — tombstone", () => {
       token: REVIEWER_TOKEN,
     });
     const ids = (queue.json() as { items: { observationId: string }[] }).items.map(
-      (i) => i.observationId
+      (i) => i.observationId,
     );
     expect(ids).toContain(id);
 
@@ -727,7 +727,7 @@ describe("reviewer block list", () => {
     const unblockRes = await reviewerInject(
       "DELETE",
       `/contrib/reviewer/blocklist/${encodeURIComponent(key.keyId)}`,
-      { token: REVIEWER_TOKEN }
+      { token: REVIEWER_TOKEN },
     );
     expect(unblockRes.statusCode).toBe(200);
     expect(unblockRes.json()).toEqual({ keyId: key.keyId, blocked: false });
@@ -784,7 +784,7 @@ describe("reviewer block list", () => {
           token: REVIEWER_TOKEN,
           payload: { keyId: key.keyId },
         })
-      ).statusCode
+      ).statusCode,
     ).toBe(200);
 
     // The grant still verifies, but the token path re-checks reporter status.
@@ -942,7 +942,7 @@ describe("GET /contrib/reviewer/flagged — originating-reporter advisory trust 
     const p2 = await reviewerInject(
       "GET",
       `/contrib/reviewer/flagged?limit=2&before=${encodeURIComponent(b1.nextBefore!)}&beforeId=${encodeURIComponent(b1.nextBeforeId!)}`,
-      { token: REVIEWER_TOKEN }
+      { token: REVIEWER_TOKEN },
     );
     expect(p2.statusCode).toBe(200);
     const b2 = p2.json() as { items: { observationId: string }[] };
@@ -1012,7 +1012,7 @@ describe("StreetComplete rule — piling onto a disputed element", () => {
           nonce: "sc-throws-00000001",
           geometry: { type: "Point", coordinates: [7.5, 47.5] },
         }),
-        key
+        key,
       );
       const res = await throwingApp.inject({
         method: "POST",

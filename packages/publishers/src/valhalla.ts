@@ -133,7 +133,7 @@ function pushLine(
   coords: [number, number][],
   ex: ValhallaExclusions,
   maxSpacing: number,
-  cap: number
+  cap: number,
 ): void {
   for (const [lon, lat] of densify(coords, maxSpacing, cap))
     ex.exclude_locations.push({ lon, lat });
@@ -164,7 +164,7 @@ function addGeometry(
   ex: ValhallaExclusions,
   maxSpacing: number,
   cap: number,
-  isClosure: boolean
+  isClosure: boolean,
 ): void {
   switch (geometry.type) {
     case "Point":
@@ -209,7 +209,7 @@ function addGeometry(
  */
 export function eventsToExclusions(
   obs: Observation[],
-  opts: ValhallaExclusionOptions = {}
+  opts: ValhallaExclusionOptions = {},
 ): ValhallaExclusions {
   const maxSpacing = opts.maxSpacingMeters ?? DEFAULT_MAX_SPACING_M;
   const cap = opts.maxPointsPerClosure ?? DEFAULT_MAX_POINTS;
@@ -238,7 +238,7 @@ export function eventsToExclusions(
  */
 export function segmentConditionsToExclusions(
   conditions: SegmentConditionJson[],
-  opts: ValhallaExclusionOptions = {}
+  opts: ValhallaExclusionOptions = {},
 ): ValhallaExclusions {
   const maxSpacing = opts.maxSpacingMeters ?? DEFAULT_MAX_SPACING_M;
   const cap = opts.maxPointsPerClosure ?? DEFAULT_MAX_POINTS;

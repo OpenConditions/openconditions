@@ -19,41 +19,41 @@ describe("toGtfsRtAlertCodes", () => {
   it("maps condition type to a GTFS-RT cause", () => {
     expect(toGtfsRtAlertCodes(roadEvent({ type: "accident" })).cause).toBe(Alert.Cause.ACCIDENT);
     expect(toGtfsRtAlertCodes(roadEvent({ type: "roadworks" })).cause).toBe(
-      Alert.Cause.CONSTRUCTION
+      Alert.Cause.CONSTRUCTION,
     );
     expect(toGtfsRtAlertCodes(roadEvent({ type: "weather" })).cause).toBe(Alert.Cause.WEATHER);
     expect(toGtfsRtAlertCodes(roadEvent({ type: "authority" })).cause).toBe(
-      Alert.Cause.POLICE_ACTIVITY
+      Alert.Cause.POLICE_ACTIVITY,
     );
   });
 
   it("maps routing impact to a GTFS-RT effect", () => {
     expect(toGtfsRtAlertCodes(roadEvent({ type: "road_closure" })).effect).toBe(
-      Alert.Effect.DETOUR
+      Alert.Effect.DETOUR,
     );
     expect(toGtfsRtAlertCodes(roadEvent({ type: "accident", roadState: "closed" })).effect).toBe(
-      Alert.Effect.DETOUR
+      Alert.Effect.DETOUR,
     );
     expect(toGtfsRtAlertCodes(roadEvent({ type: "lane_closure" })).effect).toBe(
-      Alert.Effect.SIGNIFICANT_DELAYS
+      Alert.Effect.SIGNIFICANT_DELAYS,
     );
     expect(toGtfsRtAlertCodes(roadEvent({ type: "congestion" })).effect).toBe(
-      Alert.Effect.SIGNIFICANT_DELAYS
+      Alert.Effect.SIGNIFICANT_DELAYS,
     );
   });
 
   it("maps severity to a GTFS-RT severity level", () => {
     expect(toGtfsRtAlertCodes(roadEvent({ severity: "low" })).severity).toBe(
-      Alert.SeverityLevel.INFO
+      Alert.SeverityLevel.INFO,
     );
     expect(toGtfsRtAlertCodes(roadEvent({ severity: "medium" })).severity).toBe(
-      Alert.SeverityLevel.WARNING
+      Alert.SeverityLevel.WARNING,
     );
     expect(toGtfsRtAlertCodes(roadEvent({ severity: "critical" })).severity).toBe(
-      Alert.SeverityLevel.SEVERE
+      Alert.SeverityLevel.SEVERE,
     );
     expect(toGtfsRtAlertCodes(roadEvent({ severity: "unknown" })).severity).toBe(
-      Alert.SeverityLevel.UNKNOWN_SEVERITY
+      Alert.SeverityLevel.UNKNOWN_SEVERITY,
     );
   });
 });
@@ -66,7 +66,7 @@ describe("observationsToGtfsRtAlerts", () => {
 
   it("emits a decodable FeedMessage with a FULL_DATASET header", () => {
     const feed = decode(
-      observationsToGtfsRtAlerts([transitEvent()], { timestamp: "2026-06-23T10:00:00Z" })
+      observationsToGtfsRtAlerts([transitEvent()], { timestamp: "2026-06-23T10:00:00Z" }),
     );
     expect(feed.header?.gtfsRealtimeVersion).toBe("2.0");
     expect(feed.header?.incrementality).toBe(FeedHeader.Incrementality.FULL_DATASET);
@@ -82,7 +82,7 @@ describe("observationsToGtfsRtAlerts", () => {
           severity: "critical",
           headline: "A2 closed",
         }),
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(1);
     const entity = feed.entity[0]!;
@@ -106,7 +106,7 @@ describe("observationsToGtfsRtAlerts", () => {
             { type: "geo", id: "geo:52,13" },
           ],
         }),
-      ])
+      ]),
     );
     const sel = feed.entity[0]!.alert!.informedEntity!;
     expect(sel.map((s) => s.stopId).filter(Boolean)).toEqual(["stop-1"]);
@@ -129,7 +129,7 @@ describe("observationsToGtfsRtAlerts", () => {
     const feed = decode(
       observationsToGtfsRtAlerts([
         roadEvent({ domain: "transit", type: "transit_disruption", subject: [] }),
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(0);
   });
@@ -138,7 +138,7 @@ describe("observationsToGtfsRtAlerts", () => {
     const feed = decode(
       observationsToGtfsRtAlerts([
         roadEvent({ informed: { stops: ["s1", "s2"], routes: ["R9"], trips: ["t3"] } }),
-      ])
+      ]),
     );
     const sel = feed.entity[0]!.alert!.informedEntity!;
     expect(sel.map((s) => s.stopId).filter(Boolean)).toEqual(["s1", "s2"]);
@@ -148,7 +148,7 @@ describe("observationsToGtfsRtAlerts", () => {
 
   it("emits a road event that affects transit via informed.routes", () => {
     const feed = decode(
-      observationsToGtfsRtAlerts([roadEvent({ domain: "roads", informed: { routes: ["R1"] } })])
+      observationsToGtfsRtAlerts([roadEvent({ domain: "roads", informed: { routes: ["R1"] } })]),
     );
     expect(feed.entity).toHaveLength(1);
     const sel = feed.entity[0]!.alert!.informedEntity!;
@@ -158,7 +158,9 @@ describe("observationsToGtfsRtAlerts", () => {
 
   it("maps informed.modes to GTFS route_type, skipping unknown modes", () => {
     const feed = decode(
-      observationsToGtfsRtAlerts([roadEvent({ informed: { modes: ["bus", "tram", "spaceship"] } })])
+      observationsToGtfsRtAlerts([
+        roadEvent({ informed: { modes: ["bus", "tram", "spaceship"] } }),
+      ]),
     );
     const sel = feed.entity[0]!.alert!.informedEntity!;
     expect(sel.map((s) => s.routeType)).toEqual([3, 0]);
@@ -166,7 +168,7 @@ describe("observationsToGtfsRtAlerts", () => {
 
   it("EXCLUDES an event whose modes are all unknown (no bogus selector)", () => {
     const feed = decode(
-      observationsToGtfsRtAlerts([roadEvent({ informed: { modes: ["spaceship", "teleport"] } })])
+      observationsToGtfsRtAlerts([roadEvent({ informed: { modes: ["spaceship", "teleport"] } })]),
     );
     expect(feed.entity).toHaveLength(0);
   });
@@ -178,7 +180,7 @@ describe("observationsToGtfsRtAlerts", () => {
         roadEvent({ id: "transit:1", informed: { routes: ["R1"] } }),
         roadEvent({ id: "road:2" }),
         roadEvent({ id: "transit:2", subject: [{ type: "gtfs-stop", id: "S1" }] }),
-      ])
+      ]),
     );
     expect(feed.entity.map((e) => e.id)).toEqual(["transit:1", "transit:2"]);
   });
@@ -187,7 +189,7 @@ describe("observationsToGtfsRtAlerts", () => {
     const feed = decode(
       observationsToGtfsRtAlerts([
         roadEvent({ subject: [{ type: "gtfs-route", id: "R1" }], informed: { routes: ["R1"] } }),
-      ])
+      ]),
     );
     const sel = feed.entity[0]!.alert!.informedEntity!;
     expect(sel).toHaveLength(1);
@@ -201,7 +203,7 @@ describe("observationsToGtfsRtAlerts", () => {
           subject: [{ type: "gtfs-stop", id: "" }],
           informed: { routes: ["", "   "] },
         }),
-      ])
+      ]),
     );
     expect(feed.entity).toHaveLength(0);
   });
@@ -216,7 +218,7 @@ describe("observationsToGtfsRtAlerts", () => {
           ],
           informed: { stops: ["  ", "s9"] },
         }),
-      ])
+      ]),
     );
     const sel = feed.entity[0]!.alert!.informedEntity!;
     expect(sel.map((s) => s.routeId).filter(Boolean)).toEqual(["R1"]);
@@ -228,7 +230,7 @@ describe("observationsToGtfsRtAlerts", () => {
     const feed = decode(
       observationsToGtfsRtAlerts([
         transitEvent({ validFrom: "2026-06-23T08:00:00Z", validTo: "2026-06-23T12:00:00Z" }),
-      ])
+      ]),
     );
     const period = feed.entity[0]!.alert!.activePeriod![0]!;
     expect(num(period.start)).toBe(Math.floor(Date.parse("2026-06-23T08:00:00Z") / 1000));
@@ -239,7 +241,7 @@ describe("observationsToGtfsRtAlerts", () => {
     const bytes = observationsToGtfsRtAlerts([transitEvent()]);
     expect(() => decode(bytes)).not.toThrow();
     expect(
-      transit_realtime.FeedMessage.verify(transit_realtime.FeedMessage.decode(bytes))
+      transit_realtime.FeedMessage.verify(transit_realtime.FeedMessage.decode(bytes)),
     ).toBeNull();
   });
 });
@@ -256,7 +258,7 @@ describe("observationsToGtfsRtAlerts — extended Alert fields", () => {
           detour: "Use A4",
           informed: { routes: ["R1"] },
         }),
-      ])
+      ]),
     );
     const alert = feed.entity[0]!.alert!;
     expect(alert.ttsHeaderText?.translation?.[0]?.text).toBe("A2 closed");

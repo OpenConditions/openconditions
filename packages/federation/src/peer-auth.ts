@@ -59,7 +59,7 @@ export type PeerAuthResult =
  */
 export async function authenticatePeerRequest(
   ctx: PeerAuthContext,
-  req: PeerAuthRequest
+  req: PeerAuthRequest,
 ): Promise<PeerAuthResult> {
   const pinToPeer = new Map<string, PeerRecord>();
   for (const peer of ctx.peers) {
@@ -83,7 +83,7 @@ export async function authenticatePeerRequest(
       raw as BufferSource,
       ED25519,
       true,
-      ["verify"]
+      ["verify"],
     );
     matchedPeer = peer;
     return key;

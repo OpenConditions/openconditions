@@ -247,7 +247,7 @@ const POINT_LOC = `<locationReference xsi:type="PointLocation"><pointByCoordinat
 describe("parseDatexSituations — GML geometry", () => {
   it("reads a gmlLineString/posList as a LineString (lat-lon → [lon,lat])", () => {
     const xml = v3Record(
-      `<locationReference xsi:type="LinearLocation"><gmlLineString srsName="WGS 84"><posList>52.0 13.0 52.1 13.1 52.2 13.2</posList></gmlLineString></locationReference>`
+      `<locationReference xsi:type="LinearLocation"><gmlLineString srsName="WGS 84"><posList>52.0 13.0 52.1 13.1 52.2 13.2</posList></gmlLineString></locationReference>`,
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.geometry).toEqual({
@@ -265,7 +265,7 @@ describe("parseDatexSituations — GML geometry", () => {
       `<locationReference xsi:type="ItineraryByIndexedLocations">` +
         `<locationContainedInItinerary index="0"><location xsi:type="LinearLocation"><gmlLineString><posList>52.0 13.0 52.1 13.1</posList></gmlLineString></location></locationContainedInItinerary>` +
         `<locationContainedInItinerary index="1"><location xsi:type="LinearLocation"><gmlLineString><posList>52.2 13.2 52.3 13.3</posList></gmlLineString></location></locationContainedInItinerary>` +
-        `</locationReference>`
+        `</locationReference>`,
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.geometry?.type).toBe("MultiLineString");
@@ -289,7 +289,7 @@ describe("parseDatexSituations — GML geometry", () => {
       `<locationReference xsi:type="ItineraryByIndexedLocations">` +
         `<locationContainedInItinerary><index>1</index><location xsi:type="PointLocation"><pointByCoordinates><pointCoordinates><latitude>52.1</latitude><longitude>13.1</longitude></pointCoordinates></pointByCoordinates></location></locationContainedInItinerary>` +
         `<locationContainedInItinerary><index>0</index><location xsi:type="PointLocation"><pointByCoordinates><pointCoordinates><latitude>52.0</latitude><longitude>13.0</longitude></pointCoordinates></pointByCoordinates></location></locationContainedInItinerary>` +
-        `</locationReference>`
+        `</locationReference>`,
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.geometry).toEqual({
@@ -308,7 +308,7 @@ describe("parseDatexSituations — GML geometry", () => {
         `<locationContainedInItinerary><index>1</index><location xsi:type="PointLocation"><pointByCoordinates><pointCoordinates><latitude>52.1</latitude><longitude>13.1</longitude></pointCoordinates></pointByCoordinates></location></locationContainedInItinerary>` +
         `<locationContainedInItinerary><index>0</index><location xsi:type="PointLocation"><pointByCoordinates><pointCoordinates><latitude>52.0</latitude><longitude>13.0</longitude></pointCoordinates></pointByCoordinates></location></locationContainedInItinerary>` +
         `</itineraryByIndexedLocations></locationContainedInGroup></locationGroupByList>` +
-        `</locationReference>`
+        `</locationReference>`,
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.geometry).toEqual({
@@ -326,7 +326,7 @@ describe("parseDatexSituations — GML geometry", () => {
         `<pointByCoordinates><pointCoordinates><latitude>52.0</latitude><longitude>13.0</longitude></pointCoordinates></pointByCoordinates>` +
         `<pointByCoordinates><pointCoordinates><latitude>52.1</latitude><longitude>13.1</longitude></pointCoordinates></pointByCoordinates>` +
         `<pointByCoordinates><pointCoordinates><latitude>52.2</latitude><longitude>13.2</longitude></pointCoordinates></pointByCoordinates>` +
-        `</locationReference>`
+        `</locationReference>`,
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.geometry).toEqual({
@@ -344,7 +344,7 @@ describe("parseDatexSituations — GML geometry", () => {
       `<locationReference xsi:type="LinearByCoordinates">` +
         `<start><latitude>52.0</latitude><longitude>13.0</longitude></start>` +
         `<end><latitude>52.1</latitude><longitude>13.1</longitude></end>` +
-        `</locationReference>`
+        `</locationReference>`,
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.geometry).toEqual({
@@ -361,17 +361,17 @@ describe("parseDatexSituations — road management details", () => {
   it("reads roadState from the (leaf-text) management type", () => {
     const closed = parseDatexSituations(
       v3Record(
-        `<roadOrCarriagewayOrLaneManagementType>carriagewayClosures</roadOrCarriagewayOrLaneManagementType>${POINT_LOC}`
+        `<roadOrCarriagewayOrLaneManagementType>carriagewayClosures</roadOrCarriagewayOrLaneManagementType>${POINT_LOC}`,
       ),
-      NDW_SOURCE
+      NDW_SOURCE,
     );
     expect(closed[0]!.roadState).toBe("closed");
 
     const lanes = parseDatexSituations(
       v3Record(
-        `<roadOrCarriagewayOrLaneManagementType>laneClosures</roadOrCarriagewayOrLaneManagementType>${POINT_LOC}`
+        `<roadOrCarriagewayOrLaneManagementType>laneClosures</roadOrCarriagewayOrLaneManagementType>${POINT_LOC}`,
       ),
-      NDW_SOURCE
+      NDW_SOURCE,
     );
     expect(lanes[0]!.roadState).toBe("some_lanes_closed");
   });
@@ -379,9 +379,9 @@ describe("parseDatexSituations — road management details", () => {
   it("reads lanesAffected from the nested <impact> element", () => {
     const [ev] = parseDatexSituations(
       v3Record(
-        `<impact><numberOfLanesRestricted>2</numberOfLanesRestricted><numberOfOperationalLanes>1</numberOfOperationalLanes></impact>${POINT_LOC}`
+        `<impact><numberOfLanesRestricted>2</numberOfLanesRestricted><numberOfOperationalLanes>1</numberOfOperationalLanes></impact>${POINT_LOC}`,
       ),
-      NDW_SOURCE
+      NDW_SOURCE,
     );
     expect(ev!.lanesAffected?.closed).toBe(2);
   });
@@ -393,8 +393,8 @@ describe("parseDatexSituations — NDW real-feed coverage", () => {
     expect(events.length).toBeGreaterThan(400); // was ~206 (points only)
     expect(
       events.some(
-        (e) => e.geometry?.type === "LineString" || e.geometry?.type === "MultiLineString"
-      )
+        (e) => e.geometry?.type === "LineString" || e.geometry?.type === "MultiLineString",
+      ),
     ).toBe(true);
     expect(events.some((e) => e.roadState != null)).toBe(true);
     expect(events.some((e) => e.lanesAffected != null)).toBe(true);
@@ -404,7 +404,7 @@ describe("parseDatexSituations — NDW real-feed coverage", () => {
 describe("parseDatexSituations — extended field extraction", () => {
   it("maps causeType to subtype and temporarySpeedLimit to speedLimitKph", () => {
     const xml = v3Record(
-      `<cause><causeType>roadMaintenance</causeType></cause><temporarySpeedLimit>60</temporarySpeedLimit>${POINT_LOC}`
+      `<cause><causeType>roadMaintenance</causeType></cause><temporarySpeedLimit>60</temporarySpeedLimit>${POINT_LOC}`,
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.subtype).toBe("roadMaintenance");
@@ -413,7 +413,7 @@ describe("parseDatexSituations — extended field extraction", () => {
 
   it("maps rerouting description to detour and creation reference to relatedIds", () => {
     const xml = v3Record(
-      `<situationRecordCreationReference>PARENT_1</situationRecordCreationReference><reroutingItineraryDescription>Use A4</reroutingItineraryDescription>${POINT_LOC}`
+      `<situationRecordCreationReference>PARENT_1</situationRecordCreationReference><reroutingItineraryDescription>Use A4</reroutingItineraryDescription>${POINT_LOC}`,
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.detour).toBe("Use A4");
@@ -440,7 +440,7 @@ describe("parseDatexSituations — deeper field extraction", () => {
         `<locationReference xsi:type="ItineraryByIndexedLocations"><locationContainedInItinerary><location>` +
         `<alertCLinear><alertCLocationCountryCode>8</alertCLocationCountryCode><alertCLocationTableNumber>6.13</alertCLocationTableNumber>` +
         `<alertCMethod4PrimaryPointLocation><alertCLocation><specificLocation>7324</specificLocation></alertCLocation></alertCMethod4PrimaryPointLocation></alertCLinear>` +
-        `<gmlLineString><posList>52 13 52.1 13.1</posList></gmlLineString></location></locationContainedInItinerary></locationReference>`
+        `<gmlLineString><posList>52 13 52.1 13.1</posList></gmlLineString></location></locationContainedInItinerary></locationReference>`,
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.vehiclesAffected).toContain("lorry");
@@ -535,7 +535,7 @@ describe("parseDatexSituations — OpenLR unresolved markers", () => {
 describe("parseDatexSituations — full v3 field extraction", () => {
   it("keeps causeType as the subtype when a cause is present", () => {
     const xml = v3Record(
-      `<cause><causeType>roadMaintenance</causeType></cause><accidentType>multiVehicleAccident</accidentType>${POINT_LOC}`
+      `<cause><causeType>roadMaintenance</causeType></cause><accidentType>multiVehicleAccident</accidentType>${POINT_LOC}`,
     );
     expect(parseDatexSituations(xml, NDW_SOURCE)[0]!.subtype).toBe("roadMaintenance");
   });
@@ -559,7 +559,7 @@ describe("parseDatexSituations — full v3 field extraction", () => {
       `<reroutingItineraryDescription>Follow signs</reroutingItineraryDescription>` +
         `<alternativeRoute xsi:type="ItineraryByIndexedLocations"><locationContainedInItinerary index="0">` +
         `<location xsi:type="LinearLocation"><gmlLineString srsName="WGS 84"><posList>52.0 13.0 52.1 13.1</posList></gmlLineString></location>` +
-        `</locationContainedInItinerary></alternativeRoute>${POINT_LOC}`
+        `</locationContainedInItinerary></alternativeRoute>${POINT_LOC}`,
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.detour).toBe("Follow signs");
@@ -596,7 +596,7 @@ ${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
 
   it("uses causeDescription as a headline fallback when there is no public comment", () => {
     const xml = v3Record(
-      `<cause><causeDescription><values><value lang="en">Roadworks ahead</value></values></causeDescription></cause>${POINT_LOC}`
+      `<cause><causeDescription><values><value lang="en">Roadworks ahead</value></values></causeDescription></cause>${POINT_LOC}`,
     );
     expect(parseDatexSituations(xml, NDW_SOURCE)[0]!.headline).toBe("Roadworks ahead");
   });
@@ -607,7 +607,7 @@ ${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
         `<externalReferencing><externalReferencingSystem>RIS-index</externalReferencingSystem>` +
         `<externalLocationCode>NLUTC0226A0578000005</externalLocationCode></externalReferencing>` +
         `<pointByCoordinates><pointCoordinates><latitude>52</latitude><longitude>13</longitude></pointCoordinates></pointByCoordinates>` +
-        `</locationReference>`
+        `</locationReference>`,
     );
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.externalRefs?.external).toEqual({
@@ -743,7 +743,7 @@ describe("parseDatexSituations — Trafikverket DATEX (coordinatesForDisplay + l
 
   it("reads coordinatesForDisplay (explicit lat/lon) as a Point in [lon,lat]", () => {
     const xml = wrap(
-      `<loc:coordinatesForDisplay><loc:latitude>59.74617</loc:latitude><loc:longitude>18.101748</loc:longitude></loc:coordinatesForDisplay>`
+      `<loc:coordinatesForDisplay><loc:latitude>59.74617</loc:latitude><loc:longitude>18.101748</loc:longitude></loc:coordinatesForDisplay>`,
     );
     const [ev] = parseDatexSituations(xml, SE_SOURCE);
     expect(ev!.geometry).toEqual({ type: "Point", coordinates: [18.101748, 59.74617] });
@@ -751,7 +751,7 @@ describe("parseDatexSituations — Trafikverket DATEX (coordinatesForDisplay + l
 
   it("keeps a lon-lat posList in order when posListLonLat is set", () => {
     const xml = wrap(
-      `<loc:gmlLineString><loc:posList>15.5915 56.7236 15.5872 56.724</loc:posList></loc:gmlLineString>`
+      `<loc:gmlLineString><loc:posList>15.5915 56.7236 15.5872 56.724</loc:posList></loc:gmlLineString>`,
     );
     const [ev] = parseDatexSituations(xml, SE_SOURCE);
     expect(ev!.geometry).toEqual({
@@ -765,7 +765,7 @@ describe("parseDatexSituations — Trafikverket DATEX (coordinatesForDisplay + l
 
   it("still swaps lat-lon posList for feeds without posListLonLat", () => {
     const xml = wrap(
-      `<loc:gmlLineString><loc:posList>56.7236 15.5915 56.724 15.5872</loc:posList></loc:gmlLineString>`
+      `<loc:gmlLineString><loc:posList>56.7236 15.5915 56.724 15.5872</loc:posList></loc:gmlLineString>`,
     );
     const [ev] = parseDatexSituations(xml, {
       id: "x",
@@ -839,7 +839,7 @@ describe("parseDatexSituations — Hrvatske ceste events publication (DATEX II v
   const events = () =>
     parseDatexSituations(
       readFileSync(join(import.meta.dirname, "fixtures/hc-hr/events.datex3.xml")),
-      HC
+      HC,
     );
 
   it("maps InfrastructureDamageObstruction to a hazard rather than `other`", () => {

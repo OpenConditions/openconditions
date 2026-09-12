@@ -1,13 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import Fastify from "fastify";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import { RESOLVER_VERSION } from "@openconditions/roads";
-import { FeedStatusStore } from "../feed-status.js";
+import Fastify from "fastify";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildDomainRegistry } from "../domains.js";
-import { registerPublishRoutes } from "../publish-routes.js";
+import { FeedStatusStore } from "../feed-status.js";
 import { createBindingMetricsReader } from "../pipeline/binding-metrics.js";
+import { registerPublishRoutes } from "../publish-routes.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;

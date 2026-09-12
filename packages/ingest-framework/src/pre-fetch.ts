@@ -11,7 +11,7 @@ import { redactUrl } from "./redact.js";
 export type PreFetchHook = (
   src: FeedSourceBase,
   env: Env,
-  fetchFn: typeof fetch
+  fetchFn: typeof fetch,
 ) => Promise<FeedSourceBase>;
 
 function ddmmyyyy(d: Date): string {
@@ -92,7 +92,7 @@ export async function loadWebtrisActiveSiteIds(
   registryUrl: string,
   headers: Record<string, string> | undefined,
   fetchFn: typeof fetch,
-  now: () => number = Date.now
+  now: () => number = Date.now,
 ): Promise<string[]> {
   const cached = webtrisSitesCache.get(registryUrl);
   if (cached && now() - cached.fetchedAt < WEBTRIS_SITES_TTL_MS) return cached.ids;
@@ -116,7 +116,7 @@ export async function loadWebtrisActiveSiteIds(
     // uniformity with every other raw-URL log site in this module.
     console.warn(
       `[ingest] webtrisDailyWindow: sites registry load failed (${redactUrl(registryUrl)}):`,
-      err instanceof Error ? err.message : err
+      err instanceof Error ? err.message : err,
     );
     return cached?.ids ?? [];
   }
@@ -165,12 +165,12 @@ const webtrisDailyWindow: PreFetchHook = async (src, _env, fetchFn) => {
     : [];
   if (activeIds.length === 0) {
     console.warn(
-      `[ingest] webtrisDailyWindow: ${src.id} has zero active sites (registry unreachable or none marked Active); falling back to default site ${WEBTRIS_FALLBACK_SITE_ID}`
+      `[ingest] webtrisDailyWindow: ${src.id} has zero active sites (registry unreachable or none marked Active); falling back to default site ${WEBTRIS_FALLBACK_SITE_ID}`,
     );
   }
   const ids = activeIds.length > 0 ? activeIds : [WEBTRIS_FALLBACK_SITE_ID];
   const urls = chunk(ids, WEBTRIS_SITE_CHUNK_SIZE).map((c) =>
-    dateStamped.replace("{sites}", c.join(","))
+    dateStamped.replace("{sites}", c.join(",")),
   );
   return { ...src, url: urls };
 };
@@ -180,7 +180,7 @@ export const PRE_FETCH_HOOKS: Record<string, PreFetchHook> = { webtrisDailyWindo
 export async function applyPreFetch(
   src: FeedSourceBase,
   env: Env,
-  fetchFn: typeof fetch
+  fetchFn: typeof fetch,
 ): Promise<FeedSourceBase> {
   if (!src.preFetch) return src;
   const hook = PRE_FETCH_HOOKS[src.preFetch];

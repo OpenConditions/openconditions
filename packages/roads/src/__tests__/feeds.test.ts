@@ -1,19 +1,19 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { resolvedEnv, resolveFeedUrls } from "@openconditions/ingest-framework";
 import { describe, expect, it } from "vitest";
-import { parseDatexSituations } from "../datex.js";
-import { parseOpen511 } from "../open511.js";
-import { parseWzdx } from "../wzdx.js";
 import { parseAutobahn } from "../autobahn.js";
+import { parseDatexSituations } from "../datex.js";
 import { parseDigitraffic } from "../digitraffic.js";
+import { FEED_SOURCES, feedToSourceDescriptor, parserFor } from "../feeds.js";
+import { parseFlatJson } from "../flatjson.js";
+import { parseGddkia } from "../gddkia.js";
 import { parseGeoJson } from "../geojson.js";
 import { parseIbi511 } from "../ibi511.js";
 import { parseLtaIncidents } from "../lta.js";
-import { parseGddkia } from "../gddkia.js";
-import { parseFlatJson } from "../flatjson.js";
+import { parseOpen511 } from "../open511.js";
 import { parseTrafikverket } from "../trafikverket.js";
-import { resolveFeedUrls, resolvedEnv } from "@openconditions/ingest-framework";
-import { FEED_SOURCES, feedToSourceDescriptor, parserFor } from "../feeds.js";
+import { parseWzdx } from "../wzdx.js";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
 
@@ -353,7 +353,7 @@ describe("FEED_SOURCES", () => {
     expect(typeof feed.url).toBe("string");
     expect(feed.requiredEnv).toContain("AR_BA_CLIENT_ID");
     expect(
-      resolveFeedUrls(feed, resolvedEnv({ AR_BA_CLIENT_ID: "cid", AR_BA_CLIENT_SECRET: "csec" }))
+      resolveFeedUrls(feed, resolvedEnv({ AR_BA_CLIENT_ID: "cid", AR_BA_CLIENT_SECRET: "csec" })),
     ).toEqual([
       "https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=cid&client_secret=csec",
     ]);
@@ -417,7 +417,7 @@ describe("FEED_SOURCES", () => {
     // subscription's HTTPS Zugriffspunkt — the plain-HTTPS pull (no `/soap/`),
     // id in both path and query — plus the mandatory Accept-Encoding: gzip.
     expect(
-      resolveFeedUrls(feed!, resolvedEnv({ DE_NW_VERKEHR_SUBSCRIPTION_ID: "2000001, 2000002" }))
+      resolveFeedUrls(feed!, resolvedEnv({ DE_NW_VERKEHR_SUBSCRIPTION_ID: "2000001, 2000002" })),
     ).toEqual([
       "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/2000001/clientPullService?subscriptionID=2000001",
       "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/2000002/clientPullService?subscriptionID=2000002",
@@ -437,7 +437,7 @@ describe("FEED_SOURCES", () => {
         f.country === "DE" &&
         f.auth?.kind === "mtls" &&
         f.auth.certEnvVar === "MOBILITHEK_CERT" &&
-        !f.id.includes("autobahn")
+        !f.id.includes("autobahn"),
     );
     // NRW-LVZ + Düsseldorf + Köln + Kreis Unna + NRW-Mobidrom + 13 states.
     expect(regions.length).toBeGreaterThanOrEqual(18);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SegmentGraph, nodeKey } from "../graph.js";
+import { nodeKey, SegmentGraph } from "../graph.js";
 import type { SpineSegment } from "../types.js";
 
 function seg(id: string, coords: [number, number][], ref = "A1"): SpineSegment {
@@ -41,7 +41,7 @@ describe("SegmentGraph", () => {
       g
         .successors("1:f")
         .map((s) => s.segmentId)
-        .sort()
+        .sort(),
     ).toEqual(["2:f", "4:f"]);
     expect(g.successors("3:f")).toEqual([]);
   });

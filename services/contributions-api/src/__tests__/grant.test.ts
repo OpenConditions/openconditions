@@ -113,7 +113,7 @@ describe("resolveGrantSecret", () => {
 
   it("refuses to start in production without a secret (fail closed)", () => {
     expect(() => resolveGrantSecret({ NODE_ENV: "production" }, vi.fn())).toThrow(
-      /OPENCONDITIONS_GRANT_SECRET/
+      /OPENCONDITIONS_GRANT_SECRET/,
     );
   });
 

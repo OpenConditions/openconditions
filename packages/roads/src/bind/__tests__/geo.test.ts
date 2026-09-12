@@ -24,7 +24,7 @@ describe("geo", () => {
         [6.8, 51.2],
         [6.82, 51.2],
       ],
-      100
+      100,
     ); // ~1.4 km
     expect(out[0]).toEqual([6.8, 51.2]);
     expect(out.at(-1)).toEqual([6.82, 51.2]);
@@ -34,7 +34,7 @@ describe("geo", () => {
         [6.8, 51.2],
         [6.82, 51.2],
       ]),
-      -1
+      -1,
     );
   });
   it("projects a point onto the nearest sub-segment with fraction and offset", () => {
@@ -61,7 +61,7 @@ describe("geo", () => {
         [6.81, 51.2],
         [6.79, 51.23],
         [6.83, 51.19],
-      ])
+      ]),
     ).toEqual([6.79, 51.19, 6.83, 51.23]);
   });
 
@@ -76,7 +76,7 @@ describe("geo", () => {
   it("rejects an empty polyline instead of returning a non-projection", () => {
     expect(() => projectOntoPolyline([6.8, 51.2], [])).toThrow(RangeError);
     expect(() => projectOntoPolyline([6.8, 51.2], [])).toThrow(
-      "polyline must have at least one vertex"
+      "polyline must have at least one vertex",
     );
   });
 

@@ -8,8 +8,8 @@
 import {
   encodeCoarsePartition,
   encodePrivateSegment,
-  reportByteSize,
   type RegionSpec,
+  reportByteSize,
 } from "./encoding.js";
 
 export interface EncodeBenchmarkResult {
@@ -26,7 +26,7 @@ export interface EncodeBenchmarkResult {
 
 async function timeEncode(
   iterations: number,
-  encodeOnce: () => Promise<{ reportBytes: number }>
+  encodeOnce: () => Promise<{ reportBytes: number }>,
 ): Promise<{ reportBytes: number; meanEncodeMs: number }> {
   let reportBytes = 0;
   const start = performance.now();
@@ -42,7 +42,7 @@ export async function runEncodeBenchmark(
   region: RegionSpec,
   sampleSpeed: number,
   sampleSegment: number,
-  iterations = 50
+  iterations = 50,
 ): Promise<EncodeBenchmarkResult[]> {
   const a = await timeEncode(iterations, async () => {
     const report = await encodePrivateSegment(region, {

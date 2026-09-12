@@ -1,7 +1,7 @@
-import { resolvedEnv } from "./auth.js";
 import type { Env } from "./auth.js";
-import { allowedTemplateVars } from "./template.js";
+import { resolvedEnv } from "./auth.js";
 import type { FeedSourceBase } from "./feed-source.js";
+import { allowedTemplateVars } from "./template.js";
 
 /**
  * Secret values shorter than this are never redacted — blanking a 2-3
@@ -73,7 +73,7 @@ export function redactSecrets(text: string, secretValues: Iterable<string>): str
  */
 export function feedSecretValues(
   src: Pick<FeedSourceBase, "auth" | "requiredEnv">,
-  env: Env = resolvedEnv()
+  env: Env = resolvedEnv(),
 ): string[] {
   const values: string[] = [];
   for (const name of allowedTemplateVars(src)) {

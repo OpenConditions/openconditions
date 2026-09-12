@@ -1,21 +1,21 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
-import type { FastifyInstance } from "fastify";
 import {
   crowdObservationId,
   generateReporterKey,
-  signReport,
   type ReportClaim,
   type ReporterKey,
   type SignedReport,
+  signReport,
 } from "@openconditions/contrib-core";
 import {
+  type ConditionEvent,
   phenomenonFingerprint,
   reliabilityLowerBound,
-  type ConditionEvent,
 } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
+import type { FastifyInstance } from "fastify";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createReportingGrant } from "../attester/grant.js";
 import { build } from "../server.js";
 
@@ -121,7 +121,7 @@ async function sign(key: ReporterKey, overrides: Partial<ReportClaim> = {}): Pro
 async function postReport(
   report: SignedReport,
   reportingGrant: string,
-  instance: FastifyInstance = app
+  instance: FastifyInstance = app,
 ) {
   return instance.inject({
     method: "POST",
@@ -210,7 +210,7 @@ describe("POST /contrib/reports — idempotent replay", () => {
     expect(first.statusCode).toBe(200);
     expect(second.statusCode).toBe(200);
     expect((first.json() as { observationId: string }).observationId).toBe(
-      (second.json() as { observationId: string }).observationId
+      (second.json() as { observationId: string }).observationId,
     );
 
     const obsId = await crowdObservationId(key.keyId, "replay-000000000001");
@@ -672,7 +672,7 @@ describe("GET /contrib/reporter/me — advisory own-reputation read", () => {
     // It is the core one-sided lower bound at the fixed 0.9 credible level.
     expect(body.reliabilityLowerBound).toBeCloseTo(
       reliabilityLowerBound({ alpha: 8, beta: 2 }, 0.9),
-      10
+      10,
     );
   }, 60_000);
 
@@ -688,7 +688,7 @@ describe("GET /contrib/reporter/me — advisory own-reputation read", () => {
     expect(body.reliabilityLowerBound).toBeLessThan(0.5);
     expect(body.reliabilityLowerBound).toBeCloseTo(
       reliabilityLowerBound({ alpha: 2, beta: 2 }, 0.9),
-      10
+      10,
     );
   }, 60_000);
 

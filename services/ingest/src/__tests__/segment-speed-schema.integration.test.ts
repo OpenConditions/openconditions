@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -40,7 +40,7 @@ describe("segment_observation + segment_speed schema", () => {
         "sample_count",
         "observed_at",
         "expires_at",
-      ])
+      ]),
     );
 
     const pk = await sql`
@@ -75,7 +75,7 @@ describe("segment_observation + segment_speed schema", () => {
         "is_estimated",
         "observed_at",
         "updated_at",
-      ])
+      ]),
     );
 
     const idx =

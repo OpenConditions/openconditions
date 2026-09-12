@@ -1,8 +1,8 @@
 import type { Point } from "geojson";
+import type { FlowParseResult } from "./flow.js";
+import { makeOrigin } from "./flow.js";
 import type { RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
-import { makeOrigin } from "./flow.js";
-import type { FlowParseResult } from "./flow.js";
 import { getXmlChild, getXmlChildren, isXmlObject, parseXmlDocument, xmlText } from "./xml.js";
 
 const ABSURD_SPEED_KPH = 250;

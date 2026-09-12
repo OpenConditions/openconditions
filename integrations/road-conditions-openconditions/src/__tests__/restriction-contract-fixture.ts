@@ -2,10 +2,10 @@ import { readFileSync } from "node:fs";
 import type { Observation } from "@openconditions/core";
 import {
   observationsToGeoJSON,
-  segmentConditionsToJson,
   type SegmentConditionRow,
+  segmentConditionsToJson,
 } from "@openconditions/publishers";
-import { roadAttributes, type RoadEvent } from "@openconditions/roads";
+import { type RoadEvent, roadAttributes } from "@openconditions/roads";
 import { featureCollectionToRoadConditionEvents } from "../toRoadConditionEvents.js";
 import type { RoadConditionEvent } from "../types.js";
 
@@ -30,7 +30,7 @@ export interface RestrictionContractFixture {
 
 const CONTROL_INPUT_URL = new URL(
   "../../../../packages/publishers/src/__tests__/fixtures/contracts/road-conditions-v1.input.json",
-  import.meta.url
+  import.meta.url,
 );
 
 interface ControlInput {
@@ -166,7 +166,7 @@ function conditionalEvent(): RoadEvent & { sourceCheckedAt: string; freshnessWin
 
 /** The unconditional control event that must keep publishing normally. */
 function controlEvent(
-  row: SegmentConditionRow
+  row: SegmentConditionRow,
 ): Observation & { sourceCheckedAt: string; freshnessWindowSec: number } {
   return {
     id: row.id,
@@ -252,7 +252,7 @@ export function buildRestrictionContractFixture(): RestrictionContractFixture {
   const rows = [control, conditionalRow(control, conditional)];
 
   const displayEvents = featureCollectionToRoadConditionEvents(
-    observationsToGeoJSON(events, {}, { at })
+    observationsToGeoJSON(events, {}, { at }),
   );
   const segmentConditions = segmentConditionsToJson(rows, at, {
     resolverVersion: input.resolverVersion,
@@ -268,7 +268,7 @@ export function buildRestrictionContractFixture(): RestrictionContractFixture {
     throw new Error(
       `contract fixture emitted unexpected segment conditions: ${segmentConditions.conditions
         .map((condition) => condition.id)
-        .join(",")}`
+        .join(",")}`,
     );
   }
   // The same row without restriction evidence DOES emit, so the exclusion is
@@ -279,7 +279,7 @@ export function buildRestrictionContractFixture(): RestrictionContractFixture {
   });
   if (withoutEvidence.conditions.length !== 1) {
     throw new Error(
-      "contract fixture control failed: the conditional row is excluded for a reason other than its restriction evidence"
+      "contract fixture control failed: the conditional row is excluded for a reason other than its restriction evidence",
     );
   }
 

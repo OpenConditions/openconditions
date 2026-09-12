@@ -122,7 +122,7 @@ export async function rollupSpeedSamples(sql: Sql, opts: RollupOpts = {}): Promi
 
   let rows = 0;
   let hours = 0;
-  for (let from = start; from < end;) {
+  for (let from = start; from < end; ) {
     const to = new Date(Math.min(from.getTime() + batchHours * 3_600_000, end.getTime()));
     rows += await rollupRange(sql, from, to, speedSampleCutoff(now));
     hours += Math.round((to.getTime() - from.getTime()) / 3_600_000);
@@ -202,7 +202,7 @@ function floorToHour(d: Date): Date {
  */
 export async function pruneHourlyRollup(
   sql: Sql,
-  opts: { retentionDays?: number } = {}
+  opts: { retentionDays?: number } = {},
 ): Promise<{ deleted: number }> {
   const retentionDays = opts.retentionDays ?? HOURLY_RETENTION_DAYS;
   const result = await sql`
@@ -222,7 +222,7 @@ export async function pruneRawSamples(
     hourlyRetentionDays?: number;
     batchSize?: number;
     now?: () => Date;
-  } = {}
+  } = {},
 ): Promise<{ deleted: number }> {
   const retentionDays = opts.retentionDays ?? RAW_SAMPLE_RETENTION_DAYS;
   const hourlyRetentionDays = opts.hourlyRetentionDays ?? HOURLY_RETENTION_DAYS;

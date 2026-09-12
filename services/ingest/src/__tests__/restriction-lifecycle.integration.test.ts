@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import type postgres from "postgres";
 import { readObservations } from "@openconditions/core";
 import type { LookupFn } from "@openconditions/ingest-framework";
-import { runSource, type DomainFeedSource } from "../pipeline/run.js";
+import type postgres from "postgres";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { type DomainFeedSource, runSource } from "../pipeline/run.js";
 import { sweepStaleObservations } from "../pipeline/sweep.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
@@ -19,7 +19,7 @@ import { createRestrictionDatabase } from "./helpers/restriction-database.integr
 
 const FIXTURE_URL = new URL(
   "../../../../packages/roads/src/__tests__/fixtures/digitraffic/v2-restrictions.json",
-  import.meta.url
+  import.meta.url,
 );
 
 const V2 = "https://tie.digitraffic.fi/api/traffic-message/v2";
@@ -64,7 +64,7 @@ function roadworks(): Collection {
 function weightOnly(mutate?: (props: Record<string, unknown>) => void): Collection {
   const all = roadworks();
   const feature = all.features.find(
-    (f) => (f["properties"] as Record<string, unknown>)["situationId"] === "GUID50465935"
+    (f) => (f["properties"] as Record<string, unknown>)["situationId"] === "GUID50465935",
   )!;
   const clone = structuredClone(feature);
   const props = clone["properties"] as Record<string, unknown>;
@@ -177,7 +177,7 @@ describe("restriction record lifecycle", () => {
           props["version"] = 32;
           props["versionTime"] = "2026-09-12T07:00:00.000Z";
         }),
-        { etag: 'W/"v32"' }
+        { etag: 'W/"v32"' },
       ),
       lookup: fakeLookup,
       now: () => "2026-09-12T07:16:00.000Z",
@@ -207,7 +207,7 @@ describe("restriction record lifecycle", () => {
           }
           props["version"] = 32;
           props["versionTime"] = "2026-09-12T07:00:00.000Z";
-        })
+        }),
       ),
       lookup: fakeLookup,
       now: () => "2026-09-12T07:18:00.000Z",
@@ -215,7 +215,7 @@ describe("restriction record lifecycle", () => {
     expect(unchanged.error).toBeUndefined();
     expect(await hashOf(WEIGHT_ID)).toBe(secondHash);
     expect(
-      await sql`SELECT observation_id FROM conditions.binding_queue WHERE observation_id = ${WEIGHT_ID}`
+      await sql`SELECT observation_id FROM conditions.binding_queue WHERE observation_id = ${WEIGHT_ID}`,
     ).toHaveLength(0);
 
     // A 304 advances checked time only.
@@ -266,7 +266,7 @@ describe("restriction record lifecycle", () => {
           // Synthetic: the publisher has not touched this record in months but
           // keeps serving it. Age of the source update is not expiry.
           props["versionTime"] = "2026-03-01T00:00:00.000Z";
-        })
+        }),
       ),
       lookup: fakeLookup,
       now: () => "2026-09-12T07:14:00.000Z",
@@ -288,7 +288,7 @@ describe("restriction record lifecycle", () => {
             startTime: "2026-06-11T21:00:00.000Z",
             endTime: "2026-06-30T21:00:00.000Z",
           };
-        })
+        }),
       ),
       lookup: fakeLookup,
       now: () => "2026-09-12T07:14:00.000Z",
@@ -328,7 +328,7 @@ describe("restriction record lifecycle", () => {
         weightOnly((props) => {
           const announcement = (props["announcements"] as Array<Record<string, unknown>>)[0]!;
           void announcement;
-        })
+        }),
       ),
       lookup: fakeLookup,
       now: () => "2026-09-12T07:14:00.000Z",

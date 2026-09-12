@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
+  type AggregatorTopology,
   assertHelperIndependentForProduction,
   isSameOperator,
   SameOperatorHelperError,
-  type AggregatorTopology,
 } from "../index.js";
 
 const INDEPENDENT = {

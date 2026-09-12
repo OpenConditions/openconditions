@@ -1,3 +1,4 @@
+import { feedSecretValues, redactSecrets } from "@openconditions/ingest-framework";
 import type { FeedSource, SiteGeometry } from "@openconditions/roads";
 import {
   parseBcnTramsStations,
@@ -7,7 +8,6 @@ import {
   parseMivConfig,
   parseWebtrisSites,
 } from "@openconditions/roads";
-import { feedSecretValues, redactSecrets } from "@openconditions/ingest-framework";
 
 /** Station registries change rarely; refetch at most every 6 hours. */
 const REGISTRY_TTL_MS = 6 * 60 * 60 * 1000;
@@ -48,7 +48,7 @@ const PARSERS: Record<string, (input: string) => Map<string, SiteGeometry>> = {
 export async function loadStationRegistry(
   src: FeedSource,
   fetchFn: typeof fetch,
-  now: () => number = Date.now
+  now: () => number = Date.now,
 ): Promise<Map<string, SiteGeometry> | undefined> {
   const reg = src.stationRegistry;
   if (!reg) return undefined;
@@ -73,7 +73,7 @@ export async function loadStationRegistry(
   } catch (err) {
     console.warn(
       `[ingest] station-registry load failed for ${src.id} (${redact(reg.url)}):`,
-      err instanceof Error ? redact(err.message) : err
+      err instanceof Error ? redact(err.message) : err,
     );
     return cached?.map;
   }

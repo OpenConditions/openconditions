@@ -1,6 +1,6 @@
-import { describe, it, expect } from "vitest";
-import type { Observation } from "../model.js";
+import { describe, expect, it } from "vitest";
 import { dedupeObservations } from "../dedupe.js";
+import type { Observation } from "../model.js";
 
 function makeObs(overrides: Partial<Observation> & { lng: number; lat: number }): Observation {
   const { lng, lat, ...rest } = overrides;

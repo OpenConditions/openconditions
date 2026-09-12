@@ -30,7 +30,7 @@ type RoadFields = {
 };
 
 export function roadEvent(
-  over: Partial<ConditionEvent> & RoadFields & { geometry?: Geometry } = {}
+  over: Partial<ConditionEvent> & RoadFields & { geometry?: Geometry } = {},
 ): ConditionEvent {
   return {
     id: "ndw:1",

@@ -1,10 +1,10 @@
+import type { FeedSourceBase } from "@openconditions/ingest-framework";
 import { describe, expect, it } from "vitest";
 import {
-  feedEnvVars,
-  envExampleFor,
   configSchemaPropertiesFor,
+  envExampleFor,
+  feedEnvVars,
 } from "../lib/gen-credentials-lib.js";
-import type { FeedSourceBase } from "@openconditions/ingest-framework";
 
 const ny: FeedSourceBase = {
   id: "us-ny-511",

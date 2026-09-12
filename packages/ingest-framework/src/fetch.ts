@@ -1,10 +1,10 @@
-import type { FeedSourceBase } from "./feed-source.js";
 import { resolvedEnv } from "./auth.js";
-import { boundedGunzip, DEFAULT_MAX_FEED_BYTES } from "./egress.js";
-import { resolveFeedUrls, resolveUrlTemplate, allowedTemplateVars } from "./template.js";
-import { applyPreFetch } from "./pre-fetch.js";
 import { getCatalogResolverById, resolveWithSnapshot } from "./catalog.js";
-import { redactUrl, redactSecrets, feedSecretValues } from "./redact.js";
+import { boundedGunzip, DEFAULT_MAX_FEED_BYTES } from "./egress.js";
+import type { FeedSourceBase } from "./feed-source.js";
+import { applyPreFetch } from "./pre-fetch.js";
+import { feedSecretValues, redactSecrets, redactUrl } from "./redact.js";
+import { allowedTemplateVars, resolveFeedUrls, resolveUrlTemplate } from "./template.js";
 
 const GZIP_MAGIC_0 = 0x1f;
 const GZIP_MAGIC_1 = 0x8b;
@@ -94,7 +94,7 @@ function looksLikeHtml(buf: Buffer): boolean {
 
 /** Ceiling on a single feed's decompressed bytes; matches the guard's byte cap. */
 const MAX_DECOMPRESSED_BYTES = Number(
-  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES
+  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES,
 );
 
 const EMPTY_BUFFER = Buffer.alloc(0);
@@ -105,7 +105,7 @@ async function fetchOne(
   init?: RequestInit,
   state?: FetchState,
   cacheBody = false,
-  redact: (s: string) => string = (s) => s
+  redact: (s: string) => string = (s) => s,
 ): Promise<{ changed: boolean; buffer: Buffer }> {
   const prior = state?.conditional.get(url);
   const headers = new Headers(init?.headers);
@@ -179,7 +179,7 @@ async function fetchFanout(
   // The feed's own RequestInit — its `requestHeaders`, and a POST method/body
   // where it has them. The static path has always sent these; the fan-out
   // dropped them, so a feed quietly lost its headers by being fanned out.
-  init?: RequestInit
+  init?: RequestInit,
 ): Promise<{ buffers: Buffer[]; failures: number; total: number }> {
   const out: Buffer[] = [];
   let failures = 0;
@@ -198,7 +198,7 @@ async function fetchFanout(
         failures++;
         console.warn(
           `[ingest] sub-feed fetch failed (${redact(url)}):`,
-          err instanceof Error ? err.message : err
+          err instanceof Error ? err.message : err,
         );
       }
     }
@@ -227,7 +227,7 @@ async function fetchAllBounded(
   init: RequestInit | undefined,
   state: FetchState | undefined,
   cacheBody: boolean,
-  redact: (s: string) => string = (s) => s
+  redact: (s: string) => string = (s) => s,
 ): Promise<{ changed: boolean; buffer: Buffer }[]> {
   const out = new Array<{ changed: boolean; buffer: Buffer }>(urls.length);
   let cursor = 0;
@@ -291,7 +291,7 @@ async function fetchPaginated(
   baseUrls: string[],
   src: FetchableFeed,
   fetchFn: typeof fetch,
-  redact: (s: string) => string
+  redact: (s: string) => string,
 ): Promise<Buffer[]> {
   const pg = src.pagination!;
   const recordsPath = pg.recordsPath ?? "value";
@@ -321,7 +321,7 @@ async function fetchPaginated(
 function matchesFilter(feed: FeedSourceBase, filter?: Record<string, unknown>): boolean {
   if (!filter) return true;
   return Object.entries(filter).every(
-    ([k, v]) => (feed as unknown as Record<string, unknown>)[k] === v
+    ([k, v]) => (feed as unknown as Record<string, unknown>)[k] === v,
   );
 }
 
@@ -349,7 +349,7 @@ function matchesFilter(feed: FeedSourceBase, filter?: Record<string, unknown>): 
 export async function fetchAll(
   src: FetchableFeed,
   fetchFn: typeof fetch,
-  opts: FetchOptions = {}
+  opts: FetchOptions = {},
 ): Promise<FetchResult> {
   const state = opts.state ?? sharedFetchState;
   const now = opts.now ?? Date.now;
@@ -370,7 +370,7 @@ export async function fetchAll(
   if (active.catalog) {
     const resolver = getCatalogResolverById(active.catalog.resolver);
     const feeds = (await resolveWithSnapshot(resolver, fetchFn)).filter((f) =>
-      matchesFilter(f, active.catalog?.filter)
+      matchesFilter(f, active.catalog?.filter),
     );
     const urls = feeds.flatMap((f) => (Array.isArray(f.url) ? f.url : f.url ? [f.url] : []));
     const fanout = await fetchFanout(urls, fetchFn, redact, requestInit(active));
@@ -488,7 +488,7 @@ export async function fetchAll(
       urls.flatMap((url) => {
         const prior = state.conditional.get(cacheKey(url));
         return prior ? [[url, prior] as const] : [];
-      })
+      }),
     ),
     lastFetchAt: state.lastFetchAt,
     sourceConfig: state.sourceConfig,

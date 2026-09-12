@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { parseFintrafficFlow } from "../flow-fintraffic.js";
-import type { SourceDescriptor } from "../types.js";
 import type { SiteGeometry } from "../siteTable.js";
+import type { SourceDescriptor } from "../types.js";
 
 const src = {
   id: "fi-fintraffic",

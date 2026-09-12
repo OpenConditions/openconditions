@@ -84,7 +84,7 @@ export interface RateLimiter {
     kind: "inbox" | "backfill",
     registeredTier: 0 | 1 | 2,
     count: number,
-    now: number
+    now: number,
   ): RateCheckResult;
 }
 

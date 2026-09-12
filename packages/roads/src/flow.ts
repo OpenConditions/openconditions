@@ -9,15 +9,17 @@
  * tracked separately in routing-improvements.md §8/§9.
  * conditions.observations is the data foundation that pipeline will consume.
  */
-import type { LineString, Point } from "geojson";
+
 import type {
   LineStringGeometry,
   Observation,
   PointGeometry,
   Severity,
 } from "@openconditions/core";
+import type { LineString, Point } from "geojson";
 import type { BaselineMethod, RoadEvent, RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
+import type { XmlObject } from "./xml.js";
 import {
   getXmlChild,
   getXmlChildren,
@@ -27,7 +29,6 @@ import {
   xmlNodeToArray,
   xmlText,
 } from "./xml.js";
-import type { XmlObject } from "./xml.js";
 
 export type FlowParseResult = {
   flows: RoadFlow[];
@@ -83,7 +84,7 @@ function losSeverity(los: LosValue): Severity {
 function derivedCongestionEvent(
   flow: RoadFlow,
   src: SourceDescriptor,
-  idSuffix: string
+  idSuffix: string,
 ): RoadEvent {
   const severity = losSeverity(flow.los);
   return {
@@ -173,7 +174,7 @@ function mapDigitrafficCongestionLevel(raw: unknown): LosValue {
  */
 export function parseDigitrafficFlow(
   input: string | Buffer | object,
-  src: SourceDescriptor
+  src: SourceDescriptor,
 ): FlowParseResult {
   const payload = safeParse(input);
   // safeParse returns null on a hard failure: JSON.parse threw, or the top-level
@@ -374,7 +375,7 @@ export function resolveLineStringFromLocRef(locRef: unknown): LineString | null 
  * geometry when no inline locationReference is present.
  */
 function buildSiteGeometryMap(
-  root: ReturnType<typeof parseXmlDocument>
+  root: ReturnType<typeof parseXmlDocument>,
 ): Map<string, FlowGeometry> {
   const map = new Map<string, FlowGeometry>();
 
@@ -508,7 +509,7 @@ export function buildMeasuredSiteFlow(
   fields: MeasuredSiteFields,
   src: SourceDescriptor,
   origin: RoadFlow["origin"],
-  now: string
+  now: string,
 ): { flow: RoadFlow; event?: RoadEvent } | null {
   const { siteId, measuredAt, geom, speedKph, trafficStatus, freeFlowKph } = fields;
 
@@ -565,7 +566,7 @@ export function reclassifyFlow(
   flow: RoadFlow,
   freeFlowKph: number,
   freeFlowSource: BaselineMethod,
-  src: SourceDescriptor
+  src: SourceDescriptor,
 ): { flow: RoadFlow; event?: RoadEvent } {
   if (
     flow.los !== "unknown" ||
@@ -604,7 +605,7 @@ export function reclassifyFlow(
 export function enrichFlowsWithBaseline(
   observations: Observation[],
   baselineMap: Map<string, { kph: number; method: BaselineMethod }>,
-  src: SourceDescriptor
+  src: SourceDescriptor,
 ): Observation[] {
   const out: Observation[] = [];
   for (const obs of observations) {
@@ -653,7 +654,7 @@ export function enrichFlowsWithBaseline(
 export function parseDatexMeasuredData(
   input: string | Buffer,
   src: SourceDescriptor,
-  siteMap?: Map<string, FlowGeometry>
+  siteMap?: Map<string, FlowGeometry>,
 ): FlowParseResult {
   let doc: ReturnType<typeof parseXmlDocument>;
   try {
@@ -751,7 +752,7 @@ export function parseDatexMeasuredData(
         },
         src,
         origin,
-        now
+        now,
       );
       if (built) {
         flows.push(built.flow);

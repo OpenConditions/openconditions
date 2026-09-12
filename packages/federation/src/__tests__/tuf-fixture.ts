@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { stringify } from "yaml";
 import { multibaseFromRawEd25519 } from "../multibase.js";
 import { registryEntryFileName } from "../registry.js";
-import { signRegistry, type SignedRegistry, type TufRoleConfig } from "../tuf/repo.js";
+import { type SignedRegistry, signRegistry, type TufRoleConfig } from "../tuf/repo.js";
 import { generateTufSigner, type TufSigner } from "../tuf/signing.js";
 
 export function tempDir(prefix: string): string {
@@ -64,7 +64,7 @@ export type RoleName = "root" | "targets" | "snapshot" | "timestamp";
 
 export function rolesFrom(
   keys: RepoKeys,
-  overrides: Partial<Record<RoleName, Partial<TufRoleConfig>>> = {}
+  overrides: Partial<Record<RoleName, Partial<TufRoleConfig>>> = {},
 ): Record<RoleName, TufRoleConfig> {
   const role = (signers: TufSigner[], name: RoleName): TufRoleConfig => ({
     keys: signers.map((signer) => signer.key),

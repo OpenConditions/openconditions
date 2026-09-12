@@ -1,16 +1,16 @@
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import { guardedFetch, resolveWithSnapshot } from "@openconditions/ingest-framework";
 import type { FeedSourceBase } from "@openconditions/ingest-framework";
+import { guardedFetch, resolveWithSnapshot } from "@openconditions/ingest-framework";
 // Imported from the built package barrel (not `../src/*.ts`) so the script runs
 // under plain `node scripts/export-atlas.ts` — Node does not remap `.js` import
 // specifiers to `.ts` source, so importing the compiled `dist` is required. Run
 // `pnpm --filter @openconditions/roads build` first.
 import {
-  FEED_SOURCES,
   autobahnIndexResolver,
-  wzdxRegistryResolver,
+  FEED_SOURCES,
   roadFeedSchema,
+  wzdxRegistryResolver,
 } from "@openconditions/roads";
 
 /**
@@ -21,7 +21,7 @@ import {
  */
 export function buildAtlas(
   feeds: FeedSourceBase[],
-  resolved: FeedSourceBase[][]
+  resolved: FeedSourceBase[][],
 ): FeedSourceBase[] {
   const byId = new Map<string, FeedSourceBase>();
   for (const layer of [feeds, ...resolved]) {
@@ -61,7 +61,7 @@ async function main(): Promise<void> {
   // Validate the complete export before replacing either committed artifact.
   const atlas = buildAtlas(
     FEED_SOURCES,
-    resolved.map((r) => r.feeds)
+    resolved.map((r) => r.feeds),
   );
 
   for (const { file, feeds } of resolved) {

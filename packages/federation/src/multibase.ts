@@ -12,7 +12,7 @@
 const BASE58_ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
 
 const BASE58_INDEX = new Map<string, number>(
-  Array.from(BASE58_ALPHABET, (char, index) => [char, index])
+  Array.from(BASE58_ALPHABET, (char, index) => [char, index]),
 );
 
 /** Multicodec varint prefix for ed25519-pub. */
@@ -78,7 +78,7 @@ export function base58btcDecode(text: string): Uint8Array {
 export function multibaseFromRawEd25519(publicKey: Uint8Array): string {
   if (publicKey.length !== ED25519_PUBLIC_KEY_BYTES) {
     throw new TypeError(
-      `expected a raw ${ED25519_PUBLIC_KEY_BYTES}-byte Ed25519 public key, got ${publicKey.length} bytes`
+      `expected a raw ${ED25519_PUBLIC_KEY_BYTES}-byte Ed25519 public key, got ${publicKey.length} bytes`,
     );
   }
   const prefixed = new Uint8Array(ED25519_PUB_PREFIX.length + publicKey.length);
@@ -96,7 +96,7 @@ export function multibaseFromRawEd25519(publicKey: Uint8Array): string {
 export function rawEd25519FromMultibase(multibase: string): Uint8Array {
   if (multibase.length > MAX_MULTIBASE_LENGTH) {
     throw new TypeError(
-      `publicKeyMultibase too long (${multibase.length} chars; max ${MAX_MULTIBASE_LENGTH})`
+      `publicKeyMultibase too long (${multibase.length} chars; max ${MAX_MULTIBASE_LENGTH})`,
     );
   }
   if (!multibase.startsWith("z")) {
@@ -109,7 +109,7 @@ export function rawEd25519FromMultibase(multibase: string): Uint8Array {
   const raw = decoded.slice(ED25519_PUB_PREFIX.length);
   if (raw.length !== ED25519_PUBLIC_KEY_BYTES) {
     throw new TypeError(
-      `expected a ${ED25519_PUBLIC_KEY_BYTES}-byte Ed25519 public key payload, got ${raw.length} bytes`
+      `expected a ${ED25519_PUBLIC_KEY_BYTES}-byte Ed25519 public key payload, got ${raw.length} bytes`,
     );
   }
   return raw;

@@ -38,7 +38,7 @@ export function publicContextString(ctx: PublicContext): string {
 export async function redemptionContext(ctx: PublicContext): Promise<Uint8Array> {
   const digest = await globalThis.crypto.subtle.digest(
     "SHA-256",
-    new TextEncoder().encode(publicContextString(ctx))
+    new TextEncoder().encode(publicContextString(ctx)),
   );
   return new Uint8Array(digest);
 }

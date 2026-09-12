@@ -68,7 +68,7 @@ export function epsgCode(crsName: unknown): string | null {
  * data is already WGS84 (or the CRS is unknown — caller leaves coords as-is).
  */
 export function reprojectorFor(
-  crsName: unknown
+  crsName: unknown,
 ): ((p: [number, number]) => [number, number]) | null {
   if (typeof crsName !== "string" || crsName.length === 0) return null;
   if (/(?:^|[:/])(3857|900913|102100)\b/.test(crsName)) return mercToWgs84;

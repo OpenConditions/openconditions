@@ -8,29 +8,30 @@
  * events cross the federation trust boundary).
  * Exported as build() so tests can fastify.inject; only main.ts listens.
  */
+
+import {
+  ACTIVITY_JSON,
+  ACTOR_WELL_KNOWN_PATH,
+  buildActorDocument,
+  createInMemoryRateLimiter,
+  ensureInstanceKey,
+  InMemoryNonceStore,
+  type InstanceKey,
+  loadActiveKeys,
+  type MtlsContext,
+  OUTBOX_DEFAULT_LIMIT,
+  OUTBOX_MAX_LIMIT,
+  outboxEtag,
+  PEERS_WELL_KNOWN_PATH,
+  type RateLimiter,
+  signMessage,
+} from "@openconditions/federation";
 import Fastify, {
   type FastifyInstance,
   type FastifyRequest,
   type FastifyServerOptions,
 } from "fastify";
 import type postgres from "postgres";
-import {
-  ACTIVITY_JSON,
-  ACTOR_WELL_KNOWN_PATH,
-  PEERS_WELL_KNOWN_PATH,
-  OUTBOX_DEFAULT_LIMIT,
-  OUTBOX_MAX_LIMIT,
-  InMemoryNonceStore,
-  buildActorDocument,
-  createInMemoryRateLimiter,
-  ensureInstanceKey,
-  loadActiveKeys,
-  outboxEtag,
-  signMessage,
-  type InstanceKey,
-  type MtlsContext,
-  type RateLimiter,
-} from "@openconditions/federation";
 import { readBackfill } from "./backfill.js";
 import { registerBackfillRoutes } from "./backfill-routes.js";
 import { resolveFederationSettings } from "./config.js";
@@ -164,7 +165,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         ...(options.mtlsContextFor !== undefined ? { mtlsContextFor: options.mtlsContextFor } : {}),
       },
       req,
-      reply
+      reply,
     );
     if (auth.rejected) return reply;
     // A blocked authenticated peer is refused the outbox too (transport control).
@@ -176,7 +177,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         ? (settings.peers.find((p) => p.instanceId === auth.peerId)?.trustTier ?? 0)
         : 0;
 
-    let parsed;
+    let parsed: ReturnType<typeof parseOutboxQuery>;
     try {
       parsed = parseOutboxQuery(req.query as Record<string, unknown>);
     } catch (err) {
@@ -247,7 +248,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   app.addContentTypeParser(
     ["application/json", "application/activity+json"],
     { parseAs: "buffer" },
-    (_req, body, done) => done(null, body)
+    (_req, body, done) => done(null, body),
   );
 
   registerSubscriptionRoutes(app, {

@@ -1,8 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
-import { phenomenonFingerprint, type ConditionEvent } from "@openconditions/core";
+import { type ConditionEvent, phenomenonFingerprint } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { applyCorroboration, applyNegation, findCandidates } from "../evidence/phenomenon.js";
 
 let sql: postgres.Sql;
@@ -264,7 +264,7 @@ describe("applyCorroboration", () => {
 
   it("throws a TypeError when an observation would corroborate itself", async () => {
     await expect(
-      applyCorroboration(sql, "self:same", "self:same", "2026-07-10T12:10:00Z")
+      applyCorroboration(sql, "self:same", "self:same", "2026-07-10T12:10:00Z"),
     ).rejects.toThrow(TypeError);
   }, 30_000);
 
@@ -277,10 +277,10 @@ describe("applyCorroboration", () => {
       reporterKey: "key-a",
     });
     await expect(
-      applyCorroboration(sql, "miss:absent", "miss:present", "2026-07-10T12:10:00Z")
+      applyCorroboration(sql, "miss:absent", "miss:present", "2026-07-10T12:10:00Z"),
     ).rejects.toThrow(/does not exist/);
     await expect(
-      applyCorroboration(sql, "miss:present", "miss:absent", "2026-07-10T12:10:00Z")
+      applyCorroboration(sql, "miss:present", "miss:absent", "2026-07-10T12:10:00Z"),
     ).rejects.toThrow(/does not exist/);
   }, 30_000);
 
@@ -377,10 +377,10 @@ describe("applyNegation", () => {
       reporterKey: "key-a",
     });
     await expect(
-      applyNegation(sql, "negmiss:absent", "negmiss:present", "2026-07-10T12:10:00Z")
+      applyNegation(sql, "negmiss:absent", "negmiss:present", "2026-07-10T12:10:00Z"),
     ).rejects.toThrow(/does not exist/);
     await expect(
-      applyNegation(sql, "negmiss:present", "negmiss:absent", "2026-07-10T12:10:00Z")
+      applyNegation(sql, "negmiss:present", "negmiss:absent", "2026-07-10T12:10:00Z"),
     ).rejects.toThrow(/does not exist/);
     expect(await evidenceOf("negmiss:present", "negate")).toHaveLength(0);
   }, 30_000);

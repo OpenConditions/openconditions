@@ -1,7 +1,7 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { readObservations, scanObservations, type QueryRunner } from "@openconditions/core";
+import { type QueryRunner, readObservations, scanObservations } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import type { RoadEvent } from "@openconditions/roads";
 import { parquetReadObjects } from "hyparquet";
@@ -139,7 +139,7 @@ describe("canonical observation and complete archive contract", () => {
       baseEvent({
         id: `complete:${String(i).padStart(5, "0")}`,
         headline: `Event ${i}`,
-      })
+      }),
     );
     await atomicSwap(sql, "arch-test", all);
     await sql`
@@ -176,7 +176,7 @@ describe("canonical observation and complete archive contract", () => {
       const rows = await parquetReadObjects({
         file: buffer.buffer.slice(
           buffer.byteOffset,
-          buffer.byteOffset + buffer.byteLength
+          buffer.byteOffset + buffer.byteLength,
         ) as ArrayBuffer,
       });
       expect(rows).toHaveLength(2104);
@@ -227,7 +227,7 @@ describe("canonical observation and complete archive contract", () => {
     expect(rows[0]!.canonicalId).toBeTruthy();
     expect(rows[0]!.sourceLicense).toBe("CC0-1.0");
     expect(
-      await readObservations(runner(sql), { bbox: [-180, -90, 180, 90], kind: "measurement" })
+      await readObservations(runner(sql), { bbox: [-180, -90, 180, 90], kind: "measurement" }),
     ).toEqual([]);
   });
 

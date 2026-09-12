@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -46,7 +46,7 @@ describe("migration 0008 — contribution tables exist", () => {
         "report_evidence",
         "token_quota",
         "issuer_key",
-      ])
+      ]),
     );
   }, 30_000);
 
@@ -82,7 +82,7 @@ describe("migration 0008 — contribution tables exist", () => {
         "geom",
         "signature",
         "created_at",
-      ])
+      ]),
     );
     expect(await tableColumns("report_evidence")).toEqual(
       new Set([
@@ -93,11 +93,11 @@ describe("migration 0008 — contribution tables exist", () => {
         "source_id",
         "occurred_at",
         "details",
-      ])
+      ]),
     );
     expect(await tableColumns("token_quota")).toEqual(new Set(["key_id", "epoch", "issued"]));
     expect(await tableColumns("issuer_key")).toEqual(
-      new Set(["key_id", "public_key", "private_key", "not_before", "not_after"])
+      new Set(["key_id", "public_key", "private_key", "not_before", "not_after"]),
     );
   }, 30_000);
 
@@ -119,7 +119,7 @@ describe("migration 0008 — contribution tables exist", () => {
 describe("migration 0009 — spent_token single-use ledger", () => {
   it("creates spent_token with its columns", async () => {
     expect(await tableColumns("spent_token")).toEqual(
-      new Set(["token_hash", "purpose", "spent_at"])
+      new Set(["token_hash", "purpose", "spent_at"]),
     );
   }, 30_000);
 
@@ -128,7 +128,7 @@ describe("migration 0009 — spent_token single-use ledger", () => {
       VALUES ('hash-dup', 'report:-:2026-07-12', now())`;
     await expect(
       sql`INSERT INTO conditions.spent_token (token_hash, purpose, spent_at)
-        VALUES ('hash-dup', 'report:-:2026-07-13', now())`
+        VALUES ('hash-dup', 'report:-:2026-07-13', now())`,
     ).rejects.toThrow(/spent_token_pkey|duplicate key/);
   }, 30_000);
 
@@ -152,7 +152,7 @@ describe("migration 0008 — indexes", () => {
         "idx_sub_claim_key",
         "idx_report_evidence_observation",
         "idx_conditions_obs_evidence_state",
-      ])
+      ]),
     );
   }, 30_000);
 });
@@ -162,7 +162,7 @@ describe("migration 0008 — CHECK constraints", () => {
     await expect(
       sql`INSERT INTO conditions.reporter (key_id, pub_jwk, reputation_alpha, reputation_beta,
             entitlement_expires_at, created_at, last_active_at)
-          VALUES ('k-bad-a', '{}'::jsonb, 0, 1, now(), now(), now())`
+          VALUES ('k-bad-a', '{}'::jsonb, 0, 1, now(), now(), now())`,
     ).rejects.toThrow(/reporter_reputation_alpha_positive/);
   }, 30_000);
 
@@ -170,21 +170,21 @@ describe("migration 0008 — CHECK constraints", () => {
     await expect(
       sql`INSERT INTO conditions.reporter (key_id, pub_jwk, reputation_alpha, reputation_beta,
             entitlement_expires_at, created_at, last_active_at, status)
-          VALUES ('k-bad-s', '{}'::jsonb, 1, 1, now(), now(), now(), 'weird')`
+          VALUES ('k-bad-s', '{}'::jsonb, 1, 1, now(), now(), now(), 'weird')`,
     ).rejects.toThrow(/reporter_status_enum/);
   }, 30_000);
 
   it("rejects a sub_claim with an unknown claim_type", async () => {
     await expect(
       sql`INSERT INTO conditions.sub_claim (id, subject_id, claim_type, key_id, signature, created_at)
-          VALUES ('sc-bad', 'subj-1', 'shout', 'k-1', 'sig', now())`
+          VALUES ('sc-bad', 'subj-1', 'shout', 'k-1', 'sig', now())`,
     ).rejects.toThrow(/sub_claim_claim_type_enum/);
   }, 30_000);
 
   it("rejects a report_evidence with an unknown evidence_kind", async () => {
     await expect(
       sql`INSERT INTO conditions.report_evidence (observation_id, evidence_kind, occurred_at)
-          VALUES ('obs-1', 'telepathy', now())`
+          VALUES ('obs-1', 'telepathy', now())`,
     ).rejects.toThrow(/report_evidence_kind_enum/);
   }, 30_000);
 
@@ -194,7 +194,7 @@ describe("migration 0008 — CHECK constraints", () => {
             (id, source, source_format, domain, kind, status, geom, origin,
              data_updated_at, fetched_at, is_stale, evidence_state)
           VALUES ('obs-es-bad', 'chk', 'native', 'roads', 'event', 'active',
-             ST_SetSRID(ST_MakePoint(0,0), 4326), '{}'::jsonb, now(), now(), false, 'nonsense')`
+             ST_SetSRID(ST_MakePoint(0,0), 4326), '{}'::jsonb, now(), now(), false, 'nonsense')`,
     ).rejects.toThrow(/obs_evidence_state_enum/);
   }, 30_000);
 });
@@ -205,14 +205,14 @@ describe("migration 0008 — unique sub_claim (subject, key, type)", () => {
       VALUES ('sc-1', 'subj-dup', 'confirm', 'key-dup', 'sig-1', now())`;
     await expect(
       sql`INSERT INTO conditions.sub_claim (id, subject_id, claim_type, key_id, signature, created_at)
-        VALUES ('sc-2', 'subj-dup', 'confirm', 'key-dup', 'sig-2', now())`
+        VALUES ('sc-2', 'subj-dup', 'confirm', 'key-dup', 'sig-2', now())`,
     ).rejects.toThrow(/uq_sub_claim_subject_key_type/);
   }, 30_000);
 
   it("allows the same key a different claim_type on the same subject", async () => {
     await expect(
       sql`INSERT INTO conditions.sub_claim (id, subject_id, claim_type, key_id, signature, created_at)
-        VALUES ('sc-3', 'subj-dup', 'flag', 'key-dup', 'sig-3', now())`
+        VALUES ('sc-3', 'subj-dup', 'flag', 'key-dup', 'sig-3', now())`,
     ).resolves.toBeDefined();
   }, 30_000);
 });

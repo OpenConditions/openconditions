@@ -43,7 +43,7 @@ describe("signRegistry", () => {
     const b = await buildRepo({ registryDir, keys, now });
     for (const file of ["1.root.json", "timestamp.json", "snapshot.json", "targets.json"]) {
       expect(readFileSync(join(a.metadataDir, file), "utf8")).toBe(
-        readFileSync(join(b.metadataDir, file), "utf8")
+        readFileSync(join(b.metadataDir, file), "utf8"),
       );
     }
   });
@@ -57,7 +57,7 @@ describe("signRegistry", () => {
         repoDir: tempDir("oc-tuf-repo-"),
         roles: rolesFrom(keys),
         testRoot: false as unknown as true,
-      })
+      }),
     ).rejects.toThrow(/test root/i);
   });
 
@@ -107,7 +107,7 @@ describe("verifyRegistryMetadata", () => {
 
     const v1 = await buildRepo({ registryDir, keys, version: 1 });
     await expect(verifyRegistryMetadata(v1.repoDir, v2.rootBytes, { cacheDir })).rejects.toThrow(
-      /less than current version/
+      /less than current version/,
     );
   });
 
@@ -115,7 +115,7 @@ describe("verifyRegistryMetadata", () => {
     const registryDir = writeRegistryDir([sampleEntry("openmapx-de")]);
     const repo = await buildRepo({ registryDir, expires: { timestamp: pastDate() } });
     await expect(
-      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") })
+      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") }),
     ).rejects.toThrow(/timestamp\.json is expired/);
   });
 
@@ -123,7 +123,7 @@ describe("verifyRegistryMetadata", () => {
     const registryDir = writeRegistryDir([sampleEntry("openmapx-de")]);
     const repo = await buildRepo({ registryDir, expires: { root: pastDate() } });
     await expect(
-      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") })
+      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") }),
     ).rejects.toThrow(/root\.json is expired/);
   });
 
@@ -131,7 +131,7 @@ describe("verifyRegistryMetadata", () => {
     const registryDir = writeRegistryDir([sampleEntry("openmapx-de")]);
     const repo = await buildRepo({ registryDir, expires: { targets: pastDate() } });
     await expect(
-      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") })
+      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") }),
     ).rejects.toThrow(/expired/i);
   });
 
@@ -147,7 +147,7 @@ describe("verifyRegistryMetadata", () => {
     copyFileSync(keptTargets, join(v2.metadataDir, "targets.json"));
 
     await expect(
-      verifyRegistryMetadata(v2.repoDir, v2.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") })
+      verifyRegistryMetadata(v2.repoDir, v2.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") }),
     ).rejects.toThrow(/mismatch|expected length/i);
   });
 
@@ -164,7 +164,7 @@ describe("verifyRegistryMetadata", () => {
     writeFileSync(targetsPath, tampered);
 
     await expect(
-      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") })
+      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") }),
     ).rejects.toThrow(/expected hash/i);
   });
 
@@ -176,13 +176,13 @@ describe("verifyRegistryMetadata", () => {
     const timestampPath = join(repo.metadataDir, "timestamp.json");
     const timestamp = Metadata.fromJSON(
       MetadataKind.Timestamp,
-      JSON.parse(readFileSync(timestampPath, "utf8"))
+      JSON.parse(readFileSync(timestampPath, "utf8")),
     );
     timestamp.sign(rogue.sign, false);
     writeFileSync(timestampPath, JSON.stringify(timestamp.toJSON()));
 
     await expect(
-      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") })
+      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") }),
     ).rejects.toThrow(/signed by 0\/1/);
   });
 
@@ -196,7 +196,7 @@ describe("verifyRegistryMetadata", () => {
     const repo = await buildRepo({ registryDir, keys, roles });
 
     await expect(
-      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") })
+      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") }),
     ).rejects.toThrow(/signed by 0\/1/);
   });
 
@@ -213,7 +213,7 @@ describe("verifyRegistryMetadata", () => {
     });
     const repo = await buildRepo({ registryDir, keys, roles });
     await expect(
-      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") })
+      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") }),
     ).rejects.toThrow(/signed by 1\/2/);
   });
 
@@ -285,7 +285,7 @@ describe("verifyRegistryMetadata", () => {
     });
 
     await expect(verifyRegistryMetadata(v1.repoDir, v1.rootBytes, { cacheDir })).rejects.toThrow(
-      /signed by/
+      /signed by/,
     );
   });
 
@@ -296,7 +296,7 @@ describe("verifyRegistryMetadata", () => {
       verifyRegistryMetadata(repo.repoDir, repo.rootBytes, {
         cacheDir: tempDir("oc-tuf-cache-"),
         env: "production",
-      })
+      }),
     ).rejects.toThrow(TestRootInProductionError);
   });
 
@@ -307,7 +307,9 @@ describe("verifyRegistryMetadata", () => {
     delete process.env.NODE_ENV;
     try {
       await expect(
-        verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir: tempDir("oc-tuf-cache-") })
+        verifyRegistryMetadata(repo.repoDir, repo.rootBytes, {
+          cacheDir: tempDir("oc-tuf-cache-"),
+        }),
       ).rejects.toThrow(TestRootInProductionError);
     } finally {
       process.env.NODE_ENV = previous;
@@ -321,7 +323,7 @@ describe("verifyRegistryMetadata", () => {
       verifyRegistryMetadata(repo.repoDir, repo.rootBytes, {
         cacheDir: tempDir("oc-tuf-cache-"),
         env: "staging",
-      })
+      }),
     ).rejects.toThrow(TestRootInProductionError);
   });
 
@@ -354,7 +356,7 @@ describe("verifyRegistryMetadata", () => {
     const cacheDir = tempDir("oc-tuf-cache-");
     await verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir, env: "test" });
     await expect(
-      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir, env: "production" })
+      verifyRegistryMetadata(repo.repoDir, repo.rootBytes, { cacheDir, env: "production" }),
     ).rejects.toThrow(TestRootInProductionError);
   });
 });
@@ -366,17 +368,17 @@ describe("tufSignerFromKeyPair", () => {
       "verify",
     ])) as CryptoKeyPair;
     const pkcs8 = new Uint8Array(
-      await globalThis.crypto.subtle.exportKey("pkcs8", pair.privateKey)
+      await globalThis.crypto.subtle.exportKey("pkcs8", pair.privateKey),
     );
     const nonExtractable = await globalThis.crypto.subtle.importKey(
       "pkcs8",
       pkcs8 as BufferSource,
       { name: "Ed25519" },
       false,
-      ["sign"]
+      ["sign"],
     );
     const publicKeyRaw = new Uint8Array(
-      await globalThis.crypto.subtle.exportKey("raw", pair.publicKey)
+      await globalThis.crypto.subtle.exportKey("raw", pair.publicKey),
     );
     const signer = tufSignerFromKeyPair({ publicKeyRaw, privateKey: nonExtractable });
     const data = Buffer.from("signed payload");
@@ -386,7 +388,7 @@ describe("tufSignerFromKeyPair", () => {
       { name: "Ed25519" },
       pair.publicKey,
       Buffer.from(signature.sig, "hex") as BufferSource,
-      data as BufferSource
+      data as BufferSource,
     );
     expect(verified).toBe(true);
   });

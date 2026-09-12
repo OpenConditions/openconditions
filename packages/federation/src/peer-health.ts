@@ -83,7 +83,7 @@ export async function recordAvailability(
   sql: Sql,
   peerId: string,
   ok: boolean,
-  now: string
+  now: string,
 ): Promise<void> {
   if (ok) {
     await sql`
@@ -114,7 +114,7 @@ export async function recordPeerFailure(
   peerId: string,
   kind: PeerHealthFailure,
   now: string,
-  count = 1
+  count = 1,
 ): Promise<void> {
   if (count <= 0) return;
   const column = FAILURE_COLUMN[kind];
@@ -135,7 +135,7 @@ export async function setEffectiveTierUntil(
   sql: Sql,
   peerId: string,
   until: string | null,
-  now: string
+  now: string,
 ): Promise<void> {
   await sql`
     INSERT INTO conditions.federation_peer_health (peer_id, effective_tier_until, updated_at)

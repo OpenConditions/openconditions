@@ -1,40 +1,39 @@
-import { encodeOpenlrLine } from "@openconditions/openlr";
-import { clearResolveCache } from "../pipeline/resolve.js";
 import { readFileSync } from "node:fs";
-import { gzipSync } from "node:zlib";
 import path from "node:path";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
+import { gzipSync } from "node:zlib";
 import { readObservations } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
-import { recordSkippedNoGeometry } from "@openconditions/roads";
-import { FEED_SOURCES } from "@openconditions/roads";
-import type { RoadEvent, RoadFlow } from "@openconditions/roads";
 import type { LookupFn } from "@openconditions/ingest-framework";
-import { atomicSwap, MAX_ROWS_PER_SOURCE } from "../pipeline/write-postgis.js";
-import { runSource } from "../pipeline/run.js";
+import { encodeOpenlrLine } from "@openconditions/openlr";
+import type { RoadEvent, RoadFlow } from "@openconditions/roads";
+import { FEED_SOURCES, recordSkippedNoGeometry } from "@openconditions/roads";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { clearResolveCache } from "../pipeline/resolve.js";
 import type { DomainFeedSource } from "../pipeline/run.js";
+import { runSource } from "../pipeline/run.js";
 import { clearSiteTableCache } from "../pipeline/site-table.js";
+import { atomicSwap, MAX_ROWS_PER_SOURCE } from "../pipeline/write-postgis.js";
 
 const NDW_FIXTURE_PATH = path.resolve(
   import.meta.dirname,
-  "../../../../packages/roads/src/__tests__/fixtures/ndw/actueel_beeld.xml"
+  "../../../../packages/roads/src/__tests__/fixtures/ndw/actueel_beeld.xml",
 );
 
 const DRIVEBC_FIXTURE_PATH = path.resolve(
   import.meta.dirname,
-  "../../../../packages/roads/src/__tests__/fixtures/drivebc/events.json"
+  "../../../../packages/roads/src/__tests__/fixtures/drivebc/events.json",
 );
 
 const NDW_FLOW_SPEED_FIXTURE_PATH = path.resolve(
   import.meta.dirname,
-  "../../../../packages/roads/src/__tests__/fixtures/ndw-flow/trafficspeed.xml"
+  "../../../../packages/roads/src/__tests__/fixtures/ndw-flow/trafficspeed.xml",
 );
 
 const NDW_FLOW_SITE_TABLE_FIXTURE_PATH = path.resolve(
   import.meta.dirname,
-  "../../../../packages/roads/src/__tests__/fixtures/ndw-flow/measurement_site_table.xml"
+  "../../../../packages/roads/src/__tests__/fixtures/ndw-flow/measurement_site_table.xml",
 );
 
 const ndwFeed: DomainFeedSource = {
@@ -488,7 +487,7 @@ describe("atomicSwap — bulk insert at volume", () => {
       id: `overflow:${i}`,
     }));
     await expect(atomicSwap(sql, "overflow", oversized, 300)).rejects.toThrow(
-      /100001 rows.*limit 100000/
+      /100001 rows.*limit 100000/,
     );
 
     const rows = await sql<{ id: string }[]>`
@@ -523,7 +522,7 @@ describe("atomicSwap — bulk insert at volume", () => {
         mkFlow("diffsrc:changed", 50, "2026-06-24T11:00:00Z"),
         mkFlow("diffsrc:removed", 50, "2026-06-24T11:00:00Z"),
       ],
-      300
+      300,
     );
     expect(first.inserted).toBe(3);
     expect(first.updated).toBe(0);
@@ -547,7 +546,7 @@ describe("atomicSwap — bulk insert at volume", () => {
         mkFlow("diffsrc:changed", 90, "2026-06-24T12:00:00Z"),
         mkFlow("diffsrc:new", 50, "2026-06-24T12:00:00Z"),
       ],
-      300
+      300,
     );
     expect(second.inserted).toBe(1);
     expect(second.updated).toBe(1);
@@ -600,7 +599,7 @@ describe("atomicSwap — bulk insert at volume", () => {
       sql,
       "dupsrc",
       [mkFlow("dupsrc:1", 10), mkFlow("dupsrc:1", 20)],
-      300
+      300,
     );
     expect(counts).toEqual({ inserted: 1, updated: 0, deleted: 0, changedIds: ["dupsrc:1"] });
 
@@ -1286,19 +1285,19 @@ describe("pipeline publication acceptance", () => {
           new Response(
             ++page === 1 || failure === "ceiling"
               ? body("partial new")
-              : JSON.stringify({ error: "not available" })
+              : JSON.stringify({ error: "not available" }),
           ),
         {
           ...feed,
           pagination: { recordsPath: "events", pageSize: 1, skipParam: "offset", maxPages: 2 },
-        }
+        },
       );
       expect(result.error).toMatch(/pagination/);
       expect(await facts(feed.id)).toEqual(before);
       expect(
-        await sql`SELECT description FROM conditions.observations WHERE source=${feed.id}`
+        await sql`SELECT description FROM conditions.observations WHERE source=${feed.id}`,
       ).toEqual([{ description: "last good" }]);
-    }
+    },
   );
 });
 
@@ -1337,7 +1336,7 @@ describe("stable provenance refresh", () => {
             },
           ],
         }),
-        { headers: { etag: "stable-content" } }
+        { headers: { etag: "stable-content" } },
       );
     }) as typeof globalThis.fetch;
     const run = () =>
@@ -1393,7 +1392,7 @@ describe("OpenLR publication failure", () => {
         ],
         frc: 3,
         fow: 3,
-      })
+      }),
     );
     const xml = `<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3">
       <payload xsi:type="SituationPublication"><situation id="s">
@@ -1401,12 +1400,12 @@ describe("OpenLR publication failure", () => {
         .map(
           (
             ref,
-            i
+            i,
           ) => `<situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="r${i}" version="1">
         <situationRecordVersionTime>2026-09-11T12:00:00Z</situationRecordVersionTime>
         <validity><validityStatus>active</validityStatus></validity>
         <locationReference xsi:type="OpenlrPointAlongLine"><openlrBinary>${ref}</openlrBinary></locationReference>
-      </situationRecord>`
+      </situationRecord>`,
         )
         .join("")}
       </situation></payload></messageContainer>`;

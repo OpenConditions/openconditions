@@ -31,7 +31,7 @@ describe("parseLtaIncidents", () => {
           Message: "Breakdown on AYE",
         },
       ]),
-      SRC
+      SRC,
     );
     expect(out).toHaveLength(3);
     const byType = Object.fromEntries(out.map((e) => [e.type, e]));

@@ -1,13 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { resolveUrlTemplate, resolveFeedUrls, allowedTemplateVars } from "../index.js";
-import { resolvedEnv } from "../index.js";
+import { allowedTemplateVars, resolvedEnv, resolveFeedUrls, resolveUrlTemplate } from "../index.js";
 
 describe("resolveUrlTemplate", () => {
   it("interpolates ${VAR} tokens from env", () => {
     const out = resolveUrlTemplate(
       "https://h/${K}?id=${ID}",
       { K: "abc", ID: "42" },
-      new Set(["K", "ID"])
+      new Set(["K", "ID"]),
     );
     expect(out).toBe("https://h/abc?id=42");
   });
@@ -18,7 +17,7 @@ describe("resolveUrlTemplate", () => {
 
   it("throws naming the variable when a declared var is unset", () => {
     expect(() => resolveUrlTemplate("https://h?k=${MISSING}", {}, new Set(["MISSING"]))).toThrow(
-      /unset variable MISSING/
+      /unset variable MISSING/,
     );
   });
 
@@ -27,7 +26,7 @@ describe("resolveUrlTemplate", () => {
     // declared `requiredEnv`/auth vars throws BEFORE the env lookup, even when
     // that var happens to be set — it must never resolve from the full env.
     expect(() =>
-      resolveUrlTemplate("https://h?k=${SECRET}", { SECRET: "leaked" }, new Set())
+      resolveUrlTemplate("https://h?k=${SECRET}", { SECRET: "leaked" }, new Set()),
     ).toThrow(/undeclared variable SECRET/);
   });
 
@@ -55,7 +54,7 @@ describe("resolveFeedUrls", () => {
   it("resolves a single template url", () => {
     const urls = resolveFeedUrls(
       { id: "a", url: "https://h?k=${K}", requiredEnv: ["K"] },
-      { K: "v" }
+      { K: "v" },
     );
     expect(urls).toEqual(["https://h?k=v"]);
   });
@@ -63,7 +62,7 @@ describe("resolveFeedUrls", () => {
   it("resolves an array of templates", () => {
     const urls = resolveFeedUrls(
       { id: "a", url: ["https://h/1?k=${K}", "https://h/2?k=${K}"], requiredEnv: ["K"] },
-      { K: "v" }
+      { K: "v" },
     );
     expect(urls).toEqual(["https://h/1?k=v", "https://h/2?k=v"]);
   });
@@ -76,7 +75,7 @@ describe("resolveFeedUrls", () => {
         expandEnv: "SUB",
         requiredEnv: ["SUB"],
       },
-      { SUB: "2000001, 2000002" }
+      { SUB: "2000001, 2000002" },
     );
     expect(urls).toEqual([
       "https://mobilithek.info/api/subscription/2000001/clientPullService?subscriptionID=2000001",
@@ -88,8 +87,8 @@ describe("resolveFeedUrls", () => {
     expect(
       resolveFeedUrls(
         { id: "mob", url: "https://h/${SUB}", expandEnv: "SUB", requiredEnv: ["SUB"] },
-        {}
-      )
+        {},
+      ),
     ).toEqual([]);
   });
 
@@ -99,7 +98,7 @@ describe("resolveFeedUrls", () => {
 
   it("throws when a template references a var outside requiredEnv/auth (undeclared)", () => {
     expect(() =>
-      resolveFeedUrls({ id: "leaky", url: "https://h?x=${DATABASE_URL}" }, { DATABASE_URL: "x" })
+      resolveFeedUrls({ id: "leaky", url: "https://h?x=${DATABASE_URL}" }, { DATABASE_URL: "x" }),
     ).toThrow(/undeclared variable DATABASE_URL/);
   });
 });

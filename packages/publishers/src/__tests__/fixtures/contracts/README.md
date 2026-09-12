@@ -11,7 +11,8 @@ source exclusions, expiry and ambiguous bindings. Both tests run in their normal
 repository test suites; neither requires the other checkout or a live feed.
 
 For intentional contract changes, update and review both fixture copies and run
-both suites. Compare parsed JSON, since the repositories use different formatters.
+both suites. Both repositories format with the same Biome version and settings,
+so the copies are byte-identical; the tests compare parsed JSON either way.
 Do not refresh timestamps to today's date or regenerate the expected output as
 part of a test: the fixed clock and independent golden output detect drift.
 
@@ -44,9 +45,8 @@ than to rights, binding currency or evidence.
 The same payload is checked into OpenMapX at
 `services/data-manager/src/__tests__/fixtures/contracts/road-restrictions-v1.json`.
 Regenerate deliberately with `UPDATE_RESTRICTION_CONTRACT=1` (refused under
-`CI`), run `pnpm format` so the written file matches this repository's style,
-review the diff, copy it to OpenMapX and run both suites. As above, the two
-copies are compared as parsed JSON, not as bytes.
+`CI`), run `pnpm format` so the written file matches the repository's style,
+review the diff, copy it to OpenMapX and run both suites.
 
 The Fintraffic record is real reviewed source data under CC BY 4.0
 (https://creativecommons.org/licenses/by/4.0/); the control closure is authored

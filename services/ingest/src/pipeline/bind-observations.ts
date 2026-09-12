@@ -1,17 +1,17 @@
 import { createHash } from "node:crypto";
-import type postgres from "postgres";
 import type { GeoJsonGeometry } from "@openconditions/core";
 import {
   BIND_DEFAULTS,
-  RESOLVER_VERSION,
+  type BindInput,
+  type BindResult,
   bboxOf,
   bindEvent,
   expandBbox,
-  toBindInput,
-  type BindInput,
-  type BindResult,
+  RESOLVER_VERSION,
   type SpineSegment,
+  toBindInput,
 } from "@openconditions/roads";
+import type postgres from "postgres";
 import { loadOsmRegions } from "./osm-import.js";
 
 type Sql = postgres.Sql;
@@ -105,10 +105,10 @@ function coordsOf(g: GeoJsonGeometry): [number, number][] {
 
 function insideAnyRegion(
   b: [number, number, number, number],
-  regions: { bbox: [number, number, number, number] }[]
+  regions: { bbox: [number, number, number, number] }[],
 ): boolean {
   return regions.some(
-    (r) => b[0] <= r.bbox[2] && b[2] >= r.bbox[0] && b[1] <= r.bbox[3] && b[3] >= r.bbox[1]
+    (r) => b[0] <= r.bbox[2] && b[2] >= r.bbox[0] && b[1] <= r.bbox[3] && b[3] >= r.bbox[1],
   );
 }
 
@@ -128,7 +128,7 @@ function failure(status: BindResult["status"], reason: string): BindResult {
 
 async function fetchSubgraph(
   sql: Sql,
-  bbox: [number, number, number, number]
+  bbox: [number, number, number, number],
 ): Promise<SpineSegment[]> {
   const rows = await sql<
     {
@@ -174,7 +174,7 @@ async function writeResult(
   now: string,
   observationRevision: string,
   expectedContentHash: string | null,
-  graphGeneration: string | null
+  graphGeneration: string | null,
 ): Promise<boolean> {
   return sql.begin(async (tx) => {
     // One writer per id at a time. Without this, two concurrent replacements
@@ -243,7 +243,7 @@ async function acknowledgeCurrentQueue(
   sql: Sql,
   id: string,
   observationRevision: string,
-  graphGeneration: string | null
+  graphGeneration: string | null,
 ): Promise<void> {
   await sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext('observation_binding'), hashtext(${id}))`;
@@ -299,7 +299,7 @@ async function clearInactive(sql: Sql, ids: string[], keep: Set<string>): Promis
 export async function bindObservations(
   sql: Sql,
   ids: string[],
-  deps: { now: () => string; env?: NodeJS.ProcessEnv }
+  deps: { now: () => string; env?: NodeJS.ProcessEnv },
 ): Promise<BindObservationsResult> {
   const result: BindObservationsResult = {
     attempted: 0,
@@ -369,7 +369,7 @@ export async function bindObservations(
           // still sees the segments just past its endpoints.
           const diag = Math.hypot(
             (b[2] - b[0]) * 111_320 * Math.cos((b[1] * Math.PI) / 180),
-            (b[3] - b[1]) * 111_320
+            (b[3] - b[1]) * 111_320,
           );
           const segments = await fetchSubgraph(sql, expandBbox(b, Math.max(500, 0.2 * diag)));
           r = bindEvent(input, { segments }, { maxOffsetM: opts.maxOffsetM });
@@ -387,7 +387,7 @@ export async function bindObservations(
           deps.now(),
           observationRevision,
           row.observation_revision,
-          graphGeneration
+          graphGeneration,
         );
         if (!persisted) {
           result.writeErrors++;
@@ -406,7 +406,7 @@ export async function bindObservations(
     }
   };
   await Promise.all(
-    Array.from({ length: Math.min(opts.concurrency, rows.length) }, () => worker())
+    Array.from({ length: Math.min(opts.concurrency, rows.length) }, () => worker()),
   );
   return result;
 }
@@ -414,7 +414,7 @@ export async function bindObservations(
 /** Drains due binding retries; failures remain queued with bounded backoff. */
 export async function drainBindingQueue(
   sql: Sql,
-  deps: { now: () => string; env?: NodeJS.ProcessEnv; limit?: number }
+  deps: { now: () => string; env?: NodeJS.ProcessEnv; limit?: number },
 ): Promise<BindObservationsResult> {
   const limit = Math.max(1, Math.min(deps.limit ?? 500, 2_000));
   const rows = await sql<{ observation_id: string }[]>`
@@ -425,6 +425,6 @@ export async function drainBindingQueue(
   return bindObservations(
     sql,
     rows.map((row) => row.observation_id),
-    deps
+    deps,
   );
 }

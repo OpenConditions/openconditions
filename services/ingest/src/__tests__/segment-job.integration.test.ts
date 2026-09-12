@@ -1,10 +1,10 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
-import { runSegmentRebuild } from "../pipeline/segment-rebuild.js";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { activateRoadGraph } from "../pipeline/graph-state.js";
 import { importOsmRoads, type OsmRegion } from "../pipeline/osm-import.js";
+import { runSegmentRebuild } from "../pipeline/segment-rebuild.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -255,7 +255,7 @@ describe("runSegmentRebuild", () => {
     await importOsmRoads(sql, { source, now: () => NOW, regions: [original] });
     const originalEnv = { SEGMENT_REGIONS: JSON.stringify([original]) };
     await expect(activateRoadGraph(sql, { now: () => NOW, env: originalEnv })).resolves.toBeTypeOf(
-      "string"
+      "string",
     );
 
     const changed: OsmRegion = {
@@ -268,7 +268,7 @@ describe("runSegmentRebuild", () => {
       activateRoadGraph(sql, {
         now: () => NOW,
         env: { SEGMENT_REGIONS: JSON.stringify([changed]) },
-      })
+      }),
     ).rejects.toThrow(/missing current configured imports: de/);
   }, 30_000);
 });
@@ -279,7 +279,7 @@ it("rejects malformed regions before any graph mutation", async () => {
   ]);
   const query = vi.fn();
   await expect(
-    runSegmentRebuild(query as unknown as postgres.Sql, { fetch: fetchFn, now: () => NOW })
+    runSegmentRebuild(query as unknown as postgres.Sql, { fetch: fetchFn, now: () => NOW }),
   ).rejects.toThrow(/SEGMENT_REGIONS/);
   expect(query).not.toHaveBeenCalled();
 });
@@ -296,6 +296,6 @@ it("does not import or activate a graph without configured regions", async () =>
   });
   expect(fetch).not.toHaveBeenCalled();
   await expect(activateRoadGraph(sql, { now: () => NOW, env: {} })).rejects.toThrow(
-    /SEGMENT_REGIONS is not configured/
+    /SEGMENT_REGIONS is not configured/,
   );
 });

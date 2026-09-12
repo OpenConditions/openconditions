@@ -1,9 +1,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import type { FeedSourceBase } from "@openconditions/ingest-framework";
 import {
-  envExampleFor,
   configSchemaPropertiesFor,
   credentialsDocFor,
+  envExampleFor,
 } from "./lib/gen-credentials-lib.js";
 
 export interface GenPaths {
@@ -96,7 +96,7 @@ export function nextEnvExample(current: string, feeds: FeedSourceBase[]): string
 export function applyOrCheck(
   feeds: FeedSourceBase[],
   paths: GenPaths,
-  write: boolean
+  write: boolean,
 ): { drift: string[] } {
   const targets: [string, string][] = [
     [paths.envExample, nextEnvExample(safeRead(paths.envExample), feeds)],
@@ -132,7 +132,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const { drift } = applyOrCheck(FEED_SOURCES as unknown as FeedSourceBase[], paths, write);
   if (!write && drift.length > 0) {
     console.error(
-      `✗ Credential metadata is out of sync:\n  ${drift.join("\n  ")}\n\nFix with:  pnpm gen:credentials --write`
+      `✗ Credential metadata is out of sync:\n  ${drift.join("\n  ")}\n\nFix with:  pnpm gen:credentials --write`,
     );
     process.exit(1);
   }

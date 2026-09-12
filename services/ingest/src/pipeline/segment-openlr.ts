@@ -1,5 +1,5 @@
-import type postgres from "postgres";
 import { encodeOpenlrLine } from "@openconditions/openlr";
+import type postgres from "postgres";
 
 type Sql = postgres.Sql;
 
@@ -108,7 +108,7 @@ export async function encodeSegmentOpenlr(sql: Sql): Promise<{ encoded: number }
 
   if (skipped > 0) {
     console.warn(
-      `[ingest] segment-openlr: skipped ${skipped} segment(s) with unencodable geometry`
+      `[ingest] segment-openlr: skipped ${skipped} segment(s) with unencodable geometry`,
     );
   }
 

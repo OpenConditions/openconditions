@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from "vitest";
-import type postgres from "postgres";
 import type { LookupFn } from "@openconditions/ingest-framework";
+import type postgres from "postgres";
+import { describe, expect, it, vi } from "vitest";
 import type { DomainFeedSource } from "../pipeline/run.js";
 import { runSource } from "../pipeline/run.js";
 
@@ -11,7 +11,7 @@ const noSwapSql = Object.assign(
     begin: vi.fn(async () => {
       throw new Error("atomicSwap opened a transaction for a blocked feed");
     }),
-  }
+  },
 ) as unknown as postgres.Sql;
 
 function blockedFeed(url: string): DomainFeedSource {

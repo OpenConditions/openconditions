@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MAX_ROWS_PER_SOURCE, capRows } from "../pipeline/write-postgis.js";
+import { capRows, MAX_ROWS_PER_SOURCE } from "../pipeline/write-postgis.js";
 
 describe("capRows", () => {
   it("returns the input unchanged when under the cap", () => {

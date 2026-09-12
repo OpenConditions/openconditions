@@ -108,7 +108,7 @@ export function loadPeers(source: string | unknown): PeerRecord[] {
       } catch (err) {
         fail(
           index,
-          `pinned key ${JSON.stringify(pin)} is not an Ed25519 multikey: ${(err as Error).message}`
+          `pinned key ${JSON.stringify(pin)} is not an Ed25519 multikey: ${(err as Error).message}`,
         );
       }
     }

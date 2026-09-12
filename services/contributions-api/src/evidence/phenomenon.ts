@@ -1,6 +1,6 @@
-import type postgres from "postgres";
-import { phenomenonFingerprintNeighborhood, type ConditionEvent } from "@openconditions/core";
 import type { PhenomenonCandidate } from "@openconditions/contrib-core";
+import { type ConditionEvent, phenomenonFingerprintNeighborhood } from "@openconditions/core";
+import type postgres from "postgres";
 import { recomputeEvidence } from "./recompute.js";
 
 type Sql = postgres.Sql;
@@ -76,7 +76,7 @@ export interface FindCandidatesOptions {
 export async function findCandidates(
   sql: Sql,
   observationId: string,
-  opts: FindCandidatesOptions = {}
+  opts: FindCandidatesOptions = {},
 ): Promise<PhenomenonCandidate[]> {
   const targetRows = await sql<TargetRow[]>`
     SELECT domain, type, kind, ST_AsGeoJSON(geom) AS geojson, valid_from
@@ -137,7 +137,7 @@ export async function findCandidates(
  */
 export async function loadPhenomenonCandidates(
   sql: Sql,
-  ids: string[]
+  ids: string[],
 ): Promise<PhenomenonCandidate[]> {
   if (ids.length === 0) {
     return [];
@@ -190,7 +190,7 @@ interface SurvivorRow {
 export async function resolveSurvivor(
   sql: Sql,
   observationId: string,
-  tx?: Tx
+  tx?: Tx,
 ): Promise<string | null> {
   return (await resolveSurvivors(sql, [observationId], tx)).get(observationId) ?? null;
 }
@@ -199,7 +199,7 @@ export async function resolveSurvivor(
 export async function resolveSurvivors(
   sql: Sql,
   observationIds: string[],
-  tx?: Tx
+  tx?: Tx,
 ): Promise<Map<string, string | null>> {
   const runner = tx ?? sql;
   const result = new Map<string, string | null>();
@@ -210,7 +210,7 @@ export async function resolveSurvivors(
         current: id,
         visited: new Set<string>(),
       },
-    ])
+    ]),
   );
   for (let hop = 0; hop < MAX_SURVIVOR_HOPS && paths.size > 0; hop++) {
     const ids = [...new Set([...paths.values()].map((path) => path.current))];
@@ -230,7 +230,7 @@ export async function resolveSurvivors(
       if (path.visited.has(path.current) || !row || row.status !== "inactive" || !row.parent_id) {
         result.set(
           root,
-          !path.visited.has(path.current) && row?.status === "active" ? row.id : null
+          !path.visited.has(path.current) && row?.status === "active" ? row.id : null,
         );
         paths.delete(root);
       } else {
@@ -327,7 +327,7 @@ export async function applyCorroboration(
   sql: Sql,
   observationIdA: string,
   observationIdB: string,
-  now: string
+  now: string,
 ): Promise<void> {
   if (observationIdA === observationIdB) {
     throw new TypeError("applyCorroboration: an observation cannot corroborate itself");
@@ -448,7 +448,7 @@ export async function applyNegation(
   sql: Sql,
   negationObservationId: string,
   targetObservationId: string,
-  now: string
+  now: string,
 ): Promise<void> {
   await sql.begin(async (tx) => {
     const locked = await lockObservationsInOrder(tx, targetObservationId);

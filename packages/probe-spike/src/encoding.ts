@@ -17,9 +17,10 @@
  * clamped speed is private — a Prio3Sum over `[0, 2^bits)`. Far smaller reports,
  * but the segment is disclosed in the clear.
  */
-import { Prio3Histogram, Prio3Sum } from "@divviup/prio3";
+
 import { Buffer } from "node:buffer";
 import { randomBytes } from "node:crypto";
+import { Prio3Histogram, Prio3Sum } from "@divviup/prio3";
 
 /** Fixed-point speed bound (km/h). A probe speed must be clamped into this range. */
 export const SPEED_MIN = 0;
@@ -77,7 +78,7 @@ export function cellCount(region: RegionSpec): number {
 export function speedToBucket(clampedSpeed: number, speedBucketCount: number): number {
   if (!Number.isFinite(clampedSpeed) || clampedSpeed < SPEED_MIN || clampedSpeed > SPEED_MAX) {
     throw new RangeError(
-      `clampedSpeed ${clampedSpeed} is outside the fixed-point bound [${SPEED_MIN}, ${SPEED_MAX}]`
+      `clampedSpeed ${clampedSpeed} is outside the fixed-point bound [${SPEED_MIN}, ${SPEED_MAX}]`,
     );
   }
   const width = (SPEED_MAX - SPEED_MIN) / speedBucketCount;
@@ -117,7 +118,7 @@ export function sumForSpeed(): Prio3Sum {
 async function shardEncoded(
   vdaf: Prio3Histogram | Prio3Sum,
   measurement: number,
-  nonce: Buffer
+  nonce: Buffer,
 ): Promise<EncodedReport> {
   const rand = Buffer.from(randomBytes(vdaf.randSize));
   const { publicShare, inputShares } = await vdaf.shard(measurement, nonce, rand);
@@ -137,7 +138,7 @@ async function shardEncoded(
 export async function encodePrivateSegment(
   region: RegionSpec,
   measurement: ProbeMeasurement,
-  nonce: Buffer = Buffer.from(randomBytes(16))
+  nonce: Buffer = Buffer.from(randomBytes(16)),
 ): Promise<EncodedReport> {
   const cell = measurementCell(region, measurement);
   return shardEncoded(histogramForRegion(region), cell, nonce);
@@ -150,11 +151,11 @@ export async function encodePrivateSegment(
  */
 export async function encodeCoarsePartition(
   clampedSpeed: number,
-  nonce: Buffer = Buffer.from(randomBytes(16))
+  nonce: Buffer = Buffer.from(randomBytes(16)),
 ): Promise<EncodedReport> {
   if (!Number.isFinite(clampedSpeed) || clampedSpeed < SPEED_MIN || clampedSpeed > SPEED_MAX) {
     throw new RangeError(
-      `clampedSpeed ${clampedSpeed} is outside the fixed-point bound [${SPEED_MIN}, ${SPEED_MAX}]`
+      `clampedSpeed ${clampedSpeed} is outside the fixed-point bound [${SPEED_MIN}, ${SPEED_MAX}]`,
     );
   }
   return shardEncoded(sumForSpeed(), Math.round(clampedSpeed), nonce);

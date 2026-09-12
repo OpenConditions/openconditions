@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   detectAnomaly,
-  peerWindowStats,
   type PeerBaseline,
   type PeerWindowStats,
+  peerWindowStats,
 } from "../anomaly.js";
 
 const BASELINE: PeerBaseline = {

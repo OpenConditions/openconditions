@@ -6,7 +6,7 @@ const NOW = Date.parse("2026-09-11T12:00:00.000Z");
 function attempt(
   attemptedAt: number,
   outcome: PollAttempt["outcome"] = "validated_unchanged",
-  freshnessWindowSec = 14_400
+  freshnessWindowSec = 14_400,
 ): PollAttempt {
   return {
     source: "wzdx-kansas",
@@ -20,7 +20,7 @@ describe("seven-day road-condition readiness", () => {
   it("excludes local skips and accepts exactly 99 percent across a gap-free seven-day soak", () => {
     const interval = (7 * 86_400_000) / 99;
     const rows = Array.from({ length: 100 }, (_, i) =>
-      attempt(NOW - 7 * 86_400_000 + i * interval, i === 50 ? "failed" : "validated_unchanged")
+      attempt(NOW - 7 * 86_400_000 + i * interval, i === 50 ? "failed" : "validated_unchanged"),
     );
     rows.push(attempt(NOW, "skipped_cadence"), attempt(NOW, "skipped_overlap"));
 

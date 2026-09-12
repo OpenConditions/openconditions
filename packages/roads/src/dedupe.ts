@@ -1,5 +1,5 @@
-import { dedupeObservations } from "@openconditions/core";
 import type { Observation } from "@openconditions/core";
+import { dedupeObservations } from "@openconditions/core";
 import type { RoadEvent } from "./model.js";
 
 export function dedupeRoadEvents(events: RoadEvent[]): RoadEvent[] {

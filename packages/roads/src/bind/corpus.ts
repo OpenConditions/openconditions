@@ -5,7 +5,7 @@
  * here, so the corpus stays offline and reproducible.
  */
 
-import { readdirSync, readFileSync, existsSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { BindingStatus, DirectionMode } from "@openconditions/core";
 import { bindEvent } from "./bind-event.js";
@@ -41,7 +41,7 @@ export function loadCorpus(dir: string): CorpusCase[] {
       input: JSON.parse(readFileSync(join(dir, d.name, "event.json"), "utf8")) as BindInput,
       spine: JSON.parse(readFileSync(join(dir, d.name, "spine.json"), "utf8")) as SpineSubgraph,
       expected: JSON.parse(
-        readFileSync(join(dir, d.name, "expected.json"), "utf8")
+        readFileSync(join(dir, d.name, "expected.json"), "utf8"),
       ) as CorpusExpectation,
     }));
 }

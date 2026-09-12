@@ -25,7 +25,7 @@ export async function beginRoadGraphRebuild(sql: Sql): Promise<void> {
 /** Records the identity and exact configured provenance of a completed spine build. */
 export async function activateRoadGraph(
   sql: Sql,
-  deps: { now: () => string; env?: NodeJS.ProcessEnv; generation?: string }
+  deps: { now: () => string; env?: NodeJS.ProcessEnv; generation?: string },
 ): Promise<string> {
   const regions = loadOsmRegions(deps.env ?? process.env);
   if (regions.length === 0)
@@ -43,7 +43,7 @@ export async function activateRoadGraph(
     )`;
   if (missing.length > 0) {
     throw new Error(
-      `road graph preflight: missing current configured imports: ${missing.map((r) => r.id).join(", ")}`
+      `road graph preflight: missing current configured imports: ${missing.map((r) => r.id).join(", ")}`,
     );
   }
   const [{ imported_at }] = await sql<{ imported_at: Date | string | null }[]>`
@@ -53,12 +53,12 @@ export async function activateRoadGraph(
   const highwayClasses = [
     ...new Set(
       regions.flatMap(
-        (region) => region.highwayClasses ?? loadHighwayClasses(deps.env ?? process.env)
-      )
+        (region) => region.highwayClasses ?? loadHighwayClasses(deps.env ?? process.env),
+      ),
     ),
   ];
   const pbfProvenance = regions.flatMap((region) =>
-    (region.pbfUrls ?? []).map((url) => ({ region_id: region.id, url }))
+    (region.pbfUrls ?? []).map((url) => ({ region_id: region.id, url })),
   );
   const generation = deps.generation ?? randomUUID();
   const activatedAt = deps.now();

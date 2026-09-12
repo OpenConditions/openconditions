@@ -1,7 +1,7 @@
 import type { GeoJsonGeometry, Observation } from "@openconditions/core";
 import type { MapMatchClient } from "@openconditions/openlr";
-import type { UnresolvedRoadEvent } from "@openconditions/roads";
 import { decodeOpenLrBinary } from "@openconditions/openlr";
+import type { UnresolvedRoadEvent } from "@openconditions/roads";
 
 /** Max cached resolutions — oldest entries are evicted when full. */
 const CACHE_MAX = 2_000;
@@ -45,7 +45,7 @@ const RESOLVE_CONCURRENCY = 8;
  */
 export async function resolveOpenLr(
   items: (Observation | UnresolvedRoadEvent)[],
-  client: MapMatchClient | null
+  client: MapMatchClient | null,
 ): Promise<{
   resolved: Observation[];
   dropped: number;
@@ -81,7 +81,7 @@ export async function resolveOpenLr(
     dropped += needsResolve.length;
     for (const item of needsResolve) unlocatableIds.push(item.id);
     console.warn(
-      `[resolve] dropped ${needsResolve.length} OpenLR observation(s): OPENLR_RESOLVER_URL not set`
+      `[resolve] dropped ${needsResolve.length} OpenLR observation(s): OPENLR_RESOLVER_URL not set`,
     );
     return { resolved: out, dropped, failed, unlocatableIds };
   }
@@ -135,7 +135,7 @@ export async function resolveOpenLr(
         failed++;
         console.warn(
           `[resolve] resolution failed for observation ${obs.id}:`,
-          err instanceof Error ? err.message : err
+          err instanceof Error ? err.message : err,
         );
         results[idx] = null;
       }

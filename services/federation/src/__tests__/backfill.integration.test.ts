@@ -1,13 +1,13 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import {
   encodeOutboxCursor,
+  type OutboxCursor,
   pruneOutbox,
   readOutbox,
-  type OutboxCursor,
 } from "@openconditions/federation";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   BACKFILL_WINDOW_TIER_0_SEC,
   BACKFILL_WINDOW_TIER_1_SEC,
@@ -165,7 +165,7 @@ describe("readBackfill — the tier-bounded time floor", () => {
     const outbox = await readOutbox(sql, { after: base, limit: 500 });
 
     expect(backfill.orderedItems.map((e) => e.objectId)).toEqual(
-      outbox.orderedItems.map((e) => e.objectId)
+      outbox.orderedItems.map((e) => e.objectId),
     );
     expect(backfill.highWaterMark).toBe(outbox.highWaterMark);
     // Nothing before the floor after this cursor ⇒ no archive redirect.

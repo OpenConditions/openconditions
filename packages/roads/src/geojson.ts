@@ -1,4 +1,4 @@
-import { toIsoTimestamp, type Severity, type SourceFormat } from "@openconditions/core";
+import { type Severity, type SourceFormat, toIsoTimestamp } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { GeoJsonMapping, RoadEvent, RoadEventType } from "./model.js";
@@ -84,7 +84,7 @@ function passesFilter(props: Record<string, unknown>, mapping: GeoJsonMapping): 
  */
 function synthesizeLine(
   props: Record<string, unknown>,
-  mapping: GeoJsonMapping
+  mapping: GeoJsonMapping,
 ): Geometry | undefined {
   const { startLonField, startLatField, endLonField, endLatField } = mapping;
   if (!startLonField || !startLatField || !endLonField || !endLatField) return undefined;
@@ -112,7 +112,7 @@ function resolveType(rawType: string | undefined, mapping: GeoJsonMapping): Type
 
 function resolveSeverity(
   raw: string | undefined,
-  mapping: GeoJsonMapping
+  mapping: GeoJsonMapping,
 ): { severity: Severity; severitySource: "declared" | "derived" } {
   if (raw && mapping.severityMap) {
     const mapped = mapping.severityMap[raw] ?? mapping.severityMap[raw.toLowerCase()];
@@ -174,7 +174,7 @@ export function featuresToRoadEvents(
   features: Feature[],
   collectionCrs: string | undefined,
   src: SourceDescriptor,
-  format: SourceFormat
+  format: SourceFormat,
 ): RoadEvent[] {
   const mapping = src.geojson ?? {};
   const out: RoadEvent[] = [];
@@ -207,7 +207,7 @@ export function featuresToRoadEvents(
         // CRS may be declared on the collection (ArcGIS/WFS) or per-geometry
         // (Brussels OGC API). Reproject to WGS84 when it's a known projected grid.
         const reproject = reprojectorFor(
-          crsName((rawGeometry as { crs?: unknown }).crs) ?? collectionCrs
+          crsName((rawGeometry as { crs?: unknown }).crs) ?? collectionCrs,
         );
         geometry = reproject ? remapCoords(rawGeometry, reproject) : rawGeometry;
       } else {
@@ -265,7 +265,7 @@ export function featuresToRoadEvents(
 
   if (skippedNoGeometry > 0) {
     console.debug(
-      `[geojson] ${src.id}: skipped ${skippedNoGeometry} feature(s) with no usable geometry`
+      `[geojson] ${src.id}: skipped ${skippedNoGeometry} feature(s) with no usable geometry`,
     );
     recordSkippedNoGeometry(src.id, skippedNoGeometry);
   }

@@ -1,26 +1,26 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { publicVerif } from "@cloudflare/privacypass-ts";
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
-import { runMigrations } from "@openconditions/core/server";
 import {
   DEFAULT_ISSUER_NAME,
   enrollReporter,
   generateIssuerKey,
   issueToken,
   loadActiveIssuerKeys,
+  type PublicContext,
   publicContextString,
   redemptionContext,
   TokenVerifier,
-  type PublicContext,
 } from "@openconditions/contributions-api/contrib";
+import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   acceptProbeReport,
+  type ContributionContext,
   encodePrivateSegment,
   ensureBatchSchema,
   PROBE_TOKENS_PER_EPOCH,
-  type ContributionContext,
   type RegionSpec,
   type TokenRedeemer,
 } from "../index.js";
@@ -135,7 +135,7 @@ describe("invariant 2: one admitted key/epoch -> at most one accepted contributi
 
     // The key's epoch quota is spent: it cannot mint a second admission token.
     await expect(mint(key.keyId, ctx as PublicContext, PROBE_TOKENS_PER_EPOCH)).rejects.toThrow(
-      /over-quota/
+      /over-quota/,
     );
   }, 60_000);
 });

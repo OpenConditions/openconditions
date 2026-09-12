@@ -1,6 +1,14 @@
 import { Readable } from "node:stream";
-import type postgres from "postgres";
 import type { Observation } from "@openconditions/core";
+import type { LookupFn } from "@openconditions/ingest-framework";
+import {
+  fetchAll,
+  guardedFetch,
+  guardOptionsFromEnv,
+  makeAuthorizedFetch,
+} from "@openconditions/ingest-framework";
+import type { MapMatchClient } from "@openconditions/openlr";
+import { createResolverClient } from "@openconditions/openlr";
 import type {
   FeedSource,
   RestrictionCarrier,
@@ -14,26 +22,18 @@ import {
   isRoadRestrictionDetails,
   parseXmlDocument,
 } from "@openconditions/roads";
-import type { MapMatchClient } from "@openconditions/openlr";
-import { createResolverClient } from "@openconditions/openlr";
-import {
-  fetchAll,
-  guardOptionsFromEnv,
-  guardedFetch,
-  makeAuthorizedFetch,
-} from "@openconditions/ingest-framework";
-import type { LookupFn } from "@openconditions/ingest-framework";
+import type postgres from "postgres";
 import { feedToSourceDescriptor } from "../domains.js";
+import { loadBaselineMap, writeSpeedSamples } from "./baseline-store.js";
+import { bindObservations } from "./bind-observations.js";
 import { isStreamingFlowFeed, streamMeasuredData } from "./measured-data.js";
 import { parseFor, parseRoadSnapshotFor } from "./parse.js";
 import { resolveOpenLr } from "./resolve.js";
-import { loadSiteTable } from "./site-table.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
-import { loadStationRegistry } from "./station-registry.js";
-import { bindObservations } from "./bind-observations.js";
-import { atomicSwap } from "./write-postgis.js";
-import { loadBaselineMap, writeSpeedSamples } from "./baseline-store.js";
+import { loadSiteTable } from "./site-table.js";
 import { getLastRowCount, upsertSourceStatus } from "./source-status.js";
+import { loadStationRegistry } from "./station-registry.js";
+import { atomicSwap } from "./write-postgis.js";
 
 type Sql = postgres.Sql;
 
@@ -185,14 +185,14 @@ export function stampSourceEvidence<T extends Observation>(obs: T, src: DomainFe
  */
 function stampRestrictionSource<T extends Observation>(
   obs: T,
-  src: DomainFeedSource
+  src: DomainFeedSource,
 ): Partial<RestrictionCarrier> {
   const carrier = obs as T & RestrictionCarrier;
-  if (!Object.prototype.hasOwnProperty.call(carrier, "restrictionDetails")) return {};
+  if (!Object.hasOwn(carrier, "restrictionDetails")) return {};
   const details = carrier.restrictionDetails;
   if (!isRoadRestrictionDetails(details)) return {};
   const feedUrls = (Array.isArray(src.url) ? src.url : src.url ? [src.url] : []).filter(
-    (url): url is string => typeof url === "string" && /^https?:\/\//i.test(url)
+    (url): url is string => typeof url === "string" && /^https?:\/\//i.test(url),
   );
   if (src.licenseUrl === undefined) return {};
   return {
@@ -256,7 +256,7 @@ function xmlPublicationType(value: unknown): string | undefined {
 
 export function inspectSnapshotCompleteness(
   src: DomainFeedSource,
-  buffers: Buffer[]
+  buffers: Buffer[],
 ): { complete: boolean; inputRecords?: number; completeEmpty: boolean } {
   const contract = src.snapshot;
   if (!contract) return { complete: false, completeEmpty: false };
@@ -277,7 +277,7 @@ export function inspectSnapshotCompleteness(
         .filter((publication) => xmlPublicationType(publication) === contract.publicationType);
       if (publications.length === 0) {
         throw new Error(
-          `snapshot completeness: expected ${contract.publicationType} ${contract.publicationElement}`
+          `snapshot completeness: expected ${contract.publicationType} ${contract.publicationElement}`,
         );
       }
       for (const publication of publications) {
@@ -296,7 +296,7 @@ export function inspectSnapshotCompleteness(
       document = JSON.parse(buffer.toString("utf8"));
     } catch {
       throw new Error(
-        `snapshot completeness: ${contract.recordsPath} cannot be read from invalid JSON`
+        `snapshot completeness: ${contract.recordsPath} cannot be read from invalid JSON`,
       );
     }
     const records = valueAtPath(document, contract.recordsPath);
@@ -308,7 +308,7 @@ export function inspectSnapshotCompleteness(
       const total = valueAtPath(document, contract.totalCountPath);
       if (typeof total !== "number" || !Number.isSafeInteger(total) || total < 0) {
         throw new Error(
-          `snapshot completeness: ${contract.totalCountPath} must be a non-negative integer`
+          `snapshot completeness: ${contract.totalCountPath} must be a non-negative integer`,
         );
       }
       declaredTotal ??= total;
@@ -318,7 +318,7 @@ export function inspectSnapshotCompleteness(
   }
   if (declaredTotal != null && declaredTotal !== inputRecords) {
     throw new Error(
-      `snapshot completeness: source declared ${declaredTotal} records but retrieved ${inputRecords}`
+      `snapshot completeness: source declared ${declaredTotal} records but retrieved ${inputRecords}`,
     );
   }
   return { complete: true, inputRecords, completeEmpty: inputRecords === 0 };
@@ -535,7 +535,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   // are resolved to real geometry or dropped — resolved[] always has geometry.
   const { resolved, dropped, failed, unlocatableIds } = await resolveOpenLr(
     parsed,
-    deps.openlrClient ?? null
+    deps.openlrClient ?? null,
   );
   // An accepted record missing from `resolved` is unlocatable only when the
   // resolver itself did not fail: a transport/validation failure means we do not
@@ -644,7 +644,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   const skippedNoGeometry = drainSkippedNoGeometry(src.id);
   const rejected = dropped + skippedNoGeometry;
   const preSwapDurationMs = Date.now() - start;
-  let swapCounts;
+  let swapCounts: Awaited<ReturnType<typeof atomicSwap>>;
   try {
     swapCounts = await atomicSwap(deps.sql, src.id, toWrite, src.freshnessWindowSec, undefined, {
       attemptAt,
@@ -692,13 +692,13 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
         console.info(
           `[ingest] ${src.id}: bound ${bound.bound}/${bound.attempted} events ` +
             `(cleared ${bound.cleared}, write errors ${bound.writeErrors}) ` +
-            JSON.stringify(bound.byStatus)
+            JSON.stringify(bound.byStatus),
         );
       }
       if (bound.writeErrors > 0) {
         console.warn(
           `[ingest] ${src.id}: ${bound.writeErrors} binding writes failed; ` +
-            `those events keep their previous binding until the next pass`
+            `those events keep their previous binding until the next pass`,
         );
       }
     } catch (err) {
@@ -713,7 +713,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   const dropNote = dropped > 0 ? ` (${dropped} dropped — no geometry)` : "";
   console.info(
     `[ingest] ${src.id}: swap inserted=${swapCounts.inserted} updated=${swapCounts.updated} ` +
-      `deleted=${swapCounts.deleted} of ${toWrite.length} fresh rows in ${durationMs}ms${dropNote}`
+      `deleted=${swapCounts.deleted} of ${toWrite.length} fresh rows in ${durationMs}ms${dropNote}`,
   );
   return {
     count: swapCounts.inserted + swapCounts.updated,
@@ -735,7 +735,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
 function snapshotCounts(
   report: NonNullable<ReturnType<typeof parseRoadSnapshotFor>>,
   unlocatable: readonly string[],
-  written: readonly Observation[]
+  written: readonly Observation[],
 ): NonNullable<RunResult["snapshot"]> {
   let restrictionFacts = 0;
   const restrictionIssues: Record<string, number> = {};

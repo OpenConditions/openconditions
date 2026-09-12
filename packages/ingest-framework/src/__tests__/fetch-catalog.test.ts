@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { CatalogResolver, FeedSourceBase } from "../index.js";
 import { __resetCatalogResolvers, registerCatalogResolver } from "../catalog.js";
 import { fetchAll } from "../fetch.js";
+import type { CatalogResolver, FeedSourceBase } from "../index.js";
 
 afterEach(() => __resetCatalogResolvers());
 

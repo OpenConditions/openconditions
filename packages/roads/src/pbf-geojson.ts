@@ -22,6 +22,7 @@ export function parseOsmiumGeojsonSeq(input: string | Buffer): OsmWay[] {
   const ways: OsmWay[] = [];
   for (const rawLine of input.toString().split("\n")) {
     // Strip the RFC 8142 record separator (0x1E) if present, then whitespace.
+    // biome-ignore lint/suspicious/noControlCharactersInRegex: the separator this strips is a control character by specification
     const line = rawLine.replace(/^\x1e/, "").trim();
     if (line === "") continue;
 

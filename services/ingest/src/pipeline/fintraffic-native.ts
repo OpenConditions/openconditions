@@ -1,6 +1,6 @@
-import type postgres from "postgres";
 import type { FeedSource } from "@openconditions/roads";
-import { parseFintrafficStations, parseFintrafficSensorConstants } from "@openconditions/roads";
+import { parseFintrafficSensorConstants, parseFintrafficStations } from "@openconditions/roads";
+import type postgres from "postgres";
 
 type Sql = postgres.Sql;
 
@@ -33,7 +33,7 @@ function stationIdFromSensorKey(sensorKey: string, feedId: string): string {
  */
 function orderStationsByPriority(
   stationIds: string[],
-  oldestComputedAt: Map<string, Date>
+  oldestComputedAt: Map<string, Date>,
 ): string[] {
   return stationIds
     .map((id, idx) => ({ id, idx }))
@@ -89,7 +89,7 @@ async function loadStationPriority(sql: Sql, feedId: string): Promise<Map<string
 export async function updateFintrafficNativeBaselines(
   sql: Sql,
   feed: FeedSource,
-  deps: FintrafficNativeDeps
+  deps: FintrafficNativeDeps,
 ): Promise<{ updated: number }> {
   const regUrl = feed.stationRegistry?.url;
   if (!regUrl) return { updated: 0 };
@@ -111,7 +111,7 @@ export async function updateFintrafficNativeBaselines(
   } catch (err) {
     console.warn(
       `[ingest] fintraffic native: priority lookup failed, falling back to registry order:`,
-      err
+      err,
     );
   }
 

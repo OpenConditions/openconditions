@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { P256_HALF_ORDER, P256_ORDER, normalizeLowS } from "../lowS.js";
 import {
   generateReporterKey,
-  signReport,
-  verifyReport,
   type ReportClaim,
   type SignedReport,
+  signReport,
+  verifyReport,
 } from "../index.js";
+import { normalizeLowS, P256_HALF_ORDER, P256_ORDER } from "../lowS.js";
 
 const toBig = (bytes: Uint8Array): bigint =>
   bytes.reduce((acc, byte) => (acc << 8n) | BigInt(byte), 0n);

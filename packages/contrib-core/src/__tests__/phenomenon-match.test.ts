@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { matchPhenomenonCandidates } from "../phenomenon-match.js";
 import type { PhenomenonCandidate } from "../phenomenon-match.js";
+import { matchPhenomenonCandidates } from "../phenomenon-match.js";
 
 function pointNear(meters: number, bearingLon = true): [number, number] {
   // ~1 m ≈ 0.000009° of latitude; offset from a fixed anchor.
@@ -34,7 +34,7 @@ const target: PhenomenonCandidate = {
 
 function decisionFor(
   candidate: PhenomenonCandidate,
-  from: PhenomenonCandidate = target
+  from: PhenomenonCandidate = target,
 ): { compatible: boolean; reasons: string[] } {
   const [d] = matchPhenomenonCandidates(from, [candidate]);
   return { compatible: d!.compatible, reasons: d!.reasons };
@@ -92,7 +92,7 @@ describe("matchPhenomenonCandidates", () => {
 
   it("names a missing validFrom on either side", () => {
     expect(decisionFor(makeCandidate({ validFrom: undefined })).reasons).toContain(
-      "valid-from-missing"
+      "valid-from-missing",
     );
     const targetNoValidFrom: PhenomenonCandidate = { ...target, validFrom: undefined };
     expect(decisionFor(makeCandidate(), targetNoValidFrom).reasons).toContain("valid-from-missing");
@@ -137,7 +137,7 @@ describe("matchPhenomenonCandidates", () => {
     const noDir = makeCandidate({ attributes: {} });
     expect(decisionFor(noDir, north).compatible).toBe(true);
     expect(
-      decisionFor(makeCandidate({ attributes: { direction: "north" } }), north).compatible
+      decisionFor(makeCandidate({ attributes: { direction: "north" } }), north).compatible,
     ).toBe(true);
   });
 
@@ -247,7 +247,7 @@ describe("matchPhenomenonCandidates", () => {
         "centroid-distance-exceeds-max",
         "valid-from-delta-exceeds-max",
         "same-reporter-key",
-      ])
+      ]),
     );
   });
 

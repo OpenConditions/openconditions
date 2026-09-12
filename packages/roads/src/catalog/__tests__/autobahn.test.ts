@@ -1,12 +1,12 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { autobahnIndexResolver } from "../autobahn.js";
 import { roadFeedSchema } from "../../feed-schema.js";
+import { autobahnIndexResolver } from "../autobahn.js";
 
 const INDEX = path.resolve(
   import.meta.dirname,
-  "../../__tests__/fixtures/autobahn/road-index.json"
+  "../../__tests__/fixtures/autobahn/road-index.json",
 );
 
 function jsonResponder(payload: unknown, status = 200): typeof fetch {
@@ -27,7 +27,7 @@ describe("autobahnIndexResolver", () => {
     expect(urls).toContain("https://verkehr.autobahn.de/o/autobahn/A1/services/closure");
     expect(urls).toContain("https://verkehr.autobahn.de/o/autobahn/A1/services/roadworks");
     expect(
-      urls.some((u) => u?.toString().includes("A60%20") || u?.toString().includes("A60 "))
+      urls.some((u) => u?.toString().includes("A60%20") || u?.toString().includes("A60 ")),
     ).toBe(false);
     for (const f of feeds) {
       expect(f.format).toBe("autobahn");

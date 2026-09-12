@@ -32,7 +32,7 @@ export interface OsmRegion {
 /** Exact effective import configuration whose successful rows may attest graph readiness. */
 export function osmRegionImportProvenance(
   region: OsmRegion,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
 ): Record<string, unknown> {
   return {
     region_id: region.id,
@@ -46,7 +46,7 @@ export function osmRegionImportProvenance(
 
 export function osmRegionImportFingerprint(
   region: OsmRegion,
-  env: NodeJS.ProcessEnv = process.env
+  env: NodeJS.ProcessEnv = process.env,
 ): string {
   return createHash("sha256")
     .update(JSON.stringify(osmRegionImportProvenance(region, env)))
@@ -195,7 +195,7 @@ export interface PbfExtractSourceDeps {
   extract?: (
     pbfPath: string,
     bbox: [number, number, number, number],
-    workDir: string
+    workDir: string,
   ) => Promise<OsmWay[]>;
   logger?: { info?: (msg: string) => void };
 }
@@ -235,7 +235,7 @@ export function pbfExtractSource(deps: PbfExtractSourceDeps = {}): OsmWaySource 
                   highwayClasses: region.highwayClasses,
                 });
           deps.logger?.info?.(
-            `[ingest] pbf-extract: ${region.id} ${url} → ${extracted.length} ways`
+            `[ingest] pbf-extract: ${region.id} ${url} → ${extracted.length} ways`,
           );
           ways.push(...extracted);
         } finally {
@@ -276,7 +276,7 @@ const DEFAULT_SWAP_THRESHOLD = 0.9;
 // Rows per bulk INSERT — mirrors the chunking in write-postgis.ts/baseline-store.ts.
 const CHUNK_SIZE = 1000;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: the driver's JSONB parameter type is intentionally open
 type AnyJson = any;
 
 function chunk<T>(arr: T[], size: number): T[][] {
@@ -332,7 +332,7 @@ function toRow(way: OsmWay, region: OsmRegion, importedAt: string): OsmRoadRow {
  */
 export async function importOsmRoads(
   sql: Sql,
-  deps: ImportOsmRoadsDeps
+  deps: ImportOsmRoadsDeps,
 ): Promise<{ imported: number; succeededRegions: string[]; failedRegions: string[] }> {
   const swapThreshold = deps.swapThreshold ?? DEFAULT_SWAP_THRESHOLD;
   let imported = 0;
@@ -357,7 +357,7 @@ export async function importOsmRoads(
             throw new Error(
               `region ${region.id}: refusing swap — new ${rows.length} ways < ` +
                 `${swapThreshold} × previous ${oldCount} (undercoverage guard; ` +
-                `set force to override for a genuine road-network change)`
+                `set force to override for a genuine road-network change)`,
             );
           }
         }

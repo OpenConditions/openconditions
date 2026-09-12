@@ -1,12 +1,12 @@
-import Fastify from "fastify";
 import { runMigrations } from "@openconditions/core/server";
+import Fastify from "fastify";
 import { DATABASE_URL, sql } from "./db.js";
 import { buildDomainRegistry } from "./domains.js";
 import { FeedStatusStore } from "./feed-status.js";
+import { startMemTelemetry } from "./mem.js";
 import { registerPublishRoutes } from "./publish-routes.js";
 import { RateLimiter } from "./rate-limit.js";
 import { startScheduler } from "./scheduler.js";
-import { startMemTelemetry } from "./mem.js";
 import { createTrustProxy } from "./trust-proxy.js";
 
 const PORT = parseInt(process.env["PORT"] || "4100", 10);

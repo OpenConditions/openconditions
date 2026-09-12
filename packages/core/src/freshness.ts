@@ -19,7 +19,7 @@ export function isStale(dataUpdatedAt: string, windowSec: number, now: Date = ne
 export function freshnessNow(
   dataUpdatedAt: string,
   windowSec: number,
-  now: Date = new Date()
+  now: Date = new Date(),
 ): FreshnessResult {
   const updatedMs = new Date(dataUpdatedAt).getTime();
   const ageMs = now.getTime() - updatedMs;

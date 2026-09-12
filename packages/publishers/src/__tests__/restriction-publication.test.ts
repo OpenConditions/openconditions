@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import type { Observation } from "@openconditions/core";
+import { describe, expect, it } from "vitest";
 import { observationsToGeoJSON } from "../geojson.js";
 import { observationsToJsonLd } from "../jsonld.js";
 import { restrictionDetails, roadEvent } from "./fixture.js";
@@ -70,7 +70,7 @@ describe("restriction publication", () => {
     const properties = observationsToGeoJSON(
       [conditional({ restrictionDetails: { schemaVersion: 9 } })],
       {},
-      { at: AT }
+      { at: AT },
     ).features[0]!.properties!;
     expect(properties["restrictionDetailsUnsupported"]).toBe(true);
     expect(properties).not.toHaveProperty("restrictionDetails");
@@ -80,7 +80,7 @@ describe("restriction publication", () => {
     const properties = observationsToGeoJSON(
       [roadEvent({ id: "x:1", restrictionDetailsUnsupported: true } as never) as Observation],
       {},
-      { at: AT }
+      { at: AT },
     ).features[0]!.properties!;
     expect(properties["restrictionDetailsUnsupported"]).toBe(true);
     expect(properties).not.toHaveProperty("restrictionDetails");
@@ -97,7 +97,7 @@ describe("restriction publication", () => {
     const properties = observationsToGeoJSON(
       [conditional({ sourceCheckedAt: null })],
       {},
-      { at: AT }
+      { at: AT },
     ).features[0]!.properties!;
     const details = properties["restrictionDetails"] as { isStale: boolean; freshUntil: null };
     expect(details.freshUntil).toBeNull();
@@ -108,7 +108,7 @@ describe("restriction publication", () => {
     const fc = observationsToGeoJSON(
       [conditional(), conditional({ id: "fi-digitraffic:GUID50461965" })],
       {},
-      { at: AT }
+      { at: AT },
     );
     expect(fc.features.map((f) => f.properties!["id"])).toEqual([
       "fi-digitraffic:GUID50465935",

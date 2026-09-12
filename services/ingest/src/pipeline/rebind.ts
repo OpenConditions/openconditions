@@ -51,7 +51,7 @@ async function bindIds(sql: Sql, ids: string[], deps: RebindDeps, force: boolean
     if (r.writeErrors > 0) {
       console.warn(
         `[rebind] ${r.writeErrors} of ${r.attempted} bindings could not be written; ` +
-          `those events keep their previous binding until the next pass`
+          `those events keep their previous binding until the next pass`,
       );
     }
   }
@@ -82,7 +82,7 @@ export async function rebindStale(sql: Sql, deps: RebindDeps): Promise<{ rebound
  */
 export async function rebindAll(
   sql: Sql,
-  deps: RebindDeps
+  deps: RebindDeps,
 ): Promise<{ rebound: number; prunedSegments: number }> {
   if (!bindOptionsFromEnv(deps.env).enabled) return { rebound: 0, prunedSegments: 0 };
   const rebound = await bindIds(sql, await rebindableIds(sql), deps, true);

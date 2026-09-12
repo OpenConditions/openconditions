@@ -1,18 +1,18 @@
 import type { Observation } from "@openconditions/core";
-import { writeSpeedSamples } from "../pipeline/baseline-store.js";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { BASELINE_WINDOW_DAYS, deriveBaselines } from "../pipeline/baseline-derive.js";
+import { writeSpeedSamples } from "../pipeline/baseline-store.js";
 import { SEGMENT_PROFILE_WINDOW_DAYS } from "../pipeline/segment-profile.js";
 import {
   HOURLY_RETENTION_DAYS,
-  SPEED_HISTORY_LOCK,
   pruneHourlyRollup,
   pruneRawSamples,
   rollupSpeedSamples,
   SPEED_BIN_WIDTH_KPH,
+  SPEED_HISTORY_LOCK,
 } from "../pipeline/speed-rollup.js";
 
 function deferred<T>() {
@@ -360,8 +360,8 @@ describe("speed hour finalization", () => {
         "src",
         [late, { ...late, id: "missing" }],
         () => new Date().toISOString(),
-        60
-      )
+        60,
+      ),
     ).toEqual({ inserted: 0, rejectedLate: 2 });
     // Even a stale admission clock cannot reopen an explicitly finalized hour.
     expect(
@@ -370,12 +370,12 @@ describe("speed hour finalization", () => {
         "src",
         [late],
         () => new Date(hour.getTime() + 3_600_000).toISOString(),
-        60
-      )
+        60,
+      ),
     ).toEqual({ inserted: 0, rejectedLate: 1 });
     await rollupSpeedSamples(sql);
     expect(
-      await sql`SELECT sample_count, speed_bins, speed_counts, finalized FROM conditions.sensor_speed_hourly WHERE sensor_key = 'closed'`
+      await sql`SELECT sample_count, speed_bins, speed_counts, finalized FROM conditions.sensor_speed_hourly WHERE sensor_key = 'closed'`,
     ).toEqual([{ sample_count: 2, speed_bins: [10], speed_counts: [2], finalized: true }]);
   });
 
@@ -388,7 +388,7 @@ describe("speed hour finalization", () => {
       sample("too-late", new Date(hour.getTime() - 60_000).toISOString()),
     ];
     expect(
-      await writeSpeedSamples(sql, "src", observations, () => clock.toISOString(), 60)
+      await writeSpeedSamples(sql, "src", observations, () => clock.toISOString(), 60),
     ).toEqual({ inserted: 1, rejectedLate: 1 });
     await rollupSpeedSamples(sql, { now: () => clock });
     const second = sample("boundary", new Date(hour.getTime() + 60_000).toISOString(), 40);
@@ -405,14 +405,14 @@ describe("speed hour finalization", () => {
     expect((await pruneRawSamples(sql, { now: () => later })).deleted).toBe(0);
     await rollupSpeedSamples(sql, { now: () => later });
     expect(
-      await sql`SELECT sample_count, speed_bins, finalized FROM conditions.sensor_speed_hourly WHERE sensor_key = 'boundary'`
+      await sql`SELECT sample_count, speed_bins, finalized FROM conditions.sensor_speed_hourly WHERE sensor_key = 'boundary'`,
     ).toEqual([{ sample_count: 2, speed_bins: [10, 20], finalized: true }]);
     expect((await pruneRawSamples(sql, { now: () => later })).deleted).toBe(2);
     await rollupSpeedSamples(sql, { now: () => later });
     expect(
       (
         await sql`SELECT sample_count FROM conditions.sensor_speed_hourly WHERE sensor_key = 'boundary'`
-      )[0]!.sample_count
+      )[0]!.sample_count,
     ).toBe(2);
   });
 
@@ -424,7 +424,7 @@ describe("speed hour finalization", () => {
     const halfway = new Date(hour.getTime() + 72 * 3_600_000 + 30 * 60_000);
     expect((await pruneRawSamples(sql, { now: () => halfway })).deleted).toBe(0);
     expect(
-      (await pruneRawSamples(sql, { now: () => new Date(halfway.getTime() + 3_600_000) })).deleted
+      (await pruneRawSamples(sql, { now: () => new Date(halfway.getTime() + 3_600_000) })).deleted,
     ).toBe(2);
   });
 
@@ -445,7 +445,7 @@ describe("speed hour finalization", () => {
       "src",
       [sample("race", hour.toISOString())],
       () => clock.toISOString(),
-      60
+      60,
     );
     try {
       await expect
@@ -493,7 +493,7 @@ describe("speed hour finalization", () => {
     }
     await rolling;
     expect(
-      await sql`SELECT sensor_key, sample_count, finalized FROM conditions.sensor_speed_hourly ORDER BY sensor_key`
+      await sql`SELECT sensor_key, sample_count, finalized FROM conditions.sensor_speed_hourly ORDER BY sensor_key`,
     ).toEqual([
       { sensor_key: "already-visible", sample_count: 1, finalized: true },
       { sensor_key: "in-flight", sample_count: 1, finalized: true },

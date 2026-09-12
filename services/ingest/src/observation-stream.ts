@@ -44,7 +44,7 @@ export function startObservationStream(options: {
     // snapshot indefinitely or accumulating heartbeats behind it.
     const deadline = setTimeout(
       () => fail(new Error("public SSE client did not drain within the write deadline")),
-      options.drainTimeoutMs ?? 30_000
+      options.drainTimeoutMs ?? 30_000,
     );
     deadline.unref();
     try {
@@ -70,7 +70,7 @@ export function startObservationStream(options: {
             event: "condition",
             id: observation.id,
             data: options.includeRaw ? observation : withoutRaw,
-          })
+          }),
         );
       }
       for (const id of removed) {

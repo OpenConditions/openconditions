@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { tmcTables } from "../index.js";
 import type { TmcLocationTable } from "../lcl.js";
 import { resolveAlertC } from "../resolve.js";
-import { tmcTables } from "../index.js";
 
 /** A: 0,0 — B: 0,1 — C: 0,2, chained A -> B -> C in the positive direction. */
 const TABLE: TmcLocationTable = {
@@ -204,7 +204,7 @@ describe("resolving a code from another table edition", () => {
   it("does not mark a matching-edition record as road-vouched", () => {
     const r = resolveAlertC(
       { country: "D", table: "1", version: "22.0", primary: 100, road: "A7" },
-      [ROADED]
+      [ROADED],
     );
     expect(r).toMatchObject({ ok: true });
     expect((r as { viaRoadMatch?: boolean }).viaRoadMatch).toBeUndefined();
@@ -225,7 +225,7 @@ describe("the vendored German table", () => {
     // Bayern records that carry both this reference and real coordinates.
     const r = resolveAlertC(
       { country: "D", table: "1", version: "22.0", primary: 12271, secondary: 12270 },
-      tmcTables()
+      tmcTables(),
     );
     expect(r.ok).toBe(true);
     if (!r.ok) return;

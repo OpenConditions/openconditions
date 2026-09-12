@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { segmentConditionsToJson, type SegmentConditionRow } from "../segment-conditions.js";
+import { type SegmentConditionRow, segmentConditionsToJson } from "../segment-conditions.js";
 import { restrictionDetails } from "./fixture.js";
 
 function row(over: Partial<SegmentConditionRow> = {}): SegmentConditionRow {
@@ -123,7 +123,7 @@ describe("segmentConditionsToJson", () => {
         }),
       ],
       at,
-      { resolverVersion: "1.0.0" }
+      { resolverVersion: "1.0.0" },
     );
     expect(out.conditions).toEqual([]);
   });
@@ -132,7 +132,7 @@ describe("segmentConditionsToJson", () => {
     expect(
       segmentConditionsToJson([row({ binding_resolver_version: "0.9.0" })], at, {
         resolverVersion: "1.0.0",
-      }).conditions
+      }).conditions,
     ).toEqual([]);
   });
 
@@ -140,7 +140,7 @@ describe("segmentConditionsToJson", () => {
     const out = segmentConditionsToJson(
       [row({ source: "de-child", routing_source_id: "de-parent", child_source_id: "de-child" })],
       at,
-      { resolverVersion: "1.0.0" }
+      { resolverVersion: "1.0.0" },
     );
     expect(out.conditions[0]).toMatchObject({
       source: "de-child",
@@ -152,7 +152,7 @@ describe("segmentConditionsToJson", () => {
     expect(
       segmentConditionsToJson([row({ valid_from: "2026-09-06T12:00:00Z" })], at, {
         resolverVersion: "1.0.0",
-      }).conditions
+      }).conditions,
     ).toEqual([]);
     expect(
       segmentConditionsToJson(
@@ -162,8 +162,8 @@ describe("segmentConditionsToJson", () => {
           }),
         ],
         at,
-        { resolverVersion: "1.0.0" }
-      ).conditions
+        { resolverVersion: "1.0.0" },
+      ).conditions,
     ).toEqual([]);
   });
 
@@ -171,7 +171,7 @@ describe("segmentConditionsToJson", () => {
     const crowd = segmentConditionsToJson(
       [row({ origin: { kind: "crowd" }, routing_eligible: false })],
       at,
-      { resolverVersion: "1.0.0" }
+      { resolverVersion: "1.0.0" },
     );
     expect(crowd.conditions).toEqual([]);
   });
@@ -180,7 +180,7 @@ describe("segmentConditionsToJson", () => {
     const out = segmentConditionsToJson(
       [row({ type: "roadworks", attributes: { speedLimitKph: 60 } })],
       at,
-      { resolverVersion: "1.0.0" }
+      { resolverVersion: "1.0.0" },
     );
     expect(out.conditions[0]!.speed_limit_kph).toBe(60);
   });
@@ -194,7 +194,7 @@ describe("segmentConditionsToJson", () => {
         row({ id: "vanished", segments: [{ ...row().segments[0]!, geometry: null }] }),
       ],
       at,
-      { resolverVersion: "1.0.0", evaluatedAt: at }
+      { resolverVersion: "1.0.0", evaluatedAt: at },
     );
     expect(out.conditions).toEqual([]);
   });
@@ -203,7 +203,7 @@ describe("segmentConditionsToJson", () => {
     const out = segmentConditionsToJson(
       [row({ attributes: { roadState: "closed", vehiclesAffected: ["heavyGoodsVehicle"] } })],
       at,
-      { resolverVersion: "1.0.0", evaluatedAt: at }
+      { resolverVersion: "1.0.0", evaluatedAt: at },
     );
     expect(out.conditions[0]!.routing_evidence.applicability).toEqual({
       kind: "classes",
@@ -224,7 +224,7 @@ describe("segmentConditionsToJson", () => {
         }),
       ],
       at,
-      { resolverVersion: "1.0.0", evaluatedAt: at }
+      { resolverVersion: "1.0.0", evaluatedAt: at },
     );
     expect(out.conditions).toEqual([]);
   });
@@ -265,7 +265,7 @@ describe("segmentConditionsToJson restriction evidence", () => {
         }),
       ],
       at,
-      { resolverVersion: "1.0.0" }
+      { resolverVersion: "1.0.0" },
     );
     expect(out.conditions).toEqual([]);
   });

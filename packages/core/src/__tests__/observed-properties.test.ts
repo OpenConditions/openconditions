@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import type { ConditionEvent, Measurement, Observation } from "../model.js";
 import {
   OBSERVED_PROPERTIES,
+  type ObservedProperty,
   observedKey,
   validateObserved,
-  type ObservedProperty,
 } from "../observed-properties.js";
 
 /** Measurement properties that are intentionally unit-less (enumerated level / index). */
@@ -142,7 +142,7 @@ describe("validateObserved", () => {
 
   it("returns no warnings for a known measurement with matching unit", () => {
     expect(validateObserved(baseMeasurement({ metric: "flow", unit: "km/h" })).warnings).toEqual(
-      []
+      [],
     );
   });
 

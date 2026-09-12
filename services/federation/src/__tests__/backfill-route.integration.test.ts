@@ -1,15 +1,15 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
 import {
-  InMemoryNonceStore,
   generateInstanceKey,
+  InMemoryNonceStore,
+  type InstanceKey,
   loadActiveKeys,
   signMessage,
   verifyMessage,
-  type InstanceKey,
 } from "@openconditions/federation";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
 
 let sql: postgres.Sql;

@@ -23,8 +23,9 @@
  * over a push channel, and a webhook demands a public https `inboxUrl` (an
  * SSRF-guarded target — the same egress guard the POST later dials through).
  */
-import type postgres from "postgres";
+
 import { assertPublicUrl } from "@openconditions/ingest-framework";
+import type postgres from "postgres";
 import type { FederationFilter } from "./filter.js";
 
 export type DeliveryMode = "pull" | "webhook" | "sse";
@@ -98,7 +99,7 @@ function assertStringAllowList(value: unknown, label: string): void {
   ) {
     throw new SubscriptionValidationError(
       "invalid-filter",
-      `${label} must be a non-empty array of non-empty strings`
+      `${label} must be a non-empty array of non-empty strings`,
     );
   }
 }
@@ -126,20 +127,20 @@ function validateFilterValues(filter: FederationFilter): void {
     ) {
       throw new SubscriptionValidationError(
         "invalid-filter",
-        "filter.bbox must be [west, south, east, north] — four finite numbers"
+        "filter.bbox must be [west, south, east, north] — four finite numbers",
       );
     }
     const [west, south, east, north] = bbox as [number, number, number, number];
     if (west < -180 || west > 180 || east < -180 || east > 180) {
       throw new SubscriptionValidationError(
         "invalid-filter",
-        "filter.bbox longitudes (west, east) must be within [-180, 180]"
+        "filter.bbox longitudes (west, east) must be within [-180, 180]",
       );
     }
     if (south < -90 || south > 90 || north < -90 || north > 90) {
       throw new SubscriptionValidationError(
         "invalid-filter",
-        "filter.bbox latitudes (south, north) must be within [-90, 90]"
+        "filter.bbox latitudes (south, north) must be within [-90, 90]",
       );
     }
     if (west >= east) {
@@ -160,7 +161,7 @@ function validateFilterValues(filter: FederationFilter): void {
     if (typeof maxAgeSec !== "number" || !Number.isFinite(maxAgeSec) || maxAgeSec <= 0) {
       throw new SubscriptionValidationError(
         "invalid-filter",
-        "filter.maxAgeSec must be a finite number greater than 0"
+        "filter.maxAgeSec must be a finite number greater than 0",
       );
     }
   }
@@ -190,7 +191,7 @@ export function validateSubscriptionShape(input: {
   if (!DELIVERY_MODES.includes(input.deliveryMode)) {
     throw new SubscriptionValidationError(
       "invalid-delivery-mode",
-      `deliveryMode must be one of ${DELIVERY_MODES.join(", ")}`
+      `deliveryMode must be one of ${DELIVERY_MODES.join(", ")}`,
     );
   }
 
@@ -206,7 +207,7 @@ export function validateSubscriptionShape(input: {
       "a webhook/sse subscription needs a bounded filter (a bbox, a types " +
         "allow-list, a privacyClasses allow-list, or a maxAgeSec bound) — an " +
         "unbounded push would firehose the whole journal",
-      { ...input.filter, types: RECOMMENDED_NARROW_TYPES }
+      { ...input.filter, types: RECOMMENDED_NARROW_TYPES },
     );
   }
 
@@ -214,7 +215,7 @@ export function validateSubscriptionShape(input: {
     if (input.inboxUrl === null || input.inboxUrl.length === 0) {
       throw new SubscriptionValidationError(
         "inbox-required",
-        "a webhook subscription requires an inboxUrl"
+        "a webhook subscription requires an inboxUrl",
       );
     }
     assertInboxUrl(input.inboxUrl);
@@ -242,7 +243,7 @@ function assertInboxUrl(inboxUrl: string): void {
   } catch {
     throw new SubscriptionValidationError(
       "inbox-not-public",
-      "inboxUrl must be a public address (no loopback/private/link-local targets)"
+      "inboxUrl must be a public address (no loopback/private/link-local targets)",
     );
   }
 }
@@ -288,7 +289,7 @@ export async function createSubscription(
   sql: postgres.Sql,
   peerId: string,
   input: CreateSubscriptionInput,
-  now: string
+  now: string,
 ): Promise<FederationSubscription> {
   const filter = input.filter ?? {};
   const deliveryMode = input.deliveryMode ?? "pull";
@@ -312,7 +313,7 @@ export async function createSubscription(
 /** Lists a peer's own subscriptions, newest first. */
 export async function listSubscriptions(
   sql: postgres.Sql,
-  peerId: string
+  peerId: string,
 ): Promise<FederationSubscription[]> {
   const rows = await sql<SubscriptionRow[]>`
     SELECT * FROM conditions.federation_subscription
@@ -324,7 +325,7 @@ export async function listSubscriptions(
 /** Loads one subscription by id, or null if it does not exist. */
 export async function getSubscription(
   sql: postgres.Sql,
-  id: string
+  id: string,
 ): Promise<FederationSubscription | null> {
   const [row] = await sql<SubscriptionRow[]>`
     SELECT * FROM conditions.federation_subscription WHERE id = ${id}`;
@@ -348,7 +349,7 @@ export async function updateSubscription(
   sql: postgres.Sql,
   existing: FederationSubscription,
   patch: UpdateSubscriptionInput,
-  now: string
+  now: string,
 ): Promise<FederationSubscription | null> {
   return sql.begin(async (tx) => {
     const [current] = await tx<SubscriptionRow[]>`

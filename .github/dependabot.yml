@@ -14,10 +14,9 @@ updates:
       prefix: chore
       include: scope
     groups:
-      eslint-and-formatters:
+      lint-and-format:
         patterns:
-          - "eslint*"
-          - "prettier*"
+          - "@biomejs/*"
       typescript-toolchain:
         patterns:
           - "typescript"

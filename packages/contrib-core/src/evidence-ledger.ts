@@ -36,7 +36,7 @@ function outcomeFromDetails(details: unknown, rowId: string | number): "confirme
   }
   throw new TypeError(
     `evidenceRowsToLedger: row ${String(rowId)} has unrecognized official_match ` +
-      `details.outcome ${JSON.stringify(outcome)} (corrupt ledger)`
+      `details.outcome ${JSON.stringify(outcome)} (corrupt ledger)`,
   );
 }
 
@@ -101,7 +101,7 @@ export function evidenceRowsToLedger(rows: ReportEvidenceRow[], now: string): Ev
         break;
       default:
         throw new TypeError(
-          `evidenceRowsToLedger: unknown evidence_kind "${row.evidenceKind}" (corrupt ledger)`
+          `evidenceRowsToLedger: unknown evidence_kind "${row.evidenceKind}" (corrupt ledger)`,
         );
     }
   }

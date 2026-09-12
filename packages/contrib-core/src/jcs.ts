@@ -53,7 +53,7 @@ export function boundedCanonicalBytes(value: unknown, label: string): Uint8Array
   const bytes = canonicalClaimBytes(value);
   if (bytes.byteLength > MAX_CANONICAL_BYTES) {
     throw new TypeError(
-      `${label} exceeds the 64 KiB canonical size limit: ${bytes.byteLength} bytes`
+      `${label} exceeds the 64 KiB canonical size limit: ${bytes.byteLength} bytes`,
     );
   }
   return bytes;

@@ -1,8 +1,8 @@
 import type { Point } from "geojson";
+import type { FlowParseResult } from "./flow.js";
+import { makeOrigin } from "./flow.js";
 import type { RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
-import { makeOrigin } from "./flow.js";
-import type { FlowParseResult } from "./flow.js";
 
 interface Flow {
   SiteId?: unknown;
@@ -32,7 +32,7 @@ function parseWktPoint(raw: unknown): Point | null {
  */
 export function parseTrafikverketFlow(
   input: string | Buffer,
-  src: SourceDescriptor
+  src: SourceDescriptor,
 ): FlowParseResult {
   let payload: { RESPONSE?: { RESULT?: unknown } };
   try {

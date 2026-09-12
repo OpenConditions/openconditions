@@ -18,6 +18,4 @@ LICENSES
 **/coverage
 **/*.tsbuildinfo
 **/*.log
-.prettierignore
-.prettierrc.json
-eslint.config.js
+biome.json

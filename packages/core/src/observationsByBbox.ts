@@ -1,5 +1,4 @@
-import { BINDING_JOIN_SQL, BINDING_SELECT_SQL } from "./observation-query.js";
-import type { FeatureCollection, Feature, Geometry } from "geojson";
+import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { dedupeAcrossSources } from "./crossSourceDedupe.js";
 import type {
   BindingStatus,
@@ -8,6 +7,7 @@ import type {
   Provenance,
   SegmentSpan,
 } from "./model.js";
+import { BINDING_JOIN_SQL, BINDING_SELECT_SQL } from "./observation-query.js";
 import { severityRank } from "./severity.js";
 
 /**
@@ -222,7 +222,7 @@ const IS_STALE_SQL =
  */
 export async function observationsByBbox(
   db: QueryRunner,
-  opts: ObservationsByBboxOpts
+  opts: ObservationsByBboxOpts,
 ): Promise<FeatureCollection> {
   const { domain, bbox, types, minSeverity, kind, horizonDays } = opts;
   const [west, south, east, north] = bbox;
@@ -254,7 +254,7 @@ export async function observationsByBbox(
   if (horizonDays != null) {
     params.push(horizonDays);
     clauses.push(
-      `(o.valid_from IS NULL OR o.valid_from <= now() + make_interval(days => $${params.length}))`
+      `(o.valid_from IS NULL OR o.valid_from <= now() + make_interval(days => $${params.length}))`,
     );
   }
   if (opts.excludedSourceIds && opts.excludedSourceIds.length > 0) {
@@ -278,7 +278,7 @@ export async function observationsByBbox(
   // false/NULL is excluded here so a lone self-reported closure never routes.
   if (opts.routingEligibleOnly === true) {
     clauses.push(
-      "NOT (o.origin->>'kind' = 'crowd' AND COALESCE(o.routing_eligible, false) IS NOT TRUE)"
+      "NOT (o.origin->>'kind' = 'crowd' AND COALESCE(o.routing_eligible, false) IS NOT TRUE)",
     );
   }
 

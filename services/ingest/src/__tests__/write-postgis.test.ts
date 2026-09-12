@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import type { Observation } from "@openconditions/core";
+import { describe, expect, it } from "vitest";
 import { toRow } from "../pipeline/write-postgis.js";
 
 /** A minimal valid roads event; overrides exercise the timestamp coercion. */
@@ -76,7 +76,7 @@ describe("commons fields — toRow mapping", () => {
         informed: { modes: ["bus"], routes: ["r1"], stops: ["s1"], trips: ["t1"] },
         sourceUri: "https://example.test/x",
         sourceLicense: "CC-BY-4.0",
-      })
+      }),
     ) as unknown as Record<string, unknown>;
     expect(r.instance_id).toBe("inst-1");
     expect(r.canonical_id).toBe("canon-1");
@@ -145,7 +145,7 @@ describe("commons fields — content_hash policy", () => {
         privacyClass: "authoritative",
         evidenceState: "corroborated",
         routingEligible: true,
-      })
+      }),
     );
     expect(withDerived.content_hash).toBe(GOLDEN_PLAIN_HASH);
   });

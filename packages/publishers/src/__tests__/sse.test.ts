@@ -15,7 +15,7 @@ describe("sseFrame", () => {
 
   it("includes id and event fields when given", () => {
     expect(sseFrame({ id: "x", event: "condition", data: { n: 2 } })).toBe(
-      'id: x\nevent: condition\ndata: {"n":2}\n\n'
+      'id: x\nevent: condition\ndata: {"n":2}\n\n',
     );
   });
 
@@ -86,7 +86,7 @@ describe("streamSignature", () => {
     const base = roadEvent({ id: "a", dataUpdatedAt: "2026-06-23T10:00:00Z" });
     expect(streamSignature(base)).toBe(streamSignature(roadEvent({ ...base })));
     expect(streamSignature(base)).not.toBe(
-      streamSignature(roadEvent({ ...base, status: "inactive" }))
+      streamSignature(roadEvent({ ...base, status: "inactive" })),
     );
   });
 });

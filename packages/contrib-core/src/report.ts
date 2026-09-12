@@ -5,8 +5,8 @@ import { normalizeLowS } from "./lowS.js";
 import type { ReportClaim, SignedReport, VerifyResult } from "./types.js";
 import { validateReportClaim } from "./validate.js";
 import {
-  ECDSA_SIGN_PARAMS,
   decodeRawSignature,
+  ECDSA_SIGN_PARAMS,
   errorMessage,
   importVerifyKey,
   resolveVerificationJwk,
@@ -45,7 +45,7 @@ export async function signReport(claim: ReportClaim, key: ReporterKey): Promise<
  */
 export async function verifyReport(
   report: SignedReport,
-  knownJwk?: JsonWebKey
+  knownJwk?: JsonWebKey,
 ): Promise<VerifyResult> {
   try {
     if (report === null || typeof report !== "object") {
@@ -66,7 +66,7 @@ export async function verifyReport(
       ECDSA_SIGN_PARAMS,
       publicKey,
       signature,
-      bytes
+      bytes,
     );
     return ok
       ? { ok: true, keyId: report.keyId }

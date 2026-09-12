@@ -44,7 +44,7 @@ describe("parseAutobahn — warning fixture", () => {
     for (const ev of events) {
       expect(ev.geometry).toBeDefined();
       expect(ev.geometry.type).toMatch(
-        /^(Point|LineString|Polygon|MultiPoint|MultiLineString|MultiPolygon)$/
+        /^(Point|LineString|Polygon|MultiPoint|MultiLineString|MultiPolygon)$/,
       );
     }
   });
@@ -54,7 +54,7 @@ describe("parseAutobahn — warning fixture", () => {
     const events = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
 
     const flowItem = events.find((ev) =>
-      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0")
+      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0"),
     );
     expect(flowItem).toBeDefined();
     expect(flowItem!.geometry.type).toBe("LineString");
@@ -65,7 +65,7 @@ describe("parseAutobahn — warning fixture", () => {
     const events = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
 
     const blockedItem = events.find((ev) =>
-      ev.id.includes("EVA--vi-blk.2026-06-22_10-00-00-000.de1")
+      ev.id.includes("EVA--vi-blk.2026-06-22_10-00-00-000.de1"),
     );
     expect(blockedItem).toBeDefined();
     expect(blockedItem!.geometry.type).toBe("Point");
@@ -87,7 +87,7 @@ describe("parseAutobahn — warning fixture", () => {
     const events = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
 
     const blockedItem = events.find((ev) =>
-      ev.id.includes("EVA--vi-blk.2026-06-22_10-00-00-000.de1")
+      ev.id.includes("EVA--vi-blk.2026-06-22_10-00-00-000.de1"),
     );
     expect(blockedItem).toBeDefined();
     expect(blockedItem!.roadState).toBe("closed");
@@ -98,7 +98,7 @@ describe("parseAutobahn — warning fixture", () => {
     const events = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
 
     const nonBlocked = events.find((ev) =>
-      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0")
+      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0"),
     );
     expect(nonBlocked).toBeDefined();
     expect(nonBlocked!.roadState).toBeUndefined();
@@ -109,7 +109,7 @@ describe("parseAutobahn — warning fixture", () => {
     const events = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
 
     const flowItem = events.find((ev) =>
-      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0")
+      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0"),
     );
     expect(flowItem).toBeDefined();
     expect(typeof flowItem!.description).toBe("string");
@@ -122,7 +122,7 @@ describe("parseAutobahn — warning fixture", () => {
     const events = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
 
     const flowItem = events.find((ev) =>
-      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0")
+      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0"),
     );
     expect(flowItem).toBeDefined();
     expect(flowItem!.type).toBe("congestion");
@@ -141,7 +141,7 @@ describe("parseAutobahn — warning fixture", () => {
     const events = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
 
     const blockedItem = events.find((ev) =>
-      ev.id.includes("EVA--vi-blk.2026-06-22_10-00-00-000.de1")
+      ev.id.includes("EVA--vi-blk.2026-06-22_10-00-00-000.de1"),
     );
     expect(blockedItem).toBeDefined();
     expect(blockedItem!.severity).toBe("high");
@@ -171,7 +171,7 @@ describe("parseAutobahn — warning fixture", () => {
     const events = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
 
     const isoItem = events.find((ev) =>
-      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0")
+      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0"),
     );
     expect(isoItem).toBeDefined();
     expect(isoItem!.validFrom).toMatch(/^\d{4}-\d{2}-\d{2}/);
@@ -320,7 +320,7 @@ describe("parseAutobahn — delaySeconds from congestion delayTimeValue", () => 
   it("converts the minute-valued delayTimeValue to delaySeconds on the congestion path", () => {
     const events = parseAutobahn(readFileSync(FIXTURE_PATH, "utf8"), AUTOBAHN_SOURCE, "warning");
     const flowItem = events.find((ev) =>
-      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0")
+      ev.id.includes("INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0"),
     );
     expect(flowItem).toBeDefined();
     expect(flowItem!.type).toBe("congestion");

@@ -9,44 +9,45 @@
  * never carry the reporter keyId, proof fields, or any request id; the
  * enrolled key and a token issuance/redemption stay unlinkable in the logs.
  */
-import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
-import type postgres from "postgres";
-import { reliabilityLowerBound } from "@openconditions/core";
+
 import {
   checkGeometryPlausibility,
   checkPlausibility,
-  verifyReport,
-  verifySubClaim,
   type LandingContext,
   type SignedReport,
   type SignedSubClaim,
+  verifyReport,
+  verifySubClaim,
 } from "@openconditions/contrib-core";
+import { reliabilityLowerBound } from "@openconditions/core";
 import { resolveInstanceId } from "@openconditions/normalize";
+import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
+import type postgres from "postgres";
 import { ReportRateLimitError } from "./abuse/rate.js";
 import { enrollReporter } from "./attester/enroll.js";
 import { resolveGrantSecret, verifyReportingGrant } from "./attester/grant.js";
 import { ATTESTER_POLICY, type DeviceProof } from "./attester/policy.js";
 import {
-  UNVERIFIED_ATTESTATION,
-  UNVERIFIED_OSM_AUTH,
   type AttestationVerifier,
   type OsmAuthVerifier,
+  UNVERIFIED_ATTESTATION,
+  UNVERIFIED_OSM_AUTH,
 } from "./attester/verifier.js";
-import { isPoliceCategory, isPoliceCategoryEnabled } from "./policy/police.js";
-import { reportEpoch, type PublicContext } from "./issuer/context.js";
+import { autoCorroborateOnLanding } from "./evidence/autoCorroborate.js";
+import { crossValidateAgainstFeeds } from "./evidence/crossValidate.js";
+import { type PublicContext, reportEpoch } from "./issuer/context.js";
 import { issueToken } from "./issuer/issue.js";
 import { DEFAULT_ISSUER_NAME, ensureIssuerKeys, loadActiveIssuerKeys } from "./issuer/keys.js";
 import { TokenVerifier } from "./issuer/verify.js";
-import { autoCorroborateOnLanding } from "./evidence/autoCorroborate.js";
-import { crossValidateAgainstFeeds } from "./evidence/crossValidate.js";
 import { GeometryInvalidError, landReport } from "./landing/insert.js";
+import { isPoliceCategory, isPoliceCategoryEnabled } from "./policy/police.js";
 import { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
 import { blockKey, listBlocked, unblockKey } from "./reviewer/blocklist.js";
 import { acceptObservation, rejectObservation } from "./reviewer/decide.js";
 import {
-  listFlagged,
   ADVISORY_CREDIBLE_LEVEL,
   ADVISORY_REPUTATION_NOTE,
+  listFlagged,
 } from "./reviewer/queue.js";
 import { flagOntoOpenFlagged } from "./reviewer/streetcomplete.js";
 import { castSubClaimVote } from "./subclaim/vote.js";
@@ -86,7 +87,7 @@ export interface BuildOptions {
   crossValidateAgainstFeeds?: (
     sql: postgres.Sql,
     observationId: string,
-    now: string
+    now: string,
   ) => Promise<string | null>;
   /**
    * Platform-attestation verifier for the enrollment flow. Defaults to
@@ -137,7 +138,7 @@ class EnrollLimiter {
 
   constructor(
     private readonly max: number,
-    private readonly windowMs: number
+    private readonly windowMs: number,
   ) {}
 
   allow(ip: string, nowMs: number): boolean {
@@ -210,7 +211,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     ) {
       return reply.status(400).send({ error: "pubJwk and proof.keyId are required" });
     }
-    let entitlement;
+    let entitlement: Awaited<ReturnType<typeof enrollReporter>>;
     try {
       entitlement = await enrollReporter(sql, pubJwk, proof, now(), {
         grantSecret,
@@ -370,7 +371,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       sourceUri: crowdSourceUri,
       sourceLicense: crowdSourceLicense,
     };
-    let result;
+    let result: Awaited<ReturnType<typeof landReport>>;
     try {
       result = await landReport(sql, report, landingCtx);
     } catch (err) {
@@ -389,7 +390,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       // fast mover must not be censored) and the flag is not evidence.
       req.log.warn(
         { observationId: result.observationId },
-        "kinematically implausible reporter transition; new observation flagged"
+        "kinematically implausible reporter transition; new observation flagged",
       );
     }
     // StreetComplete rule: a fresh landing onto an already-disputed element is
@@ -402,13 +403,13 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         if (pileOn) {
           req.log.warn(
             { observationId: result.observationId },
-            "new report landed onto an open-flagged phenomenon; new observation flagged"
+            "new report landed onto an open-flagged phenomenon; new observation flagged",
           );
         }
       } catch (err) {
         req.log.warn(
           { err, observationId: result.observationId },
-          "StreetComplete flag check failed; landing is unaffected"
+          "StreetComplete flag check failed; landing is unaffected",
         );
       }
 
@@ -422,13 +423,13 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         if (corroborated.length > 0) {
           req.log.info(
             { observationId: result.observationId, corroborated },
-            "landing auto-corroborated an independent report of the same phenomenon"
+            "landing auto-corroborated an independent report of the same phenomenon",
           );
         }
       } catch (err) {
         req.log.warn(
           { err, observationId: result.observationId },
-          "auto-corroboration failed; landing is unaffected"
+          "auto-corroboration failed; landing is unaffected",
         );
       }
 
@@ -444,13 +445,13 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         if (matchedFeedId !== null) {
           req.log.info(
             { observationId: result.observationId, matchedFeedId },
-            "landing cross-validated against an official feed; routed via external resolution"
+            "landing cross-validated against an official feed; routed via external resolution",
           );
         }
       } catch (err) {
         req.log.warn(
           { err, observationId: result.observationId },
-          "official-feed cross-validation failed; landing is unaffected"
+          "official-feed cross-validation failed; landing is unaffected",
         );
       }
     }
@@ -552,7 +553,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       }
 
       // 7-9. Lock the observation, store the sub-claim, append evidence, recompute.
-      let outcome;
+      let outcome: Awaited<ReturnType<typeof castSubClaimVote>>;
       try {
         outcome = await castSubClaimVote(sql, id, subClaim, nowIso);
       } catch (err) {
@@ -578,7 +579,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         routingEligible: outcome.routingEligible,
         action: outcome.action,
       });
-    }
+    },
   );
 
   // Advisory own-reputation read. Authenticated by a valid reporting grant in
@@ -610,7 +611,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     }
     const lowerBound = reliabilityLowerBound(
       { alpha: reporter.reputation_alpha, beta: reporter.reputation_beta },
-      ADVISORY_CREDIBLE_LEVEL
+      ADVISORY_CREDIBLE_LEVEL,
     );
     return reply.status(200).send({
       keyId,
@@ -649,7 +650,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       }
       const page = await listFlagged(sql, { limit, before, beforeId, now: now() });
       return reply.send(page);
-    }
+    },
   );
 
   app.post<{ Params: { id: string } }>(
@@ -665,7 +666,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         evidenceState: outcome.evidenceState,
         routingEligible: outcome.routingEligible,
       });
-    }
+    },
   );
 
   app.post<{ Params: { id: string } }>(
@@ -681,7 +682,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         evidenceState: outcome.evidenceState,
         tombstoned: outcome.tombstoned === true,
       });
-    }
+    },
   );
 
   app.get("/contrib/reviewer/blocklist", { preHandler: requireReviewer }, async (_req, reply) => {
@@ -700,7 +701,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       const reason = typeof body.reason === "string" ? body.reason : null;
       await blockKey(sql, body.keyId, reason, now());
       return reply.status(200).send({ keyId: body.keyId, blocked: true });
-    }
+    },
   );
 
   app.delete<{ Params: { keyId: string } }>(
@@ -709,7 +710,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     async (req, reply) => {
       await unblockKey(sql, req.params.keyId);
       return reply.status(200).send({ keyId: req.params.keyId, blocked: false });
-    }
+    },
   );
 
   app.get("/contrib/issuer-keys", async (_req, reply) => {

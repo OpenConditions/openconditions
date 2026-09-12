@@ -1,17 +1,17 @@
 import type { Schedule } from "@openconditions/core";
-import { normalizeDtToken } from "./digitraffic.js";
-import {
-  intersectRestrictionWindows,
-  normalizeRestrictionDimension,
-  toRestrictionInstant,
-  type RestrictionWindow,
-} from "./restrictions.js";
+import { normalizeDtToken } from "./digitraffic-token.js";
 import type {
   RestrictionIssue,
   RestrictionTokens,
   RoadRestrictionDetailsV1,
   RoadRestrictionFact,
 } from "./restriction-types.js";
+import {
+  intersectRestrictionWindows,
+  normalizeRestrictionDimension,
+  type RestrictionWindow,
+  toRestrictionInstant,
+} from "./restrictions.js";
 import { buildLocalSchedule, isoDayToICal, withTimezone } from "./schedule.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -149,7 +149,7 @@ const DIRECTION_VALUES: Record<string, "positive" | "negative" | "both"> = {
  */
 function directionOf(
   phase: unknown,
-  announcement: unknown
+  announcement: unknown,
 ): {
   basis: RoadRestrictionFact["direction"]["basis"];
   value: RoadRestrictionFact["direction"]["value"];
@@ -250,7 +250,7 @@ function workingHoursOf(phase: unknown, phaseWindow: RestrictionWindow): Schedul
       ...(group.byDay.length > 0
         ? { byDay: [...group.byDay].sort((a, b) => order.indexOf(a) - order.indexOf(b)) }
         : {}),
-    })
+    }),
   );
   return withTimezone(schedules, HELSINKI_TZ);
 }
@@ -276,7 +276,7 @@ function commentsOf(phase: unknown, announcement: unknown, language: string | nu
  */
 export function digitrafficRestrictionDetails(
   props: Record<string, unknown>,
-  src: SourceDescriptor
+  src: SourceDescriptor,
 ): RoadRestrictionDetailsV1 | undefined {
   const recordId = str(props["situationId"]);
   // Rights travel with every published fact, so a source with no licence URL

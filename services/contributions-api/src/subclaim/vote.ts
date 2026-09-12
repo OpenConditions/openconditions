@@ -1,12 +1,12 @@
-import type postgres from "postgres";
-import type { EvidenceState } from "@openconditions/core";
 import type { SignedSubClaim } from "@openconditions/contrib-core";
+import type { EvidenceState } from "@openconditions/core";
+import type postgres from "postgres";
 import { recomputeEvidence } from "../evidence/recompute.js";
 import { GeometryInvalidError, isGeometryError } from "../landing/insert.js";
 
 type Sql = postgres.Sql;
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// biome-ignore lint/suspicious/noExplicitAny: the driver's JSONB parameter type is intentionally open
 type Jsonb = any;
 
 export type VoteOutcome =
@@ -58,7 +58,7 @@ export async function castSubClaimVote(
   sql: Sql,
   observationId: string,
   subClaim: SignedSubClaim,
-  now: string
+  now: string,
 ): Promise<VoteOutcome> {
   const action = subClaim.claimType;
   const subClaimId = `sub:${subClaim.keyId}:${subClaim.nonce}`;
@@ -81,7 +81,7 @@ async function castWithin(
   action: "confirm" | "negate" | "flag",
   subClaimId: string,
   geom: string | null,
-  now: string
+  now: string,
 ): Promise<VoteOutcome> {
   return sql.begin(async (tx) => {
     const obsRows = await tx<ObservationVoteRow[]>`

@@ -7,22 +7,23 @@
  * Re-enrollment NEVER resets reputation: the upsert's conflict branch touches
  * last_active_at, trust_signal, and entitlement_expires_at only.
  */
-import type postgres from "postgres";
+
 import { keyIdFromJwk } from "@openconditions/contrib-core";
+import type postgres from "postgres";
 import { createReportingGrant } from "./grant.js";
 import {
   ATTESTER_POLICY,
   assessEntitlement,
-  validateDeviceProof,
   type DeviceProof,
   type Entitlement,
   type ReporterRow,
+  validateDeviceProof,
 } from "./policy.js";
 import {
-  UNVERIFIED_ATTESTATION,
-  UNVERIFIED_OSM_AUTH,
   type AttestationVerifier,
   type OsmAuthVerifier,
+  UNVERIFIED_ATTESTATION,
+  UNVERIFIED_OSM_AUTH,
 } from "./verifier.js";
 
 export interface EnrollLogger {
@@ -41,7 +42,7 @@ export interface EnrollLogger {
  */
 function redactSecretFromError(
   err: unknown,
-  secret: string | undefined
+  secret: string | undefined,
 ): {
   name?: string;
   message: string;
@@ -87,7 +88,7 @@ export async function enrollReporter(
   pubJwk: JsonWebKey,
   proof: DeviceProof,
   nowIso: string,
-  deps: EnrollDeps
+  deps: EnrollDeps,
 ): Promise<Entitlement> {
   // Reject malformed optional proof fields at the trust boundary before any of
   // them reaches a verifier typed to trust their shape (throws TypeError → 400).
@@ -146,7 +147,7 @@ export async function enrollReporter(
       attestationVerified = false;
       deps.log.warn(
         { err: redactSecretFromError(err, proof.attestation.blob), keyId: thumbprint },
-        "attestation verifier threw; treating as unverified"
+        "attestation verifier threw; treating as unverified",
       );
     }
   }
@@ -168,7 +169,7 @@ export async function enrollReporter(
       osmAuthVerified = false;
       deps.log.warn(
         { err: redactSecretFromError(err, proof.osmAuth), keyId: thumbprint },
-        "osm auth verifier threw; treating as unverified"
+        "osm auth verifier threw; treating as unverified",
       );
     }
   }
@@ -203,7 +204,7 @@ export async function enrollReporter(
       outcome: entitlement.grantTokens > 0 ? "enrolled" : "blocked",
       trustSignal: entitlement.trustSignal,
     },
-    "reporter enrollment assessed"
+    "reporter enrollment assessed",
   );
 
   if (entitlement.grantTokens === 0) {

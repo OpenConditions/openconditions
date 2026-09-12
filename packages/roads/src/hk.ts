@@ -1,9 +1,9 @@
 import type { Point } from "geojson";
+import type { FlowParseResult } from "./flow.js";
+import { makeOrigin } from "./flow.js";
 import type { RoadFlow } from "./model.js";
 import type { SiteGeometry } from "./siteTable.js";
 import type { SourceDescriptor } from "./types.js";
-import { makeOrigin } from "./flow.js";
-import type { FlowParseResult } from "./flow.js";
 import { getXmlChild, getXmlChildren, isXmlObject, parseXmlDocument, xmlText } from "./xml.js";
 
 const ABSURD_SPEED_KPH = 250;
@@ -60,7 +60,7 @@ export function parseHkDetectors(input: string | Buffer): Map<string, SiteGeomet
 export function parseHkRawFlow(
   input: string | Buffer,
   src: SourceDescriptor,
-  siteMap?: Map<string, SiteGeometry>
+  siteMap?: Map<string, SiteGeometry>,
 ): FlowParseResult {
   let doc: ReturnType<typeof parseXmlDocument>;
   try {

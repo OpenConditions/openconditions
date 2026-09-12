@@ -7,10 +7,10 @@ import {
   histogramForRegion,
   measurementCell,
   prepareReport,
+  type RegionSpec,
   reportByteSize,
   shardStructured,
   speedToBucket,
-  type RegionSpec,
 } from "../index.js";
 
 const REGION: RegionSpec = {
@@ -52,7 +52,7 @@ describe("invariant 1: one-hot segment enforcement", () => {
         // Malicious client sets a SECOND segment's cell in the Leader share.
         shares[0]!.measurementShare[otherCell] =
           (shares[0]!.measurementShare[otherCell] ?? 0n) + 1n;
-      })
+      }),
     ).rejects.toThrow("Verify error");
   });
 
@@ -65,7 +65,7 @@ describe("invariant 1: one-hot segment enforcement", () => {
     await expect(
       prepareReport(vdaf, verifyKey, report, (shares) => {
         shares[0]!.measurementShare[cell] = (shares[0]!.measurementShare[cell] ?? 0n) + 1n;
-      })
+      }),
     ).rejects.toThrow("Verify error");
   });
 
@@ -84,19 +84,19 @@ describe("invariant 1: one-hot segment enforcement", () => {
       prepareReport(vdaf, verifyKey, report, (shares) => {
         shares[0]!.measurementShare[cell] = (shares[0]!.measurementShare[cell] ?? 0n) - 1n;
         shares[0]!.measurementShare[beyond] = (shares[0]!.measurementShare[beyond] ?? 0n) + 1n;
-      })
+      }),
     ).rejects.toThrow("Verify error");
   });
 
   it("client-side: rejects a segment index outside the region before encoding", async () => {
     await expect(
-      encodePrivateSegment(REGION, { segmentIndex: REGION.segmentCount, clampedSpeed: 50 })
+      encodePrivateSegment(REGION, { segmentIndex: REGION.segmentCount, clampedSpeed: 50 }),
     ).rejects.toThrow(/segmentIndex/);
   });
 
   it("client-side: rejects a speed outside the fixed-point bound [0, 200]", async () => {
     await expect(
-      encodePrivateSegment(REGION, { segmentIndex: 1, clampedSpeed: 201 })
+      encodePrivateSegment(REGION, { segmentIndex: 1, clampedSpeed: 201 }),
     ).rejects.toThrow(/\[0, 200\]/);
     expect(() => speedToBucket(-1, REGION.speedBucketCount)).toThrow();
     // The boundary value 200 is IN range and lands in the top bucket.

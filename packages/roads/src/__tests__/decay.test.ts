@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_DECAY_TTLS,
-  FALLBACK_DECAY,
+  type DecayEntry,
   decayMaxLifetimeSec,
   decayTtlSec,
   expiresAtFor,
-  type DecayEntry,
+  FALLBACK_DECAY,
 } from "../decay.js";
 
 const EXPECTED: Record<string, DecayEntry> = {
@@ -107,13 +107,13 @@ describe("decayTtlSec", () => {
 
   it("throws TypeError on a non-finite or negative override value", () => {
     expect(() => decayTtlSec("congestion", "crowd", { congestion: { crowdTtlSec: -1 } })).toThrow(
-      TypeError
+      TypeError,
     );
     expect(() =>
-      decayTtlSec("congestion", "crowd", { congestion: { crowdTtlSec: Number.NaN } })
+      decayTtlSec("congestion", "crowd", { congestion: { crowdTtlSec: Number.NaN } }),
     ).toThrow(TypeError);
     expect(() =>
-      decayTtlSec("congestion", "crowd", { congestion: { crowdTtlSec: Number.POSITIVE_INFINITY } })
+      decayTtlSec("congestion", "crowd", { congestion: { crowdTtlSec: Number.POSITIVE_INFINITY } }),
     ).toThrow(TypeError);
   });
 });
@@ -132,7 +132,7 @@ describe("decayMaxLifetimeSec", () => {
 
   it("throws TypeError on a bad override value", () => {
     expect(() => decayMaxLifetimeSec("congestion", { congestion: { maxLifetimeSec: -5 } })).toThrow(
-      TypeError
+      TypeError,
     );
   });
 });
@@ -141,17 +141,17 @@ describe("expiresAtFor", () => {
   it("adds the origin TTL to a zoned instant (exact ISO in/out)", () => {
     // congestion crowd TTL = 300 s
     expect(expiresAtFor("2026-07-11T12:00:00.000Z", "congestion", "crowd")).toBe(
-      "2026-07-11T12:05:00.000Z"
+      "2026-07-11T12:05:00.000Z",
     );
     // congestion feed TTL = 600 s
     expect(expiresAtFor("2026-07-11T12:00:00.000Z", "congestion", "feed")).toBe(
-      "2026-07-11T12:10:00.000Z"
+      "2026-07-11T12:10:00.000Z",
     );
   });
 
   it("pins an offset-less datetime to UTC before adding the TTL", () => {
     expect(expiresAtFor("2026-07-11T12:00:00", "congestion", "crowd")).toBe(
-      "2026-07-11T12:05:00.000Z"
+      "2026-07-11T12:05:00.000Z",
     );
   });
 
@@ -164,7 +164,7 @@ describe("expiresAtFor", () => {
     expect(
       expiresAtFor("2026-07-11T12:00:00.000Z", "congestion", "crowd", {
         congestion: { crowdTtlSec: 60 },
-      })
+      }),
     ).toBe("2026-07-11T12:01:00.000Z");
   });
 

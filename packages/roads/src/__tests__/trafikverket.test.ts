@@ -36,7 +36,7 @@ describe("parseTrafikverket", () => {
           ],
         },
       ]),
-      SRC
+      SRC,
     );
     expect(out).toHaveLength(2);
     const byId = Object.fromEntries(out.map((e) => [e.id, e]));
@@ -53,7 +53,7 @@ describe("parseTrafikverket", () => {
 
   it("skips deviations without geometry and tolerates malformed input", () => {
     expect(
-      parseTrafikverket(body([{ Deviation: [{ Id: "x", MessageType: "Olycka" }] }]), SRC)
+      parseTrafikverket(body([{ Deviation: [{ Id: "x", MessageType: "Olycka" }] }]), SRC),
     ).toEqual([]);
     expect(parseTrafikverket("not json", SRC)).toEqual([]);
     expect(parseTrafikverket(JSON.stringify({ RESPONSE: {} }), SRC)).toEqual([]);

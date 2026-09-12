@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { stringify } from "yaml";
+import type { ActorDocument } from "../actor.js";
 import { multibaseFromRawEd25519 } from "../multibase.js";
+import { loadPeers, type PeerRecord, verifyActorAgainstPin } from "../peers.js";
 import {
   parseRegistryEntry,
+  type RegistryEntry,
   registryEntryFileName,
   registryToPeerRecords,
-  type RegistryEntry,
 } from "../registry.js";
-import { loadPeers, verifyActorAgainstPin, type PeerRecord } from "../peers.js";
-import type { ActorDocument } from "../actor.js";
 
 function randomMultibase(): string {
   const raw = new Uint8Array(32);
@@ -48,7 +48,7 @@ describe("parseRegistryEntry", () => {
     const iso = parseRegistryEntry(stringify(sampleEntryObject({ coverage: { iso3166: ["NL"] } })));
     expect(iso.coverage.bbox).toBeUndefined();
     const bbox = parseRegistryEntry(
-      stringify(sampleEntryObject({ coverage: { bbox: [3.3, 50.7, 7.2, 53.6] } }))
+      stringify(sampleEntryObject({ coverage: { bbox: [3.3, 50.7, 7.2, 53.6] } })),
     );
     expect(bbox.coverage.iso3166).toBeUndefined();
   });
@@ -98,7 +98,7 @@ describe("parseRegistryEntry", () => {
   it("throws on duplicate keys", () => {
     const key = randomMultibase();
     expect(() => parseRegistryEntry(stringify(sampleEntryObject({ keys: [key, key] })))).toThrow(
-      TypeError
+      TypeError,
     );
   });
 });
@@ -132,8 +132,8 @@ describe("registryToPeerRecords", () => {
             id: "openmapx-nl",
             actor: "https://nl.example.org/.well-known/openconditions/actor.json",
             trustTier: 2,
-          })
-        )
+          }),
+        ),
       ),
     ];
     const records = registryToPeerRecords(entries);
@@ -152,7 +152,7 @@ describe("bilateral-pin bootstrap without the registry", () => {
           trustTier: 1,
           pinnedKeys: [pinned],
         },
-      ])
+      ]),
     );
     const actor = {
       id: "https://nl.example.org/.well-known/openconditions/actor.json",
@@ -179,7 +179,7 @@ describe("bilateral-pin bootstrap without the registry", () => {
           trustTier: 1,
           pinnedKeys: [randomMultibase()],
         },
-      ])
+      ]),
     );
     const substituted = randomMultibase();
     const actor = {

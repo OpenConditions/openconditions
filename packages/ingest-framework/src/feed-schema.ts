@@ -188,7 +188,7 @@ export const feedSourceBaseShape = {
   setup: z
     .record(
       z.string(),
-      credentialSetupSchema.extend({ title: z.string(), description: z.string().optional() })
+      credentialSetupSchema.extend({ title: z.string(), description: z.string().optional() }),
     )
     .optional(),
 } as const;

@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { wzdxRegistryResolver } from "../wzdx.js";
 import { roadFeedSchema } from "../../feed-schema.js";
+import { wzdxRegistryResolver } from "../wzdx.js";
 
 const REGISTRY = path.resolve(import.meta.dirname, "../../__tests__/fixtures/wzdx/registry.json");
 
@@ -35,7 +35,7 @@ describe("wzdxRegistryResolver", () => {
         "https://golf.example/api/v3",
         "https://hotel.example/api/wzdx-string",
         "https://india.example/api/wzdx",
-      ].sort()
+      ].sort(),
     );
     for (const f of feeds) {
       expect(f.format).toBe("wzdx");
@@ -47,7 +47,7 @@ describe("wzdxRegistryResolver", () => {
     }
     expect(new Set(feeds.map((f) => f.id)).size).toBe(feeds.length); // unique ids
     expect(feeds.map((feed) => roadFeedSchema.parse(JSON.parse(JSON.stringify(feed))))).toEqual(
-      feeds
+      feeds,
     );
   });
 
@@ -72,7 +72,7 @@ describe("wzdxRegistryResolver", () => {
           version: "4.2",
           url: "https://example.test/washington",
         },
-      ])
+      ]),
     );
 
     expect(kansas).toMatchObject({
@@ -111,16 +111,16 @@ describe("wzdxRegistryResolver", () => {
     const first = await wzdxRegistryResolver.resolve(jsonResponder(rows));
     const second = await wzdxRegistryResolver.resolve(
       jsonResponder(
-        [...rows].reverse().map((row) => ({ ...row, state: "KS", feedname: "Renamed" }))
-      )
+        [...rows].reverse().map((row) => ({ ...row, state: "KS", feedname: "Renamed" })),
+      ),
     );
     expect(Object.fromEntries(first.map((feed) => [String(feed.url), feed.id]))).toEqual(
-      Object.fromEntries(second.map((feed) => [String(feed.url), feed.id]))
+      Object.fromEntries(second.map((feed) => [String(feed.url), feed.id])),
     );
     expect(first[0]).toMatchObject({ license: "UNKNOWN", selectionState: "discovered" });
     expect(first[1]).toMatchObject({ license: "CC0-1.0", selectionState: "approved" });
     expect(
-      second.filter((feed) => feed.selectionState === "approved").map((feed) => feed.url)
+      second.filter((feed) => feed.selectionState === "approved").map((feed) => feed.url),
     ).toEqual(["https://ks.carsprogram.org/carsapi_v1/api/wzdx"]);
   });
 
@@ -144,7 +144,7 @@ describe("wzdxRegistryResolver", () => {
           version: "4.1",
           url: { url: "https://xml.example/api/wzdx" },
         },
-      ])
+      ]),
     );
     expect(feeds).toEqual([]);
   });

@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { bindObservations, drainBindingQueue } from "../pipeline/bind-observations.js";
 
 let sql: postgres.Sql;
@@ -99,7 +99,7 @@ describe("bindObservations", () => {
     });
     expect(binding?.status).not.toBe("obsolete");
     expect(await sql`SELECT 1 FROM conditions.binding_queue WHERE observation_id='a:1'`).toEqual(
-      []
+      [],
     );
   }, 60_000);
 
@@ -116,7 +116,7 @@ describe("bindObservations", () => {
       SELECT observation_revision FROM conditions.observation_binding WHERE observation_id='a:1'`;
     expect(binding?.observation_revision).toBe(observation?.content_hash);
     expect(await sql`SELECT 1 FROM conditions.binding_queue WHERE observation_id='a:1'`).toEqual(
-      []
+      [],
     );
   }, 60_000);
 

@@ -70,7 +70,7 @@ export function assertCanonicalSignature(raw: Uint8Array): void {
   }
   if (s > P256_HALF_ORDER) {
     throw new TypeError(
-      "non-canonical signature: high-S form (s > n/2); only the low-S twin is accepted"
+      "non-canonical signature: high-S form (s > n/2); only the low-S twin is accepted",
     );
   }
 }

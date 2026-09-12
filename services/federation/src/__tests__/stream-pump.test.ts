@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { encodeOutboxCursor, type OutboxEntry, type OutboxPage } from "@openconditions/federation";
+import { describe, expect, it } from "vitest";
 import { SseStreamPump } from "../stream-pump.js";
 
 function entry(seq: number, txid = "10"): OutboxEntry {
@@ -67,7 +67,7 @@ describe("SseStreamPump — backpressure pause/resume", () => {
         writer: w.writer,
         formatEntry: (e) => `data:${e.seq}\n\n`,
       },
-      "0.0"
+      "0.0",
     );
 
     await pump.tick();
@@ -93,7 +93,7 @@ describe("SseStreamPump — backpressure pause/resume", () => {
         writer: w.writer,
         formatEntry: (e) => `data:${e.seq}\n\n`,
       },
-      "0.0"
+      "0.0",
     );
 
     await pump.tick(); // pauses on entry 1
@@ -125,7 +125,7 @@ describe("SseStreamPump — backpressure pause/resume", () => {
         writer: w.writer,
         formatEntry: (e) => `data:${e.seq}\n\n`,
       },
-      "0.0"
+      "0.0",
     );
 
     await pump.tick();
@@ -156,7 +156,7 @@ describe("SseStreamPump — backpressure pause/resume", () => {
         writer: w.writer,
         formatEntry: (e) => `data:${e.seq}\n\n`,
       },
-      "0.0"
+      "0.0",
     );
 
     await pump.tick();
@@ -173,7 +173,7 @@ describe("SseStreamPump — backpressure pause/resume", () => {
         writer: w.writer,
         formatEntry: (e) => `data:${e.seq}\n\n`,
       },
-      "0.0"
+      "0.0",
     );
 
     await pump.tick();
@@ -202,7 +202,7 @@ describe("SseStreamPump — backpressure pause/resume", () => {
         writer: w.writer,
         formatEntry: (e) => `data:${e.seq}\n\n`,
       },
-      "0.0"
+      "0.0",
     );
 
     const first = pump.tick(); // enters, read is now in flight (awaiting the gate)
@@ -234,7 +234,7 @@ describe("SseStreamPump — backpressure pause/resume", () => {
         writer: w.writer,
         formatEntry: (e) => `data:${e.seq}\n\n`,
       },
-      "0.0"
+      "0.0",
     );
 
     const inflight = pump.tick(); // read in flight
@@ -259,7 +259,7 @@ describe("SseStreamPump — backpressure pause/resume", () => {
         formatEntry: (e) => `data:${e.seq}\n\n`,
         onError: (err) => errors.push(err),
       },
-      "3.3"
+      "3.3",
     );
 
     await expect(pump.tick()).resolves.toBeUndefined();

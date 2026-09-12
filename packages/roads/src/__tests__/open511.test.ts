@@ -22,7 +22,7 @@ describe("parseOpen511 — DriveBC fixture", () => {
     expect(events.length).toBeGreaterThan(0);
     expect(events[0]!.geometry).toBeDefined();
     expect(events[0]!.geometry.type).toMatch(
-      /^(Point|LineString|Polygon|MultiPoint|MultiLineString|MultiPolygon)$/
+      /^(Point|LineString|Polygon|MultiPoint|MultiLineString|MultiPolygon)$/,
     );
   });
 
@@ -124,8 +124,8 @@ describe("parseOpen511 — DriveBC fixture", () => {
 
     const linear = withRefs!.externalRefs?.linear as Record<string, unknown> | undefined;
     expect(linear).toBeDefined();
-    expect(Object.prototype.hasOwnProperty.call(linear, "+ivr_message")).toBe(true);
-    expect(Object.prototype.hasOwnProperty.call(linear, "+linear_reference_km")).toBe(true);
+    expect(Object.hasOwn(linear!, "+ivr_message")).toBe(true);
+    expect(Object.hasOwn(linear!, "+linear_reference_km")).toBe(true);
   });
 
   it("accepts a pre-parsed object as well as a JSON string", () => {
@@ -241,10 +241,10 @@ describe("parseOpen511 — road state", () => {
   it("maps Open511 roads[].state to roadState", () => {
     expect(parseOpen511(event("ALL_LANES_CLOSED"), DRIVEBC_SOURCE)[0]!.roadState).toBe("closed");
     expect(parseOpen511(event("SOME_LANES_CLOSED"), DRIVEBC_SOURCE)[0]!.roadState).toBe(
-      "some_lanes_closed"
+      "some_lanes_closed",
     );
     expect(parseOpen511(event("SINGLE_LANE_ALTERNATING"), DRIVEBC_SOURCE)[0]!.roadState).toBe(
-      "single_lane_alternating"
+      "single_lane_alternating",
     );
   });
 });

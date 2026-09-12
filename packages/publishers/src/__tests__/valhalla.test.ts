@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
+import type { SegmentConditionJson } from "../segment-conditions.js";
 import {
   eventsToExclusions,
   flowToSegmentSpeedCsv,
   segmentConditionsToExclusions,
 } from "../valhalla.js";
-import type { SegmentConditionJson } from "../segment-conditions.js";
 import { measurement, restrictionDetails, roadEvent } from "./fixture.js";
 
 describe("eventsToExclusions", () => {
@@ -77,7 +77,7 @@ describe("eventsToExclusions", () => {
           },
         }),
       ],
-      { maxPointsPerClosure: 5 }
+      { maxPointsPerClosure: 5 },
     );
     expect(ex.exclude_locations).toHaveLength(5);
     expect(ex.exclude_locations[0]).toEqual({ lon: 13.4, lat: 52.5 });
@@ -172,7 +172,7 @@ describe("eventsToExclusions", () => {
         id: `road_closure:${i}`,
         type: "road_closure",
         geometry: { type: "Point", coordinates: [4 + i * 0.01, 52] },
-      })
+      }),
     );
     expect(eventsToExclusions(few).exclude_locations).toHaveLength(10);
 
@@ -183,7 +183,7 @@ describe("eventsToExclusions", () => {
         id: `road_closure:${i}`,
         type: "road_closure",
         geometry: { type: "Point", coordinates: [4 + i * 0.01, 52] },
-      })
+      }),
     );
     const ex = eventsToExclusions(many);
     expect(ex.exclude_locations).toHaveLength(45);
@@ -196,7 +196,7 @@ describe("eventsToExclusions", () => {
         id: `road_closure:${i}`,
         type: "road_closure",
         geometry: { type: "Point", coordinates: [4 + i * 0.01, 52] },
-      })
+      }),
     );
     const ex = eventsToExclusions(many, { maxTotalPoints: 5 });
     expect(ex.exclude_locations).toHaveLength(5);
@@ -235,7 +235,7 @@ describe("eventsToExclusions", () => {
           schedule: [{ startTime: "20:00", duration: "PT9H", scheduleTimezone: "Europe/Berlin" }],
         }),
       ],
-      { activeAt: new Date("2026-09-08T10:00:00Z") }
+      { activeAt: new Date("2026-09-08T10:00:00Z") },
     );
     expect(ex.exclude_locations).toEqual([]);
   });
@@ -337,7 +337,7 @@ describe("eventsToExclusions", () => {
     ];
     for (const event of variants) {
       expect(
-        eventsToExclusions([event as never], { activeAt: new Date("2026-06-22T10:00:00Z") })
+        eventsToExclusions([event as never], { activeAt: new Date("2026-06-22T10:00:00Z") }),
       ).toEqual({ exclude_locations: [], exclude_polygons: [] });
     }
   });
@@ -346,7 +346,7 @@ describe("eventsToExclusions", () => {
     expect(
       eventsToExclusions([roadEvent({ type: "lane_closure" })], {
         activeAt: new Date("2026-06-22T10:00:00Z"),
-      })
+      }),
     ).toEqual({ exclude_locations: [], exclude_polygons: [] });
   });
 });
@@ -407,7 +407,7 @@ describe("segmentConditionsToExclusions", () => {
       segmentConditionsToExclusions([condition], {
         activeAt: new Date("2026-06-22T10:00:00Z"),
         evaluatedAt: new Date("2026-06-22T10:00:00Z"),
-      }).exclude_locations.length
+      }).exclude_locations.length,
     ).toBeGreaterThan(0);
     expect(
       segmentConditionsToExclusions(
@@ -420,8 +420,8 @@ describe("segmentConditionsToExclusions", () => {
             },
           },
         ],
-        { activeAt: new Date("2026-06-22T10:00:00Z") }
-      )
+        { activeAt: new Date("2026-06-22T10:00:00Z") },
+      ),
     ).toEqual({ exclude_locations: [], exclude_polygons: [] });
   });
 });
@@ -436,11 +436,11 @@ describe("restriction evidence exclusion", () => {
       { restrictionDetails: undefined },
     ]) {
       expect(
-        eventsToExclusions([roadEvent({ type: "road_closure", geometry, ...carrier } as never)])
+        eventsToExclusions([roadEvent({ type: "road_closure", geometry, ...carrier } as never)]),
       ).toEqual({ exclude_locations: [], exclude_polygons: [] });
     }
     expect(
-      eventsToExclusions([roadEvent({ type: "road_closure", geometry })]).exclude_locations
+      eventsToExclusions([roadEvent({ type: "road_closure", geometry })]).exclude_locations,
     ).toHaveLength(1);
   });
 });

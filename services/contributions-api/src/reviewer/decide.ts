@@ -19,8 +19,9 @@
  * RETAINED for audit; only the wire-level federation tombstone (plan 2) carries
  * id + canonicalId + a deletion flag, and the local ledger never federates.
  */
-import type postgres from "postgres";
+
 import type { EvidenceState } from "@openconditions/core";
+import type postgres from "postgres";
 import { applyExternalResolution } from "../reputation/resolve.js";
 
 type Sql = postgres.Sql;
@@ -44,7 +45,7 @@ interface GateRow {
 /** Load and lock the observation row, or null when it does not exist. */
 async function loadLocked(
   tx: postgres.TransactionSql,
-  observationId: string
+  observationId: string,
 ): Promise<GateRow | null> {
   const rows = await tx<GateRow[]>`
     SELECT status, evidence_state FROM conditions.observations
@@ -64,7 +65,7 @@ async function loadLocked(
 export async function acceptObservation(
   sql: Sql,
   observationId: string,
-  now: string
+  now: string,
 ): Promise<DecisionOutcome> {
   return sql.begin(async (tx) => {
     const row = await loadLocked(tx, observationId);
@@ -84,7 +85,7 @@ export async function acceptObservation(
       observationId,
       { source: "reviewer", outcome: "confirmed" },
       now,
-      tx
+      tx,
     );
 
     await tx`
@@ -114,7 +115,7 @@ export async function acceptObservation(
 export async function rejectObservation(
   sql: Sql,
   observationId: string,
-  now: string
+  now: string,
 ): Promise<DecisionOutcome> {
   return sql.begin(async (tx) => {
     const row = await loadLocked(tx, observationId);
@@ -130,7 +131,7 @@ export async function rejectObservation(
       observationId,
       { source: "reviewer", outcome: "rejected" },
       now,
-      tx
+      tx,
     );
 
     const tombstoneMarker = { tombstone: true, reason: "reviewer_reject", at: now };

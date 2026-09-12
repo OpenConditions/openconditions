@@ -78,7 +78,7 @@ async function buildRegion(sql: Sql, region: string, now: () => string): Promise
 export async function buildSegments(
   sql: Sql,
   now: () => string,
-  opts?: BuildSegmentsOptions
+  opts?: BuildSegmentsOptions,
 ): Promise<BuildSegmentsResult> {
   let regions: string[];
   if (opts?.region) {

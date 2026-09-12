@@ -1,8 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { generateReporterKey } from "@openconditions/contrib-core";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { enrollReporter } from "../attester/enroll.js";
 import { recomputeEvidence } from "../evidence/recompute.js";
 import { applyExternalResolution } from "../reputation/resolve.js";
@@ -50,7 +50,7 @@ async function addEvidence(
   obsId: string,
   kind: string,
   occurredAt: string,
-  actorKeyId: string | null
+  actorKeyId: string | null,
 ): Promise<void> {
   await sql`
     INSERT INTO conditions.report_evidence
@@ -111,7 +111,7 @@ describe("applyExternalResolution — confirmed outcomes", () => {
       sql,
       "obs:conf-official",
       { source: "official", outcome: "confirmed" },
-      T_RESOLVE
+      T_RESOLVE,
     );
     expect(result).toEqual({ evidenceState: "externally_resolved", routingEligible: true });
 
@@ -138,7 +138,7 @@ describe("applyExternalResolution — confirmed outcomes", () => {
       sql,
       "obs:conf-reviewer",
       { source: "reviewer", outcome: "confirmed" },
-      T_RESOLVE
+      T_RESOLVE,
     );
     expect(result).toEqual({ evidenceState: "externally_resolved", routingEligible: true });
 
@@ -155,7 +155,7 @@ describe("applyExternalResolution — confirmed outcomes", () => {
       sql,
       "obs:conf-objective",
       { source: "objective", outcome: "confirmed" },
-      T_RESOLVE
+      T_RESOLVE,
     );
     expect(result).toEqual({ evidenceState: "externally_resolved", routingEligible: true });
 
@@ -174,7 +174,7 @@ describe("applyExternalResolution — rejected outcomes", () => {
       sql,
       "obs:rej-reviewer",
       { source: "reviewer", outcome: "rejected" },
-      T_RESOLVE
+      T_RESOLVE,
     );
     expect(result).toEqual({ evidenceState: "negated", routingEligible: false });
 
@@ -196,13 +196,13 @@ describe("applyExternalResolution — rejected outcomes", () => {
       sql,
       "obs:rej-official",
       { source: "official", outcome: "rejected" },
-      T_RESOLVE
+      T_RESOLVE,
     );
     await applyExternalResolution(
       sql,
       "obs:rej-objective",
       { source: "objective", outcome: "rejected" },
-      T_RESOLVE
+      T_RESOLVE,
     );
 
     const official = await readExternalEvidence("obs:rej-official");
@@ -222,7 +222,7 @@ describe("applyExternalResolution — rejected outcomes", () => {
       sql,
       "obs:rej-confirmer",
       { source: "reviewer", outcome: "rejected" },
-      T_RESOLVE
+      T_RESOLVE,
     );
 
     const originator = await readReporter("rep-rej-orig");
@@ -265,7 +265,7 @@ describe("reputation trains ONLY on external resolution", () => {
       sql,
       "obs:with-confirmer",
       { source: "official", outcome: "confirmed" },
-      T_RESOLVE
+      T_RESOLVE,
     );
 
     const originator = await readReporter("rep-orig");
@@ -300,7 +300,7 @@ describe("applyExternalResolution — late-confirm reputation free-ride is block
       sql,
       "obs:late-confirm",
       { source: "official", outcome: "confirmed" },
-      firstResolveAt
+      firstResolveAt,
     );
 
     // This confirm lands AFTER the observation was already settled (in the live
@@ -315,7 +315,7 @@ describe("applyExternalResolution — late-confirm reputation free-ride is block
       sql,
       "obs:late-confirm",
       { source: "reviewer", outcome: "confirmed" },
-      secondResolveAt
+      secondResolveAt,
     );
 
     const originator = await readReporter("rep-lc-orig");
@@ -340,13 +340,13 @@ describe("applyExternalResolution — idempotence under double resolution", () =
       sql,
       "obs:double",
       { source: "official", outcome: "confirmed" },
-      T_RESOLVE
+      T_RESOLVE,
     );
     const second = await applyExternalResolution(
       sql,
       "obs:double",
       { source: "official", outcome: "confirmed" },
-      "2026-07-12T08:20:00.000Z"
+      "2026-07-12T08:20:00.000Z",
     );
     expect(first).toEqual({ evidenceState: "externally_resolved", routingEligible: true });
     expect(second).toEqual({ evidenceState: "externally_resolved", routingEligible: true });
@@ -369,7 +369,7 @@ describe("applyExternalResolution — idempotence under double resolution", () =
         sql,
         "obs:double-confirmer",
         { source: "reviewer", outcome: "confirmed" },
-        now
+        now,
       );
     }
 
@@ -385,7 +385,7 @@ describe("applyExternalResolution — edges", () => {
       sql,
       "obs:does-not-exist",
       { source: "official", outcome: "confirmed" },
-      T_RESOLVE
+      T_RESOLVE,
     );
     expect(result).toBeNull();
   }, 30_000);

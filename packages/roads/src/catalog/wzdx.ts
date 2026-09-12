@@ -1,8 +1,8 @@
-import path from "node:path";
 import { createHash } from "node:crypto";
+import path from "node:path";
 import type { CatalogResolver, FeedSourceBase } from "@openconditions/ingest-framework";
-import wzdxSnapshot from "./snapshots/wzdx-registry.json" with { type: "json" };
 import { roadFeedSchema } from "../feed-schema.js";
+import wzdxSnapshot from "./snapshots/wzdx-registry.json" with { type: "json" };
 
 const WZDX_REGISTRY_URL = "https://datahub.transportation.gov/resource/69qe-yiui.json?$limit=5000";
 
@@ -200,7 +200,7 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
 
   if (placeholderSkipped > 0) {
     console.info(
-      `[wzdx] skipped ${placeholderSkipped} registry feed(s) with an unfilled API-key placeholder`
+      `[wzdx] skipped ${placeholderSkipped} registry feed(s) with an unfilled API-key placeholder`,
     );
   }
   return feeds;

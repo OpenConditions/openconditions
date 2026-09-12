@@ -1,12 +1,12 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import Fastify from "fastify";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
-import { RESOLVER_VERSION } from "@openconditions/roads";
 import type { DomainRegistry } from "@openconditions/ingest-framework";
-import { FeedStatusStore } from "../feed-status.js";
+import { RESOLVER_VERSION } from "@openconditions/roads";
+import Fastify from "fastify";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildDomainRegistry } from "../domains.js";
+import { FeedStatusStore } from "../feed-status.js";
 import { registerPublishRoutes } from "../publish-routes.js";
 
 let sql: postgres.Sql;
@@ -37,7 +37,7 @@ async function insertEvent(
   id: string,
   license: string,
   attributes: postgres.JSONValue,
-  validFrom: string = VALID_FROM
+  validFrom: string = VALID_FROM,
 ): Promise<void> {
   await sql`
     INSERT INTO conditions.observations
@@ -70,7 +70,7 @@ async function insertSpan(
   segmentId: string,
   wayId: number,
   startFraction: number,
-  endFraction: number
+  endFraction: number,
 ): Promise<void> {
   await sql`
     INSERT INTO conditions.observation_segment
@@ -150,7 +150,7 @@ afterAll(async () => {
 }, 30_000);
 
 async function withApp<T>(
-  fn: (app: ReturnType<typeof Fastify>, registry: DomainRegistry) => Promise<T>
+  fn: (app: ReturnType<typeof Fastify>, registry: DomainRegistry) => Promise<T>,
 ): Promise<T> {
   const app = Fastify();
   const loaded = await buildDomainRegistry();
@@ -237,7 +237,7 @@ describe("GET /segments/conditions.json", () => {
           reviewed_at: NOW,
           evidence_origin: "stored old grant",
           evidence_version: "1",
-        }
+        },
       )}) WHERE id='a:1'`;
       await withApp(async (app, registry) => {
         const publishedIds = async () => {
@@ -297,7 +297,7 @@ describe("GET /segments/conditions.json", () => {
             reviewed_at: NOW,
             evidence_origin: "stored old grant",
             evidence_version: "1",
-          }
+          },
         )}) WHERE id='a:1'`;
         await withApp(async (app, registry) => {
           const feed = registry.roads!.feeds[0]!;
@@ -309,13 +309,13 @@ describe("GET /segments/conditions.json", () => {
           });
           expect(res.statusCode).toBe(200);
           expect(
-            (res.json() as ConditionsBody).conditions.some((condition) => condition.id === "a:1")
+            (res.json() as ConditionsBody).conditions.some((condition) => condition.id === "a:1"),
           ).toBe(false);
         });
       } finally {
         await sql`UPDATE conditions.observations SET origin=${sql.json(original)} WHERE id='a:1'`;
       }
-    }
+    },
   );
   it("scopes optional bbox queries while keeping the unscoped routing snapshot complete", async () => {
     await withApp(async (app) => {
@@ -354,7 +354,7 @@ describe("GET /segments/conditions.json", () => {
         });
         expect(res.statusCode).toBe(400);
       });
-    }
+    },
   );
   it("does not relabel an older resolver binding or a non-active graph as current evidence", async () => {
     await sql`UPDATE conditions.observation_binding SET resolver_version='old-resolver' WHERE observation_id='a:1'`;
@@ -477,7 +477,7 @@ describe("GET /segments/conditions.json", () => {
         url: "/segments/conditions.json?at=2026-09-06T10:00:00Z",
       });
       expect((early.json() as ConditionsBody).conditions.map((c) => c.id)).not.toContain(
-        "a:future"
+        "a:future",
       );
 
       const later = await app.inject({

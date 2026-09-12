@@ -7,10 +7,10 @@
  */
 import { readFileSync } from "node:fs";
 import {
-  loadPeers,
-  parseActorConfig,
   type ActorConfig,
+  loadPeers,
   type PeerRecord,
+  parseActorConfig,
 } from "@openconditions/federation";
 
 export interface FederationSettings {
@@ -32,7 +32,7 @@ function readJsonSource(value: string): string {
 }
 
 export function resolveFederationSettings(
-  env: Record<string, string | undefined>
+  env: Record<string, string | undefined>,
 ): FederationSettings {
   const enabledFlag = env["OPENCONDITIONS_FEDERATION_ENABLED"];
   const enabled = enabledFlag === "true" || enabledFlag === "1";
@@ -42,7 +42,7 @@ export function resolveFederationSettings(
   if (actorSource === undefined || actorSource.length === 0) {
     throw new Error(
       "federation is enabled but OPENCONDITIONS_FEDERATION_ACTOR is missing " +
-        "(inline actor-config JSON or a path to a JSON file)"
+        "(inline actor-config JSON or a path to a JSON file)",
     );
   }
   const actor = parseActorConfig(readJsonSource(actorSource));

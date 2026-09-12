@@ -1,14 +1,14 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import type { Observation } from "@openconditions/core";
+import { runMigrations } from "@openconditions/core/server";
 import Fastify from "fastify";
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
-import { GenericContainer, Wait } from "testcontainers";
 import postgres from "postgres";
-import { runMigrations } from "@openconditions/core/server";
-import type { Observation } from "@openconditions/core";
-import { FeedStatusStore } from "../feed-status.js";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildDomainRegistry } from "../domains.js";
-import { registerPublishRoutes } from "../publish-routes.js";
+import { FeedStatusStore } from "../feed-status.js";
 import { atomicSwap } from "../pipeline/write-postgis.js";
+import { registerPublishRoutes } from "../publish-routes.js";
 
 const { transit_realtime } = GtfsRealtimeBindings;
 const BBOX = "13,52,14,53";
@@ -168,7 +168,7 @@ describe("GET /gtfs-rt/occupancy.pb — wired, honestly empty", () => {
       expect(res.headers["content-type"]).toContain("application/x-protobuf");
       const feed = transit_realtime.FeedMessage.decode(res.rawPayload);
       expect(feed.header?.incrementality).toBe(
-        transit_realtime.FeedHeader.Incrementality.FULL_DATASET
+        transit_realtime.FeedHeader.Incrementality.FULL_DATASET,
       );
       expect(feed.entity).toHaveLength(0);
       expect(transit_realtime.FeedMessage.verify(feed)).toBeNull();

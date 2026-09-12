@@ -1,8 +1,8 @@
-import type { RoadEvent, RoadFlow } from "./model.js";
-import type { SourceDescriptor } from "./types.js";
-import type { SiteGeometry } from "./siteTable.js";
-import { buildMeasuredSiteFlow, makeOrigin } from "./flow.js";
 import type { FlowParseResult } from "./flow.js";
+import { buildMeasuredSiteFlow, makeOrigin } from "./flow.js";
+import type { RoadEvent, RoadFlow } from "./model.js";
+import type { SiteGeometry } from "./siteTable.js";
+import type { SourceDescriptor } from "./types.js";
 
 /**
  * Barcelona's 0-6 congestion scale → DATEX status tokens the shared flow builder
@@ -37,7 +37,7 @@ function parseBcnTimestamp(raw: string): string | undefined {
 export function parseBcnTramsFlow(
   input: string | Buffer,
   src: SourceDescriptor,
-  siteMap?: Map<string, SiteGeometry>
+  siteMap?: Map<string, SiteGeometry>,
 ): FlowParseResult {
   const text = Buffer.isBuffer(input) ? input.toString("utf8") : input;
   if (typeof text !== "string" || text.trim() === "") {
@@ -65,7 +65,7 @@ export function parseBcnTramsFlow(
       { siteId: tramId.trim(), measuredAt, geom, trafficStatus },
       src,
       origin,
-      now
+      now,
     );
     if (!built) continue;
     flows.push({ ...built.flow, sourceFormat: "bcn-trams" });

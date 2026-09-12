@@ -30,13 +30,13 @@ describe("feedSourceBaseSchema — maintainers", () => {
 
   it("rejects a maintainer missing github", () => {
     expect(() =>
-      feedSourceBaseSchema.parse({ ...base, maintainers: [{ name: "no handle" }] })
+      feedSourceBaseSchema.parse({ ...base, maintainers: [{ name: "no handle" }] }),
     ).toThrow();
   });
 
   it("rejects an empty github handle", () => {
     expect(() =>
-      feedSourceBaseSchema.parse({ ...base, maintainers: [{ name: "x", github: "" }] })
+      feedSourceBaseSchema.parse({ ...base, maintainers: [{ name: "x", github: "" }] }),
     ).toThrow();
   });
 });

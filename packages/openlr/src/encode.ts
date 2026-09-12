@@ -209,20 +209,20 @@ export function encodeOpenlrLine(input: EncodeOpenlrLineInput): string {
       bearing,
       distanceToNext,
       isLast ? null : frcValue,
-      isLast
+      isLast,
     );
   });
 
   const raw = RawLineLocationReference.fromLineValues(
     "openconditions",
     points,
-    Offsets.fromValues(0, 0)
+    Offsets.fromValues(0, 0),
   );
   const locationReference = new BinaryEncoder().encodeDataFromRLR(raw);
 
   if (!locationReference.isValid()) {
     throw new Error(
-      `OpenLR encode failed (return code ${locationReference.getReturnCode() ?? "null"})`
+      `OpenLR encode failed (return code ${locationReference.getReturnCode() ?? "null"})`,
     );
   }
 

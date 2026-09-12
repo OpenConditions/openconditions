@@ -28,7 +28,7 @@ const DATEX2_MAP: Record<string, Severity> = {
  */
 export function normaliseSeverity(
   raw: string,
-  opts: { format: SourceFormat | string }
+  opts: { format: SourceFormat | string },
 ): NormalisedSeverity {
   let severity: Severity = "unknown";
 

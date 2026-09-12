@@ -38,7 +38,7 @@ describe("day conversions", () => {
 describe("buildLocalSchedule", () => {
   it("builds a daily window with duration", () => {
     expect(
-      buildLocalSchedule({ startDate: "2026-06-29", startTime: "20:00", endTime: "05:00" })
+      buildLocalSchedule({ startDate: "2026-06-29", startTime: "20:00", endTime: "05:00" }),
     ).toEqual({
       repeatFrequency: "P1D",
       startDate: "2026-06-29",

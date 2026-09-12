@@ -1,6 +1,6 @@
+import { runMigrations } from "@openconditions/core/server";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
-import { runMigrations } from "@openconditions/core/server";
 
 /**
  * A disposable PostGIS database for the restriction suites, using the same

@@ -19,22 +19,23 @@
  * HEALTH; signature/replay/schema failures are counted against health too.
  * NONE of this re-judges an already-accepted event or feeds evidence/routing.
  */
-import type { FastifyInstance, FastifyRequest } from "fastify";
-import type postgres from "postgres";
+
+import {
+  FederatedPageError,
+  ingestFederatedPage,
+} from "@openconditions/contributions-api/federation/ingest";
 import {
   FEDERATION_REASON_HEADER,
-  recordPeerFailure,
   type FederationFailureReason,
   type MtlsContext,
   type NonceStore,
   type PeerHealthFailure,
   type PeerRecord,
   type RateLimiter,
+  recordPeerFailure,
 } from "@openconditions/federation";
-import {
-  FederatedPageError,
-  ingestFederatedPage,
-} from "@openconditions/contributions-api/federation/ingest";
+import type { FastifyInstance, FastifyRequest } from "fastify";
+import type postgres from "postgres";
 import { requirePeer, respondIfBlocked } from "./peer-request.js";
 
 const INBOX_PATH = "/peer/inbox";
@@ -99,7 +100,7 @@ export function registerInboxRoutes(app: FastifyInstance, ctx: InboxRouteContext
       },
       req,
       reply,
-      body
+      body,
     );
     if (peerId === null) return reply;
 
@@ -123,7 +124,7 @@ export function registerInboxRoutes(app: FastifyInstance, ctx: InboxRouteContext
       "inbox",
       tierForPeer(ctx.peers, peerId),
       items.length,
-      Date.parse(ctx.now())
+      Date.parse(ctx.now()),
     );
     if (!rate.ok) {
       await recordPeerFailure(ctx.sql, peerId, "rate", ctx.now());

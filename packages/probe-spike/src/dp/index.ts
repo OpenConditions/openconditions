@@ -5,38 +5,39 @@
  * `DpMechanism` boundary. Makes NO differential-privacy guarantee; the noise and
  * the (ε,δ)/RDP/zCDP accounting are the real library's responsibility.
  */
+
+export { BudgetLedger, type UnitBudget, type UnitSpend } from "./budget.js";
 export {
-  type DpMechanism,
-  type BoundedSumCall,
-  type SelectPartitionCall,
-  type MechanismCall,
-  type MechanismControlProjection,
-  type RecordingMechanismConfig,
-  controlProjection,
-  RecordingDpMechanism,
-} from "./mechanism.js";
-export {
-  type ReleaseWindow,
-  type ReleaseManifest,
-  type ReleaseManifestConfig,
-  type Partition,
-  OverlappingWindowError,
   buildReleaseManifest,
   listPartitions,
+  OverlappingWindowError,
+  type Partition,
   partitionKey,
+  type ReleaseManifest,
+  type ReleaseManifestConfig,
+  type ReleaseWindow,
   windowForTimestamp,
 } from "./manifest.js";
-export { type UnitSpend, type UnitBudget, BudgetLedger } from "./budget.js";
 export {
-  type SpeedTuple,
+  type BoundedSumCall,
+  controlProjection,
+  type DpMechanism,
+  type MechanismCall,
+  type MechanismControlProjection,
+  RecordingDpMechanism,
+  type RecordingMechanismConfig,
+  type SelectPartitionCall,
+} from "./mechanism.js";
+export {
+  plannedPartitions,
   type ReleasedRow,
-  type SuppressedCell,
-  type ReleaseResult,
-  type ReleaseParams,
   type ReleaseFaults,
-  SPEED_PUBLIC_LOWER,
-  SPEED_PUBLIC_UPPER,
+  type ReleaseParams,
+  type ReleaseResult,
   ReleaseStore,
   releaseWithDp,
-  plannedPartitions,
+  SPEED_PUBLIC_LOWER,
+  SPEED_PUBLIC_UPPER,
+  type SpeedTuple,
+  type SuppressedCell,
 } from "./release.js";

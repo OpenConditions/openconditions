@@ -35,7 +35,7 @@ export interface WriteSensorObservationsResult {
  */
 export async function writeSensorObservations(
   sql: Sql,
-  _now: () => string
+  _now: () => string,
 ): Promise<WriteSensorObservationsResult> {
   // A flow observation contributes either a measured speed (`o.value` set) or,
   // for a declared-LoS feed (Autobahn Verkehrslage), a speed-less row that
@@ -115,7 +115,7 @@ export interface FuseSegmentSpeedResult {
  */
 export async function fuseSegmentSpeed(
   sql: FuseSql,
-  now: () => string
+  now: () => string,
 ): Promise<FuseSegmentSpeedResult> {
   const nowIso = now();
 
@@ -239,7 +239,7 @@ export interface PropagateSegmentSpeedResult {
 export async function propagateSegmentSpeed(
   sql: FuseSql,
   now: () => string,
-  opts?: PropagateSegmentSpeedOptions
+  opts?: PropagateSegmentSpeedOptions,
 ): Promise<PropagateSegmentSpeedResult> {
   const withinM = opts?.withinM ?? 50;
   const maxNeighborM = opts?.maxNeighborM ?? 3000;
@@ -304,7 +304,7 @@ export interface RefreshSegmentSpeedResult {
  */
 export async function refreshSegmentSpeed(
   sql: Sql,
-  now: () => string
+  now: () => string,
 ): Promise<RefreshSegmentSpeedResult> {
   try {
     const { written } = await writeSensorObservations(sql, now);
@@ -314,7 +314,7 @@ export async function refreshSegmentSpeed(
       return { measured: fused.measured, estimated: propagated.estimated };
     });
     console.info(
-      `[ingest] segment-speed refresh: written ${written}, measured ${measured}, estimated ${estimated}`
+      `[ingest] segment-speed refresh: written ${written}, measured ${measured}, estimated ${estimated}`,
     );
     return { written, measured, estimated };
   } catch (err) {

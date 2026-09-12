@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { parseAutobahn } from "../autobahn.js";
 import { parseDigitraffic } from "../digitraffic.js";
 import { parseOpen511 } from "../open511.js";
-import { parseWzdx } from "../wzdx.js";
 import { __resetSkipMetrics, drainSkippedNoGeometry } from "../skip-metrics.js";
 import type { SourceDescriptor } from "../types.js";
+import { parseWzdx } from "../wzdx.js";
 
 const FIXTURES = join(import.meta.dirname, "fixtures");
 const src = (id: string): SourceDescriptor => ({
@@ -63,7 +63,7 @@ describe("no-geometry skips are reported by every parser that drops records", ()
         type: "FeatureCollection",
         features: [{ id: "a", type: "Feature", properties: {}, geometry: null }],
       }),
-      src("feed-a")
+      src("feed-a"),
     );
     expect(drainSkippedNoGeometry("feed-b")).toBe(0);
     expect(drainSkippedNoGeometry("feed-a")).toBe(1);

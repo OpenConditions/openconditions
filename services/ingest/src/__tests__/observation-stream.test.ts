@@ -1,6 +1,6 @@
 import { Writable } from "node:stream";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Observation } from "@openconditions/core";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { startObservationStream } from "../observation-stream.js";
 
 function event(id: string, dataUpdatedAt = "2026-09-11T12:00:00.000Z"): Observation {
@@ -91,7 +91,7 @@ describe("public observation SSE lifecycle", () => {
     const { output, frames, drain } = writer(true);
     const read = vi.fn().mockResolvedValue([event("a"), event("b")]);
     stops.push(
-      startObservationStream({ output, read, pollMs: 10, drainTimeoutMs: 100, onError: vi.fn() })
+      startObservationStream({ output, read, pollMs: 10, drainTimeoutMs: 100, onError: vi.fn() }),
     );
     await settle();
     await vi.advanceTimersByTimeAsync(50);
@@ -156,11 +156,11 @@ describe("public observation SSE lifecycle", () => {
           read: async () => [observation],
           includeRaw,
           onError: vi.fn(),
-        })
+        }),
       );
       await settle();
       expect(frames[0]!.includes("raw-sentinel")).toBe(includeRaw);
       expect(observation.sourceRaw).toEqual({ upstream: "raw-sentinel" });
-    }
+    },
   );
 });

@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { FeedSourceBase } from "../feed-source.js";
 import {
-  PRE_FETCH_HOOKS,
-  WEBTRIS_MAX_SITES,
   clearWebtrisSitesCache,
   loadWebtrisActiveSiteIds,
+  PRE_FETCH_HOOKS,
+  WEBTRIS_MAX_SITES,
 } from "../pre-fetch.js";
-import type { FeedSourceBase } from "../feed-source.js";
 
 const noFetch = (async () => new Response("")) as unknown as typeof fetch;
 

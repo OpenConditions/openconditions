@@ -2,8 +2,8 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
-import type { FeedAuth } from "../feed-source.js";
 import { hasCredentials, makeAuthorizedFetch, normalizePem, requiredEnvVars } from "../auth.js";
+import type { FeedAuth } from "../feed-source.js";
 
 // mTLS must route through undici's OWN fetch (version-matched to its Agent), not
 // the injected base fetch. Mock undici.fetch (keeping the real Agent) so the test
@@ -71,7 +71,7 @@ describe("requiredEnvVars", () => {
         tokenUrl: "https://t",
         clientIdEnvVar: "ID",
         clientSecretEnvVar: "SEC",
-      })
+      }),
     ).toEqual(["ID", "SEC"]);
     expect(requiredEnvVars({ kind: "mtls", certEnvVar: "C", keyEnvVar: "K" })).toEqual(["C", "K"]);
   });
@@ -79,7 +79,7 @@ describe("requiredEnvVars", () => {
   it("treats a query-key with a defaultValue as needing no env var", () => {
     expect(requiredEnvVars({ kind: "query-key", param: "apikey", envVar: "K" })).toEqual(["K"]);
     expect(
-      requiredEnvVars({ kind: "query-key", param: "apikey", envVar: "K", defaultValue: "pub" })
+      requiredEnvVars({ kind: "query-key", param: "apikey", envVar: "K", defaultValue: "pub" }),
     ).toEqual([]);
   });
 });
@@ -92,7 +92,7 @@ describe("hasCredentials", () => {
     expect(hasCredentials({ auth: { kind: "bearer", envVar: "T" } }, {})).toBe(false);
     expect(hasCredentials({ auth: { kind: "bearer", envVar: "T" } }, { T: "" })).toBe(false);
     expect(
-      hasCredentials({ auth: { kind: "basic", userEnvVar: "U", passEnvVar: "P" } }, { U: "u" })
+      hasCredentials({ auth: { kind: "basic", userEnvVar: "U", passEnvVar: "P" } }, { U: "u" }),
     ).toBe(false);
   });
 
@@ -101,7 +101,7 @@ describe("hasCredentials", () => {
     expect(hasCredentials({ requiredEnv: ["K"] }, { K: "x" })).toBe(true);
     // both auth and requiredEnv must be satisfied
     expect(
-      hasCredentials({ auth: { kind: "bearer", envVar: "T" }, requiredEnv: ["K"] }, { T: "t" })
+      hasCredentials({ auth: { kind: "bearer", envVar: "T" }, requiredEnv: ["K"] }, { T: "t" }),
     ).toBe(false);
   });
 });
@@ -130,7 +130,7 @@ describe("makeAuthorizedFetch", () => {
     // Env var set → it overrides the default.
     const own = recorder();
     await makeAuthorizedFetch({ auth }, own.fn, { K: "registered" })(
-      "https://api.example/v1/events"
+      "https://api.example/v1/events",
     );
     expect(own.calls[0]!.url).toBe("https://api.example/v1/events?apikey=registered");
   });
@@ -150,7 +150,7 @@ describe("makeAuthorizedFetch", () => {
   it("bearer and basic set the Authorization header", async () => {
     const r1 = recorder();
     await makeAuthorizedFetch({ auth: { kind: "bearer", envVar: "T" } }, r1.fn, { T: "tok" })(
-      "https://x/"
+      "https://x/",
     );
     expect(header(r1.calls[0]!.init, "Authorization")).toBe("Bearer tok");
 
@@ -158,7 +158,7 @@ describe("makeAuthorizedFetch", () => {
     const basic: FeedAuth = { kind: "basic", userEnvVar: "U", passEnvVar: "P" };
     await makeAuthorizedFetch({ auth: basic }, r2.fn, { U: "user", P: "pass" })("https://x/");
     expect(header(r2.calls[0]!.init, "Authorization")).toBe(
-      `Basic ${Buffer.from("user:pass").toString("base64")}`
+      `Basic ${Buffer.from("user:pass").toString("base64")}`,
     );
   });
 
@@ -185,7 +185,7 @@ describe("makeAuthorizedFetch", () => {
       new Response(null, {
         status: 302,
         headers: { location: "http://169.254.169.254/latest/meta-data" },
-      })
+      }),
     );
     const auth: FeedAuth = { kind: "mtls", certEnvVar: "CERT", keyEnvVar: "KEY" };
     const authed = makeAuthorizedFetch({ auth }, recorder().fn, {
@@ -198,7 +198,7 @@ describe("makeAuthorizedFetch", () => {
 
   it("throws when a required static secret is missing", () => {
     expect(() =>
-      makeAuthorizedFetch({ auth: { kind: "bearer", envVar: "T" } }, recorder().fn, {})
+      makeAuthorizedFetch({ auth: { kind: "bearer", envVar: "T" } }, recorder().fn, {}),
     ).toThrow(/missing credential env var T/);
   });
 

@@ -1,6 +1,6 @@
+import type { FeedSource } from "@openconditions/roads";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearStationRegistryCache, loadStationRegistry } from "../pipeline/station-registry.js";
-import type { FeedSource } from "@openconditions/roads";
 
 const geojson = JSON.stringify({
   type: "FeatureCollection",

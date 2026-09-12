@@ -24,7 +24,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Metadata, MetadataKind } from "@tufjs/models";
 import { BaseFetcher, Updater } from "tuf-js";
 import { DownloadHTTPError } from "tuf-js/dist/error.js";
-import { parseRegistryEntry, registryEntryFileName, type RegistryEntry } from "../registry.js";
+import { parseRegistryEntry, type RegistryEntry, registryEntryFileName } from "../registry.js";
 
 /**
  * Root metadata field marking a CI/test trust root. Any root produced by
@@ -45,7 +45,7 @@ export class TestRootInProductionError extends Error {
       `refusing to trust a ${TEST_ROOT_MARKER}-marked TUF root: it is permitted only under an ` +
         "explicit dev/test NODE_ENV or the allowTestRoot opt-in; an unset, unknown, or production " +
         "environment fails closed. Production requires a root from the offline key ceremony " +
-        "(docs/federation-onboarding.md)"
+        "(docs/federation-onboarding.md)",
     );
     this.name = "TestRootInProductionError";
   }
@@ -93,7 +93,7 @@ class FileFetcher extends BaseFetcher {
       return Promise.reject(new DownloadHTTPError(`file not found: ${path}`, 404));
     }
     return Promise.resolve(
-      Readable.toWeb(createReadStream(path)) as ReadableStream<Uint8Array<ArrayBuffer>>
+      Readable.toWeb(createReadStream(path)) as ReadableStream<Uint8Array<ArrayBuffer>>,
     );
   }
 }
@@ -114,11 +114,11 @@ function isTestRootAllowed(env: string | undefined, allowTestRoot: boolean | und
 function assertRootAllowedInEnv(
   rootJson: unknown,
   env: string | undefined,
-  allowTestRoot: boolean | undefined
+  allowTestRoot: boolean | undefined,
 ): void {
   const metadata = Metadata.fromJSON(
     MetadataKind.Root,
-    rootJson as Parameters<typeof Metadata.fromJSON>[1]
+    rootJson as Parameters<typeof Metadata.fromJSON>[1],
   );
   if (
     metadata.signed.unrecognizedFields[TEST_ROOT_MARKER] === true &&
@@ -150,7 +150,7 @@ function parseJsonBytes(bytes: Buffer | Uint8Array | string): unknown {
 export async function verifyRegistryMetadata(
   source: string | RegistryRepoSource,
   trustedRoot: Buffer | Uint8Array | string,
-  options: VerifyRegistryOptions
+  options: VerifyRegistryOptions,
 ): Promise<RegistryEntry[]> {
   const { metadataUrl, targetsUrl } =
     typeof source === "string" ? repoSourceFromDir(source) : source;
@@ -167,7 +167,7 @@ export async function verifyRegistryMetadata(
   if (!existsSync(cachedRootPath)) {
     writeFileSync(
       cachedRootPath,
-      typeof trustedRoot === "string" ? trustedRoot : Buffer.from(trustedRoot)
+      typeof trustedRoot === "string" ? trustedRoot : Buffer.from(trustedRoot),
     );
   }
   assertRootAllowedInEnv(parseJsonBytes(readFileSync(cachedRootPath)), env, allowTestRoot);
@@ -187,7 +187,7 @@ export async function verifyRegistryMetadata(
     MetadataKind.Targets,
     parseJsonBytes(readFileSync(join(options.cacheDir, "targets.json"))) as Parameters<
       typeof Metadata.fromJSON
-    >[1]
+    >[1],
   );
   const entries: RegistryEntry[] = [];
   for (const targetPath of Object.keys(targetsMetadata.signed.targets)) {
@@ -201,7 +201,7 @@ export async function verifyRegistryMetadata(
     const entry = parseRegistryEntry(readFileSync(filePath, "utf8"));
     if (registryEntryFileName(entry.id) !== targetPath) {
       throw new TypeError(
-        `registry target ${targetPath} declares mismatching id "${entry.id}"; refusing the entry`
+        `registry target ${targetPath} declares mismatching id "${entry.id}"; refusing the entry`,
       );
     }
     entries.push(entry);

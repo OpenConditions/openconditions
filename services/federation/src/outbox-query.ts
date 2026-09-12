@@ -6,11 +6,11 @@
  * subscriber's filter across pagination.
  */
 import {
+  decodeOutboxCursor,
   EVIDENCE_TIERS,
+  type FederationFilter,
   OUTBOX_CURSOR_START,
   OUTBOX_MAX_LIMIT,
-  decodeOutboxCursor,
-  type FederationFilter,
   type OutboxCursor,
 } from "@openconditions/federation";
 

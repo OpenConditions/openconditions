@@ -51,7 +51,7 @@ function confidence(v: unknown): RoadFlowSegment["confidence"] {
  */
 export function featureToRoadFlowSegment(
   feature: Feature,
-  providerId: string
+  providerId: string,
 ): RoadFlowSegment | null {
   const p = (feature.properties ?? {}) as Record<string, unknown>;
   const id = str(p["segment_id"]);
@@ -76,7 +76,7 @@ export function featureToRoadFlowSegment(
 
 export function featureCollectionToRoadFlowSegments(
   fc: FeatureCollection,
-  providerId: string
+  providerId: string,
 ): RoadFlowSegment[] {
   return fc.features
     .map((f) => featureToRoadFlowSegment(f, providerId))

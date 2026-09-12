@@ -91,7 +91,7 @@ function toEpochSeconds(t: string | number | null | undefined): number | undefin
 }
 
 function translated(
-  text: string | undefined
+  text: string | undefined,
 ): GtfsRealtimeBindings.transit_realtime.ITranslatedString | undefined {
   return text ? { translation: [{ text, language: "en" }] } : undefined;
 }
@@ -127,7 +127,7 @@ const ROUTE_TYPE_BY_MODE: Record<string, number> = {
  * it from the feed rather than emitting a selector-less, network-wide alert.
  */
 function informedEntities(
-  ev: ConditionEvent
+  ev: ConditionEvent,
 ): GtfsRealtimeBindings.transit_realtime.IEntitySelector[] {
   type Selector = GtfsRealtimeBindings.transit_realtime.IEntitySelector;
   // An empty/whitespace-only concrete id matches no entity — skip it rather than
@@ -173,7 +173,7 @@ function informedEntities(
 }
 
 function activePeriod(
-  ev: ConditionEvent
+  ev: ConditionEvent,
 ): GtfsRealtimeBindings.transit_realtime.ITimeRange[] | undefined {
   const start = toEpochSeconds(ev.validFrom);
   const end = toEpochSeconds(ev.validTo ?? ev.expiresAt);
@@ -225,7 +225,7 @@ function toEntity(ev: ConditionEvent): GtfsRealtimeBindings.transit_realtime.IFe
  */
 export function observationsToGtfsRtAlerts(
   events: ConditionEvent[],
-  opts: { timestamp?: string | number } = {}
+  opts: { timestamp?: string | number } = {},
 ): Uint8Array {
   const ts = toEpochSeconds(opts.timestamp);
   const message: GtfsRealtimeBindings.transit_realtime.IFeedMessage = {
@@ -308,7 +308,7 @@ function occupancyStatusInt(level: string | undefined): number | undefined {
  * per-dataset id validation against a feed is deferred until one is wired.
  */
 function toOccupancyEntity(
-  m: Measurement
+  m: Measurement,
 ): GtfsRealtimeBindings.transit_realtime.IFeedEntity | null {
   if (observedKey(m) !== "transit/occupancy") return null;
   const occupancyStatus = occupancyStatusInt(m.level);
@@ -356,7 +356,7 @@ function toOccupancyEntity(
  */
 export function observationsToOccupancy(
   measurements: Measurement[],
-  opts: { timestamp?: string | number } = {}
+  opts: { timestamp?: string | number } = {},
 ): Uint8Array {
   const ts = toEpochSeconds(opts.timestamp);
   const message: GtfsRealtimeBindings.transit_realtime.IFeedMessage = {

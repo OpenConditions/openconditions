@@ -1,13 +1,14 @@
-import { deriveSeverity } from "@openconditions/core";
 import type { GeoJsonGeometry, Severity } from "@openconditions/core";
-import type { Restriction, RoadEvent, RoadRef } from "./model.js";
+import { deriveSeverity } from "@openconditions/core";
 import { digitrafficRestrictionDetails } from "./digitraffic-restrictions.js";
+import { normalizeDtToken } from "./digitraffic-token.js";
+import type { Restriction, RoadEvent, RoadRef } from "./model.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
-  reconcileRoadSnapshots,
-  snapshotFingerprint,
   type RoadSnapshotRecord,
   type RoadSnapshotReport,
+  reconcileRoadSnapshots,
+  snapshotFingerprint,
 } from "./snapshot.js";
 
 import { mapSourceType } from "./taxonomy.js";
@@ -48,15 +49,6 @@ interface DigitrafficFeatureCollection {
 
 function coerceString(v: unknown): string | null {
   return typeof v === "string" && v.trim() !== "" ? v.trim() : null;
-}
-
-/**
- * Canonicalize a Digitraffic *enum* token. v1 published `SINGLE_LANE_CLOSED`;
- * v2 publishes `single lane closed`, so both editions normalize to one form.
- * Applied only to known enum fields — never to descriptions or free text.
- */
-export function normalizeDtToken(value: string): string {
-  return value.trim().replaceAll(" ", "_").replaceAll("-", "_").toUpperCase();
 }
 
 function firstAnnouncement(announcements: unknown): DigitrafficAnnouncement | null {
@@ -118,7 +110,7 @@ function restrictionTypes(ann: DigitrafficAnnouncement | null): Set<string> {
 }
 
 function roadStateFromPhases(
-  ann: DigitrafficAnnouncement | null
+  ann: DigitrafficAnnouncement | null,
 ): RoadEvent["roadState"] | undefined {
   const t = restrictionTypes(ann);
   if ([...t].some((x) => DT_CLOSED.has(x))) return "closed";
@@ -260,7 +252,8 @@ function restrictionsFromFeatures(ann: DigitrafficAnnouncement | null): Restrict
 function directionFromAnnouncement(ann: DigitrafficAnnouncement | null): string | undefined {
   const ral = (
     ann?.["locationDetails"] as
-      { roadAddressLocation?: { direction?: unknown; directionDescription?: unknown } } | undefined
+      | { roadAddressLocation?: { direction?: unknown; directionDescription?: unknown } }
+      | undefined
   )?.roadAddressLocation;
   const desc = coerceString(ral?.directionDescription);
   if (desc) return desc;
@@ -360,7 +353,7 @@ interface DtLocation {
  * location code is preserved without fabricating a country.
  */
 function externalRefsFromAnnouncement(
-  ann: DigitrafficAnnouncement | null
+  ann: DigitrafficAnnouncement | null,
 ): RoadEvent["externalRefs"] {
   const location = ann?.["location"] as DtLocation | undefined;
   const ral = (
@@ -396,7 +389,7 @@ const DT_TERMINAL: Record<string, "closed" | "canceled"> = {
  */
 function terminalStatusOf(
   props: DigitrafficProperties,
-  ann: DigitrafficAnnouncement | null
+  ann: DigitrafficAnnouncement | null,
 ): "closed" | "canceled" | undefined {
   for (const raw of [props["earlyClosing"], ann?.["earlyClosing"]]) {
     const token = coerceString(raw);
@@ -409,7 +402,7 @@ function terminalStatusOf(
 }
 
 function readFeatureCollection(
-  geojson: string | Buffer | object
+  geojson: string | Buffer | object,
 ): DigitrafficFeatureCollection | null {
   try {
     const str = Buffer.isBuffer(geojson) ? geojson.toString("utf8") : geojson;
@@ -426,7 +419,7 @@ function buildDigitrafficEvent(
   geometry: GeoJsonGeometry,
   situationId: string,
   src: SourceDescriptor,
-  fetchedAt: string
+  fetchedAt: string,
 ): RoadEvent {
   const situationType = coerceString(props.situationType) ?? "";
   const announcementType = coerceString(props.trafficAnnouncementType);
@@ -436,7 +429,7 @@ function buildDigitrafficEvent(
   // the publisher's original token.
   const { type, category, isPlanned } = mapSourceType(
     "digitraffic",
-    codeForMapping ? normalizeDtToken(codeForMapping) : ""
+    codeForMapping ? normalizeDtToken(codeForMapping) : "",
   );
 
   const ann = firstAnnouncement(props.announcements);
@@ -521,7 +514,7 @@ function digitrafficSnapshotRecord(
   rawFeature: unknown,
   sourcePath: string,
   src: SourceDescriptor,
-  fetchedAt: string
+  fetchedAt: string,
 ): DigitrafficRecordResult {
   let situationId: string | null = null;
   try {
@@ -588,7 +581,7 @@ function digitrafficSnapshotRecord(
       geometry as GeoJsonGeometry,
       situationId,
       src,
-      fetchedAt
+      fetchedAt,
     );
     return {
       record: {
@@ -616,7 +609,7 @@ function canonicalTerminalFingerprint(
   id: string,
   terminal: string,
   version: number | null,
-  versionTime: string | null
+  versionTime: string | null,
 ): string {
   return `terminal:${id}:${terminal}:${version ?? ""}:${versionTime ?? ""}`;
 }
@@ -629,7 +622,7 @@ function canonicalTerminalFingerprint(
 export function parseDigitrafficSnapshot(
   input: unknown,
   src: SourceDescriptor,
-  opts: { fetchedAt?: string } = {}
+  opts: { fetchedAt?: string } = {},
 ): RoadSnapshotReport {
   const fetchedAt = opts.fetchedAt ?? new Date().toISOString();
   const payload = readFeatureCollection(input as string | Buffer | object);
@@ -673,7 +666,7 @@ export function parseDigitrafficSnapshot(
  */
 export function parseDigitraffic(
   geojson: string | Buffer | object,
-  src: SourceDescriptor
+  src: SourceDescriptor,
 ): RoadEvent[] {
   const report = parseDigitrafficSnapshot(geojson, src);
   if (report.errors.length > 0) {

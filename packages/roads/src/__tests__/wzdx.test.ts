@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseWzdx } from "../wzdx.js";
 import { mapSourceType } from "../taxonomy.js";
+import { parseWzdx } from "../wzdx.js";
 
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/wzdx/feed.json");
 
@@ -22,7 +22,7 @@ describe("parseWzdx — WZDx v4.2 fixture", () => {
     expect(events.length).toBeGreaterThan(0);
     expect(events[0]!.geometry).toBeDefined();
     expect(events[0]!.geometry.type).toMatch(
-      /^(Point|LineString|Polygon|MultiPoint|MultiLineString|MultiPolygon)$/
+      /^(Point|LineString|Polygon|MultiPoint|MultiLineString|MultiPolygon)$/,
     );
   });
 
@@ -36,7 +36,7 @@ describe("parseWzdx — WZDx v4.2 fixture", () => {
 
   it("returns [] without throwing when a feed returns HTML instead of JSON", () => {
     expect(parseWzdx("<!DOCTYPE html><html><body>Forbidden</body></html>", WZDX_SOURCE)).toEqual(
-      []
+      [],
     );
     expect(parseWzdx("  \n  <html></html>", WZDX_SOURCE)).toEqual([]);
   });
@@ -122,7 +122,7 @@ describe("parseWzdx — WZDx v4.2 fixture", () => {
     const events = parseWzdx(json, WZDX_SOURCE);
 
     const withLanes = events.find(
-      (ev) => ev.lanesAffected?.lanes && ev.lanesAffected.lanes.length > 0
+      (ev) => ev.lanesAffected?.lanes && ev.lanesAffected.lanes.length > 0,
     );
     expect(withLanes).toBeDefined();
     expect(withLanes!.lanesAffected!.lanes!.length).toBeGreaterThan(0);
@@ -137,7 +137,7 @@ describe("parseWzdx — WZDx v4.2 fixture", () => {
     const events = parseWzdx(json, WZDX_SOURCE);
 
     const withLanes = events.find(
-      (ev) => ev.lanesAffected?.lanes && ev.lanesAffected.lanes.length > 0
+      (ev) => ev.lanesAffected?.lanes && ev.lanesAffected.lanes.length > 0,
     );
     expect(withLanes).toBeDefined();
     expect(withLanes!.lanesAffected!.total).toBeGreaterThan(0);

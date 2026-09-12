@@ -22,9 +22,9 @@
  * never token bytes, reporter keys, or request ids.
  */
 import { timingSafeEqual } from "node:crypto";
-import type postgres from "postgres";
 import { publicVerif, Token } from "@cloudflare/privacypass-ts";
-import { publicContextString, redemptionContext, type PublicContext } from "./context.js";
+import type postgres from "postgres";
+import { type PublicContext, publicContextString, redemptionContext } from "./context.js";
 import type { IssueLogger } from "./issue.js";
 import { loadActiveIssuerKeys } from "./keys.js";
 
@@ -48,11 +48,11 @@ export class TokenVerifier {
     sql: postgres.Sql,
     tokenBytes: Uint8Array,
     publicContext: PublicContext,
-    nowIso: string
+    nowIso: string,
   ): Promise<boolean> {
     const purpose = publicContextString(publicContext);
     const tokenHash = Buffer.from(
-      await globalThis.crypto.subtle.digest("SHA-256", tokenBytes as BufferSource)
+      await globalThis.crypto.subtle.digest("SHA-256", tokenBytes as BufferSource),
     ).toString("hex");
 
     const inserted = await sql<{ token_hash: string }[]>`
@@ -77,13 +77,13 @@ export class TokenVerifier {
     const origin = new Origin(BlindRSAMode.PSS);
     const expectedChallenge = origin.createTokenChallenge(
       this.issuerName,
-      await redemptionContext(publicContext)
+      await redemptionContext(publicContext),
     );
     const expectedDigest = new Uint8Array(
       await globalThis.crypto.subtle.digest(
         "SHA-256",
-        expectedChallenge.serialize() as BufferSource
-      )
+        expectedChallenge.serialize() as BufferSource,
+      ),
     );
     const actualDigest = token.authInput.challengeDigest;
     if (
@@ -98,7 +98,7 @@ export class TokenVerifier {
     const issuerKey = keys.find(
       (k) =>
         k.tokenKeyId.length === token.authInput.tokenKeyId.length &&
-        timingSafeEqual(k.tokenKeyId, token.authInput.tokenKeyId)
+        timingSafeEqual(k.tokenKeyId, token.authInput.tokenKeyId),
     );
     if (issuerKey === undefined) {
       this.log.info({ purpose, outcome: "unknown-key" }, "token redemption refused");
@@ -108,7 +108,7 @@ export class TokenVerifier {
     const valid = await origin.verify(token, issuerKey.publicKey);
     this.log.info(
       { purpose, outcome: valid ? "redeemed" : "bad-signature" },
-      valid ? "token redeemed" : "token redemption refused"
+      valid ? "token redeemed" : "token redemption refused",
     );
     return valid;
   }

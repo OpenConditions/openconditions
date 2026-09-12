@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  buildReleaseManifest,
   BudgetLedger,
+  buildReleaseManifest,
   OverlappingWindowError,
   plannedPartitions,
-  releaseWithDp,
   ReleaseStore,
-  windowForTimestamp,
+  releaseWithDp,
   type SpeedTuple,
+  windowForTimestamp,
 } from "../index.js";
 import { HOUR_MS, standardManifest, standardMechanism, standardParams } from "./dpFixtures.js";
 
@@ -21,7 +21,7 @@ describe("invariant 3: tumbling windows fixed in a versioned manifest before dat
           { windowId: "w1", startMs: 0, endMs: HOUR_MS },
           { windowId: "w2", startMs: HOUR_MS / 2, endMs: HOUR_MS + HOUR_MS / 2 }, // slides
         ],
-      })
+      }),
     ).toThrow(OverlappingWindowError);
 
     expect(() =>
@@ -29,7 +29,7 @@ describe("invariant 3: tumbling windows fixed in a versioned manifest before dat
         version: "bad",
         segmentIds: ["seg-a"],
         windows: [{ windowId: "w1", startMs: HOUR_MS, endMs: 0 }], // inverted
-      })
+      }),
     ).toThrow(OverlappingWindowError);
   });
 
@@ -62,7 +62,7 @@ describe("invariant 3: tumbling windows fixed in a versioned manifest before dat
       params,
       mechA,
       new BudgetLedger(params.budget),
-      new ReleaseStore()
+      new ReleaseStore(),
     );
     releaseWithDp(
       datasetB,
@@ -70,7 +70,7 @@ describe("invariant 3: tumbling windows fixed in a versioned manifest before dat
       params,
       mechB,
       new BudgetLedger(params.budget),
-      new ReleaseStore()
+      new ReleaseStore(),
     );
 
     // The planned partition list is exactly the fixed 4-cell grid, regardless of

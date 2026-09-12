@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
+import postgres from "postgres";
 
 /**
  * Resolves the drizzle-kit migrations folder relative to the running module,
@@ -14,7 +14,7 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
  */
 function resolveMigrationsFolder(): string {
   const candidates = ["../drizzle", "./drizzle"].map((rel) =>
-    fileURLToPath(new URL(rel, import.meta.url))
+    fileURLToPath(new URL(rel, import.meta.url)),
   );
   const found = candidates.find(existsSync);
   if (!found) {

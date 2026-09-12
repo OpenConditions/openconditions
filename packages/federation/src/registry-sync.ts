@@ -16,11 +16,11 @@
  * operator's own pin/config always wins over registry-discovered values.
  */
 import type { PeerRecord } from "./peers.js";
-import { registryToPeerRecords, type RegistryEntry } from "./registry.js";
+import { type RegistryEntry, registryToPeerRecords } from "./registry.js";
 import {
-  verifyRegistryMetadata,
   type RegistryRepoSource,
   type VerifyRegistryOptions,
+  verifyRegistryMetadata,
 } from "./tuf/verify.js";
 
 /** Registry discovery cadence — daily, NOT the live-outbox polling interval. */
@@ -63,12 +63,12 @@ function peersEqual(a: PeerRecord, b: PeerRecord): boolean {
 export async function syncRegistry(
   source: string | RegistryRepoSource,
   trustedRoot: Buffer | Uint8Array | string,
-  options: RegistrySyncOptions
+  options: RegistrySyncOptions,
 ): Promise<RegistrySyncResult> {
   const entries = await verifyRegistryMetadata(source, trustedRoot, options);
   const peers = registryToPeerRecords(entries);
   const previous = new Map(
-    (options.previousPeers ?? []).map((peer) => [peer.instanceId, peer] as const)
+    (options.previousPeers ?? []).map((peer) => [peer.instanceId, peer] as const),
   );
 
   const added: string[] = [];

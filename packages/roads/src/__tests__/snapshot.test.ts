@@ -1,18 +1,18 @@
 import { describe, expect, it } from "vitest";
+import { parseDatexSnapshot } from "../datex.js";
+import { parseDigitrafficSnapshot } from "../digitraffic.js";
 import {
   canonicalSnapshotValue,
+  type RoadSnapshotRecord,
   reconcileRoadSnapshots,
   snapshotFingerprint,
-  type RoadSnapshotRecord,
 } from "../snapshot.js";
-import { parseDigitrafficSnapshot } from "../digitraffic.js";
-import { parseDatexSnapshot } from "../datex.js";
 import { restrictionEvent } from "./fixtures/restriction-event.js";
 
 describe("canonicalSnapshotValue", () => {
   it("is key-order independent and array-order sensitive", () => {
     expect(canonicalSnapshotValue({ b: 1, a: { d: 2, c: 3 } })).toBe(
-      canonicalSnapshotValue({ a: { c: 3, d: 2 }, b: 1 })
+      canonicalSnapshotValue({ a: { c: 3, d: 2 }, b: 1 }),
     );
     expect(canonicalSnapshotValue([1, 2])).not.toBe(canonicalSnapshotValue([2, 1]));
   });
@@ -69,7 +69,7 @@ describe("reconcileRoadSnapshots", () => {
     expect(() =>
       reconcileRoadSnapshots([
         { inputCount: 2, records: [a, { ...a, fingerprint: "conflict" }], errors: [] },
-      ])
+      ]),
     ).toThrow(/conflict/);
   });
 
@@ -192,7 +192,7 @@ describe("reconcileRoadSnapshots", () => {
     expect(out.terminalIds).toEqual(["s:b"]);
     expect(out.unlocatableIds).toEqual(["s:c"]);
     expect(out.acceptedIds.length + out.terminalIds.length + out.unlocatableIds.length).toBe(
-      out.uniqueCount
+      out.uniqueCount,
     );
   });
 
@@ -207,7 +207,7 @@ describe("reconcileRoadSnapshots", () => {
       event: base,
     };
     expect(() =>
-      reconcileRoadSnapshots([{ inputCount: 2, records: [record], errors: [] }])
+      reconcileRoadSnapshots([{ inputCount: 2, records: [record], errors: [] }]),
     ).toThrow(/accounting mismatch/);
     expect(() =>
       reconcileRoadSnapshots([
@@ -216,20 +216,20 @@ describe("reconcileRoadSnapshots", () => {
           records: [],
           errors: [{ code: "missing_identity", id: null, sourcePath: "features[0]" }],
         },
-      ])
+      ]),
     ).toThrow(/missing_identity/);
     expect(() =>
-      reconcileRoadSnapshots([{ inputCount: 1, records: [{ ...record, id: "" }], errors: [] }])
+      reconcileRoadSnapshots([{ inputCount: 1, records: [{ ...record, id: "" }], errors: [] }]),
     ).toThrow(/stable source identity/);
     expect(() =>
       reconcileRoadSnapshots([
         { inputCount: 1, records: [{ ...record, version: 1.5 }], errors: [] },
-      ])
+      ]),
     ).toThrow(/invalid source version/);
     expect(() =>
       reconcileRoadSnapshots([
         { inputCount: 1, records: [{ ...record, versionTime: "not a time" }], errors: [] },
-      ])
+      ]),
     ).toThrow(/invalid source version timestamp/);
   });
 
@@ -259,7 +259,7 @@ function feature(
   geometry: unknown = {
     type: "Point",
     coordinates: [24.9, 60.2],
-  }
+  },
 ): Record<string, unknown> {
   return { type: "Feature", geometry, properties: props };
 }
@@ -281,7 +281,7 @@ describe("parseDigitrafficSnapshot", () => {
         ],
       },
       src,
-      { fetchedAt: "2026-09-12T07:14:00.000Z" }
+      { fetchedAt: "2026-09-12T07:14:00.000Z" },
     );
     expect(report.inputCount).toBe(3);
     expect(report.records).toHaveLength(3);
@@ -300,7 +300,7 @@ describe("parseDigitrafficSnapshot", () => {
   it("reports a record with no stable identity instead of numbering it", () => {
     const report = parseDigitrafficSnapshot(
       { type: "FeatureCollection", features: [feature({ situationType: "road work" })] },
-      src
+      src,
     );
     expect(report.errors).toEqual([
       { code: "missing_identity", id: null, sourcePath: "features[0]" },
@@ -311,7 +311,7 @@ describe("parseDigitrafficSnapshot", () => {
   it("reports an invalid envelope, a missing records path and an invalid version", () => {
     expect(parseDigitrafficSnapshot("{not json", src).errors[0]?.code).toBe("invalid_envelope");
     expect(parseDigitrafficSnapshot({ type: "FeatureCollection" }, src).errors[0]?.code).toBe(
-      "missing_records_path"
+      "missing_records_path",
     );
     expect(
       parseDigitrafficSnapshot(
@@ -319,8 +319,8 @@ describe("parseDigitrafficSnapshot", () => {
           type: "FeatureCollection",
           features: [feature({ situationId: "A", version: "many" })],
         },
-        src
-      ).errors[0]?.code
+        src,
+      ).errors[0]?.code,
     ).toBe("invalid_version");
     expect(
       parseDigitrafficSnapshot(
@@ -328,8 +328,8 @@ describe("parseDigitrafficSnapshot", () => {
           type: "FeatureCollection",
           features: [feature({ situationId: "A", versionTime: "yesterday" })],
         },
-        src
-      ).errors[0]?.code
+        src,
+      ).errors[0]?.code,
     ).toBe("invalid_version_time");
   });
 
@@ -349,7 +349,7 @@ describe("parseDigitrafficSnapshot", () => {
           feature({ situationId: "B", situationType: "road work", version: 1 }, at),
         ],
       },
-      src
+      src,
     );
     expect(reconcileRoadSnapshots([report]).observations.map((o) => o.id)).toEqual([
       "fi-digitraffic:A",

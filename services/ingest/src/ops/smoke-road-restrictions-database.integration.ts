@@ -1,8 +1,13 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import { readObservations } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
+import {
+  eventsToExclusions,
+  observationsToDatexSituations,
+  observationsToGeoJSON,
+  observationsToTraff,
+} from "@openconditions/publishers";
 import {
   FEED_SOURCES,
   hasRestrictionEvidence,
@@ -10,17 +15,12 @@ import {
   type OsmWay,
   type SpineSegment,
 } from "@openconditions/roads";
-import {
-  eventsToExclusions,
-  observationsToDatexSituations,
-  observationsToGeoJSON,
-  observationsToTraff,
-} from "@openconditions/publishers";
-import { readObservations } from "@openconditions/core";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
 import { activateRoadGraph } from "../pipeline/graph-state.js";
 import { importOsmRoads } from "../pipeline/osm-import.js";
+import { type DomainFeedSource, runSource } from "../pipeline/run.js";
 import { buildSegments } from "../pipeline/segment-build.js";
-import { runSource, type DomainFeedSource } from "../pipeline/run.js";
 import type { RunRestrictionSmokeOptions } from "./smoke-road-restrictions.js";
 
 /**
@@ -75,7 +75,7 @@ function bboxOf(segments: SpineSegment[]): [number, number, number, number] {
  */
 function spineToWays(segments: SpineSegment[]): OsmWay[] {
   const backward = new Set(
-    segments.filter((segment) => segment.dir === "b").map((segment) => String(segment.wayId))
+    segments.filter((segment) => segment.dir === "b").map((segment) => String(segment.wayId)),
   );
   return segments
     .filter((segment) => segment.dir === "f")
@@ -89,7 +89,7 @@ function spineToWays(segments: SpineSegment[]): OsmWay[] {
 }
 
 export async function runRestrictionSmokeWithDatabase(
-  options: RunRestrictionSmokeOptions
+  options: RunRestrictionSmokeOptions,
 ): Promise<RestrictionSmokeDatabaseReport> {
   if (options.sourceId !== "fi-digitraffic") {
     throw new Error(`smoke: disposable mode does not support ${options.sourceId} yet`);
@@ -180,7 +180,7 @@ export async function runRestrictionSmokeWithDatabase(
       WHERE o.source = ${feed.id}
       GROUP BY b.status`;
     const bindingStatuses = Object.fromEntries(
-      bindingRows.map((row) => [row.status, Number(row.count)])
+      bindingRows.map((row) => [row.status, Number(row.count)]),
     );
     const routableBindings = (bindingStatuses["exact"] ?? 0) + (bindingStatuses["likely"] ?? 0);
 
@@ -190,7 +190,7 @@ export async function runRestrictionSmokeWithDatabase(
           return (await sql.unsafe(query, params as never)) as T;
         },
       },
-      { domain: "roads", bbox: [19, 59, 32, 71], dedupe: false, includeBindings: true }
+      { domain: "roads", bbox: [19, 59, 32, 71], dedupe: false, includeBindings: true },
     );
     const display = observationsToGeoJSON(rows, {}, { at: new Date(checkedAt) });
     const events = rows.filter((row) => row.kind === "event");
@@ -235,7 +235,7 @@ export async function runRestrictionSmokeWithDatabase(
     await writeFile(
       join(options.outputDir, "database-report.json"),
       `${JSON.stringify(report, null, 2)}\n`,
-      "utf8"
+      "utf8",
     );
     return report;
   } finally {

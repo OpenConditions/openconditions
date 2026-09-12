@@ -1,5 +1,5 @@
-import type { Feature, FeatureCollection } from "geojson";
 import { isPublishedRoadRestrictionDetails } from "@openconditions/roads/restrictions";
+import type { Feature, FeatureCollection } from "geojson";
 import type {
   RoadConditionEvent,
   RoadConditionRoadRef,
@@ -26,9 +26,9 @@ const HOST_TYPE_ALIASES: Record<string, RoadConditionType> = {
  * unsupported" and "no claim at all" — never re-derives state.
  */
 function restrictionFieldsOf(
-  p: Record<string, unknown>
+  p: Record<string, unknown>,
 ): Pick<RoadConditionEvent, "restrictionDetails" | "restrictionDetailsUnsupported"> {
-  if (Object.prototype.hasOwnProperty.call(p, "restrictionDetails")) {
+  if (Object.hasOwn(p, "restrictionDetails")) {
     return isPublishedRoadRestrictionDetails(p.restrictionDetails)
       ? { restrictionDetails: p.restrictionDetails }
       : { restrictionDetailsUnsupported: true };
@@ -88,7 +88,7 @@ function segmentsOf(p: Record<string, unknown>): RoadConditionEvent["segments"] 
         typeof s?.wayId === "number" &&
         (s.dir === "f" || s.dir === "b") &&
         typeof s.startFraction === "number" &&
-        typeof s.endFraction === "number"
+        typeof s.endFraction === "number",
     )
     .map((s) => ({
       wayId: s.wayId as number,
@@ -192,7 +192,7 @@ function hostType(type: string | undefined): RoadConditionType {
 }
 
 export function featureCollectionToRoadConditionEvents(
-  fc: FeatureCollection
+  fc: FeatureCollection,
 ): RoadConditionEvent[] {
   return fc.features
     .map(featureToRoadConditionEvent)

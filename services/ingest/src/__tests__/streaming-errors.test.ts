@@ -1,10 +1,10 @@
 import { Readable } from "node:stream";
-import { describe, expect, it } from "vitest";
-import { FEED_SOURCES } from "@openconditions/roads";
 import type { FeedSource } from "@openconditions/roads";
-import { clearSiteTableCache, loadSiteTable } from "../pipeline/site-table.js";
+import { FEED_SOURCES } from "@openconditions/roads";
+import { describe, expect, it } from "vitest";
 import { streamMeasuredData } from "../pipeline/measured-data.js";
 import type { DomainFeedSource } from "../pipeline/run.js";
+import { clearSiteTableCache, loadSiteTable } from "../pipeline/site-table.js";
 import { isTransientSocketError, withStreamRetry } from "../pipeline/stream-retry.js";
 
 /** undici's real shape for a mid-stream drop: `terminated` wrapping UND_ERR_SOCKET. */
@@ -41,7 +41,7 @@ describe("streaming feed error handling", () => {
     const map = await loadSiteTable(
       feed,
       async () => erroringStream(),
-      () => 0
+      () => 0,
     );
     // The error is caught; with no prior cache there is nothing to fall back to.
     expect(map).toBeUndefined();
@@ -56,8 +56,8 @@ describe("streaming feed error handling", () => {
         src,
         async () => erroringStream(),
         undefined,
-        () => new Date(0).toISOString()
-      )
+        () => new Date(0).toISOString(),
+      ),
     ).rejects.toThrow();
   });
 });
@@ -72,7 +72,7 @@ describe("withStreamRetry", () => {
         return "ok";
       },
       "test-feed",
-      { baseDelayMs: 0 }
+      { baseDelayMs: 0 },
     );
     expect(result).toBe("ok");
     expect(calls).toBe(2);
@@ -87,8 +87,8 @@ describe("withStreamRetry", () => {
           throw terminatedError();
         },
         "test-feed",
-        { retries: 2, baseDelayMs: 0 }
-      )
+        { retries: 2, baseDelayMs: 0 },
+      ),
     ).rejects.toThrow(/terminated/);
     expect(calls).toBe(3); // initial attempt + 2 retries
   });
@@ -102,8 +102,8 @@ describe("withStreamRetry", () => {
           throw new Error("HTTP 500 fetching x");
         },
         "test-feed",
-        { baseDelayMs: 0 }
-      )
+        { baseDelayMs: 0 },
+      ),
     ).rejects.toThrow("HTTP 500");
     expect(calls).toBe(1);
   });
@@ -113,7 +113,7 @@ describe("isTransientSocketError", () => {
   it("recognizes undici terminated / UND_ERR_SOCKET through the cause chain", () => {
     expect(isTransientSocketError(terminatedError())).toBe(true);
     expect(isTransientSocketError(Object.assign(new Error("x"), { code: "ECONNRESET" }))).toBe(
-      true
+      true,
     );
     expect(isTransientSocketError(new Error("socket hang up"))).toBe(true);
   });

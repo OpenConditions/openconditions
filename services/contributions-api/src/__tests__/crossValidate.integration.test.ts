@@ -1,8 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
-import { phenomenonFingerprint, type ConditionEvent } from "@openconditions/core";
+import { type ConditionEvent, phenomenonFingerprint } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { crossValidateAgainstFeeds } from "../evidence/crossValidate.js";
 import { recomputeEvidence } from "../evidence/recompute.js";
 
@@ -477,7 +477,7 @@ describe("crossValidateAgainstFeeds — official cross-validation routing", () =
     });
 
     expect(await crossValidateAgainstFeeds(sql, "xv:crowd-samesrc", T_RESOLVE)).toBe(
-      "xv:feed-samesrc"
+      "xv:feed-samesrc",
     );
     expect((await obs("xv:crowd-samesrc")).evidence_state).toBe("externally_resolved");
     expect((await readReporter("xv-rep-samesrc")).reputation_alpha).toBe(3);
@@ -680,7 +680,7 @@ describe("crossValidateAgainstFeeds — allowFederatedTarget (route-without-trai
     expect(
       await crossValidateAgainstFeeds(sql, "xvf:fed-crowd-vs-fedfeed", T_RESOLVE, {
         allowFederatedTarget: true,
-      })
+      }),
     ).toBeNull();
     const crowd = await obs("xvf:fed-crowd-vs-fedfeed");
     expect(crowd.routing_eligible).toBe(false);
@@ -708,7 +708,7 @@ describe("crossValidateAgainstFeeds — allowFederatedTarget (route-without-trai
     expect(
       await crossValidateAgainstFeeds(sql, "xvf:fed-feed-target", T_RESOLVE, {
         allowFederatedTarget: true,
-      })
+      }),
     ).toBeNull();
     expect(await externalEvidenceCount("xvf:fed-feed-target")).toBe(0);
   }, 30_000);
@@ -730,7 +730,7 @@ describe("crossValidateAgainstFeeds — allowFederatedTarget (route-without-trai
     expect(
       await crossValidateAgainstFeeds(sql, "xvf:crowd-no-chain", T_RESOLVE, {
         allowFederatedTarget: true,
-      })
+      }),
     ).toBeNull();
     expect((await obs("xvf:crowd-no-chain")).routing_eligible).toBe(false);
     expect(await externalEvidenceCount("xvf:crowd-no-chain")).toBe(0);

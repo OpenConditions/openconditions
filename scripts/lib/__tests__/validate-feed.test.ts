@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import type { FeedSourceBase } from "@openconditions/ingest-framework";
+import { describe, expect, it } from "vitest";
 import { validateFeed } from "../validate-feed.js";
 
 const feed: FeedSourceBase = {

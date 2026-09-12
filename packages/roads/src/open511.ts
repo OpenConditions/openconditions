@@ -1,9 +1,9 @@
-import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
 import type { GeoJsonGeometry } from "@openconditions/core";
-import type { RoadEvent, RoadRef } from "./model.js";
+import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
 import { dedupeRoadEvents } from "./dedupe.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
+import type { RoadEvent, RoadRef } from "./model.js";
 import { buildLocalSchedule, isoDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
+import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -86,7 +86,7 @@ function directionFromRoads(roads: Open511Road[] | undefined): string | undefine
   const dirs = new Set(
     (roads ?? [])
       .map((r) => r.direction)
-      .filter((d): d is string => typeof d === "string" && d !== "" && d.toUpperCase() !== "NONE")
+      .filter((d): d is string => typeof d === "string" && d !== "" && d.toUpperCase() !== "NONE"),
   );
   return dirs.size === 1 ? [...dirs][0] : undefined;
 }
@@ -123,7 +123,7 @@ function regionsFromAreas(areas: Open511Area[] | undefined): string[] | undefine
  * such area into a portable external reference.
  */
 function geonamesExternalFromAreas(
-  areas: Open511Area[] | undefined
+  areas: Open511Area[] | undefined,
 ): { system: string; code: string } | undefined {
   for (const a of areas ?? []) {
     const url = a?.url;
@@ -136,7 +136,7 @@ function geonamesExternalFromAreas(
 
 /** Open511 `+linear_reference_km` → km milepost; -1/0 are no-reference sentinels. */
 function milepostFromLinearReference(
-  extensionFields: Record<string, unknown> | undefined
+  extensionFields: Record<string, unknown> | undefined,
 ): number | undefined {
   const raw = extensionFields?.["+linear_reference_km"];
   if (typeof raw !== "number" || !Number.isFinite(raw) || raw <= 0) return undefined;

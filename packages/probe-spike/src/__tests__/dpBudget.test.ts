@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   BudgetLedger,
   RecordingDpMechanism,
-  releaseWithDp,
   ReleaseStore,
+  releaseWithDp,
   type SpeedTuple,
 } from "../index.js";
 import { allSumValues, standardManifest, standardParams } from "./dpFixtures.js";

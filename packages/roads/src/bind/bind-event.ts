@@ -10,15 +10,15 @@
  * walked in order with shortest paths filling the gaps).
  */
 
-import type { Geometry, LineString, MultiLineString, MultiPoint, Point } from "geojson";
 import type { BindingStatus, DirectionMode, SegmentSpan } from "@openconditions/core";
+import type { Geometry, LineString, MultiLineString, MultiPoint, Point } from "geojson";
 import {
   bearingDeg,
   bearingDelta,
   densify,
+  type LngLat,
   polylineLengthM,
   projectOntoPolyline,
-  type LngLat,
 } from "./geo.js";
 import { nodeKey, SegmentGraph } from "./graph.js";
 import { normalizeRefs, refScore } from "./refs.js";
@@ -147,7 +147,7 @@ function candidatesFor(
   bearing: number | null,
   input: BindInput,
   segments: SpineSegment[],
-  maxOffsetM: number
+  maxOffsetM: number,
 ): Candidate[] {
   const out: Candidate[] = [];
   for (const s of segments) {
@@ -158,7 +158,7 @@ function candidatesFor(
     const rs = refScore(input.refs, s.ref);
     const score = scoreCandidate(
       { offsetM: pr.offsetM, bearingDelta: delta, refScore: rs, highway: s.highway },
-      maxOffsetM
+      maxOffsetM,
     );
     // Only a heading beyond 90° scores 0, and that means the wrong carriageway.
     if (score <= 0) continue;
@@ -191,7 +191,7 @@ function span(s: SpineSegment, startFraction: number, endFraction: number): Segm
 /** First and last segment are clipped to the event's endpoints; the rest are fully covered. */
 function spansAlong(path: SpineSegment[], start: LngLat, end: LngLat): SegmentSpan[] {
   return path.map((s, i) =>
-    span(s, i === 0 ? fractionOn(s, start) : 0, i === path.length - 1 ? fractionOn(s, end) : 1)
+    span(s, i === 0 ? fractionOn(s, start) : 0, i === path.length - 1 ? fractionOn(s, end) : 1),
   );
 }
 
@@ -199,7 +199,7 @@ function spansAlong(path: SpineSegment[], start: LngLat, end: LngLat): SegmentSp
 function pathFit(
   path: SpineSegment[],
   samples: LngLat[],
-  maxOffsetM: number
+  maxOffsetM: number,
 ): { coverage: number; meanOffsetM: number } {
   if (samples.length === 0) return { coverage: 0, meanOffsetM: maxOffsetM };
   let covered = 0;
@@ -221,7 +221,7 @@ function confidenceOf(
     directionMode: DirectionMode;
     ambiguity: number;
   },
-  maxOffsetM: number
+  maxOffsetM: number,
 ): number {
   const direction = a.directionMode === "single" ? 1 : a.directionMode === "both" ? 0.5 : 0;
   const raw =
@@ -253,7 +253,7 @@ function failure(
   status: BindingStatus,
   reason: string,
   candidateCount = 0,
-  samples: BindDebug["samples"] = []
+  samples: BindDebug["samples"] = [],
 ): BindResult {
   return {
     status,
@@ -276,7 +276,7 @@ function bindPoint(
   point: LngLat,
   input: BindInput,
   spine: SpineSubgraph,
-  maxOffsetM: number
+  maxOffsetM: number,
 ): BindResult {
   const candidates = candidatesFor(point, null, input, spine.segments, maxOffsetM);
   const samples = [{ point, candidates }];
@@ -284,18 +284,18 @@ function bindPoint(
 
   const best = candidates[0]!;
   const twin = candidates.find(
-    (c) => c.segment.wayId === best.segment.wayId && c.segment.dir !== best.segment.dir
+    (c) => c.segment.wayId === best.segment.wayId && c.segment.dir !== best.segment.dir,
   );
   const rival = candidates.find((c) => isRival(c, best));
   const ambiguity = rival ? rival.score / best.score : 0;
   const directionMode: DirectionMode = twin ? "both" : rival ? "unknown" : "single";
 
   const segments = [best, ...(twin ? [twin] : [])].map((c) =>
-    span(c.segment, c.fraction, c.fraction)
+    span(c.segment, c.fraction, c.fraction),
   );
   const confidence = confidenceOf(
     { coverage: 1, meanOffsetM: best.offsetM, refScore: best.refScore, directionMode, ambiguity },
-    maxOffsetM
+    maxOffsetM,
   );
 
   return {
@@ -321,7 +321,7 @@ function bindEndpoints(
   spine: SpineSubgraph,
   graph: SegmentGraph,
   onRef: (s: SpineSegment) => boolean,
-  maxOffsetM: number
+  maxOffsetM: number,
 ): BindResult {
   const straightM = polylineLengthM([start, end]);
   // Coincident endpoints carry no travel direction; use the point rules,
@@ -330,11 +330,11 @@ function bindEndpoints(
   const cap = Math.min(MAX_ENDPOINT_PATH_M, 2.5 * straightM + 500);
   const starts = candidatesFor(start, null, input, spine.segments, maxOffsetM).slice(
     0,
-    ENDPOINT_CANDIDATES
+    ENDPOINT_CANDIDATES,
   );
   const ends = candidatesFor(end, null, input, spine.segments, maxOffsetM).slice(
     0,
-    ENDPOINT_CANDIDATES
+    ENDPOINT_CANDIDATES,
   );
   const samples = [
     { point: start, candidates: starts },
@@ -363,7 +363,7 @@ function bindEndpoints(
     // A directed twin can also be reached by travelling to the end of the way
     // and turning back. Equal endpoint scores must prefer the direct route.
     (m, r) => (!m || r.score > m.score || (r.score === m.score && r.lengthM < m.lengthM) ? r : m),
-    null
+    null,
   );
   if (!best) return failure("unresolved", "no_path", candidateCount, samples);
 
@@ -383,7 +383,7 @@ function bindEndpoints(
   const meanOffsetM = (best.from.offsetM + best.to.offsetM) / 2;
   const confidence = confidenceOf(
     { coverage: 1, meanOffsetM, refScore: best.refScore, directionMode: "single", ambiguity },
-    maxOffsetM
+    maxOffsetM,
   );
   return {
     status: statusOf(confidence, ambiguity),
@@ -412,7 +412,7 @@ function coveredM(path: SpineSegment[], start: LngLat, end: LngLat): Map<string,
     path.map((s, i) => [
       s.segmentId,
       (spans[i]!.endFraction - spans[i]!.startFraction) * polylineLengthM(s.coords),
-    ])
+    ]),
   );
 }
 
@@ -441,7 +441,7 @@ function bindLine(
   graph: SegmentGraph,
   onRef: (s: SpineSegment) => boolean,
   maxOffsetM: number,
-  spacingM: number
+  spacingM: number,
 ): BindResult {
   const lengthM = polylineLengthM(coords);
   // Too short to have a trustworthy heading, so the bearing test is skipped.
@@ -454,7 +454,7 @@ function bindLine(
     return { point, candidates: candidatesFor(point, bearing, input, spine.segments, maxOffsetM) };
   });
   const candidateCount = new Set(
-    samples.flatMap((s) => s.candidates.map((c) => c.segment.segmentId))
+    samples.flatMap((s) => s.candidates.map((c) => c.segment.segmentId)),
   ).size;
   const matched = samples.filter((s) => s.candidates.length > 0);
   if (matched.length === 0) return failure("unresolved", "no_candidates", 0, samples);
@@ -490,7 +490,7 @@ function bindLine(
   for (const sample of matched) {
     const chosen = sample.candidates[0]!;
     const rivals = sample.candidates.filter(
-      (c) => !onPath.has(c.segment.segmentId) && isRival(c, chosen)
+      (c) => !onPath.has(c.segment.segmentId) && isRival(c, chosen),
     );
     if (rivals.length === 0) continue;
     contested = true;
@@ -527,7 +527,7 @@ function bindLine(
 
   const confidence = confidenceOf(
     { coverage, meanOffsetM, refScore: rs, directionMode, ambiguity },
-    maxOffsetM
+    maxOffsetM,
   );
   return {
     status: statusOf(confidence, ambiguity),
@@ -544,7 +544,7 @@ function bindLine(
 export function bindEvent(
   input: BindInput,
   spine: SpineSubgraph,
-  opts: BindOptions = {}
+  opts: BindOptions = {},
 ): BindResult {
   const maxOffsetM = opts.maxOffsetM ?? BIND_DEFAULTS.maxOffsetM;
   const spacingM = opts.sampleSpacingM ?? BIND_DEFAULTS.sampleSpacingM;

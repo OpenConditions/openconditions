@@ -46,7 +46,7 @@ const FIXTURE = JSON.stringify({
         last_updated: "2026-06-20T11:37:19.448257+10:00",
       },
       153.02,
-      -27.34
+      -27.34,
     ),
     feature(
       {
@@ -57,7 +57,7 @@ const FIXTURE = JSON.stringify({
         road_summary: { road_name: "Grey Street" },
       },
       153.5,
-      -27.9
+      -27.9,
     ),
     feature(
       {
@@ -68,12 +68,12 @@ const FIXTURE = JSON.stringify({
         road_summary: { road_name: "Pacific Motorway" },
       },
       153.1,
-      -28.0
+      -28.0,
     ),
     feature(
       { id: 104, event_type: "Flooding", event_priority: "High", description: "Water over road" },
       152.0,
-      -26.0
+      -26.0,
     ),
   ],
 });

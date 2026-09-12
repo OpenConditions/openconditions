@@ -24,7 +24,7 @@ export const BASELINE_WINDOW_DAYS = 28;
  */
 export async function deriveBaselines(
   sql: Sql,
-  opts: { windowDays?: number; minSamples?: number } = {}
+  opts: { windowDays?: number; minSamples?: number } = {},
 ): Promise<{ upserted: number }> {
   const windowDays = opts.windowDays ?? BASELINE_WINDOW_DAYS;
   const minSamples = opts.minSamples ?? 30;

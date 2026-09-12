@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   CapabilityNegotiationError,
-  negotiateCapabilities,
   type NegotiableCapabilities,
+  negotiateCapabilities,
 } from "../capabilities.js";
 
 function caps(overrides: Partial<NegotiableCapabilities> = {}): NegotiableCapabilities {
@@ -27,7 +27,7 @@ describe("negotiateCapabilities", () => {
   it("agrees a single common protocol version when both advertise one string", () => {
     const negotiated = negotiateCapabilities(
       caps({ protocolVersion: "0.1", protocolVersions: undefined }),
-      caps({ protocolVersion: "0.1", protocolVersions: undefined })
+      caps({ protocolVersion: "0.1", protocolVersions: undefined }),
     );
     expect(negotiated.protocolVersion).toBe("0.1");
   });
@@ -52,7 +52,7 @@ describe("negotiateCapabilities", () => {
   it("takes the MAX (looser) convergenceBound both can meet", () => {
     const negotiated = negotiateCapabilities(
       caps({ convergenceBound: 120 }),
-      caps({ convergenceBound: 600 })
+      caps({ convergenceBound: 600 }),
     );
     expect(negotiated.convergenceBound).toBe(600);
   });
@@ -72,7 +72,7 @@ describe("negotiateCapabilities", () => {
   it("returns an empty intersection (not an error) when schema sets are disjoint", () => {
     const negotiated = negotiateCapabilities(
       caps({ schemaVersions: ["1"] }),
-      caps({ schemaVersions: ["2"] })
+      caps({ schemaVersions: ["2"] }),
     );
     expect(negotiated.schemaVersions).toEqual([]);
   });

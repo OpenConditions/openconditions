@@ -40,7 +40,7 @@ export interface MtlsResult {
  */
 export function checkMtls(
   peer: { mtlsRequired?: boolean; mtlsFingerprints?: string[] },
-  cert: MtlsContext | undefined
+  cert: MtlsContext | undefined,
 ): MtlsResult {
   if (peer.mtlsRequired !== true) return { ok: true };
   if (cert === undefined || !cert.authorized) return { ok: false, reason: "mtls-required" };

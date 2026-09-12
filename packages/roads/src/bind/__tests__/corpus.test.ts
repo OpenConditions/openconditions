@@ -1,11 +1,11 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { evaluateCorpus, loadCorpus, type CorpusMetrics } from "../corpus.js";
+import { type CorpusMetrics, evaluateCorpus, loadCorpus } from "../corpus.js";
 
 const DIR = join(import.meta.dirname, "corpus");
 const thresholds = JSON.parse(
-  readFileSync(join(DIR, "thresholds.json"), "utf8")
+  readFileSync(join(DIR, "thresholds.json"), "utf8"),
 ) as Partial<CorpusMetrics>;
 const cases = loadCorpus(DIR);
 const { metrics, perCase } = evaluateCorpus(cases);
@@ -31,7 +31,7 @@ describe("binding corpus", () => {
       const c = perCase.find((p) => p.id === id)!;
       expect(
         c.ok,
-        `${id} now matches its expectation — remove knownResolverBug from its expected.json`
+        `${id} now matches its expectation — remove knownResolverBug from its expected.json`,
       ).toBe(false);
     });
   }
@@ -49,13 +49,13 @@ describe("binding corpus", () => {
       expect(v).toBeGreaterThanOrEqual(min!);
       expect(
         v - min!,
-        `${key} improved to ${v.toFixed(3)}; raise thresholds.json`
+        `${key} improved to ${v.toFixed(3)}; raise thresholds.json`,
       ).toBeLessThanOrEqual(0.05);
     } else {
       expect(v).toBeLessThanOrEqual(min!);
       expect(
         min! - v,
-        `${key} improved to ${v.toFixed(3)}; lower thresholds.json`
+        `${key} improved to ${v.toFixed(3)}; lower thresholds.json`,
       ).toBeLessThanOrEqual(0.05);
     }
   });

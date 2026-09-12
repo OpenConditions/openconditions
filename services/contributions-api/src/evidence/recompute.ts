@@ -1,7 +1,7 @@
-import type postgres from "postgres";
-import { evaluateEvidence, type EvidencePolicyResult } from "@openconditions/core";
 import { evidenceRowsToLedger, type ReportEvidenceRow } from "@openconditions/contrib-core";
+import { type EvidencePolicyResult, evaluateEvidence } from "@openconditions/core";
 import { evidencePolicyFor } from "@openconditions/roads";
+import type postgres from "postgres";
 
 type Sql = postgres.Sql;
 type Tx = postgres.TransactionSql;
@@ -44,7 +44,7 @@ export async function recomputeEvidence(
   sql: Sql,
   observationId: string,
   now: string,
-  tx?: Tx
+  tx?: Tx,
 ): Promise<EvidencePolicyResult | null> {
   if (tx !== undefined) {
     return recomputeWithin(tx, observationId, now);
@@ -55,7 +55,7 @@ export async function recomputeEvidence(
 async function recomputeWithin(
   tx: Tx,
   observationId: string,
-  now: string
+  now: string,
 ): Promise<EvidencePolicyResult | null> {
   // FOR UPDATE serializes concurrent recomputes for the same observation:
   // without it, a recompute that read the ledger BEFORE a just-committed

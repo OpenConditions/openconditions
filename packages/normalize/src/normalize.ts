@@ -1,12 +1,12 @@
 import {
-  canonicalId,
-  observedKey,
-  phenomenonFingerprint,
-  validateObserved,
   type ConditionEvent,
+  canonicalId,
   type Measurement,
   type Observation,
+  observedKey,
   type PrivacyClass,
+  phenomenonFingerprint,
+  validateObserved,
 } from "@openconditions/core";
 
 /**
@@ -134,7 +134,7 @@ function warnOnObserved(obs: Observation): void {
     if (!warnedObservedKeys.has(failKey)) {
       warnedObservedKeys.add(failKey);
       console.warn(
-        `[ingest] ${obs.source}: validateObserved threw unexpectedly, skipping soft validation: ${String(err)}`
+        `[ingest] ${obs.source}: validateObserved threw unexpectedly, skipping soft validation: ${String(err)}`,
       );
     }
     return;
@@ -167,20 +167,20 @@ export function normalizeObservation(obs: Observation, ctx: WriterContext): Obse
   if (obs.privacyClass !== undefined && obs.privacyClass !== derivedPrivacy) {
     throw new Error(
       `observation ${obs.id} carries privacyClass "${obs.privacyClass}" but the ${ctx.kind} ` +
-        `writer derives "${derivedPrivacy}" — provenance is set centrally in normalizeObservation, never by a parser`
+        `writer derives "${derivedPrivacy}" — provenance is set centrally in normalizeObservation, never by a parser`,
     );
   }
   if (obs.instanceId !== undefined && obs.instanceId !== ctx.instanceId) {
     throw new Error(
       `observation ${obs.id} carries instanceId "${obs.instanceId}" but this instance is ` +
-        `"${ctx.instanceId}" — provenance is set centrally in normalizeObservation, never by a parser`
+        `"${ctx.instanceId}" — provenance is set centrally in normalizeObservation, never by a parser`,
     );
   }
   for (const field of REJECTED_BY_KIND[ctx.kind]) {
     if (obs[field] !== undefined) {
       throw new Error(
         `observation ${obs.id} carries ${field} but a ${ctx.kind}-origin row never ` +
-          `asserts it — this field is derived by a trusted writer, never by a parser`
+          `asserts it — this field is derived by a trusted writer, never by a parser`,
       );
     }
   }
@@ -253,12 +253,12 @@ function requireRange(
   field: string,
   value: number | undefined,
   ok: (v: number) => boolean,
-  range: string
+  range: string,
 ): void {
   if (value === undefined) return;
   if (typeof value !== "number" || !Number.isFinite(value) || !ok(value)) {
     throw new FederatedObservationError(
-      `federated observation ${id} carries ${field} ${JSON.stringify(value)} outside ${range}`
+      `federated observation ${id} carries ${field} ${JSON.stringify(value)} outside ${range}`,
     );
   }
 }
@@ -290,7 +290,7 @@ function requireRange(
  */
 function normalizeFederatedObservation(
   obs: Observation,
-  ctx: { instanceId: string; peerInstanceId: string }
+  ctx: { instanceId: string; peerInstanceId: string },
 ): Observation {
   for (const field of ["id", "source", "sourceFormat", "domain", "kind", "status"] as const) {
     if (typeof obs[field] !== "string" || obs[field].length === 0) {
@@ -306,7 +306,7 @@ function normalizeFederatedObservation(
   if (
     obs.fuzziness !== undefined &&
     !["exact", "low_res", "medium_res", "end_unknown", "start_unknown", "extent_unknown"].includes(
-      obs.fuzziness
+      obs.fuzziness,
     )
   ) {
     throw new FederatedObservationError(`federated observation ${obs.id} has invalid fuzziness`);
@@ -314,7 +314,7 @@ function normalizeFederatedObservation(
   for (const field of ["isStale", "isForecast"] as const) {
     if (obs[field] !== undefined && typeof obs[field] !== "boolean") {
       throw new FederatedObservationError(
-        `federated observation ${obs.id} requires boolean ${field}`
+        `federated observation ${obs.id} requires boolean ${field}`,
       );
     }
   }
@@ -325,44 +325,44 @@ function normalizeFederatedObservation(
       (!Array.isArray(value) || !value.every((id) => typeof id === "string"))
     ) {
       throw new FederatedObservationError(
-        `federated observation ${obs.id} requires an array of ${field} ids`
+        `federated observation ${obs.id} requires an array of ${field} ids`,
       );
     }
   }
   if (!obs.instanceId) {
     throw new FederatedObservationError(
       `federated observation ${obs.id} carries no instanceId — a peer must send ` +
-        `fully-normalized published views`
+        `fully-normalized published views`,
     );
   }
   if (obs.instanceId !== ctx.peerInstanceId) {
     throw new FederatedObservationError(
       `federated observation ${obs.id} carries instanceId "${obs.instanceId}" but the ` +
         `authenticated peer is "${ctx.peerInstanceId}" — relaying another instance's ` +
-        `events is not supported`
+        `events is not supported`,
     );
   }
   if (typeof obs.canonicalId !== "string" || obs.canonicalId.length === 0) {
     throw new FederatedObservationError(
       `federated observation ${obs.id} carries no canonicalId — a peer must send ` +
-        `fully-normalized published views`
+        `fully-normalized published views`,
     );
   }
   if (obs.privacyClass === undefined || !KNOWN_PRIVACY_CLASSES.has(obs.privacyClass)) {
     throw new FederatedObservationError(
       `federated observation ${obs.id} carries privacyClass ` +
-        `${JSON.stringify(obs.privacyClass)} which is not a known privacy class`
+        `${JSON.stringify(obs.privacyClass)} which is not a known privacy class`,
     );
   }
   if (obs.evidenceState !== undefined && !KNOWN_EVIDENCE_STATES.has(obs.evidenceState)) {
     throw new FederatedObservationError(
       `federated observation ${obs.id} carries evidenceState ` +
-        `${JSON.stringify(obs.evidenceState)} which is not a known evidence state`
+        `${JSON.stringify(obs.evidenceState)} which is not a known evidence state`,
     );
   }
   if (obs.origin == null || (obs.origin.kind !== "feed" && obs.origin.kind !== "crowd")) {
     throw new FederatedObservationError(
-      `federated observation ${obs.id} carries no feed/crowd origin provenance`
+      `federated observation ${obs.id} carries no feed/crowd origin provenance`,
     );
   }
   const wire: Record<string, unknown> = {
@@ -389,7 +389,7 @@ function normalizeFederatedObservation(
   ]) {
     if (wire[field] !== undefined && typeof wire[field] !== "string") {
       throw new FederatedObservationError(
-        `federated observation ${obs.id} requires string ${field}`
+        `federated observation ${obs.id} requires string ${field}`,
       );
     }
   }
@@ -402,14 +402,14 @@ function normalizeFederatedObservation(
     "kAnonymity",
     obs.kAnonymity,
     (v) => Number.isInteger(v) && v > 0 && v <= 2_147_483_647,
-    "positive 32-bit integer"
+    "positive 32-bit integer",
   );
   requireRange(
     obs.id,
     "severityLevel",
     (obs as ConditionEvent).severityLevel,
     (v) => Number.isInteger(v) && v >= 1 && v <= 5,
-    "integer [1, 5]"
+    "integer [1, 5]",
   );
 
   const next: Observation = { ...obs };

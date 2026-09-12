@@ -1,8 +1,8 @@
 import type { LineString } from "geojson";
+import type { FlowParseResult } from "./flow.js";
+import { makeOrigin } from "./flow.js";
 import type { RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
-import { makeOrigin } from "./flow.js";
-import type { FlowParseResult } from "./flow.js";
 
 type Los = RoadFlow["los"];
 

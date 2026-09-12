@@ -116,7 +116,7 @@ function chain(
   table: TmcLocationTable,
   from: number,
   to: number,
-  limit = 200
+  limit = 200,
 ): number[] | undefined {
   for (const dir of ["pos", "neg"] as const) {
     const out = [from];

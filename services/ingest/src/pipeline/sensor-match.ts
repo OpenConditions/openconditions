@@ -43,7 +43,7 @@ export interface MatchSensorsResult {
 export async function matchSensors(
   sql: Sql,
   now: () => string,
-  opts?: MatchSensorsOptions
+  opts?: MatchSensorsOptions,
 ): Promise<MatchSensorsResult> {
   const maxOffsetM = opts?.maxOffsetM ?? 35;
 

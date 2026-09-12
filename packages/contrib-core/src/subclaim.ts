@@ -5,8 +5,8 @@ import { normalizeLowS } from "./lowS.js";
 import type { SignedSubClaim, SubClaimBody, VerifyResult } from "./types.js";
 import { ENVELOPE_FIELDS, validateSubClaimBody } from "./validate.js";
 import {
-  ECDSA_SIGN_PARAMS,
   decodeRawSignature,
+  ECDSA_SIGN_PARAMS,
   errorMessage,
   importVerifyKey,
   resolveVerificationJwk,
@@ -58,7 +58,7 @@ export async function signSubClaim(body: SubClaimBody, key: ReporterKey): Promis
  */
 export async function verifySubClaim(
   sub: SignedSubClaim,
-  knownJwk?: JsonWebKey
+  knownJwk?: JsonWebKey,
 ): Promise<VerifyResult> {
   try {
     if (sub === null || typeof sub !== "object") {
@@ -80,7 +80,7 @@ export async function verifySubClaim(
       ECDSA_SIGN_PARAMS,
       publicKey,
       signature,
-      bytes
+      bytes,
     );
     return ok
       ? { ok: true, keyId: sub.keyId }

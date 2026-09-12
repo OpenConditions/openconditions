@@ -1,13 +1,13 @@
 import { Readable } from "node:stream";
 import { createGunzip } from "node:zlib";
-import type { FeedSource, SiteGeometry, SiteTableParser } from "@openconditions/roads";
-import { createPredefinedLocationsParser, createSiteTableParser } from "@openconditions/roads";
 import {
-  DEFAULT_MAX_FEED_BYTES,
   allowedTemplateVars,
+  DEFAULT_MAX_FEED_BYTES,
   resolvedEnv,
   resolveUrlTemplate,
 } from "@openconditions/ingest-framework";
+import type { FeedSource, SiteGeometry, SiteTableParser } from "@openconditions/roads";
+import { createPredefinedLocationsParser, createSiteTableParser } from "@openconditions/roads";
 import { withStreamRetry } from "./stream-retry.js";
 
 /** Site tables change rarely (version-stamped); refetch at most every 6 hours. */
@@ -15,7 +15,7 @@ const SITE_TABLE_TTL_MS = 6 * 60 * 60 * 1000;
 
 /** Ceiling on a single site table's decompressed bytes; matches the guard's byte cap. */
 const MAX_DECOMPRESSED_BYTES = Number(
-  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES
+  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES,
 );
 
 interface CacheEntry {
@@ -57,7 +57,7 @@ export function clearSiteTableCache(): void {
 async function streamIntoParser(
   source: Readable,
   gzip: boolean,
-  makeParser: () => SiteTableParser
+  makeParser: () => SiteTableParser,
 ): Promise<Map<string, SiteGeometry>> {
   const parser = makeParser();
   // `.pipe()` does not forward the source's errors to the gunzip stream, so a
@@ -100,7 +100,7 @@ async function streamIntoParser(
 export async function loadSiteTable(
   src: FeedSource,
   streamFactory: SiteTableStreamFactory = defaultStreamFactory,
-  now: () => number = Date.now
+  now: () => number = Date.now,
 ): Promise<Map<string, SiteGeometry> | undefined> {
   const table = src.siteTable;
   if (!table) return undefined;
@@ -129,14 +129,14 @@ export async function loadSiteTable(
     // falling back — the cold 362 MB fetch is the one most likely to drop.
     const map = await withStreamRetry(
       async () => streamIntoParser(await streamFactory(expanded), table.gzip ?? false, makeParser),
-      `${src.id} site-table`
+      `${src.id} site-table`,
     );
     cache.set(expanded, { map, fetchedAt: now() });
     return map;
   } catch (err) {
     console.warn(
       `[ingest] site-table load failed for ${src.id} (${expanded}):`,
-      err instanceof Error ? err.message : err
+      err instanceof Error ? err.message : err,
     );
     return cached?.map;
   }

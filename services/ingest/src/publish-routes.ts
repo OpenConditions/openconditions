@@ -6,31 +6,31 @@ import {
   readObservations,
 } from "@openconditions/core";
 import {
-  segmentConditionsToExclusions,
+  type DatasetRights,
+  type DomainRegistry,
+  hasCredentials,
+  requiredEnvVars,
+} from "@openconditions/ingest-framework";
+import {
+  type FeedInfo,
   filterForPermissiveExport,
   flowToSegmentSpeedCsv,
   isPermissiveLicense,
   matchesTypeFilter,
   observationsToDatexSituations,
-  parseTypeFilter,
-  segmentConditionsToJson,
-  segmentsToGeoJSON,
-  type FeedInfo,
-  type SegmentConditionRow,
-  type SegmentSpeedCsvRow,
-  type SegmentSpeedRow,
   observationsToGeoJSON,
   observationsToGtfsRtAlerts,
   observationsToJsonLd,
   observationsToOccupancy,
   observationsToTraff,
+  parseTypeFilter,
+  type SegmentConditionRow,
+  type SegmentSpeedCsvRow,
+  type SegmentSpeedRow,
+  segmentConditionsToExclusions,
+  segmentConditionsToJson,
+  segmentsToGeoJSON,
 } from "@openconditions/publishers";
-import {
-  hasCredentials,
-  requiredEnvVars,
-  type DomainRegistry,
-  type DatasetRights,
-} from "@openconditions/ingest-framework";
 import {
   isPublishedRoadRestrictionDetails,
   RESOLVER_VERSION,
@@ -38,18 +38,18 @@ import {
 } from "@openconditions/roads";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
-import { startObservationStream } from "./observation-stream.js";
 import type { FeedRunStatus, FeedStatusStore } from "./feed-status.js";
+import { startObservationStream } from "./observation-stream.js";
+import {
+  type BindingMetrics,
+  type BindingMetricsReader,
+  createBindingMetricsReader,
+} from "./pipeline/binding-metrics.js";
 import {
   readSourceOperationalStatus,
   type SourceOperationalStatus,
   type SourceStatusReader,
 } from "./pipeline/source-status.js";
-import {
-  createBindingMetricsReader,
-  type BindingMetrics,
-  type BindingMetricsReader,
-} from "./pipeline/binding-metrics.js";
 
 type Sql = postgres.Sql;
 type BBox = [number, number, number, number];
@@ -74,7 +74,7 @@ export async function readFeedGraphStatus(sql: Sql): Promise<FeedGraphStatus> {
             typeof region === "object" &&
             typeof (region as { id?: unknown }).id === "string"
           ? (region as { id: string }).id
-          : null
+          : null,
     )
     .filter((region): region is string => region != null);
   return {
@@ -124,27 +124,29 @@ function routingRights(rights: DatasetRights | RoutingRights | null | undefined)
 
 function hydrateSegmentRows(
   rows: SegmentConditionRow[],
-  registry: DomainRegistry
+  registry: DomainRegistry,
 ): SegmentConditionRow[] {
   const feedById = new Map(
     Object.values(registry).flatMap((domain) =>
-      domain.feeds.map((feed) => [feed.id, feed] as const)
-    )
+      domain.feeds.map((feed) => [feed.id, feed] as const),
+    ),
   );
   // A discovered catalogue child is explicitly outside the scheduled selection.
   // Its retained observations must not regain an old grant through the fallback
   // for remote sources, which legitimately have no local feed descriptor.
   const unscheduledSourceIds = new Set(
     Object.values(registry).flatMap((domain) =>
-      (domain.discoveredFeeds ?? []).filter((feed) => !feedById.has(feed.id)).map((feed) => feed.id)
-    )
+      (domain.discoveredFeeds ?? [])
+        .filter((feed) => !feedById.has(feed.id))
+        .map((feed) => feed.id),
+    ),
   );
   return rows
     .filter(
       (row) =>
         !unscheduledSourceIds.has(row.source) &&
         isPermissiveLicense(row.source_license) &&
-        isPermissiveLicense(feedById.get(row.source)?.license ?? row.source_license)
+        isPermissiveLicense(feedById.get(row.source)?.license ?? row.source_license),
     )
     .map((row) => {
       const feed = feedById.get(row.source);
@@ -332,7 +334,7 @@ export function registerFeedStatusRoute(
   registry: DomainRegistry,
   bindingMetrics: BindingMetricsReader,
   sourceStatus?: SourceStatusReader,
-  graphStatus?: FeedGraphStatusReader
+  graphStatus?: FeedGraphStatusReader,
 ): void {
   app.get("/feeds/status", async () => {
     const collectedAt = new Date().toISOString();
@@ -366,7 +368,7 @@ export function registerFeedStatusRoute(
         // just that key, not every key hasCredentials would re-derive from
         // feed.auth as a whole.
         const missingEnv = [...requiredEnvVars(feed.auth), ...(feed.requiredEnv ?? [])].filter(
-          (k) => !hasCredentials({ auth: undefined, requiredEnv: [k] })
+          (k) => !hasCredentials({ auth: undefined, requiredEnv: [k] }),
         );
         const binding = metrics.get(feed.id);
         const persisted = durable.get(feed.id);
@@ -418,13 +420,13 @@ const DEFAULT_CACHE_SECONDS = 90;
  */
 function restrictionCacheSeconds(
   features: readonly { properties?: Record<string, unknown> | null }[],
-  at: Date
+  at: Date,
 ): number {
   const views = features
     .map((feature) => feature.properties?.["restrictionDetails"])
     .filter(isPublishedRoadRestrictionDetails);
   const unsupported = features.some(
-    (feature) => feature.properties?.["restrictionDetailsUnsupported"] === true
+    (feature) => feature.properties?.["restrictionDetailsUnsupported"] === true,
   );
   if (views.length === 0 && !unsupported) return DEFAULT_CACHE_SECONDS;
   if (unsupported) return 0;
@@ -463,7 +465,7 @@ export function registerPublishRoutes(
   app: FastifyInstance,
   sql: Sql,
   statusStore: FeedStatusStore,
-  registry: DomainRegistry
+  registry: DomainRegistry,
 ): void {
   const db = runner(sql);
   const streams = new Set<() => void>();
@@ -480,7 +482,7 @@ export function registerPublishRoutes(
   // re-trigger the `"roads"` default and silently scope the read back to roads.
   const read = async (
     q: Record<string, string | undefined>,
-    defaultDomain: string | null = "roads"
+    defaultDomain: string | null = "roads",
   ) => {
     const bbox = parseBbox(q.bbox);
     if (!bbox) return null;
@@ -566,7 +568,8 @@ export function registerPublishRoutes(
     const obs = await read(req.query as Record<string, string | undefined>, null);
     if (!obs) return reply.status(400).send({ error: "bbox required: west,south,east,north" });
     const measurements = obs.filter(
-      (o): o is Measurement => o.kind === "measurement" && (o as Measurement).metric === "occupancy"
+      (o): o is Measurement =>
+        o.kind === "measurement" && (o as Measurement).metric === "occupancy",
     );
     const pb = observationsToOccupancy(measurements, { timestamp: new Date().toISOString() });
     reply.header("Content-Type", "application/x-protobuf");
@@ -626,7 +629,7 @@ export function registerPublishRoutes(
          AND (o.valid_to IS NULL OR o.valid_to > $5::timestamptz)
          AND (o.expires_at IS NULL OR o.expires_at > now())
        ORDER BY o.id`,
-      [west, south, east, north, at.toISOString(), RESOLVER_VERSION]
+      [west, south, east, north, at.toISOString(), RESOLVER_VERSION],
     );
     const evaluatedAt = new Date();
     const rows = hydrateSegmentRows(raw, registry);
@@ -648,14 +651,14 @@ export function registerPublishRoutes(
       ]
         .filter((value): value is string => value != null)
         .map((value) => Date.parse(value))
-        .filter(Number.isFinite)
+        .filter(Number.isFinite),
     );
     const maxAge =
       deadlines.length === 0
         ? 0
         : Math.max(
             0,
-            Math.min(90, Math.floor((Math.min(...deadlines) - evaluatedAt.getTime()) / 1000))
+            Math.min(90, Math.floor((Math.min(...deadlines) - evaluatedAt.getTime()) / 1000)),
           );
     reply.header("Cache-Control", `public, max-age=${maxAge}`);
     const licenses = new Set(projected.conditions.map((c) => c.routing_evidence.source_license));
@@ -683,7 +686,7 @@ export function registerPublishRoutes(
        LEFT JOIN conditions.segment_speed sp USING (segment_id)
        WHERE s.geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)
        LIMIT 20000`,
-      [west, south, east, north]
+      [west, south, east, north],
     );
     const rows: SegmentSpeedRow[] = rawRows.map((row) => ({
       ...row,
@@ -704,7 +707,7 @@ export function registerPublishRoutes(
               sp.free_flow_kph AS "freeFlowKph", sp.los
        FROM conditions.segment_speed sp
        JOIN conditions.road_segment rs USING (segment_id)
-       WHERE sp.current_kph IS NOT NULL`
+       WHERE sp.current_kph IS NOT NULL`,
     );
     reply.header("Content-Type", "text/csv");
     reply.header("Cache-Control", "public, max-age=60");
@@ -729,7 +732,7 @@ export function registerPublishRoutes(
               sp.dow, sp.tod_hour AS "todHour", sp.speed_kph AS "speedKph"
        FROM conditions.segment_profile sp
        JOIN conditions.road_segment rs USING (segment_id)
-       ORDER BY rs.segment_id`
+       ORDER BY rs.segment_id`,
     );
 
     const bySegment = new Map<
@@ -762,7 +765,7 @@ export function registerPublishRoutes(
       // falls back to free_flow_kph rather than omitting the field.
       const daytime = hourly.filter(
         (v, i): v is number =>
-          v != null && i % 24 >= DAYTIME_START_HOUR && i % 24 <= DAYTIME_END_HOUR
+          v != null && i % 24 >= DAYTIME_START_HOUR && i % 24 <= DAYTIME_END_HOUR,
       );
       const constrainedKph = daytime.length > 0 ? median(daytime) : freeFlowKph;
       return {
@@ -843,7 +846,7 @@ export function registerPublishRoutes(
          AND (o.valid_to IS NULL OR o.valid_to > $1::timestamptz)
          AND (o.expires_at IS NULL OR o.expires_at > now())
        ORDER BY o.id`,
-      [at.toISOString(), RESOLVER_VERSION, ...(bbox ?? [])]
+      [at.toISOString(), RESOLVER_VERSION, ...(bbox ?? [])],
     );
     const permissive = hydrateSegmentRows(rows, registry);
     reply.header("Content-Type", "application/json");
@@ -857,7 +860,7 @@ export function registerPublishRoutes(
       segmentConditionsToJson(permissive, at, {
         resolverVersion: RESOLVER_VERSION,
         evaluatedAt: new Date(),
-      })
+      }),
     );
   });
 
@@ -885,7 +888,7 @@ export function registerPublishRoutes(
       includeRaw: q.raw === "1",
       read: async () =>
         filterForPermissiveExport(await readObservations(db, { domain, bbox })).filter((o) =>
-          matchesTypeFilter(o, types)
+          matchesTypeFilter(o, types),
         ),
       onError: (err) => req.log.error(err, "[stream] poll failed"),
       onStop: () => streams.delete(stop),
@@ -900,6 +903,6 @@ export function registerPublishRoutes(
     registry,
     createBindingMetricsReader(sql),
     () => readSourceOperationalStatus(sql),
-    () => readFeedGraphStatus(sql)
+    () => readFeedGraphStatus(sql),
   );
 }

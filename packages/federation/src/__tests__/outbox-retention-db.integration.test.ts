@@ -1,7 +1,7 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { readOutbox } from "../outbox.js";
 import {
   DEFAULT_OUTBOX_RETENTION_SEC,
@@ -124,7 +124,7 @@ describe("pruneOutbox — the tier-time-floor retention bound", () => {
     // max(1d, 30d + 7d margin, 0) = 37d, applied UNCONDITIONALLY — the margin is
     // never dropped, so the archive-redirect's pre-window rows always survive.
     expect(result.floorIso).toBe(
-      new Date(NOW_MS - DEFAULT_OUTBOX_RETENTION_SEC * 1000).toISOString()
+      new Date(NOW_MS - DEFAULT_OUTBOX_RETENTION_SEC * 1000).toISOString(),
     );
     // The bare Tier-1 floor (30d) still holds strictly below the effective floor.
     expect(DEFAULT_OUTBOX_RETENTION_SEC).toBeGreaterThan(OUTBOX_RETENTION_TIER1_FLOOR_SEC);
@@ -137,7 +137,7 @@ describe("pruneOutbox — the tier-time-floor retention bound", () => {
     await seedEntry("exactly-at-floor", daysAgo(DEFAULT_OUTBOX_RETENTION_SEC / DAY_SEC));
     await seedEntry(
       "one-sec-past-floor",
-      new Date(NOW_MS - (DEFAULT_OUTBOX_RETENTION_SEC + 1) * 1000).toISOString()
+      new Date(NOW_MS - (DEFAULT_OUTBOX_RETENTION_SEC + 1) * 1000).toISOString(),
     );
 
     const result = await pruneOutbox(sql, { now: NOW });
@@ -152,10 +152,10 @@ describe("pruneOutbox — the tier-time-floor retention bound", () => {
     // An empty string (the Compose `${VAR:-}` trap) or garbage must THROW, never
     // silently skip the guard and delete un-archived pre-window rows.
     await expect(pruneOutbox(sql, { now: NOW, archiveHighWaterIso: "" })).rejects.toThrow(
-      TypeError
+      TypeError,
     );
     await expect(pruneOutbox(sql, { now: NOW, archiveHighWaterIso: "not-a-date" })).rejects.toThrow(
-      /archiveHighWaterIso/
+      /archiveHighWaterIso/,
     );
 
     // Nothing was deleted — the throw happened before the DELETE.
@@ -192,7 +192,7 @@ describe("pruneOutbox — the tier-time-floor retention bound", () => {
 
     // floorIso is still the retention floor (37d), not the effective cutoff.
     expect(result.floorIso).toBe(
-      new Date(NOW_MS - DEFAULT_OUTBOX_RETENTION_SEC * 1000).toISOString()
+      new Date(NOW_MS - DEFAULT_OUTBOX_RETENTION_SEC * 1000).toISOString(),
     );
     expect(result.deleted).toBe(1);
     expect(await survivingObjectIds()).toEqual(["forty-40d"]);

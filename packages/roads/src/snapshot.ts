@@ -175,12 +175,12 @@ export function reconcileRoadSnapshots(reports: RoadSnapshotReport[]): Reconcile
     if (report.errors.length > 0) {
       const first = report.errors[0]!;
       throw new Error(
-        `snapshot parse error ${first.code} at ${first.sourcePath}${first.id ? ` for ${first.id}` : ""}`
+        `snapshot parse error ${first.code} at ${first.sourcePath}${first.id ? ` for ${first.id}` : ""}`,
       );
     }
     if (report.inputCount !== report.records.length) {
       throw new Error(
-        `snapshot accounting mismatch: ${report.inputCount} input record(s), ${report.records.length} accounted`
+        `snapshot accounting mismatch: ${report.inputCount} input record(s), ${report.records.length} accounted`,
       );
     }
     inputCount += report.inputCount;
@@ -200,7 +200,7 @@ export function reconcileRoadSnapshots(reports: RoadSnapshotReport[]): Reconcile
       if (order < 0) continue;
       if (existing.fingerprint !== record.fingerprint) {
         throw new Error(
-          `snapshot version conflict for ${record.id}: equal-ranked records with different content`
+          `snapshot version conflict for ${record.id}: equal-ranked records with different content`,
         );
       }
       // Identical duplicate across partitions: keep the first, but prefer a

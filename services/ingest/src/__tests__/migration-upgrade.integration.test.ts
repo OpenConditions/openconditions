@@ -1,11 +1,11 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { runMigrations } from "@openconditions/core/server";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, expect, it } from "vitest";
-import { runMigrations } from "@openconditions/core/server";
 
 let sql: postgres.Sql;
 let url: string;
@@ -59,7 +59,7 @@ it("upgrades a populated previous schema concurrently and never reapplies versio
 
   await Promise.all([runMigrations(url), runMigrations(url), runMigrations(url)]);
   expect(
-    await sql`SELECT id FROM conditions.observations WHERE id = 'upgrade:preserved'`
+    await sql`SELECT id FROM conditions.observations WHERE id = 'upgrade:preserved'`,
   ).toHaveLength(1);
   const [count] = await sql<{ n: number; distinct_n: number }[]>`
     SELECT count(*)::int AS n, count(DISTINCT created_at)::int AS distinct_n FROM drizzle.__drizzle_migrations_oc`;
@@ -68,7 +68,7 @@ it("upgrades a populated previous schema concurrently and never reapplies versio
     SELECT pg_get_functiondef('conditions.segment_flow(integer,integer,integer,json)'::regprocedure) AS body`;
   expect(functionBefore!.body).toContain("ST_AsMVT");
   expect(
-    await sql`SELECT 1 FROM pg_trigger WHERE tgname = 'federation_outbox_capture_update'`
+    await sql`SELECT 1 FROM pg_trigger WHERE tgname = 'federation_outbox_capture_update'`,
   ).toHaveLength(1);
 
   // A later deployed function must survive an older migrator starting again.

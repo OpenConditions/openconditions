@@ -11,11 +11,12 @@
  * Log separation (binding): this module logs ONLY through the injected issuer
  * logger and never logs the reporter keyId, proof fields, or any request id.
  */
-import type postgres from "postgres";
+
 import { publicVerif } from "@cloudflare/privacypass-ts";
+import type postgres from "postgres";
 import { ATTESTER_POLICY } from "../attester/policy.js";
-import { publicContextString, type PublicContext } from "./context.js";
-import { DEFAULT_ISSUER_NAME, loadActiveIssuerKeys, type ActiveIssuerKey } from "./keys.js";
+import { type PublicContext, publicContextString } from "./context.js";
+import { type ActiveIssuerKey, DEFAULT_ISSUER_NAME, loadActiveIssuerKeys } from "./keys.js";
 
 const { BLIND_RSA, TokenRequest } = publicVerif;
 
@@ -28,7 +29,8 @@ export interface IssueLogger {
 export type IssueRefusalReason = "not-enrolled" | "blocked" | "over-quota" | "bad-request";
 
 export type IssueResult =
-  { issued: true; tokenResponse: Uint8Array } | { issued: false; reason: IssueRefusalReason };
+  | { issued: true; tokenResponse: Uint8Array }
+  | { issued: false; reason: IssueRefusalReason };
 
 export interface IssueDeps {
   log: IssueLogger;
@@ -58,7 +60,7 @@ export async function issueToken(
   epoch: string,
   blindedRequestBytes: Uint8Array,
   publicContext: PublicContext,
-  deps: IssueDeps
+  deps: IssueDeps,
 ): Promise<IssueResult> {
   const { log } = deps;
   const cap = deps.cap ?? ATTESTER_POLICY.grantTokensPerEpoch;
@@ -90,7 +92,7 @@ export async function issueToken(
     (await loadActiveIssuerKeys(
       sql,
       deps.now ?? new Date().toISOString(),
-      deps.issuerName ?? DEFAULT_ISSUER_NAME
+      deps.issuerName ?? DEFAULT_ISSUER_NAME,
     ));
   const issuerKey = keys.find((k) => k.truncatedTokenKeyId === request.truncatedTokenKeyId);
   if (issuerKey === undefined) {

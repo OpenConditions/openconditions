@@ -1,10 +1,10 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { readObservations } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import { toPublishedArchiveRows } from "@openconditions/publishers";
-import { ingestFederatedPage, type FederatedIngestContext } from "../federation/ingest.js";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { type FederatedIngestContext, ingestFederatedPage } from "../federation/ingest.js";
 import { emitTombstone } from "../federation/tombstone.js";
 
 let sql: postgres.Sql;
@@ -100,7 +100,7 @@ function deletePage(
   canonicalId: string,
   reason: string,
   seq = 2,
-  txid = "200"
+  txid = "200",
 ): Record<string, unknown> {
   return {
     type: "OrderedCollectionPage",
@@ -111,7 +111,7 @@ function deletePage(
 }
 
 async function rowStatus(
-  id: string
+  id: string,
 ): Promise<
   { status: string; tombstone_reason: string | null; origin: Record<string, unknown> } | undefined
 > {
@@ -264,7 +264,7 @@ describe("inbox apply — an incoming federation tombstone", () => {
     const res = await ingestFederatedPage(
       sql,
       deletePage("peer-a:own", canonicalId, "deleted_by_source"),
-      PEER_A
+      PEER_A,
     );
     expect(res.tombstoned).toBe(1);
     expect(res.skipped).toEqual([]);
@@ -280,12 +280,12 @@ describe("inbox apply — an incoming federation tombstone", () => {
     await ingestFederatedPage(
       sql,
       createPage(fedEvent({ id: "peer-a:feed", canonicalId })),
-      PEER_A
+      PEER_A,
     );
     const res = await ingestFederatedPage(
       sql,
       deletePage("peer-b:feed", canonicalId, "expired"),
-      PEER_B
+      PEER_B,
     );
     expect(res.tombstoned).toBe(1);
     expect((await rowStatus("peer-a:feed"))!.status).toBe("archived");
@@ -304,7 +304,7 @@ describe("inbox apply — an incoming federation tombstone", () => {
     const res = await ingestFederatedPage(
       sql,
       deletePage(id, "cc".repeat(32), "legal_takedown"),
-      PEER_A
+      PEER_A,
     );
     expect(res.tombstoned).toBe(0);
     expect(res.skipped).toEqual([{ objectId: id, reason: "non-owned-collision" }]);
@@ -325,14 +325,14 @@ describe("inbox apply — an incoming federation tombstone", () => {
           origin: { kind: "crowd", attribution: { provider: "crowd", license: "CC0-1.0" } },
           privacyClass: "crowd_pseudonym",
           evidenceState: "self_reported",
-        })
+        }),
       ),
-      PEER_A
+      PEER_A,
     );
     const res = await ingestFederatedPage(
       sql,
       deletePage("peer-a:xinst", canonicalId, "gdpr_erasure"),
-      PEER_B
+      PEER_B,
     );
     expect(res.tombstoned).toBe(0);
     expect(res.skipped[0]!.reason).toBe("non-owned-collision");
@@ -343,7 +343,7 @@ describe("inbox apply — an incoming federation tombstone", () => {
     const res = await ingestFederatedPage(
       sql,
       deletePage("peer-a:ghost", "ff".repeat(32), "expired"),
-      PEER_A
+      PEER_A,
     );
     expect(res.tombstoned).toBe(0);
     expect(res.skipped).toEqual([
@@ -356,14 +356,14 @@ describe("inbox apply — an incoming federation tombstone", () => {
     await ingestFederatedPage(
       sql,
       createPage(fedEvent({ id: "peer-a:longlived", canonicalId })),
-      PEER_A
+      PEER_A,
     );
     expect(await archiveIds()).toContain("peer-a:longlived");
 
     const res = await ingestFederatedPage(
       sql,
       deletePage("peer-a:longlived", canonicalId, "gdpr_erasure"),
-      PEER_A
+      PEER_A,
     );
     expect(res.tombstoned).toBe(1);
 
@@ -374,8 +374,8 @@ describe("inbox apply — an incoming federation tombstone", () => {
     const entries = await journalFor("peer-a:longlived");
     expect(
       entries.some(
-        (e) => e.operation === "delete" && e.payload_snapshot["reason"] === "gdpr_erasure"
-      )
+        (e) => e.operation === "delete" && e.payload_snapshot["reason"] === "gdpr_erasure",
+      ),
     ).toBe(true);
   }, 30_000);
 });
@@ -393,9 +393,9 @@ describe("terminal tombstone — a retraction is terminal for 30 days (no resurr
     const res = await ingestFederatedPage(
       sql,
       createPage(
-        fedEvent({ id: "peer-a:res", canonicalId, headline: "RESURRECTED", dataUpdatedAt: newer })
+        fedEvent({ id: "peer-a:res", canonicalId, headline: "RESURRECTED", dataUpdatedAt: newer }),
       ),
-      PEER_A
+      PEER_A,
     );
     expect(res.accepted).toBe(0);
     expect(res.resupplied).toBe(0);
@@ -415,7 +415,7 @@ describe("terminal tombstone — a retraction is terminal for 30 days (no resurr
     const t = await ingestFederatedPage(
       sql,
       deletePage("peer-a:race", canonicalId, "deleted_by_source"),
-      PEER_A
+      PEER_A,
     );
     expect(t.skipped).toEqual([{ objectId: "peer-a:race", reason: "tombstone-target-not-found" }]);
 
@@ -423,7 +423,7 @@ describe("terminal tombstone — a retraction is terminal for 30 days (no resurr
     const c = await ingestFederatedPage(
       sql,
       createPage(fedEvent({ id: "peer-a:race", canonicalId })),
-      PEER_A
+      PEER_A,
     );
     expect(c.accepted).toBe(0);
     expect(c.skipped).toEqual([{ objectId: "peer-a:race", reason: "tombstoned" }]);
@@ -473,7 +473,7 @@ describe("terminal tombstone — a retraction is terminal for 30 days (no resurr
         (result) => {
           deleted = true;
           return result;
-        }
+        },
       );
       // Observe a second blocked database transaction, rather than relying on a sleep.
       await expect
@@ -509,7 +509,7 @@ describe("GDPR journal residue — a gdpr_erasure scrubs historical outbox snaps
     await ingestFederatedPage(
       sql,
       createPage(fedEvent({ id, canonicalId, headline: "ERASE-ME" })),
-      PEER_A
+      PEER_A,
     );
     expect(await emitTombstone(sql, id, "expired", NOW)).toEqual({ tombstoned: true });
     expect(JSON.stringify(await journalFor(id))).toContain("ERASE-ME");
@@ -521,7 +521,7 @@ describe("GDPR journal residue — a gdpr_erasure scrubs historical outbox snaps
     expect(
       journal
         .filter((entry) => entry.operation === "delete")
-        .map((entry) => entry.payload_snapshot["reason"])
+        .map((entry) => entry.payload_snapshot["reason"]),
     ).toEqual(["expired", "gdpr_erasure"]);
     expect((await rowStatus(id))?.tombstone_reason).toBe("gdpr_erasure");
     const [fact] = await sql<
@@ -530,7 +530,7 @@ describe("GDPR journal residue — a gdpr_erasure scrubs historical outbox snaps
       WHERE canonical_id = ${canonicalId}`;
     expect(fact?.reason).toBe("gdpr_erasure");
     expect(
-      journal.find((entry) => entry.operation === "create")?.payload_snapshot["canonical_id"]
+      journal.find((entry) => entry.operation === "create")?.payload_snapshot["canonical_id"],
     ).toBe(canonicalId);
     // A later version may replace an old record, but cannot reopen its tombstone.
     await ingestFederatedPage(
@@ -541,9 +541,9 @@ describe("GDPR journal residue — a gdpr_erasure scrubs historical outbox snaps
           canonicalId: "6f".repeat(32),
           headline: "Replacement after erasure",
           replaces: [id],
-        })
+        }),
       ),
-      PEER_A
+      PEER_A,
     );
     expect((await rowStatus(id))?.status).toBe("archived");
   }, 30_000);
@@ -578,8 +578,8 @@ describe("GDPR journal residue — a gdpr_erasure scrubs historical outbox snaps
     // The tombstone entry is intact with its reason.
     expect(
       entries.some(
-        (e) => e.operation === "delete" && e.payload_snapshot["reason"] === "gdpr_erasure"
-      )
+        (e) => e.operation === "delete" && e.payload_snapshot["reason"] === "gdpr_erasure",
+      ),
     ).toBe(true);
   }, 30_000);
 });

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { RoadRestrictionFact } from "../restriction-types.js";
 import {
   hasRestrictionEvidence,
   intersectRestrictionWindows,
@@ -9,7 +10,6 @@ import {
   projectRoadRestrictionDetails,
   restrictionViewDeadline,
 } from "../restrictions.js";
-import type { RoadRestrictionFact } from "../restriction-types.js";
 import { restrictionDetails } from "./fixtures/restriction-event.js";
 
 describe("restriction evidence presence", () => {
@@ -98,7 +98,7 @@ describe("restriction envelope validation", () => {
             sourceText: "tuntematon rajoitus",
           },
         ],
-      })
+      }),
     ).toBe(true);
   });
 
@@ -129,7 +129,7 @@ describe("restriction envelope validation", () => {
   it("rejects duplicate fact ids and non-increasing windows", () => {
     const details = restrictionDetails();
     expect(
-      isRoadRestrictionDetails({ ...details, facts: [details.facts[0]!, details.facts[0]!] })
+      isRoadRestrictionDetails({ ...details, facts: [details.facts[0]!, details.facts[0]!] }),
     ).toBe(false);
 
     const reversed = restrictionDetails();
@@ -146,7 +146,7 @@ describe("restriction envelope validation", () => {
       isRoadRestrictionDetails({
         ...details,
         issues: [{ code: "made_up", factId: null, sourcePath: "x" }],
-      })
+      }),
     ).toBe(false);
     expect(
       isRoadRestrictionDetails({
@@ -154,7 +154,7 @@ describe("restriction envelope validation", () => {
         issues: [
           { code: "unsupported_type", factId: null, sourcePath: "x", sourceText: "a".repeat(4097) },
         ],
-      })
+      }),
     ).toBe(false);
   });
 
@@ -187,10 +187,10 @@ describe("restriction envelope validation", () => {
 describe("instant parsing", () => {
   it("requires an explicit zone and a real calendar date", () => {
     expect(parseRestrictionInstant("2026-07-19T21:00:00.000Z")).toBe(
-      Date.parse("2026-07-19T21:00:00.000Z")
+      Date.parse("2026-07-19T21:00:00.000Z"),
     );
     expect(parseRestrictionInstant("2026-07-19T23:00:00+02:00")).toBe(
-      Date.parse("2026-07-19T21:00:00.000Z")
+      Date.parse("2026-07-19T21:00:00.000Z"),
     );
     expect(parseRestrictionInstant("2026-02-30T00:00:00Z")).toBeNull();
     expect(parseRestrictionInstant("2026-07-19T21:00:00")).toBeNull();
@@ -214,13 +214,13 @@ describe("published envelope validation", () => {
     expect(isPublishedRoadRestrictionDetails(published)).toBe(true);
     expect(isPublishedRoadRestrictionDetails(details)).toBe(false);
     expect(isPublishedRoadRestrictionDetails({ ...published, facts: [details.facts[0]!] })).toBe(
-      false
+      false,
     );
     expect(
       isPublishedRoadRestrictionDetails({
         ...published,
         facts: [{ ...details.facts[0]!, state: "expired" }],
-      })
+      }),
     ).toBe(false);
   });
 });
@@ -228,13 +228,13 @@ describe("published envelope validation", () => {
 describe("dimension normalization", () => {
   it("intersects phase dates and converts tonnes without changing meaning", () => {
     expect(
-      normalizeRestrictionDimension({ dimension: "gross_weight", value: 26, unit: "t" })
+      normalizeRestrictionDimension({ dimension: "gross_weight", value: 26, unit: "t" }),
     ).toEqual({ value: 26000, unit: "kg" });
     expect(
       intersectRestrictionWindows([
         { validFrom: "2026-06-11T21:00:00Z", validTo: "2026-12-14T21:59:59.999Z" },
         { validFrom: "2026-07-19T21:00:00Z", validTo: null },
-      ]).window.validFrom
+      ]).window.validFrom,
     ).toBe("2026-07-19T21:00:00.000Z");
   });
 
@@ -244,7 +244,7 @@ describe("dimension normalization", () => {
       unit: "m",
     });
     expect(
-      normalizeRestrictionDimension({ dimension: "gross_weight", value: 26000, unit: "kg" })
+      normalizeRestrictionDimension({ dimension: "gross_weight", value: 26000, unit: "kg" }),
     ).toEqual({ value: 26000, unit: "kg" });
     for (const input of [
       { dimension: "height", value: "5.5", unit: "m" },
@@ -265,21 +265,21 @@ describe("dimension normalization", () => {
       window: { validFrom: null, validTo: null },
     });
     expect(
-      intersectRestrictionWindows([{ validFrom: "2026-07-19T21:00:00Z", validTo: null }])
+      intersectRestrictionWindows([{ validFrom: "2026-07-19T21:00:00Z", validTo: null }]),
     ).toEqual({ window: { validFrom: "2026-07-19T21:00:00.000Z", validTo: null } });
     expect(
       intersectRestrictionWindows([
         { validFrom: "2026-08-01T00:00:00Z", validTo: "2026-09-01T00:00:00Z" },
         { validFrom: "2026-09-02T00:00:00Z", validTo: "2026-10-01T00:00:00Z" },
-      ])
+      ]),
     ).toEqual({ window: { validFrom: null, validTo: null }, issue: "invalid_window" });
     expect(
-      intersectRestrictionWindows([{ validFrom: "2026-02-30T00:00:00Z", validTo: null }])
+      intersectRestrictionWindows([{ validFrom: "2026-02-30T00:00:00Z", validTo: null }]),
     ).toEqual({ window: { validFrom: null, validTo: null }, issue: "invalid_window" });
     expect(
       intersectRestrictionWindows([
         { validFrom: "2026-09-01T00:00:00Z", validTo: "2026-09-01T00:00:00Z" },
-      ])
+      ]),
     ).toEqual({ window: { validFrom: null, validTo: null }, issue: "invalid_window" });
   });
 });
@@ -335,7 +335,7 @@ describe("restriction publication projection", () => {
       projectRoadRestrictionDetails(openEnded, {
         at: new Date("2026-09-12T20:00:00Z"),
         ...fresh,
-      }).restrictionDetails!.facts[0]!.state
+      }).restrictionDetails!.facts[0]!.state,
     ).toBe("active");
 
     const unbounded = restrictionDetails();
@@ -346,7 +346,7 @@ describe("restriction publication projection", () => {
       projectRoadRestrictionDetails(unbounded, {
         at: new Date("2026-09-12T20:00:00Z"),
         ...fresh,
-      }).restrictionDetails!.facts[0]!.state
+      }).restrictionDetails!.facts[0]!.state,
     ).toBe("unknown");
   });
 
@@ -367,7 +367,7 @@ describe("restriction publication projection", () => {
       projectRoadRestrictionDetails(input, {
         at: new Date("2026-09-12T20:00:00Z"),
         ...fresh,
-      }).restrictionDetails!.facts[0]!.state
+      }).restrictionDetails!.facts[0]!.state,
     ).toBe("unknown");
 
     const unsupportedSchedule = restrictionDetails();
@@ -383,7 +383,7 @@ describe("restriction publication projection", () => {
       projectRoadRestrictionDetails(unsupportedSchedule, {
         at: new Date("2026-09-12T20:00:00Z"),
         ...fresh,
-      }).restrictionDetails!.facts[0]!.state
+      }).restrictionDetails!.facts[0]!.state,
     ).toBe("unknown");
   });
 
@@ -397,7 +397,7 @@ describe("restriction publication projection", () => {
       projectRoadRestrictionDetails(input, {
         at: new Date("2026-09-12T20:00:00Z"),
         ...fresh,
-      }).restrictionDetails!.facts.every((f) => f.state === "unknown")
+      }).restrictionDetails!.facts.every((f) => f.state === "unknown"),
     ).toBe(true);
   });
 
@@ -416,7 +416,7 @@ describe("restriction publication projection", () => {
       projectRoadRestrictionDetails(input, {
         at: new Date("2026-09-12T20:00:00Z"),
         ...fresh,
-      }).restrictionDetails!.facts[0]!.state
+      }).restrictionDetails!.facts[0]!.state,
     ).toBe("unknown");
   });
 
@@ -475,7 +475,7 @@ describe("restriction publication projection", () => {
         projectRoadRestrictionDetails(value, {
           at: new Date("2026-09-12T20:00:00Z"),
           ...fresh,
-        })
+        }),
       ).toEqual({ restrictionDetailsUnsupported: true });
     }
   });
@@ -508,7 +508,7 @@ describe("restriction projection robustness", () => {
         at: new Date("not a date"),
         sourceCheckedAt: "2026-09-12T19:59:00Z",
         freshnessWindowSec: 600,
-      })
+      }),
     ).toEqual({ restrictionDetailsUnsupported: true });
   });
 });
@@ -535,13 +535,13 @@ describe("restrictionViewDeadline", () => {
 
   it("shortens to an imminent freshness or transition deadline", () => {
     expect(
-      restrictionViewDeadline([view({ freshUntil: "2026-09-12T07:14:20.000Z" })], at).toISOString()
+      restrictionViewDeadline([view({ freshUntil: "2026-09-12T07:14:20.000Z" })], at).toISOString(),
     ).toBe("2026-09-12T07:14:20.000Z");
     expect(
       restrictionViewDeadline(
         [view({ nextTransitionAt: "2026-09-12T07:14:05.000Z" })],
-        at
-      ).toISOString()
+        at,
+      ).toISOString(),
     ).toBe("2026-09-12T07:14:05.000Z");
   });
 
@@ -549,8 +549,8 @@ describe("restrictionViewDeadline", () => {
     expect(
       restrictionViewDeadline(
         [view(), view({ nextTransitionAt: "2026-09-12T07:14:10.000Z" })],
-        at
-      ).toISOString()
+        at,
+      ).toISOString(),
     ).toBe("2026-09-12T07:14:10.000Z");
   });
 
@@ -561,7 +561,7 @@ describe("restrictionViewDeadline", () => {
       { freshUntil: "2026-09-12T07:13:59.000Z" },
     ]) {
       expect(restrictionViewDeadline([view(over)], at).getTime(), JSON.stringify(over)).toBe(
-        at.getTime()
+        at.getTime(),
       );
     }
   });

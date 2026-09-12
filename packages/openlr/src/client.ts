@@ -37,7 +37,7 @@ function readGeometry(body: unknown): GeoJsonGeometry {
         point.length <= 3 &&
         point.every((n: unknown) => typeof n === "number" && Number.isFinite(n)) &&
         Math.abs(point[0]) <= 180 &&
-        Math.abs(point[1]) <= 90
+        Math.abs(point[1]) <= 90,
     )
   ) {
     throw new Error("openlr-resolver returned invalid LineString geometry");
@@ -56,7 +56,7 @@ function readGeometry(body: unknown): GeoJsonGeometry {
  */
 export function createResolverClient(
   baseUrl: string,
-  options: ResolverClientOptions = {}
+  options: ResolverClientOptions = {},
 ): MapMatchClient {
   const endpoint = `${baseUrl.replace(/\/$/, "")}/resolve`;
   const timeoutMs = options.timeoutMs ?? 10_000;
@@ -78,7 +78,7 @@ export function createResolverClient(
       else callerSignal?.addEventListener("abort", abort, { once: true });
       const timer = setTimeout(
         () => controller.abort(new Error("openlr-resolver deadline exceeded")),
-        timeoutMs
+        timeoutMs,
       );
       const signal = controller.signal;
       let onAbort: () => void = () => {};

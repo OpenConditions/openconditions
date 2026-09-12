@@ -42,8 +42,8 @@ function defaultRunOsmium(bin: string, args: string[], timeoutMs: number): Promi
       if (signal) {
         reject(
           new Error(
-            `osmium ${args[0]} killed by ${signal} (OOM or timeout — do not retry this run): ${stderr.trim()}`
-          )
+            `osmium ${args[0]} killed by ${signal} (OOM or timeout — do not retry this run): ${stderr.trim()}`,
+          ),
         );
       } else if (code !== 0) {
         reject(new Error(`osmium ${args[0]} exited ${code}: ${stderr.trim()}`));
@@ -64,7 +64,7 @@ export async function pbfToWays(
   pbfPath: string,
   bbox: [number, number, number, number],
   workDir: string,
-  deps: OsmiumDeps = {}
+  deps: OsmiumDeps = {},
 ): Promise<OsmWay[]> {
   const bin = deps.osmiumBin ?? "osmium";
   const timeoutMs = deps.timeoutMs ?? DEFAULT_OSMIUM_TIMEOUT_MS;

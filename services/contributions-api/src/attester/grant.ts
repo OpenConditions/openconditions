@@ -45,7 +45,7 @@ async function importHmacKey(secret: Uint8Array, usage: KeyUsage): Promise<Crypt
 export async function createReportingGrant(
   keyId: string,
   nowIso: string,
-  secret: Uint8Array
+  secret: Uint8Array,
 ): Promise<string> {
   const iat = new Date(nowIso);
   const exp = new Date(iat.getTime() + ATTESTER_POLICY.grantTtlMs);
@@ -70,7 +70,7 @@ export async function verifyReportingGrant(
   grant: string,
   secret: Uint8Array,
   nowIso: string,
-  expectedKeyId?: string
+  expectedKeyId?: string,
 ): Promise<GrantVerification> {
   const parts = grant.split(".");
   if (parts.length !== 2 || parts[0]!.length === 0 || parts[1]!.length === 0) {
@@ -92,7 +92,7 @@ export async function verifyReportingGrant(
     "HMAC",
     key,
     new Uint8Array(macBytes),
-    encoder.encode(encodedPayload)
+    encoder.encode(encodedPayload),
   );
   if (!macValid) {
     return { valid: false, reason: "bad-mac" };
@@ -126,7 +126,7 @@ export async function verifyReportingGrant(
  */
 export function resolveGrantSecret(
   env: Record<string, string | undefined>,
-  warn: (msg: string) => void
+  warn: (msg: string) => void,
 ): Uint8Array {
   const configured = env["OPENCONDITIONS_GRANT_SECRET"];
   if (configured !== undefined && configured !== "") {
@@ -134,11 +134,11 @@ export function resolveGrantSecret(
   }
   if (env["NODE_ENV"] === "production") {
     throw new Error(
-      "OPENCONDITIONS_GRANT_SECRET is required in production: refusing to start with an ephemeral grant secret (fail closed)"
+      "OPENCONDITIONS_GRANT_SECRET is required in production: refusing to start with an ephemeral grant secret (fail closed)",
     );
   }
   warn(
-    "OPENCONDITIONS_GRANT_SECRET is not set; generated an EPHEMERAL grant secret — every reporting grant dies on restart. Set the env var for anything beyond local development."
+    "OPENCONDITIONS_GRANT_SECRET is not set; generated an EPHEMERAL grant secret — every reporting grant dies on restart. Set the env var for anything beyond local development.",
   );
   return globalThis.crypto.getRandomValues(new Uint8Array(32));
 }

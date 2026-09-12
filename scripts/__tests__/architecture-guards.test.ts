@@ -1,17 +1,13 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { ESLint } from "eslint";
 import { describe, expect, it } from "vitest";
+import { importBoundaryViolations } from "../check-import-boundaries.ts";
 
 const ROOT = fileURLToPath(new URL("../../", import.meta.url));
-const eslint = new ESLint({ cwd: ROOT });
 
 async function violations(source: string, filePath: string): Promise<number> {
-  const results = await eslint.lintText(source, { filePath: join(ROOT, filePath) });
-  return results
-    .flatMap((result) => result.messages)
-    .filter((message) => message.ruleId === "no-restricted-syntax").length;
+  return importBoundaryViolations(source, filePath).length;
 }
 
 describe("AST architecture boundaries", () => {
@@ -23,13 +19,13 @@ describe("AST architecture boundaries", () => {
       const source = `import * as containers from "${specifier}";`;
       expect(await violations(source, "services/ingest/src/__tests__/example.test.ts")).toBe(1);
       expect(
-        await violations(source, "services/ingest/src/__tests__/example.integration.test.ts")
+        await violations(source, "services/ingest/src/__tests__/example.integration.test.ts"),
       ).toBe(0);
       expect(await violations(source, "scripts/helpers/postgres.integration.ts")).toBe(0);
       expect(
-        await violations(`await import("${specifier}");`, "scripts/__tests__/example.test.ts")
+        await violations(`await import("${specifier}");`, "scripts/__tests__/example.test.ts"),
       ).toBe(1);
-    }
+    },
   );
 
   it.each([
@@ -69,15 +65,15 @@ describe("AST architecture boundaries", () => {
     "keeps experimental dependencies out of production: %s",
     async (specifier) => {
       expect(
-        await violations(`import * as probe from "${specifier}";`, "services/ingest/src/main.ts")
+        await violations(`import * as probe from "${specifier}";`, "services/ingest/src/main.ts"),
       ).toBe(1);
       expect(
         await violations(
           `import * as probe from "${specifier}";`,
-          "packages/probe-spike/src/index.ts"
-        )
+          "packages/probe-spike/src/index.ts",
+        ),
       ).toBe(0);
-    }
+    },
   );
 
   it("allows supported packages, local admission rates and test-only imports", async () => {
@@ -88,14 +84,14 @@ describe("AST architecture boundaries", () => {
       import { toRow } from "@openconditions/storage";
       import { checkReportRate } from "../abuse/rate.js";
     `,
-        landing
-      )
+        landing,
+      ),
     ).toBe(0);
     expect(
       await violations(
         'import * as probe from "@openconditions/probe-spike";',
-        "services/contributions-api/src/__tests__/example.test.ts"
-      )
+        "services/contributions-api/src/__tests__/example.test.ts",
+      ),
     ).toBe(0);
   });
 });

@@ -27,12 +27,12 @@ export interface GenerateReporterKeyOptions {
  * always exportable (WebCrypto forces public keys extractable).
  */
 export async function generateReporterKey(
-  options: GenerateReporterKeyOptions = {}
+  options: GenerateReporterKeyOptions = {},
 ): Promise<ReporterKey> {
   const pair = (await globalThis.crypto.subtle.generateKey(
     { name: "ECDSA", namedCurve: "P-256" },
     options.extractable ?? false,
-    ["sign", "verify"]
+    ["sign", "verify"],
   )) as CryptoKeyPair;
   const exported = await globalThis.crypto.subtle.exportKey("jwk", pair.publicKey);
   const publicJwk: JsonWebKey = {

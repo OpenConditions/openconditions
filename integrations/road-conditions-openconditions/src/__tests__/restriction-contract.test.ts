@@ -1,11 +1,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { segmentConditionsToJson } from "@openconditions/publishers";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildRestrictionContractFixture,
-  contractRowWithoutRestrictionEvidence,
   CONTRACT_EVALUATED_AT,
+  contractRowWithoutRestrictionEvidence,
 } from "./restriction-contract-fixture.js";
 
 /**
@@ -19,7 +19,7 @@ import {
 
 const GOLDEN_URL = new URL(
   "../../../../packages/publishers/src/__tests__/fixtures/contracts/road-restrictions-v1.json",
-  import.meta.url
+  import.meta.url,
 );
 
 // The segment publisher stamps `generated_at` from the wall clock, so the
@@ -45,7 +45,7 @@ describe("restriction display and routing contract", () => {
     expect(fixture.evaluatedAt).toBe(CONTRACT_EVALUATED_AT);
     expect(fixture.expectedConditionalIds).toEqual(["fi-digitraffic:GUID50465935"]);
     const displayed = fixture.displayEvents.find(
-      (event) => event.id === "fi-digitraffic:GUID50465935"
+      (event) => event.id === "fi-digitraffic:GUID50465935",
     )!;
     expect(displayed.restrictionDetails!.facts[0]).toMatchObject({
       value: 26000,
@@ -72,7 +72,7 @@ describe("restriction display and routing contract", () => {
   it("publishes complete source rights with the displayed facts", () => {
     const fixture = buildRestrictionContractFixture();
     const displayed = fixture.displayEvents.find(
-      (event) => event.id === "fi-digitraffic:GUID50465935"
+      (event) => event.id === "fi-digitraffic:GUID50465935",
     )!;
     expect(displayed.restrictionDetails!.source).toMatchObject({
       publisher: "Fintraffic / Digitraffic",
@@ -82,7 +82,7 @@ describe("restriction display and routing contract", () => {
     });
     expect(displayed.restrictionDetails!.source.feedUrls).toHaveLength(4);
     expect(displayed.restrictionDetails!.source.modificationNotice).toContain(
-      "Normalized by OpenConditions"
+      "Normalized by OpenConditions",
     );
   });
 

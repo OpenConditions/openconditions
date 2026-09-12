@@ -1,7 +1,7 @@
-import { fetchAll, guardedFetch, redactUrl } from "@openconditions/ingest-framework";
 import type { FeedSourceBase, ParserFn } from "@openconditions/ingest-framework";
-import { feedToSourceDescriptor, parserFor as roadsParserFor } from "@openconditions/roads";
+import { fetchAll, guardedFetch, redactUrl } from "@openconditions/ingest-framework";
 import type { FeedSource, SourceDescriptor } from "@openconditions/roads";
+import { feedToSourceDescriptor, parserFor as roadsParserFor } from "@openconditions/roads";
 
 export type FeedFailureKind = "upstream" | "parse";
 
@@ -36,7 +36,7 @@ function redactMessage(message: string): string {
  */
 export async function validateFeed(
   feed: FeedSourceBase,
-  deps: ValidateFeedDeps = {}
+  deps: ValidateFeedDeps = {},
 ): Promise<FeedValidation> {
   const fetchFn = deps.fetch ?? guardedFetch();
   const parserForFn = deps.parserFor ?? defaultParserFor;

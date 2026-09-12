@@ -122,7 +122,7 @@ export function scheduleOccursAt(s: Schedule, at: Date): boolean {
  */
 export function isInEffectAt(
   obs: { validFrom?: string | null; validTo?: string | null; schedule?: Schedule[] },
-  at: Date
+  at: Date,
 ): boolean {
   const t = at.getTime();
   if (Number.isNaN(t)) return true;
@@ -169,7 +169,7 @@ export function nextScheduleTransition(schedules: Schedule[], at: Date): string 
   }
   for (const candidate of [...candidates].filter((v) => v > at.getTime()).sort((a, b) => a - b)) {
     const before = schedules.some((schedule) =>
-      scheduleOccursAt(schedule, new Date(candidate - 1))
+      scheduleOccursAt(schedule, new Date(candidate - 1)),
     );
     const after = schedules.some((schedule) => scheduleOccursAt(schedule, new Date(candidate)));
     if (before !== after) return new Date(candidate).toISOString();

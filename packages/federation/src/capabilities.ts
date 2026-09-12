@@ -97,13 +97,13 @@ function intersect(local: string[], peer: string[]): string[] {
  */
 export function negotiateCapabilities(
   local: NegotiableCapabilities,
-  peer: NegotiableCapabilities
+  peer: NegotiableCapabilities,
 ): NegotiatedCapabilities {
   const common = intersect(protocolSet(local), protocolSet(peer));
   if (common.length === 0) {
     throw new CapabilityNegotiationError(
       `no mutually-supported protocol version (local: ${protocolSet(local).join(", ")}; ` +
-        `peer: ${protocolSet(peer).join(", ")})`
+        `peer: ${protocolSet(peer).join(", ")})`,
     );
   }
   const protocolVersion = [...common].sort(compareVersions).at(-1)!;

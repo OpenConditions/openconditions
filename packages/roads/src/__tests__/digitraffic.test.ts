@@ -45,7 +45,7 @@ describe("parseDigitraffic — fixture", () => {
     for (const ev of events) {
       expect(ev.geometry).toBeDefined();
       expect(ev.geometry.type).toMatch(
-        /^(Point|LineString|Polygon|MultiPoint|MultiLineString|MultiPolygon)$/
+        /^(Point|LineString|Polygon|MultiPoint|MultiLineString|MultiPolygon)$/,
       );
     }
   });
@@ -115,11 +115,11 @@ describe("parseDigitraffic — fixture", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
     expect(
-      events.every((ev) => ev.severitySource === "declared" || ev.severitySource === "derived")
+      events.every((ev) => ev.severitySource === "declared" || ev.severitySource === "derived"),
     ).toBe(true);
     // the fixture's road-work phase has an explicit HIGHEST severity → declared/critical
     expect(
-      events.some((ev) => ev.severitySource === "declared" && ev.severity === "critical")
+      events.some((ev) => ev.severitySource === "declared" && ev.severity === "critical"),
     ).toBe(true);
   });
 
@@ -142,10 +142,10 @@ describe("parseDigitraffic — fixture", () => {
 
   it("never throws on empty features array", () => {
     expect(() =>
-      parseDigitraffic({ type: "FeatureCollection", features: [] }, DIGITRAFFIC_SOURCE)
+      parseDigitraffic({ type: "FeatureCollection", features: [] }, DIGITRAFFIC_SOURCE),
     ).not.toThrow();
     expect(
-      parseDigitraffic({ type: "FeatureCollection", features: [] }, DIGITRAFFIC_SOURCE)
+      parseDigitraffic({ type: "FeatureCollection", features: [] }, DIGITRAFFIC_SOURCE),
     ).toEqual([]);
   });
 

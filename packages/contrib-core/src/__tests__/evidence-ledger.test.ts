@@ -26,7 +26,7 @@ describe("evidenceRowsToLedger — kind mapping", () => {
   it("maps report → report and carries id/at/reporterKey", () => {
     const [entry] = evidenceRowsToLedger(
       [row({ id: 7, evidenceKind: "report", actorKeyId: "key-x", occurredAt: NOW })],
-      NOW
+      NOW,
     ).entries;
     expect(entry).toMatchObject({ id: "7", at: NOW, kind: "report", reporterKey: "key-x" });
   });
@@ -49,7 +49,7 @@ describe("evidenceRowsToLedger — kind mapping", () => {
   it("maps official_match → external official confirmed by default (no details.outcome)", () => {
     const [entry] = evidenceRowsToLedger(
       [row({ evidenceKind: "official_match", details: {} })],
-      NOW
+      NOW,
     ).entries;
     expect(entry!.kind).toBe("external");
     expect(entry!.external).toEqual({ source: "official", outcome: "confirmed" });
@@ -58,7 +58,7 @@ describe("evidenceRowsToLedger — kind mapping", () => {
   it("maps official_match → external official rejected when details.outcome says so", () => {
     const [entry] = evidenceRowsToLedger(
       [row({ evidenceKind: "official_match", details: { outcome: "rejected" } })],
-      NOW
+      NOW,
     ).entries;
     expect(entry!.external).toEqual({ source: "official", outcome: "rejected" });
   });
@@ -66,7 +66,7 @@ describe("evidenceRowsToLedger — kind mapping", () => {
   it("maps official_match with explicit confirmed outcome", () => {
     const [entry] = evidenceRowsToLedger(
       [row({ evidenceKind: "official_match", details: { outcome: "confirmed" } })],
-      NOW
+      NOW,
     ).entries;
     expect(entry!.external).toEqual({ source: "official", outcome: "confirmed" });
   });
@@ -75,7 +75,7 @@ describe("evidenceRowsToLedger — kind mapping", () => {
     for (const details of [undefined, null, {}, { outcome: undefined }, { other: "x" }]) {
       const [entry] = evidenceRowsToLedger(
         [row({ evidenceKind: "official_match", details })],
-        NOW
+        NOW,
       ).entries;
       expect(entry!.external).toEqual({ source: "official", outcome: "confirmed" });
     }
@@ -86,8 +86,8 @@ describe("evidenceRowsToLedger — kind mapping", () => {
       expect(() =>
         evidenceRowsToLedger(
           [row({ id: 99, evidenceKind: "official_match", details: { outcome } })],
-          NOW
-        )
+          NOW,
+        ),
       ).toThrow(TypeError);
     }
   });
@@ -96,8 +96,8 @@ describe("evidenceRowsToLedger — kind mapping", () => {
     expect(() =>
       evidenceRowsToLedger(
         [row({ id: 99, evidenceKind: "official_match", details: { outcome: "REJECTED" } })],
-        NOW
-      )
+        NOW,
+      ),
     ).toThrow(/99.*REJECTED/);
   });
 
@@ -115,7 +115,7 @@ describe("evidenceRowsToLedger — kind mapping", () => {
   it("ignores expired rows (expiry is derived, never input)", () => {
     const ledger = evidenceRowsToLedger(
       [row({ id: 1, evidenceKind: "report" }), row({ id: 2, evidenceKind: "expired" })],
-      NOW
+      NOW,
     );
     expect(ledger.entries).toHaveLength(1);
     expect(ledger.entries[0]!.id).toBe("1");
@@ -126,7 +126,7 @@ describe("evidenceRowsToLedger — kind mapping", () => {
     expect(nullKey!.reporterKey).toBeUndefined();
     const [missing] = evidenceRowsToLedger(
       [{ id: 1, observationId: "o", evidenceKind: "report", occurredAt: NOW }],
-      NOW
+      NOW,
     ).entries;
     expect(missing!.reporterKey).toBeUndefined();
   });

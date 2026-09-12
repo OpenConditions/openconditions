@@ -1,6 +1,6 @@
 import type { ConditionEvent } from "@openconditions/core";
-import { XMLBuilder } from "fast-xml-parser";
 import { hasRestrictionEvidence } from "@openconditions/roads";
+import { XMLBuilder } from "fast-xml-parser";
 import { type FeedInfo, type RoadFields, roadFields } from "./types.js";
 
 /**

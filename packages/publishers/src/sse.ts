@@ -30,7 +30,7 @@ export function parseTypeFilter(raw: string | undefined): Set<string> | null {
     raw
       .split(",")
       .map((s) => s.trim())
-      .filter(Boolean)
+      .filter(Boolean),
   );
   return set.size > 0 ? set : null;
 }

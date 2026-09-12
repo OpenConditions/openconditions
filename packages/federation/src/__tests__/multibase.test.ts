@@ -76,7 +76,7 @@ describe("rawEd25519FromMultibase", () => {
     expect(() => rawEd25519FromMultibase(corrupted)).toThrow(TypeError);
     for (const bad of ["O", "I", "l"]) {
       expect(() => rawEd25519FromMultibase(VECTORS[0].multibase.slice(0, -1) + bad)).toThrow(
-        TypeError
+        TypeError,
       );
     }
   });

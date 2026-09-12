@@ -36,7 +36,7 @@ describe("roadFeedSchema", () => {
     const feed = roadFeedSchema.parse(berlin);
     expect(roadFeedSchema.parse(JSON.parse(JSON.stringify(feed)))).toEqual(feed);
     expect(() => roadFeedSchema.parse({ ...feed, id: "other-source" })).toThrow(
-      /serialized feed id.*does not match derived id/
+      /serialized feed id.*does not match derived id/,
     );
   });
 

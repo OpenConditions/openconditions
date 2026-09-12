@@ -1,8 +1,8 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
-import { runMigrations } from "@openconditions/core/server";
 import type { Observation } from "@openconditions/core";
+import { runMigrations } from "@openconditions/core/server";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { writeSpeedSamples } from "../pipeline/baseline-store.js";
 
 let sql: postgres.Sql;
@@ -56,7 +56,7 @@ describe("writeSpeedSamples", () => {
       "src",
       [flow("src:a", 88), flow("src:b", undefined), flow("src:c", 40)],
       () => "2026-03-04T14:31:00Z",
-      300
+      300,
     );
     expect(written).toEqual({ inserted: 2, rejectedLate: 0 });
     const rows = await sql<
@@ -91,7 +91,7 @@ describe("writeSpeedSamples", () => {
       "filt",
       [flow("filt:zero", 0), flow("filt:absurd", 300), flow("filt:ok", 55)],
       () => "2026-03-04T14:31:00Z",
-      300
+      300,
     );
     expect(written).toEqual({ inserted: 1, rejectedLate: 0 });
     const rows = await sql<{ sensor_key: string }[]>`
@@ -112,14 +112,14 @@ describe("writeSpeedSamples", () => {
       "q",
       [tsless as unknown as Observation],
       () => "2026-03-04T14:31:00Z",
-      300
+      300,
     );
     await writeSpeedSamples(
       sql,
       "q",
       [tsless as unknown as Observation],
       () => "2026-03-04T14:33:00Z",
-      300
+      300,
     );
     const rows = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM conditions.sensor_speed_sample WHERE sensor_key = 'q:1'`;

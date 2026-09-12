@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { PRE_FETCH_HOOKS, applyPreFetch } from "../index.js";
 import type { FeedSourceBase } from "../index.js";
+import { applyPreFetch, PRE_FETCH_HOOKS } from "../index.js";
 
 const base: FeedSourceBase = {
   id: "h",
@@ -40,7 +40,7 @@ describe("applyPreFetch", () => {
 
   it("throws on an unknown hook name", async () => {
     await expect(applyPreFetch({ ...base, preFetch: "missing" }, {}, noFetch)).rejects.toThrow(
-      /missing/
+      /missing/,
     );
   });
 

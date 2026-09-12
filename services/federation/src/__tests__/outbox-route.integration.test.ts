@@ -1,16 +1,16 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { GenericContainer, Wait } from "testcontainers";
-import postgres from "postgres";
 import { runMigrations } from "@openconditions/core/server";
+import type { InstanceKey, OutboxEntry, OutboxPage } from "@openconditions/federation";
 import {
-  InMemoryNonceStore,
   encodeOutboxCursor,
   generateInstanceKey,
+  InMemoryNonceStore,
   loadActiveKeys,
   signMessage,
   verifyMessage,
 } from "@openconditions/federation";
-import type { InstanceKey, OutboxEntry, OutboxPage } from "@openconditions/federation";
+import postgres from "postgres";
+import { GenericContainer, Wait } from "testcontainers";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
 
 let sql: postgres.Sql;
@@ -51,7 +51,7 @@ const ENABLED_ENV = {
 
 async function insertObservation(
   id: string,
-  opts: { lon?: number; license?: string; evidenceState?: string | null; origin?: object } = {}
+  opts: { lon?: number; license?: string; evidenceState?: string | null; origin?: object } = {},
 ): Promise<void> {
   const geometry = { type: "Point", coordinates: [opts.lon ?? 5.1, 52.1] };
   const origin = opts.origin ?? {
@@ -321,7 +321,7 @@ describe("GET /peer/outbox", () => {
       expect(res.statusCode).toBe(200);
       const page = res.json() as OutboxPage;
       const tomb = page.orderedItems.find(
-        (e) => e.objectId === "route-tomb" && e.operation === "delete"
+        (e) => e.objectId === "route-tomb" && e.operation === "delete",
       );
       expect(tomb).toBeDefined();
       expect(tomb!.operation).toBe("delete");

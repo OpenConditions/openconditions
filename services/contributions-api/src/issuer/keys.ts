@@ -9,8 +9,9 @@
  * with an overlapping [not_before, not_after) window — redemption accepts any
  * key valid at redemption time. Key MATERIAL is never logged.
  */
-import type postgres from "postgres";
+
 import { publicVerif } from "@cloudflare/privacypass-ts";
+import type postgres from "postgres";
 
 const { BLIND_RSA, BlindRSAMode, Issuer, getPublicKeyBytes } = publicVerif;
 
@@ -94,7 +95,7 @@ export interface GenerateIssuerKeyOptions {
 export async function overlappingTruncatedKeyIds(
   sql: postgres.Sql | postgres.TransactionSql,
   notBefore: Date,
-  notAfter: Date
+  notAfter: Date,
 ): Promise<Set<number>> {
   const rows = await sql<{ key_id: string }[]>`
     SELECT key_id FROM conditions.issuer_key
@@ -123,7 +124,7 @@ async function generatePair(): Promise<CryptoKeyPair> {
 export async function generateIssuerKey(
   sql: postgres.Sql,
   nowIso: string,
-  options: GenerateIssuerKeyOptions = {}
+  options: GenerateIssuerKeyOptions = {},
 ): Promise<{ keyId: string }> {
   const notBefore = new Date(options.notBefore ?? nowIso);
   const notAfter =
@@ -158,15 +159,15 @@ export async function generateIssuerKey(
     }
     if (pair === undefined || keyId === undefined) {
       throw new Error(
-        `unable to generate an issuer key with a non-colliding truncated token key id after ${maxAttempts} attempts`
+        `unable to generate an issuer key with a non-colliding truncated token key id after ${maxAttempts} attempts`,
       );
     }
 
     const privatePkcs8 = new Uint8Array(
-      await globalThis.crypto.subtle.exportKey("pkcs8", pair.privateKey)
+      await globalThis.crypto.subtle.exportKey("pkcs8", pair.privateKey),
     );
     const publicSpki = new Uint8Array(
-      await globalThis.crypto.subtle.exportKey("spki", pair.publicKey)
+      await globalThis.crypto.subtle.exportKey("spki", pair.publicKey),
     );
 
     await tx`
@@ -186,7 +187,7 @@ export async function generateIssuerKey(
 export async function loadActiveIssuerKeys(
   sql: postgres.Sql,
   nowIso: string,
-  issuerName: string
+  issuerName: string,
 ): Promise<ActiveIssuerKey[]> {
   const now = new Date(nowIso);
   const rows = await sql<IssuerKeyRow[]>`
@@ -202,14 +203,14 @@ export async function loadActiveIssuerKeys(
         new Uint8Array(row.private_key),
         BLIND_RSA.rsaParams,
         true,
-        ["sign"]
+        ["sign"],
       );
       const publicKey = await globalThis.crypto.subtle.importKey(
         "spki",
         new Uint8Array(row.public_key),
         BLIND_RSA.rsaParams,
         true,
-        ["verify"]
+        ["verify"],
       );
       const publicKeyBytes = await getPublicKeyBytes(publicKey);
       const tokenKeyId = await sha256(publicKeyBytes);
@@ -223,7 +224,7 @@ export async function loadActiveIssuerKeys(
         notBefore: row.not_before,
         notAfter: row.not_after,
       };
-    })
+    }),
   );
 }
 
@@ -234,7 +235,7 @@ export async function loadActiveIssuerKeys(
 export async function ensureIssuerKeys(
   sql: postgres.Sql,
   nowIso: string,
-  issuerName: string
+  issuerName: string,
 ): Promise<ActiveIssuerKey[]> {
   const existing = await loadActiveIssuerKeys(sql, nowIso, issuerName);
   if (existing.length > 0) return existing;

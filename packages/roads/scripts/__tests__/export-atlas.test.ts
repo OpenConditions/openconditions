@@ -1,18 +1,18 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
 import {
   loadFeeds,
   materializeApprovedCatalogChildren,
   registerFeedSchema,
 } from "@openconditions/ingest-framework";
 import {
-  FEED_SOURCES,
   autobahnIndexResolver,
+  FEED_SOURCES,
   roadFeedSchema,
   wzdxRegistryResolver,
 } from "@openconditions/roads";
+import { afterEach, describe, expect, it } from "vitest";
 import { buildAtlas } from "../export-atlas.js";
 
 const staticFeed = roadFeedSchema.parse({
@@ -47,20 +47,20 @@ describe("buildAtlas", () => {
         JSON.parse(
           readFileSync(
             new URL("../../src/__tests__/fixtures/autobahn/road-index.json", import.meta.url),
-            "utf8"
-          )
-        )
-      )
+            "utf8",
+          ),
+        ),
+      ),
     );
     const wzdx = await wzdxRegistryResolver.resolve(
       jsonResponder(
         JSON.parse(
           readFileSync(
             new URL("../../src/__tests__/fixtures/wzdx/registry.json", import.meta.url),
-            "utf8"
-          )
-        )
-      )
+            "utf8",
+          ),
+        ),
+      ),
     );
     const atlas = buildAtlas([staticFeed], [autobahn, wzdx]);
     const reloaded = serialized(atlas).map((feed) => roadFeedSchema.parse(feed));
@@ -78,7 +78,7 @@ describe("buildAtlas", () => {
 
   it("rejects serialized identity drift instead of silently renaming the export", () => {
     expect(() => buildAtlas([{ ...staticFeed, id: "old-ndw" }], [])).toThrow(
-      /does not match derived id/
+      /does not match derived id/,
     );
   });
 
@@ -101,13 +101,13 @@ describe("buildAtlas", () => {
           snapshotPath: join(dir, "remote.json"),
         },
       },
-      { remoteFetch: jsonResponder(atlas), assertUrl: () => {} }
+      { remoteFetch: jsonResponder(atlas), assertUrl: () => {} },
     );
     expect(serialized(loaded)).toEqual(serialized(atlas));
     expect(loaded).toHaveLength(
       FEED_SOURCES.length +
         autobahnIndexResolver.snapshot!.length +
-        wzdxRegistryResolver.snapshot!.length
+        wzdxRegistryResolver.snapshot!.length,
     );
     expect(new Set(loaded.map((feed) => feed.id)).size).toBe(loaded.length);
     const result = materializeApprovedCatalogChildren(loaded);
@@ -132,8 +132,8 @@ describe("buildAtlas", () => {
     expect(discoveries).toHaveLength(wzdxRegistryResolver.snapshot!.length - 1);
     expect(
       discoveries.every(
-        (feed) => feed.license === "UNKNOWN" && feed.selectionState === "discovered"
-      )
+        (feed) => feed.license === "UNKNOWN" && feed.selectionState === "discovered",
+      ),
     ).toBe(true);
   });
 });

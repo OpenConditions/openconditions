@@ -5,10 +5,10 @@ import {
   freshVerifyKey,
   histogramForRegion,
   measurementCell,
-  prepareReport,
   PUBLIC_METADATA_DISCLOSURE,
-  shardStructured,
+  prepareReport,
   type RegionSpec,
+  shardStructured,
 } from "../index.js";
 
 const REGION: RegionSpec = {
@@ -26,7 +26,7 @@ describe("invariant 4: share confidentiality", () => {
     const report = await shardStructured(vdaf, cell);
 
     const plaintextOneHot = Array.from({ length: cellCount(REGION) }, (_, i) =>
-      i === cell ? 1n : 0n
+      i === cell ? 1n : 0n,
     );
 
     // The two structured INPUT shares (what actually travels over the wire, one
@@ -66,7 +66,7 @@ describe("invariant 4: share confidentiality", () => {
     expect(seen).toContain("task id (the DAP task identifier)");
     expect(seen).toContain("report id / 16-byte VDAF nonce");
     expect(seen).toContain(
-      "this aggregator's own input share (an additive share that reveals nothing alone)"
+      "this aggregator's own input share (an additive share that reveals nothing alone)",
     );
 
     // The private fields must never appear in what an aggregator sees.

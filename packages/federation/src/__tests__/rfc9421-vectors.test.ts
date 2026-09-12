@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { httpbis } from "http-message-signatures";
+import { describe, expect, it } from "vitest";
 
 /**
  * Conformance gate against the official RFC 9421 test vectors.
@@ -71,7 +71,7 @@ async function importTestPrivateKey(): Promise<CryptoKey> {
     Uint8Array.from(Buffer.from(TEST_KEY_ED25519_PKCS8_B64, "base64")) as BufferSource,
     ED25519,
     false,
-    ["sign"]
+    ["sign"],
   );
 }
 
@@ -81,7 +81,7 @@ async function importTestPublicKey(): Promise<CryptoKey> {
     Uint8Array.from(Buffer.from(TEST_KEY_ED25519_SPKI_B64, "base64")) as BufferSource,
     ED25519,
     false,
-    ["verify"]
+    ["verify"],
   );
 }
 
@@ -96,7 +96,7 @@ async function signB26(): Promise<{ base: Buffer; headers: Record<string, string
         sign: async (data: Buffer) => {
           capturedBase = data;
           return Buffer.from(
-            await globalThis.crypto.subtle.sign(ED25519, privateKey, new Uint8Array(data))
+            await globalThis.crypto.subtle.sign(ED25519, privateKey, new Uint8Array(data)),
           );
         },
       },
@@ -105,7 +105,7 @@ async function signB26(): Promise<{ base: Buffer; headers: Record<string, string
       params: ["created", "keyid"],
       paramValues: { created: new Date(B26_CREATED * 1000) },
     },
-    { ...TEST_REQUEST, headers: { ...TEST_REQUEST.headers } }
+    { ...TEST_REQUEST, headers: { ...TEST_REQUEST.headers } },
   );
   if (capturedBase === null) throw new Error("signer was never invoked");
   return { base: capturedBase, headers: signed.headers };
@@ -138,7 +138,7 @@ describe("RFC 9421 §B.2.6 Ed25519 conformance", () => {
                     ED25519,
                     publicKey,
                     new Uint8Array(signature),
-                    new Uint8Array(data)
+                    new Uint8Array(data),
                   ),
               }
             : null,
@@ -150,7 +150,7 @@ describe("RFC 9421 §B.2.6 Ed25519 conformance", () => {
           "Signature-Input": B26_SIGNATURE_INPUT,
           Signature: B26_SIGNATURE,
         },
-      }
+      },
     );
     expect(result).toBe(true);
   });
@@ -167,7 +167,7 @@ describe("RFC 9421 §B.2.6 Ed25519 conformance", () => {
               ED25519,
               publicKey,
               new Uint8Array(signature),
-              new Uint8Array(data)
+              new Uint8Array(data),
             ),
         }),
       },
@@ -179,7 +179,7 @@ describe("RFC 9421 §B.2.6 Ed25519 conformance", () => {
           "Signature-Input": B26_SIGNATURE_INPUT,
           Signature: B26_SIGNATURE,
         },
-      }
+      },
     );
     expect(result).toBe(false);
   });

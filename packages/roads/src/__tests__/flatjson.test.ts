@@ -16,7 +16,7 @@ describe("parseFlatJson", () => {
     };
     const out = parseFlatJson(
       JSON.stringify([{ kind: "roadworks", title: "Works", lng: 100.5, lat: 13.7 }]),
-      src
+      src,
     );
     expect(out).toHaveLength(1);
     expect(out[0]!.sourceFormat).toBe("flatjson");
@@ -34,7 +34,7 @@ describe("parseFlatJson", () => {
     };
     const out = parseFlatJson(
       JSON.stringify({ value: [{ Latitude: 1.3, Longitude: 103.8 }] }),
-      src
+      src,
     );
     expect(out).toHaveLength(1);
     expect(out[0]!.geometry).toEqual({ type: "Point", coordinates: [103.8, 1.3] });

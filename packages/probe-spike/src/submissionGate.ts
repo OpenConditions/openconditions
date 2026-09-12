@@ -41,7 +41,7 @@ export interface ContributionContext {
 export type TokenRedeemer = (
   tokenBytes: Uint8Array,
   context: ContributionContext,
-  nowIso: string
+  nowIso: string,
 ) => Promise<boolean>;
 
 export interface ProbeSubmission {
@@ -98,7 +98,7 @@ async function admitReport(
   sql: postgres.Sql,
   batch: string,
   reportId: string,
-  nowIso: string
+  nowIso: string,
 ): Promise<boolean> {
   const rows = await sql<{ report_id: string }[]>`
     INSERT INTO ${sql(SCHEMA)}.batch_report (batch, report_id, admitted_at)
@@ -118,7 +118,7 @@ async function admitReport(
 export async function acceptProbeReport(
   sql: postgres.Sql,
   redeemToken: TokenRedeemer,
-  submission: ProbeSubmission
+  submission: ProbeSubmission,
 ): Promise<ProbeAcceptance> {
   const redeemed = await redeemToken(submission.tokenBytes, submission.context, submission.nowIso);
   if (!redeemed) {

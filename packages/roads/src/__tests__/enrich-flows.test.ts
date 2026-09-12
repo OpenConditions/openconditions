@@ -1,6 +1,6 @@
+import type { Observation } from "@openconditions/core";
 import { describe, expect, it } from "vitest";
 import { enrichFlowsWithBaseline } from "../flow.js";
-import type { Observation } from "@openconditions/core";
 import type { BaselineMethod, RoadEvent, RoadFlow } from "../model.js";
 import type { SourceDescriptor } from "../types.js";
 
@@ -44,7 +44,7 @@ describe("enrichFlowsWithBaseline", () => {
         flow("src:none", {}),
       ],
       map,
-      src
+      src,
     );
     const byId = new Map(out.map((o) => [o.id, o]));
     expect((byId.get("src:slow") as RoadFlow | undefined)?.los).toBe("queuing");
@@ -53,7 +53,7 @@ describe("enrichFlowsWithBaseline", () => {
     expect((byId.get("src:fast") as RoadFlow | undefined)?.freeFlowSource).toBe("osm_maxspeed");
     expect((byId.get("src:none") as RoadFlow | undefined)?.los).toBe("unknown");
     expect(
-      out.some((o) => o.id === "src:slow:congestion" && (o as RoadEvent).type === "congestion")
+      out.some((o) => o.id === "src:slow:congestion" && (o as RoadEvent).type === "congestion"),
     ).toBe(true);
   });
   it("passes non-flow observations through untouched", () => {

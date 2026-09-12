@@ -8,8 +8,9 @@
  * Reuses T3 `findCandidates` (the fingerprint-neighborhood opener) and
  * `matchPhenomenonCandidates` (the pure compatibility decision); nothing merges.
  */
-import type postgres from "postgres";
+
 import { matchPhenomenonCandidates, type PhenomenonCandidate } from "@openconditions/contrib-core";
+import type postgres from "postgres";
 import { findCandidates } from "../evidence/phenomenon.js";
 
 type Sql = postgres.Sql;
@@ -47,7 +48,7 @@ function actorFor(row: TargetRow): { kind: "crowd" | "feed"; keyId?: string; sou
 export async function flagOntoOpenFlagged(
   sql: Sql,
   observationId: string,
-  now: string
+  now: string,
 ): Promise<boolean> {
   const rows = await sql<TargetRow[]>`
     SELECT domain, type, kind, ST_AsGeoJSON(geom) AS geojson, valid_from,
