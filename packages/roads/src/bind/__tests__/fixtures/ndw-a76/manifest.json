@@ -1,0 +1,15 @@
+{
+  "description": "Frozen OSM road spine around the A76 near Kerkrade, Netherlands, for the NDW restriction binding tests.",
+  "queryBbox": [5.99, 50.8, 6.04, 50.85],
+  "highwayClasses": ["motorway", "motorway_link", "trunk", "trunk_link", "primary", "primary_link"],
+  "capturedAt": "2026-09-12T17:14:44Z",
+  "capturedWith": "packages/roads/scripts/bind-corpus-spine.ts (Overpass API)",
+  "directedSegments": 219,
+  "fixtureSha256": "d2927f6c9c33e6b9214f6819133a4e128da168ac52d89af01c60dfa2ceca9a07",
+  "attribution": "© OpenStreetMap contributors",
+  "license": "ODbL-1.0",
+  "licenseUrl": "https://www.openstreetmap.org/copyright",
+  "notice": "OpenStreetMap data is licensed under ODbL and is separate from the CC0-1.0 NDW source fixture it is tested alongside.",
+  "note": "Held verbatim as captured; excluded from the formatter (see biome.json) so fixtureSha256 stays valid.",
+  "expectedOutcome": "The height record's endpoints match ambiguously here. That is the honest limit of the supplied two-point geometry against this graph, not a threshold to tune away."
+}

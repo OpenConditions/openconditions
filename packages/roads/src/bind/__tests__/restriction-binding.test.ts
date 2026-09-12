@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { parseDatexSituations } from "../../datex.js";
 import { parseDigitraffic } from "../../digitraffic.js";
 import type { SourceDescriptor } from "../../types.js";
 import { bindEvent, toBindInput } from "../bind-event.js";
@@ -180,5 +181,88 @@ describe("disconnected linear geometry", () => {
       spine,
     );
     expect(result.reason).toBe("disconnected_geometry");
+  });
+});
+
+/**
+ * NDW event binding against a frozen OSM spine around the A76 near Kerkrade.
+ * The spine is OpenStreetMap data under ODbL (see its companion manifest) and is
+ * separate from the CC0-1.0 NDW source fixture it is exercised with.
+ *
+ * The height record supplies two endpoints, not a traced path, so this graph
+ * matches it ambiguously. That is the honest outcome and the assertions below
+ * pin it: the record stays displayable, and no threshold is tuned to force an
+ * exact match the source geometry does not support.
+ */
+describe("ndw restriction event binding on the frozen A76 spine", () => {
+  const a76 = JSON.parse(
+    readFileSync(new URL("./fixtures/ndw-a76/spine.json", import.meta.url), "utf8"),
+  ) as SpineSubgraph;
+
+  const ndwSource: SourceDescriptor = {
+    id: "nl-ndw",
+    attribution: "NDW / Rijkswaterstaat",
+    country: "NL",
+    license: "CC0-1.0",
+    licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+  };
+
+  const ndwEvents = parseDatexSituations(
+    readFileSync(
+      new URL("../../__tests__/fixtures/ndw/restrictions-v3.xml", import.meta.url),
+      "utf8",
+    ),
+    ndwSource,
+  );
+
+  function ndwEventById(id: string) {
+    const event = ndwEvents.find((e) => e.id === id);
+    if (!event) throw new Error(`fixture has no event ${id}`);
+    if (event.geometry === undefined) throw new Error(`fixture event ${id} has no geometry`);
+    return event as Extract<typeof event, { geometry: object }>;
+  }
+
+  const heightId = "nl-ndw:RWS01_M1080891_NARROW_LANES_D2_WWA";
+
+  it("reports the endpoint geometry as ambiguous rather than inventing a path", () => {
+    const result = bindEvent(toBindInput(ndwEventById(heightId)), a76);
+    expect(result.status).toBe("ambiguous");
+    const known = new Set(a76.segments.map((segment) => segment.segmentId));
+    for (const span of result.segments) {
+      expect(known.has(span.segmentId), span.segmentId).toBe(true);
+    }
+  });
+
+  it("produces the same outcome on repeated runs", () => {
+    const input = toBindInput(ndwEventById(heightId));
+    const first = bindEvent(input, a76);
+    const second = bindEvent(toBindInput(ndwEventById(heightId)), a76);
+    expect(second.status).toBe(first.status);
+    expect(second.segments.map((s) => s.segmentId)).toEqual(first.segments.map((s) => s.segmentId));
+  });
+
+  it("establishes no restriction extent even where the parent event matched", () => {
+    const event = ndwEventById(heightId);
+    bindEvent(toBindInput(event), a76);
+    for (const fact of event.restrictionDetails!.facts) {
+      expect(fact.scope.restrictionBinding).toBe("not_established");
+      expect(fact.scope).not.toHaveProperty("segments");
+    }
+  });
+
+  it("keeps the source Alert-C direction independent of any matched OSM direction", () => {
+    const event = ndwEventById(heightId);
+    expect(event.restrictionDetails!.facts[0]!.direction).toEqual({
+      basis: "alert_c",
+      value: "positive",
+      description: "aligned",
+    });
+  });
+
+  it("reports no coverage for a record outside this extract", () => {
+    // The lorry closures are near Gorinchem, far outside the A76 bbox.
+    const result = bindEvent(toBindInput(ndwEventById("nl-ndw:NLRWS_0005382945_1")), a76);
+    expect(result.segments).toEqual([]);
+    expect(["unresolved", "no_coverage"]).toContain(result.status);
   });
 });

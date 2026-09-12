@@ -821,8 +821,11 @@ describe("pipeline — parse failure", () => {
     // A feed whose format has no registered parser: `parserFor` (called from
     // inside the `buffers.flatMap(...)` dispatch, unguarded before this fix)
     // throws synchronously, before any content is actually parsed.
+    // No snapshot contract here: NDW declares one, and its structural check
+    // would reject this body before parser dispatch is ever reached.
+    const { snapshot: _snapshot, ...base } = ndwFeed as unknown as Record<string, unknown>;
     const throwingFeed: DomainFeedSource = {
-      ...ndwFeed,
+      ...base,
       id: "parse-throw-src",
       format: "bogus-format",
     } as unknown as DomainFeedSource;
