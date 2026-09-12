@@ -1,0 +1,40 @@
+{
+  "sourceUrl": "https://tie.digitraffic.fi/api/traffic-message/v2/roadworks",
+  "capturedAt": "2026-09-12, approximately 07:14-07:21 UTC",
+  "originalSha256": "dc69a106b2558d238e5b8daee04f008f76a5a2b530ede4b7512e98994ba2a789",
+  "fixtureSha256": "859e917ace1c395132d8ff99e2db73b4eb0f645e425ac2023fa33110263b07da",
+  "license": "CC-BY-4.0",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "termsUrl": "https://www.digitraffic.fi/en/terms-of-service/",
+  "attribution": "Fintraffic / Digitraffic",
+  "modificationNotice": "Reduced by OpenConditions for parser validation; source values retained.",
+  "selectedRecords": [
+    {
+      "id": "GUID50470575",
+      "version": 1
+    },
+    {
+      "id": "GUID50468844",
+      "version": 1
+    },
+    {
+      "id": "GUID50466626",
+      "version": 5
+    },
+    {
+      "id": "GUID50465935",
+      "version": 31
+    },
+    {
+      "id": "GUID50461965",
+      "version": 1
+    }
+  ],
+  "reductions": [
+    "Selected five roadworks records; omitted other records.",
+    "Removed properties.contact, announcement.features and additionalInformation.",
+    "Removed phase slowTrafficTimes and queuingTrafficTimes; retained all phases, restrictions, workingHours, source locations and geometry.",
+    "JSON whitespace reduced; values and array ordering retained."
+  ],
+  "syntheticVariants": "None. Every value in the fixture is from the reviewed capture; synthetic envelopes are constructed inline in tests and labelled there."
+}

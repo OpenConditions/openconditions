@@ -1,6 +1,7 @@
 import { deriveSeverity } from "@openconditions/core";
 import type { GeoJsonGeometry, Severity } from "@openconditions/core";
 import type { Restriction, RoadEvent, RoadRef } from "./model.js";
+import { digitrafficRestrictionDetails } from "./digitraffic-restrictions.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
   reconcileRoadSnapshots,
@@ -8,10 +9,7 @@ import {
   type RoadSnapshotRecord,
   type RoadSnapshotReport,
 } from "./snapshot.js";
-import { buildLocalSchedule, isoDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
 
-/** Digitraffic is the Finnish national feed → its local times are Europe/Helsinki. */
-const HELSINKI_TZ = "Europe/Helsinki";
 import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -99,16 +97,6 @@ interface DtRoadWorkPhase {
   comment?: unknown;
 }
 
-const WEEKDAY: Record<string, number> = {
-  MONDAY: 1,
-  TUESDAY: 2,
-  WEDNESDAY: 3,
-  THURSDAY: 4,
-  FRIDAY: 5,
-  SATURDAY: 6,
-  SUNDAY: 7,
-};
-
 // Restriction-type groupings → canonical roadState (worst wins).
 const DT_CLOSED = new Set([
   "ROAD_CLOSED",
@@ -122,7 +110,8 @@ function restrictionTypes(ann: DigitrafficAnnouncement | null): Set<string> {
   const types = new Set<string>();
   for (const p of roadWorkPhases(ann)) {
     for (const r of p.restrictions ?? []) {
-      if (typeof r?.type === "string") types.add(r.type);
+      // v1 published SINGLE_LANE_CLOSED, v2 publishes "single lane closed".
+      if (typeof r?.type === "string") types.add(normalizeDtToken(r.type));
     }
   }
   return types;
@@ -142,27 +131,13 @@ function speedLimitFromPhases(ann: DigitrafficAnnouncement | null): number | und
   let min: number | undefined;
   for (const p of roadWorkPhases(ann)) {
     for (const r of p.restrictions ?? []) {
-      if (r?.type === "SPEED_LIMIT" && typeof r.restriction?.quantity === "number") {
+      const type = typeof r?.type === "string" ? normalizeDtToken(r.type) : "";
+      if (type === "SPEED_LIMIT" && typeof r.restriction?.quantity === "number") {
         min = min == null ? r.restriction.quantity : Math.min(min, r.restriction.quantity);
       }
     }
   }
   return min;
-}
-
-function scheduleFromPhases(ann: DigitrafficAnnouncement | null): LocalSchedule[] | undefined {
-  const out: LocalSchedule[] = [];
-  for (const p of roadWorkPhases(ann)) {
-    for (const wh of p.workingHours ?? []) {
-      const isoDay = typeof wh.weekday === "string" ? WEEKDAY[wh.weekday.toUpperCase()] : undefined;
-      const iCal = isoDay ? isoDayToICal(isoDay) : undefined;
-      const startTime = typeof wh.startTime === "string" ? wh.startTime : undefined;
-      const endTime = typeof wh.endTime === "string" ? wh.endTime : undefined;
-      if (!iCal && !startTime && !endTime) continue;
-      out.push(buildLocalSchedule({ startTime, endTime, byDay: iCal ? [iCal] : undefined }));
-    }
-  }
-  return out.length > 0 ? out : undefined;
 }
 
 function locationDescription(ann: DigitrafficAnnouncement | null): string | undefined {
@@ -178,7 +153,7 @@ function roadWorkPhases(ann: DigitrafficAnnouncement | null): DtRoadWorkPhase[] 
 const DT_SEVERITY_ORDER: Severity[] = ["low", "medium", "high", "critical"];
 
 function mapDtSeverity(raw: unknown): Severity | undefined {
-  switch (typeof raw === "string" ? raw.toUpperCase() : "") {
+  switch (typeof raw === "string" ? normalizeDtToken(raw) : "") {
     case "LOW":
       return "low";
     case "HIGH":
@@ -456,7 +431,13 @@ function buildDigitrafficEvent(
   const situationType = coerceString(props.situationType) ?? "";
   const announcementType = coerceString(props.trafficAnnouncementType);
   const codeForMapping = announcementType ?? situationType;
-  const { type, category, isPlanned } = mapSourceType("digitraffic", codeForMapping);
+  // The taxonomy crosswalk is keyed on the v1 underscore vocabulary, so the
+  // v2 space-separated token is canonicalized before lookup. `subtype` keeps
+  // the publisher's original token.
+  const { type, category, isPlanned } = mapSourceType(
+    "digitraffic",
+    codeForMapping ? normalizeDtToken(codeForMapping) : ""
+  );
 
   const ann = firstAnnouncement(props.announcements);
   const headline = coerceString(ann?.title) ?? type;
@@ -469,6 +450,7 @@ function buildDigitrafficEvent(
   const restrictions = restrictionsFromPhases(ann) ?? restrictionsFromFeatures(ann);
   const speedLimitKph = speedLimitFromPhases(ann) ?? speedLimitFromFeatures(ann);
   const terminal = terminalStatusOf(props, ann);
+  const restrictionDetails = digitrafficRestrictionDetails(props as Record<string, unknown>, src);
 
   const dataUpdatedAt =
     coerceString(props.versionTime) ??
@@ -497,9 +479,13 @@ function buildDigitrafficEvent(
     roadState: roadStateFromPhases(ann),
     speedLimitKph,
     restrictions,
+    ...(restrictionDetails !== undefined ? { restrictionDetails } : {}),
     regions: regionsFromAnnouncement(ann),
     externalRefs: externalRefsFromAnnouncement(ann),
-    schedule: withTimezone(scheduleFromPhases(ann), HELSINKI_TZ),
+    // Source working hours are when a crew is on site, not when the event
+    // applies. Copying them here made a roadwork look inactive overnight and a
+    // phase-scoped limit look as though it switched off; they now travel only
+    // as restriction display context.
     headline,
     description: descriptionFromAnnouncement(ann),
     validFrom,

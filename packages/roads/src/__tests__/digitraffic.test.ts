@@ -267,7 +267,7 @@ describe("parseDigitraffic — extended fields", () => {
 });
 
 describe("parseDigitraffic — deeper field extraction", () => {
-  it("maps restriction value/unit, speed limit, roadState, schedule, secondaryPoint, description", () => {
+  it("maps restriction value/unit, speed limit, roadState, secondaryPoint, description", () => {
     const fc = {
       type: "FeatureCollection",
       features: [
@@ -309,16 +309,9 @@ describe("parseDigitraffic — deeper field extraction", () => {
     expect(ev!.restrictions).toContainEqual({ type: "SPEED_LIMIT", value: 50, unit: "km/h" });
     expect(ev!.speedLimitKph).toBe(50);
     expect(ev!.roadState).toBe("some_lanes_closed");
-    expect(ev!.schedule).toEqual([
-      {
-        repeatFrequency: "P1W",
-        startTime: "07:00:00",
-        endTime: "17:00:00",
-        duration: "PT10H",
-        byDay: ["MO"],
-        scheduleTimezone: "Europe/Helsinki",
-      },
-    ]);
+    // Working hours are site presence, not applicability: a phase that is
+    // worked 07:00-17:00 still restricts traffic at 03:00.
+    expect(ev!.schedule).toBeUndefined();
     expect(ev!.roads[0]!.to).toBe("Vt 3 end");
     expect(ev!.description).toBe("Tie 3 between A and B");
   });

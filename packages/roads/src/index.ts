@@ -12,6 +12,7 @@ export * from "./types.js";
 export * from "./autobahn.js";
 export * from "./datex.js";
 export * from "./digitraffic.js";
+export * from "./digitraffic-restrictions.js";
 export * from "./flow.js";
 export * from "./flow-elaborated.js";
 export * from "./flow-fintraffic.js";

@@ -1,0 +1,1146 @@
+{
+  "type": "FeatureCollection",
+  "dataUpdatedTime": "2026-09-12T07:05:01.021Z",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [22.403636, 60.465259],
+            [22.402098, 60.465304],
+            [22.40208, 60.465304],
+            [22.401277, 60.465319],
+            [22.401168, 60.465321],
+            [22.401134, 60.465322],
+            [22.400878, 60.465329],
+            [22.400225, 60.465345],
+            [22.400216, 60.465345],
+            [22.398544, 60.465382],
+            [22.397451, 60.465409],
+            [22.397442, 60.465409],
+            [22.397189, 60.465421],
+            [22.397181, 60.465421],
+            [22.397, 60.465428],
+            [22.396991, 60.465428],
+            [22.396846, 60.465433],
+            [22.396484, 60.465448],
+            [22.396122, 60.465465],
+            [22.395761, 60.465484],
+            [22.3954, 60.465504],
+            [22.395039, 60.465526],
+            [22.394679, 60.46555],
+            [22.394602, 60.465556]
+          ]
+        ]
+      },
+      "properties": {
+        "situationId": "GUID50470575",
+        "situationType": "road work",
+        "trafficAnnouncementType": null,
+        "version": 1,
+        "releaseTime": "2026-09-11T10:29:49.633Z",
+        "versionTime": "2026-09-11T10:29:49.631Z",
+        "announcements": [
+          {
+            "language": "fi",
+            "title": "Tie 40, eli Turun kehätie, Lieto. Tietyö. ",
+            "location": {
+              "countryCode": 6,
+              "locationTableNumber": 17,
+              "locationTableVersion": "1.11.45",
+              "description": "Tie 40, eli Turun kehätie, Lieto.\nTarkempi paikka: Paikasta Tuulissuon eritasoliittymä 500 m, vaikutusalue 500 m, suuntaan Kauselan eritasoliittymä."
+            },
+            "locationDetails": {
+              "roadAddressLocation": {
+                "primaryPoint": {
+                  "municipality": "Lieto",
+                  "province": "Varsinais-Suomi",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 40,
+                    "roadSection": 5,
+                    "distance": 2499
+                  },
+                  "roadName": "Turun kehätie",
+                  "alertCLocation": {
+                    "locationCode": 2681,
+                    "name": "Tuulissuon eritasoliittymä",
+                    "distance": 487
+                  }
+                },
+                "secondaryPoint": {
+                  "municipality": "Lieto",
+                  "province": "Varsinais-Suomi",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 40,
+                    "roadSection": 5,
+                    "distance": 2000
+                  },
+                  "roadName": "Turun kehätie",
+                  "alertCLocation": {
+                    "locationCode": 2679,
+                    "name": "Kauselan eritasoliittymä",
+                    "distance": 1964
+                  }
+                },
+                "direction": "neg",
+                "directionDescription": "Naantali"
+              }
+            },
+            "roadWorkPhases": [
+              {
+                "id": "GUID50473387",
+                "location": {
+                  "countryCode": 6,
+                  "locationTableNumber": 17,
+                  "locationTableVersion": "1.11.45",
+                  "description": "Tie 40, eli Turun kehätie, Lieto.\nTarkempi paikka: Paikasta Tuulissuon eritasoliittymä 500 m, vaikutusalue 500 m, suuntaan Kauselan eritasoliittymä."
+                },
+                "locationDetails": {
+                  "roadAddressLocation": {
+                    "primaryPoint": {
+                      "municipality": "Lieto",
+                      "province": "Varsinais-Suomi",
+                      "country": "Suomi",
+                      "roadAddress": {
+                        "road": 40,
+                        "roadSection": 5,
+                        "distance": 2499
+                      },
+                      "roadName": "Turun kehätie",
+                      "alertCLocation": {
+                        "locationCode": 2681,
+                        "name": "Tuulissuon eritasoliittymä",
+                        "distance": 487
+                      }
+                    },
+                    "secondaryPoint": {
+                      "municipality": "Lieto",
+                      "province": "Varsinais-Suomi",
+                      "country": "Suomi",
+                      "roadAddress": {
+                        "road": 40,
+                        "roadSection": 5,
+                        "distance": 2000
+                      },
+                      "roadName": "Turun kehätie",
+                      "alertCLocation": {
+                        "locationCode": 2679,
+                        "name": "Kauselan eritasoliittymä",
+                        "distance": 1964
+                      }
+                    },
+                    "direction": "neg",
+                    "directionDescription": "Naantali"
+                  }
+                },
+                "locationOpenLr": { "binary": "IzXFrAEMPQ==" },
+                "workingHours": [
+                  {
+                    "weekday": "Friday",
+                    "startTime": "06:00",
+                    "endTime": "20:00"
+                  },
+                  {
+                    "weekday": "Thursday",
+                    "startTime": "06:00",
+                    "endTime": "20:00"
+                  },
+                  {
+                    "weekday": "Saturday",
+                    "startTime": "06:00",
+                    "endTime": "20:00"
+                  },
+                  {
+                    "weekday": "Monday",
+                    "startTime": "06:00",
+                    "endTime": "20:00"
+                  },
+                  {
+                    "weekday": "Tuesday",
+                    "startTime": "06:00",
+                    "endTime": "20:00"
+                  },
+                  {
+                    "weekday": "Sunday",
+                    "startTime": "06:00",
+                    "endTime": "20:00"
+                  },
+                  {
+                    "weekday": "Wednesday",
+                    "startTime": "06:00",
+                    "endTime": "20:00"
+                  }
+                ],
+                "timeAndDuration": {
+                  "startTime": "2026-09-10T21:00:00.000Z",
+                  "endTime": "2026-09-18T20:59:59.999Z"
+                },
+                "workTypes": [
+                  {
+                    "type": "road construction",
+                    "description": "Tienrakennus"
+                  },
+                  { "type": "other", "description": "" }
+                ],
+                "restrictions": [
+                  {
+                    "type": "vehicle width limit",
+                    "restriction": {
+                      "name": "Ajoneuvon maksimileveys",
+                      "quantity": 5.0,
+                      "unit": "m"
+                    }
+                  },
+                  {
+                    "type": "single lane closed",
+                    "restriction": { "name": "Yksi ajokaista suljettu" }
+                  },
+                  {
+                    "type": "speed limit",
+                    "restriction": {
+                      "name": "Nopeusrajoitus",
+                      "quantity": 60.0,
+                      "unit": "km/h"
+                    }
+                  },
+                  {
+                    "type": "speed limit length",
+                    "restriction": {
+                      "name": "Matka, jolla nopeusrajoitus voimassa",
+                      "quantity": 500.0,
+                      "unit": "m"
+                    }
+                  }
+                ],
+                "restrictionsLiftable": false,
+                "severity": "highest"
+              }
+            ],
+            "timeAndDuration": {
+              "startTime": "2026-09-10T21:00:00.000Z",
+              "endTime": "2026-09-18T20:59:59.999Z"
+            },
+            "sender": "Fintraffic Tieliikennekeskus"
+          }
+        ],
+        "dataUpdatedTime": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [24.249493, 64.264338] },
+      "properties": {
+        "situationId": "GUID50468844",
+        "situationType": "road work",
+        "trafficAnnouncementType": null,
+        "version": 1,
+        "releaseTime": "2026-08-13T05:15:41.283Z",
+        "versionTime": "2026-08-13T05:15:41.281Z",
+        "announcements": [
+          {
+            "language": "fi",
+            "title": "Tie 7840, Kalajoki. Tietyö. ",
+            "location": {
+              "countryCode": 6,
+              "locationTableNumber": 17,
+              "locationTableVersion": "1.11.45",
+              "description": "Tie 7840 välillä Yppäri - Alavieska, Kalajoki.\nTarkempi paikka: Paikasta Metsäkylä 5,1 km, suuntaan Taluskylä."
+            },
+            "locationDetails": {
+              "roadAddressLocation": {
+                "primaryPoint": {
+                  "municipality": "Kalajoki",
+                  "province": "Pohjois-Pohjanmaa",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 7840,
+                    "roadSection": 3,
+                    "distance": 5060
+                  },
+                  "alertCLocation": {
+                    "locationCode": 22541,
+                    "name": "Metsäkylä",
+                    "distance": 5059
+                  }
+                },
+                "secondaryPoint": {
+                  "municipality": "Kalajoki",
+                  "province": "Pohjois-Pohjanmaa",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 7840,
+                    "roadSection": 3,
+                    "distance": 5060
+                  },
+                  "alertCLocation": {
+                    "locationCode": 22543,
+                    "name": "Taluskylä",
+                    "distance": 3525
+                  }
+                },
+                "direction": "both"
+              }
+            },
+            "roadWorkPhases": [
+              {
+                "id": "GUID50471633",
+                "location": {
+                  "countryCode": 6,
+                  "locationTableNumber": 17,
+                  "locationTableVersion": "1.11.45",
+                  "description": "Tie 7840 välillä Yppäri - Alavieska, Kalajoki.\nTarkempi paikka: Paikasta Metsäkylä 5,1 km, suuntaan Taluskylä."
+                },
+                "locationDetails": {
+                  "roadAddressLocation": {
+                    "primaryPoint": {
+                      "municipality": "Kalajoki",
+                      "province": "Pohjois-Pohjanmaa",
+                      "country": "Suomi",
+                      "roadAddress": {
+                        "road": 7840,
+                        "roadSection": 3,
+                        "distance": 5060
+                      },
+                      "alertCLocation": {
+                        "locationCode": 22541,
+                        "name": "Metsäkylä",
+                        "distance": 5059
+                      }
+                    },
+                    "secondaryPoint": {
+                      "municipality": "Kalajoki",
+                      "province": "Pohjois-Pohjanmaa",
+                      "country": "Suomi",
+                      "roadAddress": {
+                        "road": 7840,
+                        "roadSection": 3,
+                        "distance": 5060
+                      },
+                      "alertCLocation": {
+                        "locationCode": 22543,
+                        "name": "Taluskylä",
+                        "distance": 3525
+                      }
+                    },
+                    "direction": "both"
+                  }
+                },
+                "locationOpenLr": { "binary": "IzeAtAF6CQ==" },
+                "workingHours": [
+                  {
+                    "weekday": "Saturday",
+                    "startTime": "07:00",
+                    "endTime": "21:00"
+                  },
+                  {
+                    "weekday": "Friday",
+                    "startTime": "07:00",
+                    "endTime": "21:00"
+                  },
+                  {
+                    "weekday": "Wednesday",
+                    "startTime": "07:00",
+                    "endTime": "21:00"
+                  },
+                  {
+                    "weekday": "Monday",
+                    "startTime": "07:00",
+                    "endTime": "21:00"
+                  },
+                  {
+                    "weekday": "Thursday",
+                    "startTime": "07:00",
+                    "endTime": "21:00"
+                  },
+                  {
+                    "weekday": "Tuesday",
+                    "startTime": "07:00",
+                    "endTime": "21:00"
+                  }
+                ],
+                "timeAndDuration": {
+                  "startTime": "2026-08-12T21:00:00.000Z",
+                  "endTime": "2026-09-30T20:59:59.999Z"
+                },
+                "workTypes": [
+                  { "type": "buried cables", "description": "Kaapelityö" },
+                  { "type": "other", "description": "" }
+                ],
+                "restrictions": [
+                  {
+                    "type": "vehicle height limit",
+                    "restriction": {
+                      "name": "Ajoneuvon maksimikorkeus",
+                      "quantity": 5.5,
+                      "unit": "m"
+                    }
+                  },
+                  {
+                    "type": "single alternate line traffic",
+                    "restriction": {
+                      "name": "Liikenne ohjataan vuorotellen tapahtumapaikan ohi"
+                    }
+                  },
+                  {
+                    "type": "speed limit",
+                    "restriction": {
+                      "name": "Nopeusrajoitus",
+                      "quantity": 50.0,
+                      "unit": "km/h"
+                    }
+                  },
+                  {
+                    "type": "speed limit length",
+                    "restriction": {
+                      "name": "Matka, jolla nopeusrajoitus voimassa",
+                      "quantity": 500.0,
+                      "unit": "m"
+                    }
+                  }
+                ],
+                "restrictionsLiftable": true,
+                "severity": "high"
+              }
+            ],
+            "timeAndDuration": {
+              "startTime": "2026-08-12T21:00:00.000Z",
+              "endTime": "2026-09-30T20:59:59.999Z"
+            },
+            "sender": "Fintraffic Tieliikennekeskus"
+          }
+        ],
+        "dataUpdatedTime": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [26.723436, 60.883349] },
+      "properties": {
+        "situationId": "GUID50466626",
+        "situationType": "road work",
+        "trafficAnnouncementType": null,
+        "version": 5,
+        "releaseTime": "2026-06-30T05:13:32.889Z",
+        "versionTime": "2026-07-27T10:46:32.014Z",
+        "announcements": [
+          {
+            "language": "fi",
+            "title": "Tie 6, Kouvola. Tietyö. ",
+            "location": {
+              "countryCode": 6,
+              "locationTableNumber": 17,
+              "locationTableVersion": "1.11.45",
+              "description": "Tie 6 välillä Koskenkylä - Lappeenranta, Kouvola.\nTarkempi paikka: Paikasta Tervaskangas 3,7 km, suuntaan Käyrälammen liittymä."
+            },
+            "locationDetails": {
+              "roadAddressLocation": {
+                "primaryPoint": {
+                  "municipality": "Kouvola",
+                  "province": "Kymenlaakso",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 6,
+                    "roadSection": 201,
+                    "distance": 1166
+                  },
+                  "alertCLocation": {
+                    "locationCode": 1483,
+                    "name": "Tervaskangas",
+                    "distance": 3742
+                  }
+                },
+                "secondaryPoint": {
+                  "municipality": "Kouvola",
+                  "province": "Kymenlaakso",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 6,
+                    "roadSection": 201,
+                    "distance": 1166
+                  },
+                  "alertCLocation": {
+                    "locationCode": 1484,
+                    "name": "Käyrälammen liittymä",
+                    "distance": 2313
+                  }
+                },
+                "direction": "both"
+              }
+            },
+            "roadWorkPhases": [
+              {
+                "id": "GUID50469390",
+                "location": {
+                  "countryCode": 6,
+                  "locationTableNumber": 17,
+                  "locationTableVersion": "1.11.45",
+                  "description": "Tie 6 välillä Koskenkylä - Lappeenranta, Kouvola.\nTarkempi paikka: Paikasta Tervaskangas 3,7 km, suuntaan Käyrälammen liittymä."
+                },
+                "locationDetails": {
+                  "roadAddressLocation": {
+                    "primaryPoint": {
+                      "municipality": "Kouvola",
+                      "province": "Kymenlaakso",
+                      "country": "Suomi",
+                      "roadAddress": {
+                        "road": 6,
+                        "roadSection": 201,
+                        "distance": 1166
+                      },
+                      "alertCLocation": {
+                        "locationCode": 1483,
+                        "name": "Tervaskangas",
+                        "distance": 3742
+                      }
+                    },
+                    "secondaryPoint": {
+                      "municipality": "Kouvola",
+                      "province": "Kymenlaakso",
+                      "country": "Suomi",
+                      "roadAddress": {
+                        "road": 6,
+                        "roadSection": 201,
+                        "distance": 1166
+                      },
+                      "alertCLocation": {
+                        "locationCode": 1484,
+                        "name": "Käyrälammen liittymä",
+                        "distance": 2313
+                      }
+                    },
+                    "direction": "both"
+                  }
+                },
+                "workingHours": [
+                  {
+                    "weekday": "Monday",
+                    "startTime": "07:00",
+                    "endTime": "17:30"
+                  },
+                  {
+                    "weekday": "Thursday",
+                    "startTime": "07:00",
+                    "endTime": "17:30"
+                  },
+                  {
+                    "weekday": "Tuesday",
+                    "startTime": "07:00",
+                    "endTime": "17:30"
+                  },
+                  {
+                    "weekday": "Wednesday",
+                    "startTime": "07:00",
+                    "endTime": "17:30"
+                  }
+                ],
+                "timeAndDuration": {
+                  "startTime": "2026-06-29T21:00:00.000Z",
+                  "endTime": "2026-10-30T21:59:59.999Z"
+                },
+                "workTypes": [
+                  { "type": "crash barrier", "description": "Kaidetyö" },
+                  {
+                    "type": "resurfacing",
+                    "description": "Päällystys- tai paikkaustyö"
+                  },
+                  { "type": "bridge", "description": "Siltatyö" },
+                  { "type": "other", "description": "" }
+                ],
+                "restrictions": [
+                  {
+                    "type": "vehicle height limit",
+                    "restriction": {
+                      "name": "Ajoneuvon maksimikorkeus",
+                      "quantity": 7.0,
+                      "unit": "m"
+                    }
+                  },
+                  {
+                    "type": "vehicle width limit",
+                    "restriction": {
+                      "name": "Ajoneuvon maksimileveys",
+                      "quantity": 6.0,
+                      "unit": "m"
+                    }
+                  },
+                  {
+                    "type": "vehicle length limit",
+                    "restriction": {
+                      "name": "Ajoneuvon maksimipituus",
+                      "quantity": 40.0,
+                      "unit": "m"
+                    }
+                  },
+                  {
+                    "type": "slow moving maintenance vehicle",
+                    "restriction": { "name": "Työkoneita liikenteen seassa" }
+                  },
+                  {
+                    "type": "speed limit",
+                    "restriction": {
+                      "name": "Nopeusrajoitus",
+                      "quantity": 30.0,
+                      "unit": "km/h"
+                    }
+                  },
+                  {
+                    "type": "speed limit length",
+                    "restriction": {
+                      "name": "Matka, jolla nopeusrajoitus voimassa",
+                      "quantity": 400.0,
+                      "unit": "m"
+                    }
+                  }
+                ],
+                "restrictionsLiftable": false,
+                "severity": "high"
+              }
+            ],
+            "timeAndDuration": {
+              "startTime": "2026-06-29T21:00:00.000Z",
+              "endTime": "2026-10-30T21:59:59.999Z"
+            },
+            "sender": "Fintraffic Tieliikennekeskus Tampere"
+          }
+        ],
+        "dataUpdatedTime": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [23.536928, 60.117282] },
+      "properties": {
+        "situationId": "GUID50465935",
+        "situationType": "road work",
+        "trafficAnnouncementType": null,
+        "version": 31,
+        "releaseTime": "2026-06-15T10:48:25.057Z",
+        "versionTime": "2026-08-28T04:18:02.629Z",
+        "announcements": [
+          {
+            "language": "fi",
+            "title": "Tie 104, Raasepori. Tietyö. ",
+            "location": {
+              "countryCode": 6,
+              "locationTableNumber": 17,
+              "locationTableVersion": "1.11.45",
+              "description": "Tie 104 välillä Pohja - Sammatti, Raasepori.\nTarkempi paikka: Fiskarsin tunneli."
+            },
+            "locationDetails": {
+              "roadAddressLocation": {
+                "primaryPoint": {
+                  "municipality": "Raasepori",
+                  "province": "Uusimaa",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 104,
+                    "roadSection": 1,
+                    "distance": 2040
+                  },
+                  "alertCLocation": {
+                    "locationCode": 3592,
+                    "name": "Fiskarsin tunneli",
+                    "distance": 0
+                  }
+                },
+                "direction": "both"
+              }
+            },
+            "roadWorkPhases": [
+              {
+                "id": "GUID50468689",
+                "location": {
+                  "countryCode": 6,
+                  "locationTableNumber": 17,
+                  "locationTableVersion": "1.11.45",
+                  "description": "Tie 104 välillä Pohja - Sammatti, Raasepori.\nTarkempi paikka: Fiskarsin tunneli."
+                },
+                "locationDetails": {
+                  "roadAddressLocation": {
+                    "primaryPoint": {
+                      "municipality": "Raasepori",
+                      "province": "Uusimaa",
+                      "country": "Suomi",
+                      "roadAddress": {
+                        "road": 104,
+                        "roadSection": 1,
+                        "distance": 2040
+                      },
+                      "alertCLocation": {
+                        "locationCode": 3592,
+                        "name": "Fiskarsin tunneli",
+                        "distance": 0
+                      }
+                    },
+                    "direction": "both"
+                  }
+                },
+                "locationOpenLr": { "binary": "IzWZ5gFPMw==" },
+                "workingHours": [
+                  {
+                    "weekday": "Friday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  },
+                  {
+                    "weekday": "Monday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  },
+                  {
+                    "weekday": "Thursday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  },
+                  {
+                    "weekday": "Saturday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  },
+                  {
+                    "weekday": "Tuesday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  },
+                  {
+                    "weekday": "Wednesday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  },
+                  {
+                    "weekday": "Sunday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  }
+                ],
+                "timeAndDuration": {
+                  "startTime": "2026-06-11T21:00:00.000Z",
+                  "endTime": "2026-12-14T21:59:59.999Z"
+                },
+                "workTypes": [
+                  { "type": "other", "description": "Työ tunnelin alueella" },
+                  {
+                    "type": "other",
+                    "description": "Tunneli SULJETTU, saneeraustyö"
+                  }
+                ],
+                "restrictions": [
+                  {
+                    "type": "traffic lights",
+                    "restriction": { "name": "Liikennevalot" }
+                  },
+                  {
+                    "type": "intermittent short term stops",
+                    "restriction": {
+                      "name": "Liikenne on pysäytetty ajoittain"
+                    }
+                  },
+                  {
+                    "type": "detour",
+                    "restriction": { "name": "Kiertotie käytössä" }
+                  },
+                  {
+                    "type": "slow moving maintenance vehicle",
+                    "restriction": { "name": "Työkoneita liikenteen seassa" }
+                  },
+                  {
+                    "type": "speed limit",
+                    "restriction": {
+                      "name": "Nopeusrajoitus",
+                      "quantity": 30.0,
+                      "unit": "km/h"
+                    }
+                  }
+                ],
+                "restrictionsLiftable": false,
+                "severity": "highest"
+              },
+              {
+                "id": "GUID50469933",
+                "location": {
+                  "countryCode": 6,
+                  "locationTableNumber": 17,
+                  "locationTableVersion": "1.11.45",
+                  "description": "Tie 104 välillä Pohja - Sammatti, Raasepori.\nTarkempi paikka: Paikasta Pohja 2,0 km, vaikutusalue 200 m, suuntaan Fiskars."
+                },
+                "locationDetails": {
+                  "roadAddressLocation": {
+                    "primaryPoint": {
+                      "municipality": "Raasepori",
+                      "province": "Uusimaa",
+                      "country": "Suomi",
+                      "roadAddress": {
+                        "road": 104,
+                        "roadSection": 1,
+                        "distance": 1971
+                      },
+                      "alertCLocation": {
+                        "locationCode": 3591,
+                        "name": "Pohja",
+                        "distance": 1971
+                      }
+                    },
+                    "secondaryPoint": {
+                      "municipality": "Raasepori",
+                      "province": "Uusimaa",
+                      "country": "Suomi",
+                      "roadAddress": {
+                        "road": 104,
+                        "roadSection": 1,
+                        "distance": 2160
+                      },
+                      "alertCLocation": {
+                        "locationCode": 3593,
+                        "name": "Fiskars",
+                        "distance": 1395
+                      }
+                    },
+                    "direction": "both"
+                  }
+                },
+                "locationOpenLr": { "binary": "IzWZ1wFPPg==" },
+                "workingHours": [
+                  {
+                    "weekday": "Wednesday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  },
+                  {
+                    "weekday": "Tuesday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  },
+                  {
+                    "weekday": "Monday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  },
+                  {
+                    "weekday": "Sunday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  },
+                  {
+                    "weekday": "Thursday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  },
+                  {
+                    "weekday": "Saturday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  },
+                  {
+                    "weekday": "Friday",
+                    "startTime": "00:00",
+                    "endTime": "23:59"
+                  }
+                ],
+                "timeAndDuration": {
+                  "startTime": "2026-07-19T21:00:00.000Z",
+                  "endTime": "2026-12-14T21:59:59.999Z"
+                },
+                "workTypes": [
+                  { "type": "other", "description": "Työ tunnelin alueella" },
+                  { "type": "other", "description": "Tunnelin saneeraustyö" }
+                ],
+                "restrictions": [
+                  {
+                    "type": "single alternate line traffic",
+                    "restriction": {
+                      "name": "Liikenne ohjataan vuorotellen tapahtumapaikan ohi"
+                    }
+                  },
+                  {
+                    "type": "traffic lights",
+                    "restriction": { "name": "Liikennevalot" }
+                  },
+                  {
+                    "type": "vehicle gross weight limit",
+                    "restriction": {
+                      "name": "Painorajoitus",
+                      "quantity": 26.0,
+                      "unit": "t"
+                    }
+                  },
+                  {
+                    "type": "single lane closed",
+                    "restriction": { "name": "Yksi ajokaista suljettu" }
+                  },
+                  {
+                    "type": "slow moving maintenance vehicle",
+                    "restriction": { "name": "Työkoneita liikenteen seassa" }
+                  },
+                  {
+                    "type": "speed limit",
+                    "restriction": {
+                      "name": "Nopeusrajoitus",
+                      "quantity": 30.0,
+                      "unit": "km/h"
+                    }
+                  },
+                  {
+                    "type": "speed limit length",
+                    "restriction": {
+                      "name": "Matka, jolla nopeusrajoitus voimassa",
+                      "quantity": 400.0,
+                      "unit": "m"
+                    }
+                  }
+                ],
+                "restrictionsLiftable": false,
+                "severity": "highest"
+              }
+            ],
+            "timeAndDuration": {
+              "startTime": "2026-06-11T21:00:00.000Z",
+              "endTime": "2026-12-14T21:59:59.999Z"
+            },
+            "sender": "Fintraffic Tieliikennekeskus"
+          }
+        ],
+        "dataUpdatedTime": null
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [29.973352, 62.090067],
+            [29.974301, 62.08996],
+            [29.975937, 62.089783],
+            [29.976608, 62.089714],
+            [29.977239, 62.08964],
+            [29.978013, 62.089563],
+            [29.978815, 62.08948],
+            [29.979672, 62.089394],
+            [29.980451, 62.089311],
+            [29.981106, 62.089242],
+            [29.981382, 62.089208],
+            [29.981608, 62.089184]
+          ]
+        ]
+      },
+      "properties": {
+        "situationId": "GUID50461965",
+        "situationType": "road work",
+        "trafficAnnouncementType": null,
+        "version": 1,
+        "releaseTime": "2026-03-17T11:36:45.056Z",
+        "versionTime": "2026-03-17T11:36:45.054Z",
+        "announcements": [
+          {
+            "language": "fi",
+            "title": "Tie 486, Kitee. Tietyö. ",
+            "location": {
+              "countryCode": 6,
+              "locationTableNumber": 17,
+              "locationTableVersion": "1.11.44",
+              "description": "Tie 486 välillä Puhos - Tohmajärvi, Kitee.\nTarkempi paikka: Paikasta Lepikko 900 m, vaikutusalue 400 m, suuntaan Niinikumpu."
+            },
+            "locationDetails": {
+              "roadAddressLocation": {
+                "primaryPoint": {
+                  "municipality": "Kitee",
+                  "province": "Pohjois-Karjala",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 486,
+                    "roadSection": 1,
+                    "distance": 865
+                  },
+                  "alertCLocation": {
+                    "locationCode": 10468,
+                    "name": "Lepikko",
+                    "distance": 864
+                  }
+                },
+                "secondaryPoint": {
+                  "municipality": "Kitee",
+                  "province": "Pohjois-Karjala",
+                  "country": "Suomi",
+                  "roadAddress": {
+                    "road": 486,
+                    "roadSection": 1,
+                    "distance": 1308
+                  },
+                  "alertCLocation": {
+                    "locationCode": 10470,
+                    "name": "Niinikumpu",
+                    "distance": 1189
+                  }
+                },
+                "direction": "both"
+              }
+            },
+            "roadWorkPhases": [
+              {
+                "id": "GUID50464686",
+                "location": {
+                  "countryCode": 6,
+                  "locationTableNumber": 17,
+                  "locationTableVersion": "1.11.44",
+                  "description": "Tie 486 välillä Puhos - Tohmajärvi, Kitee.\nTarkempi paikka: Paikasta Lepikko 900 m, vaikutusalue 400 m, suuntaan Niinikumpu."
+                },
+                "locationDetails": {
+                  "roadAddressLocation": {
+                    "primaryPoint": {
+                      "municipality": "Kitee",
+                      "province": "Pohjois-Karjala",
+                      "country": "Suomi",
+                      "roadAddress": {
+                        "road": 486,
+                        "roadSection": 1,
+                        "distance": 865
+                      },
+                      "alertCLocation": {
+                        "locationCode": 10468,
+                        "name": "Lepikko",
+                        "distance": 864
+                      }
+                    },
+                    "secondaryPoint": {
+                      "municipality": "Kitee",
+                      "province": "Pohjois-Karjala",
+                      "country": "Suomi",
+                      "roadAddress": {
+                        "road": 486,
+                        "roadSection": 1,
+                        "distance": 1308
+                      },
+                      "alertCLocation": {
+                        "locationCode": 10470,
+                        "name": "Niinikumpu",
+                        "distance": 1189
+                      }
+                    },
+                    "direction": "both"
+                  }
+                },
+                "workingHours": [
+                  {
+                    "weekday": "Thursday",
+                    "startTime": "06:00",
+                    "endTime": "12:00"
+                  },
+                  {
+                    "weekday": "Friday",
+                    "startTime": "06:00",
+                    "endTime": "12:00"
+                  },
+                  {
+                    "weekday": "Monday",
+                    "startTime": "06:00",
+                    "endTime": "12:00"
+                  },
+                  {
+                    "weekday": "Tuesday",
+                    "startTime": "06:00",
+                    "endTime": "12:00"
+                  },
+                  {
+                    "weekday": "Wednesday",
+                    "startTime": "06:00",
+                    "endTime": "12:00"
+                  }
+                ],
+                "timeAndDuration": {
+                  "startTime": "2025-12-28T22:00:00.000Z",
+                  "endTime": "2026-11-30T21:59:59.999Z"
+                },
+                "workTypes": [
+                  { "type": "bridge", "description": "Siltatyö" },
+                  { "type": "other", "description": "" }
+                ],
+                "restrictions": [
+                  {
+                    "type": "traffic lights",
+                    "restriction": { "name": "Liikennevalot" }
+                  },
+                  {
+                    "type": "road surface paved",
+                    "restriction": { "name": "Tien pinta on päällystetty" }
+                  },
+                  {
+                    "type": "vehicle gross weight limit",
+                    "restriction": {
+                      "name": "Painorajoitus",
+                      "quantity": 75.0,
+                      "unit": "t"
+                    }
+                  },
+                  {
+                    "type": "single lane closed",
+                    "restriction": { "name": "Yksi ajokaista suljettu" }
+                  },
+                  {
+                    "type": "detour",
+                    "restriction": { "name": "Kiertotie käytössä" }
+                  },
+                  {
+                    "type": "detour curves steep",
+                    "restriction": { "name": "Kiertotien mutkat ovat jyrkkiä" }
+                  },
+                  {
+                    "type": "detour surface gravel",
+                    "restriction": { "name": "Kiertotien pinta on mursketta" }
+                  },
+                  {
+                    "type": "detour length",
+                    "restriction": {
+                      "name": "Kiertotien pituus",
+                      "quantity": 150.0,
+                      "unit": "m"
+                    }
+                  },
+                  {
+                    "type": "detour gross weight limit",
+                    "restriction": {
+                      "name": "Kiertotien maksimikuorma",
+                      "quantity": 75.0,
+                      "unit": "t"
+                    }
+                  },
+                  {
+                    "type": "slow moving maintenance vehicle",
+                    "restriction": { "name": "Työkoneita liikenteen seassa" }
+                  },
+                  {
+                    "type": "speed limit",
+                    "restriction": {
+                      "name": "Nopeusrajoitus",
+                      "quantity": 30.0,
+                      "unit": "km/h"
+                    }
+                  },
+                  {
+                    "type": "speed limit length",
+                    "restriction": {
+                      "name": "Matka, jolla nopeusrajoitus voimassa",
+                      "quantity": 600.0,
+                      "unit": "m"
+                    }
+                  }
+                ],
+                "restrictionsLiftable": false,
+                "severity": "high"
+              }
+            ],
+            "timeAndDuration": {
+              "startTime": "2025-12-28T22:00:00.000Z",
+              "endTime": "2026-11-30T21:59:59.999Z"
+            },
+            "sender": "Fintraffic Tieliikennekeskus Tampere"
+          }
+        ],
+        "dataUpdatedTime": null
+      }
+    }
+  ]
+}
