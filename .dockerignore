@@ -19,3 +19,5 @@ LICENSES
 **/*.tsbuildinfo
 **/*.log
 biome.json
+.prettierignore
+.prettierrc.json

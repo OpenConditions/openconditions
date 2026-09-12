@@ -117,9 +117,10 @@ Conventions:
   `pnpm format` writes formatting; `pnpm exec biome check --write .` also
   applies safe lint fixes and sorts imports. Don't reformat unrelated code in a
   feature PR.
-- Biome does not format Markdown, YAML or JSON5, so those file types are no
-  longer formatted automatically. Feed definitions are still validated by
-  `pnpm --filter @openconditions/roads feeds:lint`.
+- Biome cannot parse Markdown, YAML or JSON5, so Prettier owns exactly those
+  three extensions and nothing else. One tool per file type, so the two never
+  format the same file. Feed definitions are JSON5, and are additionally
+  validated by `pnpm --filter @openconditions/roads feeds:lint`.
 - Two recommended rules are relaxed, both for reasons specific to this
   codebase: `useLiteralKeys` is off because untyped source payloads are read
   through index access on purpose, and `noNonNullAssertion` is off in tests,

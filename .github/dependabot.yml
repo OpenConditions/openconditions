@@ -17,6 +17,7 @@ updates:
       lint-and-format:
         patterns:
           - "@biomejs/*"
+          - "prettier*"
       typescript-toolchain:
         patterns:
           - "typescript"
