@@ -7,6 +7,7 @@ import type {
   RoadRestrictionFact,
 } from "./restriction-types.js";
 import {
+  boundRestrictionIssue,
   intersectRestrictionWindows,
   normalizeRestrictionDimension,
   type RestrictionWindow,
@@ -313,12 +314,18 @@ export function digitrafficRestrictionDetails(
       str(obj(phase["location"])?.["description"]) ??
       str(obj(announcement["location"])?.["description"]);
 
+    const restrictionsPath = `announcements[0].roadWorkPhases[${phaseIndex}].restrictions`;
+    if (phase["restrictions"] != null && !Array.isArray(phase["restrictions"])) {
+      issues.push({ code: "unsupported_type", factId: null, sourcePath: restrictionsPath });
+    }
     arr(phase["restrictions"]).forEach((rawRestriction, restrictionIndex) => {
       const entry = obj(rawRestriction);
-      if (entry === null) return;
       const sourcePath = `announcements[0].roadWorkPhases[${phaseIndex}].restrictions[${restrictionIndex}]`;
-      const rawType = str(entry["type"]);
-      if (rawType === null) return;
+      const rawType = str(entry?.["type"]);
+      if (entry === null || rawType === null) {
+        issues.push({ code: "unsupported_type", factId: null, sourcePath });
+        return;
+      }
       const token = normalizeDtToken(rawType);
       const detail = obj(entry["restriction"]);
       const quantity = detail?.["quantity"];
@@ -449,7 +456,7 @@ export function digitrafficRestrictionDetails(
     vehicleScope: facts.length > 0 ? "specific" : "unknown",
     completeness: issues.length === 0 ? "complete" : "partial",
     facts,
-    issues,
+    issues: issues.map(boundRestrictionIssue),
     source: {
       sourceId: src.id,
       recordId,

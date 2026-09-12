@@ -533,6 +533,15 @@ describe("restrictionViewDeadline", () => {
     expect(restrictionViewDeadline([view()], at).toISOString()).toBe("2026-09-12T07:15:00.000Z");
   });
 
+  it("does not restart the evaluation lifetime when a cached view is read later", () => {
+    expect(restrictionViewDeadline([view()], new Date(at.getTime() + 50_000)).getTime()).toBe(
+      at.getTime() + 60_000,
+    );
+    expect(restrictionViewDeadline([view()], new Date(at.getTime() + 61_000)).getTime()).toBe(
+      at.getTime() + 61_000,
+    );
+  });
+
   it("shortens to an imminent freshness or transition deadline", () => {
     expect(
       restrictionViewDeadline([view({ freshUntil: "2026-09-12T07:14:20.000Z" })], at).toISOString(),

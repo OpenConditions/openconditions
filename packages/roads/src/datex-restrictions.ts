@@ -6,6 +6,7 @@ import type {
   RoadRestrictionFact,
 } from "./restriction-types.js";
 import {
+  boundRestrictionIssue,
   intersectRestrictionWindows,
   normalizeRestrictionDimension,
   toRestrictionInstant,
@@ -432,7 +433,7 @@ export function datexRestrictionDetails(
     vehicleScope: facts.length > 0 ? "specific" : "unknown",
     completeness: issues.length === 0 ? "complete" : "partial",
     facts,
-    issues,
+    issues: issues.map(boundRestrictionIssue),
     source: {
       sourceId: src.id,
       recordId: context.recordId,

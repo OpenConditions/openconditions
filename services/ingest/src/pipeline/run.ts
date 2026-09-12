@@ -551,7 +551,8 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   const zeroResultTripwire =
     snapshotReport === undefined
       ? (snapshotInspection?.inputRecords ?? 0) > 0 && resolved.length === 0
-      : snapshotReport.acceptedIds.length > 0 && resolved.length === 0;
+      : snapshotReport.acceptedIds.some((id) => !snapshotUnlocatable?.includes(id)) &&
+        resolved.length === 0;
   if (failed > 0 || zeroResultTripwire) {
     const error =
       failed > 0
@@ -750,7 +751,7 @@ function snapshotCounts(
   return {
     inputCount: report.inputCount,
     uniqueCount: report.uniqueCount,
-    accepted: report.acceptedIds.length,
+    accepted: report.acceptedIds.filter((id) => !unlocatable.includes(id)).length,
     terminal: report.terminalIds.length,
     unlocatable: unlocatable.length,
     duplicates: report.duplicates,

@@ -3,6 +3,7 @@ import { deriveSeverity } from "@openconditions/core";
 import { digitrafficRestrictionDetails } from "./digitraffic-restrictions.js";
 import { normalizeDtToken } from "./digitraffic-token.js";
 import type { Restriction, RoadEvent, RoadRef } from "./model.js";
+import { parseRestrictionInstant, toRestrictionInstant } from "./restrictions.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
   type RoadSnapshotRecord,
@@ -420,6 +421,7 @@ function buildDigitrafficEvent(
   situationId: string,
   src: SourceDescriptor,
   fetchedAt: string,
+  publicationTime: string | null,
 ): RoadEvent {
   const situationType = coerceString(props.situationType) ?? "";
   const announcementType = coerceString(props.trafficAnnouncementType);
@@ -449,6 +451,7 @@ function buildDigitrafficEvent(
     coerceString(props.versionTime) ??
     coerceString(props.dataUpdatedTime) ??
     coerceString(props.releaseTime) ??
+    publicationTime ??
     fetchedAt;
 
   return {
@@ -483,7 +486,13 @@ function buildDigitrafficEvent(
     description: descriptionFromAnnouncement(ann),
     validFrom,
     validTo,
-    sourceRaw: props as Record<string, unknown>,
+    sourceRaw: {
+      ...props,
+      ...(publicationTime !== null &&
+      [props.versionTime, props.dataUpdatedTime, props.releaseTime].every((v) => v == null)
+        ? { observationTimestampBasis: { sourcePath: "$.dataUpdatedTime", value: publicationTime } }
+        : {}),
+    },
     origin: {
       kind: "feed",
       attribution: {
@@ -515,6 +524,8 @@ function digitrafficSnapshotRecord(
   sourcePath: string,
   src: SourceDescriptor,
   fetchedAt: string,
+  publicationTime: string | null,
+  strictMetadata: boolean,
 ): DigitrafficRecordResult {
   let situationId: string | null = null;
   try {
@@ -534,13 +545,44 @@ function digitrafficSnapshotRecord(
       return { error: { code: "invalid_version", id, sourcePath: `${sourcePath}.version` } };
     }
     const versionTime = coerceString(props.versionTime);
-    if (versionTime !== null && !Number.isFinite(Date.parse(versionTime))) {
+    if (versionTime !== null && parseRestrictionInstant(versionTime) === null) {
       return {
         error: { code: "invalid_version_time", id, sourcePath: `${sourcePath}.versionTime` },
       };
     }
 
     const ann = firstAnnouncement(props.announcements);
+    if (strictMetadata) {
+      const invalidField = [
+        ["versionTime", props.versionTime],
+        ["dataUpdatedTime", props.dataUpdatedTime],
+        ["releaseTime", props.releaseTime],
+        ["announcements[0].timeAndDuration.startTime", ann?.timeAndDuration?.startTime],
+        ["announcements[0].timeAndDuration.endTime", ann?.timeAndDuration?.endTime],
+      ].find(([, value]) => value != null && parseRestrictionInstant(value) === null);
+      if (invalidField)
+        return {
+          error: { code: "invalid_timestamp", id, sourcePath: `${sourcePath}.${invalidField[0]}` },
+        };
+      const start = parseRestrictionInstant(ann?.timeAndDuration?.startTime);
+      const end = parseRestrictionInstant(ann?.timeAndDuration?.endTime);
+      if (start !== null && end !== null && end < start) {
+        return {
+          error: {
+            code: "invalid_window",
+            id,
+            sourcePath: `${sourcePath}.announcements[0].timeAndDuration`,
+          },
+        };
+      }
+      if (
+        [props.versionTime, props.dataUpdatedTime, props.releaseTime, publicationTime].every(
+          (value) => value == null,
+        )
+      ) {
+        return { error: { code: "missing_update_time", id, sourcePath } };
+      }
+    }
     const terminal = terminalStatusOf(props, ann);
     const geometry = feature.geometry;
     const hasGeometry =
@@ -582,6 +624,7 @@ function digitrafficSnapshotRecord(
       situationId,
       src,
       fetchedAt,
+      publicationTime,
     );
     return {
       record: {
@@ -619,10 +662,11 @@ function canonicalTerminalFingerprint(
  * suppressing errors. The tolerant array-returning `parseDigitraffic` wrapper
  * stays available for sources that do not declare a complete snapshot.
  */
-export function parseDigitrafficSnapshot(
+function parseDigitrafficInternal(
   input: unknown,
   src: SourceDescriptor,
   opts: { fetchedAt?: string } = {},
+  strictMetadata = true,
 ): RoadSnapshotReport {
   const fetchedAt = opts.fetchedAt ?? new Date().toISOString();
   const payload = readFeatureCollection(input as string | Buffer | object);
@@ -642,17 +686,41 @@ export function parseDigitrafficSnapshot(
     };
   }
 
+  const publicationTime = toRestrictionInstant(payload["dataUpdatedTime"]);
+  if (strictMetadata && payload["dataUpdatedTime"] != null && publicationTime === null) {
+    return {
+      inputCount: features.length,
+      records: [],
+      errors: [{ code: "invalid_timestamp", id: null, sourcePath: "$.dataUpdatedTime" }],
+    };
+  }
   const records: RoadSnapshotRecord[] = [];
   const errors: RoadSnapshotReport["errors"] = [];
   let skippedNoGeometry = 0;
   features.forEach((feature, index) => {
-    const outcome = digitrafficSnapshotRecord(feature, `features[${index}]`, src, fetchedAt);
+    const outcome = digitrafficSnapshotRecord(
+      feature,
+      `features[${index}]`,
+      src,
+      fetchedAt,
+      publicationTime,
+      strictMetadata,
+    );
     if (outcome.error) errors.push(outcome.error);
     if (outcome.record) records.push(outcome.record);
     if (outcome.skippedNoGeometry) skippedNoGeometry++;
   });
   if (skippedNoGeometry > 0) recordSkippedNoGeometry(src.id, skippedNoGeometry);
   return { inputCount: features.length, records, errors };
+}
+
+/** Strict companion entry point for complete-snapshot acceptance. */
+export function parseDigitrafficSnapshot(
+  input: unknown,
+  src: SourceDescriptor,
+  opts: { fetchedAt?: string } = {},
+): RoadSnapshotReport {
+  return parseDigitrafficInternal(input, src, opts);
 }
 
 /**
@@ -668,7 +736,7 @@ export function parseDigitraffic(
   geojson: string | Buffer | object,
   src: SourceDescriptor,
 ): RoadEvent[] {
-  const report = parseDigitrafficSnapshot(geojson, src);
+  const report = parseDigitrafficInternal(geojson, src, {}, false);
   if (report.errors.length > 0) {
     for (const error of report.errors) {
       console.warn(`[digitraffic] ${src.id}: ${error.code} at ${error.sourcePath}`);

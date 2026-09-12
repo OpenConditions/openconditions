@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { parseDatexSnapshot } from "../datex.js";
+import { parseDatexSituations, parseDatexSnapshot } from "../datex.js";
 import { projectRoadRestrictionDetails } from "../restrictions.js";
 import { reconcileRoadSnapshots } from "../snapshot.js";
 import type { SourceDescriptor } from "../types.js";
@@ -237,17 +237,28 @@ describe("ndw conservative restriction validity", () => {
   });
 
   it.each(["cancelled", "archived", "suspended"])(
-    "keeps a %s source record's evidence while refusing to call it active",
+    "withdraws a %s record while retaining its diagnostic evidence in the array wrapper",
     (status) => {
       const source = withHeightValidity(
         `<sit:validity><com:validityStatus>${status}</com:validityStatus><com:validityTimeSpecification><com:overallStartTime>2025-09-05T22:59:03Z</com:overallStartTime></com:validityTimeSpecification></sit:validity>`,
       );
-      const event = heightOf(source);
+      const snapshot = reconcileRoadSnapshots([parseDatexSnapshot(source, ndwSource)]);
+      expect(snapshot.terminalIds).toContain(`nl-ndw${HEIGHT_SUFFIX}`);
+      expect(snapshot.observations.some((event) => event.id.endsWith(HEIGHT_SUFFIX))).toBe(false);
+      const event = parseDatexSituations(source, ndwSource).find((event) =>
+        event.id.endsWith(HEIGHT_SUFFIX),
+      )!;
       expect(event.status).toBe(status === "suspended" ? "inactive" : status);
-      expect(event.restrictionDetails.facts).toHaveLength(1);
-      expect(heightView(source).facts[0]!.state).toBe("unknown");
-      expect(event.restrictionDetails.facts[0].context.validityStatus).toBe(status);
-      expect(event.restrictionDetails.issues).toContainEqual(
+      expect(event.restrictionDetails!.facts).toHaveLength(1);
+      expect(
+        projectRoadRestrictionDetails(event.restrictionDetails, {
+          at: new Date("2026-09-12T07:14:00Z"),
+          sourceCheckedAt: "2026-09-12T07:13:00Z",
+          freshnessWindowSec: 300,
+        }).restrictionDetails?.facts[0]?.state,
+      ).toBe("unknown");
+      expect(event.restrictionDetails!.facts[0]!.context.validityStatus).toBe(status);
+      expect(event.restrictionDetails!.issues).toContainEqual(
         expect.objectContaining({ code: "unsupported_status" }),
       );
     },

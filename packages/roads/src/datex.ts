@@ -13,9 +13,11 @@ import type {
   RoadRestrictionDetailsV1,
   RoadRestrictionFact,
 } from "./restriction-types.js";
+import { parseRestrictionInstant, toRestrictionInstant } from "./restrictions.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
+  canonicalSnapshotValue,
   compareSnapshotRank,
   type RoadSnapshotRecord,
   type RoadSnapshotReport,
@@ -1204,6 +1206,7 @@ function externalRefsOf(rec: XmlObject): RoadEvent["externalRefs"] {
 interface SituationRecord {
   rec: XmlObject;
   situationSeverity: string;
+  publicationTime?: string;
   situationId?: string;
 }
 
@@ -1288,6 +1291,7 @@ function listSituationRecords(doc: XmlObject): SituationRecord[] {
 
   if (!publication) return [];
 
+  const publicationTime = getXmlChildText(publication, "publicationTime");
   const situations = getXmlChildren(publication, "situation");
   return situations.flatMap((sit) => {
     const sitSeverity = text(sit["overallSeverity"]) ?? "";
@@ -1295,6 +1299,7 @@ function listSituationRecords(doc: XmlObject): SituationRecord[] {
     return getXmlChildren(sit, "situationRecord").map((rec) => ({
       rec,
       situationSeverity: sitSeverity,
+      publicationTime,
       ...(situationId ? { situationId } : {}),
     }));
   });
@@ -1353,7 +1358,11 @@ interface DatexParseResult {
   inputCount: number;
 }
 
-function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): DatexParseResult {
+function parseDatexInternal(
+  input: string | Buffer,
+  src: SourceDescriptor,
+  strictMetadata = false,
+): DatexParseResult {
   const doc = parseXmlDocument(input, {
     removeNSPrefix: true,
     ignoreAttributes: false,
@@ -1383,8 +1392,75 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
   /** Table editions publishers named that we do not hold. */
   const mismatchVersions = new Map<string, number>();
 
-  for (const { rec: rawRec, situationSeverity, situationId } of sourceRecords) {
+  for (const { rec: rawRec, situationSeverity, situationId, publicationTime } of sourceRecords) {
     const { body: rec, className } = recordBody(rawRec);
+    const recordId = recId(rec);
+    const prefixedId = `${src.id}:${recordId}`;
+    // Publishers place the record version either in a child element or, as NDW
+    // does, in the `version` attribute of situationRecord itself.
+    const rawRecordVersion =
+      getXmlChildText(rec, "situationRecordVersion") ?? getXmlAttribute(rec, "version");
+    const sourceVersion = rawRecordVersion === undefined ? NaN : Number(rawRecordVersion);
+    const version =
+      rawRecordVersion?.trim() !== "" && Number.isSafeInteger(sourceVersion) && sourceVersion >= 0
+        ? sourceVersion
+        : null;
+    const rawVersionTime = text(rec["situationRecordVersionTime"]) ?? null;
+    const versionTime =
+      rawVersionTime !== null && parseRestrictionInstant(rawVersionTime) !== null
+        ? rawVersionTime
+        : null;
+    if (!recordId) {
+      errors.push({ code: "missing_identity", id: null, sourcePath: "situationRecord" });
+      continue;
+    }
+
+    const validity = getXmlChild(rec, "validity") ?? {};
+    const validityStatus = text(validity["validityStatus"]);
+    const timeSpec = getXmlChild(validity, "validityTimeSpecification");
+    const status = validityStatusToStatus(validityStatus);
+    const dataUpdatedAt = versionTime ?? toRestrictionInstant(publicationTime);
+    if (strictMetadata) {
+      const invalidField = [
+        ["situationRecordVersionTime", rawVersionTime],
+        ["publicationTime", publicationTime],
+        [
+          "validity.validityTimeSpecification.overallStartTime",
+          text(timeSpec?.["overallStartTime"]),
+        ],
+        ["validity.validityTimeSpecification.overallEndTime", text(timeSpec?.["overallEndTime"])],
+      ].find(([, value]) => value != null && parseRestrictionInstant(value) === null);
+      const start = parseRestrictionInstant(text(timeSpec?.["overallStartTime"]));
+      const end = parseRestrictionInstant(text(timeSpec?.["overallEndTime"]));
+      const error =
+        rawRecordVersion !== undefined && version === null
+          ? { code: "invalid_version", sourcePath: "situationRecord.version" }
+          : invalidField
+            ? { code: "invalid_timestamp", sourcePath: `situationRecord.${invalidField[0]}` }
+            : dataUpdatedAt === null
+              ? { code: "missing_update_time", sourcePath: "situationRecord" }
+              : start !== null && end !== null && end < start
+                ? {
+                    code: "invalid_window",
+                    sourcePath: "situationRecord.validity.validityTimeSpecification",
+                  }
+                : null;
+      if (error) {
+        errors.push({ ...error, id: prefixedId });
+        continue;
+      }
+      if (status !== "active") {
+        records.push({
+          id: prefixedId,
+          version,
+          versionTime,
+          fingerprint: canonicalSnapshotValue({ id: prefixedId, status, version, versionTime }),
+          disposition: "terminal",
+        });
+        continue;
+      }
+    }
+
     let geometry = resolveGeometry(rec, reproject, lonFirst);
     let locationTable: RoadEvent["locationTable"];
 
@@ -1436,24 +1512,6 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
     }
 
     const openlr = !geometry ? collectOpenLr(rec) : undefined;
-    const recordId = recId(rec);
-    const prefixedId = `${src.id}:${recordId}`;
-    // Publishers place the record version either in a child element or, as NDW
-    // does, in the `version` attribute of situationRecord itself.
-    const rawRecordVersion =
-      getXmlChildText(rec, "situationRecordVersion") ?? getXmlAttribute(rec, "version");
-    const sourceVersion = Number(rawRecordVersion);
-    const version =
-      Number.isSafeInteger(sourceVersion) && sourceVersion >= 0 ? sourceVersion : null;
-    const rawVersionTime = text(rec["situationRecordVersionTime"]) ?? null;
-    const versionTime =
-      rawVersionTime !== null && Number.isFinite(Date.parse(rawVersionTime))
-        ? rawVersionTime
-        : null;
-    if (!recordId) {
-      errors.push({ code: "missing_identity", id: null, sourcePath: "situationRecord" });
-      continue;
-    }
 
     if (!geometry && !openlr) {
       skippedAlertCOnly++;
@@ -1463,7 +1521,7 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
         id: prefixedId,
         version,
         versionTime,
-        fingerprint: `unlocatable:${prefixedId}`,
+        fingerprint: canonicalSnapshotValue(rec),
         disposition: "unlocatable",
       });
       continue;
@@ -1478,10 +1536,6 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
     const { type, category, isPlanned } = declaresRoadClosed
       ? { ...mapped, ...mapSourceType("datex2", "roadClosure") }
       : mapped;
-
-    const validity = getXmlChild(rec, "validity") ?? {};
-    const validityStatus = text(validity["validityStatus"]);
-    const timeSpec = getXmlChild(validity, "validityTimeSpecification");
 
     const severity =
       situationSeverity || text(rec["overallSeverity"]) || text(rec["severity"]) || "";
@@ -1554,7 +1608,7 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
       isPlanned,
       ...severityFields,
       confidence: confidenceOf(rec),
-      status: validityStatusToStatus(validityStatus),
+      status,
       direction: directionOf(rec),
       roads: roadsOf(rec),
       roadState: roadStateOf(rec),
@@ -1570,7 +1624,12 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
       delaySeconds: leafNumber(rec, "delayTimeValue"),
       queueLengthMeters: leafNumber(rec, "queueLength"),
       relatedIds: relatedRefsOf(rec),
-      sourceRaw: rec,
+      sourceRaw: {
+        ...rec,
+        ...(versionTime === null && dataUpdatedAt !== null
+          ? { observationTimestampBasis: { sourcePath: "publicationTime", value: dataUpdatedAt } }
+          : {}),
+      },
       headline: headlineText,
       description: descriptionText,
       validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
@@ -1583,7 +1642,7 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
           url: src.licenseUrl,
         },
       },
-      dataUpdatedAt: text(rec["situationRecordVersionTime"]) ?? new Date().toISOString(),
+      dataUpdatedAt: dataUpdatedAt ?? new Date().toISOString(),
       fetchedAt: new Date().toISOString(),
       isStale: false,
     };
@@ -1654,7 +1713,7 @@ function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): Date
 
   // Unresolved OpenLR markers (no geometry yet) are appended after the located
   // set and resolved to geometry by the ingest resolve stage.
-  return { withGeom, unresolved, records, errors, inputCount: records.length + errors.length };
+  return { withGeom, unresolved, records, errors, inputCount: sourceRecords.length };
 }
 
 /**
@@ -1669,10 +1728,10 @@ export function parseDatexSituations(
   src: SourceDescriptor,
 ): (RoadEvent | UnresolvedRoadEvent)[] {
   const parsed = parseDatexInternal(input, src);
-  return [
-    ...collapseByIdentity(parsed.withGeom, parsed.records),
-    ...collapseByIdentity(parsed.unresolved, parsed.records),
-  ];
+  return collapseByIdentity<RoadEvent | UnresolvedRoadEvent>(
+    [...parsed.withGeom, ...parsed.unresolved],
+    parsed.records,
+  );
 }
 
 /**
@@ -1697,7 +1756,7 @@ function collapseByIdentity<T extends { id: string }>(
     if (emitted.has(event.id)) continue;
     const winner = best.get(event.id);
     emitted.add(event.id);
-    out.push((winner?.event as T | undefined) ?? event);
+    if (winner?.event) out.push(winner.event as unknown as T);
   }
   return out;
 }
@@ -1711,7 +1770,7 @@ export function parseDatexSnapshot(
   src: SourceDescriptor,
 ): RoadSnapshotReport {
   try {
-    const parsed = parseDatexInternal(input, src);
+    const parsed = parseDatexInternal(input, src, true);
     return { inputCount: parsed.inputCount, records: parsed.records, errors: parsed.errors };
   } catch (err) {
     console.warn(`[datex] ${src.id}: unreadable snapshot envelope:`, err);

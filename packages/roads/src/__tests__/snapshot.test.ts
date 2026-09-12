@@ -261,7 +261,11 @@ function feature(
     coordinates: [24.9, 60.2],
   },
 ): Record<string, unknown> {
-  return { type: "Feature", geometry, properties: props };
+  return {
+    type: "Feature",
+    geometry,
+    properties: { dataUpdatedTime: "2026-09-12T07:00:00Z", ...props },
+  };
 }
 
 describe("parseDigitrafficSnapshot", () => {

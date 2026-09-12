@@ -9,6 +9,7 @@ export * from "./restriction-types.js";
 import type {
   PublishedRoadRestrictionDetailsV1,
   RestrictionCarrier,
+  RestrictionIssue,
   RoadRestrictionDetailsV1,
   RoadRestrictionFact,
 } from "./restriction-types.js";
@@ -79,6 +80,40 @@ export function toRestrictionInstant(value: unknown): string | null {
 }
 
 const MAX_TOKEN_DEPTH = 8;
+
+/** Bound diagnostic evidence without invalidating otherwise usable sibling facts. */
+export function boundRestrictionIssue(issue: RestrictionIssue): RestrictionIssue {
+  let truncated = issue.truncated === true;
+  const clip = (value: unknown, depth = 0): unknown => {
+    if (typeof value === "string") {
+      if (value.length <= RESTRICTION_TEXT_LIMIT) return value;
+      truncated = true;
+      return `${value.slice(0, RESTRICTION_TEXT_LIMIT - 1)}…`;
+    }
+    if (value === null || typeof value === "boolean") return value;
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (depth < MAX_TOKEN_DEPTH && typeof value === "object" && value !== null) {
+      if (Array.isArray(value)) return value.map((entry) => clip(entry, depth + 1));
+      return Object.fromEntries(
+        Object.entries(value).map(([key, entry]) => [key, clip(entry, depth + 1)]),
+      );
+    }
+    truncated = true;
+    return null;
+  };
+  const sourceText =
+    issue.sourceText === undefined ? undefined : (clip(issue.sourceText) as string);
+  const sourceTokens =
+    issue.sourceTokens === undefined
+      ? undefined
+      : (clip(issue.sourceTokens) as RestrictionIssue["sourceTokens"]);
+  return {
+    ...issue,
+    ...(sourceText === undefined ? {} : { sourceText }),
+    ...(sourceTokens === undefined ? {} : { sourceTokens }),
+    ...(truncated ? { truncated: true } : {}),
+  };
+}
 
 /**
  * Is this a finite JSON value safe to persist and publish? Rejects functions,
@@ -587,9 +622,13 @@ export function restrictionViewDeadline(
     // A view that is already stale, or that has no freshness basis at all,
     // must not extend any caller's cache lifetime.
     if (view.isStale || view.freshUntil === null) return at;
+    const evaluatedAt = parseRestrictionInstant(view.evaluatedAt);
+    if (evaluatedAt === null || evaluatedAt + RESTRICTION_VIEW_MAX_AGE_MS <= now) return at;
+    earliest = Math.min(earliest, evaluatedAt + RESTRICTION_VIEW_MAX_AGE_MS);
     for (const deadline of [view.freshUntil, view.nextTransitionAt]) {
       const epoch = deadline === null ? null : parseRestrictionInstant(deadline);
-      if (epoch === null) continue;
+      if (deadline === null) continue;
+      if (epoch === null) return at;
       if (epoch <= now) return at;
       if (epoch < earliest) earliest = epoch;
     }

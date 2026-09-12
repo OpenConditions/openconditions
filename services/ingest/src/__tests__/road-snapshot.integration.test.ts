@@ -495,6 +495,51 @@ describe("complete road snapshot acceptance — NDW", () => {
     expect(await ndwRows()).toHaveLength(0);
   }, 120_000);
 
+  it("withdraws cancelled records even when the publisher removes their locations", async () => {
+    await seedNdw("2026-09-12T07:14:00.000Z");
+    const cancelled = ndwXml
+      .replace(
+        /<com:validityStatus>[^<]+<\/com:validityStatus>/g,
+        "<com:validityStatus>cancelled</com:validityStatus>",
+      )
+      .replace(/<sit:locationReference\b[\s\S]*?<\/sit:locationReference>/g, "");
+    const result = await runSource(ndwFeed, {
+      sql,
+      fetch: serveXml(cancelled),
+      lookup: fakeLookup,
+      now: () => "2026-09-12T07:16:00.000Z",
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.snapshot).toMatchObject({ accepted: 0, terminal: 6, unlocatable: 0 });
+    expect(await ndwRows()).toHaveLength(0);
+  }, 120_000);
+
+  it("accepts an explained all-new OpenLR-only snapshot without a resolver and protects retained IDs", async () => {
+    const unlocatable = ndwXml.replace(
+      /<sit:locationReference\b[\s\S]*?<\/sit:locationReference>/g,
+      "<sit:locationReference><openlrBinary>ABcDefGHiJkL==</openlrBinary></sit:locationReference>",
+    );
+    const deps = {
+      sql,
+      fetch: serveXml(unlocatable),
+      lookup: fakeLookup,
+      now: () => "2026-09-12T07:16:00.000Z",
+    };
+    const first = await runSource(ndwFeed, deps);
+    expect(first.error).toBeUndefined();
+    expect(first.snapshot).toMatchObject({
+      accepted: 0,
+      terminal: 0,
+      unlocatable: 6,
+      uniqueCount: 6,
+    });
+    expect(await ndwRows()).toHaveLength(0);
+    await seedNdw("2026-09-12T07:14:00.000Z");
+    const failed = await runSource(ndwFeed, deps);
+    expect(failed.error).toMatch(/unlocatable/);
+    expect(await ndwRows()).toHaveLength(6);
+  }, 120_000);
+
   it("withdraws only a record absent from an accepted snapshot", async () => {
     await seedNdw("2026-09-12T07:14:00.000Z");
     const withoutLorry = ndwXml.replace(

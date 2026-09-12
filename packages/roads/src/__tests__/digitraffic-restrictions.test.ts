@@ -192,6 +192,42 @@ describe("digitraffic v2 restriction extraction", () => {
 });
 
 describe("digitraffic v2 restriction edge cases", () => {
+  it.each([null, "malformed", { restriction: { quantity: 4.5, unit: "m" } }])(
+    "retains a malformed restriction entry as partial evidence: %j",
+    (entry) => {
+      const props = propsOf("GUID50465935");
+      const announcements = props["announcements"] as Array<{
+        roadWorkPhases: Array<{ restrictions: unknown[] }>;
+      }>;
+      announcements[0]!.roadWorkPhases = [{ restrictions: [entry] }];
+      const details = digitrafficRestrictionDetails(props, src);
+      expect(details).toMatchObject({
+        completeness: "partial",
+        vehicleScope: "unknown",
+        facts: [],
+        issues: [expect.objectContaining({ code: "unsupported_type" })],
+      });
+      expect(isRoadRestrictionDetails(details)).toBe(true);
+    },
+  );
+
+  it("bounds oversized issue evidence without losing a valid sibling fact", () => {
+    const props = propsOf("GUID50465935");
+    const announcements = props["announcements"] as Array<{
+      roadWorkPhases: Array<{ restrictions: unknown[] }>;
+    }>;
+    announcements[0]!.roadWorkPhases[0]!.restrictions.push({
+      type: `vehicle ${"x".repeat(5000)}`,
+      restriction: { quantity: 1, unit: "m" },
+    });
+    const details = digitrafficRestrictionDetails(props, src)!;
+    expect(details.facts).toHaveLength(1);
+    expect(details.issues).toContainEqual(
+      expect.objectContaining({ code: "unsupported_type", truncated: true }),
+    );
+    expect(isRoadRestrictionDetails(details)).toBe(true);
+  });
+
   function withRestriction(
     entry: unknown,
     patchPhase: Record<string, unknown> = {},
