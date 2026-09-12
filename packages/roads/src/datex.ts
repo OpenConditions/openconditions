@@ -2,7 +2,12 @@ import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/
 import type { Confidence } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
-import { dedupeRoadEvents } from "./dedupe.js";
+import {
+  compareSnapshotRank,
+  snapshotFingerprint,
+  type RoadSnapshotRecord,
+  type RoadSnapshotReport,
+} from "./snapshot.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { isPlausibleWgs84, reprojectorFor } from "./reproject.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
@@ -1098,10 +1103,15 @@ function recordBody(rawRec: XmlObject): { body: XmlObject; className?: string } 
  * Unresolved markers bypass deduplication (which requires coordinate geometry)
  * and are appended after the deduped set.
  */
-export function parseDatexSituations(
-  input: string | Buffer,
-  src: SourceDescriptor
-): (RoadEvent | UnresolvedRoadEvent)[] {
+interface DatexParseResult {
+  withGeom: RoadEvent[];
+  unresolved: UnresolvedRoadEvent[];
+  records: RoadSnapshotRecord[];
+  errors: RoadSnapshotReport["errors"];
+  inputCount: number;
+}
+
+function parseDatexInternal(input: string | Buffer, src: SourceDescriptor): DatexParseResult {
   const doc = parseXmlDocument(input, {
     removeNSPrefix: true,
     ignoreAttributes: false,
@@ -1116,9 +1126,11 @@ export function parseDatexSituations(
   // opposite the DATEX/WGS84 "lat lon" default.
   const lonFirst = src.posListLonLat ?? false;
 
-  const records = listSituationRecords(doc);
+  const sourceRecords = listSituationRecords(doc);
   const withGeom: RoadEvent[] = [];
   const unresolved: UnresolvedRoadEvent[] = [];
+  const records: RoadSnapshotRecord[] = [];
+  const errors: RoadSnapshotReport["errors"] = [];
   let skippedAlertCOnly = 0;
   let resolvedFromTmc = 0;
   const unresolvedReasons = new Map<string, number>();
@@ -1129,7 +1141,7 @@ export function parseDatexSituations(
   /** Table editions publishers named that we do not hold. */
   const mismatchVersions = new Map<string, number>();
 
-  for (const { rec: rawRec, situationSeverity, situationId } of records) {
+  for (const { rec: rawRec, situationSeverity, situationId } of sourceRecords) {
     const { body: rec, className } = recordBody(rawRec);
     let geometry = resolveGeometry(rec, reproject, lonFirst);
     let locationTable: RoadEvent["locationTable"];
@@ -1182,9 +1194,32 @@ export function parseDatexSituations(
     }
 
     const openlr = !geometry ? collectOpenLr(rec) : undefined;
+    const recordId = recId(rec);
+    const prefixedId = `${src.id}:${recordId}`;
+    const sourceVersion = Number(getXmlChildText(rec, "situationRecordVersion"));
+    const version =
+      Number.isSafeInteger(sourceVersion) && sourceVersion >= 0 ? sourceVersion : null;
+    const rawVersionTime = text(rec["situationRecordVersionTime"]) ?? null;
+    const versionTime =
+      rawVersionTime !== null && Number.isFinite(Date.parse(rawVersionTime))
+        ? rawVersionTime
+        : null;
+    if (!recordId) {
+      errors.push({ code: "missing_identity", id: null, sourcePath: "situationRecord" });
+      continue;
+    }
 
     if (!geometry && !openlr) {
       skippedAlertCOnly++;
+      // A valid record we cannot place is accounted for, never fabricated at a
+      // centroid and never mistaken for a withdrawal upstream.
+      records.push({
+        id: prefixedId,
+        version,
+        versionTime,
+        fingerprint: `unlocatable:${prefixedId}`,
+        disposition: "unlocatable",
+      });
       continue;
     }
 
@@ -1269,24 +1304,32 @@ export function parseDatexSituations(
       isStale: false,
     };
 
-    if (geometry) {
-      withGeom.push({
-        ...shared,
-        geometry,
-        // Local schedule times are stamped with the zone of the closure's
-        // location (resolved from geometry), so the recurrence is unambiguous.
-        schedule: withTimezone(scheduleOf(timeSpec), scheduleTimezoneForGeometry(geometry)),
-        externalRefs: externalRefsOf(rec),
-        ...(locationTable ? { locationTable } : {}),
-      });
-    } else {
-      // openlr is defined here because we checked !geometry && !openlr above.
-      unresolved.push({
-        ...shared,
-        geometry: undefined,
-        externalRefs: { ...externalRefsOf(rec), openlr: openlr! },
-      });
-    }
+    const observation: RoadEvent | UnresolvedRoadEvent = geometry
+      ? {
+          ...shared,
+          geometry,
+          // Local schedule times are stamped with the zone of the closure's
+          // location (resolved from geometry), so the recurrence is unambiguous.
+          schedule: withTimezone(scheduleOf(timeSpec), scheduleTimezoneForGeometry(geometry)),
+          externalRefs: externalRefsOf(rec),
+          ...(locationTable ? { locationTable } : {}),
+        }
+      : {
+          ...shared,
+          geometry: undefined,
+          // openlr is defined here because we checked !geometry && !openlr above.
+          externalRefs: { ...externalRefsOf(rec), openlr: openlr! },
+        };
+    if (geometry) withGeom.push(observation as RoadEvent);
+    else unresolved.push(observation as UnresolvedRoadEvent);
+    records.push({
+      id: prefixedId,
+      version,
+      versionTime,
+      fingerprint: snapshotFingerprint(observation),
+      disposition: "accepted",
+      event: observation,
+    });
   }
 
   if (resolvedFromTmc > 0) {
@@ -1325,8 +1368,73 @@ export function parseDatexSituations(
     recordSkippedNoGeometry(src.id, skippedAlertCOnly);
   }
 
-  // Unresolved OpenLR markers (no geometry yet) must bypass dedupe, which
-  // requires a coordinate to compute merge distance. They are appended after
-  // the deduped set and resolved to geometry by the ingest resolve stage.
-  return [...dedupeRoadEvents(withGeom), ...unresolved];
+  // Unresolved OpenLR markers (no geometry yet) are appended after the located
+  // set and resolved to geometry by the ingest resolve stage.
+  return { withGeom, unresolved, records, errors, inputCount: records.length + errors.length };
+}
+
+/**
+ * Parse a DATEX II SituationPublication and return its observations.
+ *
+ * Records are collapsed by their own `situationRecord` identity, not by
+ * proximity: two distinct records in one situation are two facts, and merging
+ * co-located ones would silently drop a published record.
+ */
+export function parseDatexSituations(
+  input: string | Buffer,
+  src: SourceDescriptor
+): (RoadEvent | UnresolvedRoadEvent)[] {
+  const parsed = parseDatexInternal(input, src);
+  return [
+    ...collapseByIdentity(parsed.withGeom, parsed.records),
+    ...collapseByIdentity(parsed.unresolved, parsed.records),
+  ];
+}
+
+/**
+ * Keep one event per source identity, preserving first-seen order so existing
+ * consumers see a stable sequence. The retained revision is the highest-ranked
+ * one the reporting path would also select.
+ */
+function collapseByIdentity<T extends { id: string }>(
+  events: T[],
+  records: RoadSnapshotRecord[]
+): T[] {
+  const best = new Map<string, RoadSnapshotRecord>();
+  for (const record of records) {
+    const existing = best.get(record.id);
+    if (existing === undefined || compareSnapshotRank(record, existing) > 0) {
+      best.set(record.id, record);
+    }
+  }
+  const emitted = new Set<string>();
+  const out: T[] = [];
+  for (const event of events) {
+    if (emitted.has(event.id)) continue;
+    const winner = best.get(event.id);
+    emitted.add(event.id);
+    out.push((winner?.event as T | undefined) ?? event);
+  }
+  return out;
+}
+
+/**
+ * Account for every record of one DATEX partition, reporting rather than
+ * suppressing errors.
+ */
+export function parseDatexSnapshot(
+  input: string | Buffer,
+  src: SourceDescriptor
+): RoadSnapshotReport {
+  try {
+    const parsed = parseDatexInternal(input, src);
+    return { inputCount: parsed.inputCount, records: parsed.records, errors: parsed.errors };
+  } catch (err) {
+    console.warn(`[datex] ${src.id}: unreadable snapshot envelope:`, err);
+    return {
+      inputCount: 0,
+      records: [],
+      errors: [{ code: "invalid_envelope", id: null, sourcePath: "$" }],
+    };
+  }
 }
