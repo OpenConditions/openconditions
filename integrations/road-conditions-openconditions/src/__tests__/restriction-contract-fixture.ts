@@ -5,7 +5,12 @@ import {
   type SegmentConditionRow,
   segmentConditionsToJson,
 } from "@openconditions/publishers";
-import { type RoadEvent, roadAttributes } from "@openconditions/roads";
+import {
+  FEED_SOURCES,
+  parseDatexSituations,
+  type RoadEvent,
+  roadAttributes,
+} from "@openconditions/roads";
 import { featureCollectionToRoadConditionEvents } from "../toRoadConditionEvents.js";
 import type { RoadConditionEvent } from "../types.js";
 
@@ -164,6 +169,54 @@ function conditionalEvent(): RoadEvent & { sourceCheckedAt: string; freshnessWin
   };
 }
 
+const NDW_FIXTURE_URL = new URL(
+  "../../../../packages/roads/src/__tests__/fixtures/ndw/restrictions-v3.xml",
+  import.meta.url,
+);
+
+/** The NDW display records this contract covers, in a stable order. */
+const NDW_CONDITIONAL_IDS = [
+  "nl-ndw:RWS01_M1080891_NARROW_LANES_D2_WWA",
+  "nl-ndw:RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA",
+  "nl-ndw:NLRWS_0005382945_1",
+  "nl-ndw:NLRWS_0005406494_1",
+];
+
+/**
+ * The verified NDW conditional records, produced by the REAL DATEX parser from
+ * the reviewed capture. Only the fields the ingest run stamps at publication —
+ * the canonical feed URLs and the source check timestamps — are supplied here;
+ * every normalized value comes from the parser.
+ */
+function ndwEvents(): Array<RoadEvent & { sourceCheckedAt: string; freshnessWindowSec: number }> {
+  const feed = FEED_SOURCES.find((source) => source.id === "nl-ndw");
+  if (!feed || typeof feed.url !== "string") throw new Error("nl-ndw feed descriptor missing");
+  const src = {
+    id: feed.id,
+    attribution: feed.attribution,
+    country: feed.country,
+    license: feed.license,
+    licenseUrl: feed.licenseUrl,
+  };
+  const parsed = parseDatexSituations(readFileSync(NDW_FIXTURE_URL, "utf8"), src);
+  return NDW_CONDITIONAL_IDS.map((id) => {
+    const event = parsed.find((candidate) => candidate.id === id);
+    if (!event) throw new Error(`ndw fixture has no conditional record ${id}`);
+    if (!event.geometry) throw new Error(`ndw record ${id} has no geometry`);
+    if (!event.restrictionDetails) throw new Error(`ndw record ${id} lost its restriction details`);
+    return {
+      ...(event as RoadEvent),
+      fetchedAt: CONTRACT_EVALUATED_AT,
+      restrictionDetails: {
+        ...event.restrictionDetails,
+        source: { ...event.restrictionDetails.source, feedUrls: [feed.url as string] },
+      },
+      sourceCheckedAt: "2026-09-11T11:59:00.000Z",
+      freshnessWindowSec: 300,
+    };
+  });
+}
+
 /** The unconditional control event that must keep publishing normally. */
 function controlEvent(
   row: SegmentConditionRow,
@@ -213,6 +266,11 @@ function controlEvent(
  */
 function conditionalRow(control: SegmentConditionRow, event: RoadEvent): SegmentConditionRow {
   const attributes = roadAttributes(event);
+  const attribution = event.origin.attribution as {
+    provider: string;
+    license: string;
+    url?: string;
+  };
   return {
     ...control,
     id: event.id,
@@ -221,9 +279,9 @@ function conditionalRow(control: SegmentConditionRow, event: RoadEvent): Segment
     child_source_id: event.source,
     type: event.type,
     attributes,
-    source_license: "CC-BY-4.0",
-    license_url: "https://creativecommons.org/licenses/by/4.0/",
-    attribution: "Fintraffic / Digitraffic",
+    source_license: attribution.license,
+    license_url: attribution.url ?? null,
+    attribution: attribution.provider,
     source_uri: null,
   };
 }
@@ -248,8 +306,10 @@ export function buildRestrictionContractFixture(): RestrictionContractFixture {
   }
 
   const conditional = conditionalEvent();
-  const events = [controlEvent(control), conditional as unknown as Observation];
-  const rows = [control, conditionalRow(control, conditional)];
+  const ndw = ndwEvents();
+  const conditionals = [conditional, ...ndw];
+  const events = [controlEvent(control), ...(conditionals as unknown as Observation[])];
+  const rows = [control, ...conditionals.map((event) => conditionalRow(control, event))];
 
   const displayEvents = featureCollectionToRoadConditionEvents(
     observationsToGeoJSON(events, {}, { at }),
@@ -259,9 +319,11 @@ export function buildRestrictionContractFixture(): RestrictionContractFixture {
     evaluatedAt: at,
   });
 
-  // The conditional record must be visible for display…
-  if (!displayEvents.some((event) => event.id === conditional.id)) {
-    throw new Error("contract fixture lost the conditional display event");
+  // Every conditional record must be visible for display…
+  for (const event of conditionals) {
+    if (!displayEvents.some((displayed) => displayed.id === event.id)) {
+      throw new Error(`contract fixture lost the conditional display event ${event.id}`);
+    }
   }
   // …and absent from shared routing, with the control still emitted.
   if (segmentConditions.conditions.map((condition) => condition.id).join(",") !== control.id) {
@@ -271,16 +333,18 @@ export function buildRestrictionContractFixture(): RestrictionContractFixture {
         .join(",")}`,
     );
   }
-  // The same row without restriction evidence DOES emit, so the exclusion is
+  // Each same row without restriction evidence DOES emit, so every exclusion is
   // attributable to the restriction guard and not to any other condition.
-  const withoutEvidence = segmentConditionsToJson([withoutRestrictionEvidence(rows[1]!)], at, {
-    resolverVersion: input.resolverVersion,
-    evaluatedAt: at,
-  });
-  if (withoutEvidence.conditions.length !== 1) {
-    throw new Error(
-      "contract fixture control failed: the conditional row is excluded for a reason other than its restriction evidence",
-    );
+  for (const row of rows.slice(1)) {
+    const withoutEvidence = segmentConditionsToJson([withoutRestrictionEvidence(row)], at, {
+      resolverVersion: input.resolverVersion,
+      evaluatedAt: at,
+    });
+    if (withoutEvidence.conditions.length !== 1) {
+      throw new Error(
+        `contract fixture control failed: ${row.id} is excluded for a reason other than its restriction evidence`,
+      );
+    }
   }
 
   return {
@@ -288,7 +352,7 @@ export function buildRestrictionContractFixture(): RestrictionContractFixture {
     evaluatedAt: CONTRACT_EVALUATED_AT,
     displayEvents,
     segmentConditions,
-    expectedConditionalIds: [conditional.id],
+    expectedConditionalIds: conditionals.map((event) => event.id),
   };
 }
 

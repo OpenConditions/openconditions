@@ -43,7 +43,13 @@ describe("restriction display and routing contract", () => {
   it("shows the conditional record while emitting no shared-routing condition", () => {
     const fixture = buildRestrictionContractFixture();
     expect(fixture.evaluatedAt).toBe(CONTRACT_EVALUATED_AT);
-    expect(fixture.expectedConditionalIds).toEqual(["fi-digitraffic:GUID50465935"]);
+    expect(fixture.expectedConditionalIds).toEqual([
+      "fi-digitraffic:GUID50465935",
+      "nl-ndw:RWS01_M1080891_NARROW_LANES_D2_WWA",
+      "nl-ndw:RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA",
+      "nl-ndw:NLRWS_0005382945_1",
+      "nl-ndw:NLRWS_0005406494_1",
+    ]);
     const displayed = fixture.displayEvents.find(
       (event) => event.id === "fi-digitraffic:GUID50465935",
     )!;
@@ -84,6 +90,67 @@ describe("restriction display and routing contract", () => {
     expect(displayed.restrictionDetails!.source.modificationNotice).toContain(
       "Normalized by OpenConditions",
     );
+  });
+
+  it("publishes the NDW height condition as event applicability above 4.5 m", () => {
+    const fixture = buildRestrictionContractFixture();
+    const height = fixture.displayEvents.find((event) =>
+      event.id.endsWith(":RWS01_M1080891_NARROW_LANES_D2_WWA"),
+    )!;
+    expect(height.restrictionDetails!.facts[0]).toMatchObject({
+      meaning: "event_applies_when",
+      dimension: "height",
+      operator: "gt",
+      value: 4.5,
+      unit: "m",
+      state: "active",
+      direction: { basis: "alert_c", value: "positive", description: "aligned" },
+      scope: { kind: "event_road", phaseId: null, restrictionBinding: "not_established" },
+    });
+    expect(height.restrictionDetails!.source).toMatchObject({
+      recordId: "RWS01_M1080891_NARROW_LANES_D2_WWA",
+      recordVersion: "133",
+      publisher: "NDW / Rijkswaterstaat",
+      license: "CC0-1.0",
+      licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+    });
+    expect(height.restrictionDetails!.source.feedUrls).toEqual([
+      "https://opendata.ndw.nu/actueel_beeld.xml.gz",
+    ]);
+  });
+
+  it("publishes the NDW class and usage facts without formalizing their prose", () => {
+    const fixture = buildRestrictionContractFixture();
+    for (const id of ["nl-ndw:NLRWS_0005382945_1", "nl-ndw:NLRWS_0005406494_1"]) {
+      const lorry = fixture.displayEvents.find((event) => event.id === id)!;
+      expect(lorry.restrictionDetails!.facts).toHaveLength(1);
+      expect(lorry.restrictionDetails!.facts[0]).toMatchObject({
+        kind: "vehicle_class",
+        value: "truck",
+        meaning: "event_applies_when",
+      });
+      expect(lorry.restrictionDetails!.facts[0]!.context.comments).toEqual([
+        {
+          text: "Verbod voor vrachtverkeer en autobussen (>3500kg). Lijnbussen toegestaan.",
+          language: "nl",
+        },
+      ]);
+      // The prose names 3500 kg and line buses; neither becomes a fact.
+      expect(JSON.stringify(lorry.restrictionDetails!.facts)).not.toContain("gross_weight");
+    }
+    expect(
+      fixture.displayEvents.find((event) =>
+        event.id.endsWith(":RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA"),
+      )!.restrictionDetails!.facts[0],
+    ).toMatchObject({
+      kind: "vehicle_usage",
+      value: "emergency_services",
+      meaning: "event_applies_when",
+    });
+    expect(
+      fixture.displayEvents.find((event) => event.id === "nl-ndw:NLRWS_0005406494_1")!
+        .restrictionDetails!.facts[0]!.direction.value,
+    ).toBe("negative");
   });
 
   it("keeps the unconditional control publishing for display and routing", () => {

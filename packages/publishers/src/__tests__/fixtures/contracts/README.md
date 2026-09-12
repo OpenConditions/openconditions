@@ -32,15 +32,17 @@ the actual `segmentConditionsToJson` emitter, all at the frozen instant
 The wrapper carries `displayEvents` (what OpenMapX shows), `segmentConditions`
 (what a routing consumer receives) and `expectedConditionalIds` (records that
 must produce zero routing effects). It pairs one unconditional control closure
-with one conditional Finnish record, so a consumer test proves both that the
-control still applies and that the restriction-bearing record does not.
+with five conditional records — one Finnish weight limit and four Dutch records
+covering a height condition, an emergency-service usage and two lorry classes —
+so a consumer test proves both that the control still applies and that no
+restriction-bearing record does.
 
-The conditional graph row is **synthetic**: the eligible control row with its
-identity and attributes replaced by the actual normalized restriction event,
+Each conditional graph row is **synthetic**: the eligible control row with its
+identity and attributes replaced by an actual normalized restriction event,
 keeping every other eligibility condition satisfied. The producer test also
-emits that same row with only its restriction evidence removed and asserts it
-does publish, so the exclusion is attributable to the restriction guard rather
-than to rights, binding currency or evidence.
+emits each of those rows with only its restriction evidence removed and asserts
+it does publish, so every exclusion is attributable to the restriction guard
+rather than to rights, binding currency or evidence.
 
 The same payload is checked into OpenMapX at
 `services/data-manager/src/__tests__/fixtures/contracts/road-restrictions-v1.json`.
@@ -49,5 +51,12 @@ Regenerate deliberately with `UPDATE_RESTRICTION_CONTRACT=1` (refused under
 review the diff, copy it to OpenMapX and run both suites.
 
 The Fintraffic record is real reviewed source data under CC BY 4.0
-(https://creativecommons.org/licenses/by/4.0/); the control closure is authored
-test data whose licence fields only exercise provenance handling.
+(https://creativecommons.org/licenses/by/4.0/) and the NDW records are real
+reviewed source data under CC0 1.0
+(https://creativecommons.org/publicdomain/zero/1.0/); the control closure is
+authored test data whose licence fields only exercise provenance handling.
+
+The Dutch records are produced by the real DATEX parser reading the reduced
+capture in `packages/roads/src/__tests__/fixtures/ndw/restrictions-v3.xml`, so
+their comparator, class, usage, direction and source text are parser output
+rather than hand-written expectations.
