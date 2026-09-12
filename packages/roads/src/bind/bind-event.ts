@@ -78,7 +78,8 @@ export function toBindInput(ev: {
 type Shape =
   | { kind: "point"; point: LngLat }
   | { kind: "line"; coords: LngLat[] }
-  | { kind: "endpoints"; start: LngLat; end: LngLat };
+  | { kind: "endpoints"; start: LngLat; end: LngLat }
+  | { kind: "disconnected" };
 
 /** Reduce GeoJSON to the three shapes the resolver understands; areas return null. */
 function shapeOf(g: Geometry): Shape | null {
@@ -87,8 +88,23 @@ function shapeOf(g: Geometry): Shape | null {
       return { kind: "point", point: (g as Point).coordinates as LngLat };
     case "LineString":
       return { kind: "line", coords: (g as LineString).coordinates as LngLat[] };
-    case "MultiLineString":
-      return { kind: "line", coords: (g as MultiLineString).coordinates.flat() as LngLat[] };
+    case "MultiLineString": {
+      const parts = (g as MultiLineString).coordinates as LngLat[][];
+      // Concatenate components only where each one ends exactly where the next
+      // begins. Flattening a gap would invent a connector across whatever road
+      // lies between the components, and then bind the event to it.
+      for (let i = 1; i < parts.length; i++) {
+        const previous = parts[i - 1];
+        const next = parts[i];
+        if (!previous || previous.length === 0 || !next || next.length === 0) {
+          return { kind: "disconnected" };
+        }
+        const end = previous[previous.length - 1]!;
+        const start = next[0]!;
+        if (end[0] !== start[0] || end[1] !== start[1]) return { kind: "disconnected" };
+      }
+      return { kind: "line", coords: parts.flat() };
+    }
     case "MultiPoint": {
       const pts = (g as MultiPoint).coordinates as LngLat[];
       if (pts.length === 1) return { kind: "point", point: pts[0]! };
@@ -536,6 +552,10 @@ export function bindEvent(
   if (NOT_APPLICABLE_TYPES.has(input.type)) return failure("not_applicable", "area_type");
   const shape = shapeOf(input.geometry);
   if (!shape) return failure("not_applicable", "polygon_geometry");
+  // Checked before the generic polygon branch: a gapped MultiLineString is a
+  // real linear location we cannot join, not an area. Its source geometry is
+  // still published for display.
+  if (shape.kind === "disconnected") return failure("unresolved", "disconnected_geometry");
   if (spine.segments.length > BIND_DEFAULTS.maxSubgraphSegments)
     return failure("unresolved", "subgraph_too_large");
 
