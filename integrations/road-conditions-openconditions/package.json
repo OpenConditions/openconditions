@@ -1,7 +1,7 @@
 {
   "name": "@openconditions/road-conditions-openconditions",
   "version": "1.0.0",
-  "description": "OpenMapX road-conditions provider — exposes conditions.observations as RoadConditionEvents",
+  "description": "OpenMapX road-conditions provider \u2014 exposes conditions.observations as RoadConditionEvents",
   "license": "Apache-2.0",
   "type": "module",
   "private": true,
@@ -15,9 +15,11 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@openconditions/core": "workspace:*"
+    "@openconditions/core": "workspace:*",
+    "@openconditions/roads": "workspace:*"
   },
   "devDependencies": {
+    "@openconditions/publishers": "workspace:*",
     "@types/geojson": "^7946.0.16",
     "postgres": "^3.4.9",
     "tsup": "^8.5.1",

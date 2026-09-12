@@ -572,3 +572,51 @@ describe("severityRank", () => {
     expect(severityRank("low")).toBeGreaterThan(0);
   });
 });
+
+describe("observationsByBbox source freshness metadata", () => {
+  it("selects and projects source checked time and freshness window", async () => {
+    let sql = "";
+    const fc = await observationsByBbox(
+      {
+        async execute<T = unknown>(q: string): Promise<T> {
+          sql = q;
+          return [
+            {
+              id: "fi-digitraffic:GUID50465935",
+              source: "fi-digitraffic",
+              domain: "roads",
+              kind: "event",
+              type: "roadworks",
+              severity: "high",
+              headline: "Tietyö",
+              description: null,
+              attributes: { roads: [], isPlanned: true },
+              valid_from: null,
+              valid_to: null,
+              schedule: null,
+              data_updated_at: null,
+              geojson: JSON.stringify({ type: "Point", coordinates: [23.5, 60.1] }),
+              origin: { kind: "feed", attribution: { provider: "Fintraffic / Digitraffic" } },
+              category: "planned",
+              is_forecast: null,
+              is_stale: false,
+              evidence_state: null,
+              routing_eligible: null,
+              confidence_score: null,
+              privacy_class: null,
+              fuzziness: null,
+              source_checked_at: new Date("2026-09-12T07:13:00.000Z"),
+              freshness_window_sec: 600,
+            },
+          ] as T;
+        },
+      },
+      { domain: "roads", bbox: [19, 59, 32, 71], dedupe: false }
+    );
+    expect(sql).toContain("ss.last_success_at AS source_checked_at");
+    expect(fc.features[0]!.properties).toMatchObject({
+      source_checked_at: "2026-09-12T07:13:00.000Z",
+      freshness_window_sec: 600,
+    });
+  });
+});

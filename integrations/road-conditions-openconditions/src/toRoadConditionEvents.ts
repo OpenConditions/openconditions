@@ -1,4 +1,5 @@
 import type { Feature, FeatureCollection } from "geojson";
+import { isPublishedRoadRestrictionDetails } from "@openconditions/roads";
 import type {
   RoadConditionEvent,
   RoadConditionRoadRef,
@@ -10,6 +11,29 @@ import type {
 
 function str(v: unknown): string | undefined {
   return typeof v === "string" && v.length > 0 ? v : undefined;
+}
+
+/** OC road-event types the host names differently. */
+const HOST_TYPE_ALIASES: Record<string, RoadConditionType> = {
+  dimension_restriction: "restriction",
+  speed_restriction: "restriction",
+  public_event: "event",
+};
+
+/**
+ * Read the already-evaluated restriction envelope. Evaluation happens in
+ * OpenConditions; this only decides between "valid details", "present but
+ * unsupported" and "no claim at all" — never re-derives state.
+ */
+function restrictionFieldsOf(
+  p: Record<string, unknown>
+): Pick<RoadConditionEvent, "restrictionDetails" | "restrictionDetailsUnsupported"> {
+  if (Object.prototype.hasOwnProperty.call(p, "restrictionDetails")) {
+    return isPublishedRoadRestrictionDetails(p.restrictionDetails)
+      ? { restrictionDetails: p.restrictionDetails }
+      : { restrictionDetailsUnsupported: true };
+  }
+  return p.restrictionDetailsUnsupported === true ? { restrictionDetailsUnsupported: true } : {};
 }
 
 /**
@@ -97,7 +121,8 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
     source: str(p.source) ?? "",
     provider: "",
     ...(groupId ? { groupId } : {}),
-    type: (str(p.type) ?? "other") as RoadConditionType,
+    type: hostType(str(p.type)),
+    ...(str(p.subtype) ? { subtype: str(p.subtype) } : {}),
     severity: (str(p.severity) ?? "unknown") as RoadConditionSeverity,
     geometry: feature.geometry,
     headline: str(p.headline) ?? "",
@@ -138,7 +163,14 @@ export function featureToRoadConditionEvent(feature: Feature): RoadConditionEven
     ...(vehiclesAffected ? { vehiclesAffected } : {}),
     ...(binding ? { binding } : {}),
     ...(segments ? { segments } : {}),
+    ...restrictionFieldsOf(p),
   };
+}
+
+/** Map an OC road-event type onto the host vocabulary, preserving the rest. */
+function hostType(type: string | undefined): RoadConditionType {
+  if (type === undefined) return "other";
+  return HOST_TYPE_ALIASES[type] ?? (type as RoadConditionType);
 }
 
 export function featureCollectionToRoadConditionEvents(

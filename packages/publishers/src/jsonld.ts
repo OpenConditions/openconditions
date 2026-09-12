@@ -1,5 +1,9 @@
 import type { Observation } from "@openconditions/core";
-import { type ConditionsFeatureCollection, observationsToGeoJSON } from "./geojson.js";
+import {
+  type ConditionsFeatureCollection,
+  type GeoJsonOptions,
+  observationsToGeoJSON,
+} from "./geojson.js";
 import type { FeedInfo } from "./types.js";
 
 export type JsonLdFeatureCollection = ConditionsFeatureCollection & { "@context": unknown };
@@ -30,6 +34,7 @@ const CONTEXT: unknown = [
     metric: "sosa:observedProperty",
     value: "sosa:hasSimpleResult",
     unit: "schema:unitText",
+    restrictionDetails: "oc:restrictionDetails",
   },
 ];
 
@@ -46,9 +51,10 @@ function nodeType(kind: unknown): string {
  */
 export function observationsToJsonLd(
   obs: Observation[],
-  info: FeedInfo = {}
+  info: FeedInfo = {},
+  opts: GeoJsonOptions = {}
 ): JsonLdFeatureCollection {
-  const fc = observationsToGeoJSON(obs, info);
+  const fc = observationsToGeoJSON(obs, info, opts);
   const features = fc.features.map((f) => {
     const props = (f.properties ?? {}) as Record<string, unknown>;
     return {

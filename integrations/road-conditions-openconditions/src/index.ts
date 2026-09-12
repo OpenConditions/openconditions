@@ -1,5 +1,6 @@
 import type { FeatureCollection } from "geojson";
 import { observationsByBbox, type RoadConditionRoutingEvidence } from "@openconditions/core";
+import { projectRoadRestrictionDetails } from "@openconditions/roads";
 import { featureCollectionToRoadConditionEvents } from "./toRoadConditionEvents.js";
 import { featureCollectionToRoadFlowSegments } from "./toRoadFlowSegments.js";
 import type {
@@ -101,6 +102,33 @@ function changedCount(feed: RawFeedStatus): number | null {
 }
 
 /**
+ * Evaluate every feature's stored restriction semantics into the published
+ * view, using the generic read metadata joined from source status.
+ *
+ * Evaluation lives here rather than in the browser: state, freshness and the
+ * next transition are source interpretation, and the host must only display
+ * what OpenConditions computed.
+ */
+function evaluateRestrictionViews(fc: FeatureCollection, at: Date): void {
+  for (const feature of fc.features) {
+    const properties = feature.properties as Record<string, unknown> | null;
+    if (properties === null) continue;
+    const attributes = (properties["attributes"] ?? {}) as Record<string, unknown>;
+    const hasEnvelope = Object.prototype.hasOwnProperty.call(attributes, "restrictionDetails");
+    const marked = attributes["restrictionDetailsUnsupported"] === true;
+    if (!hasEnvelope && !marked) continue;
+    const checked = properties["source_checked_at"];
+    const window = properties["freshness_window_sec"];
+    const projection = projectRoadRestrictionDetails(attributes["restrictionDetails"], {
+      at,
+      sourceCheckedAt: typeof checked === "string" ? checked : null,
+      freshnessWindowSec: typeof window === "number" ? window : null,
+    });
+    Object.assign(properties, marked ? { restrictionDetailsUnsupported: true } : projection);
+  }
+}
+
+/**
  * Registers a `road-conditions` provider backed by the shared PostGIS
  * `conditions.observations` table that the OpenConditions ingest service writes.
  * The OpenMapX `road-conditions` orchestrator merges this with any other
@@ -132,7 +160,12 @@ export function setup(ctx: IntegrationContext): void {
       // Only narrow when the caller asked: routing reads unfiltered so it can
       // evaluate future closures at the chosen travel time.
       ...(opts?.horizonDays != null ? { horizonDays: opts.horizonDays } : {}),
+      // Display grouping belongs to the host: proximity dedupe here would
+      // collapse two distinct restriction-bearing records into one and lose a
+      // published fact.
+      dedupe: false,
     });
+    evaluateRestrictionViews(fc, new Date());
     const events = featureCollectionToRoadConditionEvents(fc);
     if (requireComplete && events.length !== fc.features.length)
       throw new Error("Incomplete routing observation projection");

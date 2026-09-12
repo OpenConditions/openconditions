@@ -464,6 +464,10 @@ export function registerPublishRoutes(
       // their binding + segments. The XML emitters and the Valhalla exclusions
       // project named fields and ignore the extra ones.
       includeBindings: true,
+      // Display grouping belongs to the consumer: proximity dedupe here would
+      // collapse two distinct restriction-bearing records and lose one record's
+      // facts and provenance.
+      dedupe: false,
     });
     return filterForPermissiveExport(obs);
   };

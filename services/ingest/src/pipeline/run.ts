@@ -142,6 +142,7 @@ export function stampSourceEvidence<T extends Observation>(obs: T, src: DomainFe
   if (obs.origin.kind !== "feed") return obs;
   return {
     ...obs,
+    ...stampRestrictionSource(obs, src),
     origin: {
       ...obs.origin,
       attribution: {
@@ -172,6 +173,44 @@ export function stampSourceEvidence<T extends Observation>(obs: T, src: DomainFe
       },
     },
   };
+}
+
+/**
+ * Replace the restriction envelope's rights and endpoint fields with the
+ * trusted feed configuration. A parser reads those from its descriptor, but a
+ * payload must never be able to state its own licence, publisher or feed URLs —
+ * that is a rights claim, and rights come from the reviewed configuration.
+ * Record identity, version, update time and supplied notices are the parser's
+ * and are preserved.
+ */
+function stampRestrictionSource<T extends Observation>(
+  obs: T,
+  src: DomainFeedSource
+): Partial<RestrictionCarrier> {
+  const carrier = obs as T & RestrictionCarrier;
+  if (!Object.prototype.hasOwnProperty.call(carrier, "restrictionDetails")) return {};
+  const details = carrier.restrictionDetails;
+  if (!isRoadRestrictionDetails(details)) return {};
+  const feedUrls = (Array.isArray(src.url) ? src.url : src.url ? [src.url] : []).filter(
+    (url): url is string => typeof url === "string" && /^https?:\/\//i.test(url)
+  );
+  if (src.licenseUrl === undefined) return {};
+  return {
+    restrictionDetails: {
+      ...details,
+      source: {
+        ...details.source,
+        sourceId: src.id,
+        feedUrls,
+        publisher: src.attribution,
+        license: src.license,
+        licenseUrl: src.licenseUrl,
+        attribution: src.attribution,
+        modificationNotice:
+          "Normalized by OpenConditions; source units and structure may be transformed.",
+      },
+    },
+  } as Partial<RestrictionCarrier>;
 }
 
 function valueAtPath(value: unknown, path: string): unknown {

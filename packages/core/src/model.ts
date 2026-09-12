@@ -213,6 +213,17 @@ export interface Observation {
   fetchedAt: string;
   expiresAt?: string;
   isStale: boolean;
+  /**
+   * When this observation's source was last checked successfully, joined from
+   * generic source status at read time. It is read metadata, never a
+   * persistence input and never part of the content hash: a poll that confirms
+   * unchanged content advances this without changing the observation.
+   * Distinct from `dataUpdatedAt` (what the publisher says) and `fetchedAt`
+   * (when this row's content last changed).
+   */
+  sourceCheckedAt?: string | null;
+  /** The source's configured freshness window in seconds, joined at read time. */
+  freshnessWindowSec?: number | null;
 
   relatedIds?: string[];
 

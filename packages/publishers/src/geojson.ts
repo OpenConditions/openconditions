@@ -1,4 +1,5 @@
 import type { Observation } from "@openconditions/core";
+import { projectRoadRestrictionDetails, type RestrictionCarrier } from "@openconditions/roads";
 import type { BBox, Feature, FeatureCollection } from "geojson";
 import { type FeedInfo } from "./types.js";
 
@@ -8,6 +9,13 @@ export type ConditionsFeatureCollection = FeatureCollection & { feed_info?: Feed
 export interface GeoJsonOptions {
   /** Include the verbatim `sourceRaw` passthrough in properties (off by default — it's large). */
   includeRaw?: boolean;
+  /**
+   * Evaluation instant for restriction display state. Injected so a frozen-time
+   * test is deterministic; defaults to now for live responses. Historical
+   * exports deliberately pass their own instant rather than inheriting "now",
+   * so a stored evaluation is never read back as current.
+   */
+  at?: Date;
 }
 
 /**
@@ -15,16 +23,42 @@ export interface GeoJsonOptions {
  * observation (minus geometry) is carried losslessly. `sourceRaw` is dropped
  * unless requested. Attribution is also flattened to convenience keys.
  */
-function properties(o: Observation, includeRaw: boolean): Record<string, unknown> {
+function properties(o: Observation, includeRaw: boolean, at: Date): Record<string, unknown> {
   const att = o.origin.attribution;
   const { geometry: _geometry, ...rest } = o as Observation & { geometry: unknown };
-  if (!includeRaw) delete (rest as Record<string, unknown>)["sourceRaw"];
-  return {
-    ...rest,
+  const bag = rest as Record<string, unknown>;
+  if (!includeRaw) delete bag["sourceRaw"];
+  const out: Record<string, unknown> = {
+    ...bag,
     provider: att.provider,
     license: att.license,
     attributionUrl: att.url ?? null,
   };
+  // Evaluate the restriction view here, at the publication edge, so the stored
+  // source semantics stay free of computed state. Absence must stay absence: an
+  // observation that says nothing about vehicles gets no marker at all.
+  const carrier = o as Observation & RestrictionCarrier;
+  if (
+    Object.prototype.hasOwnProperty.call(carrier, "restrictionDetails") ||
+    carrier.restrictionDetailsUnsupported === true
+  ) {
+    delete out["restrictionDetails"];
+    delete out["restrictionDetailsUnsupported"];
+    Object.assign(
+      out,
+      projectRoadRestrictionDetails(carrier.restrictionDetails, {
+        at,
+        sourceCheckedAt: o.sourceCheckedAt ?? null,
+        freshnessWindowSec: o.freshnessWindowSec ?? null,
+      })
+    );
+    // A producer-supplied unsupported marker survives its own projection.
+    if (carrier.restrictionDetailsUnsupported === true) {
+      out["restrictionDetailsUnsupported"] = true;
+      delete out["restrictionDetails"];
+    }
+  }
+  return out;
 }
 
 /** Bounding box [minLon, minLat, maxLon, maxLat] over all feature geometries (RFC 7946 §5). */
@@ -70,11 +104,12 @@ export function observationsToGeoJSON(
   opts: GeoJsonOptions = {}
 ): ConditionsFeatureCollection {
   const includeRaw = opts.includeRaw ?? false;
+  const at = opts.at ?? new Date();
   const features = obs.map((o): Feature => ({
     type: "Feature",
     id: o.id,
     geometry: o.geometry,
-    properties: properties(o, includeRaw),
+    properties: properties(o, includeRaw, at),
   }));
   const fc: ConditionsFeatureCollection = { type: "FeatureCollection", features };
   const bbox = computeBbox(features);

@@ -72,7 +72,13 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@openconditions/roads':
+        specifier: workspace:*
+        version: link:../../packages/roads
     devDependencies:
+      '@openconditions/publishers':
+        specifier: workspace:*
+        version: link:../../packages/publishers
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16

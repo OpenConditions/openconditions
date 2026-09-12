@@ -82,6 +82,9 @@ export interface ObservationRow {
   binding_confidence?: number | null;
   binding_direction_mode?: DirectionMode | null;
   segments?: SegmentSpan[] | null;
+  // Generic read metadata joined from source status, not persisted columns.
+  source_checked_at?: string | Date | null;
+  freshness_window_sec?: number | null;
 }
 
 /** Coerce a DB timestamp (Date from postgres-js, or string) to an ISO string. */
@@ -105,6 +108,8 @@ export function rowToObservation(row: ObservationRow): Observation {
     fetchedAt: iso(row.fetched_at) ?? "",
     expiresAt: iso(row.expires_at) ?? undefined,
     isStale: row.is_stale,
+    sourceCheckedAt: iso(row.source_checked_at),
+    freshnessWindowSec: row.freshness_window_sec ?? null,
     origin: row.origin,
     ...(row.instance_id != null ? { instanceId: row.instance_id } : {}),
     ...(row.canonical_id != null ? { canonicalId: row.canonical_id } : {}),
@@ -208,7 +213,8 @@ const OBSERVATION_SELECT_SQL = `
   o.instance_id, o.canonical_id, o.phenomenon_fingerprint, o.replaces, o.corroborations,
   o.fuzziness, o.confidence_score, o.severity_level, o.privacy_class,
   o.k_anonymity, o.dp_epsilon, o.dp_delta, o.source_uri, o.source_license,
-  ST_AsGeoJSON(o.geom) AS geojson`;
+  ST_AsGeoJSON(o.geom) AS geojson,
+  ss.last_success_at AS source_checked_at, ss.freshness_window_sec`;
 
 export async function readObservations(
   db: QueryRunner,

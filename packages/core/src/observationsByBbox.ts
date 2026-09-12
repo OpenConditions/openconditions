@@ -99,6 +99,9 @@ interface ObservationRow {
   binding_confidence?: number | null;
   binding_direction_mode?: DirectionMode | null;
   segments?: SegmentSpan[] | null;
+  // Generic read metadata joined from source status, not persisted columns.
+  source_checked_at?: string | Date | null;
+  freshness_window_sec?: number | null;
 }
 
 /**
@@ -157,6 +160,13 @@ function rowToFeature(row: ObservationRow, mergedSources?: Observation["mergedSo
           ? row.data_updated_at.toISOString()
           : (row.data_updated_at ?? null),
       is_stale: row.is_stale,
+      // Generic read metadata: the consumer needs it to evaluate and expire a
+      // restriction view. Distinct from publisher update time and row fetch time.
+      source_checked_at:
+        row.source_checked_at instanceof Date
+          ? row.source_checked_at.toISOString()
+          : (row.source_checked_at ?? null),
+      freshness_window_sec: row.freshness_window_sec ?? null,
       attribution,
       // Evidence labeling: the overlay + provider render a crowd report distinctly
       // (e.g. "clearly unconfirmed") and the routing path filters on these. Feed
@@ -283,6 +293,7 @@ export async function observationsByBbox(
       ST_AsGeoJSON(o.geom) AS geojson,
       o.origin,
       o.evidence_state, o.routing_eligible, o.confidence_score, o.privacy_class, o.fuzziness,
+      ss.last_success_at AS source_checked_at, ss.freshness_window_sec,
       ${IS_STALE_SQL} AS is_stale${bindingSelect}
     FROM conditions.observations o
     LEFT JOIN conditions.source_status ss ON ss.source = o.source${bindingJoin}

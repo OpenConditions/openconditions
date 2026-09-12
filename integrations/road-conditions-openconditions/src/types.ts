@@ -13,6 +13,7 @@
 
 import type { Geometry, LineString } from "geojson";
 import type { RoadConditionRoutingEvidence } from "@openconditions/core";
+import type { PublishedRoadRestrictionDetailsV1 } from "@openconditions/roads";
 
 /** Matches OpenMapX `IntegrationContext.db` (DatabaseClient). */
 export interface DatabaseClient {
@@ -90,6 +91,8 @@ export interface RoadConditionEvent {
   /** Provider-supplied identity of the source situation for display grouping. */
   groupId?: string;
   type: RoadConditionType;
+  /** The publisher's own record type, preserved when the canonical type is coarser. */
+  subtype?: string;
   severity: RoadConditionSeverity;
   geometry: Geometry;
   headline: string;
@@ -146,6 +149,19 @@ export interface RoadConditionEvent {
   segments?: Array<{ wayId: number; dir: "f" | "b"; startFraction: number; endFraction: number }>;
   /** Current, source-authorized graph evidence. Inner keys intentionally stay snake_case on the host wire. */
   routingEvidence?: RoadConditionRoutingEvidence;
+  /**
+   * Source-verified vehicle restrictions, already evaluated by OpenConditions.
+   * A published numeric fact is a statement about the source, not a permission
+   * to pass. The host displays it and must not re-evaluate or re-unit it.
+   */
+  restrictionDetails?: PublishedRoadRestrictionDetailsV1;
+  /**
+   * Set when a present restriction envelope could not be validated. The host
+   * treats it exactly like present details: it shows a generic unsupported
+   * notice and blocks shared routing, because an uninterpretable claim about
+   * vehicle applicability is not the same as no claim at all.
+   */
+  restrictionDetailsUnsupported?: true;
 }
 
 export interface RoadConditionsQuery {

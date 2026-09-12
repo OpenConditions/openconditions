@@ -242,3 +242,39 @@ describe("complete canonical reads", () => {
     await expect(readObservations(unavailable, opts)).rejects.toThrow(/unavailable/);
   });
 });
+
+describe("readObservations source freshness metadata", () => {
+  it("selects and projects source checked time and freshness window", async () => {
+    let sql = "";
+    const obs = await readObservations(
+      stubDb(
+        [
+          {
+            ...eventRow,
+            source_checked_at: new Date("2026-09-12T07:13:00.000Z"),
+            freshness_window_sec: 600,
+          },
+        ],
+        (q) => {
+          sql = q;
+        }
+      ),
+      { domain: "roads", bbox: [4, 51, 6, 53] }
+    );
+    expect(sql).toContain("ss.last_success_at AS source_checked_at");
+    expect(sql).toContain("ss.freshness_window_sec");
+    expect(obs[0]).toMatchObject({
+      sourceCheckedAt: "2026-09-12T07:13:00.000Z",
+      freshnessWindowSec: 600,
+    });
+  });
+
+  it("never implies freshness when the source has no successful poll", async () => {
+    const obs = await readObservations(
+      stubDb([{ ...eventRow, source_checked_at: null, freshness_window_sec: null }]),
+      { domain: "roads", bbox: [4, 51, 6, 53] }
+    );
+    expect(obs[0]!.sourceCheckedAt).toBeNull();
+    expect(obs[0]!.freshnessWindowSec).toBeNull();
+  });
+});
