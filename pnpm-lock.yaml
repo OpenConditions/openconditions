@@ -167,7 +167,7 @@ importers:
         version: 3.4.9
       structured-headers:
         specifier: ^2.0.3
-        version: 2.0.3
+        version: 2.1.0
       tuf-js:
         specifier: 6.0.0
         version: 6.0.0
@@ -2958,8 +2958,8 @@ packages:
   strnum@2.4.2:
     resolution: {integrity: sha512-rDG3Ah4TV0k1hWvLSzkZtMmLN9+eS+h3knq4MP6A42Y3Yh5qGNnOUs1jJkoSr8FG5dsL28c7KgkIBzSEykqtuw==}
 
-  structured-headers@2.0.3:
-    resolution: {integrity: sha512-4g5yxhlDMClRwCcfKfLeS7Z8yAVdOWGDADwm80Poh1iReU2KVKLGBlqwpHWJ2qovq0+ZIf1atAEO1eua2o9Rgg==}
+  structured-headers@2.1.0:
+    resolution: {integrity: sha512-ClzykN+XQVaSW5UfpOdEWfDplZ1Th7mISdaFvaC2+GjLTeBhGMJw83D/Rw9jPkHOml4oYd3EXaZhbz3gnE5nBQ==}
     engines: {node: '>=18', npm: '>=6'}
 
   sucrase@3.35.1:
@@ -4889,7 +4889,7 @@ snapshots:
 
   http-message-signatures@1.0.6:
     dependencies:
-      structured-headers: 2.0.3
+      structured-headers: 2.1.0
 
   husky@9.1.7: {}
 
@@ -5577,7 +5577,7 @@ snapshots:
     dependencies:
       anynum: 1.0.1
 
-  structured-headers@2.0.3: {}
+  structured-headers@2.1.0: {}
 
   sucrase@3.35.1:
     dependencies:
