@@ -315,8 +315,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       hyparquet:
-        specifier: 1.29.2
-        version: 1.29.2
+        specifier: 1.30.0
+        version: 1.30.0
       hyparquet-writer:
         specifier: 0.16.9
         version: 0.16.9
@@ -392,9 +392,6 @@ importers:
 
   services/contributions-api:
     dependencies:
-      '@openconditions/storage':
-        specifier: workspace:*
-        version: link:../../packages/storage
       '@cloudflare/privacypass-ts':
         specifier: 0.9.0
         version: 0.9.0
@@ -410,6 +407,9 @@ importers:
       '@openconditions/roads':
         specifier: workspace:*
         version: link:../../packages/roads
+      '@openconditions/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       fastify:
         specifier: ^5.12.1
         version: 5.12.1
@@ -484,12 +484,6 @@ importers:
 
   services/ingest:
     dependencies:
-      hyparquet-writer:
-        specifier: 0.16.9
-        version: 0.16.9
-      '@openconditions/storage':
-        specifier: workspace:*
-        version: link:../../packages/storage
       '@fastify/proxy-addr':
         specifier: ^5.1.0
         version: 5.1.0
@@ -511,12 +505,18 @@ importers:
       '@openconditions/roads':
         specifier: workspace:*
         version: link:../../packages/roads
+      '@openconditions/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       croner:
         specifier: ^10.0.1
         version: 10.0.1
       fastify:
         specifier: ^5.12.1
         version: 5.12.1
+      hyparquet-writer:
+        specifier: 0.16.9
+        version: 0.16.9
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
@@ -531,8 +531,8 @@ importers:
         specifier: ^2.2.0
         version: 2.2.0
       hyparquet:
-        specifier: 1.29.2
-        version: 1.29.2
+        specifier: 1.30.0
+        version: 1.30.0
       testcontainers:
         specifier: ^12.1.0
         version: 12.1.0
@@ -2264,6 +2264,9 @@ packages:
   hyparquet@1.29.2:
     resolution: {integrity: sha512-2LxinZ8X0JqToST+9OXcy9t3t5Q7ZneMTkSqUx/36Hv18pCTk/N71IWZc7APTSNG1Me39l/jjEvzZSZ0R+Knbw==}
 
+  hyparquet@1.30.0:
+    resolution: {integrity: sha512-HlvW+Luuo2RtvTzDnTJN4F2rXxKQMcmAVNnT1khytf1MR/vDS6ALeYyWwbU1X9rrOLLIG0fjRa0Y5q3XxvOXdA==}
+
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
 
@@ -2523,8 +2526,8 @@ packages:
   nan@2.28.0:
     resolution: {integrity: sha512-fTsDz99OTq2sVePhGdp4qQhggZFtKr64ZNVyVajRKtMOkJxYekplBh577PiJB12v/D3s2E5cGtOI45LWp6rnLQ==}
 
-  nanoid@3.3.18:
-    resolution: {integrity: sha512-DTg4MJbGMWkfi6VZFdNt2/caMbQy4Ou+Op/hJQvGEWcnVfoA1QA+xzRKAzw9jD6+GVOOeYr/mIcuDSdug6F6+w==}
+  nanoid@3.3.19:
+    resolution: {integrity: sha512-Y2tUNy4ouw6tq5oDSKeQYGOyhkUBhNOcGV/02KC+6kd9eDGqdZd++mjMiIDilrBYvjEnCYvVtsuHCuP+okSfug==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
@@ -4835,6 +4838,8 @@ snapshots:
 
   hyparquet@1.29.2: {}
 
+  hyparquet@1.30.0: {}
+
   ieee754@1.2.1: {}
 
   ignore@5.3.2: {}
@@ -5071,7 +5076,7 @@ snapshots:
   nan@2.28.0:
     optional: true
 
-  nanoid@3.3.18: {}
+  nanoid@3.3.19: {}
 
   natural-compare@1.4.0: {}
 
@@ -5179,7 +5184,7 @@ snapshots:
 
   postcss@8.5.28:
     dependencies:
-      nanoid: 3.3.18
+      nanoid: 3.3.19
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
