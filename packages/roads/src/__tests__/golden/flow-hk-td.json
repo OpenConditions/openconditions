@@ -1,0 +1,114 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:hk-td:AID01101",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            114.152525,
+            22.248091
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "hk-td",
+        "sourceFormat": "hk-td",
+        "accessMode": "bulk",
+        "recordId": "AID01101",
+        "attribution": {
+          "provider": "Transport Department, HKSAR",
+          "license": "HK-Gov-Open-Data",
+          "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "1e13f00dfba9f6718a7689fc839ceb38c31cc86e3ba46c3a9f5d60680f037346",
+      "domain": "roads",
+      "contentHash": "2f2207095ad645ba93105b0f6704b4e78f91adc228d56c903b053f38f4aa3825",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:hk-td:ad091ed777b4c6eeb856725184153cd09668e3b70cbe2eb75839448c65434f8c",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            114.152525,
+            22.248091
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "hk-td",
+        "sourceFormat": "hk-td",
+        "accessMode": "bulk",
+        "recordId": "AID01101",
+        "attribution": {
+          "provider": "Transport Department, HKSAR",
+          "license": "HK-Gov-Open-Data",
+          "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "6bcbcaec8b9ceb46ef1e90bab542f93fd50b327947c511f3fce0d93f40eb16d2",
+      "domain": "roads",
+      "contentHash": "4aeabf4dee3cf3b31f9515d1bb70f14d26416e2c64f446c678e2d0dd35cd1d31",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:hk-td:AID01101"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 90,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-09-19T17:55:30.000Z"
+      },
+      "aggregation": "mean"
+    }
+  ],
+  "situations": []
+}

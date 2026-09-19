@@ -87,6 +87,7 @@ export function parseLtaSpeedBands(input: string | Buffer, src: SourceDescriptor
         geometry,
         los: "unknown",
         speedKph,
+        site: { id: linkId },
         origin,
         dataUpdatedAt: now,
         fetchedAt: now,

@@ -1,0 +1,112 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:gb-webtris:5607",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -1.5,
+            52.4
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "gb-webtris",
+        "sourceFormat": "webtris",
+        "accessMode": "bulk",
+        "recordId": "5607",
+        "attribution": {
+          "provider": "gb-webtris",
+          "license": "CC-BY-4.0"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "dfaae729977f3bef21b51b0d9f7fef02569e88d898320acd904b949280cee86d",
+      "domain": "roads",
+      "contentHash": "e7b1584d24ebb0b0bcea34ae2ee090fb2df7e6a66d4f87c60c42906b08601352",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:gb-webtris:9200acb217c5e4cd880b063567648ba82b852885445c99345581630dad59ec98",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -1.5,
+            52.4
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "gb-webtris",
+        "sourceFormat": "webtris",
+        "accessMode": "bulk",
+        "recordId": "5607",
+        "attribution": {
+          "provider": "gb-webtris",
+          "license": "CC-BY-4.0"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "d60b5811641466a79cc81a932ca5fae8d04041382b77a580daa6bc4b151c5ab8",
+      "domain": "roads",
+      "contentHash": "511ff86c40aad365ff953315caefc458926398d061e3ef176aa0dcf7fe66c9e5",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:gb-webtris:5607"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 48.28032,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-03-04T23:59:00.000Z"
+      },
+      "aggregation": "mean"
+    }
+  ],
+  "situations": []
+}

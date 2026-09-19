@@ -182,6 +182,24 @@ export interface SituationHints {
   sourceUpdatedAt?: string;
   /** False when the parser synthesised `headline` because the source has none. */
   headlineFromSource?: false;
+  /**
+   * Set on a situation OpenConditions derived from a measurement rather than
+   * read from the source: the local id of the measurement site it came from.
+   */
+  derivedFromSite?: string;
+}
+
+/**
+ * What a flow parse record says about the measurement site behind it, beyond
+ * the old fields: the site is the feature, the record one reading of it.
+ */
+export interface FlowSiteHints {
+  /** The site's source-local id; every reading of one site shares it. */
+  id: string;
+  /** The stream within the site when the source reports directions separately (its own numbering). */
+  channel?: string;
+  /** Set when `los` was computed from speed and free-flow speed rather than stated by the source. */
+  losDerived?: true;
 }
 
 export interface RoadEvent extends ConditionEvent {
@@ -293,6 +311,7 @@ export type BaselineMethod = "native" | "derived" | "osm_maxspeed";
 export interface RoadFlow extends Measurement {
   domain: "roads";
   metric: "flow";
+  site?: FlowSiteHints;
   geometry: PointGeometry | LineStringGeometry;
   los: "free_flow" | "heavy" | "queuing" | "stationary" | "blocked" | "unknown";
   speedKph?: number;

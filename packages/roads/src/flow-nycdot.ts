@@ -1,6 +1,6 @@
 import type { LineString } from "geojson";
 import type { FlowParseResult } from "./flow.js";
-import { makeOrigin } from "./flow.js";
+import { localTimestamp, makeOrigin } from "./flow.js";
 import type { RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -53,7 +53,11 @@ export function parseNycDotFlow(input: string | Buffer, src: SourceDescriptor): 
     if (typeof speedRaw === "string" && speedRaw.trim() === "") continue;
     const mph = Number(speedRaw);
     if (!Number.isFinite(mph) || mph < 0) continue;
-    const measuredAt = typeof raw.data_as_of === "string" ? raw.data_as_of : now;
+    // Socrata publishes a floating timestamp: New York wall-clock time without an offset.
+    const measuredAt =
+      (typeof raw.data_as_of === "string"
+        ? localTimestamp(raw.data_as_of, "America/New_York")
+        : undefined) ?? now;
     flows.push({
       id: `${src.id}:${linkId}`,
       source: src.id,
@@ -69,6 +73,7 @@ export function parseNycDotFlow(input: string | Buffer, src: SourceDescriptor): 
       geometry,
       los: "unknown",
       speedKph: mph * MPH_TO_KPH,
+      site: { id: linkId },
       origin,
       dataUpdatedAt: measuredAt,
       fetchedAt: now,

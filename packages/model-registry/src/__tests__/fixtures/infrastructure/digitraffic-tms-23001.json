@@ -1,0 +1,55 @@
+{
+  "type": "Feature",
+  "id": 23001,
+  "geometry": {
+    "type": "Point",
+    "coordinates": [25.689529, 60.417002, 0.0]
+  },
+  "properties": {
+    "id": 23001,
+    "tmsNumber": 1,
+    "name": "vt7_Rita",
+    "direction1Municipality": "Kotka",
+    "direction1MunicipalityCode": 285,
+    "direction2Municipality": "Helsinki",
+    "direction2MunicipalityCode": 91,
+    "stationType": "DSL_6",
+    "calculatorDeviceType": null,
+    "sensors": [
+      5054, 5055, 5056, 5057, 5058, 5061, 5064, 5067, 5068, 5071, 5072, 5073, 5074, 5075, 5078,
+      5079, 5080, 5081, 5082, 5083, 5098, 5099, 5100, 5101, 5102, 5103, 5104, 5105, 5116, 5119,
+      5122, 5125, 5158, 5161, 5164, 5168, 5184, 5185, 5186, 5187
+    ],
+    "freeFlowSpeed1": 105.0,
+    "freeFlowSpeed2": 95.0,
+    "bearing": 60,
+    "annualMaintenanceTime": null,
+    "collectionInterval": 0,
+    "collectionStatus": "GATHERING",
+    "country": null,
+    "dataUpdatedTime": "2024-11-27T09:48:30Z",
+    "liviId": "Livi968639",
+    "municipality": "Porvoo",
+    "municipalityCode": 638,
+    "names": {
+      "fi": "Tie 7 Porvoo, Rita",
+      "sv": "Väg 7 Borgå, Rita",
+      "en": "Road 7 Porvoo, Rita"
+    },
+    "province": "Uusimaa",
+    "provinceCode": 1,
+    "purpose": "reaaliaika",
+    "repairMaintenanceTime": null,
+    "roadAddress": {
+      "roadNumber": 7,
+      "roadSection": 10,
+      "distanceFromRoadSectionStart": 950,
+      "carriageway": "DUAL_CARRIAGEWAY_RIGHT_IN_INCREASING_DIRECTION",
+      "side": "LEFT",
+      "contractArea": "",
+      "contractAreaCode": 360
+    },
+    "startTime": "2001-11-07T00:00:00Z",
+    "state": "OK"
+  }
+}

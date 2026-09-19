@@ -1,0 +1,202 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:fi-fintraffic:23001",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            24.9,
+            60.2
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-fintraffic",
+        "sourceFormat": "fintraffic-tms",
+        "accessMode": "bulk",
+        "recordId": "23001",
+        "attribution": {
+          "provider": "Fintraffic / Digitraffic",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://www.fintraffic.fi/en/fintraffic/open-data"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "308cfe8e05963d2b4a700e1c2e92ff9fc002d9ef118f6d0706bf580cfc195919",
+      "domain": "roads",
+      "contentHash": "ec7d72c04a0272e956767650696fedabb97d7b947b16f4917234bf3b8d506bcb",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "components": [
+        {
+          "key": "1",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "index": 1,
+            "direction": {
+              "value": "positive",
+              "basis": "road_reference"
+            },
+            "property": "traffic.speed"
+          }
+        },
+        {
+          "key": "2",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "index": 2,
+            "direction": {
+              "value": "negative",
+              "basis": "road_reference"
+            },
+            "property": "traffic.speed"
+          }
+        }
+      ],
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:fi-fintraffic:d5a1dd487701b01891bb2e43c280afdf8d282905c6ae367233e448d1a1ff3290",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            24.9,
+            60.2
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-fintraffic",
+        "sourceFormat": "fintraffic-tms",
+        "accessMode": "bulk",
+        "recordId": "23001/1",
+        "attribution": {
+          "provider": "Fintraffic / Digitraffic",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://www.fintraffic.fi/en/fintraffic/open-data"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "9a39d44e84ea1b196ac186bb3b9b90ca577bc03d65e179da8b5365b13b3489f0",
+      "domain": "roads",
+      "contentHash": "f993c45d7a7822bc814168c99ae894458b20097cfada432e93a5bbce50a868d3",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fi-fintraffic:23001",
+        "componentKey": "1"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 95,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-03-04T14:30:00.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:fi-fintraffic:1b141acce20785c8c51caba28fc03877c8c8df2ce862136159160bf0a31a8f14",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            24.9,
+            60.2
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-fintraffic",
+        "sourceFormat": "fintraffic-tms",
+        "accessMode": "bulk",
+        "recordId": "23001/2",
+        "attribution": {
+          "provider": "Fintraffic / Digitraffic",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://www.fintraffic.fi/en/fintraffic/open-data"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "7ba43e1599e82a2ba90dc96f5db7d2e90f60eb0022d23592fd0052faf148b0af",
+      "domain": "roads",
+      "contentHash": "729cdb82b157652536d156d04aaf63b50abb51a04f3c5fb85705474bf73a1df3",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fi-fintraffic:23001",
+        "componentKey": "2"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 42,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-03-04T14:30:00.000Z"
+      },
+      "aggregation": "mean"
+    }
+  ],
+  "situations": []
+}

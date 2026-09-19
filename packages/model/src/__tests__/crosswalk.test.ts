@@ -4,10 +4,16 @@ import { buildRegistry, RegistryError } from "../registry/build.js";
 import {
   buildCrosswalk,
   CrosswalkError,
+  featureCode,
   parseSituationCode,
   situationCode,
 } from "../registry/crosswalk.js";
-import { defineKind, extendVocabulary, type RegistryModule } from "../registry/define.js";
+import {
+  defineKind,
+  defineProperty,
+  extendVocabulary,
+  type RegistryModule,
+} from "../registry/define.js";
 import { testModule } from "./fixtures.js";
 
 const incident = defineKind({
@@ -69,6 +75,65 @@ describe("buildCrosswalk", () => {
   it("rejects a mapping for an unregistered type", () => {
     const wrong = defineKind({ ...incident, typeMappings: { fire: { wzdx: ["x"] } } });
     expect(() => buildCrosswalk([wrong])).toThrow(/"fire" is not registered/);
+  });
+});
+
+describe("feature and property crosswalks", () => {
+  const sign = defineKind({
+    class: "feature",
+    code: "vms",
+    domain: "roads",
+    version: "1.0",
+    description: "sign",
+    types: { matrix: [], arrow_board: [] },
+    details: () => ({}),
+    mappings: { osm: ["highway=variable_message_sign"] },
+    typeMappings: {
+      matrix: { datex2_v3: ["vmsType:colourGraphic"], wzdx: ["device_type:dynamic-message-sign"] },
+      arrow_board: { wzdx: ["device_type:arrow-board"] },
+    },
+  });
+  const speed = defineProperty({
+    code: "traffic.speed",
+    domain: "roads",
+    version: "1.0",
+    description: "speed",
+    result: { type: "quantity", unit: "km/h" },
+    subjects: [{ kind: "segments" }],
+    mappings: { datex2_v3: ["TrafficSpeed/averageVehicleSpeed", "TrafficSpeed/maximumSpeed"] },
+  });
+  const cw = buildCrosswalk([sign, speed]);
+
+  it("resolves source codes to feature classifications and properties", () => {
+    expect(cw.feature("datex2_v3", "vmsType:colourGraphic")).toEqual({
+      kind: "vms",
+      type: "matrix",
+    });
+    expect(cw.feature("wzdx", "device_type:arrow-board")).toEqual({
+      kind: "vms",
+      type: "arrow_board",
+    });
+    expect(cw.feature("wzdx", "device_type:camera")).toBeUndefined();
+    expect(cw.property("datex2_v3", "TrafficSpeed/maximumSpeed")).toBe("traffic.speed");
+    expect(cw.propertyTargetCode("datex2_v3", "traffic.speed")).toBe(
+      "TrafficSpeed/averageVehicleSpeed",
+    );
+  });
+
+  it("falls back from the type's emitter code to the kind's", () => {
+    expect(cw.featureTargetCode("osm", { kind: "vms", type: "matrix" })).toBe(
+      "highway=variable_message_sign",
+    );
+    expect(featureCode({ kind: "vms", type: "matrix" })).toBe("vms.matrix");
+  });
+
+  it("rejects an ingest code mapped to two properties", () => {
+    const volume = defineProperty({
+      ...speed,
+      code: "traffic.volume",
+      mappings: { datex2_v3: ["TrafficSpeed/maximumSpeed"] },
+    });
+    expect(() => buildCrosswalk([speed, volume])).toThrow(/mapped twice/);
   });
 });
 

@@ -98,6 +98,12 @@ export interface KindEntry<C extends string = string, S extends z.ZodRawShape = 
   refineDetails?: (details: Record<string, unknown>, ctx: z.RefinementCtx) => void;
   /** Feature kinds: the component kinds a feature of this kind may carry. */
   components?: readonly string[];
+  /**
+   * Feature kinds: traits (vocabulary `feature_trait`) a property can name as
+   * its subject instead of listing kinds, so a property of one domain module
+   * applies to feature kinds of another without either importing the other.
+   */
+  traits?: readonly string[];
   /** Situation kinds: effects nested inside `details` (roadworks phases), for id uniqueness and materialisation. */
   nestedEffects?: (details: Record<string, unknown>) => readonly { id: string }[];
 }
@@ -121,11 +127,37 @@ export type PropertyResultSpec =
   | { type: "money"; per?: readonly string[] }
   | { type: "structured"; schema: string };
 
+/**
+ * What a property may be observed about. A feature subject names feature
+ * kinds, traits (any feature kind carrying one), component kinds, or a mix;
+ * none of them means any feature.
+ */
 export type SubjectSpec =
-  | { kind: "feature"; featureKinds?: readonly string[]; componentKinds?: readonly string[] }
+  | {
+      kind: "feature";
+      featureKinds?: readonly string[];
+      traits?: readonly string[];
+      componentKinds?: readonly string[];
+    }
   | { kind: "segments" }
   | { kind: "location" }
   | { kind: "situation"; situationKinds?: readonly string[] };
+
+/**
+ * How long a property's history is kept and in what form. A series keeps
+ * every distinct result (`changeOnly`: only results that differ from the
+ * latest), raw rows for `rawDays`, then only its rollups; `latestOnly` keeps
+ * no history at all (camera images). Rollups aggregate numeric results; an
+ * hourly histogram keeps the distribution (bins of `binWidth` in the
+ * property's unit), because percentiles over a window cannot be rebuilt from
+ * per-hour percentiles.
+ */
+export interface Retention {
+  rawDays?: number;
+  changeOnly?: boolean;
+  latestOnly?: boolean;
+  rollup?: { period: "hourly" | "daily" } | { period: "hourly"; histogram: { binWidth: number } };
+}
 
 export interface PropertyEntry extends EntryBase {
   entry: "property";
@@ -137,12 +169,7 @@ export interface PropertyEntry extends EntryBase {
   qualifiers?: (k: Kernel) => z.ZodRawShape;
   freshnessWindowSec?: number;
   decayTtlSec?: { feed?: number; crowd?: number };
-  retention?: {
-    rawDays?: number;
-    rollup?: "hourly" | "hourly_histogram" | "daily";
-    changeOnly?: boolean;
-    latestOnly?: boolean;
-  };
+  retention?: Retention;
   privacyDefault?: PrivacyClass;
   /** Fusion order for this property, highest first; defaults to FUSION_TIERS. */
   fusionTiers?: readonly FusionTier[];

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<miv>
+  <meetpunt unieke_id="4970">
+    <tijd_waarneming>2026-07-10T16:21:00+01:00</tijd_waarneming>
+    <defect>0</defect><geldig>1</geldig>
+    <meetdata klasse_id="1"><verkeersintensiteit>30</verkeersintensiteit><voertuigsnelheid_harmonisch>95</voertuigsnelheid_harmonisch></meetdata>
+    <meetdata klasse_id="2"><verkeersintensiteit>120</verkeersintensiteit><voertuigsnelheid_harmonisch>88</voertuigsnelheid_harmonisch></meetdata>
+  </meetpunt>
+  <meetpunt unieke_id="29">
+    <defect>0</defect><geldig>0</geldig>
+    <meetdata klasse_id="1"><verkeersintensiteit>0</verkeersintensiteit><voertuigsnelheid_harmonisch>252</voertuigsnelheid_harmonisch></meetdata>
+  </meetpunt>
+</miv>

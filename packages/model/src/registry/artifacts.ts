@@ -1,6 +1,12 @@
 import { z } from "zod";
 import type { Registry } from "./build.js";
-import { type Mappings, majorOf, type SchemaVersion } from "./define.js";
+import {
+  type Mappings,
+  majorOf,
+  type Retention,
+  type SchemaVersion,
+  type SubjectSpec,
+} from "./define.js";
 
 /** Kernel schemas published under stable `$defs` names. */
 function kernelDefs(registry: Registry) {
@@ -109,6 +115,32 @@ export function jsonSchemaArtifacts(registry: Registry): Map<string, unknown> {
   return files;
 }
 
+function subjectText(s: SubjectSpec): string {
+  if (s.kind !== "feature") return s.kind;
+  const parts = [
+    ...(s.featureKinds ?? []),
+    ...(s.traits ?? []).map((t) => `trait ${t}`),
+    ...(s.componentKinds ?? []).map((c) => `component ${c}`),
+  ];
+  return parts.length === 0 ? "feature" : `feature (${parts.join(", ")})`;
+}
+
+function retentionText(r: Retention | undefined): string {
+  if (r === undefined) return "—";
+  if (r.latestOnly) return "latest only";
+  const parts: string[] = [];
+  if (r.changeOnly) parts.push("change-only");
+  if (r.rawDays !== undefined) parts.push(`raw ${r.rawDays} d`);
+  if (r.rollup !== undefined) {
+    parts.push(
+      "histogram" in r.rollup
+        ? `${r.rollup.period} histogram (bin ${r.rollup.histogram.binWidth})`
+        : `${r.rollup.period} rollup`,
+    );
+  }
+  return parts.join(", ");
+}
+
 const IDENTIFIER = /^[a-z_][a-z0-9_]*$/;
 
 function literal(value: string): string {
@@ -178,8 +210,8 @@ export function registryMarkdown(registry: Registry): string {
     out.push(
       "### Properties",
       "",
-      "| property | domain | version | result | subjects |",
-      "|---|---|---|---|---|",
+      "| property | domain | version | result | subjects | retention |",
+      "|---|---|---|---|---|---|",
     );
     for (const p of props) {
       const r = p.result;
@@ -192,7 +224,7 @@ export function registryMarkdown(registry: Registry): string {
               ? `structured (${r.schema})`
               : r.type;
       out.push(
-        `| \`${p.code}\` | ${p.domain} | ${p.version} | ${result} | ${p.subjects.map((s) => s.kind).join(", ")} |`,
+        `| \`${p.code}\` | ${p.domain} | ${p.version} | ${result} | ${p.subjects.map(subjectText).join("; ")} | ${retentionText(p.retention)} |`,
       );
     }
     out.push("");
@@ -246,6 +278,46 @@ export function registryMarkdown(registry: Registry): string {
       "| classification | target | codes |",
       "|---|---|---|",
       ...crosswalkRows,
+    );
+  }
+  const featureRows: string[] = [];
+  for (const k of registry.kinds("feature")) {
+    const rows: [string, Mappings | undefined][] = [
+      [k.code, k.mappings],
+      ...Object.entries(k.typeMappings ?? {}).map(
+        ([key, m]) => [`${k.code}.${key}`, m] as [string, Mappings],
+      ),
+    ];
+    for (const [code, mappings] of rows) {
+      for (const [target, codes] of Object.entries(mappings ?? {})) {
+        featureRows.push(`| \`${code}\` | ${target} | ${codes.map(cell).join(", ")} |`);
+      }
+    }
+  }
+  if (featureRows.length > 0) {
+    out.push(
+      "",
+      "### Feature crosswalks",
+      "",
+      "| classification | target | codes |",
+      "|---|---|---|",
+      ...featureRows,
+    );
+  }
+  const propertyRows: string[] = [];
+  for (const p of registry.properties()) {
+    for (const [target, codes] of Object.entries(p.mappings ?? {})) {
+      propertyRows.push(`| \`${p.code}\` | ${target} | ${codes.map(cell).join(", ")} |`);
+    }
+  }
+  if (propertyRows.length > 0) {
+    out.push(
+      "",
+      "### Property crosswalks",
+      "",
+      "| property | target | codes |",
+      "|---|---|---|",
+      ...propertyRows,
     );
   }
   const valueRows: string[] = [];

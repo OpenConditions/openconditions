@@ -1,30 +1,6 @@
-import { defineKind, defineVocabulary, LOS } from "@openconditions/model";
+import { defineKind, LOS } from "@openconditions/model";
 import { z } from "zod";
 import { roadsSeverity } from "./severity.js";
-
-/** Road surface states (DATEX RoadSurfaceConditionMeasurements, weather-related road conditions). */
-export const SURFACE_STATES = [
-  "dry",
-  "damp",
-  "wet",
-  "frost",
-  "ice",
-  "black_ice",
-  "snow",
-  "packed_snow",
-  "slush",
-  "standing_water",
-  "flooded",
-  "chemically_wet",
-  "unknown",
-] as const;
-
-export const surfaceStateVocabulary = defineVocabulary({
-  code: "surface_state",
-  values: SURFACE_STATES,
-  extensible: false,
-  description: "Road surface states.",
-});
 
 const DOMAIN = "roads";
 const V = "1.0";

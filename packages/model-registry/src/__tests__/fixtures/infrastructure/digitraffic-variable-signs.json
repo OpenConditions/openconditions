@@ -1,0 +1,119 @@
+{
+  "type": "FeatureCollection",
+  "dataUpdatedTime": "2026-09-19T15:59:07.950Z",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.587602, 60.231528]
+      },
+      "properties": {
+        "id": "VME/TIO012801",
+        "type": "INFORMATION",
+        "roadAddress": "1 6 3577",
+        "direction": "DECREASING",
+        "carriageway": "LEFT",
+        "displayValue": "189",
+        "additionalInformation": "3,5km",
+        "effectDate": "2026-09-16T10:24:13.860Z",
+        "reliability": "NORMAL",
+        "textRows": [
+          {
+            "screen": 1,
+            "rowNumber": 1,
+            "text": "PÄÄLLYSTEVAURIO"
+          },
+          {
+            "screen": 1,
+            "rowNumber": 2,
+            "text": "BELÄGGNINGSSKADA"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [23.192654, 60.411968]
+      },
+      "properties": {
+        "id": "KRM021663",
+        "type": "SPEEDLIMIT",
+        "roadAddress": "1 22 8464",
+        "direction": "INCREASING",
+        "carriageway": "RIGHT",
+        "effectDate": "2026-09-09T04:12:28.800Z",
+        "reliability": "NORMAL",
+        "textRows": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [25.689008, 60.956679]
+      },
+      "properties": {
+        "id": "KRM011571",
+        "type": "SPEEDLIMIT",
+        "roadAddress": "12 223 4011",
+        "direction": "DECREASING",
+        "carriageway": "LEFT",
+        "effectDate": "2026-09-16T09:37:39.970Z",
+        "reliability": "MALFUNCTION",
+        "textRows": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.816019, 60.181957]
+      },
+      "properties": {
+        "id": "VME01K601",
+        "type": "WARNING",
+        "roadAddress": "101 2 919",
+        "direction": "DECREASING",
+        "carriageway": "LEFT",
+        "effectDate": "2026-09-10T08:23:18.420Z",
+        "reliability": "NORMAL",
+        "textRows": []
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [25.05174, 60.279786]
+      },
+      "properties": {
+        "id": "VMETIO013009",
+        "type": "INFORMATION",
+        "roadAddress": "50 7 4133",
+        "carriageway": "RIGHT",
+        "effectDate": "2026-09-18T13:34:42.040Z",
+        "reliability": "NORMAL",
+        "textRows": [
+          {
+            "screen": 1,
+            "rowNumber": 1,
+            "text": "VIIVYTYS FÖRDRÖJNING"
+          },
+          {
+            "screen": 1,
+            "rowNumber": 2,
+            "text": "[tie_4] +0 min  [tie_7] +0 min"
+          },
+          {
+            "screen": 1,
+            "rowNumber": 3,
+            "text": "KEHÄ I RING via [tie_4] +0 min"
+          }
+        ]
+      }
+    }
+  ]
+}

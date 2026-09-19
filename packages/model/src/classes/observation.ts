@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Kernel } from "../kernel/effect-type.js";
-import { jcs, sha256Hex } from "../kernel/identity.js";
+import { jcs, parseRecordId, sha256Hex } from "../kernel/identity.js";
 import { checkRecordBase, recordBaseShape, type Stage } from "../kernel/record-base.js";
 import {
   BooleanResult,
@@ -218,6 +218,16 @@ export function observationSchema(
           path: ["location"],
           message: "a location subject needs an admin geocode or a geometry",
         });
+        return;
+      }
+      const parts = parseRecordId(o.id);
+      if (parts !== null && parts.localId !== observationLocalId(o as Keyable)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["id"],
+          message:
+            "an observation's local id is observationLocalId(subject, property, qualifiers, phenomenon start, forecast issue)",
+        });
       }
     });
 }
@@ -271,4 +281,36 @@ export function subjectKey(o: {
 /** RFC 8785 JCS of the qualifiers, "" when absent. */
 export function qualifierKey(qualifiers: Record<string, unknown> | undefined): string {
   return qualifiers === undefined ? "" : jcs(qualifiers);
+}
+
+type Keyable = Parameters<typeof subjectKey>[0] & {
+  property: string;
+  qualifiers?: Record<string, unknown>;
+  phenomenonTime: { instant: string } | { start: string; end: string };
+  forecast?: { issuedAt: string };
+};
+
+/**
+ * The local id of an observation: one point of one series. The series is
+ * (subject key, property, qualifier key); the point is the phenomenon start,
+ * normalised to UTC so two spellings of one instant are one point, plus the
+ * issue time for a forecast (several forecasts target the same time).
+ */
+export function observationLocalId(o: Keyable): string {
+  const t = o.phenomenonTime;
+  const start = new Date("instant" in t ? t.instant : t.start).toISOString();
+  return sha256Hex(
+    jcs([
+      subjectKey(o),
+      o.property,
+      qualifierKey(o.qualifiers),
+      start,
+      o.forecast === undefined ? null : new Date(o.forecast.issuedAt).toISOString(),
+    ]),
+  );
+}
+
+/** `oc:observation:<namespace>:<observationLocalId>`. */
+export function observationId(namespace: string, o: Keyable): string {
+  return `oc:observation:${namespace}:${observationLocalId(o)}`;
 }

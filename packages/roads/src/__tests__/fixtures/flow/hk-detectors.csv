@@ -1,0 +1,3 @@
+﻿AID_ID_Number,District,Road_EN,Road_TC,Road_SC,Easting,Northing,Latitude,Longitude,Direction,Rotation
+AID01101,Southern,Aberdeen Praya Road,x,x,833758,812147,22.248091,114.152525,South East,100
+BADLAT,Southern,Road,x,x,0,0,0,0,North,0

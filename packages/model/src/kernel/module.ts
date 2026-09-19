@@ -15,6 +15,11 @@ import {
   NORMALIZATION,
 } from "./effect.js";
 import {
+  featureTraitVocabulary,
+  sensorChannelKind,
+  surfaceStateVocabulary,
+} from "./infrastructure.js";
+import {
   CARRIAGEWAYS,
   DIRECTION_BASES,
   DIRECTION_VALUES,
@@ -173,6 +178,9 @@ export const kernelModule: RegistryModule = {
       [],
       "Feature amenities (DATEX ServiceFacilityType ∪ OCPI Facility ∪ TPIMS); domain packages contribute.",
     ),
+    surfaceStateVocabulary,
+    featureTraitVocabulary,
+    sensorChannelKind,
     ...KERNEL_EFFECTS,
     ...KERNEL_CHANGE_KINDS,
     defineSelector({

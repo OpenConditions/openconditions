@@ -2,8 +2,11 @@
 
 The roads registry module of the OpenConditions data model: the `roads`
 domain, its situation kinds with their types, subtypes and `details` schemas,
-the crosswalks to DATEX II, WZDx, Open511, IBI 511, TraFF, GTFS-RT and
-Road511, and the normalized vehicle-restriction contract
+the road infrastructure it measures and signs (measurement sites, variable
+message signs, cameras, their components and the `traffic.*`, `vms.display`,
+`camera.image` and `device.status` properties), the crosswalks to DATEX II,
+WZDx, Open511, IBI 511, TraFF, GTFS-RT and Road511, and the normalized
+vehicle-restriction contract
 (`RoadRestrictionDetailsV1`) with its mapping onto kernel effects.
 
 It holds definitions only and depends on `@openconditions/model` alone, so

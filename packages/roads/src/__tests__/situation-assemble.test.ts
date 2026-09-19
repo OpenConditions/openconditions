@@ -169,6 +169,34 @@ describe("situationDrafts — detours", () => {
   });
 });
 
+describe("situationDrafts — flow-derived congestion", () => {
+  it("marks congestion computed from a site's readings as derived from that site", () => {
+    const [d] = assemble([
+      event("S4:congestion", {
+        type: "congestion",
+        category: "conditions",
+        headline: "Traffic congestion (S4)",
+        situation: {
+          classification: { kind: "congestion", type: "congestion", subtype: "stationary" },
+          headlineFromSource: false,
+          derivedFromSite: "S4",
+        },
+      }),
+    ]);
+    const site = { class: "feature", id: "oc:feature:nl-ndw:S4" };
+    expect(d!["headline"]).toBeUndefined();
+    expect(d!["provenance"]).toMatchObject({
+      origin: "derived",
+      derivedFrom: { records: [site], method: "los_threshold", version: "1" },
+    });
+    expect(d!["details"]).toMatchObject({
+      kind: "congestion",
+      los: "stationary",
+      derivedFrom: site,
+    });
+  });
+});
+
 describe("situationDrafts — fields", () => {
   it("keeps a declared severity and never invents a headline or update time", () => {
     const [d] = assemble([

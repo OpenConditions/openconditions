@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "v": {
+      "type": "number",
+      "const": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "online",
+        "offline",
+        "stale",
+        "unknown"
+      ]
+    },
+    "imageUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "imageAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "thumbnailUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "streamUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "streamType": {
+      "type": "string",
+      "enum": [
+        "hls",
+        "rtsp",
+        "mjpeg",
+        "webrtc",
+        "mp4"
+      ]
+    },
+    "views": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "imageAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": [
+          "key",
+          "imageUrl"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "v",
+    "status"
+  ],
+  "additionalProperties": false
+}

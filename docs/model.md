@@ -95,12 +95,35 @@ registry-driven CHECK would make every new property a table-locking migration.
 Instead each service fails at boot when the database holds a code the running
 registry does not register (`assertStoredCodesRegistered`).
 
-Crosswalks to external vocabularies live on the entries: `mappings` on a kind,
-`typeMappings` per `type` or `type.subtype`, `valueMappings` per vocabulary
-value. `registry.crosswalk` resolves them both ways — a parser's source code to
-a classification, a classification to an emitter's code. A code of a format
-OpenConditions parses (DATEX II, WZDx, Open511, IBI 511) must resolve to one
-classification; emitter codes (TraFF, GTFS-RT, Road511) may be shared.
+Crosswalks to external vocabularies live on the entries: `mappings` on a kind
+or a property, `typeMappings` per `type` or `type.subtype`, `valueMappings` per
+vocabulary value. `registry.crosswalk` resolves them both ways — a parser's
+source code to a situation or feature classification, a property (DATEX
+`TrafficSpeed/averageVehicleSpeed` → `traffic.speed`) or a vocabulary value,
+and back to an emitter's code. A code of a format OpenConditions parses
+(DATEX II, WZDx, Open511, IBI 511) must resolve to one target; emitter codes
+(TraFF, GTFS-RT, Road511) may be shared. Domain modules write crosswalks as
+tables (`withSituationCrosswalks`, `withFeatureCrosswalks`,
+`withPropertyCrosswalks`, `vocabularyCrosswalk`), so a table stays the single
+source of truth and the entries carry what it says.
+
+A property names its subjects by feature kind, by component kind, or by
+trait: `device.status` (roads) applies to every kind with the `field_device`
+trait, including the weather module's `weather_station`, without either module
+importing the other. Blocks several domains share live in the kernel: the
+`sensor_channel` component (one measured value stream of a site), the
+`surface_state` vocabulary and the traits.
+
+A property's `retention` says what history its series keeps: every distinct
+result or only changes (`changeOnly`), raw rows for `rawDays`, an hourly or
+daily rollup of numeric results (an hourly histogram with a bin width, for
+percentiles over long windows), or only the latest value (`latestOnly`). The
+registry rejects a retention the result type cannot have.
+
+An observation's id is derived, not chosen: `observationId(namespace, o)`
+hashes its series (subject key, property, qualifier key) and its point (the
+phenomenon start in UTC, plus the issue time for a forecast), and validation
+rejects any other id. Two spellings of one instant are one observation.
 
 `defineChangeKind` names a kind of change between two revisions; the kernel's
 change kinds watch every content field, and `computeChangeKinds(registry,
@@ -147,8 +170,8 @@ artifacts test fail when either is stale.
 kinds (`incident`, `roadworks`, `closure`, `restriction`, `weather_condition`,
 `road_condition`, `road_hazard`, `public_event`, `authority`,
 `equipment_fault`, `security`, `winter_operation`, `pass_status`,
-`congestion`, `other`), the `surface_state` vocabulary, every roads wire
-format, the `lanes_change` change kind and a severity rule per kind.
+`congestion`, `other`), every roads wire format, the `lanes_change` change
+kind and a severity rule per kind.
 
 Crosswalk tables are the single source of truth: one table per source
 standard maps its codes to `kind.type[.subtype]` (DATEX II v2.3 and v3 record
@@ -188,6 +211,63 @@ multilingual text (one language is kept, tagged `und`), the declared severity's
 verbatim token, and the time of day of a DATEX one-off validity period (its
 bounds are read as local dates; the validity's start and end keep the instants).
 
+## Road infrastructure
+
+Three modules register the things along the road and what they measure:
+
+- `@openconditions/model-roads` adds the feature kinds `measurement_site`,
+  `vms` and `camera`, their components (`sign_face`, `camera_view`, and the
+  kernel's `sensor_channel`), the `traffic.*` properties, `vms.display`
+  (`vms_display@1`), `camera.image` (`camera_image@1`) and `device.status`.
+- `@openconditions/model-weather` registers the `weather` domain: the
+  `weather_station` kind and the measured and forecast `weather.*` and `road.*`
+  properties. Salt concentration is mass per volume (`kg/m3`), as every source
+  publishes it; wind direction keeps no hourly mean (bearings do not average).
+- `@openconditions/model-vehicles` registers the `vehicles` domain:
+  `service_vehicle` and `vehicle.position` (`vehicle_position@1`). A vehicle
+  has no fixed place, so its feature carries no geometry; each position
+  observation is located where it was reported.
+
+Crosswalk tables cover DATEX II `vmsType`, sign working status, device health,
+traffic status, precipitation type and road-surface condition type, the DATEX
+II measured values of both versions (every value of every measured-data class
+maps to a property or is marked `null`), and the WZDx device types and
+statuses. Coverage tests hold them against the vendored value lists.
+
+The flow parsers keep their parse records and add a site hint: the site's
+source id, the channel when the source reports directions separately, and
+whether the level of service was computed. `measurementDrafts` turns one parsed
+flow snapshot into `measurement_site` features and `traffic.speed`,
+`traffic.volume` and `traffic.los` observations. A level of service
+OpenConditions computed from speed and free-flow speed stays on the speed's
+`baseline` instead of becoming a reading of the source, and the congestion
+situations derived from flow point at their site (`derivedFrom`) and carry no
+invented headline. Golden files hold the sealed records of every flow format's
+fixture. What the flow parse records still lose, and the ingest switchover
+recovers: per-lane and per-vehicle-class values, occupancy, volumes most
+parsers read but drop, the measurement period, and the site-table metadata
+(names, lanes, sides) the loaders reduce to geometry.
+
+A fit check (`infrastructure-fit.test.ts`) maps real records of every kind
+onto the production registry: a Digitraffic road-weather station and weather
+camera, Digitraffic variable signs, NDW route-information panels (DATEX II 3),
+WSDOT arrow boards (WZDx 4.2), Ontario 511 cameras, a Digitraffic traffic
+station (DATEX II 3.7 site table and measured data) and Iowa DOT snowplows.
+What it found:
+
+- Numbered surface sensors (`TIE_1`, `TIE_2`) are separate series, so each is
+  a `sensor_channel` of its station.
+- Route panels mostly show bitmaps: a message can be a `graphic`, whose bytes
+  stay in the archived raw payload.
+- Arrow-board patterns are WZDx codes (`codeSystem: "wzdx"`), and a simple
+  DATEX matrix sign is a pictogram sign, not lane control.
+- Ontario publishes no image time and no licence, so its images are
+  `imageRedistribution: "unknown"` with status `unknown`.
+- Digitraffic's DATEX site table carries national-grid coordinates under WGS84
+  element names; positions come from the station metadata.
+- Digitraffic's snowplow tracking has no vehicle identity, so it does not fit
+  `service_vehicle`; Iowa's AVL feed, which names its trucks, does.
+
 ## Environment fit check
 
 Before the kernel hardened, three real environmental records were mapped onto
@@ -221,13 +301,15 @@ changed:
 
 <!-- generated:registry:start -->
 
-Kernel version `1.0`; modules: `kernel`, `roads`.
+Kernel version `1.0`; modules: `kernel`, `roads`, `weather`, `vehicles`.
 
 ### Domains
 
-| domain  | description                                                                                                                    |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `roads` | Traffic information about the road network: incidents, works, closures, restrictions and conditions, even when weather-caused. |
+| domain     | description                                                                                                                    |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `roads`    | Traffic information about the road network: incidents, works, closures, restrictions and conditions, even when weather-caused. |
+| `weather`  | Measured and forecast meteorological and road-weather data. Warnings are hazards.                                              |
+| `vehicles` | Service vehicles an authority operates and tracks: maintenance and response fleets.                                            |
 
 ### Vocabularies
 
@@ -238,10 +320,12 @@ Kernel version `1.0`; modules: `kernel`, `roads`.
 | `admin_geocode_scheme`    | yes        | `iso3166-2`, `nuts`, `fips`, `same`, `ugc`, `ars`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `aggregation`             | no         | `instantaneous`, `mean`, `median`, `min`, `max`, `sum`, `p85`, `typical`                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `amenity`                 | yes        | —                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `camera_status`           | no         | `online`, `offline`, `stale`, `unknown`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `carriageway`             | no         | `main`, `entry`, `exit`, `ramp`, `connector`, `service`, `collector`, `parallel`                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `cause`                   | yes        | `accident`, `breakdown`, `debris`, `spill`, `fire`, `police_activity`, `animal`, `congestion`, `hazard`, `weather`, `roadworks`, `maintenance`, `construction`, `public_event`, `security`, `infrastructure_failure`, `equipment_failure`, `flooding`, `landslide`, `avalanche`, `wildfire`, `strike`, `demonstration`, `medical_emergency`, `obstruction`, `abnormal_load`, `military`, `customs`, `unknown`, `other`                                                                                                                  |
 | `certainty`               | no         | `observed`, `likely`, `possible`, `unlikely`, `unknown`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `compliance`              | no         | `mandatory`, `advisory`, `unknown`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `device_status`           | no         | `ok`, `warning`, `error`, `offline`, `unknown`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `dimension`               | no         | `height`, `width`, `length`, `gross_weight`, `laden_weight`, `axle_load`, `axle_count`, `trailer_count`                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `direction_basis`         | no         | `road_reference`, `alert_c`, `openlr`, `bearing`, `compass`, `text`, `unknown`                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `direction_value`         | no         | `positive`, `negative`, `both`, `unknown`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -250,6 +334,7 @@ Kernel version `1.0`; modules: `kernel`, `roads`.
 | `evidence_state`          | no         | `self_reported`, `corroborated`, `externally_resolved`, `negated`, `expired`                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `extent`                  | no         | `point`, `linear`, `area`, `network`, `none`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `external_id_scheme`      | yes        | `ocpi:location`, `ocpi:evse`, `ocpi:connector`, `oicp:evse`, `emi3:evse`, `datex:site`, `datex:situation`, `datex:record`, `datex:parking`, `datex:vms`, `datex:refill_point`, `wzdx:road_event`, `wzdx:device`, `open511`, `tpims:site`, `nbi:structure`, `fra:crossing`, `cbp:port`, `cbsa:office`, `osm:node`, `osm:way`, `osm:relation`, `gers`, `wikidata`, `tmc`, `cap`, `gtfs:stop`, `gtfs:route`, `ocm`, `bnetza`, `cpo`, `provider`                                                                                            |
+| `feature_trait`           | yes        | `field_device`, `weather_sensing`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `fusion_tier`             | no         | `authoritative`, `operator`, `aggregator`, `community`, `crowd_externally_resolved`, `crowd_corroborated`, `crowd_self_reported`                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `fuzziness`               | no         | `exact`, `low_res`, `medium_res`, `end_unknown`, `start_unknown`, `extent_unknown`                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `geometry_origin`         | no         | `source`, `site_table`, `tmc_table`, `openlr_decoded`, `osm`, `crowd_device`, `derived`, `none`                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -262,6 +347,7 @@ Kernel version `1.0`; modules: `kernel`, `roads`.
 | `normalization`           | no         | `complete`, `partial`, `unsupported`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `origin`                  | no         | `feed`, `crowd`, `federation`, `derived`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `payment_method`          | no         | `cash`, `credit_card`, `debit_card`, `contactless`, `app`, `rfid`, `sms`, `membership`, `direct_debit`, `free`, `other`                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `precipitation_type`      | no         | `none`, `rain`, `snow`, `sleet`, `hail`, `drizzle`, `freezing_rain`                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `privacy_class`           | no         | `authoritative`, `aggregate`, `k_anon`, `dp_noised`, `crowd_pseudonym`                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `record_class`            | no         | `feature`, `situation`, `observation`, `offer`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `relation`                | no         | `part_of`, `monitors`, `controls`, `serves`, `group`, `next_occurrence`, `first_occurrence`, `related_work_zone`, `caused_by`, `detour_for`, `supersedes`, `update_of`, `cancels`, `related`                                                                                                                                                                                                                                                                                                                                            |
@@ -278,6 +364,7 @@ Kernel version `1.0`; modules: `kernel`, `roads`.
 | `vehicle_class`           | no         | `motor_vehicle`, `car`, `van`, `truck`, `hgv`, `bus`, `coach`, `motorcycle`, `moped`, `bicycle`, `pedestrian`, `trailer`, `caravan`, `agricultural`, `emergency`, `taxi`, `oversize`, `abnormal_load`                                                                                                                                                                                                                                                                                                                                   |
 | `vehicle_fuel`            | no         | `electric`, `hydrogen`, `lpg`, `cng`, `lng`, `diesel`, `petrol`, `hybrid`                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `vehicle_usage`           | no         | `emergency_services`, `public_transport`, `taxi`, `delivery`, `residents`, `permit_holders`, `military`, `agricultural`, `car_sharing`                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `vms_working_status`      | no         | `in_service`, `out_of_service`, `fault`, `blank`, `unknown`                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 ### Situation kinds
 
@@ -298,6 +385,57 @@ Kernel version `1.0`; modules: `kernel`, `roads`.
 | `pass_status`       | roads  | 1.0     | `pass` (open, closed, restricted)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `congestion`        | roads  | 1.0     | `congestion` (queuing, stationary, stop_and_go, heavy, slow)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `other`             | roads  | 1.0     | `other`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+
+### Feature kinds
+
+| kind               | domain   | version | types                                                                                                 |
+| ------------------ | -------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| `vms`              | roads    | 1.0     | `textual`; `pictogram`; `matrix`; `lane_control`; `hybrid`; `arrow_board`; `flashing_beacon`; `other` |
+| `camera`           | roads    | 1.0     | `traffic`; `landscape`; `city`; `weather`; `beach`; `other`                                           |
+| `measurement_site` | roads    | 1.0     | `traffic`; `combined`                                                                                 |
+| `weather_station`  | weather  | 1.0     | —                                                                                                     |
+| `service_vehicle`  | vehicles | 1.0     | `snowplow`; `salt_spreader`; `sweeper`; `incident_response`; `patrol`; `mower`; `other`               |
+
+### Component kinds
+
+| kind             | domain | version | types |
+| ---------------- | ------ | ------- | ----- |
+| `sensor_channel` | —      | 1.0     | —     |
+| `sign_face`      | —      | 1.0     | —     |
+| `camera_view`    | —      | 1.0     | —     |
+
+### Properties
+
+| property                      | domain   | version | result                        | subjects                                                            | retention                         |
+| ----------------------------- | -------- | ------- | ----------------------------- | ------------------------------------------------------------------- | --------------------------------- |
+| `traffic.speed`               | roads    | 1.0     | quantity (km/h)               | feature (measurement_site, component sensor_channel); segments      | raw 7 d, hourly histogram (bin 2) |
+| `traffic.volume`              | roads    | 1.0     | quantity (1/h)                | feature (measurement_site, component sensor_channel)                | raw 7 d, hourly rollup            |
+| `traffic.occupancy`           | roads    | 1.0     | quantity (%)                  | feature (measurement_site, component sensor_channel)                | raw 7 d, hourly rollup            |
+| `traffic.los`                 | roads    | 1.0     | category (los)                | feature (measurement_site, component sensor_channel); segments      | change-only                       |
+| `traffic.vehicle_class_speed` | roads    | 1.0     | vector (km/h)                 | feature (measurement_site, component sensor_channel)                | raw 7 d                           |
+| `vms.display`                 | roads    | 1.0     | structured (vms_display)      | feature (vms, component sign_face)                                  | change-only, raw 30 d             |
+| `camera.image`                | roads    | 1.0     | structured (camera_image)     | feature (camera, component camera_view)                             | latest only                       |
+| `device.status`               | roads    | 1.0     | category (device_status)      | feature (trait field_device)                                        | change-only                       |
+| `weather.air_temperature`     | weather  | 1.0     | quantity (Cel)                | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `weather.dew_point`           | weather  | 1.0     | quantity (Cel)                | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `weather.humidity`            | weather  | 1.0     | quantity (%)                  | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `weather.visibility`          | weather  | 1.0     | quantity (m)                  | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `weather.wind_speed`          | weather  | 1.0     | quantity (m/s)                | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `weather.wind_gust`           | weather  | 1.0     | quantity (m/s)                | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `weather.wind_direction`      | weather  | 1.0     | quantity (deg)                | feature (trait weather_sensing, component sensor_channel)           | raw 7 d                           |
+| `weather.precipitation_rate`  | weather  | 1.0     | quantity (mm/h)               | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `weather.precipitation_type`  | weather  | 1.0     | category (precipitation_type) | feature (trait weather_sensing, component sensor_channel)           | change-only                       |
+| `road.surface_state`          | weather  | 1.0     | category (surface_state)      | feature (trait weather_sensing, component sensor_channel); segments | change-only                       |
+| `road.surface_temperature`    | weather  | 1.0     | quantity (Cel)                | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `road.subsurface_temperature` | weather  | 1.0     | quantity (Cel)                | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `road.freezing_point`         | weather  | 1.0     | quantity (Cel)                | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `road.friction`               | weather  | 1.0     | quantity (1)                  | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `road.water_film`             | weather  | 1.0     | quantity (mm)                 | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `road.snow_depth`             | weather  | 1.0     | quantity (mm)                 | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `road.ice_thickness`          | weather  | 1.0     | quantity (mm)                 | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `road.salt_concentration`     | weather  | 1.0     | quantity (kg/m3)              | feature (trait weather_sensing, component sensor_channel)           | raw 7 d, hourly rollup            |
+| `road.condition_forecast`     | weather  | 1.0     | category (surface_state)      | segments; location                                                  | raw 2 d                           |
+| `vehicle.position`            | vehicles | 1.0     | structured (vehicle_position) | feature (service_vehicle)                                           | raw 2 d                           |
 
 ### Effects
 
@@ -320,6 +458,14 @@ Kernel version `1.0`; modules: `kernel`, `roads`.
 | selector   | version | description                                                       |
 | ---------- | ------- | ----------------------------------------------------------------- |
 | `features` | 1.0     | Features (or, with componentKey, components) a situation affects. |
+
+### Structured result schemas
+
+| schema             | version | description                                                   |
+| ------------------ | ------- | ------------------------------------------------------------- |
+| `vms_display`      | 1.0     | What a sign face shows: text pages, pictograms, lane signals. |
+| `camera_image`     | 1.0     | A camera's current image or stream, per view.                 |
+| `vehicle_position` | 1.0     | Where a vehicle is and what it is doing.                      |
 
 ### Change kinds
 
@@ -915,90 +1061,208 @@ Kernel version `1.0`; modules: `kernel`, `roads`.
 | `other.other`                                  | gtfs_rt   | UNKNOWN_CAUSE                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `other.other`                                  | road511   | advisory                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
+### Feature crosswalks
+
+| classification             | target    | codes                                                                        |
+| -------------------------- | --------- | ---------------------------------------------------------------------------- |
+| `vms.matrix`               | datex2_v3 | vmsType:colourGraphic, vmsType:monochromeGraphic, vmsType:fullMatrixSign     |
+| `vms.matrix`               | datex2_v2 | vmsType:colourGraphic, vmsType:monochromeGraphic                             |
+| `vms.matrix`               | wzdx      | device_type:dynamic-message-sign                                             |
+| `vms.pictogram`            | datex2_v3 | vmsType:simpleMatrixSign, vmsType:rotatingPrismSign, vmsType:rollerBlindSign |
+| `vms.pictogram`            | datex2_v2 | vmsType:matrixSign, vmsType:continuousSign                                   |
+| `vms.other`                | datex2_v3 | vmsType:virtualVms, vmsType:other                                            |
+| `vms.other`                | datex2_v2 | vmsType:other                                                                |
+| `vms.arrow_board`          | wzdx      | device_type:arrow-board                                                      |
+| `vms.hybrid`               | wzdx      | device_type:hybrid-sign                                                      |
+| `vms.flashing_beacon`      | wzdx      | device_type:flashing-beacon                                                  |
+| `camera.traffic`           | wzdx      | device_type:camera                                                           |
+| `measurement_site.traffic` | wzdx      | device_type:traffic-sensor                                                   |
+
+### Property crosswalks
+
+| property                      | target    | codes                                                                                                                                                           |
+| ----------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `traffic.speed`               | datex2_v3 | TrafficSpeed/averageVehicleSpeed, TrafficSpeed/minimumSpeed, TrafficSpeed/maximumSpeed                                                                          |
+| `traffic.speed`               | datex2_v2 | TrafficSpeed/averageVehicleSpeed                                                                                                                                |
+| `traffic.volume`              | datex2_v3 | TrafficFlow/vehicleFlow                                                                                                                                         |
+| `traffic.volume`              | datex2_v2 | TrafficFlow/vehicleFlow                                                                                                                                         |
+| `traffic.occupancy`           | datex2_v3 | TrafficConcentration/occupancy                                                                                                                                  |
+| `traffic.occupancy`           | datex2_v2 | TrafficConcentration/occupancy                                                                                                                                  |
+| `traffic.los`                 | datex2_v3 | TrafficStatus/trafficStatus                                                                                                                                     |
+| `traffic.los`                 | datex2_v2 | TrafficStatus/trafficStatus                                                                                                                                     |
+| `weather.air_temperature`     | datex2_v3 | TemperatureInformation/temperature/airTemperature, TemperatureInformation/temperature/maximumTemperature, TemperatureInformation/temperature/minimumTemperature |
+| `weather.air_temperature`     | datex2_v2 | TemperatureInformation/temperature/airTemperature, TemperatureInformation/temperature/maximumTemperature, TemperatureInformation/temperature/minimumTemperature |
+| `weather.dew_point`           | datex2_v3 | TemperatureInformation/temperature/dewPointTemperature                                                                                                          |
+| `weather.dew_point`           | datex2_v2 | TemperatureInformation/temperature/dewPointTemperature                                                                                                          |
+| `weather.humidity`            | datex2_v3 | HumidityInformation/humidity/relativeHumidity                                                                                                                   |
+| `weather.humidity`            | datex2_v2 | HumidityInformation/humidity/relativeHumidity                                                                                                                   |
+| `weather.visibility`          | datex2_v3 | VisibilityInformation/visibility/minimumVisibilityDistance                                                                                                      |
+| `weather.visibility`          | datex2_v2 | VisibilityInformation/visibility/minimumVisibilityDistance                                                                                                      |
+| `weather.wind_speed`          | datex2_v3 | WindInformation/wind/windSpeed                                                                                                                                  |
+| `weather.wind_speed`          | datex2_v2 | WindInformation/wind/windSpeed                                                                                                                                  |
+| `weather.wind_gust`           | datex2_v3 | WindInformation/wind/maximumWindSpeed                                                                                                                           |
+| `weather.wind_gust`           | datex2_v2 | WindInformation/wind/maximumWindSpeed                                                                                                                           |
+| `weather.wind_direction`      | datex2_v3 | WindInformation/wind/windDirectionBearing, WindInformation/wind/windDirectionCompass                                                                            |
+| `weather.wind_direction`      | datex2_v2 | WindInformation/wind/windDirectionBearing, WindInformation/wind/windDirectionCompass                                                                            |
+| `weather.precipitation_rate`  | datex2_v3 | PrecipitationInformation/precipitationDetail/precipitationIntensity                                                                                             |
+| `weather.precipitation_rate`  | datex2_v2 | PrecipitationInformation/precipitationDetail/precipitationIntensity                                                                                             |
+| `weather.precipitation_type`  | datex2_v3 | PrecipitationInformation/noPrecipitation, PrecipitationInformation/precipitationDetail/precipitationType                                                        |
+| `weather.precipitation_type`  | datex2_v2 | PrecipitationInformation/noPrecipitation, PrecipitationInformation/precipitationDetail/precipitationType                                                        |
+| `road.surface_state`          | datex2_v3 | RoadSurfaceConditionInformation/weatherRelatedRoadConditionType                                                                                                 |
+| `road.surface_state`          | datex2_v2 | RoadSurfaceConditionInformation/weatherRelatedRoadConditionType                                                                                                 |
+| `road.surface_temperature`    | datex2_v3 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/roadSurfaceTemperature                                                                         |
+| `road.surface_temperature`    | datex2_v2 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/roadSurfaceTemperature                                                                         |
+| `road.subsurface_temperature` | datex2_v3 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/temperatureBelowOrAboveRoadSurface/temperatureBelowOrAboveRoadSurface                          |
+| `road.freezing_point`         | datex2_v3 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/protectionTemperature                                                                          |
+| `road.freezing_point`         | datex2_v2 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/protectionTemperature                                                                          |
+| `road.friction`               | datex2_v3 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/friction                                                                                       |
+| `road.water_film`             | datex2_v3 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/waterFilmThickness                                                                             |
+| `road.water_film`             | datex2_v2 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/waterFilmThickness                                                                             |
+| `road.snow_depth`             | datex2_v3 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/depthOfSnow                                                                                    |
+| `road.snow_depth`             | datex2_v2 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/depthOfSnow                                                                                    |
+| `road.ice_thickness`          | datex2_v3 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/iceLayerThickness                                                                              |
+| `road.salt_concentration`     | datex2_v3 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/deIcingConcentration                                                                           |
+| `road.salt_concentration`     | datex2_v2 | RoadSurfaceConditionInformation/roadSurfaceConditionMeasurements/deIcingConcentration                                                                           |
+
 ### Vocabulary crosswalks
 
-| vocabulary  | value                    | target    | codes                                                                                 |
-| ----------- | ------------------------ | --------- | ------------------------------------------------------------------------------------- |
-| `cause`     | `congestion`             | datex2_v3 | abnormalTraffic, holidayTraffic, problemsOnLocalRoads, rubberNecking                  |
-| `cause`     | `congestion`             | datex2_v2 | holidayTraffic, problemsOnLocalRoads, rubberNecking, congestion, shearWeightOfTraffic |
-| `cause`     | `congestion`             | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `accident`               | datex2_v3 | accident, earlierIncident                                                             |
-| `cause`     | `accident`               | datex2_v2 | accident, earlierIncident, earlierAccident                                            |
-| `cause`     | `accident`               | gtfs_rt   | ACCIDENT                                                                              |
-| `cause`     | `animal`                 | datex2_v3 | animalPresence                                                                        |
-| `cause`     | `animal`                 | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `police_activity`        | datex2_v3 | authorityOperation                                                                    |
-| `cause`     | `police_activity`        | gtfs_rt   | POLICE_ACTIVITY                                                                       |
-| `cause`     | `construction`           | datex2_v3 | constructionWork                                                                      |
-| `cause`     | `construction`           | gtfs_rt   | CONSTRUCTION                                                                          |
-| `cause`     | `security`               | datex2_v3 | disturbance, vandalism                                                                |
-| `cause`     | `security`               | datex2_v2 | vandalism, securityIncident, terrorism                                                |
-| `cause`     | `security`               | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `hazard`                 | datex2_v3 | drivingConditions, environmentalObstruction, nonWeatherRelatedRoadConditions          |
-| `cause`     | `hazard`                 | datex2_v2 | pollutionAlert, radioactiveLeakAlert, toxicCloudAlert                                 |
-| `cause`     | `hazard`                 | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `equipment_failure`      | datex2_v3 | equipmentOrSystemFault, roadOperatorServiceDisruption, technicalProblems              |
-| `cause`     | `equipment_failure`      | datex2_v2 | technicalProblems, equipmentFailure                                                   |
-| `cause`     | `equipment_failure`      | gtfs_rt   | TECHNICAL_PROBLEM                                                                     |
-| `cause`     | `infrastructure_failure` | datex2_v3 | infrastructureDamageObstruction                                                       |
-| `cause`     | `infrastructure_failure` | datex2_v2 | infrastructureFailure                                                                 |
-| `cause`     | `infrastructure_failure` | gtfs_rt   | TECHNICAL_PROBLEM                                                                     |
-| `cause`     | `obstruction`            | datex2_v3 | obstruction                                                                           |
-| `cause`     | `obstruction`            | datex2_v2 | obstruction                                                                           |
-| `cause`     | `obstruction`            | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `weather`                | datex2_v3 | poorEnvironment, weatherRelatedRoadConditions, winterEquipmentManagement              |
-| `cause`     | `weather`                | datex2_v2 | excessiveHeat, frost, poorWeather                                                     |
-| `cause`     | `weather`                | gtfs_rt   | WEATHER                                                                               |
-| `cause`     | `public_event`           | datex2_v3 | publicEvent, roadsideEvent                                                            |
-| `cause`     | `public_event`           | datex2_v2 | roadsideEvent, largeNumbersOfVisitors                                                 |
-| `cause`     | `public_event`           | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `maintenance`            | datex2_v3 | roadMaintenance                                                                       |
-| `cause`     | `maintenance`            | gtfs_rt   | MAINTENANCE                                                                           |
-| `cause`     | `breakdown`              | datex2_v3 | roadsideAssistance, vehicleObstruction                                                |
-| `cause`     | `breakdown`              | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `customs`                | datex2_v3 | problemsAtBorderPost, problemsAtCustomPost                                            |
-| `cause`     | `customs`                | datex2_v2 | problemsAtBorderPost, problemsAtCustomPost                                            |
-| `cause`     | `customs`                | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `other`                  | datex2_v3 | other                                                                                 |
-| `cause`     | `other`                  | datex2_v2 | other                                                                                 |
-| `cause`     | `other`                  | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `debris`                 | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `spill`                  | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `fire`                   | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `roadworks`              | gtfs_rt   | CONSTRUCTION                                                                          |
-| `cause`     | `flooding`               | gtfs_rt   | WEATHER                                                                               |
-| `cause`     | `landslide`              | gtfs_rt   | WEATHER                                                                               |
-| `cause`     | `avalanche`              | gtfs_rt   | WEATHER                                                                               |
-| `cause`     | `wildfire`               | gtfs_rt   | WEATHER                                                                               |
-| `cause`     | `strike`                 | gtfs_rt   | STRIKE                                                                                |
-| `cause`     | `demonstration`          | gtfs_rt   | DEMONSTRATION                                                                         |
-| `cause`     | `medical_emergency`      | gtfs_rt   | MEDICAL_EMERGENCY                                                                     |
-| `cause`     | `abnormal_load`          | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `military`               | gtfs_rt   | OTHER_CAUSE                                                                           |
-| `cause`     | `unknown`                | gtfs_rt   | UNKNOWN_CAUSE                                                                         |
-| `certainty` | `observed`               | datex2_v3 | certain                                                                               |
-| `certainty` | `observed`               | datex2_v2 | certain                                                                               |
-| `certainty` | `observed`               | open511   | OBSERVED                                                                              |
-| `certainty` | `likely`                 | datex2_v3 | probable                                                                              |
-| `certainty` | `likely`                 | datex2_v2 | probable                                                                              |
-| `certainty` | `likely`                 | open511   | LIKELY                                                                                |
-| `certainty` | `possible`               | datex2_v3 | riskOf                                                                                |
-| `certainty` | `possible`               | datex2_v2 | riskOf                                                                                |
-| `certainty` | `possible`               | open511   | POSSIBLE                                                                              |
-| `certainty` | `unknown`                | open511   | UNKNOWN                                                                               |
-| `severity`  | `critical`               | datex2_v3 | highest                                                                               |
-| `severity`  | `critical`               | datex2_v2 | highest                                                                               |
-| `severity`  | `major`                  | datex2_v3 | high                                                                                  |
-| `severity`  | `major`                  | datex2_v2 | high                                                                                  |
-| `severity`  | `major`                  | open511   | MAJOR                                                                                 |
-| `severity`  | `moderate`               | datex2_v3 | medium                                                                                |
-| `severity`  | `moderate`               | datex2_v2 | medium                                                                                |
-| `severity`  | `moderate`               | open511   | MODERATE                                                                              |
-| `severity`  | `minor`                  | datex2_v3 | low, lowest                                                                           |
-| `severity`  | `minor`                  | datex2_v2 | low, lowest                                                                           |
-| `severity`  | `minor`                  | open511   | MINOR                                                                                 |
-| `severity`  | `unknown`                | datex2_v3 | unknown                                                                               |
-| `severity`  | `unknown`                | datex2_v2 | unknown                                                                               |
-| `severity`  | `unknown`                | open511   | UNKNOWN                                                                               |
+| vocabulary           | value                    | target    | codes                                                                                                      |
+| -------------------- | ------------------------ | --------- | ---------------------------------------------------------------------------------------------------------- |
+| `cause`              | `congestion`             | datex2_v3 | abnormalTraffic, holidayTraffic, problemsOnLocalRoads, rubberNecking                                       |
+| `cause`              | `congestion`             | datex2_v2 | holidayTraffic, problemsOnLocalRoads, rubberNecking, congestion, shearWeightOfTraffic                      |
+| `cause`              | `congestion`             | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `accident`               | datex2_v3 | accident, earlierIncident                                                                                  |
+| `cause`              | `accident`               | datex2_v2 | accident, earlierIncident, earlierAccident                                                                 |
+| `cause`              | `accident`               | gtfs_rt   | ACCIDENT                                                                                                   |
+| `cause`              | `animal`                 | datex2_v3 | animalPresence                                                                                             |
+| `cause`              | `animal`                 | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `police_activity`        | datex2_v3 | authorityOperation                                                                                         |
+| `cause`              | `police_activity`        | gtfs_rt   | POLICE_ACTIVITY                                                                                            |
+| `cause`              | `construction`           | datex2_v3 | constructionWork                                                                                           |
+| `cause`              | `construction`           | gtfs_rt   | CONSTRUCTION                                                                                               |
+| `cause`              | `security`               | datex2_v3 | disturbance, vandalism                                                                                     |
+| `cause`              | `security`               | datex2_v2 | vandalism, securityIncident, terrorism                                                                     |
+| `cause`              | `security`               | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `hazard`                 | datex2_v3 | drivingConditions, environmentalObstruction, nonWeatherRelatedRoadConditions                               |
+| `cause`              | `hazard`                 | datex2_v2 | pollutionAlert, radioactiveLeakAlert, toxicCloudAlert                                                      |
+| `cause`              | `hazard`                 | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `equipment_failure`      | datex2_v3 | equipmentOrSystemFault, roadOperatorServiceDisruption, technicalProblems                                   |
+| `cause`              | `equipment_failure`      | datex2_v2 | technicalProblems, equipmentFailure                                                                        |
+| `cause`              | `equipment_failure`      | gtfs_rt   | TECHNICAL_PROBLEM                                                                                          |
+| `cause`              | `infrastructure_failure` | datex2_v3 | infrastructureDamageObstruction                                                                            |
+| `cause`              | `infrastructure_failure` | datex2_v2 | infrastructureFailure                                                                                      |
+| `cause`              | `infrastructure_failure` | gtfs_rt   | TECHNICAL_PROBLEM                                                                                          |
+| `cause`              | `obstruction`            | datex2_v3 | obstruction                                                                                                |
+| `cause`              | `obstruction`            | datex2_v2 | obstruction                                                                                                |
+| `cause`              | `obstruction`            | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `weather`                | datex2_v3 | poorEnvironment, weatherRelatedRoadConditions, winterEquipmentManagement                                   |
+| `cause`              | `weather`                | datex2_v2 | excessiveHeat, frost, poorWeather                                                                          |
+| `cause`              | `weather`                | gtfs_rt   | WEATHER                                                                                                    |
+| `cause`              | `public_event`           | datex2_v3 | publicEvent, roadsideEvent                                                                                 |
+| `cause`              | `public_event`           | datex2_v2 | roadsideEvent, largeNumbersOfVisitors                                                                      |
+| `cause`              | `public_event`           | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `maintenance`            | datex2_v3 | roadMaintenance                                                                                            |
+| `cause`              | `maintenance`            | gtfs_rt   | MAINTENANCE                                                                                                |
+| `cause`              | `breakdown`              | datex2_v3 | roadsideAssistance, vehicleObstruction                                                                     |
+| `cause`              | `breakdown`              | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `customs`                | datex2_v3 | problemsAtBorderPost, problemsAtCustomPost                                                                 |
+| `cause`              | `customs`                | datex2_v2 | problemsAtBorderPost, problemsAtCustomPost                                                                 |
+| `cause`              | `customs`                | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `other`                  | datex2_v3 | other                                                                                                      |
+| `cause`              | `other`                  | datex2_v2 | other                                                                                                      |
+| `cause`              | `other`                  | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `debris`                 | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `spill`                  | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `fire`                   | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `roadworks`              | gtfs_rt   | CONSTRUCTION                                                                                               |
+| `cause`              | `flooding`               | gtfs_rt   | WEATHER                                                                                                    |
+| `cause`              | `landslide`              | gtfs_rt   | WEATHER                                                                                                    |
+| `cause`              | `avalanche`              | gtfs_rt   | WEATHER                                                                                                    |
+| `cause`              | `wildfire`               | gtfs_rt   | WEATHER                                                                                                    |
+| `cause`              | `strike`                 | gtfs_rt   | STRIKE                                                                                                     |
+| `cause`              | `demonstration`          | gtfs_rt   | DEMONSTRATION                                                                                              |
+| `cause`              | `medical_emergency`      | gtfs_rt   | MEDICAL_EMERGENCY                                                                                          |
+| `cause`              | `abnormal_load`          | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `military`               | gtfs_rt   | OTHER_CAUSE                                                                                                |
+| `cause`              | `unknown`                | gtfs_rt   | UNKNOWN_CAUSE                                                                                              |
+| `certainty`          | `observed`               | datex2_v3 | certain                                                                                                    |
+| `certainty`          | `observed`               | datex2_v2 | certain                                                                                                    |
+| `certainty`          | `observed`               | open511   | OBSERVED                                                                                                   |
+| `certainty`          | `likely`                 | datex2_v3 | probable                                                                                                   |
+| `certainty`          | `likely`                 | datex2_v2 | probable                                                                                                   |
+| `certainty`          | `likely`                 | open511   | LIKELY                                                                                                     |
+| `certainty`          | `possible`               | datex2_v3 | riskOf                                                                                                     |
+| `certainty`          | `possible`               | datex2_v2 | riskOf                                                                                                     |
+| `certainty`          | `possible`               | open511   | POSSIBLE                                                                                                   |
+| `certainty`          | `unknown`                | open511   | UNKNOWN                                                                                                    |
+| `device_status`      | `ok`                     | datex2_v3 | ok                                                                                                         |
+| `device_status`      | `ok`                     | wzdx      | ok                                                                                                         |
+| `device_status`      | `warning`                | datex2_v3 | functionalityPartlyOk, intermittentlyOk                                                                    |
+| `device_status`      | `warning`                | wzdx      | warning                                                                                                    |
+| `device_status`      | `error`                  | datex2_v3 | notOk, alarm                                                                                               |
+| `device_status`      | `error`                  | wzdx      | error                                                                                                      |
+| `device_status`      | `offline`                | datex2_v3 | notResponding, offline                                                                                     |
+| `device_status`      | `unknown`                | datex2_v3 | unknown                                                                                                    |
+| `device_status`      | `unknown`                | wzdx      | unknown                                                                                                    |
+| `los`                | `free_flow`              | datex2_v3 | freeFlow                                                                                                   |
+| `los`                | `free_flow`              | datex2_v2 | freeFlow                                                                                                   |
+| `los`                | `slow`                   | datex2_v3 | slow                                                                                                       |
+| `los`                | `heavy`                  | datex2_v3 | heavy                                                                                                      |
+| `los`                | `heavy`                  | datex2_v2 | heavy                                                                                                      |
+| `los`                | `queuing`                | datex2_v3 | queuing                                                                                                    |
+| `los`                | `queuing`                | datex2_v2 | congested                                                                                                  |
+| `los`                | `stationary`             | datex2_v3 | stationary                                                                                                 |
+| `los`                | `unknown`                | datex2_v3 | unknown                                                                                                    |
+| `los`                | `unknown`                | datex2_v2 | unknown                                                                                                    |
+| `los`                | `blocked`                | datex2_v2 | impossible                                                                                                 |
+| `precipitation_type` | `none`                   | datex2_v3 | noPrecipitation                                                                                            |
+| `precipitation_type` | `rain`                   | datex2_v3 | rain, liquidNotFreezing                                                                                    |
+| `precipitation_type` | `rain`                   | datex2_v2 | rain                                                                                                       |
+| `precipitation_type` | `drizzle`                | datex2_v3 | drizzle                                                                                                    |
+| `precipitation_type` | `drizzle`                | datex2_v2 | drizzle                                                                                                    |
+| `precipitation_type` | `freezing_rain`          | datex2_v3 | freezingRain, liquidFreezing, glaze, clearIce                                                              |
+| `precipitation_type` | `freezing_rain`          | datex2_v2 | freezingRain                                                                                               |
+| `precipitation_type` | `sleet`                  | datex2_v3 | sleet, icePellets                                                                                          |
+| `precipitation_type` | `sleet`                  | datex2_v2 | sleet                                                                                                      |
+| `precipitation_type` | `snow`                   | datex2_v3 | snow, wetSnow, snowGrains, diamondDust, iceCrystals                                                        |
+| `precipitation_type` | `snow`                   | datex2_v2 | snow                                                                                                       |
+| `precipitation_type` | `hail`                   | datex2_v3 | hail, smallHail, snowPellets                                                                               |
+| `precipitation_type` | `hail`                   | datex2_v2 | hail                                                                                                       |
+| `severity`           | `critical`               | datex2_v3 | highest                                                                                                    |
+| `severity`           | `critical`               | datex2_v2 | highest                                                                                                    |
+| `severity`           | `major`                  | datex2_v3 | high                                                                                                       |
+| `severity`           | `major`                  | datex2_v2 | high                                                                                                       |
+| `severity`           | `major`                  | open511   | MAJOR                                                                                                      |
+| `severity`           | `moderate`               | datex2_v3 | medium                                                                                                     |
+| `severity`           | `moderate`               | datex2_v2 | medium                                                                                                     |
+| `severity`           | `moderate`               | open511   | MODERATE                                                                                                   |
+| `severity`           | `minor`                  | datex2_v3 | low, lowest                                                                                                |
+| `severity`           | `minor`                  | datex2_v2 | low, lowest                                                                                                |
+| `severity`           | `minor`                  | open511   | MINOR                                                                                                      |
+| `severity`           | `unknown`                | datex2_v3 | unknown                                                                                                    |
+| `severity`           | `unknown`                | datex2_v2 | unknown                                                                                                    |
+| `severity`           | `unknown`                | open511   | UNKNOWN                                                                                                    |
+| `surface_state`      | `dry`                    | datex2_v3 | dry                                                                                                        |
+| `surface_state`      | `dry`                    | datex2_v2 | dry                                                                                                        |
+| `surface_state`      | `damp`                   | datex2_v3 | moist, notDry                                                                                              |
+| `surface_state`      | `wet`                    | datex2_v3 | wet                                                                                                        |
+| `surface_state`      | `wet`                    | datex2_v2 | wet                                                                                                        |
+| `surface_state`      | `standing_water`         | datex2_v3 | surfaceWater, streamingWater                                                                               |
+| `surface_state`      | `standing_water`         | datex2_v2 | surfaceWater                                                                                               |
+| `surface_state`      | `frost`                  | datex2_v3 | rime                                                                                                       |
+| `surface_state`      | `black_ice`              | datex2_v3 | blackIce                                                                                                   |
+| `surface_state`      | `black_ice`              | datex2_v2 | blackIce                                                                                                   |
+| `surface_state`      | `ice`                    | datex2_v3 | ice, iceBuildUp, iceWithWheelBarTracks, icyPatches, glaze, freezingRain, freezingOfWetRoads, wetAndIcyRoad |
+| `surface_state`      | `ice`                    | datex2_v2 | ice, iceBuildUp, iceWithWheelBarTracks, icyPatches, freezingRain, freezingOfWetRoads, wetAndIcyRoad        |
+| `surface_state`      | `snow`                   | datex2_v3 | snow, snowOnTheRoad, freshSnow, deepSnow, looseSnow, snowDrifts                                            |
+| `surface_state`      | `snow`                   | datex2_v2 | snowOnTheRoad, freshSnow, deepSnow, looseSnow, snowDrifts                                                  |
+| `surface_state`      | `packed_snow`            | datex2_v3 | packedSnow                                                                                                 |
+| `surface_state`      | `packed_snow`            | datex2_v2 | packedSnow                                                                                                 |
+| `surface_state`      | `slush`                  | datex2_v3 | slushOnRoad, slushStrings                                                                                  |
+| `surface_state`      | `slush`                  | datex2_v2 | slushOnRoad, slushStrings                                                                                  |
+| `vms_working_status` | `in_service`             | datex2_v3 | working                                                                                                    |
+| `vms_working_status` | `fault`                  | datex2_v3 | notWorking                                                                                                 |
+| `vms_working_status` | `blank`                  | datex2_v3 | blank                                                                                                      |
+| `vms_working_status` | `out_of_service`         | datex2_v3 | covered                                                                                                    |
 
 <!-- generated:registry:end -->

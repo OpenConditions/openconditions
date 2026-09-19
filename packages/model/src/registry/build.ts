@@ -82,6 +82,32 @@ export class RegistryError extends Error {}
 
 const kindKey = (cls: KindClass, code: string) => `${cls}:${code}`;
 
+const ROLLUP_RESULTS = new Set(["quantity", "count", "vector", "money"]);
+
+/** A property's retention must describe a history its result type can have. */
+function checkRetention(p: PropertyEntry, where: string): void {
+  const r = p.retention;
+  if (r === undefined) return;
+  if (r.latestOnly && (r.rawDays !== undefined || r.rollup !== undefined || r.changeOnly)) {
+    throw new RegistryError(`${where}: a latest-only property keeps no history`);
+  }
+  if (r.rawDays !== undefined && !(r.rawDays > 0)) {
+    throw new RegistryError(`${where}: rawDays must be positive`);
+  }
+  if (r.rollup === undefined) return;
+  if (!ROLLUP_RESULTS.has(p.result.type)) {
+    throw new RegistryError(`${where}: ${p.result.type} results have no rollup`);
+  }
+  if (
+    "histogram" in r.rollup &&
+    (p.result.type !== "quantity" || !(r.rollup.histogram.binWidth > 0))
+  ) {
+    throw new RegistryError(
+      `${where}: a histogram rollup needs a quantity and a positive bin width`,
+    );
+  }
+}
+
 /**
  * Assembles registry modules into one closed registry: vocabularies merged
  * with their extensions, cross-references checked, and every record schema
@@ -224,6 +250,10 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
     if (code === undefined || !domains.has(code))
       throw new RegistryError(`${where}: unknown domain "${code}"`);
   };
+  const requireValue = (vocabulary: string, value: string, where: string) => {
+    if (!requireVocab(vocabulary, where).values.includes(value))
+      throw new RegistryError(`${where}: "${value}" is not a registered ${vocabulary}`);
+  };
 
   for (const k of kinds.values()) {
     const where = `kind ${k.class}:${k.code}`;
@@ -254,6 +284,11 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
       if (!kinds.has(kindKey("component", c)))
         throw new RegistryError(`${where}: unknown component kind "${c}"`);
     }
+    for (const t of k.traits ?? []) {
+      if (k.class !== "feature")
+        throw new RegistryError(`${where}: only feature kinds have traits`);
+      requireValue("feature_trait", t, where);
+    }
   }
   for (const p of properties.values()) {
     const where = `property ${p.code}`;
@@ -272,11 +307,13 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
         if (!kinds.has(kindKey("feature", f)))
           throw new RegistryError(`${where}: unknown feature kind "${f}"`);
       }
+      for (const t of s.traits ?? []) requireValue("feature_trait", t, where);
       for (const c of s.componentKinds ?? []) {
         if (!kinds.has(kindKey("component", c)))
           throw new RegistryError(`${where}: unknown component kind "${c}"`);
       }
     }
+    checkRetention(p, where);
   }
 
   let crosswalk: Crosswalk;

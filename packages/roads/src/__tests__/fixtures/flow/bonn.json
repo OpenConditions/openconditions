@@ -1,0 +1,31 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [[[7.1832, 50.6686], [7.1829, 50.6688], [7.1825, 50.6692]]]
+      },
+      "properties": {
+        "strecke_id": 144,
+        "auswertezeit": "2026-07-10T17:10:00Z",
+        "geschwindigkeit": 12,
+        "verkehrsstatus": "stockender Verkehr"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [[[7.177, 50.6727], [7.1773, 50.6725]]]
+      },
+      "properties": {
+        "strecke_id": 143,
+        "auswertezeit": "2026-07-10T17:10:00Z",
+        "geschwindigkeit": 45,
+        "verkehrsstatus": "normales Verkehrsaufkommen"
+      }
+    }
+  ]
+}

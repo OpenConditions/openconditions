@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { observationId } from "../classes/observation.js";
 import { canonicalIdOf } from "../kernel/identity.js";
 import { kernelModule } from "../kernel/module.js";
 import { buildRegistry } from "../registry/build.js";
@@ -45,13 +46,6 @@ export const testModule: RegistryModule = {
         ((d["phases"] as { effects: { id: string }[] }[] | undefined) ?? []).flatMap(
           (p) => p.effects,
         ),
-    }),
-    defineKind({
-      class: "component",
-      code: "sensor_channel",
-      version: "1.0",
-      description: "test channel",
-      details: () => ({ index: z.number().int().positive() }),
     }),
     defineKind({
       class: "feature",
@@ -137,6 +131,12 @@ export function draftBase(cls: "situation" | "feature" | "observation" | "offer"
     },
     freshness: { fetchedAt: NOW },
   };
+}
+
+/** An observation draft with its id derived from its series and phenomenon start. */
+export function withObservationId<T extends { id: string }>(draft: T): T {
+  const namespace = draft.id.split(":")[2]!;
+  return { ...draft, id: observationId(namespace, draft as never) };
 }
 
 export function stored<T extends { id: string; provenance: object }>(draft: T, domain = "roads") {

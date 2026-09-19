@@ -1,0 +1,172 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:de-nw-autobahn-fahrstreifen:fs.MQ_555.050_AB_SW_R_1",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            7.545113,
+            51.474907
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-fahrstreifen",
+        "sourceFormat": "datex-elaborated",
+        "accessMode": "bulk",
+        "recordId": "fs.MQ_555.050_AB_SW_R_1",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "839d1ec3fc5c378bb96b83d3446f551618cbd404684318f42d155ccc5ea47f6a",
+      "domain": "roads",
+      "contentHash": "4d8379f1c7780db987409679fd434f317978916867c179b9b324a3f25d70f006",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.volume",
+          "traffic.los"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:de-nw-autobahn-fahrstreifen:9095db3b394f7dfb5bc644fd4b41fa65b1fc74d3c236c25189d7ee405ca0d846",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            7.545113,
+            51.474907
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-fahrstreifen",
+        "sourceFormat": "datex-elaborated",
+        "accessMode": "bulk",
+        "recordId": "fs.MQ_555.050_AB_SW_R_1",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "1820068b608b9118ed99a06a4a48a009975309755e179a9eb141ce680106c235",
+      "domain": "roads",
+      "contentHash": "eed0a6a6b72c901195b51f01495cde74b882296c078e444d1a34b9b0bbfa4951",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:de-nw-autobahn-fahrstreifen:fs.MQ_555.050_AB_SW_R_1"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 92,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-27T00:02:30.880Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:de-nw-autobahn-fahrstreifen:acb79f3c79cbf9e112a0853b618a554153813278df86502b6bd5c72744d2a275",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            7.545113,
+            51.474907
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-fahrstreifen",
+        "sourceFormat": "datex-elaborated",
+        "accessMode": "bulk",
+        "recordId": "fs.MQ_555.050_AB_SW_R_1",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "78e16629953aa710038efdc0173143ade1574cf37c4701b0fbe066e118dacd05",
+      "domain": "roads",
+      "contentHash": "cce7a8c7eb101ca00ecb0da9610bd1da8ac54ae5e603be94e700ec19c5c3a7f5",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:de-nw-autobahn-fahrstreifen:fs.MQ_555.050_AB_SW_R_1"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 60,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-27T00:02:30.880Z"
+      },
+      "aggregation": "mean"
+    }
+  ],
+  "situations": []
+}

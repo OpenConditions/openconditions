@@ -126,6 +126,7 @@ export function parseMivFlow(
         geometry: geom,
         los: "unknown",
         speedKph,
+        site: { id: String(id) },
         origin,
         dataUpdatedAt: measuredAt,
         fetchedAt: now,

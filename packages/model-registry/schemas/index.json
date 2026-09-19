@@ -66,10 +66,226 @@
     "file": "effect/unsupported@1.json"
   },
   {
+    "class": "feature",
+    "code": "camera",
+    "version": "1.0",
+    "file": "feature/camera@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "measurement_site",
+    "version": "1.0",
+    "file": "feature/measurement_site@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "service_vehicle",
+    "version": "1.0",
+    "file": "feature/service_vehicle@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "vms",
+    "version": "1.0",
+    "file": "feature/vms@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "weather_station",
+    "version": "1.0",
+    "file": "feature/weather_station@1.json"
+  },
+  {
     "class": "kernel",
     "code": "kernel",
     "version": "1.0",
     "file": "kernel@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "camera.image",
+    "version": "1.0",
+    "file": "observation/camera.image@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "device.status",
+    "version": "1.0",
+    "file": "observation/device.status@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "road.condition_forecast",
+    "version": "1.0",
+    "file": "observation/road.condition_forecast@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "road.freezing_point",
+    "version": "1.0",
+    "file": "observation/road.freezing_point@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "road.friction",
+    "version": "1.0",
+    "file": "observation/road.friction@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "road.ice_thickness",
+    "version": "1.0",
+    "file": "observation/road.ice_thickness@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "road.salt_concentration",
+    "version": "1.0",
+    "file": "observation/road.salt_concentration@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "road.snow_depth",
+    "version": "1.0",
+    "file": "observation/road.snow_depth@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "road.subsurface_temperature",
+    "version": "1.0",
+    "file": "observation/road.subsurface_temperature@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "road.surface_state",
+    "version": "1.0",
+    "file": "observation/road.surface_state@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "road.surface_temperature",
+    "version": "1.0",
+    "file": "observation/road.surface_temperature@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "road.water_film",
+    "version": "1.0",
+    "file": "observation/road.water_film@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "traffic.los",
+    "version": "1.0",
+    "file": "observation/traffic.los@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "traffic.occupancy",
+    "version": "1.0",
+    "file": "observation/traffic.occupancy@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "traffic.speed",
+    "version": "1.0",
+    "file": "observation/traffic.speed@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "traffic.vehicle_class_speed",
+    "version": "1.0",
+    "file": "observation/traffic.vehicle_class_speed@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "traffic.volume",
+    "version": "1.0",
+    "file": "observation/traffic.volume@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "vehicle.position",
+    "version": "1.0",
+    "file": "observation/vehicle.position@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "vms.display",
+    "version": "1.0",
+    "file": "observation/vms.display@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "weather.air_temperature",
+    "version": "1.0",
+    "file": "observation/weather.air_temperature@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "weather.dew_point",
+    "version": "1.0",
+    "file": "observation/weather.dew_point@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "weather.humidity",
+    "version": "1.0",
+    "file": "observation/weather.humidity@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "weather.precipitation_rate",
+    "version": "1.0",
+    "file": "observation/weather.precipitation_rate@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "weather.precipitation_type",
+    "version": "1.0",
+    "file": "observation/weather.precipitation_type@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "weather.visibility",
+    "version": "1.0",
+    "file": "observation/weather.visibility@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "weather.wind_direction",
+    "version": "1.0",
+    "file": "observation/weather.wind_direction@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "weather.wind_gust",
+    "version": "1.0",
+    "file": "observation/weather.wind_gust@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "weather.wind_speed",
+    "version": "1.0",
+    "file": "observation/weather.wind_speed@1.json"
+  },
+  {
+    "class": "result",
+    "code": "camera_image",
+    "version": "1.0",
+    "file": "result/camera_image@1.json"
+  },
+  {
+    "class": "result",
+    "code": "vehicle_position",
+    "version": "1.0",
+    "file": "result/vehicle_position@1.json"
+  },
+  {
+    "class": "result",
+    "code": "vms_display",
+    "version": "1.0",
+    "file": "result/vms_display@1.json"
   },
   {
     "class": "selector",

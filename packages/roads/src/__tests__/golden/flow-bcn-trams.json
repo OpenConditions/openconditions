@@ -1,0 +1,328 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:es-bcn-ajuntament:1",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              2.11203535639414,
+              41.3841912394771
+            ],
+            [
+              2.101502862881051,
+              41.3816307921222
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "es-bcn-ajuntament",
+        "sourceFormat": "bcn-trams",
+        "accessMode": "bulk",
+        "recordId": "1",
+        "attribution": {
+          "provider": "Ajuntament de Barcelona",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "a73183f4607b52c86d60bb904276cc6baa385bcdcbcba499041cb75f0ab63f53",
+      "domain": "roads",
+      "contentHash": "283752953cf7dc3914e282a33899714bf1cab5adffb533981511e4c366c48698",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.los"
+        ]
+      }
+    },
+    {
+      "id": "oc:feature:es-bcn-ajuntament:2",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              2.18,
+              41.42
+            ],
+            [
+              2.19,
+              41.43
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "es-bcn-ajuntament",
+        "sourceFormat": "bcn-trams",
+        "accessMode": "bulk",
+        "recordId": "2",
+        "attribution": {
+          "provider": "Ajuntament de Barcelona",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "e337d0f44cc73a986ef629295c21890733b7e00ac0f1ed3228a46b529792d926",
+      "domain": "roads",
+      "contentHash": "2692b163d5c2c72837575060e68d0775d59e55b0469240859ea7635752905ba7",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.los"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:es-bcn-ajuntament:114a8fddd8cc00898cefeab1065d32b18a6c8df949862b191ae170ab78e68fc4",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              2.11203535639414,
+              41.3841912394771
+            ],
+            [
+              2.101502862881051,
+              41.3816307921222
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "es-bcn-ajuntament",
+        "sourceFormat": "bcn-trams",
+        "accessMode": "bulk",
+        "recordId": "1",
+        "attribution": {
+          "provider": "Ajuntament de Barcelona",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "c5852cf6c8986c4f0a67cd160f0aaffe4e43951ed4a43fc45a1a0f2afbce1251",
+      "domain": "roads",
+      "contentHash": "0c3551bef3caf879e715865854b326b59342884f5c3e52260c28fbf6180ce169",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.los",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:es-bcn-ajuntament:1"
+      },
+      "result": {
+        "type": "category",
+        "value": "free_flow",
+        "vocabulary": "los"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-29T11:15:57.000Z"
+      },
+      "aggregation": "instantaneous"
+    },
+    {
+      "id": "oc:observation:es-bcn-ajuntament:843376c9a97f2fc22e3927ccddfb11a74c81b383d94406dd4a934fce51b3f63c",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              2.18,
+              41.42
+            ],
+            [
+              2.19,
+              41.43
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "es-bcn-ajuntament",
+        "sourceFormat": "bcn-trams",
+        "accessMode": "bulk",
+        "recordId": "2",
+        "attribution": {
+          "provider": "Ajuntament de Barcelona",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "77fde0d712d31f5f26cfcd739e37e52517c6db60c44846603da50184f27b866a",
+      "domain": "roads",
+      "contentHash": "6927b2ca7f16c40c7d31b4af1d19caf73e27ee3779f717bb24dc1cc12b912166",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.los",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:es-bcn-ajuntament:2"
+      },
+      "result": {
+        "type": "category",
+        "value": "stationary",
+        "vocabulary": "los"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-29T11:15:57.000Z"
+      },
+      "aggregation": "instantaneous"
+    }
+  ],
+  "situations": [
+    {
+      "id": "oc:situation:es-bcn-ajuntament:2:congestion",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              2.18,
+              41.42
+            ],
+            [
+              2.19,
+              41.43
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "admin": {
+          "country": "ES"
+        }
+      },
+      "provenance": {
+        "origin": "derived",
+        "sourceId": "es-bcn-ajuntament",
+        "sourceFormat": "bcn-trams",
+        "accessMode": "bulk",
+        "recordId": "2:congestion",
+        "attribution": {
+          "provider": "Ajuntament de Barcelona",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+        },
+        "instanceId": "golden.test",
+        "derivedFrom": {
+          "records": [
+            {
+              "class": "feature",
+              "id": "oc:feature:es-bcn-ajuntament:2"
+            }
+          ],
+          "method": "los_threshold",
+          "version": "1"
+        },
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "7ddb931c72e9f09ac52a4138f5bdbbf9a942b5c64c89c52fe30754fc82cfe195",
+      "domain": "roads",
+      "contentHash": "5694b312b35e0b89e64457c51044539a3435037989bf0581063bd22bb3522775",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "situation",
+      "kind": "congestion",
+      "type": "congestion",
+      "planned": false,
+      "certainty": "unknown",
+      "severity": {
+        "label": "moderate",
+        "source": "derived"
+      },
+      "validity": {
+        "status": "active",
+        "start": "2026-07-29T11:15:57.000Z"
+      },
+      "effects": [],
+      "details": {
+        "kind": "congestion",
+        "v": 1,
+        "los": "unknown",
+        "derivedFrom": {
+          "class": "feature",
+          "id": "oc:feature:es-bcn-ajuntament:2"
+        }
+      }
+    }
+  ]
+}

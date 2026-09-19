@@ -42,7 +42,8 @@ describe("parseBcnTramsFlow", () => {
     expect(t1.los).toBe("free_flow");
     expect(t1.speedKph).toBeUndefined();
     expect(t1.geometry.type).toBe("LineString");
-    expect(t1.dataUpdatedAt).toBe("2026-07-29T13:15:57");
+    // Barcelona wall-clock time (CEST) read as an instant.
+    expect(t1.dataUpdatedAt).toBe("2026-07-29T11:15:57.000Z");
     const t2 = flows.find((f) => f.id === "es-bcn-ajuntament:2")!;
     expect(t2.los).toBe("stationary");
     expect(t2.sourceFormat).toBe("bcn-trams");

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<d2:payload xmlns:com="http://datex2.eu/schema/3/common" xmlns:roa="http://datex2.eu/schema/3/roadTrafficData" xmlns:locx="http://datex2.eu/schema/3/locationExtension" xmlns:loc="http://datex2.eu/schema/3/locationReferencing" xmlns:comx="http://datex2.eu/schema/3/commonExtension" xmlns:d2="http://datex2.eu/schema/3/d2Payload" xmlns:fac="http://datex2.eu/schema/3/facilities" xmlns:vms="http://datex2.eu/schema/3/vms" xmlns:ns9="http://datex2.eu/schema/3/afirFacilities" xmlns:prk="http://datex2.eu/schema/3/parking" xmlns:ns12="http://datex2.eu/schema/3/openLrBinary" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="roa:MeasuredDataPublication" lang="fi" modelBaseVersion="3" xsi:schemaLocation="http://datex2.eu/schema/3/d2Payload https://docs.datex2.eu/_static/data/v3.7/DATEXII_3_D2Payload.xsd">
+    <com:publicationTime>2026-09-19T16:00:39.000Z</com:publicationTime>
+    <com:publicationCreator>
+        <com:country>FI</com:country>
+        <com:nationalIdentifier>Fintraffic</com:nationalIdentifier>
+    </com:publicationCreator>
+    <roa:measurementSiteTableReference targetClass="roa:MeasurementSiteTable" id="TMS_STATIONS"/>
+    <roa:headerInformation>
+        <com:confidentiality>noRestriction</com:confidentiality>
+        <com:informationStatus>real</com:informationStatus>
+    </roa:headerInformation>
+    <roa:siteMeasurements>
+        <roa:measurementSiteReference targetClass="roa:MeasurementSite" id="23001" version="2024-11-27T09:48:30Z"/>
+        <roa:physicalQuantity index="1">
+            <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+                <roa:basicData xsi:type="roa:TrafficFlow">
+                    <roa:measurementOrCalculationTime>
+                        <roa:timeMeaning>endTime</roa:timeMeaning>
+                        <roa:timeValue>2026-09-19T16:00:35.000Z</roa:timeValue>
+                    </roa:measurementOrCalculationTime>
+                    <roa:vehicleFlow>
+                        <com:vehicleFlowRate>522</com:vehicleFlowRate>
+                    </roa:vehicleFlow>
+                </roa:basicData>
+            </roa:physicalQuantity>
+        </roa:physicalQuantity>
+        <roa:physicalQuantity index="2">
+            <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+                <roa:basicData xsi:type="roa:TrafficFlow">
+                    <roa:measurementOrCalculationTime>
+                        <roa:timeMeaning>endTime</roa:timeMeaning>
+                        <roa:timeValue>2026-09-19T16:00:35.000Z</roa:timeValue>
+                    </roa:measurementOrCalculationTime>
+                    <roa:vehicleFlow>
+                        <com:vehicleFlowRate>494</com:vehicleFlowRate>
+                    </roa:vehicleFlow>
+                </roa:basicData>
+            </roa:physicalQuantity>
+        </roa:physicalQuantity>
+        <roa:physicalQuantity index="3">
+            <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+                <roa:basicData xsi:type="roa:TrafficSpeed">
+                    <roa:measurementOrCalculationTime>
+                        <roa:timeMeaning>endTime</roa:timeMeaning>
+                        <roa:timeValue>2026-09-19T16:00:35.000Z</roa:timeValue>
+                    </roa:measurementOrCalculationTime>
+                    <roa:averageVehicleSpeed>
+                        <com:speed>119.0</com:speed>
+                    </roa:averageVehicleSpeed>
+                </roa:basicData>
+            </roa:physicalQuantity>
+        </roa:physicalQuantity>
+        <roa:physicalQuantity index="4">
+            <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+                <roa:basicData xsi:type="roa:TrafficSpeed">
+                    <roa:measurementOrCalculationTime>
+                        <roa:timeMeaning>endTime</roa:timeMeaning>
+                        <roa:timeValue>2026-09-19T16:00:35.000Z</roa:timeValue>
+                    </roa:measurementOrCalculationTime>
+                    <roa:averageVehicleSpeed>
+                        <com:speed>116.0</com:speed>
+                    </roa:averageVehicleSpeed>
+                </roa:basicData>
+            </roa:physicalQuantity>
+        </roa:physicalQuantity>
+        <roa:physicalQuantity index="5">
+            <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+                <roa:basicData xsi:type="roa:TrafficFlow">
+                    <roa:measurementOrCalculationTime>
+                        <roa:timeMeaning>endTime</roa:timeMeaning>
+                        <roa:timeValue>2026-09-19T16:00:30.000Z</roa:timeValue>
+                    </roa:measurementOrCalculationTime>
+                    <roa:vehicleFlow>
+                        <com:vehicleFlowRate>612</com:vehicleFlowRate>
+                    </roa:vehicleFlow>
+                </roa:basicData>
+            </roa:physicalQuantity>
+        </roa:physicalQuantity>
+        <roa:physicalQuantity index="6">
+            <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+                <roa:basicData xsi:type="roa:TrafficFlow">
+                    <roa:measurementOrCalculationTime>
+                        <roa:timeMeaning>endTime</roa:timeMeaning>
+                        <roa:timeValue>2026-09-19T16:00:35.000Z</roa:timeValue>
+                    </roa:measurementOrCalculationTime>
+                    <roa:vehicleFlow>
+                        <com:vehicleFlowRate>444</com:vehicleFlowRate>
+                    </roa:vehicleFlow>
+                </roa:basicData>
+            </roa:physicalQuantity>
+        </roa:physicalQuantity>
+        <roa:physicalQuantity index="7">
+            <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+                <roa:basicData xsi:type="roa:TrafficSpeed">
+                    <roa:measurementOrCalculationTime>
+                        <roa:timeMeaning>endTime</roa:timeMeaning>
+                        <roa:timeValue>2026-09-19T16:00:30.000Z</roa:timeValue>
+                    </roa:measurementOrCalculationTime>
+                    <roa:averageVehicleSpeed>
+                        <com:speed>119.0</com:speed>
+                    </roa:averageVehicleSpeed>
+                </roa:basicData>
+            </roa:physicalQuantity>
+        </roa:physicalQuantity>
+        <roa:physicalQuantity index="8">
+            <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+                <roa:basicData xsi:type="roa:TrafficSpeed">
+                    <roa:measurementOrCalculationTime>
+                        <roa:timeMeaning>endTime</roa:timeMeaning>
+                        <roa:timeValue>2026-09-19T16:00:35.000Z</roa:timeValue>
+                    </roa:measurementOrCalculationTime>
+                    <roa:averageVehicleSpeed>
+                        <com:speed>114.0</com:speed>
+                    </roa:averageVehicleSpeed>
+                </roa:basicData>
+            </roa:physicalQuantity>
+        </roa:physicalQuantity>
+        <roa:measurementTimeDefault>
+            <roa:timeMeaning>endTime</roa:timeMeaning>
+            <roa:timeValue>2026-09-19T16:00:35.000Z</roa:timeValue>
+        </roa:measurementTimeDefault>
+    </roa:siteMeasurements>
+</d2:payload>

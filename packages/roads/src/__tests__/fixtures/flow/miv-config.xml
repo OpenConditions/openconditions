@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mivconfig>
+  <meetpunt unieke_id="4970">
+    <beschrijvende_id>H292L20</beschrijvende_id>
+    <lengtegraad_EPSG_4326>4,4842054</lengtegraad_EPSG_4326>
+    <breedtegraad_EPSG_4326>50,9828171</breedtegraad_EPSG_4326>
+  </meetpunt>
+  <meetpunt unieke_id="29">
+    <beschrijvende_id>H222L10</beschrijvende_id>
+    <lengtegraad_EPSG_4326>3,7</lengtegraad_EPSG_4326>
+    <breedtegraad_EPSG_4326>51,05</breedtegraad_EPSG_4326>
+  </meetpunt>
+</mivconfig>

@@ -1,0 +1,362 @@
+{
+  "objectIdFieldName": "OBJECTID",
+  "uniqueIdField": {
+    "name": "OBJECTID",
+    "isSystemMaintained": true
+  },
+  "globalIdFieldName": "",
+  "geometryType": "esriGeometryPoint",
+  "spatialReference": {
+    "wkid": 4326,
+    "latestWkid": 4326
+  },
+  "fields": [
+    {
+      "name": "OBJECTID",
+      "type": "esriFieldTypeOID",
+      "alias": "OBJECTID",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "LABEL",
+      "type": "esriFieldTypeString",
+      "alias": "Truck Label (A-Name)",
+      "sqlType": "sqlTypeOther",
+      "length": 45,
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "XPOSITION",
+      "type": "esriFieldTypeDouble",
+      "alias": "X Coordinate (LL84)",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "YPOSITION",
+      "type": "esriFieldTypeDouble",
+      "alias": "Y Coordinate (LL84)",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "HEADING",
+      "type": "esriFieldTypeDouble",
+      "alias": "Heading",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "VELOCITY",
+      "type": "esriFieldTypeDouble",
+      "alias": "Velocity (MPH)",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "ROADTEMP",
+      "type": "esriFieldTypeDouble",
+      "alias": "Road Temp (F)",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "AIRTEMP",
+      "type": "esriFieldTypeDouble",
+      "alias": "Air Temp (F)",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "SOLIDMATERIAL",
+      "type": "esriFieldTypeString",
+      "alias": "Solid Material",
+      "sqlType": "sqlTypeOther",
+      "length": 20,
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "LIQUIDMATERIAL",
+      "type": "esriFieldTypeString",
+      "alias": "Liquid Material",
+      "sqlType": "sqlTypeOther",
+      "length": 20,
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "PREWETMATERIAL",
+      "type": "esriFieldTypeDouble",
+      "alias": "Prewet Material",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "SOLIDRATE",
+      "type": "esriFieldTypeDouble",
+      "alias": "Solid Rate",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "LIQUIDRATE",
+      "type": "esriFieldTypeDouble",
+      "alias": "Liquid Rate",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "PREWETRATE",
+      "type": "esriFieldTypeDouble",
+      "alias": "Prewet Rate",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "FRONTPLOWSTATE",
+      "type": "esriFieldTypeDouble",
+      "alias": "Front Plow State",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "RIGHTWINGPLOWSTATE",
+      "type": "esriFieldTypeDouble",
+      "alias": "Right Wing Plow State",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "LEFTWINGPLOWSTATE",
+      "type": "esriFieldTypeDouble",
+      "alias": "Left Wing Plow State",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "UNDERBELLYPLOWSTATE",
+      "type": "esriFieldTypeDouble",
+      "alias": "Underbelly Plow State",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "SOLIDRUNTOTAL",
+      "type": "esriFieldTypeDouble",
+      "alias": "Solid Run Total",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "LIQUIDRUNTOTAL",
+      "type": "esriFieldTypeDouble",
+      "alias": "Liquid Run Total",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "PREWETRUNTOTAL",
+      "type": "esriFieldTypeDouble",
+      "alias": "Prewet Run Total",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "SOLIDSETRATE",
+      "type": "esriFieldTypeDouble",
+      "alias": "Solid Set Rate",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "LIQUIDSETRATE",
+      "type": "esriFieldTypeDouble",
+      "alias": "Liquid Set Rate",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "PREWETSETRATE",
+      "type": "esriFieldTypeDouble",
+      "alias": "Prewet Set Rate",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "BLASTMODE",
+      "type": "esriFieldTypeSmallInteger",
+      "alias": "Blast Mode (Over 500lbs/Mile)",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "TOTAL_TRUCK_COUNT",
+      "type": "esriFieldTypeInteger",
+      "alias": "Total Active Trucks",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "ACTIVE_MATERIAL",
+      "type": "esriFieldTypeString",
+      "alias": "Active Material",
+      "sqlType": "sqlTypeOther",
+      "length": 20,
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "ROUTE_NAME",
+      "type": "esriFieldTypeString",
+      "alias": "Route Name",
+      "sqlType": "sqlTypeOther",
+      "length": 150,
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "LOGDT",
+      "type": "esriFieldTypeDate",
+      "alias": "AVL Ping Date-Time (Local - Iowa)",
+      "sqlType": "sqlTypeOther",
+      "length": 8,
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "MODIFIEDDT",
+      "type": "esriFieldTypeDate",
+      "alias": "AVL Ping Date-Time (UTC)",
+      "sqlType": "sqlTypeOther",
+      "length": 8,
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "MODIFIEDDT_UTC_OFFSET",
+      "type": "esriFieldTypeString",
+      "alias": "Ping DateTime UTC Offset",
+      "sqlType": "sqlTypeOther",
+      "length": 6,
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "REST_UPDATED",
+      "type": "esriFieldTypeDate",
+      "alias": "REST Service Last Updated",
+      "sqlType": "sqlTypeOther",
+      "length": 8,
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "REST_UPDATED_UTC_OFFSET",
+      "type": "esriFieldTypeString",
+      "alias": "REST Service Last Updated UTC Offset",
+      "sqlType": "sqlTypeOther",
+      "length": 6,
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "COST_CENTER",
+      "type": "esriFieldTypeString",
+      "alias": "Cost Center",
+      "sqlType": "sqlTypeOther",
+      "length": 6,
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "MAINT_DISTRICT",
+      "type": "esriFieldTypeInteger",
+      "alias": "Maintenance District",
+      "sqlType": "sqlTypeOther",
+      "domain": null,
+      "defaultValue": null
+    },
+    {
+      "name": "GARAGE_NAME",
+      "type": "esriFieldTypeString",
+      "alias": "Garage Name",
+      "sqlType": "sqlTypeOther",
+      "length": 256,
+      "domain": null,
+      "defaultValue": null,
+      "description": "{\"value\":\"Garage associated with the truck\",\"fieldValueType\":\"locationOrPlaceName\"}"
+    }
+  ],
+  "features": [
+    {
+      "attributes": {
+        "OBJECTID": 2,
+        "LABEL": "A35674",
+        "XPOSITION": -93.570509,
+        "YPOSITION": 42.421555,
+        "HEADING": 179,
+        "VELOCITY": 65.855,
+        "ROADTEMP": null,
+        "AIRTEMP": null,
+        "SOLIDMATERIAL": null,
+        "LIQUIDMATERIAL": null,
+        "PREWETMATERIAL": null,
+        "SOLIDRATE": null,
+        "LIQUIDRATE": null,
+        "PREWETRATE": null,
+        "FRONTPLOWSTATE": 9999,
+        "RIGHTWINGPLOWSTATE": 9999,
+        "LEFTWINGPLOWSTATE": 9999,
+        "UNDERBELLYPLOWSTATE": 9999,
+        "SOLIDRUNTOTAL": null,
+        "LIQUIDRUNTOTAL": null,
+        "PREWETRUNTOTAL": null,
+        "SOLIDSETRATE": null,
+        "LIQUIDSETRATE": null,
+        "PREWETSETRATE": null,
+        "BLASTMODE": null,
+        "TOTAL_TRUCK_COUNT": 1,
+        "ACTIVE_MATERIAL": "NONE",
+        "ROUTE_NAME": "I 35 S",
+        "LOGDT": 1789814761014,
+        "MODIFIEDDT": 1789832761014,
+        "MODIFIEDDT_UTC_OFFSET": "-05:00",
+        "REST_UPDATED": 1789832828105,
+        "REST_UPDATED_UTC_OFFSET": "-05:00",
+        "COST_CENTER": null,
+        "MAINT_DISTRICT": null,
+        "GARAGE_NAME": null
+      },
+      "geometry": {
+        "x": -93.570509,
+        "y": 42.42155499999999
+      }
+    }
+  ]
+}

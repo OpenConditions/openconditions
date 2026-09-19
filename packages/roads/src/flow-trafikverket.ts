@@ -72,6 +72,7 @@ export function parseTrafikverketFlow(
         geometry,
         los: "unknown",
         speedKph,
+        site: { id: siteId },
         origin,
         dataUpdatedAt: measuredAt,
         fetchedAt: now,

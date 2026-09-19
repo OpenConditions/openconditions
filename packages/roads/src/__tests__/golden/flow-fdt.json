@@ -1,0 +1,122 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:it-turin:39983",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            7.6225,
+            45.0507
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "direction": {
+          "value": "positive",
+          "basis": "alert_c"
+        }
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "it-turin",
+        "sourceFormat": "fdt",
+        "accessMode": "bulk",
+        "recordId": "39983",
+        "attribution": {
+          "provider": "5T / Città di Torino",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "50105fb339015bea98cc9d96ee0202ef8e4e3f7e214b57159e698de5cc5bd45e",
+      "domain": "roads",
+      "contentHash": "2ec9bebff33db0f38805fa650e19b1a2f01c2463472f8415f578cada97397d75",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:it-turin:35f34c989b53d3dcf54a5e5e64a1f7c0b698c54fb4f0717a90eef7e640a17d5e",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            7.6225,
+            45.0507
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "direction": {
+          "value": "positive",
+          "basis": "alert_c"
+        }
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "it-turin",
+        "sourceFormat": "fdt",
+        "accessMode": "bulk",
+        "recordId": "39983",
+        "attribution": {
+          "provider": "5T / Città di Torino",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "d34d64129d4d6227ad7a97cb659f869e12a22b94cfe9f12279f84e292219b26e",
+      "domain": "roads",
+      "contentHash": "a80f2080a0cc2126822db6e242bee948570ae495024907c906ca188c2b1cd0fc",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:it-turin:39983"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 54.5,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-10T18:00:03.516Z"
+      },
+      "aggregation": "mean"
+    }
+  ],
+  "situations": []
+}

@@ -1,0 +1,298 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:es-madrid:9841",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -3.7071932540661376,
+            40.414462781873056
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "es-madrid",
+        "sourceFormat": "informo",
+        "accessMode": "bulk",
+        "recordId": "9841",
+        "attribution": {
+          "provider": "Ayuntamiento de Madrid",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "696125ecee85fb6aa4184e34d3e78de55cebf680489ab9a663f281df5a7918da",
+      "domain": "roads",
+      "contentHash": "ff4dd07eeff5719fd09efb2fef12b0b481085a2b188901c1243ba65a5b18ddd0",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.los"
+        ]
+      }
+    },
+    {
+      "id": "oc:feature:es-madrid:9842",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -3.6955060668910114,
+            40.42354046684388
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "es-madrid",
+        "sourceFormat": "informo",
+        "accessMode": "bulk",
+        "recordId": "9842",
+        "attribution": {
+          "provider": "Ayuntamiento de Madrid",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "627186ccf46f6e46d7876f9d370f1d2abf01ed24e47f01224b77dc0c0319ca0a",
+      "domain": "roads",
+      "contentHash": "aae4805b9dac7290989cc3dd6979bfe13e79a24b5e5568a10274e3aedd00fe9b",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.los"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:es-madrid:6fdb4e8dea41c3c165ccf917295e30f4183869e37431f9af797ef5b770ba321a",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -3.7071932540661376,
+            40.414462781873056
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "es-madrid",
+        "sourceFormat": "informo",
+        "accessMode": "bulk",
+        "recordId": "9841",
+        "attribution": {
+          "provider": "Ayuntamiento de Madrid",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "f00e0770ebc527bdbf41033897a5c91cb5ecfc60a8ff44b7d590f3dfd6426002",
+      "domain": "roads",
+      "contentHash": "7f3979b63dd3160c5785aa18336e707ea52b8c12ba7e83c8061d7ff5f0d11e33",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.los",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:es-madrid:9841"
+      },
+      "result": {
+        "type": "category",
+        "value": "stationary",
+        "vocabulary": "los"
+      },
+      "phenomenonTime": {
+        "instant": "2026-09-18T10:00:00.000Z"
+      },
+      "aggregation": "instantaneous"
+    },
+    {
+      "id": "oc:observation:es-madrid:65fd28fa65103bb9a65cf61909e9a6726bddb5231014a1717e1e7e96d44529c0",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -3.6955060668910114,
+            40.42354046684388
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "es-madrid",
+        "sourceFormat": "informo",
+        "accessMode": "bulk",
+        "recordId": "9842",
+        "attribution": {
+          "provider": "Ayuntamiento de Madrid",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "a3cce09a0aa41f9575ebed22b191334368acc2c286883e64338f3c2495190872",
+      "domain": "roads",
+      "contentHash": "5d8fea5a83965a04d457a79cc035b2f67a19036a22b04e1379ea6d2c8fbc4c13",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.los",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:es-madrid:9842"
+      },
+      "result": {
+        "type": "category",
+        "value": "free_flow",
+        "vocabulary": "los"
+      },
+      "phenomenonTime": {
+        "instant": "2026-09-18T10:00:00.000Z"
+      },
+      "aggregation": "instantaneous"
+    }
+  ],
+  "situations": [
+    {
+      "id": "oc:situation:es-madrid:9841:congestion",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -3.7071932540661376,
+            40.414462781873056
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "admin": {
+          "country": "ES"
+        }
+      },
+      "provenance": {
+        "origin": "derived",
+        "sourceId": "es-madrid",
+        "sourceFormat": "informo",
+        "accessMode": "bulk",
+        "recordId": "9841:congestion",
+        "attribution": {
+          "provider": "Ayuntamiento de Madrid",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
+        },
+        "instanceId": "golden.test",
+        "derivedFrom": {
+          "records": [
+            {
+              "class": "feature",
+              "id": "oc:feature:es-madrid:9841"
+            }
+          ],
+          "method": "los_threshold",
+          "version": "1"
+        },
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "3c59732c7636735039ce6c187180cbb9631e0eb260789a7ed9856cfcf2efc277",
+      "domain": "roads",
+      "contentHash": "fdd56099f74d0af40d5ed56ff3e8d5149f6bf522d743f6d786e6ff6bc1659fd7",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "situation",
+      "kind": "congestion",
+      "type": "congestion",
+      "planned": false,
+      "certainty": "unknown",
+      "severity": {
+        "label": "moderate",
+        "source": "derived"
+      },
+      "validity": {
+        "status": "active",
+        "start": "2026-09-18T10:00:00.000Z"
+      },
+      "effects": [],
+      "details": {
+        "kind": "congestion",
+        "v": 1,
+        "los": "unknown",
+        "derivedFrom": {
+          "class": "feature",
+          "id": "oc:feature:es-madrid:9841"
+        }
+      }
+    }
+  ]
+}

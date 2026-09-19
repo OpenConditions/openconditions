@@ -1,0 +1,875 @@
+{
+  "id": 1001,
+  "dataUpdatedTime": "2026-09-19T15:56:49Z",
+  "sensorValues": [
+    {
+      "id": 1,
+      "stationId": 1001,
+      "name": "ILMA",
+      "shortName": "Ilma ",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 14.9
+    },
+    {
+      "id": 2,
+      "stationId": 1001,
+      "name": "ILMA_DERIVAATTA",
+      "shortName": "DIlm",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C/h",
+      "value": -0.4
+    },
+    {
+      "id": 3,
+      "stationId": 1001,
+      "name": "TIE_1",
+      "shortName": "Tie1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 15.0
+    },
+    {
+      "id": 4,
+      "stationId": 1001,
+      "name": "TIE_1_DERIVAATTA",
+      "shortName": "DTie1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C/h",
+      "value": -1.0
+    },
+    {
+      "id": 5,
+      "stationId": 1001,
+      "name": "TIE_2",
+      "shortName": "Tie2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 14.7
+    },
+    {
+      "id": 6,
+      "stationId": 1001,
+      "name": "TIE_2_DERIVAATTA",
+      "shortName": "DTie2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C/h",
+      "value": -1.1
+    },
+    {
+      "id": 7,
+      "stationId": 1001,
+      "name": "MAA_1",
+      "shortName": "Maa1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 15.3
+    },
+    {
+      "id": 8,
+      "stationId": 1001,
+      "name": "MAA_2",
+      "shortName": "Maa2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 14.9
+    },
+    {
+      "id": 9,
+      "stationId": 1001,
+      "name": "KASTEPISTE",
+      "shortName": "KastP",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 12.6
+    },
+    {
+      "id": 10,
+      "stationId": 1001,
+      "name": "JÄÄTYMISPISTE_1",
+      "shortName": "JääPi1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 0.0
+    },
+    {
+      "id": 11,
+      "stationId": 1001,
+      "name": "JÄÄTYMISPISTE_2",
+      "shortName": "JääPi2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 0.0
+    },
+    {
+      "id": 16,
+      "stationId": 1001,
+      "name": "KESKITUULI",
+      "shortName": "KTuuli",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "m/s",
+      "value": 1.1
+    },
+    {
+      "id": 17,
+      "stationId": 1001,
+      "name": "MAKSIMITUULI",
+      "shortName": "MTuuli",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "m/s",
+      "value": 4.3
+    },
+    {
+      "id": 18,
+      "stationId": 1001,
+      "name": "TUULENSUUNTA",
+      "shortName": "TSuunt",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°",
+      "value": 331.0
+    },
+    {
+      "id": 21,
+      "stationId": 1001,
+      "name": "ILMAN_KOSTEUS",
+      "shortName": "Koste",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "%",
+      "value": 86.0
+    },
+    {
+      "id": 22,
+      "stationId": 1001,
+      "name": "SADE",
+      "shortName": "Sade",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "sensorValueDescriptionEn": "Weak",
+      "sensorValueDescriptionFi": "Heikko",
+      "unit": "///",
+      "value": 1.0
+    },
+    {
+      "id": 23,
+      "stationId": 1001,
+      "name": "SADE_INTENSITEETTI",
+      "shortName": "S-Int",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "mm/h",
+      "value": 0.0
+    },
+    {
+      "id": 24,
+      "stationId": 1001,
+      "name": "SADESUMMA",
+      "shortName": "S-Sum",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "mm",
+      "value": 2.8
+    },
+    {
+      "id": 25,
+      "stationId": 1001,
+      "name": "SATEEN_OLOMUOTO_PWDXX",
+      "shortName": "S-Olom",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "sensorValueDescriptionEn": "Dry weather",
+      "sensorValueDescriptionFi": "Pouta",
+      "unit": "///",
+      "value": 7.0
+    },
+    {
+      "id": 26,
+      "stationId": 1001,
+      "name": "NÄKYVYYS_KM",
+      "shortName": "Näk_km",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "km",
+      "value": 20.0
+    },
+    {
+      "id": 27,
+      "stationId": 1001,
+      "name": "KELI_1",
+      "shortName": "Keli1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "sensorValueDescriptionEn": "Dry",
+      "sensorValueDescriptionFi": "Kuiva",
+      "unit": "***",
+      "value": 1.0
+    },
+    {
+      "id": 28,
+      "stationId": 1001,
+      "name": "KELI_2",
+      "shortName": "Keli2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "sensorValueDescriptionEn": "Dry",
+      "sensorValueDescriptionFi": "Kuiva",
+      "unit": "***",
+      "value": 1.0
+    },
+    {
+      "id": 29,
+      "stationId": 1001,
+      "name": "VAROITUS_1",
+      "shortName": "Varo1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "sensorValueDescriptionEn": "OK",
+      "sensorValueDescriptionFi": "OK",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 30,
+      "stationId": 1001,
+      "name": "VAROITUS_2",
+      "shortName": "Varo2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "sensorValueDescriptionEn": "OK",
+      "sensorValueDescriptionFi": "OK",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 31,
+      "stationId": 1001,
+      "name": "JOHTAVUUS_1",
+      "shortName": "Joht1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "V",
+      "value": 0.03
+    },
+    {
+      "id": 32,
+      "stationId": 1001,
+      "name": "JOHTAVUUS_2",
+      "shortName": "Joht2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "V",
+      "value": 0.05
+    },
+    {
+      "id": 33,
+      "stationId": 1001,
+      "name": "PINTASIGNAALI_1",
+      "shortName": "PSig1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "V",
+      "value": 0.0
+    },
+    {
+      "id": 34,
+      "stationId": 1001,
+      "name": "PINTASIGNAALI_2",
+      "shortName": "PSig2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "V",
+      "value": 0.0
+    },
+    {
+      "id": 35,
+      "stationId": 1001,
+      "name": "JÄÄTAAJUUS_1",
+      "shortName": "JTaaj1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "Hz",
+      "value": 397.0
+    },
+    {
+      "id": 36,
+      "stationId": 1001,
+      "name": "JÄÄTAAJUUS_2",
+      "shortName": "JTaaj2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "Hz",
+      "value": 430.0
+    },
+    {
+      "id": 37,
+      "stationId": 1001,
+      "name": "ASEMAN_STATUS_1",
+      "shortName": "Stat1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 21.0
+    },
+    {
+      "id": 38,
+      "stationId": 1001,
+      "name": "ASEMAN_STATUS_2",
+      "shortName": "Stat2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 21.0
+    },
+    {
+      "id": 48,
+      "stationId": 1001,
+      "name": "SADE_TILA",
+      "shortName": "S-Tila",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "///",
+      "value": 18.0
+    },
+    {
+      "id": 49,
+      "stationId": 1001,
+      "name": "KASTEPISTE_ERO_TIE",
+      "shortName": "KpEroT",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 2.4
+    },
+    {
+      "id": 50,
+      "stationId": 1001,
+      "name": "KOSTEUDEN_MÄÄRÄ_1",
+      "shortName": "KosMä1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "mm",
+      "value": 0.0
+    },
+    {
+      "id": 51,
+      "stationId": 1001,
+      "name": "KOSTEUDEN_MÄÄRÄ_2",
+      "shortName": "KosMä2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "mm",
+      "value": 0.0
+    },
+    {
+      "id": 52,
+      "stationId": 1001,
+      "name": "SUOLAN_MÄÄRÄ_1",
+      "shortName": "SuoMä1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "g/m2",
+      "value": 0.0
+    },
+    {
+      "id": 53,
+      "stationId": 1001,
+      "name": "SUOLAN_MÄÄRÄ_2",
+      "shortName": "SuoMä2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "g/m2",
+      "value": 0.0
+    },
+    {
+      "id": 54,
+      "stationId": 1001,
+      "name": "SUOLAN_VÄKEVYYS_1",
+      "shortName": "SuoVä1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "g/l",
+      "value": 0.0
+    },
+    {
+      "id": 55,
+      "stationId": 1001,
+      "name": "SUOLAN_VÄKEVYYS_2",
+      "shortName": "SuoVä2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "g/l",
+      "value": 0.0
+    },
+    {
+      "id": 56,
+      "stationId": 1001,
+      "name": "TURVALLISUUSLÄMPÖ_1",
+      "shortName": "TurLä1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 0.0
+    },
+    {
+      "id": 57,
+      "stationId": 1001,
+      "name": "TURVALLISUUSLÄMPÖ_2",
+      "shortName": "TurLä2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 0.0
+    },
+    {
+      "id": 58,
+      "stationId": 1001,
+      "name": "NÄKYVYYS_M",
+      "shortName": "Näky_m",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "m",
+      "value": 20000.0
+    },
+    {
+      "id": 73,
+      "stationId": 1001,
+      "name": "KASTEPISTE_ERO_ILMA",
+      "shortName": "KpEroI",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 2.3
+    },
+    {
+      "id": 91,
+      "stationId": 1001,
+      "name": "PWD_STATUS",
+      "shortName": "PWDsta",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 92,
+      "stationId": 1001,
+      "name": "PWD_TILA",
+      "shortName": "PWDtil",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 93,
+      "stationId": 1001,
+      "name": "PWD_NÄK_TILA",
+      "shortName": "PWDnäk",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 98,
+      "stationId": 1001,
+      "name": "AURINKOUP",
+      "shortName": "Aurink",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 1.0
+    },
+    {
+      "id": 99,
+      "stationId": 1001,
+      "name": "VALOISAA",
+      "shortName": "Valoa?",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 1.0
+    },
+    {
+      "id": 100,
+      "stationId": 1001,
+      "name": "VALLITSEVA_SÄÄ",
+      "shortName": "Säätila",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "///",
+      "value": 81.0
+    },
+    {
+      "id": 105,
+      "stationId": 1001,
+      "name": "KELI_3",
+      "shortName": "Keli3",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "***",
+      "value": 0.0
+    },
+    {
+      "id": 106,
+      "stationId": 1001,
+      "name": "VAROITUS_3",
+      "shortName": "Varo3",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 107,
+      "stationId": 1001,
+      "name": "JOHTAVUUS_3",
+      "shortName": "Joht3",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "V",
+      "value": 0.01
+    },
+    {
+      "id": 108,
+      "stationId": 1001,
+      "name": "PINTASIGNAALI_3",
+      "shortName": "PSig3",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "V",
+      "value": 0.0
+    },
+    {
+      "id": 115,
+      "stationId": 1001,
+      "name": "KELI_4",
+      "shortName": "Keli4",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "***",
+      "value": 0.0
+    },
+    {
+      "id": 116,
+      "stationId": 1001,
+      "name": "VAROITUS_4",
+      "shortName": "Varo4",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 117,
+      "stationId": 1001,
+      "name": "JOHTAVUUS_4",
+      "shortName": "Joht4",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "V",
+      "value": 0.01
+    },
+    {
+      "id": 118,
+      "stationId": 1001,
+      "name": "PINTASIGNAALI_4",
+      "shortName": "PSig4",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "V",
+      "value": 0.0
+    },
+    {
+      "id": 126,
+      "stationId": 1001,
+      "name": "KUURAPISTE",
+      "shortName": "KuuraP",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 12.6
+    },
+    {
+      "id": 127,
+      "stationId": 1001,
+      "name": "KUURAPISTE_ERO_TIE",
+      "shortName": "KupErT",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 2.4
+    },
+    {
+      "id": 128,
+      "stationId": 1001,
+      "name": "KUURAPISTE_ERO_ILMA",
+      "shortName": "KupErI",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 2.3
+    },
+    {
+      "id": 130,
+      "stationId": 1001,
+      "name": "KUITUVASTE_PIENI_1",
+      "shortName": "KVaP1 ",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "###",
+      "value": 0.0
+    },
+    {
+      "id": 131,
+      "stationId": 1001,
+      "name": "KUITUVASTE_PIENI_2",
+      "shortName": "KVaP2 ",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "###",
+      "value": 0.0
+    },
+    {
+      "id": 132,
+      "stationId": 1001,
+      "name": "KUITUVASTE_SUURI_1",
+      "shortName": "KVaS1 ",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "###",
+      "value": 0.0
+    },
+    {
+      "id": 133,
+      "stationId": 1001,
+      "name": "KUITUVASTE_SUURI_2",
+      "shortName": "KVaS2 ",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "###",
+      "value": 0.0
+    },
+    {
+      "id": 135,
+      "stationId": 1001,
+      "name": "DSC_VASTAANOTTIMEN_PUHTAUS1",
+      "shortName": "DSCpu1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 136,
+      "stationId": 1001,
+      "name": "DSC_STAT1",
+      "shortName": "DSCst1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 162,
+      "stationId": 1001,
+      "name": "TIENPINNAN_TILA_OPT1",
+      "shortName": "TilaO1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "***",
+      "value": 1.0
+    },
+    {
+      "id": 163,
+      "stationId": 1001,
+      "name": "TIENPINNAN_TILA_OPT2",
+      "shortName": "TilaO2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "***",
+      "value": 1.0
+    },
+    {
+      "id": 167,
+      "stationId": 1001,
+      "name": "TIENPINNAN_TILA_1",
+      "shortName": "Tila1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "***",
+      "value": 1.0
+    },
+    {
+      "id": 168,
+      "stationId": 1001,
+      "name": "TIENPINNAN_TILA_2",
+      "shortName": "Tila2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "***",
+      "value": 1.0
+    },
+    {
+      "id": 169,
+      "stationId": 1001,
+      "name": "TIENPINNAN_TILA_3",
+      "shortName": "Tila3",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "***",
+      "value": 0.0
+    },
+    {
+      "id": 170,
+      "stationId": 1001,
+      "name": "TIENPINNAN_TILA_4",
+      "shortName": "Tila4",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "***",
+      "value": 0.0
+    },
+    {
+      "id": 174,
+      "stationId": 1001,
+      "name": "OPTISEN_ANTURIN_KELI1",
+      "shortName": "KeliO1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "***",
+      "value": 1.0
+    },
+    {
+      "id": 175,
+      "stationId": 1001,
+      "name": "OPTISEN_ANTURIN_VAROITUS1",
+      "shortName": "VaroO1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "sensorValueDescriptionEn": "OK",
+      "sensorValueDescriptionFi": "OK",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 176,
+      "stationId": 1001,
+      "name": "KITKA1",
+      "shortName": "Kitka1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "µ",
+      "value": 0.82
+    },
+    {
+      "id": 177,
+      "stationId": 1001,
+      "name": "VEDEN_MÄÄRÄ1",
+      "shortName": "VedMä1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "mm",
+      "value": 0.0
+    },
+    {
+      "id": 178,
+      "stationId": 1001,
+      "name": "LUMEN_MÄÄRÄ1",
+      "shortName": "LumMä1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "mm",
+      "value": 0.0
+    },
+    {
+      "id": 179,
+      "stationId": 1001,
+      "name": "JÄÄN_MÄÄRÄ1",
+      "shortName": "JääMä1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "mm",
+      "value": 0.0
+    },
+    {
+      "id": 180,
+      "stationId": 1001,
+      "name": "ASEMAN_STATUS_OPT1",
+      "shortName": "StatO1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 1.0
+    },
+    {
+      "id": 181,
+      "stationId": 1001,
+      "name": "KITKA1_LUKU",
+      "shortName": "KitkL1",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "µ",
+      "value": 0.82
+    },
+    {
+      "id": 184,
+      "stationId": 1001,
+      "name": "OPTISEN_ANTURIN_KELI2",
+      "shortName": "KeliO2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "***",
+      "value": 1.0
+    },
+    {
+      "id": 185,
+      "stationId": 1001,
+      "name": "OPTISEN_ANTURIN_VAROITUS2",
+      "shortName": "VaroO2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 186,
+      "stationId": 1001,
+      "name": "KITKA2",
+      "shortName": "Kitka2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "µ",
+      "value": 0.82
+    },
+    {
+      "id": 187,
+      "stationId": 1001,
+      "name": "VEDEN_MÄÄRÄ2",
+      "shortName": "VedMä2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "mm",
+      "value": 0.0
+    },
+    {
+      "id": 188,
+      "stationId": 1001,
+      "name": "LUMEN_MÄÄRÄ2",
+      "shortName": "LumMä2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "mm",
+      "value": 0.0
+    },
+    {
+      "id": 189,
+      "stationId": 1001,
+      "name": "JÄÄN_MÄÄRÄ2",
+      "shortName": "JääMä2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "mm",
+      "value": 0.0
+    },
+    {
+      "id": 190,
+      "stationId": 1001,
+      "name": "ASEMAN_STATUS_OPT2",
+      "shortName": "StatO2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 1.0
+    },
+    {
+      "id": 191,
+      "stationId": 1001,
+      "name": "KITKA2_LUKU",
+      "shortName": "KitkL2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "µ",
+      "value": 0.82
+    },
+    {
+      "id": 196,
+      "stationId": 1001,
+      "name": "DSC_VASTAANOTTIMEN_PUHTAUS2",
+      "shortName": "DSCpu2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 197,
+      "stationId": 1001,
+      "name": "DSC_STAT2",
+      "shortName": "DSCst2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "???",
+      "value": 0.0
+    },
+    {
+      "id": 213,
+      "stationId": 1001,
+      "name": "ILMAN_LÄMPÖTILA_24H_MIN",
+      "shortName": "IlmMIN",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 10.2
+    },
+    {
+      "id": 214,
+      "stationId": 1001,
+      "name": "ILMAN_LÄMPÖTILA_24H_MAX",
+      "shortName": "IlmMAX",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 15.9
+    },
+    {
+      "id": 215,
+      "stationId": 1001,
+      "name": "SADESUMMA_LIUKUVA_24H",
+      "shortName": "Sad24h",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "mm",
+      "value": 7.5
+    },
+    {
+      "id": 226,
+      "stationId": 1001,
+      "name": "KASTEPISTE_ERO_TIE2",
+      "shortName": "KpEroT2",
+      "measuredTime": "2026-09-19T15:55:54Z",
+      "unit": "°C",
+      "value": 2.2
+    }
+  ]
+}

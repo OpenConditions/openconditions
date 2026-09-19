@@ -1,0 +1,622 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:fr-dir-flow:NL-MS-001",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.8952,
+              52.3703
+            ],
+            [
+              4.899,
+              52.372
+            ],
+            [
+              4.903,
+              52.374
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fr-dir-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "NL-MS-001",
+        "attribution": {
+          "provider": "Ministère de la Transition écologique / DIR",
+          "license": "etalab-2.0",
+          "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "0ac714699552ba7bd10c3b2eb41259c9c924325e6d57ace75279f630968bfa51",
+      "domain": "roads",
+      "contentHash": "a53b2399171655bdeefadb1ac3a3124f490c98451f8376a2eb656384524a34a2",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.los"
+        ]
+      }
+    },
+    {
+      "id": "oc:feature:fr-dir-flow:NL-MS-002",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.88,
+              52.36
+            ],
+            [
+              4.878,
+              52.358
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fr-dir-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "NL-MS-002",
+        "attribution": {
+          "provider": "Ministère de la Transition écologique / DIR",
+          "license": "etalab-2.0",
+          "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "f2d3e028bc12dc263de22d306abea72242368a3b67f9bf93813dfff6b68c48a0",
+      "domain": "roads",
+      "contentHash": "c17abae0442d70fc24605b199da1826b920c07021f1bfc0887728f20f8de72fc",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.los"
+        ]
+      }
+    },
+    {
+      "id": "oc:feature:fr-dir-flow:NL-MS-003",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.865,
+              52.345
+            ],
+            [
+              4.862,
+              52.343
+            ],
+            [
+              4.859,
+              52.341
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fr-dir-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "NL-MS-003",
+        "attribution": {
+          "provider": "Ministère de la Transition écologique / DIR",
+          "license": "etalab-2.0",
+          "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "ce7e25201c8f5b69cc7cfb9a6ef76691c55d3a2c36faba3fe6968fd04d883450",
+      "domain": "roads",
+      "contentHash": "23067235eb60bbb16a839a75e9ebf55cfefa26c86390bc3e6710f8125407c5a8",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.los"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:fr-dir-flow:045a0bfd72277b65fa3abb4b6b4674c7b806ba49ce4b9e61fbca883ba93a9dad",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.8952,
+              52.3703
+            ],
+            [
+              4.899,
+              52.372
+            ],
+            [
+              4.903,
+              52.374
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fr-dir-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "NL-MS-001",
+        "attribution": {
+          "provider": "Ministère de la Transition écologique / DIR",
+          "license": "etalab-2.0",
+          "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "65fc1b2bffaeddaf83dec42c1fba412aa2d90e0d439f4ad34351448a632d0a8b",
+      "domain": "roads",
+      "contentHash": "da0cc5a15b5254d1cf2cc682651313f6429244d30d1ade535a394093b8d8f783",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fr-dir-flow:NL-MS-001"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 78.5,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T10:00:00.000Z"
+      },
+      "aggregation": "mean",
+      "baseline": {
+        "freeFlow": {
+          "value": 100,
+          "unit": "km/h"
+        },
+        "source": "native",
+        "ratio": 0.785,
+        "los": "heavy"
+      }
+    },
+    {
+      "id": "oc:observation:fr-dir-flow:ae181b84c89a830f6f6733961b2d356248007464cf57988d098b9d096c2014c9",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.88,
+              52.36
+            ],
+            [
+              4.878,
+              52.358
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fr-dir-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "NL-MS-002",
+        "attribution": {
+          "provider": "Ministère de la Transition écologique / DIR",
+          "license": "etalab-2.0",
+          "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "b74cfadc511b09fccdde08fd6122161ea332d85336226f97d76ad484dac87ca2",
+      "domain": "roads",
+      "contentHash": "dfdc19853b3fc1248020ca0e83b9dcc0c90f62fe0b615cb81503da8199bcc5a4",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fr-dir-flow:NL-MS-002"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 42,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T10:00:00.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:fr-dir-flow:068dcfd73790cbe962885bde7838eece8937e616e99d55ab1f000e91b05aa2ba",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.88,
+              52.36
+            ],
+            [
+              4.878,
+              52.358
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fr-dir-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "NL-MS-002",
+        "attribution": {
+          "provider": "Ministère de la Transition écologique / DIR",
+          "license": "etalab-2.0",
+          "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "611d8b686e27c3caaa8f71d524844b833bd5c203afef0f97babc74b354c8f1a7",
+      "domain": "roads",
+      "contentHash": "949667f203fa0d88f65c0b54a8e0d192aec5528d80af7a0be883a28e2587b3c5",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.los",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fr-dir-flow:NL-MS-002"
+      },
+      "result": {
+        "type": "category",
+        "value": "heavy",
+        "vocabulary": "los"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T10:00:00.000Z"
+      },
+      "aggregation": "instantaneous"
+    },
+    {
+      "id": "oc:observation:fr-dir-flow:d086b2bae63c25c083c9acd77fe82780657b086cefc16266c3cdaa0ca4f2e627",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.865,
+              52.345
+            ],
+            [
+              4.862,
+              52.343
+            ],
+            [
+              4.859,
+              52.341
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fr-dir-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "NL-MS-003",
+        "attribution": {
+          "provider": "Ministère de la Transition écologique / DIR",
+          "license": "etalab-2.0",
+          "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "e15d6c2d8eae03ec3837e2e88c1b124048e3b7620c0a472cd1f72b189082f0c5",
+      "domain": "roads",
+      "contentHash": "1d43591fdd677e8b4f227f6926fbb8feac1e996876ecfc00d5918854706ec44e",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fr-dir-flow:NL-MS-003"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 4,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T09:55:00.000Z"
+      },
+      "aggregation": "mean",
+      "baseline": {
+        "freeFlow": {
+          "value": 80,
+          "unit": "km/h"
+        },
+        "source": "native",
+        "ratio": 0.05
+      }
+    },
+    {
+      "id": "oc:observation:fr-dir-flow:93e3c8f3620e62b6a8b29476b20ba3fa22c6aee4293c3949b2b5feeddf0bcafe",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.865,
+              52.345
+            ],
+            [
+              4.862,
+              52.343
+            ],
+            [
+              4.859,
+              52.341
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fr-dir-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "NL-MS-003",
+        "attribution": {
+          "provider": "Ministère de la Transition écologique / DIR",
+          "license": "etalab-2.0",
+          "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "6fd78ab45cee06386b596a6d3bfd028ee4f1572873b942af209c0420b683d2a1",
+      "domain": "roads",
+      "contentHash": "57aac3199e40bd371dc63c2ca132d9507c77b9af1f6c31cbcff4cda9851dead0",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.los",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fr-dir-flow:NL-MS-003"
+      },
+      "result": {
+        "type": "category",
+        "value": "stationary",
+        "vocabulary": "los"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T09:55:00.000Z"
+      },
+      "aggregation": "instantaneous"
+    }
+  ],
+  "situations": [
+    {
+      "id": "oc:situation:fr-dir-flow:NL-MS-003:congestion",
+      "temporality": "live",
+      "externalIds": [
+        {
+          "scheme": "datex:record",
+          "id": "NL-MS-003:congestion"
+        }
+      ],
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.865,
+              52.345
+            ],
+            [
+              4.862,
+              52.343
+            ],
+            [
+              4.859,
+              52.341
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "admin": {
+          "country": "FR"
+        }
+      },
+      "provenance": {
+        "origin": "derived",
+        "sourceId": "fr-dir-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "NL-MS-003:congestion",
+        "attribution": {
+          "provider": "Ministère de la Transition écologique / DIR",
+          "license": "etalab-2.0",
+          "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+        },
+        "instanceId": "golden.test",
+        "derivedFrom": {
+          "records": [
+            {
+              "class": "feature",
+              "id": "oc:feature:fr-dir-flow:NL-MS-003"
+            }
+          ],
+          "method": "los_threshold",
+          "version": "1"
+        },
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "2fa408b7a63f9c42a1c14c0b2501e15e9cfd193e662d6463dfc64dfbcb9b63c2",
+      "domain": "roads",
+      "contentHash": "15af54f4f2d56f24023373c462139f489426db6e6e241d22d195ecc4c90a4875",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "situation",
+      "kind": "congestion",
+      "type": "congestion",
+      "planned": false,
+      "certainty": "unknown",
+      "severity": {
+        "label": "moderate",
+        "source": "derived"
+      },
+      "validity": {
+        "status": "active",
+        "start": "2026-06-24T09:55:00Z"
+      },
+      "effects": [],
+      "details": {
+        "kind": "congestion",
+        "v": 1,
+        "los": "unknown",
+        "derivedFrom": {
+          "class": "feature",
+          "id": "oc:feature:fr-dir-flow:NL-MS-003"
+        },
+        "freeFlowSource": "native"
+      }
+    }
+  ]
+}

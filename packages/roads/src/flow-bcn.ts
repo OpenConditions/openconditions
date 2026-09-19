@@ -1,5 +1,5 @@
 import type { FlowParseResult } from "./flow.js";
-import { buildMeasuredSiteFlow, makeOrigin } from "./flow.js";
+import { buildMeasuredSiteFlow, localTimestamp, makeOrigin } from "./flow.js";
 import type { RoadEvent, RoadFlow } from "./model.js";
 import type { SiteGeometry } from "./siteTable.js";
 import type { SourceDescriptor } from "./types.js";
@@ -17,12 +17,12 @@ const STATUS_TO_DATEX: Record<string, string> = {
   "6": "blocked", // tallat
 };
 
-/** "YYYYMMDDHHMMSS" → ISO-8601 local timestamp, or undefined when malformed. */
+/** "YYYYMMDDHHMMSS" Barcelona wall-clock time → ISO instant, or undefined when malformed. */
 function parseBcnTimestamp(raw: string): string | undefined {
   const m = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})$/.exec(raw);
   if (!m) return undefined;
   const [, y, mo, d, h, mi, s] = m;
-  return `${y}-${mo}-${d}T${h}:${mi}:${s}`;
+  return localTimestamp(`${y}-${mo}-${d}T${h}:${mi}:${s}`, "Europe/Madrid");
 }
 
 /**

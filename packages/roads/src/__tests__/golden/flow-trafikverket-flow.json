@@ -1,0 +1,114 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:se-trafikverket-flow:TMS-1",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            18.06,
+            59.33
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "se-trafikverket-flow",
+        "sourceFormat": "trafikverket-flow",
+        "accessMode": "bulk",
+        "recordId": "TMS-1",
+        "attribution": {
+          "provider": "Trafikverket",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://api.trafikinfo.trafikverket.se/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "1f0dbd1dd62dde8f07666f50b4b18b7fa92e54cefabfd4e3ab10eb8c58c3b334",
+      "domain": "roads",
+      "contentHash": "5be0df9bfffcbb77e9b5ae07fdfeb35d9181bba78bea3d9deae1de78f4cde657",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:se-trafikverket-flow:efdfbf98dfe247d1984d11e806695b878e8159d434f4ccac6c6f0d8766ba36fe",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            18.06,
+            59.33
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "se-trafikverket-flow",
+        "sourceFormat": "trafikverket-flow",
+        "accessMode": "bulk",
+        "recordId": "TMS-1",
+        "attribution": {
+          "provider": "Trafikverket",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://api.trafikinfo.trafikverket.se/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "9b1e44ee16eefcc0ad9972edad58b1518de55afaf52ffa56c64699ad787552a2",
+      "domain": "roads",
+      "contentHash": "0cbe58284b43169d9d3a5efd2f1986dfbe9f3dde7d5a573614e2187bc17d80d4",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:se-trafikverket-flow:TMS-1"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 92,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-03-04T14:30:00.000Z"
+      },
+      "aggregation": "mean"
+    }
+  ],
+  "situations": []
+}

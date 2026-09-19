@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
-import { qualifierKey, subjectKey } from "../classes/observation.js";
+import { observationId, qualifierKey, subjectKey } from "../classes/observation.js";
 import { kernelModule } from "../kernel/module.js";
 import { buildRegistry } from "../registry/build.js";
 import {
@@ -159,8 +159,7 @@ function observation(
     extras?: unknown;
   },
 ) {
-  return {
-    id: `oc:observation:${base.provenance.sourceId}:${o.localId}`,
+  const draft = {
     class: "observation",
     kind: "observation",
     property: o.property,
@@ -180,6 +179,7 @@ function observation(
     ...(o.quality ? { quality: o.quality } : {}),
     ...(o.extras ? { extras: o.extras } : {}),
   };
+  return { id: observationId(base.provenance.sourceId, draft as never), ...draft };
 }
 
 function pegelonline() {

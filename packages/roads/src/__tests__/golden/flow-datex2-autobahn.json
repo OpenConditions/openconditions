@@ -1,0 +1,115 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:de-by-autobahn:eq.test_001.f.de",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            8.6821,
+            50.1109
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-by-autobahn",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "eq.test_001.f.de",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "3dd20720f694886cc84658a00948b3601b14e3bc98707d918e04c3bdba152aa1",
+      "domain": "roads",
+      "contentHash": "347ad90d33b9267622959e7b67f157d89574f44ba5852292aac1a391934b168a",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.los"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:de-by-autobahn:f827357607da3542b5cc62c9d379c7c77ce536237531a061c2876ed6e39bbc04",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            8.6821,
+            50.1109
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-by-autobahn",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "eq.test_001.f.de",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "a5e346d07ffc77d515aa56395b9693856bb61e9cc17cafe44eded41d0be4b89c",
+      "domain": "roads",
+      "contentHash": "b9611906f0461b5aea7fb67e4b5c53cb10982c92e248bb7680ba1ec20171562d",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:de-by-autobahn:eq.test_001.f.de"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 85,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-24T17:11:00.000Z"
+      },
+      "aggregation": "mean"
+    }
+  ],
+  "situations": []
+}

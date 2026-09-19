@@ -29,9 +29,12 @@
   },
   "dependencies": {
     "@openconditions/model": "workspace:*",
-    "@openconditions/model-roads": "workspace:*"
+    "@openconditions/model-roads": "workspace:*",
+    "@openconditions/model-vehicles": "workspace:*",
+    "@openconditions/model-weather": "workspace:*"
   },
   "devDependencies": {
+    "fast-xml-parser": "^5.11.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"

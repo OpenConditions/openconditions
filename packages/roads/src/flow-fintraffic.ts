@@ -80,6 +80,7 @@ export function parseFintrafficFlow(
         los: "unknown",
         speedKph,
         direction: `SUUNTA${dir}`,
+        site: { id: stationId, channel: dir },
         origin,
         dataUpdatedAt: measuredAt,
         fetchedAt: now,

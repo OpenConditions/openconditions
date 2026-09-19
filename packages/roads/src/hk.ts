@@ -1,6 +1,6 @@
 import type { Point } from "geojson";
 import type { FlowParseResult } from "./flow.js";
-import { makeOrigin } from "./flow.js";
+import { localTimestamp, makeOrigin } from "./flow.js";
 import type { RoadFlow } from "./model.js";
 import type { SiteGeometry } from "./siteTable.js";
 import type { SourceDescriptor } from "./types.js";
@@ -78,7 +78,12 @@ export function parseHkRawFlow(
   const periods = getXmlChildren(getXmlChild(root, "periods") ?? root, "period");
   const period = periods[periods.length - 1];
   if (!period) return { flows: [], events: [] };
-  const measuredAt = xmlText(period["period_to"]) ?? new Date().toISOString();
+  // The document carries the day once (`<date>`); each period only a Hong Kong time of day.
+  const date = xmlText(root["date"]);
+  const periodTo = xmlText(period["period_to"]);
+  const measuredAt =
+    (date && periodTo ? localTimestamp(`${date}T${periodTo}`, "Asia/Hong_Kong") : undefined) ??
+    new Date().toISOString();
 
   const detectors = getXmlChildren(getXmlChild(period, "detectors") ?? period, "detector");
   const now = new Date().toISOString();
@@ -126,6 +131,7 @@ export function parseHkRawFlow(
         geometry: geom,
         los: "unknown",
         speedKph,
+        site: { id },
         origin,
         dataUpdatedAt: measuredAt,
         fetchedAt: now,

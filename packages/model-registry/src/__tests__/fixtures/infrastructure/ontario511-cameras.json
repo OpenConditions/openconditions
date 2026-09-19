@@ -1,0 +1,71 @@
+[
+  {
+    "Id": 1,
+    "Source": "RWIS (MTO)",
+    "SourceId": "CR-1",
+    "Roadway": "QEW",
+    "Direction": "Unknown",
+    "Latitude": 42.9142736713825,
+    "Longitude": -78.9580061508579,
+    "Location": "QEW West of Thompson Road",
+    "SortOrder": 5,
+    "Views": [
+      {
+        "Id": 1,
+        "Url": "https://511on.ca/map/Cctv/1",
+        "Status": "Enabled",
+        "Description": "Toronto Bound"
+      },
+      {
+        "Id": 2,
+        "Url": "https://511on.ca/map/Cctv/2",
+        "Status": "Enabled",
+        "Description": "Looking Down"
+      },
+      {
+        "Id": 3,
+        "Url": "https://511on.ca/map/Cctv/3",
+        "Status": "Enabled",
+        "Description": "Fort Erie Bound"
+      }
+    ]
+  },
+  {
+    "Id": 198,
+    "Source": "COMPASS - Central",
+    "SourceId": "335-QEW MOUNTAIN",
+    "Roadway": "QEW",
+    "Direction": "Unknown",
+    "Latitude": 43.134439,
+    "Longitude": -79.129715,
+    "Location": "QEW at Mountain Road",
+    "SortOrder": 20,
+    "Views": [
+      {
+        "Id": 558,
+        "Url": "https://511on.ca/map/Cctv/558",
+        "Status": "Enabled",
+        "Description": ""
+      }
+    ]
+  },
+  {
+    "Id": 782,
+    "Source": "City of Toronto",
+    "SourceId": "Camera 9201",
+    "Roadway": "Gardiner Expressway",
+    "Direction": "Unknown",
+    "Latitude": 43.648162,
+    "Longitude": -79.359706,
+    "Location": "Gardiner Expressway near Cherry Street",
+    "SortOrder": 3850,
+    "Views": [
+      {
+        "Id": 1433,
+        "Url": "https://511on.ca/map/Cctv/1433",
+        "Status": "Enabled",
+        "Description": ""
+      }
+    ]
+  }
+]

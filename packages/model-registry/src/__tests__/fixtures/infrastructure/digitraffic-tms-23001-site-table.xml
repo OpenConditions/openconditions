@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<d2:payload xmlns:com="http://datex2.eu/schema/3/common" xmlns:roa="http://datex2.eu/schema/3/roadTrafficData" xmlns:comx="http://datex2.eu/schema/3/commonExtension" xmlns:locx="http://datex2.eu/schema/3/locationExtension" xmlns:loc="http://datex2.eu/schema/3/locationReferencing" xmlns:d2="http://datex2.eu/schema/3/d2Payload" xmlns:fac="http://datex2.eu/schema/3/facilities" xmlns:vms="http://datex2.eu/schema/3/vms" xmlns:ns9="http://datex2.eu/schema/3/afirFacilities" xmlns:prk="http://datex2.eu/schema/3/parking" xmlns:ns12="http://datex2.eu/schema/3/openLrBinary" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="roa:MeasurementSiteTablePublication" lang="fi" modelBaseVersion="3" xsi:schemaLocation="http://datex2.eu/schema/3/d2Payload https://docs.datex2.eu/_static/data/v3.7/DATEXII_3_D2Payload.xsd">
+    <com:publicationTime>2024-11-27T09:48:30.000Z</com:publicationTime>
+    <com:publicationCreator>
+        <com:country>FI</com:country>
+        <com:nationalIdentifier>Fintraffic</com:nationalIdentifier>
+    </com:publicationCreator>
+    <roa:headerInformation>
+        <com:confidentiality>noRestriction</com:confidentiality>
+        <com:informationStatus>real</com:informationStatus>
+    </roa:headerInformation>
+    <roa:measurementSiteTable id="TMS_STATIONS" version="2024-11-27T09:48:30Z">
+        <roa:measurementSiteTableIdentification>TMS_STATIONS</roa:measurementSiteTableIdentification>
+        <roa:measurementSite id="23001" version="2024-11-27T09:48:30Z">
+            <roa:measurementSiteRecordVersionTime>2024-11-27T09:48:30.000Z</roa:measurementSiteRecordVersionTime>
+            <roa:measurementSiteName>
+                <com:values>
+                    <com:value lang="fi">vt7_Rita</com:value>
+                    <com:value lang="sv">Väg 7 Borgå, Rita</com:value>
+                    <com:value lang="en">Road 7 Porvoo, Rita</com:value>
+                </com:values>
+            </roa:measurementSiteName>
+            <roa:measurementSiteIdentification>vt7_Rita</roa:measurementSiteIdentification>
+            <roa:measurementSpecificCharacteristics index="1">
+                <roa:measurementSpecificCharacteristics>
+                    <roa:accuracy>99.0</roa:accuracy>
+                    <roa:computationMethod>arithmeticAverageOfSamplesInATimePeriod</roa:computationMethod>
+                    <roa:period>3600.0</roa:period>
+                    <roa:specificMeasurementValueType>trafficFlow</roa:specificMeasurementValueType>
+                    <roa:specificVehicleCharacteristics>
+                        <com:vehicleType>anyVehicle</com:vehicleType>
+                    </roa:specificVehicleCharacteristics>
+                </roa:measurementSpecificCharacteristics>
+            </roa:measurementSpecificCharacteristics>
+            <roa:measurementSpecificCharacteristics index="2">
+                <roa:measurementSpecificCharacteristics>
+                    <roa:accuracy>99.0</roa:accuracy>
+                    <roa:computationMethod>arithmeticAverageOfSamplesInATimePeriod</roa:computationMethod>
+                    <roa:period>3600.0</roa:period>
+                    <roa:specificMeasurementValueType>trafficFlow</roa:specificMeasurementValueType>
+                    <roa:specificVehicleCharacteristics>
+                        <com:vehicleType>anyVehicle</com:vehicleType>
+                    </roa:specificVehicleCharacteristics>
+                </roa:measurementSpecificCharacteristics>
+            </roa:measurementSpecificCharacteristics>
+            <roa:measurementSpecificCharacteristics index="3">
+                <roa:measurementSpecificCharacteristics>
+                    <roa:accuracy>99.0</roa:accuracy>
+                    <roa:computationMethod>arithmeticAverageOfSamplesInATimePeriod</roa:computationMethod>
+                    <roa:period>3600.0</roa:period>
+                    <roa:specificMeasurementValueType>trafficSpeed</roa:specificMeasurementValueType>
+                    <roa:specificVehicleCharacteristics>
+                        <com:vehicleType>anyVehicle</com:vehicleType>
+                    </roa:specificVehicleCharacteristics>
+                </roa:measurementSpecificCharacteristics>
+            </roa:measurementSpecificCharacteristics>
+            <roa:measurementSpecificCharacteristics index="4">
+                <roa:measurementSpecificCharacteristics>
+                    <roa:accuracy>99.0</roa:accuracy>
+                    <roa:computationMethod>arithmeticAverageOfSamplesInATimePeriod</roa:computationMethod>
+                    <roa:period>3600.0</roa:period>
+                    <roa:specificMeasurementValueType>trafficSpeed</roa:specificMeasurementValueType>
+                    <roa:specificVehicleCharacteristics>
+                        <com:vehicleType>anyVehicle</com:vehicleType>
+                    </roa:specificVehicleCharacteristics>
+                </roa:measurementSpecificCharacteristics>
+            </roa:measurementSpecificCharacteristics>
+            <roa:measurementSpecificCharacteristics index="5">
+                <roa:measurementSpecificCharacteristics>
+                    <roa:accuracy>99.0</roa:accuracy>
+                    <roa:computationMethod>movingAverageOfSamples</roa:computationMethod>
+                    <roa:period>300.0</roa:period>
+                    <roa:specificMeasurementValueType>trafficFlow</roa:specificMeasurementValueType>
+                    <roa:specificVehicleCharacteristics>
+                        <com:vehicleType>anyVehicle</com:vehicleType>
+                    </roa:specificVehicleCharacteristics>
+                </roa:measurementSpecificCharacteristics>
+            </roa:measurementSpecificCharacteristics>
+            <roa:measurementSpecificCharacteristics index="6">
+                <roa:measurementSpecificCharacteristics>
+                    <roa:accuracy>99.0</roa:accuracy>
+                    <roa:computationMethod>movingAverageOfSamples</roa:computationMethod>
+                    <roa:period>300.0</roa:period>
+                    <roa:specificMeasurementValueType>trafficFlow</roa:specificMeasurementValueType>
+                    <roa:specificVehicleCharacteristics>
+                        <com:vehicleType>anyVehicle</com:vehicleType>
+                    </roa:specificVehicleCharacteristics>
+                </roa:measurementSpecificCharacteristics>
+            </roa:measurementSpecificCharacteristics>
+            <roa:measurementSpecificCharacteristics index="7">
+                <roa:measurementSpecificCharacteristics>
+                    <roa:accuracy>99.0</roa:accuracy>
+                    <roa:computationMethod>movingAverageOfSamples</roa:computationMethod>
+                    <roa:period>300.0</roa:period>
+                    <roa:specificMeasurementValueType>trafficSpeed</roa:specificMeasurementValueType>
+                    <roa:specificVehicleCharacteristics>
+                        <com:vehicleType>anyVehicle</com:vehicleType>
+                    </roa:specificVehicleCharacteristics>
+                </roa:measurementSpecificCharacteristics>
+            </roa:measurementSpecificCharacteristics>
+            <roa:measurementSpecificCharacteristics index="8">
+                <roa:measurementSpecificCharacteristics>
+                    <roa:accuracy>99.0</roa:accuracy>
+                    <roa:computationMethod>movingAverageOfSamples</roa:computationMethod>
+                    <roa:period>300.0</roa:period>
+                    <roa:specificMeasurementValueType>trafficSpeed</roa:specificMeasurementValueType>
+                    <roa:specificVehicleCharacteristics>
+                        <com:vehicleType>anyVehicle</com:vehicleType>
+                    </roa:specificVehicleCharacteristics>
+                </roa:measurementSpecificCharacteristics>
+            </roa:measurementSpecificCharacteristics>
+            <roa:measurementSiteLocation xsi:type="loc:PointLocation">
+                <loc:pointByCoordinates>
+                    <loc:bearing>60</loc:bearing>
+                    <loc:pointCoordinates>
+                        <loc:latitude>6698571.0</loc:latitude>
+                        <loc:longitude>427830.0</loc:longitude>
+                    </loc:pointCoordinates>
+                </loc:pointByCoordinates>
+            </roa:measurementSiteLocation>
+        </roa:measurementSite>
+    </roa:measurementSiteTable>
+</d2:payload>

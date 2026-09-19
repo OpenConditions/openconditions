@@ -61,6 +61,7 @@ export function parseOhgoFlow(input: string | Buffer, src: SourceDescriptor): Fl
       los: "unknown",
       speedKph: current * MPH_TO_KPH,
       ...(typeof r.Direction === "string" && r.Direction ? { direction: r.Direction } : {}),
+      site: { id },
       origin,
       dataUpdatedAt: measuredAt,
       fetchedAt: now,

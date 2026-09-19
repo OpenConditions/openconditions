@@ -123,6 +123,14 @@ function validityOf(event: SnapshotEvent): Validity {
   };
 }
 
+/** The measurement site a derived situation was computed from, as a record ref. */
+function derivedFromSiteOf(event: RoadEvent) {
+  const site = event.situation?.derivedFromSite;
+  return site === undefined
+    ? undefined
+    : { class: "feature" as const, id: `oc:feature:${event.source}:${site}` };
+}
+
 function detailsOf(c: RoadClassification, event: RoadEvent): Record<string, unknown> {
   const base = { kind: c.kind, v: 1 };
   switch (c.kind) {
@@ -141,12 +149,15 @@ function detailsOf(c: RoadClassification, event: RoadEvent): Record<string, unkn
       return { ...base, basis: "temporary" };
     case "road_condition":
       return { ...base, surface: [SURFACE[c.subtype ?? ""] ?? "unknown"] };
-    case "congestion":
+    case "congestion": {
+      const site = derivedFromSiteOf(event);
       return {
         ...base,
         los: LOS[c.subtype ?? ""] ?? "unknown",
+        ...(site !== undefined ? { derivedFrom: site } : {}),
         ...(event.freeFlowSource !== undefined ? { freeFlowSource: event.freeFlowSource } : {}),
       };
+    }
     default:
       return base;
   }
@@ -370,6 +381,7 @@ export function situationDrafts(
             ? [{ scheme, id: localIdOf(primary) }]
             : [];
       const version = versions.get(primary.id)?.version;
+      const derivedFrom = derivedFromSiteOf(primary as RoadEvent);
       const sourceUpdatedAt = instant(primary.situation?.sourceUpdatedAt);
       const expiresAt = instant(primary.expiresAt);
 
@@ -401,11 +413,14 @@ export function situationDrafts(
         location,
         ...(relations.length > 0 ? { relations } : {}),
         provenance: {
-          origin: detourOnly ? "derived" : "feed",
+          origin: detourOnly || derivedFrom !== undefined ? "derived" : "feed",
           sourceId: source.id,
           sourceFormat: primary.sourceFormat,
           accessMode: "bulk",
           recordId: localId,
+          ...(derivedFrom !== undefined
+            ? { derivedFrom: { records: [derivedFrom], method: "los_threshold", version: "1" } }
+            : {}),
           ...(version !== null && version !== undefined ? { recordVersion: String(version) } : {}),
           ...(sourceUpdatedAt !== undefined ? { sourceUpdatedAt } : {}),
           attribution: {

@@ -37,7 +37,8 @@ describe("parseNycDotFlow", () => {
     });
     expect(flows[0]!.speedKph).toBeCloseTo(31.06 * 1.609344, 2);
     expect(flows[0]!.los).toBe("unknown");
-    expect(flows[0]!.dataUpdatedAt).toBe("2026-03-04T14:30:00");
+    // Socrata floating time is New York wall-clock time (EST).
+    expect(flows[0]!.dataUpdatedAt).toBe("2026-03-04T19:30:00.000Z");
     expect(events).toEqual([]);
   });
 

@@ -24,6 +24,18 @@ export function parseSituationCode(code: string): SituationClass {
   return subtype === undefined ? { kind, type } : { kind, type, subtype };
 }
 
+/** A feature classification: the kind, and its type and subtype when the kind has types. */
+export interface FeatureClass {
+  kind: string;
+  type?: string;
+  subtype?: string;
+}
+
+/** `kind[.type[.subtype]]`. */
+export function featureCode(c: FeatureClass): string {
+  return [c.kind, c.type, c.subtype].filter((p) => p !== undefined).join(".");
+}
+
 export class CrosswalkError extends Error {}
 
 /** Whether `key` (`type` or `type.subtype`) names a registered type of a kind. */
@@ -48,12 +60,20 @@ export function isRegisteredTypeKey(
 export interface Crosswalk {
   /** The classification a source code maps to (type- or subtype-level mappings). */
   situation(target: MappingTarget, code: string): SituationClass | undefined;
+  /** The feature classification a source code maps to (kind-, type- or subtype-level mappings). */
+  feature(target: MappingTarget, code: string): FeatureClass | undefined;
   /** The value of `vocabulary` a source code maps to. */
   value(vocabulary: string, target: MappingTarget, code: string): string | undefined;
   /** An emitter's code for a classification: the subtype's, else the type's, else the kind's. */
   situationTargetCode(target: MappingTarget, c: SituationClass): string | undefined;
+  /** An emitter's code for a feature classification: the subtype's, else the type's, else the kind's. */
+  featureTargetCode(target: MappingTarget, c: FeatureClass): string | undefined;
   /** An emitter's code for a vocabulary value. */
   valueTargetCode(vocabulary: string, target: MappingTarget, value: string): string | undefined;
+  /** The property a source's measured-value code maps to (DATEX `TrafficSpeed/averageVehicleSpeed`). */
+  property(target: MappingTarget, code: string): string | undefined;
+  /** An emitter's code for a property. */
+  propertyTargetCode(target: MappingTarget, property: string): string | undefined;
 }
 
 type Index<T> = Map<string, T>;
@@ -93,6 +113,11 @@ export function buildCrosswalk(entries: readonly RegistryEntry[]): Crosswalk {
   const situationOut = new Map<string, string>();
   const valueOut = new Map<string, string>();
   const sameClass = (a: SituationClass, b: SituationClass) => situationCode(a) === situationCode(b);
+  const features: Index<FeatureClass> = new Map();
+  const featureOut = new Map<string, string>();
+  const sameFeature = (a: FeatureClass, b: FeatureClass) => featureCode(a) === featureCode(b);
+  const properties: Index<string> = new Map();
+  const propertyOut = new Map<string, string>();
 
   for (const e of entries) {
     if (e.entry === "kind" && e.class === "situation") {
@@ -120,6 +145,35 @@ export function buildCrosswalk(entries: readonly RegistryEntry[]): Crosswalk {
         });
       }
     }
+    if (e.entry === "kind" && e.class === "feature") {
+      const where = `kind feature:${e.code}`;
+      const rows: [FeatureClass, Mappings | undefined][] = [[{ kind: e.code }, e.mappings]];
+      for (const [key, mappings] of Object.entries(e.typeMappings ?? {})) {
+        if (!isRegisteredTypeKey(e.types, key)) {
+          throw new CrosswalkError(`${where}: typeMappings key "${key}" is not registered`);
+        }
+        const [type, subtype] = key.split(".");
+        rows.push([
+          subtype === undefined ? { kind: e.code, type } : { kind: e.code, type, subtype },
+          mappings,
+        ]);
+      }
+      for (const [c, mappings] of rows) {
+        each(mappings, (target, code) => {
+          if (ingest.has(target)) add(features, target, code, c, sameFeature, where);
+          const outKey = `${target}\u0000${featureCode(c)}`;
+          if (!featureOut.has(outKey)) featureOut.set(outKey, code);
+        });
+      }
+    }
+    if (e.entry === "property") {
+      each(e.mappings, (target, code) => {
+        if (ingest.has(target))
+          add(properties, target, code, e.code, (a, b) => a === b, `property ${e.code}`);
+        const outKey = `${target}\u0000${e.code}`;
+        if (!propertyOut.has(outKey)) propertyOut.set(outKey, code);
+      });
+    }
     if (e.entry === "vocabulary" || e.entry === "vocabulary_extension") {
       const vocabulary = e.entry === "vocabulary" ? e.code : e.vocabulary;
       for (const [value, mappings] of Object.entries(e.valueMappings ?? {})) {
@@ -143,12 +197,19 @@ export function buildCrosswalk(entries: readonly RegistryEntry[]): Crosswalk {
 
   return {
     situation: (target, code) => situations.get(`${target}\u0000${code}`),
+    feature: (target, code) => features.get(`${target}\u0000${code}`),
     value: (vocabulary, target, code) => values.get(`${target}\u0000${vocabulary}\u0000${code}`),
     situationTargetCode: (target, c) =>
       situationOut.get(`${target}\u0000${situationCode(c)}`) ??
       situationOut.get(`${target}\u0000${c.kind}.${c.type}`) ??
       situationOut.get(`${target}\u0000${c.kind}`),
+    featureTargetCode: (target, c) =>
+      featureOut.get(`${target}\u0000${featureCode(c)}`) ??
+      (c.type === undefined ? undefined : featureOut.get(`${target}\u0000${c.kind}.${c.type}`)) ??
+      featureOut.get(`${target}\u0000${c.kind}`),
     valueTargetCode: (vocabulary, target, value) =>
       valueOut.get(`${vocabulary}\u0000${target}\u0000${value}`),
+    property: (target, code) => properties.get(`${target}\u0000${code}`),
+    propertyTargetCode: (target, property) => propertyOut.get(`${target}\u0000${property}`),
   };
 }

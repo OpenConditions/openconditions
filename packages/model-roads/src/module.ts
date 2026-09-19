@@ -3,14 +3,15 @@ import {
   defineChangeKind,
   defineDomain,
   extendVocabulary,
+  inClassPaths,
   type MappingTarget,
   type RegistryModule,
-} from "@openconditions/model";
-import {
   type SourceCrosswalk,
   vocabularyCrosswalk,
+  withFeatureCrosswalks,
+  withPropertyCrosswalks,
   withSituationCrosswalks,
-} from "./crosswalk/assemble.js";
+} from "@openconditions/model";
 import {
   DATEX2_CAUSES,
   DATEX2_CERTAINTIES,
@@ -25,13 +26,34 @@ import {
 } from "./crosswalk/emitters.js";
 import { IBI511_SITUATIONS } from "./crosswalk/ibi511.js";
 import {
+  DATEX2_DEVICE_HEALTH,
+  DATEX2_MEASURED_TRAFFIC,
+  DATEX2_TRAFFIC_STATUSES,
+  DATEX2_VMS_TYPES,
+  DATEX2_VMS_WORKING_STATUSES,
+  WZDX_DEVICE_STATUSES,
+  WZDX_DEVICE_TYPES,
+} from "./crosswalk/infrastructure.js";
+import {
   OPEN511_CERTAINTIES,
   OPEN511_SEVERITIES,
   OPEN511_SITUATIONS,
 } from "./crosswalk/open511.js";
 import { WZDX_SITUATIONS } from "./crosswalk/wzdx.js";
-import { ROADS_SITUATION_KINDS, surfaceStateVocabulary } from "./kinds.js";
+import {
+  cameraStatusVocabulary,
+  deviceStatusVocabulary,
+  ROADS_INFRASTRUCTURE_KINDS,
+  ROADS_PROPERTIES,
+  ROADS_RESULT_SCHEMAS,
+  vmsWorkingStatusVocabulary,
+} from "./infrastructure.js";
+import { ROADS_SITUATION_KINDS } from "./kinds.js";
 import { DATEX2_V2, DATEX2_V3 } from "./vocabularies/datex2.js";
+import {
+  DATEX2_V2_INFRASTRUCTURE,
+  DATEX2_V3_INFRASTRUCTURE,
+} from "./vocabularies/datex2-infrastructure.js";
 
 /**
  * Every wire format a roads source is read from: the event and flow parsers
@@ -123,6 +145,37 @@ const situationKinds = withSituationCrosswalks(
   ],
 );
 
+type InfrastructureVocabulary = typeof DATEX2_V3_INFRASTRUCTURE | typeof DATEX2_V2_INFRASTRUCTURE;
+
+const DATEX_INFRASTRUCTURE: [MappingTarget, InfrastructureVocabulary][] = [
+  ["datex2_v3", DATEX2_V3_INFRASTRUCTURE],
+  ["datex2_v2", DATEX2_V2_INFRASTRUCTURE],
+];
+
+const datexInfrastructure = (
+  table: Readonly<Record<string, string | null>>,
+  include: (v: InfrastructureVocabulary) => (code: string) => boolean,
+): SourceCrosswalk[] =>
+  DATEX_INFRASTRUCTURE.map(([target, v]) => ({ target, table, include: include(v) }));
+
+const infrastructureKinds = withFeatureCrosswalks(
+  ROADS_INFRASTRUCTURE_KINDS,
+  [
+    ...datexInfrastructure(
+      DATEX2_VMS_TYPES,
+      (v) => (code) => (v.vmsTypes as readonly string[]).includes(code.slice("vmsType:".length)),
+    ),
+    { target: "wzdx", table: WZDX_DEVICE_TYPES },
+  ],
+  [],
+);
+
+const roadsProperties = withPropertyCrosswalks(
+  ROADS_PROPERTIES,
+  datexInfrastructure(DATEX2_MEASURED_TRAFFIC, (v) => inClassPaths(v.measuredValues)),
+  [],
+);
+
 /**
  * Roads' own change kind: the lane picture of a situation changed (the
  * competitor history API's `lanes_change`), finer than `effects_change`.
@@ -149,9 +202,35 @@ export const roadsModule: RegistryModule = {
       description:
         "Traffic information about the road network: incidents, works, closures, restrictions and conditions, even when weather-caused.",
     }),
-    surfaceStateVocabulary,
     extendVocabulary({ vocabulary: "source_format", values: ROADS_SOURCE_FORMATS }),
     ...situationKinds,
+    cameraStatusVocabulary,
+    vmsWorkingStatusVocabulary,
+    deviceStatusVocabulary,
+    ...infrastructureKinds,
+    ...ROADS_RESULT_SCHEMAS,
+    ...roadsProperties,
+    vocabularyCrosswalk(
+      "vms_working_status",
+      [{ target: "datex2_v3", table: DATEX2_VMS_WORKING_STATUSES }],
+      [],
+    ),
+    vocabularyCrosswalk(
+      "device_status",
+      [
+        { target: "datex2_v3", table: DATEX2_DEVICE_HEALTH },
+        { target: "wzdx", table: WZDX_DEVICE_STATUSES },
+      ],
+      [],
+    ),
+    vocabularyCrosswalk(
+      "los",
+      datexInfrastructure(
+        DATEX2_TRAFFIC_STATUSES,
+        (v) => (code) => (v.trafficStatuses as readonly string[]).includes(code),
+      ),
+      [],
+    ),
     vocabularyCrosswalk(
       "cause",
       datex(DATEX2_CAUSES, (v) => v.causeTypes),

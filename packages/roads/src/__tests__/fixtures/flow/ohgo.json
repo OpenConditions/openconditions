@@ -1,0 +1,22 @@
+{
+  "Results": [
+    {
+      "Id": "d1",
+      "Latitude": 40,
+      "Longitude": -82.9,
+      "CurrentAvgSpeed": 20,
+      "NormalAvgSpeed": 65,
+      "Direction": "EB",
+      "LastUpdated": "2026-03-04T14:30:00Z"
+    },
+    {
+      "Id": "d2",
+      "Latitude": 40.1,
+      "Longitude": -83,
+      "CurrentAvgSpeed": 62,
+      "NormalAvgSpeed": 65,
+      "Direction": "WB",
+      "LastUpdated": "2026-03-04T14:30:00Z"
+    }
+  ]
+}

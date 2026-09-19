@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pms>
+  <pm>
+    <idelem>9841</idelem>
+    <nivelServicio>3</nivelServicio>
+    <intensidad>840</intensidad>
+    <error>N</error>
+    <st_x>440000,5</st_x>
+    <st_y>4474000,25</st_y>
+  </pm>
+  <pm>
+    <idelem>9842</idelem>
+    <nivelServicio>0</nivelServicio>
+    <error>N</error>
+    <st_x>441000</st_x>
+    <st_y>4475000</st_y>
+  </pm>
+  <pm>
+    <idelem>9843</idelem>
+    <nivelServicio>2</nivelServicio>
+    <error>S</error>
+    <st_x>441000</st_x>
+    <st_y>4475000</st_y>
+  </pm>
+</pms>

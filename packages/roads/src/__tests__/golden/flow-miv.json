@@ -1,0 +1,114 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:be-miv:4970",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            4.4842054,
+            50.9828171
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "be-miv",
+        "sourceFormat": "miv",
+        "accessMode": "bulk",
+        "recordId": "4970",
+        "attribution": {
+          "provider": "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "16d61927ee6bff3a52f10569ff9c42493f30c8ed184429057dca90f8cb65c617",
+      "domain": "roads",
+      "contentHash": "e1c9e53c26b4434cf507d31a2673b7140c1c7283fdfb8eabb92303e275c6880b",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:be-miv:ab2358846c8ea07f95fc425d619665e211965bc507f139e358d957d961269303",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            4.4842054,
+            50.9828171
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "be-miv",
+        "sourceFormat": "miv",
+        "accessMode": "bulk",
+        "recordId": "4970",
+        "attribution": {
+          "provider": "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "f4890d220664187a721be2b518cc28f5eb6238c8a381ddace74d1d4b6c214350",
+      "domain": "roads",
+      "contentHash": "8b85a8a250b4e312d097a0f3163e393cb54f0f0d8b5dbe03b91dd291e4b9833f",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:be-miv:4970"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 88,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-10T15:21:00.000Z"
+      },
+      "aggregation": "mean"
+    }
+  ],
+  "situations": []
+}

@@ -1,0 +1,114 @@
+{
+  "feed_info": {
+    "publisher": "Washington State DOT IT",
+    "update_frequency": 60,
+    "update_date": "2026-09-19T16:01:26+00:00",
+    "version": "4.2",
+    "data_sources": [
+      {
+        "data_source_id": "67899A97-0F3E-4683-B169-75C09C3B8F67",
+        "organization_name": "iCone Products LLC",
+        "contact_name": "support@iconeproducts.com",
+        "contact_email": "",
+        "update_frequency": 0,
+        "update_date": "2026-09-19T16:02:06.6333333+00:00"
+      },
+      {
+        "data_source_id": "",
+        "organization_name": "Unknown",
+        "update_frequency": 0,
+        "update_date": "2024-06-23T23:15:05.0923428+00:00"
+      }
+    ]
+  },
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "properties": {
+        "core_details": {
+          "device_type": "arrow-board",
+          "data_source_id": "67899A97-0F3E-4683-B169-75C09C3B8F67",
+          "road_names": [""],
+          "device_status": "ok",
+          "update_date": "2026-09-19T16:01:26+00:00",
+          "has_automatic_location": true,
+          "description": "Roadwork - Lane Closed, MERGE RIGHT",
+          "road_direction": "undefined"
+        },
+        "pattern": "right-chevron-flashing",
+        "is_in_transport_position": false
+      },
+      "id": "303AEC02-912D-44B7-9523-0D2F9940B097",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-117.363864, 47.67213]
+      }
+    },
+    {
+      "properties": {
+        "core_details": {
+          "device_type": "arrow-board",
+          "data_source_id": "67899A97-0F3E-4683-B169-75C09C3B8F67",
+          "road_names": [""],
+          "device_status": "ok",
+          "update_date": "2026-09-19T15:57:49+00:00",
+          "has_automatic_location": true,
+          "description": "Roadwork - Lane Closed, MERGE RIGHT",
+          "road_direction": "undefined"
+        },
+        "pattern": "right-chevron-flashing"
+      },
+      "id": "FC203EED-FFAB-45E6-A36C-E0A4447A396E",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-119.35925, 47.104008]
+      }
+    },
+    {
+      "properties": {
+        "core_details": {
+          "device_type": "arrow-board",
+          "data_source_id": "67899A97-0F3E-4683-B169-75C09C3B8F67",
+          "road_names": [""],
+          "device_status": "ok",
+          "update_date": "2026-09-19T16:01:16+00:00",
+          "has_automatic_location": true,
+          "description": "Roadwork - Lane Closed, MERGE RIGHT",
+          "road_direction": "undefined"
+        },
+        "pattern": "right-chevron-flashing",
+        "is_in_transport_position": false
+      },
+      "id": "CAB9241D-CBBD-4865-B7CB-7B14BBC2E14A",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-117.419361, 47.650348]
+      }
+    },
+    {
+      "properties": {
+        "core_details": {
+          "device_type": "arrow-board",
+          "data_source_id": "67899A97-0F3E-4683-B169-75C09C3B8F67",
+          "road_names": [""],
+          "device_status": "ok",
+          "update_date": "2026-09-19T15:57:53+00:00",
+          "has_automatic_location": true,
+          "description": "Roadwork - Lane Closed, MERGE RIGHT",
+          "road_direction": "undefined"
+        },
+        "pattern": "right-chevron-flashing",
+        "is_in_transport_position": false
+      },
+      "id": "32647A5A-642A-4431-B4BF-D95DA8FECE03",
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-117.196933, 47.692592]
+      }
+    }
+  ]
+}

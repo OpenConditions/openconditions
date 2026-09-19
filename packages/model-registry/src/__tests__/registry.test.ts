@@ -14,11 +14,24 @@ describe("production registry", () => {
     expect(registry.vocabulary("source_tier")).toBeDefined();
   });
 
-  it("registers the roads domain and its situation kinds", () => {
+  it("registers the roads, weather and vehicles domains", () => {
     const registry = productionRegistry();
-    expect(productionModules.map((m) => m.name)).toEqual(["kernel", "roads"]);
-    expect(registry.domains().map((d) => d.code)).toEqual(["roads"]);
+    expect(productionModules.map((m) => m.name)).toEqual([
+      "kernel",
+      "roads",
+      "weather",
+      "vehicles",
+    ]);
+    expect(registry.domains().map((d) => d.code)).toEqual(["roads", "weather", "vehicles"]);
     expect(registry.kind("situation", "roadworks")?.domain).toBe("roads");
     expect(registry.vocabulary("source_format")!.values).toContain("datex2");
+  });
+
+  it("gives each infrastructure property the domain of what it measures", () => {
+    const registry = productionRegistry();
+    expect(registry.property("traffic.speed")?.domain).toBe("roads");
+    expect(registry.property("road.surface_state")?.domain).toBe("weather");
+    expect(registry.property("vehicle.position")?.domain).toBe("vehicles");
+    expect(registry.kind("feature", "weather_station")?.traits).toContain("field_device");
   });
 });

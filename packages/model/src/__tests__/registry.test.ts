@@ -9,7 +9,15 @@ import {
   defineProperty,
   extendVocabulary,
 } from "../registry/define.js";
-import { closure, draftBase, incidentDraft, registry, stored, testModule } from "./fixtures.js";
+import {
+  closure,
+  draftBase,
+  incidentDraft,
+  registry,
+  stored,
+  testModule,
+  withObservationId,
+} from "./fixtures.js";
 
 const issueCodes = (r: { ok: boolean; issues?: { code: string }[] }) =>
   r.ok ? [] : r.issues!.map((i) => i.code);
@@ -135,6 +143,68 @@ describe("buildRegistry", () => {
       ],
       /"accident\.overturned" is not a registered type/,
     ],
+    [
+      "an unregistered feature trait",
+      [
+        defineDomain({ code: "roads", description: "x" }),
+        defineKind({
+          class: "feature",
+          code: "camera",
+          domain: "roads",
+          version: "1.0",
+          description: "x",
+          details: () => ({}),
+          traits: ["flying"],
+        }),
+      ],
+      /"flying" is not a registered feature_trait/,
+    ],
+    [
+      "a trait on a component kind",
+      [
+        defineKind({
+          class: "component",
+          code: "lens",
+          version: "1.0",
+          description: "x",
+          details: () => ({}),
+          traits: ["field_device"],
+        }),
+      ],
+      /only feature kinds have traits/,
+    ],
+    [
+      "a histogram rollup of a category",
+      [
+        defineDomain({ code: "roads", description: "x" }),
+        defineProperty({
+          code: "x.state",
+          domain: "roads",
+          version: "1.0",
+          description: "x",
+          result: { type: "category", vocabulary: "los" },
+          subjects: [{ kind: "location" }],
+          retention: { rollup: { period: "hourly", histogram: { binWidth: 2 } } },
+        }),
+      ],
+      /category results have no rollup/,
+    ],
+    [
+      "a latest-only property with history",
+      [
+        defineDomain({ code: "roads", description: "x" }),
+        defineProperty({
+          code: "x.image",
+          domain: "roads",
+          version: "1.0",
+          description: "x",
+          result: { type: "text" },
+          subjects: [{ kind: "location" }],
+          retention: { latestOnly: true, rawDays: 1 },
+        }),
+      ],
+      /latest-only property keeps no history/,
+    ],
   ])("rejects %s", (_label, entries, message) => {
     expect(() => buildRegistry([kernelModule, { name: "bad", entries }])).toThrow(message);
   });
@@ -154,6 +224,16 @@ describe("buildRegistry", () => {
       },
     ]);
     expect(mapped.crosswalk.value("severity", "open511", "MAJOR")).toBe("major");
+  });
+
+  it("ships the shared infrastructure building blocks in the kernel", () => {
+    const kernelOnly = buildRegistry([kernelModule]);
+    expect(kernelOnly.kind("component", "sensor_channel")).toBeDefined();
+    expect(kernelOnly.vocabulary("surface_state")?.extensible).toBe(false);
+    expect(kernelOnly.vocabulary("feature_trait")?.values).toEqual([
+      "field_device",
+      "weather_sensing",
+    ]);
   });
 
   it("rejects a duplicate module name", () => {
@@ -253,12 +333,16 @@ describe("validate", () => {
       type: "traffic",
       lifecycle: "operational",
       components: [
-        { key: "1", kind: "sensor_channel", details: { kind: "sensor_channel", v: 1, index: 1 } },
+        {
+          key: "1",
+          kind: "sensor_channel",
+          details: { kind: "sensor_channel", v: 1, index: 1, property: "traffic.speed" },
+        },
         {
           key: "1a",
           parentKey: "1",
           kind: "sensor_channel",
-          details: { kind: "sensor_channel", v: 1, index: 2 },
+          details: { kind: "sensor_channel", v: 1, index: 2, property: "traffic.speed" },
         },
       ],
       details: { kind: "measurement_site", v: 1, measuredProperties: ["traffic.speed"] },
@@ -268,13 +352,13 @@ describe("validate", () => {
       key: "2",
       parentKey: "1a",
       kind: "sensor_channel",
-      details: { kind: "sensor_channel", v: 1, index: 3 },
+      details: { kind: "sensor_channel", v: 1, index: 3, property: "traffic.speed" },
     });
     expect(issuePaths(registry.validateDraft(site))).toContain("components.2.parentKey");
   });
 
   it("narrows an observation result to the property's declared form", () => {
-    const speed = {
+    const speed = withObservationId({
       ...draftBase("observation", "S-1:speed"),
       class: "observation",
       kind: "observation",
@@ -283,7 +367,7 @@ describe("validate", () => {
       result: { type: "quantity", value: 87, unit: "km/h" },
       phenomenonTime: { instant: "2026-09-18T09:59:00Z" },
       aggregation: "mean",
-    };
+    });
     expect(registry.validateDraft(speed)).toMatchObject({ ok: true });
     expect(
       registry.validateDraft({ ...speed, result: { type: "quantity", value: 24, unit: "m/s" } }),
@@ -303,7 +387,7 @@ describe("validate", () => {
   });
 
   it("closes category results over the vocabulary and structured results over their schema", () => {
-    const los = {
+    const los = withObservationId({
       ...draftBase("observation", "S-1:los"),
       class: "observation",
       kind: "observation",
@@ -312,17 +396,16 @@ describe("validate", () => {
       result: { type: "category", value: "queuing", vocabulary: "los" },
       phenomenonTime: { instant: "2026-09-18T09:59:00Z" },
       aggregation: "instantaneous",
-    };
+    });
     expect(registry.validateDraft(los)).toMatchObject({ ok: true });
     expect(
       registry.validateDraft({ ...los, result: { ...los.result, value: "jammed" } }),
     ).toMatchObject({ ok: false });
-    const wait = {
+    const wait = withObservationId({
       ...los,
-      id: "oc:observation:de-ndw:B-1",
       property: "border.wait",
       result: { type: "structured", schema: "border_wait", v: 1, value: { v: 1, waitMinutes: 20 } },
-    };
+    });
     expect(registry.validateDraft(wait)).toMatchObject({ ok: true });
     expect(registry.validateDraft({ ...wait, result: { ...wait.result, v: 2 } })).toMatchObject({
       ok: false,
@@ -330,7 +413,7 @@ describe("validate", () => {
   });
 
   it("requires an identifiable location for location-subject observations", () => {
-    const price = {
+    const price = withObservationId({
       ...draftBase("observation", "PADD1:e5"),
       class: "observation",
       kind: "observation",
@@ -340,7 +423,7 @@ describe("validate", () => {
       result: { type: "money", amount: "1.799", currency: "EUR", per: "L" },
       phenomenonTime: { instant: "2026-09-18T09:00:00Z" },
       aggregation: "mean",
-    };
+    });
     expect(registry.validateDraft(price)).toMatchObject({ ok: true });
     const { qualifiers: _q, ...unqualified } = price;
     expect(issuePaths(registry.validateDraft(unqualified))).toContain("qualifiers");

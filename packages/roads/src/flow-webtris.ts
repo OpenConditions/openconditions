@@ -1,5 +1,5 @@
 import type { FlowParseResult } from "./flow.js";
-import { makeOrigin } from "./flow.js";
+import { localTimestamp, makeOrigin } from "./flow.js";
 import type { RoadFlow } from "./model.js";
 import type { SiteGeometry } from "./siteTable.js";
 import type { SourceDescriptor } from "./types.js";
@@ -51,12 +51,15 @@ export function parseWebtrisFlow(
     if (typeof rawMph !== "string" || rawMph.trim() === "") continue;
     const mph = Number(rawMph);
     if (!Number.isFinite(mph) || mph < 0) continue;
-    const date = typeof row["Report Date"] === "string" ? row["Report Date"] : "";
+    // "Report Date" is a midnight timestamp ("2026-03-04T00:00:00"); the period
+    // ending is the UK wall-clock time of day the row covers up to.
+    const date = typeof row["Report Date"] === "string" ? row["Report Date"].slice(0, 10) : "";
     const ending = typeof row["Time Period Ending"] === "string" ? row["Time Period Ending"] : "";
     const sort = `${date}T${ending}`;
     const prev = latest.get(token);
     if (!prev || sort > prev.sort) {
-      latest.set(token, { speedKph: mph * MPH_TO_KPH, measuredAt: sort || now, sort });
+      const measuredAt = localTimestamp(sort, "Europe/London") ?? now;
+      latest.set(token, { speedKph: mph * MPH_TO_KPH, measuredAt, sort });
     }
   }
 
@@ -79,6 +82,7 @@ export function parseWebtrisFlow(
       geometry: geom,
       los: "unknown",
       speedKph: v.speedKph,
+      site: { id: token },
       origin,
       dataUpdatedAt: v.measuredAt,
       fetchedAt: now,

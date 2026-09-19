@@ -16,7 +16,7 @@ BADLAT,Southern,Road,x,x,0,0,0,0,North,0
 `;
 
 const XML = `<?xml version="1.0" encoding="utf-8"?>
-<raw_speed_volume_list><periods>
+<raw_speed_volume_list><date>2026-09-20</date><periods>
   <period><period_from>01:50:00</period_from><period_to>01:50:30</period_to><detectors>
     <detector><detector_id>AID01101</detector_id><lanes>
       <lane><lane_id>Fast Lane</lane_id><speed>60</speed><volume>1</volume><valid>Y</valid></lane>
@@ -48,7 +48,8 @@ describe("parseHkRawFlow", () => {
     // Latest period: (100·3 + 60·1) / (3+1) = 90; the valid=N lane is ignored.
     expect(flows[0]!.speedKph).toBe(90);
     expect(flows[0]!.geometry).toEqual({ type: "Point", coordinates: [114.152525, 22.248091] });
-    expect(flows[0]!.dataUpdatedAt).toBe("01:55:30");
+    // The document date plus the period end, in Hong Kong time.
+    expect(flows[0]!.dataUpdatedAt).toBe("2026-09-19T17:55:30.000Z");
   });
 
   it("skips detectors with no geometry", () => {

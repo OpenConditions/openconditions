@@ -1,0 +1,343 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:nl-ndw-flow:PZH01_MST_0065_00",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            4.536069,
+            52.0235558
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "nl-ndw-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "PZH01_MST_0065_00",
+        "attribution": {
+          "provider": "NDW / Rijkswaterstaat",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://www.ndw.nu"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "bd9a0f63ab68ddbc59a77ca652ccb90aa8eada023a437ae8abc35aad16fe96b7",
+      "domain": "roads",
+      "contentHash": "da098446c73d99e8bb840c6e6402d4cc66ae9d06f63ee0ce57deeafec7769aca",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.los"
+        ]
+      }
+    },
+    {
+      "id": "oc:feature:nl-ndw-flow:PZH01_MST_0029-00",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.675,
+              52.009
+            ],
+            [
+              4.6765,
+              52.0076
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "nl-ndw-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "PZH01_MST_0029-00",
+        "attribution": {
+          "provider": "NDW / Rijkswaterstaat",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://www.ndw.nu"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "513c4cf4f088ed124f140209ea656092885620555e438c1a3442787968cf139b",
+      "domain": "roads",
+      "contentHash": "735abf86d686fcd9512be371421840095f3b89e585f3fcfaf544c922e50d2266",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.los"
+        ]
+      }
+    },
+    {
+      "id": "oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            4.541,
+            52.031
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "nl-ndw-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "PZH01_MST_STANDSTILL_00",
+        "attribution": {
+          "provider": "NDW / Rijkswaterstaat",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://www.ndw.nu"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "45af471e922012e1d6a52d3d022e0d4a842c80b7ae8630e7540398da2fd88f2f",
+      "domain": "roads",
+      "contentHash": "5f1df30e899ba6cadb8299a2185b05112144e384f94f8db3cb4feb5360894124",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.los"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:nl-ndw-flow:8181eb502585839d91f5160188b315e1c344e5e68e335f92df86ad550c99d7e5",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            4.536069,
+            52.0235558
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "nl-ndw-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "PZH01_MST_0065_00",
+        "attribution": {
+          "provider": "NDW / Rijkswaterstaat",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://www.ndw.nu"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "cbf76de0604c0a13dfa98485395ce64550ad6941694db8cd39c6078a0ea5359e",
+      "domain": "roads",
+      "contentHash": "a0e88733afef9818c8ac48ff4c836e80ee1bd4e6ad91f5d52a69a54774faf371",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:nl-ndw-flow:PZH01_MST_0065_00"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 64,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T10:09:00.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:nl-ndw-flow:d11440a796a83967605ebfeffe4379b20419798648ab471342f5702af715fead",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.675,
+              52.009
+            ],
+            [
+              4.6765,
+              52.0076
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "nl-ndw-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "PZH01_MST_0029-00",
+        "attribution": {
+          "provider": "NDW / Rijkswaterstaat",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://www.ndw.nu"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "e34611e8ad1e03ac502fd716e1dfd9c8562e11714592bc2b8cec9d1026089571",
+      "domain": "roads",
+      "contentHash": "a26dbf5fec0fd901e1c94c540c285d72001a61c74ded502832925b009834013a",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:nl-ndw-flow:PZH01_MST_0029-00"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 66,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T10:09:00.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:nl-ndw-flow:bd87df316031c1dc4d570d0c4d3e85dcd0fc0fe537bc117210b2df7f13cb32b2",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            4.541,
+            52.031
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "nl-ndw-flow",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "PZH01_MST_STANDSTILL_00",
+        "attribution": {
+          "provider": "NDW / Rijkswaterstaat",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://www.ndw.nu"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "96c3ba5fe70438c3e150d90b4a8533c2e787c4dd9d2976b43f95a7e9ab18cab7",
+      "domain": "roads",
+      "contentHash": "b9fe1d8ee2414631be62269be5b54088f3b0aa967e1e60a4e19f574aada391b7",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 0,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T10:09:00.000Z"
+      },
+      "aggregation": "mean"
+    }
+  ],
+  "situations": []
+}

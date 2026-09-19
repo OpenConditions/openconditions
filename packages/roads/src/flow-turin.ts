@@ -73,6 +73,7 @@ export function parseTurinFlow(input: string | Buffer, src: SourceDescriptor): F
         los: "unknown",
         speedKph,
         ...(direction ? { direction } : {}),
+        site: { id },
         origin,
         dataUpdatedAt: genTime ?? now,
         fetchedAt: now,

@@ -66,7 +66,9 @@ describe("registryMarkdown", () => {
     expect(md).toContain(
       "| `incident` | roads | 1.2 | `accident` (multi_vehicle, overturned); `breakdown` |",
     );
-    expect(md).toContain("| `traffic.speed` | roads | 1.0 | quantity (km/h) | feature, segments |");
+    expect(md).toContain(
+      "| `traffic.speed` | roads | 1.0 | quantity (km/h) | feature (component sensor_channel); segments | — |",
+    );
     expect(md).toContain("| `closure` | 1.0 |");
   });
 });

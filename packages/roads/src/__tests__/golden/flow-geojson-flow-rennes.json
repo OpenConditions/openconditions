@@ -1,0 +1,197 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:fr-rennesmetropole:10273_D",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -1.68,
+              48.11
+            ],
+            [
+              -1.67,
+              48.12
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fr-rennesmetropole",
+        "sourceFormat": "geojson-flow",
+        "accessMode": "bulk",
+        "recordId": "10273_D",
+        "attribution": {
+          "provider": "Rennes Métropole",
+          "license": "ODbL-1.0",
+          "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "10db0dfdeb931a0dd66e4ddac055d524efc17eb73dc1138bb21cccf6a25ab2ac",
+      "domain": "roads",
+      "contentHash": "5e9aa356f2146feb2ee6fb524955c323f26b83179ff4328abbce2cd76a4568e6",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.los"
+        ]
+      }
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:fr-rennesmetropole:1e7f7ef0aa5dfe1d5dd1d8327e2db5172ea8d20047bc82ad097163b7f74375c2",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -1.68,
+              48.11
+            ],
+            [
+              -1.67,
+              48.12
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fr-rennesmetropole",
+        "sourceFormat": "geojson-flow",
+        "accessMode": "bulk",
+        "recordId": "10273_D",
+        "attribution": {
+          "provider": "Rennes Métropole",
+          "license": "ODbL-1.0",
+          "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "ae6cec9f71f667177d1fe2bf99da5a88e7838ced2c1648906d0b95b29d085d51",
+      "domain": "roads",
+      "contentHash": "76cda059521b8ffdea2e7c20ac0d9f99582b6036d378e1aa3d8b587855d3cce2",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fr-rennesmetropole:10273_D"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 83,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-29T10:49:00.000Z"
+      },
+      "aggregation": "mean",
+      "baseline": {
+        "freeFlow": {
+          "value": 70,
+          "unit": "km/h"
+        },
+        "source": "native",
+        "ratio": 1.1857142857142857
+      }
+    },
+    {
+      "id": "oc:observation:fr-rennesmetropole:fa7a343288088ab21a8e2bee02998b0a724660c16e030b760bce2d78640a7d7d",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -1.68,
+              48.11
+            ],
+            [
+              -1.67,
+              48.12
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fr-rennesmetropole",
+        "sourceFormat": "geojson-flow",
+        "accessMode": "bulk",
+        "recordId": "10273_D",
+        "attribution": {
+          "provider": "Rennes Métropole",
+          "license": "ODbL-1.0",
+          "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "faab2a2464b273f09f2342be079adae5f1cc3572a3637daf4343661facb9279b",
+      "domain": "roads",
+      "contentHash": "8c6236184d6ee7b09b2388937fc284b5e865321dff5d984dc3c9a8b5ca74dc2a",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.los",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fr-rennesmetropole:10273_D"
+      },
+      "result": {
+        "type": "category",
+        "value": "free_flow",
+        "vocabulary": "los"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-29T10:49:00.000Z"
+      },
+      "aggregation": "instantaneous"
+    }
+  ],
+  "situations": []
+}

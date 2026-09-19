@@ -1,0 +1,19 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[-1.68, 48.11], [-1.67, 48.12]]
+      },
+      "properties": {
+        "predefinedlocationreference": "10273_D",
+        "averagevehiclespeed": 83,
+        "vitesse_maxi": 70,
+        "trafficstatus": "freeFlow",
+        "datetime": "2026-07-29T12:49:00+02:00"
+      }
+    }
+  ]
+}

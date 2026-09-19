@@ -1,0 +1,21 @@
+{
+  "value": [
+    {
+      "LinkID": "103000000",
+      "RoadName": "KENT ROAD",
+      "SpeedBand": 3,
+      "MinimumSpeed": "21",
+      "MaximumSpeed": "29",
+      "StartLon": "103.8515",
+      "StartLat": "1.3220",
+      "EndLon": "103.8530",
+      "EndLat": "1.3225"
+    },
+    {
+      "LinkID": "no-geometry",
+      "SpeedBand": 5,
+      "MinimumSpeed": "40",
+      "MaximumSpeed": "49"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "type": "Feature",
+  "id": 1001,
+  "geometry": {
+    "type": "Point",
+    "coordinates": [24.596399, 60.228227, 0.0]
+  },
+  "properties": {
+    "id": 1001,
+    "name": "vt1_Espoo_Nupuri",
+    "stationType": "RWS_200",
+    "master": true,
+    "sensors": [
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+      30, 31, 32, 33, 34, 35, 36, 37, 38, 41, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 68, 73,
+      91, 92, 93, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 111, 112, 113, 114, 115,
+      116, 117, 118, 119, 126, 127, 128, 130, 131, 132, 133, 135, 136, 138, 140, 160, 161, 162, 163,
+      167, 168, 169, 170, 172, 174, 175, 176, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188, 189,
+      190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 213, 214, 215,
+      225, 226
+    ],
+    "annualMaintenanceTime": "2025-04-08T21:00:00Z",
+    "collectionInterval": 300,
+    "collectionStatus": "GATHERING",
+    "country": null,
+    "dataUpdatedTime": "2025-10-30T07:36:31Z",
+    "liviId": "Livi1090329",
+    "municipality": "Espoo",
+    "municipalityCode": 49,
+    "names": {
+      "fi": "Tie 1 Espoo, Nupuri",
+      "sv": "Väg 1 Esbo, Nuburböle",
+      "en": "Road 1 Espoo, Nupuri"
+    },
+    "province": "Uusimaa",
+    "provinceCode": 1,
+    "purpose": null,
+    "repairMaintenanceTime": null,
+    "roadAddress": {
+      "roadNumber": 1,
+      "roadSection": 6,
+      "distanceFromRoadSectionStart": 2950,
+      "carriageway": "DUAL_CARRIAGEWAY_RIGHT_IN_INCREASING_DIRECTION",
+      "side": "LEFT",
+      "contractArea": "Espoo",
+      "contractAreaCode": 283
+    },
+    "startTime": "1995-08-23T00:00:00Z",
+    "state": "OK_FAULT_DOUBT_CANCELLED"
+  }
+}

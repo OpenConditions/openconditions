@@ -37,6 +37,7 @@ export * from "./predefined-locations.js";
 export * from "./routing.js";
 export * from "./segment.js";
 export * from "./severity-derive.js";
+export * from "./sites/index.js";
 export * from "./siteTable.js";
 export * from "./situation/index.js";
 export * from "./skip-metrics.js";

@@ -64,13 +64,21 @@ const BOTH = new Set([
  * carries an axis, so only it may be positive or negative.
  */
 export function directionOf(event: RoadEvent): DirectionRef | undefined {
-  const raw = event.direction?.trim();
+  return directionFromText(event.direction, event.externalRefs?.tmc !== undefined);
+}
+
+/**
+ * A free-text direction as a DirectionRef; `alertC` says the record is placed
+ * by TMC location codes, whose direction has an axis.
+ */
+export function directionFromText(
+  value: string | undefined,
+  alertC: boolean,
+): DirectionRef | undefined {
+  const raw = value?.trim();
   if (!raw) return undefined;
   const lower = raw.toLowerCase();
-  if (
-    event.externalRefs?.tmc &&
-    (lower === "positive" || lower === "negative" || lower === "both")
-  ) {
+  if (alertC && (lower === "positive" || lower === "negative" || lower === "both")) {
     return { value: lower, basis: "alert_c" };
   }
   if (/^\d+(?:\.\d+)?$/.test(raw)) {

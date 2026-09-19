@@ -16,6 +16,7 @@ import type {
   PointGeometry,
   Severity,
 } from "@openconditions/core";
+import { zonedWallClockToInstant } from "@openconditions/model";
 import type { LineString, Point } from "geojson";
 import type { BaselineMethod, RoadEvent, RoadFlow } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
@@ -99,6 +100,10 @@ function derivedCongestionEvent(
     severity,
     severitySource: "derived",
     headline: `Traffic congestion (${idSuffix})`,
+    situation: {
+      headlineFromSource: false,
+      ...(flow.site ? { derivedFromSite: flow.site.id } : {}),
+    },
     status: "active",
     geometry: flow.geometry,
     roads: [],
@@ -121,6 +126,15 @@ export function makeOrigin(src: SourceDescriptor) {
       url: src.licenseUrl,
     },
   };
+}
+
+/**
+ * A source's zoneless local timestamp (`YYYY-MM-DDTHH:mm[:ss[.fff]]`) read in
+ * the publisher's time zone, as an ISO instant; undefined when unreadable.
+ */
+export function localTimestamp(wallClock: string, timeZone: string): string | undefined {
+  const at = zonedWallClockToInstant(timeZone, wallClock.trim().replace(/\.\d+$/, ""));
+  return at === null ? undefined : at.toISOString();
 }
 
 /**
@@ -264,6 +278,7 @@ export function parseDigitrafficFlow(
           ...(speedRatio != null ? { speedRatio } : {}),
           ...(delaySeconds != null ? { delaySeconds } : {}),
           ...(jamFactor != null ? { jamFactor } : {}),
+          site: { id: featureId },
           origin,
           dataUpdatedAt: measuredAt,
           fetchedAt: now,
@@ -514,9 +529,9 @@ export function buildMeasuredSiteFlow(
   const { siteId, measuredAt, geom, speedKph, trafficStatus, freeFlowKph } = fields;
 
   let los: LosValue = mapDatexTrafficStatus(trafficStatus);
-  if (los === "unknown" && speedKph != null && freeFlowKph != null && freeFlowKph > 0) {
-    los = losFromSpeedRatio(speedKph / freeFlowKph);
-  }
+  const losDerived =
+    los === "unknown" && speedKph != null && freeFlowKph != null && freeFlowKph > 0;
+  if (losDerived) los = losFromSpeedRatio(speedKph / freeFlowKph);
 
   // Skip sites with no geometry, or with neither a valid speed nor a resolvable
   // level-of-service (a flow row with nothing to say).
@@ -541,6 +556,7 @@ export function buildMeasuredSiteFlow(
     ...(speedKph != null ? { speedKph } : {}),
     ...(freeFlowKph != null ? { freeFlowKph, freeFlowSource: "native" as const } : {}),
     ...(speedRatio != null ? { speedRatio } : {}),
+    site: { id: siteId, ...(losDerived ? { losDerived: true as const } : {}) },
     origin,
     dataUpdatedAt: measuredAt,
     fetchedAt: now,
@@ -585,6 +601,7 @@ export function reclassifyFlow(
     speedRatio: ratio,
     los,
     level: los,
+    ...(flow.site ? { site: { ...flow.site, losDerived: true as const } } : {}),
   };
   const suffix = next.id.startsWith(`${src.id}:`) ? next.id.slice(src.id.length + 1) : next.id;
   if (QUEUING_LOS.has(los)) {
