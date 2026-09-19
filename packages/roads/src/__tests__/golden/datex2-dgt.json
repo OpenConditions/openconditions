@@ -1,0 +1,709 @@
+[
+  {
+    "id": "oc:situation:es-dgt:2816645",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "2816645"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -3.6054852,
+            39.994446
+          ],
+          [
+            -3.6074991,
+            39.993732
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-dgt",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "2816645",
+      "recordVersion": "2",
+      "sourceUpdatedAt": "2025-12-12T08:11:34.000+01:00",
+      "attribution": {
+        "provider": "Dirección General de Tráfico (DGT)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://nap.dgt.es"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "eeb11af45197efdfc7e6e592173947f6ac63db3068e8423a31e90037ddb7978d",
+    "domain": "roads",
+    "contentHash": "a373cfd111696f13948df60df99f04ea0f4d79d44465ddd0306b7cb7594e8f56",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "maintenance",
+    "causes": [
+      {
+        "type": "maintenance"
+      }
+    ],
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "validity": {
+      "status": "active",
+      "start": "2025-12-12T08:05:19.000+01:00"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:es-dgt:3343801",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "3343801"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -5.9546967,
+            37.451286
+          ],
+          [
+            -5.96623,
+            37.43413
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-dgt",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "3343801",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2023-11-21T18:50:51.000+01:00",
+      "attribution": {
+        "provider": "Dirección General de Tráfico (DGT)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://nap.dgt.es"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "52ad79987d0bcb467320b570c4e820774f3a1a3d5f6aee914cac140d9e12ad83",
+    "domain": "roads",
+    "contentHash": "3e6c5c69206191094d5a7184959d1848087e69090b1d55bbec73e90713089450",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "maintenance",
+    "causes": [
+      {
+        "type": "maintenance"
+      }
+    ],
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "major",
+      "source": "declared"
+    },
+    "validity": {
+      "status": "active",
+      "start": "2023-11-21T18:50:51.000+01:00"
+    },
+    "effects": [
+      {
+        "id": "5684393/closure",
+        "sourceRecordRef": "5684393/1",
+        "applicability": {
+          "kind": "unknown",
+          "raw": [
+            "anyVehicle"
+          ]
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road"
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:es-dgt:8212884",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "8212884"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -13.499893,
+            29.144152
+          ],
+          [
+            -13.514344,
+            29.127375
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-dgt",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "8212884",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2024-12-23T11:09:11.000+01:00",
+      "attribution": {
+        "provider": "Dirección General de Tráfico (DGT)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://nap.dgt.es"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "9be61cc741cf1cf5f50b93e0d04b49ff36c3c8f5e5b2e3970d6c6f4e6011f18e",
+    "domain": "roads",
+    "contentHash": "9d3ace21703dd2a1a4422283a1bdef60ca5d2839ec8cca7afe69009e3b94c5f2",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "maintenance",
+    "causes": [
+      {
+        "type": "maintenance"
+      }
+    ],
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "validity": {
+      "status": "active",
+      "start": "2024-12-23T11:09:11.000+01:00"
+    },
+    "effects": [
+      {
+        "id": "11374305/lane_restriction",
+        "sourceRecordRef": "11374305/1",
+        "applicability": {
+          "kind": "unknown",
+          "raw": [
+            "anyVehicle"
+          ]
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "vehicleImpact": "some_lanes_closed"
+      },
+      {
+        "id": "11374305/dimension_limit",
+        "sourceRecordRef": "11374305/1",
+        "applicability": {
+          "kind": "unknown",
+          "raw": [
+            "anyVehicle"
+          ]
+        },
+        "compliance": "mandatory",
+        "normalization": "partial",
+        "issues": [
+          {
+            "code": "unsupported_operator",
+            "sourcePath": "restrictions[0]"
+          }
+        ],
+        "source": {
+          "path": "restrictions[0]",
+          "tokens": {
+            "type": "length",
+            "value": 10,
+            "unit": "m",
+            "operator": "greaterThan",
+            "raw": {
+              "value": "10.0",
+              "comparisonOperator": "greaterThan"
+            }
+          }
+        },
+        "kind": "dimension_limit",
+        "v": 1,
+        "dimension": "length",
+        "value": {
+          "value": 10,
+          "unit": "m"
+        },
+        "operator": "lte",
+        "meaning": "maximum_permitted"
+      },
+      {
+        "id": "11374304/dimension_limit",
+        "sourceRecordRef": "11374304/1",
+        "applicability": {
+          "kind": "unknown",
+          "raw": [
+            "anyVehicle"
+          ]
+        },
+        "compliance": "mandatory",
+        "normalization": "partial",
+        "issues": [
+          {
+            "code": "unsupported_operator",
+            "sourcePath": "restrictions[0]"
+          }
+        ],
+        "source": {
+          "path": "restrictions[0]",
+          "tokens": {
+            "type": "weight",
+            "value": 5.5,
+            "unit": "kg",
+            "operator": "greaterThan",
+            "raw": {
+              "value": "5.5",
+              "comparisonOperator": "greaterThan"
+            }
+          }
+        },
+        "kind": "dimension_limit",
+        "v": 1,
+        "dimension": "gross_weight",
+        "value": {
+          "value": 5.5,
+          "unit": "kg"
+        },
+        "operator": "lte",
+        "meaning": "maximum_permitted"
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:es-dgt:8660292",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "8660292"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -6.0069118,
+            37.360683
+          ],
+          [
+            -5.983669,
+            37.341846
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-dgt",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "8660292",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2025-01-29T12:05:04.000+01:00",
+      "attribution": {
+        "provider": "Dirección General de Tráfico (DGT)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://nap.dgt.es"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "9f4a55a8fb6e89e675e5938c476d7c5d3127dc216fdf6e4d79f244476e73acc8",
+    "domain": "roads",
+    "contentHash": "4a72002bd61fa120d8695328f33f369733e7dcc45945c95172fb4bba35c132dd",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "maintenance",
+    "causes": [
+      {
+        "type": "maintenance"
+      }
+    ],
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "validity": {
+      "status": "active",
+      "start": "2025-01-29T12:05:04.000+01:00"
+    },
+    "effects": [
+      {
+        "id": "11861693/dimension_limit",
+        "sourceRecordRef": "11861693/1",
+        "applicability": {
+          "kind": "unknown",
+          "raw": [
+            "anyVehicle"
+          ]
+        },
+        "compliance": "mandatory",
+        "normalization": "partial",
+        "issues": [
+          {
+            "code": "unsupported_operator",
+            "sourcePath": "restrictions[0]"
+          }
+        ],
+        "source": {
+          "path": "restrictions[0]",
+          "tokens": {
+            "type": "weight",
+            "value": 20,
+            "unit": "kg",
+            "operator": "greaterThan",
+            "raw": {
+              "value": "20.0",
+              "comparisonOperator": "greaterThan"
+            }
+          }
+        },
+        "kind": "dimension_limit",
+        "v": 1,
+        "dimension": "gross_weight",
+        "value": {
+          "value": 20,
+          "unit": "kg"
+        },
+        "operator": "lte",
+        "meaning": "maximum_permitted"
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:es-dgt:9479421",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "9479421"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -2.2170575,
+            42.21559
+          ],
+          [
+            -2.2204194,
+            42.21589
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-dgt",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "9479421",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2025-04-17T11:36:05.000+02:00",
+      "attribution": {
+        "provider": "Dirección General de Tráfico (DGT)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://nap.dgt.es"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "3a056b633e6b103c66fa6efa0c3b5abbe16445878e611b0c50ed95b5cd1591a5",
+    "domain": "roads",
+    "contentHash": "1322336cc4a1ece88aee3fa8e444b7130029c06d29ec44f67d3b84290cccaa87",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "maintenance",
+    "causes": [
+      {
+        "type": "maintenance"
+      }
+    ],
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "validity": {
+      "status": "active",
+      "start": "2025-04-17T11:36:05.000+02:00"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:es-dgt:10852398",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "10852398"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -16.760796,
+            28.3587
+          ],
+          [
+            -16.773008,
+            28.357725
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES"
+      }
+    },
+    "relations": [
+      {
+        "ref": {
+          "class": "situation",
+          "id": "oc:situation:es-dgt:TRZ_OB20250707/018540.2685977.2.1"
+        },
+        "relation": "related"
+      }
+    ],
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-dgt",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "10852398",
+      "recordVersion": "3",
+      "sourceUpdatedAt": "2025-07-08T16:31:33.000+02:00",
+      "attribution": {
+        "provider": "Dirección General de Tráfico (DGT)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://nap.dgt.es"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "e7f1699284881845b2c6344cec583d61eccd73f997933e172739ed9625003df4",
+    "domain": "roads",
+    "contentHash": "942dcd2e5939c2af0aa728e17aabe34fb9ee830b68c9628fba0001efe4fed7b1",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "causes": [
+      {
+        "type": "maintenance"
+      }
+    ],
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "validity": {
+      "status": "active",
+      "start": "2025-07-08T16:31:00.000+02:00",
+      "end": "2026-07-01T08:00:00.000+02:00"
+    },
+    "effects": [
+      {
+        "id": "14331308/speed_limit",
+        "sourceRecordRef": "14331308/2",
+        "location": {
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -16.773008,
+                28.357725
+              ],
+              [
+                -16.760796,
+                28.3587
+              ]
+            ]
+          },
+          "extent": "linear",
+          "geometryOrigin": "source"
+        },
+        "applicability": {
+          "kind": "unknown",
+          "raw": [
+            "anyVehicle"
+          ]
+        },
+        "validity": {
+          "status": "active",
+          "start": "2025-07-08T16:30:00.000+02:00",
+          "end": "2026-07-01T08:00:00.000+02:00"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "speed_limit",
+        "v": 1,
+        "limit": {
+          "value": 1,
+          "unit": "km/h"
+        }
+      },
+      {
+        "id": "14331309/speed_limit",
+        "sourceRecordRef": "14331309/4",
+        "applicability": {
+          "kind": "unknown",
+          "raw": [
+            "anyVehicle"
+          ]
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "speed_limit",
+        "v": 1,
+        "limit": {
+          "value": 1,
+          "unit": "km/h"
+        }
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  }
+]

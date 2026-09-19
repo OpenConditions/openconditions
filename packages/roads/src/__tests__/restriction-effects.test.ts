@@ -1,11 +1,14 @@
 import { readFileSync } from "node:fs";
 import { buildRegistry, CORE_ISSUE_CODES, kernelModule } from "@openconditions/model";
+import {
+  isRoadRestrictionDetails,
+  RESTRICTION_ISSUE_CODES,
+  type RoadRestrictionDetailsV1,
+  restrictionEffects,
+} from "@openconditions/model-roads";
 import { describe, expect, it } from "vitest";
 import { parseDatexSnapshot } from "../datex.js";
 import { parseDigitrafficSnapshot } from "../digitraffic.js";
-import { restrictionEffects } from "../restriction-effects.js";
-import type { RoadRestrictionDetailsV1 } from "../restriction-types.js";
-import { isRoadRestrictionDetails, RESTRICTION_ISSUE_CODES } from "../restrictions.js";
 import { reconcileRoadSnapshots } from "../snapshot.js";
 import type { SourceDescriptor } from "../types.js";
 import { restrictionDetails } from "./fixtures/restriction-event.js";

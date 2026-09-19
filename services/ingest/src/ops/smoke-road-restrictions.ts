@@ -9,6 +9,7 @@ import {
   type LookupFn,
   makeAuthorizedFetch,
 } from "@openconditions/ingest-framework";
+import { hasRestrictionEvidence, isRoadRestrictionDetails } from "@openconditions/model-roads";
 import { normalizeObservation } from "@openconditions/normalize";
 import {
   eventsToExclusions,
@@ -16,11 +17,7 @@ import {
   observationsToGeoJSON,
   observationsToTraff,
 } from "@openconditions/publishers";
-import {
-  FEED_SOURCES,
-  hasRestrictionEvidence,
-  isRoadRestrictionDetails,
-} from "@openconditions/roads";
+import { FEED_SOURCES } from "@openconditions/roads";
 import { fetch as undiciFetch } from "undici";
 import { parseRoadSnapshotFor } from "../pipeline/parse.js";
 import { resolveOpenLr } from "../pipeline/resolve.js";

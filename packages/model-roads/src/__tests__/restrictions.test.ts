@@ -10,7 +10,7 @@ import {
   projectRoadRestrictionDetails,
   restrictionViewDeadline,
 } from "../restrictions.js";
-import { restrictionDetails } from "./fixtures/restriction-event.js";
+import { restrictionDetails } from "./fixtures/restriction-details.js";
 
 describe("restriction evidence presence", () => {
   it("keeps an unsupported present envelope distinct from absence", () => {

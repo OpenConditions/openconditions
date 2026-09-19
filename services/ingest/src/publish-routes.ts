@@ -12,6 +12,10 @@ import {
 } from "@openconditions/ingest-framework";
 import type { RoutingRights } from "@openconditions/model";
 import {
+  isPublishedRoadRestrictionDetails,
+  restrictionViewDeadline,
+} from "@openconditions/model-roads";
+import {
   type FeedInfo,
   filterForPermissiveExport,
   flowToSegmentSpeedCsv,
@@ -31,11 +35,7 @@ import {
   segmentConditionsToJson,
   segmentsToGeoJSON,
 } from "@openconditions/publishers";
-import {
-  isPublishedRoadRestrictionDetails,
-  RESOLVER_VERSION,
-  restrictionViewDeadline,
-} from "@openconditions/roads";
+import { RESOLVER_VERSION } from "@openconditions/roads";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import type { FeedRunStatus, FeedStatusStore } from "./feed-status.js";

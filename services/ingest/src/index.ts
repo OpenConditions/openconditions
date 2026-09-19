@@ -1,4 +1,5 @@
-import { runMigrations } from "@openconditions/core/server";
+import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core/server";
+import { productionRegistry } from "@openconditions/model-registry";
 import { resolveInstanceId } from "@openconditions/normalize";
 import Fastify from "fastify";
 import { DATABASE_URL, sql } from "./db.js";
@@ -28,6 +29,7 @@ async function boot() {
   console.info("[ingest] applying database migrations…");
   await runMigrations(DATABASE_URL);
   console.info("[ingest] migrations applied");
+  await assertStoredCodesRegistered(sql, productionRegistry());
 
   const app = Fastify({ logger: true, trustProxy: createTrustProxy(TRUST_PROXY_CIDRS) });
 

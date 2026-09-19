@@ -88,6 +88,8 @@ export function parseLtaIncidents(
       sourceFormat: "lta",
       domain: "roads",
       kind: "event",
+      situation:
+        typeof ev.Message === "string" && ev.Message ? {} : { headlineFromSource: false as const },
       type,
       subtype: rawType || undefined,
       category: categoryOf(type),

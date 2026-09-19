@@ -1,0 +1,229 @@
+[
+  {
+    "id": "oc:situation:hr-hc-events:HC_SIT_1",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "HC_SIT_1"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          14.4422,
+          45.3271
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "HR"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "hr-hc-events",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "HC_SIT_1",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-07-30T08:45:00Z",
+      "attribution": {
+        "provider": "Hrvatske ceste",
+        "license": "OD-HR",
+        "licenseUrl": "https://data.gov.hr/otvorena-dozvola"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "bc0f70bd52e4d544640560acba90432bb1b6ae18ebe1bb9ab7781919de152cec",
+    "domain": "roads",
+    "contentHash": "15e3bcfa8c2dc416f3725e38a7ec323e7e85cc4ed3891574bf18c5c3ab804a0a",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "incident",
+    "type": "obstruction",
+    "subtype": "infrastructure_damage",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Oštećenje kolnika na mostu"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-07-30T08:45:00Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:hr-hc-events:HC_SIT_2",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "HC_SIT_2"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.8481,
+          44.8683
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "HR"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "hr-hc-events",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "HC_SIT_2",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-07-30T07:10:00Z",
+      "attribution": {
+        "provider": "Hrvatske ceste",
+        "license": "OD-HR",
+        "licenseUrl": "https://data.gov.hr/otvorena-dozvola"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "11794fb4a6061ec00bd2eaa2d2a2d7c3685020b1d92f79d7b5cd8ecc0e58614a",
+    "domain": "roads",
+    "contentHash": "2c156a8997f45a3aa8fcaf4c3b2705edd070cd6b25d3a56f2d7d406c1d6332c8",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "incident",
+    "type": "obstruction",
+    "subtype": "rockfall",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Odron na kolniku"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-07-30T07:10:00Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:hr-hc-events:HC_SIT_3",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "HC_SIT_3"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          15.9819,
+          45.815
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "HR"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "hr-hc-events",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "HC_SIT_3",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-07-30T06:00:00Z",
+      "attribution": {
+        "provider": "Hrvatske ceste",
+        "license": "OD-HR",
+        "licenseUrl": "https://data.gov.hr/otvorena-dozvola"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "1ee7df0be1c9fc6543ed40fc8991f661b538f1ac904ef97398718c7579b178ee",
+    "domain": "roads",
+    "contentHash": "a578388a36b40303d6cd03faf16fa28819c26ebb10a5711a26321c47350b1848",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "weather_condition",
+    "type": "weather",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Jak vjetar"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-07-30T06:00:00Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "weather_condition",
+      "v": 1
+    }
+  }
+]

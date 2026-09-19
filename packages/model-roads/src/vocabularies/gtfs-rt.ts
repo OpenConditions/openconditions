@@ -1,0 +1,31 @@
+/** GTFS-Realtime Alert enums, verbatim from gtfs-realtime.proto (google/transit). */
+export const GTFS_RT = {
+  causes: [
+    "UNKNOWN_CAUSE",
+    "OTHER_CAUSE",
+    "TECHNICAL_PROBLEM",
+    "STRIKE",
+    "DEMONSTRATION",
+    "ACCIDENT",
+    "HOLIDAY",
+    "WEATHER",
+    "MAINTENANCE",
+    "CONSTRUCTION",
+    "POLICE_ACTIVITY",
+    "MEDICAL_EMERGENCY",
+    "SPECIAL_EVENT",
+  ],
+  effects: [
+    "NO_SERVICE",
+    "REDUCED_SERVICE",
+    "SIGNIFICANT_DELAYS",
+    "DETOUR",
+    "ADDITIONAL_SERVICE",
+    "MODIFIED_SERVICE",
+    "OTHER_EFFECT",
+    "UNKNOWN_EFFECT",
+    "STOP_MOVED",
+    "NO_EFFECT",
+    "ACCESSIBILITY_ISSUE",
+  ],
+} as const;

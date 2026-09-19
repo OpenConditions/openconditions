@@ -112,6 +112,7 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
     const direction = str(field(r, "direction"));
     const location = str(field(r, "location"));
     const description = str(field(r, "description"));
+    const recordTime = toIsoTimestamp(field(r, "lastUpdated"));
 
     out.push({
       id: `${src.id}:${id}`,
@@ -119,6 +120,10 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
       sourceFormat: "ohgo-events",
       domain: "roads",
       kind: "event",
+      situation: {
+        ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
+        ...((location ?? description ?? road) ? {} : { headlineFromSource: false as const }),
+      },
       type,
       subtype: category,
       category: isWorkZone ? "planned" : "incident",

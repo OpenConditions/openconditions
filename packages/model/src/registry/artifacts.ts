@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { Registry } from "./build.js";
-import { majorOf, type SchemaVersion } from "./define.js";
+import { type Mappings, majorOf, type SchemaVersion } from "./define.js";
 
 /** Kernel schemas published under stable `$defs` names. */
 function kernelDefs(registry: Registry) {
@@ -219,6 +219,54 @@ export function registryMarkdown(registry: Registry): string {
       "|---|---|---|",
     );
     for (const r of results) out.push(`| \`${r.code}\` | ${r.version} | ${cell(r.description)} |`);
+  }
+  out.push("", "### Change kinds", "", "| change kind | classes | description |", "|---|---|---|");
+  for (const c of registry.changeKinds()) {
+    out.push(`| \`${c.code}\` | ${c.classes.join(", ")} | ${cell(c.description)} |`);
+  }
+  const crosswalkRows: string[] = [];
+  for (const k of registry.kinds("situation")) {
+    const rows: [string, Mappings | undefined][] = [
+      [k.code, k.mappings],
+      ...Object.entries(k.typeMappings ?? {}).map(
+        ([key, m]) => [`${k.code}.${key}`, m] as [string, Mappings],
+      ),
+    ];
+    for (const [code, mappings] of rows) {
+      for (const [target, codes] of Object.entries(mappings ?? {})) {
+        crosswalkRows.push(`| \`${code}\` | ${target} | ${codes.map(cell).join(", ")} |`);
+      }
+    }
+  }
+  if (crosswalkRows.length > 0) {
+    out.push(
+      "",
+      "### Situation crosswalks",
+      "",
+      "| classification | target | codes |",
+      "|---|---|---|",
+      ...crosswalkRows,
+    );
+  }
+  const valueRows: string[] = [];
+  for (const v of [...registry.vocabularies()].sort((a, b) => a.code.localeCompare(b.code))) {
+    for (const [value, mappings] of Object.entries(v.valueMappings)) {
+      for (const [target, codes] of Object.entries(mappings)) {
+        valueRows.push(
+          `| \`${v.code}\` | \`${value}\` | ${target} | ${codes.map(cell).join(", ")} |`,
+        );
+      }
+    }
+  }
+  if (valueRows.length > 0) {
+    out.push(
+      "",
+      "### Vocabulary crosswalks",
+      "",
+      "| vocabulary | value | target | codes |",
+      "|---|---|---|---|",
+      ...valueRows,
+    );
   }
   return `${out.join("\n").trimEnd()}\n`;
 }

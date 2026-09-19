@@ -13,4 +13,12 @@ describe("production registry", () => {
     expect(registry.kernelVersion).toBe(KERNEL_VERSION);
     expect(registry.vocabulary("source_tier")).toBeDefined();
   });
+
+  it("registers the roads domain and its situation kinds", () => {
+    const registry = productionRegistry();
+    expect(productionModules.map((m) => m.name)).toEqual(["kernel", "roads"]);
+    expect(registry.domains().map((d) => d.code)).toEqual(["roads"]);
+    expect(registry.kind("situation", "roadworks")?.domain).toBe("roads");
+    expect(registry.vocabulary("source_format")!.values).toContain("datex2");
+  });
 });

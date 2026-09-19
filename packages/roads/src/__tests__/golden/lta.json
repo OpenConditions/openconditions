@@ -1,0 +1,218 @@
+[
+  {
+    "id": "oc:situation:sg-lta:1id3hlp",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.84,
+          1.3201
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "SG"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "sg-lta",
+      "sourceFormat": "lta",
+      "accessMode": "bulk",
+      "recordId": "1id3hlp",
+      "attribution": {
+        "provider": "Land Transport Authority (Singapore)",
+        "license": "Singapore-ODL-1.0",
+        "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "0d4a43af021aa5b43d37ff6a407e6f679b74f28adeed5e81035e9ebed9eb22cf",
+    "domain": "roads",
+    "contentHash": "9640e6bb642cfe502d044be4a995cf9524b8f2f1e3be8b0ea06ec43ac2c9adf9",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "incident",
+    "type": "accident",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "(28/6) Accident on PIE"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "(28/6) Accident on PIE"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:sg-lta:1f4enbp",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.9,
+          1.35
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "SG"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "sg-lta",
+      "sourceFormat": "lta",
+      "accessMode": "bulk",
+      "recordId": "1f4enbp",
+      "attribution": {
+        "provider": "Land Transport Authority (Singapore)",
+        "license": "Singapore-ODL-1.0",
+        "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "63e5e56b1a0daf56b9557f2ba64a7944b4218bc563176e1c4f519ca755837419",
+    "domain": "roads",
+    "contentHash": "52f81c3521aba35cb8c6c632a85490fad408dabcbcbbcb085f1a7d687471dbf4",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Roadworks on ECP"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Roadworks on ECP"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:sg-lta:1nxh11v",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.8,
+          1.29
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "SG"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "sg-lta",
+      "sourceFormat": "lta",
+      "accessMode": "bulk",
+      "recordId": "1nxh11v",
+      "attribution": {
+        "provider": "Land Transport Authority (Singapore)",
+        "license": "Singapore-ODL-1.0",
+        "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "f48a5d2834c7d14ae62cf69b49d476985bbe1c74d9338ef4a2d55d02066ee7cf",
+    "domain": "roads",
+    "contentHash": "fce60db1e33aff323c2caa85991a636fe318a36b3424310be2d8a961caea5f9d",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "incident",
+    "type": "breakdown",
+    "subtype": "disabled_vehicle",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "unknown"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Breakdown on AYE"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Breakdown on AYE"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    }
+  }
+]

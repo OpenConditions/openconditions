@@ -1,4 +1,5 @@
 export { runMigrations } from "./migrate.js";
+export { assertStoredCodesRegistered, storedRegistryCodes } from "./registry-coverage.js";
 export {
   observations,
   osmRoad,

@@ -1,0 +1,452 @@
+[
+  {
+    "id": "oc:situation:ca-qc-mtq-warnings:124315",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -71.93054799999891,
+            46.6164619999984
+          ],
+          [
+            -71.90657200000123,
+            46.60244100000108
+          ],
+          [
+            -71.9049460000015,
+            46.60187300000008
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "CA"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "ca-qc-mtq-warnings",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "124315",
+      "attribution": {
+        "provider": "Ministère des Transports du Québec (MTQ)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.donneesquebec.ca/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "fc30ffbc35356cbde6ab07bbb99c46b5de0a63fd65c597c8ad5bc62fac22da54",
+    "domain": "roads",
+    "contentHash": "43cf4b22295d5941bfd115f11a6fe570c48dc3111f0bc96fd8406d2f0acd6302",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "closure",
+    "type": "closure",
+    "subtype": "full",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "route Commerciale fermée entre la R-132 et la route Saint-Jean-Baptiste"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Travaux"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-07-14T07:34:00.000Z"
+    },
+    "effects": [
+      {
+        "id": "124315/closure",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road"
+      }
+    ],
+    "details": {
+      "kind": "closure",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:ca-qc-mtq-warnings:81387",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -75.64440800000332,
+            45.67363299999796
+          ],
+          [
+            -75.64394099999615,
+            45.67389599999725
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "CA"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "ca-qc-mtq-warnings",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "81387",
+      "attribution": {
+        "provider": "Ministère des Transports du Québec (MTQ)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.donneesquebec.ca/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "53bc1fffdc4d9d464d9795d5339249381bfbb07c46ab4fb8b4352c89dcbeb41c",
+    "domain": "roads",
+    "contentHash": "6040ea7a9079e4f871c9586bcf6029eb268aa9a9ef427a22b97235823b55f799",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "closure",
+    "type": "closure",
+    "subtype": "lane",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "chemin du Barrage sur le pont au-dessus de la rivière Blanche. Largeur de la voie réduite à 4,6 mètres."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Mesures préventives"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2025-07-30T09:17:00.000Z"
+    },
+    "effects": [
+      {
+        "id": "81387/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "vehicleImpact": "some_lanes_closed"
+      }
+    ],
+    "details": {
+      "kind": "closure",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:ca-qc-mtq-warnings:115026",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -73.43803799999932,
+            46.030312000002546
+          ],
+          [
+            -73.4369780000015,
+            46.03094800000198
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "CA"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "ca-qc-mtq-warnings",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "115026",
+      "attribution": {
+        "provider": "Ministère des Transports du Québec (MTQ)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.donneesquebec.ca/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "6ca5c20b9a2452e2f404906fe0002e49789ab90339a84079c3c608c87b9e1842",
+    "domain": "roads",
+    "contentHash": "5492bc170a65d1610712cf25766a21647f40a993594ffc82ebc5cd23f7c11de2",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "other",
+    "type": "other",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "rue Baby sur le pont, 1 voie par direction. Largeur voie : 3,2 mètres"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Inspection"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2025-09-23T08:13:00.000Z"
+    },
+    "effects": [
+      {
+        "id": "115026/contraflow",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "contraflow",
+        "v": 1
+      }
+    ],
+    "details": {
+      "kind": "other",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:ca-qc-mtq-warnings:125259",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -73.65311299999607,
+            45.42085700000033
+          ],
+          [
+            -73.65836800000397,
+            45.41054700000295
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "138"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "CA"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "ca-qc-mtq-warnings",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "125259",
+      "attribution": {
+        "provider": "Ministère des Transports du Québec (MTQ)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.donneesquebec.ca/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "ea69be7eb1ca962e24cf976b0dc0429e50fd38460690035c69b0b5d810947ad2",
+    "domain": "roads",
+    "contentHash": "0cc480d29e2561d4fa04cb349db8b5bd185b2ab41bd981dcb39cca61640f518a",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "restriction",
+    "type": "dimension",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "pont Honoré-Mercier Passage INTERDIT aux véhicules lourds (trois essieux et plus), du lundi au vendredi : direction Montréal (EST), de 5 h à 9 h 30 et direction Rive-Sud (OUEST), de 15 h à 19 h"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Travaux"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-07-15T12:37:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "restriction",
+      "v": 1,
+      "basis": "temporary"
+    }
+  },
+  {
+    "id": "oc:situation:ca-qc-mtq-warnings:111875",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -73.470835999999,
+            45.577519999997286
+          ],
+          [
+            -73.50746899999693,
+            45.58515199999764
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "25"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "CA"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "ca-qc-mtq-warnings",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "111875",
+      "attribution": {
+        "provider": "Ministère des Transports du Québec (MTQ)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.donneesquebec.ca/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "6622b20e8f12ea653a45840f00189127c2e2ab887daa2c7dd948213cc4963fb7",
+    "domain": "roads",
+    "contentHash": "450ff113d85811b319fd05a1f3d94bb4430b7dce60bde3dcc63a13f03dbc6d3d",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "other",
+    "type": "other",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "unknown"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Tunnel Louis-Hippolyte-La Fontaine<br/><br/>Hauteur libre réduite à 4,3 mètres. ATTENTION véhicules récréatifs : assurez-vous de vous y conformer avant d'inclure le tunnel dans votre itinéraire."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-07-30T08:29:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "other",
+      "v": 1
+    }
+  }
+]

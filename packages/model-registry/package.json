@@ -28,7 +28,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@openconditions/model": "workspace:*"
+    "@openconditions/model": "workspace:*",
+    "@openconditions/model-roads": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.1",

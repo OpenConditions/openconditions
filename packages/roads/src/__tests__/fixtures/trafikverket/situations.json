@@ -1,0 +1,28 @@
+{
+  "RESPONSE": {
+    "RESULT": [
+      {
+        "Situation": [
+          {
+            "Deviation": [
+              {
+                "Id": "d1",
+                "MessageType": "Olycka",
+                "Message": "Trafikolycka E4",
+                "SeverityCode": 4,
+                "RoadName": "E4",
+                "Geometry": { "Point": { "WGS84": "POINT (18.0686 59.3293)" } }
+              },
+              {
+                "Id": "d2",
+                "MessageType": "Vägarbete",
+                "Message": "Vägarbete",
+                "Geometry": { "Line": { "WGS84": "LINESTRING (17.0 59.0, 17.1 59.1)" } }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

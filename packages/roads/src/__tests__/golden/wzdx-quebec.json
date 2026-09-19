@@ -1,0 +1,310 @@
+[
+  {
+    "id": "oc:situation:us-wzdx:TIC-Quebec/1:ACL-20260729-02-JFP-P6_1",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "wzdx:road_event",
+        "id": "TIC-Quebec/1:ACL-20260729-02-JFP-P6_1"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -71.22496,
+            46.80453
+          ],
+          [
+            -71.2238047,
+            46.8051785
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Rue de Maisonneuve"
+            }
+          ]
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "compass",
+        "compass": "N",
+        "text": "northbound"
+      },
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-wzdx",
+      "sourceFormat": "wzdx",
+      "accessMode": "bulk",
+      "recordId": "TIC-Quebec/1:ACL-20260729-02-JFP-P6_1",
+      "sourceUpdatedAt": "2026-07-29T13:54:15.203Z",
+      "attribution": {
+        "provider": "WZDx publishers",
+        "license": "UNKNOWN"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "fd65f29d77afa8512ea7852a0391b68ad64e7675bfd9b1776a0c1e0c359aa481",
+    "domain": "roads",
+    "contentHash": "6a9e510129d7b89fb69c24731b06242f328071b42cce4bc732ee982b65757df7",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "likely",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Québec, Rue de Maisonneuve entre Avenue Louis-St-Laurent et Avenue de Salaberry chantier privé (pour la gestion de conteneurs, stationnement, matériaux, etc.), sur 2026-08-07 du 09:00 jusqu'au 15:00"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Québec, Rue de Maisonneuve entre Avenue Louis-St-Laurent et Avenue de Salaberry chantier privé (pour la gestion de conteneurs, stationnement, matériaux, etc.), sur 2026-08-07 du 09:00 jusqu'au 15:00"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-08-07T13:00:00Z",
+      "end": "2026-08-07T19:00:00Z"
+    },
+    "effects": [
+      {
+        "id": "TIC-Quebec/1:ACL-20260729-02-JFP-P6_1/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "N",
+          "text": "northbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 3,
+        "lanesClosed": 0,
+        "lanes": [
+          {
+            "index": 1,
+            "status": "open"
+          },
+          {
+            "index": 2,
+            "status": "open"
+          },
+          {
+            "index": 3,
+            "type": "sidewalk",
+            "status": "open"
+          }
+        ],
+        "vehicleImpact": "some_lanes_closed"
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:us-wzdx:TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "wzdx:road_event",
+        "id": "TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -71.19881,
+            46.87663
+          ],
+          [
+            -71.19848,
+            46.87673
+          ],
+          [
+            -71.19833,
+            46.87678
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Rue Adanac"
+            }
+          ]
+        },
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Avenue des Cordillères"
+            }
+          ]
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "compass",
+        "compass": "N",
+        "text": "northbound"
+      },
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "derived",
+      "sourceId": "us-wzdx",
+      "sourceFormat": "wzdx",
+      "accessMode": "bulk",
+      "recordId": "TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0",
+      "sourceUpdatedAt": "2026-07-27T19:52:24.577Z",
+      "attribution": {
+        "provider": "WZDx publishers",
+        "license": "UNKNOWN"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "bfd7bd1bd4533a83e04937ecc5d9f82571dfd2f4fa792a4c5721208ec813859e",
+    "domain": "roads",
+    "contentHash": "58b799a49b7c4d8098b2336da9aa34332a2b1986992697851d51c37e12c7212e",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "closure",
+    "type": "closure",
+    "planned": false,
+    "certainty": "likely",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "vers le nord via Rue Adanac, Rue des Rocheuses et Avenue des Cordillères"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "vers le nord via Rue Adanac, Rue des Rocheuses et Avenue des Cordillères"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-07-29T13:00:00Z",
+      "end": "2026-07-31T20:00:00Z"
+    },
+    "effects": [
+      {
+        "id": "TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "N",
+          "text": "northbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "vehicleImpact": "unknown"
+      },
+      {
+        "id": "TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0/detour",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "N",
+          "text": "northbound"
+        },
+        "compliance": "advisory",
+        "normalization": "complete",
+        "kind": "detour",
+        "v": 1,
+        "description": [
+          {
+            "lang": "und",
+            "text": "vers le nord via Rue Adanac, Rue des Rocheuses et Avenue des Cordillères"
+          }
+        ],
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -71.19881,
+              46.87663
+            ],
+            [
+              -71.19848,
+              46.87673
+            ],
+            [
+              -71.19833,
+              46.87678
+            ]
+          ]
+        }
+      }
+    ],
+    "details": {
+      "kind": "closure",
+      "v": 1
+    }
+  }
+]

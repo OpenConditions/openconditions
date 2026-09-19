@@ -1,0 +1,292 @@
+[
+  {
+    "id": "oc:situation:th-longdo:957414",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.34330070019,
+          13.705368332483
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "TH"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "th-longdo",
+      "sourceFormat": "flatjson",
+      "accessMode": "bulk",
+      "recordId": "957414",
+      "sourceUpdatedAt": "2026-06-25T23:24:40.000Z",
+      "attribution": {
+        "provider": "Longdo Traffic / iTIC Foundation",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.longdo.com/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "616ed6468fdb611694c1e1e2023757fb7a11ff84bdf0cf34e877dd1aeee71167",
+    "domain": "roads",
+    "contentHash": "dae35a1adb5ce7af921acf8a9a53d2096561da9a36061a92c5c7336d49ff3af1",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "incident",
+    "type": "accident",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Accident at Ma Charoen Rd."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Motorcycle accident blocking the left lane at the entrance of Ma Charoen Rd. (Soi Phetkasem 81) Nong Khang Phlu Nong Khaem Bangkok.\r\n\r\nCr.JS 100"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:th-longdo:957413",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.96647709608,
+          13.862967163998
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "TH"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "th-longdo",
+      "sourceFormat": "flatjson",
+      "accessMode": "bulk",
+      "recordId": "957413",
+      "sourceUpdatedAt": "2026-06-25T23:21:48.000Z",
+      "attribution": {
+        "provider": "Longdo Traffic / iTIC Foundation",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.longdo.com/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "5b19bbd8a63ab40cf546c1c0b183f15add75af7652e632306e6f688811577dac",
+    "domain": "roads",
+    "contentHash": "5f834c48022ce7db2de82d6bfdccea0e528a08bffea8e32518ad916b082efd88",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "incident",
+    "type": "accident",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Accident at Rural Road CCO.4016"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Update car accident was moved out of locale near Wat Suwan Temi on Rural Road CCO.4016 Don Chimphli Bang Nam Priao Chachoengsao.\r\n\r\nCr.JS 100"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:th-longdo:957412",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.96647977829,
+          13.86302705784
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "TH"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "th-longdo",
+      "sourceFormat": "flatjson",
+      "accessMode": "bulk",
+      "recordId": "957412",
+      "sourceUpdatedAt": "2026-06-25T23:20:21.000Z",
+      "attribution": {
+        "provider": "Longdo Traffic / iTIC Foundation",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.longdo.com/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "cd0f13ba86c0a59b6664edcc12b2f10a2fc2d47253694632f13ab82af3b823aa",
+    "domain": "roads",
+    "contentHash": "e37359e0a134ee7f0ab9882b1fbf544769fc926480c2831236e515750313579c",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "other",
+    "type": "other",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "unknown"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Heavy traffic  at Rural Road CCO.4016"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Heavy traffic  due to cars accident blocking traffic lanes near Wat Suwan Temi on Rural Road CCO.4016 Don Chimphli Bang Nam Priao Chachoengsao.\r\n\r\nCr.JS 100"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "other",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:th-longdo:957092",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          100.49286067486,
+          13.725407676664
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "TH"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "th-longdo",
+      "sourceFormat": "flatjson",
+      "accessMode": "bulk",
+      "recordId": "957092",
+      "sourceUpdatedAt": "2026-06-23T09:22:35.000Z",
+      "attribution": {
+        "provider": "Longdo Traffic / iTIC Foundation",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.longdo.com/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "fe36d6a89c11ac26579ec14204c0aed220e7a3e985868a88133032dc9219d104",
+    "domain": "roads",
+    "contentHash": "559a9075ca5fbb8c56d8a8a9d3d0f1725df767c33afb56d89a1cf4eaf181e7a2",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "other",
+    "type": "other",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "unknown"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Road Diversion at Somdet Phrachao Taksin Rd."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Road closures and diversions at Merry Kings, Wongwian Yai on outbound Somdet Phrachao Taksin Rd., on June 25 - 29, 2026.,9:00 AM - 1:00 PM (Daytime only)\r\n\r\nCr. โครงการรถไฟฟ้าสายสีม่วงฯ"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "other",
+      "v": 1
+    }
+  }
+]

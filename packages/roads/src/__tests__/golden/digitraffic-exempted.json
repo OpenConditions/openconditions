@@ -1,0 +1,141 @@
+[
+  {
+    "id": "oc:situation:fi-digitraffic:GUID50468062",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                26.220832,
+                62.118657
+              ],
+              [
+                26.226301,
+                62.123422
+              ],
+              [
+                26.229547,
+                62.126302
+              ],
+              [
+                26.236662,
+                62.132461
+              ],
+              [
+                26.240309,
+                62.135645
+              ],
+              [
+                26.220832,
+                62.118657
+              ]
+            ]
+          ]
+        ]
+      },
+      "extent": "area",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "FI"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Kangasniemi"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fi-digitraffic",
+      "sourceFormat": "digitraffic",
+      "accessMode": "bulk",
+      "recordId": "GUID50468062",
+      "recordVersion": "3",
+      "sourceUpdatedAt": "2026-07-31T06:20:14.241Z",
+      "attribution": {
+        "provider": "Fintraffic / Digitraffic",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "e87be43bb68d75f64b93c1ae68161f374f0b409d0c3816fd418e7a27a3729c29",
+    "domain": "roads",
+    "contentHash": "700318d8509191c643fe14d2f60b1d9d0137d688be0a7342dc4cd927a8986167",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "authority",
+    "type": "operation",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "unknown"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Erikoiskuljetus. Etelä-Savo"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Kangasniemi - Kangasniemi"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-07-31T07:30:00Z",
+      "end": "2026-07-31T09:00:00Z"
+    },
+    "effects": [
+      {
+        "id": "GUID50468062/dimension_limit",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "partial",
+        "issues": [
+          {
+            "code": "unsupported_operator",
+            "sourcePath": "restrictions[0]"
+          }
+        ],
+        "source": {
+          "path": "restrictions[0]",
+          "tokens": {
+            "type": "width",
+            "value": 8,
+            "unit": "m"
+          }
+        },
+        "kind": "dimension_limit",
+        "v": 1,
+        "dimension": "width",
+        "value": {
+          "value": 8,
+          "unit": "m"
+        },
+        "operator": "lte",
+        "meaning": "maximum_permitted"
+      }
+    ],
+    "details": {
+      "kind": "authority",
+      "v": 1
+    }
+  }
+]

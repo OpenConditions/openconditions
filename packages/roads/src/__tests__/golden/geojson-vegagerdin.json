@@ -1,0 +1,346 @@
+[
+  {
+    "id": "oc:situation:is-vegagerdin:0",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -22.496255,
+          65.039839
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "IS"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "is-vegagerdin",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "0",
+      "sourceUpdatedAt": "2026-06-25T17:51:00.000Z",
+      "attribution": {
+        "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.vegagerdin.is/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "919b56334d8b0ec4aff89dc8cccede9cc2a5cff47a2c698d9d327628944bbeaa",
+    "domain": "roads",
+    "contentHash": "a03375d93196467d0dc65db8734bcc5ad4398deb81266d997c0f52319016a04c",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_condition",
+    "type": "surface",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Uneven road"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "road_condition",
+      "v": 1,
+      "surface": [
+        "unknown"
+      ]
+    }
+  },
+  {
+    "id": "oc:situation:is-vegagerdin:1",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -22.245006,
+          65.032615
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "IS"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "is-vegagerdin",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "1",
+      "sourceUpdatedAt": "2026-06-25T17:51:00.000Z",
+      "attribution": {
+        "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.vegagerdin.is/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "a4c779c99fb71723f63f0830bfb4aca1e32d133baf4fd658f48679a177501c42",
+    "domain": "roads",
+    "contentHash": "f4efa1c490a227e4bbcb392a8202174fd367c4b4460cc083ad214c5ed3faf07c",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_condition",
+    "type": "surface",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Uneven road"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "road_condition",
+      "v": 1,
+      "surface": [
+        "unknown"
+      ]
+    }
+  },
+  {
+    "id": "oc:situation:is-vegagerdin:2",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -22.317247,
+          65.050745
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "IS"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "is-vegagerdin",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "2",
+      "sourceUpdatedAt": "2026-06-25T17:51:00.000Z",
+      "attribution": {
+        "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.vegagerdin.is/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "43b1f87100bbb0b2a6717d33449ab9e14032085842965f59de4d6eb079c27052",
+    "domain": "roads",
+    "contentHash": "259c77a19f2c8348a640734f8664ed7c944b04617f6be0ec3418d90886007e4d",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_condition",
+    "type": "surface",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Uneven road"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "road_condition",
+      "v": 1,
+      "surface": [
+        "unknown"
+      ]
+    }
+  },
+  {
+    "id": "oc:situation:is-vegagerdin:3",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -21.020719,
+          63.952282
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "IS"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "is-vegagerdin",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "3",
+      "sourceUpdatedAt": "2026-06-25T17:51:00.000Z",
+      "attribution": {
+        "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.vegagerdin.is/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "1828f217fddb9865f82f4b6077340ea27e6c6e061d0c38e7baa239f8c7f19fb0",
+    "domain": "roads",
+    "contentHash": "b55c2eee7592eca9d85777934fed2eab386a2275d72c269b9c8af4213e2cdbc8",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Road repairs"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:is-vegagerdin:4",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -20.334562,
+          64.294846
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "IS"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "is-vegagerdin",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "4",
+      "sourceUpdatedAt": "2026-06-25T17:51:00.000Z",
+      "attribution": {
+        "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.vegagerdin.is/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "f77ff43f794073070546be9bf90139a13c50a820ecb4559870af6ee1803d6af0",
+    "domain": "roads",
+    "contentHash": "debfedd569cbdcbd94ebd6377b6e28eeb640cd8483e3da56c7c4a94ad77d1291",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_hazard",
+    "type": "hazard",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Flying gravel"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "road_hazard",
+      "v": 1
+    }
+  }
+]

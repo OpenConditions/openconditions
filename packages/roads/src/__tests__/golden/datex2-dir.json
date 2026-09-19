@@ -1,0 +1,665 @@
+[
+  {
+    "id": "oc:situation:fr-dir:230814-001797",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "230814-001797"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          1.601671,
+          42.844486
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "N0020"
+            }
+          ],
+          "ref": "N0020"
+        }
+      ],
+      "tmc": {
+        "country": "F",
+        "table": 32,
+        "code": 17389
+      },
+      "admin": {
+        "country": "FR"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fr-dir",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "230814-001797",
+      "recordVersion": "4",
+      "sourceUpdatedAt": "2025-03-06T08:40:36.720+01:00",
+      "attribution": {
+        "provider": "DIR / Bison Futé",
+        "license": "etalab-2.0",
+        "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "3d3506d2ead58dd604fb2bf3acb9b779bcf4488aa09299e9bfb23dc3b48758b0",
+    "domain": "roads",
+    "contentHash": "31a8065222919deadb51aacd784a82806aa2002bae1ac7d07b2ed5c4cde980c3",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "restriction",
+    "type": "dimension",
+    "subtype": "weight",
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "moderate",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "DIR Sud-Ouest/District Sud (Foix)/CEI L'Hospitalet"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Arrêté A-154(Ter)-2022"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2023-08-14T16:55:00.071+02:00"
+    },
+    "effects": [
+      {
+        "id": "230814-001797-1/dimension_limit",
+        "sourceRecordRef": "230814-001797-1/4",
+        "applicability": {
+          "kind": "classes",
+          "include": [
+            {
+              "class": "truck"
+            }
+          ],
+          "raw": [
+            "lorry"
+          ]
+        },
+        "compliance": "mandatory",
+        "normalization": "partial",
+        "issues": [
+          {
+            "code": "unsupported_operator",
+            "sourcePath": "restrictions[0]"
+          }
+        ],
+        "source": {
+          "path": "restrictions[0]",
+          "tokens": {
+            "type": "weight",
+            "value": 48,
+            "unit": "kg",
+            "operator": "greaterThan",
+            "raw": {
+              "value": "48.0",
+              "comparisonOperator": "greaterThan"
+            }
+          }
+        },
+        "kind": "dimension_limit",
+        "v": 1,
+        "dimension": "gross_weight",
+        "value": {
+          "value": 48,
+          "unit": "kg"
+        },
+        "operator": "lte",
+        "meaning": "maximum_permitted"
+      }
+    ],
+    "details": {
+      "kind": "restriction",
+      "v": 1,
+      "basis": "temporary"
+    }
+  },
+  {
+    "id": "oc:situation:fr-dir:251022-000640",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "251022-000640"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -1.7477167,
+            48.104973
+          ],
+          [
+            -1.7527946,
+            48.102207
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "N0024"
+            }
+          ],
+          "ref": "N0024"
+        }
+      ],
+      "tmc": {
+        "country": "F",
+        "table": 32,
+        "code": 47221
+      },
+      "admin": {
+        "country": "FR"
+      }
+    },
+    "relations": [
+      {
+        "ref": {
+          "class": "situation",
+          "id": "oc:situation:fr-dir:EVE_DIRO-S-251022-0025-EVE_DIRO-SR-251022-000029"
+        },
+        "relation": "related"
+      }
+    ],
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fr-dir",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "251022-000640",
+      "recordVersion": "2",
+      "sourceUpdatedAt": "2025-10-22T16:22:40.487+02:00",
+      "attribution": {
+        "provider": "DIR / Bison Futé",
+        "license": "etalab-2.0",
+        "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "0fa699f74fde1538d0d52723ffbaeb42d10c7ebfcb9c09c0c74464cad9c89cc4",
+    "domain": "roads",
+    "contentHash": "7a36c30371b16daebc727a78b8f66180cd442f5438f7d4344c73fcbac4117a92",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "closure",
+    "type": "closure",
+    "subtype": "lane",
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "moderate",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "DIR Ouest/District de Rennes/CEI de Rennes"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "La mesure est obligatoire"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2025-10-22T09:11:58.953+02:00",
+      "end": "2025-10-24T00:00:00.000+02:00"
+    },
+    "effects": [
+      {
+        "id": "251022-000640-1/lane_restriction",
+        "sourceRecordRef": "251022-000640-1/2",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 2,
+        "lanesClosed": 1,
+        "vehicleImpact": "some_lanes_closed"
+      }
+    ],
+    "details": {
+      "kind": "closure",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:fr-dir:251023-001144",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "251023-001144"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.1781034,
+          45.23877
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "tmc": {
+        "country": "F",
+        "table": 32,
+        "code": 33202
+      },
+      "admin": {
+        "country": "FR"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fr-dir",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "251023-001144",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2025-10-23T10:50:24.868+02:00",
+      "attribution": {
+        "provider": "DIR / Bison Futé",
+        "license": "etalab-2.0",
+        "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "017d4500d9bc96274413b195bf64e34ac86bf79c6cc6ec54ca460e07d1dabd49",
+    "domain": "roads",
+    "contentHash": "64fe00a4e68ae08ebdaca034484a087ca09329548eea5d64bfd570be935e6062",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_condition",
+    "type": "surface",
+    "subtype": "snow_covered",
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "moderate",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Le col du Glandon est fermé pour la saison hivernale.\n\nHabituellement le col est fermé pour la saison hivernale du 2ème lundi de novembre jusqu'au dernier vendredi de mai."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "situé 19 m à l'est de Col du Glandon"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2025-10-23T10:44:14.681+02:00",
+      "end": "2026-05-29T17:00:00.000+02:00"
+    },
+    "effects": [
+      {
+        "id": "251023-001144-2/closure",
+        "sourceRecordRef": "251023-001144-2/1",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road"
+      }
+    ],
+    "details": {
+      "kind": "road_condition",
+      "v": 1,
+      "surface": [
+        "snow"
+      ]
+    }
+  },
+  {
+    "id": "oc:situation:fr-dir:241125-001455",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "241125-001455"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            3.7624981,
+            49.745174
+          ],
+          [
+            3.7548466,
+            49.731613
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "N0002"
+            }
+          ],
+          "ref": "N0002"
+        }
+      ],
+      "tmc": {
+        "country": "F",
+        "table": 32,
+        "code": 27203
+      },
+      "admin": {
+        "country": "FR"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fr-dir",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "241125-001455",
+      "recordVersion": "6",
+      "sourceUpdatedAt": "2025-12-01T15:14:51.491+01:00",
+      "attribution": {
+        "provider": "DIR / Bison Futé",
+        "license": "etalab-2.0",
+        "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "d38fe38d4f6f7f6dd68b343fb62231cabc68f0ded5e14048165a61076e29dc6e",
+    "domain": "roads",
+    "contentHash": "a3e99425a15da00369b3203453549f3da1a480ee3757701513ed100dc07b9577",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "restriction",
+    "type": "dimension",
+    "subtype": "weight",
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "moderate",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "DIR Nord/District Laon/CEI de Laon"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Arrêté n° T 24-481 AI\n\n (Prorogation de l’arrêté T 23-548 AI)"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2024-11-25T11:50:00.000+01:00",
+      "end": "2026-11-30T17:00:00.000+01:00"
+    },
+    "effects": [],
+    "details": {
+      "kind": "restriction",
+      "v": 1,
+      "basis": "temporary"
+    }
+  },
+  {
+    "id": "oc:situation:fr-dir:251209-001171",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "251209-001171"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -3.467918,
+            48.259827
+          ],
+          [
+            -3.4110432,
+            48.254482
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "N0164"
+            }
+          ],
+          "ref": "N0164"
+        }
+      ],
+      "tmc": {
+        "country": "F",
+        "table": 32,
+        "code": 63443
+      },
+      "admin": {
+        "country": "FR"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fr-dir",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "251209-001171",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2025-12-09T10:48:56.215+01:00",
+      "attribution": {
+        "provider": "DIR / Bison Futé",
+        "license": "etalab-2.0",
+        "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "4169b4ac575417d15d83bb5d6ad0f33affd3ee2db1dd75938a4ac340dacf62a6",
+    "domain": "roads",
+    "contentHash": "4ecc7a06b45ad97dd4e5b1a7f69e054b29e0effcce33337a5bc6b51e0aeac288",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "construction",
+    "planned": true,
+    "certainty": "observed",
+    "severity": {
+      "label": "moderate",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Travaux de construction"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "DIR Ouest/District de Saint-Brieuc/CEI de Rostrenen"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2025-12-09T10:38:13.271+01:00",
+      "end": "2026-08-28T17:30:00.000+02:00"
+    },
+    "effects": [
+      {
+        "id": "251209-001171-1/lane_restriction",
+        "sourceRecordRef": "251209-001171-1/1",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 4,
+        "vehicleImpact": "unknown"
+      },
+      {
+        "id": "251209-001171-2/lane_restriction",
+        "sourceRecordRef": "251209-001171-2/1",
+        "location": {
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -3.421232,
+                48.254673
+              ],
+              [
+                -3.413677,
+                48.2544
+              ]
+            ]
+          },
+          "extent": "linear",
+          "geometryOrigin": "source"
+        },
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 4,
+        "vehicleImpact": "alternating_one_way"
+      },
+      {
+        "id": "251209-001171-3/lane_restriction",
+        "sourceRecordRef": "251209-001171-3/1",
+        "location": {
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -3.4212143,
+                48.254578
+              ],
+              [
+                -3.4294572,
+                48.25528
+              ]
+            ]
+          },
+          "extent": "linear",
+          "geometryOrigin": "source"
+        },
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 4,
+        "vehicleImpact": "some_lanes_closed"
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  }
+]

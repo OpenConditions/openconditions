@@ -25,7 +25,7 @@ describe("traffEvents", () => {
       "CONGESTION_TRAFFIC_CONGESTION",
     ]);
     expect(types(traffEvents(roadEvent({ type: "hazard", category: "conditions" })))).toEqual([
-      "HAZARD_HAZARD",
+      "HAZARD_HAZARDOUS_CONDITIONS",
     ]);
     expect(types(traffEvents(roadEvent({ type: "authority" })))).toEqual(["AUTHORITY_CHECKPOINT"]);
   });

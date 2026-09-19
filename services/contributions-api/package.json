@@ -27,6 +27,7 @@
     "@openconditions/contrib-core": "workspace:*",
     "@openconditions/core": "workspace:*",
     "@openconditions/model": "workspace:*",
+    "@openconditions/model-registry": "workspace:*",
     "@openconditions/normalize": "workspace:*",
     "@openconditions/roads": "workspace:*",
     "@openconditions/storage": "workspace:*",

@@ -69,13 +69,16 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@openconditions/roads':
+      '@openconditions/model-roads':
         specifier: workspace:*
-        version: link:../../packages/roads
+        version: link:../../packages/model-roads
     devDependencies:
       '@openconditions/publishers':
         specifier: workspace:*
         version: link:../../packages/publishers
+      '@openconditions/roads':
+        specifier: workspace:*
+        version: link:../../packages/roads
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16
@@ -246,6 +249,28 @@ importers:
       '@openconditions/model':
         specifier: workspace:*
         version: link:../model
+      '@openconditions/model-roads':
+        specifier: workspace:*
+        version: link:../model-roads
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+
+  packages/model-roads:
+    dependencies:
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
+      zod:
+        specifier: ^4.4.3
+        version: 4.6.2
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -352,6 +377,9 @@ importers:
       '@openconditions/model':
         specifier: workspace:*
         version: link:../model
+      '@openconditions/model-roads':
+        specifier: workspace:*
+        version: link:../model-roads
       '@openconditions/roads':
         specifier: workspace:*
         version: link:../roads
@@ -395,6 +423,9 @@ importers:
       '@openconditions/model':
         specifier: workspace:*
         version: link:../model
+      '@openconditions/model-roads':
+        specifier: workspace:*
+        version: link:../model-roads
       fast-xml-parser:
         specifier: ^5.11.1
         version: 5.11.1
@@ -454,6 +485,9 @@ importers:
       '@openconditions/model':
         specifier: workspace:*
         version: link:../../packages/model
+      '@openconditions/model-registry':
+        specifier: workspace:*
+        version: link:../../packages/model-registry
       '@openconditions/normalize':
         specifier: workspace:*
         version: link:../../packages/normalize
@@ -509,6 +543,9 @@ importers:
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:../../packages/ingest-framework
+      '@openconditions/model-registry':
+        specifier: workspace:*
+        version: link:../../packages/model-registry
       fastify:
         specifier: ^5.12.1
         version: 5.12.5
@@ -549,6 +586,12 @@ importers:
       '@openconditions/model':
         specifier: workspace:*
         version: link:../../packages/model
+      '@openconditions/model-registry':
+        specifier: workspace:*
+        version: link:../../packages/model-registry
+      '@openconditions/model-roads':
+        specifier: workspace:*
+        version: link:../../packages/model-roads
       '@openconditions/normalize':
         specifier: workspace:*
         version: link:../../packages/normalize

@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
+import { isRoadRestrictionDetails } from "@openconditions/model-roads";
 import { describe, expect, it } from "vitest";
 import { parseDigitraffic, parseDigitrafficSnapshot } from "../digitraffic.js";
 import { digitrafficRestrictionDetails } from "../digitraffic-restrictions.js";
-import { isRoadRestrictionDetails } from "../restrictions.js";
 import { reconcileRoadSnapshots } from "../snapshot.js";
 import type { SourceDescriptor } from "../types.js";
 

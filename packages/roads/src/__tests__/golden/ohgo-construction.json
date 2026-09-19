@@ -1,0 +1,195 @@
+[
+  {
+    "id": "oc:situation:us-oh-ohgo-construction:OH-CON-1001",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -82.9988,
+          39.9612
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "I-70"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-oh-ohgo-construction",
+      "sourceFormat": "ohgo-events",
+      "accessMode": "bulk",
+      "recordId": "OH-CON-1001",
+      "sourceUpdatedAt": "2026-07-30T12:15:00.000Z",
+      "attribution": {
+        "provider": "Ohio Department of Transportation (OHGO)",
+        "license": "US-Gov-Public-Domain",
+        "licenseUrl": "https://www.usa.gov/government-works"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "eecbd6c7e41cd841b08033bd1b6b428afbf5465277a0ad67b1ee64fe9d9e6f14",
+    "domain": "roads",
+    "contentHash": "b72b45202c7f85b1627430c5439274667f61ff4cf3c8a15ba55bef36e44202bb",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "I-70 EB at Hamilton Rd"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Bridge deck replacement; right lane closed"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-01T05:00:00.000Z",
+      "end": "2026-10-15T23:00:00.000Z"
+    },
+    "effects": [
+      {
+        "id": "OH-CON-1001/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "vehicleImpact": "some_lanes_closed"
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:us-oh-ohgo-construction:OH-CON-1002",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.6944,
+          41.4993
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "I-90"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-oh-ohgo-construction",
+      "sourceFormat": "ohgo-events",
+      "accessMode": "bulk",
+      "recordId": "OH-CON-1002",
+      "attribution": {
+        "provider": "Ohio Department of Transportation (OHGO)",
+        "license": "US-Gov-Public-Domain",
+        "licenseUrl": "https://www.usa.gov/government-works"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "7567fe3c188f069cb424bc144c686ba7ccee75345704d64ce7e7a22fd4621324",
+    "domain": "roads",
+    "contentHash": "645416e0b8ce755e9e365d790b1ed8feb27441bbc43c7d159b85b28c9113825f",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "I-90 WB near W 44th St"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Full closure for beam setting"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-09-05T02:00:00.000Z",
+      "end": "2026-09-08T10:00:00.000Z"
+    },
+    "effects": [
+      {
+        "id": "OH-CON-1002/closure",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road"
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  }
+]

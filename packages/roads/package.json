@@ -13,11 +13,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    },
-    "./restrictions": {
-      "types": "./dist/restrictions.d.ts",
-      "import": "./dist/restrictions.js",
-      "require": "./dist/restrictions.cjs"
     }
   },
   "main": "./dist/index.cjs",
@@ -40,6 +35,7 @@
     "@openconditions/core": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
+    "@openconditions/model-roads": "workspace:*",
     "fast-xml-parser": "^5.11.1",
     "proj4": "^2.21.0",
     "saxes": "^6.0.0",

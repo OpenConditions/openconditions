@@ -1,0 +1,2112 @@
+{
+  "events": 842,
+  "situations": 434,
+  "classifications": {
+    "closure.closure.bridge": 1,
+    "closure.closure.carriageway": 10,
+    "closure.closure.lane": 2,
+    "incident.accident": 6,
+    "incident.breakdown": 101,
+    "incident.breakdown.disabled_vehicle": 6,
+    "incident.obstruction": 14,
+    "other.other": 41,
+    "restriction.speed.temporary": 4,
+    "roadworks.works.maintenance": 249
+  },
+  "effects": {
+    "access": 24,
+    "closure": 138,
+    "detour": 112,
+    "lane_restriction": 125,
+    "speed_limit": 97,
+    "unsupported": 10
+  },
+  "sample": [
+    {
+      "id": "oc:situation:nl-ndw:NDW08_bedf8af2-f18a-419e-9bf0-d253689d7d5f_SIT",
+      "temporality": "live",
+      "externalIds": [
+        {
+          "scheme": "datex:situation",
+          "id": "NDW08_bedf8af2-f18a-419e-9bf0-d253689d7d5f_SIT"
+        }
+      ],
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.05293,
+            52.110115
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "direction": {
+          "value": "unknown",
+          "basis": "bearing",
+          "bearingDeg": 308
+        },
+        "tmc": {
+          "country": "8",
+          "table": 6,
+          "version": "6.13",
+          "code": 7995
+        },
+        "admin": {
+          "country": "NL"
+        }
+      },
+      "relations": [
+        {
+          "ref": {
+            "class": "situation",
+            "id": "oc:situation:nl-ndw:8b2ce65d-9cee-ef11-a542-00505698df49"
+          },
+          "relation": "related"
+        }
+      ],
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "nl-ndw",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "NDW08_bedf8af2-f18a-419e-9bf0-d253689d7d5f_SIT",
+        "recordVersion": "1",
+        "sourceUpdatedAt": "2026-05-20T16:03:00.057201764Z",
+        "attribution": {
+          "provider": "NDW / Rijkswaterstaat",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "9da9d028449732ca986da674f90e14e190eb54e60b49572257719e7b584cb789",
+      "domain": "roads",
+      "contentHash": "5ed949a8db7f9df8199e545ee9567b202096685f3bcf4c034ad55b1802858fc3",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "situation",
+      "kind": "incident",
+      "type": "breakdown",
+      "planned": false,
+      "certainty": "observed",
+      "severity": {
+        "label": "unknown"
+      },
+      "headline": [
+        {
+          "lang": "und",
+          "text": "Pijlwagen"
+        }
+      ],
+      "validity": {
+        "status": "active",
+        "start": "2026-05-20T16:03:00.057201764Z"
+      },
+      "effects": [],
+      "details": {
+        "kind": "incident",
+        "v": 1
+      }
+    },
+    {
+      "id": "oc:situation:nl-ndw:RWS01_SM1146779_D2_WWA",
+      "temporality": "live",
+      "externalIds": [
+        {
+          "scheme": "datex:situation",
+          "id": "RWS01_SM1146779_D2_WWA"
+        }
+      ],
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              5.974319,
+              51.983249
+            ],
+            [
+              5.975728,
+              51.982837
+            ],
+            [
+              5.976734,
+              51.982517
+            ],
+            [
+              5.978223,
+              51.98197
+            ],
+            [
+              5.979051,
+              51.981631
+            ],
+            [
+              5.980021,
+              51.981201
+            ],
+            [
+              5.980712,
+              51.980872
+            ],
+            [
+              5.981617,
+              51.980407
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "tmc": {
+          "country": "8",
+          "table": 6,
+          "version": "6.13",
+          "code": 7324
+        },
+        "admin": {
+          "country": "NL"
+        }
+      },
+      "relations": [
+        {
+          "ref": {
+            "class": "situation",
+            "id": "oc:situation:nl-ndw:RWS01_M1146779_CLOSED_LANES_D2"
+          },
+          "relation": "related"
+        }
+      ],
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "nl-ndw",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "RWS01_SM1146779_D2_WWA",
+        "recordVersion": "15",
+        "sourceUpdatedAt": "2026-05-19T07:30:35Z",
+        "attribution": {
+          "provider": "NDW / Rijkswaterstaat",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "da01abc3f1001105806bc3a9d010e1d8e07173cdc960453d4cdc5efd3afbbf65",
+      "domain": "roads",
+      "contentHash": "2d4dcf957aab2746d771abb68c2d543c9bfe3dfe5b3a61581780ff59efc17328",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "situation",
+      "kind": "roadworks",
+      "type": "works",
+      "subtype": "maintenance",
+      "causes": [
+        {
+          "type": "maintenance"
+        }
+      ],
+      "planned": false,
+      "certainty": "observed",
+      "severity": {
+        "label": "moderate",
+        "source": "declared"
+      },
+      "validity": {
+        "status": "active",
+        "start": "2026-05-19T07:30:31Z",
+        "end": "2031-05-18T10:00:00Z"
+      },
+      "effects": [
+        {
+          "id": "RWS01_M1146779_CLOSED_LANES_D2_WWA/lane_restriction",
+          "sourceRecordRef": "RWS01_M1146779_CLOSED_LANES_D2_WWA/15",
+          "applicability": {
+            "kind": "all"
+          },
+          "compliance": "mandatory",
+          "normalization": "complete",
+          "kind": "lane_restriction",
+          "v": 1,
+          "lanesTotal": 2,
+          "lanesClosed": 0,
+          "vehicleImpact": "all_lanes_open"
+        }
+      ],
+      "details": {
+        "kind": "roadworks",
+        "v": 1
+      }
+    },
+    {
+      "id": "oc:situation:nl-ndw:RWS10_OBS0000038442",
+      "temporality": "live",
+      "externalIds": [
+        {
+          "scheme": "datex:situation",
+          "id": "RWS10_OBS0000038442"
+        }
+      ],
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.900625,
+              52.33224
+            ],
+            [
+              4.890899,
+              52.337415
+            ],
+            [
+              4.889702,
+              52.338042
+            ],
+            [
+              4.889239,
+              52.338263
+            ],
+            [
+              4.888577,
+              52.338544
+            ],
+            [
+              4.888078,
+              52.338731
+            ],
+            [
+              4.887055,
+              52.339051
+            ],
+            [
+              4.886516,
+              52.339191
+            ],
+            [
+              4.885866,
+              52.339336
+            ],
+            [
+              4.885019,
+              52.339483
+            ],
+            [
+              4.884404,
+              52.339562
+            ],
+            [
+              4.883801,
+              52.339621
+            ],
+            [
+              4.883217,
+              52.339658
+            ],
+            [
+              4.882424,
+              52.339681
+            ],
+            [
+              4.881838,
+              52.339681
+            ],
+            [
+              4.879058,
+              52.339618
+            ],
+            [
+              4.874335,
+              52.339461
+            ],
+            [
+              4.85911,
+              52.338759
+            ],
+            [
+              4.857974,
+              52.338734
+            ],
+            [
+              4.854757,
+              52.33857
+            ],
+            [
+              4.853434,
+              52.338499
+            ],
+            [
+              4.851099,
+              52.338347
+            ],
+            [
+              4.846238,
+              52.337994
+            ],
+            [
+              4.845522,
+              52.337964
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "tmc": {
+          "country": "8",
+          "table": 6,
+          "version": "6.13",
+          "code": 7201
+        },
+        "admin": {
+          "country": "NL"
+        }
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "nl-ndw",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "RWS10_OBS0000038442",
+        "recordVersion": "1",
+        "sourceUpdatedAt": "2026-06-21T14:25:07.146Z",
+        "attribution": {
+          "provider": "NDW / Rijkswaterstaat",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "4c5c18e934bf300ffb2579ca86b02ded7b847b76a32fa5f6712032d0a881bd65",
+      "domain": "roads",
+      "contentHash": "0724c12458aa05e4c0d824f8ac106880020a6cd9be8b2e62fc1c6585fc4bad6c",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "situation",
+      "kind": "other",
+      "type": "other",
+      "planned": false,
+      "certainty": "observed",
+      "severity": {
+        "label": "moderate",
+        "source": "declared"
+      },
+      "validity": {
+        "status": "active",
+        "start": "2026-06-21T14:25:07.146Z"
+      },
+      "effects": [],
+      "details": {
+        "kind": "other",
+        "v": 1
+      }
+    },
+    {
+      "id": "oc:situation:nl-ndw:NDW06_632fac64-2081-46da-96b3-7c4df763c6fb",
+      "temporality": "live",
+      "externalIds": [
+        {
+          "scheme": "datex:situation",
+          "id": "NDW06_632fac64-2081-46da-96b3-7c4df763c6fb"
+        }
+      ],
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            5.488198,
+            51.473724
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "direction": {
+          "value": "unknown",
+          "basis": "bearing",
+          "bearingDeg": 6
+        },
+        "tmc": {
+          "country": "8",
+          "table": 6,
+          "version": "6.13",
+          "code": 29033
+        },
+        "admin": {
+          "country": "NL"
+        }
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "nl-ndw",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "NDW06_632fac64-2081-46da-96b3-7c4df763c6fb",
+        "recordVersion": "2",
+        "sourceUpdatedAt": "2026-06-21T19:39:33.386447786Z",
+        "attribution": {
+          "provider": "NDW / Rijkswaterstaat",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "bf761c7cd8a996a61d0d478f1ecb05c96de729d7d26638460e9810935e4e0d59",
+      "domain": "roads",
+      "contentHash": "764974a73e60cb1074242efcb10acdffea6dc79c6b07d7e8b8b87c648ed73dd8",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "situation",
+      "kind": "incident",
+      "type": "breakdown",
+      "planned": false,
+      "certainty": "observed",
+      "severity": {
+        "label": "unknown"
+      },
+      "validity": {
+        "status": "active",
+        "start": "2026-06-21T19:29:30.726381477Z"
+      },
+      "effects": [],
+      "details": {
+        "kind": "incident",
+        "v": 1
+      }
+    },
+    {
+      "id": "oc:situation:nl-ndw:RWS01_SM1148373_D2_WWA",
+      "temporality": "live",
+      "externalIds": [
+        {
+          "scheme": "datex:situation",
+          "id": "RWS01_SM1148373_D2_WWA"
+        }
+      ],
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              4.6817609,
+              52.0311361
+            ],
+            [
+              4.6819436,
+              52.0312256
+            ],
+            [
+              4.6820277,
+              52.0312756
+            ],
+            [
+              4.6829256,
+              52.0317482
+            ],
+            [
+              4.6830968,
+              52.0318321
+            ],
+            [
+              4.6833548,
+              52.0319677
+            ],
+            [
+              4.6835009,
+              52.0320392
+            ],
+            [
+              4.68356,
+              52.0320655
+            ],
+            [
+              4.6836209,
+              52.0320903
+            ],
+            [
+              4.6836838,
+              52.0321129
+            ],
+            [
+              4.6837509,
+              52.0321337
+            ],
+            [
+              4.6838182,
+              52.0321518
+            ],
+            [
+              4.6838871,
+              52.0321668
+            ],
+            [
+              4.6839574,
+              52.0321786
+            ],
+            [
+              4.6840521,
+              52.0321891
+            ],
+            [
+              4.6841251,
+              52.0321936
+            ],
+            [
+              4.6842869,
+              52.0321887
+            ],
+            [
+              4.6844013,
+              52.0321775
+            ],
+            [
+              4.6844721,
+              52.0321665
+            ],
+            [
+              4.6845415,
+              52.0321529
+            ],
+            [
+              4.6845996,
+              52.0321386
+            ],
+            [
+              4.6846653,
+              52.0321191
+            ],
+            [
+              4.6847288,
+              52.0320971
+            ],
+            [
+              4.6847977,
+              52.0320698
+            ],
+            [
+              4.6848553,
+              52.0320431
+            ],
+            [
+              4.6849096,
+              52.0320131
+            ],
+            [
+              4.6849602,
+              52.0319807
+            ],
+            [
+              4.6850099,
+              52.0319444
+            ],
+            [
+              4.6850519,
+              52.0319084
+            ],
+            [
+              4.6850903,
+              52.0318701
+            ],
+            [
+              4.6851195,
+              52.0318362
+            ],
+            [
+              4.6851492,
+              52.0317951
+            ],
+            [
+              4.6851746,
+              52.031753
+            ],
+            [
+              4.6851948,
+              52.0317098
+            ],
+            [
+              4.6852174,
+              52.031639
+            ],
+            [
+              4.6852251,
+              52.031595
+            ],
+            [
+              4.6852278,
+              52.03155
+            ],
+            [
+              4.6852263,
+              52.0315049
+            ],
+            [
+              4.6852195,
+              52.0314601
+            ],
+            [
+              4.6852077,
+              52.0314157
+            ],
+            [
+              4.685189,
+              52.0313722
+            ],
+            [
+              4.6851616,
+              52.0313214
+            ],
+            [
+              4.6851019,
+              52.0312399
+            ],
+            [
+              4.6850625,
+              52.031199
+            ],
+            [
+              4.6850211,
+              52.0311622
+            ],
+            [
+              4.6849746,
+              52.0311276
+            ],
+            [
+              4.6849169,
+              52.0310891
+            ],
+            [
+              4.6848634,
+              52.031059
+            ],
+            [
+              4.68476,
+              52.0310056
+            ],
+            [
+              4.6847024,
+              52.0309779
+            ],
+            [
+              4.6845838,
+              52.0309257
+            ],
+            [
+              4.683438,
+              52.0304421
+            ],
+            [
+              4.683172,
+              52.0302798
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "tmc": {
+          "country": "8",
+          "table": 6,
+          "version": "6.13",
+          "code": 7272
+        },
+        "admin": {
+          "country": "NL"
+        }
+      },
+      "relations": [
+        {
+          "ref": {
+            "class": "situation",
+            "id": "oc:situation:nl-ndw:RWS01_M1148373_CLOSED_LANES_D2"
+          },
+          "relation": "related"
+        }
+      ],
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "nl-ndw",
+        "sourceFormat": "datex2",
+        "accessMode": "bulk",
+        "recordId": "RWS01_SM1148373_D2_WWA",
+        "recordVersion": "16",
+        "sourceUpdatedAt": "2026-06-19T19:02:13Z",
+        "attribution": {
+          "provider": "NDW / Rijkswaterstaat",
+          "license": "CC0-1.0",
+          "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "e4cc85adde587f7066ea1a70a76bb58383bb8de58a117ee527853e0dd3e556eb",
+      "domain": "roads",
+      "contentHash": "9f99836cd89ec6ae63e25155d41de359163048604c9caab11f6e1bf7e2da8df9",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "situation",
+      "kind": "roadworks",
+      "type": "works",
+      "subtype": "maintenance",
+      "causes": [
+        {
+          "type": "maintenance"
+        }
+      ],
+      "planned": false,
+      "certainty": "observed",
+      "severity": {
+        "label": "moderate",
+        "source": "declared"
+      },
+      "validity": {
+        "status": "active",
+        "start": "2026-06-19T19:02:13Z",
+        "end": "2026-06-22T03:00:00Z"
+      },
+      "effects": [
+        {
+          "id": "RWS01_M1148373_CLOSED_LANES_D2_WWA/closure",
+          "sourceRecordRef": "RWS01_M1148373_CLOSED_LANES_D2_WWA/16",
+          "applicability": {
+            "kind": "all"
+          },
+          "compliance": "mandatory",
+          "normalization": "complete",
+          "kind": "closure",
+          "v": 1,
+          "scope": "road"
+        },
+        {
+          "id": "RWS01_M1148373_REROUTING_1_D2_WWA/detour",
+          "sourceRecordRef": "RWS01_M1148373_REROUTING_1_D2_WWA/16",
+          "location": {
+            "geometry": {
+              "type": "Point",
+              "coordinates": [
+                4.3874173,
+                52.05778
+              ]
+            },
+            "extent": "point",
+            "geometryOrigin": "source"
+          },
+          "applicability": {
+            "kind": "all"
+          },
+          "compliance": "advisory",
+          "normalization": "complete",
+          "kind": "detour",
+          "v": 1,
+          "description": [
+            {
+              "lang": "und",
+              "text": "Verkeer richting Den Haag volg Goudse Poort (N451), Moordrecht (N451), Den Haag (A12) [Volg route R]"
+            }
+          ],
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                4.387417,
+                52.057781
+              ],
+              [
+                4.387289,
+                52.057868
+              ],
+              [
+                4.386541,
+                52.058159
+              ],
+              [
+                4.38486,
+                52.05889
+              ],
+              [
+                4.38236,
+                52.060086
+              ],
+              [
+                4.380633,
+                52.060887
+              ],
+              [
+                4.379297,
+                52.06148
+              ],
+              [
+                4.37864,
+                52.061731
+              ],
+              [
+                4.378121,
+                52.061876
+              ],
+              [
+                4.377689,
+                52.06196
+              ],
+              [
+                4.377244,
+                52.062017
+              ],
+              [
+                4.376743,
+                52.062048
+              ],
+              [
+                4.376141,
+                52.062038
+              ],
+              [
+                4.375665,
+                52.061993
+              ],
+              [
+                4.37521,
+                52.061919
+              ],
+              [
+                4.374808,
+                52.061827
+              ],
+              [
+                4.374379,
+                52.061695
+              ],
+              [
+                4.373895,
+                52.061499
+              ],
+              [
+                4.373561,
+                52.061328
+              ],
+              [
+                4.373228,
+                52.061117
+              ],
+              [
+                4.372935,
+                52.060888
+              ],
+              [
+                4.372183,
+                52.060137
+              ],
+              [
+                4.371961,
+                52.05996
+              ],
+              [
+                4.371181,
+                52.059215
+              ],
+              [
+                4.370343,
+                52.05852
+              ],
+              [
+                4.369615,
+                52.057997
+              ],
+              [
+                4.369096,
+                52.057664
+              ],
+              [
+                4.368308,
+                52.057201
+              ],
+              [
+                4.367221,
+                52.056597
+              ],
+              [
+                4.367007,
+                52.056412
+              ],
+              [
+                4.366473,
+                52.056031
+              ],
+              [
+                4.365978,
+                52.055584
+              ],
+              [
+                4.365607,
+                52.055146
+              ],
+              [
+                4.365331,
+                52.054722
+              ],
+              [
+                4.364736,
+                52.053707
+              ],
+              [
+                4.364516,
+                52.053381
+              ],
+              [
+                4.364137,
+                52.052894
+              ],
+              [
+                4.363526,
+                52.052231
+              ],
+              [
+                4.363058,
+                52.051796
+              ],
+              [
+                4.362331,
+                52.051179
+              ],
+              [
+                4.362253,
+                52.051061
+              ],
+              [
+                4.360602,
+                52.049796
+              ],
+              [
+                4.359231,
+                52.048823
+              ],
+              [
+                4.357921,
+                52.047967
+              ],
+              [
+                4.356554,
+                52.047148
+              ],
+              [
+                4.355914,
+                52.046792
+              ],
+              [
+                4.355652,
+                52.046767
+              ],
+              [
+                4.354758,
+                52.046362
+              ],
+              [
+                4.354463,
+                52.046262
+              ],
+              [
+                4.354028,
+                52.046167
+              ],
+              [
+                4.353553,
+                52.046122
+              ],
+              [
+                4.353151,
+                52.04613
+              ],
+              [
+                4.352658,
+                52.046193
+              ],
+              [
+                4.35185,
+                52.046349
+              ],
+              [
+                4.351706,
+                52.046366
+              ],
+              [
+                4.351415,
+                52.046371
+              ],
+              [
+                4.350982,
+                52.046327
+              ],
+              [
+                4.349722,
+                52.046073
+              ],
+              [
+                4.349697,
+                52.046163
+              ],
+              [
+                4.349362,
+                52.046729
+              ],
+              [
+                4.349313,
+                52.046855
+              ],
+              [
+                4.349302,
+                52.047049
+              ],
+              [
+                4.349363,
+                52.047241
+              ],
+              [
+                4.349363,
+                52.047312
+              ],
+              [
+                4.349463,
+                52.047291
+              ],
+              [
+                4.349796,
+                52.047325
+              ],
+              [
+                4.350005,
+                52.047366
+              ],
+              [
+                4.350199,
+                52.047421
+              ],
+              [
+                4.350619,
+                52.047578
+              ],
+              [
+                4.351408,
+                52.047947
+              ],
+              [
+                4.351632,
+                52.048001
+              ],
+              [
+                4.351922,
+                52.048031
+              ],
+              [
+                4.352292,
+                52.048017
+              ],
+              [
+                4.354181,
+                52.047837
+              ],
+              [
+                4.354326,
+                52.047807
+              ],
+              [
+                4.354783,
+                52.047757
+              ],
+              [
+                4.354908,
+                52.047728
+              ],
+              [
+                4.355039,
+                52.047686
+              ],
+              [
+                4.355262,
+                52.047576
+              ],
+              [
+                4.356658,
+                52.046775
+              ],
+              [
+                4.357533,
+                52.046268
+              ],
+              [
+                4.357935,
+                52.045979
+              ],
+              [
+                4.358871,
+                52.04544
+              ],
+              [
+                4.360525,
+                52.044574
+              ],
+              [
+                4.360828,
+                52.044392
+              ],
+              [
+                4.362356,
+                52.043592
+              ],
+              [
+                4.36412,
+                52.042633
+              ],
+              [
+                4.364333,
+                52.042819
+              ],
+              [
+                4.365975,
+                52.043842
+              ],
+              [
+                4.366651,
+                52.044213
+              ],
+              [
+                4.367501,
+                52.044628
+              ],
+              [
+                4.368164,
+                52.045044
+              ],
+              [
+                4.368199,
+                52.045085
+              ],
+              [
+                4.368524,
+                52.04526
+              ],
+              [
+                4.368752,
+                52.045358
+              ],
+              [
+                4.369458,
+                52.04571
+              ],
+              [
+                4.370102,
+                52.046103
+              ],
+              [
+                4.370139,
+                52.046141
+              ],
+              [
+                4.370746,
+                52.046477
+              ],
+              [
+                4.370811,
+                52.046495
+              ],
+              [
+                4.371636,
+                52.04691
+              ],
+              [
+                4.371847,
+                52.047032
+              ],
+              [
+                4.373149,
+                52.047873
+              ],
+              [
+                4.374891,
+                52.049246
+              ],
+              [
+                4.375832,
+                52.049984
+              ],
+              [
+                4.37698,
+                52.05073
+              ],
+              [
+                4.377606,
+                52.051039
+              ],
+              [
+                4.37792,
+                52.051268
+              ],
+              [
+                4.378937,
+                52.051923
+              ],
+              [
+                4.37944,
+                52.052206
+              ],
+              [
+                4.379485,
+                52.052269
+              ],
+              [
+                4.379841,
+                52.052492
+              ],
+              [
+                4.380152,
+                52.052608
+              ],
+              [
+                4.380452,
+                52.052657
+              ],
+              [
+                4.380741,
+                52.052684
+              ],
+              [
+                4.382407,
+                52.052586
+              ],
+              [
+                4.382766,
+                52.05255
+              ],
+              [
+                4.383345,
+                52.052516
+              ],
+              [
+                4.383817,
+                52.052535
+              ],
+              [
+                4.383998,
+                52.052583
+              ],
+              [
+                4.384347,
+                52.052744
+              ],
+              [
+                4.385109,
+                52.053162
+              ],
+              [
+                4.385311,
+                52.053292
+              ],
+              [
+                4.385456,
+                52.053352
+              ],
+              [
+                4.38625,
+                52.053785
+              ],
+              [
+                4.386602,
+                52.05394
+              ],
+              [
+                4.388161,
+                52.054795
+              ],
+              [
+                4.389511,
+                52.054721
+              ],
+              [
+                4.389868,
+                52.054714
+              ],
+              [
+                4.390579,
+                52.054671
+              ],
+              [
+                4.390824,
+                52.054643
+              ],
+              [
+                4.392576,
+                52.054547
+              ],
+              [
+                4.392994,
+                52.054498
+              ],
+              [
+                4.39346,
+                52.054398
+              ],
+              [
+                4.394302,
+                52.054172
+              ],
+              [
+                4.395882,
+                52.053779
+              ],
+              [
+                4.397622,
+                52.053427
+              ],
+              [
+                4.397894,
+                52.053394
+              ],
+              [
+                4.397743,
+                52.053106
+              ],
+              [
+                4.397692,
+                52.05292
+              ],
+              [
+                4.397696,
+                52.052759
+              ],
+              [
+                4.397774,
+                52.052584
+              ],
+              [
+                4.397937,
+                52.052419
+              ],
+              [
+                4.398059,
+                52.052339
+              ],
+              [
+                4.398218,
+                52.052268
+              ],
+              [
+                4.398373,
+                52.052222
+              ],
+              [
+                4.398529,
+                52.052188
+              ],
+              [
+                4.398679,
+                52.052176
+              ],
+              [
+                4.399024,
+                52.052183
+              ],
+              [
+                4.399324,
+                52.052248
+              ],
+              [
+                4.399464,
+                52.052303
+              ],
+              [
+                4.399698,
+                52.052446
+              ],
+              [
+                4.399861,
+                52.052609
+              ],
+              [
+                4.399977,
+                52.052771
+              ],
+              [
+                4.400469,
+                52.053564
+              ],
+              [
+                4.400545,
+                52.053722
+              ],
+              [
+                4.400888,
+                52.053676
+              ],
+              [
+                4.401672,
+                52.053536
+              ],
+              [
+                4.402465,
+                52.053431
+              ],
+              [
+                4.406336,
+                52.053029
+              ],
+              [
+                4.40678,
+                52.053048
+              ],
+              [
+                4.408346,
+                52.052875
+              ],
+              [
+                4.410045,
+                52.052723
+              ],
+              [
+                4.420501,
+                52.051988
+              ],
+              [
+                4.425127,
+                52.05171
+              ],
+              [
+                4.427152,
+                52.051551
+              ],
+              [
+                4.429748,
+                52.051314
+              ],
+              [
+                4.431482,
+                52.051172
+              ],
+              [
+                4.455932,
+                52.049409
+              ],
+              [
+                4.456798,
+                52.049332
+              ],
+              [
+                4.458747,
+                52.049223
+              ],
+              [
+                4.459333,
+                52.049234
+              ],
+              [
+                4.459914,
+                52.049205
+              ],
+              [
+                4.462004,
+                52.049072
+              ],
+              [
+                4.466636,
+                52.048732
+              ],
+              [
+                4.470373,
+                52.048376
+              ],
+              [
+                4.472376,
+                52.048222
+              ],
+              [
+                4.486432,
+                52.047357
+              ],
+              [
+                4.488561,
+                52.047211
+              ],
+              [
+                4.490727,
+                52.047041
+              ],
+              [
+                4.492652,
+                52.04687
+              ],
+              [
+                4.494944,
+                52.046643
+              ],
+              [
+                4.496644,
+                52.046455
+              ],
+              [
+                4.499486,
+                52.046094
+              ],
+              [
+                4.502717,
+                52.045605
+              ],
+              [
+                4.503998,
+                52.045385
+              ],
+              [
+                4.506116,
+                52.044998
+              ],
+              [
+                4.507746,
+                52.044673
+              ],
+              [
+                4.508881,
+                52.04442
+              ],
+              [
+                4.510076,
+                52.044113
+              ],
+              [
+                4.511252,
+                52.043773
+              ],
+              [
+                4.512286,
+                52.04344
+              ],
+              [
+                4.514197,
+                52.042765
+              ],
+              [
+                4.515735,
+                52.042252
+              ],
+              [
+                4.517039,
+                52.04185
+              ],
+              [
+                4.518472,
+                52.041437
+              ],
+              [
+                4.520247,
+                52.040972
+              ],
+              [
+                4.526385,
+                52.039441
+              ],
+              [
+                4.528537,
+                52.038887
+              ],
+              [
+                4.530215,
+                52.038489
+              ],
+              [
+                4.531661,
+                52.038174
+              ],
+              [
+                4.533603,
+                52.037794
+              ],
+              [
+                4.536477,
+                52.037294
+              ],
+              [
+                4.537828,
+                52.037039
+              ],
+              [
+                4.539603,
+                52.036671
+              ],
+              [
+                4.541057,
+                52.036338
+              ],
+              [
+                4.542591,
+                52.035959
+              ],
+              [
+                4.544016,
+                52.035578
+              ],
+              [
+                4.548552,
+                52.034256
+              ],
+              [
+                4.551436,
+                52.03347
+              ],
+              [
+                4.553242,
+                52.033006
+              ],
+              [
+                4.555257,
+                52.032511
+              ],
+              [
+                4.559433,
+                52.031546
+              ],
+              [
+                4.560659,
+                52.031248
+              ],
+              [
+                4.562192,
+                52.030847
+              ],
+              [
+                4.56518,
+                52.030006
+              ],
+              [
+                4.567306,
+                52.029461
+              ],
+              [
+                4.569081,
+                52.029051
+              ],
+              [
+                4.570329,
+                52.028787
+              ],
+              [
+                4.572099,
+                52.028445
+              ],
+              [
+                4.575663,
+                52.027828
+              ],
+              [
+                4.57653,
+                52.027649
+              ],
+              [
+                4.577348,
+                52.027459
+              ],
+              [
+                4.578335,
+                52.027196
+              ],
+              [
+                4.579714,
+                52.026786
+              ],
+              [
+                4.584785,
+                52.025148
+              ],
+              [
+                4.587278,
+                52.02439
+              ],
+              [
+                4.588898,
+                52.023928
+              ],
+              [
+                4.590466,
+                52.023502
+              ],
+              [
+                4.593545,
+                52.022728
+              ],
+              [
+                4.595906,
+                52.022188
+              ],
+              [
+                4.602837,
+                52.020663
+              ],
+              [
+                4.604388,
+                52.020334
+              ],
+              [
+                4.60562,
+                52.020111
+              ],
+              [
+                4.606655,
+                52.01996
+              ],
+              [
+                4.607603,
+                52.01985
+              ],
+              [
+                4.608758,
+                52.019751
+              ],
+              [
+                4.610366,
+                52.019677
+              ],
+              [
+                4.612127,
+                52.019668
+              ],
+              [
+                4.620507,
+                52.019747
+              ],
+              [
+                4.635122,
+                52.019951
+              ],
+              [
+                4.636578,
+                52.01998
+              ],
+              [
+                4.638608,
+                52.020051
+              ],
+              [
+                4.640878,
+                52.020181
+              ],
+              [
+                4.642186,
+                52.02028
+              ],
+              [
+                4.64291,
+                52.020262
+              ],
+              [
+                4.644643,
+                52.020365
+              ],
+              [
+                4.645067,
+                52.020371
+              ],
+              [
+                4.645381,
+                52.020335
+              ],
+              [
+                4.645592,
+                52.020278
+              ],
+              [
+                4.64582,
+                52.020178
+              ],
+              [
+                4.646021,
+                52.020032
+              ],
+              [
+                4.646125,
+                52.019909
+              ],
+              [
+                4.646199,
+                52.019755
+              ],
+              [
+                4.646211,
+                52.019549
+              ],
+              [
+                4.646164,
+                52.019406
+              ],
+              [
+                4.646095,
+                52.019299
+              ],
+              [
+                4.645978,
+                52.019179
+              ],
+              [
+                4.645879,
+                52.019112
+              ],
+              [
+                4.645708,
+                52.019028
+              ],
+              [
+                4.645257,
+                52.018883
+              ],
+              [
+                4.644123,
+                52.018579
+              ],
+              [
+                4.643913,
+                52.018862
+              ],
+              [
+                4.643123,
+                52.020055
+              ],
+              [
+                4.642592,
+                52.020785
+              ],
+              [
+                4.642319,
+                52.021097
+              ],
+              [
+                4.64204,
+                52.021378
+              ],
+              [
+                4.641298,
+                52.022011
+              ],
+              [
+                4.641369,
+                52.02219
+              ],
+              [
+                4.641657,
+                52.02232
+              ],
+              [
+                4.641968,
+                52.022434
+              ],
+              [
+                4.642369,
+                52.022537
+              ],
+              [
+                4.642813,
+                52.022603
+              ],
+              [
+                4.643222,
+                52.022625
+              ],
+              [
+                4.643727,
+                52.022601
+              ],
+              [
+                4.64408,
+                52.02255
+              ],
+              [
+                4.644485,
+                52.022453
+              ],
+              [
+                4.644803,
+                52.022345
+              ],
+              [
+                4.646028,
+                52.021858
+              ],
+              [
+                4.646423,
+                52.02174
+              ],
+              [
+                4.646974,
+                52.021621
+              ],
+              [
+                4.647547,
+                52.021547
+              ],
+              [
+                4.648164,
+                52.021518
+              ],
+              [
+                4.648829,
+                52.021551
+              ],
+              [
+                4.649544,
+                52.021648
+              ],
+              [
+                4.651678,
+                52.022042
+              ],
+              [
+                4.653093,
+                52.022324
+              ],
+              [
+                4.653527,
+                52.022428
+              ],
+              [
+                4.654441,
+                52.022705
+              ],
+              [
+                4.655893,
+                52.023262
+              ],
+              [
+                4.656519,
+                52.023486
+              ],
+              [
+                4.657097,
+                52.023659
+              ],
+              [
+                4.657952,
+                52.023866
+              ],
+              [
+                4.660623,
+                52.024417
+              ],
+              [
+                4.662365,
+                52.024801
+              ],
+              [
+                4.663875,
+                52.025157
+              ],
+              [
+                4.665833,
+                52.025654
+              ],
+              [
+                4.672776,
+                52.027487
+              ],
+              [
+                4.673824,
+                52.02781
+              ],
+              [
+                4.674443,
+                52.02806
+              ],
+              [
+                4.674769,
+                52.028236
+              ],
+              [
+                4.675215,
+                52.028464
+              ],
+              [
+                4.675634,
+                52.028641
+              ],
+              [
+                4.677702,
+                52.029278
+              ],
+              [
+                4.678394,
+                52.029519
+              ],
+              [
+                4.678942,
+                52.029734
+              ],
+              [
+                4.680388,
+                52.0304
+              ],
+              [
+                4.681385,
+                52.030916
+              ],
+              [
+                4.681763,
+                52.031137
+              ]
+            ]
+          }
+        },
+        {
+          "id": "RWS01_M1148373_JUNCTION_CLOSURE_1_D2_WWA/closure",
+          "sourceRecordRef": "RWS01_M1148373_JUNCTION_CLOSURE_1_D2_WWA/16",
+          "applicability": {
+            "kind": "all"
+          },
+          "validity": {
+            "status": "active",
+            "start": "2026-06-19T19:02:13Z",
+            "end": "2026-06-22T03:00:00Z",
+            "periods": [
+              {
+                "repeatFrequency": "P1D",
+                "startDate": "2026-06-19",
+                "endDate": "2026-06-22",
+                "scheduleTimezone": "Europe/Amsterdam"
+              }
+            ]
+          },
+          "compliance": "mandatory",
+          "normalization": "complete",
+          "kind": "closure",
+          "v": 1,
+          "scope": "road"
+        }
+      ],
+      "details": {
+        "kind": "roadworks",
+        "v": 1
+      }
+    }
+  ]
+}

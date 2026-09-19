@@ -1,0 +1,43 @@
+[
+  {
+    "ID": 395,
+    "SourceId": "2022-2017-809023677",
+    "Organization": "MTO-constructions",
+    "RoadwayName": "400",
+    "DirectionOfTravel": "N/A",
+    "Description": "Highway 400 - South of King Road to north of Canal Road",
+    "Reported": 1652241600,
+    "LastUpdated": 1784846059,
+    "StartDate": 1652241600,
+    "PlannedEndDate": 1782792000,
+    "LanesAffected": "No Data",
+    "Latitude": 43.9205568869433,
+    "Longitude": -79.5660099009156,
+    "LatitudeSecondary": null,
+    "LongitudeSecondary": null,
+    "EventType": "roadwork",
+    "IsFullClosure": false,
+    "Comment": null,
+    "EncodedPolyline": "ofakGpfsdNoUjDkAPiIlA_LbB{u@~KoG~@}KbBkBVqWzD_C^cFr@gTbD",
+    "Recurrence": "",
+    "RecurrenceSchedules": "",
+    "LinkId": "29602591"
+  },
+  {
+    "ID": 101,
+    "RoadwayName": "Highway 401",
+    "EventType": "roadwork",
+    "EventSubType": "Construction",
+    "Description": "Lane reductions for paving",
+    "Severity": "Major",
+    "EncodedPolyline": "_p~iF~ps|U_ulLnnqC_mqNvxq`@",
+    "LastUpdated": "2026-06-25T10:00:00Z"
+  },
+  {
+    "ID": 2,
+    "EventType": "accidentsAndIncidents",
+    "IsFullClosure": true,
+    "Latitude": 43.65,
+    "Longitude": -79.38
+  }
+]

@@ -4,7 +4,8 @@
  * build() from server.ts instead of running this file.
  */
 
-import { runMigrations } from "@openconditions/core/server";
+import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core/server";
+import { productionRegistry } from "@openconditions/model-registry";
 import postgres from "postgres";
 import {
   isCrossValidateSweepEnabled,
@@ -35,6 +36,7 @@ async function boot() {
   console.info("[contributions-api] migrations applied");
 
   const sql = postgres(url, { max: 5, idle_timeout: 30, connect_timeout: 10 });
+  await assertStoredCodesRegistered(sql, productionRegistry());
   const app = await build({ sql });
 
   // Feed-arrives-later cross-match cron: re-runs the A1 cross-validation over

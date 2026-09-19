@@ -1,6 +1,6 @@
 import type { Observation } from "@openconditions/core";
+import { restrictionViewDeadline } from "@openconditions/model-roads";
 import { observationsToGeoJSON } from "@openconditions/publishers";
-import { restrictionViewDeadline } from "@openconditions/roads";
 import type { Feature } from "geojson";
 import { describe, expect, it } from "vitest";
 import { featureToRoadConditionEvent } from "../toRoadConditionEvents.js";

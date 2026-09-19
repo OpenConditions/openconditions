@@ -1,5 +1,5 @@
+import type { RoadRestrictionDetailsV1 } from "@openconditions/model-roads";
 import type { RoadEvent } from "../../model.js";
-import type { RoadRestrictionDetailsV1 } from "../../restriction-types.js";
 
 /**
  * A labelled normalized test fixture derived from the reviewed Fintraffic

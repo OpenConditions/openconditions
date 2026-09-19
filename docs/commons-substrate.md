@@ -3,11 +3,12 @@
 The "commons substrate" is the shared identity, evidence, decay, and privacy
 plumbing that every forthcoming data-commons feature — crowd reporting,
 federation, publishing emitters, probe aggregation — builds on instead of
-reinventing. It landed as six additions: a migration on
+reinventing. It landed as five additions: a migration on
 `conditions.observations`, `packages/core`'s `canonical.ts` and
-`evidence.ts`, `packages/roads`'s `decay.ts`, `packages/core`'s
-`observed-properties.ts`, and the provenance-stamping seam in
-`services/ingest/src/pipeline/normalize.ts`.
+`evidence.ts`, `packages/roads`'s `decay.ts`, and the provenance-stamping seam
+in `services/ingest/src/pipeline/normalize.ts`. The soft observed-property
+registry that once sat beside them is replaced by the hard-validating model
+registry ([model.md](model.md)).
 
 This page is the consumer-readiness check: every field and function below has
 at least one named downstream consumer, so nothing here is speculative or
@@ -75,14 +76,6 @@ migration — it is not part of this substrate and isn't covered here.
 | `decayMaxLifetimeSec`                  | The corroboration-extension ceiling in seconds for a type.                         | Crowd reporting (same `EvidencePolicy` construction).                                                                                                                                                                 |
 | `expiresAtFor`                         | Derives an ISO expiry from `dataUpdatedAt` plus the `(type, origin)` TTL.          | Feed ingest (fallback `expiresAt` for the rare official row with no explicit `validTo`/expiry of its own).                                                                                                            |
 
-## `packages/core/src/observed-properties.ts`
-
-| Export                | Purpose                                                                                         | Downstream consumer(s)                                                                                                                                                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `OBSERVED_PROPERTIES` | Seeded, frozen registry of every known `${domain}/${type-or-metric}` with its unit/description. | Publishing emitters (STA/SIRI unit and description strings per observed property); probe aggregation (new probe-produced metrics register here so they don't sprawl into unregistered attribute keys). |
-| `observedKey`         | The registry key `${domain}/${type-or-metric}` for an observation.                              | Ingest pipeline (`normalize.ts`, already wired — used to build the warn-once dedupe key); publishing emitters (looks up the registry entry for a given observation).                                   |
-| `validateObserved`    | Warn-only registry + attribute-key-sprawl validation; never throws or mutates.                  | Ingest pipeline (`normalize.ts`, already wired — logs a rate-limited warning, ingestion proceeds regardless).                                                                                          |
-
 ## `services/ingest/src/pipeline/normalize.ts`
 
 `normalizeObservation` is the single write choke point that stamps
@@ -92,8 +85,8 @@ any parser-supplied `privacy_class`/`instance_id`/`k_anonymity`/`dp_epsilon`/
 `dp_delta` as a bug. Because `source_uri`/`source_license` are content-bearing
 (folded into `content_hash` when present), stamping them changes every
 existing feed row's hash exactly once — a deliberate one-time diff-upsert
-rewrite on the first poll after deploying this seam. It is already the live consumer of `canonicalId`,
-`phenomenonFingerprint`, `validateObserved`, and `observedKey` — every other
+rewrite on the first poll after deploying this seam. It is already the live consumer of `canonicalId`
+and `phenomenonFingerprint` — every other
 row in the tables above names a feature area that has not landed yet, but
 whose contract this normalization seam and the columns/functions above are
 already shaped to serve.

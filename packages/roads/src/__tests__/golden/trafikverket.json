@@ -1,0 +1,162 @@
+[
+  {
+    "id": "oc:situation:se-trafikverket:d1",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          18.0686,
+          59.3293
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "E4"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "SE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "se-trafikverket",
+      "sourceFormat": "trafikverket",
+      "accessMode": "bulk",
+      "recordId": "d1",
+      "attribution": {
+        "provider": "Trafikverket",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.trafikverket.se/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "555735a9eaeccb88451d4416b16ebb4b16ec81bf340cce50aed1ba9b92e09bb6",
+    "domain": "roads",
+    "contentHash": "4516d0086f007b81135da11a59a4e99a6224970b8ebcf19d4f73f59d98262655",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "incident",
+    "type": "accident",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Trafikolycka E4"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Trafikolycka E4"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:se-trafikverket:d2",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            17,
+            59
+          ],
+          [
+            17.1,
+            59.1
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "SE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "se-trafikverket",
+      "sourceFormat": "trafikverket",
+      "accessMode": "bulk",
+      "recordId": "d2",
+      "attribution": {
+        "provider": "Trafikverket",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.trafikverket.se/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "fcd80d111bf3ff037486ccf41e365ba8fae9d1157f604fc89abd425ba8a5fbdf",
+    "domain": "roads",
+    "contentHash": "b95010e7a6aba7e652494d74d91650169b126ae24d2ed3e9f2cf706d289597a1",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Vägarbete"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Vägarbete"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  }
+]

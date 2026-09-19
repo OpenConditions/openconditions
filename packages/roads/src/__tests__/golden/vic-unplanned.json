@@ -1,0 +1,170 @@
+[
+  {
+    "id": "oc:situation:au-vic-transportvic-unplanned:UNP-5001",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          144.9631,
+          -37.8136
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Flinders Street"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "AU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "au-vic-transportvic-unplanned",
+      "sourceFormat": "vic-disruptions",
+      "accessMode": "bulk",
+      "recordId": "UNP-5001",
+      "sourceUpdatedAt": "2026-07-31T06:40:00.000Z",
+      "attribution": {
+        "provider": "Department of Transport and Planning (Victoria)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "8a8f5705733ffc055bb1956eff3e661e3540880684e1746ebdd3644a2d175bc6",
+    "domain": "roads",
+    "contentHash": "aabfd5b5e1365e20c28475ec6a5cd8ac50418338559d3e29182660a6f6c8997e",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "incident",
+    "type": "accident",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Collision on Flinders St"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Two vehicles, right lane blocked"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-07-31T06:12:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:au-vic-transportvic-unplanned:UNP-5002",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            143.8503,
+            -37.5622
+          ],
+          [
+            143.8712,
+            -37.5701
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Western Freeway"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "AU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "au-vic-transportvic-unplanned",
+      "sourceFormat": "vic-disruptions",
+      "accessMode": "bulk",
+      "recordId": "UNP-5002",
+      "sourceUpdatedAt": "2026-07-30T22:05:00.000Z",
+      "attribution": {
+        "provider": "Department of Transport and Planning (Victoria)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "525fc6e24a22ed71a2cb4bc87a4c82521851c89a9a1907455b032140919f3ddd",
+    "domain": "roads",
+    "contentHash": "71e3f0f7fb6b8fb380fbdaac383d901777d1d32e1f9623826df8a76ea1a7bfdb",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "weather_condition",
+    "type": "weather",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Road closed due to flooding"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-07-30T22:05:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "weather_condition",
+      "v": 1
+    }
+  }
+]

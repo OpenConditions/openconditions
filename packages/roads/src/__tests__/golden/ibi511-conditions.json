@@ -1,0 +1,203 @@
+[
+  {
+    "id": "oc:situation:ca-on-511-conditions:627-0",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              -120.2,
+              38.5
+            ],
+            [
+              -120.95,
+              40.7
+            ],
+            [
+              -126.453,
+              43.252
+            ]
+          ],
+          [
+            [
+              -120.2,
+              38.5
+            ],
+            [
+              -120.95,
+              40.7
+            ],
+            [
+              -126.453,
+              43.252
+            ]
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "627"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "CA"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "ca-on-511-conditions",
+      "sourceFormat": "ibi511",
+      "accessMode": "bulk",
+      "recordId": "627-0",
+      "sourceUpdatedAt": "2026-05-25T17:17:05.000Z",
+      "attribution": {
+        "provider": "Contains information licensed under the Open Government Licence – Ontario",
+        "license": "OGL-ON",
+        "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "d8be9249a772d3d8f7bda1f82c8ad8326e5cae55c4c0ca3f562e8b23b8e1e6fe",
+    "domain": "roads",
+    "contentHash": "0773c06b6ede31d5d0751db7238828be58a34444932c60c736ced3b9640f9641",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_condition",
+    "type": "surface",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Snow Covered — From Highway 17 to Pukaskwa Park"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "From Highway 17 to Pukaskwa Park"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "road_condition",
+      "v": 1,
+      "surface": [
+        "unknown"
+      ]
+    }
+  },
+  {
+    "id": "oc:situation:ca-on-511-conditions:17-1",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -120.2,
+            38.5
+          ],
+          [
+            -120.95,
+            40.7
+          ],
+          [
+            -126.453,
+            43.252
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "17"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "CA"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "ca-on-511-conditions",
+      "sourceFormat": "ibi511",
+      "accessMode": "bulk",
+      "recordId": "17-1",
+      "attribution": {
+        "provider": "Contains information licensed under the Open Government Licence – Ontario",
+        "license": "OGL-ON",
+        "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "9237126d645b0b8cedc4090d719d6d38cf65cb541b4c894a65a8861c0862996f",
+    "domain": "roads",
+    "contentHash": "73713d18881da7a9768a610e7cfaaf0988f49d2509b25cb618a00907c5552eed",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_condition",
+    "type": "surface",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Slushy — 17"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "road_condition",
+      "v": 1,
+      "surface": [
+        "unknown"
+      ]
+    }
+  }
+]

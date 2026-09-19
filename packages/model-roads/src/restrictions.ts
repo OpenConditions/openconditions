@@ -1,18 +1,17 @@
 import { isInEffectAt, nextScheduleTransition } from "@openconditions/model";
 import { z } from "zod";
-import { RESTRICTION_TEXT_LIMIT } from "./restriction-types.js";
-
-// Re-exported so a consumer that needs only the contract can import this one
-// module without pulling in the feed catalogue through the package barrel.
-export * from "./restriction-types.js";
-
-import type {
-  PublishedRoadRestrictionDetailsV1,
-  RestrictionCarrier,
-  RestrictionIssue,
-  RoadRestrictionDetailsV1,
-  RoadRestrictionFact,
+import {
+  type PublishedRoadRestrictionDetailsV1,
+  RESTRICTION_TEXT_LIMIT,
+  type RestrictionCarrier,
+  type RestrictionIssue,
+  type RoadRestrictionDetailsV1,
+  type RoadRestrictionFact,
 } from "./restriction-types.js";
+
+// Re-exported so a consumer that needs only the contract (the OpenMapX
+// provider bundle) imports this entry without the roads registry module.
+export * from "./restriction-types.js";
 
 /**
  * Runtime authority for the normalized restriction contract: presence

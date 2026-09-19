@@ -12,7 +12,7 @@
  */
 
 import type { RoadConditionRoutingEvidence } from "@openconditions/core";
-import type { PublishedRoadRestrictionDetailsV1 } from "@openconditions/roads/restrictions";
+import type { PublishedRoadRestrictionDetailsV1 } from "@openconditions/model-roads/restrictions";
 import type { Geometry, LineString } from "geojson";
 
 /** Matches OpenMapX `IntegrationContext.db` (DatabaseClient). */

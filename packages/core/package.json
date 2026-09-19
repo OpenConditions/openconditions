@@ -31,7 +31,7 @@
     "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "pnpm --filter @openconditions/model build && drizzle-kit generate"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",

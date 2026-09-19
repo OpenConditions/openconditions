@@ -1,0 +1,15 @@
+[
+  {
+    "LocationDescription": "From Highway 17 to Pukaskwa Park",
+    "Condition": ["Snow Covered"],
+    "Region": "NWR - Marathon - 212",
+    "RoadwayName": "627",
+    "EncodedPolyline": ["_p~iF~ps|U_ulLnnqC_mqNvxq`@", "_p~iF~ps|U_ulLnnqC_mqNvxq`@"],
+    "LastUpdated": 1779729425
+  },
+  {
+    "RoadwayName": "17",
+    "Condition": ["Slushy"],
+    "EncodedPolyline": ["_p~iF~ps|U_ulLnnqC_mqNvxq`@"]
+  }
+]

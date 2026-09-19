@@ -463,6 +463,7 @@ export function parseAutobahn(
         sourceFormat: "autobahn",
         domain: "roads",
         kind: "event",
+        situation: (title ?? subtitle) ? {} : { headlineFromSource: false as const },
         type,
         subtype: typeof item.display_type === "string" ? item.display_type : undefined,
         category,

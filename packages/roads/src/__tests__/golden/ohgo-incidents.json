@@ -1,0 +1,273 @@
+[
+  {
+    "id": "oc:situation:us-oh-ohgo-incidents:OH-INC-2001",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.512,
+          39.1031
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "I-71"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-oh-ohgo-incidents",
+      "sourceFormat": "ohgo-events",
+      "accessMode": "bulk",
+      "recordId": "OH-INC-2001",
+      "sourceUpdatedAt": "2026-07-31T07:42:00.000Z",
+      "attribution": {
+        "provider": "Ohio Department of Transportation (OHGO)",
+        "license": "US-Gov-Public-Domain",
+        "licenseUrl": "https://www.usa.gov/government-works"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "a1928968aef87929d612c50b31fd33c4e7034a4cdbf76d8e420c5e3cb1b354bb",
+    "domain": "roads",
+    "contentHash": "e3bb98218c671cb60eadce8aa57219e04c69e3c6771d27ea1f24f720ac160456",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "incident",
+    "type": "accident",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "I-71 NB at Smith-Edwards"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Two-vehicle crash blocking the left lane"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [
+      {
+        "id": "OH-INC-2001/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "vehicleImpact": "some_lanes_closed"
+      }
+    ],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:us-oh-ohgo-incidents:OH-INC-2002",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.3784,
+          40.7989
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "US-62"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-oh-ohgo-incidents",
+      "sourceFormat": "ohgo-events",
+      "accessMode": "bulk",
+      "recordId": "OH-INC-2002",
+      "attribution": {
+        "provider": "Ohio Department of Transportation (OHGO)",
+        "license": "US-Gov-Public-Domain",
+        "licenseUrl": "https://www.usa.gov/government-works"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "09a82935e2f32439580572c7156942171c3aa7b48bd828ec2604beda2eecf8dc",
+    "domain": "roads",
+    "contentHash": "98cbd9b7600a48bc78d1f1bace993763bf8f65725b5ebfb0f9e3a21b8f6ee0b1",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_hazard",
+    "type": "hazard",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "US-62 EB at Market Ave"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Debris in the roadway"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "road_hazard",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:us-oh-ohgo-incidents:OH-INC-2003",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.519,
+          41.0814
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "SR-8"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-oh-ohgo-incidents",
+      "sourceFormat": "ohgo-events",
+      "accessMode": "bulk",
+      "recordId": "OH-INC-2003",
+      "attribution": {
+        "provider": "Ohio Department of Transportation (OHGO)",
+        "license": "US-Gov-Public-Domain",
+        "licenseUrl": "https://www.usa.gov/government-works"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "3b4059037672cf267162b8edc1620190b92f74ce4f305a9e373a63bc2b0370e0",
+    "domain": "roads",
+    "contentHash": "28498b99b9af91a605a82173c470ae6477627351f881ae9e5009b5f5610524c8",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "other",
+    "type": "other",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "SR-8 SB"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Ramp closed for police activity"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [
+      {
+        "id": "OH-INC-2003/closure",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road"
+      }
+    ],
+    "details": {
+      "kind": "other",
+      "v": 1
+    }
+  }
+]

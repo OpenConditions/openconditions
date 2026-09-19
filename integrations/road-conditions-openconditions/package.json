@@ -16,10 +16,11 @@
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
-    "@openconditions/roads": "workspace:*"
+    "@openconditions/model-roads": "workspace:*"
   },
   "devDependencies": {
     "@openconditions/publishers": "workspace:*",
+    "@openconditions/roads": "workspace:*",
     "@types/geojson": "^7946.0.16",
     "postgres": "^3.4.9",
     "tsup": "^8.5.1",

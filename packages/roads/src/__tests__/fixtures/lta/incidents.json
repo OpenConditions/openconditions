@@ -1,0 +1,18 @@
+{
+  "odata.metadata": "http://datamall2.mytransport.sg/ltaodataservice/$metadata#IncidentSet",
+  "value": [
+    {
+      "Type": "Accident",
+      "Latitude": 1.3201,
+      "Longitude": 103.84,
+      "Message": "(28/6) Accident on PIE"
+    },
+    { "Type": "Roadwork", "Latitude": 1.35, "Longitude": 103.9, "Message": "Roadworks on ECP" },
+    {
+      "Type": "Vehicle breakdown",
+      "Latitude": 1.29,
+      "Longitude": 103.8,
+      "Message": "Breakdown on AYE"
+    }
+  ]
+}

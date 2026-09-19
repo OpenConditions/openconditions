@@ -1,0 +1,440 @@
+[
+  {
+    "id": "oc:situation:nz-nzta:526478",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          170.129753492052,
+          -43.9774722272798
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "NZ"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nz-nzta",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "526478",
+      "sourceUpdatedAt": "2025-12-25T10:23:00.000Z",
+      "attribution": {
+        "provider": "NZ Transport Agency Waka Kotahi",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://opendata-nzta.opendata.arcgis.com/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "29fcd933fcbac10db55bd559f694d47301f257a36fbca140e9c0069c2672661d",
+    "domain": "roads",
+    "contentHash": "8cd41214957f46fbb3bbef159a715a6eb4ae6ad592296473a37b37e31d8dc9e8",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "other",
+    "type": "other",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Other"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Due to an uneven road surface, a temporary speed restriction of 70 km/hr is currently in place. Please take extra care when driving through this area."
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "other",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:nz-nzta:533846",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          176.857727354726,
+          -39.5498231994832
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "NZ"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nz-nzta",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "533846",
+      "sourceUpdatedAt": "2026-01-26T23:08:00.000Z",
+      "attribution": {
+        "provider": "NZ Transport Agency Waka Kotahi",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://opendata-nzta.opendata.arcgis.com/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "6abcc9420bd3f5527a330f10b85c5f9f77ec0358ac104650c24c42348adfd82d",
+    "domain": "roads",
+    "contentHash": "3b2055fd94b3dc0a85c05114368d208827b4c9249690fe8b7d14a43ad9e22ed6",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "other",
+    "type": "other",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Other"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Due to bridge project works, there will be temporary holds of traffic in both directions on weekdays (and Saturdays when required) between 10am and 2pm from Monday 5th January to Friday 31st July. Plan your journey accordingly and expect up to 20 minute delays during these holds."
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "other",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:nz-nzta:540941",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          176.877938073404,
+          -39.5187797844259
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "NZ"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nz-nzta",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "540941",
+      "sourceUpdatedAt": "2026-02-23T17:01:00.000Z",
+      "attribution": {
+        "provider": "NZ Transport Agency Waka Kotahi",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://opendata-nzta.opendata.arcgis.com/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "51030975264eaf4bef5d9b0cb5a02e39402e45f3f70d2044c611d2632894a858",
+    "domain": "roads",
+    "contentHash": "7a230d6b1a8f2531a1fbc3f965fecd383de815f1de11f8f14a89cf6e225aa1b2",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "other",
+    "type": "other",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Other"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Due to overpass construction works, this road will be closed at all times from Tuesday 24th February until approximately mid-2027. Plan your journey accordingly, allowing extra time for travel."
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "other",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:nz-nzta:541696",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          169.633331275026,
+          -44.5816908210322
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "NZ"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nz-nzta",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "541696",
+      "sourceUpdatedAt": "2026-02-27T01:53:00.000Z",
+      "attribution": {
+        "provider": "NZ Transport Agency Waka Kotahi",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://opendata-nzta.opendata.arcgis.com/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "5ef0f5cbeb798618d28bc3d7c8835be48d3342db326a0cdeb55198a81b1f9a10",
+    "domain": "roads",
+    "contentHash": "de671861812bf803ad0ccbc6895cb34e4c764ab5854c4882990f7937018ee52d",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Maintenance"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Due to maintenance and bridge repair works, there will be Stop/Go traffic management in place from Tuesday 25th February to Saturday 25th July between 8:30am and 6pm. Plan your journey accordingly and expect up to 5 minute delays."
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:nz-nzta:542780",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          174.855727935524,
+          -38.0486383879381
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "NZ"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nz-nzta",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "542780",
+      "sourceUpdatedAt": "2026-03-10T19:44:00.000Z",
+      "attribution": {
+        "provider": "NZ Transport Agency Waka Kotahi",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://opendata-nzta.opendata.arcgis.com/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "9bc0e9e8494dd2e22a1671c4abb90fbd6e319318693def34225ef4120fd5c929",
+    "domain": "roads",
+    "contentHash": "d6f1250ed1a0c1ced9400d884d871f9c14e79b295e58b55649a6fb8b978e8364",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_hazard",
+    "type": "hazard",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Slip"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Due to a slip on SH31 near Raglan Road, a priority give way is in place 24/7 until further notice. Please take care when passing through the slip site."
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "road_hazard",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:nz-nzta:543025",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          175.28232483937,
+          -37.811739963812
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "NZ"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nz-nzta",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "543025",
+      "sourceUpdatedAt": "2026-03-16T21:54:00.000Z",
+      "attribution": {
+        "provider": "NZ Transport Agency Waka Kotahi",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://opendata-nzta.opendata.arcgis.com/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "c538bce8ba33428c23f92cb37205e0821af71ee3098d4449a15cf11813f9a0f9",
+    "domain": "roads",
+    "contentHash": "daf9aeacbc4d761ede361762c6df1b9405e784f927dd600ae1fac15ab3d0adf0",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "other",
+    "type": "other",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Other"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Due to wastewater renewal works, there will be shoulder and lane closures at the roundabout from mid-March to late May."
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "other",
+      "v": 1
+    }
+  }
+]

@@ -1,0 +1,1012 @@
+[
+  {
+    "id": "oc:situation:lu-cita:234860",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "234860"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            6.247943,
+            49.5171
+          ],
+          [
+            6.25149,
+            49.517983
+          ],
+          [
+            6.253423,
+            49.518415
+          ],
+          [
+            6.254468,
+            49.518618
+          ],
+          [
+            6.255494,
+            49.518801
+          ],
+          [
+            6.257201,
+            49.519061
+          ],
+          [
+            6.259392,
+            49.519307
+          ],
+          [
+            6.26134,
+            49.519454
+          ],
+          [
+            6.263409,
+            49.519517
+          ],
+          [
+            6.264638,
+            49.519523
+          ],
+          [
+            6.266611,
+            49.519468
+          ],
+          [
+            6.26767,
+            49.519406
+          ],
+          [
+            6.268986,
+            49.519302
+          ],
+          [
+            6.270104,
+            49.519186
+          ],
+          [
+            6.271756,
+            49.518971
+          ],
+          [
+            6.273242,
+            49.518728
+          ],
+          [
+            6.275119,
+            49.518357
+          ],
+          [
+            6.276408,
+            49.518061
+          ],
+          [
+            6.278184,
+            49.517612
+          ],
+          [
+            6.285476,
+            49.515566
+          ],
+          [
+            6.287927,
+            49.514862
+          ],
+          [
+            6.289647,
+            49.514349
+          ],
+          [
+            6.290761,
+            49.513991
+          ],
+          [
+            6.293064,
+            49.513192
+          ],
+          [
+            6.294325,
+            49.512691
+          ],
+          [
+            6.295569,
+            49.512156
+          ],
+          [
+            6.297116,
+            49.511371
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "LU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "lu-cita",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "234860",
+      "recordVersion": "3",
+      "sourceUpdatedAt": "2026-06-25T19:59:48+02:00",
+      "attribution": {
+        "provider": "CITA (Luxembourg)",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "5681598e2cf6d11399264a584e2af211f1a1f9c924cee957225c78038b98bea1",
+    "domain": "roads",
+    "contentHash": "8844a9c226de214c41e2ad0c2eb01fab20edbfdb44eba3e0f6cfa1dabd86f45b",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "maintenance",
+    "planned": true,
+    "certainty": "observed",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "validity": {
+      "status": "active",
+      "start": "2026-06-25T19:59:41+02:00"
+    },
+    "effects": [
+      {
+        "id": "234860-1/lane_restriction",
+        "sourceRecordRef": "234860-1/3",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 2,
+        "lanesClosed": 0,
+        "vehicleImpact": "all_lanes_open"
+      },
+      {
+        "id": "234860-2/lane_restriction",
+        "sourceRecordRef": "234860-2/3",
+        "location": {
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                6.297128,
+                49.511455
+              ],
+              [
+                6.296192,
+                49.51193
+              ],
+              [
+                6.295051,
+                49.512453
+              ],
+              [
+                6.293661,
+                49.513023
+              ],
+              [
+                6.292416,
+                49.51349
+              ],
+              [
+                6.290788,
+                49.514043
+              ],
+              [
+                6.289612,
+                49.514421
+              ],
+              [
+                6.286275,
+                49.515398
+              ],
+              [
+                6.278099,
+                49.517698
+              ],
+              [
+                6.276474,
+                49.518103
+              ],
+              [
+                6.275146,
+                49.518408
+              ],
+              [
+                6.274133,
+                49.518619
+              ],
+              [
+                6.27327,
+                49.518779
+              ],
+              [
+                6.271743,
+                49.51903
+              ],
+              [
+                6.269764,
+                49.519281
+              ],
+              [
+                6.268082,
+                49.51943
+              ],
+              [
+                6.266666,
+                49.519519
+              ],
+              [
+                6.264749,
+                49.519578
+              ],
+              [
+                6.263602,
+                49.519576
+              ],
+              [
+                6.262222,
+                49.519543
+              ],
+              [
+                6.261327,
+                49.519503
+              ],
+              [
+                6.259391,
+                49.519366
+              ],
+              [
+                6.258163,
+                49.519241
+              ],
+              [
+                6.257134,
+                49.519109
+              ],
+              [
+                6.25619,
+                49.518973
+              ],
+              [
+                6.254428,
+                49.518669
+              ],
+              [
+                6.252833,
+                49.518345
+              ],
+              [
+                6.251463,
+                49.518035
+              ],
+              [
+                6.247929,
+                49.517156
+              ]
+            ]
+          },
+          "extent": "linear",
+          "geometryOrigin": "source"
+        },
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 2,
+        "lanesClosed": 0,
+        "vehicleImpact": "all_lanes_open"
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:lu-cita:234859",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "234859"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            6.185904,
+            49.650575
+          ],
+          [
+            6.185694,
+            49.65104
+          ],
+          [
+            6.185388,
+            49.65158
+          ],
+          [
+            6.185182,
+            49.651885
+          ],
+          [
+            6.18488,
+            49.652269
+          ],
+          [
+            6.184428,
+            49.652764
+          ],
+          [
+            6.184172,
+            49.65301
+          ],
+          [
+            6.183438,
+            49.65363
+          ],
+          [
+            6.182828,
+            49.654084
+          ],
+          [
+            6.182465,
+            49.654331
+          ],
+          [
+            6.166273,
+            49.663682
+          ],
+          [
+            6.165249,
+            49.664247
+          ],
+          [
+            6.162868,
+            49.665496
+          ],
+          [
+            6.162355,
+            49.665798
+          ],
+          [
+            6.161844,
+            49.666152
+          ],
+          [
+            6.161422,
+            49.666485
+          ],
+          [
+            6.161093,
+            49.666786
+          ],
+          [
+            6.160796,
+            49.667089
+          ],
+          [
+            6.160478,
+            49.667458
+          ],
+          [
+            6.160262,
+            49.66775
+          ],
+          [
+            6.159975,
+            49.668188
+          ],
+          [
+            6.15979,
+            49.668527
+          ],
+          [
+            6.159557,
+            49.669054
+          ],
+          [
+            6.159411,
+            49.669502
+          ],
+          [
+            6.159278,
+            49.670135
+          ],
+          [
+            6.159214,
+            49.670726
+          ],
+          [
+            6.158869,
+            49.677402
+          ],
+          [
+            6.158861,
+            49.67804
+          ],
+          [
+            6.158875,
+            49.678562
+          ],
+          [
+            6.15897,
+            49.679341
+          ],
+          [
+            6.159028,
+            49.679635
+          ],
+          [
+            6.159156,
+            49.680132
+          ],
+          [
+            6.159274,
+            49.680493
+          ],
+          [
+            6.159511,
+            49.681112
+          ],
+          [
+            6.15967,
+            49.681485
+          ],
+          [
+            6.162422,
+            49.687481
+          ],
+          [
+            6.162913,
+            49.688596
+          ],
+          [
+            6.163106,
+            49.689112
+          ],
+          [
+            6.163315,
+            49.689578
+          ],
+          [
+            6.163456,
+            49.689953
+          ],
+          [
+            6.16357,
+            49.690259
+          ],
+          [
+            6.163828,
+            49.691124
+          ],
+          [
+            6.164136,
+            49.693128
+          ],
+          [
+            6.163844,
+            49.694934
+          ],
+          [
+            6.162544,
+            49.698012
+          ],
+          [
+            6.160666,
+            49.700628
+          ],
+          [
+            6.15931,
+            49.701932
+          ],
+          [
+            6.158655,
+            49.702456
+          ],
+          [
+            6.156922,
+            49.70379
+          ],
+          [
+            6.155004,
+            49.70481
+          ],
+          [
+            6.152896,
+            49.705642
+          ],
+          [
+            6.15047,
+            49.706373
+          ],
+          [
+            6.148176,
+            49.706986
+          ],
+          [
+            6.146376,
+            49.707318
+          ],
+          [
+            6.144383,
+            49.707386
+          ],
+          [
+            6.142886,
+            49.707359
+          ],
+          [
+            6.141452,
+            49.707264
+          ],
+          [
+            6.138023,
+            49.706748
+          ],
+          [
+            6.136216,
+            49.706511
+          ],
+          [
+            6.134817,
+            49.706376
+          ],
+          [
+            6.133505,
+            49.706304
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "LU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "lu-cita",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "234859",
+      "recordVersion": "3",
+      "sourceUpdatedAt": "2026-06-25T19:59:07+02:00",
+      "attribution": {
+        "provider": "CITA (Luxembourg)",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "ea08ecfb65024456b1cfa9705d730b114f4404ba38cfc659702aedcf8447c6d3",
+    "domain": "roads",
+    "contentHash": "ac21b250653490ff488f186785742ac02ee8f9f5d2c4d16ee191fc2b6a7ca668",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "maintenance",
+    "planned": true,
+    "certainty": "observed",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "validity": {
+      "status": "active",
+      "start": "2026-06-25T19:46:37+02:00"
+    },
+    "effects": [
+      {
+        "id": "234859-1/lane_restriction",
+        "sourceRecordRef": "234859-1/3",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 2,
+        "lanesClosed": 2,
+        "vehicleImpact": "all_lanes_closed"
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:lu-cita:234858",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "234858"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            6.162875,
+            49.688952
+          ],
+          [
+            6.162509,
+            49.687909
+          ],
+          [
+            6.16203,
+            49.686755
+          ],
+          [
+            6.160574,
+            49.683556
+          ],
+          [
+            6.15989,
+            49.68215
+          ],
+          [
+            6.159562,
+            49.681425
+          ],
+          [
+            6.159244,
+            49.680615
+          ],
+          [
+            6.159091,
+            49.680131
+          ],
+          [
+            6.159018,
+            49.679847
+          ],
+          [
+            6.158934,
+            49.679446
+          ],
+          [
+            6.158872,
+            49.679008
+          ],
+          [
+            6.158821,
+            49.678316
+          ],
+          [
+            6.158815,
+            49.677849
+          ],
+          [
+            6.158871,
+            49.676384
+          ],
+          [
+            6.159085,
+            49.672224
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "LU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "lu-cita",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "234858",
+      "recordVersion": "3",
+      "sourceUpdatedAt": "2026-06-25T19:35:44+02:00",
+      "attribution": {
+        "provider": "CITA (Luxembourg)",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "4dadaec36f56b5431ecb7ad3fdcdcef2abee57fa213ada16b7b5d256c9b131b5",
+    "domain": "roads",
+    "contentHash": "4466eece6be467a2b7d8f913cc5696f29df95ac77ac66ab3bd93f733b4335816",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "maintenance",
+    "planned": true,
+    "certainty": "observed",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "validity": {
+      "status": "active",
+      "start": "2026-06-25T19:35:38+02:00"
+    },
+    "effects": [
+      {
+        "id": "234858-2/lane_restriction",
+        "sourceRecordRef": "234858-2/3",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 2,
+        "lanesClosed": 1,
+        "vehicleImpact": "some_lanes_closed"
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:lu-cita:234857",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "234857"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            6.115807,
+            49.501924
+          ],
+          [
+            6.115837,
+            49.501836
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "LU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "lu-cita",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "234857",
+      "recordVersion": "5",
+      "sourceUpdatedAt": "2026-06-25T19:33:53+02:00",
+      "attribution": {
+        "provider": "CITA (Luxembourg)",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "c34d77242637251714f1d4b0fd148a46a984a6e161af1a7bdf5aed85cdd96eaf",
+    "domain": "roads",
+    "contentHash": "58c0e09ecf00ae1d996a4ab0183e71e47415fc4ace4d274588279571c0f67ebd",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "incident",
+    "type": "accident",
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "validity": {
+      "status": "active",
+      "start": "2026-06-25T19:11:12+02:00"
+    },
+    "effects": [
+      {
+        "id": "234857-1/lane_restriction",
+        "sourceRecordRef": "234857-1/5",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 2,
+        "lanesClosed": 1,
+        "vehicleImpact": "some_lanes_closed"
+      }
+    ],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:lu-cita:234810",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "datex:situation",
+        "id": "234810"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            6.173588,
+            49.659458
+          ],
+          [
+            6.168415,
+            49.662446
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "LU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "lu-cita",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "234810",
+      "recordVersion": "4",
+      "sourceUpdatedAt": "2026-06-25T14:16:47+02:00",
+      "attribution": {
+        "provider": "CITA (Luxembourg)",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "a891a3ac758402ef718cc755cd2b7462fbfa112938a65403730104101ed8732f",
+    "domain": "roads",
+    "contentHash": "a6687146cc7cf634fba26fddf607743ab5fc09fcbd75e37be926a1bcb0f9b67e",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "equipment_fault",
+    "type": "fault",
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "unknown"
+    },
+    "validity": {
+      "status": "active",
+      "start": "2026-06-24T10:07:00+02:00"
+    },
+    "effects": [
+      {
+        "id": "234810-1/lane_restriction",
+        "sourceRecordRef": "234810-1/4",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 2,
+        "lanesClosed": 0,
+        "vehicleImpact": "all_lanes_open"
+      },
+      {
+        "id": "234810-2/lane_restriction",
+        "sourceRecordRef": "234810-2/4",
+        "location": {
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                6.16827,
+                49.662379
+              ],
+              [
+                6.173439,
+                49.659387
+              ]
+            ]
+          },
+          "extent": "linear",
+          "geometryOrigin": "source"
+        },
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 2,
+        "lanesClosed": 0,
+        "vehicleImpact": "all_lanes_open"
+      }
+    ],
+    "details": {
+      "kind": "equipment_fault",
+      "v": 1
+    }
+  }
+]

@@ -1,7 +1,10 @@
 import type { z } from "zod";
+import type { SEVERITY_LABELS } from "../classes/situation.js";
 import type { KernelBase } from "../kernel/build.js";
-import type { Kernel } from "../kernel/effect-type.js";
+import type { Effect, Kernel } from "../kernel/effect-type.js";
 import type { FusionTier, PrivacyClass } from "../kernel/provenance.js";
+
+type SeverityLabel = (typeof SEVERITY_LABELS)[number];
 
 /** `major.minor`; the wire `v` is the major. */
 export type SchemaVersion = `${number}.${number}`;
@@ -25,6 +28,20 @@ export type MappingTarget =
 
 /** Source codes an entry corresponds to, per external vocabulary. */
 export type Mappings = Partial<Record<MappingTarget, readonly string[]>>;
+
+/**
+ * Targets OpenConditions parses. A source code of one of these must resolve
+ * to exactly one classification, so the registry rejects a code mapped twice.
+ * The other targets are emitter vocabularies, where many classifications
+ * legitimately share one code (GTFS-RT `OTHER_CAUSE`).
+ */
+export const INGEST_MAPPING_TARGETS: readonly MappingTarget[] = [
+  "datex2_v2",
+  "datex2_v3",
+  "wzdx",
+  "open511",
+  "ibi511",
+];
 
 interface EntryBase {
   code: string;
@@ -67,6 +84,14 @@ export interface KindEntry<C extends string = string, S extends z.ZodRawShape = 
   version: SchemaVersion;
   /** Closed type → subtype lists. Absent = the kind has no `type`. */
   types?: Readonly<Record<string, readonly string[]>>;
+  /** Crosswalks of one `type` or `type.subtype`; the kind-level ones are `mappings`. */
+  typeMappings?: Readonly<Record<string, Mappings>>;
+  /**
+   * Situation kinds: the severity rule for a situation whose source declares
+   * none. Returns undefined when the rule has no signal, so the label stays
+   * `unknown` rather than a default.
+   */
+  deriveSeverity?: (situation: SeverityRuleInput) => DerivedSeverity | undefined;
   /** Fields of `details` besides `kind` and `v`. Offers have no details. */
   details?: (k: Kernel) => S;
   /** Cross-field rules on `details`. */
@@ -76,6 +101,15 @@ export interface KindEntry<C extends string = string, S extends z.ZodRawShape = 
   /** Situation kinds: effects nested inside `details` (roadworks phases), for id uniqueness and materialisation. */
   nestedEffects?: (details: Record<string, unknown>) => readonly { id: string }[];
 }
+
+/** What a situation kind's severity rule reads: the classification and the effects. */
+export interface SeverityRuleInput {
+  type: string;
+  subtype?: string;
+  effects: readonly Effect[];
+}
+
+export type DerivedSeverity = Exclude<SeverityLabel, "unknown">;
 
 export type PropertyResultSpec =
   | { type: "quantity"; unit: string }
@@ -140,6 +174,21 @@ export interface ResultSchemaEntry extends EntryBase {
   shape: (k: Kernel) => z.ZodRawShape;
 }
 
+/** Record classes that keep revisions; observations are a time series instead. */
+export type RevisionClass = "situation" | "feature" | "offer";
+
+/**
+ * A named kind of change between two revisions of a record (the history
+ * API's `change_kinds`). `select` picks the part of the record this change
+ * kind watches; the change is present when the picks of the previous and the
+ * new revision differ (compared as RFC 8785 JCS).
+ */
+export interface ChangeKindEntry extends EntryBase {
+  entry: "change_kind";
+  classes: readonly RevisionClass[];
+  select: (record: Readonly<Record<string, unknown>>) => unknown;
+}
+
 export type RegistryEntry =
   | DomainEntry
   | VocabularyEntry
@@ -148,7 +197,8 @@ export type RegistryEntry =
   | PropertyEntry
   | EffectEntry
   | SelectorEntry
-  | ResultSchemaEntry;
+  | ResultSchemaEntry
+  | ChangeKindEntry;
 
 /** A named bundle of entries: the kernel, or one domain package. */
 export interface RegistryModule {
@@ -183,6 +233,10 @@ export const defineSelector = (d: Def<SelectorEntry>): SelectorEntry => ({
 });
 export const defineResultSchema = (d: Def<ResultSchemaEntry>): ResultSchemaEntry => ({
   entry: "result_schema",
+  ...d,
+});
+export const defineChangeKind = (d: Def<ChangeKindEntry>): ChangeKindEntry => ({
+  entry: "change_kind",
   ...d,
 });
 

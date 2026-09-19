@@ -148,6 +148,13 @@ const ROLES: Record<string, Record<string, Role>> = {
   offer: OFFER,
 };
 
+/** The content (hashed) top-level fields of a record class. */
+export function contentFields(cls: "situation" | "feature" | "observation" | "offer"): string[] {
+  return Object.entries(ROLES[cls]!)
+    .filter(([, role]) => role === "content")
+    .map(([key]) => key);
+}
+
 function pick(value: Record<string, unknown>, roles: Record<string, Role>, where: string) {
   const out: Record<string, unknown> = {};
   for (const [key, v] of Object.entries(value)) {

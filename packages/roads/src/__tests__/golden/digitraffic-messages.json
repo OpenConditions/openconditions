@@ -1,0 +1,467 @@
+[
+  {
+    "id": "oc:situation:fi-digitraffic:GUID50465894",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              22.06278,
+              60.620919
+            ],
+            [
+              22.062854,
+              60.620906
+            ],
+            [
+              22.062867,
+              60.620904
+            ],
+            [
+              22.062952,
+              60.620891
+            ]
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Vastalahdentie"
+            }
+          ],
+          "ref": "12421",
+          "to": "Vastalahdentie"
+        }
+      ],
+      "direction": {
+        "value": "both",
+        "basis": "alert_c"
+      },
+      "tmc": {
+        "country": "6",
+        "table": 17,
+        "code": 24355
+      },
+      "admin": {
+        "country": "FI"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Nousiainen, Varsinais-Suomi"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fi-digitraffic",
+      "sourceFormat": "digitraffic",
+      "accessMode": "bulk",
+      "recordId": "GUID50465894",
+      "recordVersion": "13",
+      "sourceUpdatedAt": "2026-06-15T21:09:16.841Z",
+      "attribution": {
+        "provider": "Fintraffic / Digitraffic",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "29a7e979057a5fdb6fecbd8bdafd58b7a7250d985d5ef87de35c61488261a735",
+    "domain": "roads",
+    "contentHash": "c7f7ef17228171d5c23db2fe900280e3967d2bb40df64ff1cda0b869631f7084",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_hazard",
+    "type": "hazard",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Tie 12421, eli Vastalahdentie, Nousiainen. Liikennetiedote."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Siltatyö. \nKiertotie maanteiden 12421, 12419, 2010 ja 12414 kautta."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-16T03:00:00Z",
+      "end": "2026-07-04T17:00:00Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "road_hazard",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:fi-digitraffic:GUID50465931",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          27.849869,
+          61.554876
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Hirvensalon tie"
+            }
+          ],
+          "ref": "15147"
+        }
+      ],
+      "tmc": {
+        "country": "6",
+        "table": 17,
+        "code": 28355
+      },
+      "admin": {
+        "country": "FI"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Mikkeli, Etelä-Savo"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fi-digitraffic",
+      "sourceFormat": "digitraffic",
+      "accessMode": "bulk",
+      "recordId": "GUID50465931",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-06-15T10:27:26.913Z",
+      "attribution": {
+        "provider": "Fintraffic / Digitraffic",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "a4dfda34b3d76fb3648b6b0f36b5e9cb0c47460520eaf77c42d2470b6a98ddad",
+    "domain": "roads",
+    "contentHash": "6342ad2bb656da1a40cc51279f7281d68dbc785d857bda99e64a93c08ee4638b",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_hazard",
+    "type": "hazard",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Tie 15147, eli Hirvensalon tie, Mikkeli. Liikennetiedote."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Käytössä 44 tonnin lossi. Ajoneuvon max pituus 25 m"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-15T10:30:00Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "road_hazard",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:fi-digitraffic:GUID50466272",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.659191,
+          60.216145
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "1"
+            }
+          ],
+          "ref": "1"
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "text",
+        "text": "Helsinki"
+      },
+      "tmc": {
+        "country": "6",
+        "table": 17,
+        "code": 41795
+      },
+      "admin": {
+        "country": "FI"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Espoo, Uusimaa"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fi-digitraffic",
+      "sourceFormat": "digitraffic",
+      "accessMode": "bulk",
+      "recordId": "GUID50466272",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-06-22T18:29:13.489Z",
+      "attribution": {
+        "provider": "Fintraffic / Digitraffic",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "392ff7c6ccd246946ea03badca4e9c861cd9721ec6a68d017f799d31009ce920",
+    "domain": "roads",
+    "contentHash": "985f59d30c0eefb51eb3a1c9f66af09b2ab8bb49982e81eeda9f151f9c512cbe",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "critical",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Tie 1, Espoo. Tietyö."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Tie 1 välillä Helsinki - Turku, Espoo.\nTarkempi paikka: Lommilan liittymä."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-22T18:30:00Z",
+      "end": "2026-06-22T20:30:00Z"
+    },
+    "effects": [
+      {
+        "id": "GUID50466272/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "text",
+          "text": "Helsinki"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "vehicleImpact": "some_lanes_closed"
+      },
+      {
+        "id": "GUID50466272/unsupported",
+        "applicability": {
+          "kind": "unknown",
+          "raw": [
+            "SINGLE_LANE_CLOSED"
+          ]
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "text",
+          "text": "Helsinki"
+        },
+        "compliance": "unknown",
+        "normalization": "unsupported",
+        "issues": [
+          {
+            "code": "unsupported_type",
+            "sourcePath": "restrictions[0]",
+            "sourceText": "SINGLE_LANE_CLOSED"
+          }
+        ],
+        "source": {
+          "path": "restrictions[0]",
+          "tokens": {
+            "type": "SINGLE_LANE_CLOSED"
+          }
+        },
+        "kind": "unsupported",
+        "v": 1
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:fi-digitraffic:GUID_FIXTURE_ACCIDENT",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          25.013,
+          60.167
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Valtatie 1"
+            }
+          ],
+          "ref": "1"
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "text",
+        "text": "POS"
+      },
+      "admin": {
+        "country": "FI"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Helsinki, Uusimaa"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fi-digitraffic",
+      "sourceFormat": "digitraffic",
+      "accessMode": "bulk",
+      "recordId": "GUID_FIXTURE_ACCIDENT",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-06-22T10:00:00.000Z",
+      "attribution": {
+        "provider": "Fintraffic / Digitraffic",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "0017fb069bc1dd9f35d0feb1e1347aaf29a6de906ea880ecb8ca8c6ff2dbf552",
+    "domain": "roads",
+    "contentHash": "358169d2ad40a64d2ea4b56a001a926591f998240dd4bbad4d97a1c355fa2074",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "incident",
+    "type": "accident",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Valtatie 1, Helsinki. Liikenneonnettomuus."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Liikenneonnettomuus. Poliisi paikalla."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-22T09:45:00Z",
+      "end": "2026-06-22T12:00:00Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    }
+  }
+]

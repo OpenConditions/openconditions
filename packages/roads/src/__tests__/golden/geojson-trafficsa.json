@@ -1,0 +1,306 @@
+[
+  {
+    "id": "oc:situation:au-sa-trafficsa:3214723105",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          138.91665562700007,
+          -34.33912518699998
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "3873"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "AU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "au-sa-trafficsa",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "3214723105",
+      "attribution": {
+        "provider": "Department for Infrastructure and Transport (South Australia)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "781c75e7bd0a85b5849a74cb91218ec688065446382f90f42072a872a1ceafca",
+    "domain": "roads",
+    "contentHash": "c7c9c215a5f477298111b44ff39f5d4a588135a02321fe85c734c83dfa630c2d",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Paving"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:au-sa-trafficsa:3214723110",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          137.84210484100004,
+          -34.55968049699993
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "4027"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "AU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "au-sa-trafficsa",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "3214723110",
+      "attribution": {
+        "provider": "Department for Infrastructure and Transport (South Australia)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "93799077165f7a4f363e1eefbcbb0303b29b17fef7c762551c37f4beb1eb5d76",
+    "domain": "roads",
+    "contentHash": "59fc483a3662be8083140c2ff07ff5bb47c8a1295581c20eb8cbea3c7381c821",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Road Reconstruction"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:au-sa-trafficsa:3214723112",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          138.5721325070001,
+          -34.95627533299995
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "6203"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "AU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "au-sa-trafficsa",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "3214723112",
+      "attribution": {
+        "provider": "Department for Infrastructure and Transport (South Australia)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "c38f1880b28ac63352a5872d895458b84f0d68f2b6eded0523e66a3a2be6bad4",
+    "domain": "roads",
+    "contentHash": "2618b3d003f1ffc2efba436ba521744c48769abda88f0cb3a9a3f138fa9a1732",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Median Works"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:au-sa-trafficsa:3214723113",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          138.57242929400002,
+          -34.959348216999956
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "6203"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "AU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "au-sa-trafficsa",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "3214723113",
+      "attribution": {
+        "provider": "Department for Infrastructure and Transport (South Australia)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "04a5a87f4d711e2c248476ac1a2d302127fa7833a55ff75771010faf63ffc240",
+    "domain": "roads",
+    "contentHash": "e2f4d3d98646c30cc957cd8798869948722af78e87189571c8ba81b85883fca6",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Median Works"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  }
+]

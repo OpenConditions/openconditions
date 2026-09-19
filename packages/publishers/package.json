@@ -30,6 +30,7 @@
     "@openconditions/core": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
+    "@openconditions/model-roads": "workspace:*",
     "@openconditions/roads": "workspace:*",
     "fast-xml-parser": "^5.11.1",
     "gtfs-realtime-bindings": "^2.2.0",

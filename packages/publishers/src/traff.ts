@@ -1,5 +1,5 @@
 import type { ConditionEvent } from "@openconditions/core";
-import { hasRestrictionEvidence } from "@openconditions/roads";
+import { hasRestrictionEvidence } from "@openconditions/model-roads";
 import { XMLBuilder } from "fast-xml-parser";
 import { type FeedInfo, type RoadFields, roadFields } from "./types.js";
 
@@ -23,10 +23,10 @@ const PRIMARY: Record<string, TraffEventCode> = {
   broken_down_vehicle: { cls: "INCIDENT", type: "INCIDENT_BROKEN_DOWN_VEHICLE" },
   roadworks: { cls: "CONSTRUCTION", type: "CONSTRUCTION_ROADWORKS" },
   congestion: { cls: "CONGESTION", type: "CONGESTION_TRAFFIC_CONGESTION" },
-  hazard: { cls: "HAZARD", type: "HAZARD_HAZARD" },
+  hazard: { cls: "HAZARD", type: "HAZARD_HAZARDOUS_CONDITIONS" },
   obstruction: { cls: "HAZARD", type: "HAZARD_OBSTRUCTION" },
-  road_condition: { cls: "HAZARD", type: "HAZARD_HAZARD" },
-  weather: { cls: "HAZARD", type: "HAZARD_HAZARD" },
+  road_condition: { cls: "HAZARD", type: "HAZARD_SLIPPERY_ROAD" },
+  weather: { cls: "HAZARD", type: "HAZARD_HAZARDOUS_CONDITIONS" },
   public_event: { cls: "ACTIVITY", type: "ACTIVITY_EVENT" },
   authority: { cls: "AUTHORITY", type: "AUTHORITY_CHECKPOINT" },
   security: { cls: "SECURITY", type: "SECURITY_ALERT" },

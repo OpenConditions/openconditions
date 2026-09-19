@@ -4,7 +4,7 @@
  * build() from server.ts instead of running this file.
  */
 
-import { runMigrations } from "@openconditions/core/server";
+import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core/server";
 import {
   loadActiveKeys,
   OUTBOX_PRUNE_INTERVAL_HOURS,
@@ -12,6 +12,7 @@ import {
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
 import { guardedFetch } from "@openconditions/ingest-framework";
+import { productionRegistry } from "@openconditions/model-registry";
 import postgres from "postgres";
 import { resolveFederationSettings } from "./config.js";
 import { build } from "./server.js";
@@ -35,6 +36,7 @@ async function boot() {
   console.info("[federation-api] migrations applied");
 
   const sql = postgres(url, { max: 5, idle_timeout: 30, connect_timeout: 10 });
+  await assertStoredCodesRegistered(sql, productionRegistry());
   const app = await build({ sql });
 
   // Webhook push cron: a latency optimization over pull. Egress is SSRF-guarded

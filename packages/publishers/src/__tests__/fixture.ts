@@ -118,7 +118,7 @@ export function measurement(over: Partial<Measurement> = {}): Measurement {
 /**
  * A minimal valid normalized restriction envelope. Publishers only need to know
  * that restriction evidence is present and must be withheld — the authoritative
- * contract fixture lives in @openconditions/roads.
+ * contract fixture lives in @openconditions/model-roads.
  */
 export function restrictionDetails(): Record<string, unknown> {
   return {

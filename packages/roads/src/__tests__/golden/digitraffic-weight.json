@@ -1,0 +1,148 @@
+[
+  {
+    "id": "oc:situation:fi-digitraffic:GUID50451433",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              23.014359,
+              61.419857
+            ],
+            [
+              23.014318,
+              61.419929
+            ],
+            [
+              23.014264,
+              61.420031
+            ],
+            [
+              23.014248,
+              61.420133
+            ]
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "12981"
+            }
+          ],
+          "ref": "12981"
+        }
+      ],
+      "tmc": {
+        "country": "6",
+        "table": 17,
+        "code": 42745
+      },
+      "admin": {
+        "country": "FI"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Sastamala, Pirkanmaa"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fi-digitraffic",
+      "sourceFormat": "digitraffic",
+      "accessMode": "bulk",
+      "recordId": "GUID50451433",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2025-08-18T07:28:26.695Z",
+      "attribution": {
+        "provider": "Fintraffic / Digitraffic",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "52275717db2bce85717680d4061562b4df9b0e90add0a51dfc812524ca7933bb",
+    "domain": "roads",
+    "contentHash": "271f7331f64631be9e9979690a52d9bbd8bc2cd419e9a59315ecd529fb3c125e",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "restriction",
+    "type": "dimension",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Tie 12981, Sastamala. Painorajoitus."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Tie 12981 välillä Heinoo - Karkku, Sastamala.\nTarkempi paikka: Välillä Riippiläntien tasoristeys - Karkku."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2025-08-18T07:24:23.872Z"
+    },
+    "effects": [
+      {
+        "id": "GUID50451433/dimension_limit",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "partial",
+        "issues": [
+          {
+            "code": "unsupported_operator",
+            "sourcePath": "restrictions[0]"
+          }
+        ],
+        "source": {
+          "path": "restrictions[0]",
+          "tokens": {
+            "type": "weight",
+            "value": 12,
+            "unit": "t"
+          }
+        },
+        "kind": "dimension_limit",
+        "v": 1,
+        "dimension": "gross_weight",
+        "value": {
+          "value": 12000,
+          "unit": "kg"
+        },
+        "operator": "lte",
+        "meaning": "maximum_permitted"
+      }
+    ],
+    "details": {
+      "kind": "restriction",
+      "v": 1,
+      "basis": "temporary"
+    }
+  }
+]

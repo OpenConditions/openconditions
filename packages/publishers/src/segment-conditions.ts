@@ -5,7 +5,8 @@ import {
   type RoutingRights,
   type Schedule,
 } from "@openconditions/model";
-import { hasRestrictionEvidence, normalizeVehicleApplicability } from "@openconditions/roads";
+import { hasRestrictionEvidence } from "@openconditions/model-roads";
+import { normalizeVehicleApplicability } from "@openconditions/roads";
 import type { LineString } from "geojson";
 
 /**

@@ -1,5 +1,8 @@
 import type { Observation } from "@openconditions/core";
-import { projectRoadRestrictionDetails, type RestrictionCarrier } from "@openconditions/roads";
+import {
+  projectRoadRestrictionDetails,
+  type RestrictionCarrier,
+} from "@openconditions/model-roads";
 import type { BBox, Feature, FeatureCollection } from "geojson";
 import type { FeedInfo } from "./types.js";
 

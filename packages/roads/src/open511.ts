@@ -1,5 +1,6 @@
 import type { GeoJsonGeometry } from "@openconditions/core";
 import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
+import { open511Classification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadRef } from "./model.js";
 import { buildLocalSchedule, isoDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
@@ -305,12 +306,25 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
         roads[0]!.milepostFrom = milepostFrom;
       }
 
+      const classification = open511Classification(
+        eventType,
+        Array.isArray(ev.event_subtypes)
+          ? ev.event_subtypes.filter((s): s is string => typeof s === "string")
+          : [],
+      );
+      const hasHeadline = typeof ev.headline === "string" && !!ev.headline;
+
       out.push({
         id: `${src.id}:${eventLocalId}`,
         source: src.id,
         sourceFormat: "open511",
         domain: "roads",
         kind: "event",
+        situation: {
+          ...(classification !== undefined ? { classification } : {}),
+          ...(typeof ev.updated === "string" ? { sourceUpdatedAt: ev.updated } : {}),
+          ...(hasHeadline ? {} : { headlineFromSource: false as const }),
+        },
         type,
         subtype: firstSubtype(ev.event_subtypes) ?? eventType ?? undefined,
         category,

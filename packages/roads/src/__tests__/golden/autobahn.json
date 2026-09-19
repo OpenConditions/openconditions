@@ -1,0 +1,226 @@
+[
+  {
+    "id": "oc:situation:de-autobahn:INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            8.470950177,
+            49.019981362
+          ],
+          [
+            8.4718613,
+            49.020852701
+          ],
+          [
+            8.510950939,
+            49.0730817
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A5"
+            }
+          ],
+          "ref": "A5"
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "text",
+        "text": "Karlsruhe -> Heidelberg"
+      },
+      "admin": {
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-autobahn",
+      "sourceFormat": "autobahn",
+      "accessMode": "bulk",
+      "recordId": "INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0",
+      "attribution": {
+        "provider": "Quelle: Die Autobahn GmbH des Bundes",
+        "license": "dl-de/by-2-0"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "5a62624f0b9104e05667260d9ef5cb43b8dfd487dff373b5451d183f9f733f5e",
+    "domain": "roads",
+    "contentHash": "34255f1a1a0c29af9d6b016f5708a41ddada95c71ae27e070b4c65b14d502a72",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "congestion",
+    "type": "congestion",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "A5 | Karlsruhe-Nord - Bruchsal"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Beginn: 22.06.26 um 20:23 Uhr\nAngespannte Verkehrslage, seit 22.06.2026, 18:23\nA5: Karlsruhe -> Heidelberg, zwischen 0.5 km hinter AS Karlsruhe-Nord und 9.3 km vor AS Bruchsal\nEreignismeldung:\n- Im Stillstand\n- Reisezeitverlust: 18 Minuten (zunehmend)"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-22T18:23:00.000Z"
+    },
+    "effects": [
+      {
+        "id": "INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0/delay",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "text",
+          "text": "Karlsruhe -> Heidelberg"
+        },
+        "compliance": "unknown",
+        "normalization": "complete",
+        "kind": "delay",
+        "v": 1,
+        "delay": {
+          "value": 1080,
+          "unit": "s"
+        }
+      }
+    ],
+    "details": {
+      "kind": "congestion",
+      "v": 1,
+      "los": "unknown"
+    }
+  },
+  {
+    "id": "oc:situation:de-autobahn:EVA--vi-blk.2026-06-22_10-00-00-000.de1",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9,
+          51
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A5"
+            }
+          ],
+          "ref": "A5"
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "text",
+        "text": "Frankfurt -> Kassel"
+      },
+      "admin": {
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-autobahn",
+      "sourceFormat": "autobahn",
+      "accessMode": "bulk",
+      "recordId": "EVA--vi-blk.2026-06-22_10-00-00-000.de1",
+      "attribution": {
+        "provider": "Quelle: Die Autobahn GmbH des Bundes",
+        "license": "dl-de/by-2-0"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "f488d46dcde8f2e3e0a49aa0bc19af0bb79e3ccae56bab5cab83fecb7b4ee895",
+    "domain": "roads",
+    "contentHash": "20e48edcb1a252bf1a3722bf4d690d6675f7536132624115709a448f7797adc3",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_hazard",
+    "type": "hazard",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "A5 | Friedberg - Bad Homburg"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Vollsperrung\nA5: Frankfurt -> Kassel, zwischen Friedberg und Bad Homburg\nEreignisnummer: EVA--vi-blk.001"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-20T08:00:00.000Z"
+    },
+    "effects": [
+      {
+        "id": "EVA--vi-blk.2026-06-22_10-00-00-000.de1/closure",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "text",
+          "text": "Frankfurt -> Kassel"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road"
+      }
+    ],
+    "details": {
+      "kind": "road_hazard",
+      "v": 1
+    }
+  }
+]

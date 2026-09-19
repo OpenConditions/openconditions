@@ -180,8 +180,15 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
     const direction = str(impact?.direction);
     const road = str(r.roadName) ?? str(r.road);
 
+    const recordTime = toIsoTimestamp(r.lastUpdated);
     out.push({
       ...baseEvent(src, id, geometry, now),
+      situation: {
+        ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
+        ...((str(r.name) ?? str(r.title) ?? str(r.description) ?? road)
+          ? {}
+          : { headlineFromSource: false as const }),
+      },
       type: resolveType(str(r.eventSubtype), str(r.eventType), str(impact?.impactType)),
       subtype: str(r.eventSubtype) ?? str(r.eventType),
       category: "planned",
@@ -230,9 +237,16 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
     const road = str(p.roadName) ?? str(p.road);
     const direction = str(p.direction);
     const type = resolveType(eventSubType, eventType, str(p.status));
+    const recordTime = toIsoTimestamp(p.lastUpdated) ?? toIsoTimestamp(p.created);
 
     out.push({
       ...baseEvent(src, id, geometry, now),
+      situation: {
+        ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
+        ...((str(p.name) ?? str(p.title) ?? str(p.description) ?? road)
+          ? {}
+          : { headlineFromSource: false as const }),
+      },
       type,
       subtype: eventSubType ?? eventType,
       category: "incident",

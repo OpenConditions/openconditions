@@ -5,6 +5,7 @@ import { CAUSES, CERTAINTIES, SEVERITY_LABELS } from "../classes/situation.js";
 import type { RegistryModule, VocabularyEntry } from "../registry/define.js";
 import { defineSelector, defineVocabulary } from "../registry/define.js";
 import { ICAL_DAYS } from "../schedule/schedule.js";
+import { KERNEL_CHANGE_KINDS } from "./change-kind.js";
 import {
   ACTION_STATUSES,
   COMPLIANCE,
@@ -173,6 +174,7 @@ export const kernelModule: RegistryModule = {
       "Feature amenities (DATEX ServiceFacilityType ∪ OCPI Facility ∪ TPIMS); domain packages contribute.",
     ),
     ...KERNEL_EFFECTS,
+    ...KERNEL_CHANGE_KINDS,
     defineSelector({
       code: "features",
       version: "1.0",

@@ -12,16 +12,13 @@ import {
   evaluateEvidence,
   gridCell,
   normalizeNamespace,
-  OBSERVED_PROPERTIES,
   type Observation,
-  observedKey,
   phenomenonFingerprint,
   reliabilityLowerBound,
   shrinkToward,
   timeBucket,
   truncateType,
   updateReliability,
-  validateObserved,
 } from "../index.js";
 
 /**
@@ -132,13 +129,5 @@ describe("commons substrate public contract (packages/core barrel)", () => {
     expect(updated).toEqual({ alpha: 2, beta: 1 });
     expect(reliabilityLowerBound(updated, 0.8)).toBeGreaterThan(0);
     expect(shrinkToward(updated, prior, 0.5)).toEqual({ alpha: 1.5, beta: 1 });
-  });
-
-  it("observed-properties.ts registry + soft validation are reachable", () => {
-    expect(OBSERVED_PROPERTIES["roads/accident"]).toBeDefined();
-    expect(observedKey(makeEvent({ type: "accident" }))).toBe("roads/accident");
-
-    const { warnings } = validateObserved(makeEvent({ type: "not_a_real_type" }));
-    expect(warnings).toEqual([expect.stringContaining("unregistered observed property")]);
   });
 });

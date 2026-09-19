@@ -1,6 +1,15 @@
 import type { Confidence } from "@openconditions/core";
 import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
 import type { Schedule } from "@openconditions/model";
+import {
+  datexClassification,
+  datexDiscriminator,
+  parseRestrictionInstant,
+  type RestrictionIssue,
+  type RoadRestrictionDetailsV1,
+  type RoadRestrictionFact,
+  toRestrictionInstant,
+} from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
 import {
   type DatexRestrictionContext,
@@ -9,12 +18,6 @@ import {
 } from "./datex-restrictions.js";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { isPlausibleWgs84, reprojectorFor } from "./reproject.js";
-import type {
-  RestrictionIssue,
-  RoadRestrictionDetailsV1,
-  RoadRestrictionFact,
-} from "./restriction-types.js";
-import { parseRestrictionInstant, toRestrictionInstant } from "./restrictions.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
@@ -1555,13 +1558,13 @@ function parseDatexInternal(
     const causeDesc = causeDescriptionOf(rec);
     // Prefer a name/title-typed comment as the headline; the work-type or any
     // other comment as the description; a route/diversion comment as the detour.
-    const headlineText =
+    const sourceHeadline =
       commentByType(/name|title|head/i) ??
       comments.find((c) => !c.type)?.text ??
       comments[0]?.text ??
       multilingual(fallbackComment, "en") ??
-      causeDesc ??
-      defaultHeadline(type);
+      causeDesc;
+    const headlineText = sourceHeadline ?? defaultHeadline(type);
     const descriptionText =
       commentByType(/type|description|desc/i) ??
       comments.map((c) => c.text).find((t) => t !== headlineText) ??
@@ -1596,12 +1599,29 @@ function parseDatexInternal(
       ],
     });
 
+    const discriminator = datexDiscriminator(recType);
+    const classification = datexClassification(
+      recType,
+      discriminator === undefined
+        ? []
+        : xmlNodeToArray(rec[discriminator])
+            .map(text)
+            .filter((v): v is string => v !== undefined),
+      getXmlChildren(rec, "cause")
+        .map((cause) => getXmlChildText(cause, "causeType"))
+        .filter((v): v is string => v !== undefined),
+    );
     const shared = {
       id: `${src.id}:${recId(rec)}`,
       source: src.id,
       sourceFormat: "datex2" as const,
       domain: "roads" as const,
       kind: "event" as const,
+      situation: {
+        ...(classification !== undefined ? { classification } : {}),
+        ...(versionTime !== null ? { sourceUpdatedAt: versionTime } : {}),
+        ...(sourceHeadline === undefined ? { headlineFromSource: false as const } : {}),
+      },
       ...(situationId ? { situationId } : {}),
       type,
       subtype: subtypeOf(rec) ?? recType ?? undefined,

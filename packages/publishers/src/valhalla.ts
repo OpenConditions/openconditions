@@ -1,7 +1,7 @@
 import type { Observation } from "@openconditions/core";
 import { routingEvidenceReasons } from "@openconditions/core";
 import { isInEffectAt } from "@openconditions/model";
-import { hasRestrictionEvidence } from "@openconditions/roads";
+import { hasRestrictionEvidence } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
 import type { SegmentConditionJson } from "./segment-conditions.js";
 

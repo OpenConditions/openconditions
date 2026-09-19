@@ -1,0 +1,387 @@
+[
+  {
+    "id": "oc:situation:be-brussels:1",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.340479167927327,
+          50.839238157091614
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Boulevard Poincaré"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "BE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "be-brussels",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "1",
+      "sourceUpdatedAt": "2025-04-15T16:42:00.000Z",
+      "attribution": {
+        "provider": "Bruxelles Mobilité / Brussel Mobiliteit",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.mobility.brussels/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "33a67c35ab72a14da3425545ae689b8c698d44f3984cad25efad84bea1235ca9",
+    "domain": "roads",
+    "contentHash": "667b49d1fd35c2c4b037a641c0c676d8da45cd268c6aefd4f0e878f1dfd2ee51",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Une ou plusieurs bandes fermées"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:be-brussels:2",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.347453187600001,
+          50.85864867819713
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Square Sainctelette"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "BE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "be-brussels",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "2",
+      "sourceUpdatedAt": "2025-05-02T09:51:00.000Z",
+      "attribution": {
+        "provider": "Bruxelles Mobilité / Brussel Mobiliteit",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.mobility.brussels/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "60e2d0448628b6d26c8b15122885860304b61bda69e4f744817139764da7c938",
+    "domain": "roads",
+    "contentHash": "15f7e8dd0055e850cd93d1e3e1cd6b116564338173b566b0dde058577b8676c7",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "critical",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Bandes rétrécies"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:be-brussels:3",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.345789887354944,
+          50.85870766358903
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Place Sainctelette"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "BE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "be-brussels",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "3",
+      "sourceUpdatedAt": "2025-03-27T09:13:00.000Z",
+      "attribution": {
+        "provider": "Bruxelles Mobilité / Brussel Mobiliteit",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.mobility.brussels/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "6a33b74826c984b7a30a5b5a5ae853b1f8bbc880db4995365d0b1657390ee085",
+    "domain": "roads",
+    "contentHash": "e42c452f81d495cf4f07997d8f831fd8e27300e6a88d2109133f7ae095604b65",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Une ou plusieurs bandes fermées"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:be-brussels:4",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.396598540902679,
+          50.87587222720885
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Rue Edouard Stuckens"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "BE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "be-brussels",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "4",
+      "sourceUpdatedAt": "2025-05-20T21:59:00.000Z",
+      "attribution": {
+        "provider": "Bruxelles Mobilité / Brussel Mobiliteit",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.mobility.brussels/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "0b73550241f8bb796cc3a27ac6c82c9f3b50e6e9359cbfacf3a530255b663f63",
+    "domain": "roads",
+    "contentHash": "e7f45852fda13a2facb2e6fb1b565032d96a594323c4e85262f9e84246bb7e2f",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Bandes rétrécies"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:be-brussels:5",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.319570833227469,
+          50.79832088091682
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Chaussée de Neerstalle"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "BE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "be-brussels",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "5",
+      "sourceUpdatedAt": "2025-04-03T16:43:00.000Z",
+      "attribution": {
+        "provider": "Bruxelles Mobilité / Brussel Mobiliteit",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.mobility.brussels/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "cf18434effc9999dde21b7b49d61e2d25499ce9a0909dedfa308464f67710cf1",
+    "domain": "roads",
+    "contentHash": "1a58ffe6ee8919b213fe183d68d8a192adabb796fdd3549879eea96216763fa1",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Les deux directions fermées"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  }
+]

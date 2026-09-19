@@ -1,5 +1,4 @@
 import type { ConditionEvent, Measurement } from "@openconditions/core";
-import { observedKey } from "@openconditions/core";
 import GtfsRealtimeBindings from "gtfs-realtime-bindings";
 import { roadFields } from "./types.js";
 
@@ -310,7 +309,7 @@ function occupancyStatusInt(level: string | undefined): number | undefined {
 function toOccupancyEntity(
   m: Measurement,
 ): GtfsRealtimeBindings.transit_realtime.IFeedEntity | null {
-  if (observedKey(m) !== "transit/occupancy") return null;
+  if (m.domain !== "transit" || m.metric !== "occupancy") return null;
   const occupancyStatus = occupancyStatusInt(m.level);
   if (occupancyStatus === undefined) return null;
   const tripId = cleanId(m.subject?.find((s) => s.type === "gtfs-trip")?.id);

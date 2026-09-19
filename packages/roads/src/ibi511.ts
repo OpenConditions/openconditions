@@ -1,4 +1,5 @@
 import { toIsoTimestamp } from "@openconditions/core";
+import { ibi511Classification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
@@ -149,8 +150,13 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
       ? (SEVERITY_MAP[ev.Severity.toLowerCase()] ?? "unknown")
       : "unknown";
     const road = typeof ev.RoadwayName === "string" && ev.RoadwayName ? ev.RoadwayName : undefined;
-    const headline =
-      typeof ev.Description === "string" && ev.Description ? ev.Description : (road ?? type);
+    const hasDescription = typeof ev.Description === "string" && !!ev.Description;
+    const headline = hasDescription ? (ev.Description as string) : (road ?? type);
+    const classification =
+      ev.IsFullClosure === true
+        ? { kind: "closure", type: "closure", subtype: "full" }
+        : ibi511Classification(ev.EventType ?? "");
+    const recordTime = toIsoTimestamp(ev.LastUpdated);
 
     out.push({
       id: `${src.id}:${localId}`,
@@ -158,6 +164,11 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
       sourceFormat: "ibi511",
       domain: "roads",
       kind: "event",
+      situation: {
+        ...(classification !== undefined ? { classification } : {}),
+        ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
+        ...(hasDescription ? {} : { headlineFromSource: false as const }),
+      },
       type,
       subtype: ev.EventSubType ?? ev.EventType ?? undefined,
       category,
@@ -316,12 +327,19 @@ export function parseIbi511Conditions(
     const severity = conditionSeverity(conditions);
     const closed = conditions.some((c) => CLOSED_CONDITIONS.has(c.toLowerCase()));
 
+    const recordTime = toIsoTimestamp(rec.LastUpdated);
     out.push({
       id: `${src.id}:${road ?? "seg"}-${index}`,
       source: src.id,
       sourceFormat: "ibi511",
       domain: "roads",
       kind: "event",
+      situation: {
+        classification: closed
+          ? { kind: "closure", type: "closure", subtype: "full" }
+          : { kind: "road_condition", type: "surface" },
+        ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
+      },
       type: closed ? "road_closure" : "weather",
       subtype: label,
       category: closed ? "incident" : "conditions",

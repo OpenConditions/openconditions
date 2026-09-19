@@ -1,5 +1,5 @@
 import { observationsByBbox, type RoadConditionRoutingEvidence } from "@openconditions/core";
-import { projectRoadRestrictionDetails } from "@openconditions/roads/restrictions";
+import { projectRoadRestrictionDetails } from "@openconditions/model-roads/restrictions";
 import type { FeatureCollection } from "geojson";
 import { featureCollectionToRoadConditionEvents } from "./toRoadConditionEvents.js";
 import { featureCollectionToRoadFlowSegments } from "./toRoadFlowSegments.js";

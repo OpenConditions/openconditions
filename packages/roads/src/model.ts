@@ -6,7 +6,7 @@ import type {
   PointGeometry,
   Severity,
 } from "@openconditions/core";
-import type { RoadRestrictionDetailsV1 } from "./restriction-types.js";
+import type { RoadClassification, RoadRestrictionDetailsV1 } from "@openconditions/model-roads";
 
 /**
  * Declarative field mapping for the generic GeoJSON parser. A feed serving a
@@ -168,8 +168,25 @@ export interface Restriction {
   validTo?: string;
 }
 
+/**
+ * What a parser knows for the situation model that the RoadEvent fields cannot
+ * carry. The situation assembler prefers these over the legacy fields.
+ */
+export interface SituationHints {
+  /** The classification from the source's own codes, via the roads crosswalk. */
+  classification?: RoadClassification;
+  /**
+   * The publisher's timestamp for this record. Absent when the source gives
+   * none: `dataUpdatedAt` falls back to other times, this never does.
+   */
+  sourceUpdatedAt?: string;
+  /** False when the parser synthesised `headline` because the source has none. */
+  headlineFromSource?: false;
+}
+
 export interface RoadEvent extends ConditionEvent {
   domain: "roads";
+  situation?: SituationHints;
   type: RoadEventType;
   isPlanned: boolean;
   direction?: string;

@@ -224,9 +224,11 @@ export function featuresToRoadEvents(
     const rawType = str(get(props, mapping.typeField));
     const { type, category, isPlanned } = resolveType(rawType, mapping);
     const localId = str(get(props, mapping.idField)) ?? String(index);
-    const headline = str(get(props, mapping.headlineField)) ?? defaultHeadline(type);
+    const sourceHeadline = str(get(props, mapping.headlineField));
+    const headline = sourceHeadline ?? defaultHeadline(type);
     const road = str(get(props, mapping.roadField));
     const updated = str(get(props, mapping.updatedField));
+    const recordTime = toIsoTimestamp(updated);
 
     out.push({
       id: `${src.id}:${localId}`,
@@ -234,6 +236,10 @@ export function featuresToRoadEvents(
       sourceFormat: format,
       domain: "roads",
       kind: "event",
+      situation: {
+        ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
+        ...(sourceHeadline === undefined ? { headlineFromSource: false as const } : {}),
+      },
       type,
       subtype: rawType,
       category,

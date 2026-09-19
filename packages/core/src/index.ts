@@ -5,7 +5,6 @@ export * from "./evidence.js";
 export * from "./freshness.js";
 export * from "./model.js";
 export * from "./observationsByBbox.js";
-export * from "./observed-properties.js";
 export * from "./readObservations.js";
 export * from "./routing-evidence.js";
 export * from "./severity.js";

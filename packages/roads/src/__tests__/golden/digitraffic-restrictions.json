@@ -1,0 +1,1352 @@
+[
+  {
+    "id": "oc:situation:fi-digitraffic:GUID50470575",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              22.403636,
+              60.465259
+            ],
+            [
+              22.402098,
+              60.465304
+            ],
+            [
+              22.40208,
+              60.465304
+            ],
+            [
+              22.401277,
+              60.465319
+            ],
+            [
+              22.401168,
+              60.465321
+            ],
+            [
+              22.401134,
+              60.465322
+            ],
+            [
+              22.400878,
+              60.465329
+            ],
+            [
+              22.400225,
+              60.465345
+            ],
+            [
+              22.400216,
+              60.465345
+            ],
+            [
+              22.398544,
+              60.465382
+            ],
+            [
+              22.397451,
+              60.465409
+            ],
+            [
+              22.397442,
+              60.465409
+            ],
+            [
+              22.397189,
+              60.465421
+            ],
+            [
+              22.397181,
+              60.465421
+            ],
+            [
+              22.397,
+              60.465428
+            ],
+            [
+              22.396991,
+              60.465428
+            ],
+            [
+              22.396846,
+              60.465433
+            ],
+            [
+              22.396484,
+              60.465448
+            ],
+            [
+              22.396122,
+              60.465465
+            ],
+            [
+              22.395761,
+              60.465484
+            ],
+            [
+              22.3954,
+              60.465504
+            ],
+            [
+              22.395039,
+              60.465526
+            ],
+            [
+              22.394679,
+              60.46555
+            ],
+            [
+              22.394602,
+              60.465556
+            ]
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Turun kehätie"
+            }
+          ],
+          "ref": "40",
+          "to": "Turun kehätie"
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "text",
+        "text": "Naantali"
+      },
+      "tmc": {
+        "country": "6",
+        "table": 17,
+        "code": 2681
+      },
+      "admin": {
+        "country": "FI"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Lieto, Varsinais-Suomi"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fi-digitraffic",
+      "sourceFormat": "digitraffic",
+      "accessMode": "bulk",
+      "recordId": "GUID50470575",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-09-11T10:29:49.631Z",
+      "attribution": {
+        "provider": "Fintraffic / Digitraffic",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "b7369443c1f8a6e2f45dda775cf6422d002e580a6442720e9765efa0d5894417",
+    "domain": "roads",
+    "contentHash": "68d5a64f85310be08501e034aa8230399990054e7116c108a156deff1cd3251a",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "critical",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Tie 40, eli Turun kehätie, Lieto. Tietyö."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Tie 40, eli Turun kehätie, Lieto.\nTarkempi paikka: Paikasta Tuulissuon eritasoliittymä 500 m, vaikutusalue 500 m, suuntaan Kauselan eritasoliittymä."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-09-10T21:00:00.000Z",
+      "end": "2026-09-18T20:59:59.999Z"
+    },
+    "effects": [
+      {
+        "id": "GUID50470575/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "text",
+          "text": "Naantali"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "vehicleImpact": "some_lanes_closed"
+      },
+      {
+        "id": "GUID50470575/speed_limit",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "text",
+          "text": "Naantali"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "speed_limit",
+        "v": 1,
+        "limit": {
+          "value": 60,
+          "unit": "km/h"
+        }
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1,
+      "phases": [
+        {
+          "id": "GUID50473387",
+          "validity": {
+            "status": "active",
+            "start": "2026-09-10T21:00:00.000Z",
+            "end": "2026-09-18T20:59:59.999Z"
+          },
+          "effects": [
+            {
+              "id": "GUID50470575/dimension_limit",
+              "location": {
+                "areaDescription": [
+                  {
+                    "lang": "und",
+                    "text": "Tie 40, eli Turun kehätie, Lieto.\nTarkempi paikka: Paikasta Tuulissuon eritasoliittymä 500 m, vaikutusalue 500 m, suuntaan Kauselan eritasoliittymä."
+                  }
+                ]
+              },
+              "applicability": {
+                "kind": "all"
+              },
+              "direction": {
+                "value": "negative",
+                "basis": "road_reference",
+                "text": "Naantali"
+              },
+              "validity": {
+                "status": "unknown",
+                "start": "2026-09-10T21:00:00.000Z",
+                "end": "2026-09-18T20:59:59.999Z"
+              },
+              "compliance": "unknown",
+              "normalization": "complete",
+              "source": {
+                "path": "announcements[0].roadWorkPhases[0].restrictions[0]",
+                "tokens": {
+                  "sourcePath": "announcements[0].roadWorkPhases[0].restrictions[0]",
+                  "type": "vehicle width limit",
+                  "name": "Ajoneuvon maksimileveys",
+                  "quantity": 5,
+                  "unit": "m",
+                  "phaseId": "GUID50473387",
+                  "direction": "neg",
+                  "eventWindow": {
+                    "validFrom": "2026-09-10T21:00:00.000Z",
+                    "validTo": "2026-09-18T20:59:59.999Z"
+                  },
+                  "phaseWindow": {
+                    "validFrom": "2026-09-10T21:00:00.000Z",
+                    "validTo": "2026-09-18T20:59:59.999Z"
+                  },
+                  "locationRefs": {
+                    "scheme": "digitraffic_road_address",
+                    "road": 40,
+                    "roadSection": 5,
+                    "primaryDistance": 2499,
+                    "secondaryDistance": 2000,
+                    "openlr": "IzXFrAEMPQ=="
+                  }
+                }
+              },
+              "kind": "dimension_limit",
+              "v": 1,
+              "dimension": "width",
+              "value": {
+                "value": 5,
+                "unit": "m"
+              },
+              "operator": "lte",
+              "meaning": "maximum_permitted"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "oc:situation:fi-digitraffic:GUID50468844",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          24.249493,
+          64.264338
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "7840"
+            }
+          ],
+          "ref": "7840"
+        }
+      ],
+      "direction": {
+        "value": "both",
+        "basis": "alert_c"
+      },
+      "tmc": {
+        "country": "6",
+        "table": 17,
+        "code": 22541
+      },
+      "admin": {
+        "country": "FI"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Kalajoki, Pohjois-Pohjanmaa"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fi-digitraffic",
+      "sourceFormat": "digitraffic",
+      "accessMode": "bulk",
+      "recordId": "GUID50468844",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-08-13T05:15:41.281Z",
+      "attribution": {
+        "provider": "Fintraffic / Digitraffic",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "707fe80b8b6a66d7edbef2aa93ac7ffa5ccec205014432baad44f9a81e438620",
+    "domain": "roads",
+    "contentHash": "a8b357979cd3793ad38ee0dc1253126a686cfe2c7fe5e607d2ac55bfec9b16a9",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Tie 7840, Kalajoki. Tietyö."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Tie 7840 välillä Yppäri - Alavieska, Kalajoki.\nTarkempi paikka: Paikasta Metsäkylä 5,1 km, suuntaan Taluskylä."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-08-12T21:00:00.000Z",
+      "end": "2026-09-30T20:59:59.999Z"
+    },
+    "effects": [
+      {
+        "id": "GUID50468844/speed_limit",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "both",
+          "basis": "alert_c"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "speed_limit",
+        "v": 1,
+        "limit": {
+          "value": 50,
+          "unit": "km/h"
+        }
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1,
+      "phases": [
+        {
+          "id": "GUID50471633",
+          "validity": {
+            "status": "active",
+            "start": "2026-08-12T21:00:00.000Z",
+            "end": "2026-09-30T20:59:59.999Z"
+          },
+          "effects": [
+            {
+              "id": "GUID50468844/dimension_limit",
+              "location": {
+                "areaDescription": [
+                  {
+                    "lang": "und",
+                    "text": "Tie 7840 välillä Yppäri - Alavieska, Kalajoki.\nTarkempi paikka: Paikasta Metsäkylä 5,1 km, suuntaan Taluskylä."
+                  }
+                ]
+              },
+              "applicability": {
+                "kind": "all"
+              },
+              "direction": {
+                "value": "both",
+                "basis": "road_reference"
+              },
+              "validity": {
+                "status": "unknown",
+                "start": "2026-08-12T21:00:00.000Z",
+                "end": "2026-09-30T20:59:59.999Z"
+              },
+              "compliance": "unknown",
+              "normalization": "complete",
+              "source": {
+                "path": "announcements[0].roadWorkPhases[0].restrictions[0]",
+                "tokens": {
+                  "sourcePath": "announcements[0].roadWorkPhases[0].restrictions[0]",
+                  "type": "vehicle height limit",
+                  "name": "Ajoneuvon maksimikorkeus",
+                  "quantity": 5.5,
+                  "unit": "m",
+                  "phaseId": "GUID50471633",
+                  "direction": "both",
+                  "eventWindow": {
+                    "validFrom": "2026-08-12T21:00:00.000Z",
+                    "validTo": "2026-09-30T20:59:59.999Z"
+                  },
+                  "phaseWindow": {
+                    "validFrom": "2026-08-12T21:00:00.000Z",
+                    "validTo": "2026-09-30T20:59:59.999Z"
+                  },
+                  "locationRefs": {
+                    "scheme": "digitraffic_road_address",
+                    "road": 7840,
+                    "roadSection": 3,
+                    "primaryDistance": 5060,
+                    "secondaryDistance": 5060,
+                    "openlr": "IzeAtAF6CQ=="
+                  }
+                }
+              },
+              "kind": "dimension_limit",
+              "v": 1,
+              "dimension": "height",
+              "value": {
+                "value": 5.5,
+                "unit": "m"
+              },
+              "operator": "lte",
+              "meaning": "maximum_permitted"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "oc:situation:fi-digitraffic:GUID50466626",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          26.723436,
+          60.883349
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "6"
+            }
+          ],
+          "ref": "6"
+        }
+      ],
+      "direction": {
+        "value": "both",
+        "basis": "alert_c"
+      },
+      "tmc": {
+        "country": "6",
+        "table": 17,
+        "code": 1483
+      },
+      "admin": {
+        "country": "FI"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Kouvola, Kymenlaakso"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fi-digitraffic",
+      "sourceFormat": "digitraffic",
+      "accessMode": "bulk",
+      "recordId": "GUID50466626",
+      "recordVersion": "5",
+      "sourceUpdatedAt": "2026-07-27T10:46:32.014Z",
+      "attribution": {
+        "provider": "Fintraffic / Digitraffic",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "ee663c488a8b8f330f21a60457cfda11861f8c095f2d441a7bcc2011964c8640",
+    "domain": "roads",
+    "contentHash": "b9acb8fa0afe79e66bbacc4c5f728eae672e55c0eed55fe01e1464c7f9957e5e",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Tie 6, Kouvola. Tietyö."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Tie 6 välillä Koskenkylä - Lappeenranta, Kouvola.\nTarkempi paikka: Paikasta Tervaskangas 3,7 km, suuntaan Käyrälammen liittymä."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-29T21:00:00.000Z",
+      "end": "2026-10-30T21:59:59.999Z"
+    },
+    "effects": [
+      {
+        "id": "GUID50466626/speed_limit",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "both",
+          "basis": "alert_c"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "speed_limit",
+        "v": 1,
+        "limit": {
+          "value": 30,
+          "unit": "km/h"
+        }
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1,
+      "phases": [
+        {
+          "id": "GUID50469390",
+          "validity": {
+            "status": "active",
+            "start": "2026-06-29T21:00:00.000Z",
+            "end": "2026-10-30T21:59:59.999Z"
+          },
+          "effects": [
+            {
+              "id": "GUID50466626/dimension_limit:1",
+              "location": {
+                "areaDescription": [
+                  {
+                    "lang": "und",
+                    "text": "Tie 6 välillä Koskenkylä - Lappeenranta, Kouvola.\nTarkempi paikka: Paikasta Tervaskangas 3,7 km, suuntaan Käyrälammen liittymä."
+                  }
+                ]
+              },
+              "applicability": {
+                "kind": "all"
+              },
+              "direction": {
+                "value": "both",
+                "basis": "road_reference"
+              },
+              "validity": {
+                "status": "unknown",
+                "start": "2026-06-29T21:00:00.000Z",
+                "end": "2026-10-30T21:59:59.999Z"
+              },
+              "compliance": "unknown",
+              "normalization": "complete",
+              "source": {
+                "path": "announcements[0].roadWorkPhases[0].restrictions[0]",
+                "tokens": {
+                  "sourcePath": "announcements[0].roadWorkPhases[0].restrictions[0]",
+                  "type": "vehicle height limit",
+                  "name": "Ajoneuvon maksimikorkeus",
+                  "quantity": 7,
+                  "unit": "m",
+                  "phaseId": "GUID50469390",
+                  "direction": "both",
+                  "eventWindow": {
+                    "validFrom": "2026-06-29T21:00:00.000Z",
+                    "validTo": "2026-10-30T21:59:59.999Z"
+                  },
+                  "phaseWindow": {
+                    "validFrom": "2026-06-29T21:00:00.000Z",
+                    "validTo": "2026-10-30T21:59:59.999Z"
+                  },
+                  "locationRefs": {
+                    "scheme": "digitraffic_road_address",
+                    "road": 6,
+                    "roadSection": 201,
+                    "primaryDistance": 1166,
+                    "secondaryDistance": 1166
+                  }
+                }
+              },
+              "kind": "dimension_limit",
+              "v": 1,
+              "dimension": "height",
+              "value": {
+                "value": 7,
+                "unit": "m"
+              },
+              "operator": "lte",
+              "meaning": "maximum_permitted"
+            },
+            {
+              "id": "GUID50466626/dimension_limit:2",
+              "location": {
+                "areaDescription": [
+                  {
+                    "lang": "und",
+                    "text": "Tie 6 välillä Koskenkylä - Lappeenranta, Kouvola.\nTarkempi paikka: Paikasta Tervaskangas 3,7 km, suuntaan Käyrälammen liittymä."
+                  }
+                ]
+              },
+              "applicability": {
+                "kind": "all"
+              },
+              "direction": {
+                "value": "both",
+                "basis": "road_reference"
+              },
+              "validity": {
+                "status": "unknown",
+                "start": "2026-06-29T21:00:00.000Z",
+                "end": "2026-10-30T21:59:59.999Z"
+              },
+              "compliance": "unknown",
+              "normalization": "complete",
+              "source": {
+                "path": "announcements[0].roadWorkPhases[0].restrictions[1]",
+                "tokens": {
+                  "sourcePath": "announcements[0].roadWorkPhases[0].restrictions[1]",
+                  "type": "vehicle width limit",
+                  "name": "Ajoneuvon maksimileveys",
+                  "quantity": 6,
+                  "unit": "m",
+                  "phaseId": "GUID50469390",
+                  "direction": "both",
+                  "eventWindow": {
+                    "validFrom": "2026-06-29T21:00:00.000Z",
+                    "validTo": "2026-10-30T21:59:59.999Z"
+                  },
+                  "phaseWindow": {
+                    "validFrom": "2026-06-29T21:00:00.000Z",
+                    "validTo": "2026-10-30T21:59:59.999Z"
+                  },
+                  "locationRefs": {
+                    "scheme": "digitraffic_road_address",
+                    "road": 6,
+                    "roadSection": 201,
+                    "primaryDistance": 1166,
+                    "secondaryDistance": 1166
+                  }
+                }
+              },
+              "kind": "dimension_limit",
+              "v": 1,
+              "dimension": "width",
+              "value": {
+                "value": 6,
+                "unit": "m"
+              },
+              "operator": "lte",
+              "meaning": "maximum_permitted"
+            },
+            {
+              "id": "GUID50466626/dimension_limit:3",
+              "location": {
+                "areaDescription": [
+                  {
+                    "lang": "und",
+                    "text": "Tie 6 välillä Koskenkylä - Lappeenranta, Kouvola.\nTarkempi paikka: Paikasta Tervaskangas 3,7 km, suuntaan Käyrälammen liittymä."
+                  }
+                ]
+              },
+              "applicability": {
+                "kind": "all"
+              },
+              "direction": {
+                "value": "both",
+                "basis": "road_reference"
+              },
+              "validity": {
+                "status": "unknown",
+                "start": "2026-06-29T21:00:00.000Z",
+                "end": "2026-10-30T21:59:59.999Z"
+              },
+              "compliance": "unknown",
+              "normalization": "complete",
+              "source": {
+                "path": "announcements[0].roadWorkPhases[0].restrictions[2]",
+                "tokens": {
+                  "sourcePath": "announcements[0].roadWorkPhases[0].restrictions[2]",
+                  "type": "vehicle length limit",
+                  "name": "Ajoneuvon maksimipituus",
+                  "quantity": 40,
+                  "unit": "m",
+                  "phaseId": "GUID50469390",
+                  "direction": "both",
+                  "eventWindow": {
+                    "validFrom": "2026-06-29T21:00:00.000Z",
+                    "validTo": "2026-10-30T21:59:59.999Z"
+                  },
+                  "phaseWindow": {
+                    "validFrom": "2026-06-29T21:00:00.000Z",
+                    "validTo": "2026-10-30T21:59:59.999Z"
+                  },
+                  "locationRefs": {
+                    "scheme": "digitraffic_road_address",
+                    "road": 6,
+                    "roadSection": 201,
+                    "primaryDistance": 1166,
+                    "secondaryDistance": 1166
+                  }
+                }
+              },
+              "kind": "dimension_limit",
+              "v": 1,
+              "dimension": "length",
+              "value": {
+                "value": 40,
+                "unit": "m"
+              },
+              "operator": "lte",
+              "meaning": "maximum_permitted"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "oc:situation:fi-digitraffic:GUID50465935",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          23.536928,
+          60.117282
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "104"
+            }
+          ],
+          "ref": "104"
+        }
+      ],
+      "direction": {
+        "value": "both",
+        "basis": "alert_c"
+      },
+      "tmc": {
+        "country": "6",
+        "table": 17,
+        "code": 3592
+      },
+      "admin": {
+        "country": "FI"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Raasepori, Uusimaa"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fi-digitraffic",
+      "sourceFormat": "digitraffic",
+      "accessMode": "bulk",
+      "recordId": "GUID50465935",
+      "recordVersion": "31",
+      "sourceUpdatedAt": "2026-08-28T04:18:02.629Z",
+      "attribution": {
+        "provider": "Fintraffic / Digitraffic",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "9d7b56b86c147cd903b4f25cdff9335b67753565d2593a51ff54fa649c22a13f",
+    "domain": "roads",
+    "contentHash": "5a012814a1fc459359bf52885977388f753965cd82719c0e721b6de01d2bd39f",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "critical",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Tie 104, Raasepori. Tietyö."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Tie 104 välillä Pohja - Sammatti, Raasepori.\nTarkempi paikka: Fiskarsin tunneli."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-11T21:00:00.000Z",
+      "end": "2026-12-14T21:59:59.999Z"
+    },
+    "effects": [
+      {
+        "id": "GUID50465935/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "both",
+          "basis": "alert_c"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "vehicleImpact": "some_lanes_closed"
+      },
+      {
+        "id": "GUID50465935/speed_limit",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "both",
+          "basis": "alert_c"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "speed_limit",
+        "v": 1,
+        "limit": {
+          "value": 30,
+          "unit": "km/h"
+        }
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1,
+      "phases": [
+        {
+          "id": "GUID50469933",
+          "validity": {
+            "status": "active",
+            "start": "2026-07-19T21:00:00.000Z",
+            "end": "2026-12-14T21:59:59.999Z"
+          },
+          "effects": [
+            {
+              "id": "GUID50465935/dimension_limit",
+              "location": {
+                "areaDescription": [
+                  {
+                    "lang": "und",
+                    "text": "Tie 104 välillä Pohja - Sammatti, Raasepori.\nTarkempi paikka: Paikasta Pohja 2,0 km, vaikutusalue 200 m, suuntaan Fiskars."
+                  }
+                ]
+              },
+              "applicability": {
+                "kind": "all"
+              },
+              "direction": {
+                "value": "both",
+                "basis": "road_reference"
+              },
+              "validity": {
+                "status": "unknown",
+                "start": "2026-07-19T21:00:00.000Z",
+                "end": "2026-12-14T21:59:59.999Z"
+              },
+              "compliance": "unknown",
+              "normalization": "complete",
+              "source": {
+                "path": "announcements[0].roadWorkPhases[1].restrictions[2]",
+                "tokens": {
+                  "sourcePath": "announcements[0].roadWorkPhases[1].restrictions[2]",
+                  "type": "vehicle gross weight limit",
+                  "name": "Painorajoitus",
+                  "quantity": 26,
+                  "unit": "t",
+                  "phaseId": "GUID50469933",
+                  "direction": "both",
+                  "eventWindow": {
+                    "validFrom": "2026-06-11T21:00:00.000Z",
+                    "validTo": "2026-12-14T21:59:59.999Z"
+                  },
+                  "phaseWindow": {
+                    "validFrom": "2026-07-19T21:00:00.000Z",
+                    "validTo": "2026-12-14T21:59:59.999Z"
+                  },
+                  "locationRefs": {
+                    "scheme": "digitraffic_road_address",
+                    "road": 104,
+                    "roadSection": 1,
+                    "primaryDistance": 1971,
+                    "secondaryDistance": 2160,
+                    "openlr": "IzWZ1wFPPg=="
+                  }
+                }
+              },
+              "kind": "dimension_limit",
+              "v": 1,
+              "dimension": "gross_weight",
+              "value": {
+                "value": 26000,
+                "unit": "kg"
+              },
+              "operator": "lte",
+              "meaning": "maximum_permitted"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "oc:situation:fi-digitraffic:GUID50461965",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "MultiLineString",
+        "coordinates": [
+          [
+            [
+              29.973352,
+              62.090067
+            ],
+            [
+              29.974301,
+              62.08996
+            ],
+            [
+              29.975937,
+              62.089783
+            ],
+            [
+              29.976608,
+              62.089714
+            ],
+            [
+              29.977239,
+              62.08964
+            ],
+            [
+              29.978013,
+              62.089563
+            ],
+            [
+              29.978815,
+              62.08948
+            ],
+            [
+              29.979672,
+              62.089394
+            ],
+            [
+              29.980451,
+              62.089311
+            ],
+            [
+              29.981106,
+              62.089242
+            ],
+            [
+              29.981382,
+              62.089208
+            ],
+            [
+              29.981608,
+              62.089184
+            ]
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "486"
+            }
+          ],
+          "ref": "486"
+        }
+      ],
+      "direction": {
+        "value": "both",
+        "basis": "alert_c"
+      },
+      "tmc": {
+        "country": "6",
+        "table": 17,
+        "code": 10468
+      },
+      "admin": {
+        "country": "FI"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Kitee, Pohjois-Karjala"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "fi-digitraffic",
+      "sourceFormat": "digitraffic",
+      "accessMode": "bulk",
+      "recordId": "GUID50461965",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-03-17T11:36:45.054Z",
+      "attribution": {
+        "provider": "Fintraffic / Digitraffic",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "860c372aa0577f1d342b637b0b0e5d6dfb4cac797a106d62e9d225b6e5d8e465",
+    "domain": "roads",
+    "contentHash": "b073dd7d61e2a50dc21edad14c06908da024e76c0d7f328a7a20e57c24118fb1",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Tie 486, Kitee. Tietyö."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Tie 486 välillä Puhos - Tohmajärvi, Kitee.\nTarkempi paikka: Paikasta Lepikko 900 m, vaikutusalue 400 m, suuntaan Niinikumpu."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2025-12-28T22:00:00.000Z",
+      "end": "2026-11-30T21:59:59.999Z"
+    },
+    "effects": [
+      {
+        "id": "GUID50461965/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "both",
+          "basis": "alert_c"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "vehicleImpact": "some_lanes_closed"
+      },
+      {
+        "id": "GUID50461965/speed_limit",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "both",
+          "basis": "alert_c"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "speed_limit",
+        "v": 1,
+        "limit": {
+          "value": 30,
+          "unit": "km/h"
+        }
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1,
+      "phases": [
+        {
+          "id": "GUID50464686",
+          "validity": {
+            "status": "active",
+            "start": "2025-12-28T22:00:00.000Z",
+            "end": "2026-11-30T21:59:59.999Z"
+          },
+          "effects": [
+            {
+              "id": "GUID50461965/dimension_limit:1",
+              "location": {
+                "areaDescription": [
+                  {
+                    "lang": "und",
+                    "text": "Tie 486 välillä Puhos - Tohmajärvi, Kitee.\nTarkempi paikka: Paikasta Lepikko 900 m, vaikutusalue 400 m, suuntaan Niinikumpu."
+                  }
+                ]
+              },
+              "applicability": {
+                "kind": "all"
+              },
+              "direction": {
+                "value": "both",
+                "basis": "road_reference"
+              },
+              "validity": {
+                "status": "unknown",
+                "start": "2025-12-28T22:00:00.000Z",
+                "end": "2026-11-30T21:59:59.999Z"
+              },
+              "compliance": "unknown",
+              "normalization": "complete",
+              "source": {
+                "path": "announcements[0].roadWorkPhases[0].restrictions[2]",
+                "tokens": {
+                  "sourcePath": "announcements[0].roadWorkPhases[0].restrictions[2]",
+                  "type": "vehicle gross weight limit",
+                  "name": "Painorajoitus",
+                  "quantity": 75,
+                  "unit": "t",
+                  "phaseId": "GUID50464686",
+                  "direction": "both",
+                  "eventWindow": {
+                    "validFrom": "2025-12-28T22:00:00.000Z",
+                    "validTo": "2026-11-30T21:59:59.999Z"
+                  },
+                  "phaseWindow": {
+                    "validFrom": "2025-12-28T22:00:00.000Z",
+                    "validTo": "2026-11-30T21:59:59.999Z"
+                  },
+                  "locationRefs": {
+                    "scheme": "digitraffic_road_address",
+                    "road": 486,
+                    "roadSection": 1,
+                    "primaryDistance": 865,
+                    "secondaryDistance": 1308
+                  }
+                }
+              },
+              "kind": "dimension_limit",
+              "v": 1,
+              "dimension": "gross_weight",
+              "value": {
+                "value": 75000,
+                "unit": "kg"
+              },
+              "operator": "lte",
+              "meaning": "maximum_permitted"
+            },
+            {
+              "id": "GUID50461965/dimension_limit:2",
+              "location": {
+                "areaDescription": [
+                  {
+                    "lang": "und",
+                    "text": "Tie 486 välillä Puhos - Tohmajärvi, Kitee.\nTarkempi paikka: Paikasta Lepikko 900 m, vaikutusalue 400 m, suuntaan Niinikumpu."
+                  }
+                ]
+              },
+              "applicability": {
+                "kind": "all"
+              },
+              "direction": {
+                "value": "both",
+                "basis": "road_reference"
+              },
+              "validity": {
+                "status": "unknown",
+                "start": "2025-12-28T22:00:00.000Z",
+                "end": "2026-11-30T21:59:59.999Z"
+              },
+              "compliance": "unknown",
+              "normalization": "complete",
+              "source": {
+                "path": "announcements[0].roadWorkPhases[0].restrictions[8]",
+                "tokens": {
+                  "sourcePath": "announcements[0].roadWorkPhases[0].restrictions[8]",
+                  "type": "detour gross weight limit",
+                  "name": "Kiertotien maksimikuorma",
+                  "quantity": 75,
+                  "unit": "t",
+                  "phaseId": "GUID50464686",
+                  "direction": "both",
+                  "eventWindow": {
+                    "validFrom": "2025-12-28T22:00:00.000Z",
+                    "validTo": "2026-11-30T21:59:59.999Z"
+                  },
+                  "phaseWindow": {
+                    "validFrom": "2025-12-28T22:00:00.000Z",
+                    "validTo": "2026-11-30T21:59:59.999Z"
+                  },
+                  "locationRefs": {
+                    "scheme": "digitraffic_road_address",
+                    "road": 486,
+                    "roadSection": 1,
+                    "primaryDistance": 865,
+                    "secondaryDistance": 1308
+                  }
+                }
+              },
+              "kind": "dimension_limit",
+              "v": 1,
+              "dimension": "gross_weight",
+              "value": {
+                "value": 75000,
+                "unit": "kg"
+              },
+              "operator": "lte",
+              "meaning": "maximum_permitted"
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

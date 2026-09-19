@@ -3,10 +3,8 @@ import {
   canonicalId,
   type Measurement,
   type Observation,
-  observedKey,
   type PrivacyClass,
   phenomenonFingerprint,
-  validateObserved,
 } from "@openconditions/core";
 import { isInstanceId } from "@openconditions/model";
 
@@ -119,47 +117,6 @@ export function resolveInstanceId(env: NodeJS.ProcessEnv = process.env): string 
 }
 
 /**
- * Per-(source, observed-property-key) set of soft-validation warnings already
- * logged this process run, so one misbehaving feed logs a given warning once per
- * key rather than once per row. Process-lifetime and never cleared: the warning
- * is a "fix your registry/mapper" signal, not a per-cycle metric.
- */
-const warnedObservedKeys = new Set<string>();
-
-/**
- * Soft-validate an observation against the ObservedProperty registry and log any
- * warnings at WARN level, rate-limited to once per (source, key) per process run.
- * Purely advisory — the normalization result is UNAFFECTED (validateObserved
- * never throws or mutates); an unknown/mis-keyed type still ingests. This is the
- * key-sprawl guard's only runtime touch.
- */
-function warnOnObserved(obs: Observation): void {
-  let warnings: string[];
-  try {
-    ({ warnings } = validateObserved(obs));
-  } catch (err) {
-    // validateObserved is documented never to throw; if a future core regression
-    // breaks that, an advisory key-sprawl check must NEVER abort a source swap.
-    // Log once (reusing the dedup set under a distinct key) and continue.
-    const failKey = `validateObserved-threw ${obs.source}`;
-    if (!warnedObservedKeys.has(failKey)) {
-      warnedObservedKeys.add(failKey);
-      console.warn(
-        `[ingest] ${obs.source}: validateObserved threw unexpectedly, skipping soft validation: ${String(err)}`,
-      );
-    }
-    return;
-  }
-  if (warnings.length === 0) return;
-  const dedupeKey = `${obs.source}\u0000${observedKey(obs)}`;
-  if (warnedObservedKeys.has(dedupeKey)) return;
-  warnedObservedKeys.add(dedupeKey);
-  for (const warning of warnings) {
-    console.warn(`[ingest] ${obs.source}: ${warning}`);
-  }
-}
-
-/**
  * The single defaulting seam that stamps the commons federation/privacy
  * provenance fields onto an observation. Invoked once per row at the write
  * choke point (`atomicSwap`), so every persisted row is normalized and no
@@ -218,9 +175,6 @@ export function normalizeObservation(obs: Observation, ctx: WriterContext): Obse
   // default fills 'exact', and materializing it would flip every existing row's hash.
   next.sourceUri = obs.sourceUri ?? obs.origin.attribution?.url;
   next.sourceLicense = obs.sourceLicense ?? obs.origin.attribution?.license;
-
-  // Soft key-sprawl guard: advisory only, never changes `next`.
-  warnOnObserved(next);
 
   return next;
 }
@@ -440,8 +394,6 @@ function normalizeFederatedObservation(
 
   next.sourceUri = obs.sourceUri ?? obs.origin.attribution?.url;
   next.sourceLicense = obs.sourceLicense ?? obs.origin.attribution?.license;
-
-  warnOnObserved(next);
 
   return next;
 }

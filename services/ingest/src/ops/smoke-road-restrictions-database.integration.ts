@@ -3,18 +3,16 @@ import { join } from "node:path";
 import { readObservations, scheduleTimezoneForGeometry } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import {
+  hasRestrictionEvidence,
+  isPublishedRoadRestrictionDetails,
+} from "@openconditions/model-roads";
+import {
   eventsToExclusions,
   observationsToDatexSituations,
   observationsToGeoJSON,
   observationsToTraff,
 } from "@openconditions/publishers";
-import {
-  FEED_SOURCES,
-  hasRestrictionEvidence,
-  isPublishedRoadRestrictionDetails,
-  type OsmWay,
-  type SpineSegment,
-} from "@openconditions/roads";
+import { FEED_SOURCES, type OsmWay, type SpineSegment } from "@openconditions/roads";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { activateRoadGraph } from "../pipeline/graph-state.js";

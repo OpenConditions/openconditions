@@ -246,6 +246,13 @@
       "when": 1789823911759,
       "tag": "0034_poll_attempt_payload_hashes",
       "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1789833004686,
+      "tag": "0035_kernel_vocabulary_checks",
+      "breakpoints": true
     }
   ]
 }

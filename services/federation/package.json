@@ -17,6 +17,7 @@
     "@openconditions/core": "workspace:*",
     "@openconditions/federation": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
+    "@openconditions/model-registry": "workspace:*",
     "fastify": "^5.12.1",
     "postgres": "^3.4.9"
   },

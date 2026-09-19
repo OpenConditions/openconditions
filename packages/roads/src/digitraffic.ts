@@ -1,9 +1,9 @@
 import type { GeoJsonGeometry, Severity } from "@openconditions/core";
 import { deriveSeverity } from "@openconditions/core";
+import { parseRestrictionInstant, toRestrictionInstant } from "@openconditions/model-roads";
 import { digitrafficRestrictionDetails } from "./digitraffic-restrictions.js";
 import { normalizeDtToken } from "./digitraffic-token.js";
 import type { Restriction, RoadEvent, RoadRef } from "./model.js";
-import { parseRestrictionInstant, toRestrictionInstant } from "./restrictions.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
   type RoadSnapshotRecord,
@@ -454,12 +454,21 @@ function buildDigitrafficEvent(
     publicationTime ??
     fetchedAt;
 
+  const recordTime =
+    coerceString(props.versionTime) ??
+    coerceString(props.dataUpdatedTime) ??
+    coerceString(props.releaseTime);
+
   return {
     id: `${src.id}:${situationId}`,
     source: src.id,
     sourceFormat: "digitraffic",
     domain: "roads",
     kind: "event",
+    situation: {
+      ...(recordTime !== null ? { sourceUpdatedAt: recordTime } : {}),
+      ...(coerceString(ann?.title) === null ? { headlineFromSource: false as const } : {}),
+    },
     type,
     subtype: subtypeFromAnnouncement(ann) ?? (codeForMapping || undefined),
     category,

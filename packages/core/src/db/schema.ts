@@ -1,3 +1,4 @@
+import { EVIDENCE_STATES, enumCheckSql, FUZZINESS, PRIVACY_CLASSES } from "@openconditions/model";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -178,17 +179,16 @@ export const observations = conditionsSchema.table(
       "obs_severity_level_range",
       sql`${t.severityLevel} IS NULL OR (${t.severityLevel} >= 1 AND ${t.severityLevel} <= 5)`,
     ),
-    check(
-      "obs_fuzziness_enum",
-      sql`${t.fuzziness} IN ('exact','low_res','medium_res','end_unknown','start_unknown','extent_unknown')`,
-    ),
+    check("obs_fuzziness_enum", sql.raw(enumCheckSql("fuzziness", FUZZINESS))),
+    // The column default 'unknown' marks a row no writer stamped; it is not a
+    // privacy class, so the table allows it beside the kernel's classes.
     check(
       "obs_privacy_class_enum",
-      sql`${t.privacyClass} IN ('unknown','authoritative','aggregate','k_anon','dp_noised','crowd_pseudonym')`,
+      sql.raw(enumCheckSql("privacy_class", [...PRIVACY_CLASSES, "unknown"])),
     ),
     check(
       "obs_evidence_state_enum",
-      sql`${t.evidenceState} IS NULL OR ${t.evidenceState} IN ('self_reported','corroborated','externally_resolved','negated','expired')`,
+      sql`${t.evidenceState} IS NULL OR ${sql.raw(enumCheckSql("evidence_state", EVIDENCE_STATES))}`,
     ),
     check(
       "obs_tombstone_reason_enum",

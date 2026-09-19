@@ -1,0 +1,238 @@
+[
+  {
+    "id": "oc:situation:au-vic-transportvic-planned:PLN-90001",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            145.0421,
+            -37.8512
+          ],
+          [
+            145.0688,
+            -37.8674
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Monash Freeway"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "AU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "au-vic-transportvic-planned",
+      "sourceFormat": "vic-disruptions",
+      "accessMode": "bulk",
+      "recordId": "PLN-90001",
+      "sourceUpdatedAt": "2026-07-28T22:10:00.000Z",
+      "attribution": {
+        "provider": "Department of Transport and Planning (Victoria)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "66d6a333320d79b92bec33b4ea924d6b3c0bfa816a8a8cb4736099ec140ec727",
+    "domain": "roads",
+    "contentHash": "45ad3d08e2fe388e0b98b011983d10a8a611689f798a0049842db985e63b13b8",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Monash Freeway resurfacing"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Night resurfacing between Toorak Rd and Warrigal Rd"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-08-03T09:00:00.000Z",
+      "end": "2026-08-29T05:00:00.000Z",
+      "periods": [
+        {
+          "startDate": "2026-08-03",
+          "endDate": "2026-08-29",
+          "startTime": "21:00",
+          "duration": "PT8H",
+          "byDay": [
+            "MO",
+            "TU",
+            "WE",
+            "TH"
+          ],
+          "scheduleTimezone": "Australia/Melbourne"
+        }
+      ]
+    },
+    "effects": [
+      {
+        "id": "PLN-90001/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesClosed": 2,
+        "vehicleImpact": "some_lanes_closed"
+      },
+      {
+        "id": "PLN-90001/speed_limit",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "speed_limit",
+        "v": 1,
+        "limit": {
+          "value": 40,
+          "unit": "km/h"
+        }
+      },
+      {
+        "id": "PLN-90001/delay",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "unknown",
+        "normalization": "complete",
+        "kind": "delay",
+        "v": 1,
+        "delay": {
+          "value": 600,
+          "unit": "s"
+        }
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:au-vic-transportvic-planned:PLN-90002",
+    "temporality": "scheduled",
+    "location": {
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          {
+            "type": "Point",
+            "coordinates": [
+              144.9738,
+              -37.8306
+            ]
+          },
+          {
+            "type": "Point",
+            "coordinates": [
+              144.9801,
+              -37.8422
+            ]
+          }
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "St Kilda Road"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "AU"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "au-vic-transportvic-planned",
+      "sourceFormat": "vic-disruptions",
+      "accessMode": "bulk",
+      "recordId": "PLN-90002",
+      "attribution": {
+        "provider": "Department of Transport and Planning (Victoria)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "6dee7846e1df4e27428352932ffe85e5dbc000ffbc316f6b1974fc139d9f23bb",
+    "domain": "roads",
+    "contentHash": "d6b1ea006c2f43f1627eed57d950db1874394df9a7ffa56c0299360cea4699e5",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "public_event",
+    "type": "event",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "unknown"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Melbourne Marathon road closures"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-10-11T19:00:00.000Z",
+      "end": "2026-10-12T04:00:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "public_event",
+      "v": 1
+    }
+  }
+]

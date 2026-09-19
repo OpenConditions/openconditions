@@ -1,0 +1,346 @@
+[
+  {
+    "id": "oc:situation:de-hh-polizei:LMS/r_LMS/699889_LMS-TH/58.0",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.0574,
+          53.60864
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-hh-polizei",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "LMS/r_LMS/699889_LMS-TH/58.0",
+      "attribution": {
+        "provider": "Freie und Hansestadt Hamburg, Polizei Hamburg",
+        "license": "dl-de/by-2-0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "a8b25572298c8dc85f5b05d2a33f1c3b0ef9c3db0d5760dcd3f4f352a1b0d45f",
+    "domain": "roads",
+    "contentHash": "a70d466882f02bf358926be0e440a314b0cbaf30a5f3bb0749f0088044b4494b",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "congestion",
+    "type": "congestion",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "description": [
+      {
+        "lang": "und",
+        "text": "Steilshooper Allee zwischen Gründgensstraße und Fabriciusstraße, stockender Verkehr."
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "congestion",
+      "v": 1,
+      "los": "unknown"
+    }
+  },
+  {
+    "id": "oc:situation:de-hh-polizei:LMS/r_LMS/700113_LMS-TH/12.0",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9.9822,
+          53.5488
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-hh-polizei",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "LMS/r_LMS/700113_LMS-TH/12.0",
+      "attribution": {
+        "provider": "Freie und Hansestadt Hamburg, Polizei Hamburg",
+        "license": "dl-de/by-2-0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "2abcd1e7e1358e7e02194f1ce17cb3c5505e58837314cf3ec279b39795e41ec5",
+    "domain": "roads",
+    "contentHash": "d10c1e6d53540b0331782139b95267121070d83e8fdb061cd8cf5c73e2fd9bb6",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "incident",
+    "type": "accident",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "description": [
+      {
+        "lang": "und",
+        "text": "A7 Richtung Flensburg, Höhe Elbtunnel, Unfall, rechter Fahrstreifen gesperrt."
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:de-hh-polizei:LMS/r_LMS/698002_LMS-TH/3.0",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.0009,
+          53.5677
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-hh-polizei",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "LMS/r_LMS/698002_LMS-TH/3.0",
+      "attribution": {
+        "provider": "Freie und Hansestadt Hamburg, Polizei Hamburg",
+        "license": "dl-de/by-2-0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "eb6eb224d72a4b7df909b63f77e290cbcf8ea532bdd0a9d629d452021b843e3a",
+    "domain": "roads",
+    "contentHash": "89e269f9421a571b5e3f0cf540c37e662e1bf501e16e4af978a53fb1d3c86927",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "closure",
+    "type": "closure",
+    "subtype": "lane",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "description": [
+      {
+        "lang": "und",
+        "text": "Willy-Brandt-Straße, eine Fahrspur gesperrt."
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [
+      {
+        "id": "LMS/r_LMS/698002_LMS-TH/3.0/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "vehicleImpact": "some_lanes_closed"
+      }
+    ],
+    "details": {
+      "kind": "closure",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:de-hh-polizei:LMS/r_LMS/695431_LMS-TH/7.0",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.1203,
+          53.5901
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-hh-polizei",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "LMS/r_LMS/695431_LMS-TH/7.0",
+      "attribution": {
+        "provider": "Freie und Hansestadt Hamburg, Polizei Hamburg",
+        "license": "dl-de/by-2-0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "7feef0b15adaf39c40018e3f4f88247ce494011e2f6b267ba238aaf2e779943b",
+    "domain": "roads",
+    "contentHash": "0cc794e6d1db45077b31570207ec4fe02e0392dd5d28487aac7f97e9a530eb29",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "description": [
+      {
+        "lang": "und",
+        "text": "Bramfelder Chaussee, Baustelle, Fahrbahnverengung."
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:de-hh-polizei:LMS/r_LMS/701550_LMS-TH/1.0",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9.935,
+          53.551
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-hh-polizei",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "LMS/r_LMS/701550_LMS-TH/1.0",
+      "attribution": {
+        "provider": "Freie und Hansestadt Hamburg, Polizei Hamburg",
+        "license": "dl-de/by-2-0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "8c2fc3fa4d408c3266af89849b16806c220ce31c1823f02418802e6d369294a6",
+    "domain": "roads",
+    "contentHash": "8b6cc4a068262ec0fa5f25196017bb85ea55600e924f5952180c41799c0cfb3f",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "description": [
+      {
+        "lang": "und",
+        "text": "Reeperbahn, Wartungsarbeiten an der Signalanlage."
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  }
+]

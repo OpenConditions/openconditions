@@ -10,6 +10,13 @@ import type { Stage } from "../kernel/record-base.js";
 import { RECORD_CLASSES, type RecordClass } from "../kernel/scalars.js";
 import { enumOf } from "../kernel/vocab.js";
 import {
+  buildCrosswalk,
+  type Crosswalk,
+  CrosswalkError,
+  isRegisteredTypeKey,
+} from "./crosswalk.js";
+import {
+  type ChangeKindEntry,
   type DomainEntry,
   type EffectEntry,
   type KindClass,
@@ -59,6 +66,10 @@ export interface Registry {
   effectSchema(code: string): z.ZodType | undefined;
   selectors(): readonly SelectorEntry[];
   resultSchemas(): readonly ResultSchemaEntry[];
+  /** Change kinds in registration order (kernel first). */
+  changeKinds(): readonly ChangeKindEntry[];
+  /** Every module's crosswalks, indexed in both directions. */
+  crosswalk: Crosswalk;
   /** The full record schema for (class, kind|property) at a stage. */
   recordSchema(cls: RecordClass, code: string, stage: Stage): z.ZodType | undefined;
   /** Hard validation of a stored/wire record, dispatched on (class, kind|property, v). */
@@ -85,6 +96,7 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
   const effects = new Map<string, EffectEntry>();
   const selectors = new Map<string, SelectorEntry>();
   const resultSchemaEntries = new Map<string, ResultSchemaEntry>();
+  const changeKinds = new Map<string, ChangeKindEntry>();
   const extensions: {
     module: string;
     vocabulary: string;
@@ -155,6 +167,13 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
           checkVersion(e.version, `result schema ${e.code}`);
           unique(resultSchemaEntries, e.code, e, "result schema");
           break;
+        case "change_kind":
+          if (e.code === "created" || e.code === "tombstoned") {
+            throw new RegistryError(`change kind "${e.code}" is reserved`);
+          }
+          if (e.classes.length === 0) throw new RegistryError(`change kind ${e.code}: no classes`);
+          unique(changeKinds, e.code, e, "change kind");
+          break;
       }
     }
   }
@@ -163,7 +182,8 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
     const vocab = vocabularies.get(ext.vocabulary);
     if (vocab === undefined)
       throw new RegistryError(`${ext.module} extends unknown vocabulary "${ext.vocabulary}"`);
-    if (!vocab.extensible)
+    // A closed vocabulary keeps its value set; another module may still add crosswalks.
+    if (!vocab.extensible && ext.values.length > 0)
       throw new RegistryError(`${ext.module} extends closed vocabulary "${ext.vocabulary}"`);
     for (const v of ext.values) {
       if (vocab.contributedBy[v] !== undefined) {
@@ -174,7 +194,24 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
       (vocab.contributedBy as Record<string, string>)[v] = ext.module;
       vocab.values.push(v);
     }
-    Object.assign(vocab.valueMappings, ext.valueMappings ?? {});
+    const merged = vocab.valueMappings as Record<string, Mappings>;
+    for (const [value, mappings] of Object.entries(ext.valueMappings ?? {})) {
+      for (const target of Object.keys(mappings) as (keyof Mappings)[]) {
+        if (merged[value]?.[target] !== undefined) {
+          throw new RegistryError(
+            `${ext.module}: vocabulary ${ext.vocabulary} value "${value}" already has ${target} mappings`,
+          );
+        }
+      }
+      merged[value] = { ...merged[value], ...mappings };
+    }
+  }
+  for (const v of vocabularies.values()) {
+    for (const value of Object.keys(v.valueMappings)) {
+      if (!v.values.includes(value)) {
+        throw new RegistryError(`vocabulary ${v.code}: mappings for unregistered value "${value}"`);
+      }
+    }
   }
 
   const requireVocab = (code: string, where: string) => {
@@ -198,6 +235,14 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
     }
     if (k.class === "situation" && Object.keys(k.types ?? {}).length === 0) {
       throw new RegistryError(`${where}: situation kinds declare their types`);
+    }
+    if (k.deriveSeverity !== undefined && k.class !== "situation") {
+      throw new RegistryError(`${where}: only situation kinds derive severity`);
+    }
+    for (const key of Object.keys(k.typeMappings ?? {})) {
+      if (!isRegisteredTypeKey(k.types, key)) {
+        throw new RegistryError(`${where}: typeMappings key "${key}" is not a registered type`);
+      }
     }
     if (k.class === "offer" && k.details !== undefined)
       throw new RegistryError(`${where}: offers have no details`);
@@ -232,6 +277,14 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
           throw new RegistryError(`${where}: unknown component kind "${c}"`);
       }
     }
+  }
+
+  let crosswalk: Crosswalk;
+  try {
+    crosswalk = buildCrosswalk(modules.flatMap((m) => m.entries));
+  } catch (err) {
+    if (err instanceof CrosswalkError) throw new RegistryError(err.message);
+    throw err;
   }
 
   const vocab = (code: string) => enumOf(requireVocab(code, "kernel").values);
@@ -408,6 +461,8 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
     effectSchema: (code) => effectSchemas.get(code),
     selectors: () => selectorList,
     resultSchemas: () => [...resultSchemaEntries.values()],
+    changeKinds: () => [...changeKinds.values()],
+    crosswalk,
     recordSchema,
     validate: validateAt("stored"),
     validateDraft: validateAt("draft"),

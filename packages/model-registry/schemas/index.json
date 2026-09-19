@@ -76,5 +76,95 @@
     "code": "features",
     "version": "1.0",
     "file": "selector/features@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "authority",
+    "version": "1.0",
+    "file": "situation/authority@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "closure",
+    "version": "1.0",
+    "file": "situation/closure@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "congestion",
+    "version": "1.0",
+    "file": "situation/congestion@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "equipment_fault",
+    "version": "1.0",
+    "file": "situation/equipment_fault@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "incident",
+    "version": "1.0",
+    "file": "situation/incident@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "other",
+    "version": "1.0",
+    "file": "situation/other@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "pass_status",
+    "version": "1.0",
+    "file": "situation/pass_status@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "public_event",
+    "version": "1.0",
+    "file": "situation/public_event@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "restriction",
+    "version": "1.0",
+    "file": "situation/restriction@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "road_condition",
+    "version": "1.0",
+    "file": "situation/road_condition@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "road_hazard",
+    "version": "1.0",
+    "file": "situation/road_hazard@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "roadworks",
+    "version": "1.0",
+    "file": "situation/roadworks@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "security",
+    "version": "1.0",
+    "file": "situation/security@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "weather_condition",
+    "version": "1.0",
+    "file": "situation/weather_condition@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "winter_operation",
+    "version": "1.0",
+    "file": "situation/winter_operation@1.json"
   }
 ]

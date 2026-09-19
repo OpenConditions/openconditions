@@ -1,0 +1,657 @@
+[
+  {
+    "id": "oc:situation:us-wzdx:1:af2e3f51-611f-4ce0-9282-2f28ca68e62f",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "wzdx:road_event",
+        "id": "1:af2e3f51-611f-4ce0-9282-2f28ca68e62f"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -93.77668405099996,
+            41.617961698000045
+          ],
+          [
+            -93.776682957,
+            41.61824496200006
+          ],
+          [
+            -93.77667737299998,
+            41.61960336200008
+          ],
+          [
+            -93.77667436599995,
+            41.62032278300006
+          ],
+          [
+            -93.77667174199996,
+            41.620950321000066
+          ],
+          [
+            -93.77668897499996,
+            41.62229722600006
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "I-80"
+            }
+          ],
+          "milepostFrom": 125.2,
+          "milepostTo": 126.3
+        },
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "I-35"
+            }
+          ],
+          "milepostFrom": 125.2,
+          "milepostTo": 126.3
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "compass",
+        "compass": "N",
+        "text": "northbound"
+      },
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-wzdx",
+      "sourceFormat": "wzdx",
+      "accessMode": "bulk",
+      "recordId": "1:af2e3f51-611f-4ce0-9282-2f28ca68e62f",
+      "sourceUpdatedAt": "2009-12-31T18:01:01Z",
+      "attribution": {
+        "provider": "WZDx publishers",
+        "license": "UNKNOWN"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "22392983d119f7721464da9b31ddbdf9765ec7aabde74a2e2c1dda853eecff55",
+    "domain": "roads",
+    "contentHash": "9839eedbc0fee8ee9bacba0e9dca37aeeb1548dac25677209e8107fb6548e9d3",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Single direction work zone without lane-level information."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Single direction work zone without lane-level information."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2010-01-01T01:00:00Z",
+      "end": "2010-01-02T01:00:00Z"
+    },
+    "effects": [
+      {
+        "id": "1:af2e3f51-611f-4ce0-9282-2f28ca68e62f/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "N",
+          "text": "northbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "vehicleImpact": "some_lanes_closed"
+      },
+      {
+        "id": "1:af2e3f51-611f-4ce0-9282-2f28ca68e62f/speed_limit",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "N",
+          "text": "northbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "speed_limit",
+        "v": 1,
+        "limit": {
+          "value": 88.514,
+          "unit": "km/h"
+        }
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:us-wzdx:1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "wzdx:road_event",
+        "id": "1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -93.53729725067586,
+            41.65790432034191
+          ],
+          [
+            -93.54482889364739,
+            41.65678209854977
+          ],
+          [
+            -93.5544848462825,
+            41.65535524547257
+          ],
+          [
+            -93.5594844836903,
+            41.654633790830985
+          ],
+          [
+            -93.56351852612453,
+            41.65410471898907
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "I-80"
+            }
+          ],
+          "milepostFrom": 139.9,
+          "milepostTo": 138.5
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "compass",
+        "compass": "W",
+        "text": "westbound"
+      },
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-wzdx",
+      "sourceFormat": "wzdx",
+      "accessMode": "bulk",
+      "recordId": "1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8",
+      "sourceUpdatedAt": "2010-01-03T01:51:43Z",
+      "attribution": {
+        "provider": "WZDx publishers",
+        "license": "UNKNOWN"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "6018ee9d46ca3874199d08bfb0f5f31194f8cd7bfe8f297ae10065b1ba23187b",
+    "domain": "roads",
+    "contentHash": "7728d443a52430c9b8157ec1d78fd16ff99674b2e92f3074175adec5d6e68676",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "resurfacing",
+    "planned": true,
+    "certainty": "possible",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Multi-lane closure example"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Multi-lane closure example"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2010-01-02T08:00:00Z",
+      "end": "2010-03-31T23:00:00Z"
+    },
+    "effects": [
+      {
+        "id": "1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "W",
+          "text": "westbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 5,
+        "lanesClosed": 3,
+        "lanes": [
+          {
+            "index": 1,
+            "type": "shoulder",
+            "status": "closed"
+          },
+          {
+            "index": 2,
+            "type": "general",
+            "status": "closed"
+          },
+          {
+            "index": 3,
+            "type": "general",
+            "status": "closed"
+          },
+          {
+            "index": 4,
+            "type": "general",
+            "status": "open"
+          },
+          {
+            "index": 5,
+            "type": "shoulder",
+            "status": "open"
+          }
+        ],
+        "vehicleImpact": "some_lanes_closed"
+      },
+      {
+        "id": "1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8/speed_limit",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "W",
+          "text": "westbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "speed_limit",
+        "v": 1,
+        "limit": {
+          "value": 88.5,
+          "unit": "km/h"
+        }
+      },
+      {
+        "id": "1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8/dimension_limit:1",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "W",
+          "text": "westbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "partial",
+        "issues": [
+          {
+            "code": "unsupported_operator",
+            "sourcePath": "restrictions[0]"
+          }
+        ],
+        "source": {
+          "path": "restrictions[0]",
+          "tokens": {
+            "type": "reduced-width",
+            "value": 16,
+            "unit": "feet"
+          }
+        },
+        "kind": "dimension_limit",
+        "v": 1,
+        "dimension": "width",
+        "value": {
+          "value": 4.877,
+          "unit": "m"
+        },
+        "operator": "lte",
+        "meaning": "maximum_permitted"
+      },
+      {
+        "id": "1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8/dimension_limit:2",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "W",
+          "text": "westbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "partial",
+        "issues": [
+          {
+            "code": "unsupported_operator",
+            "sourcePath": "restrictions[1]"
+          }
+        ],
+        "source": {
+          "path": "restrictions[1]",
+          "tokens": {
+            "type": "reduced-weight",
+            "value": 156000,
+            "unit": "pounds"
+          }
+        },
+        "kind": "dimension_limit",
+        "v": 1,
+        "dimension": "gross_weight",
+        "value": {
+          "value": 70760.41,
+          "unit": "kg"
+        },
+        "operator": "lte",
+        "meaning": "maximum_permitted"
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1,
+      "workersPresent": true
+    }
+  },
+  {
+    "id": "oc:situation:us-wzdx:1:cf1092ba-3b8d-4e91-81ef-daa4a98662e1",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "wzdx:road_event",
+        "id": "1:cf1092ba-3b8d-4e91-81ef-daa4a98662e1"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -93.60037600799996,
+            41.791257966000046
+          ],
+          [
+            -93.60037512899999,
+            41.79125796500006
+          ],
+          [
+            -93.60037388799998,
+            41.79125798900003
+          ],
+          [
+            -93.59899131299994,
+            41.79128577000006
+          ],
+          [
+            -93.59740824799997,
+            41.791298693000044
+          ],
+          [
+            -93.58701834799996,
+            41.79137025000006
+          ],
+          [
+            -93.58103059399997,
+            41.791384089000076
+          ],
+          [
+            -93.57547769099995,
+            41.79137239500005
+          ],
+          [
+            -93.57330616899998,
+            41.79136198900005
+          ],
+          [
+            -93.57256923599994,
+            41.79135163700005
+          ],
+          [
+            -93.57247835899994,
+            41.79135169500006
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "F22"
+            }
+          ],
+          "from": "I-35",
+          "to": "US 69"
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "compass",
+        "compass": "W",
+        "text": "westbound"
+      },
+      "admin": {
+        "country": "US"
+      }
+    },
+    "relations": [
+      {
+        "ref": {
+          "class": "situation",
+          "id": "oc:situation:us-wzdx:a15f7570-b7e6-4367-8ad9-3a462eea65dd"
+        },
+        "relation": "related_work_zone"
+      },
+      {
+        "ref": {
+          "class": "situation",
+          "id": "oc:situation:us-wzdx:4d151e7d-11d8-4b99-a192-51e189da0de7"
+        },
+        "relation": "next_occurrence"
+      }
+    ],
+    "provenance": {
+      "origin": "derived",
+      "sourceId": "us-wzdx",
+      "sourceFormat": "wzdx",
+      "accessMode": "bulk",
+      "recordId": "1:cf1092ba-3b8d-4e91-81ef-daa4a98662e1",
+      "sourceUpdatedAt": "2010-01-01T01:03:01Z",
+      "attribution": {
+        "provider": "WZDx publishers",
+        "license": "UNKNOWN"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "f1aaa0414496815b56d0adddf098704d5148f88b79e18e95884a826888824947",
+    "domain": "roads",
+    "contentHash": "4a1167fb82a3bd6e429fa82d3ee9d8eb460990baa5b9e801bb3e3b03c016d279",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "closure",
+    "type": "closure",
+    "planned": false,
+    "certainty": "observed",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Detour for road event 67890, first segment."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Detour for road event 67890, first segment."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2010-01-01T01:03:01Z",
+      "end": "2010-06-30T01:00:00Z"
+    },
+    "effects": [
+      {
+        "id": "1:cf1092ba-3b8d-4e91-81ef-daa4a98662e1/detour",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "W",
+          "text": "westbound"
+        },
+        "compliance": "advisory",
+        "normalization": "complete",
+        "kind": "detour",
+        "v": 1,
+        "description": [
+          {
+            "lang": "und",
+            "text": "Detour for road event 67890, first segment."
+          }
+        ],
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              -93.60037600799996,
+              41.791257966000046
+            ],
+            [
+              -93.60037512899999,
+              41.79125796500006
+            ],
+            [
+              -93.60037388799998,
+              41.79125798900003
+            ],
+            [
+              -93.59899131299994,
+              41.79128577000006
+            ],
+            [
+              -93.59740824799997,
+              41.791298693000044
+            ],
+            [
+              -93.58701834799996,
+              41.79137025000006
+            ],
+            [
+              -93.58103059399997,
+              41.791384089000076
+            ],
+            [
+              -93.57547769099995,
+              41.79137239500005
+            ],
+            [
+              -93.57330616899998,
+              41.79136198900005
+            ],
+            [
+              -93.57256923599994,
+              41.79135163700005
+            ],
+            [
+              -93.57247835899994,
+              41.79135169500006
+            ]
+          ]
+        }
+      }
+    ],
+    "details": {
+      "kind": "closure",
+      "v": 1
+    }
+  }
+]

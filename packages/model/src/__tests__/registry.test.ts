@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { kernelModule } from "../kernel/module.js";
 import { buildRegistry, RegistryError } from "../registry/build.js";
-import { defineDomain, defineKind, defineProperty, extendVocabulary } from "../registry/define.js";
+import {
+  defineChangeKind,
+  defineDomain,
+  defineKind,
+  defineProperty,
+  extendVocabulary,
+} from "../registry/define.js";
 import { closure, draftBase, incidentDraft, registry, stored, testModule } from "./fixtures.js";
 
 const issueCodes = (r: { ok: boolean; issues?: { code: string }[] }) =>
@@ -84,8 +90,70 @@ describe("buildRegistry", () => {
       ],
       /not major\.minor/,
     ],
+    [
+      "a change kind with a reserved code",
+      [
+        defineChangeKind({
+          code: "created",
+          description: "x",
+          classes: ["situation"],
+          select: () => null,
+        }),
+      ],
+      /"created" is reserved/,
+    ],
+    [
+      "a severity rule on a feature kind",
+      [
+        defineDomain({ code: "roads", description: "x" }),
+        defineKind({
+          class: "feature",
+          code: "camera",
+          domain: "roads",
+          version: "1.0",
+          description: "x",
+          details: () => ({}),
+          deriveSeverity: () => "minor",
+        }),
+      ],
+      /only situation kinds derive severity/,
+    ],
+    [
+      "a type mapping for an unregistered subtype",
+      [
+        defineDomain({ code: "roads", description: "x" }),
+        defineKind({
+          class: "situation",
+          code: "incident",
+          domain: "roads",
+          version: "1.0",
+          description: "x",
+          types: { accident: [] },
+          details: () => ({}),
+          typeMappings: { "accident.overturned": { datex2_v3: ["Accident:overturnedVehicle"] } },
+        }),
+      ],
+      /"accident\.overturned" is not a registered type/,
+    ],
   ])("rejects %s", (_label, entries, message) => {
     expect(() => buildRegistry([kernelModule, { name: "bad", entries }])).toThrow(message);
+  });
+
+  it("accepts crosswalks on a closed vocabulary but no new values", () => {
+    const mapped = buildRegistry([
+      kernelModule,
+      {
+        name: "crosswalks",
+        entries: [
+          extendVocabulary({
+            vocabulary: "severity",
+            values: [],
+            valueMappings: { major: { open511: ["MAJOR"] } },
+          }),
+        ],
+      },
+    ]);
+    expect(mapped.crosswalk.value("severity", "open511", "MAJOR")).toBe("major");
   });
 
   it("rejects a duplicate module name", () => {

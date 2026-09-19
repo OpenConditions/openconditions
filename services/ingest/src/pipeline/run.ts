@@ -7,19 +7,14 @@ import {
   guardOptionsFromEnv,
   makeAuthorizedFetch,
 } from "@openconditions/ingest-framework";
+import { isRoadRestrictionDetails, type RestrictionCarrier } from "@openconditions/model-roads";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
-import type {
-  FeedSource,
-  RestrictionCarrier,
-  SiteGeometry,
-  UnresolvedRoadEvent,
-} from "@openconditions/roads";
+import type { FeedSource, SiteGeometry, UnresolvedRoadEvent } from "@openconditions/roads";
 import {
   drainSkippedNoGeometry,
   enrichEventSeverity,
   enrichFlowsWithBaseline,
-  isRoadRestrictionDetails,
   parseXmlDocument,
 } from "@openconditions/roads";
 import type postgres from "postgres";

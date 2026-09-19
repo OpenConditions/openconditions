@@ -1,5 +1,6 @@
 import type { Confidence, GeoJsonGeometry } from "@openconditions/core";
 import { deriveSeverity } from "@openconditions/core";
+import { wzdxClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
@@ -329,6 +330,21 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
       const featureId = dataSourceId != null ? `${dataSourceId}:${rawId}` : rawId;
 
       const roads = parseRoads(coreDetails, props);
+      const classification = wzdxClassification(
+        eventType,
+        (props.types_of_work ?? [])
+          .map((w) => w?.type_name)
+          .filter((n): n is string => typeof n === "string"),
+        (Array.isArray(props.restrictions) ? props.restrictions : [])
+          .map((r) => (r as { type?: unknown })?.type)
+          .filter((t): t is string => typeof t === "string"),
+      );
+      const recordTime =
+        (typeof coreDetails.update_date === "string" && coreDetails.update_date) ||
+        (typeof coreDetails.creation_date === "string" && coreDetails.creation_date) ||
+        undefined;
+      const hasDescription =
+        typeof coreDetails.description === "string" && !!coreDetails.description;
 
       out.push({
         id: `${src.id}:${featureId}`,
@@ -336,6 +352,11 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
         sourceFormat: "wzdx",
         domain: "roads",
         kind: "event",
+        situation: {
+          ...(classification !== undefined ? { classification } : {}),
+          ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
+          ...(hasDescription ? {} : { headlineFromSource: false as const }),
+        },
         type,
         subtype: props.types_of_work?.[0]?.type_name ?? (eventType || undefined),
         category,

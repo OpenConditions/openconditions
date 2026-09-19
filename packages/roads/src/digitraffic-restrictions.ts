@@ -1,18 +1,16 @@
 import type { Schedule } from "@openconditions/model";
-import { normalizeDtToken } from "./digitraffic-token.js";
-import type {
-  RestrictionIssue,
-  RestrictionTokens,
-  RoadRestrictionDetailsV1,
-  RoadRestrictionFact,
-} from "./restriction-types.js";
 import {
   boundRestrictionIssue,
   intersectRestrictionWindows,
   normalizeRestrictionDimension,
+  type RestrictionIssue,
+  type RestrictionTokens,
   type RestrictionWindow,
+  type RoadRestrictionDetailsV1,
+  type RoadRestrictionFact,
   toRestrictionInstant,
-} from "./restrictions.js";
+} from "@openconditions/model-roads";
+import { normalizeDtToken } from "./digitraffic-token.js";
 import { buildLocalSchedule, isoDayToICal, withTimezone } from "./schedule.js";
 import type { SourceDescriptor } from "./types.js";
 

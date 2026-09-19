@@ -1,0 +1,524 @@
+[
+  {
+    "id": "oc:situation:ca-bc-drivebc:DBC-90617",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "open511",
+        "id": "DBC-90617"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.779441,
+          49.664635
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Other Roads"
+            }
+          ],
+          "from": "at Thynne Bridge"
+        }
+      ],
+      "admin": {
+        "country": "CA"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Okanagan-Shuswap District"
+        }
+      ],
+      "external": [
+        {
+          "system": "geonames",
+          "code": "8630138"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "ca-bc-drivebc",
+      "sourceFormat": "open511",
+      "accessMode": "bulk",
+      "recordId": "DBC-90617",
+      "sourceUpdatedAt": "2026-04-29T11:34:20-07:00",
+      "attribution": {
+        "provider": "Contains information licensed under the Open Government Licence – British Columbia",
+        "license": "OGL-BC"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "5581ad0b95ce6d68ff990ca30ecf8db15be2808d4c6ff0b20cd8cb6fbca2acdf",
+    "domain": "roads",
+    "contentHash": "f60ab5193b8525a2a4294409f290b66744e058f3a3eb5485cc70c58ccf7cc657",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "construction",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "CONSTRUCTION"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Coalmont Rd.. Bridge construction at Thynne Bridge. Until Thu Oct 1. 14 km north west of Tulameen, BC. Watch for signage and personnel. Expect minor delays. Last updated Wed Apr 29 at 11:34 AM PDT. (DBC-90617)"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-04-29T16:34:00.000Z",
+      "end": "2026-10-02T04:59:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:ca-bc-drivebc:DBC-81533",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "open511",
+        "id": "DBC-81533"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -122.963112,
+            49.090598
+          ],
+          [
+            -122.963126,
+            49.090598
+          ],
+          [
+            -122.979427,
+            49.090562
+          ],
+          [
+            -123.000453,
+            49.090559
+          ],
+          [
+            -123.001842,
+            49.090648
+          ],
+          [
+            -123.003566,
+            49.090922
+          ],
+          [
+            -123.014233,
+            49.092998
+          ],
+          [
+            -123.019085,
+            49.093942
+          ],
+          [
+            -123.023082,
+            49.09472
+          ],
+          [
+            -123.024136,
+            49.094925
+          ],
+          [
+            -123.026296,
+            49.095345
+          ],
+          [
+            -123.026387,
+            49.095363
+          ],
+          [
+            -123.026551,
+            49.095394
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Highway 99"
+            }
+          ],
+          "from": "Exit 26",
+          "to": "Exit 20",
+          "milepostFrom": 20.63
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "compass",
+        "compass": "S",
+        "text": "S"
+      },
+      "admin": {
+        "country": "CA"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Lower Mainland District"
+        }
+      ],
+      "external": [
+        {
+          "system": "geonames",
+          "code": "8630136"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "ca-bc-drivebc",
+      "sourceFormat": "open511",
+      "accessMode": "bulk",
+      "recordId": "DBC-81533",
+      "sourceUpdatedAt": "2026-02-02T10:31:18-08:00",
+      "attribution": {
+        "provider": "Contains information licensed under the Open Government Licence – British Columbia",
+        "license": "OGL-BC"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "47c4830425f8ea982e29fa386ee7cf6a2184b7f06cd5cfe35560c193c5f040e4",
+    "domain": "roads",
+    "contentHash": "8e388d0c8ab0beb7264b381980fc8c8d477a8f0c033d479048cbb9611a8a9420",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "maintenance",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "CONSTRUCTION"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Highway 99, southbound. Utility work between Exit 26 and Exit 20 for 4.7 km (Delta). Until Sat Nov 7 at 11:45 PM PST. Last updated Mon Feb 2 at 10:31 AM PST. (DBC-81533)"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2025-09-17T05:00:00.000Z",
+      "end": "2026-11-08T06:45:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:ca-bc-drivebc:DBC-71712",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "open511",
+        "id": "DBC-71712"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.92884,
+          50.634871
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Upper Arrow Lake Ferry"
+            }
+          ],
+          "from": "Shelter Bay",
+          "to": "Galena Bay"
+        }
+      ],
+      "admin": {
+        "country": "CA"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Rocky Mountain District"
+        }
+      ],
+      "external": [
+        {
+          "system": "geonames",
+          "code": "8630135"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "ca-bc-drivebc",
+      "sourceFormat": "open511",
+      "accessMode": "bulk",
+      "recordId": "DBC-71712",
+      "sourceUpdatedAt": "2026-02-02T10:29:58-08:00",
+      "attribution": {
+        "provider": "Contains information licensed under the Open Government Licence – British Columbia",
+        "license": "OGL-BC"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "604ce03955ecde0746216ca2b925441772f1911ef7f0fccf8729450b4050277c",
+    "domain": "roads",
+    "contentHash": "5d2f6aa32a705df5f54676c01dc0913123f2c58bee23888d09dc3dad26d718cc",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "road_condition",
+    "type": "driving_condition",
+    "subtype": "hazardous",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "INCIDENT"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Upper Arrow Lake Ferry. Departure delayed between Shelter Bay and Galena Bay. From 8:45 AM to 11:00 AM PST on Wednesday. Departure delayed every Wednesday for fueling purposes. Next update time Tue Jun 30 at 10:00 AM PST. Last updated Mon Feb 2 at 10:29 AM PST. (DBC-71712)"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "periods": [
+        {
+          "repeatFrequency": "P1W",
+          "startDate": "2025-01-07",
+          "endDate": "2026-06-22",
+          "startTime": "08:45",
+          "endTime": "11:00",
+          "duration": "PT2H15M",
+          "byDay": [
+            "WE"
+          ],
+          "scheduleTimezone": "America/Vancouver"
+        }
+      ]
+    },
+    "effects": [],
+    "details": {
+      "kind": "road_condition",
+      "v": 1,
+      "surface": [
+        "unknown"
+      ]
+    }
+  },
+  {
+    "id": "oc:situation:ca-bc-drivebc:DBC-90606",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "open511",
+        "id": "DBC-90606"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -123.812954,
+            48.992218
+          ],
+          [
+            -123.813912,
+            48.992862
+          ],
+          [
+            -123.814462,
+            48.993231
+          ],
+          [
+            -123.814902,
+            48.993527
+          ],
+          [
+            -123.815883,
+            48.994199
+          ],
+          [
+            -123.816863,
+            48.994872
+          ],
+          [
+            -123.816919,
+            48.994911
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Highway 1"
+            }
+          ],
+          "from": "Davis Rd",
+          "to": "Buller St",
+          "milepostFrom": 90.58
+        }
+      ],
+      "direction": {
+        "value": "both",
+        "basis": "text",
+        "text": "BOTH"
+      },
+      "admin": {
+        "country": "CA"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Vancouver Island District"
+        }
+      ],
+      "external": [
+        {
+          "system": "geonames",
+          "code": "8630140"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "ca-bc-drivebc",
+      "sourceFormat": "open511",
+      "accessMode": "bulk",
+      "recordId": "DBC-90606",
+      "sourceUpdatedAt": "2026-04-29T09:00:12-07:00",
+      "attribution": {
+        "provider": "Contains information licensed under the Open Government Licence – British Columbia",
+        "license": "OGL-BC"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "27b791dae3c6f113410a3db27dcdd5bf59d889ea4b95a2f19620bdda319dd3ff",
+    "domain": "roads",
+    "contentHash": "877e4282bb2558d5706e3889fc4361ce9f2294a5dbac1a99d64404a49769f655",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "public_event",
+    "type": "event",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "SPECIAL_EVENT"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Highway 1 (TransCanada Highway), in both directions. Special event planned between Davis Rd and Buller St for 0.5 km (Ladysmith). Starting Sun Aug 2 at 8:00 PM PDT until Mon Aug 3. Right lane will be closed in both directions. Expect delays. Watch for traffic control personnel. Ladysmith Days Fireworks. Last updated Wed Apr 29 at 9:00 AM PDT. (DBC-90606)"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-08-03T01:00:00.000Z",
+      "end": "2026-08-04T04:59:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "public_event",
+      "v": 1
+    }
+  }
+]

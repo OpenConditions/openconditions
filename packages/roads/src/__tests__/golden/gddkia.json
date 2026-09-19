@@ -1,0 +1,518 @@
+[
+  {
+    "id": "oc:situation:pl-gddkia:1qxek0t",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          18.711872,
+          53.2814
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A1"
+            }
+          ],
+          "ref": "A1"
+        }
+      ],
+      "admin": {
+        "country": "PL"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "pl-gddkia",
+      "sourceFormat": "gddkia",
+      "accessMode": "bulk",
+      "recordId": "1qxek0t",
+      "sourceUpdatedAt": "2026-06-11T03:00:00.000Z",
+      "attribution": {
+        "provider": "GDDKiA",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://dane.gov.pl/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "d7e2dbdd21421acef7b4b8525ecb4b06ee0abfaa69bc099d00beac1359841607",
+    "domain": "roads",
+    "contentHash": "621857845ba0bab1df9b4026561d4a5afc0cc4f31e2ac092ff423b66b4a90033",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "remont nawierzchni - remontowana jest jezdnia w kierunku Łodzi, ruch odbywa się jezdnią w kierunku Gdańska, 1 pas na Łódź i  2 pasy na Gdańsk,"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "remont nawierzchni - remontowana jest jezdnia w kierunku Łodzi, ruch odbywa się jezdnią w kierunku Gdańska, 1 pas na Łódź i  2 pasy na Gdańsk,"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-11T03:00:00.000Z",
+      "end": "2026-07-31T16:00:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:pl-gddkia:jnlp52",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          18.733384,
+          53.014745
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A1"
+            }
+          ],
+          "ref": "A1"
+        }
+      ],
+      "admin": {
+        "country": "PL"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "pl-gddkia",
+      "sourceFormat": "gddkia",
+      "accessMode": "bulk",
+      "recordId": "jnlp52",
+      "sourceUpdatedAt": "2026-03-28T23:01:00.000Z",
+      "attribution": {
+        "provider": "GDDKiA",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://dane.gov.pl/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "19fe0d95f38bc2f6e77365900e01c86f453200829da9f157ad598cc6c3e495e3",
+    "domain": "roads",
+    "contentHash": "6a90e8e4f8bcaf9523d6162ad27e31ff3c02176bb13178dfcc52ca50767087cf",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "zamknięta jezdnia w kierunku Gdańska  ruch przełożony na drugą jezdnię odbywa się 2 pasami w kierunku Łodzi i 1 pasem w kierunku Gdańska  ograniczenie szerokości do 3 m"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "zamknięta jezdnia w kierunku Gdańska  ruch przełożony na drugą jezdnię odbywa się 2 pasami w kierunku Łodzi i 1 pasem w kierunku Gdańska  ograniczenie szerokości do 3 m"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-03-28T23:01:00.000Z",
+      "end": "2026-07-05T21:59:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:pl-gddkia:16kn89p",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          19.482454,
+          52.153432
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A1"
+            }
+          ],
+          "ref": "A1"
+        }
+      ],
+      "admin": {
+        "country": "PL"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "pl-gddkia",
+      "sourceFormat": "gddkia",
+      "accessMode": "bulk",
+      "recordId": "16kn89p",
+      "sourceUpdatedAt": "2026-06-22T04:00:00.000Z",
+      "attribution": {
+        "provider": "GDDKiA",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://dane.gov.pl/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "e1f8fac7037cc46ad57b1338393e12ccd34ce68e26e71272da662ab898240ba3",
+    "domain": "roads",
+    "contentHash": "d4966892c20c604bb9ace35d408c46c37780651d49f15d683b5ddd243aaf805a",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Naprawa dylatacji. Zablokowany pas szybki w kierunku Katowic."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Naprawa dylatacji. Zablokowany pas szybki w kierunku Katowic."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-22T04:00:00.000Z",
+      "end": "2026-06-26T14:00:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:pl-gddkia:1lxs2sf",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          19.189102,
+          50.901953
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A1"
+            }
+          ],
+          "ref": "A1"
+        }
+      ],
+      "admin": {
+        "country": "PL"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "pl-gddkia",
+      "sourceFormat": "gddkia",
+      "accessMode": "bulk",
+      "recordId": "1lxs2sf",
+      "sourceUpdatedAt": "2026-06-22T05:00:00.000Z",
+      "attribution": {
+        "provider": "GDDKiA",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://dane.gov.pl/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "6566a0da3f36f42862c44b56155e192fcc872fda3b1cdec65d7ca7e047dae455",
+    "domain": "roads",
+    "contentHash": "1b770c6f4a38ee42b5083396c8dbed5ead101f212d80077ee709addc022ce0d6",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Naprawy gwarancyjne dylatacji na pasach włączenia i wyłączenia - Budpol."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Naprawy gwarancyjne dylatacji na pasach włączenia i wyłączenia - Budpol."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-22T05:00:00.000Z",
+      "end": "2026-06-25T18:00:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:pl-gddkia:1d9gp2x",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          18.597648,
+          50.025837
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A1a"
+            }
+          ],
+          "ref": "A1a"
+        }
+      ],
+      "admin": {
+        "country": "PL"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "pl-gddkia",
+      "sourceFormat": "gddkia",
+      "accessMode": "bulk",
+      "recordId": "1d9gp2x",
+      "sourceUpdatedAt": "2026-06-23T05:00:00.000Z",
+      "attribution": {
+        "provider": "GDDKiA",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://dane.gov.pl/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "6f952dff566324f76ea608ce14b1bd0dc6b20afe92c193030e7fdf5dd7416609",
+    "domain": "roads",
+    "contentHash": "c63deda7daf21eedf5f97e8a4d2222261c6f9fd3fd7036b41a31b74b56ad9e1e",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Zwężenie jezdni w kierunku Gliwic."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Zwężenie jezdni w kierunku Gliwic."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-23T05:00:00.000Z",
+      "end": "2026-06-26T20:00:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:pl-gddkia:4tca7f",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          18.904369,
+          50.376548
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A1c"
+            }
+          ],
+          "ref": "A1c"
+        }
+      ],
+      "admin": {
+        "country": "PL"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "pl-gddkia",
+      "sourceFormat": "gddkia",
+      "accessMode": "bulk",
+      "recordId": "4tca7f",
+      "sourceUpdatedAt": "2026-06-25T05:00:00.000Z",
+      "attribution": {
+        "provider": "GDDKiA",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://dane.gov.pl/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "bad87ff407a535e6ead309af023d794b72675da248f5eef4762f2a4a0518da7d",
+    "domain": "roads",
+    "contentHash": "c78dd64f30d200acf24cdc32d162811c93338567845b67c01b9b45b229e7087b",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Zwężenie jezdni w kierunku Gliwic."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Zwężenie jezdni w kierunku Gliwic."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-06-25T05:00:00.000Z",
+      "end": "2026-06-25T18:00:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  }
+]

@@ -124,6 +124,10 @@ export function parseTrafikverket(
           sourceFormat: "trafikverket",
           domain: "roads",
           kind: "event",
+          situation:
+            typeof dev.Message === "string" && dev.Message
+              ? {}
+              : { headlineFromSource: false as const },
           type,
           subtype: rawType || undefined,
           category: categoryOf(type),

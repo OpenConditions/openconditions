@@ -1,0 +1,148 @@
+[
+  {
+    "id": "oc:situation:us-wzdx:dtcd-cwz-1:5e289944-03b7-4694-9e30-116e9f0dd62d",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "wzdx:road_event",
+        "id": "dtcd-cwz-1:5e289944-03b7-4694-9e30-116e9f0dd62d"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -93.6106973,
+            42.0037225
+          ],
+          [
+            -93.6109081,
+            42.0036311
+          ],
+          [
+            -93.6112162,
+            42.0035721
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "US-30 E"
+            }
+          ]
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "compass",
+        "compass": "E",
+        "text": "eastbound"
+      },
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-wzdx",
+      "sourceFormat": "wzdx",
+      "accessMode": "bulk",
+      "recordId": "dtcd-cwz-1:5e289944-03b7-4694-9e30-116e9f0dd62d",
+      "sourceUpdatedAt": "2026-07-31T08:56:03.798Z",
+      "attribution": {
+        "provider": "WZDx publishers",
+        "license": "UNKNOWN"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "413255af182a8e848ba079b282964b018883434c4196a4bc8b4e81a63e129c3b",
+    "domain": "roads",
+    "contentHash": "8ebc7aebc295ced37f13dfb2aff1f2d5ac63f40aaede59b4f7bbfe8e3fa9b86a",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "overhead_work",
+    "planned": true,
+    "certainty": "observed",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Overhead work on US-30 E eastbound; all lanes closed; reduced speed limit 55 mph."
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Overhead work on US-30 E eastbound; all lanes closed; reduced speed limit 55 mph."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-07-27T18:37:19.977+00:00",
+      "end": "2026-08-28T23:00:00+00:00"
+    },
+    "effects": [
+      {
+        "id": "dtcd-cwz-1:5e289944-03b7-4694-9e30-116e9f0dd62d/closure",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "E",
+          "text": "eastbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road"
+      },
+      {
+        "id": "dtcd-cwz-1:5e289944-03b7-4694-9e30-116e9f0dd62d/speed_limit",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "E",
+          "text": "eastbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "speed_limit",
+        "v": 1,
+        "limit": {
+          "value": 89,
+          "unit": "km/h"
+        }
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1,
+      "workZoneType": "static"
+    }
+  }
+]

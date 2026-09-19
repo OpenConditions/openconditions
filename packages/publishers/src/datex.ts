@@ -1,5 +1,5 @@
 import type { ConditionEvent, Severity } from "@openconditions/core";
-import { hasRestrictionEvidence } from "@openconditions/roads";
+import { hasRestrictionEvidence } from "@openconditions/model-roads";
 import { XMLBuilder } from "fast-xml-parser";
 import { type FeedInfo, type RoadFields, roadFields } from "./types.js";
 

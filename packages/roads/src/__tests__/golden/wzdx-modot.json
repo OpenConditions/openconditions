@@ -1,0 +1,284 @@
+[
+  {
+    "id": "oc:situation:us-wzdx:tms_work_zone:552055",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "wzdx:road_event",
+        "id": "tms_work_zone:552055"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -91.5093105941997,
+            38.8068570652998
+          ],
+          [
+            -91.5094716364675,
+            38.8070516214224
+          ],
+          [
+            -91.5095895314747,
+            38.8071634770587
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "K"
+            }
+          ]
+        },
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "RT K"
+            }
+          ]
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "compass",
+        "compass": "W",
+        "text": "westbound"
+      },
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-wzdx",
+      "sourceFormat": "wzdx",
+      "accessMode": "bulk",
+      "recordId": "tms_work_zone:552055",
+      "attribution": {
+        "provider": "WZDx publishers",
+        "license": "UNKNOWN"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "3c7f9d2341696cc53a92015971a262b77a36cc9311c60b9307fda5be5245931f",
+    "domain": "roads",
+    "contentHash": "fc6e8c1ca7d75ed3c543f72ae869b8d47206dbc9848157393686cb0a3773069c",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "BRIDGE RECONSTRUCTION"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "BRIDGE RECONSTRUCTION"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-05-29T05:00:00.0000000Z",
+      "end": "2026-08-31T05:00:00.0000000Z"
+    },
+    "effects": [
+      {
+        "id": "tms_work_zone:552055/closure",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "W",
+          "text": "westbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road"
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:us-wzdx:tms_work_zone:549748",
+    "temporality": "live",
+    "externalIds": [
+      {
+        "scheme": "wzdx:road_event",
+        "id": "tms_work_zone:549748"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -94.4166541681202,
+            36.8401259069098
+          ],
+          [
+            -94.4203780775314,
+            36.8399524479573
+          ],
+          [
+            -94.4228517565996,
+            36.8397923238643
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "60"
+            }
+          ]
+        },
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "US 60"
+            }
+          ]
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "compass",
+        "compass": "W",
+        "text": "westbound"
+      },
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-wzdx",
+      "sourceFormat": "wzdx",
+      "accessMode": "bulk",
+      "recordId": "tms_work_zone:549748",
+      "attribution": {
+        "provider": "WZDx publishers",
+        "license": "UNKNOWN"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "cd2f5310c4964d432c269809386a47f8ceedf99bd8fca77c468dceefcbdceff0",
+    "domain": "roads",
+    "contentHash": "2bbc987c806c9f1126dbe00f904ff734df28776cf71911c421c192e377370c8c",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "NEW PAVEMENT CONSTRUCTION"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "NEW PAVEMENT CONSTRUCTION"
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-04-28T05:00:00.0000000Z",
+      "end": "2026-08-31T05:00:00.0000000Z"
+    },
+    "effects": [
+      {
+        "id": "tms_work_zone:549748/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "W",
+          "text": "westbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "vehicleImpact": "some_lanes_closed"
+      },
+      {
+        "id": "tms_work_zone:549748/speed_limit",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "W",
+          "text": "westbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "speed_limit",
+        "v": 1,
+        "limit": {
+          "value": 80,
+          "unit": "km/h"
+        }
+      }
+    ],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  }
+]

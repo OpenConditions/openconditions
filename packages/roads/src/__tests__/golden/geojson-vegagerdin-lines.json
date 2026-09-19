@@ -1,0 +1,456 @@
+[
+  {
+    "id": "oc:situation:is-vegagerdin-lines:913080036",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -19.57021386,
+            63.85508479
+          ],
+          [
+            -20.02882374,
+            63.82486302
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "F210"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "IS"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "is-vegagerdin-lines",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "913080036",
+      "sourceUpdatedAt": "2026-06-02T13:34:27.000Z",
+      "attribution": {
+        "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.vegagerdin.is/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "2fb8d402dd52384c263c4f1bf46cf6c1051dea7d0cb5538e573ebe6800e490d2",
+    "domain": "roads",
+    "contentHash": "011daf44c5a5c8283719966a8c4e93ac7be738b4233c60fed317e45c05350e25",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "closure",
+    "type": "closure",
+    "subtype": "full",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Closed"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Driving prohibited"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [
+      {
+        "id": "913080036/closure",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road"
+      }
+    ],
+    "details": {
+      "kind": "closure",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:is-vegagerdin-lines:911310036",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -15.79807549,
+            64.94880395
+          ],
+          [
+            -15.53072492,
+            64.89209331
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "910"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "IS"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "is-vegagerdin-lines",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "911310036",
+      "sourceUpdatedAt": "2026-06-02T13:34:27.000Z",
+      "attribution": {
+        "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.vegagerdin.is/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "56cb8e92a36ace5de398b3513956369306e65b6ba620daf855fdce83e546c069",
+    "domain": "roads",
+    "contentHash": "9fa86c0e2cf8880cbbd4db20b632c6fe400eb708564f42570322783c1410457e",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "closure",
+    "type": "closure",
+    "subtype": "full",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Impassable"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [
+      {
+        "id": "911310036/closure",
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road"
+      }
+    ],
+    "details": {
+      "kind": "closure",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:is-vegagerdin-lines:905020036",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -21.995518,
+            65.01695019
+          ],
+          [
+            -21.80379585,
+            65.01042734
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "54"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "IS"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "is-vegagerdin-lines",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "905020036",
+      "sourceUpdatedAt": "2026-06-02T13:34:27.000Z",
+      "attribution": {
+        "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.vegagerdin.is/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "7bdc4eff67a37522f8183c149b98f3f76ed513a13cfa41e968c3f50bc68ea55c",
+    "domain": "roads",
+    "contentHash": "bd25cb4680a4bada822772e47257b893c210229ac0e1fa6a2229a2b862a9c0fa",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Road repairs"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:is-vegagerdin-lines:911220036",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -14.34234662,
+            65.19258131
+          ],
+          [
+            -14.14145937,
+            65.1645547
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "953"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "IS"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "is-vegagerdin-lines",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "911220036",
+      "sourceUpdatedAt": "2026-06-02T13:34:27.000Z",
+      "attribution": {
+        "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.vegagerdin.is/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "a5c739de0c8a2fc2226a1785c2e345ad8b18ecc45766fbd09b49fe9f50727e14",
+    "domain": "roads",
+    "contentHash": "249354ab61a36f8bc3729a750f153d8c2c711e52475718f55b6ff1fa64fbea4f",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "weather_condition",
+    "type": "weather",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Spots of ice"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "weather_condition",
+      "v": 1
+    }
+  },
+  {
+    "id": "oc:situation:is-vegagerdin-lines:904470036",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -21.70563938,
+            64.67402753
+          ],
+          [
+            -21.69619959,
+            64.73444113
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "553"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "IS"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "is-vegagerdin-lines",
+      "sourceFormat": "geojson",
+      "accessMode": "bulk",
+      "recordId": "904470036",
+      "sourceUpdatedAt": "2026-06-02T13:34:27.000Z",
+      "attribution": {
+        "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://www.vegagerdin.is/"
+      },
+      "instanceId": "golden.test",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "canonicalId": "7e1c94ffdd34ea0a4168b62a6979d0fbeea05cddee16f970a644cf0689a49979",
+    "domain": "roads",
+    "contentHash": "df96255104bad533121404439c9f4da2415f2ba9cdc996a95a620c80cfc1e085",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "class": "situation",
+    "kind": "restriction",
+    "type": "dimension",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Mountain vehicles"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Mountain vehicles"
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "restriction",
+      "v": 1,
+      "basis": "temporary"
+    }
+  }
+]
