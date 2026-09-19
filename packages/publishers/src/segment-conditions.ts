@@ -1,11 +1,10 @@
+import { type RoadConditionRoutingEvidence, routingEvidenceReasons } from "@openconditions/core";
 import {
   isInEffectAt,
   nextScheduleTransition,
-  type RoadConditionRoutingEvidence,
   type RoutingRights,
-  routingEvidenceReasons,
   type Schedule,
-} from "@openconditions/core";
+} from "@openconditions/model";
 import { hasRestrictionEvidence, normalizeVehicleApplicability } from "@openconditions/roads";
 import type { LineString } from "geojson";
 

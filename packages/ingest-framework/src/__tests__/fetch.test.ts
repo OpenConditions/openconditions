@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { FeedSourceBase } from "../feed-source.js";
 import { fetchAll } from "../fetch.js";
-import { __resetCatalogResolvers, createFetchState, registerCatalogResolver } from "../index.js";
+import {
+  __resetCatalogResolvers,
+  createFetchState,
+  digestPayload,
+  registerCatalogResolver,
+} from "../index.js";
 import { resolveFeedUrls } from "../template.js";
 
 type TestFeedSource = FeedSourceBase;
@@ -798,5 +803,27 @@ describe("snapshot acceptance", () => {
     expect(retry.buffers.map(String)).toEqual(["1", "2"]);
     retry.accept();
     expect((await fetchAll(feed, fetch, { state })).status).toBe("not-modified");
+  });
+});
+
+describe("payload digests", () => {
+  it("returns one credential-free digest per buffer, in buffer order", async () => {
+    const src = makeFeed({
+      id: "digests",
+      url: ["https://a.test/x?apikey=SECRET", "https://b.test/y"],
+    });
+    const res = await fetchAll(
+      src,
+      okFor((url) => `body:${new URL(url).host}`),
+      { state: createFetchState() },
+    );
+    expect(res.status).toBe("fetched");
+    if (res.status !== "fetched") return;
+    expect(res.payloads.map((p) => p.sha256)).toEqual(
+      res.buffers.map((b) => digestPayload("", b).sha256),
+    );
+    expect(res.payloads.map((p) => p.bytes)).toEqual(res.buffers.map((b) => b.length));
+    expect(res.payloads[0]!.url).not.toContain("SECRET");
+    expect(res.payloads[1]!.url).toBe("https://b.test/y");
   });
 });

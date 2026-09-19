@@ -37,6 +37,27 @@ beforeEach(async () => {
 });
 
 describe("durable source operational status", () => {
+  it("records the payload hashes an attempt received, and none when it downloaded nothing", async () => {
+    const hashes = ["a".repeat(64), "b".repeat(64)];
+    await upsertSourceStatus(sql, "status-payloads", {
+      attemptAt: "2026-09-11T10:00:00.000Z",
+      freshnessWindowSec: 900,
+      outcome: "partial",
+      networkValidated: false,
+      payloadHashes: hashes,
+    });
+    await upsertSourceStatus(sql, "status-payloads", {
+      attemptAt: "2026-09-11T10:05:00.000Z",
+      freshnessWindowSec: 900,
+      outcome: "validated_unchanged",
+      networkValidated: true,
+    });
+    const rows = await sql<{ payload_hashes: string[] | null }[]>`
+      SELECT payload_hashes FROM conditions.source_poll_attempt
+      WHERE source = 'status-payloads' ORDER BY attempted_at`;
+    expect(rows.map((r) => r.payload_hashes)).toEqual([hashes, null]);
+  });
+
   it("does not renew network freshness for a cadence skip", async () => {
     await upsertSourceStatus(sql, "status-cadence", {
       attemptAt: "2026-09-11T10:00:00.000Z",

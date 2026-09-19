@@ -31,7 +31,7 @@ import { parseFor, parseRoadSnapshotFor } from "./parse.js";
 import { resolveOpenLr } from "./resolve.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
 import { loadSiteTable } from "./site-table.js";
-import { getLastRowCount, upsertSourceStatus } from "./source-status.js";
+import { getLastRowCount, type SourceStatusUpdate, upsertSourceStatus } from "./source-status.js";
 import { loadStationRegistry } from "./station-registry.js";
 import { atomicSwap } from "./write-postgis.js";
 
@@ -378,6 +378,12 @@ export function createOpenlrClient(): MapMatchClient | null {
 export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<RunResult> {
   const start = Date.now();
   const attemptAt = deps.now();
+  // What this attempt downloaded: set once the fetch returns, then carried on
+  // every poll fact recorded after it (the raw-payload
+  // identity an archived blob will be filed under).
+  let payloadHashes: string[] | undefined;
+  const recordStatus = (update: SourceStatusUpdate) =>
+    upsertSourceStatus(deps.sql, src.id, payloadHashes ? { ...update, payloadHashes } : update);
 
   // Guard every egress path (feed, catalog, site-table, OAuth, mTLS) at one seam:
   // validate URL + DNS, re-check each redirect hop, cap size + time. Authorize on top.
@@ -408,7 +414,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     if (siteMap === undefined) {
       const error = "site-table cold failure — no geometry map built";
       console.warn(`[ingest] ${src.id}: ${error} — skipping swap, preserving last-good rows`);
-      await upsertSourceStatus(deps.sql, src.id, {
+      await recordStatus({
         freshnessWindowSec: src.freshnessWindowSec,
         outcome: "error",
         error,
@@ -427,7 +433,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     if (siteMap === undefined) {
       const error = "station-registry cold failure — no geometry map built";
       console.warn(`[ingest] ${src.id}: ${error} — skipping swap, preserving last-good rows`);
-      await upsertSourceStatus(deps.sql, src.id, {
+      await recordStatus({
         freshnessWindowSec: src.freshnessWindowSec,
         outcome: "error",
         error,
@@ -444,11 +450,18 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     // Large DATEX flow feed: stream fetch → gunzip → SAX so the ~50 MB document
     // is never buffered or DOM-parsed (the memory-cap OOM this path replaces).
     try {
-      parsed = await streamMeasuredData(src, streamFactoryFromFetch(fetchFn), siteMap, deps.now);
+      const streamed = await streamMeasuredData(
+        src,
+        streamFactoryFromFetch(fetchFn),
+        siteMap,
+        deps.now,
+      );
+      parsed = streamed.observations;
+      payloadHashes = [streamed.payload.sha256];
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] stream failed for source ${src.id}:`, err);
-      await upsertSourceStatus(deps.sql, src.id, {
+      await recordStatus({
         freshnessWindowSec: src.freshnessWindowSec,
         outcome: "error",
         error,
@@ -459,8 +472,11 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     let buffers: Buffer[];
     try {
       const result = await fetchAll(src, fetchFn);
+      if (result.status === "fetched" || result.status === "partial") {
+        payloadHashes = result.payloads.map((payload) => payload.sha256);
+      }
       if (result.status === "not-modified") {
-        await upsertSourceStatus(deps.sql, src.id, {
+        await recordStatus({
           freshnessWindowSec: src.freshnessWindowSec,
           outcome: "validated_unchanged",
           attemptAt,
@@ -471,7 +487,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       }
       if (result.status === "skipped" || result.status === "no-endpoint") {
         const outcome = result.status === "skipped" ? "skipped_cadence" : "missing_configuration";
-        await upsertSourceStatus(deps.sql, src.id, {
+        await recordStatus({
           freshnessWindowSec: src.freshnessWindowSec,
           outcome,
           attemptAt,
@@ -484,7 +500,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
         const { failed, total } = result.partitions;
         const error = `partial snapshot: ${failed}/${total} partitions failed — preserving last-good publication`;
         console.warn(`[ingest] ${src.id}: ${error}`);
-        await upsertSourceStatus(deps.sql, src.id, {
+        await recordStatus({
           freshnessWindowSec: src.freshnessWindowSec,
           outcome: "partial",
           attemptAt,
@@ -501,7 +517,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] fetch failed for source ${src.id}:`, err);
-      await upsertSourceStatus(deps.sql, src.id, {
+      await recordStatus({
         freshnessWindowSec: src.freshnessWindowSec,
         outcome: "error",
         error,
@@ -522,7 +538,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] parse failed for source ${src.id}:`, err);
-      await upsertSourceStatus(deps.sql, src.id, {
+      await recordStatus({
         freshnessWindowSec: src.freshnessWindowSec,
         outcome: "error",
         error,
@@ -558,7 +574,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       failed > 0
         ? `OpenLR resolution failed for ${failed} request(s)`
         : `structurally non-empty snapshot produced zero usable observations`;
-    await upsertSourceStatus(deps.sql, src.id, {
+    await recordStatus({
       freshnessWindowSec: src.freshnessWindowSec,
       outcome: "failed",
       attemptAt,
@@ -606,7 +622,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
     if (toWrite.length === 0) {
       const error = `flow feed produced zero measurements this cycle — skipping swap to avoid wiping sensor data`;
       console.warn(`[ingest] ${src.id}: ${error}`);
-      await upsertSourceStatus(deps.sql, src.id, {
+      await recordStatus({
         freshnessWindowSec: src.freshnessWindowSec,
         outcome: "error",
         error,
@@ -629,7 +645,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
         `event feed shrank from ${previousCount} to ${toWrite.length} rows ` +
         `(tripwire ratio ${shrinkTripwireRatio}) — skipping swap to avoid a suspected partial-failure wipe`;
       console.warn(`[ingest] ${src.id}: ${error}`);
-      await upsertSourceStatus(deps.sql, src.id, {
+      await recordStatus({
         freshnessWindowSec: src.freshnessWindowSec,
         outcome: "error",
         error,
@@ -651,12 +667,13 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       attemptAt,
       rejected,
       durationMs: preSwapDurationMs,
+      ...(payloadHashes ? { payloadHashes } : {}),
       ...(snapshotUnlocatable !== undefined ? { unlocatableIds: snapshotUnlocatable } : {}),
     });
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
     console.error(`[ingest] publish failed for source ${src.id}:`, err);
-    await upsertSourceStatus(deps.sql, src.id, {
+    await recordStatus({
       freshnessWindowSec: src.freshnessWindowSec,
       outcome: "failed",
       attemptAt,

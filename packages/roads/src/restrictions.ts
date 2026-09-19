@@ -1,4 +1,4 @@
-import { isInEffectAt, nextScheduleTransition } from "@openconditions/core";
+import { isInEffectAt, nextScheduleTransition } from "@openconditions/model";
 import { z } from "zod";
 import { RESTRICTION_TEXT_LIMIT } from "./restriction-types.js";
 

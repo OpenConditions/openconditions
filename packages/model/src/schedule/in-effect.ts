@@ -1,7 +1,8 @@
-import type { Schedule } from "./model.js";
-import { localDateInZone, zonedWallClockToInstant } from "./timezone.js";
+import type { Validity } from "../kernel/validity.js";
+import type { Schedule } from "./schedule.js";
+import { localDateInZone, zonedWallClockToInstant } from "./wall-clock.js";
 
-const ICAL_DAY = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"];
+const ICAL_DAY = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"] as const;
 
 function parseHhMm(s: string | undefined): number | null {
   if (!s) return null;
@@ -82,22 +83,21 @@ function occurrenceStartsOn(s: Schedule, localDate: string): boolean {
  * Whether `at` falls inside an occurrence of a schema.org-shaped Schedule,
  * evaluated in the schedule's own `scheduleTimezone`. Checks the occurrence
  * starting on `at`'s local date and the one starting the day before (for
- * windows that cross midnight). A schedule whose zone is missing or unknown,
- * or whose start time cannot be turned into an instant, cannot be evaluated
- * and is treated as in effect (never suppress on missing data). A day the
- * recurrence rules genuinely exclude is not "unevaluable" and still suppresses.
+ * windows that cross midnight). `unevaluable` = the zone is missing or unknown,
+ * or the start time cannot be turned into an instant. A day the recurrence
+ * rules genuinely exclude is `out`, not `unevaluable`.
  */
-export function scheduleOccursAt(s: Schedule, at: Date): boolean {
+export function scheduleStateAt(s: Schedule, at: Date): "in" | "out" | "unevaluable" {
   const tz = s.scheduleTimezone;
-  if (!tz) return true;
+  if (!tz) return "unevaluable";
   const startTime = normalizeStartTime(s.startTime ?? "00:00");
-  if (!startTime) return true;
+  if (!startTime) return "unevaluable";
   const durMs = occurrenceDurationMs(s);
   let today: string;
   try {
     today = localDateInZone(at, tz);
   } catch {
-    return true;
+    return "unevaluable";
   }
   let unevaluable = false;
   for (const day of [today, addDaysLocal(today, -1)]) {
@@ -108,9 +108,17 @@ export function scheduleOccursAt(s: Schedule, at: Date): boolean {
       continue;
     }
     const t0 = start.getTime();
-    if (at.getTime() >= t0 && at.getTime() < t0 + durMs) return true;
+    if (at.getTime() >= t0 && at.getTime() < t0 + durMs) return "in";
   }
-  return unevaluable;
+  return unevaluable ? "unevaluable" : "out";
+}
+
+/**
+ * Whether a schedule is in effect at `at`. An unevaluable schedule is treated
+ * as in effect: never suppress on missing data.
+ */
+export function scheduleOccursAt(s: Schedule, at: Date): boolean {
+  return scheduleStateAt(s, at) !== "out";
 }
 
 /**
@@ -138,6 +146,22 @@ export function isInEffectAt(
     return obs.schedule.some((s) => scheduleOccursAt(s, at));
   }
   return true;
+}
+
+/**
+ * Whether a kernel `Validity` is in effect at `at`: inside `[start, end)`, inside
+ * one of `periods` when there are any, and not inside an `exceptions`
+ * occurrence. `status` is never read. An exception only suppresses when it
+ * definitely matches; an unevaluable exception is ignored, the same "never
+ * suppress on missing data" rule `scheduleOccursAt` applies to periods.
+ */
+export function isValidityInEffectAt(validity: Validity, at: Date): boolean {
+  const inWindow = isInEffectAt(
+    { validFrom: validity.start, validTo: validity.end, schedule: validity.periods },
+    at,
+  );
+  if (!inWindow) return false;
+  return !(validity.exceptions ?? []).some((s) => scheduleStateAt(s, at) === "in");
 }
 
 /**

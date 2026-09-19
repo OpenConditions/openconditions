@@ -252,6 +252,8 @@ export const sourcePollAttempt = conditionsSchema.table(
     partitionsFailed: integer("partitions_failed"),
     partitionsTotal: integer("partitions_total"),
     error: text("error"),
+    /** sha256 of each decoded response this attempt received, in fetch order: the identity a raw-payload archive files each response under. */
+    payloadHashes: text("payload_hashes").array(),
   },
   (t) => [
     index("idx_source_poll_attempt_source_time").on(t.source, t.attemptedAt),

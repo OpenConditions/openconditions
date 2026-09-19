@@ -1,4 +1,5 @@
-import { type EvidenceState, updateReliability } from "@openconditions/core";
+import { updateReliability } from "@openconditions/core";
+import type { EvidenceState } from "@openconditions/model";
 import type postgres from "postgres";
 import { recomputeEvidence } from "../evidence/recompute.js";
 

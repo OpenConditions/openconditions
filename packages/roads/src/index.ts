@@ -34,6 +34,7 @@ export * from "./open511.js";
 export * from "./overpass.js";
 export * from "./pbf-geojson.js";
 export * from "./predefined-locations.js";
+export * from "./restriction-effects.js";
 export * from "./restriction-types.js";
 export * from "./restrictions.js";
 export * from "./routing.js";

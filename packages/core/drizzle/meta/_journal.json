@@ -239,6 +239,13 @@
       "when": 1789160888961,
       "tag": "0033_speed_rollup_progress",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1789823911759,
+      "tag": "0034_poll_attempt_payload_hashes",
+      "breakpoints": true
     }
   ]
 }

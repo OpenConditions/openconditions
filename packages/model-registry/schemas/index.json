@@ -1,0 +1,80 @@
+[
+  {
+    "class": "effect",
+    "code": "access",
+    "version": "1.0",
+    "file": "effect/access@1.json"
+  },
+  {
+    "class": "effect",
+    "code": "advisory",
+    "version": "1.0",
+    "file": "effect/advisory@1.json"
+  },
+  {
+    "class": "effect",
+    "code": "closure",
+    "version": "1.0",
+    "file": "effect/closure@1.json"
+  },
+  {
+    "class": "effect",
+    "code": "contraflow",
+    "version": "1.0",
+    "file": "effect/contraflow@1.json"
+  },
+  {
+    "class": "effect",
+    "code": "delay",
+    "version": "1.0",
+    "file": "effect/delay@1.json"
+  },
+  {
+    "class": "effect",
+    "code": "detour",
+    "version": "1.0",
+    "file": "effect/detour@1.json"
+  },
+  {
+    "class": "effect",
+    "code": "dimension_limit",
+    "version": "1.0",
+    "file": "effect/dimension_limit@1.json"
+  },
+  {
+    "class": "effect",
+    "code": "hazmat",
+    "version": "1.0",
+    "file": "effect/hazmat@1.json"
+  },
+  {
+    "class": "effect",
+    "code": "lane_restriction",
+    "version": "1.0",
+    "file": "effect/lane_restriction@1.json"
+  },
+  {
+    "class": "effect",
+    "code": "speed_limit",
+    "version": "1.0",
+    "file": "effect/speed_limit@1.json"
+  },
+  {
+    "class": "effect",
+    "code": "unsupported",
+    "version": "1.0",
+    "file": "effect/unsupported@1.json"
+  },
+  {
+    "class": "kernel",
+    "code": "kernel",
+    "version": "1.0",
+    "file": "kernel@1.json"
+  },
+  {
+    "class": "selector",
+    "code": "features",
+    "version": "1.0",
+    "file": "selector/features@1.json"
+  }
+]

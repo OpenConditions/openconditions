@@ -1,5 +1,6 @@
-import type { Confidence, Schedule } from "@openconditions/core";
+import type { Confidence } from "@openconditions/core";
 import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
+import type { Schedule } from "@openconditions/model";
 import type { Geometry } from "geojson";
 import {
   type DatexRestrictionContext,

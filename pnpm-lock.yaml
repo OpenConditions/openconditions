@@ -24,6 +24,12 @@ importers:
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:packages/ingest-framework
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:packages/model
+      '@openconditions/model-registry':
+        specifier: workspace:*
+        version: link:packages/model-registry
       '@openconditions/roads':
         specifier: workspace:*
         version: link:packages/roads
@@ -110,6 +116,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
       drizzle-orm:
         specifier: ^0.45.2
         version: 0.45.3(postgres@3.4.9)
@@ -213,11 +222,49 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
+  packages/model:
+    dependencies:
+      canonicalize:
+        specifier: 3.0.0
+        version: 3.0.0
+      zod:
+        specifier: ^4.4.3
+        version: 4.6.2
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+
+  packages/model-registry:
+    dependencies:
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+
   packages/normalize:
     dependencies:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../core
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
     devDependencies:
       '@types/node':
         specifier: ^26.4.0
@@ -302,6 +349,9 @@ importers:
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:../ingest-framework
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
       '@openconditions/roads':
         specifier: workspace:*
         version: link:../roads
@@ -342,6 +392,9 @@ importers:
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:../ingest-framework
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
       fast-xml-parser:
         specifier: ^5.11.1
         version: 5.11.1
@@ -398,6 +451,9 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../../packages/model
       '@openconditions/normalize':
         specifier: workspace:*
         version: link:../../packages/normalize
@@ -490,6 +546,9 @@ importers:
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:../../packages/ingest-framework
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../../packages/model
       '@openconditions/normalize':
         specifier: workspace:*
         version: link:../../packages/normalize

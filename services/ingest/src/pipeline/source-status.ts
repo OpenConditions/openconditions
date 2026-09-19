@@ -32,6 +32,8 @@ export interface SourceStatusUpdate {
   durationMs?: number;
   error?: string;
   partitions?: { succeeded: number; failed: number; total: number };
+  /** sha256 of each decoded response the attempt received; absent when nothing was downloaded. */
+  payloadHashes?: readonly string[];
   /** Compatibility input used by callers predating explicit publication facts. */
   rowCount?: number;
 }
@@ -106,13 +108,14 @@ export async function upsertSourceStatus(
     INSERT INTO conditions.source_poll_attempt (
       source, attempted_at, finished_at, outcome, network_validated, published,
       active_event_count, inserted, updated, deleted, rejected, duration_ms,
-      partitions_succeeded, partitions_failed, partitions_total, error
+      partitions_succeeded, partitions_failed, partitions_total, error, payload_hashes
     ) VALUES (
       ${sourceId}, ${attemptedAt}, now(), ${outcome}, ${networkValidated}, ${publication != null},
       ${publication?.activeEvents ?? null}, ${publication?.inserted ?? null},
       ${publication?.updated ?? null}, ${publication?.deleted ?? null},
       ${publication?.rejected ?? null}, ${durationMs}, ${p?.succeeded ?? null},
-      ${p?.failed ?? null}, ${p?.total ?? null}, ${error ?? null}
+      ${p?.failed ?? null}, ${p?.total ?? null}, ${error ?? null},
+      ${update.payloadHashes ? sql.array([...update.payloadHashes]) : null}::text[]
     )
   `;
 

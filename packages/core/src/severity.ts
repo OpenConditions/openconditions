@@ -1,4 +1,4 @@
-import type { Severity, SourceFormat } from "./model.js";
+import type { Severity } from "./model.js";
 
 export interface NormalisedSeverity {
   severity: Severity;
@@ -26,10 +26,7 @@ const DATEX2_MAP: Record<string, Severity> = {
  * Map a declared severity string from a feed format to the canonical Severity.
  * Returns severitySource:"declared" always — caller sets "derived" when using deriveSeverity.
  */
-export function normaliseSeverity(
-  raw: string,
-  opts: { format: SourceFormat | string },
-): NormalisedSeverity {
+export function normaliseSeverity(raw: string, opts: { format: string }): NormalisedSeverity {
   let severity: Severity = "unknown";
 
   if (opts.format === "open511") {

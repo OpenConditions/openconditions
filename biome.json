@@ -17,6 +17,7 @@
       "!.superpowers",
       "!**/*.d.ts",
       "!**/drizzle",
+      "!packages/model-registry/schemas",
       "!services/openlr-resolver",
       "!services/ingest/service.json",
       "!packages/roads/src/tmc/snapshots",

@@ -1,4 +1,5 @@
-import type { EvidencePolicy, EvidenceState } from "@openconditions/core";
+import type { EvidencePolicy } from "@openconditions/core";
+import type { EvidenceState } from "@openconditions/model";
 import { type DecayEntry, type DecayOrigin, decayMaxLifetimeSec, decayTtlSec } from "./decay.js";
 
 /**

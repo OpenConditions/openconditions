@@ -1,4 +1,4 @@
-import type { Schedule } from "@openconditions/core";
+import type { Schedule } from "@openconditions/model";
 
 /**
  * The normalized vehicle-restriction display contract, version 1.

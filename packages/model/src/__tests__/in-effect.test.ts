@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isInEffectAt } from "../inEffect.js";
+import { isInEffectAt, nextScheduleTransition } from "../schedule/in-effect.js";
 
 const BERLIN = "Europe/Berlin";
 
@@ -123,5 +123,21 @@ describe("isInEffectAt", () => {
       schedule: [{ startTime: "20:00", duration: "PT1H", scheduleTimezone: "Nowhere/Atlantis" }],
     };
     expect(isInEffectAt(ev, new Date("2026-09-08T10:00:00Z"))).toBe(true);
+  });
+});
+
+describe("nextScheduleTransition", () => {
+  const nightly = [{ startTime: "20:00", duration: "PT9H", scheduleTimezone: "Europe/Berlin" }];
+
+  it("finds the next inactive-to-active transition in the schedule timezone", () => {
+    expect(nextScheduleTransition(nightly, new Date("2026-09-11T10:00:00.000Z"))).toBe(
+      "2026-09-11T18:00:00.000Z",
+    );
+  });
+
+  it("finds the end of the current half-open occurrence", () => {
+    expect(nextScheduleTransition(nightly, new Date("2026-09-11T20:00:00.000Z"))).toBe(
+      "2026-09-12T03:00:00.000Z",
+    );
   });
 });

@@ -1,0 +1,23 @@
+{
+  "type": "Feature",
+  "id": "AQ_OBS-HAPNV-20260916160000",
+  "geometry": {
+    "type": "Point",
+    "coordinates": [-105.714722, 53.216111]
+  },
+  "properties": {
+    "id": "AQ_OBS-HAPNV-20260916160000",
+    "aqhi_type": "AQHI-Observation",
+    "observation_type": "original",
+    "location_name_en": "Prince Albert",
+    "location_name_fr": "Prince Albert",
+    "location_id": "HAPNV",
+    "observation_datetime": "2026-09-16T16:00:00Z",
+    "observation_datetime_text_en": "10:00 AM CST Wednesday 16 September 2026",
+    "observation_datetime_text_fr": "10h00 AM HNC mercredi 16 septembre 2026",
+    "aqhi": 1.0,
+    "special_notes_en": "",
+    "special_notes_fr": "",
+    "latest": true
+  }
+}

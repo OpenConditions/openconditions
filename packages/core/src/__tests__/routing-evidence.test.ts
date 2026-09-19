@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  nextScheduleTransition,
-  type RoadConditionRoutingEvidence,
-  routingEvidenceReasons,
-} from "../index.js";
+import { type RoadConditionRoutingEvidence, routingEvidenceReasons } from "../index.js";
 
 const base: RoadConditionRoutingEvidence = {
   schema_version: 1,
@@ -126,21 +122,5 @@ describe("routingEvidenceReasons", () => {
         new Date("2026-09-11T10:00:00.000Z"),
       ),
     ).toContain("segment_direction_mismatch");
-  });
-});
-
-describe("nextScheduleTransition", () => {
-  const nightly = [{ startTime: "20:00", duration: "PT9H", scheduleTimezone: "Europe/Berlin" }];
-
-  it("finds the next inactive-to-active transition in the schedule timezone", () => {
-    expect(nextScheduleTransition(nightly, new Date("2026-09-11T10:00:00.000Z"))).toBe(
-      "2026-09-11T18:00:00.000Z",
-    );
-  });
-
-  it("finds the end of the current half-open occurrence", () => {
-    expect(nextScheduleTransition(nightly, new Date("2026-09-11T20:00:00.000Z"))).toBe(
-      "2026-09-12T03:00:00.000Z",
-    );
   });
 });

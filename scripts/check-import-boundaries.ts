@@ -48,6 +48,34 @@ const TRANSPORT: Boundary = {
   message: "Event truth must remain independent of federation transport health.",
 };
 
+const MODEL: Boundary = {
+  id: "model",
+  pattern: /^@openconditions\//,
+  message: "The model package is the bottom layer: it imports no other OpenConditions package.",
+};
+
+const DOMAIN_MODEL: Boundary = {
+  id: "domain-model",
+  pattern: /^@openconditions\/(?!model(?:\/|$))/,
+  message: "A domain model package holds pure definitions: it imports only @openconditions/model.",
+};
+
+const MODEL_REGISTRY: Boundary = {
+  id: "model-registry",
+  pattern: /^@openconditions\/(?!model(?:-[a-z0-9-]+)?(?:\/|$))/,
+  message: "The production registry assembles model packages only.",
+};
+
+const ASSEMBLY: Boundary = {
+  id: "assembly",
+  pattern: /^@openconditions\/model-registry(?:\/|$)/,
+  message:
+    "Storage and domain packages build on the kernel; only services, publishers and scripts use the assembled registry.",
+};
+
+/** Packages that must not import the assembled registry: storage and the domain parser packages. */
+const BELOW_ASSEMBLY = ["packages/core/", "packages/roads/"];
+
 /** Files whose conclusions must not depend on federation transport health. */
 const TRUTH_PATHS = [
   "packages/core/src/evidence.ts",
@@ -82,6 +110,10 @@ const isTruthPath = (path: string): boolean =>
 export function boundariesFor(path: string): Boundary[] {
   const boundaries: Boundary[] = [];
   if (!isIntegrationFile(path)) boundaries.push(CONTAINERS);
+  if (path.startsWith("packages/model/")) boundaries.push(MODEL);
+  else if (path.startsWith("packages/model-registry/")) boundaries.push(MODEL_REGISTRY);
+  else if (path.startsWith("packages/model-")) boundaries.push(DOMAIN_MODEL);
+  if (BELOW_ASSEMBLY.some((root) => path.startsWith(root))) boundaries.push(ASSEMBLY);
   if (!isTestFile(path)) {
     if (isPackageOrServiceSource(path) && !path.startsWith("packages/probe-spike/")) {
       boundaries.push(SPIKE);

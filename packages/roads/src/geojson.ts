@@ -1,4 +1,4 @@
-import { type Severity, type SourceFormat, toIsoTimestamp } from "@openconditions/core";
+import { type Severity, toIsoTimestamp } from "@openconditions/core";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { GeoJsonMapping, RoadEvent, RoadEventType } from "./model.js";
@@ -174,7 +174,7 @@ export function featuresToRoadEvents(
   features: Feature[],
   collectionCrs: string | undefined,
   src: SourceDescriptor,
-  format: SourceFormat,
+  format: "geojson" | "flatjson",
 ): RoadEvent[] {
   const mapping = src.geojson ?? {};
   const out: RoadEvent[] = [];

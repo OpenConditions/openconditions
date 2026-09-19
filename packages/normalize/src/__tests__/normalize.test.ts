@@ -354,6 +354,17 @@ describe("resolveInstanceId", () => {
   it("falls back to 'local' for an empty value (Compose ${VAR:-} injection)", () => {
     expect(resolveInstanceId({ OPENCONDITIONS_INSTANCE_ID: "" })).toBe("local");
   });
+
+  it("accepts a hostname and rejects ids that cannot be a record-id namespace", () => {
+    expect(resolveInstanceId({ OPENCONDITIONS_INSTANCE_ID: "maps.example.org" })).toBe(
+      "maps.example.org",
+    );
+    for (const bad of ["a:b", "Maps.example.org", "node_a", "-node", "node-"]) {
+      expect(() => resolveInstanceId({ OPENCONDITIONS_INSTANCE_ID: bad })).toThrow(
+        /not a valid instance id/,
+      );
+    }
+  });
 });
 
 describe("normalizeObservation — federation context preserves origin fields", () => {

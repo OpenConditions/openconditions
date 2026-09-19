@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
@@ -140,6 +141,25 @@ describe("pipeline — happy path", () => {
       return attrs != null && "isPlanned" in attrs;
     });
     expect(hasRoadAttrs).toBe(true);
+  }, 30_000);
+});
+
+describe("pipeline — payload digests", () => {
+  it("records the sha256 of each downloaded payload on the poll attempt it published from", async () => {
+    const body = readFileSync(NDW_FIXTURE_PATH);
+    const result = await runSource(ndwFeed, {
+      sql,
+      fetch: async () => new Response(gzipSync(body)),
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+    });
+    expect(result.error).toBeUndefined();
+    const attempts = await sql<{ payload_hashes: string[] | null }[]>`
+      SELECT payload_hashes FROM conditions.source_poll_attempt
+      WHERE source = ${ndwFeed.id} ORDER BY id DESC LIMIT 1
+    `;
+    // Transport gzip does not change the identity: the digest is of the decoded body.
+    expect(attempts[0]!.payload_hashes).toEqual([createHash("sha256").update(body).digest("hex")]);
   }, 30_000);
 });
 
@@ -735,6 +755,15 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     const events = rows.filter((r) => r.kind === "event");
     expect(events.length).toBe(0);
   }, 60_000);
+
+  it("records the digest of the decoded streamed document on the poll attempt", async () => {
+    const attempts = await sql<{ payload_hashes: string[] | null }[]>`
+      SELECT payload_hashes FROM conditions.source_poll_attempt
+      WHERE source = 'nl-ndw-flow' ORDER BY id DESC LIMIT 1
+    `;
+    const decoded = createHash("sha256").update(speedPayload).digest("hex");
+    expect(attempts[0]!.payload_hashes).toEqual([decoded]);
+  });
 
   it("flow rows use 'roads' domain and 'nl-ndw-flow' source", async () => {
     const wrongRows = await sql<{ count: string }[]>`

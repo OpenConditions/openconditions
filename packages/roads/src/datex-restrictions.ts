@@ -1,4 +1,4 @@
-import type { Schedule } from "@openconditions/core";
+import type { Schedule } from "@openconditions/model";
 import type {
   RestrictionIssue,
   RestrictionTokens,

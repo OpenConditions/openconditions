@@ -1,6 +1,6 @@
+import type { EvidenceState, RoutingRights, Schedule } from "@openconditions/model";
 import type { Geometry, LineString, MultiLineString, Point } from "geojson";
-import type { EvidenceState } from "./evidence.js";
-import type { RoadConditionRoutingEvidence, RoutingRights } from "./routing-evidence.js";
+import type { RoadConditionRoutingEvidence } from "./routing-evidence.js";
 
 export type GeoJsonGeometry = Geometry;
 export type LineStringGeometry = LineString;
@@ -28,40 +28,6 @@ export interface MergedSource {
   id: string;
   attribution: Attribution;
 }
-
-export type SourceFormat =
-  | "datex2"
-  | "datex-elaborated"
-  | "open511"
-  | "wzdx"
-  | "geojson"
-  | "ibi511"
-  | "lta"
-  | "gddkia"
-  | "flatjson"
-  | "trafikverket"
-  | "traff"
-  | "autobahn"
-  | "digitraffic"
-  | "fintraffic-tms"
-  | "webtris"
-  | "nyc-dot"
-  | "ohgo"
-  | "ohgo-events"
-  | "vic-disruptions"
-  | "ibi511-conditions"
-  | "trafikverket-flow"
-  | "bonn"
-  | "informo"
-  | "lta-speedbands"
-  | "miv"
-  | "fdt"
-  | "hk-td"
-  | "geojson-flow"
-  | "bcn-trams"
-  | "gtfs-rt"
-  | "native"
-  | "crowd";
 
 export type ObservationDomain = "roads" | "transit" | "places" | string;
 
@@ -122,43 +88,6 @@ export interface ObservationBinding {
   directionMode?: DirectionMode;
 }
 
-/**
- * A recurring validity rule, shaped after schema.org `Schedule`
- * (https://schema.org/Schedule). The local wall-clock fields (`startTime`,
- * `startDate`/`endDate`, …) are interpreted in `scheduleTimezone` (an IANA name),
- * so the rule is unambiguous and DST-correct without materialising occurrences.
- * `duration` is the authoritative occurrence length (overnight-safe, e.g.
- * "PT9H" for 20:00–05:00); `endTime` is an optional human-readable convenience.
- * An Observation with no `schedule` (or an empty array) is continuously active
- * across `[validFrom, validTo]`.
- */
-export interface Schedule {
-  /** ISO 8601 duration between occurrences: "P1D" daily, "P1W" weekly. */
-  repeatFrequency?: string;
-  /** Bound the recurrence by a count of occurrences instead of `endDate`. */
-  repeatCount?: number;
-  /** Local ISO date of the first occurrence (recurrence lower bound). */
-  startDate?: string;
-  /** Local ISO date of the last occurrence's start (recurrence upper bound). */
-  endDate?: string;
-  /** Local time-of-day each occurrence starts ("HH:MM" or "HH:MM:SS"). */
-  startTime?: string;
-  /** Optional local end time-of-day (human-readable; `duration` is authoritative). */
-  endTime?: string;
-  /** ISO 8601 duration of each occurrence, e.g. "PT9H"; overnight-safe. */
-  duration?: string;
-  /** Days of week as two-letter iCal codes (SU MO TU WE TH FR SA). */
-  byDay?: string[];
-  /** Months of the year (1-12) the recurrence applies to. */
-  byMonth?: number[];
-  /** Days of the month (1-31). */
-  byMonthDay?: number[];
-  /** Local ISO dates excluded from the recurrence. */
-  exceptDate?: string[];
-  /** IANA timezone the local fields above are expressed in (e.g. "Europe/Berlin"). */
-  scheduleTimezone: string;
-}
-
 export interface SubjectRef {
   type: "geo" | "osm" | "gtfs-stop" | "gtfs-trip" | "gtfs-route" | "place" | "segment";
   id: string;
@@ -207,7 +136,8 @@ export type Provenance =
 export interface Observation {
   id: string;
   source: string;
-  sourceFormat: SourceFormat;
+  /** The wire format the parser read; registry-validated in the new model, a plain string here. */
+  sourceFormat: string;
   domain: ObservationDomain;
   kind: "event" | "measurement";
 

@@ -10,6 +10,15 @@ async function violations(source: string, filePath: string): Promise<number> {
   return importBoundaryViolations(source, filePath).length;
 }
 
+/** The kernel depends on nothing, a domain model only on the kernel, the assembly only on model packages. */
+function modelMayDependOn(name: string, dependency: string): boolean {
+  if (name === "@openconditions/model") return false;
+  if (name === "@openconditions/model-registry") {
+    return /^@openconditions\/model(?:-[a-z0-9-]+)?$/.test(dependency);
+  }
+  return dependency === "@openconditions/model";
+}
+
 describe("AST architecture boundaries", () => {
   const landing = "services/contributions-api/src/landing/insert.ts";
 
@@ -40,6 +49,49 @@ describe("AST architecture boundaries", () => {
     'import { getPeerHealth } from "../../../../packages/federation/src/peer-health.js";',
   ])("rejects transport dependencies in truth paths: %s", async (source) => {
     expect(await violations(source, landing)).toBe(1);
+  });
+
+  it.each(["packages/model/src/kernel/location.ts", "packages/model/src/__tests__/kernel.test.ts"])(
+    "keeps the model package free of other OpenConditions packages: %s",
+    async (path) => {
+      expect(await violations('import { toIsoTimestamp } from "@openconditions/core";', path)).toBe(
+        1,
+      );
+      expect(await violations('import { z } from "zod";', path)).toBe(0);
+    },
+  );
+
+  it("keeps domain model packages on the kernel alone", async () => {
+    const path = "packages/model-roads/src/index.ts";
+    expect(await violations('import { kernelModule } from "@openconditions/model";', path)).toBe(0);
+    expect(await violations('import { toIsoTimestamp } from "@openconditions/core";', path)).toBe(
+      1,
+    );
+    expect(await violations('import { x } from "@openconditions/model-parking";', path)).toBe(1);
+  });
+
+  it("lets the production registry assemble model packages only", async () => {
+    const path = "packages/model-registry/src/index.ts";
+    expect(await violations('import { kernelModule } from "@openconditions/model";', path)).toBe(0);
+    expect(
+      await violations('import { roadsModule } from "@openconditions/model-roads";', path),
+    ).toBe(0);
+    expect(await violations('import { EVENT_PARSERS } from "@openconditions/roads";', path)).toBe(
+      1,
+    );
+  });
+
+  it.each([
+    "packages/core/src/db/schema.ts",
+    "packages/roads/src/__tests__/restriction-effects.test.ts",
+  ])("keeps the assembled registry out of storage and domain packages: %s", async (path) => {
+    expect(
+      await violations(
+        'import { productionRegistry } from "@openconditions/model-registry";',
+        path,
+      ),
+    ).toBe(1);
+    expect(await violations('import { kernelModule } from "@openconditions/model";', path)).toBe(0);
   });
 
   it("allows explanatory comments and ordinary strings containing forbidden module names", async () => {
@@ -130,6 +182,20 @@ describe("workspace dependency declarations", () => {
           if (
             manifest.name === "@openconditions/contributions-api" &&
             dependency === "@openconditions/ingest"
+          ) {
+            offenders.push(`${manifest.name} -> ${dependency}`);
+          }
+          if (
+            /^@openconditions\/model(?:-|$)/.test(manifest.name) &&
+            dependency.startsWith("@openconditions/") &&
+            !modelMayDependOn(manifest.name, dependency)
+          ) {
+            offenders.push(`${manifest.name} -> ${dependency}`);
+          }
+          if (
+            (manifest.name === "@openconditions/core" ||
+              manifest.name === "@openconditions/roads") &&
+            dependency === "@openconditions/model-registry"
           ) {
             offenders.push(`${manifest.name} -> ${dependency}`);
           }

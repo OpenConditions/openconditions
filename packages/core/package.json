@@ -42,6 +42,7 @@
     "vitest": "^4.1.11"
   },
   "dependencies": {
+    "@openconditions/model": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "postgres": "^3.4.9",
     "tz-lookup": "^6.1.25"

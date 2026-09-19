@@ -2,7 +2,6 @@ import {
   type ConditionEvent,
   type Measurement,
   type Observation,
-  type RoutingRights,
   readObservations,
 } from "@openconditions/core";
 import {
@@ -11,6 +10,7 @@ import {
   hasCredentials,
   requiredEnvVars,
 } from "@openconditions/ingest-framework";
+import type { RoutingRights } from "@openconditions/model";
 import {
   type FeedInfo,
   filterForPermissiveExport,

@@ -1,4 +1,5 @@
 import { runMigrations } from "@openconditions/core/server";
+import { resolveInstanceId } from "@openconditions/normalize";
 import Fastify from "fastify";
 import { DATABASE_URL, sql } from "./db.js";
 import { buildDomainRegistry } from "./domains.js";
@@ -23,6 +24,7 @@ const TRUST_PROXY_CIDRS = process.env["TRUST_PROXY_CIDRS"];
 const LOOPBACK = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 
 async function boot() {
+  console.info(`[ingest] instance id ${resolveInstanceId()}`);
   console.info("[ingest] applying database migrations…");
   await runMigrations(DATABASE_URL);
   console.info("[ingest] migrations applied");

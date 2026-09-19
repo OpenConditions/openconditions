@@ -1,4 +1,6 @@
 import { Readable } from "node:stream";
+import { gzipSync } from "node:zlib";
+import { digestPayload } from "@openconditions/ingest-framework";
 import type { FeedSource } from "@openconditions/roads";
 import { FEED_SOURCES } from "@openconditions/roads";
 import { describe, expect, it } from "vitest";
@@ -59,6 +61,29 @@ describe("streaming feed error handling", () => {
         () => new Date(0).toISOString(),
       ),
     ).rejects.toThrow();
+  });
+});
+
+describe("streamed payload digest", () => {
+  it("hashes the decoded document on its way to the parser", async () => {
+    const feed = FEED_SOURCES.find((f) => f.id === "nl-ndw-flow")!;
+    const src = { ...feed, domain: "roads" } as DomainFeedSource;
+    // One site with no geometry: the parser accepts the publication and skips the site.
+    const xml = Buffer.from(
+      '<?xml version="1.0"?><d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0">' +
+        '<payloadPublication><siteMeasurements><measurementSiteReference id="S1"/>' +
+        "</siteMeasurements></payloadPublication></d2LogicalModel>",
+    );
+    const body = src.gzip ? gzipSync(xml) : xml;
+    const { observations, payload } = await streamMeasuredData(
+      src,
+      async () => Readable.from([body]),
+      undefined,
+      () => new Date(0).toISOString(),
+    );
+    expect(observations).toEqual([]);
+    expect(payload.sha256).toBe(digestPayload("", xml).sha256);
+    expect(payload.bytes).toBe(xml.length);
   });
 });
 

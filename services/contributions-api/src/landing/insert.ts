@@ -6,7 +6,8 @@ import {
   reportToObservation,
   type SignedReport,
 } from "@openconditions/contrib-core";
-import { centroid, coarseCell, type EvidenceState } from "@openconditions/core";
+import { centroid, coarseCell } from "@openconditions/core";
+import type { EvidenceState } from "@openconditions/model";
 import { normalizeObservation } from "@openconditions/normalize";
 import type postgres from "postgres";
 import { checkReportRate, ReportRateLimitError } from "../abuse/rate.js";

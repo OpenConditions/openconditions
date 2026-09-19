@@ -1,6 +1,5 @@
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
-import type { SourceFormat } from "@openconditions/core";
 import type { FeedAuth, FeedSourceBase } from "@openconditions/ingest-framework";
 import { loadFeedFiles } from "@openconditions/ingest-framework";
 import { parseAutobahn } from "./autobahn.js";
@@ -49,7 +48,7 @@ export type { FeedAuth };
  * fields. All feed transport is now pure data.
  */
 export type FeedSource = FeedSourceBase & {
-  format: SourceFormat;
+  format: RoadSourceFormat;
   /**
    * A companion DATEX II MeasurementSiteTablePublication that supplies the
    * geometry for measurement sites keyed only by id in the data feed (the NDW
@@ -136,18 +135,6 @@ function resolveFeedsDir(): string {
   return found;
 }
 
-/**
- * All registered feed sources, loaded from the per-country JSON5 data files
- * under `feeds/roads/` and validated against {@link roadFeedSchema} at load.
- * `format` is validated as a non-empty string here and keyed into `parserFor`
- * (which throws on an unknown format), so the narrowing to `SourceFormat` is a
- * schema-guarded assertion rather than an unchecked cast.
- */
-export const FEED_SOURCES: FeedSource[] = loadFeedFiles(
-  resolveFeedsDir(),
-  roadFeedSchema,
-) as FeedSource[];
-
 type ParserFn = typeof parseDatexSituations;
 type FlowParserFn = (
   input: string | Buffer,
@@ -155,50 +142,85 @@ type FlowParserFn = (
   siteMap?: Map<string, SiteGeometry>,
 ) => FlowParseResult;
 
+const EVENT_PARSERS = {
+  datex2: parseDatexSituations,
+  open511: parseOpen511,
+  wzdx: parseWzdx,
+  geojson: parseGeoJson,
+  ibi511: parseIbi511 as ParserFn,
+  lta: parseLtaIncidents as ParserFn,
+  gddkia: parseGddkia,
+  flatjson: parseFlatJson as ParserFn,
+  trafikverket: parseTrafikverket as ParserFn,
+  autobahn: parseAutobahn,
+  digitraffic: parseDigitraffic,
+  "ohgo-events": parseOhgoEvents as ParserFn,
+  "vic-disruptions": parseVicDisruptions as ParserFn,
+  "ibi511-conditions": parseIbi511Conditions as ParserFn,
+} satisfies Record<string, ParserFn>;
+
+const FLOW_PARSERS = {
+  digitraffic: parseDigitrafficFlow,
+  datex2: parseDatexMeasuredData,
+  "datex-elaborated": parseElaboratedFlow,
+  "fintraffic-tms": parseFintrafficFlow,
+  webtris: parseWebtrisFlow,
+  "nyc-dot": parseNycDotFlow,
+  ohgo: parseOhgoFlow,
+  "trafikverket-flow": parseTrafikverketFlow,
+  bonn: parseBonnFlow,
+  informo: parseMadridFlow,
+  "lta-speedbands": parseLtaSpeedBands,
+  miv: parseMivFlow,
+  fdt: parseTurinFlow,
+  "hk-td": parseHkRawFlow,
+  "geojson-flow": parseGeojsonFlow,
+  "bcn-trams": parseBcnTramsFlow,
+} satisfies Record<string, FlowParserFn>;
+
+/** A wire format some roads parser reads — the roads contribution to `source_format`. */
+export type RoadSourceFormat = keyof typeof EVENT_PARSERS | keyof typeof FLOW_PARSERS;
+
+/** Every roads wire format, sorted. */
+export const ROAD_SOURCE_FORMATS = [
+  ...new Set([...Object.keys(EVENT_PARSERS), ...Object.keys(FLOW_PARSERS)]),
+].sort() as RoadSourceFormat[];
+
+/**
+ * All registered feed sources, loaded from the per-country JSON5 data files
+ * under `feeds/roads/` and validated against {@link roadFeedSchema} at load.
+ * A feed whose `format` no roads parser reads fails the load, so the
+ * narrowing to {@link RoadSourceFormat} is checked, not assumed.
+ */
+export const FEED_SOURCES: FeedSource[] = loadFeedFiles(resolveFeedsDir(), roadFeedSchema).map(
+  (feed) => {
+    if (!(ROAD_SOURCE_FORMATS as string[]).includes(feed.format)) {
+      throw new Error(`feed ${feed.id}: no roads parser reads format "${feed.format}"`);
+    }
+    return feed as FeedSource;
+  },
+);
+
 /**
  * Returns the parser function for a given source format.
  * Throws for any format not yet supported.
  */
-export function parserFor(format: SourceFormat): ParserFn {
-  if (format === "datex2") return parseDatexSituations;
-  if (format === "open511") return parseOpen511;
-  if (format === "wzdx") return parseWzdx;
-  if (format === "geojson") return parseGeoJson;
-  if (format === "ibi511") return parseIbi511 as ParserFn;
-  if (format === "lta") return parseLtaIncidents as ParserFn;
-  if (format === "gddkia") return parseGddkia;
-  if (format === "flatjson") return parseFlatJson as ParserFn;
-  if (format === "trafikverket") return parseTrafikverket as ParserFn;
-  if (format === "autobahn") return parseAutobahn;
-  if (format === "digitraffic") return parseDigitraffic;
-  if (format === "ohgo-events") return parseOhgoEvents as ParserFn;
-  if (format === "vic-disruptions") return parseVicDisruptions as ParserFn;
-  if (format === "ibi511-conditions") return parseIbi511Conditions as ParserFn;
-  throw new Error(`No parser registered for format: ${format}`);
+export function parserFor(format: string): ParserFn {
+  if (!Object.hasOwn(EVENT_PARSERS, format)) {
+    throw new Error(`No parser registered for format: ${format}`);
+  }
+  return EVENT_PARSERS[format as keyof typeof EVENT_PARSERS];
 }
 
 /**
  * Returns the flow parser function for a given source format.
  * Throws when no flow parser is registered for the format.
  */
-export function flowParserFor(format: SourceFormat): FlowParserFn {
-  if (format === "digitraffic") return parseDigitrafficFlow;
-  if (format === "datex2") return parseDatexMeasuredData;
-  if (format === "datex-elaborated") return parseElaboratedFlow;
-  if (format === "fintraffic-tms") return parseFintrafficFlow;
-  if (format === "webtris") return parseWebtrisFlow;
-  if (format === "nyc-dot") return parseNycDotFlow;
-  if (format === "ohgo") return parseOhgoFlow;
-  if (format === "trafikverket-flow") return parseTrafikverketFlow;
-  if (format === "bonn") return parseBonnFlow;
-  if (format === "informo") return parseMadridFlow;
-  if (format === "lta-speedbands") return parseLtaSpeedBands;
-  if (format === "miv") return parseMivFlow;
-  if (format === "fdt") return parseTurinFlow;
-  if (format === "hk-td") return parseHkRawFlow;
-  if (format === "geojson-flow") return parseGeojsonFlow;
-  if (format === "bcn-trams") return parseBcnTramsFlow;
-  throw new Error(`No flow parser registered for format: ${format}`);
+export function flowParserFor(format: string): FlowParserFn {
+  if (!Object.hasOwn(FLOW_PARSERS, format)) {
+    throw new Error(`No flow parser registered for format: ${format}`);
+  }
+  return FLOW_PARSERS[format as keyof typeof FLOW_PARSERS];
 }
 
 /**

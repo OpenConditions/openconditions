@@ -1,3 +1,4 @@
+import type { EvidenceState } from "@openconditions/model";
 import type { Confidence } from "./model.js";
 
 /**
@@ -7,13 +8,6 @@ import type { Confidence } from "./model.js";
  * input, so the same ledger evaluated under the same policy version always
  * produces a byte-identical result.
  */
-
-export type EvidenceState =
-  | "self_reported"
-  | "corroborated"
-  | "externally_resolved"
-  | "negated"
-  | "expired";
 
 export interface EvidenceEntry {
   id: string;

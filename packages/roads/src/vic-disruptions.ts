@@ -1,4 +1,5 @@
-import { type Schedule, toIsoTimestamp } from "@openconditions/core";
+import { toIsoTimestamp } from "@openconditions/core";
+import type { Schedule } from "@openconditions/model";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";

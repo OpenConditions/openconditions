@@ -1,4 +1,4 @@
-import type { Schedule } from "@openconditions/core";
+import type { Schedule } from "@openconditions/model";
 
 /**
  * A schema.org-shaped `Schedule` minus its zone — the local-only shape a parser

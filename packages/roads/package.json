@@ -39,6 +39,7 @@
   "dependencies": {
     "@openconditions/core": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
+    "@openconditions/model": "workspace:*",
     "fast-xml-parser": "^5.11.1",
     "proj4": "^2.21.0",
     "saxes": "^6.0.0",

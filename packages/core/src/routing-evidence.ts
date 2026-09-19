@@ -1,4 +1,4 @@
-export type GrantState = "yes" | "no" | "unknown";
+import type { RoutingRights } from "@openconditions/model";
 
 export type CanonicalVehicleClass =
   | "motor_vehicle"
@@ -13,17 +13,6 @@ export interface RoutingApplicability {
   kind: "all" | "classes" | "unknown";
   classes?: CanonicalVehicleClass[];
   raw?: string[];
-}
-
-export interface RoutingRights {
-  source_redistribution: GrantState;
-  derived_redistribution: GrantState;
-  commercial_use: GrantState;
-  attribution_required: GrantState;
-  retention: GrantState;
-  evidence_origin: string | null;
-  evidence_version: string | null;
-  reviewed_at: string | null;
 }
 
 export interface RoutingEvidenceSegment {

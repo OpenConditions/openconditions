@@ -20,7 +20,7 @@
  * id + canonicalId + a deletion flag, and the local ledger never federates.
  */
 
-import type { EvidenceState } from "@openconditions/core";
+import type { EvidenceState } from "@openconditions/model";
 import type postgres from "postgres";
 import { applyExternalResolution } from "../reputation/resolve.js";
 

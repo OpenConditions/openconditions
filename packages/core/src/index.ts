@@ -3,7 +3,6 @@ export * from "./crossSourceDedupe.js";
 export * from "./dedupe.js";
 export * from "./evidence.js";
 export * from "./freshness.js";
-export * from "./inEffect.js";
 export * from "./model.js";
 export * from "./observationsByBbox.js";
 export * from "./observed-properties.js";

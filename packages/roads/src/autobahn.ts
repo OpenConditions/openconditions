@@ -1,5 +1,6 @@
-import type { GeoJsonGeometry, Schedule } from "@openconditions/core";
+import type { GeoJsonGeometry } from "@openconditions/core";
 import { deriveSeverity } from "@openconditions/core";
+import type { Schedule } from "@openconditions/model";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";

@@ -2,6 +2,7 @@ import { resolvedEnv } from "./auth.js";
 import { getCatalogResolverById, resolveWithSnapshot } from "./catalog.js";
 import { boundedGunzip, DEFAULT_MAX_FEED_BYTES } from "./egress.js";
 import type { FeedSourceBase } from "./feed-source.js";
+import { digestPayload, type PayloadDigest } from "./payload.js";
 import { applyPreFetch } from "./pre-fetch.js";
 import { feedSecretValues, redactSecrets, redactUrl } from "./redact.js";
 import { allowedTemplateVars, resolveFeedUrls, resolveUrlTemplate } from "./template.js";
@@ -32,7 +33,10 @@ type FetchableFeed = FeedSourceBase;
  * across the ~30 datex feeds — only bloats off-heap memory and is omitted.
  */
 export interface FetchState {
-  conditional: Map<string, { etag?: string; lastModified?: string; buffer?: Buffer }>;
+  conditional: Map<
+    string,
+    { etag?: string; lastModified?: string; buffer?: Buffer; payload?: PayloadDigest }
+  >;
   lastFetchAt: Map<string, number>;
   sourceConfig: Map<string, string>;
 }
@@ -49,12 +53,15 @@ export type FetchResult =
       /** Commit conditional validators only after the complete snapshot is published. */
       accept: () => void;
       buffers: Buffer[];
+      /** One digest per buffer, same order: the raw-payload identity of each response. */
+      payloads: PayloadDigest[];
       validatedAtNetwork: true;
       partitions: { succeeded: number; failed: 0; total: number };
     }
   | {
       status: "partial";
       buffers: Buffer[];
+      payloads: PayloadDigest[];
       validatedAtNetwork: false;
       partitions: { succeeded: number; failed: number; total: number };
     }
@@ -106,7 +113,7 @@ async function fetchOne(
   state?: FetchState,
   cacheBody = false,
   redact: (s: string) => string = (s) => s,
-): Promise<{ changed: boolean; buffer: Buffer }> {
+): Promise<{ changed: boolean; buffer: Buffer; payload: PayloadDigest }> {
   const prior = state?.conditional.get(url);
   const headers = new Headers(init?.headers);
   if (prior?.etag) headers.set("If-None-Match", prior.etag);
@@ -116,7 +123,14 @@ async function fetchOne(
   // A 304 body is only consumed for a multi-URL feed's partial-304 re-parse
   // (where `cacheBody` is true and `prior.buffer` was retained). A single-URL 304
   // returns this empty buffer, which the caller discards on its "unchanged" path.
-  if (res.status === 304 && prior) return { changed: false, buffer: prior.buffer ?? EMPTY_BUFFER };
+  if (res.status === 304 && prior) {
+    const buffer = prior.buffer ?? EMPTY_BUFFER;
+    return {
+      changed: false,
+      buffer,
+      payload: prior.payload ?? digestPayload(redact(redactUrl(url)), buffer),
+    };
+  }
   if (!res.ok) {
     // `redact` (the feed's own secret values) runs after `redactUrl` (query
     // values) so a credential duplicated into the URL PATH — e.g. Mobilithek's
@@ -126,14 +140,18 @@ async function fetchOne(
   const arrayBuf = await res.arrayBuffer();
   const raw = Buffer.from(arrayBuf);
   const buffer = isGzip(raw) ? await boundedGunzip(raw, MAX_DECOMPRESSED_BYTES) : raw;
+  // The digest travels further than this function (poll records, raw index):
+  // it carries the URL with credentials scrubbed, never the live one.
+  const payload = digestPayload(redact(redactUrl(url)), buffer);
   if (state) {
     state.conditional.set(url, {
       etag: res.headers.get("etag") ?? undefined,
       lastModified: res.headers.get("last-modified") ?? undefined,
       buffer: cacheBody ? buffer : undefined,
+      payload: cacheBody ? payload : undefined,
     });
   }
-  return { changed: true, buffer };
+  return { changed: true, buffer, payload };
 }
 
 /** Build the RequestInit for a feed: POST + body + headers when configured. */
@@ -180,8 +198,9 @@ async function fetchFanout(
   // where it has them. The static path has always sent these; the fan-out
   // dropped them, so a feed quietly lost its headers by being fanned out.
   init?: RequestInit,
-): Promise<{ buffers: Buffer[]; failures: number; total: number }> {
+): Promise<{ buffers: Buffer[]; payloads: PayloadDigest[]; failures: number; total: number }> {
   const out: Buffer[] = [];
+  const payloads: PayloadDigest[] = [];
   let failures = 0;
   let cursor = 0;
 
@@ -189,11 +208,12 @@ async function fetchFanout(
     while (cursor < urls.length) {
       const url = urls[cursor++]!;
       try {
-        const { buffer } = await fetchOne(url, fetchFn, init, undefined, false, redact);
+        const { buffer, payload } = await fetchOne(url, fetchFn, init, undefined, false, redact);
         if (looksLikeHtml(buffer)) {
           throw new Error("returned an HTML page, not feed data");
         }
         out.push(buffer);
+        payloads.push(payload);
       } catch (err) {
         failures++;
         console.warn(
@@ -210,7 +230,7 @@ async function fetchFanout(
   if (urls.length > 0 && out.length === 0) {
     throw new Error(`all ${urls.length} sub-feeds failed (${failures} failures)`);
   }
-  return { buffers: out, failures, total: urls.length };
+  return { buffers: out, payloads, failures, total: urls.length };
 }
 
 /**
@@ -228,8 +248,8 @@ async function fetchAllBounded(
   state: FetchState | undefined,
   cacheBody: boolean,
   redact: (s: string) => string = (s) => s,
-): Promise<{ changed: boolean; buffer: Buffer }[]> {
-  const out = new Array<{ changed: boolean; buffer: Buffer }>(urls.length);
+): Promise<{ changed: boolean; buffer: Buffer; payload: PayloadDigest }[]> {
+  const out = new Array<{ changed: boolean; buffer: Buffer; payload: PayloadDigest }>(urls.length);
   let cursor = 0;
   async function worker(): Promise<void> {
     while (cursor < urls.length) {
@@ -292,19 +312,23 @@ async function fetchPaginated(
   src: FetchableFeed,
   fetchFn: typeof fetch,
   redact: (s: string) => string,
-): Promise<Buffer[]> {
+): Promise<{ buffers: Buffer[]; payloads: PayloadDigest[] }> {
   const pg = src.pagination!;
   const recordsPath = pg.recordsPath ?? "value";
   const maxPages = pg.maxPages ?? DEFAULT_MAX_PAGES;
   const init = requestInit(src);
   const out: Buffer[] = [];
+  const payloads: PayloadDigest[] = [];
   for (const baseUrl of baseUrls) {
     let reachedEnd = false;
     for (let page = 0; page < maxPages; page++) {
       const url = withOffset(baseUrl, pg.skipParam, page * pg.pageSize);
-      const { buffer } = await fetchOne(url, fetchFn, init, undefined, false, redact);
+      const { buffer, payload } = await fetchOne(url, fetchFn, init, undefined, false, redact);
       const count = countJsonRecords(buffer, recordsPath);
-      if (count > 0) out.push(buffer);
+      if (count > 0) {
+        out.push(buffer);
+        payloads.push(payload);
+      }
       if (count < pg.pageSize) {
         reachedEnd = true;
         break;
@@ -314,7 +338,7 @@ async function fetchPaginated(
       throw new Error(`pagination: ${src.id} reached maxPages=${maxPages} without a terminal page`);
     }
   }
-  return out;
+  return { buffers: out, payloads };
 }
 
 /** Shallow equality match of a resolved descriptor against a catalog filter. */
@@ -381,6 +405,7 @@ export async function fetchAll(
       return {
         status: "partial",
         buffers: fanout.buffers,
+        payloads: fanout.payloads,
         validatedAtNetwork: false,
         partitions: {
           succeeded: fanout.total - fanout.failures,
@@ -393,6 +418,7 @@ export async function fetchAll(
       status: "fetched",
       accept: () => {},
       buffers: fanout.buffers,
+      payloads: fanout.payloads,
       validatedAtNetwork: true,
       partitions: { succeeded: fanout.total, failed: 0, total: fanout.total },
     };
@@ -407,10 +433,12 @@ export async function fetchAll(
     if (baseUrls.length === 0) {
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
+    const pages = await fetchPaginated(baseUrls, active, fetchFn, redact);
     return {
       status: "fetched",
       accept: () => {},
-      buffers: await fetchPaginated(baseUrls, active, fetchFn, redact),
+      buffers: pages.buffers,
+      payloads: pages.payloads,
       validatedAtNetwork: true,
       partitions: { succeeded: baseUrls.length, failed: 0, total: baseUrls.length },
     };
@@ -432,6 +460,7 @@ export async function fetchAll(
         return {
           status: "partial",
           buffers: fanout.buffers,
+          payloads: fanout.payloads,
           validatedAtNetwork: false,
           partitions: {
             succeeded: fanout.total - fanout.failures,
@@ -444,6 +473,7 @@ export async function fetchAll(
         status: "fetched",
         accept: () => {},
         buffers: fanout.buffers,
+        payloads: fanout.payloads,
         validatedAtNetwork: true,
         partitions: { succeeded: fanout.total, failed: 0, total: fanout.total },
       };
@@ -508,6 +538,7 @@ export async function fetchAll(
       }
     },
     buffers: results.map((r) => r.buffer),
+    payloads: results.map((r) => r.payload),
     validatedAtNetwork: true,
     partitions: { succeeded: results.length, failed: 0, total: results.length },
   };

@@ -248,6 +248,8 @@ export async function atomicSwap(
      * not place this cycle. Supplied only by complete-snapshot sources.
      */
     unlocatableIds?: readonly string[];
+    /** Digests of the payloads this publication was parsed from. */
+    payloadHashes?: readonly string[];
   },
 ): Promise<SwapCounts> {
   // The single defaulting seam: stamp the commons federation/privacy provenance
@@ -358,6 +360,7 @@ export async function atomicSwap(
         attemptAt: statusContext?.attemptAt,
         networkValidated: true,
         durationMs: statusContext?.durationMs,
+        ...(statusContext?.payloadHashes ? { payloadHashes: statusContext.payloadHashes } : {}),
         publication: {
           activeEvents: capped.filter((row) => row.kind === "event").length,
           rowCount: capped.length,

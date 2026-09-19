@@ -3,6 +3,11 @@ import { createGunzip } from "node:zlib";
 import type { Observation } from "@openconditions/core";
 import {
   DEFAULT_MAX_FEED_BYTES,
+  DigestTee,
+  feedSecretValues,
+  type PayloadDigest,
+  redactSecrets,
+  redactUrl,
   resolvedEnv,
   resolveFeedUrls,
 } from "@openconditions/ingest-framework";
@@ -43,14 +48,16 @@ function resolveUrl(src: DomainFeedSource): string {
  * parser: fetch → optional gunzip → {@link createMeasuredDataParser}. The large
  * document is never buffered whole nor materialised as a DOM — peak memory is the
  * output flow/event arrays plus a small per-site accumulator. Returns the flows
- * plus any derived congestion events as Observations (all carry geometry).
+ * plus any derived congestion events as Observations (all carry geometry), and
+ * the digest of the decoded document — hashed on the way through, the same
+ * identity a buffered fetch would give it.
  */
 export async function streamMeasuredData(
   src: DomainFeedSource,
   streamFactory: SiteTableStreamFactory,
   siteMap: Map<string, SiteGeometry> | undefined,
   now: () => string,
-): Promise<Observation[]> {
+): Promise<{ observations: Observation[]; payload: PayloadDigest }> {
   const descriptor = feedToSourceDescriptor(src);
   const url = resolveUrl(src);
 
@@ -69,14 +76,18 @@ export async function streamMeasuredData(
     // the way out so a half-read connection never lingers.
     const decoded: Readable = src.gzip ? source.pipe(createGunzip()) : source;
     if (decoded !== source) source.on("error", (err) => decoded.destroy(err));
+    const tee = new DigestTee(redactSecrets(redactUrl(url), feedSecretValues(src)));
+    decoded.on("error", (err) => tee.destroy(err));
+    decoded.pipe(tee);
     try {
       let decompressed = 0;
-      decoded.setEncoding("utf8");
-      for await (const chunk of decoded) {
+      tee.setEncoding("utf8");
+      for await (const chunk of tee) {
         decompressed += Buffer.byteLength(chunk as string);
         if (decompressed > MAX_DECOMPRESSED_BYTES) {
           if (decoded !== source) source.destroy();
           decoded.destroy();
+          tee.destroy();
           throw new Error(`decompressed stream exceeded ${MAX_DECOMPRESSED_BYTES} bytes`);
         }
         parser.write(chunk as string);
@@ -95,6 +106,6 @@ export async function streamMeasuredData(
     if (failed) {
       throw new Error(`streaming parse failed for source ${src.id} (partial/truncated document)`);
     }
-    return [...flows, ...events];
+    return { observations: [...flows, ...events], payload: tee.digest() };
   }, src.id);
 }

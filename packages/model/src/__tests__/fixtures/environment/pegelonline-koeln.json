@@ -1,0 +1,44 @@
+{
+  "uuid": "a6ee8177-107b-47dd-bcfd-30960ccc6e9c",
+  "number": "2730010",
+  "shortname": "KÖLN",
+  "longname": "KÖLN",
+  "km": 688.0,
+  "agency": "STANDORT KÖLN",
+  "longitude": 6.9633,
+  "latitude": 50.936949,
+  "voiceServiceNumber": "+49228 286527 567",
+  "water": {
+    "shortname": "RHEIN",
+    "longname": "RHEIN"
+  },
+  "timeseries": [
+    {
+      "shortname": "Q",
+      "longname": "ABFLUSS_ROHDATEN",
+      "unit": "m³/s",
+      "equidistance": 15,
+      "currentMeasurement": {
+        "timestamp": "2026-09-18T11:45:00+02:00",
+        "value": 629.0
+      }
+    },
+    {
+      "shortname": "W",
+      "longname": "WASSERSTAND ROHDATEN",
+      "unit": "cm",
+      "equidistance": 15,
+      "currentMeasurement": {
+        "timestamp": "2026-09-18T12:00:00+02:00",
+        "value": 66.0,
+        "stateMnwMhw": "low",
+        "stateNswHsw": "normal"
+      },
+      "gaugeZero": {
+        "unit": "m. ü. NHN",
+        "value": 35.038,
+        "validFrom": "2019-11-01"
+      }
+    }
+  ]
+}
