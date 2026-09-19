@@ -409,7 +409,7 @@ importers:
         version: link:../../packages/storage
       fastify:
         specifier: ^5.12.1
-        version: 5.12.1
+        version: 5.12.5
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
@@ -455,7 +455,7 @@ importers:
         version: link:../../packages/ingest-framework
       fastify:
         specifier: ^5.12.1
-        version: 5.12.1
+        version: 5.12.5
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
@@ -510,7 +510,7 @@ importers:
         version: 10.0.1
       fastify:
         specifier: ^5.12.1
-        version: 5.12.1
+        version: 5.12.5
       hyparquet-writer:
         specifier: 0.16.9
         version: 0.16.9
@@ -1982,11 +1982,11 @@ packages:
   fast-querystring@1.1.2:
     resolution: {integrity: sha512-g6KuKWmFXc0fID8WWH0jit4g0AGBoJhCkJMb1RmbsSEUNvQ+ZC8D6CUZ+GtF8nMzSPXnhiePyyqqipzNNEnHjg==}
 
-  fast-uri@3.1.6:
-    resolution: {integrity: sha512-7Ical1vFEMr0onbVzEDIreM22I4khW+fzyQPwvAFWBp1iwdshSZRsL4jjRvPG9JP1uiqMHRto+YU6R2/CzDz5Q==}
+  fast-uri@3.1.8:
+    resolution: {integrity: sha512-GZMtZUTNRpOVIECoXwLNZS5xUGE+mVNbTB8h/7Rwh2TFWcBQiPzTgyZi05BF9UMZKkLJv8XBRJTlU7zg8+ZfMg==}
 
-  fast-uri@4.1.3:
-    resolution: {integrity: sha512-7+72G6vLt7jjNas8SmSATx2qeyRIjxeqO3i4IkmDTxlqYZRKANhOe1bnovcp4WZmvsYrp60WyqPyHqgRiX0yXw==}
+  fast-uri@4.1.5:
+    resolution: {integrity: sha512-vZeoMRB4epNr7QfdHxel7te/RcX16CxyXI07JCCTFWZA2s4v1azGNESRj+2EoaHSaWFL/Z3GmKT2jF6A202jLg==}
 
   fast-xml-builder@1.3.1:
     resolution: {integrity: sha512-pIM/1n3ntFXKYrUZwW7QCK0gAW7XY+wzj1YMIV3tLDvPj/V+zTGJK5e3/4WJfwj0qWw2ElNXiTixda/R+3YSug==}
@@ -1995,11 +1995,11 @@ packages:
     resolution: {integrity: sha512-TBw6K/fxoQGGjCmZDw9w/ZwP3uDcnTM4YH/g+PFRWr8sbe5idXtxNN6vITh4+1ruCZaho6uBFurElsA7F0zzgw==}
     hasBin: true
 
-  fastify@5.12.1:
-    resolution: {integrity: sha512-FWi+tQvwxR/PeRX7Z2mhfEF5ozJ3jn9asiiclzKXNSzJRHAYcU924aIOKAdHFJ+YIKieh3cqr1IwCOvTr41B3Q==}
+  fastify@5.12.5:
+    resolution: {integrity: sha512-OB2k1dlxs5/NAABqeKV2FUHkSD2BbENsCak8yULVcymn3fHIPDVa9TI3SDnJSWYSllZmSYuZXy2gTnsT+Sut1A==}
 
-  fastq@1.20.1:
-    resolution: {integrity: sha512-GGToxJ/w1x32s/D2EKND7kTil4n8OVk/9mycTc4VDza13lOvpUZTGX3mFSCtV9ksdGBVzvsyAVLM6mHFThxXxw==}
+  fastq@1.20.3:
+    resolution: {integrity: sha512-XKv5nnLs6nLF71NgiKJLIZFLkPyIEuOselLG7ujZnGrRfQK8HpvY+WqKhAJUAdLomwVHErVS4LfxFlPq0/FTAw==}
 
   fdir@6.5.0:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
@@ -3315,7 +3315,7 @@ snapshots:
     dependencies:
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
-      fast-uri: 4.1.3
+      fast-uri: 4.1.5
 
   '@fastify/error@4.2.0': {}
 
@@ -3752,7 +3752,7 @@ snapshots:
   ajv@8.20.0:
     dependencies:
       fast-deep-equal: 3.1.3
-      fast-uri: 3.1.6
+      fast-uri: 3.1.8
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
@@ -3827,7 +3827,7 @@ snapshots:
   avvio@9.3.0:
     dependencies:
       '@fastify/error': 4.2.0
-      fastq: 1.20.1
+      fastq: 1.20.3
 
   b4a@1.8.1: {}
 
@@ -4163,7 +4163,7 @@ snapshots:
       '@fastify/merge-json-schemas': 0.2.1
       ajv: 8.20.0
       ajv-formats: 3.0.1(ajv@8.20.0)
-      fast-uri: 4.1.3
+      fast-uri: 4.1.5
       json-schema-ref-resolver: 3.0.0
       rfdc: 1.4.1
 
@@ -4171,9 +4171,9 @@ snapshots:
     dependencies:
       fast-decode-uri-component: 1.0.1
 
-  fast-uri@3.1.6: {}
+  fast-uri@3.1.8: {}
 
-  fast-uri@4.1.3: {}
+  fast-uri@4.1.5: {}
 
   fast-xml-builder@1.3.1:
     dependencies:
@@ -4189,12 +4189,12 @@ snapshots:
       strnum: 2.4.2
       xml-naming: 0.3.0
 
-  fastify@5.12.1:
+  fastify@5.12.5:
     dependencies:
       '@fastify/ajv-compiler': 4.0.6
       '@fastify/error': 4.2.0
       '@fastify/fast-json-stringify-compiler': 5.1.0
-      '@fastify/proxy-addr': 5.1.0
+      '@fastify/proxy-addr': 5.1.1
       abstract-logging: 2.0.1
       avvio: 9.3.0
       fast-json-stringify: 7.0.1
@@ -4207,7 +4207,7 @@ snapshots:
       semver: 7.8.5
       toad-cache: 3.7.4
 
-  fastq@1.20.1:
+  fastq@1.20.3:
     dependencies:
       reusify: 1.1.0
 
