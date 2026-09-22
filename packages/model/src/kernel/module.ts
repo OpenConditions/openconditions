@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { LIFECYCLES, PAYMENT_METHODS } from "../classes/feature.js";
-import { AGGREGATIONS } from "../classes/observation.js";
+import { AGGREGATIONS, TRENDS } from "../classes/observation.js";
 import { CAUSES, CERTAINTIES, SEVERITY_LABELS } from "../classes/situation.js";
 import type { RegistryModule, VocabularyEntry } from "../registry/define.js";
 import { defineSelector, defineVocabulary } from "../registry/define.js";
@@ -15,6 +15,7 @@ import {
   NORMALIZATION,
 } from "./effect.js";
 import {
+  AMENITIES,
   featureTraitVocabulary,
   sensorChannelKind,
   surfaceStateVocabulary,
@@ -98,6 +99,11 @@ export const kernelModule: RegistryModule = {
     closed("certainty", CERTAINTIES, "Situation certainty."),
     closed("aggregation", AGGREGATIONS, "The statistic an observation reports."),
     closed("result_type", RESULT_TYPES, "Observation result forms."),
+    closed(
+      "trend",
+      TRENDS,
+      "Which way a measured value is moving (parking occupancy, border waits, DATEX occupancy trend).",
+    ),
     closed("lifecycle", LIFECYCLES, "Feature and component lifecycle."),
     closed("payment_method", PAYMENT_METHODS, "Payment methods."),
     closed("ical_day", ICAL_DAYS, "Days of week in schedules."),
@@ -175,8 +181,8 @@ export const kernelModule: RegistryModule = {
     ),
     open(
       "amenity",
-      [],
-      "Feature amenities (DATEX ServiceFacilityType ∪ OCPI Facility ∪ TPIMS); domain packages contribute.",
+      AMENITIES,
+      "What a site offers besides parking, charging or fuelling; domain packages add their sources' codes.",
     ),
     surfaceStateVocabulary,
     featureTraitVocabulary,

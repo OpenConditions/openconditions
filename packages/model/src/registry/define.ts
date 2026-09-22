@@ -22,6 +22,7 @@ export type MappingTarget =
   | "cap"
   | "ocpi"
   | "oicp"
+  | "parkapi"
   | "tpims"
   | "road511"
   | "osm";
@@ -41,6 +42,10 @@ export const INGEST_MAPPING_TARGETS: readonly MappingTarget[] = [
   "wzdx",
   "open511",
   "ibi511",
+  "ocpi",
+  "oicp",
+  "parkapi",
+  "tpims",
 ];
 
 interface EntryBase {
@@ -104,6 +109,8 @@ export interface KindEntry<C extends string = string, S extends z.ZodRawShape = 
    * applies to feature kinds of another without either importing the other.
    */
   traits?: readonly string[];
+  /** Feature kinds: how two sources' records of this kind are linked, and its OSM tags. */
+  linking?: LinkingRules;
   /** Situation kinds: effects nested inside `details` (roadworks phases), for id uniqueness and materialisation. */
   nestedEffects?: (details: Record<string, unknown>) => readonly { id: string }[];
 }
@@ -128,6 +135,34 @@ export type PropertyResultSpec =
   | { type: "structured"; schema: string };
 
 /**
+ * How two per-source features of one kind are recognised as the same thing
+ * and which OSM elements that kind can be. Tier 1 is a shared id of an
+ * authoritative scheme; tier 2 a spatial match, on its own below
+ * `alwaysMetres` and otherwise only when an attribute agrees at least as well
+ * as `attribute` demands; a pair that only reaches `pendingAttribute` is kept
+ * for review instead of linked. Distances are metres between representative
+ * points.
+ */
+export interface LinkingRules {
+  /** Id schemes that identify the feature across sources; a conflict under one blocks the link. */
+  idSchemes: readonly string[];
+  alwaysMetres: number;
+  neverMetres: number;
+  attribute: { name?: number; operator?: number; address?: number };
+  pendingAttribute?: { name?: number; operator?: number; address?: number };
+  /** Tokens every feature of the kind shares, so they carry no evidence ("parkhaus"). */
+  nameStopwords?: readonly string[];
+  /** Types that may still be one feature; by default only equal types link. */
+  typeCompatible?: (a: string | undefined, b: string | undefined) => boolean;
+  osm?: {
+    /** `key=value` filters an element of this kind carries. */
+    tags: readonly string[];
+    /** OSM tag → the id scheme whose value it holds (`ref:EU:EVSE` → `emi3:evse`). */
+    idTags?: Readonly<Record<string, string>>;
+  };
+}
+
+/**
  * What a property may be observed about. A feature subject names feature
  * kinds, traits (any feature kind carrying one), component kinds, or a mix;
  * none of them means any feature.
@@ -150,7 +185,8 @@ export type SubjectSpec =
  * no history at all (camera images). Rollups aggregate numeric results; an
  * hourly histogram keeps the distribution (bins of `binWidth` in the
  * property's unit), because percentiles over a window cannot be rebuilt from
- * per-hour percentiles.
+ * per-hour percentiles. A property without a retention entry keeps every row,
+ * which only suits a sparse series (a regulated price cap).
  */
 export interface Retention {
   rawDays?: number;
@@ -167,6 +203,8 @@ export interface PropertyEntry extends EntryBase {
   subjects: readonly SubjectSpec[];
   /** Closed qualifier keys: only where neither a component nor a vector result fits. */
   qualifiers?: (k: Kernel) => z.ZodRawShape;
+  /** Cross-field rules of one property's observations (which subject needs which qualifier). */
+  refine?: (observation: Record<string, unknown>, ctx: z.RefinementCtx) => void;
   freshnessWindowSec?: number;
   decayTtlSec?: { feed?: number; crowd?: number };
   retention?: Retention;

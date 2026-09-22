@@ -21,6 +21,7 @@ import {
   type EffectEntry,
   type KindClass,
   type KindEntry,
+  type LinkingRules,
   type Mappings,
   majorOf,
   type PropertyEntry,
@@ -105,6 +106,40 @@ function checkRetention(p: PropertyEntry, where: string): void {
     throw new RegistryError(
       `${where}: a histogram rollup needs a quantity and a positive bin width`,
     );
+  }
+}
+
+/** A kind's linking rules must describe a window a match can fall in. */
+function checkLinking(
+  rules: LinkingRules,
+  where: string,
+  requireScheme: (scheme: string) => void,
+): void {
+  for (const scheme of rules.idSchemes) requireScheme(scheme);
+  if (!(rules.alwaysMetres > 0) || rules.alwaysMetres > rules.neverMetres) {
+    throw new RegistryError(`${where}: 0 < alwaysMetres <= neverMetres`);
+  }
+  const thresholds = { ...rules.attribute, ...(rules.pendingAttribute ?? {}) };
+  for (const [field, value] of Object.entries(thresholds)) {
+    if (!(value > 0) || value > 1) {
+      throw new RegistryError(`${where}: ${field} similarity is in (0, 1]`);
+    }
+  }
+  for (const [field, min] of Object.entries(rules.pendingAttribute ?? {})) {
+    const accept = rules.attribute[field as keyof typeof rules.attribute];
+    if (accept !== undefined && min >= accept) {
+      throw new RegistryError(
+        `${where}: pending ${field} similarity must be below the accepting one`,
+      );
+    }
+  }
+  for (const tag of rules.osm?.tags ?? []) {
+    if (!/^[\w:]+=[^=]+$/.test(tag))
+      throw new RegistryError(`${where}: osm tag "${tag}" is not key=value`);
+  }
+  for (const scheme of Object.values(rules.osm?.idTags ?? {})) requireScheme(scheme);
+  if (rules.osm !== undefined && rules.osm.tags.length === 0) {
+    throw new RegistryError(`${where}: osm rules without tags`);
   }
 }
 
@@ -288,6 +323,13 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
       if (k.class !== "feature")
         throw new RegistryError(`${where}: only feature kinds have traits`);
       requireValue("feature_trait", t, where);
+    }
+    if (k.linking !== undefined) {
+      if (k.class !== "feature")
+        throw new RegistryError(`${where}: only feature kinds declare linking rules`);
+      checkLinking(k.linking, where, (scheme) =>
+        requireValue("external_id_scheme", scheme, `${where} linking`),
+      );
     }
   }
   for (const p of properties.values()) {

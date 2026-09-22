@@ -73,9 +73,27 @@
   },
   {
     "class": "feature",
+    "code": "charging_site",
+    "version": "1.0",
+    "file": "feature/charging_site@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "fuel_station",
+    "version": "1.0",
+    "file": "feature/fuel_station@1.json"
+  },
+  {
+    "class": "feature",
     "code": "measurement_site",
     "version": "1.0",
     "file": "feature/measurement_site@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "parking_site",
+    "version": "1.0",
+    "file": "feature/parking_site@1.json"
   },
   {
     "class": "feature",
@@ -109,9 +127,81 @@
   },
   {
     "class": "observation",
+    "code": "charging.connector_status",
+    "version": "1.0",
+    "file": "observation/charging.connector_status@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "charging.evse_status",
+    "version": "1.0",
+    "file": "observation/charging.evse_status@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "charging.site_status",
+    "version": "1.0",
+    "file": "observation/charging.site_status@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "charging.waiting_time",
+    "version": "1.0",
+    "file": "observation/charging.waiting_time@1.json"
+  },
+  {
+    "class": "observation",
     "code": "device.status",
     "version": "1.0",
     "file": "observation/device.status@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "fuel.price_cap",
+    "version": "1.0",
+    "file": "observation/fuel.price_cap@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "fuel.price",
+    "version": "1.0",
+    "file": "observation/fuel.price@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "fuel.product_available",
+    "version": "1.0",
+    "file": "observation/fuel.product_available@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "parking.available",
+    "version": "1.0",
+    "file": "observation/parking.available@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "parking.occupancy_pct",
+    "version": "1.0",
+    "file": "observation/parking.occupancy_pct@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "parking.occupied",
+    "version": "1.0",
+    "file": "observation/parking.occupied@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "parking.status",
+    "version": "1.0",
+    "file": "observation/parking.status@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "parking.trend",
+    "version": "1.0",
+    "file": "observation/parking.trend@1.json"
   },
   {
     "class": "observation",
@@ -268,6 +358,18 @@
     "code": "weather.wind_speed",
     "version": "1.0",
     "file": "observation/weather.wind_speed@1.json"
+  },
+  {
+    "class": "offer",
+    "code": "energy_tariff",
+    "version": "1.0",
+    "file": "offer/energy_tariff@1.json"
+  },
+  {
+    "class": "offer",
+    "code": "parking_rate",
+    "version": "1.0",
+    "file": "offer/parking_rate@1.json"
   },
   {
     "class": "result",

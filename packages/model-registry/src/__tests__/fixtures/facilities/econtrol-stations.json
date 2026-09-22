@@ -1,0 +1,189 @@
+[
+  {
+    "id": 1494440,
+    "name": "TMC Werkstatt & Tankstelle",
+    "location": {
+      "address": "Rechte Wienzeile 43",
+      "postalCode": "1050",
+      "city": "Wien",
+      "latitude": 48.1963966,
+      "longitude": 16.358812
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "07:00",
+        "to": "19:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "07:00",
+        "to": "19:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "07:00",
+        "to": "19:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "07:00",
+        "to": "19:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "07:00",
+        "to": "19:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "07:00",
+        "to": "19:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "00:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "00:00"
+      }
+    ],
+    "offerInformation": {
+      "service": true,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": true,
+      "creditCard": true
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": false
+    },
+    "otherServiceOffers": "Wäsche \nAuto reperaturen \nPickerl (§57a)",
+    "position": 1,
+    "open": true,
+    "distance": 0.9219608420880954,
+    "prices": [
+      {
+        "fuelType": "DIE",
+        "amount": 2.179,
+        "label": "Diesel"
+      }
+    ]
+  },
+  {
+    "id": 34026,
+    "name": "leodiskonttankstelle GmbH",
+    "location": {
+      "address": "Seidengasse 12",
+      "postalCode": "1070",
+      "city": "Wien",
+      "latitude": 48.2004272,
+      "longitude": 16.3445982
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "06:00",
+        "to": "21:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "06:00",
+        "to": "21:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "06:00",
+        "to": "21:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "06:00",
+        "to": "21:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "06:00",
+        "to": "21:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "06:00",
+        "to": "21:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "09:00",
+        "to": "18:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "09:00",
+        "to": "18:00"
+      }
+    ],
+    "offerInformation": {
+      "service": true,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": true,
+      "creditCard": false
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": false
+    },
+    "position": 2,
+    "open": true,
+    "distance": 1.8853604072204895,
+    "prices": [
+      {
+        "fuelType": "DIE",
+        "amount": 2.195,
+        "label": "Diesel"
+      }
+    ]
+  }
+]

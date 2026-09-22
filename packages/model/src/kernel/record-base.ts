@@ -59,7 +59,20 @@ export function checkRecordBase(
   domain: string | undefined,
   ctx: z.RefinementCtx,
 ): void {
-  const r = record as { id: string; canonicalId?: string; domain?: string };
+  const r = record as {
+    id: string;
+    canonicalId?: string;
+    domain?: string;
+    provenance: { accessMode: string };
+    freshness: { expiresAt?: string };
+  };
+  if (r.provenance.accessMode === "on_demand" && r.freshness.expiresAt === undefined) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["freshness", "expiresAt"],
+      message: "an on-demand record is cached for a consumer's query and states when it expires",
+    });
+  }
   if (r.domain !== undefined && r.domain !== domain) {
     ctx.addIssue({
       code: "custom",

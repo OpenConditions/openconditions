@@ -1,0 +1,174 @@
+{
+  "items": [
+    {
+      "address": "Viktoriastr. 5",
+      "postal_code": "44532",
+      "city": "Lünen",
+      "state": "Nordrhein-Westfalen",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-15T06:40:48Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "72555",
+      "publish": true,
+      "original_id": "1002913",
+      "source": "bnetza_api",
+      "official_region_code": "059780024024",
+      "opening_times": {
+        "twentyfourseven": true
+      },
+      "coordinates": {
+        "latitude": 51.608953,
+        "longitude": 7.522998,
+        "lat": 51.608953,
+        "lon": 7.522998
+      },
+      "operator": {
+        "name": "Stadtwerke Lünen Infrastrukturbau GmbH"
+      },
+      "evses": [
+        {
+          "uid": "259994189",
+          "evse_id": "DELUEE001601",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:40:48Z",
+          "original_uid": "BNETZA*1002913*1",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T06:40:48Z",
+              "id": "260768225",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "259994190",
+          "evse_id": "DELUEE001602",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:40:48Z",
+          "original_uid": "BNETZA*1002913*2",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T06:40:48Z",
+              "id": "260768226",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Stellenbachstr. 49-51",
+      "postal_code": "44536",
+      "city": "Lünen",
+      "state": "Nordrhein-Westfalen",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-15T06:40:48Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "72557",
+      "publish": true,
+      "original_id": "1002915",
+      "source": "bnetza_api",
+      "official_region_code": "059780024024",
+      "opening_times": {
+        "twentyfourseven": true
+      },
+      "coordinates": {
+        "latitude": 51.606021,
+        "longitude": 7.459233,
+        "lat": 51.606021,
+        "lon": 7.459233
+      },
+      "operator": {
+        "name": "Stadtwerke Lünen Infrastrukturbau GmbH"
+      },
+      "evses": [
+        {
+          "uid": "259994193",
+          "evse_id": "DELUEE000803",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:40:48Z",
+          "original_uid": "BNETZA*1002915*1",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T06:40:48Z",
+              "id": "260768229",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "259994194",
+          "evse_id": "DELUEE000804",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:40:48Z",
+          "original_uid": "BNETZA*1002915*2",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T06:40:48Z",
+              "id": "260768230",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

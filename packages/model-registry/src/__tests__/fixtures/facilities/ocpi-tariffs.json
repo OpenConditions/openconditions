@@ -1,0 +1,90 @@
+{
+  "items": [
+    {
+      "id": "138586",
+      "original_id": "b54961d2769ad8ce574d40fed26e213a",
+      "source": "datex2_enbw",
+      "currency": "EUR",
+      "elements": [
+        {
+          "price_components": [
+            {
+              "type": "ENERGY",
+              "price": 0.66386555,
+              "taxes": [
+                {
+                  "name": "VAT",
+                  "percentage": "19"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "price_components": [
+            {
+              "type": "TIME",
+              "price": 0.20168067,
+              "taxes": [
+                {
+                  "name": "VAT",
+                  "percentage": "19"
+                }
+              ]
+            }
+          ],
+          "restrictions": {
+            "min_duration": 1800,
+            "max_duration": 0
+          }
+        }
+      ],
+      "start_date_time": "2026-08-03T08:26:43.619000+00:00",
+      "last_updated": "2026-09-21T21:59:12.202000+00:00",
+      "type": "AD_HOC_PAYMENT"
+    },
+    {
+      "id": "138587",
+      "original_id": "2d920dc88bc32d4b1cd13d1ee4f469c4",
+      "source": "datex2_enbw",
+      "currency": "EUR",
+      "elements": [
+        {
+          "price_components": [
+            {
+              "type": "ENERGY",
+              "price": 0.58823529,
+              "taxes": [
+                {
+                  "name": "VAT",
+                  "percentage": "19"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "price_components": [
+            {
+              "type": "TIME",
+              "price": 0.10084034,
+              "taxes": [
+                {
+                  "name": "VAT",
+                  "percentage": "19"
+                }
+              ]
+            }
+          ],
+          "restrictions": {
+            "min_duration": 7200,
+            "max_duration": 0
+          }
+        }
+      ],
+      "start_date_time": "2026-08-03T08:26:43.020000+00:00",
+      "last_updated": "2026-09-21T21:56:07.781000+00:00",
+      "type": "AD_HOC_PAYMENT"
+    }
+  ]
+}

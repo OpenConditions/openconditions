@@ -1,0 +1,40 @@
+{
+  "parking_lorry": [
+    {
+      "identifier": "DE-SL-000009",
+      "icon": "314-50",
+      "isBlocked": "false",
+      "future": false,
+      "startLcPosition": "5",
+      "display_type": "PARKING",
+      "subtitle": "Neuhaus W",
+      "title": "A1 | undefined",
+      "coordinate": {
+        "type": "Point",
+        "coordinates": [6.968336, 49.310742]
+      },
+      "description": ["PKW Stellplätze: 0", "LKW Stellplätze: 6"],
+      "routeRecommendation": [],
+      "footer": ["Koordinaten: undefined"],
+      "lorryParkingFeatureIcons": []
+    },
+    {
+      "identifier": "DE-SL-000008",
+      "icon": "314-50",
+      "isBlocked": "false",
+      "future": false,
+      "startLcPosition": "5",
+      "display_type": "PARKING",
+      "subtitle": "Neuhaus O",
+      "title": "A1 | undefined",
+      "coordinate": {
+        "type": "Point",
+        "coordinates": [6.968946, 49.309836]
+      },
+      "description": ["PKW Stellplätze: 0", "LKW Stellplätze: 4"],
+      "routeRecommendation": [],
+      "footer": ["Koordinaten: undefined"],
+      "lorryParkingFeatureIcons": []
+    }
+  ]
+}

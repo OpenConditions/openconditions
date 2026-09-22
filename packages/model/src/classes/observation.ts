@@ -220,6 +220,7 @@ export function observationSchema(
         });
         return;
       }
+      entry.refine?.(o as Record<string, unknown>, ctx);
       const parts = parseRecordId(o.id);
       if (parts !== null && parts.localId !== observationLocalId(o as Keyable)) {
         ctx.addIssue({

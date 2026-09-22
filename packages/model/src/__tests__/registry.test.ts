@@ -464,3 +464,68 @@ describe("recordSchema", () => {
     expect(registry.recordSchema("situation", "incident", "stored")).toBeInstanceOf(z.ZodType);
   });
 });
+
+describe("linking rules", () => {
+  const site = (linking: Record<string, unknown>) =>
+    defineKind({
+      class: "feature",
+      code: "linked_site",
+      domain: "roads",
+      version: "1.0",
+      description: "a kind with linking rules",
+      details: () => ({}),
+      linking: linking as never,
+    });
+  const build = (linking: Record<string, unknown>) =>
+    buildRegistry([kernelModule, testModule, { name: "linking-test", entries: [site(linking)] }]);
+  const sane = { idSchemes: ["ocpi:location"], alwaysMetres: 20, neverMetres: 150, attribute: {} };
+
+  it("accepts a window a match can fall in", () => {
+    expect(build(sane).kind("feature", "linked_site")?.linking?.alwaysMetres).toBe(20);
+  });
+
+  it("rejects a window with no room between its bounds", () => {
+    expect(() => build({ ...sane, alwaysMetres: 200 })).toThrow(RegistryError);
+    expect(() => build({ ...sane, alwaysMetres: 0 })).toThrow(RegistryError);
+  });
+
+  it("rejects an id scheme nothing registers", () => {
+    expect(() => build({ ...sane, idSchemes: ["made:up"] })).toThrow(RegistryError);
+  });
+
+  it("rejects a similarity outside the unit interval", () => {
+    expect(() => build({ ...sane, attribute: { name: 1.5 } })).toThrow(RegistryError);
+  });
+
+  it("rejects a pending threshold that is not below the accepting one", () => {
+    expect(() =>
+      build({ ...sane, attribute: { name: 0.5 }, pendingAttribute: { name: 0.5 } }),
+    ).toThrow(RegistryError);
+  });
+
+  it("rejects an OSM filter that is not a tag", () => {
+    expect(() => build({ ...sane, osm: { tags: ["amenity"] } })).toThrow(RegistryError);
+  });
+
+  it("rejects linking rules on anything but a feature kind", () => {
+    expect(() =>
+      buildRegistry([
+        kernelModule,
+        testModule,
+        {
+          name: "linking-test",
+          entries: [
+            defineKind({
+              class: "component",
+              code: "linked_part",
+              version: "1.0",
+              description: "a component with linking rules",
+              details: () => ({}),
+              linking: sane as never,
+            }),
+          ],
+        },
+      ]),
+    ).toThrow(RegistryError);
+  });
+});

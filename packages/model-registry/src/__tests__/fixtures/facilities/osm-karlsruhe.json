@@ -1,0 +1,1175 @@
+{
+  "elements": [
+    {
+      "type": "node",
+      "id": 1507190213,
+      "tags": {
+        "amenity": "charging_station",
+        "amperage": "32",
+        "authentication:membership_card": "yes",
+        "bicycle": "no",
+        "capacity": "2",
+        "description": "Elektroladestation",
+        "fee": "yes",
+        "motorcar": "yes",
+        "note": "maximale Leistung laut Aufschrift 22 kW, das müsste Drehstrom mit 400 V und 32 A entsprechen",
+        "old_ref": "1062",
+        "opening_hours": "24/7",
+        "operator": "EnBW Energie Baden-Württemberg AG",
+        "operator:wikidata": "Q644304",
+        "payment:enbw_elektronautenkarte": "yes",
+        "ref": "2045",
+        "scooter": "no",
+        "socket:type2": "2",
+        "socket:type2:output": "22 kW",
+        "truck": "no",
+        "voltage": "400"
+      },
+      "lat": 49.0106467,
+      "lon": 8.4109854
+    },
+    {
+      "type": "node",
+      "id": 2575806447,
+      "tags": {
+        "amenity": "charging_station",
+        "bicycle": "no",
+        "capacity": "2",
+        "fee": "yes",
+        "motorcar": "yes",
+        "opening_hours": "24/7",
+        "operator": "EnBW Energie Baden-Württemberg AG",
+        "operator:wikidata": "Q644304",
+        "operator:wikipedia": "de:EnBW Energie Baden-Württemberg",
+        "socket:type2": "2",
+        "socket:type2:output": "22 kW"
+      },
+      "lat": 48.9953813,
+      "lon": 8.3998365
+    },
+    {
+      "type": "node",
+      "id": 3146575218,
+      "tags": {
+        "amenity": "charging_station",
+        "authentication:membership_card": "yes",
+        "capacity": "2",
+        "level": "-1",
+        "note": "Standort auf Parkdeck 1 bei der Ausfahrt der Schloßgarage",
+        "operator": "EnBW Energie Baden-Württemberg AG",
+        "operator:wikidata": "Q644304",
+        "ref": "1117",
+        "socket": "type2",
+        "voltage": "230"
+      },
+      "lat": 49.0109766,
+      "lon": 8.4039081
+    },
+    {
+      "type": "node",
+      "id": 3194635651,
+      "tags": {
+        "amenity": "charging_station",
+        "authentication:membership_card": "yes",
+        "bicycle": "no",
+        "capacity": "2",
+        "charging_station:output": "22 kW",
+        "lastcheck": "2024-08-10",
+        "man_made": "charge_point",
+        "network": "EnBW",
+        "operator": "Stadtwerke Karlsruhe",
+        "payment:enbw_mobility+": "yes",
+        "payment:intercharge": "yes",
+        "ref": "900062",
+        "ref:EU:EVSE": "DE*EBW*E904894*1;DE*EBW*E904894*2",
+        "socket:schuko": "2",
+        "socket:schuko:output": "4.6 kW",
+        "socket:type2": "2",
+        "socket:type2:output": "22 kW"
+      },
+      "lat": 49.0107658,
+      "lon": 8.389764
+    },
+    {
+      "type": "node",
+      "id": 3194635652,
+      "tags": {
+        "access": "yes",
+        "amenity": "charging_station",
+        "amperage": "32",
+        "authentication:membership_card": "yes",
+        "authentication:nfc": "yes",
+        "bicycle": "yes",
+        "brand": "EnBW",
+        "capacity": "1",
+        "capacity:bicycle": "4",
+        "check_date": "2025-08-22",
+        "covered": "no",
+        "description": "2 Anschlüsse, aber nur 1 reservierter Parkplatz. Die Ladesäule steht hinter dem Parkplatz.",
+        "fee": "yes",
+        "man_made": "charge_point",
+        "maxstay": "4 hours",
+        "motorcar": "yes",
+        "motorcycle": "yes",
+        "network": "MeRegioMobil",
+        "opening_hours": "24/7",
+        "operator": "EnBW mobility+ AG",
+        "operator:wikidata": "Q644304",
+        "parking:fee": "no",
+        "payment:app": "yes",
+        "payment:contactless": "yes",
+        "ref": "DE*EBW*E904895",
+        "ref:EU:EVSE": "DE*EBW*E904895*1;DE*EBW*E904895*2",
+        "scooter": "yes",
+        "short_ref": "904895",
+        "socket:schuko": "2",
+        "socket:type2": "2",
+        "socket:type2:output": "22 kW",
+        "voltage": "400"
+      },
+      "lat": 49.0120026,
+      "lon": 8.3990426
+    },
+    {
+      "type": "node",
+      "id": 4067576800,
+      "tags": {
+        "amenity": "charging_station",
+        "authentication:membership_card": "yes",
+        "capacity": "2",
+        "description": "Standort auf Parkdeck 1 bei der Ausfahrt der Schloßgarage",
+        "lastcheck": "2016-03-18",
+        "operator": "EnBW",
+        "operator:wikidata": "Q644304",
+        "operator:wikipedia": "de:EnBW Energie Baden-Württemberg",
+        "socket:schuko": "2",
+        "socket:type2": "2"
+      },
+      "lat": 49.0109674,
+      "lon": 8.4039087
+    },
+    {
+      "type": "node",
+      "id": 4225585811,
+      "tags": {
+        "amenity": "charging_station",
+        "capacity": "2",
+        "capacity:private": "1",
+        "fixme": "doublecheck operator",
+        "layer": "-1",
+        "level": "-1",
+        "note": "1 Parkplatz für Stadtmobil reserviert",
+        "operator": "Stadtwerke Karlsruhe GmbH",
+        "socket:type2": "2"
+      },
+      "lat": 49.0081611,
+      "lon": 8.401371
+    },
+    {
+      "type": "node",
+      "id": 4728814334,
+      "tags": {
+        "access": "permit",
+        "amenity": "charging_station",
+        "bicycle": "no",
+        "level": "-2",
+        "not:operator:wikidata": "Q644304",
+        "operator": "EnBW"
+      },
+      "lat": 49.0074221,
+      "lon": 8.3990601
+    },
+    {
+      "type": "node",
+      "id": 4793460914,
+      "tags": {
+        "amenity": "charging_station",
+        "authentication:none": "yes",
+        "bicycle": "no",
+        "capacity": "1",
+        "description": "im Parkhaus, es fallen Parkgebühren an; 2 Ladesäulen jeweils mit Typ2 und Schuko, eine davon reserviert für Stadtmobil",
+        "fee": "no",
+        "level": "0",
+        "maxstay": "4 hours",
+        "motorcar": "yes",
+        "opening_hours": "24/7",
+        "operator": "Stadtwerke Karlsruhe GmbH",
+        "parking:fee": "yes",
+        "scooter": "no",
+        "socket:schuko": "1",
+        "socket:type2": "1",
+        "truck": "no"
+      },
+      "lat": 49.008399,
+      "lon": 8.4109614
+    },
+    {
+      "type": "node",
+      "id": 5531759684,
+      "tags": {
+        "access": "yes",
+        "amenity": "charging_station",
+        "capacity": "2",
+        "fee": "yes",
+        "motorcar": "yes",
+        "name": "4200",
+        "operator": "EnBW Energie Baden-Württemberg AG",
+        "operator:wikidata": "Q644304",
+        "ref": "4200",
+        "socket:type2": "1",
+        "socket:type2:output": "22 kW",
+        "socket:type2_combo": "1",
+        "socket:type2_combo:output": "50 kW"
+      },
+      "lat": 49.0081588,
+      "lon": 8.4172708
+    },
+    {
+      "type": "node",
+      "id": 5647839452,
+      "tags": {
+        "amenity": "charging_station",
+        "amperage": "32",
+        "bicycle": "no",
+        "capacity": "2",
+        "fee": "yes",
+        "internet_access": "wlan",
+        "internet_access:fee": "no",
+        "manufacturer": "EnBW Energie Baden-Württemberg AG",
+        "model": "SMIGHT Base Tower",
+        "motorcar": "yes",
+        "opening_hours": "24/7",
+        "operator": "Stadtwerke Karlsruhe GmbH",
+        "socket:type2": "2",
+        "socket:type2:output": "22 kW",
+        "voltage": "400"
+      },
+      "lat": 49.0010917,
+      "lon": 8.3831383
+    },
+    {
+      "type": "node",
+      "id": 6132659036,
+      "tags": {
+        "amenity": "charging_station",
+        "capacity": "2",
+        "operator": "ABL"
+      },
+      "lat": 49.0080471,
+      "lon": 8.4164435
+    },
+    {
+      "type": "node",
+      "id": 6550967187,
+      "tags": {
+        "amenity": "charging_station",
+        "operator": "Tesla Destination Charger/AAA Hotels"
+      },
+      "lat": 49.0126688,
+      "lon": 8.3935289
+    },
+    {
+      "type": "node",
+      "id": 9836354795,
+      "tags": {
+        "access": "private",
+        "amenity": "charging_station",
+        "capacity": "2",
+        "manufacturer": "Schneider Electric",
+        "operator": "EVlink"
+      },
+      "lat": 49.0106179,
+      "lon": 8.4135468
+    },
+    {
+      "type": "node",
+      "id": 9836354796,
+      "tags": {
+        "access": "private",
+        "amenity": "charging_station",
+        "capacity": "2",
+        "manufacturer": "Schneider Electric",
+        "operator": "EVlink"
+      },
+      "lat": 49.0106742,
+      "lon": 8.4135562
+    },
+    {
+      "type": "node",
+      "id": 9846587768,
+      "tags": {
+        "access": "yes",
+        "amenity": "charging_station",
+        "authentication:membership_card": "yes",
+        "authentication:nfc": "yes",
+        "brand": "EnBW",
+        "capacity": "2",
+        "fee": "yes",
+        "motorcar": "yes",
+        "opening_hours": "24/7",
+        "operator": "EnBW Energie Baden-Württemberg AG",
+        "operator:wikidata": "Q644304",
+        "payment:app": "yes",
+        "payment:contactless": "yes",
+        "ref": "DE*EBW*E904330",
+        "socket:type2": "2",
+        "socket:type2:output": "150 kW",
+        "voltage": "400"
+      },
+      "lat": 49.0143861,
+      "lon": 8.3968693
+    },
+    {
+      "type": "node",
+      "id": 11610275607,
+      "tags": {
+        "amenity": "charging_station",
+        "brand": "intercharge",
+        "capacity": "2",
+        "fee": "yes",
+        "motorcar": "yes",
+        "operator": "intercharge",
+        "ref": "DE-FHG-EIWM-A0014-1",
+        "socket:type2": "2",
+        "socket:type2:output": "22kW",
+        "website": "https://charge.lama.zone/station/DE-FHG-EIWM-A0014-1"
+      },
+      "lat": 49.0133397,
+      "lon": 8.4156979
+    },
+    {
+      "type": "node",
+      "id": 12104189514,
+      "tags": {
+        "access": "private",
+        "amenity": "charging_station",
+        "capacity": "8",
+        "operator": "Stadtmobil"
+      },
+      "lat": 49.0092961,
+      "lon": 8.3886718
+    },
+    {
+      "type": "node",
+      "id": 13018615135,
+      "tags": {
+        "access": "customers",
+        "amenity": "charging_station",
+        "bicycle": "no",
+        "capacity": "6",
+        "covered": "yes",
+        "level": "-1",
+        "motorcar": "yes",
+        "operator": "Hotel Rio Karlsruhe"
+      },
+      "lat": 49.0094481,
+      "lon": 8.3862472
+    },
+    {
+      "type": "node",
+      "id": 13858864601,
+      "tags": {
+        "amenity": "charging_station",
+        "bicycle": "no",
+        "capacity:motorcar": "2",
+        "check_date": "2026-05-22",
+        "check_date:capacity:motorcar": "2026-05-22",
+        "check_date:opening_hours": "2026-05-21",
+        "opening_hours": "24/7",
+        "operator": "enercity",
+        "socket:type2_combo": "2",
+        "socket:type2_combo:output": "200"
+      },
+      "lat": 49.0113193,
+      "lon": 8.385336
+    },
+    {
+      "type": "node",
+      "id": 13858864701,
+      "tags": {
+        "amenity": "charging_station",
+        "bicycle": "no",
+        "capacity:motorcar": "2",
+        "check_date": "2026-05-22",
+        "check_date:capacity:motorcar": "2026-05-22",
+        "check_date:opening_hours": "2026-05-21",
+        "opening_hours": "24/7",
+        "operator": "enercity",
+        "socket:type2_combo": "2",
+        "socket:type2_combo:output": "200"
+      },
+      "lat": 49.011259,
+      "lon": 8.3853944
+    },
+    {
+      "type": "node",
+      "id": 13858864801,
+      "tags": {
+        "amenity": "charging_station",
+        "bicycle": "no",
+        "capacity:motorcar": "2",
+        "check_date": "2026-05-22",
+        "check_date:capacity:motorcar": "2026-05-22",
+        "check_date:opening_hours": "2026-05-21",
+        "opening_hours": "24/7",
+        "operator": "enercity",
+        "socket:type2_combo": "2",
+        "socket:type2_combo:output": "200"
+      },
+      "lat": 49.0112063,
+      "lon": 8.3854413
+    },
+    {
+      "type": "node",
+      "id": 13858864901,
+      "tags": {
+        "amenity": "charging_station",
+        "bicycle": "no",
+        "capacity:motorcar": "2",
+        "check_date": "2026-05-22",
+        "check_date:capacity:motorcar": "2026-05-22",
+        "check_date:opening_hours": "2026-05-21",
+        "opening_hours": "24/7",
+        "operator": "enercity",
+        "socket:type2_combo": "2",
+        "socket:type2_combo:output": "200"
+      },
+      "lat": 49.0111357,
+      "lon": 8.3855072
+    },
+    {
+      "type": "node",
+      "id": 14045852872,
+      "tags": {
+        "amenity": "charging_station",
+        "authentication:contactless": "yes",
+        "bicycle": "no",
+        "capacity": "2",
+        "fee": "yes",
+        "motorcar": "yes",
+        "motorcycle": "yes",
+        "opening_hours": "24/7",
+        "operator": "PBW Parkraumgesellschaft Baden-Württemberg",
+        "socket:type2": "2",
+        "socket:type2:output": "22 kW"
+      },
+      "lat": 49.0144661,
+      "lon": 8.3867873
+    },
+    {
+      "type": "node",
+      "id": 16726014,
+      "tags": {
+        "access": "yes",
+        "addr:city": "Karlsruhe",
+        "addr:housenumber": "2f",
+        "addr:postcode": "76137",
+        "addr:street": "Luisenstraße",
+        "amenity": "parking",
+        "capacity": "210",
+        "capacity:disabled": "0",
+        "capacity:women": "57",
+        "contact:email": "info@hurrle-kg.de",
+        "contact:phone": "+49 721 937 6290",
+        "contact:website": "https://web1.karlsruhe.de/service/Parken/detail.php?id=K03",
+        "fee": "yes",
+        "maxheight": "2.1",
+        "name": "Luisenstraße",
+        "opening_hours": "Mo-Sa 06:30-24:00; Su,PH 12:00-20:00",
+        "operator": "PVB GmbH Parkhaus Verwaltungs- und Betriebsgesellschaft",
+        "parking": "underground"
+      },
+      "lat": 49.0005697,
+      "lon": 8.4046181
+    },
+    {
+      "type": "node",
+      "id": 21532925,
+      "tags": {
+        "access": "yes",
+        "amenity": "parking",
+        "fee": "yes",
+        "parking": "surface",
+        "wheelchair": "yes"
+      },
+      "lat": 49.0015222,
+      "lon": 8.4064558
+    },
+    {
+      "type": "node",
+      "id": 21533393,
+      "tags": {
+        "access": "customers",
+        "addr:city": "Karlsruhe",
+        "addr:country": "DE",
+        "addr:postcode": "76137",
+        "addr:street": "Festplatz",
+        "amenity": "parking",
+        "capacity": "475",
+        "capacity:disabled": "yes",
+        "fee": "yes",
+        "maxheight": "1.9",
+        "name": "Kongresszentrum PH1",
+        "opening_hours": "Mo-Su 00:00-24:00",
+        "parking": "multi-storey"
+      },
+      "lat": 49.0036037,
+      "lon": 8.4021424
+    },
+    {
+      "type": "node",
+      "id": 21533394,
+      "tags": {
+        "access": "yes",
+        "addr:city": "Karlsruhe",
+        "addr:country": "DE",
+        "addr:postcode": "76137",
+        "addr:street": "Festplatz",
+        "amenity": "parking",
+        "capacity": "475",
+        "capacity:disabled": "yes",
+        "fee": "yes",
+        "layer": "-1",
+        "maxheight": "2",
+        "maxweight": "2.5",
+        "name": "Kongresszentrum PH2",
+        "parking": "underground",
+        "trailer": "no",
+        "wheelchair": "yes"
+      },
+      "lat": 49.0030034,
+      "lon": 8.3997866
+    },
+    {
+      "type": "node",
+      "id": 25969885,
+      "tags": {
+        "addr:city": "Karlsruhe",
+        "addr:housenumber": "11",
+        "addr:postcode": "76137",
+        "addr:street": "Baumeisterstraße",
+        "amenity": "parking",
+        "capacity": "196",
+        "capacity:disabled": "0",
+        "capacity:women": "15",
+        "fee": "yes",
+        "layer": "-1",
+        "maxheight": "2.05",
+        "maxweight": "2.5",
+        "name": "Am Staatstheater",
+        "opening_hours": "Mo-Fr 06:30-01:00, Sa,Su 09:00-01:00",
+        "operator": "APCOA Autoparking GmbH",
+        "parking": "underground",
+        "phone": "+49 721 359039",
+        "wheelchair": "yes"
+      },
+      "lat": 49.0048704,
+      "lon": 8.4046989
+    },
+    {
+      "type": "node",
+      "id": 60019235,
+      "tags": {
+        "access": "yes",
+        "addr:city": "Karlsruhe",
+        "addr:country": "DE",
+        "addr:housenumber": "9",
+        "addr:postcode": "76133",
+        "addr:street": "Herrenstraße",
+        "amenity": "parking",
+        "capacity": "332",
+        "capacity:disabled": "13",
+        "capacity:women": "42",
+        "fee": "yes",
+        "lit": "yes",
+        "maxheight": "2.0",
+        "name": "Parkhaus Herrenstraße/Zirkel",
+        "note": "400 Stellplätze insgesamt",
+        "opening_hours": "24/7",
+        "operator": "Omega-Immobilien Service GmbH",
+        "parking": "multi-storey",
+        "smoothness": "excellent",
+        "surface": "concrete",
+        "wheelchair": "yes"
+      },
+      "lat": 49.0106119,
+      "lon": 8.4009093
+    },
+    {
+      "type": "node",
+      "id": 282566684,
+      "tags": {
+        "access": "yes",
+        "amenity": "parking",
+        "capacity": "825",
+        "capacity:disabled": "21",
+        "capacity:women": "72",
+        "fee": "yes",
+        "maxheight": "2.1",
+        "name": "Ettlinger Tor",
+        "opening_hours": "Mo-Sa 08:00-20:30; Th 08:00-22:00; Su off",
+        "operator": "Pollux Grundstücksgesellschaft & Co",
+        "parking": "multi-storey",
+        "wheelchair": "yes"
+      },
+      "lat": 49.0062294,
+      "lon": 8.4018263
+    },
+    {
+      "type": "node",
+      "id": 320238064,
+      "tags": {
+        "amenity": "parking",
+        "name": "gebaka"
+      },
+      "lat": 49.0032737,
+      "lon": 8.393868
+    },
+    {
+      "type": "node",
+      "id": 330830310,
+      "tags": {
+        "access": "yes",
+        "addr:city": "Karlsruhe",
+        "addr:country": "DE",
+        "addr:housenumber": "2-12",
+        "addr:postcode": "76133",
+        "addr:street": "Erbprinzenstraße",
+        "amenity": "parking",
+        "capacity": "115",
+        "capacity:charging": "yes",
+        "capacity:disabled": "yes",
+        "check_date:opening_hours": "2023-02-25",
+        "fee": "yes",
+        "maxheight": "1.8",
+        "name": "IHK",
+        "opening_hours": "PH,Mo-Su 00:00-24:00",
+        "operator": "Haus der Wirtschaft",
+        "parking": "multi-storey",
+        "wheelchair": "yes"
+      },
+      "lat": 49.0074831,
+      "lon": 8.4029977
+    },
+    {
+      "type": "node",
+      "id": 330845736,
+      "tags": {
+        "access": "yes",
+        "addr:city": "Karlsruhe",
+        "addr:country": "DE",
+        "addr:housenumber": "20",
+        "addr:postcode": "76133",
+        "addr:street": "Ritterstraße",
+        "amenity": "parking",
+        "capacity": "60",
+        "capacity:disabled": "yes",
+        "check_date:opening_hours": "2026-01-19",
+        "fee": "yes",
+        "layer": "-1",
+        "maxheight": "2",
+        "name": "Landesbibliothek",
+        "opening_hours": "Mo-Sa 06:00-02:00; PH off",
+        "parking": "underground"
+      },
+      "lat": 49.0074038,
+      "lon": 8.3991124
+    },
+    {
+      "type": "node",
+      "id": 330848762,
+      "tags": {
+        "access": "yes",
+        "amenity": "parking",
+        "capacity": "80",
+        "capacity:disabled": "yes",
+        "check_date:opening_hours": "2025-04-15",
+        "fee": "yes",
+        "name": "Akademiestraße",
+        "opening_hours": "Mo-Sa 06:30-24:00; PH,Su 12:00-20:00",
+        "parking": "multi-storey"
+      },
+      "lat": 49.0106292,
+      "lon": 8.394179
+    },
+    {
+      "type": "node",
+      "id": 955951761,
+      "tags": {
+        "access": "private",
+        "access:description": "nur mit Parkausweis oder Transportkarte des KIT",
+        "amenity": "parking",
+        "capacity": "0",
+        "capacity:disabled": "1",
+        "fee": "no",
+        "note": "Behindertenparkplatz",
+        "operator": "Karlsruher Institut für Technologie",
+        "park_ride": "no",
+        "parking": "surface"
+      },
+      "lat": 49.0099302,
+      "lon": 8.4119406
+    },
+    {
+      "type": "node",
+      "id": 1007094861,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "name": "Autosilo Meyer",
+        "parking": "multi-storey"
+      },
+      "lat": 49.008903,
+      "lon": 8.3909609
+    },
+    {
+      "type": "node",
+      "id": 1186674234,
+      "tags": {
+        "access": "customers",
+        "addr:city": "Karlsruhe",
+        "addr:country": "DE",
+        "addr:postcode": "76133",
+        "addr:street": "Sparkassenhof",
+        "amenity": "parking",
+        "layer": "-1",
+        "operator": "Sparkasse Karlsruhe",
+        "parking": "underground",
+        "wheelchair": "yes"
+      },
+      "lat": 49.009464,
+      "lon": 8.3923741
+    },
+    {
+      "type": "node",
+      "id": 1336906453,
+      "tags": {
+        "access": "customers",
+        "amenity": "parking",
+        "capacity": "2",
+        "capacity:disabled": "2",
+        "description": "2 Behindertenparkplätze",
+        "fee": "no",
+        "parking": "street_side",
+        "wheelchair": "yes"
+      },
+      "lat": 49.0082175,
+      "lon": 8.403312
+    },
+    {
+      "type": "node",
+      "id": 1580030217,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "parking": "underground"
+      },
+      "lat": 48.9988665,
+      "lon": 8.389261
+    },
+    {
+      "type": "node",
+      "id": 1681698050,
+      "tags": {
+        "access": "yes",
+        "addr:city": "Karlsruhe",
+        "addr:country": "DE",
+        "addr:postcode": "76131",
+        "addr:street": "Waldhornstraße",
+        "amenity": "parking",
+        "capacity": "220",
+        "capacity:charging": "3",
+        "capacity:charging:note": "mindestens 3, eventuell auch mehr",
+        "capacity:disabled": "yes",
+        "charge": "10 EUR / day",
+        "check_date:fee": "2025-07-22",
+        "fee": "yes",
+        "maxheight": "2.0",
+        "name": "Parkgarage Waldhornstraße",
+        "note": "Nur Einfahrt",
+        "old_name": "Tiefgarage Universität",
+        "old_operator": "APCOA Autoparking GmbH",
+        "opening_hours": "24/7",
+        "operator": "Parkraumgesellschaft Baden-Württemberg mbH",
+        "parking": "underground",
+        "website": "https://www.pbw.de/?cmd=Kurzparker&id_city=7&id_object=26"
+      },
+      "lat": 49.0116013,
+      "lon": 8.4078588
+    },
+    {
+      "type": "node",
+      "id": 1725394170,
+      "tags": {
+        "access": "yes",
+        "addr:city": "Karlsruhe",
+        "addr:country": "DE",
+        "addr:postcode": "76133",
+        "addr:street": "Friedrichsplatz",
+        "amenity": "parking",
+        "capacity": "250",
+        "capacity:disabled": "2",
+        "capacity:women": "10",
+        "fee": "yes",
+        "layer": "-1",
+        "maxheight": "2",
+        "name": "Friedrichsplatz",
+        "parking": "underground",
+        "wheelchair": "yes"
+      },
+      "lat": 49.0083624,
+      "lon": 8.4011575
+    },
+    {
+      "type": "node",
+      "id": 1725394191,
+      "tags": {
+        "access": "yes",
+        "addr:city": "Karlsruhe",
+        "addr:country": "DE",
+        "addr:housenumber": "69",
+        "addr:postcode": "76133",
+        "addr:street": "Zähringerstraße",
+        "amenity": "parking",
+        "capacity": "330",
+        "capacity:disabled": "5",
+        "capacity:women": "20",
+        "fee": "yes",
+        "maxheight": "2.1",
+        "name": "Karstadt",
+        "opening_hours": "Mo-Su 00:00-23:59",
+        "operator": "Karstadt Warenhaus AG",
+        "owner": "Aachener Grundvermögen Kapitalverwaltungsgesellschaft mbH",
+        "parking": "multi-storey",
+        "wheelchair": "yes",
+        "wheelchair:description": "Keine Toilette"
+      },
+      "lat": 49.0089787,
+      "lon": 8.4015944
+    },
+    {
+      "type": "node",
+      "id": 1725394201,
+      "tags": {
+        "access": "yes",
+        "addr:city": "Karlsruhe",
+        "addr:country": "DE",
+        "addr:postcode": "76133",
+        "addr:street": "Amalienstraße",
+        "amenity": "parking",
+        "capacity": "250",
+        "capacity:disabled": "2",
+        "capacity:women": "33",
+        "contact:website": "https://web1.karlsruhe.de/service/Parken/W04.php",
+        "elevator": "yes",
+        "fee": "yes",
+        "layer": "-1",
+        "maxheight": "2.1",
+        "name": "Parkhaus Ludwigsplatz",
+        "opening_hours": "24/7",
+        "operator": "Parkhaus Ludwigsplatz GmbH",
+        "parking": "multi-storey",
+        "phone": "+49 721 23280",
+        "wheelchair": "limited"
+      },
+      "lat": 49.0076187,
+      "lon": 8.3959119
+    },
+    {
+      "type": "node",
+      "id": 1744031939,
+      "tags": {
+        "access": "yes",
+        "addr:city": "Karlsruhe",
+        "addr:country": "DE",
+        "addr:housenumber": "16",
+        "addr:postcode": "76133",
+        "addr:street": "Amalienstraße",
+        "amenity": "parking",
+        "capacity": "322",
+        "capacity:disabled": "10",
+        "capacity:women": "yes",
+        "fee": "yes",
+        "layer": "-1",
+        "level": "-1;-2;-3",
+        "lit": "24/7",
+        "name": "Postgalerie",
+        "opening_hours": "24/7",
+        "operator": "APCOA Parking Deutschland GmbH",
+        "parking": "underground",
+        "surface": "paved",
+        "website": "https://www.apcoa.de/parken/karlsruhe/postgalerie/",
+        "wheelchair": "yes"
+      },
+      "lat": 49.0085461,
+      "lon": 8.3940758
+    },
+    {
+      "type": "node",
+      "id": 1811526408,
+      "tags": {
+        "access": "yes",
+        "addr:city": "Karlsruhe",
+        "addr:country": "DE",
+        "addr:housenumber": "5",
+        "addr:postcode": "76133",
+        "addr:street": "Kreuzstraße",
+        "amenity": "parking",
+        "capacity": "48",
+        "capacity:disabled": "no",
+        "capacity:women": "0",
+        "fee": "yes",
+        "maxheight": "2.2",
+        "name": "Kreuzstraße (C&A)",
+        "opening_hours": "Mo-Sa 08:00-21:00; Th 08:00-21:45",
+        "operator": "Parkwache Fuchs",
+        "parking": "multi-storey",
+        "payment:karlsruher": "yes",
+        "phone": "+49 721 3843824",
+        "wheelchair": "no"
+      },
+      "lat": 49.0099415,
+      "lon": 8.4053733
+    },
+    {
+      "type": "node",
+      "id": 1834907306,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "parking": "underground"
+      },
+      "lat": 49.0001386,
+      "lon": 8.3912182
+    },
+    {
+      "type": "node",
+      "id": 1834907316,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "parking": "underground"
+      },
+      "lat": 49.0002037,
+      "lon": 8.3919684
+    },
+    {
+      "type": "node",
+      "id": 1918474074,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "level": "-1",
+        "parking": "underground"
+      },
+      "lat": 49.0049234,
+      "lon": 8.4119296
+    },
+    {
+      "type": "node",
+      "id": 2038139137,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "capacity": "12",
+        "parking": "surface"
+      },
+      "lat": 48.9991051,
+      "lon": 8.3946972
+    },
+    {
+      "type": "node",
+      "id": 2659496331,
+      "tags": {
+        "access": "customers",
+        "amenity": "parking",
+        "fee": "yes",
+        "layer": "-1",
+        "maxheight": "2",
+        "operator": "Renaissance Karlsruhe Hotel",
+        "parking": "underground"
+      },
+      "lat": 49.0051626,
+      "lon": 8.4100287
+    },
+    {
+      "type": "node",
+      "id": 4359043400,
+      "tags": {
+        "access": "customers",
+        "amenity": "parking",
+        "capacity": "3",
+        "description": "Kundenparkplätze der Commerzbank AG",
+        "fee": "no",
+        "operator": "Commerzbank AG",
+        "parking": "surface"
+      },
+      "lat": 49.0090211,
+      "lon": 8.404858
+    },
+    {
+      "type": "node",
+      "id": 5336791413,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "parking": "surface"
+      },
+      "lat": 49.010424,
+      "lon": 8.403387
+    },
+    {
+      "type": "node",
+      "id": 5594520932,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "parking": "multi-storey"
+      },
+      "lat": 49.0088532,
+      "lon": 8.3924657
+    },
+    {
+      "type": "node",
+      "id": 7055696521,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "layer": "-1",
+        "parking": "underground"
+      },
+      "lat": 48.9985183,
+      "lon": 8.4102501
+    },
+    {
+      "type": "node",
+      "id": 8121297059,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "layer": "-1",
+        "parking": "underground"
+      },
+      "lat": 48.9997856,
+      "lon": 8.4102151
+    },
+    {
+      "type": "node",
+      "id": 9217989067,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "fee": "no",
+        "layer": "-1",
+        "operator": "Hausverwaltung Waldstraße 41-43",
+        "parking": "underground"
+      },
+      "lat": 49.0094382,
+      "lon": 8.39708
+    },
+    {
+      "type": "node",
+      "id": 12105622567,
+      "tags": {
+        "amenity": "parking",
+        "layer": "-1",
+        "parking": "underground"
+      },
+      "lat": 49.0108213,
+      "lon": 8.3911847
+    },
+    {
+      "type": "node",
+      "id": 13321736388,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "capacity": "49",
+        "layer": "-1",
+        "name": "Tiefgarage Baumeister-Carrée",
+        "parking": "underground",
+        "source:capacity": "https://www.giggmbh.de/referenzen_baumeister_carree.htm"
+      },
+      "lat": 49.0039765,
+      "lon": 8.408939
+    },
+    {
+      "type": "node",
+      "id": 13717826801,
+      "tags": {
+        "amenity": "parking",
+        "parking": "street_side"
+      },
+      "lat": 49.0035948,
+      "lon": 8.3892459
+    },
+    {
+      "type": "way",
+      "id": 36904771,
+      "tags": {
+        "access": "private",
+        "access:description": "nur mit Parkausweis oder Transportkarte des KIT",
+        "amenity": "parking",
+        "capacity": "48",
+        "lit": "yes",
+        "operator": "Karlsruher Institut für Technologie",
+        "parking": "surface",
+        "wheelchair": "yes"
+      },
+      "center": {
+        "lat": 49.0107969,
+        "lon": 8.4120774
+      }
+    },
+    {
+      "type": "way",
+      "id": 42602856,
+      "tags": {
+        "access": "private",
+        "amenity": "parking",
+        "capacity": "30",
+        "fee": "no",
+        "operator": "Karlsruher Institut für Technologie",
+        "parking": "surface",
+        "surface": "cobblestone",
+        "wheelchair": "yes"
+      },
+      "center": {
+        "lat": 49.0115598,
+        "lon": 8.4113545
+      }
+    },
+    {
+      "type": "way",
+      "id": 89969496,
+      "tags": {
+        "access": "customers",
+        "amenity": "parking",
+        "fee": "no",
+        "parking": "surface"
+      },
+      "center": {
+        "lat": 49.0013481,
+        "lon": 8.3944151
+      }
+    },
+    {
+      "type": "way",
+      "id": 90037741,
+      "tags": {
+        "access": "yes",
+        "amenity": "parking",
+        "capacity": "4",
+        "fee": "no",
+        "lit": "yes",
+        "opening_hours": "24/7",
+        "parking": "street_side",
+        "supervised": "no"
+      },
+      "center": {
+        "lat": 48.9989466,
+        "lon": 8.3937945
+      }
+    }
+  ]
+}

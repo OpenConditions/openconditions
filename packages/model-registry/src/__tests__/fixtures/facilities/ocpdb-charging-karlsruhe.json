@@ -1,0 +1,1185 @@
+{
+  "items": [
+    {
+      "address": "Straße am Forum 5",
+      "postal_code": "76131",
+      "city": "Karlsruhe",
+      "state": "Baden-Württemberg",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-15T06:50:29Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "200439",
+      "publish": true,
+      "original_id": "1031176",
+      "source": "bnetza_api",
+      "official_region_code": "082120000000",
+      "coordinates": {
+        "latitude": 49.012071,
+        "longitude": 8.417861,
+        "lat": 49.012071,
+        "lon": 8.417861
+      },
+      "operator": {
+        "name": "Fraunhofer-Gesellschaft e. V."
+      },
+      "evses": [
+        {
+          "uid": "260020011",
+          "evse_id": "BNETZA*1031176*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:50:29Z",
+          "original_uid": "BNETZA*1031176*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-15T06:50:29Z",
+              "id": "260794620",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260020012",
+          "evse_id": "BNETZA*1031177*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:50:29Z",
+          "original_uid": "BNETZA*1031177*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-15T06:50:29Z",
+              "id": "260794621",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Hans-Sachs-Str 2",
+      "postal_code": "76133",
+      "city": "Karlsruhe",
+      "state": "Baden-Württemberg",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-15T06:54:01Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "206019",
+      "publish": true,
+      "original_id": "1038459",
+      "source": "bnetza_api",
+      "official_region_code": "082120000000",
+      "coordinates": {
+        "latitude": 49.009551,
+        "longitude": 8.38619,
+        "lat": 49.009551,
+        "lon": 8.38619
+      },
+      "operator": {
+        "name": "Hotel Rio BGmbH"
+      },
+      "evses": [
+        {
+          "uid": "260031181",
+          "evse_id": "BNETZA*1038460*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:54:01Z",
+          "original_uid": "BNETZA*1038460*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T06:54:01Z",
+              "id": "260806089",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260031182",
+          "evse_id": "BNETZA*1038460*2",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:54:01Z",
+          "original_uid": "BNETZA*1038460*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T06:54:01Z",
+              "id": "260806090",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260031179",
+          "evse_id": "BNETZA*1038459*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:54:01Z",
+          "original_uid": "BNETZA*1038459*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T06:54:01Z",
+              "id": "260806087",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260031180",
+          "evse_id": "BNETZA*1038459*2",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:54:01Z",
+          "original_uid": "BNETZA*1038459*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T06:54:01Z",
+              "id": "260806088",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260031188",
+          "evse_id": "BNETZA*1038463*2",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:54:01Z",
+          "original_uid": "BNETZA*1038463*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-15T06:54:01Z",
+              "id": "260806096",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260031187",
+          "evse_id": "BNETZA*1038463*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:54:01Z",
+          "original_uid": "BNETZA*1038463*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-15T06:54:01Z",
+              "id": "260806095",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260031183",
+          "evse_id": "BNETZA*1038461*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:54:01Z",
+          "original_uid": "BNETZA*1038461*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T06:54:01Z",
+              "id": "260806091",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260031184",
+          "evse_id": "BNETZA*1038461*2",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:54:01Z",
+          "original_uid": "BNETZA*1038461*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T06:54:01Z",
+              "id": "260806092",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260031186",
+          "evse_id": "BNETZA*1038462*2",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:54:01Z",
+          "original_uid": "BNETZA*1038462*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-15T06:54:01Z",
+              "id": "260806094",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260031185",
+          "evse_id": "BNETZA*1038462*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:54:01Z",
+          "original_uid": "BNETZA*1038462*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-15T06:54:01Z",
+              "id": "260806093",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260031189",
+          "evse_id": "BNETZA*1038464*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:54:01Z",
+          "original_uid": "BNETZA*1038464*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-15T06:54:01Z",
+              "id": "260806097",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260031190",
+          "evse_id": "BNETZA*1038464*2",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T06:54:01Z",
+          "original_uid": "BNETZA*1038464*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-15T06:54:01Z",
+              "id": "260806098",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Bismarckstraße 37-43",
+      "postal_code": "76133",
+      "city": "Karlsruhe",
+      "state": "Baden-Württemberg",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-15T07:01:53Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "221662",
+      "publish": true,
+      "original_id": "1057185",
+      "source": "bnetza_api",
+      "official_region_code": "082120000000",
+      "coordinates": {
+        "latitude": 49.01291,
+        "longitude": 8.39346,
+        "lat": 49.01291,
+        "lon": 8.39346
+      },
+      "operator": {
+        "name": "LAN1 Hotspots GmbH"
+      },
+      "evses": [
+        {
+          "uid": "260053361",
+          "evse_id": "BNETZA*1057185*2",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:01:53Z",
+          "original_uid": "BNETZA*1057185*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:01:53Z",
+              "id": "260829445",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260053360",
+          "evse_id": "BNETZA*1057185*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:01:53Z",
+          "original_uid": "BNETZA*1057185*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:01:53Z",
+              "id": "260829444",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260053362",
+          "evse_id": "BNETZA*1057185*3",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:01:53Z",
+          "original_uid": "BNETZA*1057185*3",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:01:53Z",
+              "id": "260829446",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260053363",
+          "evse_id": "BNETZA*1057185*4",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:01:53Z",
+          "original_uid": "BNETZA*1057185*4",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:01:53Z",
+              "id": "260829447",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Fritz-Erler-Straße 7-11",
+      "postal_code": "76133",
+      "city": "Karlsruhe",
+      "state": "Baden-Württemberg",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-15T07:22:04Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "250940",
+      "publish": true,
+      "original_id": "1102664",
+      "source": "bnetza_api",
+      "official_region_code": "082120000000",
+      "coordinates": {
+        "latitude": 49.00854,
+        "longitude": 8.410457,
+        "lat": 49.00854,
+        "lon": 8.410457
+      },
+      "operator": {
+        "name": "Karlsruher Fächer GmbH"
+      },
+      "evses": [
+        {
+          "uid": "260107768",
+          "evse_id": "BNETZA*1102664*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:22:04Z",
+          "original_uid": "BNETZA*1102664*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:22:04Z",
+              "id": "260886127",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Fritz-Erler-Straße 7-11",
+      "postal_code": "76133",
+      "city": "Karlsruhe",
+      "state": "Baden-Württemberg",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-15T07:22:04Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "250941",
+      "publish": true,
+      "original_id": "1102665",
+      "source": "bnetza_api",
+      "official_region_code": "082120000000",
+      "coordinates": {
+        "latitude": 49.00853,
+        "longitude": 8.410457,
+        "lat": 49.00853,
+        "lon": 8.410457
+      },
+      "operator": {
+        "name": "Karlsruher Fächer GmbH"
+      },
+      "evses": [
+        {
+          "uid": "260107769",
+          "evse_id": "BNETZA*1102665*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:22:04Z",
+          "original_uid": "BNETZA*1102665*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:22:04Z",
+              "id": "260886128",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Südendstraße 44",
+      "postal_code": "76135",
+      "city": "Karlsruhe",
+      "state": "Baden-Württemberg",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-15T07:22:04Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "250943",
+      "publish": true,
+      "original_id": "1102667",
+      "source": "bnetza_api",
+      "official_region_code": "082120000000",
+      "coordinates": {
+        "latitude": 49.000215,
+        "longitude": 8.384,
+        "lat": 49.000215,
+        "lon": 8.384
+      },
+      "operator": {
+        "name": "Karlsruher Fächer GmbH"
+      },
+      "evses": [
+        {
+          "uid": "260107771",
+          "evse_id": "BNETZA*1102667*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:22:04Z",
+          "original_uid": "BNETZA*1102667*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:22:04Z",
+              "id": "260886130",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Kaiserallee 11",
+      "postal_code": "76133",
+      "city": "Karlsruhe",
+      "state": "Baden-Württemberg",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-15T07:24:30Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "254198",
+      "publish": true,
+      "original_id": "1106991",
+      "source": "bnetza_api",
+      "official_region_code": "082120000000",
+      "coordinates": {
+        "latitude": 49.010444,
+        "longitude": 8.384975,
+        "lat": 49.010444,
+        "lon": 8.384975
+      },
+      "operator": {
+        "name": "E.ON Drive Germany GmbH"
+      },
+      "evses": [
+        {
+          "uid": "260114019",
+          "evse_id": "BNETZA*1106991*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:24:30Z",
+          "original_uid": "BNETZA*1106991*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:24:30Z",
+              "id": "260892728",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Amalienstraße",
+      "postal_code": "76133",
+      "city": "Karlsruhe",
+      "state": "Baden-Württemberg",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-15T07:24:30Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "254207",
+      "publish": true,
+      "original_id": "1107000",
+      "source": "bnetza_api",
+      "official_region_code": "082120000000",
+      "coordinates": {
+        "latitude": 49.008328,
+        "longitude": 8.393834,
+        "lat": 49.008328,
+        "lon": 8.393834
+      },
+      "operator": {
+        "name": "E.ON Drive Germany GmbH"
+      },
+      "evses": [
+        {
+          "uid": "260114023",
+          "evse_id": "BNETZA*1107000*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:24:30Z",
+          "original_uid": "BNETZA*1107000*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:24:30Z",
+              "id": "260892732",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260114024",
+          "evse_id": "BNETZA*1107001*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:24:30Z",
+          "original_uid": "BNETZA*1107001*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:24:30Z",
+              "id": "260892733",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Kriegsstraße 25",
+      "postal_code": "76133",
+      "city": "Karlsruhe",
+      "state": "Baden-Württemberg",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-15T07:45:02Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "306598",
+      "publish": true,
+      "original_id": "1151635",
+      "source": "bnetza_api",
+      "official_region_code": "082120000000",
+      "coordinates": {
+        "latitude": 49.00521,
+        "longitude": 8.399475,
+        "lat": 49.00521,
+        "lon": 8.399475
+      },
+      "operator": {
+        "name": "Wirelane GmbH"
+      },
+      "evses": [
+        {
+          "uid": "260169586",
+          "evse_id": "DE*WLN*ES000510",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:45:01Z",
+          "original_uid": "BNETZA*1151635*1",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:45:01Z",
+              "id": "260949786",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260169589",
+          "evse_id": "DE*WLN*ES000920",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:45:01Z",
+          "original_uid": "BNETZA*1151732*1",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:45:01Z",
+              "id": "260949789",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260169590",
+          "evse_id": "DE*WLN*ES000921",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:45:02Z",
+          "original_uid": "BNETZA*1151733*1",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:45:02Z",
+              "id": "260949790",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260169587",
+          "evse_id": "DE*WLN*ES000918",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:45:01Z",
+          "original_uid": "BNETZA*1151730*1",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:45:01Z",
+              "id": "260949787",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260169588",
+          "evse_id": "DE*WLN*ES000919",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-15T07:45:01Z",
+          "original_uid": "BNETZA*1151731*1",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-15T07:45:01Z",
+              "id": "260949788",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Lorenzstraße 21",
+      "postal_code": "76135",
+      "city": "Karlsruhe",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-22T01:20:39Z",
+      "help_phone": "+49 721 72 586 460",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "309444",
+      "publish": true,
+      "original_id": "800019260",
+      "source": "datex2_enbw",
+      "official_region_code": "082120000000",
+      "energy_mix": {
+        "is_green_energy": true,
+        "energy_sources": null,
+        "environ_impact": null,
+        "supplier_name": null,
+        "energy_product_name": null
+      },
+      "opening_times": {
+        "twentyfourseven": true
+      },
+      "coordinates": {
+        "latitude": 49.00106,
+        "longitude": 8.38377,
+        "lat": 49.00106,
+        "lon": 8.38377
+      },
+      "operator": {
+        "name": "ENBW",
+        "emobility_uid": "EBW"
+      },
+      "evses": [
+        {
+          "uid": "262350578",
+          "evse_id": "DE*EBW*E905856*1",
+          "status": "OUTOFORDER",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-22T01:20:39Z",
+          "status_last_updated": "2026-09-08T08:10:22Z",
+          "original_uid": "DE*EBW*E905856*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 230,
+              "max_amperage": 95,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-22T01:20:39Z",
+              "id": "263136241",
+              "tariff_ids": ["14edeacd1413be434f6d54796584ff24"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262350579",
+          "evse_id": "DE*EBW*E905856*2",
+          "status": "OUTOFORDER",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-22T01:20:39Z",
+          "status_last_updated": "2026-09-15T10:18:51Z",
+          "original_uid": "DE*EBW*E905856*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 230,
+              "max_amperage": 95,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-22T01:20:39Z",
+              "id": "263136242",
+              "tariff_ids": ["14edeacd1413be434f6d54796584ff24"],
+              "original_id": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Luisenstraße 6",
+      "postal_code": "76137",
+      "city": "Karlsruhe",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-22T08:49:50Z",
+      "help_phone": "+49 721 72 586 460",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "310181",
+      "publish": true,
+      "original_id": "800019261",
+      "source": "datex2_enbw",
+      "official_region_code": "082120000000",
+      "energy_mix": {
+        "is_green_energy": true,
+        "energy_sources": null,
+        "environ_impact": null,
+        "supplier_name": null,
+        "energy_product_name": null
+      },
+      "opening_times": {
+        "twentyfourseven": true
+      },
+      "coordinates": {
+        "latitude": 49.000576,
+        "longitude": 8.404352,
+        "lat": 49.000576,
+        "lon": 8.404352
+      },
+      "operator": {
+        "name": "ENBW",
+        "emobility_uid": "EBW"
+      },
+      "evses": [
+        {
+          "uid": "262355043",
+          "evse_id": "DE*EBW*E900095*1",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-22T01:29:28Z",
+          "status_last_updated": "2026-09-21T18:04:26Z",
+          "original_uid": "DE*EBW*E900095*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 230,
+              "max_amperage": 95,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-22T01:29:28Z",
+              "id": "263140726",
+              "tariff_ids": ["14edeacd1413be434f6d54796584ff24"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262355044",
+          "evse_id": "DE*EBW*E900095*2",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-22T08:49:50Z",
+          "status_last_updated": "2026-09-22T08:49:50Z",
+          "original_uid": "DE*EBW*E900095*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 230,
+              "max_amperage": 95,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-22T01:29:29Z",
+              "id": "263140727",
+              "tariff_ids": ["14edeacd1413be434f6d54796584ff24"],
+              "original_id": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Kreuzstraße 13",
+      "postal_code": "76133",
+      "city": "Karlsruhe",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-22T01:29:39Z",
+      "help_phone": "+49 721 72 586 460",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "310198",
+      "publish": true,
+      "original_id": "800002373",
+      "source": "datex2_enbw",
+      "official_region_code": "082120000000",
+      "energy_mix": {
+        "is_green_energy": true,
+        "energy_sources": null,
+        "environ_impact": null,
+        "supplier_name": null,
+        "energy_product_name": null
+      },
+      "opening_times": {
+        "twentyfourseven": true
+      },
+      "coordinates": {
+        "latitude": 49.007847,
+        "longitude": 8.405643,
+        "lat": 49.007847,
+        "lon": 8.405643
+      },
+      "operator": {
+        "name": "ENBW",
+        "emobility_uid": "EBW"
+      },
+      "evses": [
+        {
+          "uid": "262355156",
+          "evse_id": "DE*EBW*E900096*2",
+          "status": "OUTOFORDER",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-22T01:29:39Z",
+          "status_last_updated": "2026-09-05T20:02:05Z",
+          "original_uid": "DE*EBW*E900096*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 230,
+              "max_amperage": 95,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-22T01:29:39Z",
+              "id": "263140839",
+              "tariff_ids": ["14edeacd1413be434f6d54796584ff24"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262355155",
+          "evse_id": "DE*EBW*E900096*1",
+          "status": "OUTOFORDER",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-22T01:29:39Z",
+          "status_last_updated": "2026-09-05T20:02:05Z",
+          "original_uid": "DE*EBW*E900096*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 230,
+              "max_amperage": 95,
+              "max_electric_power": 22000,
+              "last_updated": "2026-09-22T01:29:39Z",
+              "id": "263140838",
+              "tariff_ids": ["14edeacd1413be434f6d54796584ff24"],
+              "original_id": "0"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
