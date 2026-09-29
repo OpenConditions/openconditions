@@ -147,6 +147,24 @@ export function featureSchema(
     })
     .superRefine((f, ctx) => {
       checkRecordBase(f, "feature", entry.domain, ctx);
+      const partOf = (f.relations ?? []).flatMap((r, i) => (r.relation === "part_of" ? [i] : []));
+      if (partOf.length > 1) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["relations", partOf[1]!],
+          message: "a feature is part of at most one feature",
+        });
+      }
+      for (const i of partOf) {
+        const ref = f.relations![i]!.ref;
+        if (ref.class !== "feature" || ref.componentKey !== undefined || ref.id === f.id) {
+          ctx.addIssue({
+            code: "custom",
+            path: ["relations", i, "ref"],
+            message: "part_of names another whole feature",
+          });
+        }
+      }
       if (
         f.subtype !== undefined &&
         (f.type === undefined || !(entry.types?.[f.type] ?? []).includes(f.subtype))

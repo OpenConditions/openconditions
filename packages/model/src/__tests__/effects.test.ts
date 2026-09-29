@@ -51,6 +51,23 @@ describe("effects", () => {
     expect(effect({ ...closure("x/closure"), applicability: truckAbove }).success).toBe(false);
   });
 
+  it("tells a legal limit from a measured clearance", () => {
+    const height = {
+      id: "x/dimension_limit",
+      kind: "dimension_limit",
+      v: 1,
+      dimension: "height",
+      operator: "lte",
+      value: { value: 4.35, unit: "m" },
+      applicability: { kind: "all" },
+      compliance: "mandatory",
+      normalization: "complete",
+    };
+    expect(effect({ ...height, meaning: "maximum_permitted" }).success).toBe(true);
+    expect(effect({ ...height, meaning: "physical_limit" }).success).toBe(true);
+    expect(effect({ ...height, meaning: "advisory" }).success).toBe(false);
+  });
+
   it("needs include for classes applicability and nothing else", () => {
     expect(effect({ ...closure("a"), applicability: { kind: "classes" } }).success).toBe(false);
     expect(

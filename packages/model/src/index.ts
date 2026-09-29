@@ -15,6 +15,7 @@ export * from "./kernel/location.js";
 export * from "./kernel/module.js";
 export * from "./kernel/provenance.js";
 export * from "./kernel/record-base.js";
+export * from "./kernel/relations.js";
 export * from "./kernel/result.js";
 export * from "./kernel/scalars.js";
 export * from "./kernel/types.js";

@@ -1,0 +1,962 @@
+[
+  {
+    "port_number": "070801",
+    "border": "Canadian Border",
+    "port_name": "Alexandria Bay",
+    "crossing_name": "Thousand Islands Bridge",
+    "hours": "24 hrs/day",
+    "date": "9/29/2026",
+    "time": "17:02:30",
+    "port_status": "Open",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "5",
+      "cv_automation_type": "Manual",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 4:00 pm EDT",
+        "operational_status": "no delay",
+        "delay_minutes": "0",
+        "lanes_open": "3"
+      },
+      "FAST_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "8",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 4:00 pm EDT",
+        "operational_status": "no delay",
+        "delay_minutes": "0",
+        "lanes_open": "2"
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "",
+        "operational_status": "Lanes Closed",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "N/A",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "",
+    "automation": "0",
+    "automation_enabled": "0"
+  },
+  {
+    "port_number": "300403",
+    "border": "Canadian Border",
+    "port_name": "Blaine",
+    "crossing_name": "Point Roberts",
+    "hours": "24 hrs/day",
+    "date": "9/29/2026",
+    "time": "14:02:30",
+    "port_status": "Open",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "1",
+      "cv_automation_type": "Manual",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "FAST_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "3",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "N/A",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "",
+    "automation": "0",
+    "automation_enabled": "0"
+  },
+  {
+    "port_number": "090101",
+    "border": "Canadian Border",
+    "port_name": "Buffalo/Niagara Falls",
+    "crossing_name": "Peace Bridge",
+    "hours": "24 hrs/day",
+    "date": "9/29/2026",
+    "time": "17:02:30",
+    "port_status": "Open",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "8",
+      "cv_automation_type": "Bluetooth",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 4:57 pm EDT",
+        "operational_status": "delay",
+        "delay_minutes": "21",
+        "lanes_open": "4"
+      },
+      "FAST_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "17",
+      "pv_automation_type": "Bluetooth",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 4:57 pm EDT",
+        "operational_status": "no delay",
+        "delay_minutes": "1",
+        "lanes_open": "5"
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "At 4:57 pm EDT",
+        "operational_status": "no delay",
+        "delay_minutes": "1",
+        "lanes_open": "1"
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "Lanes Closed",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "N/A",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "A Ready Lane is available from 2-6pm Monday through Thursday. ",
+    "automation": "1",
+    "automation_enabled": "1"
+  },
+  {
+    "port_number": "011502",
+    "border": "Canadian Border",
+    "port_name": "Calais",
+    "crossing_name": "Milltown",
+    "hours": "8 am-4 pm",
+    "date": "9/29/2026",
+    "time": "17:02:30",
+    "port_status": "Closed",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "N/A",
+      "cv_automation_type": "Manual",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "FAST_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "1",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "Lanes Closed",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "N/A",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "",
+    "automation": "0",
+    "automation_enabled": "0"
+  },
+  {
+    "port_number": "L01901",
+    "border": "Canadian Border",
+    "port_name": "Madawaska",
+    "crossing_name": "",
+    "hours": "24 hrs/day",
+    "date": "9/29/2026",
+    "time": "17:02:30",
+    "port_status": "Open",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "3",
+      "cv_automation_type": "Manual",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 4:00 pm EDT",
+        "operational_status": "no delay",
+        "delay_minutes": "0",
+        "lanes_open": "1"
+      },
+      "FAST_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "3",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 4:00 pm EDT",
+        "operational_status": "no delay",
+        "delay_minutes": "5",
+        "lanes_open": "1"
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "N/A",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "",
+    "automation": "0",
+    "automation_enabled": "0"
+  },
+  {
+    "port_number": "380201",
+    "border": "Canadian Border",
+    "port_name": "Port Huron",
+    "crossing_name": "Bluewater Bridge",
+    "hours": "24 hrs/day",
+    "date": "9/29/2026",
+    "time": "17:02:30",
+    "port_status": "Open",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "9",
+      "cv_automation_type": "Manual",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 3:00 pm EST",
+        "operational_status": "no delay",
+        "delay_minutes": "0",
+        "lanes_open": "5"
+      },
+      "FAST_lanes": {
+        "update_time": "At 3:00 pm EST",
+        "operational_status": "no delay",
+        "delay_minutes": "0",
+        "lanes_open": "1"
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "10",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 3:00 pm EST",
+        "operational_status": "no delay",
+        "delay_minutes": "0",
+        "lanes_open": "3"
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "At 3:00 pm EST",
+        "operational_status": "no delay",
+        "delay_minutes": "0",
+        "lanes_open": "1"
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "N/A",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "",
+    "automation": "0",
+    "automation_enabled": "0"
+  },
+  {
+    "port_number": "240215",
+    "border": "Mexican Border",
+    "port_name": "BOTA CARGO FACILITY",
+    "crossing_name": "BRIDGE OF AMERICAS CARGO FACILITY ",
+    "hours": "6 am-2 pm",
+    "date": "9/29/2026",
+    "time": "15:02:30",
+    "port_status": "Closed",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "6",
+      "cv_automation_type": "Manual",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "FAST_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "N/A",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "N/A",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "Update Pending",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "",
+    "automation": "0",
+    "automation_enabled": "0"
+  },
+  {
+    "port_number": "535502",
+    "border": "Mexican Border",
+    "port_name": "Brownsville",
+    "crossing_name": "Veterans International",
+    "hours": "6 am-Midnight",
+    "date": "9/29/2026",
+    "time": "16:02:30",
+    "port_status": "Open",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "4",
+      "cv_automation_type": "RFID",
+      "cv_segment_from": "Exit of toll booth in Mexico",
+      "cv_segment_to": "Entry of U.S. CBP Primary",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 3:00 pm CDT",
+        "operational_status": "no delay",
+        "delay_minutes": "5",
+        "lanes_open": "2"
+      },
+      "FAST_lanes": {
+        "update_time": "At 3:00 pm CDT",
+        "operational_status": "no delay",
+        "delay_minutes": "0",
+        "lanes_open": "1"
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "8",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "Exit of toll booth in Mexico",
+      "pv_segment_to": "Entry of U.S. CBP Primary",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 3:00 pm CDT",
+        "operational_status": "delay",
+        "delay_minutes": "50",
+        "lanes_open": "1"
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "At 3:00 pm CDT",
+        "operational_status": "no delay",
+        "delay_minutes": "0",
+        "lanes_open": "3"
+      },
+      "ready_lanes": {
+        "update_time": "At 3:00 pm CDT",
+        "operational_status": "delay",
+        "delay_minutes": "50",
+        "lanes_open": "1"
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "2",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "Exit of toll booth in Mexico",
+      "ped_segment_to": "Entry of U.S. CBP Primary",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 3:00 pm CDT",
+        "operational_status": "no delay",
+        "delay_minutes": "0",
+        "lanes_open": "1"
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "",
+    "automation": "1",
+    "automation_enabled": "0"
+  },
+  {
+    "port_number": "260101",
+    "border": "Mexican Border",
+    "port_name": "Douglas (Raul Hector Castro)",
+    "crossing_name": "",
+    "hours": "24 hrs/day",
+    "date": "9/29/2026",
+    "time": "14:02:30",
+    "port_status": "Open",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "2",
+      "cv_automation_type": "Manual",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 2:00 pm PST",
+        "operational_status": "no delay",
+        "delay_minutes": "1",
+        "lanes_open": "1"
+      },
+      "FAST_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "7",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 2:00 pm PST",
+        "operational_status": "delay",
+        "delay_minutes": "20",
+        "lanes_open": "4"
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "At 2:00 pm PST",
+        "operational_status": "no delay",
+        "delay_minutes": "5",
+        "lanes_open": "1"
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "Lanes Closed",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "3",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 2:00 pm PST",
+        "operational_status": "no delay",
+        "delay_minutes": "1",
+        "lanes_open": "2"
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "Lanes Closed",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "",
+    "automation": "0",
+    "automation_enabled": "0"
+  },
+  {
+    "port_number": "l24501",
+    "border": "Mexican Border",
+    "port_name": "Fort Hancock",
+    "crossing_name": "Fort Hancock",
+    "hours": "6 am-6 pm",
+    "date": "9/29/2026",
+    "time": "15:02:30",
+    "port_status": "Open",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "N/A",
+      "cv_automation_type": "Manual",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "FAST_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "2",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 3:00 pm MDT",
+        "operational_status": "no delay",
+        "delay_minutes": "5",
+        "lanes_open": "1"
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "",
+        "operational_status": "Lanes Closed",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "Lanes Closed",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "4",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 3:00 pm MDT",
+        "operational_status": "no delay",
+        "delay_minutes": "0",
+        "lanes_open": "1"
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "Lanes Closed",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "",
+    "automation": "0",
+    "automation_enabled": "0"
+  },
+  {
+    "port_number": "230404",
+    "border": "Mexican Border",
+    "port_name": "Laredo",
+    "crossing_name": "World Trade Bridge",
+    "hours": "7 am-Midnight",
+    "date": "9/29/2026",
+    "time": "16:02:30",
+    "port_status": "Open",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "19",
+      "cv_automation_type": "RFID",
+      "cv_segment_from": "Exit of toll booth in Mexico",
+      "cv_segment_to": "Entry of U.S. CBP Primary",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 3:00 pm CDT",
+        "operational_status": "delay",
+        "delay_minutes": "50",
+        "lanes_open": "14"
+      },
+      "FAST_lanes": {
+        "update_time": "At 3:00 pm CDT",
+        "operational_status": "delay",
+        "delay_minutes": "25",
+        "lanes_open": "4"
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "N/A",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "Exit of toll booth in Mexico",
+      "pv_segment_to": "Entry of U.S. CBP Primary",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "N/A",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "Exit of toll booth in Mexico",
+      "ped_segment_to": "Entry of U.S. CBP Primary",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "",
+    "automation": "1",
+    "automation_enabled": "0"
+  },
+  {
+    "port_number": "250401",
+    "border": "Mexican Border",
+    "port_name": "San Ysidro",
+    "crossing_name": "",
+    "hours": "24 hrs/day",
+    "date": "9/29/2026",
+    "time": "14:02:31",
+    "port_status": "Open",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "N/A",
+      "cv_automation_type": "Manual",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "FAST_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "34",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 2:00 pm PDT",
+        "operational_status": "delay",
+        "delay_minutes": "150",
+        "lanes_open": "6"
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "At 2:00 pm PDT",
+        "operational_status": "delay",
+        "delay_minutes": "30",
+        "lanes_open": "14"
+      },
+      "ready_lanes": {
+        "update_time": "At 2:00 pm PDT",
+        "operational_status": "delay",
+        "delay_minutes": "120",
+        "lanes_open": "9"
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "22",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "At 2:00 pm PDT",
+        "operational_status": "delay",
+        "delay_minutes": "60",
+        "lanes_open": "19"
+      },
+      "ready_lanes": {
+        "update_time": "At 2:00 pm PDT",
+        "operational_status": "no delay",
+        "delay_minutes": "5",
+        "lanes_open": "1"
+      }
+    },
+    "construction_notice": "",
+    "automation": "0",
+    "automation_enabled": "0"
+  }
+]

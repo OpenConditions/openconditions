@@ -165,36 +165,40 @@ export const DATEX2_V2_PARKING_STATUSES_OUT: TargetTable = {
   closed_abnormally: null,
 };
 
-/** Which way occupancy is moving. The graded values collapse: a trend has no speed. */
+/**
+ * Which way occupancy is moving. The graded values collapse: a trend has no
+ * speed. Keyed by the enumeration, because DATEX's travel-time trend uses
+ * the same words for a value that rises rather than fills.
+ */
 export const DATEX2_V3_PARKING_TRENDS: SourceTable = {
-  decreasing: "clearing",
-  decreasingQuickly: "clearing",
-  decreasingSlowly: "clearing",
-  increasing: "filling",
-  increasingQuickly: "filling",
-  increasingSlowly: "filling",
-  stable: "steady",
-  unknown: null,
-  other: null,
-  _extended: null,
+  "parkingOccupancyTrend:decreasing": "clearing",
+  "parkingOccupancyTrend:decreasingQuickly": "clearing",
+  "parkingOccupancyTrend:decreasingSlowly": "clearing",
+  "parkingOccupancyTrend:increasing": "filling",
+  "parkingOccupancyTrend:increasingQuickly": "filling",
+  "parkingOccupancyTrend:increasingSlowly": "filling",
+  "parkingOccupancyTrend:stable": "steady",
+  "parkingOccupancyTrend:unknown": null,
+  "parkingOccupancyTrend:other": null,
+  "parkingOccupancyTrend:_extended": null,
 };
 
 export const DATEX2_V2_PARKING_TRENDS: SourceTable = {
-  decreasing: "clearing",
-  decreasingQuickly: "clearing",
-  decreasingSlowly: "clearing",
-  increasing: "filling",
-  increasingQuickly: "filling",
-  increasingSlowly: "filling",
-  stable: "steady",
-  unknown: null,
-  other: null,
+  "parkingOccupancyTrend:decreasing": "clearing",
+  "parkingOccupancyTrend:decreasingQuickly": "clearing",
+  "parkingOccupancyTrend:decreasingSlowly": "clearing",
+  "parkingOccupancyTrend:increasing": "filling",
+  "parkingOccupancyTrend:increasingQuickly": "filling",
+  "parkingOccupancyTrend:increasingSlowly": "filling",
+  "parkingOccupancyTrend:stable": "steady",
+  "parkingOccupancyTrend:unknown": null,
+  "parkingOccupancyTrend:other": null,
 };
 
 export const DATEX2_PARKING_TRENDS_OUT: TargetTable = {
-  filling: "increasing",
-  clearing: "decreasing",
-  steady: "stable",
+  filling: "parkingOccupancyTrend:increasing",
+  clearing: "parkingOccupancyTrend:decreasing",
+  steady: "parkingOccupancyTrend:stable",
   rising: null,
   falling: null,
 };

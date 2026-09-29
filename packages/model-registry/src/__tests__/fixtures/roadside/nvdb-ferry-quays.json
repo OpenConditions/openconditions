@@ -1,0 +1,243 @@
+{
+  "objekter": [
+    {
+      "id": 117614052,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/64/117614052",
+      "metadata": {
+        "type": {
+          "id": 64,
+          "navn": "Ferjekai"
+        },
+        "versjon": 6,
+        "startdato": "2024-03-22",
+        "sist_modifisert": "2025-11-22T09:08:38Z"
+      },
+      "egenskaper": [
+        {
+          "id": 9491,
+          "navn": "Antall ferjelemmer",
+          "egenskapstype": "Heltall",
+          "verdi": 2
+        },
+        {
+          "id": 10727,
+          "navn": "NSR_Stopplace_ID",
+          "egenskapstype": "Tekst",
+          "verdi": "NSR:StopPlace:58092"
+        },
+        {
+          "id": 2179,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Moss ferjekai"
+        },
+        {
+          "id": 9493,
+          "navn": "Egen gangbane til ferje",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 13373
+        },
+        {
+          "id": 7560,
+          "navn": "Vedlikeholdsansvarlig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Statens vegvesen",
+          "enum_id": 9826
+        },
+        {
+          "id": 11467,
+          "navn": "Prosjektreferanse",
+          "egenskapstype": "Tekst",
+          "verdi": "9103 Østfold-Follo 2022-2027"
+        },
+        {
+          "id": 7559,
+          "navn": "Eier",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Stat, Statens vegvesen",
+          "enum_id": 9822
+        },
+        {
+          "id": 9229,
+          "navn": "Driftsstatus",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Trafikkeres",
+          "enum_id": 12865
+        }
+      ],
+      "geometri": {
+        "wkt": "POINT Z (59.42972726 10.65427945 3.104)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [3103],
+        "fylker": [31],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "R",
+              "fase": "V",
+              "nummer": 19
+            },
+            "kortform": "RV19 S1D1 m4246"
+          }
+        ]
+      }
+    },
+    {
+      "id": 117614056,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/64/117614056",
+      "metadata": {
+        "type": {
+          "id": 64,
+          "navn": "Ferjekai"
+        },
+        "versjon": 4,
+        "startdato": "2024-03-14",
+        "sist_modifisert": "2025-11-22T09:08:38Z"
+      },
+      "egenskaper": [
+        {
+          "id": 9491,
+          "navn": "Antall ferjelemmer",
+          "egenskapstype": "Heltall",
+          "verdi": 1
+        },
+        {
+          "id": 10727,
+          "navn": "NSR_Stopplace_ID",
+          "egenskapstype": "Tekst",
+          "verdi": "NSR:StopPlace:1848"
+        },
+        {
+          "id": 2179,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Skjærhalden ferjeleie"
+        },
+        {
+          "id": 7560,
+          "navn": "Vedlikeholdsansvarlig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Kommune",
+          "enum_id": 9827
+        },
+        {
+          "id": 7559,
+          "navn": "Eier",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Kommune",
+          "enum_id": 9823
+        },
+        {
+          "id": 9229,
+          "navn": "Driftsstatus",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Trafikkeres",
+          "enum_id": 12865
+        }
+      ],
+      "geometri": {
+        "wkt": "POINT Z (59.02423538 11.03710553 2.309)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [3110],
+        "fylker": [31],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "K",
+              "fase": "V",
+              "nummer": 1014
+            },
+            "kortform": "KV1014 S1D1 m121"
+          }
+        ]
+      }
+    },
+    {
+      "id": 118756347,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/64/118756347",
+      "metadata": {
+        "type": {
+          "id": 64,
+          "navn": "Ferjekai"
+        },
+        "versjon": 3,
+        "startdato": "2023-04-17",
+        "sist_modifisert": "2025-11-22T09:08:38Z"
+      },
+      "egenskaper": [
+        {
+          "id": 9491,
+          "navn": "Antall ferjelemmer",
+          "egenskapstype": "Heltall",
+          "verdi": 1
+        },
+        {
+          "id": 10729,
+          "navn": "Venterom",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 17383
+        },
+        {
+          "id": 10727,
+          "navn": "NSR_Stopplace_ID",
+          "egenskapstype": "Tekst",
+          "verdi": "NSR:StopPlace:48073"
+        },
+        {
+          "id": 2179,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Melbu ferjekai"
+        },
+        {
+          "id": 7560,
+          "navn": "Vedlikeholdsansvarlig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Fylkeskommune",
+          "enum_id": 9829
+        },
+        {
+          "id": 7559,
+          "navn": "Eier",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Fylkeskommune",
+          "enum_id": 9825
+        },
+        {
+          "id": 9229,
+          "navn": "Driftsstatus",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Trafikkeres",
+          "enum_id": 12865
+        }
+      ],
+      "geometri": {
+        "wkt": "POLYGON((68.49874735 14.79871274,68.49843865 14.79872881,68.49844062 14.80085312,68.49868247 14.80147542,68.49856646 14.80321347,68.49875718 14.80122864,68.49874735 14.79871274))",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [1866],
+        "fylker": [18],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 82
+            },
+            "kortform": "FV82 S3D1 m1"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "returnert": 3
+  }
+}

@@ -1,0 +1,466 @@
+{
+  "objekter": [
+    {
+      "id": 79210537,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/107/79210537",
+      "metadata": {
+        "type": {
+          "id": 107,
+          "navn": "Værutsatt veg"
+        },
+        "versjon": 6,
+        "startdato": "2026-05-05",
+        "sist_modifisert": "2026-05-05T12:37:21Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1917,
+          "navn": "Antall stengte døgn",
+          "egenskapstype": "Heltall",
+          "verdi": 188
+        },
+        {
+          "id": 2103,
+          "navn": "Snødybde",
+          "egenskapstype": "Heltall",
+          "verdi": 400,
+          "enhet": {
+            "id": 3,
+            "navn": "Centimeter",
+            "kortnavn": "cm"
+          }
+        },
+        {
+          "id": 13400,
+          "navn": "Stigning, offisiell",
+          "egenskapstype": "Flyttall",
+          "verdi": 10.0,
+          "enhet": {
+            "id": 22,
+            "navn": "Prosent",
+            "kortnavn": "%"
+          }
+        },
+        {
+          "id": 2074,
+          "navn": "Vinterstengt, fra dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "12-01"
+        },
+        {
+          "id": 2222,
+          "navn": "Nattestengt, til dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "05-05"
+        },
+        {
+          "id": 2223,
+          "navn": "Vinterstengt, til dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "05-01"
+        },
+        {
+          "id": 2073,
+          "navn": "Nattestengt, fra dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "11-01"
+        },
+        {
+          "id": 12229,
+          "navn": "Ansvarlig VTS",
+          "egenskapstype": "Tekstenum",
+          "verdi": "VTS Vest",
+          "enum_id": 21345
+        },
+        {
+          "id": 12221,
+          "navn": "Sted, til",
+          "egenskapstype": "Tekst",
+          "verdi": "Turtagrø"
+        },
+        {
+          "id": 3107,
+          "navn": "Stedlig beredskap",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 4615
+        },
+        {
+          "id": 12220,
+          "navn": "Sted, fra",
+          "egenskapstype": "Tekst",
+          "verdi": "Lom"
+        },
+        {
+          "id": 10765,
+          "navn": "Tilleggsinformasjon",
+          "egenskapstype": "Tekst",
+          "verdi": "Delopning til Påske:Turtagrø-Huldrehaug"
+        },
+        {
+          "id": 8835,
+          "navn": "Ekstra vintervedlikehold",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 11776
+        },
+        {
+          "id": 12223,
+          "navn": "Sted lokalt, til",
+          "egenskapstype": "Tekst",
+          "verdi": "Turtagrø bom"
+        },
+        {
+          "id": 1082,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Sognefjellet"
+        },
+        {
+          "id": 12228,
+          "navn": "Fjellovergang",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 21341
+        },
+        {
+          "id": 12222,
+          "navn": "Sted lokalt, fra",
+          "egenskapstype": "Tekst",
+          "verdi": "Rustasætre bom"
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (61.64580274 8.09751527 942.38640313,61.50409614 7.80424343 890.77373947)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [3434, 4644],
+        "fylker": [34, 46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 55
+            },
+            "kortform": "FV55 S5D1 m0-9990"
+          },
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 55
+            },
+            "kortform": "FV55 S6D1 m0-3867"
+          }
+        ]
+      }
+    },
+    {
+      "id": 79226957,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/107/79226957",
+      "metadata": {
+        "type": {
+          "id": 107,
+          "navn": "Værutsatt veg"
+        },
+        "versjon": 6,
+        "startdato": "2021-11-05",
+        "sist_modifisert": "2026-02-16T14:00:25Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1917,
+          "navn": "Antall stengte døgn",
+          "egenskapstype": "Heltall",
+          "verdi": 146
+        },
+        {
+          "id": 2103,
+          "navn": "Snødybde",
+          "egenskapstype": "Heltall",
+          "verdi": 400,
+          "enhet": {
+            "id": 3,
+            "navn": "Centimeter",
+            "kortnavn": "cm"
+          }
+        },
+        {
+          "id": 8836,
+          "navn": "Avgrensa vinterdrift, fra dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "12-16"
+        },
+        {
+          "id": 2222,
+          "navn": "Nattestengt, til dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "05-17"
+        },
+        {
+          "id": 2223,
+          "navn": "Vinterstengt, til dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "05-01"
+        },
+        {
+          "id": 2074,
+          "navn": "Vinterstengt, fra dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "12-21"
+        },
+        {
+          "id": 8837,
+          "navn": "Avgrensa vinterdrift, til dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "05-01"
+        },
+        {
+          "id": 2073,
+          "navn": "Nattestengt, fra dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "05-01"
+        },
+        {
+          "id": 12223,
+          "navn": "Sted lokalt, til",
+          "egenskapstype": "Tekst",
+          "verdi": "Mjell bom"
+        },
+        {
+          "id": 1082,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Gaularfjellet"
+        },
+        {
+          "id": 12229,
+          "navn": "Ansvarlig VTS",
+          "egenskapstype": "Tekstenum",
+          "verdi": "VTS Vest",
+          "enum_id": 21345
+        },
+        {
+          "id": 12221,
+          "navn": "Sted, til",
+          "egenskapstype": "Tekst",
+          "verdi": "Moskog"
+        },
+        {
+          "id": 12228,
+          "navn": "Fjellovergang",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 21341
+        },
+        {
+          "id": 3107,
+          "navn": "Stedlig beredskap",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 4615
+        },
+        {
+          "id": 12220,
+          "navn": "Sted, fra",
+          "egenskapstype": "Tekst",
+          "verdi": "Dragsvik"
+        },
+        {
+          "id": 10765,
+          "navn": "Tilleggsinformasjon",
+          "egenskapstype": "Tekst",
+          "verdi": "Vinterdrift med redusert standard Mjell-Langestølen heile vinteren, strekningen er og utsatt for \"solskred\" etter opning på våren."
+        },
+        {
+          "id": 8835,
+          "navn": "Ekstra vintervedlikehold",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 11776
+        },
+        {
+          "id": 12222,
+          "navn": "Sted lokalt, fra",
+          "egenskapstype": "Tekst",
+          "verdi": "Bårddalselvi bom"
+        },
+        {
+          "id": 13400,
+          "navn": "Stigning, offisiell",
+          "egenskapstype": "Flyttall",
+          "verdi": 8.0,
+          "enhet": {
+            "id": 22,
+            "navn": "Prosent",
+            "kortnavn": "%"
+          }
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (61.35265762 6.55336742 171.51000062,61.34565581 6.32391754 461.64004798)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4640, 4647],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 613
+            },
+            "kortform": "FV613 S2D1 m10954-20429"
+          },
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 613
+            },
+            "kortform": "FV613 S3D1 m0-9202"
+          }
+        ]
+      }
+    },
+    {
+      "id": 83157741,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/107/83157741",
+      "metadata": {
+        "type": {
+          "id": 107,
+          "navn": "Værutsatt veg"
+        },
+        "versjon": 2,
+        "startdato": "2021-11-05",
+        "sist_modifisert": "2025-11-18T07:58:00Z"
+      },
+      "egenskaper": [
+        {
+          "id": 2103,
+          "navn": "Snødybde",
+          "egenskapstype": "Heltall",
+          "verdi": 350,
+          "enhet": {
+            "id": 3,
+            "navn": "Centimeter",
+            "kortnavn": "cm"
+          }
+        },
+        {
+          "id": 2222,
+          "navn": "Nattestengt, til dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "12-10"
+        },
+        {
+          "id": 2223,
+          "navn": "Vinterstengt, til dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "05-15"
+        },
+        {
+          "id": 2074,
+          "navn": "Vinterstengt, fra dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "12-10"
+        },
+        {
+          "id": 2073,
+          "navn": "Nattestengt, fra dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "11-20"
+        },
+        {
+          "id": 12223,
+          "navn": "Sted lokalt, til",
+          "egenskapstype": "Tekst",
+          "verdi": "Hordelia bom"
+        },
+        {
+          "id": 1082,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Breiborg - Røldal"
+        },
+        {
+          "id": 12229,
+          "navn": "Ansvarlig VTS",
+          "egenskapstype": "Tekstenum",
+          "verdi": "VTS Vest",
+          "enum_id": 21345
+        },
+        {
+          "id": 12221,
+          "navn": "Sted, til",
+          "egenskapstype": "Tekst",
+          "verdi": "Røldal"
+        },
+        {
+          "id": 12228,
+          "navn": "Fjellovergang",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 21341
+        },
+        {
+          "id": 12220,
+          "navn": "Sted, fra",
+          "egenskapstype": "Tekst",
+          "verdi": "Breiborg"
+        },
+        {
+          "id": 8835,
+          "navn": "Ekstra vintervedlikehold",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Uavklart",
+          "enum_id": 17891
+        },
+        {
+          "id": 12222,
+          "navn": "Sted lokalt, fra",
+          "egenskapstype": "Tekst",
+          "verdi": "Breiborg bom"
+        },
+        {
+          "id": 1917,
+          "navn": "Antall stengte døgn",
+          "egenskapstype": "Heltall",
+          "verdi": 165
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (59.72914296 6.58831093 736.80973045,59.81427517 6.75604751 601.01666238)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [1135, 4618],
+        "fylker": [11, 46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 520
+            },
+            "kortform": "FV520 S5D1 m9574-10004"
+          },
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 520
+            },
+            "kortform": "FV520 S6D1 m0-5950"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "returnert": 3
+  }
+}

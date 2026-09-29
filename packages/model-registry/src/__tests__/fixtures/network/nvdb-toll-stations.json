@@ -1,0 +1,360 @@
+{
+  "objekter": [
+    {
+      "id": 82443541,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/45/82443541",
+      "metadata": {
+        "type": {
+          "id": 45,
+          "navn": "Bomstasjon"
+        },
+        "versjon": 16,
+        "startdato": "2026-01-01",
+        "sist_modifisert": "2025-12-17T07:56:01Z"
+      },
+      "egenskaper": [
+        {
+          "id": 10951,
+          "navn": "Timesregel, passeringsgruppe",
+          "egenskapstype": "Heltall",
+          "verdi": 240016
+        },
+        {
+          "id": 10952,
+          "navn": "Timesregel, varighet",
+          "egenskapstype": "Heltall",
+          "verdi": 60,
+          "enhet": {
+            "id": 35,
+            "navn": "Minutt",
+            "kortnavn": "min"
+          }
+        },
+        {
+          "id": 11883,
+          "navn": "Operatør_Id",
+          "egenskapstype": "Heltall",
+          "verdi": 100126
+        },
+        {
+          "id": 9595,
+          "navn": "Bomstasjon_Id",
+          "egenskapstype": "Heltall",
+          "verdi": 1
+        },
+        {
+          "id": 10271,
+          "navn": "Etableringsår",
+          "egenskapstype": "Heltall",
+          "verdi": 2019
+        },
+        {
+          "id": 1820,
+          "navn": "Takst liten bil",
+          "egenskapstype": "Flyttall",
+          "verdi": 38.0,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          }
+        },
+        {
+          "id": 9410,
+          "navn": "Rushtidstakst liten bil",
+          "egenskapstype": "Flyttall",
+          "verdi": 70.0,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          }
+        },
+        {
+          "id": 1819,
+          "navn": "Takst stor bil",
+          "egenskapstype": "Flyttall",
+          "verdi": 88.0,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          }
+        },
+        {
+          "id": 9411,
+          "navn": "Rushtidstakst stor bil",
+          "egenskapstype": "Flyttall",
+          "verdi": 154.0,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          }
+        },
+        {
+          "id": 9412,
+          "navn": "Timesregel",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Første passering gjelder",
+          "enum_id": 13257
+        },
+        {
+          "id": 10715,
+          "navn": "Lenke til bomstasjon",
+          "egenskapstype": "Tekst",
+          "verdi": "www.ferde.no"
+        },
+        {
+          "id": 9390,
+          "navn": "Bomstasjonstype",
+          "egenskapstype": "Tekstenum",
+          "verdi": "AutoPASS bomstasjon",
+          "enum_id": 13133
+        },
+        {
+          "id": 10714,
+          "navn": "Navn bompengeanlegg",
+          "egenskapstype": "Tekst",
+          "verdi": "Ferde AS - Bomringen Bergen"
+        },
+        {
+          "id": 9409,
+          "navn": "Tidsdifferensiert takst",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 13255
+        },
+        {
+          "id": 9414,
+          "navn": "Innkrevningsretning",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Med metrering",
+          "enum_id": 13259
+        },
+        {
+          "id": 1078,
+          "navn": "Navn bomstasjon",
+          "egenskapstype": "Tekst",
+          "verdi": "Sandviken"
+        },
+        {
+          "id": 9405,
+          "navn": "Rushtid ettermiddag, fra",
+          "egenskapstype": "Tid",
+          "verdi": "14:30"
+        },
+        {
+          "id": 9407,
+          "navn": "Rushtid morgen, fra",
+          "egenskapstype": "Tid",
+          "verdi": "06:30"
+        },
+        {
+          "id": 9408,
+          "navn": "Rushtid morgen, til",
+          "egenskapstype": "Tid",
+          "verdi": "08:59"
+        },
+        {
+          "id": 9406,
+          "navn": "Rushtid ettermiddag, til",
+          "egenskapstype": "Tid",
+          "verdi": "16:29"
+        }
+      ],
+      "geometri": {
+        "wkt": "POINT Z (60.41800606 5.3129743 31.68447028)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4601],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "E",
+              "fase": "V",
+              "nummer": 39
+            },
+            "kortform": "EV39 S77D1 m2638"
+          }
+        ]
+      }
+    },
+    {
+      "id": 338309712,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/45/338309712",
+      "metadata": {
+        "type": {
+          "id": 45,
+          "navn": "Bomstasjon"
+        },
+        "versjon": 4,
+        "startdato": "2022-04-19",
+        "sist_modifisert": "2025-04-30T11:39:29Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1820,
+          "navn": "Takst liten bil",
+          "egenskapstype": "Flyttall",
+          "verdi": 45.0,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          }
+        },
+        {
+          "id": 1819,
+          "navn": "Takst stor bil",
+          "egenskapstype": "Flyttall",
+          "verdi": 135.0,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          }
+        },
+        {
+          "id": 9390,
+          "navn": "Bomstasjonstype",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Bomstasjon på lokal/privat veg",
+          "enum_id": 13134
+        },
+        {
+          "id": 9414,
+          "navn": "Innkrevningsretning",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Begge retninger",
+          "enum_id": 13261
+        },
+        {
+          "id": 1078,
+          "navn": "Navn bomstasjon",
+          "egenskapstype": "Tekst",
+          "verdi": "Ferje Brekstad - Valset"
+        }
+      ],
+      "geometri": {
+        "wkt": "POINT Z (63.68638696 9.66718435 2.293)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [5057],
+        "fylker": [50],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "K",
+              "fase": "V",
+              "nummer": 2050
+            },
+            "kortform": "KV2050 S4D1 m234"
+          }
+        ]
+      }
+    },
+    {
+      "id": 349721902,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/45/349721902",
+      "metadata": {
+        "type": {
+          "id": 45,
+          "navn": "Bomstasjon"
+        },
+        "versjon": 6,
+        "startdato": "2021-07-01",
+        "sist_modifisert": "2025-04-30T11:39:29Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1820,
+          "navn": "Takst liten bil",
+          "egenskapstype": "Flyttall",
+          "verdi": 57.0,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          }
+        },
+        {
+          "id": 1819,
+          "navn": "Takst stor bil",
+          "egenskapstype": "Flyttall",
+          "verdi": 171.0,
+          "enhet": {
+            "id": 19,
+            "navn": "Kroner",
+            "kortnavn": "Kr"
+          }
+        },
+        {
+          "id": 9412,
+          "navn": "Timesregel",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Første passering gjelder",
+          "enum_id": 13257
+        },
+        {
+          "id": 9404,
+          "navn": "Gratis gjennomkjøring ved HC-brikke",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13254
+        },
+        {
+          "id": 9390,
+          "navn": "Bomstasjonstype",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ferjeinnkrevingspunkt",
+          "enum_id": 13132
+        },
+        {
+          "id": 9409,
+          "navn": "Tidsdifferensiert takst",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13256
+        },
+        {
+          "id": 9414,
+          "navn": "Innkrevningsretning",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Med metrering",
+          "enum_id": 13259
+        },
+        {
+          "id": 1078,
+          "navn": "Navn bomstasjon",
+          "egenskapstype": "Tekst",
+          "verdi": "Ferje Flakk-Rørvik"
+        }
+      ],
+      "geometri": {
+        "wkt": "POINT Z (63.44960577 10.19534723 8.92379054)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [5001],
+        "fylker": [50],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 715
+            },
+            "kortform": "FV715 S2D1 m4225"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "returnert": 3
+  }
+}

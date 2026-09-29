@@ -1,0 +1,142 @@
+[
+  {
+    "mountainPass": {
+      "mountainPassId": 8,
+      "mountainPassName": "Satus Pass US 97",
+      "elevation": 3107,
+      "elevationUnit": "Feet",
+      "weatherZone": "WA521 ",
+      "latitude": 45.984722,
+      "longitude": -120.653611,
+      "stateRouteId": "097",
+      "srmp": 27.15,
+      "startMP": 22.15,
+      "endMP": 32.15,
+      "friendlyName": "satus",
+      "defaultCameraId": 1137,
+      "cameras": [1137]
+    },
+    "condition": {
+      "mountainPassId": 8,
+      "temperature": 31.0,
+      "temperatureUnit": "Fahrenheit",
+      "weather": "Clear skies",
+      "roadCondition": "Bare and dry",
+      "displayDate": "2026-09-14T06:50:21.02Z",
+      "travelAdvisoryFlag": true,
+      "restrictionOne": {
+        "travelDirectionName": "Northbound",
+        "publicPage": "No restrictions"
+      },
+      "restrictionTwo": {
+        "travelDirectionName": "Southbound",
+        "publicPage": "No restrictions"
+      }
+    }
+  },
+  {
+    "mountainPass": {
+      "mountainPassId": 9,
+      "mountainPassName": "Sherman Pass SR 20",
+      "elevation": 5575,
+      "elevationUnit": "Feet",
+      "weatherZone": "WA038 ",
+      "latitude": 48.606667,
+      "longitude": -118.48,
+      "stateRouteId": "020",
+      "srmp": 319.45,
+      "startMP": 314.45,
+      "endMP": 324.45,
+      "friendlyName": "sherman",
+      "defaultCameraId": 1161,
+      "cameras": [1161, 9962]
+    },
+    "condition": {
+      "mountainPassId": 9,
+      "temperature": 30.0,
+      "temperatureUnit": "Fahrenheit",
+      "weather": "",
+      "roadCondition": "no current information available. The reporting has ended for this season.",
+      "displayDate": "2026-09-14T06:51:03.033Z",
+      "travelAdvisoryFlag": true,
+      "restrictionOne": {
+        "travelDirectionName": "Eastbound",
+        "publicPage": "No restrictions"
+      },
+      "restrictionTwo": {
+        "travelDirectionName": "Westbound",
+        "publicPage": "No restrictions"
+      }
+    }
+  },
+  {
+    "mountainPass": {
+      "mountainPassId": 1,
+      "mountainPassName": "Blewett Pass US 97",
+      "elevation": 4102,
+      "elevationUnit": "Feet",
+      "weatherZone": "WA523 ",
+      "latitude": 47.335298205,
+      "longitude": -120.581068216,
+      "stateRouteId": "097",
+      "srmp": 163.87,
+      "startMP": 158.87,
+      "endMP": 168.87,
+      "friendlyName": "blewett",
+      "defaultCameraId": 1138,
+      "cameras": [1138]
+    },
+    "condition": {
+      "mountainPassId": 1,
+      "temperature": null,
+      "temperatureUnit": "Fahrenheit",
+      "weather": "",
+      "roadCondition": "Reports have ended for this season. Traditionally weather and road conditions are reported on this page from November 1 to April 1. Should adverse weather occur that will impact travel, updates will be provided as information is available.",
+      "displayDate": "2026-09-14T06:42:02.957Z",
+      "travelAdvisoryFlag": true,
+      "restrictionOne": {
+        "travelDirectionName": "Northbound",
+        "publicPage": "No restrictions"
+      },
+      "restrictionTwo": {
+        "travelDirectionName": "Southbound",
+        "publicPage": "No restrictions"
+      }
+    }
+  },
+  {
+    "mountainPass": {
+      "mountainPassId": 2,
+      "mountainPassName": "Cayuse Pass SR 123",
+      "elevation": 4675,
+      "elevationUnit": "Feet",
+      "weatherZone": "WA569 ",
+      "latitude": 46.865575,
+      "longitude": -121.53611,
+      "stateRouteId": "123",
+      "srmp": 16.291,
+      "startMP": 2.0,
+      "endMP": 16.34,
+      "friendlyName": "cayuse",
+      "defaultCameraId": 0,
+      "cameras": []
+    },
+    "condition": {
+      "mountainPassId": 2,
+      "temperature": null,
+      "temperatureUnit": "Fahrenheit",
+      "weather": "",
+      "roadCondition": "Cayuse Pass is open for the season. Reports have ended for this season. Traditionally weather and road conditions are reported from November 1 to April 1. Should adverse weather occur that will impact travel, updates will be provided as information is available",
+      "displayDate": "2026-09-14T06:56:51.957Z",
+      "travelAdvisoryFlag": true,
+      "restrictionOne": {
+        "travelDirectionName": "Northbound",
+        "publicPage": "No restrictions"
+      },
+      "restrictionTwo": {
+        "travelDirectionName": "Southbound",
+        "publicPage": "No restrictions"
+      }
+    }
+  }
+]

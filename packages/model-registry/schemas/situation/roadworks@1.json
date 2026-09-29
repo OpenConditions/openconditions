@@ -505,7 +505,9 @@
             "ocm",
             "bnetza",
             "cpo",
-            "provider"
+            "provider",
+            "netex:line",
+            "netex:stop_place"
           ]
         },
         "id": {
@@ -2871,7 +2873,8 @@
                       "unknown_vehicle",
                       "compound_condition",
                       "conflicting_direction",
-                      "unresolved_lane"
+                      "unresolved_lane",
+                      "value_not_published"
                     ]
                   },
                   "sourcePath": {
@@ -3315,7 +3318,8 @@
                       "unknown_vehicle",
                       "compound_condition",
                       "conflicting_direction",
-                      "unresolved_lane"
+                      "unresolved_lane",
+                      "value_not_published"
                     ]
                   },
                   "sourcePath": {
@@ -3824,7 +3828,8 @@
                       "unknown_vehicle",
                       "compound_condition",
                       "conflicting_direction",
-                      "unresolved_lane"
+                      "unresolved_lane",
+                      "value_not_published"
                     ]
                   },
                   "sourcePath": {
@@ -4262,7 +4267,8 @@
                       "unknown_vehicle",
                       "compound_condition",
                       "conflicting_direction",
-                      "unresolved_lane"
+                      "unresolved_lane",
+                      "value_not_published"
                     ]
                   },
                   "sourcePath": {
@@ -4713,7 +4719,8 @@
                       "unknown_vehicle",
                       "compound_condition",
                       "conflicting_direction",
-                      "unresolved_lane"
+                      "unresolved_lane",
+                      "value_not_published"
                     ]
                   },
                   "sourcePath": {
@@ -5169,7 +5176,8 @@
                       "unknown_vehicle",
                       "compound_condition",
                       "conflicting_direction",
-                      "unresolved_lane"
+                      "unresolved_lane",
+                      "value_not_published"
                     ]
                   },
                   "sourcePath": {
@@ -5252,7 +5260,10 @@
             },
             "meaning": {
               "type": "string",
-              "const": "maximum_permitted"
+              "enum": [
+                "maximum_permitted",
+                "physical_limit"
+              ]
             }
           },
           "required": [
@@ -5628,7 +5639,8 @@
                       "unknown_vehicle",
                       "compound_condition",
                       "conflicting_direction",
-                      "unresolved_lane"
+                      "unresolved_lane",
+                      "value_not_published"
                     ]
                   },
                   "sourcePath": {
@@ -6081,7 +6093,8 @@
                       "unknown_vehicle",
                       "compound_condition",
                       "conflicting_direction",
-                      "unresolved_lane"
+                      "unresolved_lane",
+                      "value_not_published"
                     ]
                   },
                   "sourcePath": {
@@ -6525,7 +6538,8 @@
                       "unknown_vehicle",
                       "compound_condition",
                       "conflicting_direction",
-                      "unresolved_lane"
+                      "unresolved_lane",
+                      "value_not_published"
                     ]
                   },
                   "sourcePath": {
@@ -6953,7 +6967,8 @@
                       "unknown_vehicle",
                       "compound_condition",
                       "conflicting_direction",
-                      "unresolved_lane"
+                      "unresolved_lane",
+                      "value_not_published"
                     ]
                   },
                   "sourcePath": {
@@ -7385,7 +7400,8 @@
                       "unknown_vehicle",
                       "compound_condition",
                       "conflicting_direction",
-                      "unresolved_lane"
+                      "unresolved_lane",
+                      "value_not_published"
                     ]
                   },
                   "sourcePath": {

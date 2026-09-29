@@ -68,8 +68,17 @@ export interface Crosswalk {
   situationTargetCode(target: MappingTarget, c: SituationClass): string | undefined;
   /** An emitter's code for a feature classification: the subtype's, else the type's, else the kind's. */
   featureTargetCode(target: MappingTarget, c: FeatureClass): string | undefined;
-  /** An emitter's code for a vocabulary value. */
-  valueTargetCode(vocabulary: string, target: MappingTarget, value: string): string | undefined;
+  /**
+   * An emitter's code for a vocabulary value. A value several modules map
+   * (a shared kernel vocabulary) has a code per source enumeration; name the
+   * enumeration to get its code (`travelTimeTrendType` → `travelTimeTrendType:increasing`).
+   */
+  valueTargetCode(
+    vocabulary: string,
+    target: MappingTarget,
+    value: string,
+    enumeration?: string,
+  ): string | undefined;
   /** The property a source's measured-value code maps to (DATEX `TrafficSpeed/averageVehicleSpeed`). */
   property(target: MappingTarget, code: string): string | undefined;
   /** An emitter's code for a property. */
@@ -111,7 +120,7 @@ export function buildCrosswalk(entries: readonly RegistryEntry[]): Crosswalk {
   const situations: Index<SituationClass> = new Map();
   const values: Index<string> = new Map();
   const situationOut = new Map<string, string>();
-  const valueOut = new Map<string, string>();
+  const valueOut = new Map<string, string[]>();
   const sameClass = (a: SituationClass, b: SituationClass) => situationCode(a) === situationCode(b);
   const features: Index<FeatureClass> = new Map();
   const featureOut = new Map<string, string>();
@@ -189,7 +198,8 @@ export function buildCrosswalk(entries: readonly RegistryEntry[]): Crosswalk {
             );
           }
           const outKey = `${vocabulary}\u0000${target}\u0000${value}`;
-          if (!valueOut.has(outKey)) valueOut.set(outKey, code);
+          const codes = valueOut.get(outKey) ?? [];
+          if (!codes.includes(code)) valueOut.set(outKey, [...codes, code]);
         });
       }
     }
@@ -207,8 +217,12 @@ export function buildCrosswalk(entries: readonly RegistryEntry[]): Crosswalk {
       featureOut.get(`${target}\u0000${featureCode(c)}`) ??
       (c.type === undefined ? undefined : featureOut.get(`${target}\u0000${c.kind}.${c.type}`)) ??
       featureOut.get(`${target}\u0000${c.kind}`),
-    valueTargetCode: (vocabulary, target, value) =>
-      valueOut.get(`${vocabulary}\u0000${target}\u0000${value}`),
+    valueTargetCode: (vocabulary, target, value, enumeration) => {
+      const codes = valueOut.get(`${vocabulary}\u0000${target}\u0000${value}`) ?? [];
+      return enumeration === undefined
+        ? codes[0]
+        : codes.find((c) => c.startsWith(`${enumeration}:`));
+    },
     property: (target, code) => properties.get(`${target}\u0000${code}`),
     propertyTargetCode: (target, property) => propertyOut.get(`${target}\u0000${property}`),
   };

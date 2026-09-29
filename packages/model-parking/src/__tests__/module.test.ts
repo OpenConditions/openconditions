@@ -87,11 +87,12 @@ describe("parking crosswalk coverage", () => {
   });
 
   it("maps every occupancy trend of both DATEX versions", () => {
+    const prefix = "parkingOccupancyTrend:";
     expect(
-      unmapped(DATEX2_V3_PARKING.parkingOccupancyTrends, DATEX2_V3_PARKING_TRENDS, ""),
+      unmapped(DATEX2_V3_PARKING.parkingOccupancyTrends, DATEX2_V3_PARKING_TRENDS, prefix),
     ).toEqual([]);
     expect(
-      unmapped(DATEX2_V2_PARKING.parkingOccupancyTrends, DATEX2_V2_PARKING_TRENDS, ""),
+      unmapped(DATEX2_V2_PARKING.parkingOccupancyTrends, DATEX2_V2_PARKING_TRENDS, prefix),
     ).toEqual([]);
   });
 

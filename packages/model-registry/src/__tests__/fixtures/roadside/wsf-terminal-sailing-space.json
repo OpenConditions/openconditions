@@ -1,0 +1,60 @@
+[
+  {
+    "TerminalID": 1,
+    "TerminalSubjectID": 111,
+    "RegionID": 1,
+    "TerminalName": "Anacortes",
+    "TerminalAbbrev": "ANA",
+    "SortSeq": 10,
+    "DepartingSpaces": [
+      {
+        "Departure": "/Date(1790720400000-0700)/",
+        "IsCancelled": false,
+        "VesselID": 2,
+        "VesselName": "Chelan",
+        "MaxSpaceCount": 120,
+        "SpaceForArrivalTerminals": [
+          {
+            "TerminalID": 1,
+            "TerminalName": "Anacortes -> Orcas Island -> Shaw Island -> Anacortes",
+            "VesselID": 2,
+            "VesselName": "Chelan",
+            "DisplayReservableSpace": false,
+            "ReservableSpaceCount": null,
+            "ReservableSpaceHexColor": null,
+            "DisplayDriveUpSpace": true,
+            "DriveUpSpaceCount": 0,
+            "DriveUpSpaceHexColor": "#FF0000",
+            "MaxSpaceCount": 120,
+            "ArrivalTerminalIDs": [15, 18]
+          }
+        ]
+      },
+      {
+        "Departure": "/Date(1790724000000-0700)/",
+        "IsCancelled": false,
+        "VesselID": 38,
+        "VesselName": "Yakima",
+        "MaxSpaceCount": 139,
+        "SpaceForArrivalTerminals": [
+          {
+            "TerminalID": 1,
+            "TerminalName": "Anacortes -> Lopez Island -> Friday Harbor",
+            "VesselID": 38,
+            "VesselName": "Yakima",
+            "DisplayReservableSpace": false,
+            "ReservableSpaceCount": null,
+            "ReservableSpaceHexColor": null,
+            "DisplayDriveUpSpace": true,
+            "DriveUpSpaceCount": 0,
+            "DriveUpSpaceHexColor": "#FF0000",
+            "MaxSpaceCount": 139,
+            "ArrivalTerminalIDs": [13, 10]
+          }
+        ]
+      }
+    ],
+    "IsNoFareCollected": null,
+    "NoFareCollectedMsg": null
+  }
+]

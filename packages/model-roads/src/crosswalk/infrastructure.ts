@@ -67,8 +67,10 @@ export const DATEX2_TRAFFIC_STATUSES: Readonly<Record<string, string | null>> = 
  * class>/<path>` (a class key covers every value of the class). Minimum and
  * maximum speeds are `traffic.speed` observations with that aggregation;
  * density (vehicles per km), headways, gaps, axle and PCU flows, expected
- * values and annual statistics have no property yet; travel times arrive
- * with travel-time routes; per-vehicle records are never kept.
+ * values and annual statistics have no property yet; per-vehicle records
+ * are never kept. A travel time is observed on its travel-time route: the
+ * free-flow time and speed are the observation's baseline, the trend its
+ * `quality.trend`, and the delay is derivable from the two.
  */
 export const DATEX2_MEASURED_TRAFFIC: Readonly<Record<string, string | null>> = {
   IndividualVehicleDataValues: null,
@@ -94,7 +96,35 @@ export const DATEX2_MEASURED_TRAFFIC: Readonly<Record<string, string | null>> = 
   "TrafficStatus/trafficTrendType": null,
   TrafficGap: null,
   TrafficHeadway: null,
-  TravelTimeData: null,
+  "TravelTimeData/travelTime": "traffic.travel_time",
+  "TravelTimeData/freeFlowTravelTime": null,
+  "TravelTimeData/freeFlowSpeed": null,
+  "TravelTimeData/normallyExpectedTravelTime": null,
+  "TravelTimeData/travelTimeDelay": null,
+  "TravelTimeData/travelTimeTrendType": null,
+  "TravelTimeData/travelTimeType": null,
+  "TravelTimeData/vehicleType": null,
+};
+
+/**
+ * DATEX II `TravelTimeTrendTypeEnum` → `trend`, keyed by the element it
+ * comes from: a parking occupancy that is "increasing" is filling, a travel
+ * time that is "increasing" is rising, and one crosswalk cannot hold both
+ * under the bare word.
+ */
+export const DATEX2_TRAVEL_TIME_TRENDS: Readonly<Record<string, string | null>> = {
+  "travelTimeTrendType:increasing": "rising",
+  "travelTimeTrendType:decreasing": "falling",
+  "travelTimeTrendType:stable": "steady",
+  "travelTimeTrendType:_extended": null,
+};
+
+export const DATEX2_TRAVEL_TIME_TRENDS_OUT: Readonly<Record<string, string | null>> = {
+  rising: "travelTimeTrendType:increasing",
+  falling: "travelTimeTrendType:decreasing",
+  steady: "travelTimeTrendType:stable",
+  filling: null,
+  clearing: null,
 };
 
 /**

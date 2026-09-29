@@ -233,6 +233,7 @@ describe("buildRegistry", () => {
     expect(kernelOnly.vocabulary("feature_trait")?.values).toEqual([
       "field_device",
       "weather_sensing",
+      "operated_site",
     ]);
   });
 

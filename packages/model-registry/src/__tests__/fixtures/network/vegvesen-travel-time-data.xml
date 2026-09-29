@@ -1,0 +1,59 @@
+<ns2:messageContainer xmlns="http://datex2.eu/schema/3/common"
+                      xmlns:ns2="http://datex2.eu/schema/3/messageContainer"
+                      xmlns:ns3="http://datex2.eu/schema/3/cisInformation"
+                      xmlns:ns4="http://datex2.eu/schema/3/exchangeInformation"
+                      xmlns:ns5="http://datex2.eu/schema/3/informationManagement"
+                      xmlns:ns6="http://datex2.eu/schema/3/dataDictionaryExtension"
+                      xmlns:ns7="http://datex2.eu/schema/3/cctvExtension"
+                      xmlns:ns8="http://datex2.eu/schema/3/locationReferencing"
+                      xmlns:ns9="http://datex2.eu/schema/3/alertCLocationCodeTableExtension"
+                      xmlns:ns10="http://datex2.eu/schema/3/roadTrafficData"
+                      xmlns:ns11="http://datex2.eu/schema/3/vms"
+                      xmlns:ns12="http://datex2.eu/schema/3/situation">
+    <ns2:payload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns10:ElaboratedDataPublication"
+                 lang="no" modelBaseVersion="3">
+        <publicationTime>2025-09-09T10:46:12.533+02:00</publicationTime>
+        <publicationCreator>
+            <country>no</country>
+            <nationalIdentifier>Norwegian Public Roads Administration</nationalIdentifier>
+        </publicationCreator>
+        <ns10:headerInformation>
+            <confidentiality>noRestriction</confidentiality>
+            <informationStatus>real</informationStatus>
+        </ns10:headerInformation>
+        <ns10:physicalQuantity xsi:type="ns10:SinglePhysicalQuantity">
+            <ns10:pertinentLocation xsi:type="ns8:LocationByReference">
+                <ns8:predefinedLocationReference targetClass="loc:PredefinedLocation" id="100357" version="1"/>
+            </ns10:pertinentLocation>
+            <ns10:basicData xsi:type="ns10:TravelTimeData">
+                <ns10:measurementOrCalculationTime>
+                    <ns10:period>
+                        <startOfPeriod>2025-09-09T10:40:00.010+02:00</startOfPeriod>
+                        <endOfPeriod>2025-09-09T10:45:00.010+02:00</endOfPeriod>
+                    </ns10:period>
+                </ns10:measurementOrCalculationTime>
+                <ns10:travelTimeTrendType>stable</ns10:travelTimeTrendType>
+                <ns10:travelTimeType>estimated</ns10:travelTimeType>
+                <ns10:travelTime>
+                    <ns10:duration>142.0</ns10:duration>
+                </ns10:travelTime>
+                <ns10:freeFlowTravelTime>
+                    <ns10:duration>150.0</ns10:duration>
+                </ns10:freeFlowTravelTime>
+                <ns10:freeFlowSpeed>
+                    <speed>78.0</speed>
+                </ns10:freeFlowSpeed>
+            </ns10:basicData>
+        </ns10:physicalQuantity>
+        <ns10:physicalQuantity xsi:type="ns10:SinglePhysicalQuantity">
+            <ns10:pertinentLocation xsi:type="ns8:LocationByReference">
+                <ns8:predefinedLocationReference targetClass="loc:PredefinedLocation" id="100357" version="1"/>
+            </ns10:pertinentLocation>
+            <ns10:basicData xsi:type="ns10:TrafficStatus">
+                <ns10:trafficStatus>
+                    <ns10:trafficStatusValue>freeFlow</ns10:trafficStatusValue>
+                </ns10:trafficStatus>
+            </ns10:basicData>
+        </ns10:physicalQuantity>
+    </ns2:payload>
+</ns2:messageContainer>

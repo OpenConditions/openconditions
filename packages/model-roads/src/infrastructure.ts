@@ -269,7 +269,12 @@ export const ROADS_PROPERTIES = [
     version: V,
     description: "Level of service as the source states it.",
     result: { type: "category", vocabulary: "los" },
-    subjects: [SITE, { kind: "segments" }],
+    /** Travel-time publications state a level of service per route too (DATEX `TrafficStatus` on a predefined itinerary). */
+    subjects: [
+      SITE,
+      { kind: "feature", featureKinds: ["travel_time_route"] },
+      { kind: "segments" },
+    ],
     freshnessWindowSec: 15 * MINUTE,
     retention: { changeOnly: true },
     routingRelevant: true,

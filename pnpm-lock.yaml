@@ -244,6 +244,25 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
 
+  packages/model-border:
+    dependencies:
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
+      zod:
+        specifier: ^4.4.3
+        version: 4.6.2
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+
   packages/model-charging:
     dependencies:
       '@openconditions/model':
@@ -263,7 +282,45 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
 
+  packages/model-facilities:
+    dependencies:
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
+      zod:
+        specifier: ^4.4.3
+        version: 4.6.2
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+
   packages/model-fuel:
+    dependencies:
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
+      zod:
+        specifier: ^4.4.3
+        version: 4.6.2
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+
+  packages/model-maritime:
     dependencies:
       '@openconditions/model':
         specifier: workspace:*
@@ -306,12 +363,21 @@ importers:
       '@openconditions/model':
         specifier: workspace:*
         version: link:../model
+      '@openconditions/model-border':
+        specifier: workspace:*
+        version: link:../model-border
       '@openconditions/model-charging':
         specifier: workspace:*
         version: link:../model-charging
+      '@openconditions/model-facilities':
+        specifier: workspace:*
+        version: link:../model-facilities
       '@openconditions/model-fuel':
         specifier: workspace:*
         version: link:../model-fuel
+      '@openconditions/model-maritime':
+        specifier: workspace:*
+        version: link:../model-maritime
       '@openconditions/model-parking':
         specifier: workspace:*
         version: link:../model-parking

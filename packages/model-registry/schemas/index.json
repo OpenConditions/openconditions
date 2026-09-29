@@ -38,7 +38,7 @@
   {
     "class": "effect",
     "code": "dimension_limit",
-    "version": "1.0",
+    "version": "1.1",
     "file": "effect/dimension_limit@1.json"
   },
   {
@@ -67,9 +67,27 @@
   },
   {
     "class": "feature",
+    "code": "blackspot",
+    "version": "1.0",
+    "file": "feature/blackspot@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "border_crossing",
+    "version": "1.0",
+    "file": "feature/border_crossing@1.json"
+  },
+  {
+    "class": "feature",
     "code": "camera",
     "version": "1.0",
     "file": "feature/camera@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "chain_control_zone",
+    "version": "1.0",
+    "file": "feature/chain_control_zone@1.json"
   },
   {
     "class": "feature",
@@ -79,9 +97,33 @@
   },
   {
     "class": "feature",
+    "code": "emergency_phone",
+    "version": "1.0",
+    "file": "feature/emergency_phone@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "ferry_route",
+    "version": "1.0",
+    "file": "feature/ferry_route@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "ferry_terminal",
+    "version": "1.0",
+    "file": "feature/ferry_terminal@1.json"
+  },
+  {
+    "class": "feature",
     "code": "fuel_station",
     "version": "1.0",
     "file": "feature/fuel_station@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "lane_control_gantry",
+    "version": "1.0",
+    "file": "feature/lane_control_gantry@1.json"
   },
   {
     "class": "feature",
@@ -91,15 +133,57 @@
   },
   {
     "class": "feature",
+    "code": "mountain_pass",
+    "version": "1.0",
+    "file": "feature/mountain_pass@1.json"
+  },
+  {
+    "class": "feature",
     "code": "parking_site",
     "version": "1.0",
     "file": "feature/parking_site@1.json"
   },
   {
     "class": "feature",
+    "code": "rail_crossing",
+    "version": "1.0",
+    "file": "feature/rail_crossing@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "rest_area",
+    "version": "1.0",
+    "file": "feature/rest_area@1.json"
+  },
+  {
+    "class": "feature",
     "code": "service_vehicle",
     "version": "1.0",
     "file": "feature/service_vehicle@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "structure",
+    "version": "1.0",
+    "file": "feature/structure@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "toll_point",
+    "version": "1.0",
+    "file": "feature/toll_point@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "toll_section",
+    "version": "1.0",
+    "file": "feature/toll_section@1.json"
+  },
+  {
+    "class": "feature",
+    "code": "travel_time_route",
+    "version": "1.0",
+    "file": "feature/travel_time_route@1.json"
   },
   {
     "class": "feature",
@@ -114,10 +198,22 @@
     "file": "feature/weather_station@1.json"
   },
   {
+    "class": "feature",
+    "code": "weigh_station",
+    "version": "1.0",
+    "file": "feature/weigh_station@1.json"
+  },
+  {
     "class": "kernel",
     "code": "kernel",
     "version": "1.0",
     "file": "kernel@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "border.wait",
+    "version": "1.0",
+    "file": "observation/border.wait@1.json"
   },
   {
     "class": "observation",
@@ -154,6 +250,24 @@
     "code": "device.status",
     "version": "1.0",
     "file": "observation/device.status@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "facility.open_status",
+    "version": "1.0",
+    "file": "observation/facility.open_status@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "ferry.status",
+    "version": "1.0",
+    "file": "observation/ferry.status@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "ferry.vehicle_space",
+    "version": "1.0",
+    "file": "observation/ferry.vehicle_space@1.json"
   },
   {
     "class": "observation",
@@ -202,6 +316,12 @@
     "code": "parking.trend",
     "version": "1.0",
     "file": "observation/parking.trend@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "pass.status",
+    "version": "1.0",
+    "file": "observation/pass.status@1.json"
   },
   {
     "class": "observation",
@@ -265,6 +385,12 @@
   },
   {
     "class": "observation",
+    "code": "toll.price",
+    "version": "1.0",
+    "file": "observation/toll.price@1.json"
+  },
+  {
+    "class": "observation",
     "code": "traffic.los",
     "version": "1.0",
     "file": "observation/traffic.los@1.json"
@@ -280,6 +406,12 @@
     "code": "traffic.speed",
     "version": "1.0",
     "file": "observation/traffic.speed@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "traffic.travel_time",
+    "version": "1.0",
+    "file": "observation/traffic.travel_time@1.json"
   },
   {
     "class": "observation",
@@ -360,6 +492,12 @@
     "file": "observation/weather.wind_speed@1.json"
   },
   {
+    "class": "observation",
+    "code": "winter.chain_level",
+    "version": "1.0",
+    "file": "observation/winter.chain_level@1.json"
+  },
+  {
     "class": "offer",
     "code": "energy_tariff",
     "version": "1.0",
@@ -367,9 +505,27 @@
   },
   {
     "class": "offer",
+    "code": "fare",
+    "version": "1.0",
+    "file": "offer/fare@1.json"
+  },
+  {
+    "class": "offer",
     "code": "parking_rate",
     "version": "1.0",
     "file": "offer/parking_rate@1.json"
+  },
+  {
+    "class": "offer",
+    "code": "toll",
+    "version": "1.0",
+    "file": "offer/toll@1.json"
+  },
+  {
+    "class": "result",
+    "code": "border_wait",
+    "version": "1.0",
+    "file": "result/border_wait@1.json"
   },
   {
     "class": "result",

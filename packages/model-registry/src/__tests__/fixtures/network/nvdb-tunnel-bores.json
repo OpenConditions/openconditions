@@ -1,0 +1,363 @@
+{
+  "objekter": [
+    {
+      "id": 78728421,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/67/78728421",
+      "metadata": {
+        "type": {
+          "id": 67,
+          "navn": "Tunnelløp"
+        },
+        "versjon": 3,
+        "startdato": "2011-01-24",
+        "sist_modifisert": "2025-04-30T11:41:48Z"
+      },
+      "egenskaper": [
+        {
+          "id": 8356,
+          "navn": "Åpningsår",
+          "egenskapstype": "Heltall",
+          "verdi": 2004
+        },
+        {
+          "id": 3897,
+          "navn": "Bredde",
+          "egenskapstype": "Flyttall",
+          "verdi": 3.5,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 1317,
+          "navn": "Lengde",
+          "egenskapstype": "Flyttall",
+          "verdi": 120.0,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 10883,
+          "navn": "Høyde",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.5,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 1367,
+          "navn": "Areal tverrsnitt",
+          "egenskapstype": "Flyttall",
+          "verdi": 28.8,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 1081,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Lakshammartunnelen"
+        },
+        {
+          "id": 1977,
+          "navn": "Tunnelprofil",
+          "egenskapstype": "Tekstenum",
+          "verdi": "T6",
+          "enum_id": 3408
+        },
+        {
+          "id": 8944,
+          "navn": "Kategori",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Hovedløp",
+          "enum_id": 11801
+        },
+        {
+          "id": 7864,
+          "navn": "Ekstra belysning inngangssone",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 9978
+        },
+        {
+          "id": 1130,
+          "navn": "Type tunnelløp",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Berg",
+          "enum_id": 3386
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (61.70984609 5.91939588 31.108,61.708887 5.91841277 32.617)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4650],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 5730
+            },
+            "kortform": "FV5730 S1D1 m3010-3134"
+          }
+        ]
+      }
+    },
+    {
+      "id": 78728487,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/67/78728487",
+      "metadata": {
+        "type": {
+          "id": 67,
+          "navn": "Tunnelløp"
+        },
+        "versjon": 3,
+        "startdato": "2013-02-04",
+        "sist_modifisert": "2025-04-30T11:41:48Z"
+      },
+      "egenskaper": [
+        {
+          "id": 8356,
+          "navn": "Åpningsår",
+          "egenskapstype": "Heltall",
+          "verdi": 2005
+        },
+        {
+          "id": 3897,
+          "navn": "Bredde",
+          "egenskapstype": "Flyttall",
+          "verdi": 6.5,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 1317,
+          "navn": "Lengde",
+          "egenskapstype": "Flyttall",
+          "verdi": 90.0,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 10883,
+          "navn": "Høyde",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.5,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 1367,
+          "navn": "Areal tverrsnitt",
+          "egenskapstype": "Flyttall",
+          "verdi": 49.7,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 1081,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Skasvoratunnelen"
+        },
+        {
+          "id": 5286,
+          "navn": "Merknad",
+          "egenskapstype": "Tekst",
+          "verdi": "Betongtunnel"
+        },
+        {
+          "id": 1977,
+          "navn": "Tunnelprofil",
+          "egenskapstype": "Tekstenum",
+          "verdi": "T8",
+          "enum_id": 12911
+        },
+        {
+          "id": 8944,
+          "navn": "Kategori",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Hovedløp",
+          "enum_id": 11801
+        },
+        {
+          "id": 1130,
+          "navn": "Type tunnelløp",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Løsmasse",
+          "enum_id": 3387
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (61.7633027 5.96521498 6.7,61.76407073 5.96589828 6.1)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4650],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 615
+            },
+            "kortform": "FV615 S5D1 m6053-6146"
+          }
+        ]
+      }
+    },
+    {
+      "id": 78728490,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/67/78728490",
+      "metadata": {
+        "type": {
+          "id": 67,
+          "navn": "Tunnelløp"
+        },
+        "versjon": 11,
+        "startdato": "2025-06-16",
+        "sist_modifisert": "2025-06-16T07:21:20Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1317,
+          "navn": "Lengde",
+          "egenskapstype": "Flyttall",
+          "verdi": 3482.0,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 11060,
+          "navn": "Prosjektreferanse",
+          "egenskapstype": "Tekst",
+          "verdi": "DK9305"
+        },
+        {
+          "id": 3897,
+          "navn": "Bredde",
+          "egenskapstype": "Flyttall",
+          "verdi": 6.5,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 1081,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Bogstunnelen hovedløp"
+        },
+        {
+          "id": 1367,
+          "navn": "Areal tverrsnitt",
+          "egenskapstype": "Flyttall",
+          "verdi": 49.0,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 1130,
+          "navn": "Type tunnelløp",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Berg",
+          "enum_id": 3386
+        },
+        {
+          "id": 10883,
+          "navn": "Høyde",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.5,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 8356,
+          "navn": "Åpningsår",
+          "egenskapstype": "Heltall",
+          "verdi": 2004
+        },
+        {
+          "id": 7864,
+          "navn": "Ekstra belysning inngangssone",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 9978
+        },
+        {
+          "id": 1977,
+          "navn": "Tunnelprofil",
+          "egenskapstype": "Tekstenum",
+          "verdi": "T9",
+          "enum_id": 3412
+        },
+        {
+          "id": 8944,
+          "navn": "Kategori",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Hovedløp",
+          "enum_id": 11801
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (61.19158882 5.7952518 9.50774529,61.16738671 5.75625975 9.15821172)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4638],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "E",
+              "fase": "V",
+              "nummer": 39
+            },
+            "kortform": "EV39 S62D1 m2746-6236"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "returnert": 3
+  }
+}

@@ -152,6 +152,52 @@ describe("registry crosswalks", () => {
     expect(registry.crosswalk.value("cause", "datex2_v3", "accident")).toBe("accident");
   });
 
+  it("pools two modules' codes for one shared value and emits each enumeration's own", () => {
+    const trend = (name: string, enumeration: string, word: string, value: string) => ({
+      name,
+      entries: [
+        extendVocabulary({
+          vocabulary: "trend",
+          values: [],
+          valueMappings: { [value]: { datex2_v3: [`${enumeration}:${word}`] } },
+        }),
+      ],
+    });
+    const registry = buildRegistry([
+      kernelModule,
+      testModule,
+      trend("parking", "parkingOccupancyTrend", "stable", "steady"),
+      trend("roads", "travelTimeTrendType", "stable", "steady"),
+    ]);
+    const cw = registry.crosswalk;
+    expect(cw.value("trend", "datex2_v3", "parkingOccupancyTrend:stable")).toBe("steady");
+    expect(cw.value("trend", "datex2_v3", "travelTimeTrendType:stable")).toBe("steady");
+    expect(cw.valueTargetCode("trend", "datex2_v3", "steady", "travelTimeTrendType")).toBe(
+      "travelTimeTrendType:stable",
+    );
+    expect(cw.valueTargetCode("trend", "datex2_v3", "steady", "parkingOccupancyTrend")).toBe(
+      "parkingOccupancyTrend:stable",
+    );
+    // An enumeration with no code for the value emits nothing, never another list's code.
+    expect(cw.valueTargetCode("trend", "datex2_v3", "steady", "occupancyTrend")).toBeUndefined();
+  });
+
+  it("still rejects one code mapped to a shared value by two modules", () => {
+    const same = (name: string): RegistryModule => ({
+      name,
+      entries: [
+        extendVocabulary({
+          vocabulary: "trend",
+          values: [],
+          valueMappings: { steady: { datex2_v3: ["stable"] } },
+        }),
+      ],
+    });
+    expect(() => buildRegistry([kernelModule, testModule, same("a"), same("b")])).toThrow(
+      RegistryError,
+    );
+  });
+
   it("rejects mappings for a value the vocabulary lacks", () => {
     const bad: RegistryModule = {
       name: "bad",

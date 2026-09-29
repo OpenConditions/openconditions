@@ -1,0 +1,480 @@
+{
+  "data": [
+    {
+      "cc": {
+        "index": "1-DN-101-0.1-N-84N",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:13:02"
+        },
+        "location": {
+          "district": "1",
+          "locationName": "just south of Humboldt County Line -ECC",
+          "nearbyPlace": "Orick",
+          "longitude": "-124.038550",
+          "latitude": "41.466130",
+          "elevation": "459",
+          "direction": "North",
+          "county": "Del Norte",
+          "route": "US-101",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "0.10",
+          "alignment": "",
+          "milepost": "764.28"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2023-03-25",
+            "statusTime": "16:12:38"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "1-DN-101-0.1-S-83S",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:13:02"
+        },
+        "location": {
+          "district": "1",
+          "locationName": "just south of Humboldt County Line",
+          "nearbyPlace": "Orick",
+          "longitude": "-124.038550",
+          "latitude": "41.466130",
+          "elevation": "459",
+          "direction": "South",
+          "county": "Del Norte",
+          "route": "US-101",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "0.10",
+          "alignment": "",
+          "milepost": "764.28"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2023-03-25",
+            "statusTime": "16:12:38"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "3-ALP-89-23.6-N-237",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:15:02"
+        },
+        "location": {
+          "district": "3",
+          "locationName": "Luther Pass",
+          "nearbyPlace": "Markleeville",
+          "longitude": "-119.939680",
+          "latitude": "38.787944",
+          "elevation": "7732",
+          "direction": "North",
+          "county": "Alpine",
+          "route": "SR-89",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "23.60",
+          "alignment": "",
+          "milepost": "31.03"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2026-05-05",
+            "statusTime": "05:58:27"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "3-BUT-32-27.75-E-132",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:15:02"
+        },
+        "location": {
+          "district": "3",
+          "locationName": "Garland Road",
+          "nearbyPlace": "Forest Ranch",
+          "longitude": "-121.649891",
+          "latitude": "39.922359",
+          "elevation": "3261",
+          "direction": "East",
+          "county": "Butte",
+          "route": "SR-32",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "27.75",
+          "alignment": "",
+          "milepost": "39.52"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2026-02-27",
+            "statusTime": "10:05:08"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "6-FRE-168-27.925-E-1",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:15:02"
+        },
+        "location": {
+          "district": "6",
+          "locationName": "3.4 MI E/O PRATHER",
+          "nearbyPlace": "Auberry",
+          "longitude": "-119.465272",
+          "latitude": "37.049499",
+          "elevation": "1794",
+          "direction": "East",
+          "county": "Fresno",
+          "route": "SR-168",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "27.93",
+          "alignment": "",
+          "milepost": "Not Reported"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2019-02-10",
+            "statusTime": "16:31:05"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "8-LA-2-64.1-E-40",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:15:02"
+        },
+        "location": {
+          "district": "8",
+          "locationName": "Jct. 39 Islip Saddle thru to  5 miles West of Big Pines",
+          "nearbyPlace": "Azusa",
+          "longitude": "-117.850810",
+          "latitude": "34.356940",
+          "elevation": "6686",
+          "direction": "East",
+          "county": "Los Angeles",
+          "route": "SR-2",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "64.10",
+          "alignment": "",
+          "milepost": "55.56"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2025-12-24",
+            "statusTime": "21:08:24"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "9-INY-6-0.2-N-H62",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:15:02"
+        },
+        "location": {
+          "district": "9",
+          "locationName": "Inyo County Offices / 0.2 Mi. W of Jct. 395 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _(10)1",
+          "nearbyPlace": "Bishop",
+          "longitude": "-118.395733",
+          "latitude": "37.376722",
+          "elevation": "4146",
+          "direction": "North",
+          "county": "Inyo",
+          "route": "US-6",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "0.20",
+          "alignment": "",
+          "milepost": "0.20"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2026-02-23",
+            "statusTime": "17:10:34"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "9-INY-168-23.2-E-H40",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:15:02"
+        },
+        "location": {
+          "district": "9",
+          "locationName": "168E 5 Mi. E of Big Pine",
+          "nearbyPlace": "Big Pine",
+          "longitude": "-118.234716",
+          "latitude": "37.215459",
+          "elevation": "4685",
+          "direction": "East",
+          "county": "Inyo",
+          "route": "SR-168",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "23.20",
+          "alignment": "",
+          "milepost": "82.30"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2026-02-23",
+            "statusTime": "17:10:34"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "10-ALP-4-0.65-W-14W",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:15:02"
+        },
+        "location": {
+          "district": "10",
+          "locationName": "BEAR VALLEY",
+          "nearbyPlace": "Arnold",
+          "longitude": "-120.044800",
+          "latitude": "38.460500",
+          "elevation": "7116",
+          "direction": "West",
+          "county": "Alpine",
+          "route": "SR-4",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "0.65",
+          "alignment": "",
+          "milepost": "157.37"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2026-05-05",
+            "statusTime": "13:01:03"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "11-IMP-8-R9.6L-W-11",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:15:02"
+        },
+        "location": {
+          "district": "11",
+          "locationName": "WO Ocotillo",
+          "nearbyPlace": "Eguia",
+          "longitude": "-116.013732",
+          "latitude": "32.433428",
+          "elevation": "4350",
+          "direction": "West",
+          "county": "Imperial",
+          "route": "I-8",
+          "routeSuffix": "",
+          "postmilePrefix": "R",
+          "postmile": "9.60",
+          "alignment": "L",
+          "milepost": "87.83"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2023-02-25",
+            "statusTime": "17:27:35"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "2-LAS-36-11.7-*-*",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:13:02"
+        },
+        "location": {
+          "district": "2",
+          "locationName": "FREDONYER SUMMIT (5,748 ft)",
+          "nearbyPlace": "Susanville",
+          "longitude": "-120.867951",
+          "latitude": "40.358022",
+          "elevation": "5728",
+          "direction": "*",
+          "county": "Lassen",
+          "route": "SR-36",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "11.70",
+          "alignment": "",
+          "milepost": "Not Reported"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2020-09-18",
+            "statusTime": "12:09:34"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "2-PLU-70-113.403-32.9-10- E/W",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:13:02"
+        },
+        "location": {
+          "district": "2",
+          "locationName": "Junction SR 89 at Greenville Wye",
+          "nearbyPlace": "Quincy",
+          "longitude": "-120.985977",
+          "latitude": "40.036065",
+          "elevation": "2952",
+          "direction": "",
+          "county": "Plumas",
+          "route": "SR-70",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "113.40",
+          "alignment": "",
+          "milepost": "Not Reported"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2026-02-19",
+            "statusTime": "22:04:17"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "7-LA-2-35.3-E-",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:15:02"
+        },
+        "location": {
+          "district": "7",
+          "locationName": "Ladybug curve",
+          "nearbyPlace": "Not Reported",
+          "longitude": "Not Reported",
+          "latitude": "Not Reported",
+          "elevation": "Not Reported",
+          "direction": "East",
+          "county": "Los Angeles",
+          "route": "SR-2",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "35.30",
+          "alignment": "",
+          "milepost": "25.03"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2026-03-11",
+            "statusTime": "10:22:15"
+          },
+          "status": "-118.1307759",
+          "statusDescription": ""
+        }
+      }
+    },
+    {
+      "cc": {
+        "index": "7-KER-5-10.2-N-",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:15:02"
+        },
+        "location": {
+          "district": "7",
+          "locationName": "Grapevine",
+          "nearbyPlace": "Lebec",
+          "longitude": "-118.930776",
+          "latitude": "34.939684",
+          "elevation": "1528",
+          "direction": "North",
+          "county": "Kern",
+          "route": "I-5",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "10.20",
+          "alignment": "",
+          "milepost": "215.32"
+        },
+        "inService": "true",
+        "statusData": {
+          "statusTimestamp": {
+            "statusDate": "2023-01-02",
+            "statusTime": "18:05:16"
+          },
+          "status": "R-0",
+          "statusDescription": "No chain controls are in effect at this time."
+        }
+      }
+    }
+  ]
+}

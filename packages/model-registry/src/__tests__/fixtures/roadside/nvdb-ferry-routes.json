@@ -1,0 +1,223 @@
+{
+  "objekter": [
+    {
+      "id": 1013506715,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/770/1013506715",
+      "metadata": {
+        "type": {
+          "id": 770,
+          "navn": "Ferjesamband"
+        },
+        "versjon": 1,
+        "startdato": "2020-12-31",
+        "sist_modifisert": "2026-09-25T09:55:30Z"
+      },
+      "egenskaper": [
+        {
+          "id": 9187,
+          "navn": "FDB_Ferjesambands_Id",
+          "egenskapstype": "Heltall",
+          "verdi": 1054
+        },
+        {
+          "id": 9189,
+          "navn": "Driftsstatus",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Helårssamband",
+          "enum_id": 12858
+        },
+        {
+          "id": 9186,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Eidsdal-Linge"
+        },
+        {
+          "id": 12509,
+          "navn": "NeTEx_id",
+          "egenskapstype": "Tekst",
+          "verdi": "MOR:Line:1054"
+        },
+        {
+          "id": 10954,
+          "navn": "Sambandstype",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Fylkesferjesamband",
+          "enum_id": 18305
+        },
+        {
+          "id": 13275,
+          "navn": "AutoPASS for ferje",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 23198
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (62.26279962 7.17186941 2.551,62.28429244 7.18734597 2.4)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [1578],
+        "fylker": [15],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 63
+            },
+            "kortform": "FV63 S7D1 m0-2681"
+          }
+        ]
+      }
+    },
+    {
+      "id": 1013506716,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/770/1013506716",
+      "metadata": {
+        "type": {
+          "id": 770,
+          "navn": "Ferjesamband"
+        },
+        "versjon": 1,
+        "startdato": "2020-12-31",
+        "sist_modifisert": "2026-09-25T09:56:15Z"
+      },
+      "egenskaper": [
+        {
+          "id": 9187,
+          "navn": "FDB_Ferjesambands_Id",
+          "egenskapstype": "Heltall",
+          "verdi": 1053
+        },
+        {
+          "id": 9189,
+          "navn": "Driftsstatus",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Helårssamband",
+          "enum_id": 12858
+        },
+        {
+          "id": 9186,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Stranda-Liabygda"
+        },
+        {
+          "id": 12509,
+          "navn": "NeTEx_id",
+          "egenskapstype": "Tekst",
+          "verdi": "MOR:Line:1053"
+        },
+        {
+          "id": 10954,
+          "navn": "Sambandstype",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Fylkesferjesamband",
+          "enum_id": 18305
+        },
+        {
+          "id": 13275,
+          "navn": "AutoPASS for ferje",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 23198
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (62.30836907 7.00611039 2.129,62.30902404 6.94910463 1.036)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [1525],
+        "fylker": [15],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 650
+            },
+            "kortform": "FV650 S2D20 m0-2985"
+          }
+        ]
+      }
+    },
+    {
+      "id": 1013508408,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/770/1013508408",
+      "metadata": {
+        "type": {
+          "id": 770,
+          "navn": "Ferjesamband"
+        },
+        "versjon": 3,
+        "startdato": "2022-05-31",
+        "sist_modifisert": "2026-09-25T09:52:16Z"
+      },
+      "egenskaper": [
+        {
+          "id": 9187,
+          "navn": "FDB_Ferjesambands_Id",
+          "egenskapstype": "Heltall",
+          "verdi": 1055
+        },
+        {
+          "id": 9189,
+          "navn": "Driftsstatus",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Helårssamband",
+          "enum_id": 12858
+        },
+        {
+          "id": 9186,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Sykkylven-Magerholm"
+        },
+        {
+          "id": 12509,
+          "navn": "NeTEx_id",
+          "egenskapstype": "Tekst",
+          "verdi": "MOR:Line:1055"
+        },
+        {
+          "id": 10954,
+          "navn": "Sambandstype",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Fylkesferjesamband",
+          "enum_id": 18305
+        },
+        {
+          "id": 13275,
+          "navn": "AutoPASS for ferje",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 23198
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (62.41016445 6.54771066 1.505,62.43229145 6.49722712 2.148)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [1508, 1528],
+        "fylker": [15],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 60
+            },
+            "kortform": "FV60 S2D1 m0-3689"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "returnert": 3
+  }
+}

@@ -1,0 +1,53 @@
+<ns2:messageContainer xmlns="http://datex2.eu/schema/3/common"
+                      xmlns:ns2="http://datex2.eu/schema/3/messageContainer"
+                      xmlns:ns3="http://datex2.eu/schema/3/cisInformation"
+                      xmlns:ns4="http://datex2.eu/schema/3/exchangeInformation"
+                      xmlns:ns5="http://datex2.eu/schema/3/informationManagement"
+                      xmlns:ns6="http://datex2.eu/schema/3/dataDictionaryExtension"
+                      xmlns:ns7="http://datex2.eu/schema/3/cctvExtension"
+                      xmlns:ns8="http://datex2.eu/schema/3/locationReferencing"
+                      xmlns:ns9="http://datex2.eu/schema/3/alertCLocationCodeTableExtension"
+                      xmlns:ns10="http://datex2.eu/schema/3/roadTrafficData"
+                      xmlns:ns11="http://datex2.eu/schema/3/vms"
+                      xmlns:ns12="http://datex2.eu/schema/3/situation">
+    <ns2:payload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="ns8:PredefinedLocationsPublication"
+                 lang="no" modelBaseVersion="3">
+        <publicationTime>2025-09-09T10:26:18.958+02:00</publicationTime>
+        <publicationCreator>
+            <country>no</country>
+            <nationalIdentifier>Norwegian Public Roads Administration</nationalIdentifier>
+        </publicationCreator>
+        <ns8:headerInformation>
+            <confidentiality>noRestriction</confidentiality>
+            <informationStatus>real</informationStatus>
+        </ns8:headerInformation>
+        <ns8:predefinedLocationReference xsi:type="ns8:PredefinedLocation" id="100357" version="1">
+            <ns8:predefinedLocationName>
+                <values>
+                    <value lang="no">Åsanevegen - Eikås</value>
+                </values>
+            </ns8:predefinedLocationName>
+            <ns8:location xsi:type="ns8:LinearLocation">
+                <ns8:gmlLineString srsName="http://www.opengis.net/gml/srs/epsg.xml#32633">
+                    <ns8:posList>-30621 6742669 -30603 6742707 -30596 6742719 -30575 6742754 -30561 6742776 -30546
+                        6742799 -30514 6742841 -30510 6742845 -30501 6742856 -30483 6742876 -30468 6742895 -30427
+                        6742942 -30417 6742952 -30399 6742974 -30372 6743003 -30334 6743047 -30324 6743060 -30316
+                        6743068 -30312 6743073 -30304 6743084 -30288 6743105 -30242 6743171 -30223 6743198 -30204
+                        6743229 -30175 6743276 -30159 6743299 -30152 6743312 -30120 6743364 -30092 6743405 -30075
+                        6743427 -30062 6743444 -30052 6743454 -30037 6743470 -30020 6743486 -30008 6743496 -29997
+                        6743505 -29971 6743524 -29948 6743539 -29918 6743555 -29909 6743559 -29896 6743564 -29880
+                        6743571 -29867 6743575 -29848 6743581 -29834 6743585 -29819 6743589 -29783 6743596 -29750
+                        6743599 -29730 6743599 -29700 6743598 -29671 6743596 -29657 6743594 -29619 6743587 -29591
+                        6743579 -29561 6743570 -29542 6743563 -29529 6743558 -29443 6743523 -29376 6743494 -29357
+                        6743484 -29311 6743457 -29291 6743445 -29278 6743444 -29266 6743438 -29254 6743433 -29228
+                        6743423 -29193 6743413 -29169 6743407 -29147 6743403 -29131 6743401 -29116 6743400 -29105
+                        6743400 -29090 6743401 -29067 6743405 -29044 6743412 -29016 6743422 -28897 6743469 -28822
+                        6743496 -28737 6743528 -28703 6743540 -28671 6743550 -28650 6743556 -28619 6743563 -28220
+                        6743654 -28188 6743662 -28156 6743673 -28133 6743681 -28108 6743692 -28087 6743703 -28061
+                        6743718 -28035 6743735 -27938 6743806
+                    </ns8:posList>
+                </ns8:gmlLineString>
+            </ns8:location>
+        </ns8:predefinedLocationReference>
+    </ns2:payload>
+</ns2:messageContainer>

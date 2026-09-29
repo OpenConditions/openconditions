@@ -43,6 +43,7 @@ export const DATEX2_V3_INFRASTRUCTURE = {
     "other",
     "_extended",
   ],
+  travelTimeTrendTypes: ["decreasing", "increasing", "stable", "_extended"],
   measuredValues: {
     IndividualVehicleDataValues: [],
     TrafficConcentration: ["density", "occupancy"],
@@ -85,6 +86,7 @@ export const DATEX2_V2_INFRASTRUCTURE = {
   version: "2.3",
   vmsTypes: ["colourGraphic", "continuousSign", "monochromeGraphic", "matrixSign", "other"],
   trafficStatuses: ["impossible", "congested", "heavy", "freeFlow", "unknown"],
+  travelTimeTrendTypes: ["decreasing", "increasing", "stable"],
   measuredValues: {
     IndividualVehicleDataValues: [],
     TrafficConcentration: ["concentration", "occupancy"],

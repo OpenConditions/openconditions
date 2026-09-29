@@ -255,16 +255,23 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
       (vocab.contributedBy as Record<string, string>)[v] = ext.module;
       vocab.values.push(v);
     }
+    // Modules sharing a kernel vocabulary (trend: parking occupancy and travel
+    // times) map one value from different source enumerations, so their codes
+    // are pooled; the crosswalk still rejects a code that names two values.
     const merged = vocab.valueMappings as Record<string, Mappings>;
     for (const [value, mappings] of Object.entries(ext.valueMappings ?? {})) {
-      for (const target of Object.keys(mappings) as (keyof Mappings)[]) {
-        if (merged[value]?.[target] !== undefined) {
+      const pooled: Mappings = { ...merged[value] };
+      for (const [target, codes] of Object.entries(mappings) as [keyof Mappings, string[]][]) {
+        const known = pooled[target] ?? [];
+        const repeated = codes.find((c) => known.includes(c));
+        if (repeated !== undefined) {
           throw new RegistryError(
-            `${ext.module}: vocabulary ${ext.vocabulary} value "${value}" already has ${target} mappings`,
+            `${ext.module}: vocabulary ${ext.vocabulary} value "${value}" already maps ${target} code "${repeated}"`,
           );
         }
+        pooled[target] = [...known, ...codes];
       }
-      merged[value] = { ...merged[value], ...mappings };
+      merged[value] = pooled;
     }
   }
   for (const v of vocabularies.values()) {

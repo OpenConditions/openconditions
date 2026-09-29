@@ -24,6 +24,9 @@ describe("production registry", () => {
       "parking",
       "charging",
       "fuel",
+      "facilities",
+      "border",
+      "maritime",
     ]);
     expect(registry.domains().map((d) => d.code)).toEqual([
       "roads",
@@ -32,6 +35,9 @@ describe("production registry", () => {
       "parking",
       "charging",
       "fuel",
+      "facilities",
+      "border",
+      "maritime",
     ]);
     expect(registry.kind("situation", "roadworks")?.domain).toBe("roads");
     expect(registry.vocabulary("source_format")!.values).toContain("datex2");
@@ -45,9 +51,53 @@ describe("production registry", () => {
     expect(registry.kind("feature", "weather_station")?.traits).toContain("field_device");
   });
 
-  it("registers the first offers and the kinds they price", () => {
+  it("registers every feature kind of the model, each in the domain of what it is", () => {
     const registry = productionRegistry();
-    expect(registry.kinds("offer").map((k) => k.code)).toEqual(["parking_rate", "energy_tariff"]);
+    const domainOf = Object.fromEntries(registry.kinds("feature").map((k) => [k.code, k.domain]));
+    expect(domainOf).toEqual({
+      vms: "roads",
+      camera: "roads",
+      measurement_site: "roads",
+      structure: "roads",
+      rail_crossing: "roads",
+      blackspot: "roads",
+      emergency_phone: "roads",
+      lane_control_gantry: "roads",
+      mountain_pass: "roads",
+      chain_control_zone: "roads",
+      travel_time_route: "roads",
+      toll_point: "roads",
+      toll_section: "roads",
+      weather_station: "weather",
+      service_vehicle: "vehicles",
+      parking_site: "parking",
+      charging_site: "charging",
+      fuel_station: "fuel",
+      rest_area: "facilities",
+      weigh_station: "facilities",
+      border_crossing: "border",
+      ferry_route: "maritime",
+      ferry_terminal: "maritime",
+    });
+  });
+
+  it("observes an open status on every site an operator opens and closes", () => {
+    const registry = productionRegistry();
+    const operated = registry
+      .kinds("feature")
+      .filter((k) => k.traits?.includes("operated_site"))
+      .map((k) => k.code);
+    expect(operated).toEqual(["toll_point", "rest_area", "weigh_station", "border_crossing"]);
+  });
+
+  it("registers the offers and the kinds they price", () => {
+    const registry = productionRegistry();
+    expect(registry.kinds("offer").map((k) => k.code)).toEqual([
+      "toll",
+      "parking_rate",
+      "energy_tariff",
+      "fare",
+    ]);
     expect(registry.kind("feature", "parking_site")?.components).toEqual([
       "parking_area",
       "parking_space",

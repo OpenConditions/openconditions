@@ -223,13 +223,14 @@ export const KERNEL_EFFECTS = [
   }),
   defineEffect({
     code: "dimension_limit",
-    version: "1.0",
-    description: "A maximum permitted vehicle dimension, in the dimension's canonical unit.",
+    version: "1.1",
+    description:
+      "A vehicle dimension limit, in the dimension's canonical unit: the legal maximum, or where no legal limit is published, what physically fits (a measured clearance).",
     shape: () => ({
       dimension: z.enum(DIMENSIONS),
       value: Quantity,
       operator: z.enum(["lt", "lte"]),
-      meaning: z.literal("maximum_permitted"),
+      meaning: z.enum(["maximum_permitted", "physical_limit"]),
     }),
     refine: (e, ctx) =>
       checkDimensionUnit(

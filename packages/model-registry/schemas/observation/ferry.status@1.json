@@ -1,0 +1,2347 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^oc:(feature|situation|observation|offer):([a-z0-9](?:[a-z0-9.-]*[a-z0-9])?):(.+)$"
+    },
+    "temporality": {
+      "type": "string",
+      "enum": [
+        "static",
+        "scheduled",
+        "live",
+        "forecast"
+      ]
+    },
+    "externalIds": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ExternalId"
+      }
+    },
+    "location": {
+      "$ref": "#/$defs/LocationRef"
+    },
+    "relations": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Relation"
+      }
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "freshness": {
+      "$ref": "#/$defs/Freshness"
+    },
+    "extras": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {}
+    },
+    "canonicalId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "domain": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contentHash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "revision": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "recordedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "tombstone": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "enum": [
+            "expired",
+            "withdrawn",
+            "superseded",
+            "cancelled",
+            "rights_revoked",
+            "rejected"
+          ]
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        }
+      },
+      "required": [
+        "reason",
+        "at"
+      ],
+      "additionalProperties": false
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": [
+            "self_reported",
+            "corroborated",
+            "externally_resolved",
+            "negated",
+            "expired"
+          ]
+        },
+        "confidenceScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "routingEligible": {
+          "type": "boolean"
+        },
+        "corroborations": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "flaggedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        }
+      },
+      "required": [
+        "state",
+        "confidenceScore",
+        "routingEligible",
+        "corroborations"
+      ],
+      "additionalProperties": false
+    },
+    "class": {
+      "type": "string",
+      "const": "observation"
+    },
+    "kind": {
+      "type": "string",
+      "const": "observation"
+    },
+    "property": {
+      "type": "string",
+      "const": "ferry.status"
+    },
+    "subject": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "const": "feature"
+        },
+        "featureId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "componentKey": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "featureId"
+      ],
+      "additionalProperties": false
+    },
+    "qualifiers": {
+      "type": "object",
+      "properties": {
+        "departure": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "result": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "category"
+            },
+            "value": {
+              "type": "string",
+              "enum": [
+                "on_schedule",
+                "delayed",
+                "cancelled",
+                "suspended",
+                "running",
+                "unknown"
+              ]
+            },
+            "vocabulary": {
+              "type": "string",
+              "const": "ferry_status"
+            }
+          },
+          "required": [
+            "type",
+            "value",
+            "vocabulary"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "not_applicable"
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "phenomenonTime": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "instant": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            }
+          },
+          "required": [
+            "instant"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "start": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "end": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            }
+          },
+          "required": [
+            "start",
+            "end"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "resultTime": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "validUntil": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    },
+    "aggregation": {
+      "type": "string",
+      "enum": [
+        "instantaneous",
+        "mean",
+        "median",
+        "min",
+        "max",
+        "sum",
+        "p85",
+        "typical"
+      ]
+    },
+    "forecast": {
+      "type": "object",
+      "properties": {
+        "issuedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "leadTime": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "probability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "issuedAt",
+        "leadTime"
+      ],
+      "additionalProperties": false
+    },
+    "quality": {
+      "type": "object",
+      "properties": {
+        "sampleCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "dataError": {
+          "type": "boolean"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "supplierCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verified": {
+          "type": "boolean"
+        },
+        "trend": {
+          "type": "string",
+          "enum": [
+            "rising",
+            "falling",
+            "steady",
+            "filling",
+            "clearing"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "baseline": {
+      "type": "object",
+      "properties": {
+        "freeFlow": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "native",
+            "derived",
+            "osm_maxspeed",
+            "typical_profile"
+          ]
+        },
+        "ratio": {
+          "type": "number",
+          "minimum": 0
+        },
+        "los": {
+          "type": "string",
+          "enum": [
+            "free_flow",
+            "slow",
+            "heavy",
+            "queuing",
+            "stationary",
+            "blocked",
+            "unknown"
+          ]
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "sinceAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+    }
+  },
+  "required": [
+    "id",
+    "temporality",
+    "location",
+    "provenance",
+    "freshness",
+    "canonicalId",
+    "domain",
+    "contentHash",
+    "revision",
+    "recordedAt",
+    "class",
+    "kind",
+    "property",
+    "subject",
+    "result",
+    "phenomenonTime",
+    "aggregation"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "ExternalId": {
+      "type": "object",
+      "properties": {
+        "scheme": {
+          "type": "string",
+          "enum": [
+            "ocpi:location",
+            "ocpi:evse",
+            "ocpi:connector",
+            "oicp:evse",
+            "emi3:evse",
+            "datex:site",
+            "datex:situation",
+            "datex:record",
+            "datex:parking",
+            "datex:vms",
+            "datex:refill_point",
+            "wzdx:road_event",
+            "wzdx:device",
+            "open511",
+            "tpims:site",
+            "nbi:structure",
+            "fra:crossing",
+            "cbp:port",
+            "cbsa:office",
+            "osm:node",
+            "osm:way",
+            "osm:relation",
+            "gers",
+            "wikidata",
+            "tmc",
+            "cap",
+            "gtfs:stop",
+            "gtfs:route",
+            "ocm",
+            "bnetza",
+            "cpo",
+            "provider",
+            "netex:line",
+            "netex:stop_place"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authority": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "scheme",
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "LocationRef": {
+      "type": "object",
+      "properties": {
+        "geometry": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Geometry"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "extent": {
+          "type": "string",
+          "enum": [
+            "point",
+            "linear",
+            "area",
+            "network",
+            "none"
+          ]
+        },
+        "geometryOrigin": {
+          "type": "string",
+          "enum": [
+            "source",
+            "site_table",
+            "tmc_table",
+            "openlr_decoded",
+            "osm",
+            "crowd_device",
+            "derived",
+            "none"
+          ]
+        },
+        "fuzziness": {
+          "type": "string",
+          "enum": [
+            "exact",
+            "low_res",
+            "medium_res",
+            "end_unknown",
+            "start_unknown",
+            "extent_unknown"
+          ]
+        },
+        "roads": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RoadRef"
+          }
+        },
+        "direction": {
+          "$ref": "#/$defs/DirectionRef"
+        },
+        "lanes": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/LaneRef"
+          }
+        },
+        "linear": {
+          "type": "object",
+          "properties": {
+            "system": {
+              "type": "string",
+              "enum": [
+                "milepost",
+                "kilometre_post",
+                "tpeg_olr",
+                "provider"
+              ]
+            },
+            "ref": {
+              "type": "string",
+              "minLength": 1
+            },
+            "from": {
+              "type": "number"
+            },
+            "to": {
+              "type": "number"
+            },
+            "authority": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "system",
+            "ref",
+            "from"
+          ],
+          "additionalProperties": false
+        },
+        "tmc": {
+          "type": "object",
+          "properties": {
+            "country": {
+              "type": "string",
+              "minLength": 1
+            },
+            "table": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "code": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "direction": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "const": 0
+                },
+                {
+                  "type": "number",
+                  "const": 1
+                }
+              ]
+            },
+            "extent": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "method": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "const": 2
+                },
+                {
+                  "type": "number",
+                  "const": 4
+                }
+              ]
+            }
+          },
+          "required": [
+            "country",
+            "table",
+            "code"
+          ],
+          "additionalProperties": false
+        },
+        "openlr": {
+          "type": "string",
+          "minLength": 1
+        },
+        "osm": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExternalId"
+          }
+        },
+        "admin": {
+          "type": "object",
+          "properties": {
+            "country": {
+              "type": "string",
+              "pattern": "^[A-Z]{2}$"
+            },
+            "subdivision": {
+              "type": "string",
+              "minLength": 1
+            },
+            "municipality": {
+              "type": "string",
+              "minLength": 1
+            },
+            "geocodes": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "scheme": {
+                    "type": "string",
+                    "enum": [
+                      "iso3166-2",
+                      "nuts",
+                      "fips",
+                      "same",
+                      "ugc",
+                      "ars",
+                      "padd"
+                    ]
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "scheme",
+                  "code"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "country"
+          ],
+          "additionalProperties": false
+        },
+        "areaDescription": {
+          "$ref": "#/$defs/Text"
+        },
+        "address": {
+          "$ref": "#/$defs/Address"
+        },
+        "level": {
+          "type": "string",
+          "minLength": 1
+        },
+        "elevationM": {
+          "type": "number"
+        },
+        "locationTable": {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "attribution": {
+              "type": "string",
+              "minLength": 1
+            },
+            "license": {
+              "type": "string",
+              "minLength": 1
+            },
+            "viaRoadMatch": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "ref",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "external": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "system": {
+                "type": "string",
+                "minLength": 1
+              },
+              "code": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "system",
+              "code"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "geometry",
+        "extent",
+        "geometryOrigin",
+        "fuzziness"
+      ],
+      "additionalProperties": false
+    },
+    "Geometry": {
+      "anyOf": [
+        {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "Point"
+                },
+                "coordinates": {
+                  "anyOf": [
+                    {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "number",
+                          "minimum": -180,
+                          "maximum": 180
+                        },
+                        {
+                          "type": "number",
+                          "minimum": -90,
+                          "maximum": 90
+                        }
+                      ],
+                      "items": false,
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "number",
+                          "minimum": -180,
+                          "maximum": 180
+                        },
+                        {
+                          "type": "number",
+                          "minimum": -90,
+                          "maximum": 90
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ],
+                      "items": false,
+                      "minItems": 3,
+                      "maxItems": 3
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "coordinates"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "MultiPoint"
+                },
+                "coordinates": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 3,
+                        "maxItems": 3
+                      }
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "type",
+                "coordinates"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "LineString"
+                },
+                "coordinates": {
+                  "minItems": 2,
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 3,
+                        "maxItems": 3
+                      }
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "type",
+                "coordinates"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "MultiLineString"
+                },
+                "coordinates": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "minItems": 2,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "array",
+                          "prefixItems": [
+                            {
+                              "type": "number",
+                              "minimum": -180,
+                              "maximum": 180
+                            },
+                            {
+                              "type": "number",
+                              "minimum": -90,
+                              "maximum": 90
+                            }
+                          ],
+                          "items": false,
+                          "minItems": 2,
+                          "maxItems": 2
+                        },
+                        {
+                          "type": "array",
+                          "prefixItems": [
+                            {
+                              "type": "number",
+                              "minimum": -180,
+                              "maximum": 180
+                            },
+                            {
+                              "type": "number",
+                              "minimum": -90,
+                              "maximum": 90
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ],
+                          "items": false,
+                          "minItems": 3,
+                          "maxItems": 3
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "required": [
+                "type",
+                "coordinates"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "Polygon"
+                },
+                "coordinates": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "minItems": 4,
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "array",
+                          "prefixItems": [
+                            {
+                              "type": "number",
+                              "minimum": -180,
+                              "maximum": 180
+                            },
+                            {
+                              "type": "number",
+                              "minimum": -90,
+                              "maximum": 90
+                            }
+                          ],
+                          "items": false,
+                          "minItems": 2,
+                          "maxItems": 2
+                        },
+                        {
+                          "type": "array",
+                          "prefixItems": [
+                            {
+                              "type": "number",
+                              "minimum": -180,
+                              "maximum": 180
+                            },
+                            {
+                              "type": "number",
+                              "minimum": -90,
+                              "maximum": 90
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ],
+                          "items": false,
+                          "minItems": 3,
+                          "maxItems": 3
+                        }
+                      ]
+                    }
+                  }
+                }
+              },
+              "required": [
+                "type",
+                "coordinates"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "MultiPolygon"
+                },
+                "coordinates": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "minItems": 4,
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "number",
+                                "minimum": -180,
+                                "maximum": 180
+                              },
+                              {
+                                "type": "number",
+                                "minimum": -90,
+                                "maximum": 90
+                              }
+                            ],
+                            "items": false,
+                            "minItems": 2,
+                            "maxItems": 2
+                          },
+                          {
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "number",
+                                "minimum": -180,
+                                "maximum": 180
+                              },
+                              {
+                                "type": "number",
+                                "minimum": -90,
+                                "maximum": 90
+                              },
+                              {
+                                "type": "number"
+                              }
+                            ],
+                            "items": false,
+                            "minItems": 3,
+                            "maxItems": 3
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              },
+              "required": [
+                "type",
+                "coordinates"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "GeometryCollection"
+            },
+            "geometries": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "Point"
+                      },
+                      "coordinates": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "number",
+                                "minimum": -180,
+                                "maximum": 180
+                              },
+                              {
+                                "type": "number",
+                                "minimum": -90,
+                                "maximum": 90
+                              }
+                            ],
+                            "items": false,
+                            "minItems": 2,
+                            "maxItems": 2
+                          },
+                          {
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "number",
+                                "minimum": -180,
+                                "maximum": 180
+                              },
+                              {
+                                "type": "number",
+                                "minimum": -90,
+                                "maximum": 90
+                              },
+                              {
+                                "type": "number"
+                              }
+                            ],
+                            "items": false,
+                            "minItems": 3,
+                            "maxItems": 3
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "coordinates"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "MultiPoint"
+                      },
+                      "coordinates": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "number",
+                                  "minimum": -180,
+                                  "maximum": 180
+                                },
+                                {
+                                  "type": "number",
+                                  "minimum": -90,
+                                  "maximum": 90
+                                }
+                              ],
+                              "items": false,
+                              "minItems": 2,
+                              "maxItems": 2
+                            },
+                            {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "number",
+                                  "minimum": -180,
+                                  "maximum": 180
+                                },
+                                {
+                                  "type": "number",
+                                  "minimum": -90,
+                                  "maximum": 90
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ],
+                              "items": false,
+                              "minItems": 3,
+                              "maxItems": 3
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "coordinates"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "LineString"
+                      },
+                      "coordinates": {
+                        "minItems": 2,
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "number",
+                                  "minimum": -180,
+                                  "maximum": 180
+                                },
+                                {
+                                  "type": "number",
+                                  "minimum": -90,
+                                  "maximum": 90
+                                }
+                              ],
+                              "items": false,
+                              "minItems": 2,
+                              "maxItems": 2
+                            },
+                            {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "number",
+                                  "minimum": -180,
+                                  "maximum": 180
+                                },
+                                {
+                                  "type": "number",
+                                  "minimum": -90,
+                                  "maximum": 90
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ],
+                              "items": false,
+                              "minItems": 3,
+                              "maxItems": 3
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "coordinates"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "MultiLineString"
+                      },
+                      "coordinates": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "minItems": 2,
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "array",
+                                "prefixItems": [
+                                  {
+                                    "type": "number",
+                                    "minimum": -180,
+                                    "maximum": 180
+                                  },
+                                  {
+                                    "type": "number",
+                                    "minimum": -90,
+                                    "maximum": 90
+                                  }
+                                ],
+                                "items": false,
+                                "minItems": 2,
+                                "maxItems": 2
+                              },
+                              {
+                                "type": "array",
+                                "prefixItems": [
+                                  {
+                                    "type": "number",
+                                    "minimum": -180,
+                                    "maximum": 180
+                                  },
+                                  {
+                                    "type": "number",
+                                    "minimum": -90,
+                                    "maximum": 90
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ],
+                                "items": false,
+                                "minItems": 3,
+                                "maxItems": 3
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "coordinates"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "Polygon"
+                      },
+                      "coordinates": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "minItems": 4,
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "array",
+                                "prefixItems": [
+                                  {
+                                    "type": "number",
+                                    "minimum": -180,
+                                    "maximum": 180
+                                  },
+                                  {
+                                    "type": "number",
+                                    "minimum": -90,
+                                    "maximum": 90
+                                  }
+                                ],
+                                "items": false,
+                                "minItems": 2,
+                                "maxItems": 2
+                              },
+                              {
+                                "type": "array",
+                                "prefixItems": [
+                                  {
+                                    "type": "number",
+                                    "minimum": -180,
+                                    "maximum": 180
+                                  },
+                                  {
+                                    "type": "number",
+                                    "minimum": -90,
+                                    "maximum": 90
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ],
+                                "items": false,
+                                "minItems": 3,
+                                "maxItems": 3
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "coordinates"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "const": "MultiPolygon"
+                      },
+                      "coordinates": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "minItems": 4,
+                            "type": "array",
+                            "items": {
+                              "anyOf": [
+                                {
+                                  "type": "array",
+                                  "prefixItems": [
+                                    {
+                                      "type": "number",
+                                      "minimum": -180,
+                                      "maximum": 180
+                                    },
+                                    {
+                                      "type": "number",
+                                      "minimum": -90,
+                                      "maximum": 90
+                                    }
+                                  ],
+                                  "items": false,
+                                  "minItems": 2,
+                                  "maxItems": 2
+                                },
+                                {
+                                  "type": "array",
+                                  "prefixItems": [
+                                    {
+                                      "type": "number",
+                                      "minimum": -180,
+                                      "maximum": 180
+                                    },
+                                    {
+                                      "type": "number",
+                                      "minimum": -90,
+                                      "maximum": 90
+                                    },
+                                    {
+                                      "type": "number"
+                                    }
+                                  ],
+                                  "items": false,
+                                  "minItems": 3,
+                                  "maxItems": 3
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "coordinates"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            }
+          },
+          "required": [
+            "type",
+            "geometries"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "RoadRef": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/Text"
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "class": {
+          "type": "string",
+          "enum": [
+            "motorway",
+            "trunk",
+            "primary",
+            "secondary",
+            "tertiary",
+            "local",
+            "service",
+            "other"
+          ]
+        },
+        "designation": {
+          "type": "object",
+          "properties": {
+            "scheme": {
+              "type": "string",
+              "enum": [
+                "us_interstate",
+                "us_route",
+                "us_state_route",
+                "de_bab",
+                "de_bundesstrasse",
+                "e_road",
+                "national"
+              ]
+            },
+            "ref": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "scheme",
+            "ref"
+          ],
+          "additionalProperties": false
+        },
+        "carriageway": {
+          "type": "string",
+          "enum": [
+            "main",
+            "entry",
+            "exit",
+            "ramp",
+            "connector",
+            "service",
+            "collector",
+            "parallel"
+          ]
+        },
+        "from": {
+          "type": "string",
+          "minLength": 1
+        },
+        "to": {
+          "type": "string",
+          "minLength": 1
+        },
+        "at": {
+          "type": "string",
+          "minLength": 1
+        },
+        "junctionFrom": {
+          "type": "string",
+          "minLength": 1
+        },
+        "junctionTo": {
+          "type": "string",
+          "minLength": 1
+        },
+        "milepostFrom": {
+          "type": "number"
+        },
+        "milepostTo": {
+          "type": "number"
+        },
+        "kmFrom": {
+          "type": "number"
+        },
+        "kmTo": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Text": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "lang": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "machine": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "lang",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "DirectionRef": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "string",
+          "enum": [
+            "positive",
+            "negative",
+            "both",
+            "unknown"
+          ]
+        },
+        "basis": {
+          "type": "string",
+          "enum": [
+            "road_reference",
+            "alert_c",
+            "openlr",
+            "bearing",
+            "compass",
+            "text",
+            "unknown"
+          ]
+        },
+        "compass": {
+          "type": "string",
+          "enum": [
+            "N",
+            "NE",
+            "E",
+            "SE",
+            "S",
+            "SW",
+            "W",
+            "NW"
+          ]
+        },
+        "bearingDeg": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMaximum": 360
+        },
+        "toward": {
+          "type": "string",
+          "minLength": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "value",
+        "basis"
+      ],
+      "additionalProperties": false
+    },
+    "LaneRef": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "general",
+            "hov",
+            "bus",
+            "bicycle",
+            "shoulder",
+            "hard_shoulder",
+            "emergency",
+            "turn",
+            "exit",
+            "entrance",
+            "median",
+            "center_turn",
+            "ramp",
+            "parking",
+            "sidewalk"
+          ]
+        }
+      },
+      "required": [
+        "index"
+      ],
+      "additionalProperties": false
+    },
+    "Address": {
+      "type": "object",
+      "properties": {
+        "street": {
+          "type": "string",
+          "minLength": 1
+        },
+        "houseNumber": {
+          "type": "string",
+          "minLength": 1
+        },
+        "postalCode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "city": {
+          "type": "string",
+          "minLength": 1
+        },
+        "region": {
+          "type": "string",
+          "minLength": 1
+        },
+        "country": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "country"
+      ],
+      "additionalProperties": false
+    },
+    "Relation": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/RecordRef"
+        },
+        "relation": {
+          "type": "string",
+          "enum": [
+            "part_of",
+            "monitors",
+            "controls",
+            "serves",
+            "group",
+            "next_occurrence",
+            "first_occurrence",
+            "related_work_zone",
+            "caused_by",
+            "detour_for",
+            "supersedes",
+            "update_of",
+            "cancels",
+            "related"
+          ]
+        }
+      },
+      "required": [
+        "ref",
+        "relation"
+      ],
+      "additionalProperties": false
+    },
+    "RecordRef": {
+      "type": "object",
+      "properties": {
+        "class": {
+          "type": "string",
+          "enum": [
+            "feature",
+            "situation",
+            "observation",
+            "offer"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "componentKey": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "class",
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "Provenance": {
+      "type": "object",
+      "properties": {
+        "origin": {
+          "type": "string",
+          "enum": [
+            "feed",
+            "crowd",
+            "federation",
+            "derived"
+          ]
+        },
+        "sourceId": {
+          "anyOf": [
+            {
+              "type": "string",
+              "const": "@fused"
+            },
+            {
+              "type": "string",
+              "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"
+            }
+          ]
+        },
+        "sourceFormat": {
+          "type": "string",
+          "enum": [
+            "crowd",
+            "derived",
+            "autobahn",
+            "bcn-trams",
+            "bcn-trams-csv",
+            "bonn",
+            "datex-elaborated",
+            "datex-predefined-locations",
+            "datex-site-table",
+            "datex2",
+            "digitraffic",
+            "fdt",
+            "fintraffic-stations",
+            "fintraffic-tms",
+            "flatjson",
+            "france-comptage-csv",
+            "gddkia",
+            "geojson",
+            "geojson-flow",
+            "hk-detector-csv",
+            "hk-td",
+            "ibi511",
+            "ibi511-conditions",
+            "informo",
+            "lta",
+            "lta-speedbands",
+            "miv",
+            "miv-config",
+            "nyc-dot",
+            "ohgo",
+            "ohgo-events",
+            "open511",
+            "trafikverket",
+            "trafikverket-flow",
+            "vic-disruptions",
+            "webtris",
+            "wzdx"
+          ]
+        },
+        "accessMode": {
+          "type": "string",
+          "enum": [
+            "bulk",
+            "on_demand"
+          ]
+        },
+        "recordId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "recordVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceUri": {
+          "type": "string",
+          "format": "uri"
+        },
+        "sourceUpdatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "attribution": {
+          "$ref": "#/$defs/Attribution"
+        },
+        "upstream": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "publisher": {
+                "type": "string",
+                "minLength": 1
+              },
+              "recordId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "license": {
+                "type": "string",
+                "minLength": 1
+              },
+              "attribution": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "publisher"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "rawRef": {
+          "type": "object",
+          "properties": {
+            "hash": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "part": {
+              "type": "string",
+              "minLength": 1
+            },
+            "pointer": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "hash"
+          ],
+          "additionalProperties": false
+        },
+        "instanceId": {
+          "type": "string",
+          "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"
+        },
+        "originChain": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "instanceId": {
+                "type": "string",
+                "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"
+              },
+              "viaPeer": {
+                "type": "string",
+                "minLength": 1
+              },
+              "receivedAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              }
+            },
+            "required": [
+              "instanceId",
+              "receivedAt"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "mergedSources": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "source": {
+                "type": "string",
+                "minLength": 1
+              },
+              "recordId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "attribution": {
+                "$ref": "#/$defs/Attribution"
+              },
+              "link": {
+                "type": "string",
+                "enum": [
+                  "same_record",
+                  "same_phenomenon",
+                  "same_asset"
+                ]
+              }
+            },
+            "required": [
+              "source",
+              "recordId",
+              "attribution"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "derivedFrom": {
+          "type": "object",
+          "properties": {
+            "records": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/RecordRef"
+              }
+            },
+            "method": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "records",
+            "method",
+            "version"
+          ],
+          "additionalProperties": false
+        },
+        "reporter": {
+          "type": "object",
+          "properties": {
+            "keyId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reputation": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "keyId"
+          ],
+          "additionalProperties": false
+        },
+        "privacy": {
+          "type": "object",
+          "properties": {
+            "class": {
+              "type": "string",
+              "enum": [
+                "authoritative",
+                "aggregate",
+                "k_anon",
+                "dp_noised",
+                "crowd_pseudonym"
+              ]
+            },
+            "kAnonymity": {
+              "type": "integer",
+              "minimum": 2,
+              "maximum": 9007199254740991
+            },
+            "dpEpsilon": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "dpDelta": {
+              "type": "number",
+              "minimum": 0,
+              "exclusiveMaximum": 1
+            }
+          },
+          "required": [
+            "class"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "origin",
+        "sourceId",
+        "sourceFormat",
+        "accessMode",
+        "recordId",
+        "attribution",
+        "instanceId",
+        "privacy"
+      ],
+      "additionalProperties": false
+    },
+    "Attribution": {
+      "type": "object",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "licenseUrl": {
+          "type": "string",
+          "format": "uri"
+        },
+        "parentSourceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "childSourceId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "policyIds": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "rights": {
+          "$ref": "#/$defs/RoutingRights"
+        }
+      },
+      "required": [
+        "provider",
+        "license"
+      ],
+      "additionalProperties": false
+    },
+    "RoutingRights": {
+      "type": "object",
+      "properties": {
+        "source_redistribution": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "derived_redistribution": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "commercial_use": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "attribution_required": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "retention": {
+          "type": "string",
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "evidence_origin": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reviewed_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "source_redistribution",
+        "derived_redistribution",
+        "commercial_use",
+        "attribution_required",
+        "retention",
+        "evidence_origin",
+        "evidence_version",
+        "reviewed_at"
+      ],
+      "additionalProperties": false
+    },
+    "Freshness": {
+      "type": "object",
+      "properties": {
+        "fetchedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "expiresAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "staleAfter": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "sourceCheckedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "freshnessWindowSec": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
+        "isStale": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "fetchedAt"
+      ],
+      "additionalProperties": false
+    },
+    "Quantity": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "accuracy": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "value",
+        "unit"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

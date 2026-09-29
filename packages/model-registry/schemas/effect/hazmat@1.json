@@ -358,7 +358,8 @@
               "unknown_vehicle",
               "compound_condition",
               "conflicting_direction",
-              "unresolved_lane"
+              "unresolved_lane",
+              "value_not_published"
             ]
           },
           "sourcePath": {
@@ -1488,7 +1489,9 @@
             "ocm",
             "bnetza",
             "cpo",
-            "provider"
+            "provider",
+            "netex:line",
+            "netex:stop_place"
           ]
         },
         "id": {

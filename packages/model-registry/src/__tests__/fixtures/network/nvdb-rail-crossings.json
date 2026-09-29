@@ -1,0 +1,207 @@
+{
+  "objekter": [
+    {
+      "id": 81576164,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/100/81576164",
+      "metadata": {
+        "type": {
+          "id": 100,
+          "navn": "Jernbanekryssing"
+        },
+        "versjon": 2,
+        "startdato": "2006-09-18",
+        "sist_modifisert": "2025-11-22T09:17:43Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1153,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Veg under",
+          "enum_id": 2772
+        }
+      ],
+      "geometri": {
+        "wkt": "POINT Z (60.02987448 9.23728081 204.981)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [3336],
+        "fylker": [33],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "K",
+              "fase": "V",
+              "nummer": 1004
+            },
+            "kortform": "KV1004 S2D1 m29"
+          }
+        ]
+      }
+    },
+    {
+      "id": 84580573,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/100/84580573",
+      "metadata": {
+        "type": {
+          "id": 100,
+          "navn": "Jernbanekryssing"
+        },
+        "versjon": 3,
+        "startdato": "2015-08-24",
+        "sist_modifisert": "2025-11-22T09:17:43Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1153,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "I plan, lysregulert, halve bommer",
+          "enum_id": 3906
+        }
+      ],
+      "geometri": {
+        "wkt": "POINT Z (58.50065003 8.64225341 46.365)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4214],
+        "fylker": [42],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 408
+            },
+            "kortform": "FV408 S1D1 m11756"
+          }
+        ]
+      }
+    },
+    {
+      "id": 101483046,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/100/101483046",
+      "metadata": {
+        "type": {
+          "id": 100,
+          "navn": "Jernbanekryssing"
+        },
+        "versjon": 3,
+        "startdato": "2015-04-10",
+        "sist_modifisert": "2025-11-22T09:17:43Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1153,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "I plan, lysregulert og bommer",
+          "enum_id": 2770
+        }
+      ],
+      "geometri": {
+        "wkt": "POINT Z (59.69127651 9.04038912 -999999)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4005],
+        "fylker": [40],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 37
+            },
+            "kortform": "FV37 S15D1 m618"
+          }
+        ]
+      }
+    },
+    {
+      "id": 119345057,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/100/119345057",
+      "metadata": {
+        "type": {
+          "id": 100,
+          "navn": "Jernbanekryssing"
+        },
+        "versjon": 4,
+        "startdato": "2017-03-23",
+        "sist_modifisert": "2025-11-22T09:17:43Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1153,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "I plan, lysregulert, uten bommer",
+          "enum_id": 2769
+        }
+      ],
+      "geometri": {
+        "wkt": "POINT Z (59.98745716 9.94457166 -999999)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [3316],
+        "fylker": [33],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 280
+            },
+            "kortform": "FV280 S1D1 m3112"
+          }
+        ]
+      }
+    },
+    {
+      "id": 119346127,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/100/119346127",
+      "metadata": {
+        "type": {
+          "id": 100,
+          "navn": "Jernbanekryssing"
+        },
+        "versjon": 1,
+        "startdato": "1998-07-01",
+        "sist_modifisert": "2026-07-24T11:18:49Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1153,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "I plan, lysregulert, hele bommer",
+          "enum_id": 3905
+        }
+      ],
+      "geometri": {
+        "wkt": "POINT Z (59.08714278 9.69472823 20.637)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4001],
+        "fylker": [40],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "K",
+              "fase": "V",
+              "nummer": 2450
+            },
+            "kortform": "KV2450 S1D1 m547"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "returnert": 5
+  }
+}

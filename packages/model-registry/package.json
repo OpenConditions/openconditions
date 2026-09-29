@@ -29,8 +29,11 @@
   },
   "dependencies": {
     "@openconditions/model": "workspace:*",
+    "@openconditions/model-border": "workspace:*",
     "@openconditions/model-charging": "workspace:*",
+    "@openconditions/model-facilities": "workspace:*",
     "@openconditions/model-fuel": "workspace:*",
+    "@openconditions/model-maritime": "workspace:*",
     "@openconditions/model-parking": "workspace:*",
     "@openconditions/model-roads": "workspace:*",
     "@openconditions/model-vehicles": "workspace:*",

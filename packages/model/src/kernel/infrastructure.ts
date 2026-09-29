@@ -28,9 +28,11 @@ export const SURFACE_STATES = [
  * - `field_device`: roadside equipment that reports its own operating state
  *   (`device.status`);
  * - `weather_sensing`: a site that can measure weather and road-surface
- *   values (a weather station, or a traffic site that also measures weather).
+ *   values (a weather station, or a traffic site that also measures weather);
+ * - `operated_site`: a site its operator opens and closes (a weigh station,
+ *   a rest area, a toll plaza, a border crossing), so it has an open status.
  */
-export const FEATURE_TRAITS = ["field_device", "weather_sensing"] as const;
+export const FEATURE_TRAITS = ["field_device", "weather_sensing", "operated_site"] as const;
 
 /**
  * What a site offers besides its primary purpose. One list for every kind
@@ -91,6 +93,7 @@ export const AMENITIES = [
   "luggage_locker",
   "elevator",
   "fresh_water",
+  "power_outlet",
   "waste_disposal",
   "refuse_bin",
   "dumping_station",

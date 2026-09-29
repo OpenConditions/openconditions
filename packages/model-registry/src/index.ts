@@ -4,8 +4,11 @@ import {
   type Registry,
   type RegistryModule,
 } from "@openconditions/model";
+import { borderModule } from "@openconditions/model-border";
 import { chargingModule } from "@openconditions/model-charging";
+import { facilitiesModule } from "@openconditions/model-facilities";
 import { fuelModule } from "@openconditions/model-fuel";
+import { maritimeModule } from "@openconditions/model-maritime";
 import { parkingModule } from "@openconditions/model-parking";
 import { roadsModule } from "@openconditions/model-roads";
 import { vehiclesModule } from "@openconditions/model-vehicles";
@@ -24,6 +27,9 @@ export const productionModules: readonly RegistryModule[] = [
   parkingModule,
   chargingModule,
   fuelModule,
+  facilitiesModule,
+  borderModule,
+  maritimeModule,
 ];
 
 let registry: Registry | undefined;

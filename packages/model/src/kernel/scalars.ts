@@ -25,7 +25,31 @@ export const Quantity = z.strictObject({
   unit: UcumUnit,
   accuracy: z.number().nonnegative().optional(),
 });
+/** A quantity held to one canonical unit: a field that is always metres accepts nothing else. */
+export const quantityIn = <const U extends string>(unit: U) =>
+  z.strictObject({
+    value: z.number().nonnegative(),
+    unit: z.literal(unit),
+    accuracy: z.number().nonnegative().optional(),
+  });
 export const Money = z.strictObject({ amount: DecimalString, currency: CurrencyCode });
+
+/** A day of the year without a year, `MM-DD`. */
+export const MonthDay = z.string().regex(/^(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/);
+/**
+ * A recurring stretch of the year, both days included (a pass closed from
+ * 12-01 to 05-01). It wraps the new year when `from` is later than `to`.
+ */
+export const SeasonalWindow = z.strictObject({ from: MonthDay, to: MonthDay });
+export type SeasonalWindow = z.infer<typeof SeasonalWindow>;
+
+/** Whether a local date (`YYYY-MM-DD`, in the place's own zone) lies inside a seasonal window. */
+export function inSeasonalWindow(window: SeasonalWindow, localDate: string): boolean {
+  const day = localDate.slice(5, 10);
+  return window.from <= window.to
+    ? day >= window.from && day <= window.to
+    : day >= window.from || day <= window.to;
+}
 
 export const RECORD_CLASSES = ["feature", "situation", "observation", "offer"] as const;
 export const RecordClass = z.enum(RECORD_CLASSES);

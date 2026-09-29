@@ -1,0 +1,477 @@
+{
+  "objekter": [
+    {
+      "id": 78743990,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/591/78743990",
+      "metadata": {
+        "type": {
+          "id": 591,
+          "navn": "Høydebegrensning"
+        },
+        "versjon": 5,
+        "startdato": "2019-10-11",
+        "sist_modifisert": "2025-05-01T13:11:24Z"
+      },
+      "egenskaper": [
+        {
+          "id": 3868,
+          "navn": "H-min, høyre kant",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.6,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 3869,
+          "navn": "H-min, midt",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.8,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 3870,
+          "navn": "H-min, venstre kant",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.6,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 3846,
+          "navn": "Bredde",
+          "egenskapstype": "Flyttall",
+          "verdi": 6.5,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 5277,
+          "navn": "Skilta høyde",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.2,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 10247,
+          "navn": "Beregnet høyde",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.2,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 5778,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Gudvangatunnelen"
+        },
+        {
+          "id": 5270,
+          "navn": "Type hinder",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Tunnel",
+          "enum_id": 8150
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (60.89309225 7.0547757 390.146,60.87976069 6.84698966 3.427)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4641],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "E",
+              "fase": "V",
+              "nummer": 16
+            },
+            "kortform": "EV16 S17D1 m0-2031"
+          },
+          {
+            "vegsystem": {
+              "vegkategori": "E",
+              "fase": "V",
+              "nummer": 16
+            },
+            "kortform": "EV16 S16D1 m590-10008"
+          }
+        ]
+      }
+    },
+    {
+      "id": 78745608,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/591/78745608",
+      "metadata": {
+        "type": {
+          "id": 591,
+          "navn": "Høydebegrensning"
+        },
+        "versjon": 7,
+        "startdato": "2019-10-11",
+        "sist_modifisert": "2025-05-01T13:11:24Z"
+      },
+      "egenskaper": [
+        {
+          "id": 3868,
+          "navn": "H-min, høyre kant",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.61,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 3869,
+          "navn": "H-min, midt",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.8,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 3870,
+          "navn": "H-min, venstre kant",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.41,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 3846,
+          "navn": "Bredde",
+          "egenskapstype": "Flyttall",
+          "verdi": 6.5,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 5277,
+          "navn": "Skilta høyde",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.2,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 10247,
+          "navn": "Beregnet høyde",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.2,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 5778,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Flenjatunnelen"
+        },
+        {
+          "id": 5270,
+          "navn": "Type hinder",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Tunnel",
+          "enum_id": 8150
+        },
+        {
+          "id": 5285,
+          "navn": "Merknad",
+          "egenskapstype": "Tekst",
+          "verdi": "Stigning 5%-6,5% mot Voss"
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (60.86636785 7.11350261 59.029,60.89974987 7.05984981 347.251)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4641],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "E",
+              "fase": "V",
+              "nummer": 16
+            },
+            "kortform": "EV16 S17D1 m2843-7888"
+          }
+        ]
+      }
+    },
+    {
+      "id": 78748303,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/591/78748303",
+      "metadata": {
+        "type": {
+          "id": 591,
+          "navn": "Høydebegrensning"
+        },
+        "versjon": 3,
+        "startdato": "2010-06-23",
+        "sist_modifisert": "2025-05-01T13:11:24Z"
+      },
+      "egenskaper": [
+        {
+          "id": 3868,
+          "navn": "H-min, høyre kant",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.1,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 3869,
+          "navn": "H-min, midt",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.54,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 3870,
+          "navn": "H-min, venstre kant",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.1,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 3846,
+          "navn": "Bredde",
+          "egenskapstype": "Flyttall",
+          "verdi": 5.01,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 5277,
+          "navn": "Skilta høyde",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.0,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 10247,
+          "navn": "Beregnet høyde",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.0,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 5778,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Oppljostunnelen"
+        },
+        {
+          "id": 5270,
+          "navn": "Type hinder",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Tunnel",
+          "enum_id": 8150
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (62.00369616 7.37663128 935.329,61.99372861 7.31455022 885.44)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [3433, 4651],
+        "fylker": [34, 46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "R",
+              "fase": "V",
+              "nummer": 15
+            },
+            "kortform": "RV15 S13D1 m1571-1719"
+          },
+          {
+            "vegsystem": {
+              "vegkategori": "R",
+              "fase": "V",
+              "nummer": 15
+            },
+            "kortform": "RV15 S14D1 m0-3403"
+          }
+        ]
+      }
+    },
+    {
+      "id": 78749680,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/591/78749680",
+      "metadata": {
+        "type": {
+          "id": 591,
+          "navn": "Høydebegrensning"
+        },
+        "versjon": 4,
+        "startdato": "2013-01-07",
+        "sist_modifisert": "2025-05-01T13:11:24Z"
+      },
+      "egenskaper": [
+        {
+          "id": 3868,
+          "navn": "H-min, høyre kant",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.4,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 3869,
+          "navn": "H-min, midt",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.58,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 3870,
+          "navn": "H-min, venstre kant",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.4,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 3846,
+          "navn": "Bredde",
+          "egenskapstype": "Flyttall",
+          "verdi": 3.0,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 5277,
+          "navn": "Skilta høyde",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.0,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 10247,
+          "navn": "Beregnet høyde",
+          "egenskapstype": "Flyttall",
+          "verdi": 4.3,
+          "enhet": {
+            "id": 1,
+            "navn": "Meter",
+            "kortnavn": "m"
+          }
+        },
+        {
+          "id": 5778,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Hjelletunnelen"
+        },
+        {
+          "id": 5270,
+          "navn": "Type hinder",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Tunnel",
+          "enum_id": 8150
+        }
+      ],
+      "geometri": {
+        "wkt": "LINESTRING Z (61.90811974 7.11156359 55.74095787,61.90766348 7.11137337 43.91)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4651],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 5720
+            },
+            "kortform": "FV5720 S1D1 m2349-2403"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "returnert": 4
+  }
+}

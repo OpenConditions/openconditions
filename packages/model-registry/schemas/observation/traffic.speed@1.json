@@ -515,7 +515,9 @@
             "ocm",
             "bnetza",
             "cpo",
-            "provider"
+            "provider",
+            "netex:line",
+            "netex:stop_place"
           ]
         },
         "id": {

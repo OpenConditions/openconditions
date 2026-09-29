@@ -1,0 +1,448 @@
+{
+  "objekter": [
+    {
+      "id": 78858021,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/44/78858021",
+      "metadata": {
+        "type": {
+          "id": 44,
+          "navn": "Kontroll-/veieplass"
+        },
+        "versjon": 6,
+        "startdato": "2024-03-20",
+        "sist_modifisert": "2025-11-22T09:07:53Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1360,
+          "navn": "Areal",
+          "egenskapstype": "Heltall",
+          "verdi": 1000,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 4522,
+          "navn": "Antall oppstillingsplasser, lange",
+          "egenskapstype": "Heltall",
+          "verdi": 2,
+          "enhet": {
+            "id": 12,
+            "navn": "Stykker",
+            "kortnavn": "stk"
+          }
+        },
+        {
+          "id": 7991,
+          "navn": "Eier",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Stat, Statens vegvesen",
+          "enum_id": 10257
+        },
+        {
+          "id": 9556,
+          "navn": "Vinterdriftsklasse",
+          "egenskapstype": "Tekstenum",
+          "verdi": "DkC",
+          "enum_id": 13762
+        },
+        {
+          "id": 1077,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Nordfjordeid trafikkstasjon"
+        },
+        {
+          "id": 11050,
+          "navn": "Prosjektreferanse",
+          "egenskapstype": "Tekst",
+          "verdi": "DK9306"
+        },
+        {
+          "id": 1117,
+          "navn": "Veiing",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Fastmontert vekt",
+          "enum_id": 3923
+        },
+        {
+          "id": 12587,
+          "navn": "Vekt tilgjengelig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Hele døgnet",
+          "enum_id": 21708
+        },
+        {
+          "id": 12586,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Kontrollplass",
+          "enum_id": 21707
+        },
+        {
+          "id": 8055,
+          "navn": "Vedlikeholdsansvarlig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Privat",
+          "enum_id": 10605
+        }
+      ],
+      "geometri": {
+        "wkt": "POINT Z (61.9028739 5.99494199 5.485)",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4649],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "E",
+              "fase": "V",
+              "nummer": 39
+            },
+            "kortform": "EV39 S47D1 m5451"
+          }
+        ]
+      }
+    },
+    {
+      "id": 79665688,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/44/79665688",
+      "metadata": {
+        "type": {
+          "id": 44,
+          "navn": "Kontroll-/veieplass"
+        },
+        "versjon": 7,
+        "startdato": "2022-12-15",
+        "sist_modifisert": "2026-04-08T13:23:56Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1360,
+          "navn": "Areal",
+          "egenskapstype": "Heltall",
+          "verdi": 6618,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 4522,
+          "navn": "Antall oppstillingsplasser, lange",
+          "egenskapstype": "Heltall",
+          "verdi": 7,
+          "enhet": {
+            "id": 12,
+            "navn": "Stykker",
+            "kortnavn": "stk"
+          }
+        },
+        {
+          "id": 7991,
+          "navn": "Eier",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Stat, Statens vegvesen",
+          "enum_id": 10257
+        },
+        {
+          "id": 9556,
+          "navn": "Vinterdriftsklasse",
+          "egenskapstype": "Tekstenum",
+          "verdi": "DkB, middels",
+          "enum_id": 13764
+        },
+        {
+          "id": 11564,
+          "navn": "Tilleggsinformasjon",
+          "egenskapstype": "Tekst",
+          "verdi": "N/A"
+        },
+        {
+          "id": 1077,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Sokn"
+        },
+        {
+          "id": 11050,
+          "navn": "Prosjektreferanse",
+          "egenskapstype": "Tekst",
+          "verdi": "N/A"
+        },
+        {
+          "id": 1117,
+          "navn": "Veiing",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Fastmontert vekt",
+          "enum_id": 3923
+        },
+        {
+          "id": 12587,
+          "navn": "Vekt tilgjengelig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Hele døgnet",
+          "enum_id": 21708
+        },
+        {
+          "id": 12586,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Liten kontrollstasjon",
+          "enum_id": 21706
+        },
+        {
+          "id": 8055,
+          "navn": "Vedlikeholdsansvarlig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Statens vegvesen",
+          "enum_id": 10449
+        }
+      ],
+      "geometri": {
+        "wkt": "POLYGON((59.05653639 5.66681687,59.05632603 5.67200896,59.05672125 5.66939358,59.05653639 5.66681687))",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [1103],
+        "fylker": [11],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "E",
+              "fase": "V",
+              "nummer": 39
+            },
+            "kortform": "EV39 S98D1 m5286"
+          }
+        ]
+      }
+    },
+    {
+      "id": 82417213,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/44/82417213",
+      "metadata": {
+        "type": {
+          "id": 44,
+          "navn": "Kontroll-/veieplass"
+        },
+        "versjon": 5,
+        "startdato": "2023-01-02",
+        "sist_modifisert": "2025-04-30T11:39:28Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1360,
+          "navn": "Areal",
+          "egenskapstype": "Heltall",
+          "verdi": 3802,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 10319,
+          "navn": "Etableringsår",
+          "egenskapstype": "Heltall",
+          "verdi": 1970
+        },
+        {
+          "id": 4522,
+          "navn": "Antall oppstillingsplasser, lange",
+          "egenskapstype": "Heltall",
+          "verdi": 5,
+          "enhet": {
+            "id": 12,
+            "navn": "Stykker",
+            "kortnavn": "stk"
+          }
+        },
+        {
+          "id": 7991,
+          "navn": "Eier",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Stat, Statens vegvesen",
+          "enum_id": 10257
+        },
+        {
+          "id": 9556,
+          "navn": "Vinterdriftsklasse",
+          "egenskapstype": "Tekstenum",
+          "verdi": "DkB, lav",
+          "enum_id": 13765
+        },
+        {
+          "id": 1077,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Seljestad"
+        },
+        {
+          "id": 11050,
+          "navn": "Prosjektreferanse",
+          "egenskapstype": "Tekst",
+          "verdi": "C12361 Venterom Seljestad haldeplass"
+        },
+        {
+          "id": 1117,
+          "navn": "Veiing",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Fastmontert vekt",
+          "enum_id": 3923
+        },
+        {
+          "id": 12587,
+          "navn": "Vekt tilgjengelig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Hele døgnet",
+          "enum_id": 21708
+        },
+        {
+          "id": 12586,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Stor kontrollstasjon",
+          "enum_id": 21705
+        },
+        {
+          "id": 8055,
+          "navn": "Vedlikeholdsansvarlig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Statens vegvesen",
+          "enum_id": 10449
+        }
+      ],
+      "geometri": {
+        "wkt": "POLYGON((59.90527546 6.61856857,59.90549724 6.61806301,59.9049839 6.61786882,59.90466061 6.61826627,59.90457721 6.6188683,59.90467814 6.6192293,59.90485904 6.61919041,59.90508432 6.61861821,59.90509318 6.6180714,59.90527546 6.61856857))",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4618],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "E",
+              "fase": "V",
+              "nummer": 134
+            },
+            "kortform": "EV134 S10D1 m7303"
+          }
+        ]
+      }
+    },
+    {
+      "id": 82417215,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/44/82417215",
+      "metadata": {
+        "type": {
+          "id": 44,
+          "navn": "Kontroll-/veieplass"
+        },
+        "versjon": 7,
+        "startdato": "2024-06-28",
+        "sist_modifisert": "2025-04-30T11:39:28Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1360,
+          "navn": "Areal",
+          "egenskapstype": "Heltall",
+          "verdi": 2877,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 10319,
+          "navn": "Etableringsår",
+          "egenskapstype": "Heltall",
+          "verdi": 2003
+        },
+        {
+          "id": 4522,
+          "navn": "Antall oppstillingsplasser, lange",
+          "egenskapstype": "Heltall",
+          "verdi": 8,
+          "enhet": {
+            "id": 12,
+            "navn": "Stykker",
+            "kortnavn": "stk"
+          }
+        },
+        {
+          "id": 7991,
+          "navn": "Eier",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Stat, Statens vegvesen",
+          "enum_id": 10257
+        },
+        {
+          "id": 1077,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Romslo"
+        },
+        {
+          "id": 1117,
+          "navn": "Veiing",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Fastmontert vekt",
+          "enum_id": 3923
+        },
+        {
+          "id": 12587,
+          "navn": "Vekt tilgjengelig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Hele døgnet",
+          "enum_id": 21708
+        },
+        {
+          "id": 12586,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Liten kontrollstasjon",
+          "enum_id": 21706
+        },
+        {
+          "id": 8055,
+          "navn": "Vedlikeholdsansvarlig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Statens vegvesen",
+          "enum_id": 10449
+        }
+      ],
+      "geometri": {
+        "wkt": "POLYGON((60.42458019 5.56694839,60.4246417 5.56831902,60.42516053 5.56969527,60.42537725 5.56989117,60.42498877 5.56884059,60.42458019 5.56694839))",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4601],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "E",
+              "fase": "V",
+              "nummer": 16
+            },
+            "kortform": "EV16 S3D1 m6735"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "returnert": 4
+  }
+}

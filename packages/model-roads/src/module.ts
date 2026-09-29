@@ -29,6 +29,8 @@ import {
   DATEX2_DEVICE_HEALTH,
   DATEX2_MEASURED_TRAFFIC,
   DATEX2_TRAFFIC_STATUSES,
+  DATEX2_TRAVEL_TIME_TRENDS,
+  DATEX2_TRAVEL_TIME_TRENDS_OUT,
   DATEX2_VMS_TYPES,
   DATEX2_VMS_WORKING_STATUSES,
   WZDX_DEVICE_STATUSES,
@@ -49,11 +51,20 @@ import {
   vmsWorkingStatusVocabulary,
 } from "./infrastructure.js";
 import { ROADS_SITUATION_KINDS } from "./kinds.js";
+import { ROADS_NETWORK_KINDS } from "./network.js";
+import { ROADS_TOLL_KINDS, ROADS_TOLL_PROPERTIES } from "./tolls.js";
+import { ROADS_TRAVEL_TIME_KINDS, ROADS_TRAVEL_TIME_PROPERTIES } from "./travel-time.js";
 import { DATEX2_V2, DATEX2_V3 } from "./vocabularies/datex2.js";
 import {
   DATEX2_V2_INFRASTRUCTURE,
   DATEX2_V3_INFRASTRUCTURE,
 } from "./vocabularies/datex2-infrastructure.js";
+import {
+  chainLevelVocabulary,
+  passStatusVocabulary,
+  ROADS_WINTER_KINDS,
+  ROADS_WINTER_PROPERTIES,
+} from "./winter.js";
 
 /**
  * Every wire format a roads source is read from: the event and flow parsers
@@ -171,7 +182,7 @@ const infrastructureKinds = withFeatureCrosswalks(
 );
 
 const roadsProperties = withPropertyCrosswalks(
-  ROADS_PROPERTIES,
+  [...ROADS_PROPERTIES, ...ROADS_TRAVEL_TIME_PROPERTIES],
   datexInfrastructure(DATEX2_MEASURED_TRAFFIC, (v) => inClassPaths(v.measuredValues)),
   [],
 );
@@ -210,6 +221,29 @@ export const roadsModule: RegistryModule = {
     ...infrastructureKinds,
     ...ROADS_RESULT_SCHEMAS,
     ...roadsProperties,
+    extendVocabulary({
+      vocabulary: "issue_code",
+      values: ["value_not_published"],
+    }),
+    ...ROADS_NETWORK_KINDS,
+    passStatusVocabulary,
+    chainLevelVocabulary,
+    ...ROADS_WINTER_KINDS,
+    ...ROADS_WINTER_PROPERTIES,
+    ...ROADS_TRAVEL_TIME_KINDS,
+    ...ROADS_TOLL_KINDS,
+    ...ROADS_TOLL_PROPERTIES,
+    vocabularyCrosswalk(
+      "trend",
+      datexInfrastructure(
+        DATEX2_TRAVEL_TIME_TRENDS,
+        (v) => (code) =>
+          (v.travelTimeTrendTypes as readonly string[]).includes(
+            code.slice("travelTimeTrendType:".length),
+          ),
+      ),
+      [{ target: "datex2_v3", table: DATEX2_TRAVEL_TIME_TRENDS_OUT }],
+    ),
     vocabularyCrosswalk(
       "vms_working_status",
       [{ target: "datex2_v3", table: DATEX2_VMS_WORKING_STATUSES }],

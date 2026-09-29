@@ -1,0 +1,468 @@
+{
+  "data": [
+    {
+      "tt": {
+        "index": "89",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:17:13",
+          "recordEpoch": "1790716633"
+        },
+        "location": {
+          "travelFlowDirection": "North",
+          "begin": {
+            "beginDistrict": "12",
+            "beginLocationName": "AEROPUERTO",
+            "beginFreeFormDescription": "CMS 31",
+            "beginNearbyPlace": "here",
+            "beginLongitude": "0.000001",
+            "beginLatitude": "0.000001",
+            "beginElevation": "1",
+            "beginDirection": "North",
+            "beginCounty": "Orange",
+            "beginRoute": "I-5",
+            "beginRouteSuffix": "S",
+            "beginPostmilePrefix": "C",
+            "beginPostmile": "7.99",
+            "beginAlignment": "L",
+            "beginMilepost": "1"
+          },
+          "end": {
+            "endDistrict": "12",
+            "endLocationName": "405 FWY",
+            "endFreeFormDescription": "405 FWY",
+            "endNearbyPlace": "sdf",
+            "endLongitude": "0.000002",
+            "endLatitude": "0.000002",
+            "endElevation": "2",
+            "endDirection": "North",
+            "endCounty": "Orange",
+            "endRoute": "I-5",
+            "endRouteSuffix": "",
+            "endPostmilePrefix": "",
+            "endPostmile": "21.25",
+            "endAlignment": "",
+            "endMilepost": "2"
+          }
+        },
+        "traveltime": {
+          "traveltimeRouteID": "5",
+          "traveltimeTimestamp": {
+            "traveltimeDate": "2026-09-29",
+            "traveltimeTime": "14:17:31",
+            "traveltimeEpoch": "1790716651"
+          },
+          "calculatedTraveltime": "1026",
+          "traveltimeUpdateFrequency": "60",
+          "traveltimeAccuracy": "100"
+        }
+      }
+    },
+    {
+      "tt": {
+        "index": "91",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:17:13",
+          "recordEpoch": "1790716633"
+        },
+        "location": {
+          "travelFlowDirection": "North",
+          "begin": {
+            "beginDistrict": "12",
+            "beginLocationName": "AEROPUERTO",
+            "beginFreeFormDescription": "CMS 31",
+            "beginNearbyPlace": "here",
+            "beginLongitude": "0.000001",
+            "beginLatitude": "0.000001",
+            "beginElevation": "1",
+            "beginDirection": "North",
+            "beginCounty": "Orange",
+            "beginRoute": "I-5",
+            "beginRouteSuffix": "S",
+            "beginPostmilePrefix": "C",
+            "beginPostmile": "7.99",
+            "beginAlignment": "L",
+            "beginMilepost": "1"
+          },
+          "end": {
+            "endDistrict": "12",
+            "endLocationName": "55 FWY",
+            "endFreeFormDescription": "55 FWY",
+            "endNearbyPlace": "sdf",
+            "endLongitude": "0.000002",
+            "endLatitude": "0.000002",
+            "endElevation": "2",
+            "endDirection": "North",
+            "endCounty": "Orange",
+            "endRoute": "I-5",
+            "endRouteSuffix": "",
+            "endPostmilePrefix": "",
+            "endPostmile": "30.2",
+            "endAlignment": "",
+            "endMilepost": "2"
+          }
+        },
+        "traveltime": {
+          "traveltimeRouteID": "5",
+          "traveltimeTimestamp": {
+            "traveltimeDate": "2026-09-29",
+            "traveltimeTime": "14:17:31",
+            "traveltimeEpoch": "1790716651"
+          },
+          "calculatedTraveltime": "1654",
+          "traveltimeUpdateFrequency": "60",
+          "traveltimeAccuracy": "100"
+        }
+      }
+    },
+    {
+      "tt": {
+        "index": "84",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:17:13",
+          "recordEpoch": "1790716633"
+        },
+        "location": {
+          "travelFlowDirection": "North",
+          "begin": {
+            "beginDistrict": "12",
+            "beginLocationName": "HERMOSA1",
+            "beginFreeFormDescription": "CMS 74",
+            "beginNearbyPlace": "here",
+            "beginLongitude": "0.000001",
+            "beginLatitude": "0.000001",
+            "beginElevation": "1",
+            "beginDirection": "North",
+            "beginCounty": "Orange",
+            "beginRoute": "I-5",
+            "beginRouteSuffix": "S",
+            "beginPostmilePrefix": "C",
+            "beginPostmile": "4.02",
+            "beginAlignment": "L",
+            "beginMilepost": "1"
+          },
+          "end": {
+            "endDistrict": "12",
+            "endLocationName": "405 FWY",
+            "endFreeFormDescription": "405 FWY",
+            "endNearbyPlace": "sdf",
+            "endLongitude": "0.000002",
+            "endLatitude": "0.000002",
+            "endElevation": "2",
+            "endDirection": "North",
+            "endCounty": "Orange",
+            "endRoute": "I-5",
+            "endRouteSuffix": "",
+            "endPostmilePrefix": "",
+            "endPostmile": "21.25",
+            "endAlignment": "",
+            "endMilepost": "2"
+          }
+        },
+        "traveltime": {
+          "traveltimeRouteID": "5",
+          "traveltimeTimestamp": {
+            "traveltimeDate": "2026-09-29",
+            "traveltimeTime": "14:17:31",
+            "traveltimeEpoch": "1790716651"
+          },
+          "calculatedTraveltime": "1241",
+          "traveltimeUpdateFrequency": "60",
+          "traveltimeAccuracy": "100"
+        }
+      }
+    },
+    {
+      "tt": {
+        "index": "567",
+        "recordTimestamp": {
+          "recordDate": "2026-09-29",
+          "recordTime": "14:17:13",
+          "recordEpoch": "1790716633"
+        },
+        "location": {
+          "travelFlowDirection": "North",
+          "begin": {
+            "beginDistrict": "12",
+            "beginLocationName": "HERMOSA1",
+            "beginFreeFormDescription": "CMS 74",
+            "beginNearbyPlace": "here",
+            "beginLongitude": "0.000001",
+            "beginLatitude": "0.000001",
+            "beginElevation": "1",
+            "beginDirection": "North",
+            "beginCounty": "Orange",
+            "beginRoute": "I-5",
+            "beginRouteSuffix": "S",
+            "beginPostmilePrefix": "C",
+            "beginPostmile": "4.02",
+            "beginAlignment": "L",
+            "beginMilepost": "1"
+          },
+          "end": {
+            "endDistrict": "12",
+            "endLocationName": "JWA",
+            "endFreeFormDescription": "JW AIRPRT",
+            "endNearbyPlace": "sdf",
+            "endLongitude": "0.000002",
+            "endLatitude": "0.000002",
+            "endElevation": "2",
+            "endDirection": "North",
+            "endCounty": "Orange",
+            "endRoute": "I-5",
+            "endRouteSuffix": "",
+            "endPostmilePrefix": "",
+            "endPostmile": "8.4",
+            "endAlignment": "",
+            "endMilepost": "2"
+          }
+        },
+        "traveltime": {
+          "traveltimeRouteID": "5",
+          "traveltimeTimestamp": {
+            "traveltimeDate": "2026-09-29",
+            "traveltimeTime": "14:17:31",
+            "traveltimeEpoch": "1790716651"
+          },
+          "calculatedTraveltime": "2186",
+          "traveltimeUpdateFrequency": "60",
+          "traveltimeAccuracy": "100"
+        }
+      }
+    },
+    {
+      "tt": {
+        "index": "235-315955-314689-99 LAGUNA",
+        "recordTimestamp": {
+          "recordDate": "2019-12-16",
+          "recordTime": "10:33:22",
+          "recordEpoch": "1576521202"
+        },
+        "location": {
+          "trafficFlowDirection": "South",
+          "begin": {
+            "beginDistrict": "3",
+            "beginLocationName": "WB Arena Blvd",
+            "beginFreeFormDescription": "SB Mainline",
+            "beginNearbyPlace": "Not Reported",
+            "beginLongitude": "-120.034416",
+            "beginLatitude": "37.477783",
+            "beginElevation": "Not Reported",
+            "beginDirection": "South",
+            "beginCounty": "Sacramento",
+            "beginRoute": "I-5",
+            "beginRouteSuffix": "Not Reported",
+            "beginPostmilePrefix": "",
+            "beginPostmile": "28.139",
+            "beginAlignment": "Not Reported",
+            "beginMilepost": "523.432"
+          },
+          "end": {
+            "endDistrict": "3",
+            "endLocationName": "EB Laguna Blvd",
+            "endFreeFormDescription": "SB Mainline (RM)",
+            "endNearbyPlace": "Not Reported",
+            "endLongitude": "-121.394440",
+            "endLatitude": "38.421349",
+            "endElevation": "Not Reported",
+            "endDirection": "South",
+            "endCounty": "Sacramento",
+            "endRoute": "SR-99",
+            "endRouteSuffix": "Not Reported",
+            "endPostmilePrefix": "",
+            "endPostmile": "13.660",
+            "endAlignment": "Not Reported",
+            "endMilepost": "288.025"
+          }
+        },
+        "traveltime": {
+          "traveltimeRouteID": "235",
+          "traveltimeTimestamp": {
+            "traveltimeDate": "2019-12-16",
+            "traveltimeTime": "10:32:42",
+            "traveltimeEpoch": "1576521162"
+          },
+          "calculatedTraveltime": "21",
+          "traveltimeUpdateFrequency": "1",
+          "traveltimeAccuracy": "83.1"
+        }
+      }
+    },
+    {
+      "tt": {
+        "index": "253-312689-316118-WATT AVE",
+        "recordTimestamp": {
+          "recordDate": "2019-12-16",
+          "recordTime": "10:33:22",
+          "recordEpoch": "1576521202"
+        },
+        "location": {
+          "trafficFlowDirection": "North",
+          "begin": {
+            "beginDistrict": "3",
+            "beginLocationName": "P St.",
+            "beginFreeFormDescription": "Mainline VDS",
+            "beginNearbyPlace": "Not Reported",
+            "beginLongitude": "-121.469269",
+            "beginLatitude": "38.568104",
+            "beginElevation": "Not Reported",
+            "beginDirection": "North",
+            "beginCounty": "Sacramento",
+            "beginRoute": "SR-51",
+            "beginRouteSuffix": "Not Reported",
+            "beginPostmilePrefix": "",
+            "beginPostmile": "0.680",
+            "beginAlignment": "Not Reported",
+            "beginMilepost": "0.680"
+          },
+          "end": {
+            "endDistrict": "3",
+            "endLocationName": "Auburn Blvd",
+            "endFreeFormDescription": "NB Mainline",
+            "endNearbyPlace": "Not Reported",
+            "endLongitude": "-121.388290",
+            "endLatitude": "38.635498",
+            "endElevation": "Not Reported",
+            "endDirection": "North",
+            "endCounty": "Sacramento",
+            "endRoute": "SR-51",
+            "endRouteSuffix": "Not Reported",
+            "endPostmilePrefix": "",
+            "endPostmile": "7.569",
+            "endAlignment": "Not Reported",
+            "endMilepost": "7.569"
+          }
+        },
+        "traveltime": {
+          "traveltimeRouteID": "253",
+          "traveltimeTimestamp": {
+            "traveltimeDate": "2019-12-16",
+            "traveltimeTime": "10:32:42",
+            "traveltimeEpoch": "1576521162"
+          },
+          "calculatedTraveltime": "6",
+          "traveltimeUpdateFrequency": "1",
+          "traveltimeAccuracy": "96.8"
+        }
+      }
+    },
+    {
+      "tt": {
+        "index": "22-1108607-1111539-DOWNTOWN",
+        "recordTimestamp": {
+          "recordDate": "2022-09-24",
+          "recordTime": "11:37:48",
+          "recordEpoch": "1664044668"
+        },
+        "location": {
+          "trafficFlowDirection": "South",
+          "begin": {
+            "beginDistrict": "11",
+            "beginLocationName": "MIRAMAR WAY",
+            "beginFreeFormDescription": "Miramar Way to 15 SB",
+            "beginNearbyPlace": "Not Reported",
+            "beginLongitude": "-117.108513",
+            "beginLatitude": "32.879120",
+            "beginElevation": "Not Reported",
+            "beginDirection": "South",
+            "beginCounty": "San Diego",
+            "beginRoute": "I-15",
+            "beginRouteSuffix": "Not Reported",
+            "beginPostmilePrefix": "M",
+            "beginPostmile": "13.445",
+            "beginAlignment": "Not Reported",
+            "beginMilepost": "14.107"
+          },
+          "end": {
+            "endDistrict": "11",
+            "endLocationName": "Robinson Ave",
+            "endFreeFormDescription": "SB163  @ Robinson Ave (Pseudo 495)",
+            "endNearbyPlace": "Not Reported",
+            "endLongitude": "-117.156853",
+            "endLatitude": "32.745846",
+            "endElevation": "Not Reported",
+            "endDirection": "South",
+            "endCounty": "San Diego",
+            "endRoute": "SR-163",
+            "endRouteSuffix": "Not Reported",
+            "endPostmilePrefix": "",
+            "endPostmile": "2.490",
+            "endAlignment": "Not Reported",
+            "endMilepost": "2.470"
+          }
+        },
+        "traveltime": {
+          "traveltimeRouteID": "22",
+          "traveltimeTimestamp": {
+            "traveltimeDate": "2022-09-24",
+            "traveltimeTime": "11:37:42",
+            "traveltimeEpoch": "1664044662"
+          },
+          "calculatedTraveltime": "9",
+          "traveltimeUpdateFrequency": "1",
+          "traveltimeAccuracy": "73.2"
+        }
+      }
+    },
+    {
+      "tt": {
+        "index": "25-1108607-1121074-RTE 8",
+        "recordTimestamp": {
+          "recordDate": "2022-09-24",
+          "recordTime": "11:37:48",
+          "recordEpoch": "1664044668"
+        },
+        "location": {
+          "trafficFlowDirection": "South",
+          "begin": {
+            "beginDistrict": "11",
+            "beginLocationName": "MIRAMAR WAY",
+            "beginFreeFormDescription": "Miramar Way to 15 SB",
+            "beginNearbyPlace": "Not Reported",
+            "beginLongitude": "-117.108513",
+            "beginLatitude": "32.879120",
+            "beginElevation": "Not Reported",
+            "beginDirection": "South",
+            "beginCounty": "San Diego",
+            "beginRoute": "I-15",
+            "beginRouteSuffix": "Not Reported",
+            "beginPostmilePrefix": "M",
+            "beginPostmile": "13.445",
+            "beginAlignment": "Not Reported",
+            "beginMilepost": "14.107"
+          },
+          "end": {
+            "endDistrict": "11",
+            "endLocationName": "15 SB  S/O 8",
+            "endFreeFormDescription": "15 SB  S/O 8 ( Pseudo 21310 )",
+            "endNearbyPlace": "Not Reported",
+            "endLongitude": "-117.112625",
+            "endLatitude": "32.769829",
+            "endElevation": "Not Reported",
+            "endDirection": "South",
+            "endCounty": "San Diego",
+            "endRoute": "I-15",
+            "endRouteSuffix": "Not Reported",
+            "endPostmilePrefix": "R",
+            "endPostmile": "6.158",
+            "endAlignment": "Not Reported",
+            "endMilepost": "6.744"
+          }
+        },
+        "traveltime": {
+          "traveltimeRouteID": "25",
+          "traveltimeTimestamp": {
+            "traveltimeDate": "2022-09-24",
+            "traveltimeTime": "11:37:42",
+            "traveltimeEpoch": "1664044662"
+          },
+          "calculatedTraveltime": "7",
+          "traveltimeUpdateFrequency": "1",
+          "traveltimeAccuracy": "83.7"
+        }
+      }
+    }
+  ]
+}

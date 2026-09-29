@@ -1,0 +1,882 @@
+{
+  "objekter": [
+    {
+      "id": 80092187,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/39/80092187",
+      "metadata": {
+        "type": {
+          "id": 39,
+          "navn": "Rasteplass"
+        },
+        "versjon": 3,
+        "startdato": "2025-10-22",
+        "sist_modifisert": "2025-11-22T09:07:31Z"
+      },
+      "egenskaper": [
+        {
+          "id": 12843,
+          "navn": "Antall oppstillingspl. med lading, små kjt.",
+          "egenskapstype": "Heltall",
+          "verdi": 0
+        },
+        {
+          "id": 2037,
+          "navn": "Lovlig adkomst",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Begge retninger",
+          "enum_id": 3251
+        },
+        {
+          "id": 9415,
+          "navn": "Antall oppstillingspl. forflytningshemmede",
+          "egenskapstype": "Heltall",
+          "verdi": 0
+        },
+        {
+          "id": 12844,
+          "navn": "Antall oppstillingspl. med lading, store kjt.",
+          "egenskapstype": "Heltall",
+          "verdi": 0
+        },
+        {
+          "id": 10343,
+          "navn": "Etableringsår",
+          "egenskapstype": "Heltall",
+          "verdi": 1984
+        },
+        {
+          "id": 9417,
+          "navn": "Drikkevann",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13263
+        },
+        {
+          "id": 9416,
+          "navn": "Areal, belyst",
+          "egenskapstype": "Heltall",
+          "verdi": 0,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 1816,
+          "navn": "Antall oppstillingspl. store kjt.",
+          "egenskapstype": "Heltall",
+          "verdi": 0,
+          "enhet": {
+            "id": 12,
+            "navn": "Stykker",
+            "kortnavn": "stk"
+          }
+        },
+        {
+          "id": 8765,
+          "navn": "Vinterstengning",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Helt vinterstengt",
+          "enum_id": 11603
+        },
+        {
+          "id": 1773,
+          "navn": "Kjøretøytype, dimensjonerende",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Personbil",
+          "enum_id": 3109
+        },
+        {
+          "id": 9419,
+          "navn": "Strømuttak",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13268
+        },
+        {
+          "id": 9549,
+          "navn": "Vinterdriftsklasse",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Sideanlegg",
+          "enum_id": 15873
+        },
+        {
+          "id": 12845,
+          "navn": "Helt vinterstengt, fra dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "11-30"
+        },
+        {
+          "id": 1805,
+          "navn": "Antall oppstillingspl. små kjt.",
+          "egenskapstype": "Heltall",
+          "verdi": 10,
+          "enhet": {
+            "id": 12,
+            "navn": "Stykker",
+            "kortnavn": "stk"
+          }
+        },
+        {
+          "id": 5819,
+          "navn": "Eier",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Fylkeskommune",
+          "enum_id": 10706
+        },
+        {
+          "id": 12846,
+          "navn": "Helt vinterstengt, til dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "05-01"
+        },
+        {
+          "id": 9418,
+          "navn": "Dusj",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13266
+        },
+        {
+          "id": 8766,
+          "navn": "Areal, kjørbart",
+          "egenskapstype": "Heltall",
+          "verdi": 1300,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 1074,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Lysebotn"
+        },
+        {
+          "id": 1355,
+          "navn": "Areal, totalt",
+          "egenskapstype": "Heltall",
+          "verdi": 1363,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 4564,
+          "navn": "Fast dekke",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 5478
+        },
+        {
+          "id": 4565,
+          "navn": "Vedlikeholdsansvarlig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Kommune",
+          "enum_id": 5480
+        },
+        {
+          "id": 2036,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Øvrig rasteplass",
+          "enum_id": 3249
+        }
+      ],
+      "geometri": {
+        "wkt": "POLYGON((59.05007572 6.65662871,59.04987811 6.65606371,59.04964946 6.6563056,59.04979645 6.6569852,59.05007572 6.65662871))",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [1108],
+        "fylker": [11],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 4224
+            },
+            "kortform": "FV4224 S3D1 m4379-4396"
+          }
+        ]
+      },
+      "relasjoner": {
+        "barn": [
+          {
+            "listeid": 220131,
+            "id": 200131,
+            "type": {
+              "id": 28,
+              "navn": "Utemøbler"
+            },
+            "vegobjekter": [80092186],
+            "relasjonstype": "vegobjektIder"
+          },
+          {
+            "listeid": 220139,
+            "id": 200139,
+            "type": {
+              "id": 27,
+              "navn": "Renovasjon"
+            },
+            "vegobjekter": [218784838],
+            "relasjonstype": "vegobjektIder"
+          }
+        ]
+      }
+    },
+    {
+      "id": 80194767,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/39/80194767",
+      "metadata": {
+        "type": {
+          "id": 39,
+          "navn": "Rasteplass"
+        },
+        "versjon": 9,
+        "startdato": "2025-10-22",
+        "sist_modifisert": "2025-11-22T09:07:39Z"
+      },
+      "egenskaper": [
+        {
+          "id": 9415,
+          "navn": "Antall oppstillingspl. forflytningshemmede",
+          "egenskapstype": "Heltall",
+          "verdi": 0
+        },
+        {
+          "id": 9416,
+          "navn": "Areal, belyst",
+          "egenskapstype": "Heltall",
+          "verdi": 0,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 8766,
+          "navn": "Areal, kjørbart",
+          "egenskapstype": "Heltall",
+          "verdi": 600,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 10343,
+          "navn": "Etableringsår",
+          "egenskapstype": "Heltall",
+          "verdi": 2000
+        },
+        {
+          "id": 12844,
+          "navn": "Antall oppstillingspl. med lading, store kjt.",
+          "egenskapstype": "Heltall",
+          "verdi": 0
+        },
+        {
+          "id": 9419,
+          "navn": "Strømuttak",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13268
+        },
+        {
+          "id": 12843,
+          "navn": "Antall oppstillingspl. med lading, små kjt.",
+          "egenskapstype": "Heltall",
+          "verdi": 0
+        },
+        {
+          "id": 9417,
+          "navn": "Drikkevann",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13263
+        },
+        {
+          "id": 1773,
+          "navn": "Kjøretøytype, dimensjonerende",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Lastebil",
+          "enum_id": 3119
+        },
+        {
+          "id": 9418,
+          "navn": "Dusj",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13266
+        },
+        {
+          "id": 1805,
+          "navn": "Antall oppstillingspl. små kjt.",
+          "egenskapstype": "Heltall",
+          "verdi": 6,
+          "enhet": {
+            "id": 12,
+            "navn": "Stykker",
+            "kortnavn": "stk"
+          }
+        },
+        {
+          "id": 1816,
+          "navn": "Antall oppstillingspl. store kjt.",
+          "egenskapstype": "Heltall",
+          "verdi": 0,
+          "enhet": {
+            "id": 12,
+            "navn": "Stykker",
+            "kortnavn": "stk"
+          }
+        },
+        {
+          "id": 12845,
+          "navn": "Helt vinterstengt, fra dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "11-01"
+        },
+        {
+          "id": 12846,
+          "navn": "Helt vinterstengt, til dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "03-15"
+        },
+        {
+          "id": 1074,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Jøssingfjord"
+        },
+        {
+          "id": 5819,
+          "navn": "Eier",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Fylkeskommune",
+          "enum_id": 10706
+        },
+        {
+          "id": 8765,
+          "navn": "Vinterstengning",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Helt vinterstengt",
+          "enum_id": 11603
+        },
+        {
+          "id": 1355,
+          "navn": "Areal, totalt",
+          "egenskapstype": "Heltall",
+          "verdi": 752,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 4564,
+          "navn": "Fast dekke",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 5478
+        },
+        {
+          "id": 4565,
+          "navn": "Vedlikeholdsansvarlig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Fylkeskommune",
+          "enum_id": 19903
+        },
+        {
+          "id": 2036,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Øvrig rasteplass",
+          "enum_id": 3249
+        },
+        {
+          "id": 2037,
+          "navn": "Lovlig adkomst",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Begge retninger",
+          "enum_id": 3251
+        }
+      ],
+      "geometri": {
+        "wkt": "POLYGON((58.33089004 6.35175141,58.33078301 6.3511734,58.3303683 6.3512418,58.33089004 6.35175141))",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [1111],
+        "fylker": [11],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "F",
+              "fase": "V",
+              "nummer": 44
+            },
+            "kortform": "FV44 S4D1 m3319-3427"
+          }
+        ]
+      },
+      "relasjoner": {
+        "barn": [
+          {
+            "listeid": 220131,
+            "id": 200131,
+            "type": {
+              "id": 28,
+              "navn": "Utemøbler"
+            },
+            "vegobjekter": [114902365, 657588755, 657588756],
+            "relasjonstype": "vegobjektIder"
+          },
+          {
+            "listeid": 220128,
+            "id": 200128,
+            "type": {
+              "id": 65,
+              "navn": "Bygning"
+            },
+            "vegobjekter": [79928046],
+            "relasjonstype": "vegobjektIder"
+          },
+          {
+            "listeid": 220135,
+            "id": 200135,
+            "type": {
+              "id": 243,
+              "navn": "Toalettanlegg"
+            },
+            "vegobjekter": [79928059],
+            "relasjonstype": "vegobjektIder"
+          },
+          {
+            "listeid": 220139,
+            "id": 200139,
+            "type": {
+              "id": 27,
+              "navn": "Renovasjon"
+            },
+            "vegobjekter": [657588757, 657588758, 114902366],
+            "relasjonstype": "vegobjektIder"
+          }
+        ]
+      }
+    },
+    {
+      "id": 78816218,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/39/78816218",
+      "metadata": {
+        "type": {
+          "id": 39,
+          "navn": "Rasteplass"
+        },
+        "versjon": 10,
+        "startdato": "2023-07-01",
+        "sist_modifisert": "2025-11-22T09:07:31Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1805,
+          "navn": "Antall oppstillingspl. små kjt.",
+          "egenskapstype": "Heltall",
+          "verdi": 5,
+          "enhet": {
+            "id": 12,
+            "navn": "Stykker",
+            "kortnavn": "stk"
+          }
+        },
+        {
+          "id": 1816,
+          "navn": "Antall oppstillingspl. store kjt.",
+          "egenskapstype": "Heltall",
+          "verdi": 0,
+          "enhet": {
+            "id": 12,
+            "navn": "Stykker",
+            "kortnavn": "stk"
+          }
+        },
+        {
+          "id": 1355,
+          "navn": "Areal, totalt",
+          "egenskapstype": "Heltall",
+          "verdi": 600,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 9415,
+          "navn": "Antall oppstillingspl. forflytningshemmede",
+          "egenskapstype": "Heltall",
+          "verdi": 0
+        },
+        {
+          "id": 12845,
+          "navn": "Helt vinterstengt, fra dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "10-01"
+        },
+        {
+          "id": 12846,
+          "navn": "Helt vinterstengt, til dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "07-01"
+        },
+        {
+          "id": 2037,
+          "navn": "Lovlig adkomst",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Begge retninger",
+          "enum_id": 3251
+        },
+        {
+          "id": 9418,
+          "navn": "Dusj",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13266
+        },
+        {
+          "id": 1074,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Napen 2"
+        },
+        {
+          "id": 9417,
+          "navn": "Drikkevann",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13263
+        },
+        {
+          "id": 11046,
+          "navn": "Prosjektreferanse",
+          "egenskapstype": "Tekst",
+          "verdi": "DK9306"
+        },
+        {
+          "id": 2036,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Øvrig rasteplass",
+          "enum_id": 3249
+        },
+        {
+          "id": 9419,
+          "navn": "Strømuttak",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13268
+        },
+        {
+          "id": 1773,
+          "navn": "Kjøretøytype, dimensjonerende",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Personbil",
+          "enum_id": 3109
+        },
+        {
+          "id": 8765,
+          "navn": "Vinterstengning",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Helt vinterstengt",
+          "enum_id": 11603
+        },
+        {
+          "id": 4565,
+          "navn": "Vedlikeholdsansvarlig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Statens vegvesen",
+          "enum_id": 5479
+        },
+        {
+          "id": 4564,
+          "navn": "Fast dekke",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 5477
+        },
+        {
+          "id": 5819,
+          "navn": "Eier",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Stat, Statens vegvesen",
+          "enum_id": 8214
+        }
+      ],
+      "geometri": {
+        "wkt": "POLYGON((61.93503032 7.24740884,61.93484664 7.24735885,61.93477671 7.24786241,61.93503098 7.24859409,61.93493512 7.24797486,61.93503032 7.24740884))",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4651],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "R",
+              "fase": "V",
+              "nummer": 15
+            },
+            "kortform": "RV15 S15D1 m4941 SD1 m3-73"
+          }
+        ]
+      },
+      "relasjoner": {
+        "barn": [
+          {
+            "listeid": 220131,
+            "id": 200131,
+            "type": {
+              "id": 28,
+              "navn": "Utemøbler"
+            },
+            "vegobjekter": [719451170, 78816216],
+            "relasjonstype": "vegobjektIder"
+          },
+          {
+            "listeid": 220139,
+            "id": 200139,
+            "type": {
+              "id": 27,
+              "navn": "Renovasjon"
+            },
+            "vegobjekter": [79255414],
+            "relasjonstype": "vegobjektIder"
+          },
+          {
+            "listeid": 220611,
+            "id": 200611,
+            "type": {
+              "id": 508,
+              "navn": "Grøntanlegg"
+            },
+            "vegobjekter": [1016387867],
+            "relasjonstype": "vegobjektIder"
+          }
+        ]
+      }
+    },
+    {
+      "id": 78911819,
+      "href": "https://nvdbapiles.atlas.vegvesen.no/vegobjekter/39/78911819",
+      "metadata": {
+        "type": {
+          "id": 39,
+          "navn": "Rasteplass"
+        },
+        "versjon": 11,
+        "startdato": "2023-07-01",
+        "sist_modifisert": "2025-11-22T09:07:31Z"
+      },
+      "egenskaper": [
+        {
+          "id": 1805,
+          "navn": "Antall oppstillingspl. små kjt.",
+          "egenskapstype": "Heltall",
+          "verdi": 7,
+          "enhet": {
+            "id": 12,
+            "navn": "Stykker",
+            "kortnavn": "stk"
+          }
+        },
+        {
+          "id": 1816,
+          "navn": "Antall oppstillingspl. store kjt.",
+          "egenskapstype": "Heltall",
+          "verdi": 1,
+          "enhet": {
+            "id": 12,
+            "navn": "Stykker",
+            "kortnavn": "stk"
+          }
+        },
+        {
+          "id": 1355,
+          "navn": "Areal, totalt",
+          "egenskapstype": "Heltall",
+          "verdi": 300,
+          "enhet": {
+            "id": 10,
+            "navn": "Kvadratmeter",
+            "kortnavn": "m2"
+          }
+        },
+        {
+          "id": 9415,
+          "navn": "Antall oppstillingspl. forflytningshemmede",
+          "egenskapstype": "Heltall",
+          "verdi": 0
+        },
+        {
+          "id": 12845,
+          "navn": "Helt vinterstengt, fra dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "10-01"
+        },
+        {
+          "id": 12846,
+          "navn": "Helt vinterstengt, til dato",
+          "egenskapstype": "Kortdato",
+          "verdi": "07-01"
+        },
+        {
+          "id": 2037,
+          "navn": "Lovlig adkomst",
+          "egenskapstype": "Tekstenum",
+          "verdi": "En retning",
+          "enum_id": 3252
+        },
+        {
+          "id": 9418,
+          "navn": "Dusj",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13266
+        },
+        {
+          "id": 1074,
+          "navn": "Navn",
+          "egenskapstype": "Tekst",
+          "verdi": "Napen 1"
+        },
+        {
+          "id": 9417,
+          "navn": "Drikkevann",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13263
+        },
+        {
+          "id": 11046,
+          "navn": "Prosjektreferanse",
+          "egenskapstype": "Tekst",
+          "verdi": "DK9306"
+        },
+        {
+          "id": 2036,
+          "navn": "Type",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Øvrig rasteplass",
+          "enum_id": 3249
+        },
+        {
+          "id": 9419,
+          "navn": "Strømuttak",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Nei",
+          "enum_id": 13268
+        },
+        {
+          "id": 1773,
+          "navn": "Kjøretøytype, dimensjonerende",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Personbil",
+          "enum_id": 3109
+        },
+        {
+          "id": 8765,
+          "navn": "Vinterstengning",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Helt vinterstengt",
+          "enum_id": 11603
+        },
+        {
+          "id": 4565,
+          "navn": "Vedlikeholdsansvarlig",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Statens vegvesen",
+          "enum_id": 5479
+        },
+        {
+          "id": 4564,
+          "navn": "Fast dekke",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Ja",
+          "enum_id": 5477
+        },
+        {
+          "id": 5819,
+          "navn": "Eier",
+          "egenskapstype": "Tekstenum",
+          "verdi": "Stat, Statens vegvesen",
+          "enum_id": 8214
+        }
+      ],
+      "geometri": {
+        "wkt": "POLYGON((61.93577541 7.25002878,61.93646033 7.25007954,61.93595094 7.24953716,61.93577993 7.24959984,61.93577541 7.25002878))",
+        "srid": 4326
+      },
+      "lokasjon": {
+        "kommuner": [4651],
+        "fylker": [46],
+        "vegsystemreferanser": [
+          {
+            "vegsystem": {
+              "vegkategori": "R",
+              "fase": "V",
+              "nummer": 15
+            },
+            "kortform": "RV15 S15D1 m4206 SD1 m6-82"
+          }
+        ]
+      },
+      "relasjoner": {
+        "barn": [
+          {
+            "listeid": 220131,
+            "id": 200131,
+            "type": {
+              "id": 28,
+              "navn": "Utemøbler"
+            },
+            "vegobjekter": [78816224],
+            "relasjonstype": "vegobjektIder"
+          },
+          {
+            "listeid": 220139,
+            "id": 200139,
+            "type": {
+              "id": 27,
+              "navn": "Renovasjon"
+            },
+            "vegobjekter": [79260269],
+            "relasjonstype": "vegobjektIder"
+          },
+          {
+            "listeid": 220611,
+            "id": 200611,
+            "type": {
+              "id": 508,
+              "navn": "Grøntanlegg"
+            },
+            "vegobjekter": [723139725],
+            "relasjonstype": "vegobjektIder"
+          }
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "returnert": 4
+  }
+}
