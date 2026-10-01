@@ -5,6 +5,18 @@ import { roadsSeverity } from "./severity.js";
 const DOMAIN = "roads";
 const V = "1.0";
 const Intensity = z.enum(["light", "moderate", "heavy", "extreme"]);
+const MINUTE = 60;
+const HOUR = 3600;
+const DAY = 86400;
+
+/**
+ * How long a crowd report lives before it decays, and how long confirmations
+ * can keep it alive: a queue clears in minutes, a crash in an hour or two, a
+ * closure lasts hours and works last weeks. Kinds a driver cannot see from
+ * the road — standing rules, pass and chain registers, security operations,
+ * public events — take no crowd reports.
+ */
+const PASSING = { ttlSec: 15 * MINUTE, maxLifetimeSec: 2 * HOUR };
 
 /**
  * The roads situation kinds. `type` is the nature, causes and effects are
@@ -71,6 +83,11 @@ export const ROADS_SITUATION_KINDS = [
       emergencyServicesPresent: z.boolean().optional(),
     }),
     deriveSeverity: roadsSeverity({ accident: "major", fire: "major", obstruction: "moderate" }),
+    crowd: {
+      ttlSec: 30 * MINUTE,
+      maxLifetimeSec: 4 * HOUR,
+      types: { breakdown: PASSING, vehicle_hazard: PASSING, obstruction: PASSING },
+    },
   }),
   defineKind({
     class: "situation",
@@ -134,6 +151,7 @@ export const ROADS_SITUATION_KINDS = [
         (p) => p.effects,
       ),
     deriveSeverity: roadsSeverity({ works: "minor" }),
+    crowd: { ttlSec: 7 * DAY, maxLifetimeSec: 30 * DAY },
   }),
   defineKind({
     class: "situation",
@@ -159,6 +177,7 @@ export const ROADS_SITUATION_KINDS = [
     },
     details: () => ({}),
     deriveSeverity: roadsSeverity({ closure: "major" }),
+    crowd: { ttlSec: 4 * HOUR, maxLifetimeSec: DAY },
   }),
   defineKind({
     class: "situation",
@@ -234,6 +253,7 @@ export const ROADS_SITUATION_KINDS = [
       precipitationRate: k.Quantity.optional(),
     }),
     deriveSeverity: roadsSeverity({ weather: "minor" }),
+    crowd: PASSING,
   }),
   defineKind({
     class: "situation",
@@ -276,6 +296,8 @@ export const ROADS_SITUATION_KINDS = [
         .optional(),
     }),
     deriveSeverity: roadsSeverity({ surface: "minor", driving_condition: "minor" }),
+    // An icy or flooded surface outlasts a passing hazard.
+    crowd: { ttlSec: HOUR, maxLifetimeSec: 6 * HOUR },
   }),
   defineKind({
     class: "situation",
@@ -298,6 +320,7 @@ export const ROADS_SITUATION_KINDS = [
     },
     details: () => ({ obstructionSide: z.enum(["left", "right", "centre", "unknown"]).optional() }),
     deriveSeverity: roadsSeverity({ hazard: "moderate" }),
+    crowd: PASSING,
   }),
   defineKind({
     class: "situation",
@@ -374,6 +397,7 @@ export const ROADS_SITUATION_KINDS = [
     },
     details: (k) => ({ equipmentRef: k.RecordRef.optional() }),
     deriveSeverity: roadsSeverity({}),
+    crowd: { ttlSec: 2 * HOUR, maxLifetimeSec: 12 * HOUR },
   }),
   defineKind({
     class: "situation",
@@ -420,6 +444,7 @@ export const ROADS_SITUATION_KINDS = [
       freeFlowSource: z.enum(["native", "derived", "osm_maxspeed", "typical_profile"]).optional(),
     }),
     deriveSeverity: roadsSeverity({ congestion: "moderate" }),
+    crowd: { ttlSec: 5 * MINUTE, maxLifetimeSec: HOUR },
   }),
   defineKind({
     class: "situation",
@@ -431,5 +456,6 @@ export const ROADS_SITUATION_KINDS = [
     types: { other: [] },
     details: () => ({}),
     deriveSeverity: roadsSeverity({}),
+    crowd: PASSING,
   }),
 ] as const;

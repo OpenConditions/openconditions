@@ -26,6 +26,8 @@ import {
   type RateLimiter,
   signMessage,
 } from "@openconditions/federation";
+import { schemaVersions } from "@openconditions/model";
+import { productionRegistry } from "@openconditions/model-registry";
 import Fastify, {
   type FastifyInstance,
   type FastifyRequest,
@@ -111,6 +113,8 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   }
 
   const actorConfig = settings.actor!;
+  // The running registry, not the operator, says which schemas this instance accepts.
+  const advertisedSchemaVersions = schemaVersions(productionRegistry());
   await ensureInstanceKey(sql, now());
 
   /** The newest active signing key, self-healing an all-expired table (same
@@ -134,7 +138,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       await ensureInstanceKey(sql, now());
       keys = await loadActiveKeys(sql, now());
     }
-    const doc = buildActorDocument(actorConfig, keys);
+    const doc = buildActorDocument(actorConfig, keys, advertisedSchemaVersions);
     return reply.type(ACTIVITY_JSON).send(JSON.stringify(doc));
   });
 

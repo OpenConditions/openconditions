@@ -125,7 +125,7 @@ export function resultSchemaFor(
  * has it), and never an empty object (`{}` would key a different series than
  * absence).
  */
-function qualifierSchema(entry: PropertyEntry, k: Kernel): z.ZodType {
+export function qualifierSchema(entry: PropertyEntry, k: Kernel): z.ZodType {
   if (entry.qualifiers === undefined) return z.never().optional();
   const object = z.strictObject(entry.qualifiers(k));
   const required = !object.safeParse({}).success;
@@ -138,7 +138,7 @@ function qualifierSchema(entry: PropertyEntry, k: Kernel): z.ZodType {
 export function observationSchema(
   k: Kernel,
   entry: PropertyEntry,
-  result: z.ZodType,
+  parts: { result: z.ZodType; qualifiers: z.ZodType },
   stage: Stage,
 ) {
   const subjects = subjectSchemas(k);
@@ -147,7 +147,7 @@ export function observationSchema(
     allowed.length === 1
       ? allowed[0]!
       : z.discriminatedUnion("kind", allowed as [(typeof allowed)[0], ...typeof allowed]);
-  const qualifiers = qualifierSchema(entry, k);
+  const { result, qualifiers } = parts;
   return z
     .strictObject({
       ...recordBaseShape(k, stage),

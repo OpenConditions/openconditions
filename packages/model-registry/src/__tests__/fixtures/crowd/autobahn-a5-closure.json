@@ -1,0 +1,65 @@
+{
+  "closure": [
+    {
+      "identifier": "2026-046131--vi-fbm.2026-09-19_07-00-00-000.devi-bs.2026-09-19_07-00-00-000.de0",
+      "icon": "448",
+      "isBlocked": "false",
+      "future": false,
+      "extent": "49.146228725781214,8.559449770364857,49.14698556856484,8.562760138306716",
+      "point": "49.146228725781214,8.559449770364857",
+      "startLcPosition": "1000",
+      "impact": {
+        "symbols": ["SEPARATE", "CLOSED"]
+      },
+      "display_type": "CLOSURE_ENTRY_EXIT",
+      "subtitle": "",
+      "title": "A5 , AS Bruchsal, Sperrung Rampe B35 in FR Bruchsal (RPK)",
+      "startTimestamp": "2026-09-19T07:00:00+02:00",
+      "coordinate": {
+        "lat": 49.146228725781214,
+        "long": 8.559449770364857
+      },
+      "description": [
+        "Zeitraum dieser Bauphase:",
+        "Beginn: 19.09.26 um 07:00 Uhr",
+        "Ende: 04.10.26 um 00:00 Uhr",
+        "(Ende der Gesamtmaßnahme: 04.10.26)",
+        "",
+        "Auffahrt auf die B35",
+        "",
+        "Länge: konnte nicht ermittelt werden",
+        "",
+        "A5 , AS Bruchsal, Sperrung Rampe B35 in FR Bruchsal (RPK)"
+      ],
+      "routeRecommendation": [],
+      "footer": [],
+      "lorryParkingFeatureIcons": [],
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [8.55944977, 49.146228726],
+          [8.5594873, 49.146253001],
+          [8.5596561, 49.146332701],
+          [8.559836, 49.146380701],
+          [8.5600234, 49.146416001],
+          [8.5602437, 49.146439001],
+          [8.5605188, 49.146446701],
+          [8.5608555, 49.146450801],
+          [8.5612168, 49.146456701],
+          [8.5613436, 49.146460901],
+          [8.5614418, 49.146471401],
+          [8.561587, 49.146492201],
+          [8.5617252, 49.146528001],
+          [8.5618083, 49.146557601],
+          [8.5619142, 49.146606801],
+          [8.5620678, 49.146691101],
+          [8.5622154, 49.146782601],
+          [8.5623681, 49.146867401],
+          [8.5624919, 49.146917801],
+          [8.5626529, 49.146966501],
+          [8.562760138, 49.146985569]
+        ]
+      }
+    }
+  ]
+}

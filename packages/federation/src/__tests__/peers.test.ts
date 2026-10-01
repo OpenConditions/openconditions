@@ -23,7 +23,6 @@ const ACTOR_CONFIG: ActorConfig = {
   trustTier: 1,
   capabilities: {
     protocolVersion: "0.1",
-    schemaVersions: ["1"],
     wireFormats: ["application/activity+json"],
     deliveryModes: ["pull"],
     subscriptionFilters: [],
@@ -117,7 +116,7 @@ describe("loadPeers", () => {
 
 describe("verifyActorAgainstPin", () => {
   async function actorWith(keys: InstanceKey[]) {
-    return buildActorDocument(ACTOR_CONFIG, keys);
+    return buildActorDocument(ACTOR_CONFIG, keys, ["kernel@1.0"]);
   }
 
   it("accepts an actor whose publicKey[] includes a pinned key", async () => {

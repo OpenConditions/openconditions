@@ -12,6 +12,8 @@ export {
   PEERS_WELL_KNOWN_PATH,
   parseActorConfig,
 } from "./actor.js";
+export type { PeerReceipt } from "./admit.js";
+export { admitFederatedRecord } from "./admit.js";
 export type {
   AnomalyResult,
   DetectAnomalyOptions,
@@ -116,6 +118,8 @@ export {
   RATE_WINDOW_MS,
   ratePolicyForTier,
 } from "./rate.js";
+export type { FederatedRecord, RecordFilter, RecordOutboxEntry } from "./record-filter.js";
+export { applyRecordFilter, federatedSnapshot } from "./record-filter.js";
 export type { RegistryEntry, RegistryOperator } from "./registry.js";
 export { parseRegistryEntry, registryEntryFileName, registryToPeerRecords } from "./registry.js";
 export type { RegistrySyncOptions, RegistrySyncResult } from "./registry-sync.js";

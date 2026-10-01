@@ -29,7 +29,6 @@ const ACTOR_CONFIG: ActorConfig = {
   trustTier: 0,
   capabilities: {
     protocolVersion: "0.1",
-    schemaVersions: ["1"],
     wireFormats: ["application/activity+json"],
     deliveryModes: ["pull"],
     subscriptionFilters: [],
@@ -127,10 +126,15 @@ describe("instance key lifecycle", () => {
   }, 30_000);
 
   it("the Actor document carries both keys in the overlap and only the new one after", async () => {
-    const during = buildActorDocument(ACTOR_CONFIG, await loadActiveKeys(sql, T_OVERLAP));
+    const versions = ["kernel@1.0"];
+    const during = buildActorDocument(ACTOR_CONFIG, await loadActiveKeys(sql, T_OVERLAP), versions);
     expect(during.publicKey).toHaveLength(2);
 
-    const after = buildActorDocument(ACTOR_CONFIG, await loadActiveKeys(sql, T_AFTER_OVERLAP));
+    const after = buildActorDocument(
+      ACTOR_CONFIG,
+      await loadActiveKeys(sql, T_AFTER_OVERLAP),
+      versions,
+    );
     expect(after.publicKey).toHaveLength(1);
     expect(after.publicKey[0]!.publicKeyMultibase).toMatch(/^z6Mk/);
   }, 30_000);

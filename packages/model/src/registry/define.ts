@@ -114,6 +114,66 @@ export interface KindEntry<C extends string = string, S extends z.ZodRawShape = 
   linking?: LinkingRules;
   /** Situation kinds: effects nested inside `details` (roadworks phases), for id uniqueness and materialisation. */
   nestedEffects?: (details: Record<string, unknown>) => readonly { id: string }[];
+  /** Situation kinds: how the crowd reports this kind; absent, the crowd cannot report it. */
+  crowd?: SituationCrowdRules;
+  /** Component kinds: what makes two sources' components one component of a linked feature. */
+  identity?: ComponentIdentity;
+}
+
+/**
+ * How crowd reports of one situation kind or one property live and are
+ * judged. A report is live for `ttlSec`; confirmations extend it, never past
+ * `maxLifetimeSec` after the first report. `corroborationKeys` distinct
+ * reporters corroborate it, `negationKeys` distinct reporters saying it is
+ * gone end it.
+ */
+export interface CrowdRules {
+  ttlSec: number;
+  maxLifetimeSec: number;
+  /** Default 2: one reporter never corroborates their own report. */
+  corroborationKeys?: number;
+  /** Default 2: one stranger's "gone" never ends a report. */
+  negationKeys?: number;
+}
+
+export interface SituationCrowdRules extends CrowdRules {
+  /**
+   * A report and another record of the same kind and type describe one
+   * phenomenon when the report lies within this distance of the other's
+   * geometry (default 250 m).
+   */
+  matchMetres?: number;
+  /** Lifetimes of the types that live longer or shorter than their kind. */
+  types?: Readonly<Record<string, Pick<CrowdRules, "ttlSec" | "maxLifetimeSec">>>;
+}
+
+export interface PropertyCrowdRules extends CrowdRules {
+  /**
+   * When an authoritative reading agrees with a crowd report: an equal
+   * result, or for a quantity or a price one within `tolerance` (in the
+   * property's unit or the price's currency). Agreement is what resolves a
+   * report externally and trains its reporter.
+   */
+  agreement?: { tolerance: number };
+  /**
+   * How far from its subject a reporter may stand (default 300 m): a price is
+   * read off the pole and a broken charger seen at the charger, so a report
+   * from further away is not an observation.
+   */
+  reachMetres?: number;
+}
+
+/**
+ * What makes components of two linked features one component. Only a shared
+ * id of one of `idSchemes` — compared within the corresponding parent when
+ * `withinParent`, because an OCPI connector id is only unique within its
+ * EVSE — or, for a kind whose sources publish no id, equal values of the
+ * `details` fields in `fields`. Never position or name.
+ */
+export interface ComponentIdentity {
+  idSchemes?: readonly string[];
+  withinParent?: boolean;
+  fields?: readonly string[];
 }
 
 /** What a situation kind's severity rule reads: the classification and the effects. */
@@ -207,7 +267,8 @@ export interface PropertyEntry extends EntryBase {
   /** Cross-field rules of one property's observations (which subject needs which qualifier). */
   refine?: (observation: Record<string, unknown>, ctx: z.RefinementCtx) => void;
   freshnessWindowSec?: number;
-  decayTtlSec?: { feed?: number; crowd?: number };
+  /** How the crowd reports this property; absent, the crowd cannot report it. */
+  crowd?: PropertyCrowdRules;
   retention?: Retention;
   privacyDefault?: PrivacyClass;
   /** Fusion order for this property, highest first; defaults to FUSION_TIERS. */

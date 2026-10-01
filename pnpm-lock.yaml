@@ -159,6 +159,9 @@ importers:
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:../ingest-framework
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
       '@openconditions/publishers':
         specifier: workspace:*
         version: link:../publishers
@@ -184,6 +187,9 @@ importers:
         specifier: 2.9.1
         version: 2.9.1
     devDependencies:
+      '@openconditions/model-registry':
+        specifier: workspace:*
+        version: link:../model-registry
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16
@@ -744,6 +750,9 @@ importers:
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:../../packages/ingest-framework
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../../packages/model
       '@openconditions/model-registry':
         specifier: workspace:*
         version: link:../../packages/model-registry

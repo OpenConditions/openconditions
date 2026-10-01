@@ -21,7 +21,6 @@ const ACTOR_CONFIG = {
   trustTier: 1,
   capabilities: {
     protocolVersion: "0.1",
-    schemaVersions: ["1"],
     wireFormats: ["application/activity+json"],
     deliveryModes: ["pull"],
     subscriptionFilters: ["bbox"],
@@ -117,6 +116,8 @@ describe("federation enabled", () => {
       expect(doc.publicKey).toHaveLength(1);
       expect(doc.publicKey[0]!.publicKeyMultibase).toMatch(/^z6Mk/);
       expect(doc.outbox).toBe("https://conditions.example.org/peer/outbox");
+      expect(doc.capabilities.schemaVersions).toContain("kernel@1.0");
+      expect(doc.capabilities.schemaVersions).toContain("situation/alert@1.0");
 
       const rows = await sql`SELECT key_id FROM conditions.federation_instance_key`;
       expect(rows).toHaveLength(1);

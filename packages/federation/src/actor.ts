@@ -19,6 +19,11 @@ export interface ActorCapabilities {
    *  dual-support window); when absent, {@link protocolVersion} is the only one.
    *  Used by capability negotiation to pick the highest mutually-supported. */
   protocolVersions?: string[];
+  /**
+   * Every schema this instance's registry runs, as `<key>@<major>.<minor>`
+   * (`kernel@1.0`, `situation/incident@1.2`); advertised from the registry,
+   * never configured, so a peer always sees what the running build accepts.
+   */
   schemaVersions: string[];
   wireFormats: string[];
   deliveryModes: string[];
@@ -39,7 +44,7 @@ export interface ActorConfig {
   license: string;
   policyDocument?: string;
   trustTier: 0 | 1 | 2;
-  capabilities: ActorCapabilities;
+  capabilities: Omit<ActorCapabilities, "schemaVersions">;
   /** publicKeyMultibase values of Tier-2 governance anchor keys. */
   trustAnchors?: string[];
 }
@@ -85,11 +90,16 @@ function normalizeBaseUrl(baseUrl: string): string {
 }
 
 /**
- * Builds the Actor document for the given config and the keys valid now.
- * Refuses an empty key set: an actor without a verifiable key must never be
- * served (a peer would cache an identity nothing can ever sign for).
+ * Builds the Actor document for the given config, the keys valid now and the
+ * schema versions the running registry advertises. Refuses an empty key set:
+ * an actor without a verifiable key must never be served (a peer would cache
+ * an identity nothing can ever sign for).
  */
-export function buildActorDocument(cfg: ActorConfig, activeKeys: InstanceKey[]): ActorDocument {
+export function buildActorDocument(
+  cfg: ActorConfig,
+  activeKeys: InstanceKey[],
+  schemaVersions: readonly string[],
+): ActorDocument {
   if (activeKeys.length === 0) {
     throw new TypeError("cannot build an actor document without an active instance key");
   }
@@ -113,7 +123,7 @@ export function buildActorDocument(cfg: ActorConfig, activeKeys: InstanceKey[]):
     tombstones: `${base}/peer/tombstones`,
     coverage: cfg.coverage,
     supportedTypes: cfg.supportedTypes,
-    capabilities: cfg.capabilities,
+    capabilities: { ...cfg.capabilities, schemaVersions: [...schemaVersions] },
     license: cfg.license,
     trustTier: cfg.trustTier,
     trustAnchor: cfg.trustAnchors ?? [],
@@ -205,13 +215,11 @@ export function parseActorConfig(source: string | unknown): ActorConfig {
   if (caps["protocolVersions"] !== undefined && !isStringArray(caps["protocolVersions"])) {
     fail("capabilities.protocolVersions", "must be a string array");
   }
-  for (const field of [
-    "schemaVersions",
-    "wireFormats",
-    "deliveryModes",
-    "subscriptionFilters",
-  ] as const) {
+  for (const field of ["wireFormats", "deliveryModes", "subscriptionFilters"] as const) {
     if (!isStringArray(caps[field])) fail(`capabilities.${field}`, "must be a string array");
+  }
+  if (caps["schemaVersions"] !== undefined) {
+    fail("capabilities.schemaVersions", "is advertised from the registry, not configured");
   }
   for (const field of ["maxEventRate", "convergenceBound"] as const) {
     if (typeof caps[field] !== "number" || !Number.isFinite(caps[field])) {

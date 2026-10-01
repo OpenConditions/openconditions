@@ -1,12 +1,14 @@
 import { z } from "zod";
 import type { Registry } from "./build.js";
 import {
+  type CrowdRules,
   type Mappings,
   majorOf,
   type Retention,
   type SchemaVersion,
   type SubjectSpec,
 } from "./define.js";
+import { type SchemaEntry, schemaEntries } from "./versions.js";
 
 /** Kernel schemas published under stable `$defs` names. */
 function kernelDefs(registry: Registry) {
@@ -46,10 +48,7 @@ function toJson(schema: z.ZodType, ids: z.core.$ZodRegistry<{ id?: string }>) {
   >;
 }
 
-export interface SchemaIndexEntry {
-  class: string;
-  code: string;
-  version: SchemaVersion;
+export interface SchemaIndexEntry extends SchemaEntry {
   file: string;
 }
 
@@ -65,11 +64,12 @@ export function jsonSchemaArtifacts(registry: Registry): Map<string, unknown> {
   const defs = kernelDefs(registry);
   for (const [id, schema] of Object.entries(defs)) ids.add(schema as z.ZodType, { id });
   const files = new Map<string, unknown>();
-  const index: SchemaIndexEntry[] = [];
+  const fileOf = (cls: string, code: string, version: SchemaVersion) =>
+    cls === "kernel"
+      ? `kernel@${majorOf(version)}.json`
+      : `${cls}/${code}@${majorOf(version)}.json`;
   const emit = (cls: string, code: string, version: SchemaVersion, schema: z.ZodType) => {
-    const file = `${cls}/${code}@${majorOf(version)}.json`;
-    files.set(file, toJson(schema, ids));
-    index.push({ class: cls, code, version, file });
+    files.set(fileOf(cls, code, version), toJson(schema, ids));
   };
 
   const kernelMajor = majorOf(registry.kernelVersion as SchemaVersion);
@@ -78,12 +78,6 @@ export function jsonSchemaArtifacts(registry: Registry): Map<string, unknown> {
     $schema: all["$schema"],
     title: `OpenConditions kernel ${registry.kernelVersion}`,
     $defs: all["$defs"],
-  });
-  index.push({
-    class: "kernel",
-    code: "kernel",
-    version: registry.kernelVersion as SchemaVersion,
-    file: `kernel@${kernelMajor}.json`,
   });
 
   for (const kind of registry.kinds()) {
@@ -110,7 +104,9 @@ export function jsonSchemaArtifacts(registry: Registry): Map<string, unknown> {
       z.strictObject({ v: z.literal(majorOf(r.version)), ...r.shape(registry.kernel) }),
     );
   }
-  index.sort((a, b) => a.file.localeCompare(b.file));
+  const index: SchemaIndexEntry[] = schemaEntries(registry)
+    .map((e) => ({ ...e, file: fileOf(e.class, e.code, e.version) }))
+    .sort((a, b) => a.file.localeCompare(b.file));
   files.set("index.json", index);
   return files;
 }
@@ -165,6 +161,62 @@ export function enumArrayCheckSql(columnName: string, values: readonly string[])
 
 function cell(value: string): string {
   return value.replaceAll("|", "\\|").replaceAll("\n", " ");
+}
+
+function durationText(sec: number): string {
+  if (sec % 86400 === 0) return `${sec / 86400} d`;
+  if (sec % 3600 === 0) return `${sec / 3600} h`;
+  return `${sec / 60} min`;
+}
+
+/** What the crowd may report and how long a report lives; when two sources' components are one. */
+function crowdMarkdown(registry: Registry): string[] {
+  const rows: string[] = [];
+  const row = (code: string, rules: CrowdRules, match: string) =>
+    rows.push(
+      `| \`${code}\` | ${durationText(rules.ttlSec)} | ${durationText(rules.maxLifetimeSec)} | ${rules.corroborationKeys ?? 2} / ${rules.negationKeys ?? 2} | ${match} |`,
+    );
+  for (const k of registry.kinds("situation")) {
+    if (k.crowd === undefined) continue;
+    const match = `within ${k.crowd.matchMetres ?? 250} m`;
+    row(k.code, k.crowd, match);
+    for (const [type, life] of Object.entries(k.crowd.types ?? {}))
+      row(`${k.code}.${type}`, { ...k.crowd, ...life }, match);
+  }
+  for (const p of registry.properties()) {
+    if (p.crowd === undefined) continue;
+    const tolerance = p.crowd.agreement?.tolerance;
+    row(p.code, p.crowd, tolerance === undefined ? "equal result" : `within ±${tolerance}`);
+  }
+  const out: string[] = [];
+  if (rows.length > 0) {
+    out.push(
+      "### Crowd reports",
+      "",
+      "| reported | lives | confirmations keep it up to | corroborate / negate | agrees with a record |",
+      "|---|---|---|---|---|",
+      ...rows,
+      "",
+    );
+  }
+  const identities = registry.kinds("component").filter((k) => k.identity !== undefined);
+  if (identities.length > 0) {
+    out.push("### Component identity", "", "| component | same component when |", "|---|---|");
+    for (const k of identities) {
+      const { idSchemes = [], fields = [], withinParent } = k.identity!;
+      const parts = [
+        ...(idSchemes.length > 0
+          ? [
+              `a shared ${idSchemes.map((s) => `\`${s}\``).join(" or ")} id${withinParent ? " within the same parent" : ""}`,
+            ]
+          : []),
+        ...(fields.length > 0 ? [`equal ${fields.map((f) => `\`${f}\``).join(", ")}`] : []),
+      ];
+      out.push(`| \`${k.code}\` | ${parts.join("; or ")} |`);
+    }
+    out.push("");
+  }
+  return out;
 }
 
 /** The generated "Registry" section of docs/model.md. */
@@ -229,6 +281,7 @@ export function registryMarkdown(registry: Registry): string {
     }
     out.push("");
   }
+  out.push(...crowdMarkdown(registry));
   out.push("### Effects", "", "| effect | version | description |", "|---|---|---|");
   for (const e of registry.effects())
     out.push(`| \`${e.code}\` | ${e.version} | ${cell(e.description)} |`);

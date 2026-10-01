@@ -5,8 +5,11 @@
  *  - protocolVersion — the highest version present in BOTH sides' supported set
  *    (the plan's "agree the highest mutually-supported"); no common version means
  *    the peers cannot federate at all.
- *  - schemaVersions / wireFormats / deliveryModes — the plain set intersection
- *    (empty is legal: two peers may share a protocol but no wire format yet).
+ *  - schemaVersions — every registry schema both sides run at the same major,
+ *    as `<key>@<major>` (a minor is compatible); two peers on different kernel
+ *    majors share nothing and cannot federate.
+ *  - wireFormats / deliveryModes — the plain set intersection (empty is legal:
+ *    two peers may share a protocol but no wire format yet).
  *  - convergenceBound — the MAX of the two: the looser bound BOTH can meet (a
  *    peer promising ≤300s convergence and one promising ≤600s jointly meet 600s).
  *
@@ -14,6 +17,8 @@
  * peers overlap on a common version across the upgrade; that windowing is an
  * operational policy, not enforced by this pure function.
  */
+import { sharedSchemaMajors } from "@openconditions/model";
+
 /**
  * The negotiation input — the subset of `ActorCapabilities` the intersection
  * reads (an `ActorCapabilities` value is assignable to it). Each side carries a
@@ -34,7 +39,7 @@ export interface NegotiableCapabilities {
 export interface NegotiatedCapabilities {
   /** The MAX version present in BOTH sides' supported set (semver-ish compare). */
   protocolVersion: string;
-  /** Intersection of the two schema-version sets (order follows `local`). */
+  /** The schemas both run at one major, `<key>@<major>`, sorted. */
   schemaVersions: string[];
   /** Intersection of the two wire-format sets (order follows `local`). */
   wireFormats: string[];
@@ -107,9 +112,13 @@ export function negotiateCapabilities(
     );
   }
   const protocolVersion = [...common].sort(compareVersions).at(-1)!;
+  const schemaVersions = sharedSchemaMajors(local.schemaVersions, peer.schemaVersions);
+  if (schemaVersions.length === 0) {
+    throw new CapabilityNegotiationError("no shared kernel major: every record class differs");
+  }
   return {
     protocolVersion,
-    schemaVersions: intersect(local.schemaVersions, peer.schemaVersions),
+    schemaVersions,
     wireFormats: intersect(local.wireFormats, peer.wireFormats),
     deliveryModes: intersect(local.deliveryModes, peer.deliveryModes),
     convergenceBound: Math.max(local.convergenceBound, peer.convergenceBound),

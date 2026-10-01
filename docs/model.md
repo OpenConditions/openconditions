@@ -549,6 +549,94 @@ found:
 - FIRMS grades VIIRS confidence in words and MODIS confidence as a
   percentage.
 
+## Crowd and federation
+
+Crowd reports and federation work on every class of the model. What the
+crowd may report, and for how long, is part of the registry: a situation
+kind or a property with crowd rules takes reports, anything else does not.
+
+- A report claim is what a reporter signs. A situation claim says something
+  is happening here: a kind, a registered type and subtype, the geometry and
+  how precisely it is known, optionally a severity level from 1 to 5, kernel
+  effects, the kind's details and text. An observation claim says this is the
+  value now: a property, a feature (and component) or a place, the result as
+  the property's observations carry it, and where the reporter stood. A
+  sub-claim confirms, negates or flags any record, named by class, id and,
+  for a feature, component key.
+- Landing turns a claim into a crowd record. The record's id hashes the
+  reporter's key with the claim's nonce, so a replay lands the same id and
+  the id never reveals the key; the key itself stays in `provenance.reporter`
+  and is stripped at every egress. A report lives for its kind's or
+  property's lifetime (`freshness.expiresAt`), which confirmations extend up
+  to the kind's maximum; the lifetime is never content, so the evidence, not
+  a revision, decides when it ends. A report is refused when it was made
+  more than a day ago, so long ago that it had already expired, or ahead of
+  the server clock. An observation lands on the canonical feature and
+  component, and only from a reporter who stood within the property's reach
+  of it (300 m by default); where the reporter stood is checked and not kept.
+- Agreement is what corroborates a report and what resolves it externally. A
+  situation agrees with another record of the same kind and type that was in
+  effect when the report was made and lies within the kind's match distance
+  (250 m by default, measured to the nearest part of its geometry). An
+  observation agrees with an authoritative reading of the same series that
+  was in force when the report was made — a status or a price holds until it
+  changes — or arrived within the report's lifetime, with an equal result or
+  one within the property's tolerance (a fuel price: a cent). A disagreeing
+  reading resolves nothing; the feed may be what is wrong.
+- Fusion picks the value a canonical subject shows for one property. Among
+  rows in effect now, a fresh row beats a stale one, then the higher tier
+  wins (authoritative, operator, aggregator, community, then crowd rows by
+  their evidence: externally resolved, corroborated, self-reported), then the
+  later reading. A crowd report never overrides a fresh authoritative status;
+  it surfaces when the feed is stale or silent, and a negated report, or one
+  past its `freshness.expiresAt`, never fuses. The `@fused` row is credited to the winning publisher
+  with the most restrictive rights of every source that published the same
+  value, lists them in `derivedFrom` and `mergedSources`, and stays on demand
+  when one of them is.
+- Components of linked features correspond only by their kind's identity: a
+  shared authoritative id (an EVSE's eMI3 id; an OCPI connector id within the
+  corresponding EVSE) or, where sources publish no id, equal identity fields
+  (a fuel product's grade, service, price level and vehicle scope; a parking
+  area's vehicle type and user group). The canonical feature carries every
+  member's components: the survivor's keep their keys, the rest join as
+  `<source id>/<key>`.
+- An instance advertises every schema its registry runs as
+  `<key>@<major>.<minor>` (`kernel@1.0`, `situation/incident@1.2`); the actor
+  document takes them from the registry, never from configuration. Two
+  instances exchange what both run at one major. A record of a kind the
+  receiver does not run, or runs at another major, is skipped; fields a
+  newer minor added are dropped; an effect kind or an `affects` selector the
+  receiver does not know rejects the record rather than losing what it says.
+- The outbox carries model records with their class, kind, domain and
+  property, and the subscriber filter selects on them as well as on box,
+  privacy class, age, evidence and licence. On-demand answers and fused rows
+  never leave the instance, extras only where the source opted in, and a
+  reporter's key never. A received record keeps its id, instance and
+  evidence and gains a receipt in its origin chain; a peer sends its own
+  records only.
+- The archive writes one GeoParquet file per class: the records a peer could
+  receive that are still current, crowd records only once corroborated,
+  share-alike records out, a source's extras only where it opted in, each
+  with its class's promoted columns and the record as JSON.
+
+### Crowd fit check
+
+`crowd-fit.test.ts` lands every road category of the OpenMapX report dialog
+on the production registry and judges reports against real records: an A5
+ramp closure from Autobahn GmbH, Karlsruhe charge points from the MobiData BW
+charge-point database, and MINETUR fuel prices. What it found:
+
+- MobiData BW publishes one row per upstream source of a car park, so its
+  location id names a row, not an operator's OCPI location. Read as
+  `ocpi:location`, two rows of one car park would never link; it is the
+  aggregator's `provider` id.
+- The Bundesnetzagentur register and the live feed relayed from chargecloud
+  describe the same ten charge points with ids that share nothing — the
+  register files its own `BNETZA*` numbers in the EVSE id field — so the
+  canonical car park has twenty charge points, ten with a live status.
+- An operator's status holds from when it changed: EnBW's out-of-order
+  status was eleven hours old when it confirmed a driver's report.
+
 ## Environment fit check
 
 Before the kernel hardened, three real environmental records were mapped onto
@@ -803,6 +891,38 @@ Kernel version `1.0`; modules: `kernel`, `roads`, `weather`, `vehicles`, `parkin
 | `ferry.vehicle_space`         | maritime   | 1.0     | count                           | feature (ferry_route, ferry_terminal, component ferry_leg)                                  | change-only, raw 7 d              |
 | `fire.frp`                    | hazards    | 1.0     | quantity (MW)                   | location                                                                                    | raw 7 d                           |
 | `fire.brightness`             | hazards    | 1.0     | quantity (K)                    | location                                                                                    | raw 7 d                           |
+
+### Crowd reports
+
+| reported                    | lives  | confirmations keep it up to | corroborate / negate | agrees with a record |
+| --------------------------- | ------ | --------------------------- | -------------------- | -------------------- |
+| `incident`                  | 30 min | 4 h                         | 2 / 2                | within 250 m         |
+| `incident.breakdown`        | 15 min | 2 h                         | 2 / 2                | within 250 m         |
+| `incident.vehicle_hazard`   | 15 min | 2 h                         | 2 / 2                | within 250 m         |
+| `incident.obstruction`      | 15 min | 2 h                         | 2 / 2                | within 250 m         |
+| `roadworks`                 | 7 d    | 30 d                        | 2 / 2                | within 250 m         |
+| `closure`                   | 4 h    | 1 d                         | 2 / 2                | within 250 m         |
+| `weather_condition`         | 15 min | 2 h                         | 2 / 2                | within 250 m         |
+| `road_condition`            | 1 h    | 6 h                         | 2 / 2                | within 250 m         |
+| `road_hazard`               | 15 min | 2 h                         | 2 / 2                | within 250 m         |
+| `equipment_fault`           | 2 h    | 12 h                        | 2 / 2                | within 250 m         |
+| `congestion`                | 5 min  | 1 h                         | 2 / 2                | within 250 m         |
+| `other`                     | 15 min | 2 h                         | 2 / 2                | within 250 m         |
+| `parking.status`            | 30 min | 3 h                         | 2 / 2                | equal result         |
+| `charging.evse_status`      | 4 h    | 2 d                         | 2 / 2                | equal result         |
+| `charging.connector_status` | 4 h    | 2 d                         | 2 / 2                | equal result         |
+| `fuel.price`                | 3 h    | 12 h                        | 2 / 2                | within ±0.01         |
+| `fuel.product_available`    | 12 h   | 2 d                         | 2 / 2                | equal result         |
+| `facility.open_status`      | 2 h    | 12 h                        | 2 / 2                | equal result         |
+
+### Component identity
+
+| component      | same component when                                                           |
+| -------------- | ----------------------------------------------------------------------------- |
+| `parking_area` | equal `vehicleType`, `userGroup`                                              |
+| `evse`         | a shared `emi3:evse` or `oicp:evse` or `ocpi:evse` or `datex:refill_point` id |
+| `connector`    | a shared `ocpi:connector` id within the same parent                           |
+| `fuel_product` | equal `grade`, `service`, `priceLevel`, `vehicleScope`                        |
 
 ### Effects
 

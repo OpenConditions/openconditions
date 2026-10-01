@@ -65,6 +65,7 @@ export const FUEL_KINDS = [
     version: V,
     description:
       "One priced product of a station: a grade at a service and price level, sold per litre, kilogram or cubic metre.",
+    identity: { fields: ["grade", "service", "priceLevel", "vehicleScope"] },
     details: (k) => ({
       grade: k.vocab("fuel_grade"),
       /** Self service and attended service are priced differently in IT and PT. */
@@ -160,6 +161,9 @@ export const FUEL_PROPERTIES: PropertyEntry[] = [
     },
     freshnessWindowSec: 24 * HOUR,
     retention: { rawDays: 30, rollup: { period: "daily" } },
+    // Stations reprice several times a day; a reading agrees with the
+    // station's own price within a cent of the price's currency.
+    crowd: { ttlSec: 3 * HOUR, maxLifetimeSec: 12 * HOUR, agreement: { tolerance: 0.01 } },
   }),
   defineProperty({
     code: "fuel.price_cap",
@@ -180,5 +184,6 @@ export const FUEL_PROPERTIES: PropertyEntry[] = [
     subjects: [PRODUCT],
     freshnessWindowSec: 24 * HOUR,
     retention: { changeOnly: true },
+    crowd: { ttlSec: 12 * HOUR, maxLifetimeSec: 48 * HOUR },
   }),
 ];

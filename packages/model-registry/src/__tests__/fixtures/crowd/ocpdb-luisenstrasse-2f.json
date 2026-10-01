@@ -1,0 +1,531 @@
+{
+  "items": [
+    {
+      "name": "Hurrle Luisenstraße",
+      "address": "Luisenstraße 2F",
+      "postal_code": "76137",
+      "city": "Karlsruhe",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-10-01T06:33:52Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "332714",
+      "publish": true,
+      "original_id": "4a066649-215e-4700-8724-73fbdfce0317",
+      "source": "datex2_chargecloud",
+      "official_region_code": "082120000000",
+      "energy_mix": {
+        "is_green_energy": false,
+        "energy_sources": null,
+        "environ_impact": null,
+        "supplier_name": null,
+        "energy_product_name": null
+      },
+      "coordinates": {
+        "latitude": 49.000645,
+        "longitude": 8.404824,
+        "lat": 49.000645,
+        "lon": 8.404824
+      },
+      "operator": {
+        "name": "Claus Heinemann Elektroanlagen GmbH",
+        "emobility_uid": "MUC"
+      },
+      "owner": {
+        "name": "ChargeOne (CUBOS Service GmbH)"
+      },
+      "evses": [
+        {
+          "uid": "262397007",
+          "evse_id": "DE*MUC*E*CO111064",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2023-10-17T06:44:28Z",
+          "status_last_updated": "2026-09-29T06:09:49Z",
+          "original_uid": "DE*MUC*E*CO111064",
+          "capabilities": ["CREDIT_CARD_PAYABLE", "REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 27,
+              "max_electric_power": 11000,
+              "last_updated": "2023-10-17T06:44:28Z",
+              "id": "263183949",
+              "tariff_ids": ["bfa7c5fd857cda2f9b9dc6afae5095df"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262397003",
+          "evse_id": "DE*MUC*E*CO111060",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2023-10-17T06:45:22Z",
+          "status_last_updated": "2026-09-24T07:59:26Z",
+          "original_uid": "DE*MUC*E*CO111060",
+          "capabilities": ["CREDIT_CARD_PAYABLE", "REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 27,
+              "max_electric_power": 11000,
+              "last_updated": "2023-10-17T06:45:22Z",
+              "id": "263183945",
+              "tariff_ids": ["bfa7c5fd857cda2f9b9dc6afae5095df"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262397006",
+          "evse_id": "DE*MUC*E*CO111063",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2023-10-17T06:44:56Z",
+          "status_last_updated": "2026-09-29T10:19:03Z",
+          "original_uid": "DE*MUC*E*CO111063",
+          "capabilities": ["CREDIT_CARD_PAYABLE", "REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 27,
+              "max_electric_power": 11000,
+              "last_updated": "2023-10-17T06:44:56Z",
+              "id": "263183948",
+              "tariff_ids": ["bfa7c5fd857cda2f9b9dc6afae5095df"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262397002",
+          "evse_id": "DE*MUC*E*CO111059",
+          "status": "CHARGING",
+          "presence": "PRESENT",
+          "last_updated": "2026-10-01T06:33:52Z",
+          "status_last_updated": "2026-10-01T06:33:52Z",
+          "original_uid": "DE*MUC*E*CO111059",
+          "capabilities": ["CREDIT_CARD_PAYABLE", "REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 27,
+              "max_electric_power": 11000,
+              "last_updated": "2023-10-17T06:45:35Z",
+              "id": "263183944",
+              "tariff_ids": ["bfa7c5fd857cda2f9b9dc6afae5095df"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262397000",
+          "evse_id": "DE*MUC*E*CO111057",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2023-10-17T06:45:08Z",
+          "status_last_updated": "2026-08-29T13:52:59Z",
+          "original_uid": "DE*MUC*E*CO111057",
+          "capabilities": ["CREDIT_CARD_PAYABLE", "REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 27,
+              "max_electric_power": 11000,
+              "last_updated": "2023-10-17T06:45:08Z",
+              "id": "263183942",
+              "tariff_ids": ["bfa7c5fd857cda2f9b9dc6afae5095df"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262397009",
+          "evse_id": "DE*MUC*E*CO111018",
+          "status": "CHARGING",
+          "presence": "PRESENT",
+          "last_updated": "2023-10-17T06:44:41Z",
+          "status_last_updated": "2026-08-03T17:40:46Z",
+          "original_uid": "DE*MUC*E*CO111018",
+          "capabilities": ["CREDIT_CARD_PAYABLE", "REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 27,
+              "max_electric_power": 11000,
+              "last_updated": "2023-10-17T06:44:41Z",
+              "id": "263183951",
+              "tariff_ids": ["bfa7c5fd857cda2f9b9dc6afae5095df"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262397001",
+          "evse_id": "DE*MUC*E*CO111058",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2026-10-01T06:10:21Z",
+          "status_last_updated": "2026-10-01T06:10:21Z",
+          "original_uid": "DE*MUC*E*CO111058",
+          "capabilities": ["CREDIT_CARD_PAYABLE", "REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 27,
+              "max_electric_power": 11000,
+              "last_updated": "2023-10-17T06:45:47Z",
+              "id": "263183943",
+              "tariff_ids": ["bfa7c5fd857cda2f9b9dc6afae5095df"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262397004",
+          "evse_id": "DE*MUC*E*CO111061",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2023-10-17T06:44:14Z",
+          "status_last_updated": "2026-09-27T05:56:41Z",
+          "original_uid": "DE*MUC*E*CO111061",
+          "capabilities": ["CREDIT_CARD_PAYABLE", "REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 27,
+              "max_electric_power": 11000,
+              "last_updated": "2023-10-17T06:44:14Z",
+              "id": "263183946",
+              "tariff_ids": ["bfa7c5fd857cda2f9b9dc6afae5095df"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262397008",
+          "evse_id": "DE*MUC*E*CO111017",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2023-10-17T06:44:00Z",
+          "status_last_updated": "2026-09-30T05:21:28Z",
+          "original_uid": "DE*MUC*E*CO111017",
+          "capabilities": ["CREDIT_CARD_PAYABLE", "REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 27,
+              "max_electric_power": 11000,
+              "last_updated": "2023-10-17T06:44:00Z",
+              "id": "263183950",
+              "tariff_ids": ["bfa7c5fd857cda2f9b9dc6afae5095df"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262397005",
+          "evse_id": "DE*MUC*E*CO111062",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2023-10-17T06:43:48Z",
+          "status_last_updated": "2026-09-27T13:24:18Z",
+          "original_uid": "DE*MUC*E*CO111062",
+          "capabilities": ["CREDIT_CARD_PAYABLE", "REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 27,
+              "max_electric_power": 11000,
+              "last_updated": "2023-10-17T06:43:48Z",
+              "id": "263183947",
+              "tariff_ids": ["bfa7c5fd857cda2f9b9dc6afae5095df"],
+              "original_id": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Luisenstraße 2F",
+      "postal_code": "76137",
+      "city": "Karlsruhe",
+      "state": "Baden-Württemberg",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-25T09:32:21Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "341736",
+      "publish": true,
+      "original_id": "1031489",
+      "source": "bnetza_api",
+      "official_region_code": "082120000000",
+      "coordinates": {
+        "latitude": 49.000645,
+        "longitude": 8.404824,
+        "lat": 49.000645,
+        "lon": 8.404824
+      },
+      "operator": {
+        "name": "CUBOS Service GmbH"
+      },
+      "evses": [
+        {
+          "uid": "260020987",
+          "evse_id": "BNETZA*1031491*2",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-25T09:32:21Z",
+          "original_uid": "BNETZA*1031491*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-25T09:32:21Z",
+              "id": "260795602",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260020986",
+          "evse_id": "BNETZA*1031491*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-25T09:32:21Z",
+          "original_uid": "BNETZA*1031491*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-25T09:32:21Z",
+              "id": "260795601",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260020980",
+          "evse_id": "BNETZA*1031489*3",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-25T09:32:21Z",
+          "original_uid": "BNETZA*1031489*3",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-25T09:32:21Z",
+              "id": "260795595",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260020981",
+          "evse_id": "BNETZA*1031489*4",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-25T09:32:21Z",
+          "original_uid": "BNETZA*1031489*4",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-25T09:32:21Z",
+              "id": "260795596",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260020979",
+          "evse_id": "BNETZA*1031489*2",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-25T09:32:21Z",
+          "original_uid": "BNETZA*1031489*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-25T09:32:21Z",
+              "id": "260795594",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260020978",
+          "evse_id": "BNETZA*1031489*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-25T09:32:21Z",
+          "original_uid": "BNETZA*1031489*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-25T09:32:21Z",
+              "id": "260795593",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260020985",
+          "evse_id": "BNETZA*1031490*4",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-25T09:32:21Z",
+          "original_uid": "BNETZA*1031490*4",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-25T09:32:21Z",
+              "id": "260795600",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260020983",
+          "evse_id": "BNETZA*1031490*2",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-25T09:32:21Z",
+          "original_uid": "BNETZA*1031490*2",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-25T09:32:21Z",
+              "id": "260795598",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260020982",
+          "evse_id": "BNETZA*1031490*1",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-25T09:32:21Z",
+          "original_uid": "BNETZA*1031490*1",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-25T09:32:21Z",
+              "id": "260795597",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "260020984",
+          "evse_id": "BNETZA*1031490*3",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-25T09:32:21Z",
+          "original_uid": "BNETZA*1031490*3",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-25T09:32:21Z",
+              "id": "260795599",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

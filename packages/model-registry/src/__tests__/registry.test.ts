@@ -128,4 +128,48 @@ describe("production registry", () => {
       expect(linking!.alwaysMetres).toBeLessThanOrEqual(linking!.neverMetres);
     }
   });
+
+  it("takes crowd reports of what a driver can see, and of nothing else", () => {
+    const registry = productionRegistry();
+    expect(
+      registry
+        .kinds("situation")
+        .filter((k) => k.crowd !== undefined)
+        .map((k) => k.code),
+    ).toEqual([
+      "incident",
+      "roadworks",
+      "closure",
+      "weather_condition",
+      "road_condition",
+      "road_hazard",
+      "equipment_fault",
+      "congestion",
+      "other",
+    ]);
+    expect(
+      registry
+        .properties()
+        .filter((p) => p.crowd !== undefined)
+        .map((p) => p.code),
+    ).toEqual([
+      "parking.status",
+      "charging.evse_status",
+      "charging.connector_status",
+      "fuel.price",
+      "fuel.product_available",
+      "facility.open_status",
+    ]);
+  });
+
+  it("names what makes two sources' components one, where sources share one", () => {
+    const registry = productionRegistry();
+    expect(
+      registry
+        .kinds("component")
+        .filter((k) => k.identity !== undefined)
+        .map((k) => k.code)
+        .sort(),
+    ).toEqual(["connector", "evse", "fuel_product", "parking_area"]);
+  });
 });

@@ -10,6 +10,14 @@ import { z } from "zod";
 const DOMAIN = "charging";
 const V = "1.0";
 const MINUTE = 60;
+const HOUR = 3600;
+/**
+ * A driver who finds a charge point broken or blocked can say so; a broken
+ * point usually stays broken for hours, so the report outlives a parking
+ * spot's, and confirmations can carry it over two days until the operator's
+ * own status catches up.
+ */
+const STATUS_CROWD = { ttlSec: 4 * HOUR, maxLifetimeSec: 48 * HOUR };
 
 /**
  * What a charge point is doing, OCPI's EVSE status vocabulary. Connectors
@@ -115,6 +123,9 @@ export const CHARGING_KINDS = [
     code: "evse",
     version: V,
     description: "One charge point: what a driver plugs into, with its own status.",
+    // The eMI3 id is global; the OCPI uid and the DATEX refill point id are an
+    // operator's own, which still name one point within one linked site.
+    identity: { idSchemes: ["emi3:evse", "oicp:evse", "ocpi:evse", "datex:refill_point"] },
     details: (k) => ({
       /** eMI3 / ISO 15118 id, the one that identifies the point across systems. */
       evseId: z.string().min(1).optional(),
@@ -144,6 +155,8 @@ export const CHARGING_KINDS = [
     code: "connector",
     version: V,
     description: "One plug or socket of a charge point, with its power envelope.",
+    // An OCPI connector id ("1", "2") is only unique within its EVSE.
+    identity: { idSchemes: ["ocpi:connector"], withinParent: true },
     details: (k) => ({
       standard: k.vocab("connector_standard"),
       format: z.enum(["socket", "cable"]),
@@ -256,6 +269,7 @@ export const CHARGING_PROPERTIES: PropertyEntry[] = [
     subjects: [EVSE],
     freshnessWindowSec: 15 * MINUTE,
     retention: { changeOnly: true },
+    crowd: STATUS_CROWD,
   }),
   defineProperty({
     code: "charging.connector_status",
@@ -266,6 +280,7 @@ export const CHARGING_PROPERTIES: PropertyEntry[] = [
     subjects: [EVSE],
     freshnessWindowSec: 15 * MINUTE,
     retention: { changeOnly: true },
+    crowd: STATUS_CROWD,
   }),
   defineProperty({
     code: "charging.site_status",

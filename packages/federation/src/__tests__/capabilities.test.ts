@@ -8,7 +8,7 @@ import {
 function caps(overrides: Partial<NegotiableCapabilities> = {}): NegotiableCapabilities {
   return {
     protocolVersion: "1.0",
-    schemaVersions: ["1", "2"],
+    schemaVersions: ["kernel@1.0", "situation/incident@1.0"],
     wireFormats: ["application/activity+json"],
     deliveryModes: ["pull", "webhook"],
     convergenceBound: 300,
@@ -32,19 +32,29 @@ describe("negotiateCapabilities", () => {
     expect(negotiated.protocolVersion).toBe("0.1");
   });
 
-  it("intersects schemaVersions, wireFormats and deliveryModes", () => {
+  it("shares the schemas both run at one major, and intersects wireFormats and deliveryModes", () => {
     const local = caps({
-      schemaVersions: ["1", "2", "3"],
+      schemaVersions: [
+        "kernel@1.0",
+        "situation/incident@1.2",
+        "observation/fuel.price@1.0",
+        "situation/closure@1.0",
+      ],
       wireFormats: ["application/activity+json", "application/cbor"],
       deliveryModes: ["pull", "webhook", "sse"],
     });
     const peer = caps({
-      schemaVersions: ["2", "3", "4"],
+      schemaVersions: [
+        "kernel@1.1",
+        "situation/incident@1.0",
+        "observation/fuel.price@2.0",
+        "situation/alert@1.0",
+      ],
       wireFormats: ["application/cbor"],
       deliveryModes: ["pull", "sse"],
     });
     const negotiated = negotiateCapabilities(local, peer);
-    expect(negotiated.schemaVersions).toEqual(["2", "3"]);
+    expect(negotiated.schemaVersions).toEqual(["kernel@1", "situation/incident@1"]);
     expect(negotiated.wireFormats).toEqual(["application/cbor"]);
     expect(negotiated.deliveryModes).toEqual(["pull", "sse"]);
   });
@@ -69,11 +79,20 @@ describe("negotiateCapabilities", () => {
     expect(negotiateCapabilities(local, peer).protocolVersion).toBe("1.10");
   });
 
-  it("returns an empty intersection (not an error) when schema sets are disjoint", () => {
+  it("shares only the kernel (not an error) when no kind or property is common", () => {
     const negotiated = negotiateCapabilities(
-      caps({ schemaVersions: ["1"] }),
-      caps({ schemaVersions: ["2"] }),
+      caps({ schemaVersions: ["kernel@1.0", "situation/incident@1.0"] }),
+      caps({ schemaVersions: ["kernel@1.0", "situation/alert@1.0"] }),
     );
-    expect(negotiated.schemaVersions).toEqual([]);
+    expect(negotiated.schemaVersions).toEqual(["kernel@1"]);
+  });
+
+  it("throws when the kernels differ in major: no record class could be exchanged", () => {
+    expect(() =>
+      negotiateCapabilities(
+        caps({ schemaVersions: ["kernel@1.0", "situation/incident@1.0"] }),
+        caps({ schemaVersions: ["kernel@2.0", "situation/incident@1.0"] }),
+      ),
+    ).toThrow(/no shared kernel major/);
   });
 });

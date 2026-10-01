@@ -7,6 +7,7 @@ import {
 } from "../index.js";
 
 const NOW = "2026-01-01T00:00:00.000Z";
+const VERSIONS = ["kernel@1.0", "situation/incident@1.0"];
 
 function config(overrides: Partial<ActorConfig> = {}): ActorConfig {
   return {
@@ -20,7 +21,6 @@ function config(overrides: Partial<ActorConfig> = {}): ActorConfig {
     trustTier: 1,
     capabilities: {
       protocolVersion: "0.1",
-      schemaVersions: ["1"],
       wireFormats: ["application/activity+json"],
       deliveryModes: ["pull"],
       subscriptionFilters: ["bbox", "type"],
@@ -34,7 +34,7 @@ function config(overrides: Partial<ActorConfig> = {}): ActorConfig {
 describe("buildActorDocument", () => {
   it("builds the well-known actor shape with endpoints under /peer", async () => {
     const key = await generateInstanceKey(NOW);
-    const doc = buildActorDocument(config(), [key]);
+    const doc = buildActorDocument(config(), [key], VERSIONS);
     const actorId = "https://conditions.example.org/.well-known/openconditions/actor.json";
     expect(doc.id).toBe(actorId);
     expect(doc.type).toEqual(["Service", "MobilityCommonsInstance"]);
@@ -53,9 +53,15 @@ describe("buildActorDocument", () => {
     expect(doc.trustAnchor).toEqual([]);
   });
 
+  it("advertises the schema versions of the running registry", async () => {
+    const key = await generateInstanceKey(NOW);
+    const doc = buildActorDocument(config(), [key], VERSIONS);
+    expect(doc.capabilities.schemaVersions).toEqual(VERSIONS);
+  });
+
   it("serves each active key as a Multikey entry keyed by its multibase", async () => {
     const key = await generateInstanceKey(NOW);
-    const doc = buildActorDocument(config(), [key]);
+    const doc = buildActorDocument(config(), [key], VERSIONS);
     const actorId = doc.id;
     expect(doc.publicKey).toHaveLength(1);
     expect(doc.publicKey[0]).toEqual({
@@ -69,7 +75,7 @@ describe("buildActorDocument", () => {
   it("carries BOTH keys during a rotation overlap", async () => {
     const oldKey = await generateInstanceKey(NOW);
     const newKey = await generateInstanceKey("2026-06-25T00:00:00.000Z");
-    const doc = buildActorDocument(config(), [newKey, oldKey]);
+    const doc = buildActorDocument(config(), [newKey, oldKey], VERSIONS);
     expect(doc.publicKey.map((k) => k.publicKeyMultibase)).toEqual([
       newKey.publicKeyMultibase,
       oldKey.publicKeyMultibase,
@@ -78,7 +84,7 @@ describe("buildActorDocument", () => {
 
   it("never leaks private key material (Multikey entries carry exactly four public fields)", async () => {
     const key = await generateInstanceKey(NOW);
-    const doc = buildActorDocument(config(), [key]);
+    const doc = buildActorDocument(config(), [key], VERSIONS);
     expect(Object.keys(doc.publicKey[0]!).sort()).toEqual([
       "id",
       "owner",
@@ -92,14 +98,18 @@ describe("buildActorDocument", () => {
 
   it("normalizes a trailing slash on baseUrl", async () => {
     const key = await generateInstanceKey(NOW);
-    const doc = buildActorDocument(config({ baseUrl: "https://conditions.example.org/" }), [key]);
+    const doc = buildActorDocument(
+      config({ baseUrl: "https://conditions.example.org/" }),
+      [key],
+      VERSIONS,
+    );
     expect(doc.id).toBe("https://conditions.example.org/.well-known/openconditions/actor.json");
     expect(doc.outbox).toBe("https://conditions.example.org/peer/outbox");
   });
 
   it("includes optional fields only when configured", async () => {
     const key = await generateInstanceKey(NOW);
-    const bare = buildActorDocument(config(), [key]);
+    const bare = buildActorDocument(config(), [key], VERSIONS);
     expect("transparencyReportUrl" in bare).toBe(false);
     expect("policyDocument" in bare).toBe(false);
     const full = buildActorDocument(
@@ -109,6 +119,7 @@ describe("buildActorDocument", () => {
         trustAnchors: ["z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"],
       }),
       [key],
+      VERSIONS,
     );
     expect(full.transparencyReportUrl).toBe("https://conditions.example.org/transparency");
     expect(full.policyDocument).toBe("https://conditions.example.org/policy");
@@ -116,7 +127,7 @@ describe("buildActorDocument", () => {
   });
 
   it("refuses to build an actor document with no active keys", () => {
-    expect(() => buildActorDocument(config(), [])).toThrow(TypeError);
+    expect(() => buildActorDocument(config(), [], VERSIONS)).toThrow(TypeError);
   });
 });
 
@@ -136,5 +147,12 @@ describe("parseActorConfig", () => {
     expect(() =>
       parseActorConfig({ ...config(), capabilities: { protocolVersion: "0.1" } }),
     ).toThrow(TypeError);
+  });
+
+  it("refuses configured schema versions: the registry advertises them", () => {
+    const cfg = config();
+    expect(() =>
+      parseActorConfig({ ...cfg, capabilities: { ...cfg.capabilities, schemaVersions: ["1"] } }),
+    ).toThrow(/capabilities\.schemaVersions/);
   });
 });

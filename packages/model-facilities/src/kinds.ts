@@ -124,5 +124,6 @@ export const FACILITIES_PROPERTIES = [
     freshnessWindowSec: 24 * HOUR,
     retention: { changeOnly: true },
     routingRelevant: true,
+    crowd: { ttlSec: 2 * HOUR, maxLifetimeSec: 12 * HOUR },
   }),
 ];

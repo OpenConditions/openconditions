@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { componentSchema, featureSchema } from "../classes/feature.js";
-import { observationSchema, resultSchemaFor } from "../classes/observation.js";
+import { observationSchema, qualifierSchema, resultSchemaFor } from "../classes/observation.js";
 import { offerSchema } from "../classes/offer.js";
 import { situationSchema } from "../classes/situation.js";
 import { buildKernelBase } from "../kernel/build.js";
 import type { Effect, Kernel } from "../kernel/effect-type.js";
 import { KERNEL_VERSION } from "../kernel/module.js";
+import { FUSION_TIERS } from "../kernel/provenance.js";
 import type { Stage } from "../kernel/record-base.js";
 import { RECORD_CLASSES, type RecordClass } from "../kernel/scalars.js";
 import { enumOf } from "../kernel/vocab.js";
@@ -17,6 +18,7 @@ import {
 } from "./crosswalk.js";
 import {
   type ChangeKindEntry,
+  type CrowdRules,
   type DomainEntry,
   type EffectEntry,
   type KindClass,
@@ -71,6 +73,10 @@ export interface Registry {
   changeKinds(): readonly ChangeKindEntry[];
   /** Every module's crosswalks, indexed in both directions. */
   crosswalk: Crosswalk;
+  /** A kind's `details` schema (`kind`, `v` and its own fields); offers have none. */
+  detailsSchema(cls: KindClass, code: string): z.ZodType | undefined;
+  /** A property's result and qualifier schemas, exactly as its observations carry them. */
+  observationParts(code: string): { result: z.ZodType; qualifiers: z.ZodType } | undefined;
   /** The full record schema for (class, kind|property) at a stage. */
   recordSchema(cls: RecordClass, code: string, stage: Stage): z.ZodType | undefined;
   /** Hard validation of a stored/wire record, dispatched on (class, kind|property, v). */
@@ -106,6 +112,23 @@ function checkRetention(p: PropertyEntry, where: string): void {
     throw new RegistryError(
       `${where}: a histogram rollup needs a quantity and a positive bin width`,
     );
+  }
+}
+
+/** Crowd lifetimes and quorums must describe a report that can live and be judged. */
+function checkCrowd(rules: CrowdRules, where: string): void {
+  const { ttlSec, maxLifetimeSec, corroborationKeys = 2, negationKeys = 2 } = rules;
+  if (!Number.isInteger(ttlSec) || ttlSec <= 0) {
+    throw new RegistryError(`${where}: crowd ttlSec is a positive whole number of seconds`);
+  }
+  if (!Number.isInteger(maxLifetimeSec) || maxLifetimeSec < ttlSec) {
+    throw new RegistryError(`${where}: crowd maxLifetimeSec is whole seconds, at least ttlSec`);
+  }
+  if (!Number.isInteger(corroborationKeys) || corroborationKeys < 2) {
+    throw new RegistryError(`${where}: corroboration needs at least two distinct reporters`);
+  }
+  if (!Number.isInteger(negationKeys) || negationKeys < 1) {
+    throw new RegistryError(`${where}: negationKeys is a positive whole number`);
   }
 }
 
@@ -338,6 +361,29 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
         requireValue("external_id_scheme", scheme, `${where} linking`),
       );
     }
+    if (k.crowd !== undefined) {
+      if (k.class !== "situation")
+        throw new RegistryError(`${where}: only situation kinds take crowd reports`);
+      checkCrowd(k.crowd, where);
+      if (k.crowd.matchMetres !== undefined && !(k.crowd.matchMetres > 0)) {
+        throw new RegistryError(`${where}: crowd matchMetres is positive`);
+      }
+      for (const [type, rules] of Object.entries(k.crowd.types ?? {})) {
+        if (k.types?.[type] === undefined)
+          throw new RegistryError(`${where}: crowd rules for unregistered type "${type}"`);
+        checkCrowd(rules, `${where}.${type}`);
+      }
+    }
+    if (k.identity !== undefined) {
+      if (k.class !== "component")
+        throw new RegistryError(`${where}: only component kinds declare an identity`);
+      const { idSchemes = [], fields = [], withinParent } = k.identity;
+      if (idSchemes.length === 0 && fields.length === 0)
+        throw new RegistryError(`${where}: an identity names id schemes or fields`);
+      if (withinParent && idSchemes.length === 0)
+        throw new RegistryError(`${where}: withinParent compares ids, so it needs id schemes`);
+      for (const scheme of idSchemes) requireValue("external_id_scheme", scheme, where);
+    }
   }
   for (const p of properties.values()) {
     const where = `property ${p.code}`;
@@ -363,6 +409,22 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
       }
     }
     checkRetention(p, where);
+    if (p.crowd !== undefined) {
+      checkCrowd(p.crowd, where);
+      if (!p.subjects.some((s) => s.kind === "feature" || s.kind === "location"))
+        throw new RegistryError(`${where}: the crowd reports about a feature or a location`);
+      if (p.crowd.reachMetres !== undefined && !(p.crowd.reachMetres > 0))
+        throw new RegistryError(`${where}: crowd reachMetres is positive`);
+      const tolerance = p.crowd.agreement?.tolerance;
+      if (tolerance !== undefined) {
+        if (p.result.type !== "quantity" && p.result.type !== "money")
+          throw new RegistryError(`${where}: only quantities and prices agree within a tolerance`);
+        if (!(tolerance >= 0)) throw new RegistryError(`${where}: tolerance is not negative`);
+      }
+      const order = p.fusionTiers ?? FUSION_TIERS;
+      if (!order.some((tier) => tier.startsWith("crowd_")))
+        throw new RegistryError(`${where}: a crowd-reported property fuses crowd rows`);
+    }
   }
 
   let crosswalk: Crosswalk;
@@ -400,7 +462,11 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
     ) as unknown as z.ZodType<Effect>,
   };
 
+  const detailsSchemas = new Map<string, z.ZodType>();
   const detailsSchema = (k: KindEntry): z.ZodType => {
+    const key = kindKey(k.class, k.code);
+    const hit = detailsSchemas.get(key);
+    if (hit) return hit;
     let schema = z.strictObject({
       kind: z.literal(k.code),
       v: z.literal(majorOf(k.version)),
@@ -410,6 +476,7 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
       const refine = k.refineDetails;
       schema = schema.superRefine((d, ctx) => refine(d as Record<string, unknown>, ctx));
     }
+    detailsSchemas.set(key, schema);
     return schema;
   };
   const resultSchemas = new Map(
@@ -429,8 +496,26 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
       .filter((k) => k.class === "component")
       .map((k) => [k.code, componentSchema(kernel, k, detailsSchema(k))]),
   );
+  for (const k of kinds.values()) {
+    const fields = k.identity?.fields ?? [];
+    const shape = k.details?.(kernel) ?? {};
+    const missing = fields.find((f) => !(f in shape));
+    if (missing !== undefined)
+      throw new RegistryError(
+        `kind ${k.class}:${k.code}: identity field "${missing}" is not a detail`,
+      );
+  }
   const vocabValues = (code: string) => requireVocab(code, "property").values;
   const selectorList = [...selectors.values()];
+  const observationParts = new Map(
+    [...properties.values()].map((p) => [
+      p.code,
+      {
+        result: resultSchemaFor(p.result, vocabValues, resultSchemas),
+        qualifiers: qualifierSchema(p, kernel),
+      },
+    ]),
+  );
 
   const cache = new Map<string, z.ZodType>();
   const recordSchema = (cls: RecordClass, code: string, stage: Stage): z.ZodType | undefined => {
@@ -440,13 +525,7 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
     let schema: z.ZodType | undefined;
     if (cls === "observation") {
       const p = properties.get(code);
-      if (p)
-        schema = observationSchema(
-          kernel,
-          p,
-          resultSchemaFor(p.result, vocabValues, resultSchemas),
-          stage,
-        );
+      if (p) schema = observationSchema(kernel, p, observationParts.get(code)!, stage);
     } else {
       const k = kinds.get(kindKey(cls, code));
       if (k?.class === "situation")
@@ -549,6 +628,11 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
     resultSchemas: () => [...resultSchemaEntries.values()],
     changeKinds: () => [...changeKinds.values()],
     crosswalk,
+    observationParts: (code) => observationParts.get(code),
+    detailsSchema: (cls, code) => {
+      const k = kinds.get(kindKey(cls, code));
+      return k?.details === undefined ? undefined : detailsSchema(k);
+    },
     recordSchema,
     validate: validateAt("stored"),
     validateDraft: validateAt("draft"),

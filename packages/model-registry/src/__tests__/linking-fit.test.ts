@@ -84,6 +84,9 @@ interface OcpdbLocation {
   evses?: { evse_id?: string }[];
 }
 
+/** eMI3 EVSE ids: country, operator, `E`, outlet — with or without the separators. */
+const EMI3 = /^[A-Z]{2}\*?[A-Z0-9]{3}\*?E[A-Z0-9*]{1,31}$/;
+
 const chargingFeatures = (): LinkableFeature[] =>
   (json("ocpdb-charging-karlsruhe.json").items as OcpdbLocation[]).map((loc) => ({
     id: `oc:feature:de-bw-ocpdb:${loc.id}`,
@@ -99,11 +102,20 @@ const chargingFeatures = (): LinkableFeature[] =>
     ...(loc.operator === undefined
       ? {}
       : { operator: { name: [{ lang: "de", text: loc.operator.name }] } }),
-    externalIds: [{ scheme: "ocpi:location", id: loc.id }],
+    // The database's row id, not an operator's OCPI location id: it keeps one
+    // row per upstream source of a site.
+    externalIds: [{ scheme: "provider", id: loc.id, authority: "de-bw-ocpdb" }],
     components: (loc.evses ?? []).flatMap((evse) =>
       evse.evse_id === undefined
         ? []
-        : [{ externalIds: [{ scheme: "emi3:evse", id: evse.evse_id }] }],
+        : [
+            {
+              externalIds: [
+                // Register rows carry the register's own ids (BNETZA*…), not eMI3 ones.
+                { scheme: EMI3.test(evse.evse_id) ? "emi3:evse" : "bnetza", id: evse.evse_id },
+              ],
+            },
+          ],
     ),
     provenance: { sourceId: "de-bw-ocpdb" },
   }));

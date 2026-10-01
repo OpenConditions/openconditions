@@ -253,7 +253,9 @@ function ocpiChargingSites() {
       kind: "charging_site",
       temporality: "static",
       lifecycle: "operational",
-      externalIds: [{ scheme: "ocpi:location", id: loc.id, authority: "de-bw-ocpdb" }],
+      // The database's row id, not an operator's OCPI location id: it keeps
+      // one row per upstream source of a site.
+      externalIds: [{ scheme: "provider", id: loc.id, authority: "de-bw-ocpdb" }],
       ...(loc.operator === undefined
         ? {}
         : { operator: { role: "operator", name: de(loc.operator.name) } }),

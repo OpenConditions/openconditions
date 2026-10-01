@@ -82,6 +82,7 @@ const TRUTH_PATHS = [
   "packages/core/src/crossSourceDedupe.ts",
   "packages/roads/src/evidence-policy.ts",
   "packages/federation/src/filter.ts",
+  "packages/federation/src/record-filter.ts",
 ];
 
 const TRUTH_DIRECTORIES = [

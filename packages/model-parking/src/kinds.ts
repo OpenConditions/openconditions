@@ -99,6 +99,9 @@ export const PARKING_KINDS = [
     code: "parking_area",
     version: V,
     description: "The part of a site laid out for one vehicle type and user group.",
+    // No source publishes area ids another source shares; the vehicle type and
+    // user group are what an area is.
+    identity: { fields: ["vehicleType", "userGroup"] },
     details: () => ({
       vehicleType: z.enum(PARKING_VEHICLE_TYPES),
       userGroup: z.enum(PARKING_USER_GROUPS).optional(),
@@ -270,6 +273,8 @@ export const PARKING_PROPERTIES: PropertyEntry[] = [
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
     retention: { changeOnly: true },
+    // "Full" at a car park changes within the hour.
+    crowd: { ttlSec: 30 * MINUTE, maxLifetimeSec: 180 * MINUTE },
   }),
   defineProperty({
     code: "parking.trend",
