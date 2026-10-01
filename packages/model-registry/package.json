@@ -33,6 +33,7 @@
     "@openconditions/model-charging": "workspace:*",
     "@openconditions/model-facilities": "workspace:*",
     "@openconditions/model-fuel": "workspace:*",
+    "@openconditions/model-hazards": "workspace:*",
     "@openconditions/model-maritime": "workspace:*",
     "@openconditions/model-parking": "workspace:*",
     "@openconditions/model-roads": "workspace:*",

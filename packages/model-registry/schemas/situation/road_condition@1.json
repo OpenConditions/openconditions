@@ -467,7 +467,9 @@
             "cpo",
             "provider",
             "netex:line",
-            "netex:stop_place"
+            "netex:stop_place",
+            "irwin",
+            "usgs:event"
           ]
         },
         "id": {
@@ -682,7 +684,11 @@
                       "same",
                       "ugc",
                       "ars",
-                      "padd"
+                      "padd",
+                      "warncellid",
+                      "emma_id",
+                      "sgc",
+                      "eccc_clc"
                     ]
                   },
                   "code": {
@@ -2682,7 +2688,11 @@
                               "same",
                               "ugc",
                               "ars",
-                              "padd"
+                              "padd",
+                              "warncellid",
+                              "emma_id",
+                              "sgc",
+                              "eccc_clc"
                             ]
                           },
                           "code": {
@@ -3127,7 +3137,11 @@
                               "same",
                               "ugc",
                               "ars",
-                              "padd"
+                              "padd",
+                              "warncellid",
+                              "emma_id",
+                              "sgc",
+                              "eccc_clc"
                             ]
                           },
                           "code": {
@@ -3637,7 +3651,11 @@
                               "same",
                               "ugc",
                               "ars",
-                              "padd"
+                              "padd",
+                              "warncellid",
+                              "emma_id",
+                              "sgc",
+                              "eccc_clc"
                             ]
                           },
                           "code": {
@@ -4076,7 +4094,11 @@
                               "same",
                               "ugc",
                               "ars",
-                              "padd"
+                              "padd",
+                              "warncellid",
+                              "emma_id",
+                              "sgc",
+                              "eccc_clc"
                             ]
                           },
                           "code": {
@@ -4528,7 +4550,11 @@
                               "same",
                               "ugc",
                               "ars",
-                              "padd"
+                              "padd",
+                              "warncellid",
+                              "emma_id",
+                              "sgc",
+                              "eccc_clc"
                             ]
                           },
                           "code": {
@@ -4985,7 +5011,11 @@
                               "same",
                               "ugc",
                               "ars",
-                              "padd"
+                              "padd",
+                              "warncellid",
+                              "emma_id",
+                              "sgc",
+                              "eccc_clc"
                             ]
                           },
                           "code": {
@@ -5448,7 +5478,11 @@
                               "same",
                               "ugc",
                               "ars",
-                              "padd"
+                              "padd",
+                              "warncellid",
+                              "emma_id",
+                              "sgc",
+                              "eccc_clc"
                             ]
                           },
                           "code": {
@@ -5902,7 +5936,11 @@
                               "same",
                               "ugc",
                               "ars",
-                              "padd"
+                              "padd",
+                              "warncellid",
+                              "emma_id",
+                              "sgc",
+                              "eccc_clc"
                             ]
                           },
                           "code": {
@@ -6347,7 +6385,11 @@
                               "same",
                               "ugc",
                               "ars",
-                              "padd"
+                              "padd",
+                              "warncellid",
+                              "emma_id",
+                              "sgc",
+                              "eccc_clc"
                             ]
                           },
                           "code": {
@@ -6776,7 +6818,11 @@
                               "same",
                               "ugc",
                               "ars",
-                              "padd"
+                              "padd",
+                              "warncellid",
+                              "emma_id",
+                              "sgc",
+                              "eccc_clc"
                             ]
                           },
                           "code": {
@@ -7209,7 +7255,11 @@
                               "same",
                               "ugc",
                               "ars",
-                              "padd"
+                              "padd",
+                              "warncellid",
+                              "emma_id",
+                              "sgc",
+                              "eccc_clc"
                             ]
                           },
                           "code": {

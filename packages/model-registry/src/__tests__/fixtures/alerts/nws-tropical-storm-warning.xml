@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+    <identifier>urn:oid:2.49.0.1.840.0.dcdb147a0057614b3b3437dc88adf52dd28d3dda.001.2</identifier>
+    <sender>w-nws.webmaster@noaa.gov</sender>
+    <sent>2026-10-01T09:10:00+10:00</sent>
+    <status>Actual</status>
+    <msgType>Alert</msgType>
+    <source>211803 v2.3.0</source>
+    <scope>Public</scope>
+    <code>IPAWSv1.0</code>
+    <info>
+        <language>en-US</language>
+        <category>Met</category>
+        <event>Tropical Storm Warning</event>
+        <responseType>Avoid</responseType>
+        <urgency>Immediate</urgency>
+        <severity>Severe</severity>
+        <certainty>Likely</certainty>
+        <eventCode>
+            <valueName>SAME</valueName>
+            <value>TRW</value>
+        </eventCode>
+        <eventCode>
+            <valueName>NationalWeatherService</valueName>
+            <value>TRW</value>
+        </eventCode>
+        <effective>2026-10-01T09:10:00+10:00</effective>
+        <onset>2026-10-01T09:10:00+10:00</onset>
+        <expires>2026-10-01T15:00:00+10:00</expires>
+        <senderName>NWS Tiyan GU</senderName>
+        <headline>Tropical Storm Warning issued October 1 at 9:10AM ChST by NWS Tiyan GU</headline>
+        <description>...NEWLY NAMED TROPICAL STORM CHOI-WAN CONTINUES MOVING WEST-
+NORTHWEST TOWARDS THE FAR NORTHERN MARIANAS...
+
+.NEW INFORMATION...
+Tropical Storm 26W is now named Choi-wan.
+A Tropical Storm Warning is now in effect for Tinian and Saipan and
+their adjacent waters in the CNMI.
+
+.AREAS AFFECTED...
+This local statement provides important information and recommended
+actions for people in Guam and the Northern Marianas.
+
+.WATCHES/WARNINGS...
+A Tropical Storm Warning is now in effect for Tinian and Saipan in
+the CNMI.
+A Tropical Storm Warning remains in effect for Alamagan and Pagan in
+the CNMI.
+A Typhoon Watch remains in effect for Alamagan and Pagan in the CNMI.
+A Tropical Storm Watch remains in effect for Agrihan in the CNMI.
+
+A Tropical Storm Watch means that tropical storm conditions, including
+winds of 39 to 73 mph, are possible within 48 hours.
+A Typhoon Watch means that typhoon conditions, including winds of 74
+mph or more, are possible within 48 hours.
+
+A Tropical Storm Warning means that tropical storm conditions are
+expected within 24 hours.
+
+A Flash Flood Watch remains in effect for Tinian and Saipan. Please
+listen closely for any Flash Flood Warnings that might be in effect
+for your area.
+
+All persons in the Watch areas should review their preparedness plan
+and begin to take actions to prepare for conditions as indicated by
+your local forecast and additional details, below, for your island.
+
+.STORM INFORMATION...
+At 7 AM ChST, the center of Tropical Storm Choi-wan (26W) was located
+near latitude 16.3N, longitude 149.5E. This was about 370 miles
+east-northeast of Guam. Storm motion was west-northwest, 285 degrees,
+at 9 mph. Storm intensity was 40 mph.
+
+.SITUATION OVERVIEW...
+Tropical Storm Choi-wan (26W) has increased in forward speed once
+again, with a slight expansion in the tropical storm-force wind field
+expected to the west and southwest, keeping Tinian and Saipan well
+within said wind field. As such, the Tropical Storm Watch was
+upgraded to Tropical Storm Warning for Tinian, Saipan and their
+adjacent waters. Timing of further intensification and storm trek
+remains largely unchanged. Choi-wan will continue west through
+tonight, making a turn to the northwest Friday morning as it begins
+to approach Alamagan from the south and intensify into a typhoon,
+turning sharply northward, to then move north-northeastward late
+Friday night. This forecasted passage over Alamagan and Pagan is
+still expected to prolong the duration of damaging winds across the
+northern islands, likely leading to a lengthy period of time of
+damaging to destructive tropical storm conditions beginning this
+evening and continuing into Sunday afternoon. As Choi-wan is forecast
+to strengthen to a typhoon Friday morning as it approaches Alamagan,
+this would bring Alamagan and later Pagan, directly within the
+typhoon force winds Friday night through early Saturday morning. So,
+a Typhoon Watch and Tropical Storm Warning remain in effect for
+Alamagan and Pagan.
+
+It is too early to provide exact wind and surge forecast values for
+specific locations. A general concern should be for the possibility
+of at least damaging winds likely somewhere within the Northern
+Marianas.
+
+</description>
+        <instruction>Stay indoors during heavy rain and tropical storm-force wind conditions
+associated with Tropical Storm Choi-wan (26W). Heed the advice of
+your local emergency managers and officials, and continues to monitor
+forecasts by the National Weather Service office in Tiyan, Guam.
+Remain in sturdy shelter until the all-clear is given.
+
+...WIND INFORMATION...
+Breezy northwesterlies today will quickly increase toward the late
+afternoon, with tropical storm force winds of 35 to 45 mph with gusts
+to 60 mph expected beginning tonight, lasting through at least
+Saturday as Tropical Storm Choi-Wan (26W) stalls slightly on approach
+to the Far Northern Marianas. This is expected to expose Tinian and
+Saipan to a longer period of potentially TS conditions. At this time,
+strong tropical storm-force winds look to remain north of Saipan and
+Tinian as said winds are expected to remain closely packed near the
+center of the system.
+
+...COASTAL INUNDATION AND SURF INFORMATION...
+Surf will initially build to 8 to 11 feet along north-facing reefs
+by tonight, then quickly spread to west-facing reefs as the center of
+Choi-wan crosses the far northern CNMI and exposes a western fetch by
+early Friday morning. Surf will continue to increase along all reefs
+as Choi-wan continues to strengthen. Coastal inundation of 1 to 2
+feet, as well as significant coastal erosion, will be possible along
+all reefs.
+
+...OTHER STORM EFFECTS...
+Periods of rain, widespread heavy showers and scattered thunderstorms
+could produce rainfall totals of 5 to 8 inches by early Monday
+morning, with locally heavier amounts possible. So, a Flash Flood
+Watch is still expected to be in effect beginning late this evening,
+lasting through at least Sunday night. Additionally, a monsoon surge
+south of TS Choi-wan will maintain wet conditions across Saipan and
+Tinian into next week.
+
+Take small loose object indoors. Identify suitable shelter. Stock up
+a few days worth of food and water. If no concrete shelter is
+available, look for a cave or something similar. Take action to
+protect food crops or other possessions as appropriate.
+
+.WIND INFORMATION...
+Northerly winds of 10 to 15 mph will turn toward the northwest,
+then southwest and increase through Friday as 26W moves into the
+northern CNMI and strengthens, potentially becoming a typhoon
+Friday morning as it approaches Alamagan from the south. Tropical
+storm force winds of 39 to 50 mph may begin by Friday morning.
+Depending on the track and intensity, winds may increase to strong
+tropical storm-force of 58 to 65 mph early Saturday morning.
+Typhoon force winds greater than 74 mph look to remain just east
+of Agrihan at this time.
+
+.COASTAL INUNDATION AND SURF INFORMATION...
+Surf will initially build to 8 to 11 feet along east-facing reefs
+through Friday morning, then spread along north and west-facing
+reefs as the center moves north-northeast through the northern
+CNMI Friday night through Saturday night, increasing by several feet
+during this time. As Choi-wan continues to strengthen, surf will
+continue to increase, likely becoming hazardous during the weekend and
+then dangerous by early next week. Significant coastal erosion and
+some coastal inundation is expected during Choi-wan's passage.
+
+.OTHER STORM EFFECTS...
+Periods of rain, widespread heavy showers and scattered thunderstorms
+could produce rainfall totals of 8 to 14 inches by early Monday
+morning, with up to 20 inches of rainfall possible near the center of
+the system.
+
+Take small loose object indoors. Identify suitable shelter. Stock up
+a few days worth of food and water. If no concrete shelter is
+available, look for a cave or something similar. Take action to
+protect food crops or other possessions as appropriate.
+
+.WIND INFORMATION...
+Northerly winds of 10 to 15 mph will turn toward the northwest,
+then southwest and increase through Friday as 26W moves into the
+northern CNMI and strengthens, potentially becoming a typhoon
+Friday morning as it approaches Alamagan from the south. Tropical
+storm force winds of 39 to 50 mph are expected to begin by early Friday
+morning. Depending on the track and intensity, winds may increase
+to strong tropical storm-force of 58 to 65 mph early Saturday morning.
+Typhoon force winds greater than 74 mph may begin Friday evening as
+Choi-wan nears Alamagan.
+
+.COASTAL INUNDATION AND SURF INFORMATION...
+Surf will initially build to 8 to 11 feet along east-facing reefs
+through Friday morning, then spread along north and west-facing
+reefs as the center moves north-northeast through the northern
+CNMI Friday night through Saturday night, increasing by several feet
+during this time. As Choi-wan continues to strengthen, surf will
+continue to increase, likely becoming hazardous during the weekend and
+then dangerous by early next week. SIgnificant coastal erosion and
+some coastal inundation is expected during Choi-wan's passage.
+
+.OTHER STORM EFFECTS...
+Periods of rain, widespread heavy showers and scattered thunderstorms
+could produce rainfall totals of 10 to 16 inches by early Monday
+morning, with up to 20 inches of rainfall possible near the center of
+the system.</instruction>
+        <web>http://www.weather.gov</web>
+        <parameter>
+            <valueName>AWIPSidentifier</valueName>
+            <value>HLSPQ2</value>
+        </parameter>
+        <parameter>
+            <valueName>WMOidentifier</valueName>
+            <value>WTPQ82 PGUM 302310</value>
+        </parameter>
+        <parameter>
+            <valueName>NWSheadline</valueName>
+            <value>TROPICAL STORM WARNING NOW IN EFFECT</value>
+        </parameter>
+        <parameter>
+            <valueName>BLOCKCHANNEL</valueName>
+            <value>EAS</value>
+        </parameter>
+        <parameter>
+            <valueName>BLOCKCHANNEL</valueName>
+            <value>NWEM</value>
+        </parameter>
+        <parameter>
+            <valueName>EAS-ORG</valueName>
+            <value>WXR</value>
+        </parameter>
+        <parameter>
+            <valueName>VTEC</valueName>
+            <value>/O.NEW.PGUM.TR.W.4026.260930T2310Z-000000T0000Z/</value>
+        </parameter>
+        <parameter>
+            <valueName>BLOCKCHANNEL</valueName>
+            <value>CMAS</value>
+        </parameter>
+        <area>
+            <areaDesc>Tinian; Saipan</areaDesc>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>069120</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>069110</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>MPZ002</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>MPZ003</value>
+            </geocode>
+        </area>
+    </info>
+</alert>

@@ -72,6 +72,19 @@ describe("buildCrosswalk", () => {
     expect(() => buildCrosswalk([twice])).toThrow(CrosswalkError);
   });
 
+  it("parses CAP: one event code names one classification", () => {
+    const cap = defineKind({
+      ...incident,
+      typeMappings: { accident: { cap: ["SAME:TOR"] }, breakdown: { cap: ["SAME:TOR"] } },
+    });
+    expect(() => buildCrosswalk([cap])).toThrow(/cap code "SAME:TOR" is mapped twice/);
+    const once = defineKind({ ...incident, typeMappings: { accident: { cap: ["SAME:TOR"] } } });
+    expect(buildCrosswalk([once]).situation("cap", "SAME:TOR")).toEqual({
+      kind: "incident",
+      type: "accident",
+    });
+  });
+
   it("rejects a mapping for an unregistered type", () => {
     const wrong = defineKind({ ...incident, typeMappings: { fire: { wzdx: ["x"] } } });
     expect(() => buildCrosswalk([wrong])).toThrow(/"fire" is not registered/);

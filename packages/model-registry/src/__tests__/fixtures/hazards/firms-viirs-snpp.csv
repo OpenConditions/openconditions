@@ -1,0 +1,5 @@
+latitude,longitude,bright_ti4,scan,track,acq_date,acq_time,satellite,confidence,version,bright_ti5,frp,daynight
+39.07019,16.98349,367,0.6,0.7,2026-09-29,1056,N,high,2.0NRT,298.89,15.36,D
+64.26879,7.19411,311.95,0.62,0.54,2026-09-29,0107,N,nominal,2.0NRT,281.02,2.71,N
+37.47687,29.30148,329.87,0.48,0.4,2026-09-29,1056,N,low,2.0NRT,301.4,3.35,D
+45.00652,21.17266,346.21,0.51,0.5,2026-09-29,1058,N,nominal,2.0NRT,310.23,72.63,D

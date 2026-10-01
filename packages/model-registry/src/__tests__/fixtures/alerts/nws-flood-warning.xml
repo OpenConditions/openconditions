@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+    <identifier>urn:oid:2.49.0.1.840.0.117414b445cf36e52289c7b9afd5b7e544cb7931.001.1</identifier>
+    <sender>w-nws.webmaster@noaa.gov</sender>
+    <sent>2026-09-30T16:24:00-07:00</sent>
+    <status>Actual</status>
+    <msgType>Update</msgType>
+    <source>211803 v2.3.0</source>
+    <scope>Public</scope>
+    <code>IPAWSv1.0</code>
+    <references>w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.6be82c807a1785c1e054b0ff2dc29ec1a521c044.001.1,2026-09-30T09:19:00-07:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.dca3bccf0a1d2d141fa090d46e25aa36c9d40f85.001.1,2026-09-30T11:27:00-07:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.0aba51fc525784a63be2c6db82ad906ad5e0e938.001.1,2026-09-30T14:22:00-07:00</references>
+    <info>
+        <language>en-US</language>
+        <category>Met</category>
+        <event>Flood Warning</event>
+        <responseType>Avoid</responseType>
+        <urgency>Immediate</urgency>
+        <severity>Severe</severity>
+        <certainty>Likely</certainty>
+        <eventCode>
+            <valueName>SAME</valueName>
+            <value>FLS</value>
+        </eventCode>
+        <eventCode>
+            <valueName>NationalWeatherService</valueName>
+            <value>FAW</value>
+        </eventCode>
+        <effective>2026-09-30T16:24:00-07:00</effective>
+        <onset>2026-09-30T16:24:00-07:00</onset>
+        <expires>2026-10-01T00:30:00-07:00</expires>
+        <senderName>NWS Flagstaff AZ</senderName>
+        <headline>Flood Warning issued September 30 at 4:24PM MST until October 1 at 12:30AM MST by NWS Flagstaff AZ</headline>
+        <description>* WHAT...Flooding caused by excessive rainfall continues.
+
+* WHERE...The Little Colorado River in...
+Coconino County in north central Arizona...
+Navajo County in north central Arizona...
+
+* WHEN...Until 1230 AM MST /130 AM MDT/ Tonight.
+
+* IMPACTS...Flooding of the Little Colorado River is occurring.
+Further rises in the water levels are expected. Deadly flooding
+over low-water crossings.
+
+
+* ADDITIONAL DETAILS...
+- At 412 PM MST /512 PM MDT/, River gauge at Holbrook is above
+Flood Stage. Additional flooding expected downstream as elevated
+flow moves towards Winslow, and Bird Springs later this afternoon
+and evening.
+- This includes the following creeks, washes and rivers...
+Little Colorado River.
+
+Flooding impacts will continue, but no additional rainfall is
+expected.
+- Some locations that will experience flooding include...
+Winslow, Holbrook, Bird Springs, Hibbard, Manila, Joseph City,
+Sunrise, Leupp, and Jackrabbit.
+
+- For Little Colorado at Joseph City:
+At 3:30pm MST /4:30pm MDT/ the stage was 5.74 feet.
+Flood Stage is 9.0 feet.
+Forecast: A crest of 6.24 feet is expected at 6:00pm MST /7:00pm
+MDT/ Wednesday.
+Impacts:
+At 7.5 feet: Potential downstream lowland overflow.
+
+-For Little Colorado at Winslow:
+At 4:00pm MST /5:00pm MDT/ the stage was 18.12 feet.
+Flood Stage is 19.0 feet.
+Forecast: A crest of 19.14 feet is expected at 10:00pm MST
+/11:00pm MDT/ Wednesday.
+Impacts:
+At 17.0 feet: Downstream, the approaches to the bridge over the
+river on route 71 near Bird Springs will flood, and Leupp will be
+within 3 feet of flooding problems. Minor lowland overflow on
+right bank at Winslow.
+At 18.0 feet: Flow above this level for approximately 6 hours or
+more may cause erosion to the levee and eventual leakage or
+failure.
+At 19.0 feet: Overflow on right bank. Water approaches Ames Acres
+and Bushman Acres on left bank in Winslow area. Erosion is likely
+on the levee on the left bank. Downstream, the approaches to the
+bridge over the river on route 71 near Bird Springs will flood
+and evacuations of homes near the intersection of route 2 and
+route 71 are conducted.
+
+-For Little Colorado at Little Colorado River at Holbrook:
+At 3:30pm MST /4:30pm MDT/ the stage was 16.02 feet.
+Flood Stage is 15.5 feet.
+Forecast: A crest of 16.11 feet is expected at 5:00pm MST /6:00pm
+MDT/ Wednesday.
+Impacts:
+At 15.5 feet: Railroad bridge affected. Overflow on South Bank.
+- This includes the following recreation areas andcampgrounds...
+Homolovi State Park Campground, Hunt Park, McHood Park, Standin
+on the Corner Park, Sacred Heart Park and Winslow City Park.
+
+This includes the following swimming holes...
+Clear Creek Reservoir.
+- Additional information is available at weather.gov/flagstaff.
+</description>
+        <instruction>Turn around, don't drown when encountering flooded roads. Most flood
+deaths occur in vehicles.
+
+Stay away or be swept away! The banks of creeks and washes are
+unstable and unsafe during any flooding event.
+
+Low water crossings will become dangerous in heavy rain. Do not
+attempt to cross flooded roads. Find an alternate route.</instruction>
+        <web>http://www.weather.gov</web>
+        <parameter>
+            <valueName>AWIPSidentifier</valueName>
+            <value>FLSFGZ</value>
+        </parameter>
+        <parameter>
+            <valueName>WMOidentifier</valueName>
+            <value>WGUS85 KFGZ 302324</value>
+        </parameter>
+        <parameter>
+            <valueName>NWSheadline</valueName>
+            <value>FLOOD WARNING REMAINS IN EFFECT UNTIL 1230 AM MST /130 AM MDT/ THURSDAY</value>
+        </parameter>
+        <parameter>
+            <valueName>BLOCKCHANNEL</valueName>
+            <value>EAS</value>
+        </parameter>
+        <parameter>
+            <valueName>BLOCKCHANNEL</valueName>
+            <value>NWEM</value>
+        </parameter>
+        <parameter>
+            <valueName>EAS-ORG</valueName>
+            <value>WXR</value>
+        </parameter>
+        <parameter>
+            <valueName>VTEC</valueName>
+            <value>/O.CON.KFGZ.FA.W.0010.000000T0000Z-261001T0730Z/</value>
+        </parameter>
+        <parameter>
+            <valueName>eventEndingTime</valueName>
+            <value>2026-10-01T00:30:00-07:00</value>
+        </parameter>
+        <parameter>
+            <valueName>BLOCKCHANNEL</valueName>
+            <value>CMAS</value>
+        </parameter>
+        <area>
+            <areaDesc>Coconino, AZ; Navajo, AZ</areaDesc>
+            <polygon>35.26,-110.75 35.17,-110.61 35.01,-110.58 34.99,-110.43 34.92,-110.22 34.92,-110.06 34.88,-110.15 34.89,-110.34 34.93,-110.4 34.93,-110.6 35.01,-110.7 35.12,-110.7 35.23,-110.85 35.26,-110.97 35.33,-111.03 35.35,-111.01 35.3,-110.96 35.3,-110.82 35.26,-110.75</polygon>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>004005</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>004017</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>AZC005</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>AZC017</value>
+            </geocode>
+        </area>
+    </info>
+</alert>

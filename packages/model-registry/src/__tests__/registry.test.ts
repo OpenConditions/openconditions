@@ -27,6 +27,7 @@ describe("production registry", () => {
       "facilities",
       "border",
       "maritime",
+      "hazards",
     ]);
     expect(registry.domains().map((d) => d.code)).toEqual([
       "roads",
@@ -38,6 +39,7 @@ describe("production registry", () => {
       "facilities",
       "border",
       "maritime",
+      "hazards",
     ]);
     expect(registry.kind("situation", "roadworks")?.domain).toBe("roads");
     expect(registry.vocabulary("source_format")!.values).toContain("datex2");
@@ -79,6 +81,19 @@ describe("production registry", () => {
       ferry_route: "maritime",
       ferry_terminal: "maritime",
     });
+  });
+
+  it("registers every situation kind of the model: road traffic in roads, warnings and hazard events in hazards", () => {
+    const registry = productionRegistry();
+    const domainOf = Object.fromEntries(registry.kinds("situation").map((k) => [k.code, k.domain]));
+    expect(Object.keys(domainOf)).toHaveLength(17);
+    expect(
+      Object.entries(domainOf)
+        .filter(([, domain]) => domain !== "roads")
+        .map(([kind, domain]) => `${kind}:${domain}`),
+    ).toEqual(["alert:hazards", "natural_hazard:hazards"]);
+    expect(registry.property("fire.frp")?.domain).toBe("hazards");
+    expect(registry.property("fire.brightness")?.domain).toBe("hazards");
   });
 
   it("observes an open status on every site an operator opens and closes", () => {

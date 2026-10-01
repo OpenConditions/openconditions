@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+    <identifier>urn:oid:2.49.0.1.840.0.84204a0d59c13ed94d4c75274a173b422996c023.001.1</identifier>
+    <sender>w-nws.webmaster@noaa.gov</sender>
+    <sent>2026-09-30T16:46:00-06:00</sent>
+    <status>Actual</status>
+    <msgType>Update</msgType>
+    <source>211803 v2.3.0</source>
+    <scope>Public</scope>
+    <code>IPAWSv1.0</code>
+    <references>w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.0131f538810dac521ad09e37656bcfc83b15cbff.002.1,2026-09-29T22:07:00-06:00</references>
+    <info>
+        <language>en-US</language>
+        <category>Met</category>
+        <event>Flood Watch</event>
+        <responseType>Prepare</responseType>
+        <urgency>Future</urgency>
+        <severity>Severe</severity>
+        <certainty>Possible</certainty>
+        <eventCode>
+            <valueName>SAME</valueName>
+            <value>FFA</value>
+        </eventCode>
+        <eventCode>
+            <valueName>NationalWeatherService</valueName>
+            <value>FAA</value>
+        </eventCode>
+        <effective>2026-09-30T16:46:00-06:00</effective>
+        <onset>2026-09-30T16:46:00-06:00</onset>
+        <expires>2026-10-01T06:00:00-06:00</expires>
+        <senderName>NWS Grand Junction CO</senderName>
+        <headline>Flood Watch issued September 30 at 4:46PM MDT until October 1 at 6:00AM MDT by NWS Grand Junction CO</headline>
+        <description>* WHAT...Flooding caused by excessive rainfall continues to be
+possible.
+
+* WHERE...Portions of Colorado, including the following areas, Animas
+River Basin, Four Corners/Upper Dolores River, Northwest San Juan
+Mountains, Paradox Valley/Lower Dolores River, San Juan River
+Basin, Southwest San Juan Mountains and Uncompahgre Plateau and
+Dallas Divide and southeast Utah, including the following areas,
+Canyonlands/Natural Bridges, La Sal and Abajo Mountains and
+Southeast Utah.
+
+* WHEN...Through late tonight.
+
+* IMPACTS...Flooding will be possible over burn scars, at low-water
+crossings, and along creeks, streams, washes, arroyos and other
+flood-prone locations. Creeks and streams may rise out of their
+banks. Unpaved roads could become muddy and impassable.
+
+* ADDITIONAL DETAILS...
+- Periods of light to moderate rainfall, associated with remnant
+moisture from Hurricane Polo, are expected to continue through
+early this evening with isolated thunderstorms possible. Heavy
+rain falling on saturated soils and burn scars could lead to
+localized flash flooding and rises on local rivers. Rainfall is
+expected to end by this evening, but rivers may rise out of their
+banks overnight tonight even after rainfall has ended.
+- http://www.weather.gov/safety/flood
+</description>
+        <instruction>You should monitor later forecasts and be alert for possible Flood
+Warnings. Those living in areas prone to flooding should be prepared
+to take action should flooding develop.</instruction>
+        <web>http://www.weather.gov</web>
+        <parameter>
+            <valueName>AWIPSidentifier</valueName>
+            <value>FFAGJT</value>
+        </parameter>
+        <parameter>
+            <valueName>WMOidentifier</valueName>
+            <value>WGUS65 KGJT 302246</value>
+        </parameter>
+        <parameter>
+            <valueName>NWSheadline</valueName>
+            <value>FLOOD WATCH REMAINS IN EFFECT THROUGH LATE TONIGHT</value>
+        </parameter>
+        <parameter>
+            <valueName>BLOCKCHANNEL</valueName>
+            <value>EAS</value>
+        </parameter>
+        <parameter>
+            <valueName>BLOCKCHANNEL</valueName>
+            <value>NWEM</value>
+        </parameter>
+        <parameter>
+            <valueName>EAS-ORG</valueName>
+            <value>WXR</value>
+        </parameter>
+        <parameter>
+            <valueName>VTEC</valueName>
+            <value>/O.CON.KGJT.FA.A.0009.000000T0000Z-261001T1200Z/</value>
+        </parameter>
+        <parameter>
+            <valueName>eventEndingTime</valueName>
+            <value>2026-10-01T06:00:00-06:00</value>
+        </parameter>
+        <parameter>
+            <valueName>BLOCKCHANNEL</valueName>
+            <value>CMAS</value>
+        </parameter>
+        <parameter>
+            <valueName>expiredReferences</valueName>
+            <value>w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.297cdc701262bb8a1e8beb22ff344aed20ab83bb.001.1,2026-09-29T11:22:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.bd99f2cf2c456b0afdad64dc05567baddbab62ce.001.1,2026-09-28T22:52:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.ed9ede493b5b1546377a5ccc5f8c64d7cb67cd19.001.1,2026-09-28T11:03:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.db9ea1d51f850f2b48b6bd66ab6f60bc005944be.001.1,2026-09-27T23:27:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.be23608a0bb93e7362e70d5e395b716563bb69d8.001.1,2026-09-27T21:00:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.4c2dd958580560f3aefbdfa5fe5606b541da1e5c.001.1,2026-09-27T00:45:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.4e0b211dcd7bab58026a9cb01526038e869174d9.001.1,2026-09-27T10:27:00-06:00</value>
+        </parameter>
+        <area>
+            <areaDesc>Northwestern San Juan Mountains; Southwest San Juan Mountains; San Juan River Basin</areaDesc>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>008051</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>008053</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>008085</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>008091</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>008113</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>008007</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>008033</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>008067</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>008083</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>008111</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>COZ018</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>COZ019</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>COZ023</value>
+            </geocode>
+        </area>
+    </info>
+</alert>

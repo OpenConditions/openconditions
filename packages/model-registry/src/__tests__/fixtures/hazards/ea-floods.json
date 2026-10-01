@@ -1,0 +1,60 @@
+{
+  "@context": "http://environment.data.gov.uk/flood-monitoring/meta/context.jsonld",
+  "meta": {
+    "publisher": "Environment Agency",
+    "licence": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "documentation": "http://environment.data.gov.uk/flood-monitoring/doc/reference",
+    "version": "0.9",
+    "comment": "Status: Beta service",
+    "hasFormat": [
+      "http://environment.data.gov.uk/flood-monitoring/id/floods.csv",
+      "http://environment.data.gov.uk/flood-monitoring/id/floods.rdf",
+      "http://environment.data.gov.uk/flood-monitoring/id/floods.ttl",
+      "http://environment.data.gov.uk/flood-monitoring/id/floods.html"
+    ]
+  },
+  "items": [
+    {
+      "@id": "http://environment.data.gov.uk/flood-monitoring/id/floods/111WATCHXH",
+      "description": "Christchurch Harbour",
+      "eaAreaName": "Wessex",
+      "eaRegionName": "No longer used",
+      "floodArea": {
+        "@id": "http://environment.data.gov.uk/flood-monitoring/id/floodAreas/111WATCHXH",
+        "county": "Bournemouth, Christchurch and Poole",
+        "notation": "111WATCHXH",
+        "polygon": "http://environment.data.gov.uk/flood-monitoring/id/floodAreas/111WATCHXH/polygon",
+        "riverOrSea": "English Channel"
+      },
+      "floodAreaID": "111WATCHXH",
+      "isTidal": true,
+      "message": "There is no longer a threat of flooding, though standing water and debris may still remain. \nTidal conditions are expected to improve and no flooding is expected.   \nWe will continue to monitor the situation and will issue further alerts or warnings if necessary.   \nIf you have been evacuated only return to your property once the emergency services have advised that it is safe to do so. Never drive through flood water,  just 30cm of fast flowing water is enough to move your car.  \n\n",
+      "severity": "Warning no longer in force",
+      "severityLevel": 4,
+      "timeMessageChanged": "2026-09-30T09:19:00",
+      "timeRaised": "2026-09-30T09:19:31",
+      "timeSeverityChanged": "2026-09-30T09:19:00"
+    },
+    {
+      "@id": "http://environment.data.gov.uk/flood-monitoring/id/floods/031WAT122",
+      "description": "Wye Estuary in Gloucestershire",
+      "eaAreaName": "West Midlands",
+      "eaRegionName": "No longer used",
+      "floodArea": {
+        "@id": "http://environment.data.gov.uk/flood-monitoring/id/floodAreas/031WAT122",
+        "county": "Gloucestershire",
+        "notation": "031WAT122",
+        "polygon": "http://environment.data.gov.uk/flood-monitoring/id/floodAreas/031WAT122/polygon",
+        "riverOrSea": "Wye Estuary"
+      },
+      "floodAreaID": "031WAT122",
+      "isTidal": true,
+      "message": "There is no longer a threat of flooding, though standing water and debris may still remain. \nWeather conditions are expected to improve and no further flooding is expected.   \nWe will continue to monitor the situation and will issue further alerts or warnings if necessary.   \nIf you have been evacuated only return to your property once the emergency services have advised that it is safe to do so. Never drive through flood water,  just 30cm of fast flowing water is enough to move your car.  \n\n",
+      "severity": "Warning no longer in force",
+      "severityLevel": 4,
+      "timeMessageChanged": "2026-09-30T08:32:00",
+      "timeRaised": "2026-09-30T08:32:09",
+      "timeSeverityChanged": "2026-09-30T08:32:00"
+    }
+  ]
+}

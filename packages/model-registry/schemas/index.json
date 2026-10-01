@@ -271,6 +271,18 @@
   },
   {
     "class": "observation",
+    "code": "fire.brightness",
+    "version": "1.0",
+    "file": "observation/fire.brightness@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "fire.frp",
+    "version": "1.0",
+    "file": "observation/fire.frp@1.json"
+  },
+  {
+    "class": "observation",
     "code": "fuel.price_cap",
     "version": "1.0",
     "file": "observation/fuel.price_cap@1.json"
@@ -553,6 +565,12 @@
   },
   {
     "class": "situation",
+    "code": "alert",
+    "version": "1.0",
+    "file": "situation/alert@1.json"
+  },
+  {
+    "class": "situation",
     "code": "authority",
     "version": "1.0",
     "file": "situation/authority@1.json"
@@ -580,6 +598,12 @@
     "code": "incident",
     "version": "1.0",
     "file": "situation/incident@1.json"
+  },
+  {
+    "class": "situation",
+    "code": "natural_hazard",
+    "version": "1.0",
+    "file": "situation/natural_hazard@1.json"
   },
   {
     "class": "situation",

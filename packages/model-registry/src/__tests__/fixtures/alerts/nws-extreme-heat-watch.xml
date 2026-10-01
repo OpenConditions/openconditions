@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+    <identifier>urn:oid:2.49.0.1.840.0.8530fa7ce9ec576764510fa220b9450f70b2b9a5.001.1</identifier>
+    <sender>w-nws.webmaster@noaa.gov</sender>
+    <sent>2026-09-30T13:41:00-07:00</sent>
+    <status>Actual</status>
+    <msgType>Update</msgType>
+    <source>211803 v2.3.0</source>
+    <scope>Public</scope>
+    <code>IPAWSv1.0</code>
+    <references>w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.63720199f5df7d9ac0aab1c32b1901d589923b64.001.1,2026-09-30T03:05:00-07:00</references>
+    <info>
+        <language>en-US</language>
+        <category>Met</category>
+        <event>Extreme Heat Watch</event>
+        <responseType>Monitor</responseType>
+        <urgency>Future</urgency>
+        <severity>Severe</severity>
+        <certainty>Likely</certainty>
+        <eventCode>
+            <valueName>SAME</valueName>
+            <value>NWS</value>
+        </eventCode>
+        <eventCode>
+            <valueName>NationalWeatherService</valueName>
+            <value>XHA</value>
+        </eventCode>
+        <effective>2026-09-30T13:41:00-07:00</effective>
+        <onset>2026-10-02T10:00:00-07:00</onset>
+        <expires>2026-09-30T23:15:00-07:00</expires>
+        <senderName>NWS San Diego CA</senderName>
+        <headline>Extreme Heat Watch issued September 30 at 1:41PM PDT until October 7 at 9:00PM PDT by NWS San Diego CA</headline>
+        <description>* WHAT...Dangerously hot conditions with high temperatures on the
+hottest days ranging from around 90 near the coast to the upper 90s
+to upper 100s for the valleys possible. Low temperatures for
+coastal areas into the western valleys will warm into the lower to
+mid 70s during the weekend with those warm overnight temperatures
+continuing for next week.
+
+* WHERE...Orange County Coastal Areas, Orange County Inland Areas,
+San Bernardino and Riverside County Valleys-The Inland Empire, San
+Diego County Coastal Areas, San Diego County Valleys, and Santa Ana
+Mountains and Foothills.
+
+* WHEN...From Friday morning through Wednesday evening.
+
+* IMPACTS...Heat related illnesses increase significantly during
+extreme heat events.
+
+* ADDITIONAL DETAILS...A long-duration heat wave is expected to
+develop late this week and continue through much of next week into
+the following weekend with Moderate or greater HeatRisk for the
+coast and valleys and Major to Extreme HeatRisk for inland coastal
+areas into the western valleys.
+</description>
+        <instruction>Drink plenty of fluids, stay in an air-conditioned room, stay out of
+the sun, and check up on relatives and neighbors.</instruction>
+        <web>http://www.weather.gov</web>
+        <parameter>
+            <valueName>AWIPSidentifier</valueName>
+            <value>NPWSGX</value>
+        </parameter>
+        <parameter>
+            <valueName>WMOidentifier</valueName>
+            <value>WWUS76 KSGX 302041</value>
+        </parameter>
+        <parameter>
+            <valueName>NWSheadline</valueName>
+            <value>EXTREME HEAT WATCH REMAINS IN EFFECT FROM FRIDAY MORNING THROUGH WEDNESDAY EVENING</value>
+        </parameter>
+        <parameter>
+            <valueName>BLOCKCHANNEL</valueName>
+            <value>EAS</value>
+        </parameter>
+        <parameter>
+            <valueName>BLOCKCHANNEL</valueName>
+            <value>NWEM</value>
+        </parameter>
+        <parameter>
+            <valueName>VTEC</valueName>
+            <value>/O.CON.KSGX.XH.A.0007.261002T1700Z-261008T0400Z/</value>
+        </parameter>
+        <parameter>
+            <valueName>eventEndingTime</valueName>
+            <value>2026-10-07T21:00:00-07:00</value>
+        </parameter>
+        <parameter>
+            <valueName>BLOCKCHANNEL</valueName>
+            <value>CMAS</value>
+        </parameter>
+        <area>
+            <areaDesc>San Diego County Coastal Areas; San Bernardino and Riverside County Valleys-The Inland Empire; San Diego County Inland Valleys; Santa Ana Mountains and Foothills; Orange County Coastal; Orange County Inland</areaDesc>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>006073</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>006065</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>006071</value>
+            </geocode>
+            <geocode>
+                <valueName>SAME</valueName>
+                <value>006059</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>CAZ043</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>CAZ048</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>CAZ050</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>CAZ057</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>CAZ552</value>
+            </geocode>
+            <geocode>
+                <valueName>UGC</valueName>
+                <value>CAZ554</value>
+            </geocode>
+        </area>
+    </info>
+</alert>

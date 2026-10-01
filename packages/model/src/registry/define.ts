@@ -46,6 +46,7 @@ export const INGEST_MAPPING_TARGETS: readonly MappingTarget[] = [
   "oicp",
   "parkapi",
   "tpims",
+  "cap",
 ];
 
 interface EntryBase {

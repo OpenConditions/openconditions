@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>2.49.0.0.276.0.DWD.PVW.1790658060000.7cb973e0-bf11-4ad7-9803-29756f997052.DEU</identifier>
+  <sender>opendata@dwd.de</sender>
+  <sent>2026-09-29T07:01:00+02:00</sent>
+  <status>Actual</status>
+  <msgType>Alert</msgType>
+  <source>PVW</source>
+  <scope>Public</scope>
+  <code>id:2.49.0.0.276.0.DWD.PVW.1790658060000.7cb973e0-bf11-4ad7-9803-29756f997052</code>
+  <info>
+    <language>de-DE</language>
+    <category>Met</category>
+    <event>STARKES GEWITTER</event>
+    <responseType>Prepare</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Moderate</severity>
+    <certainty>Likely</certainty>
+    <eventCode>
+      <valueName>PROFILE_VERSION</valueName>
+      <value>2.1.14</value>
+    </eventCode>
+    <eventCode>
+      <valueName>LICENSE</valueName>
+      <value>© GeoBasis-DE / BKG 2021 (Daten modifiziert)</value>
+    </eventCode>
+    <eventCode>
+      <valueName>II</valueName>
+      <value>36</value>
+    </eventCode>
+    <eventCode>
+      <valueName>GROUP</valueName>
+      <value>THUNDERSTORM</value>
+    </eventCode>
+    <eventCode>
+      <valueName>GROUP</valueName>
+      <value>WIND</value>
+    </eventCode>
+    <eventCode>
+      <valueName>GROUP</valueName>
+      <value>RAIN</value>
+    </eventCode>
+    <eventCode>
+      <valueName>AREA_COLOR</valueName>
+      <value>251 140 0</value>
+    </eventCode>
+    <effective>2026-09-29T07:01:00+02:00</effective>
+    <onset>2026-09-29T07:01:00+02:00</onset>
+    <expires>2026-09-29T07:45:00+02:00</expires>
+    <senderName>Deutscher Wetterdienst</senderName>
+    <headline>Amtliche WARNUNG vor STARKEM GEWITTER</headline>
+    <description>Von Südwesten ziehen Gewitter auf. Dabei gibt es Sturmböen mit Geschwindigkeiten um 65 km/h (18 m/s, 35 kn, Bft 8) sowie Starkregen mit Niederschlagsmengen bis 15 l/m² pro Stunde.</description>
+    <instruction>Gefahr durch: Blitzschlag (Lebensgefahr!); einzelne herabstürzende Äste; umherfliegende Gegenstände; vereinzelte, rasche Überflutungen von Straßen/Unterführungen; Aquaplaning. 
+Handlungsempfehlungen: 
+Aufenthalt im Freien vermeiden oder Schutz suchen (z.B. in Gebäuden); Gewässer meiden; frei stehende Objekte sichern (z.B. Leinwände und Möbel); z.B. Zelte und Abdeckungen befestigen; im Freien auf herabfallende Gegenstände (z.B. Äste) achten; Verhalten im Straßenverkehr anpassen; überflutete und gefährdete Abschnitte (wie Unterführungen) meiden</instruction>
+    <web>https://dwd.de/warnungen</web>
+    <contact>Deutscher Wetterdienst</contact>
+    <parameter>
+      <valueName>gusts</valueName>
+      <value>~65 [km/h]</value>
+    </parameter>
+    <parameter>
+      <valueName>precipitation</valueName>
+      <value>&lt;15 [l/m² in 1h]</value>
+    </parameter>
+    <parameter>
+      <valueName>direction of approach</valueName>
+      <value>south-west</value>
+    </parameter>
+    <area>
+      <areaDesc>Insel Borkum</areaDesc>
+      <polygon>53.593227,6.875252 53.584722,6.865479 53.589967,6.852693 53.596728,6.863725 53.593227,6.875252 53.593227,6.875252</polygon>
+      <polygon>53.584279,6.719525 53.568043,6.758352 53.557769,6.748593 53.556722,6.740508 53.563796,6.742922 53.568342,6.732102 53.568347,6.707378 53.558913,6.716775 53.577787,6.664979 53.58559,6.656202 53.599096,6.658253 53.618198,6.757171 53.604443,6.812073 53.59634,6.783837 53.5963,6.754166 53.584279,6.719525 53.584279,6.719525</polygon>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>903457002</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Kreis Aurich - Küste</areaDesc>
+      <polygon>53.641711,6.906972 53.625489,6.891767 53.62953,6.875511 53.64111,6.865194 53.653871,6.898536 53.641711,6.906972 53.641711,6.906972</polygon>
+      <polygon>53.683328,7.480504 53.671933,7.513821 53.674737,7.554065 53.667978,7.535184 53.663423,7.512525 53.654478,7.511124 53.649181,7.48889 53.627962,7.51326 53.622795,7.50771 53.625556,7.474458 53.623847,7.458955 53.622271,7.430865 53.619455,7.423312 53.582939,7.408395 53.576965,7.416207 53.551163,7.42091 53.542502,7.412293 53.533032,7.429582 53.526343,7.443383 53.513544,7.441601 53.502295,7.412487 53.510447,7.398125 53.517251,7.413699 53.526704,7.413181 53.536709,7.348929 53.527774,7.349483 53.51448,7.317949 53.50408,7.299121 53.497326,7.308514 53.478467,7.255273 53.467613,7.24379 53.465535,7.260844 53.459716,7.241091 53.442045,7.251489 53.428548,7.275614 53.428965,7.285728 53.412873,7.285415 53.40689,7.276083 53.410301,7.270007 53.405132,7.247581 53.394408,7.238382 53.393091,7.226425 53.402625,7.22162 53.398359,7.200354 53.391695,7.203804 53.388411,7.174375 53.387494,7.15419 53.397878,7.13987 53.387005,7.100293 53.368848,7.087934 53.353677,7.057547 53.353453,7.039023 53.378826,7.014214 53.36028,6.998629 53.371724,6.997642 53.385328,7.010613 53.424576,7.009782 53.482887,7.024534 53.5073,7.0481 53.529579,7.032272 53.545064,7.033326 53.523175,7.064942 53.532708,7.077292 53.512545,7.097612 53.524463,7.10052 53.525899,7.122993 53.536421,7.137356 53.570258,7.087108 53.580344,7.089797 53.611155,7.144114 53.629162,7.15538 53.627187,7.166521 53.640644,7.181306 53.668279,7.241736 53.683381,7.317394 53.683328,7.480504 53.683328,7.480504</polygon>
+      <polygon>53.679364,7.097156 53.662652,6.851934 53.671095,6.867998 53.685167,7.026979 53.687411,7.084589 53.679364,7.097156 53.679364,7.097156</polygon>
+      <polygon>53.726011,7.341087 53.718062,7.346203 53.704611,7.270835 53.706114,7.205668 53.698655,7.194395 53.704322,7.170308 53.697242,7.152508 53.705883,7.137838 53.711721,7.143179 53.723262,7.187707 53.722784,7.234037 53.726011,7.341087 53.726011,7.341087</polygon>
+      <polygon>53.732204,7.430946 53.720188,7.428475 53.721523,7.368306 53.727292,7.363001 53.73504,7.382707 53.732204,7.430946 53.732204,7.430946</polygon>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>903452002</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+  </info>
+</alert>

@@ -8,6 +8,7 @@ import { borderModule } from "@openconditions/model-border";
 import { chargingModule } from "@openconditions/model-charging";
 import { facilitiesModule } from "@openconditions/model-facilities";
 import { fuelModule } from "@openconditions/model-fuel";
+import { hazardsModule } from "@openconditions/model-hazards";
 import { maritimeModule } from "@openconditions/model-maritime";
 import { parkingModule } from "@openconditions/model-parking";
 import { roadsModule } from "@openconditions/model-roads";
@@ -30,6 +31,7 @@ export const productionModules: readonly RegistryModule[] = [
   facilitiesModule,
   borderModule,
   maritimeModule,
+  hazardsModule,
 ];
 
 let registry: Registry | undefined;
