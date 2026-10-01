@@ -238,17 +238,17 @@ importers:
         version: 3.0.0
       zod:
         specifier: ^4.4.3
-        version: 4.6.2
+        version: 4.6.5
     devDependencies:
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/model-border:
     dependencies:
@@ -257,17 +257,17 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.4.3
-        version: 4.6.2
+        version: 4.6.5
     devDependencies:
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/model-charging:
     dependencies:
@@ -276,17 +276,17 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.4.3
-        version: 4.6.2
+        version: 4.6.5
     devDependencies:
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/model-facilities:
     dependencies:
@@ -295,17 +295,17 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.4.3
-        version: 4.6.2
+        version: 4.6.5
     devDependencies:
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/model-fuel:
     dependencies:
@@ -314,17 +314,17 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.4.3
-        version: 4.6.2
+        version: 4.6.5
     devDependencies:
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/model-hazards:
     dependencies:
@@ -333,17 +333,17 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.4.3
-        version: 4.6.2
+        version: 4.6.5
     devDependencies:
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/model-maritime:
     dependencies:
@@ -352,17 +352,17 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.4.3
-        version: 4.6.2
+        version: 4.6.5
     devDependencies:
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/model-parking:
     dependencies:
@@ -371,17 +371,17 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.4.3
-        version: 4.6.2
+        version: 4.6.5
     devDependencies:
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/model-registry:
     dependencies:
@@ -424,13 +424,13 @@ importers:
         version: 5.11.1
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/model-roads:
     dependencies:
@@ -439,17 +439,17 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.4.3
-        version: 4.6.2
+        version: 4.6.5
     devDependencies:
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/model-vehicles:
     dependencies:
@@ -458,17 +458,17 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.4.3
-        version: 4.6.2
+        version: 4.6.5
     devDependencies:
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/model-weather:
     dependencies:
@@ -477,17 +477,17 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.4.3
-        version: 4.6.2
+        version: 4.6.5
     devDependencies:
       tsup:
         specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.12)(typescript@5.9.3)(yaml@2.9.0)
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
       typescript:
         specifier: ^5.9.3
         version: 5.9.3
       vitest:
         specifier: ^4.1.11
-        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.0))
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
   packages/normalize:
     dependencies:
