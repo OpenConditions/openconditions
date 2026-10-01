@@ -19,6 +19,7 @@ const parent: FeedSourceBase = {
   attribution: "registry",
   country: "US",
   privacyUrl: "https://example.test/privacy",
+  tier: "authoritative",
 };
 
 const child = (id: string, approved: boolean): FeedSourceBase => ({

@@ -1,6 +1,13 @@
-import { defineKind, LOS } from "@openconditions/model";
+import { defineKind, LOS, type NestedEffect } from "@openconditions/model";
 import { z } from "zod";
 import { roadsSeverity } from "./severity.js";
+
+/** A works phase as the roadworks details hold it, for its nested effects. */
+interface RoadworksPhase {
+  id: string;
+  validity: NestedEffect["validity"];
+  effects: NestedEffect["effect"][];
+}
 
 const DOMAIN = "roads";
 const V = "1.0";
@@ -147,8 +154,8 @@ export const ROADS_SITUATION_KINDS = [
         .optional(),
     }),
     nestedEffects: (d) =>
-      ((d["phases"] as { effects: { id: string }[] }[] | undefined) ?? []).flatMap(
-        (p) => p.effects,
+      ((d["phases"] as RoadworksPhase[] | undefined) ?? []).flatMap((p) =>
+        p.effects.map((effect) => ({ phaseId: p.id, validity: p.validity, effect })),
       ),
     deriveSeverity: roadsSeverity({ works: "minor" }),
     crowd: { ttlSec: 7 * DAY, maxLifetimeSec: 30 * DAY },

@@ -242,7 +242,7 @@ function provenanceOf(source: SourceDescriptor, format: string, recordId: string
     origin: "feed",
     sourceId: source.id,
     sourceFormat: format,
-    accessMode: "bulk",
+    accessMode: source.accessMode ?? "bulk",
     recordId,
     attribution: {
       provider: source.attribution,

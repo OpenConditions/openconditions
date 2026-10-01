@@ -3,6 +3,7 @@ import type { SEVERITY_LABELS } from "../classes/situation.js";
 import type { KernelBase } from "../kernel/build.js";
 import type { Effect, Kernel } from "../kernel/effect-type.js";
 import type { FusionTier, PrivacyClass } from "../kernel/provenance.js";
+import type { Validity } from "../kernel/validity.js";
 
 type SeverityLabel = (typeof SEVERITY_LABELS)[number];
 
@@ -112,12 +113,26 @@ export interface KindEntry<C extends string = string, S extends z.ZodRawShape = 
   traits?: readonly string[];
   /** Feature kinds: how two sources' records of this kind are linked, and its OSM tags. */
   linking?: LinkingRules;
-  /** Situation kinds: effects nested inside `details` (roadworks phases), for id uniqueness and materialisation. */
-  nestedEffects?: (details: Record<string, unknown>) => readonly { id: string }[];
+  /**
+   * Situation kinds: effects nested inside `details` (roadworks phases), each
+   * with the phase it belongs to, for id uniqueness and for storing every
+   * effect of a situation in one table.
+   */
+  nestedEffects?: (details: Record<string, unknown>) => readonly NestedEffect[];
   /** Situation kinds: how the crowd reports this kind; absent, the crowd cannot report it. */
   crowd?: SituationCrowdRules;
   /** Component kinds: what makes two sources' components one component of a linked feature. */
   identity?: ComponentIdentity;
+}
+
+/**
+ * An effect nested inside a situation's details: the effect, the phase it
+ * belongs to and that phase's validity, which the effect defaults to.
+ */
+export interface NestedEffect {
+  phaseId: string;
+  validity: Validity;
+  effect: { id: string } & Record<string, unknown>;
 }
 
 /**

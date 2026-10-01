@@ -2,6 +2,7 @@
   {
     subdivision: "nsw",
     operator: "livetraffic",
+    tier: "authoritative",
     name: "Live Traffic NSW (New South Wales)",
     format: "geojson",
     url: [
@@ -56,6 +57,7 @@
   {
     subdivision: "sa",
     operator: "trafficsa",
+    tier: "authoritative",
     name: "Traffic SA (South Australia)",
     format: "geojson",
     url: [
@@ -98,6 +100,7 @@
     // AU_QLD_TRAFFIC_API_KEY to override with a registered key and avoid the quota.
     subdivision: "qld",
     operator: "traffic",
+    tier: "authoritative",
     name: "QLDTraffic (Queensland)",
     format: "geojson",
     url: "https://api.qldtraffic.qld.gov.au/v1/events",
@@ -156,6 +159,7 @@
   {
     subdivision: "vic",
     operator: "vicroads",
+    tier: "authoritative",
     name: "Freeway Travel Time (Victoria)",
     format: "geojson-flow",
     produces: "flow",
@@ -206,6 +210,7 @@
   {
     subdivision: "vic",
     operator: "transportvic",
+    tier: "authoritative",
     stream: "planned",
     name: "Planned road disruptions (Victoria)",
     format: "vic-disruptions",
@@ -230,6 +235,7 @@
   {
     subdivision: "vic",
     operator: "transportvic",
+    tier: "authoritative",
     stream: "unplanned",
     name: "Unplanned road disruptions (Victoria)",
     format: "vic-disruptions",

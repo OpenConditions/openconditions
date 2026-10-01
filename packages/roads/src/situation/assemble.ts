@@ -416,7 +416,7 @@ export function situationDrafts(
           origin: detourOnly || derivedFrom !== undefined ? "derived" : "feed",
           sourceId: source.id,
           sourceFormat: primary.sourceFormat,
-          accessMode: "bulk",
+          accessMode: source.accessMode ?? "bulk",
           recordId: localId,
           ...(derivedFrom !== undefined
             ? { derivedFrom: { records: [derivedFrom], method: "los_threshold", version: "1" } }

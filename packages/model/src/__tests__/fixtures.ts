@@ -9,6 +9,7 @@ import {
   defineProperty,
   defineResultSchema,
   extendVocabulary,
+  type NestedEffect,
   type RegistryModule,
 } from "../registry/define.js";
 
@@ -43,8 +44,16 @@ export const testModule: RegistryModule = {
           .optional(),
       }),
       nestedEffects: (d) =>
-        ((d["phases"] as { effects: { id: string }[] }[] | undefined) ?? []).flatMap(
-          (p) => p.effects,
+        (
+          (d["phases"] as
+            | {
+                id: string;
+                validity: NestedEffect["validity"];
+                effects: NestedEffect["effect"][];
+              }[]
+            | undefined) ?? []
+        ).flatMap((p) =>
+          p.effects.map((effect) => ({ phaseId: p.id, validity: p.validity, effect })),
         ),
     }),
     defineKind({

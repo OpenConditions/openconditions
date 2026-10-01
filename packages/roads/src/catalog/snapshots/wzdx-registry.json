@@ -6,12 +6,6 @@
     "operator": "wzdx",
     "stream": "bc2a79eda520c2d9",
     "url": "https://oktraffic.org/api/Geojsons/workzones?&access_token=feOPynfHRJ5sdx8tf3IN5yOsGz89TAUuzHsN3V0jo1Fg41LcpoLhIRltaTPmDngD",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Oklahoma DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-bc2a79eda520c2d9"],
     "selectionState": "discovered",
@@ -27,7 +21,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Oklahoma DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-3bbdeede647cb1d3",
@@ -36,12 +37,6 @@
     "operator": "wzdx",
     "stream": "3bbdeede647cb1d3",
     "url": "https://udottraffic.utah.gov/wzdx/udot/v40/data",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Utah DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-3bbdeede647cb1d3"],
     "selectionState": "discovered",
@@ -57,7 +52,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Utah DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-80f9ce9830b1b3cd",
@@ -66,12 +68,6 @@
     "operator": "wzdx",
     "stream": "80f9ce9830b1b3cd",
     "url": "https://iowa-atms.cloud-q-free.com/api/rest/dataprism/wzdx/wzdxfeed",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Iowa DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-80f9ce9830b1b3cd"],
     "selectionState": "discovered",
@@ -87,7 +83,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Iowa DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-2ca8786df7b87bd2",
@@ -96,12 +99,6 @@
     "operator": "wzdx",
     "stream": "2ca8786df7b87bd2",
     "url": "https://us-datacloud.one.network/fdot/feed.json?app_key=c4090b04-26de-c9ee-873b2bd9a38c",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Florida DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-2ca8786df7b87bd2"],
     "selectionState": "discovered",
@@ -117,7 +114,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Florida DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-3c80d1115e4be5a7",
@@ -126,12 +130,6 @@
     "operator": "wzdx",
     "stream": "3c80d1115e4be5a7",
     "url": "https://mn.carsprogram.org/carsapi_v1/api/wzdx",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Minnesota DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-3c80d1115e4be5a7"],
     "selectionState": "discovered",
@@ -147,7 +145,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Minnesota DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-c1421db3e5cd2ebf",
@@ -156,12 +161,6 @@
     "operator": "wzdx",
     "stream": "c1421db3e5cd2ebf",
     "url": "https://filter.ritis.org/wzdx_v4.1/mdot.geojson",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Maryland DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-c1421db3e5cd2ebf"],
     "selectionState": "discovered",
@@ -177,7 +176,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Maryland DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-acad1adfe0ce4075",
@@ -186,12 +192,6 @@
     "operator": "wzdx",
     "stream": "acad1adfe0ce4075",
     "url": "https://traveler.modot.org/timconfig/feed/desktop/mo_wzdx.json",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Missouri DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-acad1adfe0ce4075"],
     "selectionState": "discovered",
@@ -207,7 +207,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Missouri DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-d863f1f7d976968f",
@@ -216,12 +223,6 @@
     "operator": "wzdx",
     "stream": "d863f1f7d976968f",
     "url": "https://wzdxapi.aztech.org/construction",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Maricopa County DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-d863f1f7d976968f"],
     "selectionState": "discovered",
@@ -237,7 +238,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Maricopa County DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-51e508db5ef42c5e",
@@ -246,12 +254,6 @@
     "operator": "wzdx",
     "stream": "51e508db5ef42c5e",
     "url": "https://511wi.gov/api/wzdx",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Wisconsin DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-51e508db5ef42c5e"],
     "selectionState": "discovered",
@@ -267,7 +269,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Wisconsin DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-f29380f77502b8d2",
@@ -276,12 +285,6 @@
     "operator": "wzdx",
     "stream": "f29380f77502b8d2",
     "url": "https://ai.blyncsy.io/wzdx/nmdot/feed",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "New Mexico DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-f29380f77502b8d2"],
     "selectionState": "discovered",
@@ -297,7 +300,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "New Mexico DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-f6ef7e235f145144",
@@ -306,12 +316,6 @@
     "operator": "wzdx",
     "stream": "f6ef7e235f145144",
     "url": "https://ai.blyncsy.io/wzdx/hidot/feed",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Hawaii DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-f6ef7e235f145144"],
     "selectionState": "discovered",
@@ -327,7 +331,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Hawaii DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-159a484f7bdf80b1",
@@ -336,12 +347,6 @@
     "operator": "wzdx",
     "stream": "159a484f7bdf80b1",
     "url": "https://511ny.org/api/wzdx",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "New York DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-159a484f7bdf80b1"],
     "selectionState": "discovered",
@@ -357,7 +362,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "New York DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-3586d042d6855f24",
@@ -366,12 +378,6 @@
     "operator": "wzdx",
     "stream": "3586d042d6855f24",
     "url": "https://wzdx.wsdot.wa.gov/api/v4/WorkZoneFeed",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Washington State DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-3586d042d6855f24"],
     "selectionState": "discovered",
@@ -387,7 +393,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Washington State DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-d7633b3852f44c44",
@@ -396,12 +409,6 @@
     "operator": "wzdx",
     "stream": "d7633b3852f44c44",
     "url": "https://scc.ridsi-dash.com:5000/wzdx.geojson",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "St. Charles County",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-d7633b3852f44c44"],
     "selectionState": "discovered",
@@ -417,7 +424,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "St. Charles County",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-e59bcc8615abf686",
@@ -426,12 +440,6 @@
     "operator": "wzdx",
     "stream": "e59bcc8615abf686",
     "url": "https://smartworkzones.njit.edu/nj/wzdx",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "New Jersey Institute of Technology",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-e59bcc8615abf686"],
     "selectionState": "discovered",
@@ -447,7 +455,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "New Jersey Institute of Technology",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-d16873081377dbe4",
@@ -456,12 +471,6 @@
     "operator": "wzdx",
     "stream": "d16873081377dbe4",
     "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Kentucky Transportation Cabinet",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-d16873081377dbe4"],
     "selectionState": "discovered",
@@ -477,7 +486,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Kentucky Transportation Cabinet",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-fe9b3423ea03546f",
@@ -506,6 +522,7 @@
     },
     "cadenceSec": 300,
     "freshnessWindowSec": 900,
+    "tier": "authoritative",
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Kansas DOT",
@@ -519,12 +536,6 @@
     "operator": "wzdx",
     "stream": "9a127fccb3792eaa",
     "url": "https://data.austintexas.gov/download/d9mm-cjw9",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "City of Austin",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-9a127fccb3792eaa"],
     "selectionState": "discovered",
@@ -540,7 +551,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "City of Austin",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-914cf87008410abe",
@@ -549,12 +567,6 @@
     "operator": "wzdx",
     "stream": "914cf87008410abe",
     "url": "https://quebec.gewi.com/wzdx/pull",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Quebec City",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-914cf87008410abe"],
     "selectionState": "discovered",
@@ -570,7 +582,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Quebec City",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-7945221f406463df",
@@ -579,12 +598,6 @@
     "operator": "wzdx",
     "stream": "7945221f406463df",
     "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Delaware DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-7945221f406463df"],
     "selectionState": "discovered",
@@ -600,7 +613,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Delaware DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-d121834a77dfe583",
@@ -609,12 +629,6 @@
     "operator": "wzdx",
     "stream": "d121834a77dfe583",
     "url": "https://wzdx.e-dot.com/la_dot_d_feed_wzdx_v4.1.geojson",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Louisiana DOTD",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-d121834a77dfe583"],
     "selectionState": "discovered",
@@ -630,7 +644,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Louisiana DOTD",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-5c8f02944c0a6210",
@@ -639,12 +660,6 @@
     "operator": "wzdx",
     "stream": "5c8f02944c0a6210",
     "url": "https://511.idaho.gov/api/wzdx",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Idaho DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-5c8f02944c0a6210"],
     "selectionState": "discovered",
@@ -660,7 +675,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Idaho DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-2b048f33ed9fb59e",
@@ -669,12 +691,6 @@
     "operator": "wzdx",
     "stream": "2b048f33ed9fb59e",
     "url": "https://in.carsprogram.org/carsapi_v1/api/wzdx",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Indiana DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-2b048f33ed9fb59e"],
     "selectionState": "discovered",
@@ -690,7 +706,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Indiana DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-d9233a18b703f5a2",
@@ -699,12 +722,6 @@
     "operator": "wzdx",
     "stream": "d9233a18b703f5a2",
     "url": "https://road-connect-community-bry7272.replit.app/api/wzdx/work-zones.geojson",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "CivicLink",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-d9233a18b703f5a2"],
     "selectionState": "discovered",
@@ -720,7 +737,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "CivicLink",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-190f47cabfec450d",
@@ -729,21 +753,6 @@
     "operator": "wzdx",
     "stream": "190f47cabfec450d",
     "url": "https://mdotridedata.state.mi.us//api/v1/organization/michigan_department_of_transportation/dataset/work_zone_information/query?limit=200&_format=json",
-    "auth": {
-      "kind": "none"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Michigan DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "setup": {
-      "WZDX_MICHIGAN_API_KEY": {
-        "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one.",
-        "title": "WZDx — Michigan DOT (michigan) — API key"
-      }
-    },
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-190f47cabfec450d"],
     "selectionState": "discovered",
@@ -759,6 +768,22 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
+    },
+    "auth": {
+      "kind": "none"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Michigan DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "setup": {
+      "WZDX_MICHIGAN_API_KEY": {
+        "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one.",
+        "title": "WZDx — Michigan DOT (michigan) — API key"
+      }
     }
   },
   {
@@ -768,12 +793,6 @@
     "operator": "wzdx",
     "stream": "697dcbb13cf06e6d",
     "url": "https://api.dx.ne-compass.com/wzdx-latest/",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "NHDOT/VTAOT/MEDOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-697dcbb13cf06e6d"],
     "selectionState": "discovered",
@@ -789,7 +808,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "NHDOT/VTAOT/MEDOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-747cf39185dd5bc0",
@@ -798,12 +824,6 @@
     "operator": "wzdx",
     "stream": "747cf39185dd5bc0",
     "url": "https://drivenc.gov/api/wzdx",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "North Carolina DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-747cf39185dd5bc0"],
     "selectionState": "discovered",
@@ -819,7 +839,14 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "North Carolina DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   },
   {
     "id": "us-wzdx-6b29effa79d8e709",
@@ -828,21 +855,6 @@
     "operator": "wzdx",
     "stream": "6b29effa79d8e709",
     "url": "https://api.odot.state.or.us/WZDx/v4.0/Workzones",
-    "auth": {
-      "kind": "none"
-    },
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Oregon DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
-    "setup": {
-      "WZDX_OREGON_API_KEY": {
-        "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one.",
-        "title": "WZDx — Oregon DOT (oregon) — API key"
-      }
-    },
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-6b29effa79d8e709"],
     "selectionState": "discovered",
@@ -858,6 +870,22 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
+    },
+    "auth": {
+      "kind": "none"
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Oregon DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy",
+    "setup": {
+      "WZDX_OREGON_API_KEY": {
+        "notes": "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one.",
+        "title": "WZDx — Oregon DOT (oregon) — API key"
+      }
     }
   },
   {
@@ -867,12 +895,6 @@
     "operator": "wzdx",
     "stream": "7f7eac273a6af057",
     "url": "https://api.mdottraffic.com/prod/v3/data/wzdx",
-    "cadenceSec": 300,
-    "freshnessWindowSec": 900,
-    "license": "UNKNOWN",
-    "attribution": "Mississippi DOT",
-    "country": "US",
-    "privacyUrl": "https://www.transportation.gov/privacy",
     "parentSourceId": "us-wzdx",
     "policyIds": ["us-wzdx", "us-wzdx-7f7eac273a6af057"],
     "selectionState": "discovered",
@@ -888,6 +910,13 @@
     "snapshot": {
       "completeness": "complete",
       "recordsPath": "features"
-    }
+    },
+    "cadenceSec": 300,
+    "freshnessWindowSec": 900,
+    "tier": "authoritative",
+    "license": "UNKNOWN",
+    "attribution": "Mississippi DOT",
+    "country": "US",
+    "privacyUrl": "https://www.transportation.gov/privacy"
   }
 ]

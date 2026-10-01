@@ -54,6 +54,7 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
       const feed = roadFeedSchema.parse({
         name: `Autobahn ${road} — ${service.name}`,
         operator: "autobahn",
+        tier: "authoritative",
         stream: `${slug(road)}-${service.name}`,
         format: "autobahn",
         url: `${AUTOBAHN_BASE}/${encodeURIComponent(road)}/services/${service.name}`,

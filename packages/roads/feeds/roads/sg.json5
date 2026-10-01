@@ -1,6 +1,7 @@
 [
   {
     operator: "lta",
+    tier: "authoritative",
     name: "LTA DataMall Traffic Incidents (Singapore)",
     format: "lta",
     url: "https://datamall2.mytransport.sg/ltaodataservice/TrafficIncidents",
@@ -32,6 +33,7 @@
   },
   {
     operator: "lta",
+    tier: "authoritative",
     stream: "speedbands",
     name: "LTA DataMall Traffic Speed Bands (Singapore)",
     format: "lta-speedbands",

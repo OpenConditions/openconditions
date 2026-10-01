@@ -1,6 +1,7 @@
 [
   {
     operator: "cita",
+    tier: "authoritative",
     name: "CITA (Luxembourg)",
     format: "datex2",
     url: "https://cita.lu/info_trafic/datex/situationrecord36",

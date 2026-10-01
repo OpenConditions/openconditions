@@ -1,4 +1,6 @@
+import { ACCESS_MODES, SOURCE_TIERS } from "@openconditions/model";
 import { z } from "zod";
+import { LANE_NUMBERINGS, RAW_RETENTION_CLASSES } from "./feed-source.js";
 
 /** Per-key credential-acquisition guide (rendered in the admin panel). */
 export const credentialSetupSchema = z
@@ -177,6 +179,21 @@ export const feedSourceBaseShape = {
   gzip: z.boolean().optional(),
   cadenceSec: z.number().int().positive(),
   freshnessWindowSec: z.number().int().positive(),
+  accessMode: z.enum(ACCESS_MODES).optional(),
+  tier: z.enum(SOURCE_TIERS),
+  extrasAllow: z.array(z.string().min(1)).optional(),
+  extrasFederate: z.boolean().optional(),
+  laneNumbering: z.enum(LANE_NUMBERINGS).optional(),
+  rawRetention: z.enum(RAW_RETENTION_CLASSES).optional(),
+  requestLimits: z
+    .object({
+      perMinute: z.number().int().positive().optional(),
+      perDay: z.number().int().positive().optional(),
+      maxRadiusKm: z.number().positive().optional(),
+      keyScope: z.enum(["instance", "consumer"]).optional(),
+    })
+    .strict()
+    .optional(),
   license: z.string().min(1),
   licenseUrl: z.string().url().optional(),
   attribution: z.string().min(1),

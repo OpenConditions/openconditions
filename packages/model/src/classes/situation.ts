@@ -109,7 +109,7 @@ export function situationSchema(
       }
       const nested = entry.nestedEffects?.(s.details as Record<string, unknown>) ?? [];
       const seen = new Set<string>();
-      for (const effect of [...s.effects, ...nested]) {
+      for (const effect of [...s.effects, ...nested.map((n) => n.effect)]) {
         if (seen.has(effect.id)) {
           ctx.addIssue({
             code: "custom",

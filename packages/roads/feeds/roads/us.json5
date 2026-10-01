@@ -1,6 +1,7 @@
 [
   {
     operator: "wzdx",
+    tier: "authoritative",
     name: "WZDx (United States)",
     format: "wzdx",
     catalog: {
@@ -17,6 +18,7 @@
   {
     subdivision: "ny",
     operator: "511",
+    tier: "authoritative",
     name: "511NY (New York)",
     format: "ibi511",
     url: "https://511ny.org/api/v2/get/event?format=json",
@@ -51,6 +53,7 @@
   {
     subdivision: "ny",
     operator: "511",
+    tier: "authoritative",
     stream: "winterroads",
     name: "511NY winter road conditions (New York)",
     format: "ibi511-conditions",
@@ -75,6 +78,7 @@
   {
     subdivision: "nyc",
     operator: "dot",
+    tier: "authoritative",
     name: "NYC DOT real-time traffic speeds (New York City)",
     format: "nyc-dot",
     produces: "flow",
@@ -90,6 +94,7 @@
   {
     subdivision: "oh",
     operator: "ohgo",
+    tier: "authoritative",
     name: "OHGO travel delays (Ohio)",
     format: "ohgo",
     produces: "flow",
@@ -123,6 +128,7 @@
   {
     subdivision: "oh",
     operator: "ohgo",
+    tier: "authoritative",
     stream: "construction",
     name: "OHGO construction (Ohio)",
     format: "ohgo-events",
@@ -146,6 +152,7 @@
   {
     subdivision: "oh",
     operator: "ohgo",
+    tier: "authoritative",
     stream: "incidents",
     name: "OHGO incidents (Ohio)",
     format: "ohgo-events",

@@ -4,9 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import type { DomainFeedSource } from "../pipeline/run.js";
 import { runSource } from "../pipeline/run.js";
 
-/** A sql double whose transaction opener throws if the pipeline ever reaches the swap. */
+/**
+ * A sql double whose transaction opener throws if the pipeline ever reaches
+ * the swap. Every statement answers with one row, as opening the poll's
+ * attempt does.
+ */
 const noSwapSql = Object.assign(
-  ((..._args: unknown[]) => Promise.resolve([])) as unknown as Record<string, unknown>,
+  ((..._args: unknown[]) => Promise.resolve([{ id: "1" }])) as unknown as Record<string, unknown>,
   {
     begin: vi.fn(async () => {
       throw new Error("atomicSwap opened a transaction for a blocked feed");

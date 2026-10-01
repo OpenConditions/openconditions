@@ -24,6 +24,7 @@ import { refreshSegmentSpeed } from "./pipeline/segment-speed.js";
 import { pruneSourcePollAttempts, upsertSourceStatus } from "./pipeline/source-status.js";
 import { pruneHourlyRollup, pruneRawSamples, rollupSpeedSamples } from "./pipeline/speed-rollup.js";
 import { sweepStaleObservations } from "./pipeline/sweep.js";
+import { createRawArchive, rawArchiveOptionsFromEnv } from "./raw/archive.js";
 
 type Sql = postgres.Sql;
 
@@ -128,6 +129,7 @@ export function startScheduler(
 ): () => void {
   const jobs: Cron[] = [];
   const openlrClient = createOpenlrClient();
+  const raw = createRawArchive(sql, rawArchiveOptionsFromEnv());
   // Same egress-guarded dispatcher the per-feed jobs use, reused for the
   // low-frequency Fintraffic native-baseline refresh below.
   const guarded = guardedFetch(undiciFetch as unknown as typeof fetch, guardOptionsFromEnv());
@@ -180,6 +182,7 @@ export function startScheduler(
               fetch: undiciFetch as unknown as typeof fetch,
               now: () => new Date().toISOString(),
               openlrClient,
+              raw,
             },
             statusStore,
           );

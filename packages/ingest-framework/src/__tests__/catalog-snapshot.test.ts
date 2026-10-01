@@ -17,6 +17,7 @@ const feed = (id: string): FeedSourceBase => ({
   attribution: "t",
   country: "US",
   privacyUrl: "https://x",
+  tier: "authoritative",
 });
 
 const fakeFetch = (() => new Response("")) as unknown as typeof fetch;

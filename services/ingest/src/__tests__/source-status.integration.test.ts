@@ -3,6 +3,8 @@ import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
+  closeAbandonedPollAttempts,
+  openPollAttempt,
   pruneSourcePollAttempts,
   readSourceOperationalStatus,
   upsertSourceStatus,
@@ -184,13 +186,13 @@ describe("durable source operational status", () => {
     const now = "2026-09-11T12:00:00.000Z";
     for (let index = 0; index < 4; index++) {
       await upsertSourceStatus(sql, `old-${index}`, {
-        attemptAt: "2026-09-01T12:00:00.000Z",
+        attemptAt: "2026-08-01T12:00:00.000Z",
         freshnessWindowSec: 600,
         outcome: "failed",
       });
     }
     for (const [source, attemptAt] of [
-      ["boundary", "2026-09-03T12:00:00.000Z"],
+      ["boundary", "2026-08-11T12:00:00.000Z"],
       ["recent", now],
     ]) {
       await upsertSourceStatus(sql, source!, {
@@ -228,5 +230,24 @@ describe("durable source operational status", () => {
     ).rejects.toThrow("publication failed");
     expect(await sql`SELECT source FROM conditions.source_status`).toHaveLength(0);
     expect(await sql`SELECT source FROM conditions.source_poll_attempt`).toHaveLength(0);
+  });
+
+  it("closes, at boot, the attempts a stopped service left running", async () => {
+    const abandoned = await openPollAttempt(sql, "nl-ndw", "2026-10-01T10:00:00.000Z");
+    const finished = await openPollAttempt(sql, "nl-ndw", "2026-10-01T10:05:00.000Z");
+    await upsertSourceStatus(sql, "nl-ndw", {
+      freshnessWindowSec: 900,
+      outcome: "changed",
+      attemptAt: "2026-10-01T10:05:00.000Z",
+      attemptId: finished,
+    });
+    expect(await closeAbandonedPollAttempts(sql)).toBe(1);
+    const rows = await sql<{ id: string; outcome: string; finished: boolean }[]>`
+      SELECT id, outcome, finished_at IS NOT NULL AS finished
+        FROM conditions.source_poll_attempt ORDER BY id`;
+    expect(rows).toEqual([
+      { id: String(abandoned), outcome: "failed", finished: true },
+      { id: String(finished), outcome: "changed", finished: true },
+    ]);
   });
 });

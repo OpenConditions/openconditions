@@ -49,6 +49,7 @@ export async function loadStationRegistry(
   src: FeedSource,
   fetchFn: typeof fetch,
   now: () => number = Date.now,
+  capture?: (body: Buffer, url: string) => Promise<void>,
 ): Promise<Map<string, SiteGeometry> | undefined> {
   const reg = src.stationRegistry;
   if (!reg) return undefined;
@@ -67,7 +68,9 @@ export async function loadStationRegistry(
     if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${redact(reg.url)}`);
     const parse = PARSERS[reg.format];
     if (!parse) throw new Error(`no station-registry parser for ${reg.format}`);
-    const map = parse(await res.text());
+    const body = await res.text();
+    await capture?.(Buffer.from(body), redact(reg.url));
+    const map = parse(body);
     cache.set(reg.url, { map, fetchedAt: now() });
     return map;
   } catch (err) {

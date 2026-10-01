@@ -37,6 +37,40 @@ When remote-pull is enabled, a snapshot is vendored at
 last-known-good feed set is always available. Mount a volume at the state dir to
 persist the snapshot across restarts.
 
+## Raw payloads
+
+Every decoded response a poll receives is archived once, as a zstd blob at
+`$OPENCONDITIONS_RAW_DIR/<source_id>/<yyyy-mm-dd>/<sha256>.zst`, and indexed in
+`conditions.raw_payload`. A response already archived is only counted again. The
+archive is a bounded replay cache for parser bugs, not history: see
+[`docs/storage.md`](../../docs/storage.md#raw-payloads) for the tiers and the cap.
+A feed whose catalogue `rights.retention` is `false` is never archived; one
+without `rights` keeps 48 hours only.
+
+| Env var                                    | Meaning                                                                                | Default      |
+| ------------------------------------------ | -------------------------------------------------------------------------------------- | ------------ |
+| `OPENCONDITIONS_RAW_DIR`                   | Archive root. The service image mounts the `openconditions-raw` volume at `/data/raw`. | `./data/raw` |
+| `OPENCONDITIONS_RAW_MAX_BYTES`             | Cap on the archive's stored bytes; `0` = no cap.                                       | 10 GiB       |
+| `OPENCONDITIONS_RAW_HOT_HOURS`             | Every distinct payload is kept this long.                                              | 48           |
+| `OPENCONDITIONS_RAW_THIN_DAYS_SITUATION`   | Situation feeds then keep one payload an hour this long.                               | 14           |
+| `OPENCONDITIONS_RAW_THIN_DAYS_OBSERVATION` | Flow feeds then keep one payload an hour this long.                                    | 7            |
+| `OPENCONDITIONS_RAW_ZSTD_LEVEL`            | zstd compression level.                                                                | 9            |
+
+`pnpm --filter @openconditions/ingest raw <command>` runs the archive's
+commands against `DATABASE_URL`:
+
+- `raw pin <hash> [--fixture <name>] [--source <id>]` keeps a payload whatever
+  eviction would do (a golden fixture, a disputed record); `raw unpin <hash>`
+  hands it back.
+- `raw gc [--dry-run]` runs eviction now, or only reports what it would evict.
+
+## Record history
+
+`OPENCONDITIONS_HISTORY_DAYS` (default 90) is how long a tombstoned record and
+its revisions stay for the history API. Hourly rollups are kept
+`OPENCONDITIONS_ROLLUP_HOURLY_DAYS` (35), daily ones
+`OPENCONDITIONS_ROLLUP_DAILY_DAYS` (400).
+
 ## Credentials
 
 Most feeds are credential-gated: the scheduler skips a feed until all of its

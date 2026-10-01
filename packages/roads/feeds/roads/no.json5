@@ -1,6 +1,7 @@
 [
   {
     operator: "vegvesen",
+    tier: "authoritative",
     name: "Statens vegvesen (Norway)",
     format: "datex2",
     url: "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetSituation/pullSnapshotData",
@@ -34,6 +35,7 @@
   },
   {
     operator: "vegvesen",
+    tier: "authoritative",
     stream: "flow",
     name: "Statens vegvesen traffic speed (Norway)",
     format: "datex2",

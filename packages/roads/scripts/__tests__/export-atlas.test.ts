@@ -26,6 +26,7 @@ const staticFeed = roadFeedSchema.parse({
   attribution: "NDW",
   country: "NL",
   privacyUrl: "https://www.ndw.nu",
+  tier: "authoritative",
 });
 
 const temporaryDirs: string[] = [];

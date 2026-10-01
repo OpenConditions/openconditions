@@ -799,3 +799,32 @@ describe("fi-digitraffic v2 descriptor", () => {
     expect(tms!.snapshot).toBeUndefined();
   });
 });
+
+describe("source tiers and access modes", () => {
+  it("every feed declares a tier, and only the relays are aggregators", () => {
+    const aggregators = FEED_SOURCES.filter((f) => f.tier === "aggregator").map((f) => f.id);
+    expect(aggregators.sort()).toEqual(["de-nw-mobilithek-mobidrom", "th-longdo"]);
+    expect(FEED_SOURCES.every((f) => f.tier !== undefined)).toBe(true);
+  });
+
+  it("only NDW numbers lanes from the left", () => {
+    const leftFirst = FEED_SOURCES.filter((f) => f.laneNumbering === "left_first").map((f) => f.id);
+    expect(leftFirst.sort()).toEqual(["nl-ndw", "nl-ndw-flow"]);
+  });
+
+  it("hands the access mode, lane numbering and extras allow-list to the parsers", () => {
+    const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw")!;
+    expect(feedToSourceDescriptor(ndw).accessMode).toBeUndefined();
+    const descriptor = feedToSourceDescriptor({
+      ...ndw,
+      accessMode: "on_demand",
+      laneNumbering: "left_first",
+      extrasAllow: ["situationRecordExtension"],
+    });
+    expect(descriptor).toMatchObject({
+      accessMode: "on_demand",
+      laneNumbering: "left_first",
+      extrasAllow: ["situationRecordExtension"],
+    });
+  });
+});

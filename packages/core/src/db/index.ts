@@ -1,4 +1,32 @@
 export { runMigrations } from "./migrate.js";
+export {
+  observationLatest,
+  observationRollupDaily,
+  observationRollupHourly,
+  observationRollupProgress,
+} from "./observation-schema.js";
+export { RAW_TIERS, type RawTier, rawPayload } from "./raw-schema.js";
+export {
+  feature,
+  featureCanonical,
+  featureComponent,
+  featureLink,
+  featureRevision,
+  offer,
+  offerRevision,
+  type RevisionedClass,
+  recordRelation,
+  situation,
+  situationEffect,
+  situationRevision,
+} from "./record-schema.js";
+export {
+  type Revision,
+  readLatestObservation,
+  readObservationHistory,
+  readRecord,
+  readRevisions,
+} from "./records.js";
 export { assertStoredCodesRegistered, storedRegistryCodes } from "./registry-coverage.js";
 export {
   observations,
@@ -12,3 +40,4 @@ export {
   sensorSpeedSample,
   sourceStatus,
 } from "./schema.js";
+export { source } from "./source-schema.js";

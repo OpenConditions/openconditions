@@ -17,6 +17,7 @@ const valid: FeedSourceBase = {
   attribution: "NDW / Rijkswaterstaat",
   country: "NL",
   privacyUrl: "https://www.ndw.nu/privacy",
+  tier: "authoritative",
 };
 
 describe("feedSourceBaseSchema", () => {
@@ -53,6 +54,35 @@ describe("feedSourceBaseSchema", () => {
   it("rejects an unknown auth.kind (union exhaustiveness at the data boundary)", () => {
     const res = feedSourceBaseSchema.safeParse({ ...valid, auth: { kind: "cookie-jar" } });
     expect(res.success).toBe(false);
+  });
+
+  it("requires the source tier and accepts only the kernel's tiers", () => {
+    const { tier: _drop, ...noTier } = valid;
+    expect(feedSourceBaseSchema.safeParse(noTier).success).toBe(false);
+    expect(feedSourceBaseSchema.safeParse({ ...valid, tier: "official" }).success).toBe(false);
+    for (const tier of ["authoritative", "operator", "aggregator", "community"] as const) {
+      expect(feedSourceBaseSchema.safeParse({ ...valid, tier }).success).toBe(true);
+    }
+  });
+
+  it("accepts the model's access modes, lane numbering, extras and raw retention", () => {
+    const parsed = feedSourceBaseSchema.parse({
+      ...valid,
+      accessMode: "on_demand",
+      laneNumbering: "left_first",
+      extrasAllow: ["situationRecordExtension"],
+      extrasFederate: true,
+      rawRetention: "reference",
+      requestLimits: { perMinute: 60, maxRadiusKm: 25, keyScope: "instance" },
+    });
+    expect(parsed.accessMode).toBe("on_demand");
+    expect(feedSourceBaseSchema.safeParse({ ...valid, accessMode: "stream" }).success).toBe(false);
+    expect(feedSourceBaseSchema.safeParse({ ...valid, laneNumbering: "right" }).success).toBe(
+      false,
+    );
+    expect(feedSourceBaseSchema.safeParse({ ...valid, rawRetention: "forever" }).success).toBe(
+      false,
+    );
   });
 
   it("rejects an unknown top-level key (.strict — no silent-ignore like Transitous)", () => {

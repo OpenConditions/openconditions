@@ -1,0 +1,3455 @@
+[
+  {
+    "id": "oc:feature:de-bw-ocpdb:72555",
+    "temporality": "static",
+    "externalIds": [
+      {
+        "scheme": "provider",
+        "id": "72555",
+        "authority": "de-bw-ocpdb"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.522998,
+          51.608953
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Viktoriastr. 5",
+        "postalCode": "44532",
+        "city": "Lünen",
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-ocpdb",
+      "sourceFormat": "ocpi",
+      "accessMode": "bulk",
+      "recordId": "72555",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "bnetza_api",
+          "recordId": "1002913"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "91bdf45715a3a88cc5452578b5415a7c18a6c254dfc0e02179042e480b9e2dd9",
+    "domain": "charging",
+    "contentHash": "f3ad742979da1d9a9900113eb4d28d625a3eb2075b66966e41b7b31eb9525e41",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "charging_site",
+    "lifecycle": "operational",
+    "operator": {
+      "role": "operator",
+      "name": [
+        {
+          "lang": "de",
+          "text": "Stadtwerke Lünen Infrastrukturbau GmbH"
+        }
+      ]
+    },
+    "openingHours": {
+      "osm": "24/7",
+      "twentyFourSeven": true
+    },
+    "components": [
+      {
+        "key": "259994189",
+        "kind": "evse",
+        "externalIds": [
+          {
+            "scheme": "emi3:evse",
+            "id": "DELUEE001601"
+          }
+        ],
+        "details": {
+          "kind": "evse",
+          "v": 1,
+          "evseId": "DELUEE001601",
+          "uid": "259994189",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ]
+        }
+      },
+      {
+        "key": "260768225",
+        "parentKey": "259994189",
+        "kind": "connector",
+        "details": {
+          "kind": "connector",
+          "v": 1,
+          "standard": "IEC_62196_T2",
+          "format": "socket",
+          "powerType": "AC_3_PHASE",
+          "maxVoltage": 400,
+          "maxAmperage": 32,
+          "maxPowerKw": 11
+        }
+      },
+      {
+        "key": "259994190",
+        "kind": "evse",
+        "externalIds": [
+          {
+            "scheme": "emi3:evse",
+            "id": "DELUEE001602"
+          }
+        ],
+        "details": {
+          "kind": "evse",
+          "v": 1,
+          "evseId": "DELUEE001602",
+          "uid": "259994190",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ]
+        }
+      },
+      {
+        "key": "260768226",
+        "parentKey": "259994190",
+        "kind": "connector",
+        "details": {
+          "kind": "connector",
+          "v": 1,
+          "standard": "IEC_62196_T2",
+          "format": "socket",
+          "powerType": "AC_3_PHASE",
+          "maxVoltage": 400,
+          "maxAmperage": 32,
+          "maxPowerKw": 11
+        }
+      }
+    ],
+    "details": {
+      "kind": "charging_site",
+      "v": 1,
+      "publish": true
+    }
+  },
+  {
+    "id": "oc:feature:de-bw-ocpdb:72557",
+    "temporality": "static",
+    "externalIds": [
+      {
+        "scheme": "provider",
+        "id": "72557",
+        "authority": "de-bw-ocpdb"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.459233,
+          51.606021
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Stellenbachstr. 49-51",
+        "postalCode": "44536",
+        "city": "Lünen",
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-ocpdb",
+      "sourceFormat": "ocpi",
+      "accessMode": "bulk",
+      "recordId": "72557",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "bnetza_api",
+          "recordId": "1002915"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "138c5cdb6ce645e5995afe8e4815c71cca419804a4946016610ac9ac5abe9c88",
+    "domain": "charging",
+    "contentHash": "35052cd13d389db4be31e6bbe66bf4b9bf69d7ad5ee073beb0a15bbbd20a3b53",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "charging_site",
+    "lifecycle": "operational",
+    "operator": {
+      "role": "operator",
+      "name": [
+        {
+          "lang": "de",
+          "text": "Stadtwerke Lünen Infrastrukturbau GmbH"
+        }
+      ]
+    },
+    "openingHours": {
+      "osm": "24/7",
+      "twentyFourSeven": true
+    },
+    "components": [
+      {
+        "key": "259994193",
+        "kind": "evse",
+        "externalIds": [
+          {
+            "scheme": "emi3:evse",
+            "id": "DELUEE000803"
+          }
+        ],
+        "details": {
+          "kind": "evse",
+          "v": 1,
+          "evseId": "DELUEE000803",
+          "uid": "259994193",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ]
+        }
+      },
+      {
+        "key": "260768229",
+        "parentKey": "259994193",
+        "kind": "connector",
+        "details": {
+          "kind": "connector",
+          "v": 1,
+          "standard": "IEC_62196_T2",
+          "format": "socket",
+          "powerType": "AC_3_PHASE",
+          "maxVoltage": 400,
+          "maxAmperage": 32,
+          "maxPowerKw": 11
+        }
+      },
+      {
+        "key": "259994194",
+        "kind": "evse",
+        "externalIds": [
+          {
+            "scheme": "emi3:evse",
+            "id": "DELUEE000804"
+          }
+        ],
+        "details": {
+          "kind": "evse",
+          "v": 1,
+          "evseId": "DELUEE000804",
+          "uid": "259994194",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ]
+        }
+      },
+      {
+        "key": "260768230",
+        "parentKey": "259994194",
+        "kind": "connector",
+        "details": {
+          "kind": "connector",
+          "v": 1,
+          "standard": "IEC_62196_T2",
+          "format": "socket",
+          "powerType": "AC_3_PHASE",
+          "maxVoltage": 400,
+          "maxAmperage": 32,
+          "maxPowerKw": 11
+        }
+      }
+    ],
+    "details": {
+      "kind": "charging_site",
+      "v": 1,
+      "publish": true
+    }
+  },
+  {
+    "id": "oc:observation:de-bw-ocpdb:14fa849993801dbc347781665a046a47483e91b6283157c6ef7a33e835123438",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.522998,
+          51.608953
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Viktoriastr. 5",
+        "postalCode": "44532",
+        "city": "Lünen",
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-ocpdb",
+      "sourceFormat": "ocpi",
+      "accessMode": "bulk",
+      "recordId": "72555",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "bnetza_api",
+          "recordId": "1002913"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "047a5de40fe5adce3b8908a245e728e137fc9cc0d45384d4ad84d2c8b00a08f9",
+    "domain": "charging",
+    "contentHash": "2e7a3d0ca70f91b764aeb69566311a0900dd2f82bf27dcbaedacf4dee42dc932",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "charging.evse_status",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:de-bw-ocpdb:72555",
+      "componentKey": "259994189"
+    },
+    "result": {
+      "type": "category",
+      "value": "unknown",
+      "vocabulary": "evse_status"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-15T06:40:48Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:de-bw-ocpdb:b89d1df41041b579cc7e75561a87ef7a3657fdf3d413b271b3e78304c0944769",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.522998,
+          51.608953
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Viktoriastr. 5",
+        "postalCode": "44532",
+        "city": "Lünen",
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-ocpdb",
+      "sourceFormat": "ocpi",
+      "accessMode": "bulk",
+      "recordId": "72555",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "bnetza_api",
+          "recordId": "1002913"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "69fb28add34b7fc234bf13d355c837aeb1ea4921c8a42e3383bea1b8b2ab2741",
+    "domain": "charging",
+    "contentHash": "8c69bccc937d7ea412decd946c88d2565c15b7863b6eadc7520b2c7e92a60576",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "charging.evse_status",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:de-bw-ocpdb:72555",
+      "componentKey": "259994190"
+    },
+    "result": {
+      "type": "category",
+      "value": "unknown",
+      "vocabulary": "evse_status"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-15T06:40:48Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:de-bw-ocpdb:ce1b0d0bdf7fefe5113360c4009625424ae0c03a778d88b796d5a2e470b1c570",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.459233,
+          51.606021
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Stellenbachstr. 49-51",
+        "postalCode": "44536",
+        "city": "Lünen",
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-ocpdb",
+      "sourceFormat": "ocpi",
+      "accessMode": "bulk",
+      "recordId": "72557",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "bnetza_api",
+          "recordId": "1002915"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "943a25d5e457519e77e871a69b545c582f82f3f2b2d350b6fd22ea79d862e752",
+    "domain": "charging",
+    "contentHash": "402c26364fb402b91a7e9460129d4360aa9b3bee60ffb042971ee1e9074654a2",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "charging.evse_status",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:de-bw-ocpdb:72557",
+      "componentKey": "259994193"
+    },
+    "result": {
+      "type": "category",
+      "value": "unknown",
+      "vocabulary": "evse_status"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-15T06:40:48Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:de-bw-ocpdb:50766b882b220b2e9c4b22079a430053b9dc624a6fc121fa727aaeb8bcf3626d",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.459233,
+          51.606021
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Stellenbachstr. 49-51",
+        "postalCode": "44536",
+        "city": "Lünen",
+        "country": "DE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-ocpdb",
+      "sourceFormat": "ocpi",
+      "accessMode": "bulk",
+      "recordId": "72557",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "bnetza_api",
+          "recordId": "1002915"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "f4537e58cabee4eee0613e3157087d58f2f69f299c13e75c88daf1d25ae7ac34",
+    "domain": "charging",
+    "contentHash": "ada0fcaed7710483f357dc3a635587d0c38efd1c642b3f85fa7114d69e2b3751",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "charging.evse_status",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:de-bw-ocpdb:72557",
+      "componentKey": "259994194"
+    },
+    "result": {
+      "type": "category",
+      "value": "unknown",
+      "vocabulary": "evse_status"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-15T06:40:48Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:feature:de-bw-parkapi:390",
+    "temporality": "static",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.3855853,
+          49.0254715
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "country": "DE",
+        "text": "Erzbergerstraße 117, 76133 Karlsruhe"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-parkapi",
+      "sourceFormat": "parkapi",
+      "accessMode": "bulk",
+      "recordId": "390",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "pbw",
+          "recordId": "110"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "b3cd0e706325fd21d52e896f7ac682ff4680a8116499db68c1adba34e85da8b6",
+    "domain": "parking",
+    "contentHash": "428d1c9acd7ab83df70fa1fcab15c7a9f14dd12801d016749c9f4bee879c78ad",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "parking_site",
+    "type": "off_street",
+    "name": [
+      {
+        "lang": "de",
+        "text": "Parkgarage Erzbergerstraße (DHBW)"
+      }
+    ],
+    "lifecycle": "operational",
+    "operator": {
+      "role": "operator",
+      "name": [
+        {
+          "lang": "de",
+          "text": "Parkraumgesellschaft Baden-Württemberg mbH"
+        }
+      ],
+      "website": "https://www.pbw.de/?menu=parkplatz-finder&search=*110"
+    },
+    "details": {
+      "kind": "parking_site",
+      "v": 1,
+      "capacityTotal": 337,
+      "heightLimit": {
+        "value": 2,
+        "unit": "m"
+      }
+    }
+  },
+  {
+    "id": "oc:feature:de-bw-parkapi:391",
+    "temporality": "static",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.3992879,
+          49.0072806
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "country": "DE",
+        "text": "Ritterstraße 20, 76133 Karlsruhe"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-parkapi",
+      "sourceFormat": "parkapi",
+      "accessMode": "bulk",
+      "recordId": "391",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "pbw",
+          "recordId": "111"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "f510104001225c21906e83b8915c495350cedcca8b02bb1ed7f15d5a061978cd",
+    "domain": "parking",
+    "contentHash": "b9d3aa6feea52f2bf77b810467141ed37480b1fcc0bfe9e1af1b02f47191715b",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "parking_site",
+    "type": "off_street",
+    "name": [
+      {
+        "lang": "de",
+        "text": "Parkgarage Badische Landesbibliothek (BLB)"
+      }
+    ],
+    "lifecycle": "operational",
+    "operator": {
+      "role": "operator",
+      "name": [
+        {
+          "lang": "de",
+          "text": "Parkraumgesellschaft Baden-Württemberg mbH"
+        }
+      ],
+      "website": "https://www.pbw.de/?menu=parkplatz-finder&search=*111"
+    },
+    "details": {
+      "kind": "parking_site",
+      "v": 1,
+      "capacityTotal": 100,
+      "heightLimit": {
+        "value": 2,
+        "unit": "m"
+      }
+    }
+  },
+  {
+    "id": "oc:feature:de-bw-parkapi:384",
+    "temporality": "static",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          9.321229,
+          48.7448187
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "country": "DE",
+        "text": "Flandernstraße 101 A, 73732 Esslingen"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-parkapi",
+      "sourceFormat": "parkapi",
+      "accessMode": "bulk",
+      "recordId": "384",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "pbw",
+          "recordId": "8"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "3a83f40f3e9991c446a6df2616e5e461456d33fb0c53126fcd05f22aabd02e30",
+    "domain": "parking",
+    "contentHash": "f68ba7e5f8e6a49aaeb54f7025da447a508a63f58b52003ae4654ef136355e7d",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "parking_site",
+    "type": "off_street",
+    "name": [
+      {
+        "lang": "de",
+        "text": "Parkhaus Flandernstraße"
+      }
+    ],
+    "lifecycle": "operational",
+    "operator": {
+      "role": "operator",
+      "name": [
+        {
+          "lang": "de",
+          "text": "Parkraumgesellschaft Baden-Württemberg mbH"
+        }
+      ],
+      "website": "https://www.pbw.de/?menu=parkplatz-finder&search=*8"
+    },
+    "details": {
+      "kind": "parking_site",
+      "v": 1,
+      "capacityTotal": 459,
+      "heightLimit": {
+        "value": 1.85,
+        "unit": "m"
+      }
+    }
+  },
+  {
+    "id": "oc:observation:de-bw-parkapi:a6eaf4d4ab5c7bda17e82adf4b8a77c2b07628abe163544b2b50501d5ac94a59",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.3855853,
+          49.0254715
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "country": "DE",
+        "text": "Erzbergerstraße 117, 76133 Karlsruhe"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-parkapi",
+      "sourceFormat": "parkapi",
+      "accessMode": "bulk",
+      "recordId": "390",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "pbw",
+          "recordId": "110"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "8b3cc0e21defcea21c86cdd6f18fff9acc507e58b3a6971decec836a60054b57",
+    "domain": "parking",
+    "contentHash": "28d51a2987e88705f55970c827147f3b12da9ed7de7d3aff8faa801a69242763",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "parking.available",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:de-bw-parkapi:390"
+    },
+    "result": {
+      "type": "count",
+      "value": 128
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:11:29Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:de-bw-parkapi:5610b07a516db846a210b7afc53d7c6a9e1db273c23205473ecff7dc1e7deb49",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          8.3992879,
+          49.0072806
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "country": "DE",
+        "text": "Ritterstraße 20, 76133 Karlsruhe"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-parkapi",
+      "sourceFormat": "parkapi",
+      "accessMode": "bulk",
+      "recordId": "391",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "pbw",
+          "recordId": "111"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "d8e4f8c830666c4378affe9a4d1353cf5cd6f1fb042fef52da25ba870cbfe390",
+    "domain": "parking",
+    "contentHash": "d0c1c0c1f865e4aec45277a3bd7fefb63e6456d37eabd268134cdcc405c1ebb8",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "parking.available",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:de-bw-parkapi:391"
+    },
+    "result": {
+      "type": "count",
+      "value": 19
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:11:29Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:feature:nl-ndw-truckparking:NL-12_421",
+    "temporality": "static",
+    "externalIds": [
+      {
+        "scheme": "datex:parking",
+        "id": "NL-12_421",
+        "authority": "NDW"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.108905,
+          51.39038
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nl-ndw-truckparking",
+      "sourceFormat": "datex2-parking",
+      "accessMode": "bulk",
+      "recordId": "NL-12_421",
+      "attribution": {
+        "provider": "NDW",
+        "license": "CC0-1.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "61c1eb96467199890c796d8a548a49041a9183c4cee1ffe8c1093891ad1ca19d",
+    "domain": "parking",
+    "contentHash": "fc762085caaf5f8a7ea9601c49754aea96600b0383645b6a7c2a6acee42fe9e2",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "parking_site",
+    "type": "truck_parking",
+    "name": [
+      {
+        "lang": "nl",
+        "text": "Truckstop Venlo"
+      }
+    ],
+    "lifecycle": "operational",
+    "components": [
+      {
+        "key": "0",
+        "kind": "parking_area",
+        "details": {
+          "kind": "parking_area",
+          "v": 1,
+          "vehicleType": "any"
+        }
+      },
+      {
+        "key": "1",
+        "kind": "parking_area",
+        "details": {
+          "kind": "parking_area",
+          "v": 1,
+          "vehicleType": "any"
+        }
+      },
+      {
+        "key": "2",
+        "kind": "parking_area",
+        "details": {
+          "kind": "parking_area",
+          "v": 1,
+          "vehicleType": "any"
+        }
+      }
+    ],
+    "details": {
+      "kind": "parking_site",
+      "v": 1,
+      "securityRating": {
+        "scheme": "eu_label",
+        "level": "3"
+      },
+      "securityFeatures": [
+        "cctv",
+        "fences",
+        "lighting",
+        "guard_24h"
+      ],
+      "supervision": "patrol"
+    }
+  },
+  {
+    "id": "oc:feature:nl-ndw-truckparking:NL-12_8",
+    "temporality": "static",
+    "externalIds": [
+      {
+        "scheme": "datex:parking",
+        "id": "NL-12_8",
+        "authority": "NDW"
+      }
+    ],
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5.7572865,
+          51.416557
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nl-ndw-truckparking",
+      "sourceFormat": "datex2-parking",
+      "accessMode": "bulk",
+      "recordId": "NL-12_8",
+      "attribution": {
+        "provider": "NDW",
+        "license": "CC0-1.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "ea409da7b974b4e7c66862fc5f182aa901fd20f40fb3478d7d37706a8ff1046e",
+    "domain": "parking",
+    "contentHash": "75c560da6a44863b45efad883f9b4542f5402207d1466098d5d3bc0825b499cb",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "parking_site",
+    "type": "truck_parking",
+    "name": [
+      {
+        "lang": "nl",
+        "text": "Truck-Inn Nobis ASTEN"
+      }
+    ],
+    "lifecycle": "operational",
+    "components": [
+      {
+        "key": "0",
+        "kind": "parking_area",
+        "details": {
+          "kind": "parking_area",
+          "v": 1,
+          "vehicleType": "any"
+        }
+      },
+      {
+        "key": "1",
+        "kind": "parking_area",
+        "details": {
+          "kind": "parking_area",
+          "v": 1,
+          "vehicleType": "any"
+        }
+      },
+      {
+        "key": "2",
+        "kind": "parking_area",
+        "details": {
+          "kind": "parking_area",
+          "v": 1,
+          "vehicleType": "any"
+        }
+      }
+    ],
+    "details": {
+      "kind": "parking_site",
+      "v": 1,
+      "securityFeatures": [
+        "cctv",
+        "fences",
+        "lighting",
+        "guard_24h"
+      ],
+      "supervision": "patrol"
+    }
+  },
+  {
+    "id": "oc:observation:nl-ndw-truckparking:704f408dbf9f426af1808736a5332e335aa37693e1c4d9f57a9bf800385477d0",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.108905,
+          51.39038
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nl-ndw-truckparking",
+      "sourceFormat": "datex2-parking",
+      "accessMode": "bulk",
+      "recordId": "NL-12_421",
+      "attribution": {
+        "provider": "NDW",
+        "license": "CC0-1.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "5097fe42522b134cef9d92131fbe7da7e0405264cf8fd9eaba32d898de37ce24",
+    "domain": "parking",
+    "contentHash": "49f0f8271da0738341c84fd45f4f0e19314797de8c9f3b40b504de2b1c1d6980",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "parking.available",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_421"
+    },
+    "result": {
+      "type": "count",
+      "value": 1746
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:06:57.472809998Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:nl-ndw-truckparking:3e5162ff27f0eba8210ee33e13ca597bf8651be07922cf8dfa3588d08010d0c0",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.108905,
+          51.39038
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nl-ndw-truckparking",
+      "sourceFormat": "datex2-parking",
+      "accessMode": "bulk",
+      "recordId": "NL-12_421",
+      "attribution": {
+        "provider": "NDW",
+        "license": "CC0-1.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "ded5ca18e09e2aa73f1273c94a7e289d7289377fb1a6a2730fd38f845593d2ea",
+    "domain": "parking",
+    "contentHash": "a29f8792ebb927c879d75a9dc047d52b1aa077623fbc325985941b1f6afab515",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "parking.occupied",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_421"
+    },
+    "result": {
+      "type": "count",
+      "value": 0
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:06:57.472809998Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:nl-ndw-truckparking:89217f0a502cc4b89d1dc12897c2450cb18bde3b9da809f070b9a572366bd65e",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.108905,
+          51.39038
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nl-ndw-truckparking",
+      "sourceFormat": "datex2-parking",
+      "accessMode": "bulk",
+      "recordId": "NL-12_421",
+      "attribution": {
+        "provider": "NDW",
+        "license": "CC0-1.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "6df62469ed4cb248a92ded734ff4c8f43721eca6a047acd8421feaeef1002b46",
+    "domain": "parking",
+    "contentHash": "618d7bedf46fd54b696ed3c870243023d107d77f9dc8796dc18db861e12c3d7a",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "parking.occupancy_pct",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_421"
+    },
+    "result": {
+      "type": "quantity",
+      "value": 14.571428,
+      "unit": "%"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:06:57.472809998Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:nl-ndw-truckparking:0ea676cb6fb2e6b9b3a9e1c70162dd0d93985fbe7d47dd3390f8e253f7f157d8",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.108905,
+          51.39038
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nl-ndw-truckparking",
+      "sourceFormat": "datex2-parking",
+      "accessMode": "bulk",
+      "recordId": "NL-12_421",
+      "attribution": {
+        "provider": "NDW",
+        "license": "CC0-1.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "746eb4c5b278878a46cb53a804ebd306e3b1fd07f6c1b2f796b3ca2024f4d4f2",
+    "domain": "parking",
+    "contentHash": "cf85cf506ff6d023e9742c0579cf7981bea9770d9587572e037784ea11d87dd4",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "parking.available",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_421",
+      "componentKey": "1"
+    },
+    "result": {
+      "type": "count",
+      "value": 291
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:06:57.472809998Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:nl-ndw-truckparking:7e7050a9377230920409cbe906bbca31b48696cce6941d2aa7e424ba46c2455f",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.108905,
+          51.39038
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nl-ndw-truckparking",
+      "sourceFormat": "datex2-parking",
+      "accessMode": "bulk",
+      "recordId": "NL-12_421",
+      "attribution": {
+        "provider": "NDW",
+        "license": "CC0-1.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "8d7ca2c82a0ed17bcef974756c3e9db36252bc689e0df9eb173e3d542aa7535b",
+    "domain": "parking",
+    "contentHash": "6e08324e0aeec7c0097a0f8cc161d4ad99ac70b0b8e3c4dc362ddfe8f21b0d43",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "parking.available",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_421",
+      "componentKey": "2"
+    },
+    "result": {
+      "type": "count",
+      "value": 291
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:06:57.472809998Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:nl-ndw-truckparking:e920df436809e9085884edc2e5eae2aade87567e0d445b0671afacd05da82c99",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5.7572865,
+          51.416557
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nl-ndw-truckparking",
+      "sourceFormat": "datex2-parking",
+      "accessMode": "bulk",
+      "recordId": "NL-12_8",
+      "attribution": {
+        "provider": "NDW",
+        "license": "CC0-1.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "3ff87369b074f639e8599641a772f501f32c268f469c885ce0081f1494c0d2af",
+    "domain": "parking",
+    "contentHash": "3c6f844ca6d8587c2867a37a13c7b7ddc553d13a1f9c947d71b4bce7ca4cc9be",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "parking.available",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_8"
+    },
+    "result": {
+      "type": "count",
+      "value": 1601
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:07:00.346688815Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:nl-ndw-truckparking:d6926e6ec014aec6692399bf96f65e36058cca708aee1de5996f8af880531dbe",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5.7572865,
+          51.416557
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nl-ndw-truckparking",
+      "sourceFormat": "datex2-parking",
+      "accessMode": "bulk",
+      "recordId": "NL-12_8",
+      "attribution": {
+        "provider": "NDW",
+        "license": "CC0-1.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "5a7dc3c9590754e83d25d46c940d383ea68ebd8f5dc2e9cbed291572ac4740c1",
+    "domain": "parking",
+    "contentHash": "be98bc824817ba27142df491a549c20c686066c2f6c0a5431672315378118d51",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "parking.occupied",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_8"
+    },
+    "result": {
+      "type": "unknown"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:07:00.346688815Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:nl-ndw-truckparking:5ab82937c96f93703c875f3c6e429b7c1ba0a4be046909c74f195483dfc19786",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5.7572865,
+          51.416557
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nl-ndw-truckparking",
+      "sourceFormat": "datex2-parking",
+      "accessMode": "bulk",
+      "recordId": "NL-12_8",
+      "attribution": {
+        "provider": "NDW",
+        "license": "CC0-1.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "cd42e8ca5052383dc5afb20e0d989b306222810247f0721b6a9c785b761f70ea",
+    "domain": "parking",
+    "contentHash": "bb29e80d9e245fc4f0293a3a941dd28339106da9cdfddd4aa73d44e242ef302e",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "parking.occupancy_pct",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_8"
+    },
+    "result": {
+      "type": "quantity",
+      "value": -637,
+      "unit": "%"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:07:00.346688815Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:feature:de-autobahn:DE-SL-000009",
+    "temporality": "static",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.968336,
+          49.310742
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-autobahn",
+      "sourceFormat": "autobahn-parking",
+      "accessMode": "bulk",
+      "recordId": "DE-SL-000009",
+      "attribution": {
+        "provider": "Autobahn GmbH des Bundes",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "9fb86b7f8325c3a5a4f0114e1160d35decd9efd3366cbb9e287807143a59d443",
+    "domain": "parking",
+    "contentHash": "f3ac37eac85fa9432ad6d2741473d57460703a471f851fc3b79ef7e4d951c358",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "parking_site",
+    "type": "rest_area_parking",
+    "name": [
+      {
+        "lang": "de",
+        "text": "Neuhaus W"
+      }
+    ],
+    "lifecycle": "operational",
+    "components": [
+      {
+        "key": "lorry",
+        "kind": "parking_area",
+        "details": {
+          "kind": "parking_area",
+          "v": 1,
+          "vehicleType": "truck",
+          "capacity": 6
+        }
+      },
+      {
+        "key": "car",
+        "kind": "parking_area",
+        "details": {
+          "kind": "parking_area",
+          "v": 1,
+          "vehicleType": "car",
+          "capacity": 0
+        }
+      }
+    ],
+    "details": {
+      "kind": "parking_site",
+      "v": 1,
+      "capacityTotal": 6,
+      "usage": [
+        "truck"
+      ]
+    }
+  },
+  {
+    "id": "oc:feature:de-autobahn:DE-SL-000008",
+    "temporality": "static",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          6.968946,
+          49.309836
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-autobahn",
+      "sourceFormat": "autobahn-parking",
+      "accessMode": "bulk",
+      "recordId": "DE-SL-000008",
+      "attribution": {
+        "provider": "Autobahn GmbH des Bundes",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "0132f086e742192ccd8a97a7e93c827e60f1b426ead99b1ce5e8e42c9fcc0664",
+    "domain": "parking",
+    "contentHash": "288a55b804c373da365e5d95c9a0f3fd15079ffb33fd6f348e41c42e6d674371",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "parking_site",
+    "type": "rest_area_parking",
+    "name": [
+      {
+        "lang": "de",
+        "text": "Neuhaus O"
+      }
+    ],
+    "lifecycle": "operational",
+    "components": [
+      {
+        "key": "lorry",
+        "kind": "parking_area",
+        "details": {
+          "kind": "parking_area",
+          "v": 1,
+          "vehicleType": "truck",
+          "capacity": 4
+        }
+      },
+      {
+        "key": "car",
+        "kind": "parking_area",
+        "details": {
+          "kind": "parking_area",
+          "v": 1,
+          "vehicleType": "car",
+          "capacity": 0
+        }
+      }
+    ],
+    "details": {
+      "kind": "parking_site",
+      "v": 1,
+      "capacityTotal": 4,
+      "usage": [
+        "truck"
+      ]
+    }
+  },
+  {
+    "id": "oc:feature:es-minetur:3119",
+    "temporality": "static",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.480944,
+          40.528028
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES",
+        "geocodes": [
+          {
+            "scheme": "iso3166-2",
+            "code": "ES-M"
+          }
+        ]
+      },
+      "address": {
+        "street": "CARRETERA M-114 KM. 0,7",
+        "postalCode": "28864",
+        "city": "Ajalvir",
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-minetur",
+      "sourceFormat": "minetur",
+      "accessMode": "bulk",
+      "recordId": "3119",
+      "attribution": {
+        "provider": "Ministerio para la Transición Ecológica",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "da1b8c129d90b94c1dda496189a12c02f97dfb6ebe4fc5ef0db0eeff59c3e1be",
+    "domain": "fuel",
+    "contentHash": "2086c6f16acdbd5be54a3d1110a064fb1aad8d6f81029bea0fe3c6ced23da4d7",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "fuel_station",
+    "name": [
+      {
+        "lang": "es",
+        "text": "REPSOL"
+      }
+    ],
+    "lifecycle": "operational",
+    "access": {
+      "audience": "public"
+    },
+    "components": [
+      {
+        "key": "e5",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "e5",
+          "priceLevel": "standard",
+          "vehicleScope": "any",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      },
+      {
+        "key": "sp98",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "sp98",
+          "priceLevel": "standard",
+          "vehicleScope": "any",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      },
+      {
+        "key": "diesel",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "diesel",
+          "priceLevel": "standard",
+          "vehicleScope": "any",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      },
+      {
+        "key": "hvo100",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "hvo100",
+          "priceLevel": "standard",
+          "vehicleScope": "any",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      },
+      {
+        "key": "lpg",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "lpg",
+          "priceLevel": "standard",
+          "vehicleScope": "any",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      }
+    ],
+    "details": {
+      "kind": "fuel_station",
+      "v": 1,
+      "brand": "REPSOL",
+      "productsComplete": true
+    }
+  },
+  {
+    "id": "oc:feature:es-minetur:15493",
+    "temporality": "static",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.481639,
+          40.528778
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES",
+        "geocodes": [
+          {
+            "scheme": "iso3166-2",
+            "code": "ES-M"
+          }
+        ]
+      },
+      "address": {
+        "street": "CAMINO TORREJON, 4",
+        "postalCode": "28864",
+        "city": "Ajalvir",
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-minetur",
+      "sourceFormat": "minetur",
+      "accessMode": "bulk",
+      "recordId": "15493",
+      "attribution": {
+        "provider": "Ministerio para la Transición Ecológica",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "c0718d840091d1167c3fb7d6d13c50d41f84cbd7e4a4a5aba89bb726d2255472",
+    "domain": "fuel",
+    "contentHash": "dc9d303aca8e0c527d9e278ada3e7e0018eae5ee02b19d2aef3f63e84a5faa3a",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "fuel_station",
+    "name": [
+      {
+        "lang": "es",
+        "text": "PLENERGY"
+      }
+    ],
+    "lifecycle": "operational",
+    "access": {
+      "audience": "public"
+    },
+    "components": [
+      {
+        "key": "e5",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "e5",
+          "priceLevel": "standard",
+          "vehicleScope": "any",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      },
+      {
+        "key": "diesel",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "diesel",
+          "priceLevel": "standard",
+          "vehicleScope": "any",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      }
+    ],
+    "details": {
+      "kind": "fuel_station",
+      "v": 1,
+      "brand": "PLENERGY",
+      "productsComplete": true
+    }
+  },
+  {
+    "id": "oc:observation:es-minetur:18c32bed1821cd0f7b4ba5913b45e04c9f8301fa61c70fe4dd6161e99ee1bcdc",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.480944,
+          40.528028
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES",
+        "geocodes": [
+          {
+            "scheme": "iso3166-2",
+            "code": "ES-M"
+          }
+        ]
+      },
+      "address": {
+        "street": "CARRETERA M-114 KM. 0,7",
+        "postalCode": "28864",
+        "city": "Ajalvir",
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-minetur",
+      "sourceFormat": "minetur",
+      "accessMode": "bulk",
+      "recordId": "3119",
+      "attribution": {
+        "provider": "Ministerio para la Transición Ecológica",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "e9e2a63260f38fe6873c428041e00973e762143145554d8593586db14bf4e8a8",
+    "domain": "fuel",
+    "contentHash": "003c92ed240659009b2c4b28d89580b1ea61f399f2f8b04ff9ffa3de3b2be7d9",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:es-minetur:3119",
+      "componentKey": "e5"
+    },
+    "result": {
+      "type": "money",
+      "amount": "1.989",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:07:59Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:es-minetur:854d6a87732deb1733398e53e0ca5d25e896c0d8242bf99834f82ca69965046b",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.480944,
+          40.528028
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES",
+        "geocodes": [
+          {
+            "scheme": "iso3166-2",
+            "code": "ES-M"
+          }
+        ]
+      },
+      "address": {
+        "street": "CARRETERA M-114 KM. 0,7",
+        "postalCode": "28864",
+        "city": "Ajalvir",
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-minetur",
+      "sourceFormat": "minetur",
+      "accessMode": "bulk",
+      "recordId": "3119",
+      "attribution": {
+        "provider": "Ministerio para la Transición Ecológica",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "28b4f44df0cdb57d699e4de1f66d56d75f0c3824f15e57d9e9545b343fac3a7b",
+    "domain": "fuel",
+    "contentHash": "52651cf0e75cde3e21c959a35344429825c8bd23f8922290458b80a39bd2e39b",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:es-minetur:3119",
+      "componentKey": "sp98"
+    },
+    "result": {
+      "type": "money",
+      "amount": "2.149",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:07:59Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:es-minetur:f62b6338de76b30e5e30a104b76ad6edd8af96287df29701be68fa60bf57b7df",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.480944,
+          40.528028
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES",
+        "geocodes": [
+          {
+            "scheme": "iso3166-2",
+            "code": "ES-M"
+          }
+        ]
+      },
+      "address": {
+        "street": "CARRETERA M-114 KM. 0,7",
+        "postalCode": "28864",
+        "city": "Ajalvir",
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-minetur",
+      "sourceFormat": "minetur",
+      "accessMode": "bulk",
+      "recordId": "3119",
+      "attribution": {
+        "provider": "Ministerio para la Transición Ecológica",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "4ef83526a4115b04ed368041f0ae4967ae63957b5371e360bedb6bc54bfa66fd",
+    "domain": "fuel",
+    "contentHash": "de6dd06f3f0bb0281566987e079f5a3c1cae405857811eb0756b3573ee3d4900",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:es-minetur:3119",
+      "componentKey": "diesel"
+    },
+    "result": {
+      "type": "money",
+      "amount": "2.059",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:07:59Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:es-minetur:a1d1d514d5c8a5eed02564d11f234dd146215c043eb0828fe117a9bb836f7f59",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.480944,
+          40.528028
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES",
+        "geocodes": [
+          {
+            "scheme": "iso3166-2",
+            "code": "ES-M"
+          }
+        ]
+      },
+      "address": {
+        "street": "CARRETERA M-114 KM. 0,7",
+        "postalCode": "28864",
+        "city": "Ajalvir",
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-minetur",
+      "sourceFormat": "minetur",
+      "accessMode": "bulk",
+      "recordId": "3119",
+      "attribution": {
+        "provider": "Ministerio para la Transición Ecológica",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "518b8d99872489fa87a5c565900df7e94ef3f097a67684dea92154b79c7a578d",
+    "domain": "fuel",
+    "contentHash": "da72e9bb10c3ec9a9a9e733b30a0fbcbb8a045505cd1924e43088d20811b3df0",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:es-minetur:3119",
+      "componentKey": "hvo100"
+    },
+    "result": {
+      "type": "money",
+      "amount": "2.169",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:07:59Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:es-minetur:51ef632f4a66ba4d583ba854df38017bfbda536f3f8b2d503d0c08dad19030c4",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.480944,
+          40.528028
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES",
+        "geocodes": [
+          {
+            "scheme": "iso3166-2",
+            "code": "ES-M"
+          }
+        ]
+      },
+      "address": {
+        "street": "CARRETERA M-114 KM. 0,7",
+        "postalCode": "28864",
+        "city": "Ajalvir",
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-minetur",
+      "sourceFormat": "minetur",
+      "accessMode": "bulk",
+      "recordId": "3119",
+      "attribution": {
+        "provider": "Ministerio para la Transición Ecológica",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "eaddcf959aeeb0097e505b205ad436f35d9ef6c1c9560f22d095552e0613e5f6",
+    "domain": "fuel",
+    "contentHash": "a676c9325386f3fb4f59650bd726b90e50125be9bd4c49ed8ac7bb2e0ec98acb",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:es-minetur:3119",
+      "componentKey": "lpg"
+    },
+    "result": {
+      "type": "money",
+      "amount": "1.115",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:07:59Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:es-minetur:8ca43990205205d640e7929460153372b9dd432f290b4af0db2dfbd735998bf0",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.481639,
+          40.528778
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES",
+        "geocodes": [
+          {
+            "scheme": "iso3166-2",
+            "code": "ES-M"
+          }
+        ]
+      },
+      "address": {
+        "street": "CAMINO TORREJON, 4",
+        "postalCode": "28864",
+        "city": "Ajalvir",
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-minetur",
+      "sourceFormat": "minetur",
+      "accessMode": "bulk",
+      "recordId": "15493",
+      "attribution": {
+        "provider": "Ministerio para la Transición Ecológica",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "76c1ead3e67a57fa8e6a885e349d29e5461a4a1a5899deebb1e7213a69b6e5af",
+    "domain": "fuel",
+    "contentHash": "e42ed07216d5aab9dd8d65e252a2a8457edb53b36510a55220c61c5067747a18",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:es-minetur:15493",
+      "componentKey": "e5"
+    },
+    "result": {
+      "type": "money",
+      "amount": "1.889",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:07:59Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:es-minetur:2c55665524a2f01dc832bc325be8f46acae04680d8c845e735f75cde913225dc",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -3.481639,
+          40.528778
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "ES",
+        "geocodes": [
+          {
+            "scheme": "iso3166-2",
+            "code": "ES-M"
+          }
+        ]
+      },
+      "address": {
+        "street": "CAMINO TORREJON, 4",
+        "postalCode": "28864",
+        "city": "Ajalvir",
+        "country": "ES"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "es-minetur",
+      "sourceFormat": "minetur",
+      "accessMode": "bulk",
+      "recordId": "15493",
+      "attribution": {
+        "provider": "Ministerio para la Transición Ecológica",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "3d6a50602a3c41852ed8814049688f69fd46a62837eeb7d1cadac486f9b5c978",
+    "domain": "fuel",
+    "contentHash": "3b3ce404eb35db5602cf604a6dc6eafe37c69b0792a0915b9d6f4c4c3b4fb6b6",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:es-minetur:15493",
+      "componentKey": "diesel"
+    },
+    "result": {
+      "type": "money",
+      "amount": "1.879",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:07:59Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:feature:it-mimit:3464",
+    "temporality": "static",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.570832944774565,
+          44.88011856623546
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Autostrada A13 BOLOGNA-PADOVA, Km. 43+400, dir. Nord - 44100",
+        "city": "FERRARA",
+        "region": "FE",
+        "country": "IT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "it-mimit",
+      "sourceFormat": "mimit",
+      "accessMode": "bulk",
+      "recordId": "3464",
+      "attribution": {
+        "provider": "MIMIT",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "340cbe4a72c826891e4e100567373860b687db05643bdb8d83d5b4c4d659a4e7",
+    "domain": "fuel",
+    "contentHash": "b82811efdaa9aa3357de7fa52e1feb0cafa9ff4bb5afb290de5ae800e3604aec",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "fuel_station",
+    "name": [
+      {
+        "lang": "it",
+        "text": "PO EST"
+      }
+    ],
+    "lifecycle": "operational",
+    "components": [
+      {
+        "key": "e5:served",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "e5",
+          "service": "served",
+          "priceLevel": "standard",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      },
+      {
+        "key": "e5:self",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "e5",
+          "service": "self",
+          "priceLevel": "standard",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      },
+      {
+        "key": "diesel:served",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "diesel",
+          "service": "served",
+          "priceLevel": "standard",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      },
+      {
+        "key": "diesel:self",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "diesel",
+          "service": "self",
+          "priceLevel": "standard",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      },
+      {
+        "key": "cng:served",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "cng",
+          "service": "served",
+          "priceLevel": "standard",
+          "per": "kg",
+          "priceBasis": "gross"
+        }
+      },
+      {
+        "key": "lpg:served",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "lpg",
+          "service": "served",
+          "priceLevel": "standard",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      }
+    ],
+    "details": {
+      "kind": "fuel_station",
+      "v": 1,
+      "brand": "Api-Ip",
+      "productsComplete": false,
+      "truckSuitable": true
+    }
+  },
+  {
+    "id": "oc:observation:it-mimit:dffe14b33f553ecaea2c2330bb1416db072fb444f9284f97008a469fc0416592",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.570832944774565,
+          44.88011856623546
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Autostrada A13 BOLOGNA-PADOVA, Km. 43+400, dir. Nord - 44100",
+        "city": "FERRARA",
+        "region": "FE",
+        "country": "IT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "it-mimit",
+      "sourceFormat": "mimit",
+      "accessMode": "bulk",
+      "recordId": "3464",
+      "attribution": {
+        "provider": "MIMIT",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "724c739e066199f5d0a862c0675433995c5bbe04edd59659f20a8c296440c858",
+    "domain": "fuel",
+    "contentHash": "ee93bff86fd225749b5b04cbab0d2195150c8679f4c77949b220891e55498505",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:it-mimit:3464",
+      "componentKey": "e5:served"
+    },
+    "result": {
+      "type": "money",
+      "amount": "2.659",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-18T20:00:09+02:00"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:it-mimit:decf5fdb8cb1cdc9bbb27ebbcfb71f54b168f780e9a21db297de0c2e8536c0ee",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.570832944774565,
+          44.88011856623546
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Autostrada A13 BOLOGNA-PADOVA, Km. 43+400, dir. Nord - 44100",
+        "city": "FERRARA",
+        "region": "FE",
+        "country": "IT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "it-mimit",
+      "sourceFormat": "mimit",
+      "accessMode": "bulk",
+      "recordId": "3464",
+      "attribution": {
+        "provider": "MIMIT",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "609e297c000909390b663069d38a7a685c520bffdb7dbebcff3d62c9e11c118e",
+    "domain": "fuel",
+    "contentHash": "22c043fe1f8fbae3328ba3e8cb9b99277ece4741cc7addd648e42f672792c175",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:it-mimit:3464",
+      "componentKey": "e5:self"
+    },
+    "result": {
+      "type": "money",
+      "amount": "2.299",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-18T20:00:07+02:00"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:it-mimit:e58866c5fff3ac36c9549cd32077c9ce913692a5b4160c412630525c8762b0a4",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.570832944774565,
+          44.88011856623546
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Autostrada A13 BOLOGNA-PADOVA, Km. 43+400, dir. Nord - 44100",
+        "city": "FERRARA",
+        "region": "FE",
+        "country": "IT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "it-mimit",
+      "sourceFormat": "mimit",
+      "accessMode": "bulk",
+      "recordId": "3464",
+      "attribution": {
+        "provider": "MIMIT",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "539065bad64acf04e0da46372fa5c2b12627cae0a198c25c6e7a5c3cfa0b5603",
+    "domain": "fuel",
+    "contentHash": "61462847a8a32ce2c6aa34102e7b2e5f96eaa1f98c446829af190ebcfd5ab05d",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:it-mimit:3464",
+      "componentKey": "diesel:served"
+    },
+    "result": {
+      "type": "money",
+      "amount": "2.809",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-18T20:00:10+02:00"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:it-mimit:688193cc378ec31451d5ebb9092cefec1df316b51ae70b2604ae96fbab03a730",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.570832944774565,
+          44.88011856623546
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Autostrada A13 BOLOGNA-PADOVA, Km. 43+400, dir. Nord - 44100",
+        "city": "FERRARA",
+        "region": "FE",
+        "country": "IT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "it-mimit",
+      "sourceFormat": "mimit",
+      "accessMode": "bulk",
+      "recordId": "3464",
+      "attribution": {
+        "provider": "MIMIT",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "d07109360fd17aaef7e79170d153cd059cc32140b96f467d696525e9af985b4e",
+    "domain": "fuel",
+    "contentHash": "ec92a948212c9f3c63d5ef3c4b5fe991ce517f376de9c635bc21993e9cc9756a",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:it-mimit:3464",
+      "componentKey": "diesel:self"
+    },
+    "result": {
+      "type": "money",
+      "amount": "2.449",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-18T20:00:08+02:00"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:it-mimit:bf2b4f63462068ef23c4279e9ef8a0d277f30f866a7476b49ccdedfec696d0ad",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.570832944774565,
+          44.88011856623546
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Autostrada A13 BOLOGNA-PADOVA, Km. 43+400, dir. Nord - 44100",
+        "city": "FERRARA",
+        "region": "FE",
+        "country": "IT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "it-mimit",
+      "sourceFormat": "mimit",
+      "accessMode": "bulk",
+      "recordId": "3464",
+      "attribution": {
+        "provider": "MIMIT",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "cf2985104b1caa1672c38fee469dcd6a437f125c0cb2221654df8dc9b35edf1b",
+    "domain": "fuel",
+    "contentHash": "af7ec27c023a8cee56dcc02aff1f6361b2bcf730e5e9d7cce3539049e0768ee0",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:it-mimit:3464",
+      "componentKey": "cng:served"
+    },
+    "result": {
+      "type": "money",
+      "amount": "1.794",
+      "currency": "EUR",
+      "per": "kg"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-18T20:00:10+02:00"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:it-mimit:10f4c100fd98e740c466e4b7555833d7ba8b349bd66a550969a8802edf7808cd",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.570832944774565,
+          44.88011856623546
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Autostrada A13 BOLOGNA-PADOVA, Km. 43+400, dir. Nord - 44100",
+        "city": "FERRARA",
+        "region": "FE",
+        "country": "IT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "it-mimit",
+      "sourceFormat": "mimit",
+      "accessMode": "bulk",
+      "recordId": "3464",
+      "attribution": {
+        "provider": "MIMIT",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "6824dec8d87303fb20facf2e35f9646579ffe8d0f030deb14e85f71d62b30953",
+    "domain": "fuel",
+    "contentHash": "c9bbfd2d420a2d0b49a72cfd159323a444c88be7fab3e67493f8847ee8ac35dc",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:it-mimit:3464",
+      "componentKey": "lpg:served"
+    },
+    "result": {
+      "type": "money",
+      "amount": "0.849",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-18T20:00:09+02:00"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:feature:at-econtrol:1494440",
+    "temporality": "static",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          16.358812,
+          48.1963966
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Rechte Wienzeile 43",
+        "postalCode": "1050",
+        "city": "Wien",
+        "country": "AT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "at-econtrol",
+      "sourceFormat": "econtrol",
+      "accessMode": "on_demand",
+      "recordId": "1494440",
+      "attribution": {
+        "provider": "E-Control",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z",
+      "expiresAt": "2026-09-22T11:40:00Z"
+    },
+    "canonicalId": "fde0161d44d185085dad9a72488869ee9dedce1884c61c180a66e02a2cd6b57d",
+    "domain": "fuel",
+    "contentHash": "c740f49797774dc41a65a8c8dc4a924e91f04fd7c25ae6ae9154c21b7c6b69e5",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "fuel_station",
+    "name": [
+      {
+        "lang": "de",
+        "text": "TMC Werkstatt & Tankstelle"
+      }
+    ],
+    "lifecycle": "operational",
+    "components": [
+      {
+        "key": "diesel",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "diesel",
+          "service": "served",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      }
+    ],
+    "details": {
+      "kind": "fuel_station",
+      "v": 1,
+      "productsComplete": false
+    }
+  },
+  {
+    "id": "oc:feature:at-econtrol:34026",
+    "temporality": "static",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          16.3445982,
+          48.2004272
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Seidengasse 12",
+        "postalCode": "1070",
+        "city": "Wien",
+        "country": "AT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "at-econtrol",
+      "sourceFormat": "econtrol",
+      "accessMode": "on_demand",
+      "recordId": "34026",
+      "attribution": {
+        "provider": "E-Control",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z",
+      "expiresAt": "2026-09-22T11:40:00Z"
+    },
+    "canonicalId": "34b4eb2993828756f3d3c8b984e858a1cb9257129f9932b3183e8856fda21474",
+    "domain": "fuel",
+    "contentHash": "4cf9a4718ef800266bf7882033f7f383129dad3a910fad79d76363ac6d988f96",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "feature",
+    "kind": "fuel_station",
+    "name": [
+      {
+        "lang": "de",
+        "text": "leodiskonttankstelle GmbH"
+      }
+    ],
+    "lifecycle": "operational",
+    "components": [
+      {
+        "key": "diesel",
+        "kind": "fuel_product",
+        "details": {
+          "kind": "fuel_product",
+          "v": 1,
+          "grade": "diesel",
+          "service": "served",
+          "per": "L",
+          "priceBasis": "gross"
+        }
+      }
+    ],
+    "details": {
+      "kind": "fuel_station",
+      "v": 1,
+      "productsComplete": false
+    }
+  },
+  {
+    "id": "oc:observation:at-econtrol:add2fcc4cb5e01efb70d3571161b7b082d0c180297b0b98033f43e6771859756",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          16.358812,
+          48.1963966
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Rechte Wienzeile 43",
+        "postalCode": "1050",
+        "city": "Wien",
+        "country": "AT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "at-econtrol",
+      "sourceFormat": "econtrol",
+      "accessMode": "on_demand",
+      "recordId": "1494440",
+      "attribution": {
+        "provider": "E-Control",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z",
+      "expiresAt": "2026-09-22T11:40:00Z"
+    },
+    "canonicalId": "c30b52c2a7b0a817380cfc1293828ffc0338a6d7975273017eabcbc93c9b4d92",
+    "domain": "fuel",
+    "contentHash": "67ec61531a33e7b9a0838dc75d192e52a7bafd138cf4b72cbd0960dd3aa1c0f8",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:at-econtrol:1494440",
+      "componentKey": "diesel"
+    },
+    "result": {
+      "type": "money",
+      "amount": "2.179",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:10:00Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:observation:at-econtrol:f868beac2f97867b1df8cf8f4d8de631e3bb82f30614db37de772b71cbf1ee31",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          16.3445982,
+          48.2004272
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "address": {
+        "street": "Seidengasse 12",
+        "postalCode": "1070",
+        "city": "Wien",
+        "country": "AT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "at-econtrol",
+      "sourceFormat": "econtrol",
+      "accessMode": "on_demand",
+      "recordId": "34026",
+      "attribution": {
+        "provider": "E-Control",
+        "license": "CC-BY-4.0"
+      },
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z",
+      "expiresAt": "2026-09-22T11:40:00Z"
+    },
+    "canonicalId": "1f0e8b105d200c6bb58e805ae2c5aeae8ecded8a5b53c8fc2dd760210b99691f",
+    "domain": "fuel",
+    "contentHash": "887a57fcc18ed9a0a99efb9b052e257af18d6e4255c640fb538f3506d4af4bf4",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "observation",
+    "kind": "observation",
+    "property": "fuel.price",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:at-econtrol:34026",
+      "componentKey": "diesel"
+    },
+    "result": {
+      "type": "money",
+      "amount": "2.195",
+      "currency": "EUR",
+      "per": "L"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:10:00Z"
+    },
+    "aggregation": "instantaneous"
+  },
+  {
+    "id": "oc:offer:de-bw-ocpdb:138586",
+    "temporality": "static",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.522998,
+          51.608953
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-ocpdb",
+      "sourceFormat": "ocpi",
+      "accessMode": "bulk",
+      "recordId": "138586",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "datex2_enbw"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "4bd5e5fa28a3ebd2b60ad66e4dd2c6b66357b40bc71b92936c54a88ea03f6483",
+    "domain": "charging",
+    "contentHash": "94eefae86fa061e4510a83e2fa6c614add8d90cfd25635c1300d05d62f002d98",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "offer",
+    "kind": "energy_tariff",
+    "subject": {
+      "class": "feature",
+      "id": "oc:feature:de-bw-ocpdb:72555"
+    },
+    "currency": "EUR",
+    "elements": [
+      {
+        "components": [
+          {
+            "type": "energy",
+            "price": {
+              "amount": "0.6639",
+              "currency": "EUR"
+            },
+            "vatPct": 19
+          }
+        ]
+      },
+      {
+        "components": [
+          {
+            "type": "time",
+            "price": {
+              "amount": "0.2017",
+              "currency": "EUR"
+            },
+            "vatPct": 19
+          }
+        ],
+        "restrictions": {
+          "minDuration": {
+            "value": 1800,
+            "unit": "s"
+          },
+          "maxDuration": {
+            "value": 0,
+            "unit": "s"
+          }
+        }
+      }
+    ],
+    "priceIncludesVat": false,
+    "validity": {
+      "status": "active"
+    }
+  },
+  {
+    "id": "oc:offer:de-bw-ocpdb:138587",
+    "temporality": "static",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.522998,
+          51.608953
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "de-bw-ocpdb",
+      "sourceFormat": "ocpi",
+      "accessMode": "bulk",
+      "recordId": "138587",
+      "attribution": {
+        "provider": "MobiData BW",
+        "license": "CC-BY-4.0"
+      },
+      "upstream": [
+        {
+          "publisher": "datex2_enbw"
+        }
+      ],
+      "instanceId": "fit.example",
+      "privacy": {
+        "class": "authoritative"
+      }
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "canonicalId": "97b99602dccf207447bfe5c58ab62db846230130848f460a1f4b50a95d25f25b",
+    "domain": "charging",
+    "contentHash": "39b18791276ef7aabfe3d92b118799629d7725dc2959245e5cc87027306b5757",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "class": "offer",
+    "kind": "energy_tariff",
+    "subject": {
+      "class": "feature",
+      "id": "oc:feature:de-bw-ocpdb:72555"
+    },
+    "currency": "EUR",
+    "elements": [
+      {
+        "components": [
+          {
+            "type": "energy",
+            "price": {
+              "amount": "0.5882",
+              "currency": "EUR"
+            },
+            "vatPct": 19
+          }
+        ]
+      },
+      {
+        "components": [
+          {
+            "type": "time",
+            "price": {
+              "amount": "0.1008",
+              "currency": "EUR"
+            },
+            "vatPct": 19
+          }
+        ],
+        "restrictions": {
+          "minDuration": {
+            "value": 7200,
+            "unit": "s"
+          },
+          "maxDuration": {
+            "value": 0,
+            "unit": "s"
+          }
+        }
+      }
+    ],
+    "priceIncludesVat": false,
+    "validity": {
+      "status": "active"
+    }
+  }
+]

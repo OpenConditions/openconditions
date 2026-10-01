@@ -1,6 +1,7 @@
 [
   {
     operator: "nationalhighways",
+    tier: "authoritative",
     name: "National Highways NTIS (England)",
     format: "datex2",
     url: "https://api.data.nationalhighways.co.uk/roads/v2.0/closures",

@@ -1,6 +1,7 @@
 [
   {
     operator: "hc",
+    tier: "authoritative",
     name: "Hrvatske ceste roadworks (Croatia)",
     format: "datex2",
     url: "https://b2b.promet-info.hr/dc/b2b.hc.roadworks.datex",
@@ -34,6 +35,7 @@
   },
   {
     operator: "hc",
+    tier: "authoritative",
     stream: "events",
     name: "Hrvatske ceste traffic events (Croatia)",
     format: "datex2",

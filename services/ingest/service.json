@@ -34,7 +34,10 @@
       "OPENCONDITIONS_DOWNLOAD_TIMEOUT_MS": "${OPENCONDITIONS_DOWNLOAD_TIMEOUT_MS:-}",
       "RATE_LIMIT_MAX": "${OPENCONDITIONS_RATE_LIMIT_MAX:-120}",
       "RATE_LIMIT_WINDOW_MS": "${OPENCONDITIONS_RATE_LIMIT_WINDOW_MS:-60000}",
-      "TRUST_PROXY_CIDRS": "${TRUST_PROXY_CIDRS:-loopback,linklocal,uniquelocal}"
+      "TRUST_PROXY_CIDRS": "${TRUST_PROXY_CIDRS:-loopback,linklocal,uniquelocal}",
+      "OPENCONDITIONS_RAW_DIR": "/data/raw",
+      "OPENCONDITIONS_RAW_MAX_BYTES": "${OPENCONDITIONS_RAW_MAX_BYTES:-}",
+      "OPENCONDITIONS_HISTORY_DAYS": "${OPENCONDITIONS_HISTORY_DAYS:-}"
     },
     "memory": "${OPENCONDITIONS_INGEST_MEMORY:-4g}",
     "restart": "unless-stopped",
@@ -54,6 +57,14 @@
       "startPeriod": "30s"
     }
   },
+  "volumes": [
+    {
+      "name": "openconditions-raw",
+      "mountAt": "/data/raw",
+      "backup": false,
+      "readOnly": false
+    }
+  ],
   "provides": [
     "openconditions/road-conditions-data"
   ],

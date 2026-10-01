@@ -22,6 +22,7 @@ function makeFeed(overrides: Partial<TestFeedSource> & Pick<TestFeedSource, "id"
     attribution: "test",
     country: "XX",
     privacyUrl: "https://example.test/privacy",
+    tier: "authoritative",
     ...overrides,
   };
 }

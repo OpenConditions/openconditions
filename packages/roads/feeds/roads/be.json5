@@ -1,6 +1,7 @@
 [
   {
     operator: "flanders",
+    tier: "authoritative",
     name: "Verkeerscentrum Vlaanderen (Flanders)",
     format: "datex2",
     url: "https://www.verkeerscentrum.be/uitwisseling/datex2v3full",
@@ -14,6 +15,7 @@
   },
   {
     operator: "brussels",
+    tier: "authoritative",
     name: "Bruxelles Mobilité traffic events",
     format: "geojson",
     url: "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items?f=json&limit=1000",
@@ -49,6 +51,7 @@
   },
   {
     operator: "miv",
+    tier: "authoritative",
     name: "MIV traffic speed (Flanders)",
     format: "miv",
     produces: "flow",

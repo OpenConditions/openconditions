@@ -34,8 +34,43 @@ export interface SourceStatusUpdate {
   partitions?: { succeeded: number; failed: number; total: number };
   /** sha256 of each decoded response the attempt received; absent when nothing was downloaded. */
   payloadHashes?: readonly string[];
+  /** The attempt this poll opened ({@link openPollAttempt}); absent, a new attempt row is written. */
+  attemptId?: number;
   /** Compatibility input used by callers predating explicit publication facts. */
   rowCount?: number;
+}
+
+/**
+ * Opens a poll's attempt row before anything is fetched, so its id can name
+ * the raw payloads the poll archives (the fetch id). `upsertSourceStatus`
+ * with `attemptId` closes it.
+ */
+export async function openPollAttempt(
+  sql: Sql,
+  sourceId: string,
+  attemptedAt: string,
+): Promise<number> {
+  const [row] = await sql<{ id: string }[]>`
+    INSERT INTO conditions.source_poll_attempt (source, attempted_at, outcome, network_validated)
+    VALUES (${sourceId}, ${attemptedAt}, 'running', false)
+    RETURNING id`;
+  return Number(row!.id);
+}
+
+/**
+ * Closes, as failed, every attempt still marked running. Called at boot,
+ * before the scheduler starts: no poll of this service can be running then,
+ * so such an attempt belongs to a poll the stopped service never finished.
+ * Returns how many it closed.
+ */
+export async function closeAbandonedPollAttempts(sql: Sql): Promise<number> {
+  const rows = await sql`
+    UPDATE conditions.source_poll_attempt
+       SET outcome = 'failed', finished_at = now(),
+           error = 'abandoned: the ingest service stopped during the poll'
+     WHERE outcome = 'running'
+    RETURNING id`;
+  return rows.length;
 }
 
 export interface SourceOperationalStatus {
@@ -104,20 +139,35 @@ export async function upsertSourceStatus(
   const durationMs = update.durationMs == null ? null : Math.max(0, Math.round(update.durationMs));
   const p = update.partitions;
 
-  await sql`
-    INSERT INTO conditions.source_poll_attempt (
-      source, attempted_at, finished_at, outcome, network_validated, published,
-      active_event_count, inserted, updated, deleted, rejected, duration_ms,
-      partitions_succeeded, partitions_failed, partitions_total, error, payload_hashes
-    ) VALUES (
-      ${sourceId}, ${attemptedAt}, now(), ${outcome}, ${networkValidated}, ${publication != null},
-      ${publication?.activeEvents ?? null}, ${publication?.inserted ?? null},
-      ${publication?.updated ?? null}, ${publication?.deleted ?? null},
-      ${publication?.rejected ?? null}, ${durationMs}, ${p?.succeeded ?? null},
-      ${p?.failed ?? null}, ${p?.total ?? null}, ${error ?? null},
-      ${update.payloadHashes ? sql.array([...update.payloadHashes]) : null}::text[]
-    )
-  `;
+  const hashes = update.payloadHashes ? sql.array([...update.payloadHashes]) : null;
+  if (update.attemptId !== undefined) {
+    // The attempt was opened when the poll began; close it with what happened.
+    await sql`
+      UPDATE conditions.source_poll_attempt SET
+        finished_at = now(), outcome = ${outcome}, network_validated = ${networkValidated},
+        published = ${publication != null},
+        active_event_count = ${publication?.activeEvents ?? null},
+        inserted = ${publication?.inserted ?? null}, updated = ${publication?.updated ?? null},
+        deleted = ${publication?.deleted ?? null}, rejected = ${publication?.rejected ?? null},
+        duration_ms = ${durationMs}, partitions_succeeded = ${p?.succeeded ?? null},
+        partitions_failed = ${p?.failed ?? null}, partitions_total = ${p?.total ?? null},
+        error = ${error ?? null}, payload_hashes = ${hashes}::text[]
+      WHERE id = ${update.attemptId}`;
+  } else {
+    await sql`
+      INSERT INTO conditions.source_poll_attempt (
+        source, attempted_at, finished_at, outcome, network_validated, published,
+        active_event_count, inserted, updated, deleted, rejected, duration_ms,
+        partitions_succeeded, partitions_failed, partitions_total, error, payload_hashes
+      ) VALUES (
+        ${sourceId}, ${attemptedAt}, now(), ${outcome}, ${networkValidated}, ${publication != null},
+        ${publication?.activeEvents ?? null}, ${publication?.inserted ?? null},
+        ${publication?.updated ?? null}, ${publication?.deleted ?? null},
+        ${publication?.rejected ?? null}, ${durationMs}, ${p?.succeeded ?? null},
+        ${p?.failed ?? null}, ${p?.total ?? null}, ${error ?? null}, ${hashes}::text[]
+      )
+    `;
+  }
 
   await sql`
     INSERT INTO conditions.source_status (
@@ -205,6 +255,14 @@ export async function upsertSourceStatus(
   `;
 }
 
+/**
+ * How long poll attempts are kept. An observation history row names the raw
+ * payload it was read from through its attempt (`fetch_id` + position in
+ * `payload_hashes`), so attempts outlive the longest finite raw history
+ * (30 days); keep-everything series carry the payload hash themselves.
+ */
+export const POLL_ATTEMPT_RETENTION_DAYS = 31;
+
 /** Prune one bounded batch independently of source publication transactions.
  * Skip locked rows so concurrent maintenance workers never wait on each other. */
 export async function pruneSourcePollAttempts(
@@ -216,7 +274,7 @@ export async function pruneSourcePollAttempts(
     throw new RangeError("source-poll retention batchSize must be an integer from 1 to 10000");
   }
   const now = new Date(options.now ?? new Date().toISOString());
-  const cutoff = new Date(now.getTime() - 8 * 86_400_000).toISOString();
+  const cutoff = new Date(now.getTime() - POLL_ATTEMPT_RETENTION_DAYS * 86_400_000).toISOString();
   const rows = await sql<{ id: string }[]>`
     WITH expired AS (
       SELECT id FROM conditions.source_poll_attempt

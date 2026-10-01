@@ -3,11 +3,15 @@ import { createGunzip } from "node:zlib";
 import {
   allowedTemplateVars,
   DEFAULT_MAX_FEED_BYTES,
+  feedSecretValues,
+  redactSecrets,
+  redactUrl,
   resolvedEnv,
   resolveUrlTemplate,
 } from "@openconditions/ingest-framework";
 import type { FeedSource, SiteGeometry, SiteTableParser } from "@openconditions/roads";
 import { createPredefinedLocationsParser, createSiteTableParser } from "@openconditions/roads";
+import { digestOnlyTee, type StreamTee, type StreamTeeFactory } from "../raw/stream-tee.js";
 import { withStreamRetry } from "./stream-retry.js";
 
 /** Site tables change rarely (version-stamped); refetch at most every 6 hours. */
@@ -58,6 +62,7 @@ async function streamIntoParser(
   source: Readable,
   gzip: boolean,
   makeParser: () => SiteTableParser,
+  { tee, finish }: StreamTee,
 ): Promise<Map<string, SiteGeometry>> {
   const parser = makeParser();
   // `.pipe()` does not forward the source's errors to the gunzip stream, so a
@@ -67,20 +72,26 @@ async function streamIntoParser(
   // map; destroy `source` on the way out so a half-read connection never lingers.
   const decoded: Readable = gzip ? source.pipe(createGunzip()) : source;
   if (decoded !== source) source.on("error", (err) => decoded.destroy(err));
+  decoded.on("error", (err) => tee.destroy(err));
+  decoded.pipe(tee);
+  let complete = false;
   try {
     let decompressed = 0;
-    decoded.setEncoding("utf8");
-    for await (const chunk of decoded) {
+    tee.setEncoding("utf8");
+    for await (const chunk of tee) {
       decompressed += Buffer.byteLength(chunk as string);
       if (decompressed > MAX_DECOMPRESSED_BYTES) {
         if (decoded !== source) source.destroy();
         decoded.destroy();
+        tee.destroy();
         throw new Error(`decompressed stream exceeded ${MAX_DECOMPRESSED_BYTES} bytes`);
       }
       parser.write(chunk as string);
     }
+    complete = true;
   } finally {
     if (decoded !== source) source.destroy();
+    await finish(complete);
   }
   return parser.close();
 }
@@ -101,6 +112,7 @@ export async function loadSiteTable(
   src: FeedSource,
   streamFactory: SiteTableStreamFactory = defaultStreamFactory,
   now: () => number = Date.now,
+  teeFor: StreamTeeFactory = digestOnlyTee,
 ): Promise<Map<string, SiteGeometry> | undefined> {
   const table = src.siteTable;
   if (!table) return undefined;
@@ -127,10 +139,20 @@ export async function loadSiteTable(
   try {
     // Retry a transient mid-stream drop with a fresh connection + parser before
     // falling back — the cold 362 MB fetch is the one most likely to drop.
-    const map = await withStreamRetry(
-      async () => streamIntoParser(await streamFactory(expanded), table.gzip ?? false, makeParser),
-      `${src.id} site-table`,
-    );
+    const redacted = redactSecrets(redactUrl(expanded), feedSecretValues(src));
+    // The tee opens before the download starts: a stream that errors while the
+    // tee is still being opened would have no listener yet.
+    const map = await withStreamRetry(async () => {
+      const tee = await teeFor(redacted);
+      let source: Readable;
+      try {
+        source = await streamFactory(expanded);
+      } catch (err) {
+        await tee.finish(false);
+        throw err;
+      }
+      return streamIntoParser(source, table.gzip ?? false, makeParser, tee);
+    }, `${src.id} site-table`);
     cache.set(expanded, { map, fetchedAt: now() });
     return map;
   } catch (err) {

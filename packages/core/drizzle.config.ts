@@ -6,7 +6,7 @@ import { defineConfig } from "drizzle-kit";
 // and `conditions` schema are created in runMigrations(), not in a migration —
 // drizzle-kit does not model `CREATE EXTENSION` and omits `CREATE SCHEMA` here.
 export default defineConfig({
-  schema: "./src/db/schema.ts",
+  schema: "./src/db/*schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
 });

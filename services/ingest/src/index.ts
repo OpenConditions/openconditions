@@ -1,14 +1,18 @@
 import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core/server";
 import { productionRegistry } from "@openconditions/model-registry";
 import { resolveInstanceId } from "@openconditions/normalize";
+import { syncSources } from "@openconditions/storage";
 import Fastify from "fastify";
 import { DATABASE_URL, sql } from "./db.js";
 import { buildDomainRegistry } from "./domains.js";
 import { FeedStatusStore } from "./feed-status.js";
 import { startMemTelemetry } from "./mem.js";
+import { closeAbandonedPollAttempts } from "./pipeline/source-status.js";
 import { registerPublishRoutes } from "./publish-routes.js";
 import { RateLimiter } from "./rate-limit.js";
+import { maintainPartitions, startRecordJobs } from "./record-jobs.js";
 import { startScheduler } from "./scheduler.js";
+import { catalogueSources } from "./sources.js";
 import { createTrustProxy } from "./trust-proxy.js";
 
 const PORT = parseInt(process.env["PORT"] || "4100", 10);
@@ -29,7 +33,8 @@ async function boot() {
   console.info("[ingest] applying database migrations…");
   await runMigrations(DATABASE_URL);
   console.info("[ingest] migrations applied");
-  await assertStoredCodesRegistered(sql, productionRegistry());
+  const model = productionRegistry();
+  await assertStoredCodesRegistered(sql, model);
 
   const app = Fastify({ logger: true, trustProxy: createTrustProxy(TRUST_PROXY_CIDRS) });
 
@@ -49,12 +54,21 @@ async function boot() {
 
   const statusStore = new FeedStatusStore();
   const registry = await buildDomainRegistry();
+  await syncSources(sql, catalogueSources(registry));
+  await maintainPartitions(sql, model, new Date());
+  const abandoned = await closeAbandonedPollAttempts(sql);
+  if (abandoned > 0) console.warn(`[ingest] closed ${abandoned} poll attempt(s) left running`);
   registerPublishRoutes(app, sql, statusStore, registry);
 
   const stopScheduler = startScheduler(sql, statusStore, registry);
+  const stopRecordJobs = startRecordJobs(sql, {
+    registry: model,
+    instanceId: resolveInstanceId(),
+  });
   const stopMemTelemetry = startMemTelemetry();
   const close = async () => {
     stopScheduler();
+    stopRecordJobs();
     stopMemTelemetry();
     limiter.destroy();
     await app.close();

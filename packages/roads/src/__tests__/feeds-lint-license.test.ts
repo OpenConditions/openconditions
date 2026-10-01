@@ -15,6 +15,7 @@ describe("feeds-lint license rule", () => {
       attribution: "t",
       country: "NL",
       privacyUrl: "https://x",
+      tier: "authoritative",
     });
     expect(errors.join("\n")).toContain("unknown license id 'MADE-UP-1.0'");
   });
@@ -32,6 +33,7 @@ describe("feeds-lint license rule", () => {
       attribution: "t",
       country: "NL",
       privacyUrl: "https://x",
+      tier: "authoritative",
     });
     expect(errors).toEqual([]);
   });
@@ -49,6 +51,7 @@ describe("feeds-lint license rule", () => {
       attribution: "Publisher",
       country: "US",
       privacyUrl: "https://x.test/privacy",
+      tier: "authoritative",
       parentSourceId: "us-wzdx",
       selectionState: "approved",
       policyIds: ["us-wzdx", "wzdx-unverified"],
@@ -70,6 +73,7 @@ describe("feeds-lint license rule", () => {
       attribution: "t",
       country: "NL",
       privacyUrl: "https://x",
+      tier: "authoritative",
     });
     expect(errors.join("\n")).toContain("169.254.169.254");
   });
@@ -88,6 +92,7 @@ describe("feeds-lint license rule", () => {
       attribution: "t",
       country: "NL",
       privacyUrl: "https://x",
+      tier: "authoritative",
     });
     expect(errors.join("\n")).toContain("169.254.169.254");
   });

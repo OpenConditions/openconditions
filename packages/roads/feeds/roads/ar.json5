@@ -2,6 +2,7 @@
   {
     subdivision: "ba",
     operator: "cortes",
+    tier: "authoritative",
     name: "Buenos Aires road closures (cortes)",
     format: "geojson",
     url: "https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=${AR_BA_CLIENT_ID}&client_secret=${AR_BA_CLIENT_SECRET}",

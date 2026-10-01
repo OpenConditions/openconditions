@@ -2,6 +2,7 @@
   {
     subdivision: "bc",
     operator: "drivebc",
+    tier: "authoritative",
     name: "DriveBC (British Columbia)",
     format: "open511",
     url: "https://api.open511.gov.bc.ca/events?format=json&limit=500",
@@ -19,6 +20,7 @@
   {
     subdivision: "on",
     operator: "511",
+    tier: "authoritative",
     name: "Ontario 511 (Canada)",
     format: "ibi511",
     url: "https://511on.ca/api/v2/get/event?format=json",
@@ -33,6 +35,7 @@
   {
     subdivision: "on",
     operator: "511",
+    tier: "authoritative",
     // Separate from the events feed: the two datasets share no ids (146
     // construction projects vs. 623 events, disjoint) and are worth monitoring
     // independently.
@@ -51,6 +54,7 @@
   {
     subdivision: "on",
     operator: "511",
+    tier: "authoritative",
     stream: "conditions",
     name: "Ontario 511 road conditions (Canada)",
     format: "ibi511-conditions",
@@ -71,6 +75,7 @@
   {
     subdivision: "qc",
     operator: "mtq",
+    tier: "authoritative",
     name: "MTQ roadworks (Québec)",
     format: "geojson",
     url: "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:chantiers_mtmdet&outputformat=geojson",
@@ -98,6 +103,7 @@
   {
     subdivision: "qc",
     operator: "mtq",
+    tier: "authoritative",
     stream: "warnings",
     name: "MTQ road warnings (Québec)",
     format: "geojson",

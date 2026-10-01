@@ -169,6 +169,8 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
     let feed: FeedSourceBase = roadFeedSchema.parse({
       name: `WZDx — ${org || feedname || state || "feed"}${state ? ` (${state})` : ""}`,
       operator: "wzdx",
+      // The registry lists the state agencies that publish their own work zones.
+      tier: "authoritative",
       stream,
       format: "wzdx",
       url,

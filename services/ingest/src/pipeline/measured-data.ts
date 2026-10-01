@@ -3,7 +3,6 @@ import { createGunzip } from "node:zlib";
 import type { Observation } from "@openconditions/core";
 import {
   DEFAULT_MAX_FEED_BYTES,
-  DigestTee,
   feedSecretValues,
   type PayloadDigest,
   redactSecrets,
@@ -13,6 +12,7 @@ import {
 } from "@openconditions/ingest-framework";
 import type { SiteGeometry } from "@openconditions/roads";
 import { createMeasuredDataParser, feedToSourceDescriptor } from "@openconditions/roads";
+import { digestOnlyTee, type StreamTeeFactory } from "../raw/stream-tee.js";
 import type { DomainFeedSource } from "./run.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
 import { withStreamRetry } from "./stream-retry.js";
@@ -57,6 +57,7 @@ export async function streamMeasuredData(
   streamFactory: SiteTableStreamFactory,
   siteMap: Map<string, SiteGeometry> | undefined,
   now: () => string,
+  teeFor: StreamTeeFactory = digestOnlyTee,
 ): Promise<{ observations: Observation[]; payload: PayloadDigest }> {
   const descriptor = feedToSourceDescriptor(src);
   const url = resolveUrl(src);
@@ -68,7 +69,16 @@ export async function streamMeasuredData(
   // is not retried.
   return withStreamRetry(async () => {
     const parser = createMeasuredDataParser(descriptor, siteMap, now);
-    const source = await streamFactory(url);
+    // The tee opens before the download starts: a stream that errors while the
+    // tee is still being opened would have no listener yet.
+    const { tee, finish } = await teeFor(redactSecrets(redactUrl(url), feedSecretValues(src)));
+    let source: Readable;
+    try {
+      source = await streamFactory(url);
+    } catch (err) {
+      await finish(false);
+      throw err;
+    }
     // `.pipe()` does not forward the source's errors to the gunzip stream, so a
     // mid-stream socket drop (the upstream closing a large download) would surface
     // as an unhandled 'error' event and crash the process. Forward it so the loop
@@ -76,9 +86,11 @@ export async function streamMeasuredData(
     // the way out so a half-read connection never lingers.
     const decoded: Readable = src.gzip ? source.pipe(createGunzip()) : source;
     if (decoded !== source) source.on("error", (err) => decoded.destroy(err));
-    const tee = new DigestTee(redactSecrets(redactUrl(url), feedSecretValues(src)));
     decoded.on("error", (err) => tee.destroy(err));
     decoded.pipe(tee);
+    // The whole document reached the tee: archive it, even when the parser then
+    // rejects it — a document a parser chokes on is what raw payloads are for.
+    let complete = false;
     try {
       let decompressed = 0;
       tee.setEncoding("utf8");
@@ -92,8 +104,10 @@ export async function streamMeasuredData(
         }
         parser.write(chunk as string);
       }
+      complete = true;
     } finally {
       if (decoded !== source) source.destroy();
+      await finish(complete);
     }
 
     const { flows, events, failed } = parser.close();

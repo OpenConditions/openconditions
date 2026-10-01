@@ -253,6 +253,48 @@
       "when": 1789833004686,
       "tag": "0035_kernel_vocabulary_checks",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1790870778058,
+      "tag": "0036_source_registry",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1790870899773,
+      "tag": "0037_record_classes",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1790870986607,
+      "tag": "0038_observation_series",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1790870987380,
+      "tag": "0039_observation_history",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1790871678626,
+      "tag": "0040_raw_payloads",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1790871971765,
+      "tag": "0041_raw_eviction_warning",
+      "breakpoints": true
     }
   ]
 }

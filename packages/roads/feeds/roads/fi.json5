@@ -1,6 +1,7 @@
 [
   {
     operator: "digitraffic",
+    tier: "authoritative",
     name: "Digitraffic (Finland)",
     format: "digitraffic",
     // One collection per situation family on the supported v2 prefix. v1 is
@@ -40,6 +41,7 @@
   },
   {
     operator: "fintraffic",
+    tier: "authoritative",
     name: "Fintraffic TMS traffic speed (Finland)",
     format: "fintraffic-tms",
     produces: "flow",

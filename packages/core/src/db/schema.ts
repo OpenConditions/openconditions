@@ -5,12 +5,10 @@ import {
   bigserial,
   boolean,
   check,
-  customType,
   doublePrecision,
   index,
   integer,
   jsonb,
-  pgSchema,
   primaryKey,
   smallint,
   text,
@@ -18,38 +16,7 @@ import {
   unique,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
-
-const conditionsSchema = pgSchema("conditions");
-
-/** PostGIS geometry column. Requires the `postgis` extension (created by the
- * first migration, which drizzle-kit cannot model on its own). */
-const geometry = customType<{ data: string }>({
-  dataType() {
-    return "geometry(Geometry, 4326)";
-  },
-});
-
-/** PostGIS Point geometry column (crowd sub-claims are always single points). */
-const geometryPoint = customType<{ data: string }>({
-  dataType() {
-    return "geometry(Point, 4326)";
-  },
-});
-
-/** Raw bytes column (issuer signing keypair material). */
-const bytea = customType<{ data: Buffer; default: false }>({
-  dataType() {
-    return "bytea";
-  },
-});
-
-/** 64-bit transaction id (`xid8`) — the epoch-safe full transaction id used to
- * fence the federation outbox cursor against not-yet-committed lower seqs. */
-const xid8 = customType<{ data: string }>({
-  dataType() {
-    return "xid8";
-  },
-});
+import { bytea, conditionsSchema, geometry, geometryPoint, xid8 } from "./columns.js";
 
 /**
  * The single generic store for every domain (roads/transit/places/crowd).
@@ -227,6 +194,8 @@ export const sourceStatus = conditionsSchema.table("source_status", {
   consecutiveFailures: integer("consecutive_failures").notNull().default(0),
   lastError: text("last_error"),
   lastErrorAt: timestamp("last_error_at", { withTimezone: true }),
+  /** When the raw archive, over its cap, last evicted payloads from this source's hot window. */
+  rawHotEvictedAt: timestamp("raw_hot_evicted_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -238,7 +207,8 @@ export const sourcePollAttempt = conditionsSchema.table(
     id: bigserial("id", { mode: "number" }).primaryKey(),
     source: text("source").notNull(),
     attemptedAt: timestamp("attempted_at", { withTimezone: true }).notNull(),
-    finishedAt: timestamp("finished_at", { withTimezone: true }).notNull(),
+    /** Null while the poll is still running: its id is the fetch id its raw payloads are filed under. */
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
     outcome: text("outcome").notNull(),
     networkValidated: boolean("network_validated").notNull(),
     published: boolean("published").notNull().default(false),

@@ -14,6 +14,7 @@ const feed: FeedSourceBase = {
   attribution: "t",
   country: "NL",
   privacyUrl: "https://feed.test/privacy",
+  tier: "authoritative",
 };
 
 const okFetch = (body: string): typeof fetch =>

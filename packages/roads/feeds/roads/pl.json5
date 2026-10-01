@@ -5,6 +5,7 @@
     // 301/302-redirects (via an http hop) to it, which the bare host's flaky DNS
     // made unreliable. Year-round despite the zima_html (winter) path.
     operator: "gddkia",
+    tier: "authoritative",
     name: "GDDKiA road obstructions (Poland)",
     format: "gddkia",
     url: "https://www.archiwum.gddkia.gov.pl/dane/zima_html/utrdane.xml",

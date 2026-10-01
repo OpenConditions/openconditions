@@ -250,6 +250,8 @@ export async function atomicSwap(
     unlocatableIds?: readonly string[];
     /** Digests of the payloads this publication was parsed from. */
     payloadHashes?: readonly string[];
+    /** The poll attempt to close with this publication. */
+    attemptId?: number;
   },
 ): Promise<SwapCounts> {
   // The single defaulting seam: stamp the commons federation/privacy provenance
@@ -361,6 +363,7 @@ export async function atomicSwap(
         networkValidated: true,
         durationMs: statusContext?.durationMs,
         ...(statusContext?.payloadHashes ? { payloadHashes: statusContext.payloadHashes } : {}),
+        ...(statusContext?.attemptId !== undefined ? { attemptId: statusContext.attemptId } : {}),
         publication: {
           activeEvents: capped.filter((row) => row.kind === "event").length,
           rowCount: capped.length,

@@ -8,12 +8,11 @@ import {
   type FusionTier,
   type GrantState,
   type RoutingRights,
+  type SourceTier,
 } from "../kernel/provenance.js";
 import type { Result } from "../kernel/result.js";
 import type { LocationRef } from "../kernel/types.js";
 import type { Registry, ValidationResult } from "../registry/build.js";
-
-type SourceTier = Extract<FusionTier, "authoritative" | "operator" | "aggregator" | "community">;
 
 /** The parts of a stored observation fusion reads and copies. */
 export interface FusableObservation {

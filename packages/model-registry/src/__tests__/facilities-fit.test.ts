@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   buildRegistry,
   extendVocabulary,
@@ -1127,5 +1128,21 @@ describe("facilities fit", () => {
     ).toBe(true);
     const noExpiry = records.map((r) => ({ ...r, freshness: { fetchedAt: FETCHED } }));
     expect(sealAll(noExpiry).length).toBe(records.length);
+  });
+
+  // The storage tests write these records through the record tables.
+  it("seals every record as its golden file holds it", async () => {
+    const drafts = [...CASES.flatMap(([, make]) => recordsOf(make)), ...ocpiTariffs()];
+    const sealed = drafts.map((r) => {
+      const result = sealRecord(registry, r, {
+        instanceId: "fit.example",
+        revision: 1,
+        recordedAt: FETCHED,
+      });
+      return result.ok ? result.value : { id: r["id"], issues: result.issues };
+    });
+    await expect(`${JSON.stringify(sealed, null, 2)}\n`).toMatchFileSnapshot(
+      join(import.meta.dirname, "golden", "facilities.json"),
+    );
   });
 });

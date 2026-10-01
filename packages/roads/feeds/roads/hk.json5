@@ -1,6 +1,7 @@
 [
   {
     operator: "td",
+    tier: "authoritative",
     name: "Transport Department traffic detectors (Hong Kong)",
     format: "hk-td",
     produces: "flow",

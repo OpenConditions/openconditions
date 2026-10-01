@@ -270,3 +270,14 @@ describe("situationDrafts — fields", () => {
     });
   });
 });
+
+describe("situationDrafts — access mode", () => {
+  it("records the source's access mode, bulk unless it says otherwise", () => {
+    const bulk = situationDrafts([event("A")], { source: SRC })[0]!;
+    expect((bulk["provenance"] as { accessMode: string }).accessMode).toBe("bulk");
+    const onDemand = situationDrafts([event("A")], {
+      source: { ...SRC, accessMode: "on_demand" },
+    })[0]!;
+    expect((onDemand["provenance"] as { accessMode: string }).accessMode).toBe("on_demand");
+  });
+});

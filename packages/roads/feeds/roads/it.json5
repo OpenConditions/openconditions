@@ -1,6 +1,7 @@
 [
   {
     operator: "turin",
+    tier: "authoritative",
     name: "5T real-time traffic flow (Turin)",
     format: "fdt",
     produces: "flow",

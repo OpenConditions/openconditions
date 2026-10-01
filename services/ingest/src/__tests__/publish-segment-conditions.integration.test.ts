@@ -170,6 +170,7 @@ async function withApp<T>(
           license: "CC0-1.0",
           attribution: "bind-test",
           privacyUrl: "https://example.test/privacy",
+          tier: "authoritative",
           rights: {
             sourceRedistribution: true,
             derivedRedistribution: true,

@@ -1,8 +1,11 @@
 [
   {
     operator: "ndw",
+    tier: "authoritative",
     name: "NDW (Netherlands)",
     format: "datex2",
+    // NDW documents lane 1 as the far-left lane, not the one nearest the hard shoulder.
+    laneNumbering: "left_first",
     url: "https://opendata.ndw.nu/actueel_beeld.xml.gz",
     gzip: true,
     // The publisher's current national picture, so absence from an accepted
@@ -40,9 +43,12 @@
     // carries measurements keyed by site id only; the companion measurement.xml.gz
     // site table supplies each site's geometry.
     operator: "ndw",
+    tier: "authoritative",
     stream: "flow",
     name: "NDW traffic speed (Netherlands)",
     format: "datex2",
+    // NDW documents lane 1 as the far-left lane, not the one nearest the hard shoulder.
+    laneNumbering: "left_first",
     produces: "flow",
     url: "https://opendata.ndw.nu/trafficspeed.xml.gz",
     gzip: true,

@@ -211,6 +211,9 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../core
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
       json5:
         specifier: ^2.2.3
         version: 2.2.3
@@ -667,7 +670,19 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../core
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
+      postgres:
+        specifier: ^3.4.9
+        version: 3.4.9
     devDependencies:
+      '@openconditions/model-registry':
+        specifier: workspace:*
+        version: link:../model-registry
+      testcontainers:
+        specifier: ^12.1.0
+        version: 12.1.0
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)

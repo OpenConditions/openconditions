@@ -1,6 +1,7 @@
 [
   {
     operator: "dir",
+    tier: "authoritative",
     name: "DIR / Bison Futé (France national roads)",
     format: "datex2",
     url: "https://transport.data.gouv.fr/resources/79174/download",
@@ -32,6 +33,7 @@
   },
   {
     operator: "dir",
+    tier: "authoritative",
     stream: "flow",
     name: "Circulation temps réel — vitesses & débits (France)",
     format: "datex2",
@@ -54,6 +56,7 @@
   },
   {
     operator: "rennesmetropole",
+    tier: "authoritative",
     name: "État du trafic temps réel (Rennes Métropole)",
     format: "geojson-flow",
     produces: "flow",
@@ -78,6 +81,7 @@
   },
   {
     operator: "bordeauxmetropole",
+    tier: "authoritative",
     name: "État du trafic temps réel (Bordeaux Métropole)",
     format: "geojson-flow",
     produces: "flow",

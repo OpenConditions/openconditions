@@ -1,7 +1,9 @@
 import { Readable } from "node:stream";
 import type { Observation } from "@openconditions/core";
+import type { RawTier } from "@openconditions/core/server";
 import type { LookupFn } from "@openconditions/ingest-framework";
 import {
+  digestPayload,
   fetchAll,
   guardedFetch,
   guardOptionsFromEnv,
@@ -19,6 +21,9 @@ import {
 } from "@openconditions/roads";
 import type postgres from "postgres";
 import { feedToSourceDescriptor } from "../domains.js";
+import type { RawArchive } from "../raw/archive.js";
+import { archivingTee, digestOnlyTee } from "../raw/stream-tee.js";
+import { rawTierFor } from "../raw/tiers.js";
 import { loadBaselineMap, writeSpeedSamples } from "./baseline-store.js";
 import { bindObservations } from "./bind-observations.js";
 import { isStreamingFlowFeed, streamMeasuredData } from "./measured-data.js";
@@ -26,7 +31,12 @@ import { parseFor, parseRoadSnapshotFor } from "./parse.js";
 import { resolveOpenLr } from "./resolve.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
 import { loadSiteTable } from "./site-table.js";
-import { getLastRowCount, type SourceStatusUpdate, upsertSourceStatus } from "./source-status.js";
+import {
+  getLastRowCount,
+  openPollAttempt,
+  type SourceStatusUpdate,
+  upsertSourceStatus,
+} from "./source-status.js";
 import { loadStationRegistry } from "./station-registry.js";
 import { atomicSwap } from "./write-postgis.js";
 
@@ -110,6 +120,8 @@ export interface RunDeps {
   fetch: typeof fetch;
   now: () => string;
   openlrClient?: MapMatchClient | null;
+  /** Where the poll's raw payloads are archived; absent, none are kept. */
+  raw?: RawArchive;
   /**
    * Overrides the DNS resolver `guardedFetch` uses to pin egress connections.
    * Left unset in production (the scheduler doesn't set it), so `guardedFetch`
@@ -369,16 +381,72 @@ export function createOpenlrClient(): MapMatchClient | null {
  * swap instead of handing `atomicSwap` an empty/shrunk/unreliable set, since
  * its delete-missing step would otherwise delete every row absent from that
  * set.
+ *
+ * The poll's attempt row is opened before anything is fetched (its id is the
+ * fetch id the poll's raw payloads are filed under). A poll that throws
+ * closes it as an error on the way out, so no attempt stays `running`.
  */
 export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<RunResult> {
-  const start = Date.now();
   const attemptAt = deps.now();
+  const attempt: PollAttempt = {
+    id: await openPollAttempt(deps.sql, src.id, attemptAt),
+    at: attemptAt,
+    closed: false,
+  };
+  try {
+    return await runAttempt(src, deps, attempt);
+  } catch (err) {
+    if (!attempt.closed) {
+      await upsertSourceStatus(deps.sql, src.id, {
+        freshnessWindowSec: src.freshnessWindowSec,
+        outcome: "error",
+        attemptAt,
+        attemptId: attempt.id,
+        error: err instanceof Error ? err.message : String(err),
+      }).catch((closeErr) =>
+        console.error(`[ingest] ${src.id}: could not close poll attempt ${attempt.id}`, closeErr),
+      );
+    }
+    throw err;
+  }
+}
+
+/** A poll's open attempt row, and whether a status update has closed it yet. */
+interface PollAttempt {
+  id: number;
+  at: string;
+  closed: boolean;
+}
+
+async function runAttempt(
+  src: DomainFeedSource,
+  deps: RunDeps,
+  attempt: PollAttempt,
+): Promise<RunResult> {
+  const start = Date.now();
+  const attemptAt = attempt.at;
+  const attemptId = attempt.id;
   // What this attempt downloaded: set once the fetch returns, then carried on
   // every poll fact recorded after it (the raw-payload
   // identity an archived blob will be filed under).
   let payloadHashes: string[] | undefined;
-  const recordStatus = (update: SourceStatusUpdate) =>
-    upsertSourceStatus(deps.sql, src.id, payloadHashes ? { ...update, payloadHashes } : update);
+  const recordStatus = async (update: SourceStatusUpdate) => {
+    await upsertSourceStatus(deps.sql, src.id, {
+      ...update,
+      attemptId,
+      ...(payloadHashes ? { payloadHashes } : {}),
+    });
+    attempt.closed = true;
+  };
+  const capture = (tier: RawTier | undefined) =>
+    deps.raw !== undefined && tier !== undefined
+      ? {
+          archive: deps.raw,
+          meta: { sourceId: src.id, fetchId: attemptId, fetchedAt: new Date(attemptAt), tier },
+        }
+      : undefined;
+  const feedCapture = capture(rawTierFor(src, "feed"));
+  const referenceCapture = capture(rawTierFor(src, "reference"));
 
   // Guard every egress path (feed, catalog, site-table, OAuth, mTLS) at one seam:
   // validate URL + DNS, re-check each redirect hop, cap size + time. Authorize on top.
@@ -401,7 +469,14 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   // fetch so the streaming flow path has the join map ready.
   let siteMap: Map<string, SiteGeometry> | undefined;
   if (src.siteTable) {
-    siteMap = await loadSiteTable(src, streamFactoryFromFetch(fetchFn));
+    siteMap = await loadSiteTable(
+      src,
+      streamFactoryFromFetch(fetchFn),
+      Date.now,
+      referenceCapture
+        ? archivingTee(referenceCapture.archive, referenceCapture.meta)
+        : digestOnlyTee,
+    );
     // A COLD site-table failure (no map ever built, not even stale) means every
     // measurement would lose its geometry and be skipped — parsing on would
     // hand atomicSwap an empty set, deleting all existing last-good rows. Treat
@@ -424,7 +499,19 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
   // the same guarded `fetchFn` the feed fetch uses, so the registry request is
   // egress-guarded too.
   if (src.stationRegistry) {
-    siteMap = await loadStationRegistry(src, fetchFn);
+    siteMap = await loadStationRegistry(
+      src,
+      fetchFn,
+      Date.now,
+      referenceCapture
+        ? (body, url) =>
+            referenceCapture.archive.capture(
+              { ...referenceCapture.meta, url },
+              body,
+              digestPayload(url, body),
+            )
+        : undefined,
+    );
     if (siteMap === undefined) {
       const error = "station-registry cold failure — no geometry map built";
       console.warn(`[ingest] ${src.id}: ${error} — skipping swap, preserving last-good rows`);
@@ -450,6 +537,7 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
         streamFactoryFromFetch(fetchFn),
         siteMap,
         deps.now,
+        feedCapture ? archivingTee(feedCapture.archive, feedCapture.meta) : digestOnlyTee,
       );
       parsed = streamed.observations;
       payloadHashes = [streamed.payload.sha256];
@@ -469,6 +557,15 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       const result = await fetchAll(src, fetchFn);
       if (result.status === "fetched" || result.status === "partial") {
         payloadHashes = result.payloads.map((payload) => payload.sha256);
+        if (feedCapture) {
+          for (const [i, payload] of result.payloads.entries()) {
+            await feedCapture.archive.capture(
+              { ...feedCapture.meta, url: payload.url },
+              result.buffers[i]!,
+              payload,
+            );
+          }
+        }
       }
       if (result.status === "not-modified") {
         await recordStatus({
@@ -662,9 +759,12 @@ export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<R
       attemptAt,
       rejected,
       durationMs: preSwapDurationMs,
+      attemptId,
       ...(payloadHashes ? { payloadHashes } : {}),
       ...(snapshotUnlocatable !== undefined ? { unlocatableIds: snapshotUnlocatable } : {}),
     });
+    // The swap's transaction closed the attempt with the poll's success.
+    attempt.closed = true;
   } catch (err) {
     const error = err instanceof Error ? err.message : String(err);
     console.error(`[ingest] publish failed for source ${src.id}:`, err);

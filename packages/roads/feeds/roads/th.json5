@@ -1,6 +1,7 @@
 [
   {
     operator: "longdo",
+    tier: "aggregator",
     name: "Longdo Traffic Events (Thailand)",
     format: "flatjson",
     url: "https://event.longdo.com/feed/json",

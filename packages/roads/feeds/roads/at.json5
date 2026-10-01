@@ -1,6 +1,7 @@
 [
   {
     operator: "asfinag",
+    tier: "authoritative",
     name: "ASFINAG events (Austria)",
     format: "datex2",
     url: [

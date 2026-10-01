@@ -13,6 +13,7 @@ const base = {
   attribution: "t",
   country: "NL",
   privacyUrl: "https://example.test/privacy",
+  tier: "authoritative",
 };
 
 describe("feedSourceBaseSchema — maintainers", () => {

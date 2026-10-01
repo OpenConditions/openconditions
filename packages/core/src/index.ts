@@ -4,6 +4,7 @@ export * from "./dedupe.js";
 export * from "./evidence.js";
 export * from "./freshness.js";
 export * from "./model.js";
+export * from "./observation-codec.js";
 export * from "./observationsByBbox.js";
 export * from "./readObservations.js";
 export * from "./routing-evidence.js";

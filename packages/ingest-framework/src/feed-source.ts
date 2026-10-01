@@ -1,3 +1,24 @@
+import type { AccessMode, SourceTier } from "@openconditions/model";
+
+export const LANE_NUMBERINGS = ["standard", "left_first"] as const;
+export type LaneNumbering = (typeof LANE_NUMBERINGS)[number];
+
+/**
+ * The raw-payload retention classes: situation feeds keep payloads longest,
+ * observation feeds shorter, reference tables (site tables, station
+ * registries) by version.
+ */
+export const RAW_RETENTION_CLASSES = ["situation", "observation", "reference"] as const;
+export type RawRetentionClass = (typeof RAW_RETENTION_CLASSES)[number];
+
+export interface RequestLimits {
+  perMinute?: number;
+  perDay?: number;
+  maxRadiusKm?: number;
+  /** Whether the provider's quota is one key for the instance or one per consumer. */
+  keyScope?: "instance" | "consumer";
+}
+
 /** How a feed authenticates. Discriminated union; secrets live only in env. */
 export type FeedAuth =
   | { kind: "none" }
@@ -128,6 +149,27 @@ export interface FeedSourceBase {
   gzip?: boolean;
   cadenceSec: number;
   freshnessWindowSec: number;
+  /**
+   * How OpenConditions may use the source: `bulk` (default) polls the whole
+   * source on its cadence; `on_demand` fetches only what a consumer asks for,
+   * and its records are cached, never kept as history or federated.
+   */
+  accessMode?: AccessMode;
+  /** Who publishes the data, which ranks it when sources disagree on one reading. */
+  tier: SourceTier;
+  /** Source-native keys a record may keep in `extras`; every other key is dropped. */
+  extrasAllow?: string[];
+  /** Whether the allow-listed extras may leave the instance (federation, archive). */
+  extrasFederate?: boolean;
+  /**
+   * How a DATEX feed numbers lanes: `standard` (default) counts from the hard
+   * shoulder, `left_first` from the left, as NDW documents.
+   */
+  laneNumbering?: LaneNumbering;
+  /** Overrides which raw-payload retention class the source's responses are kept by. */
+  rawRetention?: RawRetentionClass;
+  /** What an on-demand source's terms allow per consumer query. */
+  requestLimits?: RequestLimits;
   license: string;
   licenseUrl?: string;
   attribution: string;

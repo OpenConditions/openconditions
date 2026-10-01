@@ -1,3 +1,5 @@
+import type { LaneNumbering } from "@openconditions/ingest-framework";
+import type { AccessMode } from "@openconditions/model";
 import type { GeoJsonMapping } from "./model.js";
 
 /**
@@ -37,6 +39,12 @@ export interface SourceDescriptor {
   country: string;
   license: string;
   licenseUrl?: string;
+  /** Whether the source is polled whole (`bulk`, the default) or queried per consumer (`on_demand`). */
+  accessMode?: AccessMode;
+  /** How the source numbers lanes, when it numbers them from the left. */
+  laneNumbering?: LaneNumbering;
+  /** Source-native keys a record may keep in `extras`. */
+  extrasAllow?: string[];
   /** Field mapping for the generic GeoJSON parser (only set for geojson feeds). */
   geojson?: GeoJsonMapping;
   /** Field mapping for the GeoJSON flow parser (only set for geojson-flow feeds). */

@@ -7,6 +7,7 @@
     // (roadworks + closures, the bulk) and accident. Auth = the key as
     // ?authenticationkey=. Trafikverket publishes posList in lon-lat order.
     operator: "trafikverket",
+    tier: "authoritative",
     name: "Trafikverket (Sweden)",
     format: "datex2",
     url: [
@@ -47,6 +48,7 @@
     // via a POST XML request body (not a query-key), so the key travels
     // through bodyTemplate's ${SE_TRAFIKVERKET_API_KEY} expansion instead of auth.
     operator: "trafikverket",
+    tier: "authoritative",
     stream: "flow",
     name: "Trafikverket traffic flow (Sweden)",
     format: "trafikverket-flow",

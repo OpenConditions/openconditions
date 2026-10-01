@@ -4,6 +4,7 @@
     // catalog resolver, which replaced the bespoke discovery closure. No
     // hand-maintained url. Complements the non-motorway city/state feeds below.
     operator: "autobahn",
+    tier: "authoritative",
     name: "Autobahn GmbH (Germany)",
     format: "autobahn",
     catalog: {
@@ -19,6 +20,7 @@
   {
     subdivision: "bw",
     operator: "svzbw",
+    tier: "authoritative",
     name: "MobiData BW roadworks (Baden-Württemberg)",
     format: "datex2",
     url: "https://api.mobidata-bw.de/datasets/traffic/roadworks/roadworks_svzbw.datex2.xml",
@@ -33,6 +35,7 @@
   {
     subdivision: "be",
     operator: "berlin",
+    tier: "authoritative",
     name: "VIZ Berlin roadworks & closures",
     format: "geojson",
     url: "https://api.viz.berlin.de/daten/baustellen_sperrungen_viz.json",
@@ -76,6 +79,7 @@
     // source. verkehr-nrw-de (LVZ.NRW) keeps its source id for provider continuity.
     subdivision: "nw",
     operator: "verkehr",
+    tier: "authoritative",
     name: "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_VERKEHR_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_VERKEHR_SUBSCRIPTION_ID}",
@@ -122,6 +126,7 @@
   {
     subdivision: "nw",
     operator: "duesseldorf",
+    tier: "authoritative",
     name: "Düsseldorf (dmotion) via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_DUESSELDORF_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_DUESSELDORF_SUBSCRIPTION_ID}",
@@ -172,6 +177,7 @@
     // subscription lapses no longer takes the others down with it.
     subdivision: "nw",
     operator: "koeln",
+    tier: "authoritative",
     name: "Köln via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_KOELN_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_KOELN_SUBSCRIPTION_ID}",
@@ -205,6 +211,7 @@
   {
     subdivision: "nw",
     operator: "unna",
+    tier: "authoritative",
     name: "Kreis Unna via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NW_UNNA_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NW_UNNA_SUBSCRIPTION_ID}",
@@ -237,6 +244,7 @@
     // so it never folds into a more permissive source.
     subdivision: "nw",
     operator: "mobilithek",
+    tier: "aggregator",
     stream: "mobidrom",
     name: "NRW.Mobidrom bundled roadworks via Mobilithek",
     format: "datex2",
@@ -284,6 +292,7 @@
   {
     subdivision: "by",
     operator: "mobilithek",
+    tier: "authoritative",
     name: "Bayern via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BY_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BY_MOBILITHEK_SUBSCRIPTION_ID}",
@@ -330,6 +339,7 @@
   {
     subdivision: "bw",
     operator: "mobilithek",
+    tier: "authoritative",
     name: "Baden-Württemberg via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BW_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BW_MOBILITHEK_SUBSCRIPTION_ID}",
@@ -376,6 +386,7 @@
   {
     subdivision: "be",
     operator: "mobilithek",
+    tier: "authoritative",
     name: "Berlin via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BE_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BE_MOBILITHEK_SUBSCRIPTION_ID}",
@@ -422,6 +433,7 @@
   {
     subdivision: "bb",
     operator: "mobilithek",
+    tier: "authoritative",
     name: "Brandenburg via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_BB_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_BB_MOBILITHEK_SUBSCRIPTION_ID}",
@@ -468,6 +480,7 @@
   {
     subdivision: "hb",
     operator: "mobilithek",
+    tier: "authoritative",
     name: "Bremen via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HB_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HB_MOBILITHEK_SUBSCRIPTION_ID}",
@@ -514,6 +527,7 @@
   {
     subdivision: "hh",
     operator: "mobilithek",
+    tier: "authoritative",
     name: "Hamburg via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HH_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HH_MOBILITHEK_SUBSCRIPTION_ID}",
@@ -572,6 +586,7 @@
     // No credential: needs no Mobilithek certificate.
     subdivision: "hh",
     operator: "polizei",
+    tier: "authoritative",
     name: "Polizei Hamburg traffic incidents (Landesmeldestelle)",
     format: "geojson",
     url: "https://api.hamburg.de/datasets/v1/verkehrsinformation/collections/hauptmeldungen_aktuell/items?f=json&limit=5000",
@@ -591,6 +606,7 @@
   {
     subdivision: "he",
     operator: "mobilithek",
+    tier: "authoritative",
     name: "Hessen via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_HE_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_HE_MOBILITHEK_SUBSCRIPTION_ID}",
@@ -637,6 +653,7 @@
   {
     subdivision: "mv",
     operator: "mobilithek",
+    tier: "authoritative",
     name: "Mecklenburg-Vorpommern via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_MV_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_MV_MOBILITHEK_SUBSCRIPTION_ID}",
@@ -690,6 +707,7 @@
     // only how the data is delivered — the same reason Hannover sits in its own
     // feed below instead of being credited to the state authority.
     operator: "nlstbv",
+    tier: "authoritative",
     name: "NLStBV (Niedersachsen) via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NI_NLSTBV_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NI_NLSTBV_SUBSCRIPTION_ID}",
@@ -739,6 +757,7 @@
   {
     subdivision: "ni",
     operator: "hannover",
+    tier: "authoritative",
     name: "Hannover via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_NI_HANNOVER_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_NI_HANNOVER_SUBSCRIPTION_ID}",
@@ -769,6 +788,7 @@
   {
     subdivision: "sn",
     operator: "mobilithek",
+    tier: "authoritative",
     name: "Sachsen via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_SN_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_SN_MOBILITHEK_SUBSCRIPTION_ID}",
@@ -815,6 +835,7 @@
   {
     subdivision: "st",
     operator: "mobilithek",
+    tier: "authoritative",
     name: "Sachsen-Anhalt via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_ST_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_ST_MOBILITHEK_SUBSCRIPTION_ID}",
@@ -861,6 +882,7 @@
   {
     subdivision: "sh",
     operator: "mobilithek",
+    tier: "authoritative",
     name: "Schleswig-Holstein via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_SH_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_SH_MOBILITHEK_SUBSCRIPTION_ID}",
@@ -907,6 +929,7 @@
   {
     subdivision: "th",
     operator: "mobilithek",
+    tier: "authoritative",
     name: "Thüringen via Mobilithek",
     format: "datex2",
     url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${DE_TH_MOBILITHEK_SUBSCRIPTION_ID}/clientPullService?subscriptionID=${DE_TH_MOBILITHEK_SUBSCRIPTION_ID}",
@@ -953,6 +976,7 @@
   {
     subdivision: "nw",
     operator: "bonn",
+    tier: "authoritative",
     name: "Bonn realtime traffic (Nordrhein-Westfalen)",
     format: "bonn",
     produces: "flow",
@@ -973,6 +997,7 @@
     // Disabled by default until validated against a live payload.
     subdivision: "hh",
     operator: "autobahn",
+    tier: "authoritative",
     stream: "nord",
     name: "Autobahn GmbH BAB traffic data (NL Nord: Hamburg & Schleswig-Holstein)",
     format: "datex2",
@@ -1030,6 +1055,7 @@
     // predefinedLocationReference id — hence datex-elaborated + datex-predefined-locations.
     subdivision: "nw",
     operator: "autobahn",
+    tier: "authoritative",
     stream: "fahrstreifen",
     name: "Autobahn GmbH BAB traffic data (Nordrhein-Westfalen, per lane)",
     format: "datex-elaborated",
@@ -1082,6 +1108,7 @@
     // (VZD, central node, Hessen). Joined to the VZD Verortung by measurementSiteReference id.
     subdivision: "he",
     operator: "autobahn",
+    tier: "authoritative",
     stream: "vzd",
     name: "Autobahn GmbH BAB traffic data (VZD, Hessen)",
     format: "datex2",
@@ -1135,6 +1162,7 @@
     // (offer carried no explicit license doc — confirm the Einlegeblatt before enabling).
     subdivision: "bw",
     operator: "autobahn",
+    tier: "authoritative",
     stream: "suedwest",
     name: "Autobahn GmbH BAB traffic data (NL Südwest, Baden-Württemberg)",
     format: "datex2",
@@ -1189,6 +1217,7 @@
     // reports when a newer D2MSTPub_LVE_* file replaces this one.
     subdivision: "by",
     operator: "autobahn",
+    tier: "authoritative",
     name: "Autobahn GmbH BAB traffic data (Bayern, per lane)",
     format: "datex2",
     produces: "flow",
@@ -1243,6 +1272,7 @@
     // a PredefinedLocationsPublication Verortung by predefinedLocationReference id.
     subdivision: "nw",
     operator: "autobahn",
+    tier: "authoritative",
     stream: "loslane",
     name: "Autobahn GmbH BAB Verkehrslage LoS (Nordrhein-Westfalen, per lane)",
     format: "datex-elaborated",
@@ -1298,6 +1328,7 @@
     // (Baden-Württemberg). License provisionally GeoNutzV — confirm the Einlegeblatt.
     subdivision: "bw",
     operator: "autobahn",
+    tier: "authoritative",
     stream: "los",
     name: "Autobahn GmbH BAB Verkehrslage LoS (NL Südwest, Baden-Württemberg)",
     format: "datex2",

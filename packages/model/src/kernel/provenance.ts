@@ -51,6 +51,8 @@ export const TOMBSTONE_REASONS = [
  * ranks sources by it, then crowd rows by evidence state.
  */
 export const SOURCE_TIERS = ["authoritative", "operator", "aggregator", "community"] as const;
+export type SourceTier = (typeof SOURCE_TIERS)[number];
+export type AccessMode = (typeof ACCESS_MODES)[number];
 /** The default fusion order, highest first; a property may declare its own order. */
 export const FUSION_TIERS = [
   ...SOURCE_TIERS,

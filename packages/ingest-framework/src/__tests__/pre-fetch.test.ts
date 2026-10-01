@@ -13,6 +13,7 @@ const base: FeedSourceBase = {
   attribution: "t",
   country: "XX",
   privacyUrl: "https://x",
+  tier: "authoritative",
 };
 const noFetch = (async () => new Response("", { status: 200 })) as unknown as typeof fetch;
 
