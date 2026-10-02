@@ -181,12 +181,22 @@ classifications to its codes (TraFF events, GTFS-RT causes, Road511 types).
 The module derives the kinds' `typeMappings` from them. Coverage tests hold
 every table against the standard's own value list (vendored verbatim from the
 official schemas): every source value is mapped or explicitly `null`, and every
-registered type has an emitter code or an explicit `null`.
+registered type has an emitter code or an explicit `null`. The DATEX II export
+picks its record class from a table of its own, `DATEX2_RECORDS`
+(`crosswalk/emitters.ts`), because several DATEX codes read in as one type and
+the inbound table cannot say which one to write
+([DATEX II export](datex-conformance.md)). Provider vocabularies with no
+standard behind them (Digitraffic, LTA, Autobahn and the like) map through plain tables
+in `crosswalk/providers.ts`: no emitter writes them.
 
-The roads parsers keep producing their parse records, now with the
-classification from those crosswalks, the publisher's own record time and
-whether the headline came from the source. `situationDrafts` turns one parsed
-snapshot into situation drafts:
+Each roads event parser reads its format into a parse record that stays inside
+`@openconditions/roads`, with the classification from those crosswalks, the
+publisher's own record time and whether the headline came from the source.
+`parseEvents(feed, payloads, { fetchedAt })` turns one poll into situation
+drafts (a `ParseOutput`, defined in `@openconditions/ingest-framework`), dated
+by the poll. For a source that declares a complete snapshot it also accounts
+for every input record, naming the situations of records it could not place so
+the poll cannot end them. The assembly follows these rules:
 
 - A DATEX situation's records fold into one situation. A record that names a
   nature (an accident) is the situation; lane, speed, rerouting and winter
@@ -205,11 +215,12 @@ snapshot into situation drafts:
   rule, or an `unsupported` carrier), so it is listed but never routes.
 
 Golden files under `packages/roads/src/__tests__/golden/` hold the sealed
-situations of every road event format's reviewed fixture. What the parse
-records still lose, and the ingest switchover's parser work recovers:
-multilingual text (one language is kept, tagged `und`), the declared severity's
-verbatim token, and the time of day of a DATEX one-off validity period (its
-bounds are read as local dates; the validity's start and end keep the instants).
+situations `parseEvents` produces from every road event format's reviewed
+fixture. The
+drafts keep multilingual text with each value's language (Open511 and IBI 511
+payloads declare no language, so their text is tagged `und`), a declared
+severity's verbatim token (`severity.declaredRaw`), and a DATEX one-off
+validity period with its exact start and end.
 
 ## Road infrastructure
 

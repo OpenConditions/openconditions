@@ -1,0 +1,991 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "OpenConditions",
+    "version": "1.0.0",
+    "description": "Road conditions as model records. Collections are paginated by a keyset cursor: a walk is complete when `next` is null."
+  },
+  "paths": {
+    "/situations": {
+      "get": {
+        "operationId": "listSituations",
+        "summary": "Live situations as records, one keyset page ordered by id.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated type codes",
+              "type": "string"
+            },
+            "description": "comma-separated type codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "minSeverity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["minor", "moderate", "major", "critical"]
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant situations are current at"
+            },
+            "description": "the instant situations are current at"
+          },
+          {
+            "name": "horizonDays",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 366,
+              "description": "only situations starting within this many days after `at`"
+            },
+            "description": "only situations starting within this many days after `at`"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the `next` of the previous page"
+            },
+            "description": "the `next` of the previous page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            }
+          },
+          {
+            "name": "dedupe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "description": "1 folds one phenomenon reported by several sources into one situation"
+            },
+            "description": "1 folds one phenomenon reported by several sources into one situation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/situations.geojson": {
+      "get": {
+        "operationId": "listSituationsGeoJson",
+        "summary": "Live situations as a GeoJSON FeatureCollection, one keyset page.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated type codes",
+              "type": "string"
+            },
+            "description": "comma-separated type codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "minSeverity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["minor", "moderate", "major", "critical"]
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant situations are current at"
+            },
+            "description": "the instant situations are current at"
+          },
+          {
+            "name": "horizonDays",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 366,
+              "description": "only situations starting within this many days after `at`"
+            },
+            "description": "only situations starting within this many days after `at`"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the `next` of the previous page"
+            },
+            "description": "the `next` of the previous page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            }
+          },
+          {
+            "name": "dedupe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "description": "1 folds one phenomenon reported by several sources into one situation"
+            },
+            "description": "1 folds one phenomenon reported by several sources into one situation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/geo+json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/situations.jsonld": {
+      "get": {
+        "operationId": "listSituationsJsonLd",
+        "summary": "Live situations as GeoJSON-LD (schema.org and SOSA context), one keyset page.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated type codes",
+              "type": "string"
+            },
+            "description": "comma-separated type codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "minSeverity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["minor", "moderate", "major", "critical"]
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant situations are current at"
+            },
+            "description": "the instant situations are current at"
+          },
+          {
+            "name": "horizonDays",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 366,
+              "description": "only situations starting within this many days after `at`"
+            },
+            "description": "only situations starting within this many days after `at`"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the `next` of the previous page"
+            },
+            "description": "the `next` of the previous page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            }
+          },
+          {
+            "name": "dedupe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "description": "1 folds one phenomenon reported by several sources into one situation"
+            },
+            "description": "1 folds one phenomenon reported by several sources into one situation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/traff.xml": {
+      "get": {
+        "operationId": "listSituationsTraff",
+        "summary": "Live situations as a TraFF 0.8 feed, one keyset page; `Link: rel=\"next\"` names the next. Situations TraFF cannot tell without widening a vehicle condition are left out.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated type codes",
+              "type": "string"
+            },
+            "description": "comma-separated type codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "minSeverity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["minor", "moderate", "major", "critical"]
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant situations are current at"
+            },
+            "description": "the instant situations are current at"
+          },
+          {
+            "name": "horizonDays",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 366,
+              "description": "only situations starting within this many days after `at`"
+            },
+            "description": "only situations starting within this many days after `at`"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the `next` of the previous page"
+            },
+            "description": "the `next` of the previous page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            }
+          },
+          {
+            "name": "dedupe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "description": "1 folds one phenomenon reported by several sources into one situation"
+            },
+            "description": "1 folds one phenomenon reported by several sources into one situation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/datex2/situations.xml": {
+      "get": {
+        "operationId": "listSituationsDatex",
+        "summary": "Live situations as a DATEX II v3 SituationPublication, one record per effect, one keyset page; `Link: rel=\"next\"` names the next. Not SRTI-profile-conformant.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated type codes",
+              "type": "string"
+            },
+            "description": "comma-separated type codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "minSeverity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["minor", "moderate", "major", "critical"]
+            }
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant situations are current at"
+            },
+            "description": "the instant situations are current at"
+          },
+          {
+            "name": "horizonDays",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 366,
+              "description": "only situations starting within this many days after `at`"
+            },
+            "description": "only situations starting within this many days after `at`"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the `next` of the previous page"
+            },
+            "description": "the `next` of the previous page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            }
+          },
+          {
+            "name": "dedupe",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "description": "1 folds one phenomenon reported by several sources into one situation"
+            },
+            "description": "1 folds one phenomenon reported by several sources into one situation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/xml": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/stream": {
+      "get": {
+        "operationId": "streamSituations",
+        "summary": "Server-sent events: every live matching situation, then each one that changes (`event: situation`) or goes (`event: remove`), polled every 15 s.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated type codes",
+              "type": "string"
+            },
+            "description": "comma-separated type codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "minSeverity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["minor", "moderate", "major", "critical"]
+            }
+          },
+          {
+            "name": "class",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["situation"],
+              "description": "the record class streamed; observations are not"
+            },
+            "description": "the record class streamed; observations are not"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/event-stream": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/situations/{id}": {
+      "get": {
+        "operationId": "getSituation",
+        "summary": "One situation, tombstoned or not, with its evidence and graph binding.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the record id, URL-encoded"
+            },
+            "description": "the record id, URL-encoded"
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "404": {
+            "description": "No such record or schema"
+          }
+        }
+      }
+    },
+    "/history/{class}/{id}": {
+      "get": {
+        "operationId": "getHistory",
+        "summary": "A record's revisions, oldest first: what changed and the record as it stood.",
+        "parameters": [
+          {
+            "name": "class",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["situation", "feature", "offer"]
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the record id, URL-encoded"
+            },
+            "description": "the record id, URL-encoded"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "404": {
+            "description": "No such record or schema"
+          }
+        }
+      }
+    },
+    "/taxonomy": {
+      "get": {
+        "operationId": "getTaxonomy",
+        "summary": "The running registry: domains, kinds, types, properties, effects, vocabularies.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/schemas/{path}": {
+      "get": {
+        "operationId": "getSchema",
+        "summary": "A generated JSON Schema of the running registry; `index.json` lists them.",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "e.g. index.json or situation/incident@1.json"
+            },
+            "description": "e.g. index.json or situation/incident@1.json"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/schema+json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "404": {
+            "description": "No such record or schema"
+          }
+        }
+      }
+    },
+    "/coverage": {
+      "get": {
+        "operationId": "getCoverage",
+        "summary": "Live records per country, subdivision, class, kind and access mode.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/openapi.json": {
+      "get": {
+        "operationId": "getOpenApi",
+        "summary": "This document.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

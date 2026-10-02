@@ -24,22 +24,35 @@ const statusFetch = (status: number): typeof fetch =>
   (async () => new Response("err", { status })) as unknown as typeof fetch;
 
 describe("validateFeed", () => {
-  it("is ok when the feed fetches and parses ≥1 observation", async () => {
-    const res = await validateFeed(feed, {
-      fetch: okFetch("[fixture]"),
-      parserFor: () => () => [{ id: "a" }, { id: "b" }],
-    });
+  it("is ok when the feed fetches and parses ≥1 record", async () => {
+    const res = await validateFeed(feed, { fetch: okFetch("[fixture]"), count: () => 2 });
     expect(res).toEqual({ ok: true, rowCount: 2 });
   });
 
-  it("is not ok (no throw) when the parser yields zero observations", async () => {
-    const res = await validateFeed(feed, {
-      fetch: okFetch("[]"),
-      parserFor: () => () => [],
-    });
+  it("is not ok (no throw) when the parser yields zero records", async () => {
+    const res = await validateFeed(feed, { fetch: okFetch("[]"), count: () => 0 });
     expect(res.ok).toBe(false);
     expect(res.rowCount).toBe(0);
-    expect(res.message).toMatch(/0 observation/i);
+    expect(res.message).toMatch(/0 records/i);
+  });
+
+  it("counts the situations a roads event feed parses into", async () => {
+    const geojson = JSON.stringify({
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          id: "w1",
+          geometry: { type: "Point", coordinates: [4.9, 52.37] },
+          properties: { title: "Werkzaamheden" },
+        },
+      ],
+    });
+    const res = await validateFeed(
+      { ...feed, geojson: { headlineField: "title", defaultType: "roadworks" } } as FeedSourceBase,
+      { fetch: okFetch(geojson) },
+    );
+    expect(res).toEqual({ ok: true, rowCount: 1 });
   });
 
   it("is not ok (no throw) on an HTTP error, and reports the status", async () => {

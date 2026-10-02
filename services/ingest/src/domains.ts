@@ -9,12 +9,10 @@ import {
   materializeApprovedCatalogChildren,
   registerFeedSchema,
 } from "@openconditions/ingest-framework";
-import type { RoadEvent, RoadFlow } from "@openconditions/roads";
+import type { FeedSource, RoadFlow } from "@openconditions/roads";
 import {
   feedToSourceDescriptor,
-  flowParserFor,
-  parserFor,
-  roadAttributes,
+  parseEvents,
   roadFeedSchema,
   roadFlowAttributes,
 } from "@openconditions/roads";
@@ -23,18 +21,14 @@ import {
 // mounted/remote descriptors without depending on @openconditions/roads.
 registerFeedSchema("roads", roadFeedSchema);
 
-// Parser/attribute dispatch — feed-independent, used by parse.ts + write-postgis.ts
+// Parse/attribute dispatch — feed-independent, used by parse.ts + write-postgis.ts
 // to look up a domain's parser/attributes by name. The feed set is populated
 // per-boot by buildDomainRegistry(); this static entry carries none.
 const roadsDispatch: IngestDomain = {
   name: "roads",
   feeds: [],
-  parserFor: parserFor as IngestDomain["parserFor"],
-  flowParserFor: flowParserFor as IngestDomain["flowParserFor"],
-  attributes: (obs: Observation) =>
-    obs.kind === "measurement"
-      ? roadFlowAttributes(obs as RoadFlow)
-      : roadAttributes(obs as RoadEvent),
+  parse: (feed, buffers, opts) => parseEvents(feed as FeedSource, buffers, opts),
+  attributes: (obs: Observation) => roadFlowAttributes(obs as RoadFlow),
 };
 
 /**

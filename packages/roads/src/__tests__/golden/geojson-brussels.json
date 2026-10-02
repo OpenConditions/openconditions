@@ -49,7 +49,7 @@
     },
     "canonicalId": "33a67c35ab72a14da3425545ae689b8c698d44f3984cad25efad84bea1235ca9",
     "domain": "roads",
-    "contentHash": "667b49d1fd35c2c4b037a641c0c676d8da45cd268c6aefd4f0e878f1dfd2ee51",
+    "contentHash": "9fd4182c9a364b2a8a0e8c87cad4855d516dfacd048eb1f1525cd8c3e1886996",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -59,7 +59,8 @@
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "1"
     },
     "headline": [
       {
@@ -126,7 +127,7 @@
     },
     "canonicalId": "60e2d0448628b6d26c8b15122885860304b61bda69e4f744817139764da7c938",
     "domain": "roads",
-    "contentHash": "15f7e8dd0055e850cd93d1e3e1cd6b116564338173b566b0dde058577b8676c7",
+    "contentHash": "e2241f2290b26619747ae85dcbf291e93544284b53eb3c2e29e73bad466fa644",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -136,7 +137,8 @@
     "certainty": "unknown",
     "severity": {
       "label": "critical",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "4"
     },
     "headline": [
       {
@@ -203,7 +205,7 @@
     },
     "canonicalId": "6a33b74826c984b7a30a5b5a5ae853b1f8bbc880db4995365d0b1657390ee085",
     "domain": "roads",
-    "contentHash": "e42c452f81d495cf4f07997d8f831fd8e27300e6a88d2109133f7ae095604b65",
+    "contentHash": "0d24a03652c6ad2431120465bbc0957c2c05e750ea9c7687d32dc97f5affa0d1",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -213,7 +215,8 @@
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "1"
     },
     "headline": [
       {
@@ -280,7 +283,7 @@
     },
     "canonicalId": "0b73550241f8bb796cc3a27ac6c82c9f3b50e6e9359cbfacf3a530255b663f63",
     "domain": "roads",
-    "contentHash": "e7f45852fda13a2facb2e6fb1b565032d96a594323c4e85262f9e84246bb7e2f",
+    "contentHash": "f68d40689ac3ff37b6b93d5869a1e77777abd52bd9726fd31f4528a462dd86ce",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -290,7 +293,8 @@
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "1"
     },
     "headline": [
       {
@@ -357,7 +361,7 @@
     },
     "canonicalId": "cf18434effc9999dde21b7b49d61e2d25499ce9a0909dedfa308464f67710cf1",
     "domain": "roads",
-    "contentHash": "1a58ffe6ee8919b213fe183d68d8a192adabb796fdd3549879eea96216763fa1",
+    "contentHash": "06eb5cbe1058cf944df97a2e7d3fb12afd6552eb7bfa8dca1f54d8cec170a1d6",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -367,7 +371,8 @@
     "certainty": "unknown",
     "severity": {
       "label": "major",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "3"
     },
     "headline": [
       {

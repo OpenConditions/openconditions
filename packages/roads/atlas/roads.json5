@@ -123,7 +123,7 @@
       "typeMap": {
         "Incident": "accident",
         "Road Work": "roadworks",
-        "Flooding": "weather",
+        "Flooding": "road_hazard.hazard.flooding",
         "Fire": "hazard",
         "Major Event": "public_event",
         "Alpine": "weather"
@@ -158,11 +158,11 @@
         "ROADWORKS": "roadworks",
         "24HR ROADWORKS": "roadworks",
         "EMERGENCY WATERWORKS": "roadworks",
-        "SIGNAL FAULT": "equipment_fault",
+        "SIGNAL FAULT": "equipment_fault.fault.traffic_signal",
         "INCIDENT": "obstruction",
         "COLLISION": "accident",
         "CRASH": "accident",
-        "FLOODING": "weather",
+        "FLOODING": "road_hazard.hazard.flooding",
         "EVENT": "public_event",
         "ROAD CLOSURE": "road_closure",
         "HAZARD": "hazard"
@@ -216,7 +216,7 @@
         "Congestion": "congestion",
         "Roadworks": "roadworks",
         "Special event": "public_event",
-        "Flooding": "weather"
+        "Flooding": "road_hazard.hazard.flooding"
       },
       "defaultType": "other",
       "headlineField": "description",
@@ -524,7 +524,7 @@
         "Fermeture de 1 voie sur 2": "lane_closure",
         "Circulation en alternance": "lane_closure",
         "Circulation à contresens": "contraflow",
-        "Circulation interdite aux véhicules lourds": "dimension_restriction"
+        "Circulation interdite aux véhicules lourds": "restriction.access.truck_ban"
       },
       "defaultType": "other",
       "headlineField": "localisation",
@@ -1139,6 +1139,22 @@
     "geojson": {
       "idField": "id",
       "typeField": "art",
+      "typeMap": {
+        "Accident": "incident.accident",
+        "VehicleObstruction": "incident.breakdown",
+        "GeneralObstruction": "incident.obstruction",
+        "EnvironmentalObstruction": "incident.obstruction",
+        "InfrastructureDamageObstruction": "incident.obstruction.infrastructure_damage",
+        "AbnormalTraffic": "congestion.congestion",
+        "MaintenanceWorks": "roadworks.works.maintenance",
+        "ConstructionWorks": "roadworks.works.construction",
+        "PoorEnvironmentConditions": "weather_condition.weather",
+        "PublicEvent": "public_event.event",
+        "EquipmentOrSystemFault": "equipment_fault.fault",
+        "RoadOrCarriagewayOrLaneManagement": "lane_closure",
+        "ReroutingManagement": "detour",
+        "SpeedManagement": "speed_restriction"
+      },
       "descriptionField": "description"
     }
   },
@@ -2394,11 +2410,11 @@
       "typeMap": {
         "Closed": "road_closure",
         "Road repairs": "roadworks",
-        "Uneven road": "road_condition",
-        "Flying gravel": "hazard",
-        "Animals on the road": "hazard",
-        "Holes in road": "road_condition",
-        "Total axle weight limit": "dimension_restriction"
+        "Uneven road": "road_condition.surface.rough",
+        "Flying gravel": "road_condition.surface.loose_chippings",
+        "Animals on the road": "incident.obstruction.animal",
+        "Holes in road": "incident.obstruction.pothole",
+        "Total axle weight limit": "restriction.dimension.axle_load"
       },
       "defaultType": "hazard",
       "headlineField": "DESCRIPTION",
@@ -2430,9 +2446,9 @@
         "Impassable": "road_closure",
         "Impassable because of snow or weather": "weather",
         "Road repairs": "roadworks",
-        "Spots of ice": "weather",
+        "Spots of ice": "road_condition.surface.icy",
         "Mountain vehicles": "dimension_restriction",
-        "No winter services": "road_condition"
+        "No winter services": "road_condition.driving_condition.no_winter_maintenance"
       },
       "defaultType": "road_condition",
       "headlineField": "ROADCONDITION",
@@ -2660,12 +2676,12 @@
       "typeMap": {
         "Crash": "accident",
         "Breakdown": "broken_down_vehicle",
-        "Slip": "hazard",
-        "Maintenance": "roadworks",
+        "Slip": "incident.obstruction.landslide",
+        "Maintenance": "roadworks.works.maintenance",
         "Pavement Repairs": "roadworks",
-        "Bridge Repairs": "roadworks",
-        "Resurfacing": "roadworks",
-        "Road Construction": "roadworks",
+        "Bridge Repairs": "roadworks.works.bridge_work",
+        "Resurfacing": "roadworks.works.resurfacing",
+        "Road Construction": "roadworks.works.construction",
         "Services": "roadworks"
       },
       "defaultType": "other",

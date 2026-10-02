@@ -1,9 +1,11 @@
 # OpenConditions Ingest
 
-Fetches open road-condition feeds, normalises them to the canonical model, and
-writes them to the shared PostGIS `conditions` schema. Also serves public,
-rate-limited emitter feeds (GeoJSON, TraFF, DATEX II, GTFS-RT, JSON-LD, Valhalla
-exclusions, SSE).
+Fetches open road-condition feeds, parses road events into model situations and
+flow readings into measurements, and writes them to the shared PostGIS
+`conditions` schema. Also serves the public,
+rate-limited record API (JSON, GeoJSON, JSON-LD, TraFF, DATEX II, SSE; described
+at `GET /openapi.json`) and the routing outputs (`/segments/conditions.json`,
+Valhalla exclusions).
 
 ## Feed sources — layered delivery
 
@@ -63,6 +65,11 @@ commands against `DATABASE_URL`:
   eviction would do (a golden fixture, a disputed record); `raw unpin <hash>`
   hands it back.
 - `raw gc [--dry-run]` runs eviction now, or only reports what it would evict.
+- `raw replay <source> --from <time> [--to <time>]` re-parses each archived
+  published poll of an event feed with the current parser and lists, per poll,
+  the situations that read the same, changed, new or gone against what that poll
+  stored. It writes nothing; see
+  [`docs/storage.md`](../../docs/storage.md#replay).
 
 ## Record history
 

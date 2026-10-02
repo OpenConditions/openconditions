@@ -416,6 +416,10 @@ export async function storeRecords(
       EFFECT_COLUMNS,
       live.flatMap((r) => effectRows(registry, r)),
     );
+    await enqueueBindings(
+      tx,
+      records.map((r) => ({ id: r["id"] as string, revision: r["revision"] as number })),
+    );
   }
   if (cls === "feature") {
     await insertRows(tx, "feature_component", COMPONENT_COLUMNS, records.flatMap(componentRows));
@@ -427,6 +431,25 @@ export async function storeRecords(
     live.flatMap((r) => relationRows(cls, r)),
     "ON CONFLICT DO NOTHING",
   );
+}
+
+/**
+ * Queues the graph binding of situations whose stored revision changed, in
+ * the writing transaction: a revision is never visible without its binding
+ * work. The binder places a live situation and its effects, and drops the
+ * bindings of a tombstoned one.
+ */
+async function enqueueBindings(tx: Sql, refs: readonly { id: string; revision: number }[]) {
+  if (refs.length === 0) return;
+  await tx`
+    INSERT INTO conditions.binding_queue
+      (record_class, record_id, effect_id, record_revision, attempts, next_attempt_at,
+       last_error, updated_at)
+    SELECT 'situation', r.id, '', r.revision, 0, now(), NULL, now()
+      FROM jsonb_to_recordset(${JSON.stringify(refs)}::text::jsonb) AS r(id text, revision int)
+    ON CONFLICT (record_class, record_id, effect_id) DO UPDATE SET
+      record_revision = excluded.record_revision, attempts = 0, next_attempt_at = now(),
+      last_error = NULL, updated_at = now()`;
 }
 
 async function deleteChildren(tx: Sql, cls: RevisionedClass, ids: readonly string[]) {
@@ -483,6 +506,13 @@ export async function tombstoneRecords(
   await insertRows(tx, `${cls}_revision`, REVISION_COLUMNS(cls), revisions);
   if (cls === "situation") {
     await tx`DELETE FROM conditions.situation_effect WHERE situation_id = ANY(${ids as string[]})`;
+    await enqueueBindings(
+      tx,
+      ids.flatMap((id) => {
+        const prev = previous.get(id);
+        return prev === undefined ? [] : [{ id, revision: (prev["revision"] as number) + 1 }];
+      }),
+    );
   }
   await tx`
     DELETE FROM conditions.record_relation

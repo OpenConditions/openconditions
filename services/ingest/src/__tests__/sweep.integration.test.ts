@@ -1,4 +1,4 @@
-import { observationsByBbox, type QueryRunner } from "@openconditions/core";
+import { type QueryRunner, readObservations } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
@@ -11,7 +11,7 @@ let containerStop: () => Promise<unknown>;
 
 const HOUR_MS = 3600_000;
 
-/** Adapt postgres-js to the QueryRunner (`execute`) interface observationsByBbox expects. */
+/** Adapt postgres-js to the QueryRunner (`execute`) interface readObservations expects. */
 function runner(): QueryRunner {
   return {
     async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
@@ -258,7 +258,7 @@ describe("upsertSourceStatus — the unchanged/304 write path", () => {
   }, 30_000);
 });
 
-describe("observationsByBbox is_stale derivation (from source_status, not per-row stale_after)", () => {
+describe("readObservations isStale derivation (from source_status, not per-row stale_after)", () => {
   it("flags a row as fresh when its source polled successfully within its freshness window, even if fetched_at is old", async () => {
     const now = new Date();
     await insertRow("bbox:fresh-source", {
@@ -270,13 +270,12 @@ describe("observationsByBbox is_stale derivation (from source_status, not per-ro
     // dedupe: false — several tests in this describe block deliberately reuse
     // the same geometry/type across different sources, which is exactly what
     // the cross-source dedup pass (unrelated to this test) would merge.
-    const fc = await observationsByBbox(runner(), {
+    const rows = await readObservations(runner(), {
       domain: "roads",
       bbox: [13, 52, 14, 53],
       dedupe: false,
     });
-    const row = fc.features.find((f) => f.properties?.id === "bbox:fresh-source");
-    expect(row?.properties?.is_stale).toBe(false);
+    expect(rows.find((o) => o.id === "bbox:fresh-source")?.isStale).toBe(false);
   }, 30_000);
 
   it("flags a row as stale once its source's last success falls outside the freshness window", async () => {
@@ -287,25 +286,23 @@ describe("observationsByBbox is_stale derivation (from source_status, not per-ro
       freshnessWindowSec: 300,
     });
 
-    const fc = await observationsByBbox(runner(), {
+    const rows = await readObservations(runner(), {
       domain: "roads",
       bbox: [13, 52, 14, 53],
       dedupe: false,
     });
-    const row = fc.features.find((f) => f.properties?.id === "bbox:stale-source");
-    expect(row?.properties?.is_stale).toBe(true);
+    expect(rows.find((o) => o.id === "bbox:stale-source")?.isStale).toBe(true);
   }, 30_000);
 
   it("flags a row as stale when its source has no source_status row at all", async () => {
     const now = new Date();
     await insertRow("bbox:no-status", { source: "bbox-no-status", fetchedAt: now });
 
-    const fc = await observationsByBbox(runner(), {
+    const rows = await readObservations(runner(), {
       domain: "roads",
       bbox: [13, 52, 14, 53],
       dedupe: false,
     });
-    const row = fc.features.find((f) => f.properties?.id === "bbox:no-status");
-    expect(row?.properties?.is_stale).toBe(true);
+    expect(rows.find((o) => o.id === "bbox:no-status")?.isStale).toBe(true);
   }, 30_000);
 });

@@ -336,12 +336,13 @@
     },
     "canonicalId": "a5c739de0c8a2fc2226a1785c2e345ad8b18ecc45766fbd09b49fe9f50727e14",
     "domain": "roads",
-    "contentHash": "249354ab61a36f8bc3729a750f153d8c2c711e52475718f55b6ff1fa64fbea4f",
+    "contentHash": "f23bb6d69500820462dfa397a07e8d40d858be9278f526d30ff766784fb67569",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
-    "kind": "weather_condition",
-    "type": "weather",
+    "kind": "road_condition",
+    "type": "surface",
+    "subtype": "icy",
     "planned": false,
     "certainty": "unknown",
     "severity": {
@@ -359,8 +360,11 @@
     },
     "effects": [],
     "details": {
-      "kind": "weather_condition",
-      "v": 1
+      "kind": "road_condition",
+      "v": 1,
+      "surface": [
+        "ice"
+      ]
     }
   },
   {

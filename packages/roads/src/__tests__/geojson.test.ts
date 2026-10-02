@@ -13,6 +13,7 @@ const SRC: SourceDescriptor = {
   geojson: {
     idField: "id",
     typeField: "category",
+    typeMap: { Crash: "incident.accident.multi_vehicle", roadworks: "roadworks" },
     headlineField: "headline",
     descriptionField: "info",
     severityField: "priority",
@@ -27,7 +28,7 @@ function fc(features: unknown[]): string {
 }
 
 describe("parseGeoJson", () => {
-  it("maps a feature through the field mapping + taxonomy crosswalk", () => {
+  it("maps a feature through the field mapping and the feed's typeMap", () => {
     const out = parseGeoJson(
       fc([
         {
@@ -51,7 +52,12 @@ describe("parseGeoJson", () => {
       id: "test-gj:X1",
       source: "test-gj",
       sourceFormat: "geojson",
-      type: "accident", // "Crash"→incident via crosswalk
+      // A situation-code entry is the classification; the coarse type follows from it.
+      type: "accident",
+      category: "incident",
+      situation: {
+        classification: { kind: "incident", type: "accident", subtype: "multi_vehicle" },
+      },
       severity: "high",
       headline: "Crash on M1",
       description: "Two vehicles",
@@ -196,7 +202,10 @@ describe("parseGeoJson", () => {
       ]),
       "utf8",
     );
-    const out = parseGeoJson(buf, { ...SRC, geojson: { typeField: "meta.kind" } });
+    const out = parseGeoJson(buf, {
+      ...SRC,
+      geojson: { typeField: "meta.kind", typeMap: { roadworks: "roadworks" } },
+    });
     expect(out[0]!.type).toBe("roadworks");
   });
 });
@@ -319,7 +328,7 @@ describe("parseGeoJson — Traffic SA fixture (ArcGIS f=geojson, real mapping)",
 });
 
 describe("parseGeoJson — Polizei Hamburg fixture (api.hamburg.de OGC API, real mapping)", () => {
-  it("maps the `art` DATEX classes through the crosswalk via the registered de-hh-polizei mapping", () => {
+  it("maps the `art` DATEX classes through the registered de-hh-polizei typeMap", () => {
     const feed = FEED_SOURCES.find((f) => f.id === "de-hh-polizei")!;
     const json = readFileSync(
       join(import.meta.dirname, "fixtures/polizei-hamburg-de/hauptmeldungen.geojson"),
@@ -327,12 +336,14 @@ describe("parseGeoJson — Polizei Hamburg fixture (api.hamburg.de OGC API, real
     const events = parseGeoJson(json, feedToSourceDescriptor(feed));
     expect(events).toHaveLength(5);
 
-    // `art` values map straight through the taxonomy crosswalk, no per-feed typeMap.
     const byType = (t: string) => events.filter((e) => e.type === t);
     expect(byType("congestion")).toHaveLength(1); // AbnormalTraffic
     expect(byType("accident")).toHaveLength(1); // Accident
     expect(byType("lane_closure")).toHaveLength(1); // RoadOrCarriagewayOrLaneManagement
     expect(byType("roadworks")).toHaveLength(2); // ConstructionWorks + MaintenanceWorks
+    expect(byType("roadworks").map((e) => e.situation?.classification?.subtype)).toEqual(
+      expect.arrayContaining(["construction", "maintenance"]),
+    );
 
     const congestion = byType("congestion")[0]!;
     expect(congestion.id).toBe("de-hh-polizei:LMS/r_LMS/699889_LMS-TH/58.0");
@@ -574,8 +585,19 @@ describe("parseGeoJson — Vegagerðin Iceland line-incident fixture", () => {
     expect(byId.get("is-vegagerdin-lines:913080036")).toBe("road_closure"); // Closed
     expect(byId.get("is-vegagerdin-lines:911310036")).toBe("road_closure"); // Impassable
     expect(byId.get("is-vegagerdin-lines:905020036")).toBe("roadworks"); // Road repairs
-    expect(byId.get("is-vegagerdin-lines:911220036")).toBe("weather"); // Spots of ice
+    expect(byId.get("is-vegagerdin-lines:911220036")).toBe("road_condition"); // Spots of ice
     expect(byId.get("is-vegagerdin-lines:904470036")).toBe("dimension_restriction");
+  });
+
+  it("classifies the labels whose meaning is a registered situation", () => {
+    const ice = events().find((e) => e.id === "is-vegagerdin-lines:911220036")!;
+    expect(ice.situation?.classification).toEqual({
+      kind: "road_condition",
+      type: "surface",
+      subtype: "icy",
+    });
+    const closed = events().find((e) => e.id === "is-vegagerdin-lines:913080036")!;
+    expect(closed.situation?.classification).toBeUndefined();
   });
 
   it("filters out the passable baseline and the unknown-state segments", () => {

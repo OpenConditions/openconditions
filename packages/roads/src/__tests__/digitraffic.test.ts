@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseDigitraffic } from "../digitraffic.js";
-import { mapSourceType } from "../taxonomy.js";
 
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/digitraffic/messages.json");
 
@@ -160,52 +159,52 @@ describe("parseDigitraffic — fixture", () => {
   });
 });
 
-describe("mapSourceType — digitraffic branch", () => {
-  it("maps ROAD_WORK to roadworks/planned/isPlanned:true", () => {
-    expect(mapSourceType("digitraffic", "ROAD_WORK")).toEqual({
-      type: "roadworks",
-      category: "planned",
-      isPlanned: true,
+describe("parseDigitraffic — classification", () => {
+  const parse = (fixture: string) =>
+    parseDigitraffic(
+      readFileSync(join(import.meta.dirname, "fixtures/digitraffic", fixture), "utf8"),
+      DIGITRAFFIC_SOURCE,
+    );
+
+  it("refines a road work by its work type and reads its coarse type from it", () => {
+    const rw = parse("messages.json").find((ev) => ev.subtype === "MAINTENANCE");
+    expect(rw).toMatchObject({ type: "roadworks", category: "planned", isPlanned: true });
+    expect(rw!.situation?.classification).toEqual({
+      kind: "roadworks",
+      type: "works",
+      subtype: "maintenance",
     });
   });
 
-  it("maps WEIGHT_RESTRICTION to dimension_restriction", () => {
-    expect(mapSourceType("digitraffic", "WEIGHT_RESTRICTION")).toEqual({
-      type: "dimension_restriction",
-      category: "conditions",
-      isPlanned: false,
-    });
+  it("classifies an accident report; a general announcement stays a coarse hazard", () => {
+    const events = parse("messages.json");
+    const acc = events.find((ev) => ev.id.includes("GUID_FIXTURE_ACCIDENT"));
+    expect(acc!.situation?.classification).toEqual({ kind: "incident", type: "accident" });
+    const general = events.filter(
+      (ev) =>
+        (ev.sourceRaw as { trafficAnnouncementType?: string }).trafficAnnouncementType ===
+        "GENERAL",
+    );
+    expect(general.length).toBeGreaterThan(0);
+    for (const ev of general) {
+      expect(ev.type).toBe("hazard");
+      expect(ev.situation?.classification).toBeUndefined();
+    }
   });
 
-  it("maps EXEMPTED_TRANSPORT to authority", () => {
-    expect(mapSourceType("digitraffic", "EXEMPTED_TRANSPORT")).toEqual({
-      type: "authority",
-      category: "incident",
-      isPlanned: false,
+  it("classifies weight restrictions and exempted transports", () => {
+    const [weight] = parse("weight-restriction.json");
+    expect(weight!.type).toBe("dimension_restriction");
+    expect(weight!.situation?.classification).toEqual({
+      kind: "restriction",
+      type: "dimension",
+      subtype: "weight",
     });
-  });
-
-  it("maps ACCIDENT_REPORT to accident", () => {
-    expect(mapSourceType("digitraffic", "ACCIDENT_REPORT")).toEqual({
-      type: "accident",
-      category: "incident",
-      isPlanned: false,
-    });
-  });
-
-  it("maps PRELIMINARY_ACCIDENT_REPORT to accident", () => {
-    expect(mapSourceType("digitraffic", "PRELIMINARY_ACCIDENT_REPORT")).toEqual({
-      type: "accident",
-      category: "incident",
-      isPlanned: false,
-    });
-  });
-
-  it("maps unknown Digitraffic code to other", () => {
-    expect(mapSourceType("digitraffic", "SOMETHING_UNKNOWN")).toEqual({
-      type: "other",
-      category: "conditions",
-      isPlanned: false,
+    const [exempted] = parse("exempted-transport.json");
+    expect(exempted!.situation?.classification).toEqual({
+      kind: "incident",
+      type: "vehicle_hazard",
+      subtype: "abnormal_load",
     });
   });
 });

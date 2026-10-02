@@ -34,13 +34,12 @@ import {
   type SpineSubgraph,
 } from "./types.js";
 
-/** Event types that describe an area or a non-road subject and never bind to a carriageway. */
+/** Situation kinds that describe an area or a non-road subject and never bind to a carriageway. */
 export const NOT_APPLICABLE_TYPES: ReadonlySet<string> = new Set([
-  "weather",
+  "weather_condition",
   "public_event",
   "authority",
   "security",
-  "transit_disruption",
 ]);
 
 /** Hard ceiling on a reconstructed endpoint-pair path, in metres. */

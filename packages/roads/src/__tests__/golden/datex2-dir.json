@@ -62,7 +62,7 @@
     },
     "canonicalId": "3d3506d2ead58dd604fb2bf3acb9b779bcf4488aa09299e9bfb23dc3b48758b0",
     "domain": "roads",
-    "contentHash": "31a8065222919deadb51aacd784a82806aa2002bae1ac7d07b2ed5c4cde980c3",
+    "contentHash": "1b401901108994500d80b0c3da7feb6570f8cc83dd5bec8bbf5c15fb890ff56f",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -73,18 +73,30 @@
     "certainty": "observed",
     "severity": {
       "label": "moderate",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "medium"
     },
     "headline": [
       {
-        "lang": "und",
+        "lang": "fr",
         "text": "DIR Sud-Ouest/District Sud (Foix)/CEI L'Hospitalet"
       }
     ],
     "description": [
       {
-        "lang": "und",
+        "lang": "fr",
         "text": "Arrêté A-154(Ter)-2022"
+      }
+    ],
+    "comments": [
+      {
+        "type": "public",
+        "text": [
+          {
+            "lang": "fr",
+            "text": "situé 804 m au nord de Tarascon-sur-Ariège sud"
+          }
+        ]
       }
     ],
     "validity": {
@@ -222,7 +234,7 @@
     },
     "canonicalId": "0fa699f74fde1538d0d52723ffbaeb42d10c7ebfcb9c09c0c74464cad9c89cc4",
     "domain": "roads",
-    "contentHash": "7a36c30371b16daebc727a78b8f66180cd442f5438f7d4344c73fcbac4117a92",
+    "contentHash": "2f8920db2ac275f981585cc8897ba8745cb644bc990413d96abe5f39cae79cc1",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -233,18 +245,39 @@
     "certainty": "observed",
     "severity": {
       "label": "moderate",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "medium"
     },
     "headline": [
       {
-        "lang": "und",
+        "lang": "fr",
         "text": "DIR Ouest/District de Rennes/CEI de Rennes"
       }
     ],
     "description": [
       {
-        "lang": "und",
+        "lang": "fr",
         "text": "La mesure est obligatoire"
+      }
+    ],
+    "comments": [
+      {
+        "type": "public",
+        "text": [
+          {
+            "lang": "fr",
+            "text": "Point particulier : début : situé 447 m à l'est de Le Rheu Les Landes d'Apigné, fin : situé 2359 m à l'ouest de Rennes Porte de Lorient"
+          }
+        ]
+      },
+      {
+        "type": "public",
+        "text": [
+          {
+            "lang": "fr",
+            "text": "De Lorient vers Rennes"
+          }
+        ]
       }
     ],
     "validity": {
@@ -325,7 +358,7 @@
     },
     "canonicalId": "017d4500d9bc96274413b195bf64e34ac86bf79c6cc6ec54ca460e07d1dabd49",
     "domain": "roads",
-    "contentHash": "64fe00a4e68ae08ebdaca034484a087ca09329548eea5d64bfd570be935e6062",
+    "contentHash": "a8b22f7988fdeb8a04df1da8a3d6dc66a45c86c4b1e21f8baaf9bf55244dfda8",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -336,17 +369,18 @@
     "certainty": "observed",
     "severity": {
       "label": "moderate",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "medium"
     },
     "headline": [
       {
-        "lang": "und",
+        "lang": "fr",
         "text": "Le col du Glandon est fermé pour la saison hivernale.\n\nHabituellement le col est fermé pour la saison hivernale du 2ème lundi de novembre jusqu'au dernier vendredi de mai."
       }
     ],
     "description": [
       {
-        "lang": "und",
+        "lang": "fr",
         "text": "situé 19 m à l'est de Col du Glandon"
       }
     ],
@@ -446,7 +480,7 @@
     },
     "canonicalId": "d38fe38d4f6f7f6dd68b343fb62231cabc68f0ded5e14048165a61076e29dc6e",
     "domain": "roads",
-    "contentHash": "a3e99425a15da00369b3203453549f3da1a480ee3757701513ed100dc07b9577",
+    "contentHash": "4686df35c3e3dc8b9c885bb410badd32113ba55f5e63cef2bbc15bf3d7e5379a",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -457,18 +491,30 @@
     "certainty": "observed",
     "severity": {
       "label": "moderate",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "medium"
     },
     "headline": [
       {
-        "lang": "und",
+        "lang": "fr",
         "text": "DIR Nord/District Laon/CEI de Laon"
       }
     ],
     "description": [
       {
-        "lang": "und",
+        "lang": "fr",
         "text": "Arrêté n° T 24-481 AI\n\n (Prorogation de l’arrêté T 23-548 AI)"
+      }
+    ],
+    "comments": [
+      {
+        "type": "public",
+        "text": [
+          {
+            "lang": "fr",
+            "text": "Point particulier : début : situé 4559 m au nord de 27202, fin : situé 995 m au sud de Marle"
+          }
+        ]
       }
     ],
     "validity": {
@@ -552,7 +598,7 @@
     },
     "canonicalId": "4169b4ac575417d15d83bb5d6ad0f33affd3ee2db1dd75938a4ac340dacf62a6",
     "domain": "roads",
-    "contentHash": "4ecc7a06b45ad97dd4e5b1a7f69e054b29e0effcce33337a5bc6b51e0aeac288",
+    "contentHash": "d1239e938eb86d6c30e897e792fa6f32e381081cc2bfa819437545fa7bde18d4",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -563,18 +609,39 @@
     "certainty": "observed",
     "severity": {
       "label": "moderate",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "medium"
     },
     "headline": [
       {
-        "lang": "und",
+        "lang": "fr",
         "text": "Travaux de construction"
       }
     ],
     "description": [
       {
-        "lang": "und",
+        "lang": "fr",
         "text": "DIR Ouest/District de Saint-Brieuc/CEI de Rostrenen"
+      }
+    ],
+    "comments": [
+      {
+        "type": "public",
+        "text": [
+          {
+            "lang": "fr",
+            "text": "Arrêté SR033-9"
+          }
+        ]
+      },
+      {
+        "type": "public",
+        "text": [
+          {
+            "lang": "fr",
+            "text": "Point particulier : début : situé 2879 m à l'ouest de 47621, fin : situé 5460 m à l'est de Le Moustoir"
+          }
+        ]
       }
     ],
     "validity": {

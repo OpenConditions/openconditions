@@ -1,11 +1,11 @@
-import type { ConditionEvent, Observation } from "@openconditions/core";
-
 /**
- * Server-Sent Events helpers for the live `/stream` emitter — pure framing,
- * filtering, and snapshot-diffing so the transport route stays thin and the
- * logic is testable. The route polls the store on an interval and pushes only
- * what changed since the last poll.
+ * Server-Sent Events helpers for the live `/stream` emitter — pure framing
+ * and snapshot-diffing so the transport route stays thin and the logic is
+ * testable. The route polls the store on an interval and pushes only what
+ * changed since the last poll.
  */
+
+type Rec = Record<string, unknown>;
 
 export interface SseMessage {
   event?: string;
@@ -23,32 +23,19 @@ export function sseFrame(msg: SseMessage): string {
   return `${lines.join("\n")}\n\n`;
 }
 
-/** Parse a comma-separated `type` filter; null = no filter (match all). */
-export function parseTypeFilter(raw: string | undefined): Set<string> | null {
-  if (!raw) return null;
-  const set = new Set(
-    raw
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean),
-  );
-  return set.size > 0 ? set : null;
+/**
+ * What a client would see change in a record: its content hash, which covers
+ * everything a source said, and its evidence summary, which corroboration
+ * changes without a new revision.
+ */
+export function recordSignature(record: Rec): string {
+  const evidence = record["evidence"] as Rec | undefined;
+  return `${String(record["contentHash"])}|${JSON.stringify(evidence ?? null)}`;
 }
 
-/** A `type` filter applies to events only; measurements have no type. */
-export function matchesTypeFilter(o: Observation, types: Set<string> | null): boolean {
-  if (!types) return true;
-  return o.kind === "event" && types.has((o as ConditionEvent).type);
-}
-
-/** Content fingerprint used to detect changes between polls. */
-export function streamSignature(o: Observation): string {
-  return `${o.dataUpdatedAt}|${o.status}|${o.isStale ? 1 : 0}`;
-}
-
-export interface ObservationDelta {
-  /** New or content-changed observations since the previous snapshot. */
-  changed: Observation[];
+export interface RecordDelta {
+  /** New or changed records since the previous snapshot. */
+  changed: Rec[];
   /** Ids present last time but gone now. */
   removed: string[];
   /** The new id→signature map to carry into the next diff. */
@@ -56,21 +43,22 @@ export interface ObservationDelta {
 }
 
 /**
- * Diffs a fresh observation set against the previous snapshot's id→signature
- * map. Pure: never mutates `prev`. First call (empty `prev`) reports everything
- * as changed.
+ * Diffs a fresh record set against the previous snapshot's id→signature map.
+ * Pure: never mutates `prev`. First call (empty `prev`) reports everything as
+ * changed.
  */
-export function diffObservations(prev: Map<string, string>, next: Observation[]): ObservationDelta {
-  const nextMap = new Map<string, string>();
-  const changed: Observation[] = [];
-  for (const o of next) {
-    const sig = streamSignature(o);
-    nextMap.set(o.id, sig);
-    if (prev.get(o.id) !== sig) changed.push(o);
+export function diffRecords(
+  prev: ReadonlyMap<string, string>,
+  records: readonly Rec[],
+): RecordDelta {
+  const next = new Map<string, string>();
+  const changed: Rec[] = [];
+  for (const record of records) {
+    const id = String(record["id"]);
+    const signature = recordSignature(record);
+    next.set(id, signature);
+    if (prev.get(id) !== signature) changed.push(record);
   }
-  const removed: string[] = [];
-  for (const id of prev.keys()) {
-    if (!nextMap.has(id)) removed.push(id);
-  }
-  return { changed, removed, next: nextMap };
+  const removed = [...prev.keys()].filter((id) => !next.has(id));
+  return { changed, removed, next };
 }

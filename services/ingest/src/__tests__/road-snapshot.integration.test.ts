@@ -10,7 +10,8 @@ import { createRestrictionDatabase } from "./helpers/restriction-database.integr
 /**
  * Complete-snapshot acceptance against a real disposable PostGIS. The point of
  * these cases is the difference between "the publisher withdrew this record"
- * and "we failed to read this record": only the former may delete a row.
+ * and "we failed to read this record": only the former may withdraw a
+ * situation.
  */
 
 const FIXTURE_URL = new URL(
@@ -81,14 +82,36 @@ afterAll(async () => {
 }, 30_000);
 
 beforeEach(async () => {
-  await sql`DELETE FROM conditions.observations WHERE source = 'fi-digitraffic'`;
+  await sql`TRUNCATE conditions.situation, conditions.record_binding, conditions.record_segment,
+    conditions.binding_queue CASCADE`;
   await sql`DELETE FROM conditions.source_status WHERE source = 'fi-digitraffic'`;
 });
 
-async function idsAndHashes(): Promise<Array<{ id: string; content_hash: string | null }>> {
-  return sql<Array<{ id: string; content_hash: string | null }>>`
-    SELECT id, content_hash FROM conditions.observations
-    WHERE source = 'fi-digitraffic' ORDER BY id`;
+const fiId = (local: string) => `oc:situation:fi-digitraffic:${local}`;
+
+/** The live situations of `source`, with their content hashes. */
+async function liveRows(source: string): Promise<Array<{ id: string; content_hash: string }>> {
+  return sql<Array<{ id: string; content_hash: string }>>`
+    SELECT id, content_hash FROM conditions.situation
+    WHERE source_id = ${source} AND tombstoned_at IS NULL ORDER BY id`;
+}
+
+/** The situations of `source` ended by the reason given. */
+async function tombstoned(source: string, reason: string): Promise<string[]> {
+  const rows = await sql<Array<{ id: string }>>`
+    SELECT id FROM conditions.situation
+    WHERE source_id = ${source} AND tombstone_reason = ${reason} ORDER BY id`;
+  return rows.map((r) => r.id);
+}
+
+async function idsAndHashes(): Promise<Array<{ id: string; content_hash: string }>> {
+  return liveRows("fi-digitraffic");
+}
+
+async function queued(): Promise<Array<{ record_id: string; record_revision: number }>> {
+  return sql<Array<{ record_id: string; record_revision: number }>>`
+    SELECT record_id, record_revision FROM conditions.binding_queue
+    WHERE record_class = 'situation' ORDER BY record_id`;
 }
 
 async function seed(now: string): Promise<void> {
@@ -121,19 +144,16 @@ describe("complete road snapshot acceptance", () => {
     expect(result.snapshot!.restrictionFacts).toBeGreaterThanOrEqual(8);
     const rows = await idsAndHashes();
     expect(rows.map((r) => r.id)).toEqual([
-      "fi-digitraffic:GUID50461965",
-      "fi-digitraffic:GUID50465935",
-      "fi-digitraffic:GUID50466626",
-      "fi-digitraffic:GUID50468844",
-      "fi-digitraffic:GUID50470575",
+      fiId("GUID50461965"),
+      fiId("GUID50465935"),
+      fiId("GUID50466626"),
+      fiId("GUID50468844"),
+      fiId("GUID50470575"),
     ]);
-    const stored = await sql<Array<{ attributes: Record<string, unknown> }>>`
-      SELECT attributes FROM conditions.observations
-      WHERE id = 'fi-digitraffic:GUID50465935'`;
-    const details = stored[0]!.attributes["restrictionDetails"] as {
-      facts: Array<{ value: number; unit: string }>;
-    };
-    expect(details.facts[0]).toMatchObject({ value: 26000, unit: "kg" });
+    const limits = await sql<Array<{ value: { value: { value: number; unit: string } } }>>`
+      SELECT value FROM conditions.situation_effect
+      WHERE situation_id = ${fiId("GUID50465935")} AND kind = 'dimension_limit'`;
+    expect(limits[0]!.value.value).toEqual({ value: 26000, unit: "kg" });
   }, 120_000);
 
   it("rejects a candidate in which a still-published record lost its geometry", async () => {
@@ -179,7 +199,9 @@ describe("complete road snapshot acceptance", () => {
       now: () => "2026-09-12T07:16:00.000Z",
     });
     expect(result.error).toBeUndefined();
-    expect((await idsAndHashes()).map((r) => r.id)).not.toContain("fi-digitraffic:GUID50465935");
+    expect(result.deleted).toBe(1);
+    expect((await idsAndHashes()).map((r) => r.id)).not.toContain(fiId("GUID50465935"));
+    expect(await tombstoned("fi-digitraffic", "withdrawn")).toEqual([fiId("GUID50465935")]);
   }, 120_000);
 
   it("clears the source for a valid complete empty snapshot", async () => {
@@ -192,6 +214,7 @@ describe("complete road snapshot acceptance", () => {
     });
     expect(empty.error).toBeUndefined();
     expect(await idsAndHashes()).toHaveLength(0);
+    expect(await tombstoned("fi-digitraffic", "withdrawn")).toHaveLength(5);
   }, 120_000);
 
   it("clears the source for an all-terminal snapshot without a zero-result failure", async () => {
@@ -323,14 +346,17 @@ describe("complete road snapshot acceptance", () => {
     expect(result.snapshot).toMatchObject({ accepted: 4, unlocatable: 1 });
     const rows = await idsAndHashes();
     expect(rows).toHaveLength(4);
-    expect(rows.map((r) => r.id)).not.toContain("fi-digitraffic:GUID50466626");
+    expect(rows.map((r) => r.id)).not.toContain(fiId("GUID50466626"));
+    const [unplaced] = await sql<Array<{ n: number }>>`
+      SELECT count(*)::int AS n FROM conditions.situation WHERE id = ${fiId("GUID50466626")}`;
+    expect(unplaced!.n).toBe(0);
   }, 120_000);
 
   it("advances checked time on an unchanged snapshot without changing content", async () => {
     await seed("2026-09-12T07:14:00.000Z");
     const before = await idsAndHashes();
-    const beforeQueue = await sql<Array<{ observation_id: string }>>`
-      SELECT observation_id FROM conditions.binding_queue ORDER BY observation_id`;
+    const beforeQueue = await queued();
+    expect(beforeQueue).toHaveLength(5);
 
     const again = await runSource(feed, {
       sql,
@@ -341,11 +367,7 @@ describe("complete road snapshot acceptance", () => {
     expect(again.error).toBeUndefined();
     expect(again.count).toBe(0);
     expect(await idsAndHashes()).toEqual(before);
-    const afterQueue = await sql<Array<{ observation_id: string }>>`
-      SELECT observation_id FROM conditions.binding_queue ORDER BY observation_id`;
-    expect(afterQueue.map((r) => r.observation_id)).toEqual(
-      beforeQueue.map((r) => r.observation_id),
-    );
+    expect(await queued()).toEqual(beforeQueue);
     const status = await sql<Array<{ last_success_at: Date | null }>>`
       SELECT last_success_at FROM conditions.source_status WHERE source = 'fi-digitraffic'`;
     expect(status[0]!.last_success_at).not.toBeNull();
@@ -386,13 +408,13 @@ describe("complete road snapshot acceptance", () => {
     });
     expect(result.error).toBeUndefined();
     const after = await idsAndHashes();
-    const id = "fi-digitraffic:GUID50465935";
+    const id = fiId("GUID50465935");
     expect(after.find((r) => r.id === id)!.content_hash).not.toBe(
       before.find((r) => r.id === id)!.content_hash,
     );
-    const queued = await sql<Array<{ observation_id: string }>>`
-      SELECT observation_id FROM conditions.binding_queue WHERE observation_id = ${id}`;
-    expect(queued).toHaveLength(1);
+    expect((await queued()).filter((q) => q.record_id === id)).toEqual([
+      { record_id: id, record_revision: 2 },
+    ]);
   }, 120_000);
 });
 
@@ -422,11 +444,11 @@ describe("complete road snapshot acceptance — NDW", () => {
       })) as unknown as typeof fetch;
   }
 
-  async function ndwRows(): Promise<Array<{ id: string; content_hash: string | null }>> {
-    return sql<Array<{ id: string; content_hash: string | null }>>`
-      SELECT id, content_hash FROM conditions.observations
-      WHERE source = 'nl-ndw' ORDER BY id`;
+  async function ndwRows(): Promise<Array<{ id: string; content_hash: string }>> {
+    return liveRows("nl-ndw");
   }
+
+  const ndwId = (local: string) => `oc:situation:nl-ndw:${local}`;
 
   async function seedNdw(now: string): Promise<void> {
     const result = await runSource(ndwFeed, {
@@ -439,7 +461,6 @@ describe("complete road snapshot acceptance — NDW", () => {
   }
 
   beforeEach(async () => {
-    await sql`DELETE FROM conditions.observations WHERE source = 'nl-ndw'`;
     await sql`DELETE FROM conditions.source_status WHERE source = 'nl-ndw'`;
   });
 
@@ -459,27 +480,34 @@ describe("complete road snapshot acceptance — NDW", () => {
       unlocatable: 0,
       duplicates: 0,
     });
+    // The six DATEX records fold into the four situations they belong to.
     expect((await ndwRows()).map((r) => r.id)).toEqual([
-      "nl-ndw:NDW08_2e188db4-9bff-492d-bf28-90e17bffac8c",
-      "nl-ndw:NLRWS_0005382945_1",
-      "nl-ndw:NLRWS_0005406494_1",
-      "nl-ndw:RWS01_M1080891_DISPLACEMENT_D2_WWA",
-      "nl-ndw:RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA",
-      "nl-ndw:RWS01_M1080891_NARROW_LANES_D2_WWA",
+      ndwId("NDW08_2e188db4-9bff-492d-bf28-90e17bffac8c_SIT"),
+      ndwId("NLRWS_0005382945"),
+      ndwId("NLRWS_0005406494"),
+      ndwId("RWS01_SM1080891_D2_WWA"),
     ]);
-    const stored = await sql<Array<{ attributes: Record<string, unknown> }>>`
-      SELECT attributes FROM conditions.observations
-      WHERE id = 'nl-ndw:RWS01_M1080891_NARROW_LANES_D2_WWA'`;
-    const details = stored[0]!.attributes["restrictionDetails"] as {
-      facts: Array<{ value: number; unit: string; operator: string }>;
-      source: { license: string; licenseUrl: string; attribution: string };
-    };
-    expect(details.facts[0]).toMatchObject({ value: 4.5, unit: "m", operator: "gt" });
+    const [height] = await sql<
+      Array<{ applicability: { include: Array<{ when: unknown[] }> }; provenance: unknown }>
+    >`
+      SELECT e.value -> 'applicability' AS applicability,
+             s.record -> 'provenance' AS provenance
+        FROM conditions.situation_effect e
+        JOIN conditions.situation s ON s.id = e.situation_id
+       WHERE e.situation_id = ${ndwId("RWS01_SM1080891_D2_WWA")}
+         AND e.effect_id = 'RWS01_M1080891_NARROW_LANES_D2_WWA/closure'`;
+    expect(height!.applicability.include[0]!.when[0]).toEqual({
+      dimension: "height",
+      operator: "gt",
+      value: { value: 4.5, unit: "m" },
+    });
     // The trusted descriptor supplies rights, never the payload.
-    expect(details.source).toMatchObject({
-      license: "CC0-1.0",
-      licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
-      attribution: "NDW / Rijkswaterstaat",
+    expect(height!.provenance).toMatchObject({
+      attribution: {
+        license: "CC0-1.0",
+        licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+        provider: "NDW / Rijkswaterstaat",
+      },
     });
   }, 120_000);
 
@@ -537,7 +565,7 @@ describe("complete road snapshot acceptance — NDW", () => {
     await seedNdw("2026-09-12T07:14:00.000Z");
     const failed = await runSource(ndwFeed, deps);
     expect(failed.error).toMatch(/unlocatable/);
-    expect(await ndwRows()).toHaveLength(6);
+    expect(await ndwRows()).toHaveLength(4);
   }, 120_000);
 
   it("withdraws only a record absent from an accepted snapshot", async () => {
@@ -554,8 +582,9 @@ describe("complete road snapshot acceptance — NDW", () => {
     });
     expect(result.error).toBeUndefined();
     const ids = (await ndwRows()).map((r) => r.id);
-    expect(ids).not.toContain("nl-ndw:NLRWS_0005382945_1");
-    expect(ids).toContain("nl-ndw:RWS01_M1080891_NARROW_LANES_D2_WWA");
+    expect(ids).not.toContain(ndwId("NLRWS_0005382945"));
+    expect(ids).toContain(ndwId("RWS01_SM1080891_D2_WWA"));
+    expect(await tombstoned("nl-ndw", "withdrawn")).toEqual([ndwId("NLRWS_0005382945")]);
   }, 120_000);
 
   it.each([

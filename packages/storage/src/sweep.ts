@@ -54,64 +54,91 @@ const ORPHANED = `r.tombstoned_at IS NULL AND r.instance_id = $2 AND r.origin IN
  *    revisions, effects and components;
  *  - an on-demand row is deleted at expiry: it was a cache, with no history.
  * A declared validity end is never a reason: a source that still publishes
- * an ended record keeps it, and reads filter by time. Tombstones are chosen
- * and written under their source's advisory lock, like any other write, so a
- * poll or a confirmation in between is never undone.
+ * an ended record keeps it, and reads filter by time. Every tombstone and
+ * delete is chosen and written under its source's advisory lock, like any
+ * other write, so a poll or a confirmation in between is never undone.
  */
 export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promise<SweepCounts> {
   const counts: SweepCounts = { expired: 0, orphaned: 0, purged: 0, dropped: 0 };
   const params = [opts.now, opts.instanceId, opts.maxAgeSec];
+  const tombstone = (cls: RevisionedClass) => (tx: postgres.TransactionSql, ids: string[]) =>
+    tombstoneRecords(tx, cls, ids, "expired", opts);
+  const remove =
+    (table: string, key: string, type = "text") =>
+    (tx: postgres.TransactionSql, ids: string[]) =>
+      tx.unsafe(`DELETE FROM conditions.${table} WHERE ${key} = ANY($1::${type}[])`, [ids]);
+  // A record's graph bindings have no foreign key to it: they go with it.
+  const removeRecords =
+    (cls: RevisionedClass) => async (tx: postgres.TransactionSql, ids: string[]) => {
+      for (const table of ["record_segment", "record_binding", "binding_queue"]) {
+        await tx.unsafe(
+          `DELETE FROM conditions.${table} WHERE record_class = $1 AND record_id = ANY($2::text[])`,
+          [cls, ids],
+        );
+      }
+      await remove(cls, "id")(tx, ids);
+    };
   for (const cls of CLASSES) {
-    const dropped = await sql.unsafe(
-      `DELETE FROM conditions.${cls}
-        WHERE access_mode = 'on_demand' AND expires_at < $1 RETURNING id`,
-      [opts.now],
-    );
-    counts.dropped += dropped.length;
-    counts.expired += await tombstoneWhere(sql, cls, EXPIRED, [opts.now], opts);
-    counts.orphaned += await tombstoneWhere(sql, cls, ORPHANED, params, opts);
-    const purged = await sql.unsafe(
-      `DELETE FROM conditions.${cls}
-        WHERE tombstoned_at < $1::timestamptz - make_interval(days => $2) RETURNING id`,
+    const rows = { table: cls, key: "id" };
+    counts.dropped += await perSource(sql, rows, ON_DEMAND_EXPIRED, [opts.now], removeRecords(cls));
+    counts.expired += await perSource(sql, rows, EXPIRED, [opts.now], tombstone(cls));
+    counts.orphaned += await perSource(sql, rows, ORPHANED, params, tombstone(cls));
+    counts.purged += await perSource(
+      sql,
+      rows,
+      PURGEABLE,
       [opts.now, opts.historyDays],
+      removeRecords(cls),
     );
-    counts.purged += purged.length;
   }
-  const series = await sql`
-    DELETE FROM conditions.observation_latest
-     WHERE access_mode = 'on_demand' AND expires_at < ${opts.now} RETURNING series_id`;
-  counts.dropped += series.length;
+  counts.dropped += await perSource(
+    sql,
+    { table: "observation_latest", key: "series_id" },
+    ON_DEMAND_EXPIRED,
+    [opts.now],
+    remove("observation_latest", "series_id", "bigint"),
+  );
   return counts;
 }
 
-/** Tombstones `expired` every record matching `where`, one transaction per source under its lock. */
-async function tombstoneWhere(
+/** An on-demand row past its expiry. ($1 = now) */
+const ON_DEMAND_EXPIRED = `r.access_mode = 'on_demand' AND r.expires_at < $1`;
+
+/** A record tombstoned longer ago than the history window. ($1 = now, $2 = history days) */
+const PURGEABLE = `r.tombstoned_at < $1::timestamptz - make_interval(days => $2)`;
+
+/**
+ * Runs `act` on the rows of `table` matching `where`, one transaction per
+ * source under its advisory lock, on the rows that still match once the lock
+ * is held — so a poll writing in between is never undone. Returns how many
+ * rows it acted on.
+ */
+async function perSource(
   sql: postgres.Sql,
-  cls: RevisionedClass,
+  { table, key }: { table: string; key: string },
   where: string,
   params: readonly (string | number)[],
-  opts: SweepOptions,
+  act: (tx: postgres.TransactionSql, ids: string[]) => Promise<unknown>,
 ): Promise<number> {
   const sources = await sql.unsafe<{ source_id: string }[]>(
-    `SELECT DISTINCT r.source_id FROM conditions.${cls} r WHERE ${where}`,
+    `SELECT DISTINCT r.source_id FROM conditions.${table} r WHERE ${where}`,
     [...params],
   );
   let n = 0;
   for (const { source_id } of sources) {
     await sql.begin(async (tx) => {
       await tx`SELECT pg_advisory_xact_lock(hashtext(${source_id}))`;
-      const ids = await tx.unsafe<{ id: string }[]>(
-        `SELECT r.id FROM conditions.${cls} r WHERE ${where} AND r.source_id = $${params.length + 1}`,
+      const rows = await tx.unsafe<{ id: string }[]>(
+        `SELECT r.${key} AS id FROM conditions.${table} r
+          WHERE ${where} AND r.source_id = $${params.length + 1}`,
         [...params, source_id],
       );
-      await tombstoneRecords(
+      if (rows.length === 0) return;
+      await act(
         tx,
-        cls,
-        ids.map((r) => r.id),
-        "expired",
-        opts,
+        rows.map((r) => String(r.id)),
       );
-      n += ids.length;
+      n += rows.length;
     });
   }
   return n;

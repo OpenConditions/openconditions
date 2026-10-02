@@ -36,6 +36,15 @@ function occurrenceDurationMs(s: Schedule): number {
 }
 
 /**
+ * How many local days before `at` an occurrence still covering `at` may have
+ * started: one for a window within a day or overnight, more for a longer one
+ * (a one-off DATEX period). Bounded at a year.
+ */
+function lookbackDays(s: Schedule): number {
+  return Math.min(366, Math.max(1, Math.ceil(occurrenceDurationMs(s) / 86_400_000)));
+}
+
+/**
  * A schedule's `startTime` as the `HH:mm:ss` wall clock it denotes, or `null`
  * when it is not a time at all. Feeds publish variants a strict wall-clock
  * parser rejects: a trailing `Z`, a UTC offset (DATEX `startTimeOfPeriod`), or
@@ -81,9 +90,10 @@ function occurrenceStartsOn(s: Schedule, localDate: string): boolean {
 
 /**
  * Whether `at` falls inside an occurrence of a schema.org-shaped Schedule,
- * evaluated in the schedule's own `scheduleTimezone`. Checks the occurrence
- * starting on `at`'s local date and the one starting the day before (for
- * windows that cross midnight). `unevaluable` = the zone is missing or unknown,
+ * evaluated in the schedule's own `scheduleTimezone`. Checks the occurrences
+ * starting on `at`'s local date and on each day before it that an occurrence
+ * as long as the schedule's could still cover (the day before, for a window
+ * that crosses midnight). `unevaluable` = the zone is missing or unknown,
  * or the start time cannot be turned into an instant. A day the recurrence
  * rules genuinely exclude is `out`, not `unevaluable`.
  */
@@ -100,7 +110,8 @@ export function scheduleStateAt(s: Schedule, at: Date): "in" | "out" | "unevalua
     return "unevaluable";
   }
   let unevaluable = false;
-  for (const day of [today, addDaysLocal(today, -1)]) {
+  for (let delta = 0; delta >= -lookbackDays(s); delta--) {
+    const day = addDaysLocal(today, delta);
     if (!occurrenceStartsOn(s, day)) continue;
     const start = zonedWallClockToInstant(tz, `${day}T${startTime}`);
     if (!start) {
@@ -182,7 +193,7 @@ export function nextScheduleTransition(schedules: Schedule[], at: Date): string 
     } catch {
       continue;
     }
-    for (let delta = -1; delta <= 366; delta++) {
+    for (let delta = -lookbackDays(schedule); delta <= 366; delta++) {
       const day = addDaysLocal(localDate, delta);
       if (!occurrenceStartsOn(schedule, day)) continue;
       const start = zonedWallClockToInstant(schedule.scheduleTimezone, `${day}T${startTime}`);

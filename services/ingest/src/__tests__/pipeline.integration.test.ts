@@ -6,8 +6,9 @@ import { readObservations } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import type { LookupFn } from "@openconditions/ingest-framework";
 import { encodeOpenlrLine } from "@openconditions/openlr";
-import type { RoadEvent, RoadFlow } from "@openconditions/roads";
+import type { RoadFlow } from "@openconditions/roads";
 import { FEED_SOURCES, recordSkippedNoGeometry } from "@openconditions/roads";
+import { writeSnapshotIn } from "@openconditions/storage";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -16,6 +17,7 @@ import type { DomainFeedSource } from "../pipeline/run.js";
 import { runSource } from "../pipeline/run.js";
 import { clearSiteTableCache } from "../pipeline/site-table.js";
 import { atomicSwap, MAX_ROWS_PER_SOURCE } from "../pipeline/write-postgis.js";
+import { bindSituation, registry, situationDraft, writeSituations } from "./helpers/situations.js";
 
 const NDW_FIXTURE_PATH = path.resolve(
   import.meta.dirname,
@@ -87,8 +89,16 @@ afterAll(async () => {
   await containerStop?.();
 }, 30_000);
 
+/** How many situations of `source` are live: a withdrawn one is tombstoned, not deleted. */
+async function liveSituations(source: string): Promise<number> {
+  const [row] = await sql<{ n: number }[]>`
+    SELECT count(*)::int AS n FROM conditions.situation
+     WHERE source_id = ${source} AND tombstoned_at IS NULL`;
+  return row!.n;
+}
+
 describe("pipeline — happy path", () => {
-  it("inserts rows from the NDW fixture into conditions.observations", async () => {
+  it("publishes situations from the NDW fixture into conditions.situation", async () => {
     const xmlPayload = readFileSync(NDW_FIXTURE_PATH);
 
     const fakeFetch = async (_url: string | URL | Request): Promise<Response> => {
@@ -105,12 +115,16 @@ describe("pipeline — happy path", () => {
     expect(result.count).toBeGreaterThan(0);
     console.info(`[test] inserted ${result.count} rows`);
 
+    expect(await liveSituations("nl-ndw")).toBe(result.count);
     const wrongRows = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
-      FROM conditions.observations
-      WHERE domain <> 'roads' OR source <> 'nl-ndw'
+      FROM conditions.situation
+      WHERE domain <> 'roads' OR source_id <> 'nl-ndw'
     `;
     expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
+    // No road event reaches the legacy observation table any more.
+    const legacy = await sql`SELECT id FROM conditions.observations WHERE source = 'nl-ndw'`;
+    expect(legacy).toHaveLength(0);
   }, 60_000);
 
   it("all inserted geometries are valid PostGIS geometries", async () => {
@@ -121,26 +135,21 @@ describe("pipeline — happy path", () => {
       lookup: fakeLookup,
     });
     expect(seeded.error).toBeUndefined();
-    const total = await sql`SELECT id FROM conditions.observations WHERE source = ${ndwFeed.id}`;
-    expect(total.length).toBeGreaterThan(0);
+    expect(await liveSituations(ndwFeed.id)).toBeGreaterThan(0);
     const invalid = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
-      FROM conditions.observations
+      FROM conditions.situation
       WHERE NOT ST_IsValid(geom)
     `;
     expect(parseInt(invalid[0]!.count, 10)).toBe(0);
 
-    const rows = await sql<{ attributes: unknown }[]>`
-      SELECT attributes
-      FROM conditions.observations
+    const rows = await sql<{ record: Record<string, unknown> }[]>`
+      SELECT record
+      FROM conditions.situation
       WHERE domain = 'roads'
       LIMIT 100
     `;
-    const hasRoadAttrs = rows.some((r) => {
-      const attrs = r.attributes as Record<string, unknown> | null;
-      return attrs != null && "isPlanned" in attrs;
-    });
-    expect(hasRoadAttrs).toBe(true);
+    expect(rows.some((r) => typeof r.record["planned"] === "boolean")).toBe(true);
   }, 30_000);
 });
 
@@ -172,10 +181,7 @@ describe("pipeline — feed downtime", () => {
       lookup: fakeLookup,
     });
     expect(seeded.error).toBeUndefined();
-    const beforeCount = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw'
-    `;
-    const countBefore = parseInt(beforeCount[0]!.count, 10);
+    const countBefore = await liveSituations("nl-ndw");
     expect(countBefore).toBeGreaterThan(0);
 
     const throwingFetch = async (_url: string | URL | Request): Promise<Response> => {
@@ -190,12 +196,7 @@ describe("pipeline — feed downtime", () => {
     });
 
     expect(result.count).toBe(0);
-
-    const afterCount = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw'
-    `;
-    const countAfter = parseInt(afterCount[0]!.count, 10);
-    expect(countAfter).toBe(countBefore);
+    expect(await liveSituations("nl-ndw")).toBe(countBefore);
   }, 30_000);
 });
 
@@ -217,10 +218,11 @@ describe("pipeline — open511 (DriveBC)", () => {
     expect(result.count).toBeGreaterThan(0);
     console.info(`[test] drivebc: inserted ${result.count} rows`);
 
+    expect(await liveSituations("ca-bc-drivebc")).toBe(result.count);
     const wrongRows = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
-      FROM conditions.observations
-      WHERE source = 'ca-bc-drivebc' AND (domain <> 'roads')
+      FROM conditions.situation
+      WHERE source_id = 'ca-bc-drivebc' AND (domain <> 'roads')
     `;
     expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
   }, 60_000);
@@ -246,102 +248,17 @@ describe("pipeline — open511 (DriveBC)", () => {
   }, 60_000);
 
   it("all DriveBC geometries are valid PostGIS geometries", async () => {
+    expect(await liveSituations("ca-bc-drivebc")).toBeGreaterThan(0);
     const invalid = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
-      FROM conditions.observations
-      WHERE source = 'ca-bc-drivebc' AND NOT ST_IsValid(geom)
+      FROM conditions.situation
+      WHERE source_id = 'ca-bc-drivebc' AND NOT ST_IsValid(geom)
     `;
     expect(parseInt(invalid[0]!.count, 10)).toBe(0);
   }, 30_000);
 });
 
-describe("store round-trip — typed columns + attributes JSONB", () => {
-  it("persists label (column) and road-specific fields (attributes) and reads them back", async () => {
-    const ev: RoadEvent = {
-      id: "rt:1",
-      source: "rt",
-      sourceFormat: "wzdx",
-      domain: "roads",
-      kind: "event",
-      type: "roadworks",
-      category: "planned",
-      isPlanned: true,
-      severity: "low",
-      severitySource: "derived",
-      headline: "Roadworks",
-      label: "Big Dig",
-      geometry: { type: "Point", coordinates: [13.4, 52.5] },
-      status: "active",
-      roads: [{ name: "A2" }],
-      roadState: "some_lanes_closed",
-      workersPresent: true,
-      workZoneType: "moving",
-      speedLimitKph: 50,
-      regions: ["Berlin"],
-      detourGeometry: {
-        type: "LineString",
-        coordinates: [
-          [13.4, 52.5],
-          [13.42, 52.51],
-        ],
-      },
-      schedule: [
-        {
-          repeatFrequency: "P1D",
-          startDate: "2026-06-10T06:00:00Z",
-          endDate: "2026-06-10T18:00:00Z",
-          scheduleTimezone: "Europe/Berlin",
-        },
-      ],
-      externalRefs: { external: { system: "RIS-index", code: "NL123" } },
-      confidence: "likely",
-      isForecast: true,
-      relatedIds: ["parent-1", "parent-2"],
-      sourceRaw: { provider_field: "verbatim" },
-      origin: { kind: "feed", attribution: { provider: "X", license: "CC0-1.0" } },
-      dataUpdatedAt: "2026-06-23T10:00:00Z",
-      fetchedAt: "2026-06-23T10:00:00Z",
-      isStale: false,
-    };
-    await atomicSwap(sql, "rt", [ev]);
-
-    const db = {
-      async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
-        return (p ? await sql.unsafe(q, p as never[]) : await sql.unsafe(q)) as T;
-      },
-    };
-    const out = await readObservations(db, { domain: "roads", bbox: [13, 52, 14, 53] });
-    const got = out.find((o) => o.id === "rt:1") as RoadEvent | undefined;
-    expect(got).toBeDefined();
-    expect(got!.label).toBe("Big Dig"); // dedicated column
-    expect(got!.roadState).toBe("some_lanes_closed"); // attributes JSONB
-    expect(got!.workersPresent).toBe(true);
-    expect(got!.workZoneType).toBe("moving");
-    expect(got!.speedLimitKph).toBe(50);
-    expect(got!.regions).toEqual(["Berlin"]);
-    expect(got!.detourGeometry).toEqual({
-      type: "LineString",
-      coordinates: [
-        [13.4, 52.5],
-        [13.42, 52.51],
-      ],
-    });
-    expect(got!.schedule).toEqual([
-      {
-        repeatFrequency: "P1D",
-        startDate: "2026-06-10T06:00:00Z",
-        endDate: "2026-06-10T18:00:00Z",
-        scheduleTimezone: "Europe/Berlin",
-      },
-    ]);
-    expect(got!.externalRefs?.external).toEqual({ system: "RIS-index", code: "NL123" });
-    expect(got!.confidence).toBe("likely"); // typed column, was dropped on read
-    expect(got!.isForecast).toBe(true);
-    expect(got!.relatedIds).toEqual(["parent-1", "parent-2"]);
-    expect(got!.source).toBe("rt"); // feed id NOT clobbered by sourceRaw
-    expect(got!.sourceRaw).toEqual({ provider_field: "verbatim" }); // verbatim passthrough survives
-  }, 30_000);
-
+describe("store round-trip — typed columns + flow attributes JSONB", () => {
   it("persists a RoadFlow measurement (metric/value columns + flow attributes)", async () => {
     // NOTE: this is just the direct atomicSwap round-trip; the full flow-feed
     // e2e test (parseFor dispatch → DB) lives in the "flow feed — e2e pipeline"
@@ -547,11 +464,6 @@ describe("atomicSwap — bulk insert at volume", () => {
     expect(first.inserted).toBe(3);
     expect(first.updated).toBe(0);
     expect(first.deleted).toBe(0);
-    expect([...first.changedIds].sort()).toEqual([
-      "diffsrc:changed",
-      "diffsrc:removed",
-      "diffsrc:unchanged",
-    ]);
 
     const before = await sql<{ id: string; fetched_at: Date }[]>`
       SELECT id, fetched_at FROM conditions.observations WHERE source = 'diffsrc' ORDER BY id
@@ -571,9 +483,6 @@ describe("atomicSwap — bulk insert at volume", () => {
     expect(second.inserted).toBe(1);
     expect(second.updated).toBe(1);
     expect(second.deleted).toBe(1);
-    // Only the rows that really moved come back: the unchanged one is skipped
-    // by the diff-upsert, so a derived stage never revisits it.
-    expect([...second.changedIds].sort()).toEqual(["diffsrc:changed", "diffsrc:new"]);
 
     const after = await sql<{ id: string; fetched_at: Date }[]>`
       SELECT id, fetched_at FROM conditions.observations
@@ -621,7 +530,7 @@ describe("atomicSwap — bulk insert at volume", () => {
       [mkFlow("dupsrc:1", 10), mkFlow("dupsrc:1", 20)],
       300,
     );
-    expect(counts).toEqual({ inserted: 1, updated: 0, deleted: 0, changedIds: ["dupsrc:1"] });
+    expect(counts).toEqual({ inserted: 1, updated: 0, deleted: 0 });
 
     const rows = await sql<{ id: string; value: string | null }[]>`
       SELECT id, value::text AS value FROM conditions.observations WHERE source = 'dupsrc'
@@ -631,51 +540,53 @@ describe("atomicSwap — bulk insert at volume", () => {
     expect(Number(rows[0]!.value)).toBe(20); // last one in the fresh set wins
   }, 30_000);
 
-  it("obsoletes the prior binding and queues the new observation revision atomically", async () => {
-    const mkAtomicEvent = (headline: string, dataUpdatedAt: string): RoadEvent => ({
-      id: "binding-atomic:event",
-      source: "binding-atomic",
-      sourceFormat: "datex2",
-      domain: "roads",
-      kind: "event",
-      type: "roadworks",
-      category: "planned",
-      isPlanned: true,
-      roads: [],
-      severity: "medium",
-      severitySource: "declared",
-      headline,
-      geometry: { type: "Point", coordinates: [7, 51] },
-      status: "active",
-      origin: { kind: "feed", attribution: { provider: "X", license: "CC0-1.0" } },
-      dataUpdatedAt,
-      fetchedAt: dataUpdatedAt,
-      isStale: false,
+  it("queues a changed situation's binding work in the same transaction as its new revision", async () => {
+    const id = "oc:situation:binding-atomic:event";
+    const changed = situationDraft(
+      "event",
+      { headline: [{ lang: "de", text: "A 46 geändert" }] },
+      "binding-atomic",
+    );
+    await writeSituations(sql, "binding-atomic", [situationDraft("event", {}, "binding-atomic")]);
+    await bindSituation(sql, id, {
+      status: "exact",
+      confidence: 0.95,
+      revision: 1,
+      generation: "test-graph",
+      resolverVersion: "test",
     });
-    const first = mkAtomicEvent("first", "2026-09-11T10:00:00Z");
-    await atomicSwap(sql, "binding-atomic", [first], 900);
-    await sql`
-      INSERT INTO conditions.observation_binding
-        (observation_id, status, confidence, direction_mode, candidate_count,
-         resolver_version, geom_hash, observation_revision, graph_generation, bound_at)
-      SELECT id, 'exact', 0.95, 'single', 1, 'test', 'old-geom', content_hash,
-        'test-graph', now()
-      FROM conditions.observations WHERE id = 'binding-atomic:event'
-      ON CONFLICT (observation_id) DO UPDATE SET status = excluded.status
-    `;
+    await sql`DELETE FROM conditions.binding_queue WHERE record_id = ${id}`;
 
-    const changed = mkAtomicEvent("changed", "2026-09-11T10:01:00Z");
-    await atomicSwap(sql, "binding-atomic", [changed], 900);
+    // A write that rolls back leaves neither the new revision nor its work.
+    await expect(
+      sql.begin(async (tx) => {
+        await writeSnapshotIn(
+          tx,
+          "binding-atomic",
+          { situations: [changed] },
+          { registry, instanceId: "test.local", now: "2026-09-11T10:01:00Z", complete: true },
+        );
+        throw new Error("rolled back");
+      }),
+    ).rejects.toThrow("rolled back");
+    const [kept] = await sql<{ revision: number }[]>`
+      SELECT revision FROM conditions.situation WHERE id = ${id}`;
+    expect(kept!.revision).toBe(1);
+    expect(await sql`SELECT 1 FROM conditions.binding_queue WHERE record_id = ${id}`).toHaveLength(
+      0,
+    );
 
-    const [row] = await sql<{ status: string; queued: string; current: string }[]>`
-      SELECT b.status, q.observation_revision AS queued, o.content_hash AS current
-      FROM conditions.observations o
-      JOIN conditions.observation_binding b ON b.observation_id = o.id
-      JOIN conditions.binding_queue q ON q.observation_id = o.id
-      WHERE o.id = 'binding-atomic:event'
+    await writeSituations(sql, "binding-atomic", [changed], "2026-09-11T10:01:00Z");
+    const [row] = await sql<{ current: number; queued: number; bound: number }[]>`
+      SELECT s.revision AS current, q.record_revision AS queued, b.record_revision AS bound
+      FROM conditions.situation s
+      JOIN conditions.binding_queue q ON q.record_class = 'situation' AND q.record_id = s.id
+      JOIN conditions.record_binding b ON b.record_class = 'situation' AND b.record_id = s.id
+      WHERE s.id = ${id}
     `;
-    expect(row?.status).toBe("obsolete");
-    expect(row?.queued).toBe(row?.current);
+    // The work names the new revision; the stored binding still names the old
+    // one, so it no longer counts as current for the situation.
+    expect(row).toEqual({ current: 2, queued: 2, bound: 1 });
   }, 30_000);
 
   it("writes the success source_status row atomically with a brand-new source's rows", async () => {
@@ -751,9 +662,10 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     // Three sites resolve (Point + LineString + the genuine standstill); the
     // rest are skipped (no-data zero/sentinel, absurd speed, missing geometry).
     expect(measurements.length).toBe(3);
-    // los is unknown for NDW (no baseline), so no derived congestion events.
-    const events = rows.filter((r) => r.kind === "event");
-    expect(events.length).toBe(0);
+    // Only readings live in the observation table now.
+    expect(rows.filter((r) => r.kind === "event")).toHaveLength(0);
+    // los is unknown for NDW (no baseline), so no derived congestion situations.
+    expect(await liveSituations("nl-ndw-flow")).toBe(0);
   }, 60_000);
 
   it("records the digest of the decoded streamed document on the poll attempt", async () => {
@@ -1068,11 +980,7 @@ describe("pipeline — shrink tripwire (event feed)", () => {
     expect(guarded.count).toBe(0);
     expect(guarded.error).toBeDefined();
     expect(guarded.error).toMatch(/shrank/i);
-
-    const afterGuarded = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'shrink-test-src'
-    `;
-    expect(parseInt(afterGuarded[0]!.count, 10)).toBe(seededCount);
+    expect(await liveSituations("shrink-test-src")).toBe(seededCount);
 
     // The error write must not have clobbered last_row_count (needed so the
     // tripwire's baseline survives an error cycle).
@@ -1094,17 +1002,20 @@ describe("pipeline — shrink tripwire (event feed)", () => {
       lookup: fakeLookup,
     });
     expect(cleared.error).toBeUndefined();
-
-    const afterCleared = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'shrink-test-src'
+    expect(cleared.deleted).toBe(seededCount);
+    expect(await liveSituations("shrink-test-src")).toBe(0);
+    // Withdrawn, not deleted: the situations keep their history.
+    const withdrawn = await sql<{ count: string }[]>`
+      SELECT COUNT(*)::text AS count FROM conditions.situation
+      WHERE source_id = 'shrink-test-src' AND tombstone_reason = 'withdrawn'
     `;
-    expect(parseInt(afterCleared[0]!.count, 10)).toBe(0);
+    expect(parseInt(withdrawn[0]!.count, 10)).toBe(seededCount);
   }, 30_000);
 });
 
 describe("pipeline — partition-complete fan-out reconciliation", () => {
   /** Minimal well-formed open511 event, unique per url so each sub-feed's
-   * contribution is distinguishable in the observations table. */
+   * contribution is distinguishable as its own situation. */
   function eventBodyFor(url: string): string {
     return JSON.stringify({
       events: [
@@ -1159,10 +1070,7 @@ describe("pipeline — partition-complete fan-out reconciliation", () => {
     expect(guarded.error).toBeDefined();
     expect(guarded.outcome).toBe("partial");
 
-    const after = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'fanout-skip-test-src'
-    `;
-    expect(parseInt(after[0]!.count, 10)).toBe(4);
+    expect(await liveSituations("fanout-skip-test-src")).toBe(4);
   }, 30_000);
 
   it("skips the swap at the EXACT threshold boundary (2 of 4 fail = ratio 0.5, >= semantics)", async () => {
@@ -1197,10 +1105,7 @@ describe("pipeline — partition-complete fan-out reconciliation", () => {
     expect(guarded.error).toBeDefined();
     expect(guarded.outcome).toBe("partial");
 
-    const after = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'fanout-boundary-test-src'
-    `;
-    expect(parseInt(after[0]!.count, 10)).toBe(4);
+    expect(await liveSituations("fanout-boundary-test-src")).toBe(4);
   }, 30_000);
 
   it("preserves every partition when even one fan-out partition fails", async () => {
@@ -1234,10 +1139,7 @@ describe("pipeline — partition-complete fan-out reconciliation", () => {
     expect(proceeded.outcome).toBe("partial");
     expect(proceeded.count).toBe(0);
 
-    const after = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'fanout-proceed-test-src'
-    `;
-    expect(parseInt(after[0]!.count, 10)).toBe(4);
+    expect(await liveSituations("fanout-proceed-test-src")).toBe(4);
   }, 30_000);
 });
 
@@ -1267,6 +1169,9 @@ describe("pipeline publication acceptance", () => {
     (
       await sql`SELECT publication_revision, last_network_success_at FROM conditions.source_status WHERE source=${id}`
     )[0];
+  const descriptions = (id: string) =>
+    sql`SELECT record #>> '{description,0,text}' AS description FROM conditions.situation
+        WHERE source_id = ${id} AND tombstoned_at IS NULL`;
 
   it("retries a downloaded revision after the publication transaction fails", async () => {
     const feed = source("accept-db-failure");
@@ -1284,18 +1189,16 @@ describe("pipeline publication acceptance", () => {
     expect((await run()).count).toBe(1);
     const before = await facts(feed.id);
     await sql`CREATE FUNCTION conditions.reject_accept_test() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
-      IF NEW.source = 'accept-db-failure' THEN RAISE EXCEPTION 'injected publication failure'; END IF;
+      IF NEW.source_id = 'accept-db-failure' THEN RAISE EXCEPTION 'injected publication failure'; END IF;
       RETURN NEW; END $$`;
-    await sql`CREATE TRIGGER reject_accept_test BEFORE INSERT OR UPDATE ON conditions.observations FOR EACH ROW EXECUTE FUNCTION conditions.reject_accept_test()`;
+    await sql`CREATE TRIGGER reject_accept_test BEFORE INSERT OR UPDATE ON conditions.situation FOR EACH ROW EXECUTE FUNCTION conditions.reject_accept_test()`;
     revision = "v2";
     try {
       expect((await run()).error).toContain("injected publication failure");
       expect(await facts(feed.id)).toEqual(before);
-      const rows =
-        await sql`SELECT description FROM conditions.observations WHERE source=${feed.id}`;
-      expect(rows).toEqual([{ description: "v1" }]);
+      expect(await descriptions(feed.id)).toEqual([{ description: "v1" }]);
     } finally {
-      await sql`DROP TRIGGER reject_accept_test ON conditions.observations`;
+      await sql`DROP TRIGGER reject_accept_test ON conditions.situation`;
       await sql`DROP FUNCTION conditions.reject_accept_test()`;
     }
     expect((await run()).updated).toBe(1);
@@ -1326,9 +1229,7 @@ describe("pipeline publication acceptance", () => {
       );
       expect(result.error).toMatch(/pagination/);
       expect(await facts(feed.id)).toEqual(before);
-      expect(
-        await sql`SELECT description FROM conditions.observations WHERE source=${feed.id}`,
-      ).toEqual([{ description: "last good" }]);
+      expect(await descriptions(feed.id)).toEqual([{ description: "last good" }]);
     },
   );
 });
@@ -1375,7 +1276,8 @@ describe("stable provenance refresh", () => {
       runSource(feed, { sql, fetch, now: () => new Date().toISOString(), lookup: fakeLookup });
     const row = async () =>
       (
-        await sql`SELECT content_hash, origin, xmin::text AS version FROM conditions.observations WHERE source=${feed.id}`
+        await sql`SELECT content_hash, revision, record -> 'provenance' AS origin, xmin::text AS version
+          FROM conditions.situation WHERE source_id=${feed.id}`
       )[0]!;
     expect((await run()).count).toBe(1);
     const first = await row();
@@ -1389,8 +1291,9 @@ describe("stable provenance refresh", () => {
     };
     expect((await run()).updated).toBe(1);
     const revoked = await row();
-    expect(revoked.content_hash).toBe(first.content_hash);
-    expect(revoked.version).not.toBe(first.version);
+    // Attribution is part of a record's content: changed rights are a new revision.
+    expect(revoked.content_hash).not.toBe(first.content_hash);
+    expect(revoked.revision).toBe(first.revision + 1);
     expect(revoked.origin.attribution).toMatchObject({
       parentSourceId: "parent-b",
       policyIds: ["parent-b", feed.id],
@@ -1426,21 +1329,20 @@ describe("OpenLR publication failure", () => {
         fow: 3,
       }),
     );
+    // One situation per record, so each is its own publication to retain.
     const xml = `<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3">
-      <payload xsi:type="SituationPublication"><situation id="s">
+      <payload xsi:type="SituationPublication">
       ${refs
         .map(
-          (
-            ref,
-            i,
-          ) => `<situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="r${i}" version="1">
+          (ref, i) => `<situation id="s${i}">
+        <situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="r${i}" version="1">
         <situationRecordVersionTime>2026-09-11T12:00:00Z</situationRecordVersionTime>
         <validity><validityStatus>active</validityStatus></validity>
         <locationReference xsi:type="OpenlrPointAlongLine"><openlrBinary>${ref}</openlrBinary></locationReference>
-      </situationRecord>`,
+      </situationRecord></situation>`,
         )
         .join("")}
-      </situation></payload></messageContainer>`;
+      </payload></messageContainer>`;
     let version = "v1";
     let failing = false;
     const validators: (string | null)[] = [];
@@ -1468,7 +1370,8 @@ describe("OpenLR publication failure", () => {
         },
       });
     const facts = async () => ({
-      rows: await sql`SELECT id, ST_AsGeoJSON(geom) AS geom FROM conditions.observations WHERE source = ${feed.id} ORDER BY id`,
+      rows: await sql`SELECT id, revision, ST_AsGeoJSON(geom) AS geom FROM conditions.situation
+        WHERE source_id = ${feed.id} AND tombstoned_at IS NULL ORDER BY id`,
       status: (
         await sql`SELECT publication_revision, last_network_success_at FROM conditions.source_status WHERE source = ${feed.id}`
       )[0],

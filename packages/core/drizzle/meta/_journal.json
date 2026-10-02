@@ -295,6 +295,27 @@
       "when": 1790871971765,
       "tag": "0041_raw_eviction_warning",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790876175373,
+      "tag": "0042_record_bindings",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1790901651398,
+      "tag": "0043_drop_observation_bindings",
+      "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1790901659011,
+      "tag": "0044_record_binding_queue",
+      "breakpoints": true
     }
   ]
 }

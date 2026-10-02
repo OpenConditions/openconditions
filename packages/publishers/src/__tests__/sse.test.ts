@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
-import {
-  diffObservations,
-  matchesTypeFilter,
-  parseTypeFilter,
-  sseFrame,
-  streamSignature,
-} from "../sse.js";
-import { measurement, roadEvent } from "./fixture.js";
+import { diffRecords, recordSignature, sseFrame } from "../sse.js";
+
+type Rec = Record<string, unknown>;
+
+const record = (id: string, contentHash = "h1", evidence?: Rec): Rec => ({
+  id,
+  contentHash,
+  ...(evidence ? { evidence } : {}),
+});
 
 describe("sseFrame", () => {
   it("frames a JSON data event with a trailing blank line", () => {
@@ -14,8 +15,8 @@ describe("sseFrame", () => {
   });
 
   it("includes id and event fields when given", () => {
-    expect(sseFrame({ id: "x", event: "condition", data: { n: 2 } })).toBe(
-      'id: x\nevent: condition\ndata: {"n":2}\n\n',
+    expect(sseFrame({ id: "x", event: "situation", data: { n: 2 } })).toBe(
+      'id: x\nevent: situation\ndata: {"n":2}\n\n',
     );
   });
 
@@ -24,69 +25,42 @@ describe("sseFrame", () => {
   });
 });
 
-describe("parseTypeFilter / matchesTypeFilter", () => {
-  it("returns null for no filter (matches everything)", () => {
-    expect(parseTypeFilter(undefined)).toBeNull();
-    expect(matchesTypeFilter(roadEvent({ type: "accident" }), null)).toBe(true);
-    expect(matchesTypeFilter(measurement(), null)).toBe(true);
-  });
-
-  it("keeps only events of the listed types", () => {
-    const types = parseTypeFilter("accident, road_closure");
-    expect(matchesTypeFilter(roadEvent({ type: "accident" }), types)).toBe(true);
-    expect(matchesTypeFilter(roadEvent({ type: "congestion" }), types)).toBe(false);
-    expect(matchesTypeFilter(measurement(), types)).toBe(false);
-  });
-});
-
-describe("diffObservations", () => {
+describe("diffRecords", () => {
   it("treats everything as changed on the first pass", () => {
-    const { changed, removed, next } = diffObservations(new Map(), [
-      roadEvent({ id: "a" }),
-      roadEvent({ id: "b" }),
-    ]);
-    expect(changed.map((o) => o.id)).toEqual(["a", "b"]);
+    const { changed, removed, next } = diffRecords(new Map(), [record("a"), record("b")]);
+    expect(changed.map((r) => r["id"])).toEqual(["a", "b"]);
     expect(removed).toEqual([]);
     expect(next.size).toBe(2);
   });
 
   it("emits nothing when the snapshot is unchanged", () => {
-    const first = diffObservations(new Map(), [roadEvent({ id: "a" })]);
-    const second = diffObservations(first.next, [roadEvent({ id: "a" })]);
+    const first = diffRecords(new Map(), [record("a")]);
+    const second = diffRecords(first.next, [record("a")]);
     expect(second.changed).toEqual([]);
     expect(second.removed).toEqual([]);
   });
 
-  it("re-emits an observation whose content changed", () => {
-    const first = diffObservations(new Map(), [
-      roadEvent({ id: "a", dataUpdatedAt: "2026-06-23T10:00:00Z" }),
+  it("re-emits a record whose content or evidence changed", () => {
+    const first = diffRecords(new Map(), [record("a"), record("b")]);
+    const second = diffRecords(first.next, [
+      record("a", "h2"),
+      record("b", "h1", { state: "corroborated", confidenceScore: 0.9 }),
     ]);
-    const second = diffObservations(first.next, [
-      roadEvent({ id: "a", dataUpdatedAt: "2026-06-23T11:00:00Z" }),
-    ]);
-    expect(second.changed.map((o) => o.id)).toEqual(["a"]);
+    expect(second.changed.map((r) => r["id"])).toEqual(["a", "b"]);
   });
 
-  it("reports observations that disappeared as removed", () => {
-    const first = diffObservations(new Map(), [roadEvent({ id: "a" }), roadEvent({ id: "b" })]);
-    const second = diffObservations(first.next, [roadEvent({ id: "a" })]);
-    expect(second.changed).toEqual([]);
-    expect(second.removed).toEqual(["b"]);
+  it("reports ids that disappeared, without mutating the previous snapshot", () => {
+    const first = diffRecords(new Map(), [record("a"), record("b")]);
+    const before = new Map(first.next);
+    const second = diffRecords(first.next, [record("b")]);
+    expect(second.removed).toEqual(["a"]);
+    expect(first.next).toEqual(before);
   });
 
-  it("does not mutate the previous map", () => {
-    const prev = new Map<string, string>();
-    diffObservations(prev, [roadEvent({ id: "a" })]);
-    expect(prev.size).toBe(0);
-  });
-});
-
-describe("streamSignature", () => {
-  it("changes when status or update time changes", () => {
-    const base = roadEvent({ id: "a", dataUpdatedAt: "2026-06-23T10:00:00Z" });
-    expect(streamSignature(base)).toBe(streamSignature(roadEvent({ ...base })));
-    expect(streamSignature(base)).not.toBe(
-      streamSignature(roadEvent({ ...base, status: "inactive" })),
+  it("signs a record by its content hash and evidence summary", () => {
+    expect(recordSignature(record("a", "h1"))).not.toBe(recordSignature(record("a", "h2")));
+    expect(recordSignature(record("a", "h1", { state: "reported" }))).not.toBe(
+      recordSignature(record("a", "h1", { state: "corroborated" })),
     );
   });
 });

@@ -1,7 +1,7 @@
 {
   "name": "@openconditions/publishers",
   "version": "0.1.0",
-  "description": "Outbound emitters (GeoJSON, TraFF, JSON-LD) — pure projections from the OpenConditions canonical model to standard wire formats",
+  "description": "Outbound emitters (GeoJSON, JSON-LD, TraFF, DATEX II, routing outputs) — pure projections from OpenConditions records to standard wire formats",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=24"
@@ -33,12 +33,12 @@
     "@openconditions/model-roads": "workspace:*",
     "@openconditions/roads": "workspace:*",
     "fast-xml-parser": "^5.11.1",
-    "gtfs-realtime-bindings": "^2.2.0",
     "hyparquet": "1.31.1",
     "hyparquet-writer": "0.16.10"
   },
   "devDependencies": {
     "@openconditions/contrib-core": "workspace:*",
+    "@openconditions/model-registry": "workspace:*",
     "@types/geojson": "^7946.0.16",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",

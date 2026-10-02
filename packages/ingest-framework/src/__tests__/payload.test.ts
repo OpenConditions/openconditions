@@ -5,7 +5,7 @@ import { Readable } from "node:stream";
 import { pipeline } from "node:stream/promises";
 import { zstdDecompressSync } from "node:zlib";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { DigestTee, digestPayload, fsRawPayloadSink } from "../payload.js";
+import { DigestTee, digestPayload, fsRawPayloadSink, readRawPayload } from "../payload.js";
 
 const BODY = Buffer.from("<d2LogicalModel>".repeat(1000));
 const SHA = digestPayload("https://x", BODY).sha256;
@@ -47,6 +47,14 @@ describe("fsRawPayloadSink", () => {
     fetchId: "1",
     fetchedAt: new Date("2026-09-18T10:00:00Z"),
   };
+
+  it("reads back the decoded body of a blob it wrote, and only a key it could have written", async () => {
+    const w = await fsRawPayloadSink({ dir }).begin(meta);
+    w.write(BODY);
+    const { storageKey } = await w.commit(SHA);
+    expect(await readRawPayload(dir, storageKey)).toEqual(BODY);
+    await expect(readRawPayload(dir, "../etc/passwd")).rejects.toThrow(/storage key/);
+  });
 
   it("writes a zstd blob under source/day/hash via a temp file", async () => {
     const sink = fsRawPayloadSink({ dir });

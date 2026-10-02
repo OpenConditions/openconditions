@@ -271,6 +271,65 @@ describe("situationDrafts — fields", () => {
   });
 });
 
+describe("situationDrafts — what the source said", () => {
+  it("reads a one-off DATEX period as its exact window", () => {
+    const [d] = assemble([
+      event("R1", {
+        schedule: [
+          {
+            scheduleTimezone: "Europe/Amsterdam",
+            startDate: "2026-10-05T18:00:00Z",
+            endDate: "2026-10-08T03:00:00Z",
+            repeatFrequency: "P1D",
+          },
+        ],
+      }),
+    ]);
+    expect((d!["validity"] as { periods: unknown[] }).periods).toEqual([
+      {
+        startDate: "2026-10-05",
+        endDate: "2026-10-05",
+        startTime: "20:00:00",
+        duration: "P2DT9H",
+        scheduleTimezone: "Europe/Amsterdam",
+      },
+    ]);
+  });
+
+  it("keeps every language the source wrote its texts in", () => {
+    const headline = [
+      { lang: "nl", text: "Ongeval" },
+      { lang: "en", text: "Accident" },
+    ];
+    const description = [{ lang: "nl", text: "Twee voertuigen" }];
+    const comments = [{ type: "public" as const, text: [{ lang: "en", text: "Expect delays" }] }];
+    const [d] = assemble([event("R1", { situation: { headline, description, comments } })]);
+    expect(d).toMatchObject({ headline, description, comments });
+  });
+
+  it("keeps the severity token the source declared", () => {
+    const [d] = assemble([
+      event("R1", {
+        severity: "critical",
+        severitySource: "declared",
+        situation: { severityRaw: "highest" },
+      }),
+    ]);
+    expect(d!["severity"]).toEqual({
+      label: "critical",
+      source: "declared",
+      declaredRaw: "highest",
+    });
+  });
+
+  it("keeps a suspended situation suspended rather than ended", () => {
+    const [d] = assemble([
+      event("R1", { status: "inactive", situation: { validityStatus: "suspended" } }),
+    ]);
+    expect((d!["validity"] as { status: string }).status).toBe("suspended");
+  });
+});
+
 describe("situationDrafts — access mode", () => {
   it("records the source's access mode, bulk unless it says otherwise", () => {
     const bulk = situationDrafts([event("A")], { source: SRC })[0]!;

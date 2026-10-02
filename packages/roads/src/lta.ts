@@ -1,3 +1,4 @@
+import { ltaClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
@@ -81,6 +82,7 @@ export function parseLtaIncidents(
     }
     const rawType = (ev.Type ?? "").trim();
     const type = TYPE_MAP[rawType.toLowerCase()] ?? "other";
+    const classification = ltaClassification(rawType);
 
     out.push({
       id: `${src.id}:${deriveId(ev)}`,
@@ -88,8 +90,12 @@ export function parseLtaIncidents(
       sourceFormat: "lta",
       domain: "roads",
       kind: "event",
-      situation:
-        typeof ev.Message === "string" && ev.Message ? {} : { headlineFromSource: false as const },
+      situation: {
+        ...(classification !== undefined ? { classification } : {}),
+        ...(typeof ev.Message === "string" && ev.Message
+          ? {}
+          : { headlineFromSource: false as const }),
+      },
       type,
       subtype: rawType || undefined,
       category: categoryOf(type),

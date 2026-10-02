@@ -4,8 +4,8 @@ import { open511Classification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadRef } from "./model.js";
 import { buildLocalSchedule, isoDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
+import { coarseOf } from "./situation/classes.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
-import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
 interface Open511Road {
@@ -281,7 +281,13 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
       }
 
       const eventType = typeof ev.event_type === "string" ? ev.event_type : "";
-      const { type, category, isPlanned } = mapSourceType("open511", eventType);
+      const classification = open511Classification(
+        eventType,
+        Array.isArray(ev.event_subtypes)
+          ? ev.event_subtypes.filter((s): s is string => typeof s === "string")
+          : [],
+      );
+      const { type, category, isPlanned } = coarseOf(classification);
 
       const severityRaw = typeof ev.severity === "string" ? ev.severity : "UNKNOWN";
       const { validFrom, validTo } = parseSchedule(ev.schedule);
@@ -306,12 +312,6 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
         roads[0]!.milepostFrom = milepostFrom;
       }
 
-      const classification = open511Classification(
-        eventType,
-        Array.isArray(ev.event_subtypes)
-          ? ev.event_subtypes.filter((s): s is string => typeof s === "string")
-          : [],
-      );
       const hasHeadline = typeof ev.headline === "string" && !!ev.headline;
 
       out.push({
@@ -324,6 +324,9 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
           ...(classification !== undefined ? { classification } : {}),
           ...(typeof ev.updated === "string" ? { sourceUpdatedAt: ev.updated } : {}),
           ...(hasHeadline ? {} : { headlineFromSource: false as const }),
+          ...(typeof ev.severity === "string" && ev.severity.trim()
+            ? { severityRaw: ev.severity.trim() }
+            : {}),
         },
         type,
         subtype: firstSubtype(ev.event_subtypes) ?? eventType ?? undefined,

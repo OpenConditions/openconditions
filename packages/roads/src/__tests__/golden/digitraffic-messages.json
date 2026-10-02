@@ -283,17 +283,19 @@
     },
     "canonicalId": "392ff7c6ccd246946ea03badca4e9c861cd9721ec6a68d017f799d31009ce920",
     "domain": "roads",
-    "contentHash": "985f59d30c0eefb51eb3a1c9f66af09b2ab8bb49982e81eeda9f151f9c512cbe",
+    "contentHash": "592693e0ec21bd3d72b49b5ab3015f133060386d933638b945eb28e6e44e27b4",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
+    "subtype": "maintenance",
     "planned": true,
     "certainty": "unknown",
     "severity": {
       "label": "critical",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "HIGHEST"
     },
     "headline": [
       {

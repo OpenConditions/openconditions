@@ -1,100 +1,45 @@
-import type { Observation } from "@openconditions/core";
-import type {
-  FeedSource,
-  SiteGeometry,
-  SourceDescriptor,
-  UnresolvedRoadEvent,
-} from "@openconditions/roads";
+import type { ParseOutput } from "@openconditions/ingest-framework";
 import {
-  flowParserFor,
-  parseDatexSnapshot,
-  parseDigitrafficSnapshot,
-  type ReconciledRoadSnapshot,
-  reconcileRoadSnapshots,
+  type FeedSource,
+  type FlowParse,
+  parseFlows,
+  type SiteGeometry,
 } from "@openconditions/roads";
-import { DOMAIN_REGISTRY, feedToSourceDescriptor } from "../domains.js";
+import { DOMAIN_REGISTRY } from "../domains.js";
 
 /**
- * Dispatches a single buffer to the correct domain parser based on
- * `src.domain` (looked up in the registry) and `src.format`.
- *
- * When `src.produces === "flow"` the feed is routed to the matching flow
- * parser (e.g. parseDigitrafficFlow or parseDatexMeasuredData). Both the
- * RoadFlow measurements and the derived congestion RoadEvents returned by the
- * flow parser are flattened so the rest of the pipeline treats them uniformly.
- * `siteMap`, when supplied, gives the flow parser external geometry keyed by
- * measurement-site id (the NDW site-table join).
- *
- * The return type is `(Observation | UnresolvedRoadEvent)[]` because some
- * parsers (currently datex2) emit OpenLR-only records without geometry. These
- * are narrowed to real Observation (geometry guaranteed) by resolveOpenLr
- * before reaching write-postgis.
+ * One poll of an event feed as record drafts, through its domain's parse
+ * entry. Every payload of the poll is one snapshot. Throws when a payload
+ * cannot be read, or a complete snapshot cannot be accounted for; the caller
+ * then keeps the last good publication. Drafts are dated by `fetchedAt`, the
+ * instant the poll fetched the payloads.
  */
-export function parseFor(
+export function parseEventFeed(
   src: FeedSource & { domain: string },
-  buf: Buffer,
-  siteMap?: Map<string, SiteGeometry>,
-): (Observation | UnresolvedRoadEvent)[] {
+  buffers: readonly Buffer[],
+  opts: { fetchedAt?: string } = {},
+): ParseOutput {
   const plugin = DOMAIN_REGISTRY[src.domain];
-  if (!plugin) {
-    throw new Error(`No domain plugin registered for domain: ${src.domain}`);
-  }
-
-  if (src.produces === "flow") {
-    const flowParserFn = flowParserFor(src.format);
-    const descriptor = feedToSourceDescriptor(src);
-    const { flows, events, failed } = flowParserFn(buf, descriptor, siteMap);
-    // A HARD parse failure (XML/JSON parse threw, or no recognizable
-    // publication/root found) — `flows`/`events` are empty or partial and must
-    // not reach `atomicSwap` as a "0 rows this cycle" result. Throwing routes
-    // this through the try/catch `runSource` already wraps this dispatch in,
-    // so the swap is skipped and last-good rows survive, same as a fetch
-    // failure.
-    if (failed) {
-      throw new Error(`flow parser reported a hard parse failure for source ${src.id}`);
-    }
-    return [...flows, ...events] as Observation[];
-  }
-
-  // The registry's parserFor is domain-generic (IngestDomain#parserFor returns a
-  // loosely-typed ParserFn); cast to the concrete per-record signature every
-  // registered roads parser actually has.
-  const parserFn = plugin.parserFor(src.format) as (
-    buf: Buffer,
-    descriptor: SourceDescriptor,
-  ) => (Observation | UnresolvedRoadEvent)[];
-  const descriptor = feedToSourceDescriptor(src);
-  return parserFn(buf, descriptor);
+  if (!plugin) throw new Error(`No domain plugin registered for domain: ${src.domain}`);
+  return plugin.parse(src, buffers, opts);
 }
 
 /**
- * The formats whose parsers can account for every input record. A format is
- * listed here only once its reporting entry point exists; every other format
- * keeps the tolerant array path untouched.
+ * One poll of a flow feed: the readings of every payload and the congestion
+ * situations derived from them. `siteMap` gives sites keyed only by id their
+ * geometry (the NDW site-table join). A hard parse failure throws, so it can
+ * never read as "no readings this cycle".
  */
-const SNAPSHOT_REPORTERS = {
-  digitraffic: parseDigitrafficSnapshot,
-  datex2: parseDatexSnapshot,
-} as const;
-
-/**
- * Parse a source that declares a *complete* snapshot through the reporting
- * path, reconciling every partition by source identity before resolution.
- *
- * Returns `undefined` when the source does not declare a complete snapshot or
- * its format has no reporting entry point — the caller then keeps the existing
- * generic/flow path, so no other source's behaviour changes. Throws when the
- * candidate snapshot cannot be accounted for; the caller turns that into a
- * whole-source failure that preserves the last-good publication.
- */
-export function parseRoadSnapshotFor(
-  src: FeedSource & { domain: string },
-  buffers: Buffer[],
-): ReconciledRoadSnapshot | undefined {
-  if (src.domain !== "roads" || src.produces === "flow") return undefined;
-  if (src.snapshot?.completeness !== "complete") return undefined;
-  const reporter = SNAPSHOT_REPORTERS[src.format as keyof typeof SNAPSHOT_REPORTERS];
-  if (reporter === undefined) return undefined;
-  const descriptor = feedToSourceDescriptor(src);
-  return reconcileRoadSnapshots(buffers.map((buffer) => reporter(buffer, descriptor)));
+export function parseFlowFeed(
+  src: FeedSource,
+  buffers: readonly Buffer[],
+  siteMap?: Map<string, SiteGeometry>,
+): FlowParse {
+  const out: FlowParse = { flows: [], situations: [] };
+  for (const buffer of buffers) {
+    const parsed = parseFlows(src, buffer, siteMap);
+    out.flows.push(...parsed.flows);
+    out.situations.push(...parsed.situations);
+  }
+  return out;
 }

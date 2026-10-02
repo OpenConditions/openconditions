@@ -270,3 +270,54 @@ export const GTFS_RT_CAUSE_VALUES: Readonly<Record<string, string>> = {
   unknown: "UNKNOWN_CAUSE",
   other: "OTHER_CAUSE",
 };
+
+/**
+ * Roads classification → the DATEX II v3 record an emitter writes for it,
+ * `Class` or `Class:discriminator`. DATEX is also a parsed vocabulary, where
+ * many record codes read as one classification; reversing that index would
+ * pick whichever code came first, so the emitter's choice lives here. Every
+ * code reads back as the same kind; `null` marks a type with no record of its
+ * own, which the emitter tells through its effects' records alone.
+ */
+export const DATEX2_RECORDS: Readonly<Record<string, string | null>> = {
+  "incident.accident": "Accident",
+  "incident.breakdown": "VehicleObstruction",
+  "incident.vehicle_hazard": "VehicleObstruction",
+  "incident.obstruction": "GeneralObstruction",
+  "incident.obstruction.animal": "AnimalPresenceObstruction",
+  "incident.obstruction.infrastructure_damage": "InfrastructureDamageObstruction",
+  "incident.fire": "GeneralObstruction",
+  "incident.fire.vehicle_fire": "VehicleObstruction:vehicleOnFire",
+  "roadworks.works": "MaintenanceWorks",
+  "roadworks.works.construction": "ConstructionWorks",
+  "closure.closure": "RoadOrCarriagewayOrLaneManagement:roadClosed",
+  "closure.closure.carriageway": "RoadOrCarriagewayOrLaneManagement:carriagewayClosures",
+  "closure.closure.lane": "RoadOrCarriagewayOrLaneManagement:laneClosures",
+  "closure.closure.ramp": "ReroutingManagement:doNotUseExit",
+  "closure.closure.intermittent": "GeneralNetworkManagement:trafficHeld",
+  "restriction.dimension": null,
+  "restriction.access": null,
+  "restriction.speed": "SpeedManagement",
+  "restriction.speed.variable": "SpeedManagement:activeSpeedControlInOperation",
+  "restriction.speed.advisory": "SpeedManagement:reduceYourSpeed",
+  "restriction.seasonal_load": null,
+  "weather_condition.weather": "PoorEnvironmentConditions",
+  "road_condition.surface": "WeatherRelatedRoadConditions",
+  "road_condition.driving_condition": "Conditions",
+  "road_hazard.hazard": null,
+  "road_hazard.hazard.flooding": "EnvironmentalObstruction:flooding",
+  "road_hazard.hazard.avalanche_risk": "EnvironmentalObstruction:avalanches",
+  "road_hazard.hazard.smoke": "EnvironmentalObstruction:smokeOrFumes",
+  "public_event.event": "PublicEvent",
+  "authority.operation": "AuthorityOperation",
+  "equipment_fault.fault": "EquipmentOrSystemFault",
+  "security.incident": "DisturbanceActivity",
+  "winter_operation.chain_control": "WinterDrivingManagement",
+  "pass_status.pass": null,
+  "congestion.congestion": "AbnormalTraffic",
+  "congestion.congestion.queuing": "AbnormalTraffic:queuingTraffic",
+  "congestion.congestion.stationary": "AbnormalTraffic:stationaryTraffic",
+  "congestion.congestion.slow": "AbnormalTraffic:slowTraffic",
+  "congestion.congestion.heavy": "AbnormalTraffic:heavyTraffic",
+  "other.other": "GeneralNetworkManagement",
+};

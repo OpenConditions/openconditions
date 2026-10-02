@@ -1,4 +1,4 @@
-import type { Observation } from "@openconditions/core";
+import type { RecordDraft } from "@openconditions/ingest-framework";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { clearResolveCache, resolveOpenLr } from "../pipeline/resolve.js";
@@ -23,31 +23,38 @@ const LINE_GEOM = {
   ],
 };
 
-// `externalRefs` is a RoadEvent field, not on the base Observation type.
-// Cast overrides so the test helpers can set it without TypeScript complaining.
-type WithOpenlr = Observation & { externalRefs?: { openlr?: string } };
-
-function makeEvent(id: string, overrides: Partial<WithOpenlr> = {}): Observation {
+/** A situation draft placed at a point. */
+function placedDraft(local: string): RecordDraft {
   return {
-    id,
-    source: "test",
-    sourceFormat: "datex2",
-    domain: "roads",
-    kind: "event",
-    status: "active",
-    origin: { kind: "feed", attribution: { provider: "T", license: "CC0" } },
-    dataUpdatedAt: "2024-01-01T00:00:00Z",
-    fetchedAt: "2024-01-01T00:00:00Z",
-    isStale: false,
-    geometry: { type: "Point", coordinates: [4.75, 52.37] } as unknown as Observation["geometry"],
-    ...overrides,
-  } as Observation;
+    id: `oc:situation:nl-ndw:${local}`,
+    location: {
+      geometry: { type: "Point", coordinates: [4.75, 52.37] },
+      extent: "point",
+      geometryOrigin: "source",
+      fuzziness: "exact",
+    },
+  };
 }
 
-function fakeClient(returnGeom: typeof LINE_GEOM | null): MapMatchClient {
+/** A situation draft only an OpenLR reference places. */
+function openLrDraft(local: string): RecordDraft {
   return {
-    resolve: vi.fn().mockResolvedValue(returnGeom),
+    id: `oc:situation:nl-ndw:${local}`,
+    location: {
+      geometry: null,
+      extent: "linear",
+      geometryOrigin: "none",
+      fuzziness: "exact",
+      openlr: FAKE_OPENLR,
+    },
   };
+}
+
+const locationOf = (draft: RecordDraft | undefined) =>
+  draft?.["location"] as Record<string, unknown>;
+
+function fakeClient(returnGeom: typeof LINE_GEOM | null): MapMatchClient {
+  return { resolve: vi.fn().mockResolvedValue(returnGeom) };
 }
 
 afterEach(() => {
@@ -55,81 +62,64 @@ afterEach(() => {
 });
 
 describe("resolveOpenLr", () => {
-  it("passes through events that already have geometry", async () => {
-    const ev = makeEvent("ev1");
+  it("passes through situations that already have geometry", async () => {
+    const draft = placedDraft("a");
     const client = fakeClient(LINE_GEOM);
-    const { resolved, dropped } = await resolveOpenLr([ev], client);
-    expect(resolved).toHaveLength(1);
-    expect(resolved[0]).toBe(ev);
+    const { resolved, dropped } = await resolveOpenLr([draft], client);
+    expect(resolved).toEqual([draft]);
     expect(dropped).toBe(0);
     expect(client.resolve).not.toHaveBeenCalled();
   });
 
-  it("resolves an OpenLR event and fills its geometry on success", async () => {
-    const ev = makeEvent("ev2", {
-      geometry: undefined as unknown as Observation["geometry"],
-      externalRefs: { openlr: FAKE_OPENLR },
-    });
+  it("places an OpenLR-only situation on the decoded geometry", async () => {
     const client = fakeClient(LINE_GEOM);
-    const { resolved, dropped } = await resolveOpenLr([ev], client);
+    const { resolved, dropped } = await resolveOpenLr([openLrDraft("b")], client);
     expect(dropped).toBe(0);
-    expect(resolved).toHaveLength(1);
-    expect(resolved[0]!.geometry).toEqual(LINE_GEOM);
+    expect(locationOf(resolved[0])).toMatchObject({
+      geometry: LINE_GEOM,
+      extent: "linear",
+      geometryOrigin: "openlr_decoded",
+      openlr: FAKE_OPENLR,
+    });
     expect(client.resolve).toHaveBeenCalledOnce();
   });
 
-  it("drops an event and increments dropped when the resolver returns null", async () => {
-    const ev = makeEvent("ev3", {
-      geometry: undefined as unknown as Observation["geometry"],
-      externalRefs: { openlr: FAKE_OPENLR },
-    });
-    const client = fakeClient(null);
-    const { resolved, dropped } = await resolveOpenLr([ev], client);
-    expect(resolved).toHaveLength(0);
+  it("drops a situation the resolver cannot place, and names it unlocatable", async () => {
+    const { resolved, dropped, unlocatable } = await resolveOpenLr(
+      [openLrDraft("c")],
+      fakeClient(null),
+    );
+    expect(resolved).toEqual([]);
     expect(dropped).toBe(1);
+    expect(unlocatable).toEqual(["oc:situation:nl-ndw:c"]);
   });
 
-  it("caches a successful resolution — client called only once for repeated openlr string", async () => {
-    const ev1 = makeEvent("ev4a", {
-      geometry: undefined as unknown as Observation["geometry"],
-      externalRefs: { openlr: FAKE_OPENLR },
-    });
-    const ev2 = makeEvent("ev4b", {
-      geometry: undefined as unknown as Observation["geometry"],
-      externalRefs: { openlr: FAKE_OPENLR },
-    });
+  it("caches a successful resolution — client called only once for a repeated reference", async () => {
     const client = fakeClient(LINE_GEOM);
-    const { resolved } = await resolveOpenLr([ev1, ev2], client);
+    const { resolved } = await resolveOpenLr([openLrDraft("d1"), openLrDraft("d2")], client);
     expect(resolved).toHaveLength(2);
     expect(client.resolve).toHaveBeenCalledOnce();
   });
 
-  it("drops all unresolved events when client is null (resolver not configured)", async () => {
-    const ev = makeEvent("ev5", {
-      geometry: undefined as unknown as Observation["geometry"],
-      externalRefs: { openlr: FAKE_OPENLR },
-    });
-    const { resolved, dropped } = await resolveOpenLr([ev], null);
-    expect(resolved).toHaveLength(0);
+  it("drops every OpenLR-only situation when no resolver is configured", async () => {
+    const { resolved, dropped } = await resolveOpenLr([openLrDraft("e")], null);
+    expect(resolved).toEqual([]);
     expect(dropped).toBe(1);
   });
-  it("marks partial resolver failure unsafe and retries the uncached reference", async () => {
-    const ev = makeEvent("failed", {
-      geometry: undefined as unknown as Observation["geometry"],
-      externalRefs: { openlr: FAKE_OPENLR },
-    });
+
+  it("marks a resolver failure unsafe and retries the uncached reference", async () => {
     const client = {
       resolve: vi
         .fn()
         .mockRejectedValueOnce(new Error("deadline exceeded"))
         .mockResolvedValueOnce(LINE_GEOM),
     };
-    const first = await resolveOpenLr([makeEvent("already-placed"), ev], client);
+    const first = await resolveOpenLr([placedDraft("placed"), openLrDraft("failed")], client);
     expect(first.failed).toBe(1);
     expect(first.resolved).toHaveLength(1);
-    const retried = await resolveOpenLr([ev], client);
+    const retried = await resolveOpenLr([openLrDraft("failed")], client);
     expect(retried.failed).toBe(0);
-    expect(retried.resolved[0]!.geometry).toEqual(LINE_GEOM);
+    expect(locationOf(retried.resolved[0])["geometry"]).toEqual(LINE_GEOM);
     expect(client.resolve).toHaveBeenCalledTimes(2);
   });
 });

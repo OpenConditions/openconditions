@@ -2,9 +2,13 @@ import { describe, expect, it } from "vitest";
 import { type RoadConditionRoutingEvidence, routingEvidenceReasons } from "../index.js";
 
 const base: RoadConditionRoutingEvidence = {
-  schema_version: 1,
-  observation_revision: "rev-1",
-  binding_revision: "rev-1",
+  schema_version: 2,
+  record_class: "situation",
+  record_id: "oc:situation:de-autobahn-events:a1",
+  effect_id: "a1/closure",
+  record_revision: 2,
+  binding_revision: 2,
+  effect_kind: "closure",
   graph_generation: "graph-1",
   resolver_version: "1.0.0",
   source_id: "de-autobahn-events",
@@ -54,7 +58,7 @@ describe("routingEvidenceReasons", () => {
       routingEvidenceReasons(
         {
           ...base,
-          binding_revision: "rev-old",
+          binding_revision: 1,
           binding_status: "ambiguous",
           fresh_until: "2026-09-11T09:59:59.000Z",
           direction_mode: "unknown",
@@ -84,7 +88,7 @@ describe("routingEvidenceReasons", () => {
     ).toEqual(["source_check_invalid", "freshness_deadline_invalid"]);
   });
 
-  it("rejects an expired observation and invalid optional time bounds", () => {
+  it("rejects an expired record and invalid optional time bounds", () => {
     expect(
       routingEvidenceReasons(
         {
@@ -95,7 +99,21 @@ describe("routingEvidenceReasons", () => {
         },
         new Date("2026-09-11T10:00:00.000Z"),
       ),
-    ).toEqual(["observation_expired", "valid_from_invalid", "next_transition_invalid"]);
+    ).toEqual(["record_expired", "valid_from_invalid", "next_transition_invalid"]);
+  });
+
+  it("requires the record, effect and revisions the evidence is about", () => {
+    expect(
+      routingEvidenceReasons(
+        { ...base, record_id: "", effect_kind: " ", record_revision: 0, binding_revision: 0 },
+        new Date("2026-09-11T10:00:00.000Z"),
+      ),
+    ).toEqual([
+      "record_id_missing",
+      "effect_kind_missing",
+      "record_revision_missing",
+      "binding_revision_missing",
+    ]);
   });
 
   it("requires timezone-qualified evaluation and rights-review timestamps", () => {

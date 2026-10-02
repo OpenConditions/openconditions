@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { FeedSourceBase, IngestDomain } from "../index.js";
+import { emptyParseOutput, type FeedSourceBase, type IngestDomain } from "../index.js";
 
 describe("IngestDomain", () => {
   it("accepts a minimal domain plugin shape", () => {
@@ -19,10 +19,15 @@ describe("IngestDomain", () => {
     const domain: IngestDomain = {
       name: "roads",
       feeds: [feed],
-      parserFor: () => () => [],
+      parse: () => emptyParseOutput(),
       attributes: () => ({}),
     };
     expect(domain.feeds[0]?.id).toBe("x");
-    expect(domain.parserFor("geojson")(Buffer.from(""))).toEqual([]);
+    expect(domain.parse(feed, [Buffer.from("")])).toEqual({
+      situations: [],
+      features: [],
+      observations: [],
+      offers: [],
+    });
   });
 });

@@ -164,17 +164,19 @@
     },
     "canonicalId": "b7369443c1f8a6e2f45dda775cf6422d002e580a6442720e9765efa0d5894417",
     "domain": "roads",
-    "contentHash": "68d5a64f85310be08501e034aa8230399990054e7116c108a156deff1cd3251a",
+    "contentHash": "d3545e00645e23e03ea9f3a91e6ebe589e93420b4e35ecef5437b5fc81d4d102",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
+    "subtype": "construction",
     "planned": true,
     "certainty": "unknown",
     "severity": {
       "label": "critical",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "highest"
     },
     "headline": [
       {
@@ -377,17 +379,19 @@
     },
     "canonicalId": "707fe80b8b6a66d7edbef2aa93ac7ffa5ccec205014432baad44f9a81e438620",
     "domain": "roads",
-    "contentHash": "a8b357979cd3793ad38ee0dc1253126a686cfe2c7fe5e607d2ac55bfec9b16a9",
+    "contentHash": "1b90e79253b036da4021fc9af90365d310c72301bcd3dff0bcfb289251027b74",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
+    "subtype": "utility_work",
     "planned": true,
     "certainty": "unknown",
     "severity": {
       "label": "major",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "high"
     },
     "headline": [
       {
@@ -572,17 +576,19 @@
     },
     "canonicalId": "ee663c488a8b8f330f21a60457cfda11861f8c095f2d441a7bcc2011964c8640",
     "domain": "roads",
-    "contentHash": "b9acb8fa0afe79e66bbacc4c5f728eae672e55c0eed55fe01e1464c7f9957e5e",
+    "contentHash": "683c563c70709a605aa656fa5143ef2e1f95b6c3ac9182f09ca3a74b9ff1eea1",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
+    "subtype": "barrier_work",
     "planned": true,
     "certainty": "unknown",
     "severity": {
       "label": "major",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "high"
     },
     "headline": [
       {
@@ -888,7 +894,7 @@
     },
     "canonicalId": "9d7b56b86c147cd903b4f25cdff9335b67753565d2593a51ff54fa649c22a13f",
     "domain": "roads",
-    "contentHash": "5a012814a1fc459359bf52885977388f753965cd82719c0e721b6de01d2bd39f",
+    "contentHash": "fe0b3e517ff4dd5b0b99f8f591ad9e939eeb4615de4aa6aedccbe5114480b29c",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -898,7 +904,8 @@
     "certainty": "unknown",
     "severity": {
       "label": "critical",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "highest"
     },
     "headline": [
       {
@@ -1146,17 +1153,19 @@
     },
     "canonicalId": "860c372aa0577f1d342b637b0b0e5d6dfb4cac797a106d62e9d225b6e5d8e465",
     "domain": "roads",
-    "contentHash": "b073dd7d61e2a50dc21edad14c06908da024e76c0d7f328a7a20e57c24118fb1",
+    "contentHash": "22ff79a03fc9f45dfed4121e5035b26f24e59ddb199c720cc202597eff68ae18",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
+    "subtype": "bridge_work",
     "planned": true,
     "certainty": "unknown",
     "severity": {
       "label": "major",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "high"
     },
     "headline": [
       {

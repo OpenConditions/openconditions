@@ -1,11 +1,11 @@
-import type { FeedSourceBase, ParserFn } from "@openconditions/ingest-framework";
+import type { FeedSourceBase } from "@openconditions/ingest-framework";
 import { fetchAll, guardedFetch, redactUrl } from "@openconditions/ingest-framework";
-import type { FeedSource, SourceDescriptor } from "@openconditions/roads";
-import { feedToSourceDescriptor, parserFor as roadsParserFor } from "@openconditions/roads";
+import type { FeedSource } from "@openconditions/roads";
+import { parseEvents, parseFlows } from "@openconditions/roads";
 
 export type FeedFailureKind = "upstream" | "parse";
 
-/** Canonical liveness verdict — the shape plan 09's changed-feed CI also imports. */
+/** Canonical liveness verdict — the shape the changed-feed CI job also imports. */
 export interface FeedValidation {
   ok: boolean;
   rowCount: number;
@@ -13,14 +13,24 @@ export interface FeedValidation {
   message?: string; // redacted
 }
 
+/** How many records one fetch of a feed parses into. */
+export type RecordCounter = (feed: FeedSourceBase, buffers: readonly Buffer[]) => number;
+
 export interface ValidateFeedDeps {
   /** Overridable fetch — defaults to the SSRF + resource egress guard. */
   fetch?: typeof fetch;
-  /** Overridable parser dispatch — defaults to the roads domain. */
-  parserFor?: (format: string) => ParserFn;
+  /** Overridable parse — defaults to the roads domain. */
+  count?: RecordCounter;
 }
 
-const defaultParserFor = roadsParserFor as unknown as (format: string) => ParserFn;
+/** A roads feed's readings when it is a flow feed, its situations otherwise. */
+const countRoadRecords: RecordCounter = (feed, buffers) => {
+  const roadFeed = feed as FeedSource;
+  if (feed.produces === "flow") {
+    return buffers.reduce((n, buf) => n + parseFlows(roadFeed, buf).flows.length, 0);
+  }
+  return parseEvents(roadFeed, buffers).situations.length;
+};
 
 /** Scrub any URL token in a message so query-string secrets never surface. */
 function redactMessage(message: string): string {
@@ -29,21 +39,21 @@ function redactMessage(message: string): string {
 
 /**
  * Run one feed through the production fetch+parse path and report whether it is
- * alive (yielded ≥1 observation). Never throws: every failure — fetch error,
- * non-2xx status, parser throw, or zero rows — becomes { ok:false, message }, and
+ * alive (yielded ≥1 record). Never throws: every failure — fetch error, non-2xx
+ * status, parser throw, or zero records — becomes { ok:false, message }, and
  * the message is redacted. Reused by the scheduled liveness check and by the
- * changed-feed PR job (plan 09).
+ * changed-feed PR job.
  */
 export async function validateFeed(
   feed: FeedSourceBase,
   deps: ValidateFeedDeps = {},
 ): Promise<FeedValidation> {
   const fetchFn = deps.fetch ?? guardedFetch();
-  const parserForFn = deps.parserFor ?? defaultParserFor;
+  const count = deps.count ?? countRoadRecords;
   const errMsg = (err: unknown) => redactMessage(err instanceof Error ? err.message : String(err));
 
   // Fetch failures are "upstream" (a flake/outage); parse failures are "parse"
-  // (the feed's data is broken) — plan 09 annotates the two differently.
+  // (the feed's data is broken) — the changed-feed job annotates them differently.
   let buffers: Buffer[];
   try {
     const result = await fetchAll(feed, fetchFn);
@@ -56,15 +66,10 @@ export async function validateFeed(
     return { ok: false, rowCount: 0, failureKind: "upstream", message: errMsg(err) };
   }
   try {
-    const descriptor = feedToSourceDescriptor(feed as FeedSource) as SourceDescriptor;
-    const parse = parserForFn(feed.format);
-    let count = 0;
-    for (const buf of buffers) {
-      count += parse(buf, descriptor as never).length;
-    }
-    return count > 0
-      ? { ok: true, rowCount: count }
-      : { ok: false, rowCount: 0, failureKind: "parse", message: "parsed 0 observations" };
+    const rows = count(feed, buffers);
+    return rows > 0
+      ? { ok: true, rowCount: rows }
+      : { ok: false, rowCount: 0, failureKind: "parse", message: "parsed 0 records" };
   } catch (err) {
     return { ok: false, rowCount: 0, failureKind: "parse", message: errMsg(err) };
   }

@@ -19,10 +19,10 @@ Road domain, v0.1:
   and Trafikverket (SE, keyed). Congestion is computed from a self-derived free-flow baseline (85th
   percentile), with native reference speeds where a feed ships one and OSM `maxspeed` as a day-one proxy.
   See [docs/speed-coverage.md](docs/speed-coverage.md).
-- **Emitters:** GeoJSON, TraFF, DATEX II, GTFS-RT Alert, JSON-LD, Valhalla exclusions, and an SSE stream —
+- **Emitters:** a paged record API, GeoJSON, JSON-LD, TraFF, DATEX II, Valhalla exclusions, and an SSE stream —
   all public, rate-limited, and bbox-filterable.
-- **Graph binding:** road events are bound to the directed OSM segment spine (`way_id:f|b` spans with
-  confidence); see [docs/graph-binding.md](docs/graph-binding.md).
+- **Graph binding:** road situations, and effects with a location of their own, are bound to the directed
+  OSM segment spine (`way_id:f|b` spans with confidence); see [docs/graph-binding.md](docs/graph-binding.md).
 - **OpenMapX integration:** ships as an installable extension (a service + a provider integration).
 - **TMC location tables:** publishers that send Alert-C location codes instead of coordinates are placed
   against the published national table (Germany's LCL 22.0, CC BY 4.0), behind a strict table-version guard.
@@ -32,8 +32,8 @@ Road domain, v0.1:
 
 ## Architecture
 
-A two-axis canonical model — every record is an `Observation`, either a `ConditionEvent` (an incident, closure,
-…) or a `Measurement` (a flow speed, …) — stored in a single generic `conditions.observations` PostGIS table.
+Road events are stored as model situations, each with its effects and revisions ([model](docs/model.md),
+[storage](docs/storage.md)); flow speeds and crowd reports are `Observation` rows in `conditions.observations`.
 Three layers:
 
 ```
@@ -41,16 +41,16 @@ packages/          reusable libraries (Apache-2.0)
   core/            canonical model, severity, freshness, read helpers, DB schema/migrations (./server)
   roads/           road-domain parsers (DATEX II / Open511 / WZDx) + feed registry + TMC location tables
     bind/          event → segment resolver + evaluation corpus
-  publishers/      outbound emitters (GeoJSON, TraFF, DATEX II, GTFS-RT, JSON-LD, Valhalla)
+  publishers/      outbound emitters (GeoJSON, JSON-LD, TraFF, DATEX II, SSE, Valhalla)
   openlr/          OpenLR binary decode + resolver client
 
 services/          deployable services
-  ingest/          Fastify: fetch → parse → atomic PostGIS swap + public emitter feeds; ships
+  ingest/          Fastify: fetch → parse → write records, bind + public record API and routing outputs; ships
                    the OpenMapX service.json so `repos add` can install it (AGPL-3.0)
   openlr-resolver/ Python/FastAPI OpenLR → geometry map-matcher (dormant)
 
 integrations/
-  road-conditions-openconditions/   OpenMapX provider integration (reads observations back into the map)
+  road-conditions-openconditions/   OpenMapX provider integration (reads situations over HTTP into the map and routing)
 ```
 
 The ingest service owns and migrates the `conditions` schema itself, idempotently, on boot.
@@ -69,21 +69,27 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/openconditions \
 
 The service applies its migrations, starts polling the enabled feeds, and serves on `:4100`.
 
-### Public emitter feeds
+### Public API
 
-Most are bbox-filterable (`?bbox=west,south,east,north[&domain=roads]`) and all are rate-limited:
+Road situations are served as model records ([model](docs/model.md)). Collections take the same
+filters (`bbox=west,south,east,north`, `kind`, `type`, `domain`, `source`, `origin`, `minSeverity`,
+`at`, `horizonDays`) and are paged by a keyset cursor: follow `next` (JSON) or the `Link: rel="next"`
+header (XML) until there is none. Everything is rate-limited; `GET /openapi.json` describes it all.
 
-| Endpoint                        | Format                                                                                    |
-| ------------------------------- | ----------------------------------------------------------------------------------------- |
-| `GET /observations.geojson`     | GeoJSON FeatureCollection                                                                 |
-| `GET /observations.jsonld`      | JSON-LD (SOSA/Schema.org `@context`)                                                      |
-| `GET /traff.xml`                | TraFF (CoMaps / Navit)                                                                    |
-| `GET /datex2/situations.xml`    | DATEX II v3 SituationPublication ([status](docs/datex-conformance.md))                    |
-| `GET /gtfs-rt/alerts.pb`        | GTFS-RT Alert (protobuf)                                                                  |
-| `GET /valhalla/exclusions.json` | Valhalla `exclude_locations` / `exclude_polygons`                                         |
-| `GET /segments/conditions.json` | Bound, in-effect conditions keyed by directed OSM way spans (routing feed; instance-wide) |
-| `GET /stream`                   | Server-Sent Events (snapshot + live deltas)                                               |
-| `GET /status`                   | health (unlimited)                                                                        |
+| Endpoint                             | Content                                                                                       |
+| ------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `GET /situations`                    | Situations as JSON records `{records, next}`                                                  |
+| `GET /situations.geojson`, `.jsonld` | The same as GeoJSON, or GeoJSON-LD (SOSA/Schema.org `@context`)                               |
+| `GET /situations/{id}`               | One situation with its evidence and graph binding                                             |
+| `GET /history/{class}/{id}`          | A record's revisions and what changed                                                         |
+| `GET /traff.xml`                     | TraFF (CoMaps / Navit)                                                                        |
+| `GET /datex2/situations.xml`         | DATEX II v3 SituationPublication, one record per effect ([status](docs/datex-conformance.md)) |
+| `GET /stream`                        | Server-Sent Events: live situations, then each change and removal                             |
+| `GET /valhalla/exclusions.json`      | Valhalla `exclude_locations` / `exclude_polygons` and speed caps                              |
+| `GET /segments/conditions.json`      | Bound effects in force, keyed by directed OSM way spans (routing feed)                        |
+| `GET /taxonomy`, `/schemas/{path}`   | The running registry and its JSON Schemas                                                     |
+| `GET /coverage`                      | Live records per country, kind and access mode                                                |
+| `GET /status`                        | health (unlimited)                                                                            |
 
 ## Using OpenConditions with OpenMapX
 
@@ -96,8 +102,8 @@ pnpm openmapx compose render && pnpm openmapx compose up
 # then install the road-conditions-openconditions provider integration artifact
 ```
 
-See OpenMapX's _Building an external extension_ guide for the full flow. The ingest writes to the shared PostGIS
-`conditions` schema; the provider integration reads it back into the OpenMapX map overlay and routing avoidance.
+See OpenMapX's _Building an external extension_ guide for the full flow. The provider integration reads situations
+and their routing evidence from the ingest's API into the OpenMapX map overlay and routing avoidance.
 
 ## Crowd reporting
 

@@ -6,6 +6,7 @@ import type {
   PointGeometry,
   Severity,
 } from "@openconditions/core";
+import type { Text, Validity } from "@openconditions/model";
 import type { RoadClassification, RoadRestrictionDetailsV1 } from "@openconditions/model-roads";
 
 /**
@@ -14,8 +15,8 @@ import type { RoadClassification, RoadRestrictionDetailsV1 } from "@openconditio
  * ingested by naming which `properties` keys carry each field — so a new such
  * source is a config entry, not new code. Geometry is taken verbatim from each
  * feature (GeoJSON is WGS84 by RFC 7946). Field names may be dotted paths into
- * nested `properties`. Unmapped type strings route through the shared taxonomy
- * crosswalk; extend that (not a per-source map) for new vocabularies.
+ * nested `properties`. A feed's type strings are its own vocabulary: the
+ * feed's `typeMap` says what each one means.
  */
 export interface GeoJsonMapping {
   /** properties key for the feature's stable id (falls back to the feed index). */
@@ -23,11 +24,12 @@ export interface GeoJsonMapping {
   /** properties key whose value is mapped to a RoadEventType. */
   typeField?: string;
   /**
-   * Source-specific value → RoadEventType overrides for this feed's own
-   * vocabulary (checked before the shared crosswalk). Keeps a feed's idiosyncratic
-   * type strings out of the global taxonomy. Keys are matched case-insensitively.
+   * This feed's type values → what they mean: a coarse RoadEventType, or a
+   * registered roads situation code (`roadworks.works.bridge_work`) where the
+   * value names a classification, whose coarse type follows from it. Keys are
+   * matched case-insensitively; an unmapped value takes `defaultType`.
    */
-  typeMap?: Record<string, RoadEventType>;
+  typeMap?: Record<string, RoadEventType | `${string}.${string}`>;
   /** type to use when the feed has no per-feature type (e.g. a closures-only feed). */
   defaultType?: RoadEventType;
   /** properties key for the human headline/title. */
@@ -98,8 +100,7 @@ export interface GeoJsonRecordFilter {
  * The canonical set of road-event types — the single source of truth.
  *
  * Declared as a runtime tuple (not just a TS union) so the full set is
- * iterable at runtime: validating an inbound `type` string, asserting the
- * taxonomy crosswalk only targets known types, and driving consumer UIs
+ * iterable at runtime: validating an inbound `type` string and driving consumer UIs
  * (legends, per-type icons) all read from this one list. `RoadEventType` is
  * derived from it, so the compile-time type and the runtime list cannot drift.
  */
@@ -187,6 +188,16 @@ export interface SituationHints {
    * read from the source: the local id of the measurement site it came from.
    */
   derivedFromSite?: string;
+  /** The headline in every language the source wrote it in, its primary first. */
+  headline?: Text;
+  /** The description in every language the source wrote it in. */
+  description?: Text;
+  /** The source's further comments, each in every language it wrote it in. */
+  comments?: { type?: "public" | "operator" | "detour" | "internal"; text: Text }[];
+  /** The severity token exactly as the source declared it. */
+  severityRaw?: string;
+  /** The source's lifecycle where it says more than active or ended (DATEX `suspended`). */
+  validityStatus?: Validity["status"];
 }
 
 /**
@@ -348,58 +359,9 @@ export type UnresolvedRoadEvent = Omit<RoadEvent, "geometry"> & {
 };
 
 /**
- * Map road-specific fields from a RoadEvent into a plain object for
- * the store's `attributes` JSONB column.
- */
-export function roadAttributes(ev: RoadEvent): Record<string, unknown> {
-  const attrs: Record<string, unknown> = {
-    roads: ev.roads,
-    isPlanned: ev.isPlanned,
-  };
-
-  if (ev.direction != null) attrs["direction"] = ev.direction;
-  if (ev.roadState != null) attrs["roadState"] = ev.roadState;
-  if (ev.lanesAffected != null) attrs["lanesAffected"] = ev.lanesAffected;
-  if (ev.speedLimitKph != null) attrs["speedLimitKph"] = ev.speedLimitKph;
-  if (ev.restrictions != null && ev.restrictions.length > 0) {
-    attrs["restrictions"] = ev.restrictions;
-  }
-  // Source semantics only: the publication-time evaluation (state, evaluatedAt,
-  // freshness) is added at the publisher edge and must never be persisted here.
-  if (ev.restrictionDetails != null) attrs["restrictionDetails"] = ev.restrictionDetails;
-  if (ev.restrictionDetailsUnsupported === true) {
-    attrs["restrictionDetailsUnsupported"] = true;
-  }
-  if (ev.vehiclesAffected != null && ev.vehiclesAffected.length > 0) {
-    attrs["vehiclesAffected"] = ev.vehiclesAffected;
-  }
-  if (ev.detour != null) attrs["detour"] = ev.detour;
-  if (ev.detourGeometry != null) attrs["detourGeometry"] = ev.detourGeometry;
-  if (ev.delaySeconds != null) attrs["delaySeconds"] = ev.delaySeconds;
-  if (ev.queueLengthMeters != null) attrs["queueLengthMeters"] = ev.queueLengthMeters;
-  if (ev.workersPresent != null) attrs["workersPresent"] = ev.workersPresent;
-  if (ev.workZoneType != null) attrs["workZoneType"] = ev.workZoneType;
-  if (ev.regions != null && ev.regions.length > 0) attrs["regions"] = ev.regions;
-  if (ev.relatedEvents != null && ev.relatedEvents.length > 0) {
-    attrs["relatedEvents"] = ev.relatedEvents;
-  }
-  if (ev.situationId != null && ev.situationId.length > 0) {
-    attrs["situationId"] = ev.situationId;
-  }
-  if (ev.externalRefs != null) attrs["externalRefs"] = ev.externalRefs;
-  // Keyed "sourceRaw" (not "source") so it never clobbers the top-level
-  // Observation.source when readObservations spreads attributes back.
-  if (ev.sourceRaw != null) attrs["sourceRaw"] = ev.sourceRaw;
-  if (ev.freeFlowSource != null) attrs["freeFlowSource"] = ev.freeFlowSource;
-  if (ev.locationTable != null) attrs["locationTable"] = ev.locationTable;
-
-  return attrs;
-}
-
-/**
  * Map flow-specific fields from a RoadFlow measurement into a plain object for
- * the store's `attributes` JSONB column (the measurement counterpart to
- * roadAttributes; metric/value/level/unit/aggregation go to typed columns).
+ * the store's `attributes` JSONB column (metric/value/level/unit/aggregation
+ * go to typed columns).
  */
 export function roadFlowAttributes(flow: RoadFlow): Record<string, unknown> {
   const attrs: Record<string, unknown> = { los: flow.los };

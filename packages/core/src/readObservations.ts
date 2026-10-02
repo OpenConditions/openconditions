@@ -1,23 +1,17 @@
 import type { Geometry } from "geojson";
 import { dedupeAcrossSources } from "./crossSourceDedupe.js";
-import type {
-  BindingStatus,
-  ConditionEvent,
-  DirectionMode,
-  Measurement,
-  Observation,
-  Provenance,
-  SegmentSpan,
-} from "./model.js";
-import { BINDING_JOIN_SQL, BINDING_SELECT_SQL } from "./observation-query.js";
-import type { QueryRunner } from "./observationsByBbox.js";
+import type { ConditionEvent, Measurement, Observation, Provenance } from "./model.js";
+import type { QueryRunner } from "./query-runner.js";
 import { severityRank } from "./severity.js";
 
 const SEVERITY_RANK_SQL =
   "(CASE o.severity WHEN 'critical' THEN 4 WHEN 'high' THEN 3 WHEN 'medium' THEN 2 WHEN 'low' THEN 1 ELSE 0 END)";
 
-// See observationsByBbox.ts's IS_STALE_SQL for why this is a source_status
-// join rather than the row's own stale_after/fetched_at.
+// A row is stale when its source has no successful poll or its last success
+// is older than its freshness window. Joined rather than read from the row's
+// own fetched_at/stale_after: the diff-upsert swap leaves an unchanged row's
+// fetched_at untouched, so per-row freshness would flag a healthy-but-static
+// row as stale even though its source just polled successfully.
 const IS_STALE_SQL =
   "(ss.last_success_at IS NULL OR ss.last_success_at + make_interval(secs => ss.freshness_window_sec) < now())";
 
@@ -77,11 +71,6 @@ export interface ObservationRow {
   dp_delta?: number | null;
   source_uri?: string | null;
   source_license?: string | null;
-  // Only selected when `includeBindings` is set; absent otherwise.
-  binding_status?: BindingStatus | null;
-  binding_confidence?: number | null;
-  binding_direction_mode?: DirectionMode | null;
-  segments?: SegmentSpan[] | null;
   // Generic read metadata joined from source status, not persisted columns.
   source_checked_at?: string | Date | null;
   freshness_window_sec?: number | null;
@@ -146,18 +135,6 @@ export function rowToObservation(row: ObservationRow): Observation {
           routingEligible: row.routing_eligible ?? false,
         }
       : {}),
-    // Derived graph binding, present only when the read asked for it (the
-    // columns are absent from the default query, so this never fires there).
-    ...(row.binding_status
-      ? {
-          binding: {
-            status: row.binding_status,
-            ...(row.binding_confidence != null ? { confidence: row.binding_confidence } : {}),
-            ...(row.binding_direction_mode ? { directionMode: row.binding_direction_mode } : {}),
-          },
-        }
-      : {}),
-    ...(row.segments && row.segments.length > 0 ? { segments: row.segments } : {}),
   };
   const specific =
     row.kind === "measurement"
@@ -198,7 +175,6 @@ export interface ReadObservationsOptions {
   dedupe?: boolean;
   requireComplete?: boolean;
   routingEligibleOnly?: boolean;
-  includeBindings?: boolean;
   excludedSourceIds?: string[];
 }
 
@@ -268,12 +244,10 @@ export async function readObservations(
       "NOT (o.origin->>'kind' = 'crowd' AND COALESCE(o.routing_eligible, false) IS NOT TRUE)",
     );
   }
-  const bindingSelect = opts.includeBindings ? BINDING_SELECT_SQL : "";
-  const bindingJoin = opts.includeBindings ? BINDING_JOIN_SQL : "";
   const query = `
-    SELECT ${OBSERVATION_SELECT_SQL}, ${IS_STALE_SQL} AS is_stale${bindingSelect}
+    SELECT ${OBSERVATION_SELECT_SQL}, ${IS_STALE_SQL} AS is_stale
     FROM conditions.observations o
-    LEFT JOIN conditions.source_status ss ON ss.source = o.source${bindingJoin}
+    LEFT JOIN conditions.source_status ss ON ss.source = o.source
     WHERE ${clauses.join(" AND ")}
     ORDER BY ${SEVERITY_RANK_SQL} DESC, o.id
     LIMIT ${opts.requireComplete ? 100001 : 2000}`;

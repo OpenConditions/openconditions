@@ -75,13 +75,14 @@ describe("streamed payload digest", () => {
         "</siteMeasurements></payloadPublication></d2LogicalModel>",
     );
     const body = src.gzip ? gzipSync(xml) : xml;
-    const { observations, payload } = await streamMeasuredData(
+    const { flows, situations, payload } = await streamMeasuredData(
       src,
       async () => Readable.from([body]),
       undefined,
       () => new Date(0).toISOString(),
     );
-    expect(observations).toEqual([]);
+    expect(flows).toEqual([]);
+    expect(situations).toEqual([]);
     expect(payload.sha256).toBe(digestPayload("", xml).sha256);
     expect(payload.bytes).toBe(xml.length);
   });

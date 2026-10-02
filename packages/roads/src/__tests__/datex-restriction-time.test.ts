@@ -1,7 +1,8 @@
 import { readFileSync } from "node:fs";
-import { projectRoadRestrictionDetails } from "@openconditions/model-roads";
+import { type Effect, effectStateAt, type Validity } from "@openconditions/model";
 import { describe, expect, it } from "vitest";
 import { parseDatexSituations, parseDatexSnapshot } from "../datex.js";
+import { situationDrafts } from "../situation/assemble.js";
 import { reconcileRoadSnapshots } from "../snapshot.js";
 import type { SourceDescriptor } from "../types.js";
 
@@ -46,16 +47,22 @@ function heightOf(source = xml): any {
   return found;
 }
 
-/** The evaluated view of the height record at a fixed instant. */
-function heightView(source = xml, at = new Date("2026-09-12T07:14:00Z")) {
-  const details = heightOf(source).restrictionDetails;
-  const projected = projectRoadRestrictionDetails(details, {
-    at,
-    sourceCheckedAt: "2026-09-12T07:13:00Z",
-    freshnessWindowSec: 300,
-  });
-  if (!projected.restrictionDetails) throw new Error("height details did not project");
-  return projected.restrictionDetails;
+const AT = new Date("2026-09-12T07:14:00Z");
+
+/** The state at `at` of the vehicle-conditioned effect an event's situation carries. */
+// biome-ignore lint/suspicious/noExplicitAny: the same union as above.
+function heightLimitState(event: any, at = AT) {
+  const [draft] = situationDrafts([event], { source: ndwSource });
+  const limit = (draft!["effects"] as Effect[]).find((e) => e.applicability.kind !== "all");
+  if (!limit) throw new Error("no vehicle-conditioned effect");
+  return effectStateAt(limit, draft!["validity"] as Validity, at).state;
+}
+
+/** The height record's limit state at a fixed instant, with the source facts behind it. */
+function heightView(source = xml, at = AT) {
+  const event = heightOf(source);
+  const details = event.restrictionDetails;
+  return { state: heightLimitState(event, at), issues: details.issues, fact: details.facts[0] };
 }
 
 /** Replace only the height record's validity block with a synthetic variant. */
@@ -137,9 +144,7 @@ describe("ndw source direction and location references", () => {
 
 describe("ndw conservative restriction validity", () => {
   it("verifies the live implemented, time-specified height condition as active", () => {
-    const view = heightView();
-    expect(view.facts[0]!.state).toBe("active");
-    expect(view.isStale).toBe(false);
+    expect(heightView().state).toBe("active");
   });
 
   it.each([undefined, "planned", "beingTerminated", "futureUnknownStatus"])(
@@ -156,9 +161,9 @@ describe("ndw conservative restriction validity", () => {
               `<sit:operatorActionStatus>${status}</sit:operatorActionStatus><sit:complianceOption>mandatory</sit:complianceOption><sit:forVehiclesWithCharacteristicsOf><com:heightCharacteristic>`,
             );
       const view = heightView(mutatedXml);
-      expect(view.facts[0]!.state).toBe("unknown");
+      expect(view.state).toBe("unknown");
       expect(view.issues).toContainEqual(expect.objectContaining({ code: "unsupported_status" }));
-      expect(view.facts[0]!.context.operatorActionStatus).toBe(status ?? null);
+      expect(view.fact.context.operatorActionStatus).toBe(status ?? null);
     },
   );
 
@@ -168,7 +173,7 @@ describe("ndw conservative restriction validity", () => {
       "<sit:validity><com:validityTimeSpecification><com:overallStartTime>2025-09-05T22:59:03Z</com:overallStartTime></com:validityTimeSpecification></sit:validity>",
     ]) {
       const view = heightView(withHeightValidity(replacement));
-      expect(view.facts[0]!.state).toBe("unknown");
+      expect(view.state).toBe("unknown");
       expect(view.issues).toContainEqual(expect.objectContaining({ code: "unsupported_status" }));
     }
   });
@@ -179,13 +184,13 @@ describe("ndw conservative restriction validity", () => {
         "<sit:validity><com:validityStatus>definedByValidityTimeSpec</com:validityStatus><com:validityTimeSpecification><com:overallStartTime>2027-01-01T00:00:00Z</com:overallStartTime></com:validityTimeSpecification></sit:validity>",
       ),
     );
-    expect(future.facts[0]!.state).toBe("scheduled");
+    expect(future.state).toBe("scheduled");
     const ended = heightView(
       withHeightValidity(
         "<sit:validity><com:validityStatus>definedByValidityTimeSpec</com:validityStatus><com:validityTimeSpecification><com:overallStartTime>2025-01-01T00:00:00Z</com:overallStartTime><com:overallEndTime>2025-02-01T00:00:00Z</com:overallEndTime></com:validityTimeSpecification></sit:validity>",
       ),
     );
-    expect(ended.facts[0]!.state).toBe("ended");
+    expect(ended.state).toBe("ended");
   });
 
   it("keeps the open-ended lorry conditions present with no invented end", () => {
@@ -204,7 +209,7 @@ describe("ndw conservative restriction validity", () => {
       ),
     );
     expect(view.issues).toContainEqual(expect.objectContaining({ code: "unsupported_schedule" }));
-    expect(view.facts[0]!.state).toBe("unknown");
+    expect(view.state).toBe("unknown");
   });
 
   it("reports an exception period as unsupported rather than ignoring it", () => {
@@ -214,7 +219,7 @@ describe("ndw conservative restriction validity", () => {
       ),
     );
     expect(view.issues).toContainEqual(expect.objectContaining({ code: "unsupported_schedule" }));
-    expect(view.facts[0]!.state).toBe("unknown");
+    expect(view.state).toBe("unknown");
   });
 
   it("carries a fully represented nightly recurrence in the Amsterdam zone", () => {
@@ -250,13 +255,7 @@ describe("ndw conservative restriction validity", () => {
       )!;
       expect(event.status).toBe(status === "suspended" ? "inactive" : status);
       expect(event.restrictionDetails!.facts).toHaveLength(1);
-      expect(
-        projectRoadRestrictionDetails(event.restrictionDetails, {
-          at: new Date("2026-09-12T07:14:00Z"),
-          sourceCheckedAt: "2026-09-12T07:13:00Z",
-          freshnessWindowSec: 300,
-        }).restrictionDetails?.facts[0]?.state,
-      ).toBe("unknown");
+      expect(heightLimitState(event)).toBe("unknown");
       expect(event.restrictionDetails!.facts[0]!.context.validityStatus).toBe(status);
       expect(event.restrictionDetails!.issues).toContainEqual(
         expect.objectContaining({ code: "unsupported_status" }),

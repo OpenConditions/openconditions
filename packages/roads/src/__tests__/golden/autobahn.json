@@ -63,12 +63,13 @@
     },
     "canonicalId": "5a62624f0b9104e05667260d9ef5cb43b8dfd487dff373b5451d183f9f733f5e",
     "domain": "roads",
-    "contentHash": "34255f1a1a0c29af9d6b016f5708a41ddada95c71ae27e070b4c65b14d502a72",
+    "contentHash": "301769ef7ef627e44dcc4c115a3a0ea507ec99870c34eaa34b0c47c8fcbadc65",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "congestion",
     "type": "congestion",
+    "subtype": "queuing",
     "planned": false,
     "certainty": "unknown",
     "severity": {
@@ -115,7 +116,7 @@
     "details": {
       "kind": "congestion",
       "v": 1,
-      "los": "unknown"
+      "los": "queuing"
     }
   },
   {

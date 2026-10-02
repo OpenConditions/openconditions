@@ -143,12 +143,13 @@
     },
     "canonicalId": "09a82935e2f32439580572c7156942171c3aa7b48bd828ec2604beda2eecf8dc",
     "domain": "roads",
-    "contentHash": "98cbd9b7600a48bc78d1f1bace993763bf8f65725b5ebfb0f9e3a21b8f6ee0b1",
+    "contentHash": "21c5d19fee9b4eff4de285efe62dc050a50dabe9f75f11a9d634c082e0ff2511",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
-    "kind": "road_hazard",
-    "type": "hazard",
+    "kind": "incident",
+    "type": "obstruction",
+    "subtype": "debris",
     "planned": false,
     "certainty": "unknown",
     "severity": {
@@ -172,7 +173,7 @@
     },
     "effects": [],
     "details": {
-      "kind": "road_hazard",
+      "kind": "incident",
       "v": 1
     }
   },

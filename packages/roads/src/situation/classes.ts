@@ -36,3 +36,67 @@ export const ROAD_EVENT_TYPE_CLASSES: Readonly<Record<RoadEventType, RoadClassif
 export function classificationOf(event: RoadEvent): RoadClassification {
   return event.situation?.classification ?? ROAD_EVENT_TYPE_CLASSES[event.type];
 }
+
+/** A parse-local coarse road-event type with the category and planning it implies. */
+export interface CoarseType {
+  type: RoadEventType;
+  category: RoadEvent["category"];
+  isPlanned: boolean;
+}
+
+const PLANNED_TYPES = new Set<RoadEventType>(["roadworks", "public_event"]);
+const INCIDENT_TYPES = new Set<RoadEventType>([
+  "accident",
+  "road_closure",
+  "lane_closure",
+  "contraflow",
+  "broken_down_vehicle",
+  "obstruction",
+  "authority",
+  "security",
+  "transit_disruption",
+]);
+
+/** A coarse type with its category: works and events are planned, disruptions incidents. */
+export function coarseType(type: RoadEventType): CoarseType {
+  if (PLANNED_TYPES.has(type)) return { type, category: "planned", isPlanned: true };
+  if (INCIDENT_TYPES.has(type)) return { type, category: "incident", isPlanned: false };
+  return { type, category: "conditions", isPlanned: false };
+}
+
+const KIND_TYPES: Readonly<Record<string, RoadEventType>> = {
+  "incident.accident": "accident",
+  "incident.breakdown": "broken_down_vehicle",
+  "incident.vehicle_hazard": "obstruction",
+  "incident.obstruction": "obstruction",
+  "incident.fire": "hazard",
+  "roadworks.works": "roadworks",
+  "restriction.speed": "speed_restriction",
+  "restriction.dimension": "dimension_restriction",
+  "restriction.access": "dimension_restriction",
+  "restriction.seasonal_load": "dimension_restriction",
+  "weather_condition.weather": "weather",
+  "road_condition.surface": "road_condition",
+  "road_condition.driving_condition": "road_condition",
+  "road_hazard.hazard": "hazard",
+  "public_event.event": "public_event",
+  "authority.operation": "authority",
+  "equipment_fault.fault": "equipment_fault",
+  "security.incident": "security",
+  "winter_operation.chain_control": "road_condition",
+  "pass_status.pass": "road_condition",
+  "congestion.congestion": "congestion",
+};
+
+/**
+ * The coarse type a classification reads as, the inverse direction of
+ * {@link ROAD_EVENT_TYPE_CLASSES}: a lane closure is `lane_closure`, any other
+ * closure `road_closure`; no classification, or one without a coarse
+ * counterpart, is `other`.
+ */
+export function coarseOf(c: RoadClassification | undefined): CoarseType {
+  if (c === undefined) return coarseType("other");
+  if (c.kind === "closure")
+    return coarseType(c.subtype === "lane" ? "lane_closure" : "road_closure");
+  return coarseType(KIND_TYPES[`${c.kind}.${c.type}`] ?? "other");
+}

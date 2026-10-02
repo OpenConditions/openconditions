@@ -1,12 +1,10 @@
 import type { Observation } from "@openconditions/core";
 import type { FeedSourceBase } from "./feed-source.js";
-
-export type ParserFn = (buf: Buffer, ...rest: never[]) => unknown[];
-export type FlowParserFn = (input: string | Buffer, ...rest: never[]) => unknown;
+import type { ParseOutput } from "./parse-output.js";
 
 /**
- * A domain plugin: its loaded feed instances, the parser dispatch for its wire
- * formats, and the mapper from a domain observation to the JSONB attributes
+ * A domain plugin: its loaded feed instances, the parse entry for its event
+ * feeds, and the mapper from a domain measurement to the JSONB attributes
  * column. Generalized from services/ingest's DomainPlugin so transit/places reuse it.
  */
 export interface IngestDomain {
@@ -14,8 +12,15 @@ export interface IngestDomain {
   feeds: FeedSourceBase[];
   /** Catalogue children visible to operators but never handed to the scheduler. */
   discoveredFeeds?: FeedSourceBase[];
-  parserFor(format: string): ParserFn;
-  flowParserFor?(format: string): FlowParserFn;
+  /**
+   * One poll of an event feed as record drafts, dated by `fetchedAt` (the
+   * instant the poll fetched them); throws when a payload cannot be read.
+   */
+  parse(
+    feed: FeedSourceBase,
+    buffers: readonly Buffer[],
+    opts?: { fetchedAt?: string },
+  ): ParseOutput;
   attributes(obs: Observation): Record<string, unknown>;
 }
 

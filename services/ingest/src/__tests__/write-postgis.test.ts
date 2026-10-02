@@ -125,19 +125,35 @@ describe("commons fields — toRow mapping", () => {
 });
 
 describe("commons fields — content_hash policy", () => {
-  // Pinned hash of a plain (no commons fields) observation. `sourceFormat` is
-  // part of the content material, so this value is pinned to the standardized
-  // format id ("ibi511"); the identity/derived fields stay excluded (asserted
-  // below). Feed-id/format standardization re-pins this once.
-  const GOLDEN_PLAIN_HASH = "2e3d52cb6234ff978875df49a7d6a9336bff2e3b7c4cf7a4c33ab172e4654fe5";
+  // Pinned hash of a plain (no commons fields) flow reading, the only feed
+  // observation still written here. `sourceFormat` is part of the content
+  // material; the identity/derived fields stay excluded (asserted below).
+  const GOLDEN_PLAIN_HASH = "99fbbd5f0de49261b2bbddf1421a42c070c18af2c6f5293193073b92079fedb0";
+  const flow = (overrides: Record<string, unknown> = {}) =>
+    baseObs({
+      kind: "measurement",
+      metric: "flow",
+      type: undefined,
+      category: undefined,
+      isPlanned: undefined,
+      severity: undefined,
+      severitySource: undefined,
+      roads: undefined,
+      headline: undefined,
+      speedKph: 40,
+      value: 40,
+      unit: "km/h",
+      aggregation: "live",
+      ...overrides,
+    });
 
   it("is byte-identical for a no-commons-fields observation", () => {
-    expect(toRow(baseObs()).content_hash).toBe(GOLDEN_PLAIN_HASH);
+    expect(toRow(flow()).content_hash).toBe(GOLDEN_PLAIN_HASH);
   });
 
   it("is unaffected by the derived/identity fields (excluded from the hash material)", () => {
     const withDerived = toRow(
-      baseObs({
+      flow({
         instanceId: "inst-1",
         canonicalId: "canon-1",
         phenomenonFingerprint: "fp-1",
@@ -151,8 +167,8 @@ describe("commons fields — content_hash policy", () => {
   });
 
   it("changes when a content-bearing field (sourceLicense) changes", () => {
-    const a = toRow(baseObs({ sourceLicense: "CC0-1.0" }));
-    const b = toRow(baseObs({ sourceLicense: "CC-BY-4.0" }));
+    const a = toRow(flow({ sourceLicense: "CC0-1.0" }));
+    const b = toRow(flow({ sourceLicense: "CC-BY-4.0" }));
     expect(a.content_hash).not.toBe(b.content_hash);
     expect(a.content_hash).not.toBe(GOLDEN_PLAIN_HASH);
   });

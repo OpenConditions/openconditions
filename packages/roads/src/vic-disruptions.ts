@@ -1,5 +1,6 @@
 import { toIsoTimestamp } from "@openconditions/core";
 import type { Schedule } from "@openconditions/model";
+import { vicClassification } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
@@ -181,15 +182,18 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
     const road = str(r.roadName) ?? str(r.road);
 
     const recordTime = toIsoTimestamp(r.lastUpdated);
+    const tokens = [str(r.eventSubtype), str(r.eventType), str(impact?.impactType)];
+    const classification = vicClassification(...tokens);
     out.push({
       ...baseEvent(src, id, geometry, now),
       situation: {
+        ...(classification !== undefined ? { classification } : {}),
         ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
         ...((str(r.name) ?? str(r.title) ?? str(r.description) ?? road)
           ? {}
           : { headlineFromSource: false as const }),
       },
-      type: resolveType(str(r.eventSubtype), str(r.eventType), str(impact?.impactType)),
+      type: resolveType(...tokens),
       subtype: str(r.eventSubtype) ?? str(r.eventType),
       category: "planned",
       isPlanned: true,
@@ -237,11 +241,13 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
     const road = str(p.roadName) ?? str(p.road);
     const direction = str(p.direction);
     const type = resolveType(eventSubType, eventType, str(p.status));
+    const classification = vicClassification(eventSubType, eventType, str(p.status));
     const recordTime = toIsoTimestamp(p.lastUpdated) ?? toIsoTimestamp(p.created);
 
     out.push({
       ...baseEvent(src, id, geometry, now),
       situation: {
+        ...(classification !== undefined ? { classification } : {}),
         ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
         ...((str(p.name) ?? str(p.title) ?? str(p.description) ?? road)
           ? {}

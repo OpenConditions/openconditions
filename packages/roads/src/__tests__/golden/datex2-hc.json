@@ -46,7 +46,7 @@
     },
     "canonicalId": "bc0f70bd52e4d544640560acba90432bb1b6ae18ebe1bb9ab7781919de152cec",
     "domain": "roads",
-    "contentHash": "15e3bcfa8c2dc416f3725e38a7ec323e7e85cc4ed3891574bf18c5c3ab804a0a",
+    "contentHash": "f4b07a1f8e4a803ee72101ba261f12f2312d4c01ac417b61c1f6f5f8f3399173",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -57,11 +57,12 @@
     "certainty": "unknown",
     "severity": {
       "label": "major",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "high"
     },
     "headline": [
       {
-        "lang": "und",
+        "lang": "hr",
         "text": "Oštećenje kolnika na mostu"
       }
     ],
@@ -122,7 +123,7 @@
     },
     "canonicalId": "11794fb4a6061ec00bd2eaa2d2a2d7c3685020b1d92f79d7b5cd8ecc0e58614a",
     "domain": "roads",
-    "contentHash": "2c156a8997f45a3aa8fcaf4c3b2705edd070cd6b25d3a56f2d7d406c1d6332c8",
+    "contentHash": "52d05d661e5336583c6f4ab54e54e19206f8e5556cd931f582a1821cfbd786df",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -133,11 +134,12 @@
     "certainty": "unknown",
     "severity": {
       "label": "moderate",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "medium"
     },
     "headline": [
       {
-        "lang": "und",
+        "lang": "hr",
         "text": "Odron na kolniku"
       }
     ],
@@ -198,7 +200,7 @@
     },
     "canonicalId": "1ee7df0be1c9fc6543ed40fc8991f661b538f1ac904ef97398718c7579b178ee",
     "domain": "roads",
-    "contentHash": "a578388a36b40303d6cd03faf16fa28819c26ebb10a5711a26321c47350b1848",
+    "contentHash": "c5bf112b01c520684d1a7616784ce37051ace656a13d914498e68bad4d9875bb",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -208,11 +210,12 @@
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "low"
     },
     "headline": [
       {
-        "lang": "und",
+        "lang": "hr",
         "text": "Jak vjetar"
       }
     ],

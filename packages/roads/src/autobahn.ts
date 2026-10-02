@@ -1,11 +1,12 @@
 import type { GeoJsonGeometry } from "@openconditions/core";
 import { deriveSeverity } from "@openconditions/core";
 import type { Schedule } from "@openconditions/model";
+import { autobahnClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
-import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
+import type { LaneStatus, Restriction, RoadEvent, RoadEventType, RoadRef } from "./model.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
+import { coarseType } from "./situation/classes.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
-import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
 interface AutobahnCoordinate {
@@ -355,6 +356,13 @@ function restrictionsFromDescription(description: string | undefined): Restricti
 const AUTOBAHN_SERVICES = ["warning", "closure", "roadworks"] as const;
 type AutobahnService = (typeof AUTOBAHN_SERVICES)[number];
 
+/** The coarse type of each service's items: a warning is a hazard until its display type says more. */
+const SERVICE_TYPES: Readonly<Record<AutobahnService, RoadEventType>> = {
+  warning: "hazard",
+  closure: "road_closure",
+  roadworks: "roadworks",
+};
+
 function detectService(payload: AutobahnPayload): AutobahnService | undefined {
   for (const key of AUTOBAHN_SERVICES) {
     if (Array.isArray(payload[key])) return key;
@@ -407,24 +415,26 @@ export function parseAutobahn(
 
       const isFlow = hasFlowFields(item);
 
-      let type: RoadEvent["type"];
-      let category: RoadEvent["category"];
-      let isPlanned: boolean;
+      const displayType = typeof item.display_type === "string" ? item.display_type : undefined;
+      const classification = autobahnClassification(
+        displayType,
+        isFlow
+          ? {
+              ...(typeof item.abnormalTrafficType === "string"
+                ? { abnormalTrafficType: item.abnormalTrafficType }
+                : {}),
+            }
+          : undefined,
+      );
+      const { type, category, isPlanned } = coarseType(
+        isFlow ? "congestion" : SERVICE_TYPES[resolvedService],
+      );
       let delaySeconds: number | undefined;
-
       if (isFlow) {
-        type = "congestion";
-        category = "conditions";
-        isPlanned = false;
         const delayMinutes = Number(item.delayTimeValue);
         if (Number.isFinite(delayMinutes) && delayMinutes > 0) {
           delaySeconds = delayMinutes * 60;
         }
-      } else {
-        const mapped = mapSourceType("autobahn", resolvedService);
-        type = mapped.type;
-        category = mapped.category;
-        isPlanned = mapped.isPlanned;
       }
 
       const impact =
@@ -463,9 +473,12 @@ export function parseAutobahn(
         sourceFormat: "autobahn",
         domain: "roads",
         kind: "event",
-        situation: (title ?? subtitle) ? {} : { headlineFromSource: false as const },
+        situation: {
+          ...(classification !== undefined ? { classification } : {}),
+          ...((title ?? subtitle) ? {} : { headlineFromSource: false as const }),
+        },
         type,
-        subtype: typeof item.display_type === "string" ? item.display_type : undefined,
+        subtype: displayType,
         category,
         isPlanned,
         severity,

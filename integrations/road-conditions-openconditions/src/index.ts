@@ -1,11 +1,11 @@
-import { observationsByBbox, type RoadConditionRoutingEvidence } from "@openconditions/core";
-import { projectRoadRestrictionDetails } from "@openconditions/model-roads/restrictions";
+import type { RoadConditionRoutingEvidence } from "@openconditions/core";
 import type { FeatureCollection } from "geojson";
-import { featureCollectionToRoadConditionEvents } from "./toRoadConditionEvents.js";
+import { situationToRoadConditionEvent } from "./situation.js";
 import { featureCollectionToRoadFlowSegments } from "./toRoadFlowSegments.js";
 import type {
   BBox,
   IntegrationContext,
+  RoadConditionEvent,
   RoadConditionsOperationalFeedEvidence,
   RoadConditionsProvider,
   RoadConditionsQuery,
@@ -21,11 +21,19 @@ const PROVIDER_ID = "road-conditions-openconditions";
 const INGEST_SERVICE_ID = "openconditions-ingest";
 const INGEST_FALLBACK_URL = "http://openconditions-ingest:4100";
 const MAX_OPERATIONAL_FEEDS = 500;
+/** A display read stops after this many situations; a routing read reads them all. */
+const DISPLAY_MAX = 2000;
+const DISPLAY_PAGE = 1000;
+const ROUTING_PAGE = 5000;
+
+type Rec = Record<string, unknown>;
+
+type SituationPage = { records?: unknown; next?: unknown };
 
 type SegmentConditionEvidenceResponse = {
   schema_version?: unknown;
   complete?: unknown;
-  conditions?: Array<{ id?: unknown; routing_evidence?: RoadConditionRoutingEvidence }>;
+  conditions?: Array<{ routing_evidence?: RoadConditionRoutingEvidence }>;
 };
 
 type RawGraphStatus = {
@@ -101,151 +109,150 @@ function changedCount(feed: RawFeedStatus): number | null {
     : values.reduce<number>((sum, value) => sum + (value ?? 0), 0);
 }
 
-/**
- * Evaluate every feature's stored restriction semantics into the published
- * view, using the generic read metadata joined from source status.
- *
- * Evaluation lives here rather than in the browser: state, freshness and the
- * next transition are source interpretation, and the host must only display
- * what OpenConditions computed.
- */
-function evaluateRestrictionViews(fc: FeatureCollection, at: Date): void {
-  for (const feature of fc.features) {
-    const properties = feature.properties as Record<string, unknown> | null;
-    if (properties === null) continue;
-    const attributes = (properties["attributes"] ?? {}) as Record<string, unknown>;
-    const hasEnvelope = Object.hasOwn(attributes, "restrictionDetails");
-    const marked = attributes["restrictionDetailsUnsupported"] === true;
-    if (!hasEnvelope && !marked) continue;
-    const checked = properties["source_checked_at"];
-    const window = properties["freshness_window_sec"];
-    const projection = projectRoadRestrictionDetails(attributes["restrictionDetails"], {
-      at,
-      sourceCheckedAt: typeof checked === "string" ? checked : null,
-      freshnessWindowSec: typeof window === "number" ? window : null,
-    });
-    Object.assign(properties, marked ? { restrictionDetailsUnsupported: true } : projection);
-  }
+/** Whether a record comes from a source, or a catalogue child of a source, the deployment excluded. */
+function excluded(record: Rec, sources: ReadonlySet<string>): boolean {
+  const provenance = (record["provenance"] ?? {}) as Rec;
+  const attribution = (provenance["attribution"] ?? {}) as Rec;
+  return (
+    sources.has(String(provenance["sourceId"])) ||
+    sources.has(String(attribution["parentSourceId"] ?? ""))
+  );
 }
 
 /**
- * Registers a `road-conditions` provider backed by the shared PostGIS
- * `conditions.observations` table that the OpenConditions ingest service writes.
- * The OpenMapX `road-conditions` orchestrator merges this with any other
+ * Registers a `road-conditions` provider backed by the OpenConditions record
+ * API: situations from `GET /situations`, their routing evidence from
+ * `GET /segments/conditions.json`, flow from `GET /segments.geojson`. The
+ * OpenMapX `road-conditions` orchestrator merges this with any other
  * providers (TomTom/HERE/…) and serves the result to the overlay + navigation.
  */
 export function setup(ctx: IntegrationContext): void {
   const ingestUrl = ctx.getRequiredService(INGEST_SERVICE_ID)?.url ?? INGEST_FALLBACK_URL;
 
-  async function readEvents(bbox: BBox, opts?: RoadConditionsQuery, requireComplete = false) {
-    const db = ctx.db;
-    if (!db) {
-      if (requireComplete) throw new Error("Routing observation storage unavailable");
-      return [];
-    }
-    const fc = await observationsByBbox(db, {
-      domain: "roads",
-      bbox,
-      // Incidents only: the shared store also holds high-frequency traffic-flow
-      // `measurement` rows (tens of thousands NL-wide). Derived congestion is
-      // emitted as kind 'event', so it is still included.
-      kind: "event",
-      types: opts?.types,
-      minSeverity: opts?.minSeverity,
-      excludedSourceIds: opts?.excludedSourceIds,
-      // Carry the graph binding through to the host: routing consumes the
-      // exact/likely spans, the overlay labels the ambiguous ones.
-      includeBindings: true,
-      requireComplete,
-      // Only narrow when the caller asked: routing reads unfiltered so it can
-      // evaluate future closures at the chosen travel time.
-      ...(opts?.horizonDays != null ? { horizonDays: opts.horizonDays } : {}),
-      // Display grouping belongs to the host: proximity dedupe here would
-      // collapse two distinct restriction-bearing records into one and lose a
-      // published fact.
-      dedupe: false,
-    });
-    evaluateRestrictionViews(fc, new Date());
-    const events = featureCollectionToRoadConditionEvents(fc);
-    if (requireComplete && events.length !== fc.features.length)
-      throw new Error("Incomplete routing observation projection");
-    try {
-      const snapshot = await ctx.http.get<SegmentConditionEvidenceResponse>(
-        `${ingestUrl}/segments/conditions.json`,
-        {
-          params: { bbox: bbox.join(",") },
-          // Never cached: the evidence is attached to a freshly evaluated
-          // restriction view, so a cached snapshot could outlive the view's
-          // own freshness deadline.
-          cache: { ttl: 0 },
-          ...(requireComplete ? { timeoutMs: 2000, maxResponseBytes: 32 * 1024 * 1024 } : {}),
+  /**
+   * The situations in `bbox`, page after page until `next` is null. A display
+   * read stops at `DISPLAY_MAX`; a routing read reads every page, and any page
+   * that fails or does not parse fails the whole read.
+   */
+  async function readSituations(
+    bbox: BBox,
+    opts: RoadConditionsQuery | undefined,
+    routing: boolean,
+  ): Promise<Rec[]> {
+    const records: Rec[] = [];
+    let cursor: string | null = null;
+    do {
+      const page: SituationPage = await ctx.http.get<SituationPage>(`${ingestUrl}/situations`, {
+        params: {
+          bbox: bbox.join(","),
+          limit: routing ? ROUTING_PAGE : DISPLAY_PAGE,
+          ...(opts?.kinds?.length ? { kind: opts.kinds.join(",") } : {}),
+          ...(opts?.types?.length ? { type: opts.types.join(",") } : {}),
+          ...(opts?.minSeverity ? { minSeverity: opts.minSeverity } : {}),
+          // Only narrow when the caller asked: routing reads unfiltered so it
+          // can evaluate future closures at the chosen travel time.
+          ...(opts?.horizonDays != null ? { horizonDays: opts.horizonDays } : {}),
+          ...(cursor !== null ? { cursor } : {}),
         },
-      );
-      if (
-        snapshot.schema_version === 1 &&
-        snapshot.complete === true &&
-        Array.isArray(snapshot.conditions)
-      ) {
-        const byId = new Map(
-          snapshot.conditions
-            .filter(
-              (condition) => typeof condition.id === "string" && condition.routing_evidence != null,
-            )
-            .map((condition) => [condition.id as string, condition.routing_evidence!]),
-        );
-        const revisions = new Map(
-          fc.features.map((feature) => [
-            feature.properties?.id,
-            feature.properties?.observation_revision,
-          ]),
-        );
-        for (const event of events) {
-          const evidence = byId.get(event.id);
-          if (evidence) {
-            if (
-              typeof revisions.get(event.id) !== "string" ||
-              revisions.get(event.id) !== evidence.observation_revision
-            ) {
-              if (requireComplete)
-                throw new Error(`Observation changed during routing read: ${event.id}`);
-              continue;
-            }
-            const spansAgree =
-              event.binding?.status === evidence.binding_status &&
-              event.segments?.length === evidence.segments.length &&
-              evidence.segments.every((span, i) => {
-                const projected = event.segments?.[i];
-                return (
-                  projected &&
-                  span.segment_id === `${projected.wayId}:${projected.dir}` &&
-                  span.direction === (projected.dir === "f" ? "forward" : "reverse") &&
-                  span.from_fraction === projected.startFraction &&
-                  span.to_fraction === projected.endFraction
-                );
-              });
-            if (!spansAgree) {
-              if (requireComplete)
-                throw new Error(`Binding changed during routing read: ${event.id}`);
-              continue;
-            }
-            event.routingEvidence = evidence;
-          }
-        }
-      } else if (requireComplete) {
-        throw new Error("Incomplete routing evidence snapshot");
+        cache: { ttl: 0 },
+        ...(routing ? { timeoutMs: 5000, maxResponseBytes: 64 * 1024 * 1024 } : {}),
+      });
+      if (!Array.isArray(page.records) || (page.next !== null && typeof page.next !== "string")) {
+        throw new Error("Malformed situation page");
       }
-    } catch (error) {
-      if (requireComplete) throw error;
-      // Operational evidence is optional. Display events remain available while the strict projection recovers.
+      records.push(...(page.records as Rec[]));
+      cursor = page.next as string | null;
+    } while (cursor !== null && (routing || records.length < DISPLAY_MAX));
+    const without = new Set(opts?.excludedSourceIds ?? []);
+    return without.size === 0 ? records : records.filter((r) => !excluded(r, without));
+  }
+
+  /**
+   * The events of `records`, each with an evidence map that starts empty.
+   * OpenConditions publishes routing evidence for every effect it binds, so an
+   * effect without an entry is unbound, stale or not licensed for routing: the
+   * host must not stand in its raw geometry for a binding.
+   */
+  function eventsOf(records: readonly Rec[]): RoadConditionEvent[] {
+    return records.flatMap((record) => {
+      const event = situationToRoadConditionEvent(record, PROVIDER_ID);
+      return event ? [{ ...event, routingEvidence: {} }] : [];
+    });
+  }
+
+  /**
+   * The situations of `records` with the routing evidence of their effects.
+   * The evidence is read after the situations, so a situation that changed in
+   * between fails a strict read rather than routing on stale evidence; a
+   * display read keeps the situation and leaves its evidence out. Both reads
+   * match a situation by its own place or any of its effects', so evidence of
+   * a situation the walk did not return names one that appeared after the
+   * walk; it is left out and routes from the next read.
+   */
+  async function withEvidence(
+    bbox: BBox,
+    records: readonly Rec[],
+    strict: boolean,
+  ): Promise<RoadConditionEvent[]> {
+    const snapshot = await ctx.http.get<SegmentConditionEvidenceResponse>(
+      `${ingestUrl}/segments/conditions.json`,
+      {
+        params: { bbox: bbox.join(",") },
+        cache: { ttl: 0 },
+        ...(strict ? { timeoutMs: 2000, maxResponseBytes: 32 * 1024 * 1024 } : {}),
+      },
+    );
+    if (
+      snapshot.schema_version !== 2 ||
+      snapshot.complete !== true ||
+      !Array.isArray(snapshot.conditions)
+    ) {
+      throw new Error("Incomplete routing evidence snapshot");
     }
-    return events;
+    const byId = new Map(records.map((r) => [String(r["id"]), r]));
+    const events = new Map(eventsOf(records).map((e) => [e.id, e]));
+    const changed = new Set<string>();
+    for (const condition of snapshot.conditions) {
+      const evidence = condition.routing_evidence;
+      if (evidence == null) continue;
+      const record = byId.get(evidence.record_id);
+      const event = events.get(evidence.record_id);
+      if (record === undefined || event === undefined) continue;
+      const current =
+        record["revision"] === evidence.record_revision &&
+        event.effects.some((effect) => effect.id === evidence.effect_id);
+      if (!current) {
+        if (strict) throw new Error(`Situation changed during routing read: ${evidence.record_id}`);
+        changed.add(event.id);
+        continue;
+      }
+      event.routingEvidence = { ...event.routingEvidence, [evidence.effect_id]: evidence };
+    }
+    // A display read never attaches part of a changed situation's evidence.
+    for (const id of changed) events.get(id)!.routingEvidence = {};
+    return [...events.values()];
+  }
+
+  /**
+   * A display read: the situations, with their routing evidence when it can
+   * be read. Evidence is optional here; the situations stay available while
+   * the evidence read recovers.
+   */
+  async function readEvents(bbox: BBox, opts?: RoadConditionsQuery) {
+    const records = await readSituations(bbox, opts, false);
+    try {
+      return await withEvidence(bbox, records, false);
+    } catch {
+      return eventsOf(records);
+    }
   }
 
   const provider: RoadConditionsProvider = {
     id: PROVIDER_ID,
-    getEvents: (bbox, opts) => readEvents(bbox, opts),
+    getEvents: readEvents,
     async getRoutingEvents(bbox) {
-      return { complete: true, events: await readEvents(bbox, undefined, true) };
+      const records = await readSituations(bbox, undefined, true);
+      return { complete: true, events: await withEvidence(bbox, records, true) };
     },
     async getFlow(bbox) {
       const fc = await ctx.http.get<FeatureCollection>(`${ingestUrl}/segments.geojson`, {

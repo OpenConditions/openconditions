@@ -1,3 +1,4 @@
+import { trafikverketClassification } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
@@ -115,6 +116,7 @@ export function parseTrafikverket(
         }
         const rawType = (dev.MessageType ?? "").trim();
         const type = TYPE_MAP[rawType.toLowerCase()] ?? "other";
+        const classification = trafikverketClassification(rawType);
         const road = typeof dev.RoadName === "string" && dev.RoadName ? dev.RoadName : undefined;
         const severity = severityOf(dev.SeverityCode);
 
@@ -124,10 +126,15 @@ export function parseTrafikverket(
           sourceFormat: "trafikverket",
           domain: "roads",
           kind: "event",
-          situation:
-            typeof dev.Message === "string" && dev.Message
+          situation: {
+            ...(classification !== undefined ? { classification } : {}),
+            ...(typeof dev.Message === "string" && dev.Message
               ? {}
-              : { headlineFromSource: false as const },
+              : { headlineFromSource: false as const }),
+            ...(typeof dev.SeverityCode === "number"
+              ? { severityRaw: String(dev.SeverityCode) }
+              : {}),
+          },
           type,
           subtype: rawType || undefined,
           category: categoryOf(type),

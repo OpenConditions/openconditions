@@ -57,8 +57,7 @@ export interface UpsertCounts {
  * (xmax = 0) AS inserted` distinguishes a fresh INSERT from an UPDATE so the
  * caller gets honest per-batch counts; a row skipped by the WHERE clause
  * (unchanged) returns nothing and counts as neither. The returned ids are the
- * exact set of rows this batch changed, which is what downstream derived
- * stages (graph binding) re-derive instead of rescanning the whole source.
+ * exact set of rows this batch changed.
  */
 export async function upsertRows(
   tx: TransactionSql,
@@ -211,11 +210,6 @@ export interface SwapCounts {
   inserted: number;
   updated: number;
   deleted: number;
-  /**
-   * Ids inserted or updated by this swap. Feeds the derived stages that run
-   * after the transaction commits, so they only revisit rows that moved.
-   */
-  changedIds: string[];
 }
 
 /**
@@ -243,16 +237,15 @@ export async function atomicSwap(
     attemptAt?: string;
     rejected?: number;
     durationMs?: number;
-    /**
-     * Source-prefixed ids of records the publisher still serves but we could
-     * not place this cycle. Supplied only by complete-snapshot sources.
-     */
-    unlocatableIds?: readonly string[];
     /** Digests of the payloads this publication was parsed from. */
     payloadHashes?: readonly string[];
     /** The poll attempt to close with this publication. */
     attemptId?: number;
+    /** The live situations the same poll publishes beside its readings. */
+    activeEvents?: number;
   },
+  /** Further writes of the same poll, in the same transaction, before its status. */
+  alongside?: (tx: TransactionSql) => Promise<void>,
 ): Promise<SwapCounts> {
   // The single defaulting seam: stamp the commons federation/privacy provenance
   // onto every row here — the one write choke point — before anything else, so
@@ -278,60 +271,12 @@ export async function atomicSwap(
   return sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${sourceId}))`;
 
-    // A record the publisher still serves but we failed to locate is not a
-    // withdrawal. Rejecting the whole candidate publication keeps the existing
-    // row intact instead of deleting a fact that is still true upstream. The
-    // check runs under the source lock, before any mutation, so a concurrent
-    // poll cannot slip a delete in between.
-    const unavailable = statusContext?.unlocatableIds ?? [];
-    if (unavailable.length > 0) {
-      const retained = await tx<{ id: string }[]>`
-        SELECT id FROM conditions.observations
-        WHERE source = ${sourceId} AND id = ANY(${tx.array([...unavailable])}::text[])
-        LIMIT 1`;
-      if (retained.length > 0) {
-        throw new Error(
-          `snapshot unlocatable retained record: ${retained[0]!.id} ` +
-            `(${unavailable.length} unlocatable in source ${sourceId})`,
-        );
-      }
-    }
-
     let inserted = 0;
     let updated = 0;
-    const changedIds: string[] = [];
     for (const batch of chunk(capped, CHUNK_SIZE)) {
       const counts = await upsertRows(tx, batch, freshnessWindowSec);
       inserted += counts.inserted;
       updated += counts.updated;
-      changedIds.push(...counts.ids);
-    }
-
-    // A changed event and its old routing binding must never be observable as
-    // current at the same time. Obsolete the prior result and enqueue the new
-    // content revision before this publication transaction commits. New events
-    // have no binding yet but still enter the durable queue.
-    if (changedIds.length > 0) {
-      await tx`
-        UPDATE conditions.observation_binding
-        SET status = 'obsolete'
-        WHERE observation_id = ANY(${tx.array(changedIds)}::text[])
-      `;
-      await tx`
-        INSERT INTO conditions.binding_queue
-          (observation_id, observation_revision, attempts, next_attempt_at, last_error, updated_at)
-        SELECT id, content_hash, 0, now(), NULL, now()
-        FROM conditions.observations
-        WHERE id = ANY(${tx.array(changedIds)}::text[])
-          AND kind = 'event'
-          AND content_hash IS NOT NULL
-        ON CONFLICT (observation_id) DO UPDATE SET
-          observation_revision = excluded.observation_revision,
-          attempts = 0,
-          next_attempt_at = now(),
-          last_error = NULL,
-          updated_at = now()
-      `;
     }
 
     // Delete-missing: rows for this source that are no longer in the fresh
@@ -345,6 +290,8 @@ export async function atomicSwap(
         )
       RETURNING o.id
     `;
+
+    await alongside?.(tx);
 
     // Write the success source_status row in this SAME transaction, not as a
     // separate call after atomicSwap returns: a brand-new source's rows are
@@ -365,7 +312,7 @@ export async function atomicSwap(
         ...(statusContext?.payloadHashes ? { payloadHashes: statusContext.payloadHashes } : {}),
         ...(statusContext?.attemptId !== undefined ? { attemptId: statusContext.attemptId } : {}),
         publication: {
-          activeEvents: capped.filter((row) => row.kind === "event").length,
+          activeEvents: statusContext?.activeEvents ?? 0,
           rowCount: capped.length,
           inserted,
           updated,
@@ -375,6 +322,6 @@ export async function atomicSwap(
       });
     }
 
-    return { inserted, updated, deleted: removed.length, changedIds };
+    return { inserted, updated, deleted: removed.length };
   });
 }

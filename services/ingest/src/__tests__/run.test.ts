@@ -1,12 +1,9 @@
 import { readFileSync } from "node:fs";
-import { FEED_SOURCES, type RoadEvent } from "@openconditions/roads";
+import { FEED_SOURCES } from "@openconditions/roads";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { stampAttribution } from "../pipeline/publish.js";
 import type { DomainFeedSource } from "../pipeline/run.js";
-import {
-  createOpenlrClient,
-  inspectSnapshotCompleteness,
-  stampSourceEvidence,
-} from "../pipeline/run.js";
+import { createOpenlrClient, inspectSnapshotCompleteness } from "../pipeline/run.js";
 
 describe("createOpenlrClient", () => {
   let savedUrl: string | undefined;
@@ -41,15 +38,20 @@ describe("createOpenlrClient", () => {
   });
 });
 
-describe("stampSourceEvidence", () => {
-  it("persists qualified catalogue lineage and exact rights on an observation", () => {
-    const event = {
-      id: "wzdx-kansas:1",
-      source: "wzdx-kansas",
-      origin: { kind: "feed", attribution: { provider: "Kansas DOT", license: "CC0-1.0" } },
-    } as RoadEvent;
-    const stamped = stampSourceEvidence(event, {
+describe("stampAttribution", () => {
+  it("writes the catalogue's lineage and exact rights into a situation's attribution", () => {
+    const draft = {
+      id: "oc:situation:wzdx-kansas:1",
+      provenance: {
+        origin: "feed",
+        sourceId: "wzdx-kansas",
+        attribution: { provider: "a payload claim", license: "a payload claim" },
+      },
+    };
+    const stamped = stampAttribution(draft, {
       id: "wzdx-kansas",
+      attribution: "Kansas DOT",
+      license: "CC0-1.0",
       parentSourceId: "us-wzdx",
       rights: {
         sourceRedistribution: true,
@@ -63,7 +65,9 @@ describe("stampSourceEvidence", () => {
       },
     } as DomainFeedSource);
 
-    expect(stamped.origin.attribution).toMatchObject({
+    expect((stamped["provenance"] as { attribution: unknown }).attribution).toMatchObject({
+      provider: "Kansas DOT",
+      license: "CC0-1.0",
       parentSourceId: "us-wzdx",
       childSourceId: "wzdx-kansas",
       policyIds: ["us-wzdx", "wzdx-kansas"],

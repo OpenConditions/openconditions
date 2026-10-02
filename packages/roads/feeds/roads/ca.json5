@@ -118,7 +118,7 @@
         "Fermeture de 1 voie sur 2": "lane_closure",
         "Circulation en alternance": "lane_closure",
         "Circulation à contresens": "contraflow",
-        "Circulation interdite aux véhicules lourds": "dimension_restriction",
+        "Circulation interdite aux véhicules lourds": "restriction.access.truck_ban",
       },
       defaultType: "other",
       headlineField: "localisation",

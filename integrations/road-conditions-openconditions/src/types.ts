@@ -5,20 +5,12 @@
  * runtime, and re-exported for build-time by the published @openmapx/extension-sdk.
  * When wired into the OpenMapX monorepo, swap this file for that import.
  *
- * `db` mirrors OpenMapX's `DatabaseClient` exactly (positional-parameter `execute`), and is
- * present only when the manifest declares `requires: [{ service: "postgis" }]`.
- *
  * monorepo-wired: swap types.ts for the @openmapx/extension-sdk IntegrationContext
  */
 
 import type { RoadConditionRoutingEvidence } from "@openconditions/core";
-import type { PublishedRoadRestrictionDetailsV1 } from "@openconditions/model-roads/restrictions";
+import type { Effect } from "@openconditions/model";
 import type { Geometry, LineString } from "geojson";
-
-/** Matches OpenMapX `IntegrationContext.db` (DatabaseClient). */
-export interface DatabaseClient {
-  execute<T = unknown>(query: string, params?: unknown[]): Promise<T>;
-}
 
 export interface HttpClientOptions {
   cache?: { ttl: number };
@@ -36,21 +28,10 @@ export interface HttpClient {
 
 export type BBox = [west: number, south: number, east: number, north: number];
 
-export type RoadConditionType =
-  | "accident"
-  | "roadworks"
-  | "road_closure"
-  | "lane_closure"
-  | "hazard"
-  | "congestion"
-  | "weather"
-  | "event"
-  | "restriction"
-  | "other";
+/** A text in every language the publisher wrote it in, the publisher's own first. */
+export type LocalizedText = { lang: string; text: string }[];
 
-export type RoadConditionSeverity = "low" | "medium" | "high" | "critical" | "unknown";
-
-export type RoadState = "open" | "closed" | "some_lanes_closed" | "single_lane_alternating";
+export type RoadConditionSeverityLabel = "minor" | "moderate" | "major" | "critical" | "unknown";
 
 export interface RoadConditionAttribution {
   provider: string;
@@ -59,15 +40,18 @@ export interface RoadConditionAttribution {
 }
 
 export interface RoadConditionRoadRef {
-  name: string;
-  direction?: string;
+  ref?: string;
+  name?: LocalizedText;
+  class?: string;
+  from?: string;
+  to?: string;
 }
 
 /**
  * A recurring validity rule, shaped after schema.org `Schedule`. Local fields
  * (`startTime`, `startDate`/`endDate`, `byDay`) are interpreted in
  * `scheduleTimezone` (IANA); `duration` is the authoritative occurrence length
- * (overnight-safe). Mirrors the canonical `Schedule` + the host contract.
+ * (overnight-safe). Mirrors the model `Schedule`.
  */
 export interface RoadConditionSchedule {
   repeatFrequency?: string;
@@ -84,91 +68,70 @@ export interface RoadConditionSchedule {
   scheduleTimezone: string;
 }
 
+/** When a situation holds: the source's declared lifecycle and bounds. */
+export interface RoadConditionValidity {
+  status: "planned" | "active" | "suspended" | "ended" | "cancelled" | "unknown";
+  start?: string;
+  end?: string;
+  estimatedEnd?: string;
+  periods?: RoadConditionSchedule[];
+  exceptions?: RoadConditionSchedule[];
+}
+
+/** What a situation does to traffic: the model `Effect`, as the host mirrors it. */
+export type RoadConditionEffect = Omit<Effect, "source">;
+
+/**
+ * One situation record, mapped 1:1. Mirrors OpenMapX `@openmapx/core`'s
+ * `RoadConditionEvent`.
+ */
 export interface RoadConditionEvent {
+  /** The record id (`oc:situation:<source>:<local id>`). */
   id: string;
   source: string;
   provider: string;
-  /** Provider-supplied identity of the source situation for display grouping. */
+  /** The source situation a situation split by nature came from, for display grouping. */
   groupId?: string;
-  type: RoadConditionType;
-  /** The publisher's own record type, preserved when the canonical type is coarser. */
+  kind: string;
+  type: string;
   subtype?: string;
-  severity: RoadConditionSeverity;
+  severity: { label: RoadConditionSeverityLabel; level?: number };
+  certainty: "observed" | "likely" | "possible" | "unlikely" | "unknown";
+  temporality: "live" | "scheduled" | "forecast";
+  planned: boolean;
+  headline?: LocalizedText;
+  description?: LocalizedText;
   geometry: Geometry;
-  headline: string;
-  description?: string;
-  /** Estimated delay in seconds this event adds vs. free flow (DATEX
-   * delayTimeValue / Verlustzeit), where the source reports it. */
-  delaySeconds?: number;
-  speedLimitKph?: number;
-  isStale?: boolean;
-  roadState?: RoadState;
   roads?: RoadConditionRoadRef[];
-  validFrom?: string | null;
-  validTo?: string | null;
-  /** Fine-grained recurring schedule (e.g. nightly closures); when present, an
-   * event is in effect only inside a window, not across the whole from–to span. */
-  schedule?: RoadConditionSchedule[];
-  dataUpdatedAt?: string;
-  attribution?: RoadConditionAttribution;
+  direction?: { value: string; compass?: string; text?: string };
+  validity: RoadConditionValidity;
+  effects: RoadConditionEffect[];
+  origin: "feed" | "crowd" | "federation" | "derived";
+  /** A crowd situation's evidence; a feed situation has none. */
+  evidence?: { state: string; confidenceScore?: number; routingEligible?: boolean };
+  attribution: RoadConditionAttribution;
+  /** When the source last changed the situation. */
+  updatedAt?: string;
+  fetchedAt: string;
+  expiresAt?: string;
   /**
-   * Provenance kind: `"feed"` (authoritative official source) or `"crowd"` (user
-   * report). Drives the host's routing gate and overlay "unconfirmed" labeling.
-   * Mirrors OpenMapX `@openmapx/core`'s `RoadConditionEvent.originKind`.
+   * Current, source-authorized graph evidence per effect id: where each
+   * effect is bound, under which rights, until when. Always present: an
+   * effect without an entry is not bound for routing (unbound, stale, not
+   * licensed, or its evidence could not be read on a display read). Inner
+   * keys stay snake_case on the host wire.
    */
-  originKind?: "feed" | "crowd";
-  /**
-   * Whether a crowd event is corroborated strongly enough to affect routing.
-   * Feed events leave this undefined (they always route).
-   */
-  routingEligible?: boolean;
-  /** Evidence maturity of a crowd report (e.g. `"self_reported"`). */
-  evidenceState?: string;
-  /** Aggregate confidence score for a crowd event (0..1). */
-  confidenceScore?: number;
-  /** Upstream announced this condition before it takes effect. */
-  isForecast?: boolean;
-  /** Scheduled work rather than an unplanned incident. */
-  isPlanned?: boolean;
-  /** Vehicle classes a restriction applies to (e.g. ["truck"]); empty/absent = all traffic. */
-  vehiclesAffected?: string[];
-  /** Graph-binding outcome for this event, when the instance has bound it. */
-  binding?: {
-    status:
-      | "exact"
-      | "likely"
-      | "ambiguous"
-      | "unresolved"
-      | "no_coverage"
-      | "not_applicable"
-      | "obsolete";
-    confidence?: number;
-    directionMode?: "single" | "both" | "unknown";
-  };
-  /** Ordered directed OSM-way spans the event occupies (only for exact/likely/ambiguous). */
-  segments?: Array<{ wayId: number; dir: "f" | "b"; startFraction: number; endFraction: number }>;
-  /** Current, source-authorized graph evidence. Inner keys intentionally stay snake_case on the host wire. */
-  routingEvidence?: RoadConditionRoutingEvidence;
-  /**
-   * Source-verified vehicle restrictions, already evaluated by OpenConditions.
-   * A published numeric fact is a statement about the source, not a permission
-   * to pass. The host displays it and must not re-evaluate or re-unit it.
-   */
-  restrictionDetails?: PublishedRoadRestrictionDetailsV1;
-  /**
-   * Set when a present restriction envelope could not be validated. The host
-   * treats it exactly like present details: it shows a generic unsupported
-   * notice and blocks shared routing, because an uninterpretable claim about
-   * vehicle applicability is not the same as no claim at all.
-   */
-  restrictionDetailsUnsupported?: true;
+  routingEvidence?: Record<string, RoadConditionRoutingEvidence>;
 }
 
 export interface RoadConditionsQuery {
-  types?: RoadConditionType[];
-  minSeverity?: RoadConditionSeverity;
+  /** Kind codes. */
+  kinds?: string[];
+  /** Type codes. */
+  types?: string[];
+  minSeverity?: RoadConditionSeverityLabel;
   /**
-   * Keep only conditions in effect within the next `n` days (`0` = active now).
+   * Keep only situations starting within the next `n` days (`0` = active now).
    * Undefined means no temporal filter — the routing path depends on that.
    */
   horizonDays?: number;
@@ -206,7 +169,7 @@ export interface RoadConditionsProvider {
   readonly attribution?: RoadConditionAttribution[];
   readonly coverage?: { bbox: BBox } | { all: true };
   getEvents(bbox: BBox, opts?: RoadConditionsQuery): Promise<RoadConditionEvent[]>;
-  /** Complete, uncollapsed observations for routing; reject overflow or unavailable data.
+  /** Every situation in the box with its routing evidence; rejects anything incomplete.
    * Display-only lists cannot establish routing coverage. */
   getRoutingEvents?(bbox: BBox): Promise<{ complete: true; events: RoadConditionEvent[] }>;
 
@@ -252,7 +215,6 @@ export interface RoadConditionsOperationalEvidence {
 }
 
 export interface IntegrationContext {
-  db?: DatabaseClient;
   http: HttpClient;
   cache: {
     withCache<T>(key: string, ttlSec: number, fn: () => Promise<T>): Promise<T>;

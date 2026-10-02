@@ -1,20 +1,23 @@
 # Binding evaluation corpus
 
-Each directory is one hand-verified case: a real event from a German feed, a
+Each directory is one hand-verified case: a real location from a German feed, a
 frozen OSM spine extract for its area, and what the resolver must produce.
 
 ## Capturing a case
 
 1. Fetch a live record (e.g. `curl -s https://verkehr.autobahn.de/o/autobahn/A46/services/roadworks`)
-   and pick one item. Run it through the parser
-   (`packages/roads/src/autobahn.ts` `parseAutobahn`) or copy an already
-   parsed observation from a running ingest's `/observations.geojson`.
-2. Write `event.json` as a `BindInput`: `{ id, geometry, type, refs, direction?, roadState? }`.
+   and pick one item. Run it through the roads parser (`parseEvents` in
+   `packages/roads/src/parse.ts`) or copy an already parsed situation from a
+   running ingest's `/situations/{id}`. To capture an effect that has a
+   location of its own, use the effect's `location.geometry`.
+2. Write `event.json` as a `BindInput`: `{ id, geometry, type, refs, direction?, roadState? }`,
+   built the way the binder builds it: the location's geometry, the
+   situation's `kind` as `type`, and the refs and names of `location.roads`.
    `refs` must be normalized (`normalizeRefs`). Note the source id and fetch
    date in `expected.json.why`.
 3. Extract the spine: `pnpm --filter @openconditions/roads bind:spine <west> <south> <east> <north> > <case>/spine.json`
    (Overpass, same highway classes as the import, directed `f`/`b` segments
-   exactly as `segment-build.ts` produces them). Keep the bbox tight (event
+   exactly as `segment-build.ts` produces them). Keep the bbox tight (location
    bbox + ~1 km).
 4. Verify BY HAND on osm.org: which ways, which carriageway, where it starts
    and ends. Write `expected.json`:

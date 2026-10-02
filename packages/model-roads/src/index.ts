@@ -5,6 +5,7 @@ export * from "./crosswalk/emitters.js";
 export * from "./crosswalk/ibi511.js";
 export * from "./crosswalk/infrastructure.js";
 export * from "./crosswalk/open511.js";
+export * from "./crosswalk/providers.js";
 export * from "./crosswalk/wzdx.js";
 export * from "./infrastructure.js";
 export * from "./kinds.js";

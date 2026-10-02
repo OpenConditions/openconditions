@@ -1,4 +1,5 @@
 import { toIsoTimestamp } from "@openconditions/core";
+import { gddkiaClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
@@ -61,11 +62,13 @@ export function parseGddkia(input: string | Buffer, src: SourceDescriptor): Road
     const road = getXmlChildText(it, "nr_drogi");
     const section = getXmlChildText(it, "nazwa_odcinka");
     const text = getXmlChildText(it, "objazd");
+    const bridge = bool(getXmlChildText(it, "awaria_mostu"));
     const { type, category, isPlanned } = typeOf({
       typ,
       closed: bool(getXmlChildText(it, "droga_zamknieta")),
-      bridge: bool(getXmlChildText(it, "awaria_mostu")),
+      bridge,
     });
+    const classification = gddkiaClassification(typ, bridge);
     const localId = hash(`${road ?? ""}|${getXmlChildText(it, "km") ?? ""}|${lat}|${lng}`);
 
     const recordTime = toIsoTimestamp(getXmlChildText(it, "data_powstania"));
@@ -76,6 +79,7 @@ export function parseGddkia(input: string | Buffer, src: SourceDescriptor): Road
       domain: "roads",
       kind: "event",
       situation: {
+        ...(classification !== undefined ? { classification } : {}),
         ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
         ...(text ? {} : { headlineFromSource: false as const }),
       },

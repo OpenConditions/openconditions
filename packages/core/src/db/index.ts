@@ -1,3 +1,4 @@
+export { bindingQueue, recordBinding, recordSegment } from "./binding-schema.js";
 export { runMigrations } from "./migrate.js";
 export {
   observationLatest,

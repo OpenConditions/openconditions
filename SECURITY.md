@@ -50,9 +50,8 @@ tagged release receive security fixes. Older releases are not patched.
 In scope:
 
 - `services/ingest` — the Fastify ingest service, including the public,
-  rate-limited emitter feeds (`/observations.geojson`, `/traff.xml`,
-  `/datex2/situations.xml`, `/gtfs-rt/alerts.pb`, `/valhalla/exclusions.json`,
-  `/stream`, …).
+  rate-limited record API and emitter feeds (`/situations`, `/traff.xml`,
+  `/datex2/situations.xml`, `/valhalla/exclusions.json`, `/stream`, …).
 - `services/openlr-resolver` — the Python OpenLR map-matcher.
 - The published `@openconditions/*` packages (`core`, `roads`, `publishers`,
   `openlr`).
@@ -93,7 +92,8 @@ If you self-host the OpenConditions ingest service, a few recommendations:
 - Use a strong, unique database password; do not expose PostGIS to the public
   internet — the ingest service should reach it over a private network.
 - The public emitter feeds are rate-limited (`RATE_LIMIT_MAX` /
-  `RATE_LIMIT_WINDOW_MS`); tune them for your traffic. `TRUST_PROXY_CIDRS`
+  `RATE_LIMIT_WINDOW_MS`), and `/stream` refuses connections past
+  `STREAM_MAX_CONNECTIONS` (default 100); tune them for your traffic. `TRUST_PROXY_CIDRS`
   controls which immediate reverse-proxy address ranges may supply the client
   IP. The default accepts local and container networks and only one proxy hop;
   use explicit CIDRs if your proxy is elsewhere.

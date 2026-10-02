@@ -67,7 +67,7 @@
     },
     "canonicalId": "5581ad0b95ce6d68ff990ca30ecf8db15be2808d4c6ff0b20cd8cb6fbca2acdf",
     "domain": "roads",
-    "contentHash": "f60ab5193b8525a2a4294409f290b66744e058f3a3eb5485cc70c58ccf7cc657",
+    "contentHash": "8fcd631c2699a31664803989881223a96a2d260bfad3942dde1f5fbd131b29ec",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -78,7 +78,8 @@
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "MINOR"
     },
     "headline": [
       {
@@ -229,7 +230,7 @@
     },
     "canonicalId": "47c4830425f8ea982e29fa386ee7cf6a2184b7f06cd5cfe35560c193c5f040e4",
     "domain": "roads",
-    "contentHash": "8e388d0c8ab0beb7264b381980fc8c8d477a8f0c033d479048cbb9611a8a9420",
+    "contentHash": "2749f62586e3a9f41e338e7ee5d277d4c34aeb00448531874dc0762ec0b8c0ff",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -240,7 +241,8 @@
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "MINOR"
     },
     "headline": [
       {
@@ -334,7 +336,7 @@
     },
     "canonicalId": "604ce03955ecde0746216ca2b925441772f1911ef7f0fccf8729450b4050277c",
     "domain": "roads",
-    "contentHash": "5d2f6aa32a705df5f54676c01dc0913123f2c58bee23888d09dc3dad26d718cc",
+    "contentHash": "5a793f907b3a1c443d4afaa80cd69891b54eb6e598e1957f10c99bb5121252ff",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -345,7 +347,8 @@
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "MINOR"
     },
     "headline": [
       {
@@ -486,7 +489,7 @@
     },
     "canonicalId": "27b791dae3c6f113410a3db27dcdd5bf59d889ea4b95a2f19620bdda319dd3ff",
     "domain": "roads",
-    "contentHash": "877e4282bb2558d5706e3889fc4361ce9f2294a5dbac1a99d64404a49769f655",
+    "contentHash": "ac349b26f1acf0fc29113a4fa488b4caad9490da254497a8a831b8042cb782c3",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -496,7 +499,8 @@
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "MINOR"
     },
     "headline": [
       {

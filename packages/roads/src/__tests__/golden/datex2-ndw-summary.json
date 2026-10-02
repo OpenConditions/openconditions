@@ -89,7 +89,7 @@
       },
       "canonicalId": "9da9d028449732ca986da674f90e14e190eb54e60b49572257719e7b584cb789",
       "domain": "roads",
-      "contentHash": "5ed949a8db7f9df8199e545ee9567b202096685f3bcf4c034ad55b1802858fc3",
+      "contentHash": "319639f647bce6e48016df8857ceb83549345a506cc03cc1f155763eb62aa7fb",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
@@ -98,11 +98,12 @@
       "planned": false,
       "certainty": "observed",
       "severity": {
-        "label": "unknown"
+        "label": "unknown",
+        "declaredRaw": "unknown"
       },
       "headline": [
         {
-          "lang": "und",
+          "lang": "nl",
           "text": "Pijlwagen"
         }
       ],
@@ -208,7 +209,7 @@
       },
       "canonicalId": "da01abc3f1001105806bc3a9d010e1d8e07173cdc960453d4cdc5efd3afbbf65",
       "domain": "roads",
-      "contentHash": "2d4dcf957aab2746d771abb68c2d543c9bfe3dfe5b3a61581780ff59efc17328",
+      "contentHash": "d2bed3a8332f9c40bde2db0f42fe8b6ea30b17aadaeb1469fbe40d9abb591825",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
@@ -224,7 +225,8 @@
       "certainty": "observed",
       "severity": {
         "label": "moderate",
-        "source": "declared"
+        "source": "declared",
+        "declaredRaw": "medium"
       },
       "validity": {
         "status": "active",
@@ -399,7 +401,7 @@
       },
       "canonicalId": "4c5c18e934bf300ffb2579ca86b02ded7b847b76a32fa5f6712032d0a881bd65",
       "domain": "roads",
-      "contentHash": "0724c12458aa05e4c0d824f8ac106880020a6cd9be8b2e62fc1c6585fc4bad6c",
+      "contentHash": "6e309c9b77324d066cce5f7f65db974e5ac62715f89c43cfe34542472a9adeb8",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
@@ -409,7 +411,8 @@
       "certainty": "observed",
       "severity": {
         "label": "moderate",
-        "source": "declared"
+        "source": "declared",
+        "declaredRaw": "medium"
       },
       "validity": {
         "status": "active",
@@ -479,7 +482,7 @@
       },
       "canonicalId": "bf761c7cd8a996a61d0d478f1ecb05c96de729d7d26638460e9810935e4e0d59",
       "domain": "roads",
-      "contentHash": "764974a73e60cb1074242efcb10acdffea6dc79c6b07d7e8b8b87c648ed73dd8",
+      "contentHash": "2ccc69727283b894cc8206e21dfd25dcdd3e6e112619e67e76bef255716b94c8",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
@@ -488,7 +491,8 @@
       "planned": false,
       "certainty": "observed",
       "severity": {
-        "label": "unknown"
+        "label": "unknown",
+        "declaredRaw": "unknown"
       },
       "validity": {
         "status": "active",
@@ -772,7 +776,7 @@
       },
       "canonicalId": "e4cc85adde587f7066ea1a70a76bb58383bb8de58a117ee527853e0dd3e556eb",
       "domain": "roads",
-      "contentHash": "9f99836cd89ec6ae63e25155d41de359163048604c9caab11f6e1bf7e2da8df9",
+      "contentHash": "72eb0ca2ef3627d526585bff6db86357fe7bebfe62183b5d0885573b932d57c0",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
@@ -788,7 +792,8 @@
       "certainty": "observed",
       "severity": {
         "label": "moderate",
-        "source": "declared"
+        "source": "declared",
+        "declaredRaw": "medium"
       },
       "validity": {
         "status": "active",
@@ -2089,9 +2094,10 @@
             "end": "2026-06-22T03:00:00Z",
             "periods": [
               {
-                "repeatFrequency": "P1D",
                 "startDate": "2026-06-19",
-                "endDate": "2026-06-22",
+                "endDate": "2026-06-19",
+                "startTime": "21:00:00",
+                "duration": "P2DT8H",
                 "scheduleTimezone": "Europe/Amsterdam"
               }
             ]

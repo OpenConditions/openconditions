@@ -1,6 +1,6 @@
 import type { Confidence } from "@openconditions/core";
 import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
-import type { Schedule } from "@openconditions/model";
+import type { Schedule, Text } from "@openconditions/model";
 import {
   datexClassification,
   datexDiscriminator,
@@ -19,6 +19,7 @@ import {
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { isPlausibleWgs84, reprojectorFor } from "./reproject.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
+import { type CoarseType, coarseOf, coarseType } from "./situation/classes.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
   canonicalSnapshotValue,
@@ -27,7 +28,6 @@ import {
   type RoadSnapshotReport,
   snapshotFingerprint,
 } from "./snapshot.js";
-import { mapSourceType } from "./taxonomy.js";
 import { type AlertCReference, resolveAlertC, tmcTables } from "./tmc/index.js";
 import type { SourceDescriptor } from "./types.js";
 import {
@@ -116,6 +116,58 @@ function multilingual(node: unknown, lang: string): string | undefined {
 
   return text(comment);
 }
+
+const BCP47 = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$/;
+
+/**
+ * A DATEX multilingual block in every language it carries, in document order
+ * (the publisher's primary first). A value without a usable `lang` is
+ * undetermined; a block with no `values` is its plain text.
+ */
+function multilingualText(node: unknown): Text | undefined {
+  if (!isXmlObject(node)) return undefined;
+  const comment = getXmlChild(node, "comment") ?? node;
+  const values = getXmlChild(comment, "values");
+  const out: Text = [];
+  if (values) {
+    for (const v of xmlNodeToArray(values["value"]).filter(isXmlObject)) {
+      const t = text(v)?.trim();
+      if (!t) continue;
+      const lang = getXmlAttribute(v, "lang")?.trim();
+      const entry = { lang: lang && BCP47.test(lang) ? lang : "und", text: t };
+      if (!out.some((e) => e.lang === entry.lang && e.text === entry.text)) out.push(entry);
+    }
+  } else {
+    const t = text(comment)?.trim();
+    if (t) out.push({ lang: "und", text: t });
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+/**
+ * The coarse type of a DATEX record class where it is not its classification's:
+ * a management record's coarse type is its measure (a lane closure, a
+ * rerouting, a speed limit) whatever the classification its cause gives it, and
+ * the established reading of the vehicle and obstruction classes stays. Every
+ * other class reads its coarse type from its classification.
+ */
+const DATEX_COARSE: Readonly<Record<string, CoarseType>> = {
+  Accident: coarseType("accident"),
+  VehicleObstruction: coarseType("broken_down_vehicle"),
+  GeneralObstruction: coarseType("obstruction"),
+  InfrastructureDamageObstruction: { ...coarseType("hazard"), category: "incident" },
+  EnvironmentalObstruction: { ...coarseType("hazard"), category: "incident" },
+  RoadOrCarriagewayOrLaneManagement: coarseType("lane_closure"),
+  ReroutingManagement: coarseType("detour"),
+  SpeedManagement: coarseType("speed_restriction"),
+  GeneralNetworkManagement: coarseType("other"),
+  MaintenanceWorks: coarseType("roadworks"),
+  ConstructionWorks: coarseType("roadworks"),
+  AbnormalTraffic: coarseType("congestion"),
+  PoorEnvironmentConditions: coarseType("weather"),
+  PublicEvent: coarseType("public_event"),
+  EquipmentOrSystemFault: coarseType("equipment_fault"),
+};
 
 function defaultHeadline(type: string): string {
   const labels: Record<string, string> = {
@@ -866,18 +918,26 @@ function causeDescriptionOf(rec: XmlObject): string | undefined {
  * is what broke the old single-node `multilingual()` lookup (it returned the
  * default headline for every multi-comment record).
  */
-function publicComments(rec: XmlObject, lang = "en"): { type?: string; text: string }[] {
-  const out: { type?: string; text: string }[] = [];
+function publicComments(rec: XmlObject, lang = "en"): PublicComment[] {
+  const out: PublicComment[] = [];
   for (const gpc of getXmlChildren(rec, "generalPublicComment")) {
     const t = multilingual(gpc, lang);
-    if (!t) continue;
+    const all = multilingualText(gpc);
+    if (!t || !all) continue;
     const type = getXmlChildText(
       getXmlChild(getXmlChild(gpc, "commentExtension"), "commentExtended"),
       "commentType2",
     );
-    out.push(type ? { type, text: t } : { text: t });
+    out.push(type ? { type, text: t, all } : { text: t, all });
   }
   return out;
+}
+
+/** One `generalPublicComment`: its best-language text, and every language it carries. */
+interface PublicComment {
+  type?: string;
+  text: string;
+  all: Text;
 }
 
 function speedLimitOf(rec: XmlObject): number | undefined {
@@ -1527,19 +1587,31 @@ function parseDatexInternal(
         versionTime,
         fingerprint: canonicalSnapshotValue(rec),
         disposition: "unlocatable",
+        ...(situationId ? { situationId } : {}),
       });
       continue;
     }
 
     const recType = elementType(rec) || className || "";
-    const mapped = mapSourceType("datex2", recType);
+    const discriminator = datexDiscriminator(recType);
+    const classification = datexClassification(
+      recType,
+      discriminator === undefined
+        ? []
+        : xmlNodeToArray(rec[discriminator])
+            .map(text)
+            .filter((v): v is string => v !== undefined),
+      getXmlChildren(rec, "cause")
+        .map((cause) => getXmlChildText(cause, "causeType"))
+        .filter((v): v is string => v !== undefined),
+    );
     // A management record that declares a full road closure is a closure, even
     // when the publisher's record id or headline names something narrower.
     const declaresRoadClosed =
       getXmlChildText(rec, "roadOrCarriagewayOrLaneManagementType") === "roadClosed";
     const { type, category, isPlanned } = declaresRoadClosed
-      ? { ...mapped, ...mapSourceType("datex2", "roadClosure") }
-      : mapped;
+      ? coarseType("road_closure")
+      : (DATEX_COARSE[recType] ?? coarseOf(classification));
 
     const severity =
       situationSeverity || text(rec["overallSeverity"]) || text(rec["severity"]) || "";
@@ -1552,24 +1624,36 @@ function parseDatexInternal(
         : normalised;
 
     const comments = publicComments(rec, "en");
-    const commentByType = (re: RegExp): string | undefined =>
-      comments.find((c) => c.type && re.test(c.type))?.text;
+    const typed = (re: RegExp) => comments.find((c) => c.type && re.test(c.type));
+    const commentByType = (re: RegExp): string | undefined => typed(re)?.text;
     const fallbackComment = getXmlChild(rec, "comment");
+    const fallbackAll = multilingualText(fallbackComment);
+    const causeNode = getXmlChild(getXmlChild(rec, "cause"), "causeDescription");
+    const causeAll = multilingualText(causeNode);
     const causeDesc = causeDescriptionOf(rec);
     // Prefer a name/title-typed comment as the headline; the work-type or any
     // other comment as the description; a route/diversion comment as the detour.
+    const headlineComment =
+      typed(/name|title|head/i) ?? comments.find((c) => !c.type) ?? comments[0];
     const sourceHeadline =
-      commentByType(/name|title|head/i) ??
-      comments.find((c) => !c.type)?.text ??
-      comments[0]?.text ??
-      multilingual(fallbackComment, "en") ??
-      causeDesc;
+      headlineComment?.text ?? multilingual(fallbackComment, "en") ?? causeDesc;
+    const headlineAll =
+      headlineComment?.all ?? (multilingual(fallbackComment, "en") ? fallbackAll : causeAll);
     const headlineText = sourceHeadline ?? defaultHeadline(type);
+    const descriptionComment =
+      typed(/type|description|desc/i) ?? comments.find((c) => c.text !== headlineText);
     const descriptionText =
-      commentByType(/type|description|desc/i) ??
-      comments.map((c) => c.text).find((t) => t !== headlineText) ??
-      multilingual(fallbackComment, "en") ??
-      causeDesc;
+      descriptionComment?.text ?? multilingual(fallbackComment, "en") ?? causeDesc;
+    const descriptionAll =
+      descriptionComment?.all ?? (multilingual(fallbackComment, "en") ? fallbackAll : causeAll);
+    const detourComment = typed(/route|recommend|divers|detour|umleit/i);
+    // Every comment the headline and description did not take stays a comment.
+    const otherComments = comments
+      .filter((c) => c !== headlineComment && c !== descriptionComment)
+      .map((c) => ({
+        type: c === detourComment ? ("detour" as const) : ("public" as const),
+        text: c.all,
+      }));
 
     const sourceDirection = restrictionDirectionOf(rec);
     const droppedScheduleFields = unsupportedScheduleFields(timeSpec);
@@ -1599,18 +1683,6 @@ function parseDatexInternal(
       ],
     });
 
-    const discriminator = datexDiscriminator(recType);
-    const classification = datexClassification(
-      recType,
-      discriminator === undefined
-        ? []
-        : xmlNodeToArray(rec[discriminator])
-            .map(text)
-            .filter((v): v is string => v !== undefined),
-      getXmlChildren(rec, "cause")
-        .map((cause) => getXmlChildText(cause, "causeType"))
-        .filter((v): v is string => v !== undefined),
-    );
     const shared = {
       id: `${src.id}:${recId(rec)}`,
       source: src.id,
@@ -1621,6 +1693,13 @@ function parseDatexInternal(
         ...(classification !== undefined ? { classification } : {}),
         ...(versionTime !== null ? { sourceUpdatedAt: versionTime } : {}),
         ...(sourceHeadline === undefined ? { headlineFromSource: false as const } : {}),
+        ...(sourceHeadline !== undefined && headlineAll ? { headline: headlineAll } : {}),
+        ...(descriptionText !== undefined && descriptionAll ? { description: descriptionAll } : {}),
+        ...(otherComments.length > 0 ? { comments: otherComments } : {}),
+        ...(severity.trim() ? { severityRaw: severity.trim() } : {}),
+        ...(validityStatus?.toLowerCase() === "suspended"
+          ? { validityStatus: "suspended" as const }
+          : {}),
       },
       ...(situationId ? { situationId } : {}),
       type,

@@ -1,353 +1,113 @@
+import type { SegmentConditionRow } from "@openconditions/core";
+import type { Effect } from "@openconditions/model";
 import { describe, expect, it } from "vitest";
-import type { SegmentConditionJson } from "../segment-conditions.js";
-import {
-  eventsToExclusions,
-  flowToSegmentSpeedCsv,
-  segmentConditionsToExclusions,
-} from "../valhalla.js";
-import { measurement, restrictionDetails, roadEvent } from "./fixture.js";
+import { segmentConditionsToJson } from "../segment-conditions.js";
+import { flowToSegmentSpeedCsv, segmentConditionsToExclusions } from "../valhalla.js";
+import { closure, segmentRow } from "./segment-rows.js";
 
-describe("eventsToExclusions", () => {
-  it("returns empty arrays for no input", () => {
-    expect(eventsToExclusions([])).toEqual({ exclude_locations: [], exclude_polygons: [] });
-  });
+const at = new Date("2026-09-06T10:00:00Z");
+const line = {
+  type: "LineString" as const,
+  coordinates: [
+    [6.8, 51.2],
+    [6.801, 51.2],
+  ],
+};
+/** Both directions of way 10, end to end. */
+const fullWay = [
+  {
+    segmentId: "10:f",
+    wayId: 10,
+    dir: "f" as const,
+    startFraction: 0,
+    endFraction: 1,
+    geometry: line,
+  },
+  {
+    segmentId: "10:b",
+    wayId: 10,
+    dir: "b" as const,
+    startFraction: 0,
+    endFraction: 1,
+    geometry: line,
+  },
+];
 
-  it("maps a Point road_closure to one exclude_locations entry ({lon, lat})", () => {
-    const ex = eventsToExclusions([
-      roadEvent({ type: "road_closure", geometry: { type: "Point", coordinates: [4.9, 52.37] } }),
-    ]);
-    expect(ex.exclude_locations).toEqual([{ lon: 4.9, lat: 52.37 }]);
-    expect(ex.exclude_polygons).toEqual([]);
-  });
+function exclusions(rows: SegmentConditionRow[]) {
+  const projected = segmentConditionsToJson(rows, at, { resolverVersion: "2.0.0" });
+  return segmentConditionsToExclusions(projected.conditions, { activeAt: at, evaluatedAt: at });
+}
 
-  it("samples a LineString closure into points <=45 m apart, keeping the endpoints", () => {
-    // ~1.35 km segment at lat 52.5 → many sampled points, not just the 2 vertices.
-    const ex = eventsToExclusions([
-      roadEvent({
-        type: "road_closure",
-        geometry: {
-          type: "LineString",
-          coordinates: [
-            [13.4, 52.5],
-            [13.42, 52.5],
-          ],
-        },
-      }),
-    ]);
-    expect(ex.exclude_locations.length).toBeGreaterThan(10);
-    expect(ex.exclude_locations[0]).toEqual({ lon: 13.4, lat: 52.5 });
-    expect(ex.exclude_locations.at(-1)).toEqual({ lon: 13.42, lat: 52.5 });
-    // Every consecutive pair is within the spacing budget (+ small slack).
-    for (let i = 1; i < ex.exclude_locations.length; i++) {
-      const a = ex.exclude_locations[i - 1]!;
-      const b = ex.exclude_locations[i]!;
-      const dLat = (b.lat - a.lat) * 111_320;
-      const dLon = (b.lon - a.lon) * 111_320 * Math.cos((a.lat * Math.PI) / 180);
-      expect(Math.hypot(dLat, dLon)).toBeLessThanOrEqual(50);
-    }
-  });
-
-  it("honours a larger maxSpacingMeters (fewer sampled points)", () => {
-    const line = roadEvent({
-      type: "road_closure",
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [13.4, 52.5],
-          [13.42, 52.5],
-        ],
-      },
-    });
-    const tight = eventsToExclusions([line], { maxSpacingMeters: 45 });
-    const loose = eventsToExclusions([line], { maxSpacingMeters: 500 });
-    expect(loose.exclude_locations.length).toBeLessThan(tight.exclude_locations.length);
-  });
-
-  it("downsamples a long line to maxPointsPerClosure but keeps both endpoints", () => {
-    const ex = eventsToExclusions(
-      [
-        roadEvent({
-          type: "road_closure",
-          geometry: {
-            type: "LineString",
-            coordinates: [
-              [13.4, 52.5],
-              [13.6, 52.5], // ~13.5 km → hundreds of 45 m samples, capped to 5
-            ],
-          },
-        }),
-      ],
-      { maxPointsPerClosure: 5 },
-    );
-    expect(ex.exclude_locations).toHaveLength(5);
-    expect(ex.exclude_locations[0]).toEqual({ lon: 13.4, lat: 52.5 });
-    expect(ex.exclude_locations.at(-1)).toEqual({ lon: 13.6, lat: 52.5 });
-  });
-
-  it("maps a closure Polygon to an exterior ring of [lon, lat] pairs (GeoJSON order)", () => {
-    const ring: [number, number][] = [
-      [4.0, 52.0],
-      [4.1, 52.0],
-      [4.1, 52.1],
-      [4.0, 52.0],
-    ];
-    const ex = eventsToExclusions([
-      roadEvent({
-        type: "road_closure",
-        severity: "critical",
-        geometry: { type: "Polygon", coordinates: [ring] },
-      }),
-    ]);
-    expect(ex.exclude_polygons).toEqual([ring]);
-    expect(ex.exclude_locations).toEqual([]);
-  });
-
-  it("does not turn critical severity alone into a road closure", () => {
-    const ex = eventsToExclusions([roadEvent({ type: "accident", severity: "critical" })]);
-    expect(ex.exclude_locations).toHaveLength(0);
-  });
-
-  it("suppresses the polygon ring of a critical non-closure event (e.g. a regional weather warning)", () => {
-    const ring: [number, number][] = [
-      [4.0, 52.0],
-      [4.1, 52.0],
-      [4.1, 52.1],
-      [4.0, 52.0],
-    ];
-    const ex = eventsToExclusions([
-      roadEvent({
-        type: "weather",
-        severity: "critical",
-        geometry: { type: "Polygon", coordinates: [ring] },
-      }),
-    ]);
-    expect(ex.exclude_polygons).toEqual([]);
-    expect(ex.exclude_locations).toEqual([]);
-  });
-
-  it("still maps a closure MultiPolygon's rings, but suppresses a critical non-closure MultiPolygon", () => {
-    const ring: [number, number][] = [
-      [4.0, 52.0],
-      [4.1, 52.0],
-      [4.1, 52.1],
-      [4.0, 52.0],
-    ];
-    const closure = eventsToExclusions([
-      roadEvent({
-        type: "road_closure",
-        geometry: { type: "MultiPolygon", coordinates: [[ring]] },
-      }),
-    ]);
-    expect(closure.exclude_polygons).toEqual([ring]);
-
-    const nonClosure = eventsToExclusions([
-      roadEvent({
-        type: "weather",
-        severity: "critical",
-        geometry: { type: "MultiPolygon", coordinates: [[ring]] },
-      }),
-    ]);
-    expect(nonClosure.exclude_polygons).toEqual([]);
-  });
-
-  it("excludes non-closure, non-critical events", () => {
-    const ex = eventsToExclusions([roadEvent({ type: "accident", severity: "high" })]);
-    expect(ex).toEqual({ exclude_locations: [], exclude_polygons: [] });
-  });
-
-  it("excludes inactive/cancelled closures", () => {
-    const ex = eventsToExclusions([roadEvent({ type: "road_closure", status: "cancelled" })]);
-    expect(ex.exclude_locations).toEqual([]);
-  });
-
-  it("ignores measurements (only events contribute)", () => {
-    const ex = eventsToExclusions([measurement()]);
-    expect(ex).toEqual({ exclude_locations: [], exclude_polygons: [] });
-  });
-
-  it("caps the TOTAL exclude_locations across all closures to maxTotalPoints (default 45), evenly subsampled", () => {
-    // 10 point closures, each contributing 1 location, well under 45 → unchanged.
-    const few = Array.from({ length: 10 }, (_, i) =>
-      roadEvent({
-        id: `road_closure:${i}`,
-        type: "road_closure",
-        geometry: { type: "Point", coordinates: [4 + i * 0.01, 52] },
-      }),
-    );
-    expect(eventsToExclusions(few).exclude_locations).toHaveLength(10);
-
-    // 100 point closures → raw total (100) exceeds the 45 cap, so the result
-    // is subsampled down to exactly 45, preserving the first vertex.
-    const many = Array.from({ length: 100 }, (_, i) =>
-      roadEvent({
-        id: `road_closure:${i}`,
-        type: "road_closure",
-        geometry: { type: "Point", coordinates: [4 + i * 0.01, 52] },
-      }),
-    );
-    const ex = eventsToExclusions(many);
-    expect(ex.exclude_locations).toHaveLength(45);
-    expect(ex.exclude_locations[0]).toEqual({ lon: 4, lat: 52 });
-  });
-
-  it("honours an explicit maxTotalPoints override", () => {
-    const many = Array.from({ length: 20 }, (_, i) =>
-      roadEvent({
-        id: `road_closure:${i}`,
-        type: "road_closure",
-        geometry: { type: "Point", coordinates: [4 + i * 0.01, 52] },
-      }),
-    );
-    const ex = eventsToExclusions(many, { maxTotalPoints: 5 });
-    expect(ex.exclude_locations).toHaveLength(5);
-  });
-
-  it("excludes a closure whose validFrom is in the future relative to activeAt", () => {
-    const activeAt = new Date("2026-06-01T00:00:00Z");
-    const future = roadEvent({
-      type: "road_closure",
-      validFrom: "2026-06-15T00:00:00Z",
-      geometry: { type: "Point", coordinates: [4.9, 52.37] },
-    });
-    const ex = eventsToExclusions([future], { activeAt });
-    expect(ex.exclude_locations).toEqual([]);
-  });
-
-  it("includes a closure whose validFrom is in the past relative to activeAt", () => {
-    const activeAt = new Date("2026-06-01T00:00:00Z");
-    const started = roadEvent({
-      type: "road_closure",
-      validFrom: "2026-05-15T00:00:00Z",
-      geometry: { type: "Point", coordinates: [4.9, 52.37] },
-    });
-    const ex = eventsToExclusions([started], { activeAt });
-    expect(ex.exclude_locations).toEqual([{ lon: 4.9, lat: 52.37 }]);
-  });
-
-  it("does not exclude a closure outside its nightly schedule window", () => {
-    const ex = eventsToExclusions(
-      [
-        roadEvent({
-          type: "road_closure",
-          geometry: { type: "Point", coordinates: [13.4, 52.5] },
-          validFrom: "2026-09-01T00:00:00Z",
-          validTo: "2026-09-30T00:00:00Z",
-          schedule: [{ startTime: "20:00", duration: "PT9H", scheduleTimezone: "Europe/Berlin" }],
-        }),
-      ],
-      { activeAt: new Date("2026-09-08T10:00:00Z") },
-    );
-    expect(ex.exclude_locations).toEqual([]);
-  });
-
-  it("does NOT exclude a self-reported crowd closure that is not routing-eligible", () => {
-    const crowd = roadEvent({
-      type: "road_closure",
-      geometry: { type: "Point", coordinates: [4.9, 52.37] },
-      origin: {
-        kind: "crowd",
-        attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
-        reporter: { keyId: "key-a" },
-      },
-      routingEligible: false,
-    } as never);
-    expect(eventsToExclusions([crowd])).toEqual({ exclude_locations: [], exclude_polygons: [] });
-  });
-
-  it("does NOT exclude a crowd closure with an undefined routingEligible (defaults to not routing)", () => {
-    const crowd = roadEvent({
-      type: "road_closure",
-      geometry: { type: "Point", coordinates: [4.9, 52.37] },
-      origin: {
-        kind: "crowd",
-        attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
-        reporter: { keyId: "key-a" },
-      },
-    } as never);
-    expect(eventsToExclusions([crowd]).exclude_locations).toEqual([]);
-  });
-
-  it("DOES exclude the same crowd closure once an external resolution made it routing-eligible", () => {
-    const resolved = roadEvent({
-      type: "road_closure",
-      geometry: { type: "Point", coordinates: [4.9, 52.37] },
-      origin: {
-        kind: "crowd",
-        attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
-        reporter: { keyId: "key-a" },
-      },
-      routingEligible: true,
-    } as never);
-    expect(eventsToExclusions([resolved]).exclude_locations).toEqual([{ lon: 4.9, lat: 52.37 }]);
-  });
-
-  it("always excludes a feed closure (authoritative; routing_eligible false/NULL must not drop it)", () => {
-    const feed = roadEvent({
-      type: "road_closure",
-      geometry: { type: "Point", coordinates: [4.9, 52.37] },
-      // Feed rows never carry routingEligible; that must not exclude them.
-    });
-    expect(eventsToExclusions([feed]).exclude_locations).toEqual([{ lon: 4.9, lat: 52.37 }]);
-  });
-
-  it("does NOT exclude a closure of unknown/missing provenance (fail-closed, matches the SQL filter)", () => {
-    const unknownKind = roadEvent({
-      type: "road_closure",
-      geometry: { type: "Point", coordinates: [4.9, 52.37] },
-      origin: { kind: "other", attribution: { provider: "?" } },
-    } as never);
-    expect(eventsToExclusions([unknownKind]).exclude_locations).toEqual([]);
-
-    const missingOrigin = roadEvent({
-      type: "road_closure",
-      geometry: { type: "Point", coordinates: [4.9, 52.37] },
-      origin: undefined,
-    } as never);
-    expect(eventsToExclusions([missingOrigin]).exclude_locations).toEqual([]);
-  });
-
-  it("requires current exact/likely evidence with all-vehicle, bidirectional, full-way spans", () => {
-    const base = roadEvent({ type: "road_closure" }) as never as {
-      routingEvidence: import("@openconditions/core").RoadConditionRoutingEvidence;
-    };
-    const variants = [
-      {
-        ...base,
-        routingEvidence: { ...base.routingEvidence, binding_status: "ambiguous" as const },
-      },
-      {
-        ...base,
-        routingEvidence: {
-          ...base.routingEvidence,
-          applicability: { kind: "classes" as const, classes: ["truck" as const] },
-        },
-      },
-      { ...base, routingEvidence: { ...base.routingEvidence, direction_mode: "forward" as const } },
-      {
-        ...base,
-        routingEvidence: {
-          ...base.routingEvidence,
-          segments: [{ ...base.routingEvidence.segments[0]!, from_fraction: 0.2 }],
-        },
-      },
-      {
-        ...base,
-        routingEvidence: { ...base.routingEvidence, fresh_until: "2026-06-22T09:59:00Z" },
-      },
-    ];
-    for (const event of variants) {
-      expect(
-        eventsToExclusions([event as never], { activeAt: new Date("2026-06-22T10:00:00Z") }),
-      ).toEqual({ exclude_locations: [], exclude_polygons: [] });
-    }
-  });
-
-  it("does not treat a lane closure as a whole-road exclusion", () => {
+describe("segmentConditionsToExclusions", () => {
+  it("excludes a bidirectional, full-way closure that applies to cars", () => {
     expect(
-      eventsToExclusions([roadEvent({ type: "lane_closure" })], {
-        activeAt: new Date("2026-06-22T10:00:00Z"),
-      }),
-    ).toEqual({ exclude_locations: [], exclude_polygons: [] });
+      exclusions([segmentRow({ segments: fullWay })]).exclude_locations.length,
+    ).toBeGreaterThan(0);
+    const cars = { ...closure, applicability: { kind: "classes", include: [{ class: "car" }] } };
+    expect(
+      exclusions([segmentRow({ segments: fullWay, effect: cars as Effect })]).exclude_locations
+        .length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("does not exclude a closure narrower than every car, in one direction or part of a way", () => {
+    const trucks = {
+      ...closure,
+      applicability: { kind: "classes", include: [{ class: "truck" }] },
+    };
+    const exceptCars = { ...closure, applicability: { kind: "all", except: [{ class: "car" }] } };
+    const none = { exclude_locations: [], exclude_polygons: [], speed_caps: [] };
+    expect(exclusions([segmentRow({ segments: fullWay, effect: trucks as Effect })])).toEqual(none);
+    expect(exclusions([segmentRow({ segments: fullWay, effect: exceptCars as Effect })])).toEqual(
+      none,
+    );
+    expect(exclusions([segmentRow()])).toEqual(none);
+  });
+
+  it("excludes every lane closed as a closure, and no closure off the carriageway", () => {
+    const allLanes = {
+      ...closure,
+      kind: "lane_restriction",
+      vehicleImpact: "all_lanes_closed",
+    } as unknown as Effect;
+    expect(
+      exclusions([segmentRow({ segments: fullWay, effect: allLanes })]).exclude_locations.length,
+    ).toBeGreaterThan(0);
+    const someLanes = { ...allLanes, vehicleImpact: "some_lanes_closed" } as unknown as Effect;
+    const cycleway = { ...closure, scope: "cycleway" } as Effect;
+    const none = { exclude_locations: [], exclude_polygons: [], speed_caps: [] };
+    expect(exclusions([segmentRow({ segments: fullWay, effect: someLanes })])).toEqual(none);
+    expect(exclusions([segmentRow({ segments: fullWay, effect: cycleway })])).toEqual(none);
+  });
+
+  it("never excludes restriction evidence", () => {
+    const unknown = { ...closure, applicability: { kind: "unknown" } } as Effect;
+    expect(exclusions([segmentRow({ segments: fullWay, effect: unknown })])).toEqual({
+      exclude_locations: [],
+      exclude_polygons: [],
+      speed_caps: [],
+    });
+  });
+
+  it("caps the speed of each span a mandatory speed limit for cars covers", () => {
+    const limit = {
+      id: "a1/speed_limit",
+      kind: "speed_limit",
+      v: 1,
+      limit: { value: 60, unit: "km/h" },
+      applicability: { kind: "all" },
+      compliance: "mandatory",
+      normalization: "complete",
+    } as Effect;
+    const advisory = { ...limit, id: "a1/advisory", advisory: true } as Effect;
+    const out = exclusions([
+      segmentRow({ effect_id: "a1/speed_limit", effect: limit }),
+      segmentRow({ effect_id: "a1/advisory", effect: advisory }),
+    ]);
+    expect(out.speed_caps).toEqual([
+      { way_id: 10, dir: "f", start_fraction: 0.3, end_fraction: 1, limit_kph: 60 },
+    ]);
+    expect(out.exclude_locations).toEqual([]);
   });
 });
 
@@ -370,77 +130,5 @@ describe("flowToSegmentSpeedCsv", () => {
       { wayId: 501, dir: "b", currentKph: null, freeFlowKph: null, los: "unknown" },
     ]);
     expect(csv.split("\n")[1]).toBe("501,b,,,unknown");
-  });
-});
-
-describe("segmentConditionsToExclusions", () => {
-  it("uses complete all-vehicle bidirectional full spans and rejects narrower semantics", () => {
-    const event = roadEvent({ type: "road_closure" });
-    const evidence = event.routingEvidence!;
-    const line = {
-      type: "LineString" as const,
-      coordinates: [
-        [13.4, 52.5],
-        [13.401, 52.5],
-      ],
-    };
-    const condition = {
-      id: event.id,
-      source: event.source,
-      type: "road_closure",
-      severity: "high",
-      road_state: "closed",
-      speed_limit_kph: null,
-      vehicles_affected: [],
-      origin_kind: "feed",
-      routing_eligible: true,
-      valid_from: null,
-      valid_to: null,
-      binding: { status: "exact", confidence: 0.99, direction_mode: "both" },
-      routing_evidence: evidence,
-      segments: [
-        { way_id: 1, dir: "f", start_fraction: 0, end_fraction: 1, geometry: line },
-        { way_id: 1, dir: "b", start_fraction: 0, end_fraction: 1, geometry: line },
-      ],
-    } satisfies SegmentConditionJson;
-    expect(
-      segmentConditionsToExclusions([condition], {
-        activeAt: new Date("2026-06-22T10:00:00Z"),
-        evaluatedAt: new Date("2026-06-22T10:00:00Z"),
-      }).exclude_locations.length,
-    ).toBeGreaterThan(0);
-    expect(
-      segmentConditionsToExclusions(
-        [
-          {
-            ...condition,
-            routing_evidence: {
-              ...evidence,
-              applicability: { kind: "classes", classes: ["truck"] },
-            },
-          },
-        ],
-        { activeAt: new Date("2026-06-22T10:00:00Z") },
-      ),
-    ).toEqual({ exclude_locations: [], exclude_polygons: [] });
-  });
-});
-
-describe("restriction evidence exclusion", () => {
-  it("produces no Valhalla effect for a record carrying restriction evidence", () => {
-    const geometry = { type: "Point" as const, coordinates: [4.9, 52.37] };
-    for (const carrier of [
-      { restrictionDetails: restrictionDetails() },
-      { restrictionDetailsUnsupported: true },
-      { restrictionDetails: { schemaVersion: 9 } },
-      { restrictionDetails: undefined },
-    ]) {
-      expect(
-        eventsToExclusions([roadEvent({ type: "road_closure", geometry, ...carrier } as never)]),
-      ).toEqual({ exclude_locations: [], exclude_polygons: [] });
-    }
-    expect(
-      eventsToExclusions([roadEvent({ type: "road_closure", geometry })]).exclude_locations,
-    ).toHaveLength(1);
   });
 });

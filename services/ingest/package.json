@@ -29,11 +29,11 @@
     "fastify": "^5.12.1",
     "hyparquet-writer": "0.16.10",
     "postgres": "^3.4.9",
-    "undici": "^8.10.0"
+    "undici": "^8.10.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
-    "gtfs-realtime-bindings": "^2.2.0",
     "hyparquet": "1.31.1",
     "testcontainers": "^12.1.0",
     "tsup": "^8.5.1",

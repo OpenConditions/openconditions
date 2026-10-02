@@ -186,7 +186,8 @@ export interface EvictionResult extends EvictionPlan {
  * marks its index row `evicted_at` (the row stays, so a record's raw
  * reference still names what it was read from), warns on the sources that
  * lost hot-window payloads, and removes the index rows of payloads evicted
- * more than `historyDays` ago. `dryRun` only plans.
+ * more than `historyDays` ago. A payload fetched again since the plan was
+ * made is kept; `evict` lists what was evicted. `dryRun` only plans.
  */
 export async function evictRawPayloads(
   sql: postgres.Sql,
@@ -204,12 +205,11 @@ export async function evictRawPayloads(
       tier: RawTier;
       last_seen_at: Date;
       bytes_stored: string;
-      storage_key: string;
       pinned: boolean;
       is_base: boolean;
     }[]
   >`
-    SELECT p.source_id, p.hash, p.tier, p.last_seen_at, p.bytes_stored, p.storage_key,
+    SELECT p.source_id, p.hash, p.tier, p.last_seen_at, p.bytes_stored,
            p.pinned_reason IS NOT NULL AS pinned,
            EXISTS (SELECT 1 FROM conditions.raw_payload d
                     WHERE d.source_id = p.source_id AND d.base_hash = p.hash
@@ -223,17 +223,30 @@ export async function evictRawPayloads(
     lastSeenAt: r.last_seen_at.getTime(),
     bytesStored: Number(r.bytes_stored),
     protected: r.pinned || r.is_base || (r.tier === "situation" && live.has(r.hash)),
-    storageKey: r.storage_key,
   }));
   const plan = planEviction(held, opts.policy);
   if (opts.dryRun) return { ...plan, purged: 0 };
 
   const at = new Date(opts.policy.now);
-  for (const r of plan.evict as (HeldPayload & { storageKey: string })[]) {
-    await rm(join(opts.dir, r.storageKey), { force: true });
-    await sql`
-      UPDATE conditions.raw_payload SET evicted_at = ${at}
-       WHERE source_id = ${r.sourceId} AND hash = ${r.hash}`;
+  const evicted: HeldPayload[] = [];
+  for (const r of plan.evict) {
+    // The row stays locked until its blob is gone, so a poll fetching the
+    // payload meanwhile waits and then archives it afresh. One fetched since
+    // the plan was made is kept.
+    const done = await sql.begin(async (tx) => {
+      const [row] = await tx<{ storage_key: string }[]>`
+        SELECT storage_key FROM conditions.raw_payload
+         WHERE source_id = ${r.sourceId} AND hash = ${r.hash} AND evicted_at IS NULL
+           AND date_trunc('milliseconds', last_seen_at) <= ${new Date(r.lastSeenAt)}
+           FOR UPDATE`;
+      if (!row) return false;
+      await tx`
+        UPDATE conditions.raw_payload SET evicted_at = ${at}
+         WHERE source_id = ${r.sourceId} AND hash = ${r.hash}`;
+      await rm(join(opts.dir, row.storage_key), { force: true });
+      return true;
+    });
+    if (done) evicted.push(r);
   }
   if (plan.hotEvicted.length > 0) {
     console.warn(
@@ -246,5 +259,5 @@ export async function evictRawPayloads(
   const purged = await sql`
     DELETE FROM conditions.raw_payload
      WHERE evicted_at < ${new Date(opts.policy.now - opts.historyDays * DAY_MS)}`;
-  return { ...plan, purged: purged.count };
+  return { ...plan, evict: evicted, purged: purged.count };
 }

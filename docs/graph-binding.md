@@ -1,32 +1,49 @@
 # Graph binding
 
-A road event arrives from a feed as geometry: a point, a start/end pair of
-coordinates, or a polyline that a publisher drew somewhere near the road it is
-talking about. That is enough to draw a marker on a map and nowhere near enough
-to close a carriageway for a router, which needs to know _which_ directed piece
-of _which_ OSM way is affected.
+A road situation arrives from a feed with a location: a point, a start/end pair
+of coordinates, or a polyline that a publisher drew somewhere near the road it
+is talking about. That is enough to draw a marker on a map and nowhere near
+enough to close a carriageway for a router, which needs to know _which_ directed
+piece of _which_ OSM way is affected.
 
-**Binding** is the derived step that answers that question. It resolves an event
-against the directed segment spine (`conditions.road_segment`, one row per
-`way_id:f|b`) and stores the ordered spans the event occupies, each with the
-fraction range along the segment, plus a confidence and a status describing how
-sure the resolver is.
+**Binding** is the derived step that answers that question. It resolves a
+location against the directed segment spine (`conditions.road_segment`, one row
+per `way_id:f|b`) and stores the ordered spans the location occupies, each with
+the fraction range along the segment, plus a confidence and a status describing
+how sure the resolver is.
 
-Binding never rewrites the event. `conditions.observations.geom` stays exactly
-as the publisher sent it, and the binding lives in its own tables alongside it.
-That matters for three reasons: the original geometry is what the map draws and
-what an archive consumer expects; a resolver bug can be corrected by re-running
-the resolver rather than by re-fetching a feed that may no longer serve the
-record; and a consumer that disagrees with the binding can always fall back to
-the raw geometry.
+Binding never rewrites the record. A situation's `location` (and the `geom`
+column promoted from it) stays exactly as the publisher sent it, and the binding
+lives in its own tables alongside it. That matters for three reasons: the
+original geometry is what the map draws and what an archive consumer expects; a
+resolver bug can be corrected by re-running the resolver rather than by
+re-fetching a feed that may no longer serve the record; and a consumer that
+disagrees with the binding can always fall back to the raw geometry.
 
-## The two tables
+## What is bound
 
-Both live in the `conditions` schema, created by migration
-`0025_observation_binding.sql`.
+The binder places live (not tombstoned) situations of the `roads` domain
+([model](model.md)). One situation can have several bound locations:
 
-`conditions.observation_binding` — one row per attempted event, keyed by
-`observation_id`:
+- **The situation's own location**, when it has a geometry. Its binding has
+  `effect_id` `''`.
+- **Each effect that names a geometry of its own** in `effect.location`: a
+  roadworks phase closing a different stretch, a detour, a lane closure the
+  source located separately. Its binding is keyed by the effect's id.
+
+An effect without a `location` applies where its situation does and reads the
+situation's binding. An effect whose own location has only a description and no
+geometry applies somewhere the situation's binding does not establish, so it
+reads no binding at all and never reaches the routing outputs.
+
+## The tables
+
+All three live in the `conditions` schema, created by migrations
+`0042_record_bindings.sql` and `0044_record_binding_queue.sql`. Each is keyed by
+`(record_class, record_id, effect_id)`; `record_class` is `situation` for every
+row the binder writes, and `effect_id` is `''` for a record's own location.
+
+`conditions.record_binding` — one row per location the resolver attempted:
 
 | column                   | meaning                                                                                                                                                                                         |
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -38,18 +55,31 @@ Both live in the `conditions` schema, created by migration
 | `reason`                 | short machine reason on a non-binding outcome                                                                                                                                                   |
 | `resolver_version`       | `RESOLVER_VERSION` at the time of writing                                                                                                                                                       |
 | `geom_hash`              | hash of the resolver inputs, used for change detection                                                                                                                                          |
+| `record_revision`        | the record revision the binding was computed from                                                                                                                                               |
+| `graph_generation`       | the spine generation (`road_graph_state.generation`) it was computed on                                                                                                                         |
 | `bound_at`               | when the row was written                                                                                                                                                                        |
 
-`conditions.observation_segment` — the ordered path, primary key
-`(observation_id, seq)`, carrying `segment_id`, `way_id`, `dir`,
-`start_fraction` and `end_fraction`.
+`conditions.record_segment` — the ordered path, primary key
+`(record_class, record_id, effect_id, seq)`, carrying `segment_id`, `way_id`,
+`dir`, `start_fraction` and `end_fraction`.
 
-Both tables cascade from `conditions.observations`, so deleting an observation
-takes its binding with it. Neither has a foreign key to
-`conditions.road_segment`: the weekly rebuild deletes and reinserts a region's
-segments inside one transaction, and a cascade there would wipe every binding in
-the region once a week. The rebuild re-binds instead, and prunes the path rows
-whose segment genuinely disappeared.
+`conditions.binding_queue` — durable binding work, one row per situation whose
+revision changed (`effect_id` `''` covers the situation and all its effects),
+with the `record_revision` it was queued for, `attempts`, `next_attempt_at` and
+`last_error`.
+
+A summary row and its spans are always replaced together in one transaction, and
+only while the situation is still live at the revision the result was computed
+from and the graph is still the generation it was computed on. A reader never
+sees a new status with an old path.
+
+None of the tables has a foreign key. The record classes are separate tables, so
+the binder drops the bindings of a tombstoned situation or of an effect that is
+gone, and the sweep removes the bindings and queued work of a purged record. Nor
+is there a foreign key to `conditions.road_segment`: the weekly rebuild deletes
+and reinserts a region's segments inside one transaction, and a cascade there
+would wipe every binding in the region once a week. The rebuild re-binds
+instead, and prunes the path rows whose segment genuinely disappeared.
 
 ## The resolver
 
@@ -57,7 +87,13 @@ The resolver lives in `packages/roads/src/bind/` and is pure: geometry and
 stated road references in, ordered directed spans out. No I/O and no database —
 SQL only fetches the spine subgraph and stores the outcome, which is what makes
 the evaluation corpus possible. The entry points are `bindEvent(input, spine,
-opts)` and `toBindInput(event)`, both exported from `@openconditions/roads`.
+opts)` and `toBindInput(location)`, both exported from `@openconditions/roads`.
+
+The binder (`services/ingest/src/pipeline/bind-records.ts`) builds one input per
+location: the location's geometry, the situation's `kind` as `type`, the refs
+and first names of `location.roads`, and the direction (the axis value
+`positive` / `negative` when the location states one, else the source's text).
+An effect's own location is resolved with the situation's roads and direction.
 
 Tuning constants (`BIND_DEFAULTS` in `packages/roads/src/bind/types.ts`):
 
@@ -70,14 +106,15 @@ Tuning constants (`BIND_DEFAULTS` in `packages/roads/src/bind/types.ts`):
 
 ### Applicability
 
-- Only `kind = "event"`, `domain = "roads"`, `status = "active"` rows are
-  attempted.
+- Only live situations of the `roads` domain are attempted, and only while the
+  road graph is `ready`.
 - Polygon and MultiPolygon geometry is `not_applicable` / `polygon_geometry` —
   an area warning must never become a road closure.
-- The types `weather`, `public_event`, `authority`, `security` and
-  `transit_disruption` are `not_applicable` / `area_type`. Everything else is
-  attempted, including `congestion`, `accident` and `hazard`.
-- An event whose bbox lies outside every configured spine region is
+- The situation kinds `weather_condition`, `public_event`, `authority` and
+  `security` are `not_applicable` / `area_type` (`NOT_APPLICABLE_TYPES` in
+  `packages/roads/src/bind/bind-event.ts`). Everything else is attempted,
+  including `congestion`, `incident` and `road_hazard`.
+- A location whose bbox lies outside every configured spine region is
   `no_coverage` / `outside_regions`. That is decided by the ingest stage rather
   than the resolver: it is an operator's region-list choice, not a failure of
   the maths.
@@ -163,13 +200,16 @@ never rivals.
 | `unresolved`     | `no_path`            | both endpoints matched but no connected route between them                                              |
 | `unresolved`     | `subgraph_too_large` | the spine subgraph exceeded `maxSubgraphSegments`                                                       |
 | `unresolved`     | `resolver_error`     | the resolver threw; recorded rather than retried, never fatal                                           |
-| `no_coverage`    | `outside_regions`    | the event's bbox is outside every configured spine region                                               |
-| `not_applicable` | `area_type`          | `weather`, `public_event`, `authority`, `security`, `transit_disruption`                                |
+| `no_coverage`    | `outside_regions`    | the location's bbox is outside every configured spine region                                            |
+| `not_applicable` | `area_type`          | `weather_condition`, `public_event`, `authority`, `security`                                            |
 | `not_applicable` | `polygon_geometry`   | Polygon / MultiPolygon geometry                                                                         |
+| `obsolete`       | —                    | computed on a graph that is being rebuilt or replaced, or by a forced rebind; waiting to be re-resolved |
 
-Consumers that steer routes narrow to `exact` and `likely`. `ambiguous` exists
-so that a human, a map layer or a QA pass can see what the resolver was unsure
-about instead of the record vanishing.
+The routing outputs read only `exact` and `likely`. `ambiguous` exists so that a
+human, a map layer or a QA pass can see what the resolver was unsure about
+instead of the record vanishing. `obsolete` is written by the ingest service,
+not the resolver: the old spans stay until their replacement is written, but no
+reader applies them.
 
 ### Direction modes
 
@@ -184,83 +224,156 @@ order (the `b` geometry is stored reversed, so both run in travel direction).
 | `both`    | a bidirectional way with no usable heading: a point, or a line under 20 m. Both directions are bound, two spans per way                                                                                                                                                                                             |
 | `unknown` | contested and undecidable: a bearing-less line, or a point whose nearest carriageway has a rival. The nearest one still wins, but confidence is capped at 0.69 so routing never closes a guessed side                                                                                                               |
 
-The free-text `direction` attribute a feed may carry is part of the change hash
-but is not interpreted.
+The location's `direction` is part of the change hash but is not interpreted.
 
 ## When binding runs
 
-- **After every swap.** `services/ingest/src/pipeline/bind-observations.ts` runs
-  as a stage after a non-flow source's atomic swap has committed, over exactly
-  the ids that changed (`SwapCounts.changedIds`). It runs _after_ the commit so
-  a slow resolve never holds the advisory lock, and a failure is logged and
-  swallowed — binding is derived data and must never fail a poll.
-- **At startup.** `rebindStale` in `services/ingest/src/pipeline/rebind.ts`
-  hands every bindable id to the stage, fire-and-forget, so neither the feed
-  pollers nor the HTTP server wait on it. It force-deletes nothing: the stage's
-  own change detection decides what is stale, so a boot with nothing to do
-  reports 0.
-- **On a resolver bump.** The same startup pass covers it. A binding is
-  re-resolved when its input hash changed _or_ its stored `resolver_version` is
-  no longer `RESOLVER_VERSION`, so raising the constant in
+- **After every publish.** The writer (`writeSnapshotIn` in
+  `@openconditions/storage`) queues every situation whose revision changed,
+  tombstones included, in `binding_queue` inside the poll's own transaction, so
+  a revision is never visible without its binding work. After each feed poll,
+  event or flow (flow feeds derive congestion situations), the scheduler drains
+  the queue with `drainBindingQueue` in
+  `services/ingest/src/pipeline/bind-records.ts`: up to 500 due situations per
+  drain, outside the poll's transaction, so a slow resolve never holds the
+  source's advisory lock. A failed drain is logged and swallowed — binding is
+  derived data and must never fail a poll.
+- **Retries.** A resolver error is stored as `unresolved` / `resolver_error`
+  and the situation stays queued with backoff (30 s doubling, at most an hour).
+  A result that could not be written stays queued as it is. Everything else is
+  acknowledged up to the revision now stored, so work queued for a newer
+  revision in the meantime stays.
+- **At startup.** `rebindOnBoot` in `services/ingest/src/pipeline/rebind.ts`
+  runs fire-and-forget, so neither the feed pollers nor the HTTP server wait on
+  it. When every stored binding carries the current `RESOLVER_VERSION`, it hands
+  every live road situation to the binder and lets change detection decide, so a
+  boot with nothing to do reports 0. When any binding carries another version,
+  it rebinds everything (`rebindAll`): raising the constant in
   `packages/roads/src/bind/types.ts` is all it takes to re-resolve the store on
   the next boot.
-- **After the weekly spine rebuild.** `rebindAll` is the fifth and last stage of
+- **When the graph changes.** A spine rebuild marks every binding `obsolete`
+  and queues every live road situation before it touches a graph table.
+  Activating the new graph marks the bindings of any other generation
+  `obsolete` and queues every live road situation again. Until the graph is
+  `ready`, the binder writes nothing.
+- **After the weekly spine rebuild.** `rebindAll` is the last stage of
   `runSegmentRebuild` (`SEGMENT_REBUILD_CRON`), after OSM import, segment build,
-  OpenLR encode and sensor snap. This pass _forces_ a re-resolve, because a
-  rebuilt spine renumbers segments under events whose own inputs never moved and
-  the stage would otherwise skip them all as unchanged. It then deletes any path
-  row still pointing at a segment the rebuild removed.
+  OpenLR encode, sensor snap and graph activation. This pass _forces_ a
+  re-resolve, because a rebuilt spine renumbers segments under situations whose
+  own inputs never moved and the binder would otherwise skip them all as
+  unchanged. It then deletes any path row still pointing at a segment the
+  rebuild removed.
 
-Both rebind passes are no-ops when `BIND_ENABLED=false`; they bail before
-touching anything, so turning the stage off can never strip bindings that
+The binder writes nothing when `BIND_ENABLED=false`, and both rebind passes bail
+before touching anything, so turning the stage off can never strip bindings that
 nothing would put back.
 
-The change hash covers every input the resolver reads: geometry, normalized
-refs, event type, the free-text direction and `roadState`. Type is in there
-because `bindEvent` short-circuits on the not-applicable types — an event whose
-type flips to `weather` must lose its spans rather than be skipped as unchanged.
+A location is skipped as unchanged when its input hash, the resolver version,
+the record revision and the graph generation all match the stored binding and
+the binding is not `obsolete`. The hash covers every input the resolver reads
+plus what the location means for traffic: geometry, normalized refs, the
+situation kind, the direction and the kinds of the situation's effects. The kind
+is in there because `bindEvent` short-circuits on the not-applicable kinds — a
+situation whose kind flips to `weather_condition` must lose its spans rather
+than be skipped as unchanged.
 
-Bindings are dropped for ids that are no longer active road events. A swap can
-flip `observations.status` to `inactive` in place instead of deleting the row,
-and the cascade only fires on a real delete; without the explicit clear an ended
-closure would keep its `exact` binding and its spans forever.
+Bindings are dropped for locations that are no longer live: a tombstoned
+situation, or an effect that no longer names its own geometry. A situation that
+returns binds from scratch.
 
-## `GET /segments/conditions.json`
+## Routing outputs
 
-The routing consumer's feed: bound, in-effect road events keyed by directed OSM
-way spans. Instance-wide (no bbox, like `/segments/speed.csv`), rate-limited,
-`Cache-Control: public, max-age=60`, share-alike rows removed and
+Two routes in `services/ingest/src/publish-routes.ts` turn bindings into
+routing input. Both read through `readSegmentConditionRows` in
+`@openconditions/core` and project with `segmentConditionsToJson` in
+`@openconditions/publishers`, so they apply the same gates.
+
+### `GET /segments/conditions.json`
+
+The routing consumer's feed, schema version 2: one condition per bound effect,
+keyed by directed OSM way spans. Rate-limited, `Cache-Control: public,
+max-age=60`, share-alike records and unscheduled catalogue children removed, and
 `X-Data-License` set from the surviving rows.
 
-Query parameter: `at=<ISO 8601>`, defaulting to now. A malformed value is a 400. Only `active` events with an `exact`, `likely` or `ambiguous` binding are
-selected, and each is then filtered through `isInEffectAt` — the coarse
-`validFrom`/`validTo` span and the schema.org `schedule` **intersect**, so `at`
-must fall inside the span _and_, when a schedule is present, inside one of its
-occurrences (evaluated in the schedule's own `scheduleTimezone`). A nightly
-closure is therefore absent from the feed during the day. SQL cannot express
-that, which is why the filter runs in the emitter.
+Query parameters: `at=<ISO 8601>`, defaulting to now, and an optional
+`bbox=west,south,east,north` that selects effects by their own geometry. A
+malformed value is a 400.
 
-The payload is snake_case throughout:
+A condition is read when all of these hold:
+
+- The situation is live, of the `roads` domain and not past its expiry.
+- The effect is of a routing kind (`closure`, `lane_restriction`,
+  `speed_limit`, `access`, `dimension_limit`, `hazmat`), or it is restriction
+  evidence (its vehicles are unknown or it is not fully normalized).
+- The location it applies to has an `exact` or `likely` binding computed by the
+  current `RESOLVER_VERSION` on the active, `ready` graph generation. That is the
+  effect's own binding when it names its own geometry, else the situation's.
+- The effect is in force at `at`: `effectStateAt` evaluates the effect's own
+  validity, else its situation's, including any schedule, in the schedule's own
+  timezone. A roadworks phase is therefore listed only during its phase, and a
+  nightly closure is absent during the day. SQL cannot express that, which is
+  why the filter runs in the publisher.
+- A crowd effect's situation is `routing_eligible`; a feed effect always may
+  route.
+- Its routing evidence is complete: source check time, freshness deadline,
+  licence and rights, and spans that all still have a geometry. Anything
+  missing drops the condition — the feed fails closed.
+
+A restriction-evidence effect is listed with `routing_evidence.reason_codes`
+saying why it may not constrain shared routing, and never routes. Every other
+condition is listed only when its evidence passes `routingEvidenceReasons`.
+
+The payload is snake_case at the top; `effect` is the model effect itself:
 
 ```json
 {
+  "schema_version": 2,
+  "complete": true,
   "generated_at": "2026-09-06T10:00:00.000Z",
   "at": "2026-09-06T10:00:00.000Z",
-  "resolver_version": "1.0.0",
+  "resolver_version": "2.0.0",
   "conditions": [
     {
-      "id": "autobahn:…",
-      "source": "autobahn-de",
-      "type": "road_closure",
-      "severity": "high",
-      "road_state": "closed",
-      "speed_limit_kph": null,
-      "vehicles_affected": [],
-      "origin_kind": "feed",
+      "id": "oc:situation:de-autobahn-a46-closure:…#…/closure",
+      "record_id": "oc:situation:de-autobahn-a46-closure:…",
+      "effect_id": "…/closure",
+      "source": "de-autobahn-a46-closure",
+      "kind": "closure",
+      "type": "closure",
+      "subtype": "full",
+      "severity": "major",
+      "effect": {
+        "id": "…/closure",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road",
+        "applicability": { "kind": "all" },
+        "compliance": "mandatory",
+        "normalization": "complete"
+      },
+      "origin": "feed",
+      "evidence_state": null,
       "routing_eligible": true,
-      "valid_from": "2026-09-06T04:00:00.000Z",
-      "valid_to": "2026-09-08T16:00:00.000Z",
       "binding": { "status": "exact", "confidence": 0.96, "direction_mode": "single" },
+      "routing_evidence": {
+        "schema_version": 2,
+        "record_class": "situation",
+        "record_id": "oc:situation:de-autobahn-a46-closure:…",
+        "effect_id": "…/closure",
+        "record_revision": 3,
+        "binding_revision": 3,
+        "effect_kind": "closure",
+        "graph_generation": "…",
+        "resolver_version": "2.0.0",
+        "valid_from": "2026-09-06T04:00:00.000Z",
+        "valid_to": "2026-09-08T16:00:00.000Z",
+        "next_transition_at": "2026-09-08T16:00:00.000Z",
+        "direction_mode": "forward",
+        "applicability": { "kind": "all" },
+        "binding_status": "exact",
+        "reason_codes": [],
+        "…": "source, licence, rights, freshness and the spans"
+      },
       "segments": [
         {
           "way_id": 23456,
@@ -299,100 +412,111 @@ The payload is snake_case throughout:
 segment's stored geometry already runs in travel direction (it is reversed for
 `dir = 'b'`), so the cut does too. Three details are worth knowing:
 
-- A **point-located** event binds to a zero-length span, and `ST_LineSubstring`
-  on an empty range returns a `Point`. The cut is therefore widened by 10 m
-  either side of the fraction, so `geometry` is always a `LineString` or `null`
+- A **point-located** effect binds to a zero-length span, and
+  `ST_LineSubstring` on an empty range returns a `Point`. The cut is therefore
+  widened by 10 m either side of the fraction, so `geometry` is a `LineString`
   and never a `Point`. The emitted `start_fraction` and `end_fraction` stay
-  equal and truthful about where the event actually is.
-- `geometry` is **`null`** when the span's segment no longer exists in
-  `road_segment`. The binding tables carry no FK to the spine, so a rebuild can
-  drop a segment out from under a still-valid binding; the span comes through
-  with a null geometry rather than vanishing.
-- `routing_eligible` is honoured verbatim for `origin_kind: "crowd"` rows (an
-  unconfirmed report must not steer a route) and forced to `true` for every
-  other origin, because a feed row's own column defaults to `false` in the
-  schema and would otherwise suppress whole authoritative feeds.
+  equal and truthful about where the effect actually is.
+- A span whose segment no longer exists in `road_segment` has no geometry. The
+  binding tables carry no FK to the spine, so a rebuild can drop a segment out
+  from under a binding; the reader returns that span with a `null` geometry,
+  and the publisher drops the whole condition rather than route on part of it.
+- `routing_eligible` is honoured verbatim for `origin: "crowd"` (an unconfirmed
+  report must not steer a route) and `true` for every other origin.
 
-Consumers that steer routes should narrow to `binding.status` of `exact` or
-`likely`.
+`routing_evidence` is what a consumer checks before it applies a condition: the
+record, effect and binding revisions, the graph generation and resolver
+version, the source's rights, freshness and licence, and the directed spans. Its
+`direction_mode` is `forward`, `reverse` or `both`, from the bound spans.
 
-## `binding` and `segments` on the read path
+### `GET /valhalla/exclusions.json`
 
-`readObservations` and `observationsByBbox` in `@openconditions/core` take an
-`includeBindings` option. It splices a LEFT JOIN onto `observation_binding` plus
-a lateral aggregate over `observation_segment` into the query; without it the
-default query is byte-for-byte unchanged and the fields are absent rather than
-null.
+Valhalla route-request avoidance for a `bbox` (required) at `at` (default now),
+built from the same projection. Only conditions whose routing evidence passes,
+whose effect applies to every car (all vehicles, or a vehicle-class list naming
+cars with no further condition) and that are in effect at `at` contribute:
 
-The shared `read()` helper behind the emitter routes sets it for every one of
-them, and because the GeoJSON emitter carries the whole model into `properties`,
-a bound `/observations.geojson` feature gains:
+- A closure contributes only when its spans cover whole ways in both
+  directions. Coordinate avoidance cannot keep a direction or a partial span, so
+  those closures are left to `/segments/conditions.json`. Its span geometry is
+  sampled into `exclude_locations`, capped at 45 points in total.
+- A speed limit that is not advisory contributes one `speed_caps` entry per span
+  (`way_id`, `dir`, `start_fraction`, `end_fraction`, `limit_kph`).
 
-```json
-{
-  "binding": { "status": "exact", "confidence": 0.96, "directionMode": "single" },
-  "segments": [
-    { "segmentId": "23456:f", "wayId": 23456, "dir": "f", "startFraction": 0.31, "endFraction": 1 }
-  ]
-}
-```
+The response also carries the projection it was built from as
+`routing_evidence`. `Cache-Control` max-age is the time to the earliest
+freshness deadline, expiry, validity end or transition among the conditions,
+at most 90 s.
 
-These are camelCase — the canonical model's `ObservationBinding` and
-`SegmentSpan` shapes. snake_case appears only in `/segments/conditions.json`.
-The XML emitters and the Valhalla exclusions project named fields and simply
-ignore the extra ones.
+## Bindings on the record API
 
-`integrations/road-conditions-openconditions` maps them onto
-`RoadConditionEvent.binding` and `.segments`, and also forwards
-`vehiclesAffected` off the attributes. All three are optional: an instance that
-has not bound an event, or has binding turned off, simply omits them.
+`GET /situations/{id}` returns the situation's own binding beside the record:
+`{ status, confidence, directionMode, boundAt }`, or `null` when it has none.
+The collections and the TraFF, DATEX II and SSE outputs carry no bindings.
+
+`integrations/road-conditions-openconditions` reads situations from
+`GET /situations` and their routing evidence from `/segments/conditions.json`,
+over HTTP. It attaches each condition's `routing_evidence` to its situation's
+effect by `effect_id`, and fails the routing read when the situation's revision
+changed between the two reads or the effect is unknown. The binding status
+travels per effect, inside the routing evidence.
 
 ## `/feeds/status` metrics
 
-Each feed entry gains a `binding` object counting the outcomes of that source's
-events:
+Each feed entry with live situations gains a `binding` object counting the
+binding of each situation's own location:
 
 ```json
 {
-  "id": "autobahn-de",
+  "id": "de-autobahn-a46-roadworks",
   "binding": {
+    "activeEvents": 1450,
     "attempted": 1420,
+    "attemptedCurrent": 1410,
+    "unattempted": 30,
+    "obsolete": 10,
+    "unattemptedOrObsolete": 40,
+    "unknownStatus": 0,
     "exact": 1103,
     "likely": 214,
     "ambiguous": 61,
-    "unresolved": 30,
+    "unresolved": 20,
     "noCoverage": 12,
     "notApplicable": 0
   }
 }
 ```
 
-`attempted` is the total of all stored bindings for the source, including any
-status this reader does not recognise, so it stays truthful if the resolver ever
-grows an outcome. The counts come from one `GROUP BY` cached for 60 s, so
-polling the status page is cheap. The key is omitted entirely for a feed with no
-bindings, and a failed metrics read is logged and degrades the whole endpoint to
-no `binding` keys rather than failing it.
+`activeEvents` counts the source's live, unexpired situations. `attempted` is
+every one with a stored binding, including any status this reader does not
+recognise, so it stays truthful if the resolver ever grows an outcome.
+`attemptedCurrent` is the share computed at the situation's current revision on
+the active graph; only those are split by status. A binding that is `obsolete`,
+or was computed for an older revision or another graph, counts as `obsolete`.
+The counts come from one `GROUP BY` cached for 60 s, so polling the status page
+is cheap. A failed metrics read is logged and degrades the whole endpoint to no
+`binding` keys rather than failing it.
 
-The ratio to watch is `unresolved / attempted`. A sudden rise usually means the
-feed started publishing on a road class the spine does not import (see
-`SEGMENT_HIGHWAY_CLASSES`), not that the resolver regressed.
+The ratio to watch is `unresolved / attemptedCurrent`. A sudden rise usually
+means the feed started publishing on a road class the spine does not import
+(see `SEGMENT_HIGHWAY_CLASSES`), not that the resolver regressed. A lasting
+`unattemptedOrObsolete` means the binding queue is not draining.
 
-`noCoverage` means an event lies outside the configured graph regions. Feed
+`noCoverage` means a situation lies outside the configured graph regions. Feed
 availability is not graph coverage: configure the regions that the selected feeds
 actually publish in, then import and activate that graph. No countries are imported
 implicitly.
 
 ## Configuration
 
-| variable                  | default                                                        | meaning                                                                                          |
-| ------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `BIND_ENABLED`            | `true`                                                         | run the binding stage; `false` also disables both rebind passes                                  |
-| `BIND_MAX_OFFSET_M`       | `40`                                                           | candidate search radius in metres                                                                |
-| `BIND_CONCURRENCY`        | `8`                                                            | events resolved in parallel per stage run                                                        |
-| `SEGMENT_HIGHWAY_CLASSES` | `motorway,motorway_link,trunk,trunk_link,primary,primary_link` | OSM `highway` values the spine imports, shared by the osmium filter and the Overpass query       |
-| `SEGMENT_REGIONS`         | none (`[]`)                                                    | JSON array of the regions whose spine is imported; an event outside all of them is `no_coverage` |
-| `SEGMENT_REBUILD_CRON`    | `0 4 * * 1`                                                    | when the spine rebuild (and with it the forced full rebind) runs; `off` disables it              |
+| variable                  | default                                                        | meaning                                                                                            |
+| ------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `BIND_ENABLED`            | `true`                                                         | run the binding stage; `false` also disables both rebind passes                                    |
+| `BIND_MAX_OFFSET_M`       | `40`                                                           | candidate search radius in metres                                                                  |
+| `BIND_CONCURRENCY`        | `8`                                                            | locations resolved in parallel per binder pass                                                     |
+| `SEGMENT_HIGHWAY_CLASSES` | `motorway,motorway_link,trunk,trunk_link,primary,primary_link` | OSM `highway` values the spine imports, shared by the osmium filter and the Overpass query         |
+| `SEGMENT_REGIONS`         | none (`[]`)                                                    | JSON array of the regions whose spine is imported; a location outside all of them is `no_coverage` |
+| `SEGMENT_REBUILD_CRON`    | `0 4 * * 1`                                                    | when the spine rebuild (and with it the forced full rebind) runs; `off` disables it                |
 
 `SEGMENT_REGIONS` is the single region configuration used by import, binding,
 graph-readiness checks and local-time speed profiles. It is a JSON array of
@@ -488,7 +612,7 @@ pnpm --filter @openconditions/roads bind:spine 6.55 51.05 6.70 51.15 > spine.jso
 ```
 
 `bind:inspect` also takes an explicit `<event.json> <spine.json>` pair, which is
-the fastest way to debug a live event that is not (yet) a corpus case.
+the fastest way to debug a live situation that is not (yet) a corpus case.
 
 The full recipe for capturing a case, including the required coverage targets,
 is in

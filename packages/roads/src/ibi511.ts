@@ -2,8 +2,8 @@ import { toIsoTimestamp } from "@openconditions/core";
 import { ibi511Classification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
+import type { CoarseType } from "./situation/classes.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
-import type { TypeMapping } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -40,7 +40,7 @@ interface IbiEvent {
   LongitudeSecondary?: number;
 }
 
-const TYPE_BY_EVENTTYPE: Record<string, TypeMapping> = {
+const TYPE_BY_EVENTTYPE: Record<string, CoarseType> = {
   roadwork: { type: "roadworks", category: "planned", isPlanned: true },
   closures: { type: "road_closure", category: "incident", isPlanned: false },
   accidentsandincidents: { type: "accident", category: "incident", isPlanned: false },
@@ -111,7 +111,7 @@ function geometryOf(ev: IbiEvent): RoadEvent["geometry"] | null {
   return { type: "Point", coordinates: [lng as number, lat as number] };
 }
 
-function typeOf(ev: IbiEvent): TypeMapping {
+function typeOf(ev: IbiEvent): CoarseType {
   const key = (ev.EventType ?? "").toLowerCase().replace(/[^a-z]/g, "");
   const base = TYPE_BY_EVENTTYPE[key] ?? {
     type: "other" as RoadEventType,
@@ -168,6 +168,7 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
         ...(classification !== undefined ? { classification } : {}),
         ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
         ...(hasDescription ? {} : { headlineFromSource: false as const }),
+        ...(ev.Severity?.trim() ? { severityRaw: ev.Severity.trim() } : {}),
       },
       type,
       subtype: ev.EventSubType ?? ev.EventType ?? undefined,

@@ -1,272 +1,122 @@
+import type { SegmentConditionRow } from "@openconditions/core";
+import type { Effect } from "@openconditions/model";
 import { describe, expect, it } from "vitest";
-import { type SegmentConditionRow, segmentConditionsToJson } from "../segment-conditions.js";
-import { restrictionDetails } from "./fixture.js";
+import { segmentConditionsToJson } from "../segment-conditions.js";
+import { closure, segmentRow as row } from "./segment-rows.js";
 
-function row(over: Partial<SegmentConditionRow> = {}): SegmentConditionRow {
-  return {
-    id: "a:1",
-    source: "autobahn-de",
-    type: "road_closure",
-    severity: "high",
-    attributes: { roadState: "closed", speedLimitKph: null, vehiclesAffected: [] },
-    origin: { kind: "feed" },
-    routing_eligible: null,
-    valid_from: "2026-09-06T08:00:00Z",
-    valid_to: "2026-09-06T16:00:00Z",
-    schedule: null,
-    source_license: "CC0-1.0",
-    binding_status: "exact",
-    binding_resolver_version: "1.0.0",
-    binding_confidence: 0.96,
-    binding_direction_mode: "single",
-    observation_revision: "rev-1",
-    binding_revision: "rev-1",
-    graph_generation: "graph-1",
-    child_source_id: null,
-    source_uri: "https://example.test/events/1",
-    source_checked_at: "2026-09-06T09:55:00Z",
-    fresh_until: "2026-09-06T10:15:00Z",
-    expires_at: "2026-09-06T16:00:00Z",
-    license_url: "https://creativecommons.org/publicdomain/zero/1.0/",
-    attribution: "Autobahn GmbH",
-    rights: {
-      source_redistribution: "yes",
-      derived_redistribution: "yes",
-      commercial_use: "yes",
-      attribution_required: "no",
-      retention: "yes",
-      evidence_origin: "license-registry",
-      evidence_version: "1",
-      reviewed_at: "2026-09-01T00:00:00Z",
-    },
-    segments: [
-      {
-        segmentId: "10:f",
-        wayId: 10,
-        dir: "f",
-        startFraction: 0.3,
-        endFraction: 1,
-        geometry: {
-          type: "LineString",
-          coordinates: [
-            [6.803, 51.2],
-            [6.81, 51.2],
-          ],
-        },
-      },
-    ],
-    ...over,
-  };
-}
+const at = new Date("2026-09-06T10:00:00Z");
+const project = (rows: SegmentConditionRow[]) =>
+  segmentConditionsToJson(rows, at, { resolverVersion: "2.0.0" });
 
 describe("segmentConditionsToJson", () => {
-  const at = new Date("2026-09-06T10:00:00Z");
-
-  it("emits snake_case rows with bindings, segments and span geometry", () => {
-    const out = segmentConditionsToJson([row()], at, { resolverVersion: "1.0.0" });
-    expect(out.at).toBe(at.toISOString());
-    expect(out.resolver_version).toBe("1.0.0");
-    expect(out.schema_version).toBe(1);
-    expect(out.complete).toBe(true);
+  it("emits one condition per effect with its binding, evidence and span geometry", () => {
+    const out = project([row()]);
+    expect(out).toMatchObject({ schema_version: 2, complete: true, resolver_version: "2.0.0" });
     expect(out.conditions[0]).toMatchObject({
-      id: "a:1",
-      type: "road_closure",
-      road_state: "closed",
-      speed_limit_kph: null,
-      vehicles_affected: [],
-      origin_kind: "feed",
+      id: "oc:situation:de-autobahn:a1#a1/closure",
+      kind: "closure",
+      severity: "major",
+      effect: closure,
+      origin: "feed",
       routing_eligible: true,
       binding: { status: "exact", confidence: 0.96, direction_mode: "single" },
-      segments: [
-        {
-          way_id: 10,
-          dir: "f",
-          start_fraction: 0.3,
-          end_fraction: 1,
-          geometry: {
-            type: "LineString",
-            coordinates: [
-              [6.803, 51.2],
-              [6.81, 51.2],
-            ],
-          },
-        },
-      ],
-      routing_evidence: {
-        schema_version: 1,
-        observation_revision: "rev-1",
-        binding_revision: "rev-1",
-        graph_generation: "graph-1",
-        source_id: "autobahn-de",
-        binding_status: "exact",
-        direction_mode: "forward",
-        applicability: { kind: "all" },
-        reason_codes: [],
-      },
+      segments: [{ way_id: 10, dir: "f", start_fraction: 0.3, end_fraction: 1 }],
     });
+    expect(out.conditions[0]!.routing_evidence).toMatchObject({
+      schema_version: 2,
+      record_class: "situation",
+      record_id: "oc:situation:de-autobahn:a1",
+      effect_id: "a1/closure",
+      record_revision: 3,
+      binding_revision: 3,
+      effect_kind: "closure",
+      direction_mode: "forward",
+      applicability: { kind: "all" },
+      reason_codes: [],
+    });
+  });
+
+  it("drops an effect whose binding resolved an older revision", () => {
+    expect(project([row({ binding_revision: 2 })]).conditions).toEqual([]);
   });
 
   it("drops a binding whose segment vanished from the active graph", () => {
-    const out = segmentConditionsToJson(
-      [
-        row({
-          segments: [
-            {
-              segmentId: "10:f",
-              wayId: 10,
-              dir: "f",
-              startFraction: 0,
-              endFraction: 1,
-              geometry: null,
-            },
-          ],
-        }),
-      ],
-      at,
-      { resolverVersion: "1.0.0" },
-    );
-    expect(out.conditions).toEqual([]);
+    const [span] = row().segments;
+    expect(project([row({ segments: [{ ...span!, geometry: null }] })]).conditions).toEqual([]);
   });
 
-  it("drops a binding produced by an older resolver", () => {
-    expect(
-      segmentConditionsToJson([row({ binding_resolver_version: "0.9.0" })], at, {
-        resolverVersion: "1.0.0",
-      }).conditions,
-    ).toEqual([]);
+  it("drops a binding produced by another resolver version", () => {
+    expect(project([row({ binding_resolver_version: "1.2.0" })]).conditions).toEqual([]);
   });
 
-  it("retains the original child source while evidence names its parent policy source", () => {
-    const out = segmentConditionsToJson(
-      [row({ source: "de-child", routing_source_id: "de-parent", child_source_id: "de-child" })],
-      at,
-      { resolverVersion: "1.0.0" },
-    );
-    expect(out.conditions[0]).toMatchObject({
-      source: "de-child",
-      routing_evidence: { source_id: "de-parent", child_source_id: "de-child" },
+  it("drops an ambiguous binding and a source past its freshness deadline", () => {
+    expect(project([row({ binding_status: "ambiguous" })]).conditions).toEqual([]);
+    expect(project([row({ fresh_until: "2026-09-06T09:59:00Z" })]).conditions).toEqual([]);
+  });
+
+  it("names the parent policy source while keeping the child it came from", () => {
+    const [c] = project([
+      row({ routing_source_id: "de-parent", child_source_id: "de-autobahn" }),
+    ]).conditions;
+    expect(c?.source).toBe("de-autobahn");
+    expect(c?.routing_evidence).toMatchObject({
+      source_id: "de-parent",
+      child_source_id: "de-autobahn",
     });
   });
 
-  it("drops rows not in effect at `at` (validity or schedule)", () => {
-    expect(
-      segmentConditionsToJson([row({ valid_from: "2026-09-06T12:00:00Z" })], at, {
-        resolverVersion: "1.0.0",
-      }).conditions,
-    ).toEqual([]);
-    expect(
-      segmentConditionsToJson(
-        [
-          row({
-            schedule: [{ startTime: "20:00", duration: "PT9H", scheduleTimezone: "Europe/Berlin" }],
-          }),
-        ],
-        at,
-        { resolverVersion: "1.0.0" },
-      ).conditions,
-    ).toEqual([]);
-  });
-
-  it("drops crowd rows without external routing eligibility", () => {
-    const crowd = segmentConditionsToJson(
-      [row({ origin: { kind: "crowd" }, routing_eligible: false })],
-      at,
-      { resolverVersion: "1.0.0" },
-    );
-    expect(crowd.conditions).toEqual([]);
-  });
-
-  it("carries speed limits from attributes", () => {
-    const out = segmentConditionsToJson(
-      [row({ type: "roadworks", attributes: { speedLimitKph: 60 } })],
-      at,
-      { resolverVersion: "1.0.0" },
-    );
-    expect(out.conditions[0]!.speed_limit_kph).toBe(60);
-  });
-
-  it("drops obsolete, stale, ambiguous and incomplete bindings before routing export", () => {
-    const out = segmentConditionsToJson(
-      [
-        row({ id: "obsolete", binding_revision: "rev-old" }),
-        row({ id: "stale", fresh_until: "2026-09-06T09:59:59Z" }),
-        row({ id: "ambiguous", binding_status: "ambiguous" }),
-        row({ id: "vanished", segments: [{ ...row().segments[0]!, geometry: null }] }),
-      ],
-      at,
-      { resolverVersion: "1.0.0", evaluatedAt: at },
-    );
-    expect(out.conditions).toEqual([]);
-  });
-
-  it("preserves class-specific applicability for the host to evaluate", () => {
-    const out = segmentConditionsToJson(
-      [row({ attributes: { roadState: "closed", vehiclesAffected: ["heavyGoodsVehicle"] } })],
-      at,
-      { resolverVersion: "1.0.0", evaluatedAt: at },
-    );
-    expect(out.conditions[0]!.routing_evidence.applicability).toEqual({
-      kind: "classes",
-      classes: ["truck"],
-      raw: ["heavyGoodsVehicle"],
-    });
-  });
-
-  it("drops a dimension-qualified vehicle scope that cannot be represented safely", () => {
-    const out = segmentConditionsToJson(
-      [
-        row({
-          attributes: {
-            roadState: "closed",
-            vehiclesAffected: ["lorry"],
-            restrictions: [{ type: "height", value: 4.5, unit: "m", operator: "greaterThan" }],
+  it("routes an effect only while its own window is open", () => {
+    const later = { ...closure, validity: { status: "active", start: "2026-09-06T20:00:00Z" } };
+    expect(project([row({ effect: later as Effect })]).conditions).toEqual([]);
+    const [c] = project([
+      row({
+        effect: {
+          ...closure,
+          validity: {
+            status: "active",
+            start: "2026-09-06T09:00:00Z",
+            end: "2026-09-06T11:00:00Z",
           },
-        }),
-      ],
-      at,
-      { resolverVersion: "1.0.0", evaluatedAt: at },
-    );
-    expect(out.conditions).toEqual([]);
-  });
-});
-
-describe("segmentConditionsToJson restriction evidence", () => {
-  const at = new Date("2026-09-06T10:00:00Z");
-
-  it("emits no condition for a restriction-bearing row while keeping an unconditional row", () => {
-    for (const details of [
-      restrictionDetails(),
-      { schemaVersion: 9 },
-      { schemaVersion: 1, vehicleScope: "unknown", completeness: "partial", facts: [] },
-      undefined,
-    ]) {
-      const conditional = row({
-        id: "fi-digitraffic:GUID50465935",
-        source: "fi-digitraffic",
-        attributes: {
-          roadState: "closed",
-          vehiclesAffected: ["all"],
-          restrictionDetails: details,
-        },
-      });
-      const out = segmentConditionsToJson([conditional, row({ id: "a:2" })], at, {
-        resolverVersion: "1.0.0",
-      });
-      expect(out.conditions.map((c) => c.id)).toEqual(["a:2"]);
-    }
+        } as Effect,
+      }),
+    ]).conditions;
+    expect(c?.routing_evidence).toMatchObject({
+      valid_from: "2026-09-06T09:00:00Z",
+      valid_to: "2026-09-06T11:00:00Z",
+      next_transition_at: "2026-09-06T11:00:00.000Z",
+    });
   });
 
-  it("emits no condition for an unsupported-envelope marker", () => {
-    const out = segmentConditionsToJson(
-      [
-        row({
-          id: "fi-digitraffic:GUID50468844",
-          attributes: { roadState: "closed", restrictionDetailsUnsupported: true },
-        }),
-      ],
-      at,
-      { resolverVersion: "1.0.0" },
-    );
-    expect(out.conditions).toEqual([]);
+  it("drops a crowd effect its situation's evidence has not made routing eligible", () => {
+    expect(project([row({ origin: "crowd", routing_eligible: false })]).conditions).toEqual([]);
+    expect(project([row({ origin: "crowd", routing_eligible: true })]).conditions).toHaveLength(1);
+  });
+
+  it("keeps a class-specific scope for the consumer to evaluate", () => {
+    const trucks = {
+      ...closure,
+      applicability: { kind: "classes", include: [{ class: "truck" }] },
+    };
+    const [c] = project([row({ effect: trucks as Effect })]).conditions;
+    expect(c?.routing_evidence.applicability).toEqual({
+      kind: "classes",
+      include: [{ class: "truck" }],
+    });
+  });
+
+  it("lists restriction evidence with the reasons it may not route", () => {
+    const unknown = {
+      ...closure,
+      applicability: { kind: "unknown", raw: ["lorries over 7.5 t"] },
+    } as Effect;
+    const partial = { ...closure, id: "a1/partial", normalization: "partial" } as Effect;
+    const out = project([
+      row({ effect: unknown }),
+      row({ effect_id: "a1/partial", effect: partial }),
+    ]);
+    expect(out.conditions.map((c) => c.routing_evidence.reason_codes)).toEqual([
+      ["applicability_unknown"],
+      ["not_normalized"],
+    ]);
   });
 });

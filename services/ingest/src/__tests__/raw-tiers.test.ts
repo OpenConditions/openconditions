@@ -15,7 +15,7 @@ describe("rawTierFor", () => {
     expect(rawTierFor({ rights: rights(false) }, "reference")).toBeUndefined();
   });
 
-  it("keeps only the first 48 hours of a source whose terms do not say", () => {
+  it("keeps only the last 48 hours of a source whose terms do not say", () => {
     expect(rawTierFor({}, "feed")).toBe("hot");
     expect(rawTierFor({ rights: rights(null) }, "reference")).toBe("hot");
   });

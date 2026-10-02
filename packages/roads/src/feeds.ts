@@ -223,11 +223,28 @@ export function flowParserFor(format: string): FlowParserFn {
   return FLOW_PARSERS[format as keyof typeof FLOW_PARSERS];
 }
 
+/** The catalogue fields a parser's source descriptor is made of. */
+export type DescribedFeed = Pick<
+  FeedSource,
+  | "id"
+  | "attribution"
+  | "country"
+  | "license"
+  | "licenseUrl"
+  | "accessMode"
+  | "laneNumbering"
+  | "extrasAllow"
+  | "geojson"
+  | "flowMap"
+  | "posListLonLat"
+  | "srsName"
+>;
+
 /**
  * Maps a FeedSource to the minimal SourceDescriptor that parsers receive at
  * call time. Keeps parsers decoupled from the full feed registry shape.
  */
-export function feedToSourceDescriptor(feed: FeedSource): SourceDescriptor {
+export function feedToSourceDescriptor(feed: DescribedFeed): SourceDescriptor {
   return {
     id: feed.id,
     attribution: feed.attribution,

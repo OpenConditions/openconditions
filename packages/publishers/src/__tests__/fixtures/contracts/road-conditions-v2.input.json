@@ -1,0 +1,71 @@
+{
+  "at": "2026-09-11T12:00:00.000Z",
+  "resolverVersion": "2.0.0",
+  "rows": [
+    {
+      "record_id": "oc:situation:test-child:closure-1",
+      "effect_id": "closure-1/closure",
+      "source_id": "test-child",
+      "routing_source_id": "test-parent",
+      "kind": "closure",
+      "type": "closure",
+      "subtype": "full",
+      "severity": "major",
+      "validity": {
+        "status": "active",
+        "start": "2026-09-11T11:59:00.000Z",
+        "end": "2026-09-11T12:15:00.000Z"
+      },
+      "effect": {
+        "id": "closure-1/closure",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road",
+        "applicability": { "kind": "all" },
+        "compliance": "mandatory",
+        "normalization": "complete"
+      },
+      "origin": "feed",
+      "evidence_state": null,
+      "routing_eligible": null,
+      "record_revision": 1,
+      "expires_at": "2026-09-11T12:15:00.000Z",
+      "provenance_attribution": { "provider": "Example road authority", "license": "CC0-1.0" },
+      "source_uri": "https://example.test/conditions/1",
+      "source_checked_at": "2026-09-11T11:59:00.000Z",
+      "fresh_until": "2026-09-11T12:15:00.000Z",
+      "binding_status": "exact",
+      "binding_confidence": 0.99,
+      "binding_resolver_version": "2.0.0",
+      "binding_direction_mode": "single",
+      "binding_revision": 1,
+      "graph_generation": "graph-generation-1",
+      "child_source_id": "test-child",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "Example road authority",
+      "rights": {
+        "source_redistribution": "yes",
+        "derived_redistribution": "yes",
+        "commercial_use": "yes",
+        "attribution_required": "yes",
+        "retention": "yes",
+        "evidence_origin": "feed-descriptor",
+        "evidence_version": "1",
+        "reviewed_at": "2026-09-10T12:00:00.000Z"
+      },
+      "segments": [
+        {
+          "segmentId": "123:f",
+          "wayId": 123,
+          "dir": "f",
+          "startFraction": 0,
+          "endFraction": 1,
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [[13.4, 52.5], [13.41, 52.5]]
+          }
+        }
+      ]
+    }
+  ]
+}

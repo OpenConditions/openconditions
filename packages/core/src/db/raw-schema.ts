@@ -5,7 +5,7 @@ import { conditionsSchema, tstz } from "./columns.js";
 
 /**
  * How long a raw payload is kept: a situation feed's longest, an observation
- * feed's shorter, a reference table's by version, and `hot` (the first 48
+ * feed's shorter, a reference table's by version, and `hot` (the last 48
  * hours only) for a source whose terms do not affirm retention.
  */
 export const RAW_TIERS = ["situation", "observation", "reference", "hot"] as const;

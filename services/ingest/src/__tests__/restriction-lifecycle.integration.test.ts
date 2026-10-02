@@ -1,11 +1,15 @@
 import { readFileSync } from "node:fs";
-import { readObservations } from "@openconditions/core";
+import { readSegmentConditionRows } from "@openconditions/core";
 import type { LookupFn } from "@openconditions/ingest-framework";
+import { segmentConditionsToJson } from "@openconditions/publishers";
+import { RESOLVER_VERSION } from "@openconditions/roads";
+import { sweepRecords } from "@openconditions/storage";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { createBindingMetricsReader } from "../pipeline/binding-metrics.js";
 import { type DomainFeedSource, runSource } from "../pipeline/run.js";
-import { sweepStaleObservations } from "../pipeline/sweep.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
+import { bindSituation, registry } from "./helpers/situations.js";
 
 /**
  * The full record lifecycle against a real disposable PostGIS: update,
@@ -25,7 +29,8 @@ const FIXTURE_URL = new URL(
 const V2 = "https://tie.digitraffic.fi/api/traffic-message/v2";
 const ROADWORKS = `${V2}/roadworks`;
 const SOURCE = "fi-digitraffic";
-const WEIGHT_ID = `${SOURCE}:GUID50465935`;
+const WEIGHT_ID = `oc:situation:${SOURCE}:GUID50465935`;
+const LANES = `${WEIGHT_ID}#GUID50465935/lane_restriction`;
 
 const feed: DomainFeedSource = {
   id: SOURCE,
@@ -46,7 +51,19 @@ const feed: DomainFeedSource = {
   licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
   attribution: "Fintraffic / Digitraffic",
   country: "FI",
+  rights: {
+    sourceRedistribution: true,
+    derivedRedistribution: true,
+    commercialUse: true,
+    attributionRequired: true,
+    retention: true,
+    reviewedAt: "2026-09-01T00:00:00.000Z",
+    evidenceOrigin: "test",
+  },
 } as unknown as DomainFeedSource;
+
+const MODEL = { registry, instanceId: "test.local" };
+const GENERATION = "graph-lifecycle";
 
 const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 const EMPTY = { type: "FeatureCollection", features: [] };
@@ -107,8 +124,8 @@ afterAll(async () => {
 }, 30_000);
 
 beforeEach(async () => {
-  await sql`DELETE FROM conditions.binding_queue`;
-  await sql`DELETE FROM conditions.observations WHERE source = ${SOURCE}`;
+  await sql`TRUNCATE conditions.situation, conditions.record_binding, conditions.record_segment,
+    conditions.binding_queue, conditions.road_graph_state, conditions.road_segment CASCADE`;
   await sql`DELETE FROM conditions.source_status WHERE source = ${SOURCE}`;
 });
 
@@ -118,49 +135,110 @@ const runner = {
   },
 };
 
-async function readFinland() {
-  return readObservations(runner, {
-    domain: "roads",
-    bbox: [19, 59, 32, 71],
-    dedupe: false,
-    includeBindings: true,
-  });
-}
-
+/** Live situations of the feed: a withdrawn or expired one is tombstoned, not deleted. */
 async function ids(): Promise<string[]> {
   const rows = await sql<{ id: string }[]>`
-    SELECT id FROM conditions.observations WHERE source = ${SOURCE} ORDER BY id`;
+    SELECT id FROM conditions.situation
+     WHERE source_id = ${SOURCE} AND tombstoned_at IS NULL ORDER BY id`;
   return rows.map((r) => r.id);
 }
 
-async function hashOf(id: string): Promise<string | null> {
-  const rows = await sql<{ content_hash: string | null }[]>`
-    SELECT content_hash FROM conditions.observations WHERE id = ${id}`;
-  return rows[0]?.content_hash ?? null;
+async function stored(id: string) {
+  const [row] = await sql<
+    {
+      content_hash: string;
+      revision: number;
+      tombstone_reason: string | null;
+      record: Record<string, unknown>;
+    }[]
+  >`SELECT content_hash, revision, tombstone_reason, record FROM conditions.situation
+     WHERE id = ${id}`;
+  return row;
+}
+
+async function queued(id: string): Promise<number[]> {
+  const rows = await sql<{ record_revision: number }[]>`
+    SELECT record_revision FROM conditions.binding_queue
+     WHERE record_class = 'situation' AND record_id = ${id}`;
+  return rows.map((r) => r.record_revision);
+}
+
+/** The road graph, held out of `ready` so the polls below leave their binding work queued. */
+async function createGraph(status: "ready" | "rebuilding"): Promise<void> {
+  await sql`INSERT INTO conditions.road_graph_state
+    (singleton, generation, status, regions, highway_classes, pbf_provenance, imported_at,
+     activated_at)
+    VALUES (true, ${GENERATION}, ${status}, '[]', '["primary"]', '[]', now(), now())`;
+  await sql`INSERT INTO conditions.road_segment
+    (segment_id, way_id, dir, geom, highway, ref, length_m, min_zoom, computed_at)
+    VALUES ('1:f', 1, 'f', ST_SetSRID(ST_GeomFromText('LINESTRING(23.53 60.09, 23.55 60.09)'), 4326),
+      'primary', '104', 1100, 5, now())`;
+}
+
+/** Places the weight restriction's situation on the graph at its stored revision. */
+async function placeOnGraph(): Promise<void> {
+  await sql`UPDATE conditions.road_graph_state SET status = 'ready'`;
+  await sql`DELETE FROM conditions.record_binding WHERE record_id = ${WEIGHT_ID}`;
+  const row = await stored(WEIGHT_ID);
+  await bindSituation(sql, WEIGHT_ID, {
+    status: "exact",
+    confidence: 0.95,
+    spans: [{ segmentId: "1:f", wayId: 1, start: 0, end: 1 }],
+    revision: row!.revision,
+    generation: GENERATION,
+    resolverVersion: RESOLVER_VERSION,
+  });
+}
+
+function sweep() {
+  return sweepRecords(sql, {
+    ...MODEL,
+    now: new Date().toISOString(),
+    maxAgeSec: 3600,
+    historyDays: 7,
+  });
+}
+
+/** The routing read and its projection, evaluated at `at`, with the stored feed rights. */
+async function routed(at: Date) {
+  const rows = await readSegmentConditionRows(runner, { at, resolverVersion: RESOLVER_VERSION });
+  return segmentConditionsToJson(
+    rows.map((r) => ({ ...r, rights: r.provenance_attribution.rights ?? null })),
+    at,
+    { resolverVersion: RESOLVER_VERSION, evaluatedAt: at },
+  ).conditions;
 }
 
 describe("restriction record lifecycle", () => {
   it("walks update, unchanged, 304, failure, staleness and orphan cleanup", async () => {
+    await createGraph("rebuilding");
     const seeded = await runSource(feed, {
       sql,
       fetch: serve(weightOnly(), { etag: 'W/"v31"' }),
       lookup: fakeLookup,
       now: () => "2026-09-12T07:14:00.000Z",
+      model: MODEL,
     });
     expect(seeded.error).toBeUndefined();
     expect(await ids()).toEqual([WEIGHT_ID]);
-    const firstHash = await hashOf(WEIGHT_ID);
-    expect(firstHash).not.toBeNull();
+    const first = await stored(WEIGHT_ID);
+    expect(first!.revision).toBe(1);
+    expect(await queued(WEIGHT_ID)).toEqual([1]);
 
-    // An updated restriction changes the content revision, obsoletes the old
-    // binding result and re-queues the event.
-    await sql`INSERT INTO conditions.observation_binding
-      (observation_id, observation_revision, graph_generation, resolver_version,
-       status, direction_mode, confidence, candidate_count, geom_hash, bound_at)
-      VALUES (${WEIGHT_ID}, ${firstHash}, 'graph-1', '1.0.0', 'exact', 'single', 0.99, 1,
-              'geom-1', now())
-      ON CONFLICT (observation_id) DO NOTHING`;
+    // An updated restriction changes the content revision, fences off the old
+    // binding result and re-queues the situation at its new revision.
+    await bindSituation(sql, WEIGHT_ID, {
+      status: "exact",
+      confidence: 0.99,
+      revision: 1,
+      generation: GENERATION,
+      resolverVersion: RESOLVER_VERSION,
+    });
     await sql`DELETE FROM conditions.binding_queue`;
+    expect((await createBindingMetricsReader(sql, 0)()).get(SOURCE)).toMatchObject({
+      attemptedCurrent: 1,
+      obsolete: 0,
+    });
 
     const updated = await runSource(feed, {
       sql,
@@ -181,16 +259,17 @@ describe("restriction record lifecycle", () => {
       ),
       lookup: fakeLookup,
       now: () => "2026-09-12T07:16:00.000Z",
+      model: MODEL,
     });
     expect(updated.error).toBeUndefined();
-    const secondHash = await hashOf(WEIGHT_ID);
-    expect(secondHash).not.toBe(firstHash);
-    const binding = await sql<{ status: string }[]>`
-      SELECT status FROM conditions.observation_binding WHERE observation_id = ${WEIGHT_ID}`;
-    expect(binding[0]!.status).toBe("obsolete");
-    const queued = await sql<{ observation_id: string }[]>`
-      SELECT observation_id FROM conditions.binding_queue WHERE observation_id = ${WEIGHT_ID}`;
-    expect(queued).toHaveLength(1);
+    const second = await stored(WEIGHT_ID);
+    expect(second!.content_hash).not.toBe(first!.content_hash);
+    expect(second!.revision).toBe(2);
+    expect((await createBindingMetricsReader(sql, 0)()).get(SOURCE)).toMatchObject({
+      attemptedCurrent: 0,
+      obsolete: 1,
+    });
+    expect(await queued(WEIGHT_ID)).toEqual([2]);
 
     // An accepted unchanged 200 leaves content and the queue alone.
     await sql`DELETE FROM conditions.binding_queue`;
@@ -211,12 +290,14 @@ describe("restriction record lifecycle", () => {
       ),
       lookup: fakeLookup,
       now: () => "2026-09-12T07:18:00.000Z",
+      model: MODEL,
     });
     expect(unchanged.error).toBeUndefined();
-    expect(await hashOf(WEIGHT_ID)).toBe(secondHash);
-    expect(
-      await sql`SELECT observation_id FROM conditions.binding_queue WHERE observation_id = ${WEIGHT_ID}`,
-    ).toHaveLength(0);
+    expect(await stored(WEIGHT_ID)).toMatchObject({
+      content_hash: second!.content_hash,
+      revision: 2,
+    });
+    expect(await queued(WEIGHT_ID)).toEqual([]);
 
     // A 304 advances checked time only.
     const notModified = (async () =>
@@ -226,9 +307,13 @@ describe("restriction record lifecycle", () => {
       fetch: notModified,
       lookup: fakeLookup,
       now: () => "2026-09-12T07:20:00.000Z",
+      model: MODEL,
     });
     expect(validated.outcome).toBe("validated_unchanged");
-    expect(await hashOf(WEIGHT_ID)).toBe(secondHash);
+    expect(await stored(WEIGHT_ID)).toMatchObject({
+      content_hash: second!.content_hash,
+      revision: 2,
+    });
 
     // A failed fetch preserves the last-good publication.
     const failing = (async () => {
@@ -239,23 +324,32 @@ describe("restriction record lifecycle", () => {
       fetch: failing,
       lookup: fakeLookup,
       now: () => "2026-09-12T07:22:00.000Z",
+      model: MODEL,
     });
     expect(failed.error).toBeDefined();
     expect(await ids()).toEqual([WEIGHT_ID]);
 
-    // Past the freshness window the read reports the row as stale, and the
-    // orphan sweep still keeps it until the source's own threshold.
+    // Past the freshness window the routing read fails the situation closed,
+    // and the orphan sweep still keeps it until the source's own threshold.
+    await placeOnGraph();
+    const [status] = await sql<{ freshness_deadline: Date }[]>`
+      SELECT freshness_deadline FROM conditions.source_status WHERE source = ${SOURCE}`;
+    const deadline = status!.freshness_deadline.getTime();
+    const fresh = await routed(new Date(deadline - 1000));
+    expect(fresh.find((c) => c.id === LANES)?.routing_evidence.reason_codes).toEqual([]);
+    const stale = await routed(new Date(deadline + 1000));
+    expect(stale.map((c) => c.id)).not.toContain(LANES);
+
     await sql`UPDATE conditions.source_status
       SET last_success_at = now() - interval '601 seconds' WHERE source = ${SOURCE}`;
-    const stale = await readFinland();
-    expect(stale.find((o) => o.source === SOURCE)?.isStale).toBe(true);
-    await sweepStaleObservations(sql, { maxAgeSec: 3600 });
+    await sweep();
     expect(await ids()).toEqual([WEIGHT_ID]);
 
     await sql`UPDATE conditions.source_status
       SET last_success_at = now() - interval '3601 seconds' WHERE source = ${SOURCE}`;
-    await sweepStaleObservations(sql, { maxAgeSec: 3600 });
+    await sweep();
     expect(await ids()).toEqual([]);
+    expect((await stored(WEIGHT_ID))?.tombstone_reason).toBe("expired");
   }, 180_000);
 
   it("keeps a confirmed open-ended record with an old source update timestamp", async () => {
@@ -270,14 +364,18 @@ describe("restriction record lifecycle", () => {
       ),
       lookup: fakeLookup,
       now: () => "2026-09-12T07:14:00.000Z",
+      model: MODEL,
     });
     expect(seeded.error).toBeUndefined();
     await sql`UPDATE conditions.source_status SET last_success_at = now() WHERE source = ${SOURCE}`;
-    await sweepStaleObservations(sql, { maxAgeSec: 3600 });
+    await sweep();
     expect(await ids()).toEqual([WEIGHT_ID]);
   }, 120_000);
 
-  it("removes a record whose own end has passed, however fresh the source is", async () => {
+  // A declared end is not a reason to end a record its source still
+  // publishes; the routing read leaves the ended effects out instead.
+  it("never routes a record whose own end has passed, however fresh the source is", async () => {
+    await createGraph("rebuilding");
     const seeded = await runSource(feed, {
       sql,
       fetch: serve(
@@ -292,33 +390,46 @@ describe("restriction record lifecycle", () => {
       ),
       lookup: fakeLookup,
       now: () => "2026-09-12T07:14:00.000Z",
+      model: MODEL,
     });
     expect(seeded.error).toBeUndefined();
-    await sql`UPDATE conditions.observations
-      SET valid_to = now() - interval '1 day' WHERE source = ${SOURCE}`;
-    await sql`UPDATE conditions.source_status SET last_success_at = now() WHERE source = ${SOURCE}`;
-    await sweepStaleObservations(sql, { maxAgeSec: 3600 });
-    expect(await ids()).toEqual([]);
+    expect(await ids()).toEqual([WEIGHT_ID]);
+    await placeOnGraph();
+    const [status] = await sql<{ freshness_deadline: Date }[]>`
+      SELECT freshness_deadline FROM conditions.source_status WHERE source = ${SOURCE}`;
+    // Inside the source's freshness window, so only the record's own end decides.
+    const conditions = await routed(new Date(status!.freshness_deadline.getTime() - 1000));
+    for (const condition of conditions) {
+      expect(condition.routing_evidence.reason_codes).not.toEqual([]);
+    }
+    expect(conditions.map((c) => c.id)).not.toContain(LANES);
   }, 120_000);
 
   it("projects source checked time and freshness through the read path", async () => {
+    await createGraph("rebuilding");
     await runSource(feed, {
       sql,
       fetch: serve(weightOnly()),
       lookup: fakeLookup,
       now: () => "2026-09-12T07:14:00.000Z",
+      model: MODEL,
     });
-    const rows = await readFinland();
-    const row = rows.find((o) => o.source === SOURCE)!;
-    expect(row.freshnessWindowSec).toBe(600);
-    expect(row.sourceCheckedAt).not.toBeNull();
-    expect(Number.isFinite(Date.parse(row.sourceCheckedAt!))).toBe(true);
-    // Read metadata must never be persisted into the attributes bag.
-    const stored = await sql<{ attributes: Record<string, unknown> }[]>`
-      SELECT attributes FROM conditions.observations WHERE id = ${WEIGHT_ID}`;
-    expect(stored[0]!.attributes).not.toHaveProperty("sourceCheckedAt");
-    expect(stored[0]!.attributes).not.toHaveProperty("freshnessWindowSec");
-    expect(stored[0]!.attributes["restrictionDetails"]).toBeDefined();
+    await placeOnGraph();
+    const rows = await readSegmentConditionRows(runner, {
+      at: new Date("2026-09-12T07:15:00.000Z"),
+      resolverVersion: RESOLVER_VERSION,
+    });
+    const row = rows.find((r) => r.effect_id === "GUID50465935/lane_restriction")!;
+    const checkedAt = new Date(row.source_checked_at!).getTime();
+    expect(checkedAt).toBe(Date.parse("2026-09-12T07:14:00.000Z"));
+    expect(new Date(row.fresh_until!).getTime() - checkedAt).toBe(600_000);
+    // Read metadata must never be persisted into the stored record.
+    const record = JSON.stringify((await stored(WEIGHT_ID))!.record);
+    expect(record).not.toContain("sourceCheckedAt");
+    expect(record).not.toContain("freshnessWindowSec");
+    const effects = await sql<{ kind: string }[]>`
+      SELECT kind FROM conditions.situation_effect WHERE situation_id = ${WEIGHT_ID}`;
+    expect(effects.map((e) => e.kind)).toContain("dimension_limit");
   }, 120_000);
 
   it("stamps the trusted feed rights onto the stored restriction envelope", async () => {
@@ -332,16 +443,25 @@ describe("restriction record lifecycle", () => {
       ),
       lookup: fakeLookup,
       now: () => "2026-09-12T07:14:00.000Z",
+      model: MODEL,
     });
-    const stored = await sql<{ attributes: Record<string, unknown> }[]>`
-      SELECT attributes FROM conditions.observations WHERE id = ${WEIGHT_ID}`;
-    const source = (
-      stored[0]!.attributes["restrictionDetails"] as { source: Record<string, unknown> }
-    ).source;
-    expect(source["license"]).toBe("CC-BY-4.0");
-    expect(source["licenseUrl"]).toBe("https://creativecommons.org/licenses/by/4.0/");
-    expect(source["publisher"]).toBe("Fintraffic / Digitraffic");
-    expect(source["feedUrls"]).toEqual(feed.url);
-    expect(source["modificationNotice"]).toContain("Normalized by OpenConditions");
+    const provenance = (await stored(WEIGHT_ID))!.record["provenance"] as {
+      attribution: Record<string, unknown>;
+    };
+    expect(provenance.attribution).toEqual({
+      provider: "Fintraffic / Digitraffic",
+      license: "CC-BY-4.0",
+      licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+      rights: {
+        source_redistribution: "yes",
+        derived_redistribution: "yes",
+        commercial_use: "yes",
+        attribution_required: "yes",
+        retention: "yes",
+        evidence_origin: "test",
+        evidence_version: null,
+        reviewed_at: "2026-09-01T00:00:00.000Z",
+      },
+    });
   }, 120_000);
 });

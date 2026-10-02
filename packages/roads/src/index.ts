@@ -29,14 +29,30 @@ export * from "./lta.js";
 export * from "./maxspeed.js";
 export * from "./measuredData.js";
 export * from "./miv.js";
-export * from "./model.js";
+// A parser's event intermediate (`RoadEvent`, `UnresolvedRoadEvent`) stays
+// inside this package: other packages see situation drafts only.
+export {
+  type BaselineMethod,
+  type FlowSiteHints,
+  type GeoJsonMapping,
+  type GeoJsonRecordFilter,
+  isRoadEventType,
+  type LaneStatus,
+  type Restriction,
+  ROAD_EVENT_TYPES,
+  type RoadEventType,
+  type RoadFlow,
+  type RoadRef,
+  roadFlowAttributes,
+  type SituationHints,
+} from "./model.js";
 export * from "./open511.js";
 export * from "./overpass.js";
+export * from "./parse.js";
 export * from "./pbf-geojson.js";
 export * from "./predefined-locations.js";
 export * from "./routing.js";
 export * from "./segment.js";
-export * from "./severity-derive.js";
 export * from "./sites/index.js";
 export * from "./siteTable.js";
 export * from "./situation/index.js";
@@ -46,7 +62,6 @@ export * from "./stations-bcn.js";
 export * from "./stations-fintraffic.js";
 export * from "./stations-france.js";
 export * from "./stations-webtris.js";
-export * from "./taxonomy.js";
 export * from "./tmc/index.js";
 export * from "./trafikverket.js";
 export * from "./types.js";

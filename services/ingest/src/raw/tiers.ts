@@ -4,7 +4,7 @@ import type { FeedSourceBase } from "@openconditions/ingest-framework";
 /**
  * How long a source's raw payloads may be kept, from its terms: a source
  * whose rights forbid retention keeps none (undefined), one whose rights do
- * not say keeps the first 48 hours only (`hot`), and one that affirms
+ * not say keeps the last 48 hours only (`hot`), and one that affirms
  * retention keeps its class's full tiers. A feed's responses are situation
  * or observation payloads by what it produces, unless it says otherwise;
  * its site table or station registry is a reference payload.

@@ -1,74 +1,56 @@
-import { runMigrations } from "@openconditions/core/server";
 import { RESOLVER_VERSION } from "@openconditions/roads";
 import Fastify from "fastify";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildDomainRegistry } from "../domains.js";
 import { FeedStatusStore } from "../feed-status.js";
 import { createBindingMetricsReader } from "../pipeline/binding-metrics.js";
 import { registerPublishRoutes } from "../publish-routes.js";
+import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
+import { bindSituation, situationDraft, writeSituations } from "./helpers/situations.js";
 
+let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
-const NOW = "2026-09-06T00:00:00.000Z";
+const id = (source: string, local: string) => `oc:situation:${source}:${local}`;
 
-async function insertEvent(id: string, source: string): Promise<void> {
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, category, severity, severity_source,
-       headline, status, geom, attributes, valid_from, origin,
-       data_updated_at, fetched_at, source_license, content_hash)
-    VALUES (${id}, ${source}, 'datex2', 'roads', 'event', 'road_closure', 'incident',
-      'high', 'declared', 'Closure', 'active',
-      ST_SetSRID(ST_GeomFromText('POINT(6.85 51.2)'), 4326),
-      ${sql.json({})}, ${NOW},
-      ${sql.json({ kind: "feed", attribution: { provider: source, license: "CC0-1.0" } })},
-      ${NOW}, ${NOW}, 'CC0-1.0', ${`rev-${id}`})`;
+/** Adds a live situation without withdrawing the source's others. */
+async function insertSituation(local: string, source: string): Promise<void> {
+  await writeSituations(sql, source, [situationDraft(local, {}, source)], undefined, false);
 }
 
-async function insertBinding(id: string, status: string, current = true): Promise<void> {
-  await sql`
-    INSERT INTO conditions.observation_binding
-      (observation_id, status, confidence, direction_mode, candidate_count,
-       alternative_confidence, reason, resolver_version, geom_hash, bound_at,
-       observation_revision, graph_generation)
-    VALUES (${id}, ${status}, 0.9, 'single', 1, null, null,
-      ${RESOLVER_VERSION}, ${`hash-${id}`}, ${NOW},
-      ${current ? `rev-${id}` : null}, ${current ? "graph-current" : null})`;
+async function insertBinding(
+  source: string,
+  local: string,
+  status: string,
+  current = true,
+): Promise<void> {
+  await bindSituation(sql, id(source, local), {
+    status,
+    confidence: 0.9,
+    generation: current ? "graph-current" : "graph-previous",
+    resolverVersion: RESOLVER_VERSION,
+  });
 }
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-  await runMigrations(url);
+  db = await createRestrictionDatabase();
+  sql = db.sql;
   await sql`
     INSERT INTO conditions.road_graph_state
       (singleton, generation, regions, highway_classes, pbf_provenance, imported_at, activated_at)
     VALUES (true, 'graph-current', '[]'::jsonb, '[]'::jsonb, '{}'::jsonb, now(), now())`;
 
-  await insertEvent("a:1", "de-autobahn");
-  await insertBinding("a:1", "exact");
-  await insertEvent("a:2", "de-autobahn");
-  await insertBinding("a:2", "unresolved");
-  // An unbound event of another feed: it must not create a `binding` key.
-  await insertEvent("n:1", "nl-ndw");
+  await insertSituation("1", "de-autobahn");
+  await insertBinding("de-autobahn", "1", "exact");
+  await insertSituation("2", "de-autobahn");
+  await insertBinding("de-autobahn", "2", "unresolved");
+  // An unbound situation of another feed: it must not create a `binding` key.
+  await insertSituation("1", "nl-ndw");
 }, 120_000);
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 async function withApp<T>(fn: (app: ReturnType<typeof Fastify>) => Promise<T>): Promise<T> {
@@ -94,7 +76,7 @@ async function feedsStatus(app: ReturnType<typeof Fastify>): Promise<StatusBody>
 }
 
 describe("binding metrics on GET /feeds/status", () => {
-  it("reports attempted and unattempted events over the same active cohort", async () => {
+  it("reports attempted and unattempted situations over the same live cohort", async () => {
     await withApp(async (app) => {
       const body = await feedsStatus(app);
       const autobahn = body.feeds.find((f) => f.id === "de-autobahn");
@@ -128,8 +110,8 @@ describe("binding metrics on GET /feeds/status", () => {
       const first = await feedsStatus(app);
       expect(first.feeds.find((f) => f.id === "de-autobahn")?.binding?.attempted).toBe(2);
 
-      await insertEvent("a:3", "de-autobahn");
-      await insertBinding("a:3", "likely");
+      await insertSituation("3", "de-autobahn");
+      await insertBinding("de-autobahn", "3", "likely");
 
       const second = await feedsStatus(app);
       expect(second.feeds.find((f) => f.id === "de-autobahn")?.binding).toEqual({
@@ -149,7 +131,7 @@ describe("binding metrics on GET /feeds/status", () => {
       });
     });
 
-    // A reader whose TTL has already lapsed re-queries and sees the third row.
+    // A reader whose TTL has already lapsed re-queries and sees the third situation.
     const fresh = createBindingMetricsReader(sql, 0);
     expect((await fresh()).get("de-autobahn")).toEqual({
       activeEvents: 3,
@@ -169,8 +151,8 @@ describe("binding metrics on GET /feeds/status", () => {
   });
 
   it("counts an unknown status toward attempted without inventing a key", async () => {
-    await insertEvent("a:weird", "de-autobahn");
-    await insertBinding("a:weird", "something_new");
+    await insertSituation("weird", "de-autobahn");
+    await insertBinding("de-autobahn", "weird", "something_new");
     const reader = createBindingMetricsReader(sql, 0);
     const metrics = await reader();
     expect(metrics.get("de-autobahn")).toEqual({
@@ -188,11 +170,13 @@ describe("binding metrics on GET /feeds/status", () => {
       noCoverage: 0,
       notApplicable: 0,
     });
-    await sql`DELETE FROM conditions.observations WHERE id = 'a:weird'`;
+    await sql`UPDATE conditions.situation SET tombstoned_at = now(), tombstone_reason = 'withdrawn'
+      WHERE id = ${id("de-autobahn", "weird")}`;
   });
 
   it("counts obsolete bindings outside attemptedCurrent", async () => {
-    await sql`UPDATE conditions.observation_binding SET status = 'obsolete' WHERE observation_id = 'a:2'`;
+    await sql`UPDATE conditions.record_binding SET status = 'obsolete'
+      WHERE record_id = ${id("de-autobahn", "2")}`;
     const metrics = (await createBindingMetricsReader(sql, 0)()).get("de-autobahn");
     expect(metrics).toMatchObject({
       activeEvents: 3,
@@ -203,17 +187,27 @@ describe("binding metrics on GET /feeds/status", () => {
     expect(metrics!.activeEvents).toBe(metrics!.attemptedCurrent + metrics!.unattemptedOrObsolete);
   });
 
-  it("treats a legacy binding without revision and graph generation as obsolete", async () => {
-    await insertEvent("a:legacy", "de-autobahn");
-    await insertBinding("a:legacy", "exact", false);
+  it("treats a binding of an older revision or graph generation as obsolete", async () => {
+    await insertSituation("stale-graph", "de-autobahn");
+    await insertBinding("de-autobahn", "stale-graph", "exact", false);
+    await insertSituation("stale-revision", "de-autobahn");
+    await insertBinding("de-autobahn", "stale-revision", "exact");
+    await sql`UPDATE conditions.record_binding SET record_revision = 0
+      WHERE record_id = ${id("de-autobahn", "stale-revision")}`;
     const metrics = (await createBindingMetricsReader(sql, 0)()).get("de-autobahn");
     expect(metrics).toMatchObject({
-      activeEvents: 4,
+      activeEvents: 5,
       attemptedCurrent: 2,
-      obsolete: 2,
-      unattemptedOrObsolete: 2,
+      obsolete: 3,
+      unattemptedOrObsolete: 3,
       exact: 1,
     });
     expect(metrics!.activeEvents).toBe(metrics!.attemptedCurrent + metrics!.unattemptedOrObsolete);
+  });
+
+  it("leaves a withdrawn situation out of the cohort", async () => {
+    await writeSituations(sql, "nl-ndw", [], "2026-09-06T10:05:00.000Z");
+    const metrics = await createBindingMetricsReader(sql, 0)();
+    expect(metrics.get("nl-ndw")).toBeUndefined();
   });
 });

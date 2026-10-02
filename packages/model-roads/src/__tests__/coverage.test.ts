@@ -16,6 +16,7 @@ import {
   DATEX2_SITUATIONS,
 } from "../crosswalk/datex2.js";
 import {
+  DATEX2_RECORDS,
   GTFS_RT_CAUSE_VALUES,
   GTFS_RT_CAUSES,
   ROAD511_TYPES,
@@ -27,6 +28,15 @@ import {
   OPEN511_SEVERITIES,
   OPEN511_SITUATIONS,
 } from "../crosswalk/open511.js";
+import {
+  AUTOBAHN_SITUATIONS,
+  DIGITRAFFIC_SITUATIONS,
+  GDDKIA_SITUATIONS,
+  LTA_SITUATIONS,
+  OHGO_SITUATIONS,
+  TRAFIKVERKET_SITUATIONS,
+  VIC_SITUATIONS,
+} from "../crosswalk/providers.js";
 import {
   WZDX_LANE_STATUSES,
   WZDX_LANE_TYPES,
@@ -128,6 +138,13 @@ describe("source crosswalk coverage", () => {
       WZDX_SITUATIONS,
       OPEN511_SITUATIONS,
       IBI511_SITUATIONS,
+      DIGITRAFFIC_SITUATIONS,
+      LTA_SITUATIONS,
+      GDDKIA_SITUATIONS,
+      TRAFIKVERKET_SITUATIONS,
+      AUTOBAHN_SITUATIONS,
+      OHGO_SITUATIONS,
+      VIC_SITUATIONS,
     ]) {
       for (const [code, target] of Object.entries(table)) {
         if (target !== null) expect(isRegistered(target), `${code} → ${target}`).toBe(true);
@@ -190,6 +207,23 @@ describe("emitter crosswalk coverage", () => {
       }
     },
   );
+
+  it("gives every registered type a DATEX record that reads back as the same kind, or an explicit null", () => {
+    for (const type of registeredTypes) expect(Object.keys(DATEX2_RECORDS), type).toContain(type);
+    for (const [code, record] of Object.entries(DATEX2_RECORDS)) {
+      expect(isRegistered(code), code).toBe(true);
+      if (record === null) continue;
+      const [cls, value] = record.split(":") as [string, string | undefined];
+      expect(DATEX2_V3.recordClasses as readonly string[], record).toContain(cls);
+      const discriminators = DATEX2_V3.discriminators as Record<
+        string,
+        { values: readonly string[] }
+      >;
+      if (value !== undefined) expect(discriminators[cls]?.values, record).toContain(value);
+      const read = DATEX2_SITUATIONS[record];
+      expect(read && parseSituationCode(read).kind, record).toBe(parseSituationCode(code).kind);
+    }
+  });
 
   it("gives every cause a nature or an explicit null", () => {
     expect(sorted(Object.keys(CAUSE_NATURES))).toEqual(sorted(CAUSES));

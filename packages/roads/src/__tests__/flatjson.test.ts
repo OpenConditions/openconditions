@@ -12,7 +12,13 @@ describe("parseFlatJson", () => {
       attribution: "T",
       country: "XX",
       license: "CC0-1.0",
-      geojson: { lonField: "lng", latField: "lat", typeField: "kind", headlineField: "title" },
+      geojson: {
+        lonField: "lng",
+        latField: "lat",
+        typeField: "kind",
+        typeMap: { roadworks: "roadworks" },
+        headlineField: "title",
+      },
     };
     const out = parseFlatJson(
       JSON.stringify([{ kind: "roadworks", title: "Works", lng: 100.5, lat: 13.7 }]),

@@ -5,6 +5,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { activateRoadGraph } from "../pipeline/graph-state.js";
 import { importOsmRoads, type OsmRegion } from "../pipeline/osm-import.js";
 import { runSegmentRebuild } from "../pipeline/segment-rebuild.js";
+import { situationDraft, writeSituations } from "./helpers/situations.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -48,17 +49,28 @@ async function seedFlowSensor(): Promise<void> {
 }
 
 /** A closure along the fixture way, so the rebind stage has something to bind. */
-async function seedClosureEvent(): Promise<void> {
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, status, geom, attributes, origin,
-       data_updated_at, fetched_at)
-    VALUES ('closure:1', 'test-src', 'test-fmt', 'roads', 'event', 'road_closure', 'active',
-      ST_SetSRID(ST_GeomFromText('LINESTRING(5.02 52.00001, 5.08 52.00001)'), 4326),
-      ${sql.json({ roads: [{ ref: "A12" }] })},
-      ${sql.json({ kind: "feed", attribution: { provider: "test" } })},
-      ${NOW}, ${NOW})`;
+async function seedClosureSituation(): Promise<void> {
+  const draft = situationDraft("closure-1", {}, "test-src");
+  await writeSituations(sql, "test-src", [
+    {
+      ...draft,
+      location: {
+        ...(draft["location"] as Record<string, unknown>),
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [5.02, 52.00001],
+            [5.08, 52.00001],
+          ],
+        },
+        roads: [{ ref: "A12" }],
+        admin: { country: "NL" },
+      },
+    },
+  ]);
 }
+
+const CLOSURE_ID = "oc:situation:test-src:closure-1";
 
 beforeEach(() => {
   process.env["SEGMENT_REGIONS"] = ONE_REGION;
@@ -89,6 +101,8 @@ afterEach(async () => {
   delete process.env["SEGMENT_REGIONS"];
   await sql`DELETE FROM conditions.sensor_segment`;
   await sql`DELETE FROM conditions.observations`;
+  await sql`TRUNCATE conditions.situation, conditions.record_binding, conditions.record_segment,
+    conditions.binding_queue CASCADE`;
   await sql`DELETE FROM conditions.road_segment`;
   await sql`DELETE FROM conditions.osm_road`;
 });
@@ -97,7 +111,7 @@ describe("runSegmentRebuild", () => {
   it("runs import -> build -> encode -> match -> rebind in order and is idempotent", async () => {
     process.env["SEGMENT_REGIONS"] = ONE_REGION;
     await seedFlowSensor();
-    await seedClosureEvent();
+    await seedClosureSituation();
 
     const first = await runSegmentRebuild(sql, { fetch: fetchFn, now: () => NOW });
     expect(first).toMatchObject({ imported: 1, built: 1, encoded: 1, matched: 1, rebound: 1 });
@@ -120,7 +134,8 @@ describe("runSegmentRebuild", () => {
 
     // The rebind stage ran against the freshly built spine, not a stale one.
     const boundRows = await sql<{ segment_id: string }[]>`
-      SELECT segment_id FROM conditions.observation_segment WHERE observation_id = 'closure:1'`;
+      SELECT segment_id FROM conditions.record_segment
+       WHERE record_class = 'situation' AND record_id = ${CLOSURE_ID} AND effect_id = ''`;
     expect(boundRows.map((r) => r.segment_id)).toEqual(["9:f"]);
 
     const segRows = await sql<{ segment_id: string; openlr: string | null }[]>`

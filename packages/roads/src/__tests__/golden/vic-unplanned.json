@@ -139,16 +139,17 @@
     },
     "canonicalId": "525fc6e24a22ed71a2cb4bc87a4c82521851c89a9a1907455b032140919f3ddd",
     "domain": "roads",
-    "contentHash": "71e3f0f7fb6b8fb380fbdaac383d901777d1d32e1f9623826df8a76ea1a7bfdb",
+    "contentHash": "a6fa022b3c9d74f757eb2078acd9a985b14df562c60c043227bf27d7ca40511e",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
-    "kind": "weather_condition",
-    "type": "weather",
+    "kind": "road_hazard",
+    "type": "hazard",
+    "subtype": "flooding",
     "planned": false,
     "certainty": "unknown",
     "severity": {
-      "label": "minor",
+      "label": "moderate",
       "source": "derived"
     },
     "headline": [
@@ -163,7 +164,7 @@
     },
     "effects": [],
     "details": {
-      "kind": "weather_condition",
+      "kind": "road_hazard",
       "v": 1
     }
   }

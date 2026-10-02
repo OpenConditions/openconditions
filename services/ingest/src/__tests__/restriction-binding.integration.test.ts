@@ -1,26 +1,30 @@
 import { readFileSync } from "node:fs";
+import type { LookupFn } from "@openconditions/ingest-framework";
 import type { OsmWay, SpineSubgraph } from "@openconditions/roads";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { registerApiRoutes } from "../api/routes.js";
 import { buildDomainRegistry } from "../domains.js";
 import { FeedStatusStore } from "../feed-status.js";
-import { bindObservations, drainBindingQueue } from "../pipeline/bind-observations.js";
+import { bindRecords, drainBindingQueue } from "../pipeline/bind-records.js";
 import { activateRoadGraph } from "../pipeline/graph-state.js";
 import { importOsmRoads } from "../pipeline/osm-import.js";
+import { type DomainFeedSource, runSource } from "../pipeline/run.js";
 import { buildSegments } from "../pipeline/segment-build.js";
-import { atomicSwap } from "../pipeline/write-postgis.js";
 import { registerPublishRoutes } from "../publish-routes.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
+import { registry as model, situationDraft, writeSituations } from "./helpers/situations.js";
 
 /**
- * Event binding through the real graph tables: import the frozen Road 40 spine,
- * build segments, activate the graph and drain the queue.
+ * Situation binding through the real graph tables: import the frozen Road 40
+ * spine, build segments, activate the graph, publish the reviewed records the
+ * way a poll does and bind them.
  *
- * The spine is OpenStreetMap data under ODbL (see its manifest); the event is
- * the reviewed Fintraffic record under CC BY 4.0. The assertion that matters is
- * negative: binding the parent event never establishes where a phase or detour
- * restriction applies.
+ * The spine is OpenStreetMap data under ODbL (see its manifest); the records
+ * are the reviewed Fintraffic records under CC BY 4.0. The assertion that
+ * matters is negative: binding the parent situation never establishes where a
+ * phase or detour restriction applies.
  */
 
 const CHECKED_AT = "2026-09-12T07:14:00.000Z";
@@ -30,6 +34,7 @@ const REGION = {
   tz: "Europe/Helsinki",
 };
 const ENV = { SEGMENT_REGIONS: JSON.stringify([REGION]), BIND_ENABLED: "true" };
+const ROADWORKS = "https://tie.digitraffic.fi/api/traffic-message/v2/roadworks";
 
 const spine = JSON.parse(
   readFileSync(
@@ -41,15 +46,21 @@ const spine = JSON.parse(
   ),
 ) as SpineSubgraph;
 
-const sourceFixture = JSON.parse(
-  readFileSync(
-    new URL(
-      "../../../../packages/roads/src/__tests__/fixtures/digitraffic/v2-restrictions.json",
-      import.meta.url,
-    ),
-    "utf8",
-  ),
-) as { features: Array<{ geometry: unknown; properties: Record<string, unknown> }> };
+type Feature = { geometry: unknown; properties: Record<string, unknown> };
+
+function sourceFeatures(): Feature[] {
+  return (
+    JSON.parse(
+      readFileSync(
+        new URL(
+          "../../../../packages/roads/src/__tests__/fixtures/digitraffic/v2-restrictions.json",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    ) as { features: Feature[] }
+  ).features;
+}
 
 /**
  * Convert the frozen directed spine back into the `OsmWay` rows the importer
@@ -77,12 +88,44 @@ function spineToWays(subgraph: SpineSubgraph): OsmWay[] {
 
 const ways = spineToWays(spine);
 
-function road40Event() {
-  const feature = sourceFixture.features.find(
-    (f) => f.properties["situationId"] === "GUID50470575",
-  )!;
-  return feature;
+const ROAD40 = "GUID50470575";
+const situationId = (local: string) => `oc:situation:fi-digitraffic:${local}`;
+
+function feature(local: string): Feature {
+  return structuredClone(sourceFeatures().find((f) => f.properties["situationId"] === local)!);
 }
+
+/**
+ * Synthetic: opens the record's windows so it stays active whenever the suite
+ * runs; the frozen capture's own dates would eventually lie in the past.
+ */
+function openEnded(f: Feature): Feature {
+  for (const announcement of f.properties["announcements"] as Array<Record<string, unknown>>) {
+    announcement["timeAndDuration"] = { startTime: "2026-06-11T21:00:00.000Z", endTime: null };
+    for (const phase of (announcement["roadWorkPhases"] ?? []) as Array<Record<string, unknown>>) {
+      phase["timeAndDuration"] = { startTime: "2026-07-19T21:00:00.000Z", endTime: null };
+    }
+  }
+  return f;
+}
+
+const feed = {
+  id: "fi-digitraffic",
+  domain: "roads",
+  operator: "digitraffic",
+  name: "Digitraffic (Finland)",
+  format: "digitraffic",
+  url: [ROADWORKS],
+  snapshot: { completeness: "complete", recordsPath: "features" },
+  cadenceSec: 120,
+  freshnessWindowSec: 600,
+  license: "CC-BY-4.0",
+  licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+  attribution: "Fintraffic / Digitraffic",
+  country: "FI",
+} as unknown as DomainFeedSource;
+
+const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 
 let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
 let sql: postgres.Sql;
@@ -90,6 +133,8 @@ let sql: postgres.Sql;
 beforeAll(async () => {
   db = await createRestrictionDatabase();
   sql = db.sql;
+  // Polls only publish here; each case binds explicitly against the test region.
+  process.env["BIND_ENABLED"] = "false";
   await importOsmRoads(sql, {
     source: { fetchRegion: async () => ways },
     now: () => CHECKED_AT,
@@ -104,55 +149,44 @@ beforeAll(async () => {
 }, 180_000);
 
 afterAll(async () => {
+  delete process.env["BIND_ENABLED"];
   await db?.close();
 }, 30_000);
 
-/**
- * Publish one road event. Road-domain fields are top-level model fields: the
- * write path derives the attributes bag from the domain mapper, so a
- * hand-built `attributes` object would never be persisted.
- */
-async function seedEvent(
-  id: string,
-  geometry: unknown,
-  roadFields: Record<string, unknown>,
-): Promise<void> {
-  await atomicSwap(
+/** Publishes `features` as one complete Digitraffic snapshot, as a poll would. */
+async function publish(features: Feature[], now = CHECKED_AT): Promise<void> {
+  const result = await runSource(feed, {
     sql,
-    "fi-digitraffic",
-    [
-      {
-        id,
-        source: "fi-digitraffic",
-        sourceFormat: "digitraffic",
-        domain: "roads",
-        kind: "event",
-        type: "roadworks",
-        category: "planned",
-        severity: "high",
-        severitySource: "declared",
-        headline: "Tie 40, Lieto",
-        status: "active",
-        geometry,
-        origin: {
-          kind: "feed",
-          attribution: {
-            provider: "Fintraffic / Digitraffic",
-            license: "CC-BY-4.0",
-            url: "https://creativecommons.org/licenses/by/4.0/",
-          },
-        },
-        dataUpdatedAt: CHECKED_AT,
-        fetchedAt: CHECKED_AT,
-        isStale: false,
-        ...roadFields,
-      } as never,
-    ],
-    600,
-  );
+    fetch: (async () =>
+      new Response(JSON.stringify({ type: "FeatureCollection", features }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })) as unknown as typeof fetch,
+    lookup: fakeLookup,
+    now: () => now,
+  });
+  expect(result.error).toBeUndefined();
 }
 
-describe("restriction event binding against the real graph", () => {
+function bind(ids: string[]) {
+  return bindRecords(sql, ids, { now: () => CHECKED_AT, env: ENV });
+}
+
+async function binding(id: string) {
+  const rows = await sql<
+    { effect_id: string; status: string; reason: string | null; graph_generation: string | null }[]
+  >`SELECT effect_id, status, reason, graph_generation FROM conditions.record_binding
+     WHERE record_class = 'situation' AND record_id = ${id} ORDER BY effect_id`;
+  return rows;
+}
+
+async function spans(id: string) {
+  return sql<{ effect_id: string; segment_id: string; dir: string }[]>`
+    SELECT effect_id, segment_id, dir FROM conditions.record_segment
+     WHERE record_class = 'situation' AND record_id = ${id} ORDER BY effect_id, seq`;
+}
+
+describe("restriction situation binding against the real graph", () => {
   it("imports the frozen spine into real directed segments", async () => {
     const rows = await sql<{ segment_id: string }[]>`
       SELECT segment_id FROM conditions.road_segment ORDER BY segment_id`;
@@ -164,113 +198,70 @@ describe("restriction event binding against the real graph", () => {
   }, 60_000);
 
   it("binds the width record to the same segments the pure matcher chose", async () => {
-    const event = road40Event();
-    await seedEvent("fi-digitraffic:GUID50470575", event.geometry, {
-      roads: [{ name: "Turun kehätie", ref: "40" }],
-      isPlanned: true,
-      direction: "Naantali",
-    });
-    const result = await bindObservations(sql, ["fi-digitraffic:GUID50470575"], {
-      now: () => CHECKED_AT,
-      env: ENV,
-    });
+    await publish([feature(ROAD40)]);
+    const result = await bind([situationId(ROAD40)]);
     expect(result.attempted).toBe(1);
-    const binding = await sql<{ status: string; direction_mode: string }[]>`
-      SELECT status, direction_mode FROM conditions.observation_binding
-      WHERE observation_id = 'fi-digitraffic:GUID50470575'`;
-    expect(["exact", "likely"]).toContain(binding[0]!.status);
-    const spans = await sql<{ segment_id: string; dir: string }[]>`
-      SELECT segment_id, dir FROM conditions.observation_segment
-      WHERE observation_id = 'fi-digitraffic:GUID50470575' ORDER BY seq`;
-    expect(spans.map((s) => s.segment_id)).toEqual(["1089416142:f", "724030614:f", "1117139737:f"]);
+    const [own] = await binding(situationId(ROAD40));
+    expect(own!.effect_id).toBe("");
+    expect(["exact", "likely"]).toContain(own!.status);
+    const bound = await spans(situationId(ROAD40));
+    expect(bound.map((s) => s.segment_id)).toEqual(["1089416142:f", "724030614:f", "1117139737:f"]);
     // Every span names a segment the graph actually holds.
     const known = await sql<{ segment_id: string }[]>`
       SELECT segment_id FROM conditions.road_segment`;
     const set = new Set(known.map((k) => k.segment_id));
-    for (const span of spans) expect(set.has(span.segment_id), span.segment_id).toBe(true);
+    for (const span of bound) expect(set.has(span.segment_id), span.segment_id).toBe(true);
   }, 60_000);
 
-  it("never records a restriction fact as bound, whatever the event bound to", async () => {
-    const stored = await sql<{ attributes: Record<string, unknown> }[]>`
-      SELECT attributes FROM conditions.observations
-      WHERE id = 'fi-digitraffic:GUID50470575'`;
-    void stored;
-    const spans = await sql<{ segment_id: string }[]>`
-      SELECT segment_id FROM conditions.observation_segment
-      WHERE observation_id = 'fi-digitraffic:GUID50470575'`;
-    expect(spans.length).toBeGreaterThan(0);
-    // There is no table, column or attribute that binds a restriction fact:
-    // the contract's only value is "not_established", asserted at the parser
-    // and contract boundaries. Assert here that the segment table holds only
-    // observation-level rows.
-    const columns = await sql<{ column_name: string }[]>`
-      SELECT column_name FROM information_schema.columns
-      WHERE table_schema = 'conditions' AND table_name = 'observation_segment'`;
-    expect(columns.map((c) => c.column_name)).not.toContain("fact_id");
+  it("never binds a restriction effect, whatever the situation bound to", async () => {
+    const effects = await sql<{ effect_id: string }[]>`
+      SELECT effect_id FROM conditions.situation_effect WHERE situation_id = ${situationId(ROAD40)}`;
+    expect(effects.length).toBeGreaterThan(0);
+    // Only the situation's own location is placed: no effect of the record
+    // names a location of its own, so none gets a binding or spans.
+    expect((await binding(situationId(ROAD40))).map((b) => b.effect_id)).toEqual([""]);
+    const bound = await spans(situationId(ROAD40));
+    expect(bound.length).toBeGreaterThan(0);
+    expect(new Set(bound.map((s) => s.effect_id))).toEqual(new Set([""]));
   }, 60_000);
 
-  it("reports no coverage for an event outside the imported graph", async () => {
-    await seedEvent(
-      "fi-digitraffic:GUID50470575",
-      { type: "Point", coordinates: [24.249493, 64.264338] },
-      { roads: [{ name: "7840", ref: "7840" }], isPlanned: true },
-    );
-    await bindObservations(sql, ["fi-digitraffic:GUID50470575"], {
-      now: () => CHECKED_AT,
-      env: ENV,
-    });
-    const binding = await sql<{ status: string }[]>`
-      SELECT status FROM conditions.observation_binding
-      WHERE observation_id = 'fi-digitraffic:GUID50470575'`;
-    expect(["unresolved", "no_coverage"]).toContain(binding[0]!.status);
-    const spans = await sql`SELECT segment_id FROM conditions.observation_segment
-      WHERE observation_id = 'fi-digitraffic:GUID50470575'`;
-    expect(spans).toHaveLength(0);
+  it("reports no coverage for a situation outside the imported graph", async () => {
+    const outside = feature(ROAD40);
+    outside.geometry = { type: "Point", coordinates: [24.249493, 64.264338] };
+    await publish([outside]);
+    await bind([situationId(ROAD40)]);
+    const [own] = await binding(situationId(ROAD40));
+    expect(["unresolved", "no_coverage"]).toContain(own!.status);
+    expect(await spans(situationId(ROAD40))).toHaveLength(0);
   }, 60_000);
 
-  it("leaves a disconnected linear event unbound with a diagnostic", async () => {
-    const event = road40Event();
-    const original = event.geometry as { coordinates: number[][][] };
-    const component = original.coordinates[0]!;
+  it("leaves a disconnected linear situation unbound with a diagnostic", async () => {
+    const gapped = feature(ROAD40);
+    const component = (gapped.geometry as { coordinates: number[][][] }).coordinates[0]!;
     const half = Math.floor(component.length / 2);
-    await seedEvent(
-      "fi-digitraffic:gapped",
-      {
-        type: "MultiLineString",
-        // Synthetic: the real line split and its second half moved away, so the
-        // gap crosses roads the source never mentioned.
-        coordinates: [
-          component.slice(0, half),
-          component.slice(half).map(([lon, lat]) => [lon! + 0.01, lat! + 0.005]),
-        ],
-      },
-      { roads: [{ name: "Turun kehätie", ref: "40" }], isPlanned: true },
-    );
-    await bindObservations(sql, ["fi-digitraffic:gapped"], { now: () => CHECKED_AT, env: ENV });
-    const binding = await sql<{ status: string; reason: string | null }[]>`
-      SELECT status, reason FROM conditions.observation_binding
-      WHERE observation_id = 'fi-digitraffic:gapped'`;
-    expect(binding[0]).toMatchObject({
+    gapped.geometry = {
+      type: "MultiLineString",
+      // Synthetic: the real line split and its second half moved away, so the
+      // gap crosses roads the source never mentioned.
+      coordinates: [
+        component.slice(0, half),
+        component.slice(half).map(([lon, lat]) => [lon! + 0.01, lat! + 0.005]),
+      ],
+    };
+    await publish([gapped]);
+    await bind([situationId(ROAD40)]);
+    expect((await binding(situationId(ROAD40)))[0]).toMatchObject({
       status: "unresolved",
       reason: "disconnected_geometry",
     });
-    expect(
-      await sql`SELECT segment_id FROM conditions.observation_segment
-        WHERE observation_id = 'fi-digitraffic:gapped'`,
-    ).toHaveLength(0);
+    expect(await spans(situationId(ROAD40))).toHaveLength(0);
   }, 60_000);
 
   it("invalidates binding currency when the graph generation changes", async () => {
-    const event = road40Event();
-    await seedEvent("fi-digitraffic:GUID50470575", event.geometry, {
-      roads: [{ name: "Turun kehätie", ref: "40" }],
-      isPlanned: true,
-    });
+    await publish([feature(ROAD40)]);
     await drainBindingQueue(sql, { now: () => CHECKED_AT, env: ENV, limit: 500 });
-    const before = await sql<{ graph_generation: string | null }[]>`
-      SELECT graph_generation FROM conditions.observation_binding
-      WHERE observation_id = 'fi-digitraffic:GUID50470575'`;
-    expect(before[0]!.graph_generation).toBe("restriction-fi-test");
+    const [before] = await binding(situationId(ROAD40));
+    expect(before!.graph_generation).toBe("restriction-fi-test");
 
     await activateRoadGraph(sql, {
       now: () => CHECKED_AT,
@@ -282,155 +273,122 @@ describe("restriction event binding against the real graph", () => {
     expect(state[0]!.generation).toBe("restriction-fi-test-2");
     // The stored binding still names the old generation, so a consumer's
     // currency check rejects it rather than treating it as current.
-    const after = await sql<{ graph_generation: string | null }[]>`
-      SELECT graph_generation FROM conditions.observation_binding
-      WHERE observation_id = 'fi-digitraffic:GUID50470575'`;
-    expect(after[0]!.graph_generation).not.toBe(state[0]!.generation);
+    const [after] = await binding(situationId(ROAD40));
+    expect(after!.graph_generation).not.toBe(state[0]!.generation);
   }, 60_000);
 });
 
-describe("stored restriction publication through the real HTTP and provider path", () => {
-  const CONDITIONAL_ID = "fi-digitraffic:GUID50465935";
+describe("stored restriction publication through the real HTTP path", () => {
+  const BBOX = "22.3,60.4,22.5,60.5";
+  const CONDITIONAL = "GUID50465935";
+  const CONDITIONAL_ID = situationId(CONDITIONAL);
+  /** The 26 t gross weight limit of one roadworks phase, located only by a description. */
+  const PHASE_RESTRICTION = `${CONDITIONAL}/dimension_limit`;
 
-  const restrictionDetails = {
-    schemaVersion: 1,
-    vehicleScope: "specific",
-    completeness: "complete",
-    issues: [],
-    source: {
-      sourceId: "fi-digitraffic",
-      recordId: "GUID50465935",
-      recordVersion: "31",
-      sourceUpdatedAt: "2026-08-28T04:18:02.629Z",
-      feedUrls: ["https://tie.digitraffic.fi/api/traffic-message/v2/roadworks"],
-      publisher: "Fintraffic / Digitraffic",
-      license: "CC-BY-4.0",
-      licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
-      attribution: "Fintraffic / Digitraffic",
-      modificationNotice:
-        "Normalized by OpenConditions; source units and structure may be transformed.",
-    },
-    facts: [
-      {
-        id: "GUID50465935:GUID50469933:roadwork_phase:restrictions[2]",
-        kind: "dimension",
-        dimension: "gross_weight",
-        meaning: "maximum_permitted",
-        value: 26000,
-        unit: "kg",
-        operator: "lte",
-        scope: {
-          kind: "roadwork_phase",
-          phaseId: "GUID50469933",
-          locationDescription: "Tie 104, Raasepori",
-          sourceLocationRefs: { scheme: "digitraffic_road_address", road: 104 },
-          restrictionBinding: "not_established",
-        },
-        direction: { basis: "road_reference", value: "both", description: null },
-        validFrom: "2026-07-19T21:00:00.000Z",
-        validTo: null,
-        sourceTokens: { type: "vehicle gross weight limit", quantity: 26, unit: "t" },
-        context: {
-          restrictionsLiftable: false,
-          compliance: "unknown",
-          operatorActionStatus: null,
-          validityStatus: null,
-        },
-      },
-    ],
-  };
-
+  /**
+   * The reviewed weight-restricted roadworks, moved onto the imported Road 40
+   * spine (synthetic) and published fresh, then bound.
+   */
   async function seedConditional(): Promise<void> {
-    const event = road40Event();
-    await seedEvent(CONDITIONAL_ID, event.geometry, {
-      roads: [{ name: "Turun kehätie", ref: "40" }],
-      isPlanned: true,
-      roadState: "closed",
-      restrictionDetails,
-    });
-    await sql`UPDATE conditions.observations
-      SET valid_from = now() - interval '1 day', valid_to = NULL WHERE id = ${CONDITIONAL_ID}`;
-    await sql`UPDATE conditions.source_status
-      SET last_success_at = now(), freshness_window_sec = 600 WHERE source = 'fi-digitraffic'`;
-    await bindObservations(sql, [CONDITIONAL_ID], { now: () => CHECKED_AT, env: ENV });
+    const conditional = openEnded(feature(CONDITIONAL));
+    conditional.geometry = feature(ROAD40).geometry;
+    await publish([conditional], new Date().toISOString());
+    await bind([CONDITIONAL_ID]);
   }
 
   async function app() {
     const instance = Fastify();
     const registry = await buildDomainRegistry();
     registerPublishRoutes(instance, sql, new FeedStatusStore(), registry);
+    registerApiRoutes(instance, sql, { registry: model });
     await instance.ready();
     return instance;
   }
 
-  it("publishes the evaluated restriction with freshness read from the database", async () => {
+  type Condition = {
+    id: string;
+    record_id: string;
+    effect: { kind: string };
+    routing_evidence: { reason_codes: string[]; source_checked_at: string; fresh_until: string };
+  };
+
+  async function segmentConditions(instance: Awaited<ReturnType<typeof app>>) {
+    const res = await instance.inject({
+      method: "GET",
+      url: `/segments/conditions.json?bbox=${BBOX}`,
+    });
+    expect(res.statusCode).toBe(200);
+    return (res.json() as { conditions: Condition[] }).conditions;
+  }
+
+  it("publishes the situation's effects with freshness read from the database", async () => {
     await seedConditional();
+    const [status] = await sql<{ last_network_success_at: Date; freshness_deadline: Date }[]>`
+      SELECT last_network_success_at, freshness_deadline FROM conditions.source_status
+       WHERE source = 'fi-digitraffic'`;
+    // The weight restriction itself is stored with the situation.
+    const [weight] = await sql<{ value: { value: { value: number; unit: string } } }[]>`
+      SELECT value FROM conditions.situation_effect
+       WHERE situation_id = ${CONDITIONAL_ID} AND effect_id = ${PHASE_RESTRICTION}`;
+    expect(weight!.value.value).toEqual({ value: 26000, unit: "kg" });
     const instance = await app();
     try {
-      const res = await instance.inject({
-        method: "GET",
-        url: "/observations.geojson?bbox=22.3,60.4,22.5,60.5",
+      const lanes = (await segmentConditions(instance)).find(
+        (c) => c.id === `${CONDITIONAL_ID}#${CONDITIONAL}/lane_restriction`,
+      )!;
+      expect(lanes.routing_evidence).toMatchObject({
+        reason_codes: [],
+        source_license: "CC-BY-4.0",
+        license_url: "https://creativecommons.org/licenses/by/4.0/",
+        attribution: "Fintraffic / Digitraffic",
       });
-      expect(res.statusCode).toBe(200);
-      const body = res.json() as {
-        features: Array<{ id: string; properties: Record<string, unknown> }>;
-      };
-      const feature = body.features.find((f) => f.id === CONDITIONAL_ID)!;
-      expect(feature.properties["restrictionDetails"]).toBeDefined();
-      const view = feature.properties["restrictionDetails"] as {
-        facts: Array<{ value: number; unit: string; state: string }>;
-        source: Record<string, unknown>;
-        sourceCheckedAt: string | null;
-        freshUntil: string | null;
-        isStale: boolean;
-      };
-      expect(view.facts[0]).toMatchObject({ value: 26000, unit: "kg", state: "active" });
-      expect(view.source).toMatchObject({
-        license: "CC-BY-4.0",
-        licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
-        publisher: "Fintraffic / Digitraffic",
-      });
-      // Freshness is computed from the database's source status, not from the
-      // observation row's own timestamps.
-      expect(view.sourceCheckedAt).not.toBeNull();
-      expect(view.freshUntil).not.toBeNull();
-      expect(view.isStale).toBe(false);
+      // Freshness is read from the database's source status, not from the
+      // record's own timestamps.
+      expect(Date.parse(lanes.routing_evidence.source_checked_at)).toBe(
+        status!.last_network_success_at.getTime(),
+      );
+      expect(Date.parse(lanes.routing_evidence.fresh_until)).toBe(
+        status!.freshness_deadline.getTime(),
+      );
+      expect(Date.parse(lanes.routing_evidence.fresh_until)).toBeGreaterThan(Date.now());
     } finally {
       await instance.close();
     }
   }, 120_000);
 
-  it("emits no conditional record into segments, Valhalla, DATEX or TraFF", async () => {
+  it("emits no phase restriction into segments, Valhalla, DATEX or TraFF", async () => {
     await seedConditional();
     const instance = await app();
     try {
-      const segments = await instance.inject({
-        method: "GET",
-        url: "/segments/conditions.json?bbox=22.3,60.4,22.5,60.5",
-      });
-      expect(segments.statusCode).toBe(200);
-      const conditions = (segments.json() as { conditions: Array<{ id: string }> }).conditions;
-      expect(conditions.map((c) => c.id)).not.toContain(CONDITIONAL_ID);
+      // The phase restriction names no location the record places, so the
+      // situation's binding never establishes where it applies.
+      const conditions = await segmentConditions(instance);
+      expect(conditions.some((c) => c.record_id === CONDITIONAL_ID)).toBe(true);
+      for (const condition of conditions.filter(
+        (c) => c.id === `${CONDITIONAL_ID}#${PHASE_RESTRICTION}`,
+      )) {
+        expect(condition.routing_evidence.reason_codes).not.toEqual([]);
+      }
 
       const exclusions = await instance.inject({
         method: "GET",
-        url: "/valhalla/exclusions.json?bbox=22.3,60.4,22.5,60.5",
+        url: `/valhalla/exclusions.json?bbox=${BBOX}`,
       });
       expect(exclusions.statusCode).toBe(200);
       const body = exclusions.json() as {
         exclude_locations: unknown[];
         exclude_polygons: unknown[];
+        speed_caps: Array<{ limit_kph: number }>;
       };
       expect(body.exclude_locations).toEqual([]);
       expect(body.exclude_polygons).toEqual([]);
+      // Only the situation's own 30 km/h limit caps speeds.
+      expect(new Set(body.speed_caps.map((c) => c.limit_kph))).toEqual(new Set([30]));
 
-      for (const url of [
-        "/datex2/situations.xml?bbox=22.3,60.4,22.5,60.5",
-        "/traff.xml?bbox=22.3,60.4,22.5,60.5",
-      ]) {
+      for (const url of [`/datex2/situations.xml?bbox=${BBOX}`, `/traff.xml?bbox=${BBOX}`]) {
         const res = await instance.inject({ method: "GET", url });
         expect(res.statusCode).toBe(200);
-        expect(res.body, url).not.toContain(CONDITIONAL_ID);
+        expect(res.body, url).not.toContain(CONDITIONAL);
         expect(res.body, url).not.toContain("26000");
         expect(res.body, url).not.toContain("Painorajoitus");
       }
@@ -441,50 +399,55 @@ describe("stored restriction publication through the real HTTP and provider path
 
   it("still publishes an independently bound unconditional control", async () => {
     await seedConditional();
-    const event = road40Event();
-    // A second source so the conditional swap cannot withdraw it.
-    await atomicSwap(
-      sql,
-      "control-source",
-      [
-        {
-          id: "control-source:closure",
-          source: "control-source",
-          sourceFormat: "native",
-          domain: "roads",
-          kind: "event",
-          type: "road_closure",
-          category: "incident",
-          severity: "high",
-          severitySource: "declared",
-          headline: "Road closed",
-          status: "active",
-          geometry: event.geometry,
-          origin: {
-            kind: "feed",
-            attribution: { provider: "control", license: "CC0-1.0" },
+    const control = situationDraft("closure", {}, "control-source");
+    const provenance = control["provenance"] as Record<string, unknown>;
+    // A second source so the conditional snapshot cannot withdraw it.
+    await writeSituations(sql, "control-source", [
+      {
+        ...control,
+        location: {
+          geometry: feature(ROAD40).geometry,
+          extent: "linear",
+          geometryOrigin: "source",
+          fuzziness: "exact",
+          roads: [{ ref: "40" }],
+          admin: { country: "FI" },
+        },
+        provenance: {
+          ...provenance,
+          attribution: {
+            provider: "control",
+            license: "CC0-1.0",
+            rights: {
+              source_redistribution: "yes",
+              derived_redistribution: "yes",
+              commercial_use: "yes",
+              attribution_required: "no",
+              retention: "yes",
+              evidence_origin: "test",
+              evidence_version: null,
+              reviewed_at: null,
+            },
           },
-          dataUpdatedAt: CHECKED_AT,
-          fetchedAt: CHECKED_AT,
-          isStale: false,
-          attributes: { roads: [{ name: "Turun kehätie", ref: "40" }], roadState: "closed" },
-        } as never,
-      ],
-      600,
-    );
+        },
+      },
+    ]);
+    await sql`INSERT INTO conditions.source_status
+      (source, last_success_at, last_network_success_at, freshness_deadline,
+       freshness_window_sec, updated_at)
+      VALUES ('control-source', now(), now(), now() + interval '600 seconds', 600, now())`;
+    const controlId = "oc:situation:control-source:closure";
+    await bind([controlId]);
     const instance = await app();
     try {
-      const res = await instance.inject({
-        method: "GET",
-        url: "/observations.geojson?bbox=22.3,60.4,22.5,60.5",
-      });
-      const body = res.json() as { features: Array<{ id: string }> };
-      expect(body.features.map((f) => f.id)).toContain("control-source:closure");
-      // Two collocated records with different identities both survive.
-      expect(body.features.map((f) => f.id)).toContain(CONDITIONAL_ID);
+      const conditions = await segmentConditions(instance);
+      const closure = conditions.find((c) => c.id === `${controlId}#closure/closure`);
+      expect(closure?.routing_evidence.reason_codes).toEqual([]);
+      // Two collocated situations with different identities both survive.
+      expect(conditions.some((c) => c.record_id === CONDITIONAL_ID)).toBe(true);
     } finally {
       await instance.close();
-      await sql`DELETE FROM conditions.observations WHERE source = 'control-source'`;
+      await writeSituations(sql, "control-source", []);
       await sql`DELETE FROM conditions.source_status WHERE source = 'control-source'`;
     }
   }, 120_000);

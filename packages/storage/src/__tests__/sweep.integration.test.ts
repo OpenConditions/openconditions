@@ -173,4 +173,58 @@ describe("sweepRecords", () => {
       await sql`SELECT count(*)::int AS revisions FROM conditions.situation_revision`;
     expect(revisions).toBe(0);
   });
+
+  it("purges a record's graph bindings with it", async () => {
+    await polled("nl-ndw", LATER);
+    await writeSnapshot(
+      sql,
+      "nl-ndw",
+      { situations: [situationDraft("gone")] },
+      { ...write, complete: true },
+    );
+    await sql`INSERT INTO conditions.record_binding (record_class, record_id, effect_id, status,
+        direction_mode, resolver_version, geom_hash, record_revision, bound_at)
+      VALUES ('situation', 'oc:situation:nl-ndw:gone', '', 'exact', 'single', 'v', 'h', 1, now())`;
+    await sql`INSERT INTO conditions.record_segment (record_class, record_id, effect_id, seq,
+        segment_id, way_id, dir, start_fraction, end_fraction)
+      VALUES ('situation', 'oc:situation:nl-ndw:gone', '', 0, '1:f', 1, 'f', 0, 1)`;
+    await sql`UPDATE conditions.situation SET tombstoned_at = '2026-06-01T00:00:00Z',
+      tombstone_reason = 'withdrawn'`;
+    expect(await sweep(LATER)).toMatchObject({ purged: 1 });
+    expect(await sql`SELECT 1 FROM conditions.record_binding`).toHaveLength(0);
+    expect(await sql`SELECT 1 FROM conditions.record_segment`).toHaveLength(0);
+  });
+
+  it("waits for a poll of the source before purging or dropping its rows", async () => {
+    await polled("nl-ndw", LATER);
+    await writeSnapshot(
+      sql,
+      "nl-ndw",
+      {
+        situations: [
+          situationDraft("gone"),
+          {
+            ...situationDraft("od"),
+            provenance: {
+              ...(situationDraft("od")["provenance"] as object),
+              accessMode: "on_demand",
+            },
+            freshness: { fetchedAt: FETCHED_AT, expiresAt: "2026-10-01T10:15:00Z" },
+          },
+        ],
+      },
+      { ...write, complete: true },
+    );
+    await sql`UPDATE conditions.situation SET tombstoned_at = '2026-06-01T00:00:00Z',
+      tombstone_reason = 'withdrawn' WHERE id = 'oc:situation:nl-ndw:gone'`;
+    const poll = await sql.reserve();
+    await poll`SELECT pg_advisory_lock(hashtext('nl-ndw'))`;
+    const swept = sweep(LATER);
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    const [{ held }] = await sql`SELECT count(*)::int AS held FROM conditions.situation`;
+    expect(held).toBe(2);
+    await poll`SELECT pg_advisory_unlock(hashtext('nl-ndw'))`;
+    poll.release();
+    expect(await swept).toMatchObject({ purged: 1, dropped: 1 });
+  });
 });

@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseAutobahn } from "../autobahn.js";
-import { mapSourceType } from "../taxonomy.js";
 
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/autobahn/warning.json");
 
@@ -238,36 +237,47 @@ describe("parseAutobahn — roadworks service", () => {
   });
 });
 
-describe("mapSourceType — autobahn branch", () => {
-  it("maps autobahn roadworks to roadworks/planned/isPlanned:true", () => {
-    expect(mapSourceType("autobahn", "roadworks")).toEqual({
-      type: "roadworks",
-      category: "planned",
-      isPlanned: true,
-    });
+describe("parseAutobahn — classification", () => {
+  const item = (extra: Record<string, unknown>) => ({
+    identifier: "x-1",
+    title: "A1 | Neuhaus - Quierschied",
+    coordinate: { lat: 49.31, long: 6.97 },
+    ...extra,
   });
 
-  it("maps autobahn closure to road_closure/incident/isPlanned:false", () => {
-    expect(mapSourceType("autobahn", "closure")).toEqual({
-      type: "road_closure",
-      category: "incident",
-      isPlanned: false,
+  it("keeps each service's coarse type and classifies by display type", () => {
+    const [closure] = parseAutobahn(
+      { closure: [item({ display_type: "CLOSURE_ENTRY_EXIT" })] },
+      AUTOBAHN_SOURCE,
+      "closure",
+    );
+    expect(closure).toMatchObject({ type: "road_closure", category: "incident", isPlanned: false });
+    expect(closure!.situation?.classification).toEqual({
+      kind: "closure",
+      type: "closure",
+      subtype: "ramp",
     });
+
+    const [warning] = parseAutobahn(
+      { warning: [item({ display_type: "WARNING" })] },
+      AUTOBAHN_SOURCE,
+      "warning",
+    );
+    expect(warning).toMatchObject({ type: "hazard", category: "conditions" });
+    expect(warning!.situation?.classification).toBeUndefined();
   });
 
-  it("maps autobahn warning to hazard/conditions/isPlanned:false", () => {
-    expect(mapSourceType("autobahn", "warning")).toEqual({
-      type: "hazard",
-      category: "conditions",
-      isPlanned: false,
-    });
-  });
-
-  it("maps unknown autobahn service to other", () => {
-    expect(mapSourceType("autobahn", "unknown-service")).toEqual({
-      type: "other",
-      category: "conditions",
-      isPlanned: false,
+  it("classifies a traffic-flow warning as congestion of its abnormal traffic type", () => {
+    const [flow] = parseAutobahn(
+      { warning: [item({ display_type: "WARNING", abnormalTrafficType: "QUEUING_TRAFFIC" })] },
+      AUTOBAHN_SOURCE,
+      "warning",
+    );
+    expect(flow!.type).toBe("congestion");
+    expect(flow!.situation?.classification).toEqual({
+      kind: "congestion",
+      type: "congestion",
+      subtype: "queuing",
     });
   });
 });

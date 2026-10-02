@@ -1,22 +1,13 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { readObservations, scheduleTimezoneForGeometry } from "@openconditions/core";
+import { scheduleTimezoneForGeometry } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
-import {
-  hasRestrictionEvidence,
-  isPublishedRoadRestrictionDetails,
-} from "@openconditions/model-roads";
-import {
-  eventsToExclusions,
-  observationsToDatexSituations,
-  observationsToGeoJSON,
-  observationsToTraff,
-} from "@openconditions/publishers";
 import { FEED_SOURCES, type OsmWay, type SpineSegment } from "@openconditions/roads";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { activateRoadGraph } from "../pipeline/graph-state.js";
 import { importOsmRoads } from "../pipeline/osm-import.js";
+import { type RestrictionTally, tallyRestrictions } from "../pipeline/restriction-tally.js";
 import { type DomainFeedSource, runSource } from "../pipeline/run.js";
 import { buildSegments } from "../pipeline/segment-build.js";
 import type { RunRestrictionSmokeOptions } from "./smoke-road-restrictions.js";
@@ -35,12 +26,13 @@ export interface RestrictionSmokeDatabaseReport {
   sourceId: string;
   mode: "disposable-database";
   checkedAt: string;
+  /** Live situations the poll published. */
   published: number;
+  /** Situations whose own location bound exactly or likely. */
   bound: number;
   bindingStatuses: Record<string, number>;
-  restrictionRecords: number;
-  restrictionFacts: number;
-  withheldConditional: number;
+  /** What the stored situations' vehicle-specific effects say. */
+  restrictions: RestrictionTally;
   notes: string[];
 }
 
@@ -149,7 +141,6 @@ export async function runRestrictionSmokeWithDatabase(
       SEGMENT_REGIONS: process.env["SEGMENT_REGIONS"],
       BIND_ENABLED: process.env["BIND_ENABLED"],
     };
-    let ids: { id: string }[];
     try {
       process.env["SEGMENT_REGIONS"] = env.SEGMENT_REGIONS;
       process.env["BIND_ENABLED"] = env.BIND_ENABLED;
@@ -163,9 +154,6 @@ export async function runRestrictionSmokeWithDatabase(
         now: () => checkedAt,
       });
       if (run.error) throw new Error(`smoke run: ${run.error}`);
-
-      ids = await sql<{ id: string }[]>`
-        SELECT id FROM conditions.observations WHERE source = ${feed.id}`;
     } finally {
       for (const [key, value] of Object.entries(previousEnv)) {
         if (value === undefined) delete process.env[key];
@@ -174,63 +162,29 @@ export async function runRestrictionSmokeWithDatabase(
     }
 
     // What the database actually holds, rather than what a second pass would
-    // report about rows it has nothing left to do for.
+    // report about records it has nothing left to do for.
     const bindingRows = await sql<{ status: string; count: string }[]>`
       SELECT b.status, COUNT(*)::text AS count
-      FROM conditions.observation_binding b
-      JOIN conditions.observations o ON o.id = b.observation_id
-      WHERE o.source = ${feed.id}
+      FROM conditions.record_binding b
+      JOIN conditions.situation s ON s.id = b.record_id
+      WHERE b.record_class = 'situation' AND b.effect_id = '' AND s.source_id = ${feed.id}
       GROUP BY b.status`;
     const bindingStatuses = Object.fromEntries(
       bindingRows.map((row) => [row.status, Number(row.count)]),
     );
     const routableBindings = (bindingStatuses["exact"] ?? 0) + (bindingStatuses["likely"] ?? 0);
+    const stored = await sql<{ record: Record<string, unknown> }[]>`
+      SELECT record FROM conditions.situation
+       WHERE source_id = ${feed.id} AND tombstoned_at IS NULL`;
 
-    const rows = await readObservations(
-      {
-        async execute<T>(query: string, params?: unknown[]): Promise<T> {
-          return (await sql.unsafe(query, params as never)) as T;
-        },
-      },
-      // The disposable database holds this source alone, so the read covers the
-      // whole world rather than a hard-coded national box that would silently
-      // drop every record of a source outside it.
-      { domain: "roads", bbox: [-180, -90, 180, 90], dedupe: false, includeBindings: true },
-    );
-    const display = observationsToGeoJSON(rows, {}, { at: new Date(checkedAt) });
-    const events = rows.filter((row) => row.kind === "event");
-    const conditional = events.filter((row) => hasRestrictionEvidence(row));
-
-    // The same publication-safety assertions the fixtures make, now against
-    // rows that actually round-tripped through the database.
-    const datex = observationsToDatexSituations(events as never, {}, feed.country ?? "other");
-    const traff = observationsToTraff(events as never);
-    for (const record of conditional) {
-      if (datex.includes(record.id) || traff.includes(record.id)) {
-        throw new Error(`smoke publication safety: conditional record exported: ${record.id}`);
-      }
-    }
-    const exclusions = eventsToExclusions(conditional, {
-      activeAt: new Date(checkedAt),
-      evaluatedAt: new Date(checkedAt),
-    });
-    if (exclusions.exclude_locations.length > 0 || exclusions.exclude_polygons.length > 0) {
-      throw new Error("smoke publication safety: a conditional record produced exclusions");
-    }
-
-    const views = display.features
-      .map((feature) => feature.properties?.["restrictionDetails"])
-      .filter(isPublishedRoadRestrictionDetails);
     const report: RestrictionSmokeDatabaseReport = {
       sourceId: feed.id,
       mode: "disposable-database",
       checkedAt,
-      published: ids.length,
+      published: stored.length,
       bound: routableBindings,
       bindingStatuses,
-      restrictionRecords: views.length,
-      restrictionFacts: views.reduce((sum, view) => sum + view.facts.length, 0),
-      withheldConditional: conditional.length,
+      restrictions: tallyRestrictions(stored.map((row) => row.record)),
       notes: [
         "most national records fall outside the small frozen graph and are expected to be unbound",
         "a restriction kind absent from this snapshot is not observed, not a failure",

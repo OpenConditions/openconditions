@@ -87,7 +87,12 @@ describe("QLDTraffic mapping (spec v1.10)", () => {
     expect(byId["au-qld-traffic:101"]!.type).toBe("roadworks");
     expect(byId["au-qld-traffic:102"]!.type).toBe("public_event");
     expect(byId["au-qld-traffic:103"]!.type).toBe("accident");
-    expect(byId["au-qld-traffic:104"]!.type).toBe("weather");
+    expect(byId["au-qld-traffic:104"]!.type).toBe("hazard");
+    expect(byId["au-qld-traffic:104"]!.situation?.classification).toEqual({
+      kind: "road_hazard",
+      type: "hazard",
+      subtype: "flooding",
+    });
   });
 
   it("maps event_priority to severity (Red Alert → critical)", () => {

@@ -78,9 +78,11 @@ ${OPENCONDITIONS_ARCHIVE_DIR:-./data/archive}/archive-YYYY-MM-DD.parquet
 The build is **best-effort**: an unwritable or misconfigured output directory is
 logged and swallowed, never crashing the scheduler.
 
-> **Read scope.** The build reads through `readObservations`, which caps at 2000
-> rows per query. That is ample for the current single-region deployments; a
-> planet-scale archive would page this read. Tracked as a follow-up.
+> **Read scope.** The build pages through `scanObservations` inside one
+> repeatable-read transaction, so it reads the rows of `conditions.observations`
+> only: flow measurements and crowd reports. Road situations from feeds are not
+> in the archive; their current state and revisions are served by the record API
+> (`/situations`, `/history/situation/{id}`).
 
 ## Deferred: z8 PMTiles snapshots
 

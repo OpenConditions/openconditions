@@ -6,7 +6,7 @@
   "backend": {
     "routes": false
   },
-  "requires": [{ "service": "postgis" }, { "service": "openconditions-ingest" }],
+  "requires": [{ "service": "openconditions-ingest" }],
   "healthCheck": {
     "type": "http",
     "url": "http://openconditions-ingest:4100/status"

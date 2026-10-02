@@ -199,7 +199,7 @@
     },
     "canonicalId": "2383705905bd4410986991c16553b719704f28873af5eb8ec0ebf3a980225b47",
     "domain": "roads",
-    "contentHash": "07d217da2f7ebf34cc28bb085b61406b9d2b3fc0e2272d08b76fe46f77c59afe",
+    "contentHash": "bd789673751167b24c3dd399ed0023d3d092d3918aaab05e262dde0c871c3524",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
@@ -209,7 +209,8 @@
     "certainty": "unknown",
     "severity": {
       "label": "major",
-      "source": "declared"
+      "source": "declared",
+      "declaredRaw": "Major"
     },
     "headline": [
       {

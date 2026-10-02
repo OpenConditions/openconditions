@@ -1,0 +1,137 @@
+import type { Effect } from "@openconditions/model";
+import type {
+  LocalizedText,
+  RoadConditionEffect,
+  RoadConditionEvent,
+  RoadConditionRoadRef,
+  RoadConditionValidity,
+} from "./types.js";
+
+type Rec = Record<string, unknown>;
+
+const obj = (v: unknown): Rec | undefined =>
+  v !== null && typeof v === "object" && !Array.isArray(v) ? (v as Rec) : undefined;
+const str = (v: unknown): string | undefined =>
+  typeof v === "string" && v.length > 0 ? v : undefined;
+
+/** Drops the parser's own trace (source path and tokens); the host has no use for it. */
+function hostEffect(effect: Effect, validity?: unknown): RoadConditionEffect {
+  const { source: _source, ...rest } = effect as Effect & { source?: unknown };
+  return (
+    rest.validity === undefined && validity !== undefined ? { ...rest, validity } : rest
+  ) as RoadConditionEffect;
+}
+
+/**
+ * A situation's effects, its phases' among them. A phase effect without a
+ * window of its own holds during its phase, so it takes the phase's.
+ */
+function effectsOf(record: Rec): RoadConditionEffect[] {
+  const own = ((record["effects"] as Effect[] | undefined) ?? []).map((e) => hostEffect(e));
+  const phases = (obj(record["details"])?.["phases"] as Rec[] | undefined) ?? [];
+  return [
+    ...own,
+    ...phases.flatMap((phase) =>
+      ((phase["effects"] as Effect[] | undefined) ?? []).map((e) =>
+        hostEffect(e, phase["validity"]),
+      ),
+    ),
+  ];
+}
+
+function roadsOf(location: Rec): RoadConditionRoadRef[] | undefined {
+  const roads = location["roads"] as Rec[] | undefined;
+  if (!roads?.length) return undefined;
+  return roads.map((r) => ({
+    ...(str(r["ref"]) ? { ref: str(r["ref"])! } : {}),
+    ...(r["name"] ? { name: r["name"] as LocalizedText } : {}),
+    ...(str(r["class"]) ? { class: str(r["class"])! } : {}),
+    ...(str(r["from"]) ? { from: str(r["from"])! } : {}),
+    ...(str(r["to"]) ? { to: str(r["to"])! } : {}),
+  }));
+}
+
+function validityOf(raw: Rec): RoadConditionValidity {
+  const keys = ["start", "end", "estimatedEnd", "periods", "exceptions"] as const;
+  return {
+    status: raw["status"] as RoadConditionValidity["status"],
+    ...Object.fromEntries(keys.filter((k) => raw[k] !== undefined).map((k) => [k, raw[k]])),
+  };
+}
+
+/**
+ * One situation record as the host's `RoadConditionEvent`, field for field.
+ * A record not yet placed (no geometry) cannot be shown or routed: null.
+ */
+export function situationToRoadConditionEvent(
+  record: Rec,
+  provider = "",
+): RoadConditionEvent | null {
+  const location = obj(record["location"]) ?? {};
+  const geometry = obj(location["geometry"]);
+  if (geometry === undefined) return null;
+  const provenance = obj(record["provenance"]) ?? {};
+  const attribution = obj(provenance["attribution"]) ?? {};
+  const freshness = obj(record["freshness"]) ?? {};
+  const severity = obj(record["severity"]) ?? {};
+  const evidence = obj(record["evidence"]);
+  const direction = obj(location["direction"]);
+  const roads = roadsOf(location);
+  return {
+    id: String(record["id"]),
+    source: String(provenance["sourceId"]),
+    provider,
+    ...(str(record["groupId"]) ? { groupId: str(record["groupId"])! } : {}),
+    kind: String(record["kind"]),
+    type: String(record["type"]),
+    ...(str(record["subtype"]) ? { subtype: str(record["subtype"])! } : {}),
+    severity: {
+      label: (str(severity["label"]) ?? "unknown") as RoadConditionEvent["severity"]["label"],
+      ...(typeof severity["level"] === "number" ? { level: severity["level"] } : {}),
+    },
+    certainty: (str(record["certainty"]) ?? "unknown") as RoadConditionEvent["certainty"],
+    temporality: (str(record["temporality"]) ?? "live") as RoadConditionEvent["temporality"],
+    planned: record["planned"] === true,
+    ...(record["headline"] ? { headline: record["headline"] as LocalizedText } : {}),
+    ...(record["description"] ? { description: record["description"] as LocalizedText } : {}),
+    geometry: geometry as unknown as RoadConditionEvent["geometry"],
+    ...(roads ? { roads } : {}),
+    ...(direction
+      ? {
+          direction: {
+            value: String(direction["value"]),
+            ...(str(direction["compass"]) ? { compass: str(direction["compass"])! } : {}),
+            ...(str(direction["text"]) ? { text: str(direction["text"])! } : {}),
+          },
+        }
+      : {}),
+    validity: validityOf(obj(record["validity"]) ?? { status: "unknown" }),
+    effects: effectsOf(record),
+    origin: (str(provenance["origin"]) ?? "feed") as RoadConditionEvent["origin"],
+    ...(evidence
+      ? {
+          evidence: {
+            state: String(evidence["state"]),
+            ...(typeof evidence["confidenceScore"] === "number"
+              ? { confidenceScore: evidence["confidenceScore"] }
+              : {}),
+            ...(typeof evidence["routingEligible"] === "boolean"
+              ? { routingEligible: evidence["routingEligible"] }
+              : {}),
+          },
+        }
+      : {}),
+    attribution: {
+      provider: str(attribution["provider"]) ?? String(provenance["sourceId"]),
+      ...(str(attribution["license"]) ? { license: str(attribution["license"])! } : {}),
+      ...(str(attribution["licenseUrl"]) || str(attribution["url"])
+        ? { url: (str(attribution["licenseUrl"]) ?? str(attribution["url"]))! }
+        : {}),
+    },
+    ...(str(provenance["sourceUpdatedAt"])
+      ? { updatedAt: str(provenance["sourceUpdatedAt"])! }
+      : {}),
+    fetchedAt: String(freshness["fetchedAt"]),
+    ...(str(freshness["expiresAt"]) ? { expiresAt: str(freshness["expiresAt"])! } : {}),
+  };
+}

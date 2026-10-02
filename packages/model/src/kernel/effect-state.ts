@@ -76,6 +76,26 @@ export function routingBlockers(
   return blockers;
 }
 
+/** A situation's own effects and the effects of its phases. */
+export function situationEffects(situation: Record<string, unknown>): Effect[] {
+  const details = situation["details"] as { phases?: { effects?: Effect[] }[] } | undefined;
+  return [
+    ...((situation["effects"] as Effect[] | undefined) ?? []),
+    ...(details?.phases ?? []).flatMap((phase) => phase.effects ?? []),
+  ];
+}
+
+/** Effect kinds that are vehicle-specific whatever vehicles they name. */
+const VEHICLE_KINDS = new Set(["dimension_limit", "hazmat", "unsupported"]);
+
+/**
+ * An effect that applies to some vehicles only, or is a vehicle rule in
+ * itself: what a format without vehicle conditions cannot carry truthfully.
+ */
+export function isVehicleSpecific(effect: Pick<Effect, "kind" | "applicability">): boolean {
+  return VEHICLE_KINDS.has(effect.kind) || effect.applicability.kind !== "all";
+}
+
 /** Restriction evidence: present, but withheld from shared routing and lossy exports. */
 export function isRestrictionEvidence(
   effect: Pick<Effect, "applicability" | "normalization">,

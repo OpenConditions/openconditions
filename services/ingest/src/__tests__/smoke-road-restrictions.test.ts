@@ -79,16 +79,10 @@ describe("runRestrictionSmoke", () => {
       terminal: 0,
       unlocatable: 0,
     });
-    expect(report.restrictions.recordsWithDetails).toBe(5);
-    expect(report.restrictions.facts).toBeGreaterThanOrEqual(8);
+    expect(report.restrictions.situations).toBe(5);
+    expect(report.restrictions.effects).toBeGreaterThanOrEqual(8);
     expect(report.restrictions.kinds["gross_weight:kg"]).toBeGreaterThanOrEqual(3);
-    expect(report.restrictions.scopes["detour"]).toBe(1);
-    expect(report.restrictions.unsupportedEnvelopes).toBe(0);
-    expect(report.withheldExports).toMatchObject({
-      datexSituations: 5,
-      traffMessages: 5,
-      valhallaExclusions: 5,
-    });
+    expect(report.restrictions.unsupported).toBe(0);
     expect(report.provenance).toMatchObject({
       license: "CC-BY-4.0",
       licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
@@ -108,7 +102,7 @@ describe("runRestrictionSmoke", () => {
     const display = await readFile(join(outputDir, "display.geojson"), "utf8");
     expect(display).not.toContain("sourceRaw");
     expect(display).not.toContain("Fintraffic Tieliikennekeskus");
-    expect(display).toContain("restrictionDetails");
+    expect(display).toContain("dimension_limit");
   });
 
   it("reports a restriction kind the snapshot does not contain as not observed", async () => {
@@ -191,7 +185,7 @@ describe("runRestrictionSmoke", () => {
       { fetch: serve(EMPTY), lookup: fakeLookup, now: () => CHECKED_AT },
     );
     expect(report.snapshot).toMatchObject({ inputCount: 0, accepted: 0 });
-    expect(report.restrictions.recordsWithDetails).toBe(0);
+    expect(report.restrictions.situations).toBe(0);
     expect(report.notes.some((note) => note.includes("frozen fixtures remain the gate"))).toBe(
       true,
     );
@@ -239,12 +233,12 @@ describe("runRestrictionSmoke — nl-ndw", () => {
       unlocatable: 0,
       duplicates: 0,
     });
-    expect(report.restrictions.recordsWithDetails).toBe(4);
+    expect(report.restrictions.effects).toBe(4);
     expect(report.restrictions.kinds["height:m"]).toBe(1);
     expect(report.restrictions.kinds["vehicle_class:truck"]).toBe(2);
     expect(report.restrictions.kinds["vehicle_usage:emergency_services"]).toBe(1);
-    expect(report.restrictions.scopes["event_road"]).toBe(4);
-    expect(report.restrictions.unsupportedEnvelopes).toBe(0);
+    expect(report.restrictions.applicability["classes"]).toBe(4);
+    expect(report.restrictions.unsupported).toBe(0);
     // Weight, width and length have no verified live coverage for this source.
     for (const kind of ["gross_weight:kg", "width:m", "length:m"]) {
       expect(report.restrictions.kinds[kind]).toBeUndefined();
@@ -269,14 +263,8 @@ describe("runRestrictionSmoke — nl-ndw", () => {
     });
     expect(report.provenance.recordVersion).not.toBeNull();
     expect(report.provenance.sourceUpdatedAt).not.toBeNull();
-    expect(report.withheldExports).toEqual({
-      segmentConditions: 4,
-      valhallaExclusions: 4,
-      datexSituations: 4,
-      traffMessages: 4,
-    });
     const display = await readFile(join(outputDir, "display.geojson"), "utf8");
-    expect(display).toContain("restrictionDetails");
+    expect(display).toContain("emergency_services");
     expect(display).not.toContain("sourceRaw");
     // The reduced capture carries no contact fields; assert none appear anyway.
     expect(display).not.toContain("telephone");
@@ -293,7 +281,7 @@ describe("runRestrictionSmoke — nl-ndw", () => {
       },
     );
     expect(report.snapshot).toMatchObject({ inputCount: 0, accepted: 0 });
-    expect(report.restrictions.recordsWithDetails).toBe(0);
+    expect(report.restrictions.situations).toBe(0);
     expect(report.notes.some((note) => note.includes("frozen fixtures remain the gate"))).toBe(
       true,
     );

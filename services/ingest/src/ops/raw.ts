@@ -1,11 +1,15 @@
 import postgres from "postgres";
+import { buildDomainRegistry } from "../domains.js";
+import { createOpenlrClient, type DomainFeedSource } from "../pipeline/run.js";
 import { rawArchiveOptionsFromEnv } from "../raw/archive.js";
 import { evictionPolicyFromEnv, evictRawPayloads } from "../raw/evict.js";
 import { historyDaysFromEnv } from "../record-jobs.js";
+import { replayRaw } from "./raw-replay.js";
 
 const USAGE = `usage: raw pin <hash> [--fixture <name>] [--source <id>]
        raw unpin <hash> [--source <id>]
-       raw gc [--dry-run]`;
+       raw gc [--dry-run]
+       raw replay <source> --from <time> [--to <time>]`;
 
 /** The value after `--flag` in `args`, if any. */
 function flag(args: readonly string[], name: string): string | undefined {
@@ -18,7 +22,10 @@ function flag(args: readonly string[], name: string): string | undefined {
  *  - `pin <hash>` keeps a payload whatever eviction would do — a golden
  *    fixture (`--fixture <name>`) or a payload under dispute;
  *  - `unpin <hash>` hands it back to eviction;
- *  - `gc` runs eviction now; `--dry-run` only reports what it would evict.
+ *  - `gc` runs eviction now; `--dry-run` only reports what it would evict;
+ *  - `replay <source> --from <time>` re-parses the source's archived polls
+ *    with the current parser and lists what reads differently from what each
+ *    poll stored.
  * `--source` narrows a hash to one source (the same response from two
  * sources is two payloads). Returns the process exit code.
  */
@@ -77,6 +84,49 @@ export async function runRawCommand(
     }
     if (result.hotEvicted.length > 0) out(`  hot window cut for: ${result.hotEvicted.join(", ")}`);
     if (!dryRun) out(`purged ${result.purged} index row(s) of long-evicted payloads`);
+    return 0;
+  }
+  if (command === "replay" && hash !== undefined && !hash.startsWith("--")) {
+    const from = flag(args, "--from");
+    const to = flag(args, "--to");
+    if (
+      from === undefined ||
+      Number.isNaN(Date.parse(from)) ||
+      (to && Number.isNaN(Date.parse(to)))
+    ) {
+      out(USAGE);
+      return 2;
+    }
+    const registry = await buildDomainRegistry();
+    const feed = Object.entries(registry)
+      .flatMap(([domain, plugin]) => plugin.feeds.map((f) => ({ ...f, domain })))
+      .find((f) => f.id === hash) as DomainFeedSource | undefined;
+    if (feed === undefined) {
+      out(`no scheduled feed ${hash}`);
+      return 1;
+    }
+    const report = await replayRaw(sql, {
+      feed,
+      from: new Date(from),
+      ...(to ? { to: new Date(to) } : {}),
+      dir: rawArchiveOptionsFromEnv(env).dir,
+      openlrClient: createOpenlrClient(),
+    });
+    for (const p of report.polls) {
+      if (p.unavailable.length > 0) {
+        out(`poll ${p.attemptId} at ${p.attemptedAt}: ${p.unavailable.length} payload(s) evicted`);
+        continue;
+      }
+      out(
+        `poll ${p.attemptId} at ${p.attemptedAt}: ${p.same} same, ${p.changed.length} changed, ` +
+          `${p.created.length} new, ${p.gone.length} gone` +
+          (p.unplaced.length > 0 ? `, ${p.unplaced.length} unplaced` : ""),
+      );
+      for (const id of p.changed) out(`  changed ${id}`);
+      for (const id of p.created) out(`  new ${id}`);
+      for (const id of p.gone) out(`  gone ${id}`);
+    }
+    if (report.polls.length === 0) out(`no archived poll of ${hash} since ${from}`);
     return 0;
   }
   out(USAGE);

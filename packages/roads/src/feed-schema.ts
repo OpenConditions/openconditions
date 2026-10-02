@@ -1,8 +1,13 @@
 import { feedSourceBaseShape } from "@openconditions/ingest-framework";
+import { registeredClassification } from "@openconditions/model-roads";
 import { z } from "zod";
 import { ROAD_EVENT_TYPES } from "./model.js";
 
 const roadEventType = z.enum(ROAD_EVENT_TYPES);
+const situationCode = z.custom<`${string}.${string}`>(
+  (v) => typeof v === "string" && registeredClassification(v) !== undefined,
+  { message: "not a registered roads situation code (kind.type[.subtype])" },
+);
 const severity = z.enum(["low", "medium", "high", "critical", "unknown"]);
 
 /** Declarative GeoJSON field mapping — mirrors GeoJsonMapping in model.ts. */
@@ -10,9 +15,10 @@ const geoJsonMappingSchema = z
   .object({
     idField: z.string().optional(),
     typeField: z.string().optional(),
-    // Values are constrained to the canonical taxonomy: a typo like
-    // "roadwroks" fails the lint instead of silently defaulting.
-    typeMap: z.record(z.string(), roadEventType).optional(),
+    // Values are a coarse type or a registered situation code: a typo like
+    // "roadwroks" or "roadworks.works.knitting" fails the lint instead of
+    // silently defaulting.
+    typeMap: z.record(z.string(), z.union([roadEventType, situationCode])).optional(),
     defaultType: roadEventType.optional(),
     headlineField: z.string().optional(),
     descriptionField: z.string().optional(),

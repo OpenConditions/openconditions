@@ -24,6 +24,8 @@ export interface RoadSnapshotRecord {
   disposition: "accepted" | "terminal" | "unlocatable";
   /** Present for accepted records; terminal/unlocatable ones may carry none. */
   event?: SnapshotEvent;
+  /** The source situation an unlocatable record belongs to, when the source groups records. */
+  situationId?: string;
 }
 
 /** One partition's parse result. */
@@ -39,6 +41,8 @@ export interface ReconciledRoadSnapshot {
   uniqueCount: number;
   duplicates: number;
   observations: SnapshotEvent[];
+  /** The selected version of every record, by id. */
+  records: RoadSnapshotRecord[];
   acceptedIds: string[];
   terminalIds: string[];
   unlocatableIds: string[];
@@ -239,6 +243,7 @@ export function reconcileRoadSnapshots(reports: RoadSnapshotReport[]): Reconcile
     uniqueCount: selected.length,
     duplicates,
     observations,
+    records: selected,
     acceptedIds,
     terminalIds,
     unlocatableIds,

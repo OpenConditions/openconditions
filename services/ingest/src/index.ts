@@ -3,6 +3,7 @@ import { productionRegistry } from "@openconditions/model-registry";
 import { resolveInstanceId } from "@openconditions/normalize";
 import { syncSources } from "@openconditions/storage";
 import Fastify from "fastify";
+import { registerApiRoutes } from "./api/routes.js";
 import { DATABASE_URL, sql } from "./db.js";
 import { buildDomainRegistry } from "./domains.js";
 import { FeedStatusStore } from "./feed-status.js";
@@ -59,6 +60,7 @@ async function boot() {
   const abandoned = await closeAbandonedPollAttempts(sql);
   if (abandoned > 0) console.warn(`[ingest] closed ${abandoned} poll attempt(s) left running`);
   registerPublishRoutes(app, sql, statusStore, registry);
+  registerApiRoutes(app, sql, { registry: model });
 
   const stopScheduler = startScheduler(sql, statusStore, registry);
   const stopRecordJobs = startRecordJobs(sql, {

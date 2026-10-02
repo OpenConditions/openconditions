@@ -11,6 +11,7 @@ export * from "./fetch.js";
 export * from "./layered-feeds.js";
 export * from "./licenses.js";
 export * from "./load-feeds.js";
+export * from "./parse-output.js";
 export * from "./payload.js";
 export * from "./pre-fetch.js";
 export * from "./redact.js";

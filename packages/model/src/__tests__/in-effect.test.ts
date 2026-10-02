@@ -3,6 +3,31 @@ import { isInEffectAt, nextScheduleTransition } from "../schedule/in-effect.js";
 
 const BERLIN = "Europe/Berlin";
 
+/** One window from Mon 2026-10-05 20:00 to Thu 2026-10-08 05:00 Berlin time, once. */
+const ONE_OFF = {
+  startDate: "2026-10-05",
+  endDate: "2026-10-05",
+  startTime: "20:00:00",
+  duration: "P2DT9H",
+  scheduleTimezone: BERLIN,
+};
+
+describe("a one-off window longer than a day", () => {
+  it("is in effect throughout, and not after it ends", () => {
+    const ev = { schedule: [ONE_OFF] };
+    expect(isInEffectAt(ev, new Date("2026-10-05T17:59:00Z"))).toBe(false);
+    expect(isInEffectAt(ev, new Date("2026-10-07T12:00:00Z"))).toBe(true);
+    expect(isInEffectAt(ev, new Date("2026-10-08T02:59:00Z"))).toBe(true);
+    expect(isInEffectAt(ev, new Date("2026-10-08T03:00:00Z"))).toBe(false);
+  });
+
+  it("ends at its exact end", () => {
+    expect(nextScheduleTransition([ONE_OFF], new Date("2026-10-07T12:00:00Z"))).toBe(
+      "2026-10-08T03:00:00.000Z",
+    );
+  });
+});
+
 describe("isInEffectAt", () => {
   it("treats an event with no temporal info as always in effect", () => {
     expect(isInEffectAt({}, new Date("2026-09-06T10:00:00Z"))).toBe(true);

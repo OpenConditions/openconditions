@@ -13,9 +13,11 @@ disabled.
 
 Finland's `fi-digitraffic` event feed reads the four supported Digitraffic v2
 collections. Verified vehicle height, width, length and gross-weight limits are
-normalized into an additive display contract, carried through OpenConditions'
-publishers and the OpenMapX host provider, and shown with their phase or detour
-scope, dates, source direction and rights.
+normalized through the restriction contract (`RoadRestrictionDetailsV1`, used
+inside the parse) into vehicle-conditioned effects of the situation. The record
+API serves them, `/segments/conditions.json` lists them as restriction evidence,
+and the OpenMapX host provider shows them with their phase or detour scope,
+dates, source direction and rights.
 
 NDW's `nl-ndw` event feed reads the national current-events DATEX II v3
 snapshot. Verified vehicle applicability is taken only from a measure's own
@@ -47,17 +49,19 @@ Focused unit suites:
 ```sh
 pnpm exec vitest run --project unit \
   packages/roads/src/__tests__/feeds.test.ts \
-  packages/roads/src/__tests__/restrictions.test.ts \
   packages/roads/src/__tests__/snapshot.test.ts \
+  packages/roads/src/__tests__/parse.test.ts \
+  packages/roads/src/__tests__/situation-golden.test.ts \
+  packages/roads/src/__tests__/restriction-effects.test.ts \
   packages/roads/src/__tests__/digitraffic.test.ts \
   packages/roads/src/__tests__/digitraffic-restrictions.test.ts \
   packages/roads/src/__tests__/datex.test.ts \
+  packages/roads/src/__tests__/datex-restrictions.test.ts \
   packages/roads/src/__tests__/routing.test.ts \
   packages/roads/src/__tests__/decay-contract.test.ts \
   packages/roads/src/bind/__tests__ \
+  packages/model-roads/src/__tests__/restrictions.test.ts \
   packages/publishers/src/__tests__ \
-  packages/core/src/__tests__/readObservations.test.ts \
-  packages/core/src/__tests__/observationsByBbox.test.ts \
   integrations/road-conditions-openconditions/src/__tests__ \
   services/ingest/src/__tests__/run.test.ts \
   services/ingest/src/__tests__/resolve.test.ts \
@@ -72,10 +76,12 @@ pnpm exec vitest run --project integration \
   services/ingest/src/__tests__/road-snapshot.integration.test.ts \
   services/ingest/src/__tests__/restriction-lifecycle.integration.test.ts \
   services/ingest/src/__tests__/restriction-binding.integration.test.ts \
+  services/ingest/src/__tests__/ndw-restrictions.integration.test.ts \
   services/ingest/src/__tests__/pipeline.integration.test.ts \
-  services/ingest/src/__tests__/bind-observations.integration.test.ts \
+  services/ingest/src/__tests__/bind-records.integration.test.ts \
+  services/ingest/src/__tests__/rebind.integration.test.ts \
   services/ingest/src/__tests__/publish-segment-conditions.integration.test.ts \
-  services/ingest/src/__tests__/publish-routes-filters.integration.test.ts \
+  services/ingest/src/__tests__/api-routes.integration.test.ts \
   services/ingest/src/__tests__/sweep.integration.test.ts --no-cache
 ```
 
@@ -279,27 +285,35 @@ preservation is proved rather than assumed. Every status, recurrence, compound,
 conflicting-direction and invalid-value variant is built by mutating that XML
 inside a test and is labelled synthetic there.
 
-The cross-repository contract fixture `road-restrictions-v1.json` is generated
-from real producer code and copied to OpenMapX. Both repositories format with
-the same Biome version and settings, so the copies are byte-identical, and both
-contract tests parse the file so whitespace never reaches an assertion either
-way:
+The cross-repository contract fixtures (`road-conditions-v2.json`,
+`road-speed-cap-v2.json` and `road-restrictions-v2.json`, schema version 2 of
+`/segments/conditions.json`) are generated from real producer code and copied
+to OpenMapX; their
+[README](../packages/publishers/src/__tests__/fixtures/contracts/README.md)
+describes each. Both repositories format with the same Biome version and
+settings, so the copies are byte-identical, and both contract tests parse the
+files so whitespace never reaches an assertion either way:
 
 ```sh
-cmp packages/publishers/src/__tests__/fixtures/contracts/road-restrictions-v1.json \
-    ../openmapx/services/data-manager/src/__tests__/fixtures/contracts/road-restrictions-v1.json
+for f in road-conditions-v2 road-speed-cap-v2 road-restrictions-v2; do
+  cmp packages/publishers/src/__tests__/fixtures/contracts/$f.json \
+      ../openmapx/services/data-manager/src/__tests__/fixtures/contracts/$f.json
+done
 ```
 
-Regenerate deliberately with `UPDATE_RESTRICTION_CONTRACT=1` (refused under
-`CI`), run `pnpm format`, review the diff, then copy it across and run both
+Regenerate deliberately with `UPDATE_CONTRACTS=1` (refused under `CI`), run
+`pnpm format`, review the diff, then copy the three files across and run both
 suites.
 
 ## Known limits
 
-- Restriction extent is never bound. Every fact carries
-  `restrictionBinding: "not_established"`, and the display says so. Matching the
-  parent event to segments does not establish where a phase or detour limit
-  applies.
+- Restriction extent is bound only as far as the source locates it. Every
+  parsed fact carries `restrictionBinding: "not_established"`. A restriction
+  effect whose phase or detour names a geometry of its own is bound on that
+  geometry; one whose own location is only a description reads no binding; one
+  without a location of its own reads the situation's
+  ([graph binding](graph-binding.md#what-is-bound)). Restriction evidence is
+  listed with its binding, never routed.
 - Source `pos`/`neg` directions are reference-system orientations and are never
   mapped to an OSM `f`/`b` direction.
 - Working hours are display context only. A weight limit does not lapse when the

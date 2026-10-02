@@ -2,7 +2,7 @@ import type postgres from "postgres";
 
 type Sql = postgres.Sql;
 
-/** Binding outcomes of one source: how many events the resolver attempted, split by outcome. */
+/** Binding outcomes of one source: how many live situations the resolver attempted, by outcome. */
 export interface BindingMetrics {
   activeEvents: number;
   attempted: number;
@@ -19,10 +19,10 @@ export interface BindingMetrics {
   notApplicable: number;
 }
 
-/** Reads per-source binding metrics, keyed by `observations.source`. */
+/** Reads per-source binding metrics, keyed by the situation's source id. */
 export type BindingMetricsReader = () => Promise<Map<string, BindingMetrics>>;
 
-/** Maps the stored `observation_binding.status` values onto the reported keys. */
+/** Maps the stored `record_binding.status` values onto the reported keys. */
 const STATUS_KEYS: Record<string, keyof Omit<BindingMetrics, "attempted">> = {
   exact: "exact",
   likely: "likely",
@@ -63,22 +63,21 @@ export function createBindingMetricsReader(sql: Sql, ttlMs = 60_000): BindingMet
     const rows = await sql<
       { source: string; status: string | null; binding_current: boolean; n: number }[]
     >`
-      SELECT o.source, b.status,
+      SELECT s.source_id AS source, b.status,
         CASE WHEN b.status IS NULL OR b.status = 'obsolete' THEN false
           WHEN g.generation IS NULL THEN false
-          ELSE b.observation_revision IS NOT DISTINCT FROM o.content_hash
-            AND b.observation_revision IS NOT NULL
+          ELSE b.record_revision = s.revision
             AND b.graph_generation IS NOT DISTINCT FROM g.generation
             AND b.graph_generation IS NOT NULL
         END AS binding_current,
         count(*)::int AS n
-      FROM conditions.observations o
-      LEFT JOIN conditions.observation_binding b ON b.observation_id = o.id
+      FROM conditions.situation s
+      LEFT JOIN conditions.record_binding b ON b.record_class = 'situation'
+        AND b.record_id = s.id AND b.effect_id = ''
       LEFT JOIN conditions.road_graph_state g ON g.singleton
-      WHERE o.kind = 'event'
-        AND o.status NOT IN ('cancelled', 'archived')
-        AND (o.expires_at IS NULL OR o.expires_at > now())
-      GROUP BY o.source, b.status, binding_current`;
+      WHERE s.tombstoned_at IS NULL AND s.domain = 'roads'
+        AND (s.expires_at IS NULL OR s.expires_at > now())
+      GROUP BY s.source_id, b.status, binding_current`;
     const value = new Map<string, BindingMetrics>();
     for (const row of rows) {
       const metrics = value.get(row.source) ?? emptyMetrics();

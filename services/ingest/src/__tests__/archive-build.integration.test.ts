@@ -1,9 +1,13 @@
 import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { type QueryRunner, readObservations, scanObservations } from "@openconditions/core";
+import {
+  type ConditionEvent,
+  type QueryRunner,
+  readObservations,
+  scanObservations,
+} from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
-import type { RoadEvent } from "@openconditions/roads";
 import { parquetReadObjects } from "hyparquet";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
@@ -11,8 +15,9 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vites
 import { buildDailyArchive } from "../pipeline/archive-build.js";
 import { atomicSwap } from "../pipeline/write-postgis.js";
 
-function baseEvent(overrides: Partial<RoadEvent>): RoadEvent {
-  return {
+/** A legacy event row, as crowd landing still writes them to the archive's source table. */
+function baseEvent(overrides: Record<string, unknown>): ConditionEvent {
+  const event: Record<string, unknown> = {
     id: "base",
     source: "arch-test",
     sourceFormat: "wzdx",
@@ -33,6 +38,7 @@ function baseEvent(overrides: Partial<RoadEvent>): RoadEvent {
     isStale: false,
     ...overrides,
   };
+  return event as unknown as ConditionEvent;
 }
 
 let sql: postgres.Sql;
@@ -198,7 +204,7 @@ describe("canonical observation and complete archive contract", () => {
     }
   }, 60_000);
 
-  it("honors canonical filters and marks old binding generations obsolete", async () => {
+  it("honors canonical filters", async () => {
     await atomicSwap(sql, "arch-test", [
       baseEvent({ id: "read:feed" }),
       baseEvent({ id: "read:denied" }),
@@ -208,21 +214,14 @@ describe("canonical observation and complete archive contract", () => {
     await sql`UPDATE conditions.observations SET origin = ${sql.json({ kind: "crowd", attribution: { provider: "crowd", license: "CC0-1.0" } })}, routing_eligible = false WHERE id = 'read:crowd'`;
     await sql`INSERT INTO conditions.road_graph_state (generation, regions, highway_classes, pbf_provenance, imported_at, activated_at)
       VALUES ('current', '[]', '[]', '{}', now(), now())`;
-    await sql`INSERT INTO conditions.observation_binding (observation_id, status, resolver_version, geom_hash, bound_at, observation_revision, graph_generation)
-      SELECT id, 'exact', 'resolver', 'geom', now(), content_hash, 'old' FROM conditions.observations WHERE id = 'read:feed'`;
-    await sql`INSERT INTO conditions.observation_segment (observation_id, seq, segment_id, way_id, dir, start_fraction, end_fraction)
-      VALUES ('read:feed', 0, '1:f', 1, 'f', 0, 1)`;
     const rows = await readObservations(runner(sql), {
       bbox: [-180, -90, 180, 90],
       kind: "event",
       routingEligibleOnly: true,
       excludedSourceIds: ["denied"],
-      includeBindings: true,
       requireComplete: true,
     });
     expect(rows.map((row) => row.id)).toEqual(["read:feed"]);
-    expect(rows[0]!.binding?.status).toBe("obsolete");
-    expect(rows[0]!.segments).toBeUndefined();
     expect(rows[0]!.privacyClass).toBe("authoritative");
     expect(rows[0]!.canonicalId).toBeTruthy();
     expect(rows[0]!.sourceLicense).toBe("CC0-1.0");

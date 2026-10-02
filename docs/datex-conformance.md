@@ -1,18 +1,51 @@
 # DATEX II export: current status and the path to real conformance
 
-This page is the honest record for `observationsToDatexSituations`
-([`packages/publishers/src/datex.ts`](../packages/publishers/src/datex.ts)),
+This page is the honest record for `situationsToDatex`
+([`packages/publishers/src/situation-datex.ts`](../packages/publishers/src/situation-datex.ts)),
 exposed at `GET /datex2/situations.xml`. Read it before telling anyone —
 including a NAP operator — that this export is DATEX II SRTI-conformant. It
 is not, yet.
+
+## What the export contains
+
+The route reads road situations like the other collections (same filters, same
+keyset paging: the next page is in the `Link: <…>; rel="next"` header) and writes
+one DATEX `situation` per situation, with its id and revision as `version`:
+
+- **A record for the situation's nature.** Its class comes from `DATEX2_RECORDS`
+  in `@openconditions/model-roads` (`packages/model-roads/src/crosswalk/emitters.ts`):
+  the subtype's entry, else the type's. A coverage test holds that table to
+  every registered type (a code or an explicit `null`), every code to the
+  DATEX II v3 schema, and every code to reading back as the same kind. The
+  inbound DATEX crosswalk is not used for export: several DATEX codes map to one
+  type there, and the first one is not always the right one to write.
+- **One record per effect** in force or scheduled at the request's `at` that
+  DATEX has a management record for: closures and all-lanes closures
+  (`RoadOrCarriagewayOrLaneManagement`), lane closures with their lane counts,
+  contraflow, speed limits (`SpeedManagement` with the limit) and diversions
+  (`ReroutingManagement`). Ended effects and effects of unknown state are left
+  out. An effect whose record would repeat the nature record is folded into it.
+  A nature without a record of its own leads with its first effect's record.
+- **Record ids.** A record keeps the DATEX record id it was parsed from
+  (`effect.sourceRecordRef`); the nature record carries the situation id; any
+  other record is `<situation id>#<effect id>`.
+- **What describes the whole situation** — probability, severity, headline and
+  a stated delay — travels on the leading record only.
+
+A situation is **omitted entirely** when any of its effects is vehicle-specific
+or restriction evidence. DATEX output cannot carry an effect's vehicle
+conditions faithfully, and exporting such a closure without them would widen it
+to every vehicle. A situation with no record DATEX can write is omitted as well.
 
 ## Current status: pragmatic, not conformant
 
 The emitter produces a **pragmatic DATEX II v3 `SituationPublication`-shaped
 export**. It hand-builds XML with `fast-xml-parser` (no usable JS DATEX II
-writer exists), mirroring the reader in `@openconditions/roads`, and it
-round-trips cleanly through our own parser
-([`packages/publishers/src/__tests__/datex.roundtrip.test.ts`](../packages/publishers/src/__tests__/datex.roundtrip.test.ts)).
+writer exists), mirroring the reader in `@openconditions/roads`, and its output
+re-ingests through our own parser as the same situations: a full closure stays a
+full closure with its validity and place, and roadworks with a lane closure and
+a speed limit stay one situation with both effects
+([`packages/publishers/src/__tests__/situation-datex.test.ts`](../packages/publishers/src/__tests__/situation-datex.test.ts)).
 That proves internal consistency. It does **not** prove conformance to any
 official schema, because no official schema is checked anywhere in this
 stack.
@@ -30,43 +63,39 @@ Concretely, the export is:
   supports "NAP readiness."
 - **NOT XSD-certified against the base DATEX II v3 schema either.** Known,
   documented pragmatic deviations exist (see the module doc comment in
-  `datex.ts`): a single feed-level publication-creator country where the
+  `situation-datex.ts`): a single feed-level publication-creator country where the
   aggregate spans many; every location reduced to a representative point
   (see below); road name/number placed directly under the location
   reference rather than through the fuller DATEX road-reference model.
 
 None of this is new information hidden from operators — it is stated
-directly in the `datex.ts` module doc comment, which links back to this
-page.
+directly in the `situation-datex.ts` module doc comment, which links back to
+this page.
 
-## Point-geometry correctness (verified, not deferred)
+## Point-geometry correctness
 
-One thing this export gets right today, and must keep getting right: **a
-point sensor's `Point` geometry is never buffered into a fabricated linear or
-area location.** `buildLocation()` always emits `loc:PointLocation` for a
-point (or for any geometry — `LineString`, `Polygon`, `GeometryCollection` —
-by taking a representative first coordinate; see `representativePoint()`).
+One thing this export gets right, and must keep getting right: **a point
+sensor's `Point` geometry is never buffered into a fabricated linear or area
+location.** `buildLocation()` always emits `loc:PointLocation` for the
+situation's location, whatever its geometry — `Point`, `LineString`, `Polygon`,
+`GeometryCollection` — by taking a representative first coordinate (see
+`representativePoint()`). Every record of a situation carries that same
+location, including the record of an effect that has a location of its own.
 There is no code path anywhere in `packages/publishers` or `packages/roads`
 that grows a point into a synthetic segment, buffered polygon, or invented
 linear reference. Precise linear/OpenLR location references for extended
-(non-point) events are a real gap — see "What full conformance requires"
+(non-point) situations are a real gap — see "What full conformance requires"
 below — but the fix for that gap is to add a correctly-modeled linear
 location, never to fabricate one by buffering a point.
 
-This is pinned by a regression test:
-[`packages/publishers/src/__tests__/datex.test.ts`](../packages/publishers/src/__tests__/datex.test.ts)
-asserts that both a `Point`-geometry event and a `LineString`-geometry event
-produce `loc:PointLocation` output with no `linearLocation` or `area`
-element — i.e. no buffering, for either geometry shape, today.
+The tests in
+[`packages/publishers/src/__tests__/situation-datex.test.ts`](../packages/publishers/src/__tests__/situation-datex.test.ts)
+round-trip `Point` locations. No test asserts that a `LineString` location is
+written as a `loc:PointLocation` without a `linearLocation` or `area` element.
 
-`docs/speed-coverage.md`'s "Known export limitation" section previously
-suggested the DATEX emitter would eventually buffer point-sensor congestion
-into a short directional segment to satisfy a (non-existent) DATEX
-requirement for linear geometry. That was wrong: `loc:PointLocation` is a
-valid DATEX II v3 location type for a point sensor and needs no linear
-geometry. That page has been corrected; only CIFS (not built) still has an
-open, undecided question about how a point-sensor reading maps onto a
-required linear `polyline`.
+`loc:PointLocation` is a valid DATEX II v3 location type for a point sensor and
+needs no linear geometry. Only CIFS (not built) has an open, undecided question
+about how a point-sensor reading maps onto a required linear `polyline`.
 
 ## What full SRTI conformance actually requires
 
@@ -146,5 +175,5 @@ This page **is** the tracked follow-up record for DATEX II SRTI conformance.
 Full conformance (steps 1–4 above) is deferred, larger infrastructure work —
 picking and vendoring the official schema plus wiring a CI validator — and is
 explicitly not done as of this writing. Do not remove the "NOT
-SRTI-profile-conformant" language from `datex.ts` or this page until that
+SRTI-profile-conformant" language from `situation-datex.ts` or this page until that
 validator exists and passes.

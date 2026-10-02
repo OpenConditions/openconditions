@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseOpen511 } from "../open511.js";
-import { mapSourceType } from "../taxonomy.js";
 
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/drivebc/events.json");
 
@@ -175,52 +174,40 @@ describe("parseOpen511 — DriveBC fixture", () => {
   });
 });
 
-describe("mapSourceType — open511 branch", () => {
-  it("maps CONSTRUCTION to roadworks/planned/isPlanned:true", () => {
-    expect(mapSourceType("open511", "CONSTRUCTION")).toEqual({
-      type: "roadworks",
-      category: "planned",
-      isPlanned: true,
-    });
+describe("parseOpen511 — coarse type from the classification", () => {
+  const parse = (event_type: string, event_subtypes?: string[]) =>
+    parseOpen511(
+      {
+        events: [
+          {
+            id: "e1",
+            event_type,
+            ...(event_subtypes ? { event_subtypes } : {}),
+            geography: { type: "Point", coordinates: [-123, 49] },
+          },
+        ],
+      },
+      DRIVEBC_SOURCE,
+    )[0]!;
+
+  it.each([
+    ["CONSTRUCTION", "roadworks", "planned", true],
+    ["INCIDENT", "accident", "incident", false],
+    ["SPECIAL_EVENT", "public_event", "planned", true],
+    ["WEATHER_CONDITION", "weather", "conditions", false],
+    ["ROAD_CONDITION", "road_condition", "conditions", false],
+    ["SOMETHING_WEIRD", "other", "conditions", false],
+  ] as const)("reads %s as %s", (eventType, type, category, isPlanned) => {
+    expect(parse(eventType)).toMatchObject({ type, category, isPlanned });
   });
 
-  it("maps INCIDENT to accident/incident/isPlanned:false", () => {
-    expect(mapSourceType("open511", "INCIDENT")).toEqual({
-      type: "accident",
-      category: "incident",
-      isPlanned: false,
-    });
-  });
-
-  it("maps SPECIAL_EVENT to public_event/planned/isPlanned:true", () => {
-    expect(mapSourceType("open511", "SPECIAL_EVENT")).toEqual({
-      type: "public_event",
-      category: "planned",
-      isPlanned: true,
-    });
-  });
-
-  it("maps WEATHER_CONDITION to weather/conditions/isPlanned:false", () => {
-    expect(mapSourceType("open511", "WEATHER_CONDITION")).toEqual({
-      type: "weather",
-      category: "conditions",
-      isPlanned: false,
-    });
-  });
-
-  it("maps ROAD_CONDITION to road_condition/conditions/isPlanned:false", () => {
-    expect(mapSourceType("open511", "ROAD_CONDITION")).toEqual({
-      type: "road_condition",
-      category: "conditions",
-      isPlanned: false,
-    });
-  });
-
-  it("maps unknown open511 event_type to other", () => {
-    expect(mapSourceType("open511", "SOMETHING_WEIRD")).toEqual({
-      type: "other",
-      category: "conditions",
-      isPlanned: false,
+  it("follows a subtype that refines the event type", () => {
+    const ev = parse("INCIDENT", ["ALMOST_IMPASSABLE"]);
+    expect(ev.type).toBe("road_condition");
+    expect(ev.situation?.classification).toEqual({
+      kind: "road_condition",
+      type: "driving_condition",
+      subtype: "hazardous",
     });
   });
 });

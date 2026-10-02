@@ -1,7 +1,7 @@
 import { Readable } from "node:stream";
 import type { Observation } from "@openconditions/core";
 import type { RawTier } from "@openconditions/core/server";
-import type { LookupFn } from "@openconditions/ingest-framework";
+import type { LookupFn, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
 import {
   digestPayload,
   fetchAll,
@@ -9,26 +9,31 @@ import {
   guardOptionsFromEnv,
   makeAuthorizedFetch,
 } from "@openconditions/ingest-framework";
-import { isRoadRestrictionDetails, type RestrictionCarrier } from "@openconditions/model-roads";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
-import type { FeedSource, SiteGeometry, UnresolvedRoadEvent } from "@openconditions/roads";
-import {
-  drainSkippedNoGeometry,
-  enrichEventSeverity,
-  enrichFlowsWithBaseline,
-  parseXmlDocument,
-} from "@openconditions/roads";
+import type { FeedSource, FlowParse, SiteGeometry } from "@openconditions/roads";
+import { drainSkippedNoGeometry, enrichFlows, parseXmlDocument } from "@openconditions/roads";
+import { type WriteSummary, writeSnapshotIn } from "@openconditions/storage";
 import type postgres from "postgres";
-import { feedToSourceDescriptor } from "../domains.js";
 import type { RawArchive } from "../raw/archive.js";
 import { archivingTee, digestOnlyTee } from "../raw/stream-tee.js";
 import { rawTierFor } from "../raw/tiers.js";
 import { loadBaselineMap, writeSpeedSamples } from "./baseline-store.js";
-import { bindObservations } from "./bind-observations.js";
+import { bindRecords } from "./bind-records.js";
 import { isStreamingFlowFeed, streamMeasuredData } from "./measured-data.js";
-import { parseFor, parseRoadSnapshotFor } from "./parse.js";
+import { parseEventFeed, parseFlowFeed } from "./parse.js";
+import {
+  changedSituations,
+  logRejections,
+  type PollIdentity,
+  publishSituations,
+  situationContext,
+  stampAttribution,
+  type WriteModel,
+  writeModel,
+} from "./publish.js";
 import { resolveOpenLr } from "./resolve.js";
+import { tallyRestrictions } from "./restriction-tally.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
 import { loadSiteTable } from "./site-table.js";
 import {
@@ -66,11 +71,10 @@ function shrinkTripwireRatioFromEnv(env: NodeJS.ProcessEnv = process.env): numbe
 
 export interface RunResult {
   /**
-   * Rows actually persisted this cycle: `inserted + updated` from the
-   * diff-upsert swap (an unchanged row, left untouched by the swap, counts
-   * toward neither). 0 for an unchanged/304 poll and for every swallowed
-   * failure below — not the size of the fetched/parsed set, which may be
-   * larger than what was actually written (capped, or partially unchanged).
+   * Records or rows actually written this cycle: new, changed and restored
+   * situations of an event feed, inserted and updated readings of a flow feed
+   * (an unchanged one counts toward neither). 0 for an unchanged/304 poll and
+   * for every swallowed failure below — not the size of the parsed set.
    */
   count: number;
   durationMs: number;
@@ -101,7 +105,8 @@ export interface RunResult {
    * Per-run source-record accounting for a complete-snapshot source. Bounded
    * counts only — never record ids as metric labels and never record bodies.
    * Counted from the reconciled selected versions, so a record served by two
-   * partitions is counted once.
+   * partitions is counted once. The restriction counts are of the effects the
+   * written situations carry: vehicle-specific rules and their issue codes.
    */
   snapshot?: {
     inputCount: number;
@@ -130,6 +135,8 @@ export interface RunDeps {
    * fixtures doesn't still require live DNS to resolve the feed host first.
    */
   lookup?: LookupFn;
+  /** The registry records are sealed against and the instance id they are written as. */
+  model?: Partial<WriteModel>;
 }
 
 /**
@@ -138,86 +145,6 @@ export interface RunDeps {
  */
 export interface DomainFeedSource extends FeedSource {
   domain: string;
-}
-
-const grantState = (value: boolean | null | undefined): "yes" | "no" | "unknown" =>
-  value == null ? "unknown" : value ? "yes" : "no";
-
-/** Stamps the concrete feed/child grant at the ingestion boundary so later
- * dedupe and projections never have to reconstruct child ownership by id. */
-export function stampSourceEvidence<T extends Observation>(obs: T, src: DomainFeedSource): T {
-  if (obs.origin.kind !== "feed") return obs;
-  return {
-    ...obs,
-    ...stampRestrictionSource(obs, src),
-    origin: {
-      ...obs.origin,
-      attribution: {
-        ...obs.origin.attribution,
-        provider: src.attribution,
-        license: src.license,
-        url: src.licenseUrl ?? obs.origin.attribution?.url,
-        parentSourceId: undefined,
-        childSourceId: undefined,
-        policyIds: src.policyIds,
-        ...(src.parentSourceId
-          ? {
-              parentSourceId: src.parentSourceId,
-              childSourceId: src.id,
-              policyIds: src.policyIds ?? [src.parentSourceId, src.id],
-            }
-          : {}),
-        rights: {
-          source_redistribution: grantState(src.rights?.sourceRedistribution),
-          derived_redistribution: grantState(src.rights?.derivedRedistribution),
-          commercial_use: grantState(src.rights?.commercialUse),
-          attribution_required: grantState(src.rights?.attributionRequired),
-          retention: grantState(src.rights?.retention),
-          evidence_origin: src.rights?.evidenceOrigin ?? null,
-          evidence_version: src.rights?.evidenceVersion ?? null,
-          reviewed_at: src.rights?.reviewedAt ?? null,
-        },
-      },
-    },
-  };
-}
-
-/**
- * Replace the restriction envelope's rights and endpoint fields with the
- * trusted feed configuration. A parser reads those from its descriptor, but a
- * payload must never be able to state its own licence, publisher or feed URLs —
- * that is a rights claim, and rights come from the reviewed configuration.
- * Record identity, version, update time and supplied notices are the parser's
- * and are preserved.
- */
-function stampRestrictionSource<T extends Observation>(
-  obs: T,
-  src: DomainFeedSource,
-): Partial<RestrictionCarrier> {
-  const carrier = obs as T & RestrictionCarrier;
-  if (!Object.hasOwn(carrier, "restrictionDetails")) return {};
-  const details = carrier.restrictionDetails;
-  if (!isRoadRestrictionDetails(details)) return {};
-  const feedUrls = (Array.isArray(src.url) ? src.url : src.url ? [src.url] : []).filter(
-    (url): url is string => typeof url === "string" && /^https?:\/\//i.test(url),
-  );
-  if (src.licenseUrl === undefined) return {};
-  return {
-    restrictionDetails: {
-      ...details,
-      source: {
-        ...details.source,
-        sourceId: src.id,
-        feedUrls,
-        publisher: src.attribution,
-        license: src.license,
-        licenseUrl: src.licenseUrl,
-        attribution: src.attribution,
-        modificationNotice:
-          "Normalized by OpenConditions; source units and structure may be transformed.",
-      },
-    },
-  } as Partial<RestrictionCarrier>;
 }
 
 function valueAtPath(value: unknown, path: string): unknown {
@@ -362,25 +289,26 @@ export function createOpenlrClient(): MapMatchClient | null {
 /**
  * Runs the full ingest pipeline for one feed source:
  *   1. Fetch all URLs for the source (gunzip transparently).
- *   2. Parse each buffer via the domain plugin.
- *   3. Resolve any OpenLR-only observations via the map-match service.
- *   4. Atomically swap the `conditions.observations` rows for this source.
+ *   2. Parse the payloads into situation drafts (and, for a flow feed, readings).
+ *   3. Resolve any OpenLR-only situations via the map-match service.
+ *   4. Write the situations as one complete snapshot (a flow feed's readings
+ *      are swapped into `conditions.observations` in the same transaction).
+ *   5. Bind the situations that changed to the segment spine.
  *
- * Feed-downtime safety: if fetching throws, the swap is never opened and
- * existing rows for this source are left intact (last-good behavior).
- * The error is logged and the function returns {count:0, durationMs, error}
- * so callers can distinguish a swallowed failure from a genuinely successful
- * (including unchanged/304) poll.
+ * Feed-downtime safety: if fetching throws, nothing is written and the
+ * source's published records are left intact (last-good behavior). The error
+ * is logged and the function returns {count:0, durationMs, error} so callers
+ * can distinguish a swallowed failure from a genuinely successful (including
+ * unchanged/304) poll.
  *
  * The same last-good guarantee also covers a parse that "succeeds" but yields
- * an empty or suspiciously-shrunk fresh set (a HARD parse failure surfaced via
- * `FlowParseResult.failed`, a 200-with-garbage body, a dormant feed resolving
- * zero URLs, an event feed's row count collapsing relative to its last
- * successful cycle, or a tolerant fan-out whose failure ratio is at/above
- * `OPENCONDITIONS_FANOUT_FAIL_SKIP_RATIO`) — every one of these skips the
- * swap instead of handing `atomicSwap` an empty/shrunk/unreliable set, since
- * its delete-missing step would otherwise delete every row absent from that
- * set.
+ * an empty or suspiciously-shrunk fresh set (a hard parse failure, a
+ * 200-with-garbage body, a dormant feed resolving zero URLs, an event feed's
+ * count collapsing relative to its last successful cycle, or a tolerant
+ * fan-out whose failure ratio is at/above `OPENCONDITIONS_FANOUT_FAIL_SKIP_RATIO`)
+ * — every one of these skips the write instead of handing a complete snapshot
+ * an empty/shrunk/unreliable set, which would withdraw every record missing
+ * from it.
  *
  * The poll's attempt row is opened before anything is fetched (its id is the
  * fetch id the poll's raw payloads are filed under). A poll that throws
@@ -525,9 +453,9 @@ async function runAttempt(
   }
 
   let acceptFetch: (() => void) | undefined;
-  let parsed: (Observation | UnresolvedRoadEvent)[];
+  let flowParse: FlowParse | undefined;
+  let eventParse: ParseOutput | undefined;
   let snapshotInspection: ReturnType<typeof inspectSnapshotCompleteness> | undefined;
-  let snapshotReport: ReturnType<typeof parseRoadSnapshotFor>;
   if (isStreamingFlowFeed(src)) {
     // Large DATEX flow feed: stream fetch → gunzip → SAX so the ~50 MB document
     // is never buffered or DOM-parsed (the memory-cap OOM this path replaces).
@@ -539,7 +467,7 @@ async function runAttempt(
         deps.now,
         feedCapture ? archivingTee(feedCapture.archive, feedCapture.meta) : digestOnlyTee,
       );
-      parsed = streamed.observations;
+      flowParse = { flows: streamed.flows, situations: streamed.situations };
       payloadHashes = [streamed.payload.sha256];
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
@@ -617,16 +545,11 @@ async function runAttempt(
       return { count: 0, durationMs: Date.now() - start, error };
     }
     try {
-      // A complete-snapshot road source goes through the reporting path, which
-      // reconciles partitions by source identity and refuses a candidate it
-      // cannot fully account for. Every other source keeps the tolerant path.
-      const reconciled = parseRoadSnapshotFor(src, buffers);
-      if (reconciled !== undefined) {
-        snapshotReport = reconciled;
-        parsed = reconciled.observations;
-      } else {
-        parsed = buffers.flatMap((b) => parseFor(src, b, siteMap));
-      }
+      // A complete-snapshot source is read through its format's reporting
+      // path, which reconciles partitions by source identity and refuses a
+      // candidate it cannot fully account for.
+      if (src.produces === "flow") flowParse = parseFlowFeed(src, buffers, siteMap);
+      else eventParse = parseEventFeed(src, buffers, { fetchedAt: attemptAt });
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] parse failed for source ${src.id}:`, err);
@@ -639,235 +562,309 @@ async function runAttempt(
     }
   }
 
-  // resolveOpenLr narrows the union: items without geometry (UnresolvedRoadEvent)
-  // are resolved to real geometry or dropped — resolved[] always has geometry.
-  const { resolved, dropped, failed, unlocatableIds } = await resolveOpenLr(
-    parsed,
+  const poll: PollContext = {
+    src,
+    deps,
+    attempt,
+    start,
+    recordStatus,
+    identity: { at: attemptAt, id: attemptId, ...(payloadHashes ? { payloadHashes } : {}) },
+    ...(acceptFetch ? { acceptFetch } : {}),
+  };
+  return flowParse !== undefined
+    ? finishFlowPoll(poll, flowParse)
+    : finishEventPoll(poll, eventParse!, snapshotInspection);
+}
+
+/** What the poll's last stages share once its payloads are parsed. */
+interface PollContext {
+  src: DomainFeedSource;
+  deps: RunDeps;
+  attempt: PollAttempt;
+  start: number;
+  recordStatus: (update: SourceStatusUpdate) => Promise<void>;
+  identity: PollIdentity;
+  acceptFetch?: () => void;
+}
+
+/** Records a failure that keeps the last good publication, and the run's result for it. */
+async function fail(
+  poll: PollContext,
+  outcome: "failed" | "error",
+  error: string,
+): Promise<RunResult> {
+  await poll.recordStatus({
+    freshnessWindowSec: poll.src.freshnessWindowSec,
+    outcome,
+    attemptAt: poll.identity.at,
+    networkValidated: false,
+    durationMs: Date.now() - poll.start,
+    error,
+  });
+  return {
+    count: 0,
+    durationMs: Date.now() - poll.start,
+    ...(outcome === "failed" ? { outcome } : {}),
+    error,
+  };
+}
+
+/**
+ * Binds the situations a poll changed. Graph binding is derived and
+ * best-effort: it runs after the publication committed so a slow resolve never
+ * holds the source's lock, and a failure here never fails the poll — the
+ * work stays queued and the scheduler drains it.
+ */
+async function bindChanged(poll: PollContext, summary: WriteSummary): Promise<void> {
+  const ids = changedSituations(summary);
+  if (ids.length === 0) return;
+  try {
+    const bound = await bindRecords(poll.deps.sql, ids, { now: poll.deps.now });
+    if (bound.attempted > 0 || bound.cleared > 0) {
+      console.info(
+        `[ingest] ${poll.src.id}: bound ${bound.bound}/${bound.attempted} situations ` +
+          `(cleared ${bound.cleared}, write errors ${bound.writeErrors}) ` +
+          JSON.stringify(bound.byStatus),
+      );
+    }
+  } catch (err) {
+    console.warn(`[ingest] ${poll.src.id}: graph binding failed:`, err);
+  }
+}
+
+/**
+ * The last stages of an event feed's poll: place OpenLR-only situations,
+ * refuse a result the tripwires call suspect, stamp the catalogue's rights,
+ * publish the complete snapshot, bind what changed.
+ */
+async function finishEventPoll(
+  poll: PollContext,
+  parse: ParseOutput,
+  inspection: ReturnType<typeof inspectSnapshotCompleteness> | undefined,
+): Promise<RunResult> {
+  const { src, deps } = poll;
+  const { resolved, dropped, failed, unlocatable } = await resolveOpenLr(
+    parse.situations,
     deps.openlrClient ?? null,
   );
-  // An accepted record missing from `resolved` is unlocatable only when the
-  // resolver itself did not fail: a transport/validation failure means we do not
-  // know where the record is, which is a whole-source failure, not a per-record
-  // disposition.
-  const snapshotUnlocatable =
-    snapshotReport === undefined
+  const accounting = parse.records;
+  // A situation the resolver could not place is unlocatable only when the
+  // resolver itself did not fail: a transport/validation failure means we do
+  // not know where it is, which is a whole-source failure, not a disposition.
+  const unlocatableSituations =
+    accounting === undefined
       ? undefined
-      : [...new Set([...snapshotReport.unlocatableIds, ...(failed > 0 ? [] : unlocatableIds)])];
-  // For a reporting source the exhaustive disposition report — not the raw
-  // input count — decides whether an empty result is real. A snapshot of only
-  // terminal or explained unlocatable records legitimately has no active rows.
-  const zeroResultTripwire =
-    snapshotReport === undefined
-      ? (snapshotInspection?.inputRecords ?? 0) > 0 && resolved.length === 0
-      : snapshotReport.acceptedIds.some((id) => !snapshotUnlocatable?.includes(id)) &&
-        resolved.length === 0;
-  if (failed > 0 || zeroResultTripwire) {
-    const error =
-      failed > 0
-        ? `OpenLR resolution failed for ${failed} request(s)`
-        : `structurally non-empty snapshot produced zero usable observations`;
-    await recordStatus({
-      freshnessWindowSec: src.freshnessWindowSec,
-      outcome: "failed",
-      attemptAt,
-      networkValidated: false,
-      durationMs: Date.now() - start,
-      error,
-    });
-    return { count: 0, durationMs: Date.now() - start, outcome: "failed", error };
+      : [...new Set([...accounting.unlocatableSituations, ...(failed > 0 ? [] : unlocatable)])];
+  // For an accounted snapshot the record accounting — not the raw input count —
+  // decides whether an empty result is real: a snapshot of only terminal or
+  // unplaceable records legitimately publishes no situations.
+  const zeroResult =
+    accounting === undefined
+      ? (inspection?.inputRecords ?? 0) > 0 && resolved.length === 0
+      : accounting.accepted > 0 && resolved.length === 0 && unlocatable.length === 0;
+  if (failed > 0) return fail(poll, "failed", `OpenLR resolution failed for ${failed} request(s)`);
+  if (zeroResult) {
+    return fail(poll, "failed", "structurally non-empty snapshot produced zero usable situations");
   }
+  const situations = resolved.map((draft) => stampAttribution(draft, src));
 
-  // Stamp each flow's free-flow baseline (native > derived > osm_maxspeed) before
-  // the swap so the enriched los/freeFlowKph and any newly derived congestion
-  // events are what gets persisted, for every flow format (buffered and
-  // streaming NDW alike) at this one seam.
-  let toWrite = resolved;
-  if (src.produces === "flow") {
-    // Best-effort: a baseline-load failure must never throw away a good fetch +
-    // resolve — fall back to writing the unenriched observations rather than
-    // aborting the whole poll and reverting the feed to stale data.
-    try {
-      const baselineMap = await loadBaselineMap(deps.sql, src.id);
-      if (baselineMap.size > 0) {
-        toWrite = enrichFlowsWithBaseline(resolved, baselineMap, feedToSourceDescriptor(src));
-      }
-    } catch (err) {
-      console.warn(`[ingest] ${src.id}: baseline-map load failed, skipping enrichment:`, err);
-    }
-  }
-
-  // Derive a severity for events the feed left undeclared (uniform across every
-  // feed at this one seam) so the map's severity ramp is meaningful for sources
-  // that omit it, e.g. the German Mobilithek roadworks. No-op on declared
-  // events and on flows.
-  toWrite = enrichEventSeverity(toWrite).map((obs) => stampSourceEvidence(obs, src));
-
-  // Shrink tripwire: the diff-upsert swap's delete-missing step deletes every
-  // row absent from `toWrite`, so an empty/suspiciously-shrunk fresh set is as
-  // dangerous as a thrown parse error — it just doesn't look like one. Both
-  // guards below skip the swap entirely (last-good rows survive) rather than
-  // letting `atomicSwap` reconcile against a bad fresh set.
-  if (src.produces === "flow") {
-    // A sensor network never legitimately vanishes to zero — this also covers
-    // a 200-with-garbage body (parses to []) and any parse path that yields an
-    // empty set without throwing.
-    if (toWrite.length === 0) {
-      const error = `flow feed produced zero measurements this cycle — skipping swap to avoid wiping sensor data`;
-      console.warn(`[ingest] ${src.id}: ${error}`);
-      await recordStatus({
-        freshnessWindowSec: src.freshnessWindowSec,
-        outcome: "error",
-        error,
-      });
-      return { count: 0, durationMs: Date.now() - start, error };
-    }
-  } else if (snapshotReport !== undefined) {
-    // Accounted snapshots need no ratio heuristic: every input record has an
-    // explicit disposition, and the retained-id check inside the publication
-    // transaction is what protects a still-published record.
-  } else if (!snapshotInspection?.completeEmpty) {
-    const shrinkTripwireRatio = shrinkTripwireRatioFromEnv();
-    const previousCount = await getLastRowCount(deps.sql, src.id);
-    if (
-      previousCount != null &&
-      previousCount > 0 &&
-      toWrite.length <= previousCount * shrinkTripwireRatio
-    ) {
+  // Shrink tripwire: a complete snapshot withdraws every situation it does not
+  // hold, so a suspiciously shrunk fresh set is as dangerous as a parse error.
+  // An accounted snapshot needs no ratio heuristic: every input record has an
+  // explicit disposition, and the unlocatable check inside the publication
+  // transaction protects a still-published record.
+  if (accounting === undefined && !inspection?.completeEmpty) {
+    const ratio = shrinkTripwireRatioFromEnv();
+    const previous = await getLastRowCount(deps.sql, src.id);
+    if (previous != null && previous > 0 && situations.length <= previous * ratio) {
       const error =
-        `event feed shrank from ${previousCount} to ${toWrite.length} rows ` +
-        `(tripwire ratio ${shrinkTripwireRatio}) — skipping swap to avoid a suspected partial-failure wipe`;
+        `event feed shrank from ${previous} to ${situations.length} situations ` +
+        `(tripwire ratio ${ratio}) — skipping the write to avoid a suspected partial-failure wipe`;
       console.warn(`[ingest] ${src.id}: ${error}`);
-      await recordStatus({
-        freshnessWindowSec: src.freshnessWindowSec,
-        outcome: "error",
-        error,
-      });
-      return { count: 0, durationMs: Date.now() - start, error };
+      return fail(poll, "error", error);
     }
   }
 
-  // atomicSwap writes the success source_status row itself, inside the same
-  // transaction as the swap (see its doc comment) — this is what closes the
-  // race where a brand-new source's rows commit before its status row exists
-  // and the 5-min orphan sweep, keyed off source_status, deletes them again.
   const skippedNoGeometry = drainSkippedNoGeometry(src.id);
   const rejected = dropped + skippedNoGeometry;
-  const preSwapDurationMs = Date.now() - start;
-  let swapCounts: Awaited<ReturnType<typeof atomicSwap>>;
+  let summary: WriteSummary;
   try {
-    swapCounts = await atomicSwap(deps.sql, src.id, toWrite, src.freshnessWindowSec, undefined, {
-      attemptAt,
+    summary = await publishSituations(deps.sql, src, {
+      situations,
+      ...(unlocatableSituations
+        ? {
+            unlocatable: unlocatableSituations,
+            unlocatableRecords: accounting?.unlocatableRecords ?? [],
+          }
+        : {}),
       rejected,
-      durationMs: preSwapDurationMs,
-      attemptId,
-      ...(payloadHashes ? { payloadHashes } : {}),
-      ...(snapshotUnlocatable !== undefined ? { unlocatableIds: snapshotUnlocatable } : {}),
+      poll: poll.identity,
+      durationMs: Date.now() - poll.start,
+      now: deps.now(),
+      model: writeModel(deps.model),
     });
-    // The swap's transaction closed the attempt with the poll's success.
-    attempt.closed = true;
+    // The publication's transaction closed the attempt with the poll's success.
+    poll.attempt.closed = true;
   } catch (err) {
-    const error = err instanceof Error ? err.message : String(err);
     console.error(`[ingest] publish failed for source ${src.id}:`, err);
-    await recordStatus({
-      freshnessWindowSec: src.freshnessWindowSec,
-      outcome: "failed",
-      attemptAt,
-      networkValidated: false,
-      durationMs: Date.now() - start,
-      error,
-    });
-    return { count: 0, durationMs: Date.now() - start, outcome: "failed", error };
+    return fail(poll, "failed", err instanceof Error ? err.message : String(err));
   }
+  logRejections(src.id, summary);
+  poll.acceptFetch?.();
+  await bindChanged(poll, summary);
 
-  acceptFetch?.();
-
-  if (src.produces === "flow") {
-    // Append this cycle's speeds to the rolling per-sensor history (the raw
-    // material the nightly baseline derivation consumes). Best-effort: a history
-    // write must never fail the live swap that already succeeded.
-    try {
-      const samples = await writeSpeedSamples(deps.sql, src.id, toWrite, deps.now, src.cadenceSec);
-      if (samples.rejectedLate > 0) {
-        console.warn(`[ingest] ${src.id}: rejected ${samples.rejectedLate} late speed samples`);
-      }
-    } catch (err) {
-      console.warn(`[ingest] ${src.id}: speed-sample write failed:`, err);
-    }
-  }
-
-  if (src.produces !== "flow" && swapCounts.changedIds.length > 0) {
-    // Graph binding is derived and best-effort: it runs after the swap has
-    // committed so a slow resolve never holds the advisory lock, and a
-    // failure here never fails the poll.
-    try {
-      const bound = await bindObservations(deps.sql, swapCounts.changedIds, { now: deps.now });
-      if (bound.attempted > 0 || bound.cleared > 0) {
-        console.info(
-          `[ingest] ${src.id}: bound ${bound.bound}/${bound.attempted} events ` +
-            `(cleared ${bound.cleared}, write errors ${bound.writeErrors}) ` +
-            JSON.stringify(bound.byStatus),
-        );
-      }
-      if (bound.writeErrors > 0) {
-        console.warn(
-          `[ingest] ${src.id}: ${bound.writeErrors} binding writes failed; ` +
-            `those events keep their previous binding until the next pass`,
-        );
-      }
-    } catch (err) {
-      console.warn(`[ingest] ${src.id}: graph binding failed:`, err);
-    }
-  }
-
-  const durationMs = Date.now() - start;
-  // Records the parser dropped for want of a coordinate (DATEX Alert-C/TMC
-  // only). Drained per run so the status page shows what this cycle lost, not
-  // a total that keeps climbing after the cause is fixed.
+  const c = summary.counts.situation;
+  const durationMs = Date.now() - poll.start;
+  // Records the parser dropped for want of a coordinate, drained per run so the
+  // status page shows what this cycle lost.
   const dropNote = dropped > 0 ? ` (${dropped} dropped — no geometry)` : "";
   console.info(
-    `[ingest] ${src.id}: swap inserted=${swapCounts.inserted} updated=${swapCounts.updated} ` +
-      `deleted=${swapCounts.deleted} of ${toWrite.length} fresh rows in ${durationMs}ms${dropNote}`,
+    `[ingest] ${src.id}: situations created=${c.created} updated=${c.updated} ` +
+      `restored=${c.restored} withdrawn=${c.withdrawn} unchanged=${c.unchanged} ` +
+      `of ${situations.length} in ${durationMs}ms${dropNote}`,
   );
   return {
-    count: swapCounts.inserted + swapCounts.updated,
+    count: c.created + c.updated + c.restored,
     durationMs,
-    outcome: toWrite.length === 0 ? "complete_empty" : "changed",
-    activeEvents: toWrite.filter((row) => row.kind === "event").length,
-    inserted: swapCounts.inserted,
-    updated: swapCounts.updated,
-    deleted: swapCounts.deleted,
-    rejected,
+    outcome: situations.length === 0 ? "complete_empty" : "changed",
+    activeEvents: situations.length - summary.rejected.length,
+    inserted: c.created + c.restored,
+    updated: c.updated,
+    deleted: c.withdrawn,
+    rejected: rejected + summary.rejected.length,
     ...(skippedNoGeometry > 0 ? { skippedNoGeometry } : {}),
-    ...(snapshotReport !== undefined
-      ? { snapshot: snapshotCounts(snapshotReport, snapshotUnlocatable ?? [], toWrite) }
+    ...(accounting !== undefined
+      ? {
+          snapshot: snapshotCounts(accounting, failed > 0 ? [] : unlocatable, situations),
+        }
       : {}),
+  };
+}
+
+/**
+ * The last stages of a flow feed's poll: apply the free-flow baselines, then
+ * swap the readings into `conditions.observations` and write the derived
+ * congestion situations in the same transaction, then bind what changed.
+ */
+async function finishFlowPoll(poll: PollContext, parse: FlowParse): Promise<RunResult> {
+  const { src, deps } = poll;
+  let flows = parse.flows;
+  const congestion = new Map(parse.situations.map((d) => [String(d["id"]), d]));
+  // Best-effort: a baseline-load failure must never throw away a good fetch —
+  // fall back to the unenriched readings rather than reverting the feed.
+  try {
+    const baselineMap = await loadBaselineMap(deps.sql, src.id);
+    if (baselineMap.size > 0) {
+      const enriched = enrichFlows(src, flows, baselineMap);
+      flows = enriched.flows;
+      for (const draft of enriched.situations) congestion.set(String(draft["id"]), draft);
+    }
+  } catch (err) {
+    console.warn(`[ingest] ${src.id}: baseline-map load failed, skipping enrichment:`, err);
+  }
+  // A sensor network never legitimately vanishes to zero — this also covers a
+  // 200-with-garbage body (parses to nothing) and any parse path that yields an
+  // empty set without throwing.
+  if (flows.length === 0) {
+    const error = `flow feed produced zero measurements this cycle — skipping swap to avoid wiping sensor data`;
+    console.warn(`[ingest] ${src.id}: ${error}`);
+    return fail(poll, "error", error);
+  }
+  const situations = [...congestion.values()].map((draft) => stampAttribution(draft, src));
+  const skippedNoGeometry = drainSkippedNoGeometry(src.id);
+  const model = writeModel(deps.model);
+  let summary: WriteSummary | undefined;
+  let swap: Awaited<ReturnType<typeof atomicSwap>>;
+  try {
+    swap = await atomicSwap(
+      deps.sql,
+      src.id,
+      flows as unknown as Observation[],
+      src.freshnessWindowSec,
+      undefined,
+      {
+        attemptAt: poll.identity.at,
+        rejected: skippedNoGeometry,
+        durationMs: Date.now() - poll.start,
+        attemptId: poll.identity.id,
+        ...(poll.identity.payloadHashes ? { payloadHashes: poll.identity.payloadHashes } : {}),
+        activeEvents: situations.length,
+      },
+      async (tx) => {
+        summary = await writeSnapshotIn(
+          tx,
+          src.id,
+          { situations },
+          situationContext({ poll: poll.identity, now: deps.now(), model }),
+        );
+      },
+    );
+    poll.attempt.closed = true;
+  } catch (err) {
+    console.error(`[ingest] publish failed for source ${src.id}:`, err);
+    return fail(poll, "failed", err instanceof Error ? err.message : String(err));
+  }
+  if (summary) logRejections(src.id, summary);
+  poll.acceptFetch?.();
+
+  // Append this cycle's speeds to the rolling per-sensor history (the raw
+  // material the nightly baseline derivation consumes). Best-effort: a history
+  // write must never fail the live swap that already succeeded.
+  try {
+    const samples = await writeSpeedSamples(
+      deps.sql,
+      src.id,
+      flows as unknown as Observation[],
+      deps.now,
+      src.cadenceSec,
+    );
+    if (samples.rejectedLate > 0) {
+      console.warn(`[ingest] ${src.id}: rejected ${samples.rejectedLate} late speed samples`);
+    }
+  } catch (err) {
+    console.warn(`[ingest] ${src.id}: speed-sample write failed:`, err);
+  }
+  if (summary) await bindChanged(poll, summary);
+
+  const durationMs = Date.now() - poll.start;
+  console.info(
+    `[ingest] ${src.id}: swap inserted=${swap.inserted} updated=${swap.updated} ` +
+      `deleted=${swap.deleted} of ${flows.length} readings, ${situations.length} ` +
+      `congestion situations in ${durationMs}ms`,
+  );
+  return {
+    count: swap.inserted + swap.updated,
+    durationMs,
+    outcome: "changed",
+    activeEvents: situations.length,
+    inserted: swap.inserted,
+    updated: swap.updated,
+    deleted: swap.deleted,
+    rejected: skippedNoGeometry + (summary?.rejected.length ?? 0),
+    ...(skippedNoGeometry > 0 ? { skippedNoGeometry } : {}),
   };
 }
 
 /** Bounded per-run counts for a complete-snapshot source. */
 function snapshotCounts(
-  report: NonNullable<ReturnType<typeof parseRoadSnapshotFor>>,
-  unlocatable: readonly string[],
-  written: readonly Observation[],
+  accounting: NonNullable<ParseOutput["records"]>,
+  unplacedSituations: readonly string[],
+  written: readonly RecordDraft[],
 ): NonNullable<RunResult["snapshot"]> {
-  let restrictionFacts = 0;
-  const restrictionIssues: Record<string, number> = {};
-  for (const row of written) {
-    const details = (row as Observation & RestrictionCarrier).restrictionDetails;
-    if (!isRoadRestrictionDetails(details)) continue;
-    restrictionFacts += details.facts.length;
-    for (const issue of details.issues) {
-      restrictionIssues[issue.code] = (restrictionIssues[issue.code] ?? 0) + 1;
-    }
-  }
+  const restrictions = tallyRestrictions(written);
+  // The resolver drops situations; the accounting counts records.
+  const unplaced = unplacedSituations.reduce(
+    (sum, id) => sum + (accounting.situationRecords[id] ?? 1),
+    0,
+  );
   return {
-    inputCount: report.inputCount,
-    uniqueCount: report.uniqueCount,
-    accepted: report.acceptedIds.filter((id) => !unlocatable.includes(id)).length,
-    terminal: report.terminalIds.length,
-    unlocatable: unlocatable.length,
-    duplicates: report.duplicates,
-    restrictionFacts,
-    restrictionIssues,
+    inputCount: accounting.inputCount,
+    uniqueCount: accounting.uniqueCount,
+    accepted: Math.max(0, accounting.accepted - unplaced),
+    terminal: accounting.terminal,
+    unlocatable: accounting.unlocatable + unplaced,
+    duplicates: accounting.duplicates,
+    restrictionFacts: restrictions.effects,
+    restrictionIssues: restrictions.issues,
   };
 }

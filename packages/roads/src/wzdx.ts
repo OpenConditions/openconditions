@@ -3,8 +3,8 @@ import { deriveSeverity } from "@openconditions/core";
 import { wzdxClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
+import { coarseOf, coarseType } from "./situation/classes.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
-import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
 interface WzdxLane {
@@ -293,7 +293,19 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
       const props = liftV3Properties(feature.properties ?? {});
       const coreDetails = props.core_details ?? {};
       const eventType = typeof coreDetails.event_type === "string" ? coreDetails.event_type : "";
-      const { type, category, isPlanned } = mapSourceType("wzdx", eventType);
+      const classification = wzdxClassification(
+        eventType,
+        (props.types_of_work ?? [])
+          .map((w) => w?.type_name)
+          .filter((n): n is string => typeof n === "string"),
+        (Array.isArray(props.restrictions) ? props.restrictions : [])
+          .map((r) => (r as { type?: unknown })?.type)
+          .filter((t): t is string => typeof t === "string"),
+      );
+      // A detour road event is never a situation of its own: it stays a detour
+      // for the assembler to attach to the situation it serves.
+      const { type, category, isPlanned } =
+        eventType === "detour" ? coarseType("detour") : coarseOf(classification);
 
       const vehicleImpact =
         typeof props.vehicle_impact === "string" ? props.vehicle_impact : undefined;
@@ -330,15 +342,6 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
       const featureId = dataSourceId != null ? `${dataSourceId}:${rawId}` : rawId;
 
       const roads = parseRoads(coreDetails, props);
-      const classification = wzdxClassification(
-        eventType,
-        (props.types_of_work ?? [])
-          .map((w) => w?.type_name)
-          .filter((n): n is string => typeof n === "string"),
-        (Array.isArray(props.restrictions) ? props.restrictions : [])
-          .map((r) => (r as { type?: unknown })?.type)
-          .filter((t): t is string => typeof t === "string"),
-      );
       const recordTime =
         (typeof coreDetails.update_date === "string" && coreDetails.update_date) ||
         (typeof coreDetails.creation_date === "string" && coreDetails.creation_date) ||

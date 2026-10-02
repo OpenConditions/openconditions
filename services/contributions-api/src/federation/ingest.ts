@@ -36,12 +36,7 @@
 import { checkGeometryPlausibility } from "@openconditions/contrib-core";
 import type { Observation, OriginHop, Provenance } from "@openconditions/core";
 import { FederatedObservationError, normalizeObservation } from "@openconditions/normalize";
-import {
-  type RoadEvent,
-  type RoadFlow,
-  roadAttributes,
-  roadFlowAttributes,
-} from "@openconditions/roads";
+import { type RoadFlow, roadFlowAttributes } from "@openconditions/roads";
 import { toRow } from "@openconditions/storage";
 import type postgres from "postgres";
 import { autoCorroborateOnLanding } from "../evidence/autoCorroborate.js";
@@ -143,6 +138,45 @@ interface WireEntry {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+/** The road fields a federated event keeps in the `attributes` column. */
+const EVENT_ATTRIBUTE_KEYS = [
+  "roads",
+  "isPlanned",
+  "direction",
+  "roadState",
+  "lanesAffected",
+  "speedLimitKph",
+  "restrictions",
+  "restrictionDetails",
+  "restrictionDetailsUnsupported",
+  "vehiclesAffected",
+  "detour",
+  "detourGeometry",
+  "delaySeconds",
+  "queueLengthMeters",
+  "workersPresent",
+  "workZoneType",
+  "regions",
+  "relatedEvents",
+  "situationId",
+  "externalRefs",
+  "sourceRaw",
+  "freeFlowSource",
+  "locationTable",
+] as const;
+
+/** A federated road event's road fields, for the `attributes` column. */
+function eventAttributes(event: Observation): Record<string, unknown> {
+  const fields = event as unknown as Record<string, unknown>;
+  const attrs: Record<string, unknown> = {};
+  for (const key of EVENT_ATTRIBUTE_KEYS) {
+    const value = fields[key];
+    if (value == null || (Array.isArray(value) && value.length === 0 && key !== "roads")) continue;
+    attrs[key] = value;
+  }
+  return attrs;
 }
 
 /** Geometry collections must contain geometry objects before coordinate validation. */
@@ -364,7 +398,7 @@ export async function ingestFederatedObservation(
     normalized.domain === "roads"
       ? normalized.kind === "measurement"
         ? roadFlowAttributes(normalized as RoadFlow)
-        : roadAttributes(normalized as RoadEvent)
+        : eventAttributes(normalized)
       : {};
   const row = toRow(normalized, attributes);
 

@@ -50,7 +50,8 @@ free-flow baseline for that sensor:
 
 Priority is native > derived > osm_maxspeed. Thresholds (share of free-flow):
 ≥ 0.85 free-flow, ≥ 0.5 heavy, ≥ 0.15 queuing, else stationary. A congestion
-event is emitted at queuing or worse.
+situation is derived at queuing or worse; it is stored and bound to the segment
+spine like any other road situation.
 
 ## Keyed sources
 

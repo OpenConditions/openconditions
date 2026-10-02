@@ -15,17 +15,20 @@ covered by our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 - **New feed sources** — the highest-leverage contribution. A parser + a
   `FeedSource` entry in [`@openconditions/roads`](packages/roads) turns a public
-  open-data feed (DATEX II, Open511, GeoJSON, …) into canonical observations.
-  Link the open-data portal and its license in your PR.
+  open-data feed (DATEX II, Open511, GeoJSON, …) into situation drafts of the
+  [data model](docs/model.md). Link the open-data portal and its license in
+  your PR.
 - **Emitters** — outbound projections to standard wire formats live in
-  [`@openconditions/publishers`](packages/publishers) (GeoJSON, TraFF, DATEX II,
-  GTFS-RT, JSON-LD, Valhalla exclusions).
-- **The canonical model** — the two-axis `Observation` model, severity, and
-  freshness helpers live in [`@openconditions/core`](packages/core).
+  [`@openconditions/publishers`](packages/publishers) (GeoJSON, JSON-LD, TraFF,
+  DATEX II, SSE, Valhalla exclusions).
+- **The data model** — record classes and the registry live in
+  [`@openconditions/model`](packages/model) and its domain modules (roads:
+  [`@openconditions/model-roads`](packages/model-roads)); read helpers and the
+  database schema in [`@openconditions/core`](packages/core).
 - **The OpenLR resolver** — the Python map-matcher in
   [`services/openlr-resolver`](services/openlr-resolver).
-- **The OpenMapX integration** — the provider that exposes observations to
-  OpenMapX lives in
+- **The OpenMapX integration** — the provider that reads situations and their
+  routing evidence from the ingest's API for OpenMapX lives in
   [`integrations/road-conditions-openconditions`](integrations/road-conditions-openconditions).
 - **Bug reports / feature requests** — file an issue with reproduction steps and
   your environment (which feeds are configured, the affected component, and the

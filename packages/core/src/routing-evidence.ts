@@ -1,19 +1,7 @@
-import type { RoutingRights } from "@openconditions/model";
+import type { Effect, RoutingRights } from "@openconditions/model";
 
-export type CanonicalVehicleClass =
-  | "motor_vehicle"
-  | "car"
-  | "truck"
-  | "bus"
-  | "motorcycle"
-  | "bicycle"
-  | "pedestrian";
-
-export interface RoutingApplicability {
-  kind: "all" | "classes" | "unknown";
-  classes?: CanonicalVehicleClass[];
-  raw?: string[];
-}
+/** Which vehicles an effect applies to: the model effect's own `applicability`. */
+export type RoutingApplicability = Effect["applicability"];
 
 export interface RoutingEvidenceSegment {
   segment_id: string;
@@ -33,12 +21,20 @@ export type RoutingBindingStatus =
   | "invalid"
   | "not_applicable";
 
-/** Versioned evidence OC gives routing consumers with each projected event. */
+/**
+ * Versioned evidence OC gives routing consumers with each projected effect:
+ * which effect of which record revision, bound to which spans of which graph,
+ * under which rights and until when.
+ */
 export interface RoadConditionRoutingEvidence {
-  schema_version: 1;
-  observation_revision: string;
-  /** Revision of the observation snapshot the binding resolved. */
-  binding_revision: string;
+  schema_version: 2;
+  record_class: "situation";
+  record_id: string;
+  effect_id: string;
+  record_revision: number;
+  /** The record revision the binding resolved. */
+  binding_revision: number;
+  effect_kind: string;
   graph_generation: string;
   resolver_version: string;
   source_id: string;
@@ -80,10 +76,11 @@ export function routingEvidenceReasons(
 ): string[] {
   const reasons: string[] = [];
   const now = evaluatedAt.getTime();
-  if (evidence.schema_version !== 1) reasons.push("schema_version_unsupported");
+  if (evidence.schema_version !== 2) reasons.push("schema_version_unsupported");
   for (const [field, value] of [
-    ["observation_revision", evidence.observation_revision],
-    ["binding_revision", evidence.binding_revision],
+    ["record_id", evidence.record_id],
+    ["effect_id", evidence.effect_id],
+    ["effect_kind", evidence.effect_kind],
     ["graph_generation", evidence.graph_generation],
     ["resolver_version", evidence.resolver_version],
     ["source_id", evidence.source_id],
@@ -91,7 +88,13 @@ export function routingEvidenceReasons(
   ] as const) {
     if (typeof value !== "string" || value.trim() === "") reasons.push(`${field}_missing`);
   }
-  if (evidence.observation_revision !== evidence.binding_revision) {
+  for (const [field, value] of [
+    ["record_revision", evidence.record_revision],
+    ["binding_revision", evidence.binding_revision],
+  ] as const) {
+    if (!Number.isSafeInteger(value) || value < 1) reasons.push(`${field}_missing`);
+  }
+  if (evidence.record_revision !== evidence.binding_revision) {
     reasons.push("binding_revision_mismatch");
   }
   if (evidence.binding_status !== "exact" && evidence.binding_status !== "likely") {
@@ -105,7 +108,7 @@ export function routingEvidenceReasons(
   const expiresAt = evidence.expires_at == null ? null : finiteInstant(evidence.expires_at);
   if (evidence.expires_at != null && expiresAt == null) reasons.push("expires_at_invalid");
   else if (expiresAt != null && Number.isFinite(now) && now >= expiresAt) {
-    reasons.push("observation_expired");
+    reasons.push("record_expired");
   }
   for (const [field, value] of [
     ["valid_from", evidence.valid_from],
@@ -131,7 +134,7 @@ export function routingEvidenceReasons(
   if (evidence.applicability.kind === "unknown") reasons.push("applicability_unknown");
   if (
     evidence.applicability.kind === "classes" &&
-    (!evidence.applicability.classes || evidence.applicability.classes.length === 0)
+    (!evidence.applicability.include || evidence.applicability.include.length === 0)
   ) {
     reasons.push("applicability_empty");
   }

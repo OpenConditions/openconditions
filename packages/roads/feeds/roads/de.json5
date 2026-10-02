@@ -579,10 +579,8 @@
     // Features endpoint as WGS84 GeoJSON points; we use the deduplicated
     // "current filtered main messages" collection. NOT the Mobilithek mirror of
     // this dataset, which is licensed other-closed. The `art` field carries
-    // DATEX II situation classes that map straight through the taxonomy
-    // crosswalk (AbnormalTraffic→congestion, Accident→accident,
-    // MaintenanceWorks/ConstructionWorks→roadworks,
-    // RoadOrCarriagewayOrLaneManagement→lane_closure); severity is type-derived.
+    // DATEX II situation record class names, mapped below; a management class
+    // keeps its measure as its coarse type. Severity is type-derived.
     // No credential: needs no Mobilithek certificate.
     subdivision: "hh",
     operator: "polizei",
@@ -593,6 +591,22 @@
     geojson: {
       idField: "id",
       typeField: "art",
+      typeMap: {
+        Accident: "incident.accident",
+        VehicleObstruction: "incident.breakdown",
+        GeneralObstruction: "incident.obstruction",
+        EnvironmentalObstruction: "incident.obstruction",
+        InfrastructureDamageObstruction: "incident.obstruction.infrastructure_damage",
+        AbnormalTraffic: "congestion.congestion",
+        MaintenanceWorks: "roadworks.works.maintenance",
+        ConstructionWorks: "roadworks.works.construction",
+        PoorEnvironmentConditions: "weather_condition.weather",
+        PublicEvent: "public_event.event",
+        EquipmentOrSystemFault: "equipment_fault.fault",
+        RoadOrCarriagewayOrLaneManagement: "lane_closure",
+        ReroutingManagement: "detour",
+        SpeedManagement: "speed_restriction",
+      },
       descriptionField: "description",
     },
     cadenceSec: 300,

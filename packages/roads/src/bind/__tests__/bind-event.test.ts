@@ -469,7 +469,7 @@ describe("bindEvent", () => {
       bindEvent(
         toBindInput({
           id: "wx",
-          type: "weather",
+          type: "weather_condition",
           geometry: { type: "Point", coordinates: [6.815, 51.2] },
         }),
         spine,

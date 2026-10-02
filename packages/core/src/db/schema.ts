@@ -404,54 +404,6 @@ export const sensorSegment = conditionsSchema.table(
   (t) => [index("idx_sensor_segment_segment").on(t.segmentId)],
 );
 
-/**
- * One row per event the resolver attempted. `status` records the outcome for
- * every attempt (including non-bound ones) so per-source quality is measurable.
- * Cascades with the observation; `geom_hash` lets an unchanged event skip
- * rebinding when only its text changed.
- */
-export const observationBinding = conditionsSchema.table(
-  "observation_binding",
-  {
-    observationId: text("observation_id")
-      .primaryKey()
-      .references(() => observations.id, { onDelete: "cascade" }),
-    status: text("status").notNull(),
-    confidence: doublePrecision("confidence"),
-    directionMode: text("direction_mode").notNull().default("single"),
-    candidateCount: integer("candidate_count").notNull().default(0),
-    alternativeConfidence: doublePrecision("alternative_confidence"),
-    reason: text("reason"),
-    resolverVersion: text("resolver_version").notNull(),
-    geomHash: text("geom_hash").notNull(),
-    /** Observation content revision this resolver attempt consumed. */
-    observationRevision: text("observation_revision"),
-    /** Active road graph generation this resolver attempt consumed. */
-    graphGeneration: text("graph_generation"),
-    boundAt: timestamp("bound_at", { withTimezone: true }).notNull(),
-  },
-  (t) => [index("idx_observation_binding_status").on(t.status)],
-);
-
-/**
- * Durable retry queue for binding work. The observation revision fences a
- * delayed worker from publishing a result for a replaced event snapshot.
- */
-export const bindingQueue = conditionsSchema.table(
-  "binding_queue",
-  {
-    observationId: text("observation_id")
-      .primaryKey()
-      .references(() => observations.id, { onDelete: "cascade" }),
-    observationRevision: text("observation_revision").notNull(),
-    attempts: integer("attempts").notNull().default(0),
-    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
-    lastError: text("last_error"),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [index("idx_binding_queue_due").on(t.nextAttemptAt)],
-);
-
 /** Singleton identity and provenance of the segment spine currently active. */
 export const roadGraphState = conditionsSchema.table(
   "road_graph_state",
@@ -466,31 +418,6 @@ export const roadGraphState = conditionsSchema.table(
     activatedAt: timestamp("activated_at", { withTimezone: true }).notNull(),
   },
   (t) => [check("road_graph_state_singleton", sql`${t.singleton} IS TRUE`)],
-);
-
-/**
- * Ordered path rows of a bound event. Deliberately NO foreign key to
- * `road_segment`: the weekly rebuild deletes and reinserts a region's segments
- * inside one transaction (ids stay stable), and a cascade would wipe every
- * binding each week. The rebuild re-binds and prunes orphans itself.
- */
-export const observationSegment = conditionsSchema.table(
-  "observation_segment",
-  {
-    observationId: text("observation_id")
-      .notNull()
-      .references(() => observations.id, { onDelete: "cascade" }),
-    seq: smallint("seq").notNull(),
-    segmentId: text("segment_id").notNull(),
-    wayId: bigint("way_id", { mode: "number" }).notNull(),
-    dir: text("dir").notNull(),
-    startFraction: doublePrecision("start_fraction").notNull(),
-    endFraction: doublePrecision("end_fraction").notNull(),
-  },
-  (t) => [
-    primaryKey({ columns: [t.observationId, t.seq] }),
-    index("idx_observation_segment_segment").on(t.segmentId),
-  ],
 );
 
 /**

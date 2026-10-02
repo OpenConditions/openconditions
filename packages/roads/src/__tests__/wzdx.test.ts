@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { mapSourceType } from "../taxonomy.js";
 import { parseWzdx } from "../wzdx.js";
 
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/wzdx/feed.json");
@@ -292,25 +291,41 @@ describe("parseWzdx — WZDx v4.2 fixture", () => {
   });
 });
 
-describe("mapSourceType — wzdx branch", () => {
-  it("maps work-zone to roadworks/planned/isPlanned:true", () => {
-    expect(mapSourceType("wzdx", "work-zone")).toEqual({
+describe("parseWzdx — coarse type", () => {
+  const parse = (event_type: string) =>
+    parseWzdx(
+      {
+        type: "FeatureCollection",
+        features: [
+          {
+            id: "t",
+            type: "Feature",
+            properties: { core_details: { event_type, road_names: ["US-1"] } },
+            geometry: { type: "Point", coordinates: [-80.0, 25.0] },
+          },
+        ],
+      },
+      WZDX_SOURCE,
+    )[0]!;
+
+  it("reads a work zone's coarse type from its classification", () => {
+    expect(parse("work-zone")).toMatchObject({
       type: "roadworks",
       category: "planned",
       isPlanned: true,
     });
   });
 
-  it("maps detour to detour/conditions/isPlanned:false", () => {
-    expect(mapSourceType("wzdx", "detour")).toEqual({
+  it("keeps a detour road event a detour", () => {
+    expect(parse("detour")).toMatchObject({
       type: "detour",
       category: "conditions",
       isPlanned: false,
     });
   });
 
-  it("maps unknown WZDx event_type to other", () => {
-    expect(mapSourceType("wzdx", "unknown-event-type")).toEqual({
+  it("reads an unknown event type as other", () => {
+    expect(parse("unknown-event-type")).toMatchObject({
       type: "other",
       category: "conditions",
       isPlanned: false,

@@ -1,6 +1,7 @@
 import {
   type Effect,
   localDateInZone,
+  localTimeInZone,
   type Schedule,
   situationCode,
   type Validity,
@@ -29,6 +30,10 @@ export interface AssembleOptions {
   source: SourceDescriptor;
   /** A snapshot parser's per-record accounting, for record versions. */
   records?: readonly RoadSnapshotRecord[];
+  /** Filled with each draft's id and the ids of the events it folds. */
+  members?: Map<string, string[]>;
+  /** The instant the poll fetched the payloads; default each event's own parse time. */
+  fetchedAt?: string;
 }
 
 /** Kinds that name what a record does rather than what it is; they fold into the group's nature. */
@@ -85,13 +90,41 @@ function localIdOf(event: SnapshotEvent): string {
   return event.id.startsWith(prefix) ? event.id.slice(prefix.length) : event.id;
 }
 
+/** A positive span in milliseconds as an ISO 8601 duration of days, hours, minutes and seconds. */
+function isoDuration(ms: number): string {
+  const total = Math.round(ms / 1000);
+  const [d, h, m, s] = [
+    Math.floor(total / 86_400),
+    Math.floor((total % 86_400) / 3_600),
+    Math.floor((total % 3_600) / 60),
+    total % 60,
+  ];
+  const time = `${h ? `${h}H` : ""}${m ? `${m}M` : ""}${s ? `${s}S` : ""}`;
+  return `P${d ? `${d}D` : ""}${time ? `T${time}` : ""}`;
+}
+
 /**
  * A parser schedule as a kernel Schedule. DATEX `validPeriod` bounds are
- * instants, the kernel's recurrence bounds are local dates: an instant bound
- * becomes its local date in the schedule's zone, which is how the evaluator
- * already reads it; the exact start and end stay on the validity.
+ * instants, the kernel's recurrence bounds are local dates. A period with
+ * both bounds and no time of day is one window: it becomes one occurrence
+ * starting at its exact start and lasting until its exact end. Otherwise an
+ * instant bound becomes its local date in the schedule's zone, which is how
+ * the evaluator reads a recurrence's bounds.
  */
 function kernelSchedule(s: Schedule): Schedule | undefined {
+  const start = s.startDate?.includes("T") ? Date.parse(s.startDate) : Number.NaN;
+  const end = s.endDate?.includes("T") ? Date.parse(s.endDate) : Number.NaN;
+  if (s.startTime === undefined && Number.isFinite(start) && Number.isFinite(end)) {
+    if (end <= start) return undefined;
+    const day = localDateInZone(new Date(start), s.scheduleTimezone);
+    return {
+      startDate: day,
+      endDate: day,
+      startTime: localTimeInZone(new Date(start), s.scheduleTimezone),
+      duration: isoDuration(end - start),
+      scheduleTimezone: s.scheduleTimezone,
+    };
+  }
   const out: Schedule = { ...s };
   for (const key of ["startDate", "endDate"] as const) {
     const value = s[key];
@@ -116,7 +149,7 @@ function validityOf(event: SnapshotEvent): Validity {
     .map(kernelSchedule)
     .filter((s): s is Schedule => s !== undefined);
   return {
-    status: STATUS[event.status],
+    status: event.situation?.validityStatus ?? STATUS[event.status],
     ...(start !== undefined ? { start } : {}),
     ...(end !== undefined ? { end } : {}),
     ...(periods.length > 0 ? { periods: periods as Validity["periods"] } : {}),
@@ -167,12 +200,14 @@ function severityOf(c: RoadClassification, event: RoadEvent, effects: readonly E
   const declared =
     event.severitySource === "declared" ? DECLARED_SEVERITY[event.severity] : undefined;
   const level = event.severityLevel !== undefined ? { level: event.severityLevel } : {};
-  if (declared !== undefined) return { label: declared, source: "declared", ...level };
+  const raw = event.situation?.severityRaw?.trim();
+  const token = raw ? { declaredRaw: raw } : {};
+  if (declared !== undefined) return { label: declared, source: "declared", ...level, ...token };
   const rule = ROADS_SITUATION_KINDS.find((k) => k.code === c.kind)?.deriveSeverity;
   const derived = rule?.({ type: c.type, ...(c.subtype ? { subtype: c.subtype } : {}), effects });
   return derived !== undefined
-    ? { label: derived, source: "derived", ...level }
-    : { label: "unknown" };
+    ? { label: derived, source: "derived", ...level, ...token }
+    : { label: "unknown", ...token };
 }
 
 function relationsOf(event: RoadEvent, source: SourceDescriptor, selfId: string) {
@@ -307,6 +342,7 @@ export function situationDrafts(
       const location = locationOf(primary, source);
       const validity = validityOf(primary);
       const grouped = group.situationId !== undefined;
+      opts.members?.set(id, [...(opts.members.get(id) ?? []), ...members.map((m) => m.id)]);
 
       const placed: PlacedEffect[] = members.flatMap((member) => {
         const own = member === primary;
@@ -369,9 +405,12 @@ export function situationDrafts(
         (type) => ({ type }),
       );
       const detourOnly = members.every((m) => m.type === "detour");
+      const hints = primary.situation;
       const headline =
-        primary.situation?.headlineFromSource === false ? undefined : text(primary.headline);
-      const description = text(primary.description);
+        hints?.headline ??
+        (hints?.headlineFromSource === false ? undefined : text(primary.headline));
+      const description = hints?.description ?? text(primary.description);
+      const comments = hints?.comments?.filter((c) => c.text.length > 0) ?? [];
       const relations = relationsOf(primary, source, id);
       const scheme = EXTERNAL_ID_SCHEME[primary.sourceFormat];
       const externalIds =
@@ -383,6 +422,7 @@ export function situationDrafts(
       const version = versions.get(primary.id)?.version;
       const derivedFrom = derivedFromSiteOf(primary as RoadEvent);
       const sourceUpdatedAt = instant(primary.situation?.sourceUpdatedAt);
+      const fetchedAt = opts.fetchedAt ?? primary.fetchedAt;
       const expiresAt = instant(primary.expiresAt);
 
       drafts.push({
@@ -397,7 +437,7 @@ export function situationDrafts(
           ? "forecast"
           : primary.isPlanned &&
               validity.start !== undefined &&
-              Date.parse(validity.start) > Date.parse(primary.fetchedAt)
+              Date.parse(validity.start) > Date.parse(fetchedAt)
             ? "scheduled"
             : "live",
         planned: primary.isPlanned,
@@ -405,6 +445,7 @@ export function situationDrafts(
         severity: severityOf(c, primary, effects),
         ...(headline ? { headline } : {}),
         ...(description ? { description } : {}),
+        ...(comments.length > 0 ? { comments } : {}),
         validity,
         effects,
         ...(split ? { groupId: group.situationId } : {}),
@@ -431,7 +472,7 @@ export function situationDrafts(
           privacy: { class: "authoritative" },
         },
         freshness: {
-          fetchedAt: instant(primary.fetchedAt) ?? primary.fetchedAt,
+          fetchedAt: instant(fetchedAt) ?? fetchedAt,
           ...(expiresAt !== undefined ? { expiresAt } : {}),
         },
       });

@@ -1,10 +1,16 @@
 import { type Severity, toIsoTimestamp } from "@openconditions/core";
+import { type RoadClassification, registeredClassification } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
-import type { GeoJsonMapping, RoadEvent, RoadEventType } from "./model.js";
+import {
+  type GeoJsonMapping,
+  isRoadEventType,
+  type RoadEvent,
+  type RoadEventType,
+} from "./model.js";
 import { reprojectorFor } from "./reproject.js";
+import { type CoarseType, coarseOf, coarseType } from "./situation/classes.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
-import { mapSourceType, type TypeMapping } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -19,26 +25,6 @@ import type { SourceDescriptor } from "./types.js";
 interface Feature {
   geometry?: Geometry | null;
   properties?: Record<string, unknown> | null;
-}
-
-/** Plain-incident type → (category, isPlanned) when a feed gives an explicit defaultType. */
-const PLANNED_TYPES = new Set<RoadEventType>(["roadworks", "public_event"]);
-const INCIDENT_TYPES = new Set<RoadEventType>([
-  "accident",
-  "road_closure",
-  "lane_closure",
-  "contraflow",
-  "broken_down_vehicle",
-  "obstruction",
-  "authority",
-  "security",
-  "transit_disruption",
-]);
-
-function mappingForType(type: RoadEventType): TypeMapping {
-  if (PLANNED_TYPES.has(type)) return { type, category: "planned", isPlanned: true };
-  if (INCIDENT_TYPES.has(type)) return { type, category: "incident", isPlanned: false };
-  return { type, category: "conditions", isPlanned: false };
 }
 
 /** Dotted-path lookup within a feature's `properties`. */
@@ -96,18 +82,22 @@ function synthesizeLine(
   return { type: "LineString", coordinates: coords };
 }
 
-function resolveType(rawType: string | undefined, mapping: GeoJsonMapping): TypeMapping {
-  if (rawType) {
-    // Source-specific overrides win over the shared crosswalk.
-    const override = mapping.typeMap?.[rawType] ?? mapping.typeMap?.[rawType.toLowerCase()];
-    if (override) return mappingForType(override);
-    const tm = mapSourceType("geojson", rawType);
-    if (tm.type !== "other") return tm;
-  }
-  if (mapping.defaultType) return mappingForType(mapping.defaultType);
-  return rawType
-    ? mapSourceType("geojson", rawType)
-    : { type: "other", category: "conditions", isPlanned: false };
+/**
+ * What a feature's type value means under the feed's mapping: its `typeMap`
+ * entry, else the feed's `defaultType`. A situation-code entry is the
+ * classification, and the coarse type follows from it.
+ */
+function resolveType(
+  rawType: string | undefined,
+  mapping: GeoJsonMapping,
+): CoarseType & { classification?: RoadClassification } {
+  const mapped = rawType
+    ? (mapping.typeMap?.[rawType] ?? mapping.typeMap?.[rawType.toLowerCase()])
+    : undefined;
+  if (mapped !== undefined && isRoadEventType(mapped)) return coarseType(mapped);
+  const classification = mapped !== undefined ? registeredClassification(mapped) : undefined;
+  if (classification !== undefined) return { ...coarseOf(classification), classification };
+  return coarseType(mapping.defaultType ?? "other");
 }
 
 function resolveSeverity(
@@ -222,13 +212,14 @@ export function featuresToRoadEvents(
     }
 
     const rawType = str(get(props, mapping.typeField));
-    const { type, category, isPlanned } = resolveType(rawType, mapping);
+    const { type, category, isPlanned, classification } = resolveType(rawType, mapping);
     const localId = str(get(props, mapping.idField)) ?? String(index);
     const sourceHeadline = str(get(props, mapping.headlineField));
     const headline = sourceHeadline ?? defaultHeadline(type);
     const road = str(get(props, mapping.roadField));
     const updated = str(get(props, mapping.updatedField));
     const recordTime = toIsoTimestamp(updated);
+    const severityToken = str(get(props, mapping.severityField))?.trim();
 
     out.push({
       id: `${src.id}:${localId}`,
@@ -237,14 +228,16 @@ export function featuresToRoadEvents(
       domain: "roads",
       kind: "event",
       situation: {
+        ...(classification !== undefined ? { classification } : {}),
         ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
         ...(sourceHeadline === undefined ? { headlineFromSource: false as const } : {}),
+        ...(severityToken ? { severityRaw: severityToken } : {}),
       },
       type,
       subtype: rawType,
       category,
       isPlanned,
-      ...resolveSeverity(str(get(props, mapping.severityField)), mapping),
+      ...resolveSeverity(severityToken, mapping),
       status: "active",
       geometry,
       roads: road ? [{ name: road }] : [],

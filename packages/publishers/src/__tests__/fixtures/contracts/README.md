@@ -1,62 +1,41 @@
-# OpenConditions → OpenMapX contract fixture
+# OpenConditions → OpenMapX contract fixtures
 
-`road-conditions-v1.input.json` is a synthetic bound-observation input. The
-publisher contract test calls `segmentConditionsToJson` with its frozen clock
-and compares the entire result with `road-conditions-v1.json`.
+The routing wire contract, schema version 2: `/segments/conditions.json` lists
+one condition per routable or restriction-evidence effect of a bound road
+situation, with its routing evidence.
 
-The same output payload is checked into OpenMapX at
-`services/data-manager/src/__tests__/fixtures/contracts/road-conditions-v1.json`.
-Its consumer contract test exercises parsing, directed graph mapping, provenance,
-source exclusions, expiry and ambiguous bindings. Both tests run in their normal
-repository test suites; neither requires the other checkout or a live feed.
+`road-conditions-v2.input.json` (a full closure) and
+`road-speed-cap-v2.input.json` (a temporary speed limit) are synthetic bound
+effect rows, as `readSegmentConditionRows` returns them. The publisher
+contract test calls `segmentConditionsToJson` with their frozen clock and
+compares the entire result with `road-conditions-v2.json` and
+`road-speed-cap-v2.json`.
 
-For intentional contract changes, update and review both fixture copies and run
-both suites. Both repositories format with the same Biome version and settings,
-so the copies are byte-identical; the tests compare parsed JSON either way.
-Do not refresh timestamps to today's date or regenerate the expected output as
-part of a test: the fixed clock and independent golden output detect drift.
+`road-restrictions-v2.json` pairs the closure with the vehicle-specific
+effects the real parsers produce: the NDW records of
+`packages/roads/src/__tests__/fixtures/ndw/restrictions-v3.xml` (a height
+condition, an emergency-service usage and two lorry closures) and the
+Fintraffic weight limit of `…/digitraffic/weight-restriction.json`. Each
+restriction row is the eligible closure row with its identity,
+classification and effect replaced, and the effect's own window dropped so
+every one is evaluated at the frozen instant. The test also proves that none
+of them excludes a car route or caps its speed.
 
-All observations, sources and road identities here are authored test data. The
-licence fields exercise provenance handling; they do not assert rights for an
-actual upstream source.
+The same payloads are checked into OpenMapX at
+`services/data-manager/src/__tests__/fixtures/contracts/`. Its consumer
+contract tests exercise parsing, directed graph mapping, provenance, source
+exclusions, expiry, vehicle scope and restriction evidence. Both tests run in
+their normal repository test suites; neither requires the other checkout or a
+live feed.
 
-## `road-restrictions-v1.json`
+For an intentional contract change, regenerate with `UPDATE_CONTRACTS=1`
+(refused under `CI`), run `pnpm format`, review the diff, copy the three
+output files to OpenMapX and run both suites. Do not refresh timestamps to
+today's date: the fixed clock and the golden output detect drift.
 
-The normalized vehicle-restriction display contract, version 1. Unlike the two
-fixtures above it has no `.input.json`: it is produced entirely from real
-producer code by `buildRestrictionContractFixture` in the OpenConditions host
-provider's tests — the actual GeoJSON publisher, the actual host projection and
-the actual `segmentConditionsToJson` emitter, all at the frozen instant
-`2026-09-11T12:00:00.000Z`.
-
-The wrapper carries `displayEvents` (what OpenMapX shows), `segmentConditions`
-(what a routing consumer receives) and `expectedConditionalIds` (records that
-must produce zero routing effects). It pairs one unconditional control closure
-with five conditional records — one Finnish weight limit and four Dutch records
-covering a height condition, an emergency-service usage and two lorry classes —
-so a consumer test proves both that the control still applies and that no
-restriction-bearing record does.
-
-Each conditional graph row is **synthetic**: the eligible control row with its
-identity and attributes replaced by an actual normalized restriction event,
-keeping every other eligibility condition satisfied. The producer test also
-emits each of those rows with only its restriction evidence removed and asserts
-it does publish, so every exclusion is attributable to the restriction guard
-rather than to rights, binding currency or evidence.
-
-The same payload is checked into OpenMapX at
-`services/data-manager/src/__tests__/fixtures/contracts/road-restrictions-v1.json`.
-Regenerate deliberately with `UPDATE_RESTRICTION_CONTRACT=1` (refused under
-`CI`), run `pnpm format` so the written file matches the repository's style,
-review the diff, copy it to OpenMapX and run both suites.
-
-The Fintraffic record is real reviewed source data under CC BY 4.0
+The closure, the speed limit and the road identities are authored test data;
+their licence fields only exercise provenance handling. The Fintraffic
+record is real reviewed source data under CC BY 4.0
 (https://creativecommons.org/licenses/by/4.0/) and the NDW records are real
 reviewed source data under CC0 1.0
-(https://creativecommons.org/publicdomain/zero/1.0/); the control closure is
-authored test data whose licence fields only exercise provenance handling.
-
-The Dutch records are produced by the real DATEX parser reading the reduced
-capture in `packages/roads/src/__tests__/fixtures/ndw/restrictions-v3.xml`, so
-their comparator, class, usage, direction and source text are parser output
-rather than hand-written expectations.
+(https://creativecommons.org/publicdomain/zero/1.0/).

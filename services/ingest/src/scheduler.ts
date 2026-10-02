@@ -12,10 +12,10 @@ import { fetch as undiciFetch } from "undici";
 import type { FeedStatusStore } from "./feed-status.js";
 import { buildDailyArchive } from "./pipeline/archive-build.js";
 import { deriveBaselines } from "./pipeline/baseline-derive.js";
-import { drainBindingQueue as defaultDrainBindingQueue } from "./pipeline/bind-observations.js";
+import { drainBindingQueue as defaultDrainBindingQueue } from "./pipeline/bind-records.js";
 import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js";
 import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
-import { rebindStale } from "./pipeline/rebind.js";
+import { rebindOnBoot } from "./pipeline/rebind.js";
 import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
 import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
 import { deriveSegmentProfiles } from "./pipeline/segment-profile.js";
@@ -61,12 +61,11 @@ export async function runFeedOnce(
         result.skippedNoGeometry,
       );
     }
-    if (src.produces !== "flow") {
-      try {
-        await (o.drainBindingQueue ?? defaultDrainBindingQueue)(deps.sql, { now: deps.now });
-      } catch (err) {
-        console.warn(`[scheduler] ${src.id}: binding queue drain failed`, err);
-      }
+    // Flow feeds derive congestion situations too, so every poll may have queued work.
+    try {
+      await (o.drainBindingQueue ?? defaultDrainBindingQueue)(deps.sql, { now: deps.now });
+    } catch (err) {
+      console.warn(`[scheduler] ${src.id}: binding queue drain failed`, err);
     }
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -389,13 +388,13 @@ export function startScheduler(
     console.info("[scheduler] weekly segment rebuild disabled (SEGMENT_REBUILD_CRON=off)");
   }
 
-  // Bind whatever the last resolver version left unbound (a new deploy, or a
-  // first boot against an existing store), and drop the bindings of events that
-  // were deactivated in place. Fire-and-forget: feed pollers and server start
-  // are not blocked, and a failure here is never fatal.
-  void rebindStale(sql, { now: () => new Date().toISOString() })
+  // Bind whatever is unbound or was bound by another resolver version (a new
+  // deploy, or a first boot against an existing store), and drop the bindings
+  // of situations no longer live. Fire-and-forget: feed pollers and server
+  // start are not blocked, and a failure here is never fatal.
+  void rebindOnBoot(sql, { now: () => new Date().toISOString() })
     .then((r) => {
-      if (r.rebound > 0) console.info(`[scheduler] startup rebind: ${r.rebound} events`);
+      if (r.rebound > 0) console.info(`[scheduler] startup rebind: ${r.rebound} bindings`);
     })
     .catch((err: unknown) => console.warn("[scheduler] startup rebind failed", err));
 

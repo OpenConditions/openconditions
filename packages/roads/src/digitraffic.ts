@@ -1,9 +1,14 @@
 import type { GeoJsonGeometry, Severity } from "@openconditions/core";
 import { deriveSeverity } from "@openconditions/core";
-import { parseRestrictionInstant, toRestrictionInstant } from "@openconditions/model-roads";
+import {
+  digitrafficClassification,
+  parseRestrictionInstant,
+  toRestrictionInstant,
+} from "@openconditions/model-roads";
 import { digitrafficRestrictionDetails } from "./digitraffic-restrictions.js";
 import { normalizeDtToken } from "./digitraffic-token.js";
-import type { Restriction, RoadEvent, RoadRef } from "./model.js";
+import type { Restriction, RoadEvent, RoadEventType, RoadRef } from "./model.js";
+import { coarseOf, coarseType } from "./situation/classes.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
   type RoadSnapshotRecord,
@@ -11,9 +16,19 @@ import {
   reconcileRoadSnapshots,
   snapshotFingerprint,
 } from "./snapshot.js";
-
-import { mapSourceType } from "./taxonomy.js";
 import type { SourceDescriptor } from "./types.js";
+
+/**
+ * The coarse types Digitraffic messages have always had where their
+ * classification reads differently: a general announcement, which names no
+ * nature, warns; an exempted (oversize, permit-bound) transport stays an
+ * authority matter. Every other message's coarse type follows its
+ * classification.
+ */
+const DT_COARSE: Readonly<Record<string, RoadEventType>> = {
+  GENERAL: "hazard",
+  EXEMPTED_TRANSPORT: "authority",
+};
 
 interface DigitrafficTimeAndDuration {
   startTime?: unknown;
@@ -158,13 +173,18 @@ function mapDtSeverity(raw: unknown): Severity | undefined {
   }
 }
 
-/** Worst severity across the announcement's road-work phases. */
-function severityFromPhases(ann: DigitrafficAnnouncement | null): Severity | undefined {
-  let worst: Severity | undefined;
+/** Worst severity across the announcement's road-work phases, with the token that declared it. */
+function severityFromPhases(
+  ann: DigitrafficAnnouncement | null,
+): { severity: Severity; raw: string } | undefined {
+  let worst: { severity: Severity; raw: string } | undefined;
   for (const p of roadWorkPhases(ann)) {
     const s = mapDtSeverity(p.severity);
-    if (s && (worst == null || DT_SEVERITY_ORDER.indexOf(s) > DT_SEVERITY_ORDER.indexOf(worst))) {
-      worst = s;
+    if (
+      s &&
+      (worst == null || DT_SEVERITY_ORDER.indexOf(s) > DT_SEVERITY_ORDER.indexOf(worst.severity))
+    ) {
+      worst = { severity: s, raw: String(p.severity).trim() };
     }
   }
   return worst;
@@ -426,21 +446,28 @@ function buildDigitrafficEvent(
   const situationType = coerceString(props.situationType) ?? "";
   const announcementType = coerceString(props.trafficAnnouncementType);
   const codeForMapping = announcementType ?? situationType;
-  // The taxonomy crosswalk is keyed on the v1 underscore vocabulary, so the
-  // v2 space-separated token is canonicalized before lookup. `subtype` keeps
-  // the publisher's original token.
-  const { type, category, isPlanned } = mapSourceType(
-    "digitraffic",
-    codeForMapping ? normalizeDtToken(codeForMapping) : "",
-  );
-
   const ann = firstAnnouncement(props.announcements);
+  // The crosswalk is keyed on the v1 underscore vocabulary, so the v2
+  // space-separated tokens are canonicalized before lookup. `subtype` keeps
+  // the publisher's original token.
+  const classification = digitrafficClassification(
+    normalizeDtToken(situationType),
+    announcementType ? normalizeDtToken(announcementType) : undefined,
+    roadWorkPhases(ann).flatMap((p) =>
+      (p.workTypes ?? []).flatMap((w) =>
+        typeof w?.type === "string" ? [normalizeDtToken(w.type)] : [],
+      ),
+    ),
+  );
+  const coarse = DT_COARSE[normalizeDtToken(codeForMapping)];
+  const { type, category, isPlanned } =
+    coarse !== undefined ? coarseType(coarse) : coarseOf(classification);
   const headline = coerceString(ann?.title) ?? type;
   const validFrom = coerceString(ann?.timeAndDuration?.startTime) ?? null;
   const validTo = coerceString(ann?.timeAndDuration?.endTime) ?? null;
 
   const phaseSeverity = severityFromPhases(ann);
-  const severity = phaseSeverity ?? deriveSeverity({});
+  const severity = phaseSeverity?.severity ?? deriveSeverity({});
 
   const restrictions = restrictionsFromPhases(ann) ?? restrictionsFromFeatures(ann);
   const speedLimitKph = speedLimitFromPhases(ann) ?? speedLimitFromFeatures(ann);
@@ -466,8 +493,10 @@ function buildDigitrafficEvent(
     domain: "roads",
     kind: "event",
     situation: {
+      ...(classification !== undefined ? { classification } : {}),
       ...(recordTime !== null ? { sourceUpdatedAt: recordTime } : {}),
       ...(coerceString(ann?.title) === null ? { headlineFromSource: false as const } : {}),
+      ...(phaseSeverity ? { severityRaw: phaseSeverity.raw } : {}),
     },
     type,
     subtype: subtypeFromAnnouncement(ann) ?? (codeForMapping || undefined),

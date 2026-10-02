@@ -115,6 +115,33 @@ describe("evictRawPayloads", () => {
     expect((await held()).some((r) => r.evicted)).toBe(false);
   });
 
+  it("keeps a payload a poll fetched again after eviction planned it away", async () => {
+    const hashes = await archive("ca-bc-drivebc", "hot", 60);
+    const oldest = hashes[59]!;
+    const raw = createRawArchive(sql, { dir });
+    // The poll lands between eviction reading the archive and applying its plan.
+    const racing = new Proxy(sql, {
+      apply(target, self, args) {
+        const query = Reflect.apply(target, self, args);
+        const strings = args[0] as readonly string[] | undefined;
+        if (!Array.isArray(strings) || !strings.join("").includes("FROM conditions.raw_payload p"))
+          return query;
+        return query.then(async (rows: unknown) => {
+          const body = Buffer.from(`ca-bc-drivebc payload 59 ${"x".repeat(200)}`);
+          const digest = digestPayload("https://ca-bc-drivebc.example/feed", body);
+          const meta = { sourceId: "ca-bc-drivebc", fetchId: 99, tier: "hot" as const };
+          await raw.capture({ ...meta, fetchedAt: new Date(NOW), url: digest.url }, body, digest);
+          return rows;
+        });
+      },
+    });
+    const result = await evictRawPayloads(racing, { dir, policy: policy(), historyDays: 90 });
+    expect(result.evict.map((r) => r.hash)).not.toContain(oldest);
+    const row = (await held()).find((r) => r.hash === oldest)!;
+    expect(row.evicted).toBe(false);
+    expect(existsSync(path.join(dir, row.storage_key))).toBe(true);
+  });
+
   it("removes the index rows of payloads evicted longer ago than the history window", async () => {
     await archive("ca-bc-drivebc", "hot", 60);
     await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });

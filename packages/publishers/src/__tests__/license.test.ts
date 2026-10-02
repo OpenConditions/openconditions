@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { observationsToGeoJSON } from "../geojson.js";
 import {
   type EgressRecord,
   filterForPermissiveExport,
@@ -168,15 +167,5 @@ describe("filterForPermissiveExport — crowd reporter identity stripping", () =
     });
     const [out] = filterForPermissiveExport([feed]);
     expect(out).toBe(feed);
-  });
-
-  it("carries no reporter through the GeoJSON emitter once filtered", () => {
-    const fc = observationsToGeoJSON(filterForPermissiveExport([crowd()]));
-    const props = fc.features[0]!.properties as { origin: Record<string, unknown> };
-    expect(props.origin).toEqual({
-      kind: "crowd",
-      attribution: { provider: "inst", license: "CC0-1.0" },
-    });
-    expect(JSON.stringify(fc)).not.toContain("REPORTER-KEYID-SENTINEL");
   });
 });

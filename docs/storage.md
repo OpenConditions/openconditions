@@ -40,7 +40,9 @@ longer loaded stays, inactive, because its records still name it.
 ## Revisions and lifecycle
 
 A poll is written by `writeSnapshot`, in one transaction under the source's
-advisory lock. Each record ends up in one of these states:
+advisory lock; an event feed's poll calls `writeSnapshotIn` inside its own
+transaction, so the source's poll status commits with its records. Each record
+ends up in one of these states:
 
 - **Unchanged.** The draft's content hash equals the stored one. Nothing is
   validated or written; the source's poll time says it was seen again.
@@ -53,6 +55,11 @@ advisory lock. Each record ends up in one of these states:
   are removed.
 - **Rejected.** A draft that fails validation is counted and logged. The poll
   goes on, and the stored version stays.
+
+Every new situation revision, a tombstone included, queues the situation's graph
+binding in `binding_queue` in the same transaction
+([graph binding](graph-binding.md)). A purged record's bindings and queued work
+go with it.
 
 `writeRecord` writes one record the same way: a crowd report it seals, or a
 peer's record it keeps with the peer's revision, ignoring one that is not newer.
@@ -125,7 +132,7 @@ A source's `rights.retention` decides how long:
 | `rights.retention` | Kept                   |
 | ------------------ | ---------------------- |
 | `false`            | Nothing                |
-| Unset              | The first 48 hours     |
+| Unset              | The last 48 hours      |
 | `true`             | Its tier's full window |
 
 The tiers:
@@ -150,3 +157,24 @@ Only rung 3 warns: it sets `source_status.raw_hot_evicted_at`. Eviction deletes
 the blob and keeps the index row, so a raw reference still names its payload.
 Index rows evicted longer ago than the history window are removed. Settings and
 the `raw` command are in the [ingest README](../services/ingest/README.md#raw-payloads).
+
+### Replay
+
+The archive exists so a parser change can be checked against what feeds really
+sent:
+
+```sh
+pnpm --filter @openconditions/ingest raw replay <source> --from <time> [--to <time>]
+```
+
+For each published poll of the source in the window, replay reads the poll's
+archived payloads, parses them with the current parser (dated by the poll's
+attempt time, OpenLR resolved through the configured resolver) and compares the
+drafts, by content hash, with the situations that poll left stored: each
+situation's latest revision recorded before the next attempt began, unless that
+revision is a tombstone. It prints one line per poll —
+`N same, N changed, N new, N gone`, plus `N unplaced` when OpenLR could not
+place a draft — followed by the ids that changed, are new or are gone. A poll
+whose payloads were evicted is listed with the count of missing payloads and not
+compared. Replay writes nothing. It covers event feeds only; a flow feed is
+refused.

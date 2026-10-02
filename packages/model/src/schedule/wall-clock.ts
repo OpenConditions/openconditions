@@ -50,6 +50,12 @@ export function localDateInZone(at: Date, timeZone: string): string {
   return `${String(p.year).padStart(4, "0")}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
 }
 
+/** `HH:mm:ss` of the instant `at` as seen on a wall clock in `timeZone`. */
+export function localTimeInZone(at: Date, timeZone: string): string {
+  const p = partsAt(timeZone, at.getTime());
+  return [p.hour, p.minute, p.second].map((n) => String(n).padStart(2, "0")).join(":");
+}
+
 /**
  * Converts a local wall-clock string (`YYYY-MM-DDTHH:mm[:ss]`) in `timeZone`
  * to an absolute instant. Two-pass offset correction handles DST; returns

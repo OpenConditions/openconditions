@@ -1,6 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { Observation } from "@openconditions/core";
 import {
   createFetchState,
   fetchAll,
@@ -8,36 +7,28 @@ import {
   guardOptionsFromEnv,
   type LookupFn,
   makeAuthorizedFetch,
+  type RecordDraft,
 } from "@openconditions/ingest-framework";
-import { hasRestrictionEvidence, isRoadRestrictionDetails } from "@openconditions/model-roads";
-import { normalizeObservation } from "@openconditions/normalize";
-import {
-  eventsToExclusions,
-  observationsToDatexSituations,
-  observationsToGeoJSON,
-  observationsToTraff,
-} from "@openconditions/publishers";
+import { isVehicleSpecific, situationEffects } from "@openconditions/model";
 import { FEED_SOURCES } from "@openconditions/roads";
 import { fetch as undiciFetch } from "undici";
-import { parseRoadSnapshotFor } from "../pipeline/parse.js";
+import { parseEventFeed } from "../pipeline/parse.js";
+import { stampAttribution, writeModel } from "../pipeline/publish.js";
 import { resolveOpenLr } from "../pipeline/resolve.js";
-import {
-  type DomainFeedSource,
-  inspectSnapshotCompleteness,
-  stampSourceEvidence,
-} from "../pipeline/run.js";
+import { type RestrictionTally, tallyRestrictions } from "../pipeline/restriction-tally.js";
+import { type DomainFeedSource, inspectSnapshotCompleteness } from "../pipeline/run.js";
 
 /**
  * A finite, operator-run smoke check for the restriction path.
  *
- * It reuses the real descriptor, the real guarded acquisition, the real parser,
- * the real normalization and the real publishers — nothing here re-implements a
- * step it is meant to verify. It performs exactly one complete acquisition per
+ * It reuses the real descriptor, the real guarded acquisition, the real parser
+ * and the real registry validation — nothing here re-implements a step it is
+ * meant to verify. It performs exactly one complete acquisition per
  * invocation, starts no scheduler, and never loops.
  *
  * A missing restriction kind is reported as "not observed", not as a failure:
- * the pinned fixtures are the deterministic coverage gate. A transport, schema,
- * normalization or publication-safety failure IS a failure and exits nonzero.
+ * the pinned fixtures are the deterministic coverage gate. A transport,
+ * schema or validation failure IS a failure and exits nonzero.
  */
 
 export type SmokeSourceId = "fi-digitraffic" | "nl-ndw";
@@ -45,7 +36,7 @@ export type SmokeSourceId = "fi-digitraffic" | "nl-ndw";
 export interface RunRestrictionSmokeOptions {
   sourceId: SmokeSourceId;
   outputDir: string;
-  /** Disposable mode runs the full storage/binding/provider path locally. */
+  /** Disposable mode runs the full storage/binding path locally. */
   database?: "disposable";
   /** Reviewed frozen spine JSON, required by disposable mode. */
   spineFile?: string;
@@ -83,16 +74,9 @@ export interface RestrictionSmokeReport {
     accepted: number;
     terminal: number;
     unlocatable: number;
+    situations: number;
   };
-  restrictions: {
-    recordsWithDetails: number;
-    facts: number;
-    /** Counts per `dimension:unit`; absence of a kind is "not observed". */
-    kinds: Record<string, number>;
-    scopes: Record<string, number>;
-    issues: Record<string, number>;
-    unsupportedEnvelopes: number;
-  };
+  restrictions: RestrictionTally;
   provenance: {
     sourceUpdatedAt: string | null;
     recordId: string | null;
@@ -102,12 +86,6 @@ export interface RestrictionSmokeReport {
     licenseUrl: string | null;
     termsUrl: string | null;
     rightsReviewedAt: string | null;
-  };
-  withheldExports: {
-    segmentConditions: number;
-    valhallaExclusions: number;
-    datexSituations: number;
-    traffMessages: number;
   };
   notes: string[];
 }
@@ -121,11 +99,25 @@ function redact(value: unknown, depth = 0): unknown {
   const out: Record<string, unknown> = {};
   for (const [key, entry] of Object.entries(value as Record<string, unknown>)) {
     if (REDACTED_SOURCE_FIELDS.includes(key)) continue;
-    // The raw national payload is never written to a report.
-    if (key === "sourceRaw") continue;
     out[key] = redact(entry, depth + 1);
   }
   return out;
+}
+
+/** The situations as a GeoJSON FeatureCollection, for an operator to look at. */
+function displayOf(situations: readonly RecordDraft[]) {
+  return {
+    type: "FeatureCollection",
+    features: situations.map((situation) => {
+      const location = situation["location"] as { geometry?: unknown } | undefined;
+      return {
+        type: "Feature",
+        id: situation["id"],
+        geometry: location?.geometry ?? null,
+        properties: redact(situation),
+      };
+    }),
+  };
 }
 
 /** Record each response's validators without buffering its body twice. */
@@ -151,14 +143,10 @@ function recordingFetch(inner: typeof fetch, into: RequestRecord[]): typeof fetc
   }) as typeof fetch;
 }
 
-function tally(into: Record<string, number>, key: string): void {
-  into[key] = (into[key] ?? 0) + 1;
-}
-
 /**
- * Acquire, parse, normalize and publish one snapshot, and report what the
- * exporters withheld. Throws on any failure that is not an honest empty
- * observation.
+ * Acquire and parse one snapshot, validate every situation against the
+ * registry, and report what its vehicle-specific effects say. Throws on any
+ * failure that is not an honest empty observation.
  */
 export async function runRestrictionSmoke(
   options: RunRestrictionSmokeOptions,
@@ -180,8 +168,6 @@ export async function runRestrictionSmoke(
   const checkedAt = (deps.now ?? (() => new Date().toISOString()))();
   if (!Number.isFinite(Date.parse(checkedAt))) throw new Error("smoke: invalid checked time");
 
-  // Exclusive directory creation: a smoke run never silently overwrites the
-  // artefacts an operator is about to read.
   await mkdir(options.outputDir, { recursive: true });
 
   const requests: RequestRecord[] = [];
@@ -205,100 +191,41 @@ export async function runRestrictionSmoke(
   const completeness = inspectSnapshotCompleteness(feed, acquired.buffers);
   if (!completeness.complete) throw new Error("smoke: source declares no complete snapshot");
 
-  const report = parseRoadSnapshotFor(feed, acquired.buffers);
-  if (!report) throw new Error("source lacks complete road snapshot reporting");
+  const parsed = parseEventFeed(feed, acquired.buffers);
+  const accounting = parsed.records;
+  if (!accounting) throw new Error("source lacks complete road snapshot reporting");
 
   // No OpenLR client in smoke mode: unresolved references are reported as
-  // unlocatable, never as successfully graph-bound.
-  const located = await resolveOpenLr(report.observations, null);
+  // unlocatable, never as successfully placed.
+  const located = await resolveOpenLr(parsed.situations, null);
   if (located.failed > 0) throw new Error("smoke location resolution failed");
+  const situations = located.resolved.map((draft) => stampAttribution(draft, feed));
 
-  const normalized = located.resolved.map((observation) =>
-    normalizeObservation(stampSourceEvidence(observation, feed), {
-      kind: "feed",
-      instanceId: "local-restriction-smoke",
-    }),
-  );
-
-  const forPublication = normalized.map((observation) => ({
-    ...observation,
-    sourceCheckedAt: checkedAt,
-    freshnessWindowSec: feed.freshnessWindowSec,
-  })) as Observation[];
-  const display = observationsToGeoJSON(forPublication, {}, { at: new Date(checkedAt) });
-
-  const restrictions: RestrictionSmokeReport["restrictions"] = {
-    recordsWithDetails: 0,
-    facts: 0,
-    kinds: {},
-    scopes: {},
-    issues: {},
-    unsupportedEnvelopes: 0,
-  };
-  for (const feature of display.features) {
-    const properties = feature.properties ?? {};
-    if (properties["restrictionDetailsUnsupported"] === true) {
-      restrictions.unsupportedEnvelopes++;
-      continue;
-    }
-    const details = properties["restrictionDetails"];
-    if (details === undefined) continue;
-    restrictions.recordsWithDetails++;
-    const view = details as {
-      facts: Array<Record<string, unknown>>;
-      issues: Array<{ code: string }>;
-    };
-    restrictions.facts += view.facts.length;
-    for (const fact of view.facts) {
-      const kind =
-        fact["kind"] === "dimension"
-          ? `${String(fact["dimension"])}:${String(fact["unit"])}`
-          : `${String(fact["kind"])}:${String(fact["value"])}`;
-      tally(restrictions.kinds, kind);
-      tally(restrictions.scopes, String((fact["scope"] as { kind?: unknown })?.kind));
-    }
-    for (const issue of view.issues) tally(restrictions.issues, issue.code);
-  }
-
-  const events = forPublication.filter((observation) => observation.kind === "event");
-  const conditional = events.filter((observation) => hasRestrictionEvidence(observation));
-  const datex = observationsToDatexSituations(events as never, {}, feed.country ?? "other");
-  const traff = observationsToTraff(events as never);
-  for (const record of conditional) {
-    if (datex.includes(record.id) || traff.includes(record.id)) {
-      throw new Error(`smoke publication safety: conditional record exported: ${record.id}`);
+  const { registry } = writeModel();
+  for (const situation of situations) {
+    const checked = registry.validateDraft(situation);
+    if (!checked.ok) {
+      const issue = checked.issues[0]!;
+      throw new Error(
+        `smoke validation: ${String(situation["id"])}: ${issue.path.join(".")}: ${issue.message}`,
+      );
     }
   }
-  // Feed the conditional records alone to the exclusion emitter: if any of
-  // them can still produce avoidance geometry, that is a safety failure rather
-  // than something to count.
-  const conditionalExclusions = eventsToExclusions(conditional, {
-    activeAt: new Date(checkedAt),
-    evaluatedAt: new Date(checkedAt),
-  });
-  if (
-    conditionalExclusions.exclude_locations.length > 0 ||
-    conditionalExclusions.exclude_polygons.length > 0
-  ) {
-    throw new Error("smoke publication safety: a conditional record produced Valhalla exclusions");
-  }
 
-  const firstDetails = display.features
-    .map((feature) => feature.properties?.["restrictionDetails"])
-    .find((details) => isRoadRestrictionDetails(details)) as
-    | { source: Record<string, string | null> }
-    | undefined;
-
+  const restrictions = tallyRestrictions(situations);
+  const first = situations.find((s) => situationEffects(s).some(isVehicleSpecific));
+  const provenance = first?.["provenance"] as Record<string, unknown> | undefined;
   const notes: string[] = [];
   for (const kind of ["height:m", "width:m", "length:m", "gross_weight:kg"]) {
-    if (restrictions.kinds[kind] === undefined) {
+    if (restrictions.kinds[kind] === undefined)
       notes.push(`not observed in this snapshot: ${kind}`);
-    }
   }
-  if (restrictions.recordsWithDetails === 0) {
-    notes.push("no restriction-bearing record in this snapshot; frozen fixtures remain the gate");
+  if (restrictions.situations === 0) {
+    notes.push(
+      "no restriction-bearing situation in this snapshot; frozen fixtures remain the gate",
+    );
   }
-  notes.push("validation-only run: no observation was published to a database");
+  notes.push("validation-only run: nothing was written to a database");
 
   const result: RestrictionSmokeReport = {
     sourceId: feed.id,
@@ -309,31 +236,24 @@ export async function runRestrictionSmoke(
     feedUrls: Array.isArray(feed.url) ? feed.url : feed.url ? [feed.url] : [],
     requests,
     snapshot: {
-      inputCount: report.inputCount,
-      uniqueCount: report.uniqueCount,
-      duplicates: report.duplicates,
-      accepted: report.acceptedIds.length,
-      terminal: report.terminalIds.length,
-      unlocatable: [...new Set([...report.unlocatableIds, ...located.unlocatableIds])].length,
+      inputCount: accounting.inputCount,
+      uniqueCount: accounting.uniqueCount,
+      duplicates: accounting.duplicates,
+      accepted: accounting.accepted,
+      terminal: accounting.terminal,
+      unlocatable: accounting.unlocatable + located.unlocatable.length,
+      situations: situations.length,
     },
     restrictions,
     provenance: {
-      sourceUpdatedAt: firstDetails?.source["sourceUpdatedAt"] ?? null,
-      recordId: firstDetails?.source["recordId"] ?? null,
-      recordVersion: firstDetails?.source["recordVersion"] ?? null,
-      publisher: firstDetails?.source["publisher"] ?? null,
+      sourceUpdatedAt: (provenance?.["sourceUpdatedAt"] as string | undefined) ?? null,
+      recordId: (provenance?.["recordId"] as string | undefined) ?? null,
+      recordVersion: (provenance?.["recordVersion"] as string | undefined) ?? null,
+      publisher: feed.attribution ?? null,
       license: feed.license ?? null,
       licenseUrl: feed.licenseUrl ?? null,
       termsUrl: feed.rights?.termsUrl ?? null,
       rightsReviewedAt: feed.rights?.reviewedAt ?? null,
-    },
-    // Every restriction-bearing record is withheld from each lossy or routing
-    // exporter, so one count describes all four.
-    withheldExports: {
-      segmentConditions: conditional.length,
-      valhallaExclusions: conditional.length,
-      datexSituations: conditional.length,
-      traffMessages: conditional.length,
     },
     notes,
   };
@@ -345,7 +265,7 @@ export async function runRestrictionSmoke(
   );
   await writeFile(
     join(options.outputDir, "display.geojson"),
-    `${JSON.stringify(redact(display), null, 2)}\n`,
+    `${JSON.stringify(displayOf(situations), null, 2)}\n`,
     "utf8",
   );
   return result;
@@ -391,8 +311,9 @@ export async function main(args: string[]): Promise<void> {
     );
     const databaseReport = await runRestrictionSmokeWithDatabase(options);
     console.info(
-      `[smoke] ${databaseReport.sourceId}: published ${databaseReport.published} row(s), ` +
-        `bound ${databaseReport.bound}, withheld ${databaseReport.withheldConditional} conditional record(s)`,
+      `[smoke] ${databaseReport.sourceId}: published ${databaseReport.published} situation(s), ` +
+        `bound ${databaseReport.bound}, ${databaseReport.restrictions.evidence} ` +
+        `restriction-evidence effect(s) withheld from routing`,
     );
     for (const note of databaseReport.notes) console.info(`[smoke] ${note}`);
     return;
@@ -401,8 +322,8 @@ export async function main(args: string[]): Promise<void> {
   console.info(
     `[smoke] ${report.sourceId}: ${report.snapshot.accepted} accepted, ` +
       `${report.snapshot.terminal} terminal, ${report.snapshot.unlocatable} unlocatable, ` +
-      `${report.restrictions.facts} restriction fact(s) across ` +
-      `${report.restrictions.recordsWithDetails} record(s)`,
+      `${report.restrictions.effects} restriction effect(s) across ` +
+      `${report.restrictions.situations} situation(s)`,
   );
   for (const note of report.notes) console.info(`[smoke] ${note}`);
 }

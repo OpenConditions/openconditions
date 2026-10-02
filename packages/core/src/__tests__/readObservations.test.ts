@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { QueryRunner } from "../observationsByBbox.js";
+import type { QueryRunner } from "../query-runner.js";
 import { readObservations } from "../readObservations.js";
 
 const eventRow = {
@@ -198,37 +198,6 @@ describe("readObservations", () => {
       { domain: "roads", bbox: [4, 51, 6, 53] },
     );
     expect(q).not.toMatch(/make_interval\(days =>/);
-  });
-
-  it("attaches binding and segments when includeBindings is set", async () => {
-    let q = "";
-    const boundRow = {
-      ...eventRow,
-      binding_status: "exact",
-      binding_confidence: 0.95,
-      binding_direction_mode: "single",
-      segments: [{ segmentId: "10:f", wayId: 10, dir: "f", startFraction: 0.2, endFraction: 1 }],
-    };
-    const [obs] = await readObservations(
-      stubDb([boundRow], (query) => (q = query)),
-      { domain: "roads", bbox: [0, 0, 1, 1], includeBindings: true },
-    );
-    expect(obs!.binding).toEqual({ status: "exact", confidence: 0.95, directionMode: "single" });
-    expect(obs!.segments).toEqual([
-      { segmentId: "10:f", wayId: 10, dir: "f", startFraction: 0.2, endFraction: 1 },
-    ]);
-    expect(q).toContain("observation_binding");
-  });
-
-  it("does not join bindings by default", async () => {
-    let q = "";
-    const [obs] = await readObservations(
-      stubDb([eventRow], (query) => (q = query)),
-      { domain: "roads", bbox: [0, 0, 1, 1] },
-    );
-    expect(q).not.toContain("observation_binding");
-    expect(obs!.binding).toBeUndefined();
-    expect(obs!.segments).toBeUndefined();
   });
 });
 

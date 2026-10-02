@@ -1,21 +1,22 @@
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
-import { readObservations } from "@openconditions/core";
 import type { LookupFn } from "@openconditions/ingest-framework";
 import { FEED_SOURCES, type OsmWay, type SpineSubgraph } from "@openconditions/roads";
+import { sweepRecords } from "@openconditions/storage";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { registerApiRoutes } from "../api/routes.js";
 import { buildDomainRegistry } from "../domains.js";
 import { FeedStatusStore } from "../feed-status.js";
-import { drainBindingQueue } from "../pipeline/bind-observations.js";
+import { drainBindingQueue } from "../pipeline/bind-records.js";
 import { activateRoadGraph } from "../pipeline/graph-state.js";
 import { importOsmRoads } from "../pipeline/osm-import.js";
 import { type DomainFeedSource, runSource } from "../pipeline/run.js";
 import { buildSegments } from "../pipeline/segment-build.js";
-import { sweepStaleObservations } from "../pipeline/sweep.js";
 import { registerPublishRoutes } from "../publish-routes.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
+import { registry, writeSituations } from "./helpers/situations.js";
 
 /**
  * The NDW slice end to end against a real disposable PostGIS: fetch the
@@ -30,12 +31,22 @@ import { createRestrictionDatabase } from "./helpers/restriction-database.integr
 
 const SOURCE = "nl-ndw";
 const CHECKED_AT = "2026-09-12T07:14:00.000Z";
-const HEIGHT_ID = `${SOURCE}:RWS01_M1080891_NARROW_LANES_D2_WWA`;
-const EMERGENCY_ID = `${SOURCE}:RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA`;
-const DISPLACEMENT_ID = `${SOURCE}:RWS01_M1080891_DISPLACEMENT_D2_WWA`;
-const LORRY_POSITIVE_ID = `${SOURCE}:NLRWS_0005382945_1`;
-const LORRY_NEGATIVE_ID = `${SOURCE}:NLRWS_0005406494_1`;
-const OBSTRUCTION_ID = `${SOURCE}:NDW08_2e188db4-9bff-492d-bf28-90e17bffac8c`;
+const MODEL = { registry, instanceId: "test.local" };
+const situationId = (local: string) => `oc:situation:${SOURCE}:${local}`;
+/**
+ * The DATEX records of one situation fold into it: the roadworks situation
+ * carries the height, emergency-services and displacement records.
+ */
+const ROADWORKS_ID = situationId("RWS01_SM1080891_D2_WWA");
+const LORRY_POSITIVE_ID = situationId("NLRWS_0005382945");
+const LORRY_NEGATIVE_ID = situationId("NLRWS_0005406494");
+const OBSTRUCTION_ID = situationId("NDW08_2e188db4-9bff-492d-bf28-90e17bffac8c_SIT");
+/** The conditional effects, as `<situationId>#<effectId>` condition ids. */
+const HEIGHT = `${ROADWORKS_ID}#RWS01_M1080891_NARROW_LANES_D2_WWA/closure`;
+const EMERGENCY = `${ROADWORKS_ID}#RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA/access`;
+const LORRY_POSITIVE = `${LORRY_POSITIVE_ID}#NLRWS_0005382945_1/closure`;
+const LORRY_NEGATIVE = `${LORRY_NEGATIVE_ID}#NLRWS_0005406494_1/closure`;
+const CONDITIONAL = [HEIGHT, EMERGENCY, LORRY_POSITIVE, LORRY_NEGATIVE];
 
 const REGION = {
   id: "ndw-a76-test",
@@ -155,7 +166,7 @@ let sql: postgres.Sql;
 const savedEnv: Record<string, string | undefined> = {};
 
 beforeAll(async () => {
-  // The ingest run binds accepted observations itself, and that binder reads the
+  // The ingest run binds the situations it changed itself, and that binder reads the
   // process environment, so the region must be configured the way the service
   // configures it rather than only passed to the explicit calls below.
   for (const key of ["SEGMENT_REGIONS", "BIND_ENABLED"]) {
@@ -182,27 +193,54 @@ afterAll(async () => {
 }, 30_000);
 
 beforeEach(async () => {
-  await sql`DELETE FROM conditions.binding_queue`;
-  await sql`DELETE FROM conditions.observations WHERE source = ${SOURCE}`;
+  await sql`TRUNCATE conditions.situation, conditions.record_binding, conditions.record_segment,
+    conditions.binding_queue CASCADE`;
   await sql`DELETE FROM conditions.source_status WHERE source = ${SOURCE}`;
 });
 
-const runner = {
-  async execute<T>(query: string, params?: unknown[]): Promise<T> {
-    return (await sql.unsafe(query, params as never)) as T;
-  },
-};
-
+/** Live situations of the feed: a withdrawn or expired one is tombstoned, not deleted. */
 async function ids(): Promise<string[]> {
   const rows = await sql<{ id: string }[]>`
-    SELECT id FROM conditions.observations WHERE source = ${SOURCE} ORDER BY id`;
+    SELECT id FROM conditions.situation
+     WHERE source_id = ${SOURCE} AND tombstoned_at IS NULL ORDER BY id`;
   return rows.map((r) => r.id);
 }
 
-async function hashOf(id: string): Promise<string | null> {
-  const rows = await sql<{ content_hash: string | null }[]>`
-    SELECT content_hash FROM conditions.observations WHERE id = ${id}`;
-  return rows[0]?.content_hash ?? null;
+async function stored(id: string) {
+  const [row] = await sql<
+    {
+      content_hash: string;
+      revision: number;
+      tombstone_reason: string | null;
+      record: Record<string, unknown>;
+    }[]
+  >`SELECT content_hash, revision, tombstone_reason, record FROM conditions.situation
+     WHERE id = ${id}`;
+  return row;
+}
+
+/** A stored effect's model value, by its condition id. */
+async function effect(conditionId: string): Promise<Record<string, unknown> | undefined> {
+  const [situation, effectId] = conditionId.split("#") as [string, string];
+  const [row] = await sql<{ value: Record<string, unknown> }[]>`
+    SELECT value FROM conditions.situation_effect
+     WHERE situation_id = ${situation} AND effect_id = ${effectId}`;
+  return row?.value;
+}
+
+async function ownBinding(id: string) {
+  return sql<{ effect_id: string; status: string; record_revision: number }[]>`
+    SELECT effect_id, status, record_revision FROM conditions.record_binding
+     WHERE record_class = 'situation' AND record_id = ${id} ORDER BY effect_id`;
+}
+
+function sweep() {
+  return sweepRecords(sql, {
+    ...MODEL,
+    now: new Date().toISOString(),
+    maxAgeSec: 3600,
+    historyDays: 7,
+  });
 }
 
 async function ingest(
@@ -214,6 +252,7 @@ async function ingest(
     fetch: serveXml(body, init),
     lookup: fakeLookup,
     now: () => init.now ?? CHECKED_AT,
+    model: MODEL,
   });
 }
 
@@ -224,8 +263,9 @@ async function seed(): Promise<void> {
 
 async function app() {
   const instance = Fastify();
-  const registry = await buildDomainRegistry();
-  registerPublishRoutes(instance, sql, new FeedStatusStore(), registry);
+  const domains = await buildDomainRegistry();
+  registerPublishRoutes(instance, sql, new FeedStatusStore(), domains);
+  registerApiRoutes(instance, sql, { registry });
   await instance.ready();
   return instance;
 }
@@ -234,7 +274,9 @@ describe("ndw record lifecycle against a real database", () => {
   it("accepts the capture and keeps the source's own freshness window", async () => {
     const result = await ingest();
     expect(result.error).toBeUndefined();
-    expect(await ids()).toHaveLength(6);
+    expect(await ids()).toEqual(
+      [ROADWORKS_ID, LORRY_POSITIVE_ID, LORRY_NEGATIVE_ID, OBSTRUCTION_ID].sort(),
+    );
     const status = await sql<{ freshness_window_sec: number | null }[]>`
       SELECT freshness_window_sec FROM conditions.source_status WHERE source = ${SOURCE}`;
     // NDW's own 300 seconds, never Finland's inherited 600.
@@ -243,16 +285,11 @@ describe("ndw record lifecycle against a real database", () => {
 
   it("walks update, unchanged, 304, failure, staleness and orphan cleanup", async () => {
     await seed();
-    const firstHash = await hashOf(HEIGHT_ID);
-    expect(firstHash).not.toBeNull();
-
-    await sql`INSERT INTO conditions.observation_binding
-      (observation_id, observation_revision, graph_generation, resolver_version,
-       status, direction_mode, confidence, candidate_count, geom_hash, bound_at)
-      VALUES (${HEIGHT_ID}, ${firstHash}, 'ndw-a76-test', '1.0.0', 'ambiguous', 'unknown', 0.69, 2,
-              'geom-1', now())
-      ON CONFLICT (observation_id) DO NOTHING`;
-    await sql`DELETE FROM conditions.binding_queue`;
+    const first = await stored(ROADWORKS_ID);
+    expect(first!.revision).toBe(1);
+    expect(await ownBinding(ROADWORKS_ID)).toEqual([
+      { effect_id: "", status: "ambiguous", record_revision: 1 },
+    ]);
 
     // Synthetic: the publisher raises the conditioned height to 4.7 m.
     const raised = xml
@@ -266,29 +303,37 @@ describe("ndw record lifecycle against a real database", () => {
       );
     const updated = await ingest(raised, { etag: 'W/"v2"', now: "2026-09-12T07:16:00.000Z" });
     expect(updated.error).toBeUndefined();
-    const secondHash = await hashOf(HEIGHT_ID);
-    expect(secondHash).not.toBe(firstHash);
+    const second = await stored(ROADWORKS_ID);
+    expect(second!.content_hash).not.toBe(first!.content_hash);
+    expect(second!.revision).toBe(2);
+    expect((await effect(HEIGHT))?.["applicability"]).toMatchObject({
+      include: [{ when: [{ value: { value: 4.7, unit: "m" } }] }],
+    });
     // No binding may stay current against the superseded content: the stored
-    // revision tracks the new hash, so nothing routes on the 4.5 m version.
-    const binding = await sql<{ status: string; observation_revision: string | null }[]>`
-      SELECT status, observation_revision FROM conditions.observation_binding
-      WHERE observation_id = ${HEIGHT_ID}`;
-    expect(binding[0]!.observation_revision).not.toBe(firstHash);
-    expect(binding[0]!.observation_revision).toBe(secondHash);
+    // binding tracks the new revision, so nothing routes on the 4.5 m version.
+    expect(await ownBinding(ROADWORKS_ID)).toEqual([
+      { effect_id: "", status: "ambiguous", record_revision: 2 },
+    ]);
 
     // An accepted unchanged 200 leaves content and the queue alone.
     await sql`DELETE FROM conditions.binding_queue`;
     const unchanged = await ingest(raised, { now: "2026-09-12T07:18:00.000Z" });
     expect(unchanged.error).toBeUndefined();
-    expect(await hashOf(HEIGHT_ID)).toBe(secondHash);
+    expect(await stored(ROADWORKS_ID)).toMatchObject({
+      content_hash: second!.content_hash,
+      revision: 2,
+    });
     expect(
-      await sql`SELECT observation_id FROM conditions.binding_queue WHERE observation_id = ${HEIGHT_ID}`,
+      await sql`SELECT record_id FROM conditions.binding_queue WHERE record_id = ${ROADWORKS_ID}`,
     ).toHaveLength(0);
 
     // A 304 advances checked time only.
     const validated = await ingest("", { status: 304, now: "2026-09-12T07:20:00.000Z" });
     expect(validated.outcome).toBe("validated_unchanged");
-    expect(await hashOf(HEIGHT_ID)).toBe(secondHash);
+    expect(await stored(ROADWORKS_ID)).toMatchObject({
+      content_hash: second!.content_hash,
+      revision: 2,
+    });
 
     // A failed fetch preserves the last-good publication.
     const failing = (async () => {
@@ -299,56 +344,61 @@ describe("ndw record lifecycle against a real database", () => {
       fetch: failing,
       lookup: fakeLookup,
       now: () => "2026-09-12T07:22:00.000Z",
+      model: MODEL,
     });
     expect(failed.error).toBeDefined();
-    expect(await ids()).toHaveLength(6);
+    expect(await ids()).toHaveLength(4);
 
-    // Past 300 seconds the read reports the rows stale; the orphan sweep still
-    // keeps them until the source's own 3600-second threshold.
+    // Every read's freshness deadline is NDW's own 300 seconds past its last
+    // successful check; the orphan sweep still keeps the situations until the
+    // source's 3600-second threshold, then ends them as expired.
+    const [status] = await sql<{ last_network_success_at: Date; freshness_deadline: Date }[]>`
+      SELECT last_network_success_at, freshness_deadline FROM conditions.source_status
+       WHERE source = ${SOURCE}`;
+    expect(status!.freshness_deadline.getTime() - status!.last_network_success_at.getTime()).toBe(
+      300_000,
+    );
     await sql`UPDATE conditions.source_status
       SET last_success_at = now() - interval '301 seconds' WHERE source = ${SOURCE}`;
-    const stale = await readObservations(runner, {
-      domain: "roads",
-      bbox: [3, 50, 8, 54],
-      dedupe: false,
-      includeBindings: true,
-    });
-    const height = stale.find((o) => o.id === HEIGHT_ID)!;
-    expect(height.isStale).toBe(true);
-    await sweepStaleObservations(sql, { maxAgeSec: 3600 });
-    expect(await ids()).toHaveLength(6);
+    await sweep();
+    expect(await ids()).toHaveLength(4);
 
     await sql`UPDATE conditions.source_status
       SET last_success_at = now() - interval '3601 seconds' WHERE source = ${SOURCE}`;
-    await sweepStaleObservations(sql, { maxAgeSec: 3600 });
+    await sweep();
     expect(await ids()).toEqual([]);
+    expect((await stored(ROADWORKS_ID))?.tombstone_reason).toBe("expired");
   }, 240_000);
 
   it("keeps the open-ended lorry record despite an old source update time", async () => {
     await seed();
     await sql`UPDATE conditions.source_status SET last_success_at = now() WHERE source = ${SOURCE}`;
-    const rows = await readObservations(runner, {
-      domain: "roads",
-      bbox: [3, 50, 8, 54],
-      dedupe: false,
-      includeBindings: true,
-    });
-    const lorry = rows.find((o) => o.id === LORRY_POSITIVE_ID)!;
-    expect(lorry.isStale).toBe(false);
-    expect(lorry.validTo).toBeNull();
-    await sweepStaleObservations(sql, { maxAgeSec: 3600 });
+    const lorry = await stored(LORRY_POSITIVE_ID);
+    expect((lorry!.record["validity"] as Record<string, unknown>)["end"]).toBeUndefined();
+    const [window] = await sql<{ valid_to: Date | null }[]>`
+      SELECT valid_to FROM conditions.situation_effect WHERE situation_id = ${LORRY_POSITIVE_ID}`;
+    expect(window!.valid_to).toBeNull();
+    await sweep();
     expect(await ids()).toContain(LORRY_POSITIVE_ID);
   }, 180_000);
 
   it("rejects a candidate where a published record can no longer be located", async () => {
     await seed();
     const before = await ids();
+    const roadworks = await stored(ROADWORKS_ID);
     // Synthetic: the height record keeps its id but loses every locator.
     const unlocatable = xml.replace(
       /<sit:locationReference xsi:type="loc:ItineraryByIndexedLocations">[\s\S]*?<\/sit:locationReference>(<sit:operatorActionStatus>implemented<\/sit:operatorActionStatus><sit:complianceOption>mandatory<\/sit:complianceOption><sit:forVehiclesWithCharacteristicsOf><com:heightCharacteristic>)/,
       "$1",
     );
     const failed = await ingest(unlocatable, { now: "2026-09-12T07:16:00.000Z" });
+    // The record is still published, so its situation keeps the height
+    // restriction rather than silently losing it.
+    expect(await effect(HEIGHT)).toBeDefined();
+    expect(await stored(ROADWORKS_ID)).toMatchObject({
+      content_hash: roadworks!.content_hash,
+      revision: roadworks!.revision,
+    });
     expect(failed.error).toBeDefined();
     expect(await ids()).toEqual(before);
   }, 180_000);
@@ -363,7 +413,8 @@ describe("ndw record lifecycle against a real database", () => {
     expect(result.error).toBeUndefined();
     const remaining = await ids();
     expect(remaining).not.toContain(LORRY_NEGATIVE_ID);
-    expect(remaining).toContain(HEIGHT_ID);
+    expect(remaining).toContain(ROADWORKS_ID);
+    expect((await stored(LORRY_NEGATIVE_ID))?.tombstone_reason).toBe("withdrawn");
   }, 180_000);
 
   it("retires a record the publisher marks cancelled", async () => {
@@ -374,16 +425,22 @@ describe("ndw record lifecycle against a real database", () => {
     );
     const result = await ingest(cancelled, { now: "2026-09-12T07:16:00.000Z" });
     expect(result.error).toBeUndefined();
-    const stored = await sql<{ attributes: Record<string, unknown> }[]>`
-      SELECT attributes FROM conditions.observations WHERE id = ${LORRY_POSITIVE_ID}`;
-    const details = stored[0]!.attributes["restrictionDetails"] as {
-      source: { recordVersion: string };
-    };
-    expect(details.source.recordVersion).toBe("537");
+    const lorry = await stored(LORRY_POSITIVE_ID);
+    expect((lorry!.record["provenance"] as Record<string, unknown>)["recordVersion"]).toBe("537");
+    expect((await effect(LORRY_POSITIVE))?.["sourceRecordRef"]).toBe("NLRWS_0005382945_1/537");
   }, 180_000);
 });
 
 describe("ndw binding and publication through the real graph and routes", () => {
+  type Condition = { id: string; routing_evidence: { reason_codes: string[] } };
+
+  /** A conditional effect may be listed only as evidence, with the reasons it does not route. */
+  function expectNoConditionalRouted(body: { conditions: Condition[] }): void {
+    for (const condition of body.conditions.filter((c) => CONDITIONAL.includes(c.id))) {
+      expect(condition.routing_evidence.reason_codes, condition.id).not.toEqual([]);
+    }
+  }
+
   /**
    * Make a source's freshness current against wall-clock evaluation. The
    * publication routes evaluate at the real `now`, while the frozen fixture is
@@ -403,90 +460,56 @@ describe("ndw binding and publication through the real graph and routes", () => 
     await drainBindingQueue(sql, { now: () => CHECKED_AT, env: ENV, limit: 500 });
   }
 
-  it("binds the height event ambiguously and establishes no restriction extent", async () => {
+  it("binds the height situation ambiguously and establishes no restriction extent", async () => {
     await seedAndBind();
-    const binding = await sql<{ status: string; confidence: number | null }[]>`
-      SELECT status, confidence FROM conditions.observation_binding
-      WHERE observation_id = ${HEIGHT_ID}`;
-    expect(binding[0]!.status).toBe("ambiguous");
-    const stored = await sql<{ attributes: Record<string, unknown> }[]>`
-      SELECT attributes FROM conditions.observations WHERE id = ${HEIGHT_ID}`;
-    const details = stored[0]!.attributes["restrictionDetails"] as {
-      facts: Array<{ scope: { restrictionBinding: string } }>;
-    };
-    for (const fact of details.facts) {
-      expect(fact.scope.restrictionBinding).toBe("not_established");
-    }
+    // Only the situation's own location is placed, and only ambiguously; no
+    // conditional effect gets a binding of its own.
+    expect(await ownBinding(ROADWORKS_ID)).toEqual([
+      { effect_id: "", status: "ambiguous", record_revision: 1 },
+    ]);
+    const [{ n }] = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM conditions.record_binding
+       WHERE record_class = 'situation' AND effect_id <> ''`;
+    expect(n).toBe(0);
   }, 180_000);
 
-  it("displays every conditional record with its provenance and source direction", async () => {
+  it("stores every conditional record with its provenance and source direction", async () => {
     await seedAndBind();
-    const instance = await app();
-    try {
-      const res = await instance.inject({
-        method: "GET",
-        url: `/observations.geojson?bbox=${NL_BBOX}`,
-      });
-      expect(res.statusCode).toBe(200);
-      const body = res.json() as {
-        features: Array<{ id: string; properties: Record<string, unknown> }>;
-      };
-      const byId = new Map(body.features.map((f) => [f.id, f.properties]));
-      for (const id of [HEIGHT_ID, EMERGENCY_ID, LORRY_POSITIVE_ID, LORRY_NEGATIVE_ID]) {
-        expect(byId.get(id), id).toBeDefined();
-        expect(byId.get(id)!["restrictionDetails"], id).toBeDefined();
-      }
-      // Collocated records with distinct identities all survive.
-      expect(byId.has(DISPLACEMENT_ID)).toBe(true);
-      expect(byId.has(OBSTRUCTION_ID)).toBe(true);
+    for (const id of CONDITIONAL) expect(await effect(id), id).toBeDefined();
+    // Collocated situations with distinct identities all survive.
+    expect(await ids()).toContain(OBSTRUCTION_ID);
 
-      const height = byId.get(HEIGHT_ID)!["restrictionDetails"] as {
-        facts: Array<{
-          value: number;
-          unit: string;
-          operator: string;
-          state: string;
-          direction: { basis: string; value: string };
-        }>;
-        source: Record<string, unknown>;
-        sourceCheckedAt: string | null;
-        freshUntil: string | null;
-        isStale: boolean;
-      };
-      expect(height.facts[0]).toMatchObject({
-        value: 4.5,
-        unit: "m",
-        operator: "gt",
-        state: "active",
-        direction: { basis: "alert_c", value: "positive" },
-      });
-      expect(height.source).toMatchObject({
-        sourceId: SOURCE,
-        recordId: "RWS01_M1080891_NARROW_LANES_D2_WWA",
-        recordVersion: "133",
+    const height = await effect(HEIGHT);
+    expect(height).toMatchObject({
+      kind: "closure",
+      applicability: {
+        kind: "classes",
+        include: [
+          { when: [{ dimension: "height", operator: "gt", value: { value: 4.5, unit: "m" } }] },
+        ],
+      },
+      direction: { basis: "alert_c", value: "positive" },
+      sourceRecordRef: "RWS01_M1080891_NARROW_LANES_D2_WWA/133",
+    });
+    expect((await stored(ROADWORKS_ID))!.record["provenance"]).toMatchObject({
+      sourceId: SOURCE,
+      recordVersion: "133",
+      attribution: {
         license: "CC0-1.0",
         licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
-        attribution: "NDW / Rijkswaterstaat",
-      });
-      expect(height.sourceCheckedAt).not.toBeNull();
-      expect(height.freshUntil).not.toBeNull();
-      expect(height.isStale).toBe(false);
+        provider: "NDW / Rijkswaterstaat",
+      },
+    });
 
-      const lorry = byId.get(LORRY_POSITIVE_ID)!["restrictionDetails"] as {
-        facts: Array<{
-          kind: string;
-          value: string;
-          context: { comments: Array<{ text: string; language: string }> };
-        }>;
-      };
-      expect(lorry.facts[0]).toMatchObject({ kind: "vehicle_class", value: "truck" });
-      expect(lorry.facts[0]!.context.comments[0]).toEqual({
+    expect(await effect(LORRY_POSITIVE)).toMatchObject({
+      applicability: { kind: "classes", include: [{ class: "truck" }] },
+    });
+    expect((await stored(LORRY_POSITIVE_ID))!.record["headline"]).toEqual([
+      {
+        lang: "nl",
         text: "Verbod voor vrachtverkeer en autobussen (>3500kg). Lijnbussen toegestaan.",
-        language: "nl",
-      });
-    } finally {
-      await instance.close();
-    }
+      },
+    ]);
   }, 180_000);
 
   it("emits no conditional record into segments, Valhalla, DATEX or TraFF", async () => {
@@ -498,13 +521,7 @@ describe("ndw binding and publication through the real graph and routes", () => 
         url: `/segments/conditions.json?bbox=${NL_BBOX}`,
       });
       expect(segments.statusCode).toBe(200);
-      const conditions = (segments.json() as { conditions: Array<{ id: string }> }).conditions;
-      for (const id of [HEIGHT_ID, EMERGENCY_ID, LORRY_POSITIVE_ID, LORRY_NEGATIVE_ID]) {
-        expect(
-          conditions.map((c) => c.id),
-          id,
-        ).not.toContain(id);
-      }
+      expectNoConditionalRouted(segments.json() as { conditions: Condition[] });
 
       const exclusions = await instance.inject({
         method: "GET",
@@ -514,9 +531,13 @@ describe("ndw binding and publication through the real graph and routes", () => 
       const body = exclusions.json() as {
         exclude_locations: unknown[];
         exclude_polygons: unknown[];
+        speed_caps: unknown[];
+        routing_evidence: { conditions: Condition[] };
       };
       expect(body.exclude_locations).toEqual([]);
       expect(body.exclude_polygons).toEqual([]);
+      expect(body.speed_caps).toEqual([]);
+      expectNoConditionalRouted(body.routing_evidence);
 
       for (const url of [`/datex2/situations.xml?bbox=${NL_BBOX}`, `/traff.xml?bbox=${NL_BBOX}`]) {
         const res = await instance.inject({ method: "GET", url });
@@ -537,12 +558,14 @@ describe("ndw binding and publication through the real graph and routes", () => 
     // real rights, freshness and a binding, and it lies on a way this graph
     // actually imported. Without it, "no conditional effect" could pass simply
     // because nothing in this region produces a shared effect at all.
-    await runSource(controlFeed, {
+    const control = await runSource(controlFeed, {
       sql,
       fetch: serveXml(controlXml()),
       lookup: fakeLookup,
       now: () => CHECKED_AT,
+      model: MODEL,
     });
+    expect(control.error).toBeUndefined();
     await markFresh(CONTROL_SOURCE);
     await drainBindingQueue(sql, { now: () => CHECKED_AT, env: ENV, limit: 500 });
 
@@ -552,17 +575,16 @@ describe("ndw binding and publication through the real graph and routes", () => 
         method: "GET",
         url: `/segments/conditions.json?bbox=${NL_BBOX}`,
       });
-      const conditions = (segments.json() as { conditions: Array<{ id: string }> }).conditions;
-      expect(conditions.map((c) => c.id)).toContain(`${CONTROL_SOURCE}:CONTROL_CLOSURE_1`);
-      for (const id of [HEIGHT_ID, EMERGENCY_ID, LORRY_POSITIVE_ID, LORRY_NEGATIVE_ID]) {
-        expect(
-          conditions.map((c) => c.id),
-          id,
-        ).not.toContain(id);
-      }
+      const body = segments.json() as { conditions: Condition[] };
+      const closure = body.conditions.find(
+        (c) =>
+          c.id === `oc:situation:${CONTROL_SOURCE}:CONTROL_SITUATION#CONTROL_CLOSURE_1/closure`,
+      );
+      expect(closure?.routing_evidence.reason_codes).toEqual([]);
+      expectNoConditionalRouted(body);
     } finally {
       await instance.close();
-      await sql`DELETE FROM conditions.observations WHERE source = ${CONTROL_SOURCE}`;
+      await writeSituations(sql, CONTROL_SOURCE, []);
       await sql`DELETE FROM conditions.source_status WHERE source = ${CONTROL_SOURCE}`;
     }
   }, 180_000);

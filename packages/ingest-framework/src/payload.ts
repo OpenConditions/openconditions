@@ -1,10 +1,10 @@
 import { createHash, randomUUID } from "node:crypto";
 import { createWriteStream } from "node:fs";
-import { mkdir, rename, rm, stat } from "node:fs/promises";
+import { mkdir, readFile, rename, rm, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { Transform, type TransformCallback } from "node:stream";
 import { pipeline } from "node:stream/promises";
-import { createZstdCompress, constants as zlib } from "node:zlib";
+import { createZstdCompress, constants as zlib, zstdDecompressSync } from "node:zlib";
 
 /**
  * Identity of one fetched payload: sha256 of the decoded body (after gunzip),
@@ -137,4 +137,12 @@ export function fsRawPayloadSink(opts: { dir: string; zstdLevel?: number }): Raw
       };
     },
   };
+}
+
+const STORAGE_KEY = /^[a-z0-9]+(?:-[a-z0-9]+)*\/\d{4}-\d{2}-\d{2}\/[0-9a-f]{64}\.zst$/;
+
+/** The decoded body of a blob {@link fsRawPayloadSink} stored under `storageKey`. */
+export async function readRawPayload(dir: string, storageKey: string): Promise<Buffer> {
+  if (!STORAGE_KEY.test(storageKey)) throw new TypeError(`bad storage key ${storageKey}`);
+  return zstdDecompressSync(await readFile(join(dir, storageKey)));
 }

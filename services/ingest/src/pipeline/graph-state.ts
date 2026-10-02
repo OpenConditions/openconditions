@@ -5,20 +5,26 @@ import { loadOsmRegions, osmRegionImportFingerprint } from "./osm-import.js";
 
 type Sql = postgres.Sql;
 
+/** Queues the binding of every live road situation at its current revision. */
+async function enqueueLiveSituations(tx: postgres.TransactionSql): Promise<void> {
+  await tx`
+    INSERT INTO conditions.binding_queue
+      (record_class, record_id, effect_id, record_revision, attempts, next_attempt_at, updated_at)
+    SELECT 'situation', s.id, '', s.revision, 0, now(), now()
+      FROM conditions.situation s
+     WHERE s.tombstoned_at IS NULL AND s.domain = 'roads'
+    ON CONFLICT (record_class, record_id, effect_id) DO UPDATE SET
+      record_revision = excluded.record_revision, attempts = 0,
+      next_attempt_at = excluded.next_attempt_at, last_error = NULL,
+      updated_at = excluded.updated_at`;
+}
+
 /** Makes old bindings ineligible before any mutable graph table changes. */
 export async function beginRoadGraphRebuild(sql: Sql): Promise<void> {
   await sql.begin(async (tx) => {
     await tx`UPDATE conditions.road_graph_state SET status='rebuilding' WHERE singleton`;
-    await tx`UPDATE conditions.observation_binding SET status='obsolete'`;
-    await tx`
-      INSERT INTO conditions.binding_queue
-        (observation_id, observation_revision, attempts, next_attempt_at, updated_at)
-      SELECT o.id, COALESCE(o.content_hash, md5(o.id || ':' || o.data_updated_at::text)), 0, now(), now()
-      FROM conditions.observations o
-      WHERE o.kind='event' AND o.domain='roads' AND o.status='active'
-      ON CONFLICT (observation_id) DO UPDATE SET
-        observation_revision=excluded.observation_revision, attempts=0,
-        next_attempt_at=excluded.next_attempt_at, last_error=NULL, updated_at=excluded.updated_at`;
+    await tx`UPDATE conditions.record_binding SET status='obsolete'`;
+    await enqueueLiveSituations(tx);
   });
 }
 
@@ -76,20 +82,10 @@ export async function activateRoadGraph(
         imported_at = excluded.imported_at,
         activated_at = excluded.activated_at`;
     await tx`
-      UPDATE conditions.observation_binding
+      UPDATE conditions.record_binding
       SET status = 'obsolete'
       WHERE graph_generation IS DISTINCT FROM ${generation}`;
-    await tx`
-      INSERT INTO conditions.binding_queue (observation_id, observation_revision, attempts, next_attempt_at, updated_at)
-      SELECT o.id, COALESCE(o.content_hash, md5(o.id || ':' || o.data_updated_at::text)), 0, now(), now()
-      FROM conditions.observations o
-      WHERE o.kind = 'event' AND o.domain = 'roads' AND o.status = 'active'
-      ON CONFLICT (observation_id) DO UPDATE SET
-        observation_revision = excluded.observation_revision,
-        attempts = 0,
-        next_attempt_at = excluded.next_attempt_at,
-        last_error = NULL,
-        updated_at = excluded.updated_at`;
+    await enqueueLiveSituations(tx);
   });
   return generation;
 }

@@ -1,6 +1,5 @@
 import type { Readable } from "node:stream";
 import { createGunzip } from "node:zlib";
-import type { Observation } from "@openconditions/core";
 import {
   DEFAULT_MAX_FEED_BYTES,
   feedSecretValues,
@@ -10,8 +9,7 @@ import {
   resolvedEnv,
   resolveFeedUrls,
 } from "@openconditions/ingest-framework";
-import type { SiteGeometry } from "@openconditions/roads";
-import { createMeasuredDataParser, feedToSourceDescriptor } from "@openconditions/roads";
+import { type FlowParse, measuredDataReader, type SiteGeometry } from "@openconditions/roads";
 import { digestOnlyTee, type StreamTeeFactory } from "../raw/stream-tee.js";
 import type { DomainFeedSource } from "./run.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
@@ -45,12 +43,12 @@ function resolveUrl(src: DomainFeedSource): string {
 
 /**
  * Streams a DATEX II MeasuredData (traffic-speed/flow) feed through the SAX flow
- * parser: fetch → optional gunzip → {@link createMeasuredDataParser}. The large
+ * parser: fetch → optional gunzip → {@link measuredDataReader}. The large
  * document is never buffered whole nor materialised as a DOM — peak memory is the
- * output flow/event arrays plus a small per-site accumulator. Returns the flows
- * plus any derived congestion events as Observations (all carry geometry), and
- * the digest of the decoded document — hashed on the way through, the same
- * identity a buffered fetch would give it.
+ * output arrays plus a small per-site accumulator. Returns the readings, the
+ * congestion situations derived from them, and the digest of the decoded
+ * document — hashed on the way through, the same identity a buffered fetch
+ * would give it.
  */
 export async function streamMeasuredData(
   src: DomainFeedSource,
@@ -58,8 +56,7 @@ export async function streamMeasuredData(
   siteMap: Map<string, SiteGeometry> | undefined,
   now: () => string,
   teeFor: StreamTeeFactory = digestOnlyTee,
-): Promise<{ observations: Observation[]; payload: PayloadDigest }> {
-  const descriptor = feedToSourceDescriptor(src);
+): Promise<FlowParse & { payload: PayloadDigest }> {
   const url = resolveUrl(src);
 
   // Re-fetch + re-parse from scratch on a transient mid-stream socket drop (NDW
@@ -68,7 +65,7 @@ export async function streamMeasuredData(
   // 60 s tick. A decompression-bomb abort is a plain Error, not transient, so it
   // is not retried.
   return withStreamRetry(async () => {
-    const parser = createMeasuredDataParser(descriptor, siteMap, now);
+    const parser = measuredDataReader(src, siteMap, now);
     // The tee opens before the download starts: a stream that errors while the
     // tee is still being opened would have no listener yet.
     const { tee, finish } = await teeFor(redactSecrets(redactUrl(url), feedSecretValues(src)));
@@ -110,9 +107,9 @@ export async function streamMeasuredData(
       await finish(complete);
     }
 
-    const { flows, events, failed } = parser.close();
+    const { flows, situations, failed } = parser.close();
     // A SAX error (mid-document glitch, malformed chunk) stopped accumulation
-    // partway through the ~50 MB document: `flows`/`events` hold only whatever
+    // partway through the ~50 MB document: the readings are only whatever
     // resolved before the break, which `runSource` must not treat as a
     // legitimate (possibly empty) fresh set — throwing routes this through the
     // same fetch/parse-failure handling `runSource` already has around this
@@ -120,6 +117,6 @@ export async function streamMeasuredData(
     if (failed) {
       throw new Error(`streaming parse failed for source ${src.id} (partial/truncated document)`);
     }
-    return { observations: [...flows, ...events], payload: tee.digest() };
+    return { flows, situations, payload: tee.digest() };
   }, src.id);
 }

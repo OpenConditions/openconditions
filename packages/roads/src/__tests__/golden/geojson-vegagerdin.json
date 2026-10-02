@@ -39,12 +39,13 @@
     },
     "canonicalId": "919b56334d8b0ec4aff89dc8cccede9cc2a5cff47a2c698d9d327628944bbeaa",
     "domain": "roads",
-    "contentHash": "a03375d93196467d0dc65db8734bcc5ad4398deb81266d997c0f52319016a04c",
+    "contentHash": "48f7ef785fb3302a16bcbdc1223b4ea0184a04ce95183e7ce10ff4e64020e0fe",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_condition",
     "type": "surface",
+    "subtype": "rough",
     "planned": false,
     "certainty": "unknown",
     "severity": {
@@ -109,12 +110,13 @@
     },
     "canonicalId": "a4c779c99fb71723f63f0830bfb4aca1e32d133baf4fd658f48679a177501c42",
     "domain": "roads",
-    "contentHash": "f4efa1c490a227e4bbcb392a8202174fd367c4b4460cc083ad214c5ed3faf07c",
+    "contentHash": "c22b82653c039c129579b5f6bcac1723afbc116c9d18a1fbae1fe498cf4c5b87",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_condition",
     "type": "surface",
+    "subtype": "rough",
     "planned": false,
     "certainty": "unknown",
     "severity": {
@@ -179,12 +181,13 @@
     },
     "canonicalId": "43b1f87100bbb0b2a6717d33449ab9e14032085842965f59de4d6eb079c27052",
     "domain": "roads",
-    "contentHash": "259c77a19f2c8348a640734f8664ed7c944b04617f6be0ec3418d90886007e4d",
+    "contentHash": "8df69b2c8ea6defbddabfea722cca5bb8cf8a937fd759a536ce6a397c2bf0beb",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_condition",
     "type": "surface",
+    "subtype": "rough",
     "planned": false,
     "certainty": "unknown",
     "severity": {
@@ -316,16 +319,17 @@
     },
     "canonicalId": "f77ff43f794073070546be9bf90139a13c50a820ecb4559870af6ee1803d6af0",
     "domain": "roads",
-    "contentHash": "debfedd569cbdcbd94ebd6377b6e28eeb640cd8483e3da56c7c4a94ad77d1291",
+    "contentHash": "fced8a0075e625b5e2b9c4fcc04de4eb61a8fa08487bbe1ab36bf26185a5f852",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
-    "kind": "road_hazard",
-    "type": "hazard",
+    "kind": "road_condition",
+    "type": "surface",
+    "subtype": "loose_chippings",
     "planned": false,
     "certainty": "unknown",
     "severity": {
-      "label": "moderate",
+      "label": "minor",
       "source": "derived"
     },
     "headline": [
@@ -339,8 +343,11 @@
     },
     "effects": [],
     "details": {
-      "kind": "road_hazard",
-      "v": 1
+      "kind": "road_condition",
+      "v": 1,
+      "surface": [
+        "unknown"
+      ]
     }
   }
 ]

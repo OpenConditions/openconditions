@@ -6,7 +6,7 @@ federation, publishing emitters, probe aggregation — builds on instead of
 reinventing. It landed as five additions: a migration on
 `conditions.observations`, `packages/core`'s `canonical.ts` and
 `evidence.ts`, `packages/roads`'s `decay.ts`, and the provenance-stamping seam
-in `services/ingest/src/pipeline/normalize.ts`. The soft observed-property
+`normalizeObservation` in `packages/normalize/src/normalize.ts`. The soft observed-property
 registry that once sat beside them is replaced by the hard-validating model
 registry ([model.md](model.md)).
 
@@ -50,12 +50,12 @@ migration — it is not part of this substrate and isn't covered here.
 
 ## `packages/core/src/canonical.ts`
 
-| Export                   | Purpose                                                              | Downstream consumer(s)                                                                                                                                                                                                                  |
-| ------------------------ | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `canonicalId`            | Hashes a namespace + record id into the stable `canonical_id`.       | Ingest pipeline (`normalize.ts`, already wired — stamps every feed row); federation (dedup key); crowd reporting (fusion key).                                                                                                          |
-| `canonicalIdentityParts` | Extracts the `(namespace, recordId)` pair `canonicalId` hashes.      | Federation (constructs the same namespace a receiving instance must reproduce to match rows).                                                                                                                                           |
-| `normalizeNamespace`     | Idempotent NFC-lowercase normalization of a namespace string.        | Federation (namespace comparison across instances must be case/normalization-insensitive).                                                                                                                                              |
-| `phenomenonFingerprint`  | Hashes grid cell + type + time bucket into a candidate-matching key. | Ingest pipeline (`normalize.ts`, already wired — stamps every event row with a `validFrom`); federation (candidate matching before merge); crowd reporting (finds nearby-in-space/time/type candidates a new report might corroborate). |
+| Export                   | Purpose                                                              | Downstream consumer(s)                                                                                                                                                                                                                                     |
+| ------------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `canonicalId`            | Hashes a namespace + record id into the stable `canonical_id`.       | Ingest pipeline (`normalize.ts`, already wired — stamps every flow measurement row); federation (dedup key); crowd reporting (fusion key).                                                                                                                 |
+| `canonicalIdentityParts` | Extracts the `(namespace, recordId)` pair `canonicalId` hashes.      | Federation (constructs the same namespace a receiving instance must reproduce to match rows).                                                                                                                                                              |
+| `normalizeNamespace`     | Idempotent NFC-lowercase normalization of a namespace string.        | Federation (namespace comparison across instances must be case/normalization-insensitive).                                                                                                                                                                 |
+| `phenomenonFingerprint`  | Hashes grid cell + type + time bucket into a candidate-matching key. | `normalize.ts` (already wired — stamps every event row with a `validFrom`: crowd reports and federated events); federation (candidate matching before merge); crowd reporting (finds nearby-in-space/time/type candidates a new report might corroborate). |
 
 ## `packages/core/src/evidence.ts`
 
@@ -76,11 +76,12 @@ migration — it is not part of this substrate and isn't covered here.
 | `decayMaxLifetimeSec`                  | The corroboration-extension ceiling in seconds for a type.                         | Crowd reporting (same `EvidencePolicy` construction).                                                                                                                                                                 |
 | `expiresAtFor`                         | Derives an ISO expiry from `dataUpdatedAt` plus the `(type, origin)` TTL.          | Feed ingest (fallback `expiresAt` for the rare official row with no explicit `validTo`/expiry of its own).                                                                                                            |
 
-## `services/ingest/src/pipeline/normalize.ts`
+## `packages/normalize/src/normalize.ts`
 
 `normalizeObservation` is the single write choke point that stamps
 `instance_id`, `canonical_id`, `phenomenon_fingerprint`, `source_uri`, and
-`source_license` onto every observation before it is persisted, and rejects
+`source_license` onto every row of `conditions.observations` (flow
+measurements, crowd reports, federated events) before it is persisted, and rejects
 any parser-supplied `privacy_class`/`instance_id`/`k_anonymity`/`dp_epsilon`/
 `dp_delta` as a bug. Because `source_uri`/`source_license` are content-bearing
 (folded into `content_hash` when present), stamping them changes every

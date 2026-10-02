@@ -6,7 +6,7 @@ import type { RevisionedClass } from "./record-schema.js";
 type Rec = Record<string, unknown>;
 
 /** A stored record's materialised evidence, merged back as `evidence` (situations only). */
-function withEvidence(row: Rec): Rec {
+export function withEvidence(row: Rec): Rec {
   const record = row["record"] as Rec;
   if (row["evidence_state"] == null) return record;
   return {
@@ -23,11 +23,17 @@ function withEvidence(row: Rec): Rec {
   };
 }
 
-const EVIDENCE: Record<RevisionedClass, string> = {
+export const EVIDENCE: Record<RevisionedClass, string> = {
   situation: ", evidence_state, confidence_score, routing_eligible, corroborations, flagged_at",
   feature: "",
   offer: "",
 };
+
+/** `cls` is interpolated into SQL, so it must be one of the record tables. */
+function assertRecordClass(cls: string): void {
+  if (!Object.hasOwn(EVIDENCE, cls))
+    throw new Error(`${JSON.stringify(cls)} is not a record class`);
+}
 
 /**
  * One stored record by id, tombstoned or not, as the record table holds it
@@ -38,6 +44,7 @@ export async function readRecord(
   cls: RevisionedClass,
   id: string,
 ): Promise<Rec | undefined> {
+  assertRecordClass(cls);
   const [row] = await sql.unsafe<Rec[]>(
     `SELECT record${EVIDENCE[cls]} FROM conditions.${cls} WHERE id = $1`,
     [id],
@@ -58,6 +65,7 @@ export async function readRevisions(
   cls: RevisionedClass,
   id: string,
 ): Promise<Revision[]> {
+  assertRecordClass(cls);
   const rows = await sql.unsafe<
     { revision: number; recorded_at: Date; change_kinds: string[]; snapshot: Rec }[]
   >(

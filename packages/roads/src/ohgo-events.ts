@@ -1,4 +1,5 @@
 import { toIsoTimestamp } from "@openconditions/core";
+import { ohgoClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
@@ -105,6 +106,7 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
     const type: RoadEventType = isWorkZone
       ? "roadworks"
       : (category && INCIDENT_TYPE_BY_CATEGORY[category.toLowerCase()]) || "other";
+    const classification = ohgoClassification(category, isWorkZone);
 
     const roadStatus = str(field(r, "roadStatus"));
     const roadState = roadStatus ? ROAD_STATE_BY_STATUS[roadStatus.toLowerCase()] : undefined;
@@ -121,6 +123,7 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
       domain: "roads",
       kind: "event",
       situation: {
+        ...(classification !== undefined ? { classification } : {}),
         ...(recordTime !== undefined ? { sourceUpdatedAt: recordTime } : {}),
         ...((location ?? description ?? road) ? {} : { headlineFromSource: false as const }),
       },

@@ -1,7 +1,7 @@
 {
   "name": "@openconditions/roads",
   "version": "0.1.0",
-  "description": "RoadEvent model, DATEX II SituationPublication parser, and taxonomy for OpenConditions roads domain",
+  "description": "Roads parsers for OpenConditions: DATEX II, WZDx, Open511 and other road feed formats into situation drafts, plus the feed catalogue and the segment-spine resolver",
   "license": "Apache-2.0",
   "engines": {
     "node": ">=24"

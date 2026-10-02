@@ -239,6 +239,7 @@ describe("reconcileRoadSnapshots", () => {
       uniqueCount: 0,
       duplicates: 0,
       observations: [],
+      records: [],
       acceptedIds: [],
       terminalIds: [],
       unlocatableIds: [],

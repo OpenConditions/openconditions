@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { isRoadEventType, ROAD_EVENT_TYPES, type RoadEventType } from "../model.js";
-import { TYPE_CROSSWALK } from "../taxonomy.js";
 
 describe("ROAD_EVENT_TYPES", () => {
   it("is a non-empty, duplicate-free canonical list", () => {
@@ -10,12 +9,6 @@ describe("ROAD_EVENT_TYPES", () => {
 
   it("includes the 'other' fallback type", () => {
     expect(ROAD_EVENT_TYPES).toContain("other");
-  });
-
-  it("covers every canonical type the taxonomy crosswalk maps to", () => {
-    for (const mapping of Object.values(TYPE_CROSSWALK)) {
-      expect(ROAD_EVENT_TYPES).toContain(mapping.type);
-    }
   });
 });
 

@@ -1,7 +1,7 @@
-import type { GeoJsonGeometry, Observation } from "@openconditions/core";
+import type { GeoJsonGeometry } from "@openconditions/core";
+import type { RecordDraft } from "@openconditions/ingest-framework";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { decodeOpenLrBinary } from "@openconditions/openlr";
-import type { UnresolvedRoadEvent } from "@openconditions/roads";
 
 /** Max cached resolutions — oldest entries are evicted when full. */
 const CACHE_MAX = 2_000;
@@ -21,93 +21,91 @@ function cacheSet(key: string, value: GeoJsonGeometry): void {
 /** Max concurrent resolver calls in flight at once. */
 const RESOLVE_CONCURRENCY = 8;
 
+type Location = Record<string, unknown>;
+
+const locationOf = (draft: RecordDraft) => draft["location"] as Location | undefined;
+
+function extentOf(geometry: GeoJsonGeometry): string {
+  return geometry.type.includes("Polygon")
+    ? "area"
+    : geometry.type.includes("LineString")
+      ? "linear"
+      : "point";
+}
+
+/** The draft placed on its decoded OpenLR geometry. */
+function placed(draft: RecordDraft, geometry: GeoJsonGeometry): RecordDraft {
+  return {
+    ...draft,
+    location: {
+      ...locationOf(draft),
+      geometry,
+      extent: extentOf(geometry),
+      geometryOrigin: "openlr_decoded",
+    },
+  };
+}
+
 /**
- * Resolves any observations that carry an OpenLR reference but no geometry.
+ * Places the drafts whose location is only an OpenLR reference.
  *
- * - Observations that already have geometry pass through unchanged.
- * - UnresolvedRoadEvent items (geometry absent, externalRefs.openlr set) are
- *   resolved via the map-match client; on success the resolved geometry is
- *   applied, yielding a full Observation; on failure (null return or thrown
- *   error) the item is dropped and the dropped counter is incremented.
- *   Transport/validation failures also increment failed; callers must retain
- *   their last-good snapshot rather than publish a partial resolution.
- * - When `client` is null (OPENLR_RESOLVER_URL unset) unresolved items are
- *   dropped silently.
+ * - A draft with geometry passes through unchanged.
+ * - A draft with `location.openlr` and no geometry is resolved through the
+ *   map-match client; on success it carries the decoded geometry
+ *   (`geometryOrigin: openlr_decoded`), on a miss it is dropped and counted.
+ *   A transport or validation failure also counts in `failed`: the caller
+ *   must keep its last good snapshot rather than publish a partial one.
+ * - Without a client (`OPENLR_RESOLVER_URL` unset) such drafts are dropped.
  *
- * Returns the filtered+resolved array (real geometry only), the count of
- * dropped events, and the ids of records that were valid but could not be
- * located. After this stage every item in `resolved` has a geometry field —
- * UnresolvedRoadEvent never reaches write-postgis.
- *
- * `unlocatableIds` exists so a complete-snapshot source can tell "this record
- * is gone upstream" apart from "we failed to place this record", which look
- * identical from the resolved set alone.
+ * `unlocatable` names every dropped situation, so a complete-snapshot source
+ * can tell "gone upstream" apart from "we failed to place it".
  */
 export async function resolveOpenLr(
-  items: (Observation | UnresolvedRoadEvent)[],
+  drafts: readonly RecordDraft[],
   client: MapMatchClient | null,
 ): Promise<{
-  resolved: Observation[];
+  resolved: RecordDraft[];
   dropped: number;
   failed: number;
-  unlocatableIds: string[];
+  unlocatable: string[];
 }> {
-  const out: Observation[] = [];
-  let dropped = 0;
+  const resolved: RecordDraft[] = [];
+  const unlocatable: string[] = [];
   let failed = 0;
-  const unlocatableIds: string[] = [];
+  const needsResolve: { draft: RecordDraft; openlr: string }[] = [];
 
-  const passThrough: Observation[] = [];
-  const needsResolve: UnresolvedRoadEvent[] = [];
-
-  for (const item of items) {
-    if (item.geometry != null) {
-      passThrough.push(item as Observation);
-    } else if ((item as UnresolvedRoadEvent).externalRefs?.openlr) {
-      needsResolve.push(item as UnresolvedRoadEvent);
-    } else {
-      dropped++;
-      unlocatableIds.push(item.id);
-    }
+  for (const draft of drafts) {
+    const location = locationOf(draft);
+    const openlr = location?.["openlr"];
+    if (location?.["geometry"] != null) resolved.push(draft);
+    else if (typeof openlr === "string" && openlr.length > 0) needsResolve.push({ draft, openlr });
+    else unlocatable.push(String(draft["id"]));
   }
-
-  out.push(...passThrough);
-
-  if (needsResolve.length === 0) {
-    return { resolved: out, dropped, failed, unlocatableIds };
-  }
-
-  if (client === null) {
-    dropped += needsResolve.length;
-    for (const item of needsResolve) unlocatableIds.push(item.id);
+  if (needsResolve.length > 0 && client === null) {
     console.warn(
-      `[resolve] dropped ${needsResolve.length} OpenLR observation(s): OPENLR_RESOLVER_URL not set`,
+      `[resolve] dropped ${needsResolve.length} OpenLR situation(s): OPENLR_RESOLVER_URL not set`,
     );
-    return { resolved: out, dropped, failed, unlocatableIds };
+    for (const { draft } of needsResolve) unlocatable.push(String(draft["id"]));
+    return { resolved, dropped: unlocatable.length, failed, unlocatable };
   }
 
-  const results: Array<Observation | null> = new Array(needsResolve.length).fill(null);
+  const results: Array<RecordDraft | null> = new Array(needsResolve.length).fill(null);
   let cursor = 0;
-
-  // Tracks in-flight resolutions by openlr string so concurrent workers with
-  // the same key share a single resolver call rather than issuing duplicates.
+  // Concurrent workers with the same reference share one resolver call.
   const inFlight = new Map<string, Promise<GeoJsonGeometry | null>>();
 
-  async function resolveOne(openlr: string, obsId: string): Promise<GeoJsonGeometry | null> {
+  async function resolveOne(openlr: string, id: string): Promise<GeoJsonGeometry | null> {
     const inProgress = inFlight.get(openlr);
     if (inProgress !== undefined) return inProgress;
-
     const promise = (async (): Promise<GeoJsonGeometry | null> => {
-      const loc = decodeOpenLrBinary(openlr);
-      const geom = await client!.resolve(loc);
+      const geom = await client!.resolve(decodeOpenLrBinary(openlr));
       if (geom === null) {
-        console.warn(`[resolve] no map-match for OpenLR observation ${obsId} — dropped`);
+        console.warn(`[resolve] no map-match for OpenLR situation ${id} — dropped`);
         return null;
       }
       cacheSet(openlr, geom);
       return geom;
     })();
-
     inFlight.set(openlr, promise);
     try {
       return await promise;
@@ -119,42 +117,32 @@ export async function resolveOpenLr(
   async function worker(): Promise<void> {
     while (cursor < needsResolve.length && failed === 0) {
       const idx = cursor++;
-      const obs = needsResolve[idx]!;
-      const openlr = obs.externalRefs!.openlr!;
-
+      const { draft, openlr } = needsResolve[idx]!;
       const cached = cache.get(openlr);
       if (cached !== undefined) {
-        results[idx] = { ...obs, geometry: cached } as Observation;
+        results[idx] = placed(draft, cached);
         continue;
       }
-
       try {
-        const geom = await resolveOne(openlr, obs.id);
-        results[idx] = geom !== null ? ({ ...obs, geometry: geom } as Observation) : null;
+        const geom = await resolveOne(openlr, String(draft["id"]));
+        results[idx] = geom !== null ? placed(draft, geom) : null;
       } catch (err) {
         failed++;
         console.warn(
-          `[resolve] resolution failed for observation ${obs.id}:`,
+          `[resolve] resolution failed for situation ${String(draft["id"])}:`,
           err instanceof Error ? err.message : err,
         );
-        results[idx] = null;
       }
     }
   }
-
-  const workerCount = Math.min(RESOLVE_CONCURRENCY, needsResolve.length);
-  await Promise.all(Array.from({ length: workerCount }, () => worker()));
-
+  await Promise.all(
+    Array.from({ length: Math.min(RESOLVE_CONCURRENCY, needsResolve.length) }, () => worker()),
+  );
   results.forEach((r, index) => {
-    if (r !== null) {
-      out.push(r);
-    } else {
-      dropped++;
-      unlocatableIds.push(needsResolve[index]!.id);
-    }
+    if (r !== null) resolved.push(r);
+    else unlocatable.push(String(needsResolve[index]!.draft["id"]));
   });
-
-  return { resolved: out, dropped, failed, unlocatableIds };
+  return { resolved, dropped: unlocatable.length, failed, unlocatable };
 }
 
 /** Exposed for testing — clears the in-process resolution cache. */
