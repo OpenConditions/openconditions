@@ -1,28 +1,12 @@
-import type { Fuzziness, GeoJsonGeometry, SubjectRef } from "@openconditions/core";
+import type { ReportClaim, SubClaimBody } from "@openconditions/model";
 
-export type { Fuzziness, GeoJsonGeometry, SubjectRef };
-
-/**
- * The portable, signable content of a crowd report. This object — and nothing
- * else — is what the ES256 signature covers, as RFC 8785 (JCS) canonical
- * bytes, so it must stay strictly I-JSON: finite numbers, well-formed Unicode.
- */
-export interface ReportClaim {
-  domain: "roads" | "transit" | "places";
-  /** Canonical taxonomy value, e.g. "hazard" or "road_closure". */
-  type: string;
-  /** WGS84 GeoJSON geometry of the reported condition. */
-  geometry: GeoJsonGeometry;
-  /** How precisely the geometry/extent is known (deliberate coarsening included). */
-  fuzziness: Fuzziness;
-  subject?: SubjectRef[];
-  severityLevel?: 1 | 2 | 3 | 4 | 5;
-  attributes?: Record<string, unknown>;
-  /** ISO-8601 UTC instant with a zone designator. */
-  reportedAt: string;
-  /** Anti-replay/dedup token: 16..64 chars of [A-Za-z0-9_-]. */
-  nonce: string;
-}
+export type {
+  ObservationClaim,
+  RecordRef,
+  ReportClaim,
+  SituationClaim,
+  SubClaimBody,
+} from "@openconditions/model";
 
 /**
  * A report claim plus its detached signature envelope. The envelope fields
@@ -40,31 +24,16 @@ export interface SignedReport {
   signature: string;
 }
 
-export type SubClaimType = "confirm" | "negate" | "flag";
+export type SubClaimType = SubClaimBody["claimType"];
 
-/**
- * The signable content of a sub-claim (a reaction to an existing report or
- * observation). Signed exactly like a {@link ReportClaim}: JCS bytes of this
- * body, WITHOUT the envelope fields.
- */
-export interface SubClaimBody {
-  /** "urn:openconditions:report:<base64url signature>" or an observation id. */
-  subject: string;
-  claimType: SubClaimType;
-  /** Free text, only meaningful for "flag"; max 2000 chars. */
-  reason?: string;
-  geometry?: GeoJsonGeometry;
-  reportedAt: string;
-  nonce: string;
-}
-
-export interface SignedSubClaim extends SubClaimBody {
+/** A sub-claim body plus its envelope; the signature covers the body alone. */
+export type SignedSubClaim = SubClaimBody & {
   alg: "ES256";
   keyId: string;
   pubJwk?: JsonWebKey;
   /** Over `canonicalize(SubClaimBody)` — the body WITHOUT alg/keyId/pubJwk/signature. */
   signature: string;
-}
+};
 
 /** Result of a signature verification; `error` names the first failed check. */
 export interface VerifyResult {

@@ -1,9 +1,7 @@
 /**
- * Shared spatial primitives for the dedup passes: great-circle distance, a
- * lat-aware bucket grid for candidate generation, a union-find, and the
- * cluster-merge driver with an all-pairs guard. Both the same-source
- * (`dedupeObservations`) and cross-source (`dedupeAcrossSources`) dedup build on
- * these so the clustering semantics stay identical.
+ * Spatial primitives for the same-source dedup pass (`dedupeObservations`):
+ * great-circle distance, a lat-aware bucket grid for candidate generation, a
+ * union-find, and the cluster-merge driver with an all-pairs guard.
  */
 
 export const BUCKET_DEG = 0.002;

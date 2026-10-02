@@ -1,5 +1,5 @@
-import type { ConditionEvent, Observation } from "@openconditions/core";
-import { canonicalId, phenomenonFingerprint } from "@openconditions/core";
+import type { Observation } from "@openconditions/core";
+import { canonicalId } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
@@ -274,23 +274,18 @@ describe("normalizeObservation seam — write through atomicSwap", () => {
     }
   }, 30_000);
 
-  it("stamps the event fingerprint + attribution provenance and honors the instance-id env", async () => {
+  it("stamps attribution provenance and honors the instance-id env", async () => {
     const prev = process.env["OPENCONDITIONS_INSTANCE_ID"];
     process.env["OPENCONDITIONS_INSTANCE_ID"] = "node-e2e";
     try {
-      const evt: Observation = {
-        id: "seam:evt-1",
+      const linked: Observation = {
+        id: "seam:meas-0",
         source: "seamsrc",
-        sourceFormat: "geojson",
+        sourceFormat: "native",
         domain: "roads",
-        kind: "event",
-        type: "roadworks",
-        category: "planned",
-        severity: "low",
-        severitySource: "declared",
-        headline: "Seam event",
+        kind: "measurement",
+        metric: "flow",
         status: "active",
-        validFrom: "2026-06-24T10:00:00Z",
         geometry: { type: "Point", coordinates: [4.0, 52.0] },
         origin: {
           kind: "feed",
@@ -316,7 +311,7 @@ describe("normalizeObservation seam — write through atomicSwap", () => {
         isStale: false,
       } as unknown as Observation;
 
-      await atomicSwap(sql, "seamsrc", [evt, measurement], 300);
+      await atomicSwap(sql, "seamsrc", [linked, measurement], 300);
 
       const rows = await sql<
         {
@@ -325,30 +320,27 @@ describe("normalizeObservation seam — write through atomicSwap", () => {
           privacy_class: string;
           instance_id: string;
           canonical_id: string;
-          phenomenon_fingerprint: string | null;
           source_uri: string | null;
           source_license: string | null;
         }[]
       >`
         SELECT id, fuzziness, privacy_class, instance_id, canonical_id,
-               phenomenon_fingerprint, source_uri, source_license
+               source_uri, source_license
         FROM conditions.observations WHERE source = 'seamsrc' ORDER BY id`;
       expect(rows).toHaveLength(2);
       const byId = new Map(rows.map((r) => [r.id, r]));
 
-      const e = byId.get("seam:evt-1")!;
-      expect(e.fuzziness).toBe("exact");
-      expect(e.privacy_class).toBe("authoritative");
-      expect(e.instance_id).toBe("node-e2e");
-      expect(e.canonical_id).toBe(canonicalId({ namespace: "seamsrc", recordId: "seam:evt-1" }));
-      expect(e.phenomenon_fingerprint).toBe(phenomenonFingerprint(evt as ConditionEvent));
-      expect(e.source_uri).toBe("https://ex.test/seam");
-      expect(e.source_license).toBe("CC-BY-4.0");
+      const l = byId.get("seam:meas-0")!;
+      expect(l.fuzziness).toBe("exact");
+      expect(l.privacy_class).toBe("authoritative");
+      expect(l.instance_id).toBe("node-e2e");
+      expect(l.canonical_id).toBe(canonicalId({ namespace: "seamsrc", recordId: "seam:meas-0" }));
+      expect(l.source_uri).toBe("https://ex.test/seam");
+      expect(l.source_license).toBe("CC-BY-4.0");
 
       const m = byId.get("seam:meas-1")!;
       expect(m.instance_id).toBe("node-e2e");
       expect(m.canonical_id).toBe(canonicalId({ namespace: "seamsrc", recordId: "seam:meas-1" }));
-      expect(m.phenomenon_fingerprint).toBeNull();
       expect(m.source_uri).toBeNull();
       expect(m.source_license).toBe("CC-BY-4.0");
     } finally {

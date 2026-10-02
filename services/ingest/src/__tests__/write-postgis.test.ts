@@ -2,23 +2,21 @@ import type { Observation } from "@openconditions/core";
 import { describe, expect, it } from "vitest";
 import { toRow } from "../pipeline/write-postgis.js";
 
-/** A minimal valid roads event; overrides exercise the timestamp coercion. */
+/** A minimal valid flow reading; overrides exercise the timestamp coercion. */
 function baseObs(overrides: Record<string, unknown> = {}): Observation {
   return {
     id: "ca-on-511:1",
     source: "ca-on-511",
     sourceFormat: "ibi511",
     domain: "roads",
-    kind: "event",
-    type: "roadworks",
-    category: "planned",
-    isPlanned: true,
-    severity: "low",
-    severitySource: "declared",
+    kind: "measurement",
+    metric: "flow",
+    speedKph: 40,
+    value: 40,
+    unit: "km/h",
+    aggregation: "live",
     status: "active",
     geometry: { type: "Point", coordinates: [-79.38, 43.65] },
-    roads: [],
-    headline: "Test",
     origin: { kind: "feed", attribution: {} },
     dataUpdatedAt: "2026-06-25T10:00:00.000Z",
     fetchedAt: "2026-06-25T10:00:00.000Z",
@@ -58,17 +56,12 @@ describe("content_hash includes expires_at", () => {
 });
 
 describe("commons fields — toRow mapping", () => {
-  it("maps every new commons field to its column", () => {
+  it("maps every commons field to its column", () => {
     const r = toRow(
       baseObs({
         instanceId: "inst-1",
         canonicalId: "canon-1",
-        phenomenonFingerprint: "fp-1",
-        replaces: ["a", "b"],
-        corroborations: ["c"],
         fuzziness: "low_res",
-        confidenceScore: 0.7,
-        severityLevel: 3,
         privacyClass: "authoritative",
         kAnonymity: 5,
         dpEpsilon: 0.5,
@@ -80,12 +73,7 @@ describe("commons fields — toRow mapping", () => {
     ) as unknown as Record<string, unknown>;
     expect(r.instance_id).toBe("inst-1");
     expect(r.canonical_id).toBe("canon-1");
-    expect(r.phenomenon_fingerprint).toBe("fp-1");
-    expect(r.replaces).toEqual(["a", "b"]);
-    expect(r.corroborations).toEqual(["c"]);
     expect(r.fuzziness).toBe("low_res");
-    expect(r.confidence_score).toBe(0.7);
-    expect(r.severity_level).toBe(3);
     expect(r.privacy_class).toBe("authoritative");
     expect(r.k_anonymity).toBe(5);
     expect(r.dp_epsilon).toBe(0.5);
@@ -100,17 +88,12 @@ describe("commons fields — toRow mapping", () => {
     expect(r.source_license).toBe("CC-BY-4.0");
   });
 
-  it("leaves the new columns null when the observation carries no commons fields", () => {
+  it("leaves the commons columns null when the observation carries no commons fields", () => {
     const r = toRow(baseObs()) as unknown as Record<string, unknown>;
     for (const col of [
       "instance_id",
       "canonical_id",
-      "phenomenon_fingerprint",
-      "replaces",
-      "corroborations",
       "fuzziness",
-      "confidence_score",
-      "severity_level",
       "privacy_class",
       "k_anonymity",
       "dp_epsilon",
@@ -122,53 +105,55 @@ describe("commons fields — toRow mapping", () => {
       expect(r[col]).toBeNull();
     }
   });
+
+  it("writes none of the event or crowd columns", () => {
+    const r = toRow(baseObs()) as unknown as Record<string, unknown>;
+    for (const col of [
+      "type",
+      "subtype",
+      "category",
+      "severity",
+      "severity_source",
+      "headline",
+      "description",
+      "severity_level",
+      "phenomenon_fingerprint",
+      "replaces",
+      "corroborations",
+      "confidence_score",
+      "evidence_state",
+      "routing_eligible",
+      "flagged_at",
+    ]) {
+      expect(r).not.toHaveProperty(col);
+    }
+  });
 });
 
 describe("commons fields — content_hash policy", () => {
   // Pinned hash of a plain (no commons fields) flow reading, the only feed
   // observation still written here. `sourceFormat` is part of the content
   // material; the identity/derived fields stay excluded (asserted below).
-  const GOLDEN_PLAIN_HASH = "99fbbd5f0de49261b2bbddf1421a42c070c18af2c6f5293193073b92079fedb0";
-  const flow = (overrides: Record<string, unknown> = {}) =>
-    baseObs({
-      kind: "measurement",
-      metric: "flow",
-      type: undefined,
-      category: undefined,
-      isPlanned: undefined,
-      severity: undefined,
-      severitySource: undefined,
-      roads: undefined,
-      headline: undefined,
-      speedKph: 40,
-      value: 40,
-      unit: "km/h",
-      aggregation: "live",
-      ...overrides,
-    });
+  const GOLDEN_PLAIN_HASH = "543fd223c6618f3909dbbcfd8c088572efbf92276caf52406ee8d22d90d7370b";
 
   it("is byte-identical for a no-commons-fields observation", () => {
-    expect(toRow(flow()).content_hash).toBe(GOLDEN_PLAIN_HASH);
+    expect(toRow(baseObs()).content_hash).toBe(GOLDEN_PLAIN_HASH);
   });
 
   it("is unaffected by the derived/identity fields (excluded from the hash material)", () => {
     const withDerived = toRow(
-      flow({
+      baseObs({
         instanceId: "inst-1",
         canonicalId: "canon-1",
-        phenomenonFingerprint: "fp-1",
-        confidenceScore: 0.42,
         privacyClass: "authoritative",
-        evidenceState: "corroborated",
-        routingEligible: true,
       }),
     );
     expect(withDerived.content_hash).toBe(GOLDEN_PLAIN_HASH);
   });
 
   it("changes when a content-bearing field (sourceLicense) changes", () => {
-    const a = toRow(flow({ sourceLicense: "CC0-1.0" }));
-    const b = toRow(flow({ sourceLicense: "CC-BY-4.0" }));
+    const a = toRow(baseObs({ sourceLicense: "CC0-1.0" }));
+    const b = toRow(baseObs({ sourceLicense: "CC-BY-4.0" }));
     expect(a.content_hash).not.toBe(b.content_hash);
     expect(a.content_hash).not.toBe(GOLDEN_PLAIN_HASH);
   });

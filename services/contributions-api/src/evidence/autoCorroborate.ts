@@ -1,160 +1,90 @@
 /**
- * Landing-time auto-corroboration: the second step of the §7 evidence ladder.
- * After a fresh report lands, if an INDEPENDENT report of the same phenomenon is
- * already in its fingerprint neighborhood and type-compatible, the two are
- * merged. The survivor is NOT "the just-landed row" — `applyCorroboration`
- * chooses it by a stable global order (earlier survives) under the row lock, so
- * two concurrent landings converge on one survivor instead of annihilating each
- * other. Two independent witnesses raise the survivor to `corroborated`.
+ * Landing-time auto-corroboration: the second step of the evidence ladder.
+ * After a fresh crowd report lands, if an INDEPENDENT crowd report of the same
+ * phenomenon is already nearby — the same kind and type, in effect when this
+ * one was reported, within the kind's match distance (`situationsAgree`) —
+ * the two are merged. The survivor is NOT "the just-landed report":
+ * `applyCorroboration` chooses it by a stable global order (earlier survives)
+ * under the row lock, so two concurrent landings converge on one survivor
+ * instead of annihilating each other. Two independent witnesses raise the
+ * survivor to `corroborated`.
  *
- * The neighborhood scan ALSO surfaces merged (`inactive`) rows and redirects
- * them to their active survivor via `resolveSurvivor`, so a 3rd witness that
- * only neighbors an already-merged report is re-credited to the real
- * phenomenon instead of landing unlinked. `archived` tombstones are never
- * surfaced and never a target.
- *
- * Reuses the existing pieces (nothing is redefined here): `findCandidates` (the
- * fingerprint-neighborhood opener), `resolveSurvivor` (the merged→active-head
- * walk), `matchPhenomenonCandidates` (the pure
- * type/distance/time/direction/independence decision), and `applyCorroboration`
- * (the atomic merge + recompute). Corroboration NEVER sets `routing_eligible`
- * and NEVER trains reputation — only an external resolution routes.
+ * Nearby superseded reports are redirected to their live survivor, so a 3rd
+ * witness that only neighbours an already-merged report re-credits the real
+ * phenomenon instead of landing unlinked. Corroboration NEVER makes a report
+ * routing-eligible and NEVER trains reputation — only an external resolution
+ * does.
  */
 
-import { matchPhenomenonCandidates, type PhenomenonCandidate } from "@openconditions/contrib-core";
+import { crowdRulesFor, type Registry, situationsAgree } from "@openconditions/model";
 import type postgres from "postgres";
-import {
-  applyCorroboration,
-  findCandidates,
-  loadPhenomenonCandidates,
-  resolveSurvivors,
-} from "./phenomenon.js";
+import { actorOf, agreeing, loadSituation, loadSituations, nearbySituations } from "../crowd.js";
+import { applyCorroboration, resolveSurvivors } from "./corroborate.js";
 
 type Sql = postgres.Sql;
 
-interface TargetRow {
-  domain: string;
-  type: string | null;
-  kind: string;
-  geojson: string;
-  valid_from: Date | null;
-  attributes: Record<string, unknown> | null;
-  origin: { kind?: string; reporter?: { keyId?: string } } | null;
-  source: string;
-  status: string;
-  flagged_at: Date | null;
-}
-
-function actorFor(row: TargetRow): { kind: "crowd" | "feed"; keyId?: string; source: string } {
-  if (row.origin?.kind === "feed") {
-    return { kind: "feed", source: row.source };
-  }
-  // Crowd (and any non-feed/absent origin.kind) carries a reporter keyId only when
-  // present; a federated crowd row is keyId-less but still kind 'crowd'.
-  const keyId = row.origin?.reporter?.keyId;
-  return keyId !== undefined
-    ? { kind: "crowd", keyId, source: row.source }
-    : { kind: "crowd", source: row.source };
-}
-
 /**
- * Auto-corroborate the just-landed `observationId` against every INDEPENDENT,
- * type-compatible report already in its fingerprint neighborhood. Returns the
- * candidate ids it corroborated with (empty when the observation is not a
- * time-bucketed event, is flagged, has no neighbors, or none are compatible).
- *
- * Passes both ids to `applyCorroboration`, which determines the survivor itself
- * under the lock (earlier survives). Corroboration is idempotent, converges under
- * concurrency, and never routes.
+ * Auto-corroborate the just-landed crowd situation `situationId` against
+ * every INDEPENDENT crowd report of the same phenomenon. Returns the ids it
+ * corroborated with (empty when the situation is not a live keyed crowd
+ * report, is flagged, or nothing agrees).
  */
 export async function autoCorroborateOnLanding(
   sql: Sql,
-  observationId: string,
+  registry: Registry,
+  situationId: string,
   now: string,
 ): Promise<string[]> {
-  const rows = await sql<TargetRow[]>`
-    SELECT domain, type, kind, ST_AsGeoJSON(geom) AS geojson, valid_from,
-           attributes, origin, source, status, flagged_at
-    FROM conditions.observations
-    WHERE id = ${observationId}
-  `;
-  const row = rows[0];
-  if (row === undefined || row.kind !== "event" || row.valid_from === null) {
-    return [];
-  }
+  const target = await loadSituation(sql, situationId);
+  if (target === undefined || target.tombstoneReason !== null) return [];
+  const actor = actorOf(target.record);
+  // A peer's crowd report carries no key: it is no independent witness, and
+  // merging it either way would supersede a report with one this instance
+  // does not federate.
+  if (actor.origin !== "crowd" || actor.keyId === undefined) return [];
   // A disputed (flagged) landing is not a clean witness: a kinematically
   // implausible report, or one that piled onto an already-disputed element (the
-  // StreetComplete rule), must stay a distinct row for review rather than be
-  // silently merged into another observation. Corroboration waits for the
-  // dispute to clear.
-  if (row.flagged_at !== null) {
-    return [];
-  }
+  // StreetComplete rule), must stay a distinct report for review rather than be
+  // silently merged into another. Corroboration waits for the dispute to clear.
+  if (target.flaggedAt !== null) return [];
+  const rules = crowdRulesFor(registry, {
+    class: "situation",
+    kind: target.kind,
+    type: target.type,
+  });
+  if (rules === undefined) return [];
 
-  // Widen the neighborhood to merged (`inactive`) rows too, then REDIRECT each
-  // candidate to the active survivor of its corroboration cluster. A 3rd witness
-  // that only neighbors an already-merged report must re-credit the real
-  // phenomenon (the survivor), not land unlinked. `archived` tombstones are
-  // never surfaced by findCandidates and `resolveSurvivor` never returns one.
-  const neighborhood = await findCandidates(sql, observationId, { includeInactive: true });
-  const survivorIds = new Set<string>();
+  const nearby = await nearbySituations(sql, target, rules.matchMetres!, {
+    origins: ["crowd"],
+    includeSuperseded: true,
+  });
   const resolved = await resolveSurvivors(
     sql,
-    neighborhood.map((candidate) => candidate.id),
+    nearby.map((s) => s.id),
   );
+  const survivorIds = new Set<string>();
   for (const survivorId of resolved.values()) {
-    if (survivorId !== null && survivorId !== observationId) survivorIds.add(survivorId);
+    if (survivorId !== null && survivorId !== situationId) survivorIds.add(survivorId);
   }
-  if (survivorIds.size === 0) {
-    return [];
-  }
+  if (survivorIds.size === 0) return [];
 
-  // Match against the SURVIVOR rows (re-read by id — a survivor may sit outside
-  // the just-landed row's own neighborhood). Crowd-only for now: matching a
-  // crowd report to an OFFICIAL FEED observation (cross-source validation) is a
-  // larger pass, deliberately DEFERRED — reviewer external-resolution remains the
-  // routing gate in the interim. Feed survivors carry no reporter keyId (actorFor
-  // sets keyId only for crowd origin), so exclude them here.
-  const survivors = await loadPhenomenonCandidates(sql, [...survivorIds]);
-  const candidates = survivors.filter((c) => c.actor.keyId !== undefined);
-  if (candidates.length === 0) {
-    return [];
-  }
-
-  const target: PhenomenonCandidate = {
-    id: observationId,
-    domain: row.domain,
-    type: row.type ?? "",
-    geometry: JSON.parse(row.geojson),
-    validFrom: row.valid_from.toISOString(),
-    attributes: row.attributes ?? undefined,
-    actor: actorFor(row),
-    status: row.status,
-  };
-
-  const compatibleIds = matchPhenomenonCandidates(target, candidates)
-    .filter((decision) => decision.compatible)
-    .map((decision) => decision.candidateId);
-  if (compatibleIds.length === 0) {
-    return [];
-  }
-
-  // Never corroborate ONTO a disputed (flagged) survivor either — raising a
-  // disputed observation's confidence should wait for a reviewer, not a fresh
-  // independent report.
-  const flaggedRows = await sql<{ id: string }[]>`
-    SELECT id FROM conditions.observations
-    WHERE id = ANY(${compatibleIds}) AND flagged_at IS NOT NULL
-  `;
-  const flagged = new Set(flaggedRows.map((r) => r.id));
-
+  // Match against the SURVIVORS (re-read by id — a survivor may sit outside
+  // the just-landed report's match distance). Only keyed reports from another
+  // reporter are independent witnesses: a peer's crowd report carries no key,
+  // and a key never corroborates itself. Never corroborate ONTO a disputed
+  // (flagged) survivor either — that waits for a reviewer.
+  const survivors = await loadSituations(sql, [...survivorIds]);
   const corroborated: string[] = [];
-  for (const candidateId of compatibleIds) {
-    if (flagged.has(candidateId)) {
-      continue;
-    }
-    await applyCorroboration(sql, observationId, candidateId, now);
-    corroborated.push(candidateId);
+  for (const survivor of survivors) {
+    const witness = actorOf(survivor.record);
+    if (witness.keyId === undefined || witness.keyId === actor.keyId) continue;
+    if (survivor.flaggedAt !== null || survivor.tombstoneReason !== null) continue;
+    // Two crowd reports agree whichever was made first: an earlier report
+    // that lands later (an offline upload) still meets the later one.
+    const [a, b] = [agreeing(target), agreeing(survivor)];
+    if (!situationsAgree(registry, a, b) && !situationsAgree(registry, b, a)) continue;
+    await applyCorroboration(sql, registry, situationId, survivor.id, now);
+    corroborated.push(survivor.id);
   }
   return corroborated;
 }

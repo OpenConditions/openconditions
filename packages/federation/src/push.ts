@@ -3,12 +3,13 @@
  * second ordering authority and NOT the completeness channel.
  *
  * THE CHANNEL CONTRACT (read this before touching the cursor).
- *  - The webhook push channel delivers ONLY the priority classes when
- *    `priorityOnly` is set (closure/crash) — a low-latency alert path. Under
- *    `priorityOnly: false` it is full-fidelity (every subscriber-matching event).
+ *  - The webhook push channel delivers ONLY priority entries when `priorityOnly`
+ *    is set (a situation that closes a road or all its lanes, or an incident) —
+ *    a low-latency alert path. Under `priorityOnly: false` it is full-fidelity
+ *    (every subscriber-matching entry).
  *  - `subscription.cursor` is the PUSH-CHANNEL cursor: it advances ONLY over
- *    events that are eligible for THIS channel. Under `priorityOnly` the SQL scan
- *    is restricted to priority classes ({@link readOutbox}'s `priorityClasses`),
+ *    entries that are eligible for THIS channel. Under `priorityOnly` the SQL scan
+ *    is restricted to priority entries ({@link readOutbox}'s `priorityOnly`),
  *    so the frontier is over the priority subsequence and the cursor can NEVER be
  *    advanced past a non-priority (but subscriber-filter-matching) event — such an
  *    event is simply not part of the push channel. This closes the skip where a
@@ -25,10 +26,10 @@
  * on pull). A recovered peer re-enables push with a PATCH (resets the counter).
  */
 import type postgres from "postgres";
-import type { FederationFilter } from "./filter.js";
 import { signMessage } from "./http-signature.js";
 import type { InstanceKey } from "./keys.js";
-import { type OutboxEntry, type OutboxPage, readOutbox } from "./outbox.js";
+import { type OutboxPage, readOutbox } from "./outbox.js";
+import type { RecordFilter } from "./record-filter.js";
 import type { FederationSubscription } from "./subscriptions.js";
 
 /** ActivityStreams content type the pushed page (and the pull outbox) use. */
@@ -36,28 +37,6 @@ const ACTIVITY_JSON = "application/activity+json";
 
 /** Consecutive push failures that flip a subscription to `push_disabled`. */
 export const PUSH_FAILURE_THRESHOLD = 5;
-
-/**
- * The high-priority event classes a `priorityOnly` push carries (closure/crash).
- * A push channel is a low-latency alert path, not a full mirror — the bulk
- * stream stays on the peer's pull. Delete tombstones always pass (a retraction of
- * any event must reach a subscriber that might still hold it). This ordered list
- * is what feeds {@link readOutbox}'s SQL-level `priorityClasses` restriction.
- */
-export const PRIORITY_EVENT_TYPES: readonly string[] = ["road_closure", "lane_closure", "accident"];
-
-const PRIORITY_EVENT_TYPE_SET: ReadonlySet<string> = new Set(PRIORITY_EVENT_TYPES);
-
-/** Whether an entry qualifies for a `priorityOnly` push. Used by the SSE channel
- *  (whose live poll post-filters) — the webhook channel restricts at SQL instead. */
-export function isPriorityEntry(
-  entry: OutboxEntry,
-  priorityTypes: ReadonlySet<string> = PRIORITY_EVENT_TYPE_SET,
-): boolean {
-  if (entry.operation === "delete") return true;
-  const type = (entry.observation as { type?: string } | undefined)?.type;
-  return type !== undefined && priorityTypes.has(type);
-}
 
 export interface DeliverWebhookOptions {
   /** The instance signing key (the pushed page is RFC-9421 signed with it). */
@@ -68,8 +47,6 @@ export interface DeliverWebhookOptions {
   partOf: string;
   /** Filter evaluation instant (ISO 8601); defaults to the real clock. */
   now?: string;
-  /** Override the priority class list (the SQL-level push-channel restriction). */
-  priorityTypes?: readonly string[];
   /** Consecutive-failure ceiling; defaults to {@link PUSH_FAILURE_THRESHOLD}. */
   failureThreshold?: number;
   /** Outbox page size per delivery. */
@@ -85,10 +62,10 @@ export type DeliverWebhookOutcome =
 
 /**
  * Delivers one outbox page to a webhook subscription's inbox. Under
- * `priorityOnly` the outbox scan itself is restricted to the priority classes
- * (via {@link readOutbox}'s SQL `priorityClasses`), so the page frontier — and
+ * `priorityOnly` the outbox scan itself is restricted to priority entries
+ * (via {@link readOutbox}'s SQL `priorityOnly`), so the page frontier — and
  * thus the advanced cursor — is over the PRIORITY subsequence only and can never
- * skip a non-priority matching event (that event is not in this channel;
+ * skip a non-priority matching entry (that entry is not in this channel;
  * completeness for it is the peer's pull). Then:
  *  - on 2xx: advances the cursor to the priority-channel frontier, resets the
  *    failure counter;
@@ -113,9 +90,7 @@ export async function deliverWebhook(
   const page = await readOutbox(sql, {
     after: subscription.cursor,
     filter: subscription.filter,
-    ...(subscription.priorityOnly
-      ? { priorityClasses: opts.priorityTypes ?? PRIORITY_EVENT_TYPES }
-      : {}),
+    ...(subscription.priorityOnly ? { priorityOnly: true } : {}),
     ...(opts.limit !== undefined ? { limit: opts.limit } : {}),
     partOf: opts.partOf,
     now,
@@ -228,7 +203,7 @@ export async function runWebhookDeliveryCycle(
       {
         id: string;
         peer_id: string;
-        filter: FederationFilter;
+        filter: RecordFilter;
         delivery_mode: FederationSubscription["deliveryMode"];
         inbox_url: string | null;
         cursor: string;

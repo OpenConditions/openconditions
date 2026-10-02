@@ -20,7 +20,11 @@
  * preserves the existing pull semantics of stepping over trailing filtered-out
  * rows.
  */
-import { encodeOutboxCursor, type OutboxEntry, type OutboxPage } from "@openconditions/federation";
+import {
+  encodeOutboxCursor,
+  type OutboxPage,
+  type RecordOutboxEntry,
+} from "@openconditions/federation";
 
 /** The socket surface the pump drives — the two `reply.raw` calls it needs. */
 export interface StreamWriter {
@@ -37,7 +41,7 @@ export interface StreamPumpDeps {
   /** The socket sink. */
   writer: StreamWriter;
   /** Serialises one entry into its SSE frame. */
-  formatEntry(entry: OutboxEntry): string;
+  formatEntry(entry: RecordOutboxEntry): string;
   /** Called on a read error (the tick swallows it — a transient poll failure
    *  must not tear the stream down; the next tick retries from the same cursor). */
   onError?(err: unknown): void;

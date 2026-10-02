@@ -62,16 +62,31 @@ binding in `binding_queue` in the same transaction
 go with it.
 
 `writeRecord` writes one record the same way: a crowd report it seals, or a
-peer's record it keeps with the peer's revision, ignoring one that is not newer.
+peer's record it keeps with the peer's revision, ignoring one that is not newer
+and never writing over a record another instance wrote under the same id (two
+instances that ingest one feed mint the same ids, and each keeps its own).
+
+A crowd situation's evidence summary lives in its own columns
+(`evidence_state`, `confidence_score`, `routing_eligible`, `corroborations`,
+`flagged_at`), recomputed from the `report_evidence` ledger by the
+contributions service; its lifetime is the evidence's, so the recompute also
+moves `expires_at` and `freshness.expiresAt` in place, without a revision.
+
+Every change of one of this instance's own records — a new revision, a crowd
+report's new evidence, a tombstone — is journalled in `federation_outbox` by a
+trigger on the record tables, in the same transaction, while a subscription
+wants the class (observations: only for a subscription naming the property). A
+peer's record (it carries an origin chain), an on-demand answer and a fused row
+are never journalled.
 
 The sweep, every five minutes, takes these actions:
 
-| What                                                                 | Action                                    |
-| -------------------------------------------------------------------- | ----------------------------------------- |
-| A record whose `freshness.expiresAt` has passed                      | Tombstoned `expired`                      |
-| A feed record of a source with no successful poll for an hour        | Tombstoned `expired`                      |
-| A record tombstoned more than `OPENCONDITIONS_HISTORY_DAYS` (90) ago | Purged with its revisions                 |
-| An on-demand row at expiry                                           | Deleted (it was a cache, with no history) |
+| What                                                                 | Action                                                        |
+| -------------------------------------------------------------------- | ------------------------------------------------------------- |
+| A record whose `freshness.expiresAt` has passed                      | Tombstoned `expired`                                          |
+| A feed record of a source with no successful poll for an hour        | Tombstoned `expired`                                          |
+| A record tombstoned more than `OPENCONDITIONS_HISTORY_DAYS` (90) ago | Purged with its revisions, bindings, crowd evidence and votes |
+| An on-demand row at expiry                                           | Deleted (it was a cache, with no history)                     |
 
 A declared validity end is never a tombstone reason: a source that still
 publishes an ended record keeps it, and reads filter by time.

@@ -16,7 +16,6 @@ const ACTOR_CONFIG = {
   operator: "Test Operator",
   jurisdiction: "NL",
   coverage: { iso3166: ["NL"] },
-  supportedTypes: ["incident", "roadwork"],
   license: "ODbL-1.0",
   trustTier: 1,
   capabilities: {
@@ -101,6 +100,17 @@ describe("federation enabled", () => {
     ).rejects.toThrow(/OPENCONDITIONS_FEDERATION_ACTOR/);
   }, 30_000);
 
+  it("fails the boot closed on an actor config that still names supported types", async () => {
+    const env = {
+      ...ENABLED_ENV,
+      OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify({
+        ...ACTOR_CONFIG,
+        supportedTypes: ["incident"],
+      }),
+    };
+    await expect(build({ sql, env, logger: false })).rejects.toThrow(/supportedTypes/);
+  }, 30_000);
+
   it("bootstraps an instance key and serves the actor document as activity+json", async () => {
     const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
     try {
@@ -115,7 +125,20 @@ describe("federation enabled", () => {
       expect(doc.type).toEqual(["Service", "MobilityCommonsInstance"]);
       expect(doc.publicKey).toHaveLength(1);
       expect(doc.publicKey[0]!.publicKeyMultibase).toMatch(/^z6Mk/);
-      expect(doc.outbox).toBe("https://conditions.example.org/peer/outbox");
+      expect({
+        outbox: doc.outbox,
+        inbox: doc.inbox,
+        subscriptions: doc.subscriptions,
+        backfill: doc.backfill,
+        stream: doc.stream,
+      }).toEqual({
+        outbox: "https://conditions.example.org/peer/outbox",
+        inbox: "https://conditions.example.org/peer/inbox",
+        subscriptions: "https://conditions.example.org/peer/subscriptions",
+        backfill: "https://conditions.example.org/peer/backfill",
+        stream: "https://conditions.example.org/peer/stream",
+      });
+      expect(doc).not.toHaveProperty("supportedTypes");
       expect(doc.capabilities.schemaVersions).toContain("kernel@1.0");
       expect(doc.capabilities.schemaVersions).toContain("situation/alert@1.0");
 

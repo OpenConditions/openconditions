@@ -1,34 +1,22 @@
-import {
-  type ConditionEvent,
-  canonicalId,
-  type Observation,
-  phenomenonFingerprint,
-} from "@openconditions/core";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  FederatedObservationError,
-  normalizeObservation,
-  resolveInstanceId,
-  type WriterContext,
-} from "../index.js";
+import { canonicalId, type Observation } from "@openconditions/core";
+import { describe, expect, it } from "vitest";
+import { normalizeObservation, resolveInstanceId, type WriterContext } from "../index.js";
 
 const CTX: WriterContext = { kind: "feed", instanceId: "inst-x" };
 
-function feedEvent(overrides: Record<string, unknown> = {}): Observation {
+function feedReading(overrides: Record<string, unknown> = {}): Observation {
   return {
     id: "src:1",
     source: "src",
-    sourceFormat: "geojson",
+    sourceFormat: "native",
     domain: "roads",
-    kind: "event",
-    type: "roadworks",
-    category: "planned",
-    severity: "low",
-    severitySource: "declared",
-    headline: "H",
-    status: "active",
-    validFrom: "2026-06-24T10:00:00Z",
+    kind: "measurement",
+    metric: "flow",
+    value: 40,
+    unit: "km/h",
+    aggregation: "live",
     geometry: { type: "Point", coordinates: [4, 52] },
+    status: "active",
     origin: {
       kind: "feed",
       attribution: { provider: "P", license: "CC-BY-4.0", url: "https://ex.test/a" },
@@ -40,73 +28,29 @@ function feedEvent(overrides: Record<string, unknown> = {}): Observation {
   } as unknown as Observation;
 }
 
-function feedMeasurement(overrides: Record<string, unknown> = {}): Observation {
-  return {
-    id: "src:m1",
-    source: "src",
-    sourceFormat: "native",
-    domain: "roads",
-    kind: "measurement",
-    metric: "flow",
-    geometry: { type: "Point", coordinates: [4, 52] },
-    status: "active",
-    origin: { kind: "feed", attribution: { provider: "P", license: "CC0-1.0" } },
-    dataUpdatedAt: "2026-06-24T10:00:00Z",
-    fetchedAt: "2026-06-24T10:00:00Z",
-    isStale: false,
-    ...overrides,
-  } as unknown as Observation;
-}
-
 describe("normalizeObservation — stamping", () => {
   it("stamps instanceId, privacyClass and the derived canonicalId", () => {
-    const out = normalizeObservation(feedEvent(), CTX);
+    const out = normalizeObservation(feedReading(), CTX);
     expect(out.instanceId).toBe("inst-x");
     expect(out.privacyClass).toBe("authoritative");
     expect(out.canonicalId).toBe(canonicalId({ namespace: "src", recordId: "src:1" }));
   });
 
-  it("stamps phenomenonFingerprint for an event", () => {
-    const evt = feedEvent();
-    const out = normalizeObservation(evt, CTX);
-    expect(out.phenomenonFingerprint).toBe(phenomenonFingerprint(evt as ConditionEvent));
-    expect(out.phenomenonFingerprint).toEqual(expect.any(String));
-  });
-
-  it("leaves phenomenonFingerprint unset for an event without validFrom (documents the fallback)", () => {
-    const out = normalizeObservation(feedEvent({ validFrom: undefined }), CTX);
-    expect(out.phenomenonFingerprint).toBeUndefined();
-  });
-
-  it("lands an event with a garbage validFrom string without a fingerprint (row survives)", () => {
-    const out = normalizeObservation(feedEvent({ validFrom: "not-a-date" }), CTX);
-    expect(out.phenomenonFingerprint).toBeUndefined();
-    expect(out.instanceId).toBe("inst-x");
-  });
-
-  it("strips phenomenonFingerprint for a measurement (never phenomenon-collapsed)", () => {
-    const out = normalizeObservation(
-      feedMeasurement({ phenomenonFingerprint: "leaked" } as Record<string, unknown>),
-      CTX,
-    );
-    expect(out.phenomenonFingerprint).toBeUndefined();
-  });
-
   it("overwrites an incoming (garbage) canonicalId with the derived value", () => {
-    const out = normalizeObservation(feedEvent({ canonicalId: "garbage" }), CTX);
+    const out = normalizeObservation(feedReading({ canonicalId: "garbage" }), CTX);
     expect(out.canonicalId).toBe(canonicalId({ namespace: "src", recordId: "src:1" }));
     expect(out.canonicalId).not.toBe("garbage");
   });
 
   it("promotes attribution url/license into sourceUri/sourceLicense when absent", () => {
-    const out = normalizeObservation(feedEvent(), CTX);
+    const out = normalizeObservation(feedReading(), CTX);
     expect(out.sourceUri).toBe("https://ex.test/a");
     expect(out.sourceLicense).toBe("CC-BY-4.0");
   });
 
   it("passes through an explicit sourceUri/sourceLicense over the attribution", () => {
     const out = normalizeObservation(
-      feedEvent({ sourceUri: "https://own/x", sourceLicense: "ODbL-1.0" }),
+      feedReading({ sourceUri: "https://own/x", sourceLicense: "ODbL-1.0" }),
       CTX,
     );
     expect(out.sourceUri).toBe("https://own/x");
@@ -114,12 +58,12 @@ describe("normalizeObservation — stamping", () => {
   });
 
   it("does NOT default fuzziness (left to the DB column default)", () => {
-    const out = normalizeObservation(feedEvent(), CTX);
+    const out = normalizeObservation(feedReading(), CTX);
     expect(out.fuzziness).toBeUndefined();
   });
 
   it("returns a new object without mutating the input", () => {
-    const input = feedEvent();
+    const input = feedReading();
     const out = normalizeObservation(input, CTX);
     expect(out).not.toBe(input);
     expect(input.instanceId).toBeUndefined();
@@ -130,177 +74,44 @@ describe("normalizeObservation — stamping", () => {
 
 describe("normalizeObservation — spoof rejection (trust boundary)", () => {
   it("throws when a parser sets a conflicting privacyClass", () => {
-    expect(() => normalizeObservation(feedEvent({ privacyClass: "dp_noised" }), CTX)).toThrow(
+    expect(() => normalizeObservation(feedReading({ privacyClass: "dp_noised" }), CTX)).toThrow(
       /src:1/,
     );
   });
 
   it("throws when a parser sets a conflicting instanceId", () => {
-    expect(() => normalizeObservation(feedEvent({ instanceId: "evil" }), CTX)).toThrow(/src:1/);
+    expect(() => normalizeObservation(feedReading({ instanceId: "evil" }), CTX)).toThrow(/src:1/);
   });
 
   it("does NOT throw when the incoming values equal the derived ones (idempotent)", () => {
-    const stamped = feedEvent({ privacyClass: "authoritative", instanceId: "inst-x" });
+    const stamped = feedReading({ privacyClass: "authoritative", instanceId: "inst-x" });
     expect(() => normalizeObservation(stamped, CTX)).not.toThrow();
   });
 
   it("throws when a feed-origin row carries kAnonymity", () => {
-    expect(() => normalizeObservation(feedEvent({ kAnonymity: 5 }), CTX)).toThrow(
+    expect(() => normalizeObservation(feedReading({ kAnonymity: 5 }), CTX)).toThrow(
       /src:1.*kAnonymity/,
     );
   });
 
   it("throws when a feed-origin row carries dpEpsilon", () => {
-    expect(() => normalizeObservation(feedEvent({ dpEpsilon: 0.1 }), CTX)).toThrow(
+    expect(() => normalizeObservation(feedReading({ dpEpsilon: 0.1 }), CTX)).toThrow(
       /src:1.*dpEpsilon/,
     );
   });
 
   it("throws when a feed-origin row carries dpDelta", () => {
-    expect(() => normalizeObservation(feedEvent({ dpDelta: 0.001 }), CTX)).toThrow(
+    expect(() => normalizeObservation(feedReading({ dpDelta: 0.001 }), CTX)).toThrow(
       /src:1.*dpDelta/,
     );
-  });
-
-  it("throws when a feed-origin row asserts evidenceState (derived, never parser-set)", () => {
-    expect(() => normalizeObservation(feedEvent({ evidenceState: "corroborated" }), CTX)).toThrow(
-      /src:1.*evidenceState/,
-    );
-  });
-
-  it("throws when a feed-origin row asserts routingEligible", () => {
-    expect(() => normalizeObservation(feedEvent({ routingEligible: true }), CTX)).toThrow(
-      /src:1.*routingEligible/,
-    );
-  });
-});
-
-describe("normalizeObservation — confidenceScore strip", () => {
-  it("silently strips a parser-set confidenceScore (derived presentation value)", () => {
-    const out = normalizeObservation(feedEvent({ confidenceScore: 0.9 }), CTX);
-    expect(out.confidenceScore).toBeUndefined();
-  });
-
-  it("stays idempotent through the strip", () => {
-    const once = normalizeObservation(feedEvent({ confidenceScore: 0.9 }), CTX);
-    const twice = normalizeObservation(once, CTX);
-    expect(twice).toEqual(once);
-  });
-});
-
-describe("normalizeObservation — non-TypeError from the fingerprint path propagates", () => {
-  afterEach(() => {
-    vi.doUnmock("@openconditions/core");
-    vi.resetModules();
-  });
-
-  it("rethrows a non-TypeError instead of silently dropping the fingerprint", async () => {
-    vi.resetModules();
-    vi.doMock("@openconditions/core", async (importOriginal) => {
-      const actual = await importOriginal<typeof import("@openconditions/core")>();
-      return {
-        ...actual,
-        phenomenonFingerprint: () => {
-          throw new RangeError("simulated core regression");
-        },
-      };
-    });
-    const { normalizeObservation: normalize } = await import("../normalize.js");
-    expect(() => normalize(feedEvent(), CTX)).toThrow(RangeError);
   });
 });
 
 describe("normalizeObservation — idempotence", () => {
   it("normalize(normalize(x)) deep-equals normalize(x)", () => {
-    const once = normalizeObservation(feedEvent(), CTX);
+    const once = normalizeObservation(feedReading(), CTX);
     const twice = normalizeObservation(once, CTX);
     expect(twice).toEqual(once);
-  });
-});
-
-const CROWD_CTX: WriterContext = { kind: "crowd", instanceId: "maps.example.org" };
-
-function crowdEvent(overrides: Record<string, unknown> = {}): Observation {
-  return {
-    id: "crowd:key-1:nonce-abcdefghij",
-    source: "crowd",
-    sourceFormat: "crowd",
-    domain: "roads",
-    kind: "event",
-    type: "congestion",
-    status: "active",
-    validFrom: "2026-07-12T08:00:00Z",
-    fuzziness: "low_res",
-    geometry: { type: "Point", coordinates: [4.9, 52.37] },
-    origin: {
-      kind: "crowd",
-      attribution: { provider: "maps.example.org", license: "ODbL-1.0" },
-      reporter: { keyId: "key-1" },
-    },
-    dataUpdatedAt: "2026-07-12T08:00:00Z",
-    fetchedAt: "2026-07-12T08:05:00Z",
-    isStale: false,
-    ...overrides,
-  } as unknown as Observation;
-}
-
-describe("normalizeObservation — crowd writer context", () => {
-  it("stamps privacyClass crowd_pseudonym and the instance id", () => {
-    const out = normalizeObservation(crowdEvent(), CROWD_CTX);
-    expect(out.privacyClass).toBe("crowd_pseudonym");
-    expect(out.instanceId).toBe("maps.example.org");
-  });
-
-  it("namespaces canonicalId on the instance id for a crowd row (not the source)", () => {
-    const out = normalizeObservation(crowdEvent(), CROWD_CTX);
-    expect(out.canonicalId).toBe(
-      canonicalId({ namespace: "maps.example.org", recordId: "crowd:key-1:nonce-abcdefghij" }),
-    );
-    expect(out.canonicalId).not.toBe(
-      canonicalId({ namespace: "crowd", recordId: "crowd:key-1:nonce-abcdefghij" }),
-    );
-  });
-
-  it("stamps the phenomenonFingerprint for a crowd event", () => {
-    const evt = crowdEvent();
-    const out = normalizeObservation(evt, CROWD_CTX);
-    expect(out.phenomenonFingerprint).toBe(phenomenonFingerprint(evt as ConditionEvent));
-  });
-
-  it("rejects a crowd report that carries evidenceState", () => {
-    expect(() =>
-      normalizeObservation(crowdEvent({ evidenceState: "corroborated" }), CROWD_CTX),
-    ).toThrow(/evidenceState/);
-  });
-
-  it("rejects a crowd report that carries routingEligible", () => {
-    expect(() => normalizeObservation(crowdEvent({ routingEligible: true }), CROWD_CTX)).toThrow(
-      /routingEligible/,
-    );
-  });
-
-  it("rejects a crowd report that carries confidenceScore", () => {
-    expect(() => normalizeObservation(crowdEvent({ confidenceScore: 0.9 }), CROWD_CTX)).toThrow(
-      /confidenceScore/,
-    );
-  });
-
-  it("rejects a crowd report that carries dpEpsilon", () => {
-    expect(() => normalizeObservation(crowdEvent({ dpEpsilon: 0.1 }), CROWD_CTX)).toThrow(
-      /dpEpsilon/,
-    );
-  });
-
-  it("rejects a crowd report that spoofs its own privacyClass", () => {
-    expect(() =>
-      normalizeObservation(crowdEvent({ privacyClass: "crowd_pseudonym" }), CROWD_CTX),
-    ).toThrow(/privacyClass/);
-  });
-
-  it("rejects a crowd report that spoofs a conflicting instanceId", () => {
-    expect(() => normalizeObservation(crowdEvent({ instanceId: "evil" }), CROWD_CTX)).toThrow(
-      /instanceId|evil/,
-    );
   });
 });
 
@@ -330,159 +141,5 @@ describe("resolveInstanceId", () => {
         /not a valid instance id/,
       );
     }
-  });
-});
-
-describe("normalizeObservation — federation context preserves origin fields", () => {
-  const FED_CTX: WriterContext = {
-    kind: "federation",
-    instanceId: "inst-x",
-    peerInstanceId: "peer-a",
-  };
-
-  function federatedEvent(overrides: Record<string, unknown> = {}): Observation {
-    return feedEvent({
-      instanceId: "peer-a",
-      canonicalId: "cafe".repeat(16),
-      privacyClass: "authoritative",
-      ...overrides,
-    });
-  }
-
-  it("preserves the origin's instanceId/canonicalId/privacyClass instead of re-stamping", () => {
-    const out = normalizeObservation(federatedEvent(), FED_CTX);
-    expect(out.instanceId).toBe("peer-a");
-    expect(out.canonicalId).toBe("cafe".repeat(16));
-    expect(out.privacyClass).toBe("authoritative");
-    // NOT the locally derived canonical id.
-    expect(out.canonicalId).not.toBe(canonicalId({ namespace: "src", recordId: "src:1" }));
-  });
-
-  it("preserves dpEpsilon/dpDelta/kAnonymity on a dp_noised aggregate (rejected on the feed path)", () => {
-    const out = normalizeObservation(
-      federatedEvent({ privacyClass: "dp_noised", dpEpsilon: 0.5, dpDelta: 1e-6, kAnonymity: 10 }),
-      FED_CTX,
-    );
-    expect(out.dpEpsilon).toBe(0.5);
-    expect(out.dpDelta).toBe(1e-6);
-    expect(out.kAnonymity).toBe(10);
-  });
-
-  it("preserves evidenceState and confidenceScore (the origin's published values)", () => {
-    const out = normalizeObservation(
-      federatedEvent({ evidenceState: "corroborated", confidenceScore: 0.8 }),
-      FED_CTX,
-    );
-    expect(out.evidenceState).toBe("corroborated");
-    expect(out.confidenceScore).toBe(0.8);
-  });
-
-  it("rejects an event whose instanceId is missing", () => {
-    expect(() => normalizeObservation(federatedEvent({ instanceId: undefined }), FED_CTX)).toThrow(
-      /no instanceId/,
-    );
-  });
-
-  it("rejects an event whose instanceId is not the authenticated peer (no third-instance relay)", () => {
-    expect(() => normalizeObservation(federatedEvent({ instanceId: "peer-c" }), FED_CTX)).toThrow(
-      /authenticated peer/,
-    );
-  });
-
-  it("rejects an event without a canonicalId", () => {
-    expect(() => normalizeObservation(federatedEvent({ canonicalId: undefined }), FED_CTX)).toThrow(
-      /no canonicalId/,
-    );
-  });
-
-  it("rejects an unknown privacyClass (including the DB legacy 'unknown')", () => {
-    expect(() =>
-      normalizeObservation(federatedEvent({ privacyClass: undefined }), FED_CTX),
-    ).toThrow(/privacyClass/);
-    expect(() =>
-      normalizeObservation(federatedEvent({ privacyClass: "unknown" }), FED_CTX),
-    ).toThrow(/privacyClass/);
-  });
-
-  it("rejects an unknown evidenceState and out-of-range privacy accounting", () => {
-    expect(() =>
-      normalizeObservation(federatedEvent({ evidenceState: "verified" }), FED_CTX),
-    ).toThrow(/evidenceState/);
-    expect(() => normalizeObservation(federatedEvent({ dpDelta: 1.5 }), FED_CTX)).toThrow(
-      /dpDelta/,
-    );
-    expect(() => normalizeObservation(federatedEvent({ kAnonymity: 0 }), FED_CTX)).toThrow(
-      /kAnonymity/,
-    );
-  });
-
-  it.each(["not-a-number", Number.NaN, Number.POSITIVE_INFINITY])(
-    "permanently rejects a malformed measurement value %s",
-    (value) => {
-      expect(() =>
-        normalizeObservation(federatedEvent({ kind: "measurement", value }), FED_CTX),
-      ).toThrow(FederatedObservationError);
-    },
-  );
-
-  it.each([{ headline: {} }, { metric: [] }, { relatedIds: "not-an-array" }])(
-    "permanently rejects malformed optional field shapes %j",
-    (fields) => {
-      expect(() => normalizeObservation(federatedEvent(fields), FED_CTX)).toThrow(
-        FederatedObservationError,
-      );
-    },
-  );
-
-  it("strips a present origin.reporter (never stores another instance's reporter identity)", () => {
-    const out = normalizeObservation(
-      federatedEvent({
-        origin: {
-          kind: "crowd",
-          attribution: { provider: "Peer", license: "ODbL-1.0" },
-          reporter: { keyId: "leaked-key" },
-        },
-      }),
-      FED_CTX,
-    );
-    expect(out.origin.kind).toBe("crowd");
-    expect((out.origin as { reporter?: unknown }).reporter).toBeUndefined();
-  });
-
-  it("strips a smuggled origin.reporter off a FEED origin (unconditional strip)", () => {
-    const out = normalizeObservation(
-      federatedEvent({
-        origin: {
-          kind: "feed",
-          attribution: { provider: "Peer", license: "CC0-1.0" },
-          reporter: { keyId: "smuggled-key" },
-        } as Record<string, unknown>,
-      }),
-      FED_CTX,
-    );
-    expect(out.origin.kind).toBe("feed");
-    expect((out.origin as { reporter?: unknown }).reporter).toBeUndefined();
-  });
-
-  it("strips routingEligible and flaggedAt (local-only, never federated)", () => {
-    const out = normalizeObservation(
-      federatedEvent({ routingEligible: true, flaggedAt: "2026-06-24T10:00:00Z" }),
-      FED_CTX,
-    );
-    expect(out.routingEligible).toBeUndefined();
-    expect(out.flaggedAt).toBeUndefined();
-  });
-
-  it("re-derives phenomenonFingerprint locally, never trusting the wire value", () => {
-    const evt = federatedEvent({ phenomenonFingerprint: "forged" });
-    const out = normalizeObservation(evt, FED_CTX);
-    expect(out.phenomenonFingerprint).toBe(phenomenonFingerprint(feedEvent() as ConditionEvent));
-    expect(out.phenomenonFingerprint).not.toBe("forged");
-  });
-
-  it("does not mutate the input", () => {
-    const input = federatedEvent({ routingEligible: false });
-    normalizeObservation(input, FED_CTX);
-    expect(input.routingEligible).toBe(false);
   });
 });

@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { applyFederationFilter, type FederationFilter } from "../filter.js";
-import type { OutboxEntry } from "../outbox.js";
-import { isPriorityEntry, PRIORITY_EVENT_TYPES } from "../push.js";
-import { SubscriptionValidationError, validateSubscriptionShape } from "../subscriptions.js";
+import type { RecordFilter } from "../record-filter.js";
+import {
+  filterIsBounded,
+  SubscriptionValidationError,
+  validateSubscriptionShape,
+} from "../subscriptions.js";
+
+const INBOX = "https://peer.example.org/inbox";
 
 function shape(over: Partial<Parameters<typeof validateSubscriptionShape>[0]> = {}) {
   return {
@@ -14,29 +18,48 @@ function shape(over: Partial<Parameters<typeof validateSubscriptionShape>[0]> = 
   };
 }
 
+function caught(fn: () => void): SubscriptionValidationError {
+  try {
+    fn();
+  } catch (err) {
+    expect(err).toBeInstanceOf(SubscriptionValidationError);
+    return err as SubscriptionValidationError;
+  }
+  throw new Error("expected a validation error");
+}
+
 describe("validateSubscriptionShape", () => {
   it("accepts a pull subscription with an empty filter", () => {
     expect(() => validateSubscriptionShape(shape())).not.toThrow();
   });
 
   it("rejects an unknown delivery mode", () => {
-    expect(() =>
-      validateSubscriptionShape(shape({ deliveryMode: "carrier-pigeon" as never })),
-    ).toThrow(SubscriptionValidationError);
+    expect(
+      caught(() => validateSubscriptionShape(shape({ deliveryMode: "carrier-pigeon" as never })))
+        .code,
+    ).toBe("invalid-delivery-mode");
   });
 
-  it("rejects an over-broad webhook filter and recommends a narrower one", () => {
-    try {
+  it("rejects an over-broad webhook filter and recommends closures and incidents", () => {
+    const e = caught(() =>
+      validateSubscriptionShape(shape({ deliveryMode: "webhook", inboxUrl: INBOX, filter: {} })),
+    );
+    expect(e.code).toBe("over-broad-filter");
+    expect(e.recommended).toEqual({ kinds: ["closure", "incident"] });
+  });
+
+  it("keeps the subscriber's own fields in the recommendation", () => {
+    const e = caught(() =>
       validateSubscriptionShape(
-        shape({ deliveryMode: "webhook", inboxUrl: "https://peer.example.org/inbox", filter: {} }),
-      );
-      throw new Error("expected a validation error");
-    } catch (err) {
-      expect(err).toBeInstanceOf(SubscriptionValidationError);
-      const e = err as SubscriptionValidationError;
-      expect(e.code).toBe("over-broad-filter");
-      expect(e.recommended?.types).toBeDefined();
-    }
+        shape({ deliveryMode: "sse", filter: { classes: ["situation"], permissiveOnly: false } }),
+      ),
+    );
+    expect(e.code).toBe("over-broad-filter");
+    expect(e.recommended).toEqual({
+      classes: ["situation"],
+      permissiveOnly: false,
+      kinds: ["closure", "incident"],
+    });
   });
 
   it("rejects an over-broad sse filter", () => {
@@ -45,54 +68,62 @@ describe("validateSubscriptionShape", () => {
     );
   });
 
+  it("does not count naming only classes as bounded for a push channel", () => {
+    expect(
+      caught(() =>
+        validateSubscriptionShape(
+          shape({ deliveryMode: "sse", filter: { classes: ["situation"] } }),
+        ),
+      ).code,
+    ).toBe("over-broad-filter");
+  });
+
   it("accepts a webhook with a bbox-bounded filter and a public https inbox", () => {
     expect(() =>
       validateSubscriptionShape(
-        shape({
-          deliveryMode: "webhook",
-          inboxUrl: "https://peer.example.org/inbox",
-          filter: { bbox: [4, 50, 6, 54] },
-        }),
+        shape({ deliveryMode: "webhook", inboxUrl: INBOX, filter: { bbox: [4, 50, 6, 54] } }),
       ),
     ).not.toThrow();
   });
 
-  it("accepts a types-bounded filter as narrow enough", () => {
-    expect(() =>
-      validateSubscriptionShape(
-        shape({
-          deliveryMode: "webhook",
-          inboxUrl: "https://peer.example.org/inbox",
-          filter: { types: ["road_closure"] },
-        }),
-      ),
-    ).not.toThrow();
+  it("accepts each allow-list as narrow enough for a push channel", () => {
+    const bounded: RecordFilter[] = [
+      { kinds: ["closure"] },
+      { domains: ["road"] },
+      { classes: ["observation"], properties: ["speed"] },
+      { privacyClasses: ["authoritative"] },
+      { maxAgeSec: 600 },
+    ];
+    for (const filter of bounded) {
+      expect(
+        () => validateSubscriptionShape(shape({ deliveryMode: "sse", filter })),
+        JSON.stringify(filter),
+      ).not.toThrow();
+    }
   });
 
   it("requires an inboxUrl for a webhook", () => {
-    try {
-      validateSubscriptionShape(
-        shape({ deliveryMode: "webhook", inboxUrl: null, filter: { types: ["road_closure"] } }),
-      );
-      throw new Error("expected a validation error");
-    } catch (err) {
-      expect((err as SubscriptionValidationError).code).toBe("inbox-required");
-    }
+    expect(
+      caught(() =>
+        validateSubscriptionShape(
+          shape({ deliveryMode: "webhook", inboxUrl: null, filter: { kinds: ["closure"] } }),
+        ),
+      ).code,
+    ).toBe("inbox-required");
   });
 
   it("rejects a non-https inbox", () => {
-    try {
-      validateSubscriptionShape(
-        shape({
-          deliveryMode: "webhook",
-          inboxUrl: "http://peer.example.org/inbox",
-          filter: { types: ["road_closure"] },
-        }),
-      );
-      throw new Error("expected a validation error");
-    } catch (err) {
-      expect((err as SubscriptionValidationError).code).toBe("inbox-not-public");
-    }
+    expect(
+      caught(() =>
+        validateSubscriptionShape(
+          shape({
+            deliveryMode: "webhook",
+            inboxUrl: "http://peer.example.org/inbox",
+            filter: { kinds: ["closure"] },
+          }),
+        ),
+      ).code,
+    ).toBe("inbox-not-public");
   });
 
   it("rejects a loopback/private inbox (SSRF)", () => {
@@ -102,14 +133,12 @@ describe("validateSubscriptionShape", () => {
       "https://10.0.0.5/inbox",
       "https://169.254.169.254/inbox",
     ]) {
-      try {
+      const e = caught(() =>
         validateSubscriptionShape(
-          shape({ deliveryMode: "webhook", inboxUrl, filter: { types: ["road_closure"] } }),
-        );
-        throw new Error(`expected rejection for ${inboxUrl}`);
-      } catch (err) {
-        expect((err as SubscriptionValidationError).code, inboxUrl).toBe("inbox-not-public");
-      }
+          shape({ deliveryMode: "webhook", inboxUrl, filter: { kinds: ["closure"] } }),
+        ),
+      );
+      expect(e.code, inboxUrl).toBe("inbox-not-public");
     }
   });
 
@@ -122,20 +151,15 @@ describe("validateSubscriptionShape", () => {
   });
 });
 
-describe("validateSubscriptionShape — filter VALUE validation (all delivery modes)", () => {
-  function reject(filter: FederationFilter, mode: "pull" | "webhook" | "sse" = "pull") {
+describe("validateSubscriptionShape: filter values (all delivery modes)", () => {
+  function reject(filter: RecordFilter, mode: "pull" | "webhook" | "sse" = "pull"): string {
     const over =
       mode === "webhook"
-        ? { deliveryMode: mode, inboxUrl: "https://peer.example.org/inbox", filter }
+        ? { deliveryMode: mode, inboxUrl: INBOX, filter }
         : { deliveryMode: mode, filter };
-    let caught: unknown;
-    try {
-      validateSubscriptionShape(shape(over));
-    } catch (err) {
-      caught = err;
-    }
-    expect(caught).toBeInstanceOf(SubscriptionValidationError);
-    expect((caught as SubscriptionValidationError).code).toBe("invalid-filter");
+    const e = caught(() => validateSubscriptionShape(shape(over)));
+    expect(e.code).toBe("invalid-filter");
+    return e.message;
   }
 
   it("rejects a swapped bbox (west >= east)", () => {
@@ -161,24 +185,49 @@ describe("validateSubscriptionShape — filter VALUE validation (all delivery mo
   });
 
   it("rejects a bbox out of lon/lat range", () => {
-    reject({ bbox: [-181, 50, 6, 54] }); // west < -180
-    reject({ bbox: [4, 50, 181, 54] }); // east > 180
-    reject({ bbox: [4, -91, 6, 54] }); // south < -90
-    reject({ bbox: [4, 50, 6, 91] }); // north > 90
+    reject({ bbox: [-181, 50, 6, 54] });
+    reject({ bbox: [4, 50, 181, 54] });
+    reject({ bbox: [4, -91, 6, 54] });
+    reject({ bbox: [4, 50, 6, 91] });
   });
 
-  it("rejects an empty types array", () => {
-    reject({ types: [] });
+  it("rejects an empty or blank allow-list for kinds, domains, properties and privacyClasses", () => {
+    for (const field of ["kinds", "domains", "properties", "privacyClasses"] as const) {
+      expect(reject({ [field]: [] })).toContain(`filter.${field}`);
+      expect(reject({ [field]: ["closure", "  "] })).toContain(`filter.${field}`);
+      expect(reject({ [field]: ["closure", 5 as unknown as string] })).toContain(`filter.${field}`);
+      expect(reject({ [field]: "closure" as unknown as string[] })).toContain(`filter.${field}`);
+    }
   });
 
-  it("rejects a types array with a blank / non-string entry", () => {
-    reject({ types: ["road_closure", "  "] });
-    reject({ types: ["road_closure", 5 as unknown as string] });
+  it("rejects an empty classes list and a class the model does not have", () => {
+    expect(reject({ classes: [] })).toContain("filter.classes");
+    expect(reject({ classes: ["situation", "event" as never] })).toMatch(/record classes.*event/);
   });
 
-  it("rejects an empty privacyClasses array and blank entries", () => {
-    reject({ privacyClasses: [] });
-    reject({ privacyClasses: [""] });
+  it("refuses observations without named properties", () => {
+    expect(reject({ classes: ["observation"] })).toMatch(/properties/);
+    expect(reject({ classes: ["situation", "observation"], kinds: ["closure"] })).toMatch(
+      /properties/,
+    );
+    expect(() =>
+      validateSubscriptionShape(
+        shape({ filter: { classes: ["observation"], properties: ["speed", "travel_time"] } }),
+      ),
+    ).not.toThrow();
+  });
+
+  it("accepts every record class by name", () => {
+    expect(() =>
+      validateSubscriptionShape(
+        shape({
+          filter: {
+            classes: ["feature", "situation", "offer", "observation"],
+            properties: ["speed"],
+          },
+        }),
+      ),
+    ).not.toThrow();
   });
 
   it("rejects maxAgeSec <= 0 or non-finite", () => {
@@ -188,9 +237,10 @@ describe("validateSubscriptionShape — filter VALUE validation (all delivery mo
     reject({ maxAgeSec: Number.POSITIVE_INFINITY });
   });
 
-  it("rejects a non-object filter (a string or array)", () => {
-    reject("abc" as unknown as FederationFilter);
-    reject([1, 2] as unknown as FederationFilter);
+  it("rejects a non-object filter (a string, array or null)", () => {
+    reject("abc" as unknown as RecordFilter);
+    reject([1, 2] as unknown as RecordFilter);
+    reject(null as unknown as RecordFilter);
   });
 
   it("rejects a bad filter for a webhook mode too (all modes are validated)", () => {
@@ -202,11 +252,16 @@ describe("validateSubscriptionShape — filter VALUE validation (all delivery mo
       validateSubscriptionShape(
         shape({
           deliveryMode: "webhook",
-          inboxUrl: "https://peer.example.org/inbox",
+          inboxUrl: INBOX,
           filter: {
             bbox: [4, 50, 6, 54],
-            types: ["road_closure"],
+            classes: ["situation", "observation"],
+            kinds: ["closure"],
+            domains: ["road"],
+            properties: ["speed"],
             privacyClasses: ["authoritative"],
+            permissiveOnly: false,
+            minEvidenceTier: "self_reported",
             maxAgeSec: 3600,
           },
         }),
@@ -219,57 +274,26 @@ describe("validateSubscriptionShape — filter VALUE validation (all delivery mo
       validateSubscriptionShape(shape({ filter: { bbox: [-180, -90, 180, 90] } })),
     ).not.toThrow();
   });
-
-  it("applyFederationFilter is unchanged for a valid filter (golden bbox include/exclude)", () => {
-    // A validated filter drives applyFederationFilter identically — validation is
-    // a fail-closed gate at subscribe time, not a change to filter evaluation. Use
-    // real (non-tombstone) entries so the bbox test actually runs: one geometry
-    // INSIDE the bbox is kept, one OUTSIDE is dropped.
-    function evt(seq: number, lon: number): OutboxEntry {
-      return {
-        seq,
-        txid: "10",
-        operation: "create",
-        objectId: `o${seq}`,
-        canonicalId: null,
-        createdAt: "2026-07-13T00:00:00Z",
-        observation: {
-          origin: { kind: "feed", attribution: { provider: "A", license: "CC-BY-4.0" } },
-          geometry: { type: "Point", coordinates: [lon, 52] },
-          dataUpdatedAt: "2026-07-13T11:00:00Z",
-          privacyClass: "authoritative",
-        } as never,
-      };
-    }
-    const inside = evt(1, 5); // lon 5 ∈ [4, 6]
-    const outside = evt(2, 10); // lon 10 ∉ [4, 6]
-    const filter: FederationFilter = { bbox: [4, 50, 6, 54], permissiveOnly: false };
-    const out = applyFederationFilter([inside, outside], filter, "2026-07-13T12:00:00Z");
-    expect(out).toEqual([inside]); // inside kept untouched, outside excluded
-  });
 });
 
-describe("isPriorityEntry", () => {
-  const base: OutboxEntry = {
-    seq: 1,
-    txid: "10",
-    operation: "create",
-    objectId: "o1",
-    canonicalId: null,
-    createdAt: "2026-07-13T00:00:00Z",
-  };
-
-  it("keeps a closure/crash event", () => {
-    for (const type of PRIORITY_EVENT_TYPES) {
-      expect(isPriorityEntry({ ...base, observation: { type } as never })).toBe(true);
-    }
+describe("filterIsBounded", () => {
+  it("is false for an empty filter and for one that only names classes or relaxes gates", () => {
+    expect(filterIsBounded({})).toBe(false);
+    expect(filterIsBounded({ classes: ["situation", "feature"] })).toBe(false);
+    expect(filterIsBounded({ permissiveOnly: false, minEvidenceTier: "self_reported" })).toBe(
+      false,
+    );
   });
 
-  it("drops a non-priority event", () => {
-    expect(isPriorityEntry({ ...base, observation: { type: "roadworks" } as never })).toBe(false);
-  });
-
-  it("always keeps a delete tombstone (a retraction must propagate)", () => {
-    expect(isPriorityEntry({ ...base, operation: "delete", tombstone: true })).toBe(true);
+  it("is true for each source-side bound", () => {
+    const bounds: RecordFilter[] = [
+      { bbox: [4, 50, 6, 54] },
+      { kinds: ["closure"] },
+      { domains: ["road"] },
+      { properties: ["speed"] },
+      { privacyClasses: ["authoritative"] },
+      { maxAgeSec: 60 },
+    ];
+    for (const filter of bounds) expect(filterIsBounded(filter), JSON.stringify(filter)).toBe(true);
   });
 });

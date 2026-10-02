@@ -4,6 +4,7 @@ import {
   InMemoryNonceStore,
   type InstanceKey,
   loadActiveKeys,
+  type RecordOutboxEntry,
   signMessage,
   verifyMessage,
 } from "@openconditions/federation";
@@ -11,6 +12,13 @@ import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
+import {
+  ownSituation,
+  setOutboxAge,
+  situationId,
+  storeSituation,
+  subscribeAll,
+} from "./record-fixtures.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -20,6 +28,12 @@ let stranger: InstanceKey;
 
 const BASE_URL = "https://conditions.example.org";
 const ARCHIVE_URL = "https://conditions.example.org/archive";
+const ARCHIVE_FILES = {
+  situation: `${ARCHIVE_URL}/archive-situation.parquet`,
+  feature: `${ARCHIVE_URL}/archive-feature.parquet`,
+  offer: `${ARCHIVE_URL}/archive-offer.parquet`,
+  observation: `${ARCHIVE_URL}/archive-observation.parquet`,
+};
 const NOW = "2026-07-13T12:00:00.000Z";
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -30,7 +44,6 @@ const ACTOR_CONFIG = {
   operator: "Test Operator",
   jurisdiction: "NL",
   coverage: { iso3166: ["NL"] },
-  supportedTypes: ["incident", "roadwork"],
   license: "ODbL-1.0",
   trustTier: 1,
   capabilities: {
@@ -45,26 +58,14 @@ const ACTOR_CONFIG = {
 
 let enabledEnv: Record<string, string>;
 
-async function insertObservation(id: string): Promise<void> {
-  const geometry = { type: "Point", coordinates: [5.1, 52.1] };
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, category, severity, severity_source,
-       headline, status, geom, origin, data_updated_at, fetched_at)
-    VALUES (${id}, 'bf-route-test', 'datex2', 'roads', 'event', 'incident', 'incident', 'medium',
-       'declared', ${id}, 'active',
-       ST_SetSRID(ST_GeomFromGeoJSON(${JSON.stringify(geometry)}), 4326),
-       ${sql.json({ kind: "feed", attribution: { provider: "Test", license: "CC0-1.0" } } as never)},
-       '2026-07-13T10:00:00Z', '2026-07-13T10:00:00Z')`;
+/** Stores one of this instance's situations and backdates its journal entry. */
+async function seed(local: string, msAgo: number): Promise<void> {
+  await storeSituation(sql, ownSituation(local));
+  await setOutboxAge(sql, situationId(local), msAgo, NOW);
 }
 
-async function setAge(objectId: string, msAgo: number): Promise<void> {
-  const ts = new Date(Date.parse(NOW) - msAgo).toISOString();
-  await sql`
-    UPDATE conditions.federation_outbox
-    SET created_at = ${ts}::timestamptz
-    WHERE object_id = ${objectId}`;
-}
+const ids = (page: { orderedItems: RecordOutboxEntry[] }) =>
+  page.orderedItems.map((e) => e.recordId);
 
 /** Signs a peer GET the way the server reconstructs it (baseUrl + path+query). */
 async function signedGet(key: InstanceKey, path: string): Promise<Record<string, string>> {
@@ -101,13 +102,7 @@ beforeAll(async () => {
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
   sql = postgres(url, { max: 4 });
   await runMigrations(url);
-  // The outbox capture trigger only journals for a SUBSCRIBER (migration 0023);
-  // the backfill route serves that journal, so give it one.
-  await sql`
-    INSERT INTO conditions.federation_subscription
-      (id, peer_id, delivery_mode, created_at, updated_at)
-    VALUES ('sub-backfill-route', 'peer-backfill-route', 'pull', now(), now())
-    ON CONFLICT (id) DO NOTHING`;
+  await subscribeAll(sql, "sub-backfill-route");
 
   const now = new Date().toISOString();
   tier1Peer = await generateInstanceKey(now);
@@ -191,10 +186,8 @@ describe("GET /peer/backfill", () => {
   }, 30_000);
 
   it("serves a Tier-1 peer a signed page within 30 days, redirecting older to the archive", async () => {
-    await insertObservation("bf-route-recent");
-    await insertObservation("bf-route-old");
-    await setAge("bf-route-recent", 10 * DAY);
-    await setAge("bf-route-old", 45 * DAY);
+    await seed("bf-route-recent", 10 * DAY);
+    await seed("bf-route-old", 45 * DAY);
 
     const app = await build({ sql, env: enabledEnv, logger: false, now: () => NOW });
     try {
@@ -205,11 +198,15 @@ describe("GET /peer/backfill", () => {
       expect(res.headers["content-type"]).toContain("application/activity+json");
 
       const page = res.json();
-      const ids = page.orderedItems.map((e: { objectId: string }) => e.objectId);
-      expect(ids).toContain("bf-route-recent");
-      expect(ids).not.toContain("bf-route-old");
+      expect(ids(page)).toContain(situationId("bf-route-recent"));
+      expect(ids(page)).not.toContain(situationId("bf-route-old"));
+      const recent = page.orderedItems.find(
+        (e: RecordOutboxEntry) => e.recordId === situationId("bf-route-recent"),
+      );
+      expect(recent).toMatchObject({ recordClass: "situation", operation: "create" });
+      expect(recent.record.id).toBe(situationId("bf-route-recent"));
       expect(page.beyondWindow).toBe(true);
-      expect(page.archiveUrl).toBe(ARCHIVE_URL);
+      expect(page.archiveUrl).toEqual(ARCHIVE_FILES);
 
       const [key] = await loadActiveKeys(sql, NOW);
       const verified = await verifyMessage({
@@ -229,10 +226,8 @@ describe("GET /peer/backfill", () => {
   }, 30_000);
 
   it("takes the tier from the pinned record: a Tier-0 peer only gets the last 24 hours", async () => {
-    await insertObservation("bf-route-t0-fresh");
-    await insertObservation("bf-route-t0-2day");
-    await setAge("bf-route-t0-fresh", 2 * HOUR);
-    await setAge("bf-route-t0-2day", 2 * DAY);
+    await seed("bf-route-t0-fresh", 2 * HOUR);
+    await seed("bf-route-t0-2day", 2 * DAY);
 
     const app = await build({ sql, env: enabledEnv, logger: false, now: () => NOW });
     try {
@@ -243,11 +238,10 @@ describe("GET /peer/backfill", () => {
       expect(res.statusCode).toBe(200);
 
       const page = res.json();
-      const ids = page.orderedItems.map((e: { objectId: string }) => e.objectId);
-      expect(ids).toContain("bf-route-t0-fresh");
-      expect(ids).not.toContain("bf-route-t0-2day");
+      expect(ids(page)).toContain(situationId("bf-route-t0-fresh"));
+      expect(ids(page)).not.toContain(situationId("bf-route-t0-2day"));
       expect(page.beyondWindow).toBe(true);
-      expect(page.archiveUrl).toBe(ARCHIVE_URL);
+      expect(page.archiveUrl).toEqual(ARCHIVE_FILES);
     } finally {
       await app.close();
     }

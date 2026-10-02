@@ -2,6 +2,7 @@ import { runMigrations } from "@openconditions/core/server";
 import {
   encodeOutboxCursor,
   type OutboxCursor,
+  type OutboxPage,
   pruneOutbox,
   readOutbox,
 } from "@openconditions/federation";
@@ -14,12 +15,26 @@ import {
   backfillWindowForTier,
   readBackfill,
 } from "../backfill.js";
+import {
+  ownSituation,
+  setOutboxAge,
+  situationId,
+  storeSituation,
+  subscribeAll,
+} from "./record-fixtures.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
 
 const NOW = "2026-07-13T12:00:00.000Z";
 const ARCHIVE_URL = "https://conditions.example.org/archive";
+/** The archive's latest file of each class, which a beyond-window page names. */
+const ARCHIVE_FILES = {
+  situation: `${ARCHIVE_URL}/archive-situation.parquet`,
+  feature: `${ARCHIVE_URL}/archive-feature.parquet`,
+  offer: `${ARCHIVE_URL}/archive-offer.parquet`,
+  observation: `${ARCHIVE_URL}/archive-observation.parquet`,
+};
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
 
@@ -33,27 +48,13 @@ async function frontier(): Promise<OutboxCursor> {
   return row ? { txid: row.txid, seq: Number(row.seq) } : { txid: "0", seq: 0 };
 }
 
-async function insertObservation(id: string, lon = 5.1): Promise<void> {
-  const geometry = { type: "Point", coordinates: [lon, 52.1] };
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, category, severity, severity_source,
-       headline, status, geom, origin, data_updated_at, fetched_at)
-    VALUES (${id}, 'backfill-test', 'datex2', 'roads', 'event', 'incident', 'incident', 'medium',
-       'declared', ${id}, 'active',
-       ST_SetSRID(ST_GeomFromGeoJSON(${JSON.stringify(geometry)}), 4326),
-       ${sql.json({ kind: "feed", attribution: { provider: "Test", license: "CC0-1.0" } } as never)},
-       '2026-07-13T10:00:00Z', '2026-07-13T10:00:00Z')`;
+/** Stores one of this instance's situations and backdates its journal entry. */
+async function seed(local: string, msAgo?: number): Promise<void> {
+  await storeSituation(sql, ownSituation(local));
+  if (msAgo !== undefined) await setOutboxAge(sql, situationId(local), msAgo, NOW);
 }
 
-/** Backdates the outbox row for an object to `msAgo` before NOW. */
-async function setAge(objectId: string, msAgo: number): Promise<void> {
-  const ts = new Date(Date.parse(NOW) - msAgo).toISOString();
-  await sql`
-    UPDATE conditions.federation_outbox
-    SET created_at = ${ts}::timestamptz
-    WHERE object_id = ${objectId}`;
-}
+const ids = (page: OutboxPage) => page.orderedItems.map((e) => e.recordId);
 
 beforeAll(async () => {
   const container = await new GenericContainer("postgis/postgis:16-3.4")
@@ -69,13 +70,7 @@ beforeAll(async () => {
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
   sql = postgres(url, { max: 3 });
   await runMigrations(url);
-  // The outbox capture trigger only journals for a SUBSCRIBER (migration 0023);
-  // backfill reads that journal, so give it one.
-  await sql`
-    INSERT INTO conditions.federation_subscription
-      (id, peer_id, delivery_mode, created_at, updated_at)
-    VALUES ('sub-backfill', 'peer-backfill', 'pull', now(), now())
-    ON CONFLICT (id) DO NOTHING`;
+  await subscribeAll(sql, "sub-backfill");
 }, 120_000);
 
 afterAll(async () => {
@@ -105,10 +100,8 @@ describe("backfillWindowForTier", () => {
 describe("readBackfill — the tier-bounded time floor", () => {
   it("serves a Tier-1 peer entries within 30 days and omits older ones", async () => {
     const base = await frontier();
-    await insertObservation("bf-t1-recent");
-    await insertObservation("bf-t1-old");
-    await setAge("bf-t1-recent", 20 * DAY);
-    await setAge("bf-t1-old", 40 * DAY);
+    await seed("bf-t1-recent", 20 * DAY);
+    await seed("bf-t1-old", 40 * DAY);
 
     const page = await readBackfill(sql, {
       after: base,
@@ -117,20 +110,18 @@ describe("readBackfill — the tier-bounded time floor", () => {
       archiveUrl: ARCHIVE_URL,
       limit: 500,
     });
-    const ids = page.orderedItems.map((e) => e.objectId);
-    expect(ids).toContain("bf-t1-recent");
-    expect(ids).not.toContain("bf-t1-old");
+    expect(ids(page)).toContain(situationId("bf-t1-recent"));
+    expect(ids(page)).not.toContain(situationId("bf-t1-old"));
+    expect(page.orderedItems[0]).toMatchObject({ recordClass: "situation", operation: "create" });
     // The 40-day entry is beyond the window ⇒ redirect to the static archive.
     expect(page.beyondWindow).toBe(true);
-    expect(page.archiveUrl).toBe(ARCHIVE_URL);
+    expect(page.archiveUrl).toEqual(ARCHIVE_FILES);
   }, 30_000);
 
   it("serves a Tier-0 peer only the last 24 hours", async () => {
     const base = await frontier();
-    await insertObservation("bf-t0-fresh");
-    await insertObservation("bf-t0-stale");
-    await setAge("bf-t0-fresh", 2 * HOUR);
-    await setAge("bf-t0-stale", 2 * DAY);
+    await seed("bf-t0-fresh", 2 * HOUR);
+    await seed("bf-t0-stale", 2 * DAY);
 
     const page = await readBackfill(sql, {
       after: base,
@@ -139,21 +130,17 @@ describe("readBackfill — the tier-bounded time floor", () => {
       archiveUrl: ARCHIVE_URL,
       limit: 500,
     });
-    const ids = page.orderedItems.map((e) => e.objectId);
-    expect(ids).toContain("bf-t0-fresh");
-    expect(ids).not.toContain("bf-t0-stale");
+    expect(ids(page)).toContain(situationId("bf-t0-fresh"));
+    expect(ids(page)).not.toContain(situationId("bf-t0-stale"));
     expect(page.beyondWindow).toBe(true);
-    expect(page.archiveUrl).toBe(ARCHIVE_URL);
+    expect(page.archiveUrl).toEqual(ARCHIVE_FILES);
   }, 30_000);
 
   it("within the window returns the SAME composite-cursor entries as the outbox (gap-free)", async () => {
     const base = await frontier();
-    await insertObservation("bf-par-a");
-    await insertObservation("bf-par-b");
-    await insertObservation("bf-par-c");
-    await setAge("bf-par-a", 1 * HOUR);
-    await setAge("bf-par-b", 2 * HOUR);
-    await setAge("bf-par-c", 3 * HOUR);
+    await seed("bf-par-a", 1 * HOUR);
+    await seed("bf-par-b", 2 * HOUR);
+    await seed("bf-par-c", 3 * HOUR);
 
     const backfill = await readBackfill(sql, {
       after: base,
@@ -164,19 +151,32 @@ describe("readBackfill — the tier-bounded time floor", () => {
     });
     const outbox = await readOutbox(sql, { after: base, limit: 500 });
 
-    expect(backfill.orderedItems.map((e) => e.objectId)).toEqual(
-      outbox.orderedItems.map((e) => e.objectId),
-    );
+    expect(ids(backfill)).toEqual(ids(outbox));
+    expect(ids(backfill)).toEqual(["bf-par-a", "bf-par-b", "bf-par-c"].map(situationId));
     expect(backfill.highWaterMark).toBe(outbox.highWaterMark);
     // Nothing before the floor after this cursor ⇒ no archive redirect.
     expect(backfill.beyondWindow).toBeUndefined();
     expect(backfill.archiveUrl).toBeUndefined();
   }, 30_000);
 
+  it("narrows a backfill page with the subscriber's record filter", async () => {
+    const base = await frontier();
+    await storeSituation(sql, ownSituation("bf-filter-works", { kind: "roadworks" }));
+    await seed("bf-filter-incident");
+
+    const page = await readBackfill(sql, {
+      after: base,
+      tier: 1,
+      now: NOW,
+      filter: { classes: ["situation"], kinds: ["roadworks"] },
+      limit: 500,
+    });
+    expect(ids(page)).toEqual([situationId("bf-filter-works")]);
+  }, 30_000);
+
   it("flags beyondWindow with the archive link when the cursor sits before the floor", async () => {
     const base = await frontier();
-    await insertObservation("bf-before-floor");
-    await setAge("bf-before-floor", 45 * DAY);
+    await seed("bf-before-floor", 45 * DAY);
 
     // A cursor at (or before) the pre-floor entry ⇒ the range reaches the archive.
     const page = await readBackfill(sql, {
@@ -186,9 +186,9 @@ describe("readBackfill — the tier-bounded time floor", () => {
       archiveUrl: ARCHIVE_URL,
       limit: 500,
     });
-    expect(page.orderedItems.map((e) => e.objectId)).not.toContain("bf-before-floor");
+    expect(ids(page)).not.toContain(situationId("bf-before-floor"));
     expect(page.beyondWindow).toBe(true);
-    expect(page.archiveUrl).toBe(ARCHIVE_URL);
+    expect(page.archiveUrl).toEqual(ARCHIVE_FILES);
 
     // Advancing the cursor PAST the pre-floor entry drops the redirect.
     const advanced = await readBackfill(sql, {
@@ -203,9 +203,8 @@ describe("readBackfill — the tier-bounded time floor", () => {
 
   it("includes an entry exactly ON the floor (created_at == now - window, consistent with the >= scan)", async () => {
     const base = await frontier();
-    await insertObservation("bf-on-floor");
     // Exactly at the Tier-1 floor: now - 30 days.
-    await setAge("bf-on-floor", BACKFILL_WINDOW_TIER_1_SEC * 1000);
+    await seed("bf-on-floor", BACKFILL_WINDOW_TIER_1_SEC * 1000);
 
     const page = await readBackfill(sql, {
       after: base,
@@ -214,27 +213,25 @@ describe("readBackfill — the tier-bounded time floor", () => {
       archiveUrl: ARCHIVE_URL,
       limit: 500,
     });
-    expect(page.orderedItems.map((e) => e.objectId)).toContain("bf-on-floor");
+    expect(ids(page)).toContain(situationId("bf-on-floor"));
     // The boundary entry is served, not redirected.
     expect(page.beyondWindow).toBeUndefined();
   }, 30_000);
 
   it("does not break gap-freeness: a floored page keeps the composite-cursor ordering", async () => {
     const base = await frontier();
-    await insertObservation("bf-gap-1");
-    await insertObservation("bf-gap-2");
-    await setAge("bf-gap-1", 1 * HOUR);
-    await setAge("bf-gap-2", 2 * HOUR);
+    await seed("bf-gap-1", 1 * HOUR);
+    await seed("bf-gap-2", 2 * HOUR);
 
     const first = await readBackfill(sql, { after: base, tier: 1, now: NOW, limit: 1 });
-    expect(first.orderedItems.map((e) => e.objectId)).toEqual(["bf-gap-1"]);
+    expect(ids(first)).toEqual([situationId("bf-gap-1")]);
     const second = await readBackfill(sql, {
       after: first.highWaterMark,
       tier: 1,
       now: NOW,
       limit: 1,
     });
-    expect(second.orderedItems.map((e) => e.objectId)).toEqual(["bf-gap-2"]);
+    expect(ids(second)).toEqual([situationId("bf-gap-2")]);
   }, 30_000);
 });
 
@@ -246,10 +243,8 @@ describe("readBackfill — the archive redirect survives the retention prune", (
     // the prune must not delete it. Plus a deep-past row the prune removes — the
     // point of the unconditional margin is that pruning the deep past does not
     // silence the redirect, because the margin-band row keeps it alive.
-    await insertObservation("bf-margin-band");
-    await insertObservation("bf-deep-past");
-    await setAge("bf-margin-band", 33 * DAY);
-    await setAge("bf-deep-past", 50 * DAY);
+    await seed("bf-margin-band", 33 * DAY);
+    await seed("bf-deep-past", 50 * DAY);
 
     const before = await readBackfill(sql, {
       after: base,
@@ -263,12 +258,12 @@ describe("readBackfill — the archive redirect survives the retention prune", (
     const pruned = await pruneOutbox(sql, { now: NOW });
     expect(pruned.deleted).toBeGreaterThanOrEqual(1);
 
-    const survivors = await sql<{ object_id: string }[]>`
-      SELECT object_id FROM conditions.federation_outbox
-      WHERE object_id IN ('bf-margin-band', 'bf-deep-past')`;
-    const ids = survivors.map((r) => r.object_id);
-    expect(ids).toContain("bf-margin-band");
-    expect(ids).not.toContain("bf-deep-past");
+    const survivors = await sql<{ record_id: string }[]>`
+      SELECT record_id FROM conditions.federation_outbox
+      WHERE record_id IN (${situationId("bf-margin-band")}, ${situationId("bf-deep-past")})`;
+    const kept = survivors.map((r) => r.record_id);
+    expect(kept).toContain(situationId("bf-margin-band"));
+    expect(kept).not.toContain(situationId("bf-deep-past"));
 
     const after = await readBackfill(sql, {
       after: base,
@@ -278,6 +273,6 @@ describe("readBackfill — the archive redirect survives the retention prune", (
       limit: 500,
     });
     expect(after.beyondWindow).toBe(true);
-    expect(after.archiveUrl).toBe(ARCHIVE_URL);
+    expect(after.archiveUrl).toEqual(ARCHIVE_FILES);
   }, 30_000);
 });

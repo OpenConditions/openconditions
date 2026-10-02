@@ -1,62 +1,50 @@
 import {
   generateReporterKey,
-  type ReportClaim,
   type ReporterKey,
-  type SignedReport,
   type SignedSubClaim,
-  type SubClaimBody,
+  type SituationClaim,
   type SubClaimType,
-  signReport,
   signSubClaim,
 } from "@openconditions/contrib-core";
-import { runMigrations } from "@openconditions/core/server";
 import type { FastifyInstance } from "fastify";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { build } from "../server.js";
+import {
+  createTestDatabase,
+  evidenceOf,
+  feedSituationDraft,
+  INSTANCE,
+  reportAs,
+  seedFeedSituation,
+  seedPeerCrowdReport,
+  situationClaim,
+} from "./crowd-fixtures.integration.js";
 
 const NOW = "2026-07-12T08:00:00.000Z";
 const GRANT_SECRET_VALUE = "reviewer-route-test-grant-secret";
 const REVIEWER_TOKEN = "reviewer-route-test-operator-token";
+const ENV = {
+  OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+  OPENCONDITIONS_REVIEWER_TOKEN: REVIEWER_TOKEN,
+  OPENCONDITIONS_INSTANCE_ID: INSTANCE,
+};
 
+let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;
-let dbUrl: string;
-let containerStop: () => Promise<unknown>;
 let app: FastifyInstance;
 let ipCounter = 0;
 let nowValue = NOW;
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  dbUrl = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(dbUrl, { max: 10 });
-  await runMigrations(dbUrl);
-  app = await build({
-    sql,
-    env: {
-      OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
-      OPENCONDITIONS_REVIEWER_TOKEN: REVIEWER_TOKEN,
-      OPENCONDITIONS_INSTANCE_ID: "maps.example.org",
-    },
-    logger: false,
-    now: () => nowValue,
-  });
+  db = await createTestDatabase();
+  sql = db.sql;
+  app = await build({ sql, env: ENV, logger: false, now: () => nowValue });
 }, 180_000);
 
 afterAll(async () => {
   await app?.close();
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 beforeEach(() => {
@@ -69,34 +57,26 @@ function nextIp(): string {
   return `198.51.100.${ipCounter % 250}`;
 }
 
-function makeClaim(overrides: Partial<ReportClaim> = {}): ReportClaim {
-  return {
-    domain: "roads",
-    type: "congestion",
-    geometry: { type: "Point", coordinates: [4.9, 52.37] },
-    fuzziness: "low_res",
-    reportedAt: nowValue,
-    nonce: "nonce-000000000001",
-    ...overrides,
-  };
+async function enroll(key: ReporterKey): Promise<string> {
+  const res = await enrollRaw(key);
+  return (res.json() as { reportingGrant: string }).reportingGrant;
 }
 
-async function enroll(key: ReporterKey): Promise<string> {
-  const res = await app.inject({
+async function enrollRaw(key: ReporterKey) {
+  return app.inject({
     method: "POST",
     url: "/contrib/enroll",
     payload: { pubJwk: key.publicJwk, proof: { keyId: key.keyId } },
     remoteAddress: nextIp(),
   });
-  return (res.json() as { reportingGrant: string }).reportingGrant;
 }
 
 async function landReportFrom(
   key: ReporterKey,
   grant: string,
-  overrides: Partial<ReportClaim>,
+  overrides: Partial<SituationClaim>,
 ): Promise<{ statusCode: number; id?: string }> {
-  const report: SignedReport = await signReport(makeClaim(overrides), key);
+  const report = await reportAs(key, situationClaim({ reportedAt: nowValue, ...overrides }));
   const res = await app.inject({
     method: "POST",
     url: "/contrib/reports",
@@ -104,14 +84,13 @@ async function landReportFrom(
   });
   return {
     statusCode: res.statusCode,
-    id:
-      res.statusCode === 200 ? (res.json() as { observationId: string }).observationId : undefined,
+    id: res.statusCode === 200 ? (res.json() as { record: { id: string } }).record.id : undefined,
   };
 }
 
-/** Enroll a key and land a fresh active crowd observation from it. */
-async function landObs(
-  overrides: Partial<ReportClaim>,
+/** Enroll a key and land a fresh live crowd situation from it. */
+async function landSituation(
+  overrides: Partial<SituationClaim>,
 ): Promise<{ key: ReporterKey; grant: string; id: string }> {
   const key = await generateReporterKey();
   const grant = await enroll(key);
@@ -122,29 +101,30 @@ async function landObs(
 
 async function signSub(
   key: ReporterKey,
-  subject: string,
+  id: string,
   claimType: SubClaimType,
-  overrides: Partial<SubClaimBody> = {},
+  reason?: string,
 ): Promise<SignedSubClaim> {
-  const body: SubClaimBody = {
-    subject,
-    claimType,
-    reportedAt: nowValue,
-    nonce: `sub-${claimType}-${Math.random().toString(36).slice(2, 14)}`,
-    ...overrides,
-  };
-  return signSubClaim(body, key);
+  return signSubClaim(
+    {
+      subject: { class: "situation", id },
+      claimType,
+      reportedAt: nowValue,
+      nonce: `sub-${claimType}-${Math.random().toString(36).slice(2, 14)}`,
+      ...(reason === undefined ? {} : { reason }),
+    },
+    key,
+  );
 }
 
-/** Flag an observation through the real T6 sub-claim flag route. */
-async function flagObs(id: string, reason?: string): Promise<void> {
+/** Flag a situation through the real sub-claim flag route. */
+async function flagSituation(id: string, reason?: string): Promise<void> {
   const key = await generateReporterKey();
   const grant = await enroll(key);
-  const sub = await signSub(key, id, "flag", reason === undefined ? {} : { reason });
   const res = await app.inject({
     method: "POST",
-    url: `/contrib/reports/${id}/flag`,
-    payload: { subClaim: sub, reportingGrant: grant },
+    url: `/contrib/reports/situation/${encodeURIComponent(id)}/flag`,
+    payload: { subClaim: await signSub(key, id, "flag", reason), reportingGrant: grant },
   });
   expect(res.statusCode).toBe(200);
 }
@@ -159,40 +139,30 @@ function reviewerInject(
   return app.inject({ method, url, headers, payload: opts.payload as never });
 }
 
-interface ObsRow {
-  status: string;
+function decide(id: string, decision: string, recordClass = "situation") {
+  return reviewerInject(
+    "POST",
+    `/contrib/reviewer/${recordClass}/${encodeURIComponent(id)}/${decision}`,
+    { token: REVIEWER_TOKEN },
+  );
+}
+
+interface SituationRow {
   evidence_state: string | null;
   routing_eligible: boolean;
   flagged_at: Date | null;
-  headline: string | null;
-  description: string | null;
-  subject: unknown;
-  label: string | null;
-  severity: string | null;
-  severity_level: number | null;
-  attributes: Record<string, unknown> | null;
-  origin: { kind?: string; reporter?: { keyId?: string } } | null;
-  canonical_id: string | null;
-  instance_id: string | null;
-  phenomenon_fingerprint: string | null;
+  tombstone_reason: string | null;
+  tombstoned_at: Date | null;
+  revision: number;
+  record: Record<string, unknown>;
 }
 
-async function readObs(id: string): Promise<ObsRow | undefined> {
-  const rows = await sql<ObsRow[]>`
-    SELECT status, evidence_state, routing_eligible, flagged_at, headline, description,
-           subject, label, severity, severity_level, attributes, origin,
-           canonical_id, instance_id, phenomenon_fingerprint
-    FROM conditions.observations WHERE id = ${id}`;
+async function readSituation(id: string): Promise<SituationRow | undefined> {
+  const rows = await sql<SituationRow[]>`
+    SELECT evidence_state, routing_eligible, flagged_at, tombstone_reason, tombstoned_at,
+           revision, record
+    FROM conditions.situation WHERE id = ${id}`;
   return rows[0];
-}
-
-async function enrollRaw(key: ReporterKey) {
-  return app.inject({
-    method: "POST",
-    url: "/contrib/enroll",
-    payload: { pubJwk: key.publicJwk, proof: { keyId: key.keyId } },
-    remoteAddress: nextIp(),
-  });
 }
 
 async function readPosterior(keyId: string): Promise<{ alpha: number; beta: number }> {
@@ -204,37 +174,37 @@ async function readPosterior(keyId: string): Promise<{ alpha: number; beta: numb
 async function countEvidence(id: string, kind: string): Promise<number> {
   const rows = await sql<{ n: number }[]>`
     SELECT count(*)::int AS n FROM conditions.report_evidence
-    WHERE observation_id = ${id} AND evidence_kind = ${kind}`;
+    WHERE record_class = 'situation' AND record_id = ${id} AND evidence_kind = ${kind}`;
   return rows[0]!.n;
 }
 
 /**
- * Inserts a flagged observation DIRECTLY (no HTTP landing) so the fire-and-forget
- * auto-corroboration/cross-validation side effects can't race the reviewer query.
- * Used by the reporter-trust-surface tests, mirroring the composite-cursor tests.
+ * Stores a flagged situation DIRECTLY (no HTTP landing) so the post-hoc
+ * landing hooks can't race the reviewer query, with a chosen local id so the
+ * keyset order is known. A feed situation is the simplest such record; the
+ * queue reads any origin.
  */
-async function insertFlaggedRow(id: string, lon: number, flaggedAt: string): Promise<void> {
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, status, geom, origin,
-       valid_from, data_updated_at, fetched_at, is_stale, flagged_at)
-    VALUES
-      (${id}, 'reviewer-trust-test', 'native', 'roads', 'event', 'hazard', 'active',
-       ST_SetSRID(ST_MakePoint(${lon}, 47.0), 4326),
-       ${sql.json({ kind: "crowd" } as never)},
-       '2027-01-01T00:00:00.000Z', now(), now(), false, ${flaggedAt}::timestamptz)`;
+async function insertFlagged(local: string, lon: number, flaggedAt: string): Promise<string> {
+  const id = await seedFeedSituation(sql, local, {
+    location: {
+      ...(feedSituationDraft(local)["location"] as object),
+      geometry: { type: "Point", coordinates: [lon, 47.0] },
+    },
+  });
+  await sql`UPDATE conditions.situation SET flagged_at = ${flaggedAt}::timestamptz WHERE id = ${id}`;
+  return id;
 }
 
-/** Seeds a `report` evidence row (the originating claim) for an observation. */
+/** Seeds a `report` evidence row (the originating claim) for a situation. */
 async function seedReportEvidence(
-  obsId: string,
+  id: string,
   keyId: string | null,
   occurredAt: string,
 ): Promise<void> {
   await sql`
     INSERT INTO conditions.report_evidence
-      (observation_id, evidence_kind, actor_key_id, occurred_at, details)
-    VALUES (${obsId}, 'report', ${keyId}, ${occurredAt}::timestamptz, '{}'::jsonb)`;
+      (record_class, record_id, evidence_kind, actor_key_id, occurred_at, details)
+    VALUES ('situation', ${id}, 'report', ${keyId}, ${occurredAt}::timestamptz, '{}'::jsonb)`;
 }
 
 /** Seeds a reporter row directly with an explicit posterior and timestamps. */
@@ -260,6 +230,13 @@ async function seedReporter(opts: {
        ${opts.lastActiveAt ?? "2026-07-10T08:00:00.000Z"}::timestamptz)`;
 }
 
+/** Clears every flag but the given situations', so a page's positions are known. */
+async function onlyFlagged(ids: readonly string[]): Promise<void> {
+  await sql`
+    UPDATE conditions.situation SET flagged_at = NULL
+    WHERE flagged_at IS NOT NULL AND id <> ALL(${sql.array([...ids])})`;
+}
+
 interface ReporterSignalShape {
   keyId: string;
   status: string;
@@ -271,17 +248,35 @@ interface ReporterSignalShape {
   note: string;
 }
 
-async function fetchFlaggedItem(
-  obsId: string,
-): Promise<{ observationId: string; reporter: ReporterSignalShape | null } | undefined> {
-  const res = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=200", {
+interface FlaggedItemShape {
+  record: { class: string; id: string };
+  flaggedAt: string;
+  origin: string;
+  evidenceState: string | null;
+  kind: string;
+  type: string;
+  geometry: { type: string } | null;
+  flagCount: number;
+  flagReasons: string[];
+  reporter: ReporterSignalShape | null;
+}
+
+interface FlaggedPageShape {
+  items: FlaggedItemShape[];
+  nextBefore: string | null;
+  nextBeforeId: string | null;
+}
+
+async function flaggedPage(query = "limit=200"): Promise<FlaggedPageShape> {
+  const res = await reviewerInject("GET", `/contrib/reviewer/flagged?${query}`, {
     token: REVIEWER_TOKEN,
   });
   expect(res.statusCode).toBe(200);
-  const body = res.json() as {
-    items: { observationId: string; reporter: ReporterSignalShape | null }[];
-  };
-  return body.items.find((i) => i.observationId === obsId);
+  return res.json() as FlaggedPageShape;
+}
+
+async function fetchFlaggedItem(id: string): Promise<FlaggedItemShape | undefined> {
+  return (await flaggedPage()).items.find((i) => i.record.id === id);
 }
 
 describe("migration 0012 — conditions.block_list", () => {
@@ -313,6 +308,11 @@ describe("reviewer auth — operator bearer token", () => {
     expect(res.statusCode).toBe(200);
   });
 
+  it("guards the decisions too (401 without the bearer)", async () => {
+    const res = await reviewerInject("POST", "/contrib/reviewer/situation/any/accept");
+    expect(res.statusCode).toBe(401);
+  });
+
   it("build() throws when the reviewer token is unset in production (fail closed)", async () => {
     await expect(
       build({
@@ -320,7 +320,7 @@ describe("reviewer auth — operator bearer token", () => {
         env: {
           NODE_ENV: "production",
           OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
-          OPENCONDITIONS_INSTANCE_ID: "maps.example.org",
+          OPENCONDITIONS_INSTANCE_ID: INSTANCE,
         },
         logger: false,
         now: () => nowValue,
@@ -330,85 +330,68 @@ describe("reviewer auth — operator bearer token", () => {
 });
 
 describe("GET /contrib/reviewer/flagged — the anomaly queue", () => {
-  it("lists an open-flagged observation with its flagCount and flagReasons", async () => {
-    const { id } = await landObs({
+  it("lists an open-flagged situation with its record, flagCount, flagReasons and reporter", async () => {
+    const { key, id } = await landSituation({
       nonce: "queue-flag-00000001",
       geometry: { type: "Point", coordinates: [4.9, 52.37] },
     });
     nowValue = "2026-07-12T08:05:00.000Z";
-    await flagObs(id, "looks like spam");
+    await flagSituation(id, "looks like spam");
 
-    const res = await reviewerInject("GET", "/contrib/reviewer/flagged", { token: REVIEWER_TOKEN });
-    expect(res.statusCode).toBe(200);
-    const body = res.json() as { items: Record<string, unknown>[]; nextBefore: string | null };
-    const item = body.items.find((i) => i.observationId === id);
-    expect(item).toBeDefined();
-    expect(item!.type).toBe("congestion");
-    expect(item!.flagCount).toBe(1);
-    expect(item!.flagReasons).toEqual(["looks like spam"]);
-    expect((item!.geometry as { type: string }).type).toBe("Point");
+    const item = await fetchFlaggedItem(id);
+    expect(item).toMatchObject({
+      record: { class: "situation", id },
+      flaggedAt: "2026-07-12T08:05:00.000Z",
+      origin: "crowd",
+      evidenceState: "self_reported",
+      kind: "incident",
+      type: "obstruction",
+      geometry: { type: "Point" },
+      flagCount: 1,
+      flagReasons: ["looks like spam"],
+      reporter: { keyId: key.keyId, status: "active" },
+    });
   }, 60_000);
 
   it("paginates newest-flag-first with a keyset cursor", async () => {
-    const a = await landObs({
+    const a = await landSituation({
       nonce: "queue-page-a-000001",
       geometry: { type: "Point", coordinates: [10.0, 45.0] },
     });
-    const b = await landObs({
+    const b = await landSituation({
       nonce: "queue-page-b-000001",
       geometry: { type: "Point", coordinates: [20.0, 40.0] },
     });
-    nowValue = "2026-07-12T09:00:00.000Z";
-    await flagObs(a.id);
-    nowValue = "2026-07-12T09:05:00.000Z";
-    await flagObs(b.id);
+    nowValue = "2026-07-12T08:06:00.000Z";
+    await flagSituation(a.id);
+    nowValue = "2026-07-12T08:07:00.000Z";
+    await flagSituation(b.id);
 
-    const first = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=1", {
-      token: REVIEWER_TOKEN,
-    });
-    const firstBody = first.json() as {
-      items: { observationId: string }[];
-      nextBefore: string;
-      nextBeforeId: string;
-    };
-    expect(firstBody.items).toHaveLength(1);
+    const first = await flaggedPage("limit=1");
+    expect(first.items).toHaveLength(1);
     // b was flagged latest, so it comes first.
-    expect(firstBody.items[0]!.observationId).toBe(b.id);
-    expect(firstBody.nextBefore).not.toBeNull();
-    expect(firstBody.nextBeforeId).not.toBeNull();
+    expect(first.items[0]!.record.id).toBe(b.id);
+    expect(first.nextBefore).not.toBeNull();
+    expect(first.nextBeforeId).not.toBeNull();
 
-    const second = await reviewerInject(
-      "GET",
-      `/contrib/reviewer/flagged?limit=1&before=${encodeURIComponent(firstBody.nextBefore)}&beforeId=${encodeURIComponent(firstBody.nextBeforeId)}`,
-      { token: REVIEWER_TOKEN },
+    const second = await flaggedPage(
+      `limit=1&before=${encodeURIComponent(first.nextBefore!)}&beforeId=${encodeURIComponent(first.nextBeforeId!)}`,
     );
-    const secondBody = second.json() as { items: { observationId: string }[] };
-    const ids = secondBody.items.map((i) => i.observationId);
+    const ids = second.items.map((i) => i.record.id);
     expect(ids).toContain(a.id);
     expect(ids).not.toContain(b.id);
   }, 90_000);
 
-  it("omits observations that were never flagged", async () => {
-    const { id } = await landObs({
+  it("omits situations that were never flagged", async () => {
+    const { id } = await landSituation({
       nonce: "queue-unflagged-001",
       geometry: { type: "Point", coordinates: [30.0, 35.0] },
     });
-    const res = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=200", {
-      token: REVIEWER_TOKEN,
-    });
-    const body = res.json() as { items: { observationId: string }[] };
-    expect(body.items.map((i) => i.observationId)).not.toContain(id);
+    expect((await flaggedPage()).items.map((i) => i.record.id)).not.toContain(id);
   }, 60_000);
 
   it("a non-full page ends the list with null cursor fields", async () => {
-    const res = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=200", {
-      token: REVIEWER_TOKEN,
-    });
-    const body = res.json() as {
-      items: unknown[];
-      nextBefore: string | null;
-      nextBeforeId: string | null;
-    };
+    const body = await flaggedPage();
     // The DB never holds 200 flagged rows in this suite, so the page is not full.
     expect(body.items.length).toBeLessThan(200);
     expect(body.nextBefore).toBeNull();
@@ -417,76 +400,36 @@ describe("GET /contrib/reviewer/flagged — the anomaly queue", () => {
 });
 
 describe("GET /contrib/reviewer/flagged — composite (flagged_at, id) keyset cursor", () => {
-  /**
-   * Inserts a flagged observation DIRECTLY with an explicit id + flagged_at.
-   * Deliberately NOT via the HTTP landing route: a landing spawns best-effort
-   * auto-corroboration / cross-validation whose fire-and-forget completion races
-   * the reviewer query below and made the tie-break assertion flaky. A direct
-   * insert has no such side effects, so the page-boundary positions are
-   * deterministic.
-   */
-  async function insertFlaggedObs(id: string, lon: number, flaggedAt: string): Promise<void> {
-    await sql`
-      INSERT INTO conditions.observations
-        (id, source, source_format, domain, kind, type, status, geom, origin,
-         valid_from, data_updated_at, fetched_at, is_stale, flagged_at)
-      VALUES
-        (${id}, 'reviewer-cursor-test', 'native', 'roads', 'event', 'hazard', 'active',
-         ST_SetSRID(ST_MakePoint(${lon}, 46.0), 4326),
-         ${sql.json({ kind: "crowd" } as never)},
-         '2027-01-01T00:00:00.000Z', now(), now(), false, ${flaggedAt}::timestamptz)`;
-  }
-
   it("does not skip a same-flagged_at tie row split across a page boundary", async () => {
     // Three rows; TWO share the EXACT same flagged_at, and the page boundary lands
     // in the middle of that tie — the case a flagged_at-only cursor would skip.
     const tie = "2027-01-01T00:00:01.000Z";
     const later = "2027-01-01T00:00:02.000Z";
-    const newest = "cursor-tie-newest";
-    const tieA = "cursor-tie-a";
-    const tieB = "cursor-tie-b";
-    await insertFlaggedObs(newest, 11.0, later);
-    await insertFlaggedObs(tieA, 12.0, tie);
-    await insertFlaggedObs(tieB, 13.0, tie);
+    const newest = await insertFlagged("cursor-tie-newest", 11.0, later);
+    const tieA = await insertFlagged("cursor-tie-a", 12.0, tie);
+    const tieB = await insertFlagged("cursor-tie-b", 13.0, tie);
     const mine = new Set([newest, tieA, tieB]);
     const [tieHi, tieLo] = [tieA, tieB].sort((x, y) => (x < y ? 1 : -1)); // id DESC
-    // Clear every OTHER flag (from earlier tests / their async side effects) right
-    // before the query, so these three are the only flagged rows at query time and
-    // the page-boundary positions are deterministic regardless of test order.
-    await sql`
-      UPDATE conditions.observations SET flagged_at = NULL
-      WHERE flagged_at IS NOT NULL AND id <> ALL(${sql.array([...mine])})`;
+    await onlyFlagged([...mine]);
 
     // Page 1: newest first, boundary in the middle of the tie (limit 2).
-    const p1 = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=2", {
-      token: REVIEWER_TOKEN,
-    });
-    expect(p1.statusCode).toBe(200);
-    const b1 = p1.json() as {
-      items: { observationId: string; flaggedAt: string }[];
-      nextBefore: string | null;
-      nextBeforeId: string | null;
-    };
-    expect(b1.items.map((i) => i.observationId)).toEqual([newest, tieHi]);
+    const b1 = await flaggedPage("limit=2");
+    expect(b1.items.map((i) => i.record.id)).toEqual([newest, tieHi]);
     expect(b1.nextBefore).toBe(tie);
     expect(b1.nextBeforeId).toBe(tieHi);
 
     // Page 2: with BOTH cursor fields, the remaining tie row must appear — a
     // flagged_at-only cursor (before=tie) would have excluded it entirely.
-    const p2 = await reviewerInject(
-      "GET",
-      `/contrib/reviewer/flagged?limit=2&before=${encodeURIComponent(b1.nextBefore!)}&beforeId=${encodeURIComponent(b1.nextBeforeId!)}`,
-      { token: REVIEWER_TOKEN },
+    const b2 = await flaggedPage(
+      `limit=2&before=${encodeURIComponent(b1.nextBefore!)}&beforeId=${encodeURIComponent(b1.nextBeforeId!)}`,
     );
-    expect(p2.statusCode).toBe(200);
-    const b2 = p2.json() as { items: { observationId: string }[] };
-    const p2Ids = b2.items.map((i) => i.observationId);
+    const p2Ids = b2.items.map((i) => i.record.id);
     expect(p2Ids[0]).toBe(tieLo);
 
     // Full set across both pages: no dup, no skip; every seeded row present.
-    const seen = [...b1.items.map((i) => i.observationId), ...p2Ids].filter((id) => mine.has(id));
-    expect(new Set(seen).size).toBe(seen.length); // no duplicate
-    expect(new Set(seen)).toEqual(mine); // no skip — all three returned
+    const seen = [...b1.items.map((i) => i.record.id), ...p2Ids].filter((id) => mine.has(id));
+    expect(new Set(seen).size).toBe(seen.length);
+    expect(new Set(seen)).toEqual(mine);
     // Global order across pages is (flagged_at DESC, id DESC).
     expect(seen).toEqual([newest, tieHi, tieLo]);
   }, 90_000);
@@ -501,186 +444,185 @@ describe("GET /contrib/reviewer/flagged — composite (flagged_at, id) keyset cu
   });
 
   it("rejects a beforeId without a before with 400", async () => {
-    const res = await reviewerInject("GET", "/contrib/reviewer/flagged?beforeId=crowd:x:y", {
-      token: REVIEWER_TOKEN,
-    });
+    const res = await reviewerInject(
+      "GET",
+      `/contrib/reviewer/flagged?beforeId=${encodeURIComponent("oc:situation:x:y")}`,
+      { token: REVIEWER_TOKEN },
+    );
     expect(res.statusCode).toBe(400);
   });
 });
 
-describe("POST /contrib/reviewer/observations/:id/accept", () => {
+describe("POST /contrib/reviewer/:class/:id/:decision — the route", () => {
+  it("answers an unknown decision with 404", async () => {
+    const res = await decide("oc:situation:x:y", "approve");
+    expect(res.statusCode).toBe(404);
+  });
+
+  it.each(["feature", "offer", "observation"])(
+    "answers a %s with 422 unsupported_record_class",
+    async (recordClass) => {
+      const res = await decide(`oc:${recordClass}:x:y`, "accept", recordClass);
+      expect(res.statusCode).toBe(422);
+      expect((res.json() as { reason: string }).reason).toBe("unsupported_record_class");
+    },
+  );
+});
+
+describe("POST /contrib/reviewer/situation/:id/accept", () => {
   it("externally resolves, routes, clears the flag, and trains the originator confirmed", async () => {
-    const { key, id } = await landObs({
+    const { key, id } = await landSituation({
       nonce: "accept-000000000001",
       geometry: { type: "Point", coordinates: [-10.0, 30.0] },
     });
-    await flagObs(id);
-    expect((await readObs(id))!.flagged_at).not.toBeNull();
+    await flagSituation(id);
+    expect((await readSituation(id))!.flagged_at).not.toBeNull();
 
     nowValue = "2026-07-12T08:10:00.000Z";
-    const res = await reviewerInject("POST", `/contrib/reviewer/observations/${id}/accept`, {
-      token: REVIEWER_TOKEN,
-    });
+    const res = await decide(id, "accept");
     expect(res.statusCode).toBe(200);
-    const body = res.json() as {
-      observationId: string;
-      evidenceState: string;
-      routingEligible: boolean;
-    };
-    expect(body.evidenceState).toBe("externally_resolved");
-    expect(body.routingEligible).toBe(true);
+    expect(res.json()).toEqual({
+      record: { class: "situation", id },
+      evidenceState: "externally_resolved",
+      routingEligible: true,
+      tombstoned: false,
+    });
 
-    const row = await readObs(id);
-    expect(row!.evidence_state).toBe("externally_resolved");
-    expect(row!.routing_eligible).toBe(true);
-    expect(row!.flagged_at).toBeNull();
-    expect(row!.status).toBe("active");
+    const row = await readSituation(id);
+    expect(row).toMatchObject({
+      evidence_state: "externally_resolved",
+      routing_eligible: true,
+      flagged_at: null,
+      tombstone_reason: null,
+    });
+    expect(await countEvidence(id, "reviewer_accept")).toBe(1);
     // The originating reporter was trained confirmed (Beta(2,2) -> (3,2)).
     expect(await readPosterior(key.keyId)).toEqual({ alpha: 3, beta: 2 });
+    expect(await fetchFlaggedItem(id)).toBeUndefined();
   }, 60_000);
 
-  it("re-accepting a resolved observation is a 409", async () => {
-    const { id } = await landObs({
+  it("re-accepting a resolved report is a 409", async () => {
+    const { id } = await landSituation({
       nonce: "accept-again-000001",
       geometry: { type: "Point", coordinates: [-20.0, 25.0] },
     });
-    await flagObs(id);
-    expect(
-      (
-        await reviewerInject("POST", `/contrib/reviewer/observations/${id}/accept`, {
-          token: REVIEWER_TOKEN,
-        })
-      ).statusCode,
-    ).toBe(200);
-    const again = await reviewerInject("POST", `/contrib/reviewer/observations/${id}/accept`, {
-      token: REVIEWER_TOKEN,
-    });
-    expect(again.statusCode).toBe(409);
+    await flagSituation(id);
+    expect((await decide(id, "accept")).statusCode).toBe(200);
+    expect((await decide(id, "accept")).statusCode).toBe(409);
   }, 60_000);
 
-  it("accepting a non-existent observation is a 404", async () => {
-    const res = await reviewerInject(
-      "POST",
-      "/contrib/reviewer/observations/crowd:none:missing0001/accept",
-      { token: REVIEWER_TOKEN },
-    );
+  it("accepting a non-existent situation is a 404", async () => {
+    const res = await decide(`oc:situation:${INSTANCE}:missing0001`, "accept");
     expect(res.statusCode).toBe(404);
   });
+
+  it("on a feed situation only clears the flag: its source decides its truth", async () => {
+    const id = await insertFlagged("accept-feed-1", -25.0, "2026-07-12T07:30:00.000Z");
+    const res = await decide(id, "accept");
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ evidenceState: null, routingEligible: false });
+
+    expect(await readSituation(id)).toMatchObject({
+      evidence_state: null,
+      routing_eligible: false,
+      flagged_at: null,
+      tombstone_reason: null,
+      revision: 1,
+    });
+    expect(await countEvidence(id, "reviewer_accept")).toBe(0);
+  }, 60_000);
 });
 
-describe("POST /contrib/reviewer/observations/:id/reject — tombstone", () => {
-  it("negates, tombstones the row, retains the ledger, and trains the originator rejected", async () => {
-    const { key, id } = await landObs({
+describe("POST /contrib/reviewer/situation/:id/reject — tombstone", () => {
+  it("negates, tombstones the report `rejected` in a new revision, retains the ledger, and trains the originator rejected", async () => {
+    const { key, id } = await landSituation({
       nonce: "reject-000000000001",
       geometry: { type: "Point", coordinates: [-30.0, 20.0] },
-      subject: [{ type: "osm", id: "way/123" }],
-      attributes: { direction: "N" },
     });
-    await flagObs(id);
-    const before = await readObs(id);
-    expect(before!.canonical_id).not.toBeNull();
+    await flagSituation(id);
+    const before = await readSituation(id);
+    expect(before!.revision).toBe(1);
 
-    nowValue = "2026-07-12T08:20:00.000Z";
-    const res = await reviewerInject("POST", `/contrib/reviewer/observations/${id}/reject`, {
-      token: REVIEWER_TOKEN,
-    });
+    nowValue = "2026-07-12T08:10:00.000Z";
+    const res = await decide(id, "reject");
     expect(res.statusCode).toBe(200);
-    const body = res.json() as { evidenceState: string; tombstoned: boolean };
-    expect(body.evidenceState).toBe("negated");
-    expect(body.tombstoned).toBe(true);
-
-    const row = await readObs(id);
-    expect(row!.status).toBe("archived");
-    expect(row!.evidence_state).toBe("negated");
-    expect(row!.flagged_at).toBeNull();
-    // Content scrubbed to a minimal deletion record.
-    expect(row!.headline).toBeNull();
-    expect(row!.description).toBeNull();
-    expect(row!.subject).toBeNull();
-    expect(row!.label).toBeNull();
-    expect(row!.severity).toBeNull();
-    expect(row!.severity_level).toBeNull();
-    expect(row!.attributes).toEqual({
-      tombstone: true,
-      reason: "reviewer_reject",
-      at: "2026-07-12T08:20:00.000Z",
+    expect(res.json()).toEqual({
+      record: { class: "situation", id },
+      evidenceState: "negated",
+      routingEligible: false,
+      tombstoned: true,
     });
-    // origin scrubbed to a minimal marker — the reporter key is dropped from the
-    // PUBLIC row (the ledger keeps the linkage for audit).
-    expect(row!.origin).toEqual({ kind: "crowd" });
-    expect(row!.origin?.reporter).toBeUndefined();
-    // Federation identity kept.
-    expect(row!.canonical_id).toBe(before!.canonical_id);
-    expect(row!.instance_id).toBe(before!.instance_id);
-    expect(row!.phenomenon_fingerprint).toBe(before!.phenomenon_fingerprint);
+
+    const row = await readSituation(id);
+    expect(row).toMatchObject({
+      evidence_state: "negated",
+      routing_eligible: false,
+      flagged_at: null,
+      tombstone_reason: "rejected",
+      tombstoned_at: new Date(nowValue),
+      revision: 2,
+    });
+    expect(row!.record).toMatchObject({
+      revision: 2,
+      tombstone: { reason: "rejected", at: nowValue },
+    });
     // The audit ledger is retained.
     expect(await countEvidence(id, "report")).toBe(1);
     expect(await countEvidence(id, "reviewer_reject")).toBe(1);
     // The originating reporter was trained rejected (Beta(2,2) -> (2,3)).
     expect(await readPosterior(key.keyId)).toEqual({ alpha: 2, beta: 3 });
+    // A tombstoned report leaves the queue.
+    expect(await fetchFlaggedItem(id)).toBeUndefined();
   }, 60_000);
 
-  it("rejecting an already-tombstoned observation is a 409", async () => {
-    const { id } = await landObs({
+  it("rejecting an already-tombstoned report is a 409", async () => {
+    const { id } = await landSituation({
       nonce: "reject-again-000001",
       geometry: { type: "Point", coordinates: [-40.0, 15.0] },
     });
-    await flagObs(id);
-    expect(
-      (
-        await reviewerInject("POST", `/contrib/reviewer/observations/${id}/reject`, {
-          token: REVIEWER_TOKEN,
-        })
-      ).statusCode,
-    ).toBe(200);
-    const again = await reviewerInject("POST", `/contrib/reviewer/observations/${id}/reject`, {
-      token: REVIEWER_TOKEN,
-    });
-    expect(again.statusCode).toBe(409);
+    await flagSituation(id);
+    expect((await decide(id, "reject")).statusCode).toBe(200);
+    expect((await decide(id, "reject")).statusCode).toBe(409);
   }, 60_000);
 
-  it("rejecting a non-existent observation is a 404", async () => {
-    const res = await reviewerInject(
-      "POST",
-      "/contrib/reviewer/observations/crowd:none:missing0002/reject",
-      { token: REVIEWER_TOKEN },
-    );
+  it("rejecting a non-existent situation is a 404", async () => {
+    const res = await decide(`oc:situation:${INSTANCE}:missing0002`, "reject");
     expect(res.statusCode).toBe(404);
   });
 
-  it("tombstones a community-NEGATED flagged observation (no GDPR-reachability gap)", async () => {
-    const { id } = await landObs({
+  it("refuses to reject a feed situation (409) and leaves it flagged", async () => {
+    const id = await insertFlagged("reject-feed-1", -45.0, "2026-07-12T07:30:00.000Z");
+    const res = await decide(id, "reject");
+    expect(res.statusCode).toBe(409);
+    expect(await readSituation(id)).toMatchObject({
+      tombstone_reason: null,
+      flagged_at: new Date("2026-07-12T07:30:00.000Z"),
+      revision: 1,
+    });
+    expect(await countEvidence(id, "reviewer_reject")).toBe(0);
+  }, 60_000);
+
+  it("tombstones a community-NEGATED flagged report (no erasure-reachability gap)", async () => {
+    const { id } = await landSituation({
       nonce: "reject-negated-0001",
       geometry: { type: "Point", coordinates: [-15.0, 12.0] },
     });
-    // Peers negate it (status stays 'active'); it is also flagged for review.
-    await sql`UPDATE conditions.observations SET evidence_state = 'negated' WHERE id = ${id}`;
-    await flagObs(id, "disputed and negated");
+    // Peers negate it (it stays live); it is also flagged for review.
+    await sql`UPDATE conditions.situation SET evidence_state = 'negated' WHERE id = ${id}`;
+    await flagSituation(id, "disputed and negated");
 
     // It shows up in the queue despite being peer-negated.
-    const queue = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=200", {
-      token: REVIEWER_TOKEN,
-    });
-    const ids = (queue.json() as { items: { observationId: string }[] }).items.map(
-      (i) => i.observationId,
-    );
-    expect(ids).toContain(id);
+    expect(await fetchFlaggedItem(id)).toBeDefined();
 
     // Reject is allowed regardless of the negated state and tombstones it.
-    const res = await reviewerInject("POST", `/contrib/reviewer/observations/${id}/reject`, {
-      token: REVIEWER_TOKEN,
+    expect((await decide(id, "reject")).statusCode).toBe(200);
+    expect(await readSituation(id)).toMatchObject({
+      tombstone_reason: "rejected",
+      evidence_state: "negated",
     });
-    expect(res.statusCode).toBe(200);
-    const row = await readObs(id);
-    expect(row!.status).toBe("archived");
-    expect(row!.evidence_state).toBe("negated");
-    expect(row!.attributes).toMatchObject({ tombstone: true });
 
-    // A second reject on the tombstoned row is a 409.
-    const again = await reviewerInject("POST", `/contrib/reviewer/observations/${id}/reject`, {
-      token: REVIEWER_TOKEN,
-    });
-    expect(again.statusCode).toBe(409);
+    // A second reject on the tombstoned report is a 409.
+    expect((await decide(id, "reject")).statusCode).toBe(409);
   }, 60_000);
 });
 
@@ -689,7 +631,7 @@ describe("reviewer block list", () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
     // The key can report before it is blocked.
-    const cell: ReportClaim["geometry"] = { type: "Point", coordinates: [-50.0, 10.0] };
+    const cell: SituationClaim["geometry"] = { type: "Point", coordinates: [-50.0, 10.0] };
     const before = await landReportFrom(key, grant, {
       nonce: "block-before-00001",
       geometry: cell,
@@ -799,8 +741,7 @@ describe("reviewer block list", () => {
 
 describe("GET /contrib/reviewer/flagged — originating-reporter advisory trust surface", () => {
   it("attaches the originating reporter's advisory component signals to a flagged item", async () => {
-    const keyId = "crowd:trust:reporter-present-1";
-    const obsId = "crowd:trust:obs-present-1";
+    const keyId = "trust-reporter-present-1";
     await seedReporter({
       keyId,
       alpha: 5,
@@ -810,10 +751,10 @@ describe("GET /contrib/reviewer/flagged — originating-reporter advisory trust 
       createdAt: "2026-06-12T08:00:00.000Z",
       lastActiveAt: "2026-07-10T08:00:00.000Z",
     });
-    await insertFlaggedRow(obsId, 11.11, "2027-02-01T00:00:00.000Z");
-    await seedReportEvidence(obsId, keyId, "2026-06-12T08:00:00.000Z");
+    const id = await insertFlagged("trust-present-1", 11.11, "2027-02-01T00:00:00.000Z");
+    await seedReportEvidence(id, keyId, "2026-06-12T08:00:00.000Z");
 
-    const item = await fetchFlaggedItem(obsId);
+    const item = await fetchFlaggedItem(id);
     expect(item).toBeDefined();
     const reporter = item!.reporter;
     expect(reporter).not.toBeNull();
@@ -821,7 +762,6 @@ describe("GET /contrib/reviewer/flagged — originating-reporter advisory trust 
     expect(reporter!.status).toBe("active");
     expect(reporter!.trustSignal).toBe(0.8);
     expect(reporter!.corroboratedCount).toBe(3);
-    expect(typeof reporter!.reliabilityLowerBound).toBe("number");
     expect(reporter!.reliabilityLowerBound).toBeGreaterThan(0);
     expect(reporter!.reliabilityLowerBound).toBeLessThan(1);
     // now = 2026-07-12, created = 2026-06-12 → ~30 days.
@@ -833,69 +773,65 @@ describe("GET /contrib/reviewer/flagged — originating-reporter advisory trust 
   }, 60_000);
 
   it("surfaces a BLOCKED originating reporter's status so a reviewer sees it", async () => {
-    const keyId = "crowd:trust:reporter-blocked-1";
-    const obsId = "crowd:trust:obs-blocked-1";
+    const keyId = "trust-reporter-blocked-1";
     await seedReporter({ keyId, alpha: 2, beta: 6, status: "blocked" });
-    await insertFlaggedRow(obsId, 15.55, "2027-03-01T00:00:00.000Z");
-    await seedReportEvidence(obsId, keyId, "2026-06-12T08:00:00.000Z");
+    const id = await insertFlagged("trust-blocked-1", 15.55, "2027-03-01T00:00:00.000Z");
+    await seedReportEvidence(id, keyId, "2026-06-12T08:00:00.000Z");
 
-    const item = await fetchFlaggedItem(obsId);
+    const item = await fetchFlaggedItem(id);
     expect(item!.reporter).not.toBeNull();
     expect(item!.reporter!.status).toBe("blocked");
   }, 60_000);
 
-  it("leaves reporter null for a flagged observation with no originating key", async () => {
-    // A federated report row with a NULL actor_key_id.
-    const federatedObs = "crowd:trust:obs-federated-1";
-    await insertFlaggedRow(federatedObs, 12.22, "2027-02-01T00:00:01.000Z");
-    await seedReportEvidence(federatedObs, null, "2026-06-12T08:00:00.000Z");
-    // A keyless auto-flag with no report evidence at all.
-    const autoFlagObs = "crowd:trust:obs-autoflag-1";
-    await insertFlaggedRow(autoFlagObs, 13.33, "2027-02-01T00:00:02.000Z");
+  it("leaves reporter null for a flagged situation with no originating key", async () => {
+    // A peer's crowd report: its report row carries no key.
+    const federated = await seedPeerCrowdReport(sql, "trust-federated-1", [12.22, 47.0]);
+    await sql`
+      UPDATE conditions.situation SET flagged_at = '2027-02-01T00:00:01.000Z'
+      WHERE id = ${federated}`;
+    // A keyless auto-flag on a record with no report evidence at all.
+    const autoFlag = await insertFlagged("trust-autoflag-1", 13.33, "2027-02-01T00:00:02.000Z");
 
-    const fed = await fetchFlaggedItem(federatedObs);
-    const auto = await fetchFlaggedItem(autoFlagObs);
+    const fed = await fetchFlaggedItem(federated);
+    const auto = await fetchFlaggedItem(autoFlag);
     expect(fed).toBeDefined();
+    expect(fed!.origin).toBe("crowd");
     expect(fed!.reporter).toBeNull();
     expect(auto).toBeDefined();
+    expect(auto!.origin).toBe("feed");
     expect(auto!.reporter).toBeNull();
   }, 60_000);
 
-  it("is read-only: a GET mutates neither the reporter nor the observation", async () => {
-    const keyId = "crowd:trust:readonly-key";
-    const obsId = "crowd:trust:readonly-obs";
+  it("is read-only: a GET mutates neither the reporter nor the situation", async () => {
+    const keyId = "trust-readonly-key";
     await seedReporter({ keyId, alpha: 4, beta: 3, trustSignal: 0.5, corroboratedCount: 2 });
-    await insertFlaggedRow(obsId, 14.44, "2027-02-05T00:00:00.000Z");
-    await seedReportEvidence(obsId, keyId, "2026-06-12T08:00:00.000Z");
+    const id = await insertFlagged("trust-readonly-1", 14.44, "2027-02-05T00:00:00.000Z");
+    await seedReportEvidence(id, keyId, "2026-06-12T08:00:00.000Z");
 
-    const snapBefore = await sql`
-      SELECT reputation_alpha, reputation_beta, corroborated_count, trust_signal,
-             last_active_at, created_at
-      FROM conditions.reporter WHERE key_id = ${keyId}`;
-    const obsBefore = await sql`
-      SELECT status, evidence_state, flagged_at FROM conditions.observations WHERE id = ${obsId}`;
+    const snapshot = async () => ({
+      reporter: (
+        await sql`
+          SELECT reputation_alpha, reputation_beta, corroborated_count, trust_signal,
+                 last_active_at, created_at
+          FROM conditions.reporter WHERE key_id = ${keyId}`
+      )[0],
+      situation: await readSituation(id),
+    });
+    const before = await snapshot();
 
-    const item = await fetchFlaggedItem(obsId);
+    const item = await fetchFlaggedItem(id);
     expect(item!.reporter).not.toBeNull();
 
-    const snapAfter = await sql`
-      SELECT reputation_alpha, reputation_beta, corroborated_count, trust_signal,
-             last_active_at, created_at
-      FROM conditions.reporter WHERE key_id = ${keyId}`;
-    const obsAfter = await sql`
-      SELECT status, evidence_state, flagged_at FROM conditions.observations WHERE id = ${obsId}`;
-    expect(snapAfter[0]).toEqual(snapBefore[0]);
-    expect(obsAfter[0]).toEqual(obsBefore[0]);
+    expect(await snapshot()).toEqual(before);
   }, 60_000);
 
   it("computes a sane conservative reliabilityLowerBound for a fresh Beta(2,2) reporter", async () => {
-    const keyId = "crowd:trust:fresh-key";
-    const obsId = "crowd:trust:fresh-obs";
+    const keyId = "trust-fresh-key";
     await seedReporter({ keyId, alpha: 2, beta: 2 });
-    await insertFlaggedRow(obsId, 15.55, "2027-02-06T00:00:00.000Z");
-    await seedReportEvidence(obsId, keyId, "2026-06-12T08:00:00.000Z");
+    const id = await insertFlagged("trust-fresh-1", 15.65, "2027-02-06T00:00:00.000Z");
+    await seedReportEvidence(id, keyId, "2026-06-12T08:00:00.000Z");
 
-    const item = await fetchFlaggedItem(obsId);
+    const item = await fetchFlaggedItem(id);
     // Beta(2,2) 10th-percentile lower bound at the 0.9 advisory level ≈ 0.2 —
     // conservative, well under the 0.5 symmetric mean, so it never over-claims.
     expect(item!.reporter!.reliabilityLowerBound).toBeGreaterThan(0.1);
@@ -903,95 +839,87 @@ describe("GET /contrib/reviewer/flagged — originating-reporter advisory trust 
   }, 60_000);
 
   it("keeps the (flagged_at, id) tie-break exact when the LATERAL reporter join is present", async () => {
-    // Same shape as the composite-cursor tie test, but each tie row's originating
-    // reporter has MULTIPLE report rows: a non-LIMIT-1 join would multiply rows and
-    // corrupt the keyset. The LATERAL LIMIT-1 must keep counts/order intact.
+    // Each tie row's originating reporter has MULTIPLE report rows: a
+    // non-LIMIT-1 join would multiply rows and corrupt the keyset.
     const tie = "2027-03-01T00:00:01.000Z";
     const later = "2027-03-01T00:00:02.000Z";
-    const newest = "trust-tie-newest";
-    const tieA = "trust-tie-a";
-    const tieB = "trust-tie-b";
-    await insertFlaggedRow(newest, 21.0, later);
-    await insertFlaggedRow(tieA, 22.0, tie);
-    await insertFlaggedRow(tieB, 23.0, tie);
-    const keyA = "crowd:trust:tie-a-key";
+    const newest = await insertFlagged("trust-tie-newest", 21.0, later);
+    const tieA = await insertFlagged("trust-tie-a", 22.0, tie);
+    const tieB = await insertFlagged("trust-tie-b", 23.0, tie);
+    const keyA = "trust-tie-a-key";
     await seedReporter({ keyId: keyA });
     await seedReportEvidence(tieA, keyA, "2026-06-01T00:00:00.000Z");
     await seedReportEvidence(tieA, keyA, "2026-06-02T00:00:00.000Z");
     await seedReportEvidence(tieA, keyA, "2026-06-03T00:00:00.000Z");
     const mine = new Set([newest, tieA, tieB]);
     const [tieHi, tieLo] = [tieA, tieB].sort((x, y) => (x < y ? 1 : -1)); // id DESC
-    await sql`
-      UPDATE conditions.observations SET flagged_at = NULL
-      WHERE flagged_at IS NOT NULL AND id <> ALL(${sql.array([...mine])})`;
+    await onlyFlagged([...mine]);
 
-    const p1 = await reviewerInject("GET", "/contrib/reviewer/flagged?limit=2", {
-      token: REVIEWER_TOKEN,
-    });
-    expect(p1.statusCode).toBe(200);
-    const b1 = p1.json() as {
-      items: { observationId: string; reporter: ReporterSignalShape | null }[];
-      nextBefore: string | null;
-      nextBeforeId: string | null;
-    };
+    const b1 = await flaggedPage("limit=2");
     // Exactly two rows despite tieA's three report rows — no multiplication.
-    expect(b1.items.map((i) => i.observationId)).toEqual([newest, tieHi]);
+    expect(b1.items.map((i) => i.record.id)).toEqual([newest, tieHi]);
     expect(b1.nextBefore).toBe(tie);
     expect(b1.nextBeforeId).toBe(tieHi);
 
-    const p2 = await reviewerInject(
-      "GET",
-      `/contrib/reviewer/flagged?limit=2&before=${encodeURIComponent(b1.nextBefore!)}&beforeId=${encodeURIComponent(b1.nextBeforeId!)}`,
-      { token: REVIEWER_TOKEN },
+    const b2 = await flaggedPage(
+      `limit=2&before=${encodeURIComponent(b1.nextBefore!)}&beforeId=${encodeURIComponent(b1.nextBeforeId!)}`,
     );
-    expect(p2.statusCode).toBe(200);
-    const b2 = p2.json() as { items: { observationId: string }[] };
-    const p2Ids = b2.items.map((i) => i.observationId);
+    const p2Ids = b2.items.map((i) => i.record.id);
     expect(p2Ids[0]).toBe(tieLo);
 
-    const seen = [...b1.items.map((i) => i.observationId), ...p2Ids].filter((id) => mine.has(id));
-    expect(new Set(seen).size).toBe(seen.length); // no duplicate
-    expect(new Set(seen)).toEqual(mine); // no skip
-    expect(seen).toEqual([newest, tieHi, tieLo]); // (flagged_at DESC, id DESC)
+    const seen = [...b1.items.map((i) => i.record.id), ...p2Ids].filter((id) => mine.has(id));
+    expect(new Set(seen).size).toBe(seen.length);
+    expect(new Set(seen)).toEqual(mine);
+    expect(seen).toEqual([newest, tieHi, tieLo]);
   }, 90_000);
 });
 
 describe("StreetComplete rule — piling onto a disputed element", () => {
-  it("flags a second report that lands onto an open-flagged phenomenon (still 200)", async () => {
-    const a = await landObs({
+  it("flags a second report that lands onto an open-flagged situation (still 200, not merged)", async () => {
+    const a = await landSituation({
       nonce: "sc-first-000000001",
       geometry: { type: "Point", coordinates: [5.12, 51.7] },
     });
-    await flagObs(a.id);
-    expect((await readObs(a.id))!.flagged_at).not.toBeNull();
+    await flagSituation(a.id);
+    expect((await readSituation(a.id))!.flagged_at).not.toBeNull();
 
-    // A DIFFERENT key reports the same phenomenon (same type, place, time).
-    const b = await landObs({
+    // A DIFFERENT key reports the same phenomenon (same kind, type, place, time).
+    const b = await landSituation({
       nonce: "sc-second-00000001",
       geometry: { type: "Point", coordinates: [5.12, 51.7] },
     });
     expect(b.id).not.toBe(a.id);
-    const row = await readObs(b.id);
-    expect(row!.status).toBe("active");
-    expect(row!.flagged_at).not.toBeNull();
+    // Flagged, and as a disputed witness it stays its own report.
+    expect(await evidenceOf(sql, b.id)).toMatchObject({
+      tombstone_reason: null,
+      evidence_state: "self_reported",
+      flagged_at: expect.any(Date),
+    });
+    expect(await evidenceOf(sql, a.id)).toMatchObject({ corroborations: 0 });
   }, 90_000);
 
+  it("flags a report that lands onto an open-flagged FEED situation", async () => {
+    const feed = await insertFlagged("sc-feed-1", 6.3, "2026-07-12T07:30:00.000Z");
+    const { id } = await landSituation({
+      nonce: "sc-onto-feed-00001",
+      geometry: { type: "Point", coordinates: [6.3, 47.0] },
+    });
+    expect(feed).not.toBe(id);
+    expect((await readSituation(id))!.flagged_at).not.toBeNull();
+  }, 60_000);
+
   it("does NOT flag a report with no open-flagged neighbor", async () => {
-    const { id } = await landObs({
+    const { id } = await landSituation({
       nonce: "sc-lonely-00000001",
       geometry: { type: "Point", coordinates: [6.9, 50.9] },
     });
-    expect((await readObs(id))!.flagged_at).toBeNull();
+    expect((await readSituation(id))!.flagged_at).toBeNull();
   }, 60_000);
 
   it("still lands 200 when the post-hoc flag check throws (never fails the landing)", async () => {
     const throwingApp = await build({
       sql,
-      env: {
-        OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
-        OPENCONDITIONS_REVIEWER_TOKEN: REVIEWER_TOKEN,
-        OPENCONDITIONS_INSTANCE_ID: "maps.example.org",
-      },
+      env: ENV,
       logger: false,
       now: () => nowValue,
       streetCompleteCheck: async () => {
@@ -1007,12 +935,13 @@ describe("StreetComplete rule — piling onto a disputed element", () => {
         remoteAddress: nextIp(),
       });
       const grant = (enrollRes.json() as { reportingGrant: string }).reportingGrant;
-      const report = await signReport(
-        makeClaim({
+      const report = await reportAs(
+        key,
+        situationClaim({
           nonce: "sc-throws-00000001",
           geometry: { type: "Point", coordinates: [7.5, 47.5] },
+          reportedAt: nowValue,
         }),
-        key,
       );
       const res = await throwingApp.inject({
         method: "POST",
@@ -1021,8 +950,8 @@ describe("StreetComplete rule — piling onto a disputed element", () => {
       });
       // The landing still succeeds despite the hook throwing.
       expect(res.statusCode).toBe(200);
-      const id = (res.json() as { observationId: string }).observationId;
-      expect((await readObs(id))!.status).toBe("active");
+      const id = (res.json() as { record: { id: string } }).record.id;
+      expect((await readSituation(id))!.tombstone_reason).toBeNull();
     } finally {
       await throwingApp.close();
     }

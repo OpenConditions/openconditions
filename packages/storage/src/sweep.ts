@@ -51,7 +51,7 @@ const ORPHANED = `r.tombstoned_at IS NULL AND r.instance_id = $2 AND r.origin IN
  *    for `maxAgeSec` is tombstoned `expired` — a still-polling source ends
  *    its records itself, by leaving them out of its snapshot;
  *  - a record tombstoned more than `historyDays` ago is purged with its
- *    revisions, effects and components;
+ *    revisions, effects, components, bindings, crowd evidence and votes;
  *  - an on-demand row is deleted at expiry: it was a cache, with no history.
  * A declared validity end is never a reason: a source that still publishes
  * an ended record keeps it, and reads filter by time. Every tombstone and
@@ -67,15 +67,25 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
     (table: string, key: string, type = "text") =>
     (tx: postgres.TransactionSql, ids: string[]) =>
       tx.unsafe(`DELETE FROM conditions.${table} WHERE ${key} = ANY($1::${type}[])`, [ids]);
-  // A record's graph bindings have no foreign key to it: they go with it.
+  // A record's graph bindings, crowd evidence and votes have no foreign key
+  // to it: they go with it.
   const removeRecords =
     (cls: RevisionedClass) => async (tx: postgres.TransactionSql, ids: string[]) => {
-      for (const table of ["record_segment", "record_binding", "binding_queue"]) {
+      for (const table of [
+        "record_segment",
+        "record_binding",
+        "binding_queue",
+        "report_evidence",
+      ]) {
         await tx.unsafe(
           `DELETE FROM conditions.${table} WHERE record_class = $1 AND record_id = ANY($2::text[])`,
           [cls, ids],
         );
       }
+      await tx.unsafe(
+        `DELETE FROM conditions.sub_claim WHERE subject_class = $1 AND subject_id = ANY($2::text[])`,
+        [cls, ids],
+      );
       await remove(cls, "id")(tx, ids);
     };
   for (const cls of CLASSES) {

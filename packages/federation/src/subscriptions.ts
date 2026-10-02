@@ -7,26 +7,30 @@
  * ordering authority is the outbox's composite `(txid, seq)` cursor.
  *
  * `cursor` is the PUSH-CHANNEL cursor. Under `priorityOnly` the push channel
- * carries ONLY the priority classes (closure/crash), and this cursor advances
- * ONLY across those priority events (the scan is priority-restricted at SQL) —
- * it can never be advanced past a non-priority but subscriber-matching event,
- * because such an event is not part of the push channel. COMPLETENESS (every
- * matching event, priority and non-priority) is the peer's OWN independent pull
- * of `/peer/outbox`, which is never `priorityOnly`-restricted; push is a latency
- * optimization for priority events, never the completeness channel. A dropped
- * push loses nothing: the push cursor is not advanced (priority events re-push,
- * idempotently) and the peer's pull covers everything regardless.
+ * carries ONLY priority entries (a situation that closes a road or all its
+ * lanes, or an incident), and this cursor advances ONLY across those (the scan
+ * is priority-restricted at SQL) — it can never be advanced past a
+ * non-priority but subscriber-matching entry, because such an entry is not
+ * part of the push channel. COMPLETENESS is the peer's OWN independent pull of
+ * `/peer/outbox`, which is never `priorityOnly`-restricted; push is a latency
+ * optimization for priority entries, never the completeness channel. A dropped
+ * push loses nothing: the push cursor is not advanced (priority entries
+ * re-push, idempotently) and the peer's pull covers everything regardless.
  *
- * Validation is fail-closed: a push mode (webhook/sse) demands a NARROW filter
- * (at least a bbox, a type allow-list, a privacyClass allow-list, or a maxAge
- * bound) so a subscriber cannot ask the publisher to firehose its whole journal
- * over a push channel, and a webhook demands a public https `inboxUrl` (an
- * SSRF-guarded target — the same egress guard the POST later dials through).
+ * The filter is a {@link RecordFilter}. Validation is fail-closed: a push mode
+ * (webhook/sse) demands a NARROW filter (a bbox, a kind, domain, property or
+ * privacy-class allow-list, or a maxAge bound) so a subscriber cannot ask the
+ * publisher to firehose its whole journal over a push channel; a subscription
+ * that wants observations must name their properties, since flow series change
+ * by the tens of thousands every minute; and a webhook demands a public https
+ * `inboxUrl` (an SSRF-guarded target — the same egress guard the POST later
+ * dials through).
  */
 
 import { assertPublicUrl } from "@openconditions/ingest-framework";
+import { RECORD_CLASSES } from "@openconditions/model";
 import type postgres from "postgres";
-import type { FederationFilter } from "./filter.js";
+import type { RecordFilter } from "./record-filter.js";
 
 export type DeliveryMode = "pull" | "webhook" | "sse";
 export type SubscriptionStatus = "active" | "push_disabled";
@@ -37,7 +41,7 @@ export const DELIVERY_MODES: readonly DeliveryMode[] = ["pull", "webhook", "sse"
 export interface FederationSubscription {
   id: string;
   peerId: string;
-  filter: FederationFilter;
+  filter: RecordFilter;
   deliveryMode: DeliveryMode;
   inboxUrl: string | null;
   /** Last composite `(txid, seq)` cursor delivered/acked to this peer (wire form). */
@@ -51,14 +55,14 @@ export interface FederationSubscription {
 }
 
 export interface CreateSubscriptionInput {
-  filter?: FederationFilter;
+  filter?: RecordFilter;
   deliveryMode?: DeliveryMode;
   inboxUrl?: string;
   priorityOnly?: boolean;
 }
 
 export interface UpdateSubscriptionInput {
-  filter?: FederationFilter;
+  filter?: RecordFilter;
   deliveryMode?: DeliveryMode;
   inboxUrl?: string | null;
   priorityOnly?: boolean;
@@ -75,9 +79,9 @@ export type SubscriptionValidationCode =
 export class SubscriptionValidationError extends Error {
   readonly code: SubscriptionValidationCode;
   /** A narrower filter to suggest back to the caller (set for over-broad-filter). */
-  readonly recommended?: FederationFilter;
+  readonly recommended?: RecordFilter;
 
-  constructor(code: SubscriptionValidationCode, message: string, recommended?: FederationFilter) {
+  constructor(code: SubscriptionValidationCode, message: string, recommended?: RecordFilter) {
     super(message);
     this.name = "SubscriptionValidationError";
     this.code = code;
@@ -85,12 +89,12 @@ export class SubscriptionValidationError extends Error {
   }
 }
 
-/** The high-priority event classes a push channel is meant for: a narrower
- *  `types` recommendation handed back when a webhook/sse filter is over-broad. */
-const RECOMMENDED_NARROW_TYPES = ["road_closure", "lane_closure", "accident"];
+/** What a push channel is meant for — closures and incidents: a narrower
+ *  `kinds` recommendation handed back when a webhook/sse filter is over-broad. */
+const RECOMMENDED_NARROW_KINDS = ["closure", "incident"];
 
-/** Rejects a `types`/`privacyClasses` value that is not a non-empty array of
- *  non-empty strings (an open vocabulary — only blank/malformed entries fail). */
+/** Rejects an allow-list that is not a non-empty array of non-empty strings
+ *  (an open vocabulary — only blank/malformed entries fail). */
 function assertStringAllowList(value: unknown, label: string): void {
   if (
     !Array.isArray(value) ||
@@ -111,7 +115,7 @@ function assertStringAllowList(value: unknown, label: string): void {
  * Applied for every delivery mode, so a `pull` subscription cannot store a
  * malformed bbox/maxAge that would later mis-scope its pages either.
  */
-function validateFilterValues(filter: FederationFilter): void {
+function validateFilterValues(filter: RecordFilter): void {
   // Fail closed on a non-object filter (a string/array would let every field read
   // below be `undefined` and pass — then get stored as non-object JSON).
   if (filter === null || typeof filter !== "object" || Array.isArray(filter)) {
@@ -151,9 +155,26 @@ function validateFilterValues(filter: FederationFilter): void {
     }
   }
 
-  if (filter.types !== undefined) assertStringAllowList(filter.types, "filter.types");
-  if (filter.privacyClasses !== undefined) {
-    assertStringAllowList(filter.privacyClasses, "filter.privacyClasses");
+  for (const field of ["kinds", "domains", "properties", "privacyClasses"] as const) {
+    if (filter[field] !== undefined) assertStringAllowList(filter[field], `filter.${field}`);
+  }
+  if (filter.classes !== undefined) {
+    assertStringAllowList(filter.classes, "filter.classes");
+    const unknown = filter.classes.filter(
+      (c) => !(RECORD_CLASSES as readonly string[]).includes(c),
+    );
+    if (unknown.length > 0) {
+      throw new SubscriptionValidationError(
+        "invalid-filter",
+        `filter.classes must name record classes (${RECORD_CLASSES.join(", ")}), not ${unknown.join(", ")}`,
+      );
+    }
+    if (filter.classes.includes("observation") && filter.properties === undefined) {
+      throw new SubscriptionValidationError(
+        "invalid-filter",
+        "a subscription that wants observations must name their properties (filter.properties)",
+      );
+    }
   }
 
   const maxAgeSec: unknown = filter.maxAgeSec;
@@ -167,11 +188,17 @@ function validateFilterValues(filter: FederationFilter): void {
   }
 }
 
-/** Whether a filter narrows the journal at all (any of the source-side bounds). */
-function filterIsBounded(filter: FederationFilter): boolean {
+/**
+ * Whether a filter narrows the journal at all (any of the source-side bounds).
+ * Naming only classes does not: one class of a busy instance is still its
+ * firehose.
+ */
+export function filterIsBounded(filter: RecordFilter): boolean {
   return (
     filter.bbox !== undefined ||
-    filter.types !== undefined ||
+    filter.kinds !== undefined ||
+    filter.domains !== undefined ||
+    filter.properties !== undefined ||
     filter.privacyClasses !== undefined ||
     filter.maxAgeSec !== undefined
   );
@@ -183,7 +210,7 @@ function filterIsBounded(filter: FederationFilter): boolean {
  * Throws {@link SubscriptionValidationError} the route turns into 422.
  */
 export function validateSubscriptionShape(input: {
-  filter: FederationFilter;
+  filter: RecordFilter;
   deliveryMode: DeliveryMode;
   inboxUrl: string | null;
   priorityOnly: boolean;
@@ -204,10 +231,10 @@ export function validateSubscriptionShape(input: {
   if (isPush && !filterIsBounded(input.filter)) {
     throw new SubscriptionValidationError(
       "over-broad-filter",
-      "a webhook/sse subscription needs a bounded filter (a bbox, a types " +
-        "allow-list, a privacyClasses allow-list, or a maxAgeSec bound) — an " +
-        "unbounded push would firehose the whole journal",
-      { ...input.filter, types: RECOMMENDED_NARROW_TYPES },
+      "a webhook/sse subscription needs a bounded filter (a bbox, a kinds, " +
+        "domains, properties or privacyClasses allow-list, or a maxAgeSec " +
+        "bound) — an unbounded push would firehose the whole journal",
+      { ...input.filter, kinds: RECOMMENDED_NARROW_KINDS },
     );
   }
 
@@ -251,7 +278,7 @@ function assertInboxUrl(inboxUrl: string): void {
 interface SubscriptionRow {
   id: string;
   peer_id: string;
-  filter: FederationFilter;
+  filter: RecordFilter;
   delivery_mode: DeliveryMode;
   inbox_url: string | null;
   cursor: string;

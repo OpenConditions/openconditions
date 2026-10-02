@@ -1,7 +1,6 @@
 import { jcs } from "../kernel/identity.js";
 import type { Result } from "../kernel/result.js";
 import type { Validity } from "../kernel/validity.js";
-import { representativePoint } from "../linking/link.js";
 import type { Registry } from "../registry/build.js";
 import { isValidityInEffectAt } from "../schedule/in-effect.js";
 import { crowdRulesFor } from "./rules.js";
@@ -97,14 +96,31 @@ export function distanceToGeometryMetres(point: Position, geometry: unknown): nu
   return best;
 }
 
-/** The point a report stands for: itself when it is one, else the mean of its vertices. */
+/**
+ * The point a report stands for: itself when it is one, else the mean of its
+ * vertices, with longitudes taken the short way round from the first vertex so
+ * a report drawn across the antimeridian stays on its line.
+ */
 function anchorOf(geometry: unknown): Position | undefined {
   const g = geometry as { type?: string; coordinates?: unknown };
   if (g?.type === "Point") return g.coordinates as Position;
-  const mean = representativePoint(geometry);
-  if (mean !== undefined) return mean;
-  const first = partsOf(geometry).lines[0]?.[0];
-  return first === undefined ? undefined : [first[0], first[1]];
+  const { lines, polygons } = partsOf(geometry);
+  const positions = [...lines.flat(), ...polygons.flat(2)];
+  const first = positions[0];
+  if (first === undefined) return undefined;
+  let lon = 0;
+  let lat = 0;
+  for (const [x, y] of positions) {
+    let d = x - first[0];
+    if (d > 180) d -= 360;
+    if (d < -180) d += 360;
+    lon += first[0] + d;
+    lat += y;
+  }
+  lon /= positions.length;
+  if (lon > 180) lon -= 360;
+  if (lon < -180) lon += 360;
+  return [lon, lat / positions.length];
 }
 
 /** The parts of a situation agreement reads. */
@@ -181,14 +197,15 @@ const startOf = (t: AgreeingObservation["phenomenonTime"]) =>
  * subject: the same property and qualifiers, agreeing results, and a reading
  * that either was in force when the report was made — the source's latest
  * reading of the series then, which the caller picks, since a status or a
- * price holds from when it was stated until it changes — or arrived within
- * the report's lifetime after it. A reading that disagrees resolves nothing:
+ * price holds from when it was stated until it changes — or arrived while
+ * the report was alive: within its lifetime, or until the `expiresAt`
+ * confirmations extended it to. A reading that disagrees resolves nothing:
  * the authoritative feed may be what is wrong, which is why the crowd
  * reports.
  */
 export function observationConfirms(
   registry: Registry,
-  report: AgreeingObservation,
+  report: AgreeingObservation & { expiresAt?: string },
   authoritative: AgreeingObservation & { validUntil?: string },
 ): boolean {
   if (report.property !== authoritative.property) return false;
@@ -200,7 +217,9 @@ export function observationConfirms(
   const start = startOf(t);
   const end = "end" in t ? Date.parse(t.end) : Date.parse(authoritative.validUntil ?? "");
   const inForce = start <= at && !(end <= at);
-  const after = start > at && start - at <= rules.ttlSec * 1000;
+  const alive =
+    report.expiresAt === undefined ? at + rules.ttlSec * 1000 : Date.parse(report.expiresAt);
+  const after = start > at && start <= alive;
   if (!inForce && !after) return false;
   return resultsAgree(registry, report.property, report.result, authoritative.result);
 }

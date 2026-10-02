@@ -1,27 +1,26 @@
 /**
- * The reviewer accept/reject decisions — the accountable, post-hoc resolution of
- * a flagged crowd observation. Both call T7's {@link applyExternalResolution}
- * (the ONE place reporter reputation is trained); neither re-implements the
- * resolution or reputation math.
+ * The reviewer accept/reject decisions — the accountable, post-hoc resolution
+ * of a flagged situation. On a crowd report both call
+ * {@link applyExternalResolution} (the ONE place reporter reputation is
+ * trained); neither re-implements the resolution or reputation math.
  *
- * accept → the observation is externally CONFIRMED: it flips to
- * `externally_resolved`, becomes routing-eligible, its pre-settlement confirmers
- * are trained `confirmed`, and its open flag is cleared.
+ * accept → a crowd report is externally CONFIRMED: it becomes
+ * `externally_resolved` and routing-eligible, its pre-settlement confirmers
+ * are trained `confirmed`, and its open flag is cleared. On a feed record a
+ * reviewer has nothing to resolve (its source decides its truth), so accept
+ * only clears the flag.
  *
- * reject → the observation is externally REJECTED and TOMBSTONED in ONE
- * transaction holding FOR UPDATE: the resolution negates it and trains
- * `rejected`, then the public row is scrubbed to a minimal deletion record
- * (`status = 'archived'`, text/attributes/subject scrubbed, a tombstone marker
- * left in `attributes`). The observations table `geom` is NOT NULL, so geometry
- * cannot be nulled; a road-condition point/line is not itself PII, so it is
- * kept. `id`/`canonical_id`/`instance_id`/`phenomenon_fingerprint` are kept for
- * federation dedup + tombstone propagation. The `report_evidence` ledger is
- * RETAINED for audit; only the wire-level federation tombstone (plan 2) carries
- * id + canonicalId + a deletion flag, and the local ledger never federates.
+ * reject → a crowd report is externally REJECTED and TOMBSTONED `rejected` in
+ * ONE transaction under the crowd lock: the resolution negates it and trains
+ * `rejected`, then the write seam tombstones it, so it leaves every read and
+ * federates as a delete. The `report_evidence` ledger is RETAINED for audit.
+ * A feed record cannot be rejected here: its source would publish it again.
  */
 
-import type { EvidenceState } from "@openconditions/model";
+import type { EvidenceState, Registry } from "@openconditions/model";
+import { tombstoneRecords } from "@openconditions/storage";
 import type postgres from "postgres";
+import { lockCrowd } from "../crowd.js";
 import { applyExternalResolution } from "../reputation/resolve.js";
 
 type Sql = postgres.Sql;
@@ -31,131 +30,96 @@ export type DecisionOutcome =
   | { code: 409; error: string }
   | {
       code: 200;
-      observationId: string;
-      evidenceState: EvidenceState;
+      record: { class: "situation"; id: string };
+      evidenceState: EvidenceState | null;
       routingEligible: boolean;
       tombstoned?: boolean;
     };
 
 interface GateRow {
-  status: string;
+  origin: string;
+  tombstoned: boolean;
   evidence_state: EvidenceState | null;
+  routing_eligible: boolean;
 }
 
-/** Load and lock the observation row, or null when it does not exist. */
-async function loadLocked(
-  tx: postgres.TransactionSql,
-  observationId: string,
-): Promise<GateRow | null> {
-  const rows = await tx<GateRow[]>`
-    SELECT status, evidence_state FROM conditions.observations
-    WHERE id = ${observationId} FOR UPDATE
+async function loadLocked(tx: postgres.TransactionSql, id: string): Promise<GateRow | null> {
+  const [row] = await tx<GateRow[]>`
+    SELECT origin, tombstoned_at IS NOT NULL AS tombstoned, evidence_state, routing_eligible
+    FROM conditions.situation WHERE id = ${id} FOR UPDATE
   `;
-  return rows[0] ?? null;
+  return row ?? null;
 }
 
-/**
- * Accept a flagged observation: confirm it externally, make it routing-eligible,
- * train reputation, and clear its open flag.
- *
- * Gate: 404 when missing; 409 when not active or already externally settled
- * (`externally_resolved`/`negated`) — one does not "accept" something peers or a
- * prior review already resolved.
- */
-export async function acceptObservation(
+export async function acceptSituation(
   sql: Sql,
-  observationId: string,
+  registry: Registry,
+  id: string,
   now: string,
 ): Promise<DecisionOutcome> {
   return sql.begin(async (tx) => {
-    const row = await loadLocked(tx, observationId);
-    if (row === null) {
-      return { code: 404, error: "observation not found" };
-    }
+    await lockCrowd(tx);
+    const row = await loadLocked(tx, id);
+    if (row === null) return { code: 404, error: "situation not found" };
     if (
-      row.status !== "active" ||
+      row.tombstoned ||
       row.evidence_state === "externally_resolved" ||
       row.evidence_state === "negated"
     ) {
-      return { code: 409, error: "observation already resolved or archived" };
+      return { code: 409, error: "situation already resolved or ended" };
     }
-
-    const resolution = await applyExternalResolution(
-      sql,
-      observationId,
-      { source: "reviewer", outcome: "confirmed" },
-      now,
-      tx,
-    );
-
-    await tx`
-      UPDATE conditions.observations SET flagged_at = NULL WHERE id = ${observationId}
-    `;
-
-    return {
-      code: 200,
-      observationId,
-      evidenceState: resolution!.evidenceState,
-      routingEligible: resolution!.routingEligible,
+    let state: { evidenceState: EvidenceState | null; routingEligible: boolean } = {
+      evidenceState: row.evidence_state,
+      routingEligible: row.routing_eligible,
     };
+    if (row.origin === "crowd") {
+      const resolution = await applyExternalResolution(
+        sql,
+        registry,
+        id,
+        { source: "reviewer", outcome: "confirmed" },
+        now,
+        tx,
+      );
+      if (resolution !== null) state = resolution;
+    }
+    await tx`UPDATE conditions.situation SET flagged_at = NULL WHERE id = ${id}`;
+    return { code: 200, record: { class: "situation", id }, ...state };
   });
 }
 
-/**
- * Reject a flagged observation: negate it externally, train reputation, then
- * tombstone the public row (archive + scrub). All in ONE transaction.
- *
- * Gate: 404 when missing; 409 ONLY when already tombstoned (`status` is not
- * `active`). A reject is allowed on an active observation REGARDLESS of evidence
- * state — including one peers already negated — so a community-negated, flagged
- * observation can always be tombstoned and never gets stuck unreachable (a GDPR
- * deletion-reachability requirement). Re-training is idempotent: T7's
- * `applyExternalResolution` guards the duplicate `reviewer_reject` row.
- */
-export async function rejectObservation(
+export async function rejectSituation(
   sql: Sql,
-  observationId: string,
+  registry: Registry,
+  id: string,
   now: string,
 ): Promise<DecisionOutcome> {
   return sql.begin(async (tx) => {
-    const row = await loadLocked(tx, observationId);
-    if (row === null) {
-      return { code: 404, error: "observation not found" };
+    await lockCrowd(tx);
+    const row = await loadLocked(tx, id);
+    if (row === null) return { code: 404, error: "situation not found" };
+    if (row.tombstoned) return { code: 409, error: "situation already ended" };
+    if (row.origin !== "crowd") {
+      return {
+        code: 409,
+        error: "only a crowd report can be rejected; its source decides a feed record",
+      };
     }
-    if (row.status !== "active") {
-      return { code: 409, error: "observation already archived" };
-    }
-
     const resolution = await applyExternalResolution(
       sql,
-      observationId,
+      registry,
+      id,
       { source: "reviewer", outcome: "rejected" },
       now,
       tx,
     );
-
-    const tombstoneMarker = { tombstone: true, reason: "reviewer_reject", at: now };
-    await tx`
-      UPDATE conditions.observations SET
-        status = 'archived',
-        tombstone_reason = 'retracted_as_wrong',
-        flagged_at = NULL,
-        headline = NULL,
-        description = NULL,
-        subject = NULL,
-        label = NULL,
-        severity = NULL,
-        severity_level = NULL,
-        attributes = ${tx.json(tombstoneMarker)},
-        origin = ${tx.json({ kind: "crowd" })}
-      WHERE id = ${observationId}
-    `;
-
+    await tx`UPDATE conditions.situation SET flagged_at = NULL WHERE id = ${id}`;
+    await tombstoneRecords(tx, "situation", [id], "rejected", { registry, now });
     return {
       code: 200,
-      observationId,
-      evidenceState: resolution!.evidenceState,
-      routingEligible: resolution!.routingEligible,
+      record: { class: "situation", id },
+      evidenceState: resolution?.evidenceState ?? row.evidence_state,
+      routingEligible: resolution?.routingEligible ?? false,
       tombstoned: true,
     };
   });

@@ -107,4 +107,11 @@ describe("admitting a peer's record", () => {
       skipped: "the peer runs another kernel major",
     });
   });
+
+  it("skips a record built from an effect the peer runs at another major", () => {
+    expect(admitRecord(registry, bump(local, "effect/closure", "2.0"), record)).toEqual({
+      admitted: false,
+      skipped: "the peer does not run effect/closure@1",
+    });
+  });
 });

@@ -8,18 +8,19 @@
 import {
   decodeOutboxCursor,
   EVIDENCE_TIERS,
-  type FederationFilter,
   OUTBOX_CURSOR_START,
   OUTBOX_MAX_LIMIT,
   type OutboxCursor,
+  type RecordFilter,
 } from "@openconditions/federation";
+import { RECORD_CLASSES, type RecordClass } from "@openconditions/model";
 
 export class OutboxQueryError extends Error {}
 
 export interface ParsedOutboxQuery {
   after: OutboxCursor;
   limit?: number;
-  filter?: FederationFilter;
+  filter?: RecordFilter;
   /** Encoded filter/limit params for the `next` link (no `after`). */
   nextParams?: string;
 }
@@ -40,8 +41,17 @@ function nonNegativeInt(value: string, name: string): number {
   return parsed;
 }
 
+/** A comma-separated allow-list parameter, or undefined when absent. */
+function list(query: Record<string, unknown>, name: string): string[] | undefined {
+  const raw = single(query, name);
+  if (raw === undefined) return undefined;
+  const values = raw.split(",").filter((v) => v.length > 0);
+  if (values.length === 0) throw new OutboxQueryError(`${name} must be a comma-separated list`);
+  return values;
+}
+
 export function parseOutboxQuery(query: Record<string, unknown>): ParsedOutboxQuery {
-  const filter: FederationFilter = {};
+  const filter: RecordFilter = {};
   const next = new URLSearchParams();
 
   const bbox = single(query, "bbox");
@@ -54,22 +64,21 @@ export function parseOutboxQuery(query: Record<string, unknown>): ParsedOutboxQu
     next.set("bbox", bbox);
   }
 
-  const types = single(query, "types");
-  if (types !== undefined) {
-    const list = types.split(",").filter((t) => t.length > 0);
-    if (list.length === 0) throw new OutboxQueryError("types must be a comma-separated list");
-    filter.types = list;
-    next.set("types", types);
+  const classes = list(query, "classes");
+  if (classes !== undefined) {
+    const unknown = classes.filter((c) => !(RECORD_CLASSES as readonly string[]).includes(c));
+    if (unknown.length > 0) {
+      throw new OutboxQueryError(`classes must name record classes (${RECORD_CLASSES.join(", ")})`);
+    }
+    filter.classes = classes as RecordClass[];
+    next.set("classes", classes.join(","));
   }
 
-  const privacyClasses = single(query, "privacyClasses");
-  if (privacyClasses !== undefined) {
-    const list = privacyClasses.split(",").filter((c) => c.length > 0);
-    if (list.length === 0) {
-      throw new OutboxQueryError("privacyClasses must be a comma-separated list");
-    }
-    filter.privacyClasses = list;
-    next.set("privacyClasses", privacyClasses);
+  for (const name of ["kinds", "domains", "properties", "privacyClasses"] as const) {
+    const values = list(query, name);
+    if (values === undefined) continue;
+    filter[name] = values;
+    next.set(name, values.join(","));
   }
 
   const permissiveOnly = single(query, "permissiveOnly");

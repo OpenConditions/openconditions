@@ -13,6 +13,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    "./admit": {
+      "types": "./dist/admit.d.ts",
+      "import": "./dist/admit.js",
+      "require": "./dist/admit.cjs"
     }
   },
   "main": "./dist/index.cjs",
@@ -27,7 +32,6 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@openconditions/core": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
     "@openconditions/publishers": "workspace:*",
@@ -40,7 +44,9 @@
     "yaml": "2.9.1"
   },
   "devDependencies": {
+    "@openconditions/core": "workspace:*",
     "@openconditions/model-registry": "workspace:*",
+    "@openconditions/storage": "workspace:*",
     "@types/geojson": "^7946.0.16",
     "testcontainers": "^12.1.0",
     "tsup": "^8.5.1",

@@ -7,20 +7,24 @@ import {
   type InstanceKey,
   type PeerRatePolicy,
   signMessage,
+  storePeerVersions,
   unblockPeer,
 } from "@openconditions/federation";
+import { schemaVersions } from "@openconditions/model";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
+import { pageOf, peerSituation, registry } from "./record-fixtures.js";
 
-/** A deliberately tiny budget so a second event trips the limiter in-test. */
+/** A deliberately tiny budget so a second record trips the limiter in-test. */
 const TIGHT_POLICY: PeerRatePolicy = { inboxPerMin: 1, backfillPerMin: 1 };
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
 let peerA: InstanceKey;
 let peerB: InstanceKey;
+let peerC: InstanceKey;
 let stranger: InstanceKey;
 
 const BASE_URL = "https://conditions.example.org";
@@ -31,7 +35,6 @@ const ACTOR_CONFIG = {
   operator: "Test Operator",
   jurisdiction: "NL",
   coverage: { iso3166: ["NL"] },
-  supportedTypes: ["incident", "roadwork"],
   license: "ODbL-1.0",
   trustTier: 1,
   capabilities: {
@@ -45,8 +48,6 @@ const ACTOR_CONFIG = {
 };
 
 let enabledEnv: Record<string, string>;
-
-const VALID_FROM = new Date(Date.now() - 5 * 60_000).toISOString();
 
 /** Signs a peer request the way the server reconstructs it (baseUrl + path). */
 async function signed(
@@ -67,50 +68,7 @@ async function signed(
   return { headers: s.headers, ...(body ? { payload: body } : {}) };
 }
 
-/** A fully-normalized published event, as a peer's outbox/webhook serves it. */
-function fedEvent(id: string, instanceId: string, canonicalId: string): Record<string, unknown> {
-  return {
-    id,
-    source: "ndw",
-    sourceFormat: "datex2",
-    domain: "roads",
-    kind: "event",
-    type: "hazard",
-    category: "incident",
-    severity: "high",
-    severitySource: "declared",
-    headline: `Event ${id}`,
-    status: "active",
-    validFrom: VALID_FROM,
-    geometry: { type: "Point", coordinates: [5.1, 52.1] },
-    origin: { kind: "feed", attribution: { provider: "NDW", license: "CC0-1.0" } },
-    dataUpdatedAt: VALID_FROM,
-    fetchedAt: VALID_FROM,
-    isStale: false,
-    instanceId,
-    canonicalId,
-    privacyClass: "authoritative",
-  };
-}
-
-function pageOf(
-  entries: { seq: number; txid: string; observation: Record<string, unknown> }[],
-): Record<string, unknown> {
-  return {
-    type: "OrderedCollectionPage",
-    partOf: "https://a.example.net/peer/outbox",
-    highWaterMark: "0.0",
-    orderedItems: entries.map((e) => ({
-      seq: e.seq,
-      txid: e.txid,
-      operation: "create",
-      objectId: e.observation["id"],
-      canonicalId: e.observation["canonicalId"],
-      createdAt: VALID_FROM,
-      observation: e.observation,
-    })),
-  };
-}
+const idOf = (local: string) => `oc:situation:nl-ndw:${local}`;
 
 beforeAll(async () => {
   const container = await new GenericContainer("postgis/postgis:16-3.4")
@@ -130,7 +88,11 @@ beforeAll(async () => {
   const now = new Date().toISOString();
   peerA = await generateInstanceKey(now);
   peerB = await generateInstanceKey(now);
+  peerC = await generateInstanceKey(now);
   stranger = await generateInstanceKey(now);
+  // Peers A and B have had their actor documents verified; peer C has not.
+  await storePeerVersions(sql, "peer-a", schemaVersions(registry), now);
+  await storePeerVersions(sql, "peer-b", schemaVersions(registry), now);
 
   enabledEnv = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
@@ -147,6 +109,12 @@ beforeAll(async () => {
         actorUrl: "https://b.example.net/.well-known/openconditions/actor.json",
         trustTier: 1,
         pinnedKeys: [peerB.keyId],
+      },
+      {
+        instanceId: "peer-c",
+        actorUrl: "https://c.example.net/.well-known/openconditions/actor.json",
+        trustTier: 1,
+        pinnedKeys: [peerC.keyId],
       },
     ]),
   };
@@ -187,9 +155,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
   it("rejects a tampered page (bad signature) with 401 — the WHOLE page", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false });
     try {
-      const page = pageOf([
-        { seq: 1, txid: "100", observation: fedEvent("ndw:t1", "peer-a", "10".repeat(32)) },
-      ]);
+      const page = pageOf([{ seq: 1, txid: "100", record: peerSituation("peer-a", "t1") }]);
       const req = await signed(peerA, "POST", "/peer/inbox", page);
       const res = await app.inject({
         method: "POST",
@@ -198,7 +164,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
         payload: Buffer.from(JSON.stringify({ ...page, tampered: true })),
       });
       expect(res.statusCode).toBe(401);
-      expect(await countRows("ndw:t1")).toBe(0);
+      expect(await countRows(idOf("t1"))).toBe(0);
     } finally {
       await app.close();
     }
@@ -207,9 +173,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
   it("rejects an unpinned peer with 401", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false });
     try {
-      const page = pageOf([
-        { seq: 1, txid: "100", observation: fedEvent("ndw:t2", "peer-a", "11".repeat(32)) },
-      ]);
+      const page = pageOf([{ seq: 1, txid: "100", record: peerSituation("peer-a", "t2") }]);
       const req = await signed(stranger, "POST", "/peer/inbox", page);
       const res = await app.inject({
         method: "POST",
@@ -219,18 +183,39 @@ describe("POST /peer/inbox — the trust boundary", () => {
       });
       expect(res.statusCode).toBe(401);
       expect(res.headers["federation-reason"]).toBe("unknown-key");
-      expect(await countRows("ndw:t2")).toBe(0);
+      expect(await countRows(idOf("t2"))).toBe(0);
     } finally {
       await app.close();
     }
   }, 30_000);
 
-  it("ingests a valid signed page from a pinned peer and returns counts + maxCursor", async () => {
+  it("answers 503 Retry-After to a peer whose capabilities are not yet known", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    try {
+      const page = pageOf([{ seq: 1, txid: "150", record: peerSituation("peer-c", "cap-1") }]);
+      const req = await signed(peerC, "POST", "/peer/inbox", page);
+      const res = await app.inject({
+        method: "POST",
+        url: "/peer/inbox",
+        headers: req.headers,
+        payload: req.payload,
+      });
+      expect(res.statusCode).toBe(503);
+      expect(Number(res.headers["retry-after"])).toBeGreaterThan(0);
+      expect(res.headers["federation-reason"]).toBe("capabilities-unknown");
+      expect(res.json()).not.toHaveProperty("maxCursor");
+      expect(await countRows(idOf("cap-1"))).toBe(0);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("lands a valid signed page from a pinned peer and returns counts + maxCursor", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false });
     try {
       const page = pageOf([
-        { seq: 7, txid: "200", observation: fedEvent("peer-a:in-1", "peer-a", "12".repeat(32)) },
-        { seq: 9, txid: "201", observation: fedEvent("peer-a:in-2", "peer-a", "13".repeat(32)) },
+        { seq: 7, txid: "200", record: peerSituation("peer-a", "in-1") },
+        { seq: 9, txid: "201", record: peerSituation("peer-a", "in-2") },
       ]);
       const req = await signed(peerA, "POST", "/peer/inbox", page);
       const res = await app.inject({
@@ -240,14 +225,16 @@ describe("POST /peer/inbox — the trust boundary", () => {
         payload: req.payload,
       });
       expect(res.statusCode).toBe(200);
-      const body = res.json();
-      expect(body.accepted).toBe(2);
-      expect(body.resupplied).toBe(0);
-      expect(body.skipped).toEqual([]);
-      expect(body.maxCursor).toBe("201.9");
+      expect(res.json()).toEqual({
+        accepted: 2,
+        stale: 0,
+        tombstoned: 0,
+        skipped: [],
+        maxCursor: "201.9",
+      });
 
-      const rows = await sql<{ instance_id: string | null; privacy_class: string }[]>`
-        SELECT instance_id, privacy_class FROM conditions.observations WHERE id = 'peer-a:in-1'`;
+      const rows = await sql<{ instance_id: string; privacy_class: string }[]>`
+        SELECT instance_id, privacy_class FROM conditions.situation WHERE id = ${idOf("in-1")}`;
       expect(rows[0]).toEqual({ instance_id: "peer-a", privacy_class: "authoritative" });
     } finally {
       await app.close();
@@ -257,31 +244,23 @@ describe("POST /peer/inbox — the trust boundary", () => {
   it.each(["40001", "23502", "22P02"])(
     "retries a partially committed page after local SQL %s without penalizing the peer",
     async (code) => {
-      const firstId = `peer-a:retry-first-${code}`;
-      const secondId = `peer-a:retry-second-${code}`;
+      const firstLocal = `retry-first-${code}`;
+      const secondLocal = `retry-second-${code}`;
       const app = await build({ sql, env: enabledEnv, logger: false });
       await sql`CREATE FUNCTION conditions.fail_inbox_retry_test() RETURNS trigger AS $$
       BEGIN
-        IF NEW.id LIKE 'peer-a:retry-second-%' THEN
+        IF NEW.id LIKE 'oc:situation:nl-ndw:retry-second-%' THEN
           RAISE EXCEPTION 'temporary local failure' USING ERRCODE = TG_ARGV[0];
         END IF;
         RETURN NEW;
       END;
     $$ LANGUAGE plpgsql`;
-      await sql.unsafe(`CREATE TRIGGER fail_inbox_retry_test BEFORE INSERT ON conditions.observations
+      await sql.unsafe(`CREATE TRIGGER fail_inbox_retry_test BEFORE INSERT ON conditions.situation
       FOR EACH ROW EXECUTE FUNCTION conditions.fail_inbox_retry_test('${code}')`);
       try {
         const page = pageOf([
-          {
-            seq: 1,
-            txid: "290",
-            observation: fedEvent(firstId, "peer-a", `retry-first-${code}`),
-          },
-          {
-            seq: 2,
-            txid: "290",
-            observation: fedEvent(secondId, "peer-a", `retry-second-${code}`),
-          },
+          { seq: 1, txid: "290", record: peerSituation("peer-a", firstLocal) },
+          { seq: 2, txid: "290", record: peerSituation("peer-a", secondLocal) },
         ]);
         const before = await getPeerHealth(sql, "peer-a");
         const first = await signed(peerA, "POST", "/peer/inbox", page);
@@ -289,30 +268,26 @@ describe("POST /peer/inbox — the trust boundary", () => {
         expect(failed.statusCode).toBe(500);
         expect(failed.json()).not.toHaveProperty("maxCursor");
         expect(await getPeerHealth(sql, "peer-a")).toEqual(before);
-        expect(await countRows(firstId)).toBe(1);
-        expect(await countRows(secondId)).toBe(0);
+        expect(await countRows(idOf(firstLocal))).toBe(1);
+        expect(await countRows(idOf(secondLocal))).toBe(0);
 
-        await sql`DROP TRIGGER fail_inbox_retry_test ON conditions.observations`;
+        await sql`DROP TRIGGER fail_inbox_retry_test ON conditions.situation`;
         const retry = await signed(peerA, "POST", "/peer/inbox", page);
         const succeeded = await app.inject({ method: "POST", url: "/peer/inbox", ...retry });
         expect(succeeded.statusCode).toBe(200);
-        expect(succeeded.json()).toMatchObject({
+        // The record that landed before the failure is a stale redelivery now.
+        expect(succeeded.json()).toEqual({
           accepted: 1,
-          resupplied: 1,
+          stale: 1,
+          tombstoned: 0,
           skipped: [],
           maxCursor: "290.2",
         });
-        const evidence = await sql<{ observation_id: string; count: number }[]>`
-        SELECT observation_id, count(*)::int AS count FROM conditions.report_evidence
-        WHERE observation_id IN (${firstId}, ${secondId})
-        GROUP BY observation_id ORDER BY observation_id`;
-        expect(evidence).toEqual([
-          { observation_id: firstId, count: 1 },
-          { observation_id: secondId, count: 1 },
-        ]);
+        expect(await countRows(idOf(firstLocal))).toBe(1);
+        expect(await countRows(idOf(secondLocal))).toBe(1);
         expect(await getPeerHealth(sql, "peer-a")).toEqual(before);
       } finally {
-        await sql`DROP TRIGGER IF EXISTS fail_inbox_retry_test ON conditions.observations`;
+        await sql`DROP TRIGGER IF EXISTS fail_inbox_retry_test ON conditions.situation`;
         await sql`DROP FUNCTION conditions.fail_inbox_retry_test()`;
         await app.close();
       }
@@ -320,14 +295,16 @@ describe("POST /peer/inbox — the trust boundary", () => {
     30_000,
   );
 
-  it("skips (and reports) an event whose instanceId is not the sending peer's", async () => {
+  it("skips and reports what it may not keep, counting each against the peer's schema health", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false });
     try {
+      const before = (await getPeerHealth(sql, "peer-a"))?.schemaFailures ?? 0;
       const page = pageOf([
-        // peer B's event, delivered by peer A: third-instance relay, rejected.
-        { seq: 1, txid: "300", observation: fedEvent("peer-b:relay", "peer-b", "14".repeat(32)) },
-        { seq: 2, txid: "300", observation: fedEvent("peer-a:own", "peer-a", "15".repeat(32)) },
+        // Peer B's record, delivered by peer A: a relay, refused.
+        { seq: 1, txid: "300", record: peerSituation("peer-b", "relay") },
+        { seq: 2, txid: "300", record: peerSituation("peer-a", "own") },
       ]);
+      (page["orderedItems"] as unknown[]).push({ seq: 3, txid: "300", operation: "update" });
       const req = await signed(peerA, "POST", "/peer/inbox", page);
       const res = await app.inject({
         method: "POST",
@@ -338,24 +315,23 @@ describe("POST /peer/inbox — the trust boundary", () => {
       expect(res.statusCode).toBe(200);
       const body = res.json();
       expect(body.accepted).toBe(1);
-      expect(body.skipped).toHaveLength(1);
-      expect(body.skipped[0].objectId).toBe("peer-b:relay");
-      expect(body.skipped[0].reason).toMatch(/authenticated peer/);
-      // The skipped event still advances the processed cursor.
-      expect(body.maxCursor).toBe("300.2");
-      expect(await countRows("peer-b:relay")).toBe(0);
+      expect(body.skipped).toEqual([
+        { recordId: idOf("relay"), reason: expect.stringMatching(/peer-b's/) },
+        { reason: "malformed entry" },
+      ]);
+      // The skipped entries still advance the processed cursor.
+      expect(body.maxCursor).toBe("300.3");
+      expect(await countRows(idOf("relay"))).toBe(0);
+      expect((await getPeerHealth(sql, "peer-a"))!.schemaFailures).toBe(before + 2);
     } finally {
       await app.close();
     }
   }, 30_000);
 
-  it("a resupply through the inbox collapses instead of duplicating", async () => {
+  it("never lets one peer's record replace another instance's under the same id", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false });
     try {
-      const canonicalId = "16".repeat(32);
-      const first = pageOf([
-        { seq: 1, txid: "400", observation: fedEvent("ndw:shared", "peer-a", canonicalId) },
-      ]);
+      const first = pageOf([{ seq: 1, txid: "400", record: peerSituation("peer-a", "shared") }]);
       const reqA = await signed(peerA, "POST", "/peer/inbox", first);
       await app.inject({
         method: "POST",
@@ -364,9 +340,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
         payload: reqA.payload,
       });
 
-      const second = pageOf([
-        { seq: 1, txid: "50", observation: fedEvent("ndw:shared", "peer-b", canonicalId) },
-      ]);
+      const second = pageOf([{ seq: 1, txid: "50", record: peerSituation("peer-b", "shared", 4) }]);
       const reqB = await signed(peerB, "POST", "/peer/inbox", second);
       const res = await app.inject({
         method: "POST",
@@ -375,9 +349,15 @@ describe("POST /peer/inbox — the trust boundary", () => {
         payload: reqB.payload,
       });
       expect(res.statusCode).toBe(200);
-      expect(res.json().accepted).toBe(0);
-      expect(res.json().resupplied).toBe(1);
-      expect(await countRows("ndw:shared")).toBe(1);
+      expect(res.json()).toMatchObject({
+        accepted: 0,
+        skipped: [
+          { recordId: idOf("shared"), reason: "another instance's record holds this id here" },
+        ],
+      });
+      const rows = await sql<{ instance_id: string; revision: number }[]>`
+        SELECT instance_id, revision FROM conditions.situation WHERE id = ${idOf("shared")}`;
+      expect(rows).toEqual([{ instance_id: "peer-a", revision: 1 }]);
     } finally {
       await app.close();
     }
@@ -399,7 +379,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
     }
   }, 30_000);
 
-  it("rate-limits a peer that exceeds its per-minute event budget with 429", async () => {
+  it("rate-limits a peer that exceeds its per-minute record budget with 429", async () => {
     const app = await build({
       sql,
       env: enabledEnv,
@@ -407,9 +387,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
       rateLimiter: createInMemoryRateLimiter({ policyForTier: () => TIGHT_POLICY }),
     });
     try {
-      const first = pageOf([
-        { seq: 1, txid: "500", observation: fedEvent("peer-a:rl-1", "peer-a", "17".repeat(32)) },
-      ]);
+      const first = pageOf([{ seq: 1, txid: "500", record: peerSituation("peer-a", "rl-1") }]);
       const req1 = await signed(peerA, "POST", "/peer/inbox", first);
       const res1 = await app.inject({
         method: "POST",
@@ -419,9 +397,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
       });
       expect(res1.statusCode).toBe(200);
 
-      const second = pageOf([
-        { seq: 2, txid: "501", observation: fedEvent("peer-a:rl-2", "peer-a", "18".repeat(32)) },
-      ]);
+      const second = pageOf([{ seq: 2, txid: "501", record: peerSituation("peer-a", "rl-2") }]);
       const req2 = await signed(peerA, "POST", "/peer/inbox", second);
       const res2 = await app.inject({
         method: "POST",
@@ -432,12 +408,10 @@ describe("POST /peer/inbox — the trust boundary", () => {
       expect(res2.statusCode).toBe(429);
       expect(res2.headers["retry-after"]).toBeDefined();
       expect(res2.headers["federation-reason"]).toBe("rate-limited");
-      expect(await countRows("peer-a:rl-2")).toBe(0);
+      expect(await countRows(idOf("rl-2"))).toBe(0);
 
       // The cap is per PEER: peer B is unaffected by peer A's exhaustion.
-      const third = pageOf([
-        { seq: 1, txid: "502", observation: fedEvent("peer-b:rl-3", "peer-b", "19".repeat(32)) },
-      ]);
+      const third = pageOf([{ seq: 1, txid: "502", record: peerSituation("peer-b", "rl-3") }]);
       const req3 = await signed(peerB, "POST", "/peer/inbox", third);
       const res3 = await app.inject({
         method: "POST",
@@ -461,9 +435,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
         now: new Date().toISOString(),
       });
 
-      const page = pageOf([
-        { seq: 1, txid: "600", observation: fedEvent("peer-a:blk-1", "peer-a", "20".repeat(32)) },
-      ]);
+      const page = pageOf([{ seq: 1, txid: "600", record: peerSituation("peer-a", "blk-1") }]);
       const req = await signed(peerA, "POST", "/peer/inbox", page);
       const blocked = await app.inject({
         method: "POST",
@@ -474,7 +446,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
       expect(blocked.statusCode).toBe(403);
       expect(blocked.json().reason).toBe("blocked");
       // The block stops the request BEFORE ingest — nothing landed.
-      expect(await countRows("peer-a:blk-1")).toBe(0);
+      expect(await countRows(idOf("blk-1"))).toBe(0);
 
       // The block is LOCAL only — it is never written into the peers document
       // this instance publishes (no auto-sync / propagation).
@@ -485,9 +457,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
       expect(JSON.stringify(peersDoc.json())).not.toContain("operator decision");
 
       await unblockPeer(sql, "peer-a");
-      const page2 = pageOf([
-        { seq: 2, txid: "601", observation: fedEvent("peer-a:blk-2", "peer-a", "21".repeat(32)) },
-      ]);
+      const page2 = pageOf([{ seq: 2, txid: "601", record: peerSituation("peer-a", "blk-2") }]);
       const req2 = await signed(peerA, "POST", "/peer/inbox", page2);
       const restored = await app.inject({
         method: "POST",
@@ -501,7 +471,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
     }
   }, 30_000);
 
-  it("records rate and replay failures against peer HEALTH (never event truth)", async () => {
+  it("records rate and replay failures against peer HEALTH (never record truth)", async () => {
     const app = await build({
       sql,
       env: enabledEnv,
@@ -514,9 +484,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
       const replayBefore = before?.replayFailures ?? 0;
 
       // A first valid page lands and consumes the tight budget's single slot.
-      const first = pageOf([
-        { seq: 1, txid: "700", observation: fedEvent("peer-b:h-1", "peer-b", "22".repeat(32)) },
-      ]);
+      const first = pageOf([{ seq: 1, txid: "700", record: peerSituation("peer-b", "h-1") }]);
       const r1 = await signed(peerB, "POST", "/peer/inbox", first);
       const ok = await app.inject({
         method: "POST",
@@ -527,11 +495,9 @@ describe("POST /peer/inbox — the trust boundary", () => {
       expect(ok.statusCode).toBe(200);
 
       // A second (freshly-signed) page authenticates but trips the limiter → 429
-      // and a rate violation counted against health. The event that DID land
-      // (peer-b:h-1) is untouched — a transport refusal never unwinds truth.
-      const second = pageOf([
-        { seq: 2, txid: "701", observation: fedEvent("peer-b:h-2", "peer-b", "23".repeat(32)) },
-      ]);
+      // and a rate violation counted against health. The record that DID land
+      // is untouched — a transport refusal never unwinds truth.
+      const second = pageOf([{ seq: 2, txid: "701", record: peerSituation("peer-b", "h-2") }]);
       const r2 = await signed(peerB, "POST", "/peer/inbox", second);
       const over = await app.inject({
         method: "POST",
@@ -540,7 +506,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
         payload: r2.payload,
       });
       expect(over.statusCode).toBe(429);
-      expect(await countRows("peer-b:h-1")).toBe(1);
+      expect(await countRows(idOf("h-1"))).toBe(1);
 
       // Replaying the first request (same signed nonce) fails on the verify path
       // under peer-b's pinned key → a replay failure counted against health.
@@ -564,6 +530,6 @@ describe("POST /peer/inbox — the trust boundary", () => {
 
 async function countRows(id: string): Promise<number> {
   const rows = await sql<{ n: string }[]>`
-    SELECT count(*)::text AS n FROM conditions.observations WHERE id = ${id}`;
+    SELECT count(*)::text AS n FROM conditions.situation WHERE id = ${id}`;
   return Number(rows[0]!.n);
 }

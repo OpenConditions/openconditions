@@ -1,19 +1,29 @@
-import { encodeOutboxCursor, type OutboxEntry, type OutboxPage } from "@openconditions/federation";
+import {
+  encodeOutboxCursor,
+  type OutboxPage,
+  type RecordOutboxEntry,
+} from "@openconditions/federation";
 import { describe, expect, it } from "vitest";
 import { SseStreamPump } from "../stream-pump.js";
 
-function entry(seq: number, txid = "10"): OutboxEntry {
+/** A delete entry: the pump never reads the record, only the cursor fields. */
+function entry(seq: number, txid = "10"): RecordOutboxEntry {
   return {
     seq,
     txid,
-    operation: "create",
-    objectId: `o${seq}`,
+    operation: "delete",
+    recordClass: "situation",
+    recordId: `oc:situation:nl-ndw:s${seq}`,
     canonicalId: null,
+    kind: "incident",
+    domain: "roads",
     createdAt: "2026-07-13T00:00:00Z",
+    tombstone: true,
+    reason: "withdrawn",
   };
 }
 
-function page(entries: OutboxEntry[], highWaterMark: string): OutboxPage {
+function page(entries: RecordOutboxEntry[], highWaterMark: string): OutboxPage {
   return {
     type: "OrderedCollectionPage",
     partOf: "/peer/stream",

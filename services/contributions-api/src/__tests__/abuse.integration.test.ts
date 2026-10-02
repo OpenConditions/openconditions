@@ -1,49 +1,37 @@
 import { readFileSync } from "node:fs";
-import {
-  crowdObservationId,
-  generateReporterKey,
-  type ReportClaim,
-  type ReporterKey,
-  type SignedReport,
-  signReport,
-} from "@openconditions/contrib-core";
-import { runMigrations } from "@openconditions/core/server";
+import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
+import { crowdLocalId } from "@openconditions/model";
 import type { FastifyInstance } from "fastify";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { coReportingClusters } from "../abuse/coreporting.js";
 import { checkReportRate, type RateRule } from "../abuse/rate.js";
 import { build } from "../server.js";
+import {
+  createTestDatabase,
+  evidenceOf,
+  INSTANCE,
+  reportAs,
+  situationClaim,
+} from "./crowd-fixtures.integration.js";
 
 const BASE_NOW = "2026-07-12T08:00:00.000Z";
 const GRANT_SECRET_VALUE = "abuse-route-test-secret";
 
+let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 let app: FastifyInstance;
 let currentNow = BASE_NOW;
 let ipCounter = 0;
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 10 });
-  await runMigrations(url);
+  db = await createTestDatabase();
+  sql = db.sql;
   app = await build({
     sql,
     env: {
       OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
-      OPENCONDITIONS_INSTANCE_ID: "maps.example.org",
+      OPENCONDITIONS_INSTANCE_ID: INSTANCE,
     },
     logger: false,
     now: () => currentNow,
@@ -52,14 +40,18 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await app?.close();
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 /** A fresh per-call source IP so the enrollment per-IP limiter never trips. */
 function nextIp(): string {
   ipCounter += 1;
   return `203.0.113.${ipCounter % 250}`;
+}
+
+/** The id a crowd report from a key with a nonce lands under here. */
+function crowdId(key: ReporterKey, nonce: string): string {
+  return `oc:situation:${INSTANCE}:${crowdLocalId(key.keyId, nonce)}`;
 }
 
 async function enroll(key: ReporterKey): Promise<string> {
@@ -79,28 +71,20 @@ async function report(
   lon: number,
   lat: number,
 ): Promise<{ statusCode: number; body: Record<string, unknown> }> {
-  const claim: ReportClaim = {
-    domain: "roads",
-    type: "congestion",
-    geometry: { type: "Point", coordinates: [lon, lat] },
-    fuzziness: "low_res",
-    reportedAt: currentNow,
-    nonce,
-  };
-  const signed: SignedReport = await signReport(claim, key);
+  const signed = await reportAs(
+    key,
+    situationClaim({
+      geometry: { type: "Point", coordinates: [lon, lat] },
+      reportedAt: currentNow,
+      nonce,
+    }),
+  );
   const res = await app.inject({
     method: "POST",
     url: "/contrib/reports",
     payload: { report: signed, reportingGrant: grant },
   });
   return { statusCode: res.statusCode, body: res.json() as Record<string, unknown> };
-}
-
-async function readFlaggedAt(observationId: string): Promise<Date | null> {
-  const rows = await sql<{ flagged_at: Date | null }[]>`
-    SELECT flagged_at FROM conditions.observations WHERE id = ${observationId}`;
-  expect(rows[0]).toBeDefined();
-  return rows[0]!.flagged_at;
 }
 
 describe("report rate limiting — per key across all cells", () => {
@@ -126,9 +110,13 @@ describe("report rate limiting — per key across all cells", () => {
       52.37,
     );
     expect(replay.statusCode).toBe(200);
+    expect(replay.body).toEqual(responses[accepted]!.body);
     const [evidence] = await sql<{ count: number }[]>`SELECT count(*)::int AS count
       FROM conditions.report_evidence WHERE actor_key_id = ${key.keyId} AND evidence_kind = 'report'`;
     expect(evidence?.count).toBe(10);
+    const [situations] = await sql<{ count: number }[]>`SELECT count(*)::int AS count
+      FROM conditions.situation WHERE record->'provenance'->'reporter'->>'keyId' = ${key.keyId}`;
+    expect(situations?.count).toBe(10);
   }, 120_000);
 
   it("accepts 10 reports spread across cells inside 60s and 429s the 11th", async () => {
@@ -242,10 +230,35 @@ describe("checkReportRate — reusable limiter contract", () => {
     expect(blocked.ok).toBe(false);
     expect(blocked.reason).toBe("per-key");
   }, 30_000);
+
+  it("counts by the server's arrival time, so a backdated claim dodges nothing", async () => {
+    currentNow = "2026-07-12T12:30:00.000Z";
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const signed = await reportAs(
+      key,
+      situationClaim({
+        geometry: { type: "Point", coordinates: [7.7, 48.6] },
+        reportedAt: "2026-07-12T12:20:00.000Z",
+        nonce: "backdated-00000000001",
+      }),
+    );
+    const res = await app.inject({
+      method: "POST",
+      url: "/contrib/reports",
+      payload: { report: signed, reportingGrant: grant },
+    });
+    expect(res.statusCode).toBe(200);
+    const rule: RateRule = { windowSec: 60, maxPerKey: 1, maxPerKeyCell: 1 };
+    expect(await checkReportRate(sql, key.keyId, 7.7, 48.6, currentNow, rule)).toEqual({
+      ok: false,
+      reason: "per-key",
+    });
+  }, 60_000);
 });
 
 describe("kinematic plausibility — post-hoc flag, never a block", () => {
-  it("lands an implausible teleport with 200 AND sets flagged_at on the new observation", async () => {
+  it("lands an implausible teleport with 200 AND sets flagged_at on the new situation", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
 
@@ -258,10 +271,10 @@ describe("kinematic plausibility — post-hoc flag, never a block", () => {
     const second = await report(key, grant, "teleport-b-00000001", 13.405, 52.52);
     expect(second.statusCode).toBe(200);
 
-    const firstId = await crowdObservationId(key.keyId, "teleport-a-00000001");
-    const secondId = await crowdObservationId(key.keyId, "teleport-b-00000001");
-    expect(await readFlaggedAt(firstId)).toBeNull();
-    const flagged = await readFlaggedAt(secondId);
+    const firstId = crowdId(key, "teleport-a-00000001");
+    const secondId = crowdId(key, "teleport-b-00000001");
+    expect((await evidenceOf(sql, firstId)).flagged_at).toBeNull();
+    const flagged = (await evidenceOf(sql, secondId)).flagged_at;
     expect(flagged).not.toBeNull();
     expect(flagged!.toISOString()).toBe("2026-07-12T13:01:00.000Z");
 
@@ -269,7 +282,7 @@ describe("kinematic plausibility — post-hoc flag, never a block", () => {
     // self_reported and the ledger holds only its own report row.
     const evidence = await sql<{ kinds: string[] }[]>`
       SELECT array_agg(evidence_kind) AS kinds FROM conditions.report_evidence
-      WHERE observation_id = ${secondId}`;
+      WHERE record_class = 'situation' AND record_id = ${secondId}`;
     expect(evidence[0]!.kinds).toEqual(["report"]);
     expect(second.body["evidenceState"]).toBe("self_reported");
   }, 120_000);
@@ -287,44 +300,33 @@ describe("kinematic plausibility — post-hoc flag, never a block", () => {
     const second = await report(key, grant, "drive-b-00000000001", 6.0, 52.009);
     expect(second.statusCode).toBe(200);
 
-    expect(
-      await readFlaggedAt(await crowdObservationId(key.keyId, "drive-a-00000000001")),
-    ).toBeNull();
-    expect(
-      await readFlaggedAt(await crowdObservationId(key.keyId, "drive-b-00000000001")),
-    ).toBeNull();
+    expect((await evidenceOf(sql, crowdId(key, "drive-a-00000000001"))).flagged_at).toBeNull();
+    expect((await evidenceOf(sql, crowdId(key, "drive-b-00000000001"))).flagged_at).toBeNull();
   }, 120_000);
 });
 
 describe("co-reporting monitoring view", () => {
-  async function insertReportWithFingerprint(
-    id: string,
+  async function insertEvidence(
+    recordId: string,
     keyId: string,
-    fingerprint: string,
+    kind: "report" | "confirm" | "negate",
     occurredAt: string,
   ): Promise<void> {
     await sql`
-      INSERT INTO conditions.observations
-        (id, source, source_format, domain, kind, type, status, geom, origin,
-         data_updated_at, fetched_at, is_stale, phenomenon_fingerprint)
-      VALUES
-        (${id}, 'crowd', 'native', 'roads', 'event', 'hazard', 'active',
-         ST_SetSRID(ST_MakePoint(4, 52), 4326), '{"kind":"crowd"}'::jsonb,
-         now(), now(), false, ${fingerprint})`;
-    await sql`
       INSERT INTO conditions.report_evidence
-        (observation_id, evidence_kind, actor_key_id, occurred_at, details)
-      VALUES (${id}, 'report', ${keyId}, ${occurredAt}, '{}'::jsonb)`;
+        (record_class, record_id, evidence_kind, actor_key_id, occurred_at, details)
+      VALUES ('situation', ${recordId}, ${kind}, ${keyId}, ${occurredAt}, '{}'::jsonb)`;
   }
 
-  it("surfaces a synthetic collusion cluster and orders the pair keys", async () => {
+  it("surfaces a key pair sharing report and confirm rows on the same records, keys ordered", async () => {
     const at = "2026-07-12T15:00:00.000Z";
-    for (const fp of ["fp-collude-1", "fp-collude-2", "fp-collude-3"]) {
-      await insertReportWithFingerprint(`obs:${fp}:x`, "colluder-x", fp, at);
-      await insertReportWithFingerprint(`obs:${fp}:y`, "colluder-y", fp, at);
+    for (const n of [1, 2, 3]) {
+      const record = `oc:situation:${INSTANCE}:collude-${n}`;
+      await insertEvidence(record, "colluder-x", "report", at);
+      await insertEvidence(record, "colluder-y", "confirm", at);
     }
-    // A pair sharing only one fingerprint stays below the threshold.
-    await insertReportWithFingerprint("obs:fp-collude-1:z", "bystander-z", "fp-collude-1", at);
+    // A key standing on only one of those records stays below the threshold.
+    await insertEvidence(`oc:situation:${INSTANCE}:collude-1`, "bystander-z", "confirm", at);
 
     const clusters = await coReportingClusters(sql, "2026-07-12T14:59:00.000Z");
     const pair = clusters.find((c) => c.keyA === "colluder-x" && c.keyB === "colluder-y");
@@ -336,20 +338,22 @@ describe("co-reporting monitoring view", () => {
     }
   }, 30_000);
 
-  it("ignores reports older than sinceIso", async () => {
-    for (const fp of ["old-cluster-1", "old-cluster-2", "old-cluster-3"]) {
-      await insertReportWithFingerprint(
-        `obs:${fp}:x`,
-        "old-cluster-x",
-        fp,
-        "2026-07-12T15:00:00.000Z",
-      );
-      await insertReportWithFingerprint(
-        `obs:${fp}:y`,
-        "old-cluster-y",
-        fp,
-        "2026-07-12T15:00:00.000Z",
-      );
+  it("does not count negations as co-reporting", async () => {
+    const at = "2026-07-12T16:00:00.000Z";
+    for (const n of [1, 2, 3]) {
+      const record = `oc:situation:${INSTANCE}:disputed-${n}`;
+      await insertEvidence(record, "disputed-x", "report", at);
+      await insertEvidence(record, "disputed-y", "negate", at);
+    }
+    const clusters = await coReportingClusters(sql, "2026-07-12T15:59:00.000Z");
+    expect(clusters.some((c) => c.keyA === "disputed-x" || c.keyB === "disputed-x")).toBe(false);
+  }, 30_000);
+
+  it("ignores rows older than sinceIso", async () => {
+    for (const n of [1, 2, 3]) {
+      const record = `oc:situation:${INSTANCE}:old-cluster-${n}`;
+      await insertEvidence(record, "old-cluster-x", "report", "2026-07-12T15:00:00.000Z");
+      await insertEvidence(record, "old-cluster-y", "report", "2026-07-12T15:00:00.000Z");
     }
     const before = await coReportingClusters(sql, "2026-07-12T14:59:00.000Z");
     expect(before.some((c) => c.keyA === "old-cluster-x" && c.keyB === "old-cluster-y")).toBe(true);
@@ -360,9 +364,10 @@ describe("co-reporting monitoring view", () => {
   it("is observability only: no accept/reject path imports it", () => {
     const gatedPaths = [
       "../server.ts",
-      "../landing/insert.ts",
+      "../landing/land.ts",
       "../subclaim/vote.ts",
       "../reputation/resolve.ts",
+      "../reviewer/decide.ts",
     ];
     for (const path of gatedPaths) {
       const source = readFileSync(new URL(path, import.meta.url), "utf8");

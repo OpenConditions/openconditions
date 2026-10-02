@@ -180,7 +180,7 @@ technical deletion machinery can and cannot promise.
 >    exchanged under this MoU.
 > 2. **Data categories and lawful basis.** Exchanged events describe road
 >    conditions, not persons. Where an event or its provenance chain could
->    contain personal data (e.g. a reporter-attributed observation), each
+>    contain personal data (e.g. a crowd report), each
 >    party documents its lawful basis for onward sharing before enabling the
 >    relevant event types.
 > 3. **GDPR controller-role assessment.** The parties assess and record, per
@@ -198,7 +198,7 @@ technical deletion machinery can and cannot promise.
 > 5. **Privacy and rights handling.** Each party names a contact
 >    (`[privacy@…]`) for data-subject requests. A rights request affecting
 >    federated data is routed along the provenance chain to the originating
->    instance; the receiving party honours signed `gdpr_erasure` tombstones
+>    instance; the receiving party honours signed `rights_revoked` tombstones
 >    from its peer without undue delay and confirms application. Both parties
 >    acknowledge tombstone propagation is best-effort evidence of a
 >    good-faith technical step, not proof that every copy is gone.

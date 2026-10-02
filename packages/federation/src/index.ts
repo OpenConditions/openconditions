@@ -12,8 +12,8 @@ export {
   PEERS_WELL_KNOWN_PATH,
   parseActorConfig,
 } from "./actor.js";
-export type { PeerReceipt } from "./admit.js";
-export { admitFederatedRecord } from "./admit.js";
+export type { InboundEntry, PeerReceipt } from "./admit.js";
+export { admitFederatedRecord, readInboundEntry } from "./admit.js";
 export type {
   AnomalyResult,
   DetectAnomalyOptions,
@@ -24,8 +24,6 @@ export type {
 export { detectAnomaly, peerWindowStats } from "./anomaly.js";
 export type { NegotiableCapabilities, NegotiatedCapabilities } from "./capabilities.js";
 export { CapabilityNegotiationError, negotiateCapabilities } from "./capabilities.js";
-export type { FederationFilter } from "./filter.js";
-export { applyFederationFilter, DEFAULT_MIN_EVIDENCE_TIER, EVIDENCE_TIERS } from "./filter.js";
 export type {
   FederationFailureReason,
   NonceStore,
@@ -64,7 +62,6 @@ export {
 } from "./multibase.js";
 export type {
   OutboxCursor,
-  OutboxEntry,
   OutboxOperation,
   OutboxPage,
   OutboxQuery,
@@ -91,6 +88,13 @@ export type { PeerAuthContext, PeerAuthRequest, PeerAuthResult } from "./peer-au
 export { authenticatePeerRequest } from "./peer-auth.js";
 export type { BlockedPeer, BlockPeerInput } from "./peer-blocklist.js";
 export { blockPeer, isPeerBlocked, listBlockedPeers, unblockPeer } from "./peer-blocklist.js";
+export type { PeerVersions } from "./peer-capabilities.js";
+export {
+  loadPeerVersions,
+  peerVersionsFromActor,
+  refreshPeerCapabilities,
+  storePeerVersions,
+} from "./peer-capabilities.js";
 export type { PeerHealth, PeerHealthFailure, PeerHealthRow } from "./peer-health.js";
 export {
   computePeerHealth,
@@ -102,13 +106,7 @@ export {
 export type { PeerRecord, PinVerification } from "./peers.js";
 export { loadPeers, verifyActorAgainstPin } from "./peers.js";
 export type { DeliverWebhookOptions, DeliverWebhookOutcome, WebhookCycleResult } from "./push.js";
-export {
-  deliverWebhook,
-  isPriorityEntry,
-  PRIORITY_EVENT_TYPES,
-  PUSH_FAILURE_THRESHOLD,
-  runWebhookDeliveryCycle,
-} from "./push.js";
+export { deliverWebhook, PUSH_FAILURE_THRESHOLD, runWebhookDeliveryCycle } from "./push.js";
 export type { PeerRatePolicy, RateCheckResult, RateLimiter, RateLimiterOptions } from "./rate.js";
 export {
   createInMemoryRateLimiter,
@@ -119,7 +117,12 @@ export {
   ratePolicyForTier,
 } from "./rate.js";
 export type { FederatedRecord, RecordFilter, RecordOutboxEntry } from "./record-filter.js";
-export { applyRecordFilter, federatedSnapshot } from "./record-filter.js";
+export {
+  applyRecordFilter,
+  DEFAULT_MIN_EVIDENCE_TIER,
+  EVIDENCE_TIERS,
+  federatedSnapshot,
+} from "./record-filter.js";
 export type { RegistryEntry, RegistryOperator } from "./registry.js";
 export { parseRegistryEntry, registryEntryFileName, registryToPeerRecords } from "./registry.js";
 export type { RegistrySyncOptions, RegistrySyncResult } from "./registry-sync.js";
@@ -136,6 +139,7 @@ export {
   createSubscription,
   DELIVERY_MODES,
   deleteSubscription,
+  filterIsBounded,
   getSubscription,
   listSubscriptions,
   SubscriptionValidationError,

@@ -7,7 +7,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outDir: "dist",
-  external: ["@openconditions/core"],
+  external: ["@openconditions/core", "@openconditions/model"],
   // canonicalize ships ESM-only; bundle it so the CJS build does not depend
   // on require(esm) support in the consuming runtime.
   noExternal: ["canonicalize"],

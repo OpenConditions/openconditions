@@ -11,21 +11,22 @@ import { defineConfig } from "tsup";
 const coreDrizzle = fileURLToPath(new URL("../../packages/core/drizzle", import.meta.url));
 const bundledDrizzle = fileURLToPath(new URL("./dist/drizzle", import.meta.url));
 
-// Domain attribute projection and evidence policies inline @openconditions/roads,
-// whose package entry still loads feed data. Keep its runtime data beside the
+// The federation inbox inlines @openconditions/federation, whose egress filter
+// inlines @openconditions/publishers and with it @openconditions/roads, whose
+// package entry still loads feed data. Keep its runtime data beside the
 // bundle so resolveFeedsDir() finds ./feeds/roads.
 const roadsFeeds = fileURLToPath(new URL("../../packages/roads/feeds/roads", import.meta.url));
 const bundledFeeds = fileURLToPath(new URL("./dist/feeds/roads", import.meta.url));
 
 export default defineConfig({
-  // federation/ingest is a public subpath entry: the federation service's
-  // POST /peer/inbox route runs the SAME federated ingest (one trust
-  // boundary); dts is emitted only for that subpath.
-  entry: ["src/index.ts", "src/main.ts", "src/federation/ingest.ts", "src/contrib.ts"],
+  // federation/inbox is a public subpath entry: the federation service's
+  // POST /peer/inbox route lands peer records through the SAME crowd paths
+  // (one trust boundary); dts is emitted only for the subpaths.
+  entry: ["src/index.ts", "src/main.ts", "src/federation/inbox.ts", "src/contrib.ts"],
   format: ["esm"],
   dts: {
     entry: {
-      "federation/ingest": "src/federation/ingest.ts",
+      "federation/inbox": "src/federation/inbox.ts",
       contrib: "src/contrib.ts",
     },
   },

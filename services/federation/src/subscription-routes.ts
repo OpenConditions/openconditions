@@ -26,7 +26,6 @@ import {
   type MtlsContext,
   type NonceStore,
   type PeerRecord,
-  PRIORITY_EVENT_TYPES,
   readOutbox,
   SubscriptionValidationError,
   type UpdateSubscriptionInput,
@@ -187,9 +186,9 @@ export function registerSubscriptionRoutes(
     if (subscription === null) return reply;
 
     const filter = subscription.filter;
-    // The push-channel restriction (priority classes only) when priorityOnly, so
+    // The push-channel restriction (priority entries only) when priorityOnly, so
     // the SSE cursor advances over the priority subsequence exactly like webhook.
-    const priorityClasses = subscription.priorityOnly ? PRIORITY_EVENT_TYPES : undefined;
+    const priorityOnly = subscription.priorityOnly;
     // The tier CEILING is uniform across all three journal channels: the SSE
     // snapshot + live loop are floored to the requesting peer's tier window
     // (from the PINNED record, never a client field), exactly like /peer/outbox
@@ -216,7 +215,7 @@ export function registerSubscriptionRoutes(
           readOutbox(ctx.sql, {
             after,
             filter,
-            ...(priorityClasses !== undefined ? { priorityClasses } : {}),
+            ...(priorityOnly ? { priorityOnly } : {}),
             minCreatedAt: backfillFloorIso(tier, ctx.now(), ctx.governanceWindowSec),
             partOf: `${ctx.baseUrl}${STREAM_PATH}`,
             limit: STREAM_TICK_LIMIT,
@@ -228,7 +227,7 @@ export function registerSubscriptionRoutes(
         },
         formatEntry: (entry) => {
           const id = encodeOutboxCursor({ txid: entry.txid, seq: entry.seq });
-          return `event: condition\nid: ${id}\ndata: ${JSON.stringify({ cursor: id, entry })}\n\n`;
+          return `event: record\nid: ${id}\ndata: ${JSON.stringify({ cursor: id, entry })}\n\n`;
         },
         onError: (err) => req.log.error(err, "[peer/stream] poll failed"),
       },

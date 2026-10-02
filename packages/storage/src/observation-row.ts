@@ -23,13 +23,6 @@ function sortKeysDeep(value: unknown): unknown {
 
 interface ContentHashInput {
   id: string;
-  type: string | null;
-  subtype: string | null;
-  category: string | null;
-  severity: string | null;
-  severity_source: string | null;
-  headline: string | null;
-  description: string | null;
   label: string | null;
   metric: string | null;
   value: number | null;
@@ -51,10 +44,7 @@ interface ContentHashInput {
   // Commons content-bearing fields — hashed only WHEN PRESENT (see
   // computeContentHash). The derived/identity commons fields are intentionally
   // absent here: they never enter the hash.
-  replaces: unknown;
-  corroborations: unknown;
   fuzziness: string | null;
-  severity_level: number | null;
   informed: unknown;
   source_uri: string | null;
   source_license: string | null;
@@ -80,20 +70,13 @@ interface ContentHashInput {
  * observation carrying none of them hashes byte-identically to before those
  * columns existed — that absent-key omission is what keeps existing feeds from
  * mass-rewriting. The derived/identity commons fields (instance_id,
- * canonical_id, phenomenon_fingerprint, confidence_score, privacy_class) are
- * excluded entirely: they are derived from already-hashed content or trusted
- * writer config, so hashing them would force the same one-time full rewrite.
+ * canonical_id, privacy_class) are excluded entirely: they are derived from
+ * already-hashed content or trusted writer config, so hashing them would force
+ * a one-time full rewrite.
  */
 function computeContentHash(row: ContentHashInput): string {
   const material: Record<string, unknown> = {
     id: row.id,
-    type: row.type,
-    subtype: row.subtype,
-    category: row.category,
-    severity: row.severity,
-    severitySource: row.severity_source,
-    headline: row.headline,
-    description: row.description,
     label: row.label,
     metric: row.metric,
     value: row.value,
@@ -113,10 +96,7 @@ function computeContentHash(row: ContentHashInput): string {
     dataUpdatedAt: row.data_updated_at,
     expiresAt: row.expires_at,
   };
-  if (row.replaces != null) material.replaces = row.replaces;
-  if (row.corroborations != null) material.corroborations = row.corroborations;
   if (row.fuzziness != null) material.fuzziness = row.fuzziness;
-  if (row.severity_level != null) material.severityLevel = row.severity_level;
   if (row.informed != null) material.informed = row.informed;
   if (row.source_uri != null) material.sourceUri = row.source_uri;
   if (row.source_license != null) material.sourceLicense = row.source_license;
@@ -134,16 +114,6 @@ function computeContentHash(row: ContentHashInput): string {
  * Domain attributes are supplied explicitly by the caller; this package owns no registry.
  */
 export function toRow(obs: Observation, attributes: Record<string, unknown>) {
-  const condEvent = obs as Observation & {
-    type?: string;
-    subtype?: string;
-    category?: string;
-    severity?: string;
-    severitySource?: string;
-    headline?: string;
-    description?: string;
-    severityLevel?: number;
-  };
   // Measurement axis (e.g. RoadFlow) — populated when kind === "measurement".
   const measurement = obs as Observation & {
     metric?: string;
@@ -159,13 +129,6 @@ export function toRow(obs: Observation, attributes: Record<string, unknown>) {
     source_format: obs.sourceFormat,
     domain: obs.domain,
     kind: obs.kind,
-    type: condEvent.type ?? null,
-    subtype: condEvent.subtype ?? null,
-    category: condEvent.category ?? null,
-    severity: condEvent.severity ?? null,
-    severity_source: condEvent.severitySource ?? null,
-    headline: condEvent.headline ?? null,
-    description: condEvent.description ?? null,
     label: obs.label ?? null,
     metric: measurement.metric ?? null,
     value: measurement.value ?? null,
@@ -197,16 +160,7 @@ export function toRow(obs: Observation, attributes: Record<string, unknown>) {
     // column default for fuzziness/privacy_class); no derivation happens here.
     instance_id: obs.instanceId ?? null,
     canonical_id: obs.canonicalId ?? null,
-    phenomenon_fingerprint: obs.phenomenonFingerprint ?? null,
-    replaces: obs.replaces ?? null,
-    corroborations: obs.corroborations ?? null,
     fuzziness: obs.fuzziness ?? null,
-    confidence_score: obs.confidenceScore ?? null,
-    // Derived evidence-policy outputs — pass-through only, EXCLUDED from
-    // content_hash (recomputed on replay). A feed row never carries them.
-    evidence_state: obs.evidenceState ?? null,
-    routing_eligible: obs.routingEligible ?? false,
-    severity_level: condEvent.severityLevel ?? null,
     privacy_class: obs.privacyClass ?? null,
     k_anonymity: obs.kAnonymity ?? null,
     dp_epsilon: obs.dpEpsilon ?? null,

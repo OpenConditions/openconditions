@@ -19,9 +19,9 @@ const PORT = parseInt(process.env["PORT"] || "4200", 10);
 const HOST = process.env["HOST"] || "0.0.0.0";
 
 /**
- * How often the feed-arrives-later sweep re-runs A1 cross-validation over
+ * How often the feed-arrives-later sweep re-runs cross-validation over
  * still-unresolved crowd reports. A few minutes: an official feed confirming a
- * crowd report is not latency-critical, and this only patches the case A1's
+ * crowd report is not latency-critical, and this only patches the case the
  * landing hook misses.
  */
 const CROSS_VALIDATE_SWEEP_MS = 3 * 60_000;
@@ -36,21 +36,22 @@ async function boot() {
   console.info("[contributions-api] migrations applied");
 
   const sql = postgres(url, { max: 5, idle_timeout: 30, connect_timeout: 10 });
-  await assertStoredCodesRegistered(sql, productionRegistry());
-  const app = await build({ sql });
+  const registry = productionRegistry();
+  await assertStoredCodesRegistered(sql, registry);
+  const app = await build({ sql, registry });
 
-  // Feed-arrives-later cross-match cron: re-runs the A1 cross-validation over
+  // Feed-arrives-later cross-match cron: re-runs the cross-validation over
   // still-unresolved crowd reports so an official feed that lands AFTER a crowd
   // report retroactively routes it. Opt out with OPENCONDITIONS_CROSS_VALIDATE_SWEEP=off.
   let sweepTimer: NodeJS.Timeout | undefined;
   if (isCrossValidateSweepEnabled(process.env)) {
     // Single-flight so a slow cycle can never overlap itself. Both the local
-    // (T2) sweep and the starvation-safe federated sweep run in the SAME tick
+    // sweep and the starvation-safe federated sweep run in the SAME tick
     // under the one guard — no second cron. Each is wrapped in its own try so a
     // failure in one never skips the other.
     const runSweep = singleFlight(async () => {
       try {
-        const result = await sweepCrossValidate(sql, new Date().toISOString(), {
+        const result = await sweepCrossValidate(sql, registry, new Date().toISOString(), {
           log: (msg) => console.info(msg),
         });
         if (result.scanned > 0) {
@@ -62,7 +63,7 @@ async function boot() {
         console.error("[contributions-api] cross-validate sweep failed:", err);
       }
       try {
-        const fed = await sweepFederatedCrossValidate(sql, new Date().toISOString(), {
+        const fed = await sweepFederatedCrossValidate(sql, registry, new Date().toISOString(), {
           log: (msg) => console.info(msg),
         });
         if (fed.scanned > 0) {

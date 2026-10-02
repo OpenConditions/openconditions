@@ -1,8 +1,8 @@
 /**
- * The reviewer anomaly queue: the observations carrying an OPEN flag
- * (`flagged_at IS NOT NULL` AND `status = 'active'`), newest flag first. A flag
- * is a marker, not evidence, so the queue reads the observation's `flagged_at`
- * plus the flag `sub_claim` rows that name it — never the evidence ledger.
+ * The reviewer anomaly queue: the live situations carrying an OPEN flag
+ * (`flagged_at IS NOT NULL`, not tombstoned), newest flag first. A flag is a
+ * marker, not evidence, so the queue reads the situation's `flagged_at` plus
+ * the flag `sub_claim` rows that name it — never the evidence ledger.
  * Auto-flags (kinematic/StreetComplete) set `flagged_at` with no sub_claim, so
  * an item's `flagCount` can legitimately be 0 with an empty `flagReasons`.
  */
@@ -25,7 +25,7 @@ export const ADVISORY_CREDIBLE_LEVEL = 0.9;
 /**
  * Advisory disclaimer stamped onto every surfaced reputation signal. Mirrors the
  * `/contrib/reporter/me` note so a reviewer never over-reads the number: it is
- * triage context, NOT a probability the observation is true.
+ * triage context, NOT a probability the report is true.
  */
 export const ADVISORY_REPUTATION_NOTE =
   "advisory — not a probability of truth or a Sybil-resistance guarantee";
@@ -36,7 +36,7 @@ export const ADVISORY_REPUTATION_NOTE =
  * lower bound, corroboration, tenure, last-active) are presented rather than a
  * single blended score — components are more honest for a triage decision. This
  * NEVER feeds routing, the Beta posterior, confidence, or the accept/reject
- * outcome; the reviewer's decision must be about the OBSERVATION's content.
+ * outcome; the reviewer's decision must be about the REPORT's content.
  */
 export interface ReporterSignal {
   /** The originating reporter's key thumbprint. */
@@ -45,7 +45,7 @@ export interface ReporterSignal {
    * The reporter's account status ("active" | "blocked"). Surfaced so a reviewer
    * triaging a flagged report can see the originator is already blocked — a
    * strong triage signal — without a second lookup. Advisory context only; the
-   * accept/reject decision stays about the observation's content.
+   * accept/reject decision stays about the report's content.
    */
   status: string;
   /** The device-trust signal (nullable until the key re-enrolls post-#1). */
@@ -66,19 +66,22 @@ export interface ReporterSignal {
 }
 
 export interface FlaggedItem {
-  observationId: string;
+  record: { class: "situation"; id: string };
   flaggedAt: string;
+  origin: string;
   evidenceState: string | null;
-  type: string | null;
-  geometry: GeoJsonGeometry;
-  /** Count of distinct flag sub_claims naming this observation (0 for auto-flags). */
+  kind: string;
+  type: string;
+  geometry: GeoJsonGeometry | null;
+  /** Count of distinct flag sub_claims naming this situation (0 for auto-flags). */
   flagCount: number;
   /** The non-empty reason strings from those flag sub_claims. */
   flagReasons: string[];
   /**
    * The originating reporter's advisory signals, or null when the flagged
-   * observation has no originating key (a federated row, or a keyless auto-flag).
-   * READ-ONLY triage context — see {@link ReporterSignal}.
+   * situation has no originating key (a feed record, a peer's crowd report,
+   * or a keyless auto-flag). READ-ONLY triage context — see
+   * {@link ReporterSignal}.
    */
   reporter: ReporterSignal | null;
 }
@@ -87,7 +90,7 @@ export interface FlaggedPage {
   items: FlaggedItem[];
   /** Composite keyset cursor: the last item's `flaggedAt`, or null at the end. */
   nextBefore: string | null;
-  /** Composite keyset cursor: the last item's observation `id`, or null. */
+  /** Composite keyset cursor: the last item's situation `id`, or null. */
   nextBeforeId: string | null;
 }
 
@@ -101,7 +104,7 @@ export interface ListFlaggedParams {
   before?: string;
   /**
    * Composite keyset cursor (with `before`): the previous page's last
-   * observation `id`, tie-breaking rows that share `before`'s `flaggedAt`.
+   * situation `id`, tie-breaking rows that share `before`'s `flaggedAt`.
    */
   beforeId?: string;
   /**
@@ -114,9 +117,11 @@ export interface ListFlaggedParams {
 interface FlaggedRow {
   id: string;
   flagged_at: Date;
+  origin: string;
   evidence_state: string | null;
-  type: string | null;
-  geojson: string;
+  kind: string;
+  type: string;
+  geojson: string | null;
   flag_count: number;
   flag_reasons: string[] | null;
   reporter_key_id: string | null;
@@ -171,7 +176,7 @@ export function clampLimit(limit: number | undefined): number {
 }
 
 /**
- * List the open-flagged observations, newest flag first, with a composite
+ * List the open-flagged situations, newest flag first, with a composite
  * `(flagged_at, id)` keyset cursor. The cursor is the previous page's last row:
  * `before` (its `flaggedAt`) and `beforeId` (its `id`), supplied together or
  * both absent for the first page. The row-wise predicate mirrors the
@@ -194,7 +199,7 @@ export async function listFlagged(sql: Sql, params: ListFlaggedParams = {}): Pro
   const nowMs = Number.isNaN(parsedNow) ? Date.now() : parsedNow;
 
   const rows = await sql<FlaggedRow[]>`
-    SELECT o.id, o.flagged_at, o.evidence_state, o.type,
+    SELECT o.id, o.flagged_at, o.origin, o.evidence_state, o.kind, o.type,
            ST_AsGeoJSON(o.geom) AS geojson,
            COALESCE(f.flag_count, 0) AS flag_count,
            f.flag_reasons AS flag_reasons,
@@ -206,23 +211,25 @@ export async function listFlagged(sql: Sql, params: ListFlaggedParams = {}): Pro
            r.corroborated_count AS reporter_corroborated_count,
            r.created_at AS reporter_created_at,
            r.last_active_at AS reporter_last_active_at
-    FROM conditions.observations o
+    FROM conditions.situation o
     LEFT JOIN LATERAL (
       SELECT count(*)::int AS flag_count,
              array_remove(array_agg(sc.reason), NULL) AS flag_reasons
       FROM conditions.sub_claim sc
-      WHERE sc.subject_id = o.id AND sc.claim_type = 'flag'
+      WHERE sc.subject_class = 'situation' AND sc.subject_id = o.id
+        AND sc.claim_type = 'flag'
     ) f ON true
     LEFT JOIN LATERAL (
       SELECT re.actor_key_id
       FROM conditions.report_evidence re
-      WHERE re.observation_id = o.id AND re.evidence_kind = 'report'
+      WHERE re.record_class = 'situation' AND re.record_id = o.id
+        AND re.evidence_kind = 'report'
       ORDER BY re.occurred_at, re.id
       LIMIT 1
     ) orig ON true
     LEFT JOIN conditions.reporter r ON r.key_id = orig.actor_key_id
     WHERE o.flagged_at IS NOT NULL
-      AND o.status = 'active'
+      AND o.tombstoned_at IS NULL
       AND (
         ${before}::timestamptz IS NULL
         OR o.flagged_at < ${before}::timestamptz
@@ -233,11 +240,13 @@ export async function listFlagged(sql: Sql, params: ListFlaggedParams = {}): Pro
   `;
 
   const items: FlaggedItem[] = rows.map((row) => ({
-    observationId: row.id,
+    record: { class: "situation", id: row.id },
     flaggedAt: row.flagged_at.toISOString(),
+    origin: row.origin,
     evidenceState: row.evidence_state,
+    kind: row.kind,
     type: row.type,
-    geometry: JSON.parse(row.geojson) as GeoJsonGeometry,
+    geometry: row.geojson === null ? null : (JSON.parse(row.geojson) as GeoJsonGeometry),
     flagCount: row.flag_count,
     flagReasons: row.flag_reasons ?? [],
     reporter: reporterSignalFrom(row, nowMs),

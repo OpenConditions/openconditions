@@ -50,12 +50,11 @@ migration — it is not part of this substrate and isn't covered here.
 
 ## `packages/core/src/canonical.ts`
 
-| Export                   | Purpose                                                              | Downstream consumer(s)                                                                                                                                                                                                                                     |
-| ------------------------ | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `canonicalId`            | Hashes a namespace + record id into the stable `canonical_id`.       | Ingest pipeline (`normalize.ts`, already wired — stamps every flow measurement row); federation (dedup key); crowd reporting (fusion key).                                                                                                                 |
-| `canonicalIdentityParts` | Extracts the `(namespace, recordId)` pair `canonicalId` hashes.      | Federation (constructs the same namespace a receiving instance must reproduce to match rows).                                                                                                                                                              |
-| `normalizeNamespace`     | Idempotent NFC-lowercase normalization of a namespace string.        | Federation (namespace comparison across instances must be case/normalization-insensitive).                                                                                                                                                                 |
-| `phenomenonFingerprint`  | Hashes grid cell + type + time bucket into a candidate-matching key. | `normalize.ts` (already wired — stamps every event row with a `validFrom`: crowd reports and federated events); federation (candidate matching before merge); crowd reporting (finds nearby-in-space/time/type candidates a new report might corroborate). |
+| Export                   | Purpose                                                         | Downstream consumer(s)                                                                                                                     |
+| ------------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `canonicalId`            | Hashes a namespace + record id into the stable `canonical_id`.  | Ingest pipeline (`normalize.ts`, already wired — stamps every flow measurement row); federation (dedup key); crowd reporting (fusion key). |
+| `canonicalIdentityParts` | Extracts the `(namespace, recordId)` pair `canonicalId` hashes. | Federation (constructs the same namespace a receiving instance must reproduce to match rows).                                              |
+| `normalizeNamespace`     | Idempotent NFC-lowercase normalization of a namespace string.   | Federation (namespace comparison across instances must be case/normalization-insensitive).                                                 |
 
 ## `packages/core/src/evidence.ts`
 
@@ -67,27 +66,25 @@ migration — it is not part of this substrate and isn't covered here.
 | `shrinkToward`          | Shrinks a reliability posterior toward a cohort prior (inactivity decay).            | Crowd reporting (an inactive reporter's reputation decays back toward the cohort average over time).                                                |
 | `confidenceEnum`        | Maps a `confidenceScore` to the wire `Confidence` enum.                              | Crowd reporting / publishing emitters (display and export both need the categorical enum, not the raw score).                                       |
 
-## `packages/roads/src/decay.ts`
+## `packages/contrib-core/src/evidence-policy.ts`
 
-| Export                                 | Purpose                                                                            | Downstream consumer(s)                                                                                                                                                                                                |
-| -------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DEFAULT_DECAY_TTLS`, `FALLBACK_DECAY` | Per-type crowd/feed TTL and corroboration-extension ceiling policy table.          | Crowd reporting (`decayTtlSec`/`decayMaxLifetimeSec` feed `EvidencePolicy.ttlSec`/`maxLifetimeSec`); federation (bounded TTL is the primary GDPR data-minimisation mitigant for a row crossing an instance boundary). |
-| `decayTtlSec`                          | The effective TTL in seconds for a `(type, origin)`, honouring operator overrides. | Crowd reporting (builds the `EvidencePolicy` passed to `evaluateEvidence`).                                                                                                                                           |
-| `decayMaxLifetimeSec`                  | The corroboration-extension ceiling in seconds for a type.                         | Crowd reporting (same `EvidencePolicy` construction).                                                                                                                                                                 |
-| `expiresAtFor`                         | Derives an ISO expiry from `dataUpdatedAt` plus the `(type, origin)` TTL.          | Feed ingest (fallback `expiresAt` for the rare official row with no explicit `validTo`/expiry of its own).                                                                                                            |
+| Export                     | Purpose                                                                                                            | Downstream consumer(s)                                                                                                   |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `EVIDENCE_POLICY_DEFAULTS` | The per-state presentation scores, reliability weight and asymmetric peer-confirmation constants.                  | Crowd reporting (every evidence policy carries them).                                                                    |
+| `crowdEvidencePolicy`      | Builds the `EvidencePolicy` for a kind and type, or a property, from the registry's crowd rules (`crowdRulesFor`). | Crowd reporting (the contributions-api's recompute: lifetime, corroboration ceiling and quorums come from the registry). |
 
 ## `packages/normalize/src/normalize.ts`
 
 `normalizeObservation` is the single write choke point that stamps
-`instance_id`, `canonical_id`, `phenomenon_fingerprint`, `source_uri`, and
+`instance_id`, `canonical_id`, `privacy_class`, `source_uri`, and
 `source_license` onto every row of `conditions.observations` (flow
-measurements, crowd reports, federated events) before it is persisted, and rejects
+measurements) before it is persisted, and rejects
 any parser-supplied `privacy_class`/`instance_id`/`k_anonymity`/`dp_epsilon`/
 `dp_delta` as a bug. Because `source_uri`/`source_license` are content-bearing
 (folded into `content_hash` when present), stamping them changes every
 existing feed row's hash exactly once — a deliberate one-time diff-upsert
 rewrite on the first poll after deploying this seam. It is already the live consumer of `canonicalId`
-and `phenomenonFingerprint` — every other
+— every other
 row in the tables above names a feature area that has not landed yet, but
 whose contract this normalization seam and the columns/functions above are
 already shaped to serve.

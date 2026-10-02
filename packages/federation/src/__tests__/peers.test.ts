@@ -18,7 +18,6 @@ const ACTOR_CONFIG: ActorConfig = {
   operator: "Example Mobility Foundation",
   jurisdiction: "NL",
   coverage: { iso3166: ["NL"] },
-  supportedTypes: ["incident"],
   license: "ODbL-1.0",
   trustTier: 1,
   capabilities: {

@@ -1,14 +1,11 @@
 import type { GeoJsonGeometry } from "@openconditions/core";
-import type { ReportClaim } from "./types.js";
 
 /**
- * Deterministic plausibility screen for a crowd report, run AFTER signature +
- * grant verification and BEFORE landing. PURE: the evaluation instant is an
- * input. Unlike the authenticity layer (`verifyReport`), this layer validates
- * the coordinate VALUES: finite and inside WGS84 range. It also bounds the
- * report's self-declared time to a sane window around the server clock and
- * re-checks the nonce shape. Kinematic/proximity plausibility and H3 rate
- * limiting are a later concern; this is the structural floor.
+ * Deterministic geometry screen for a crowd report or a vote, run AFTER
+ * signature + grant verification and BEFORE landing. The kernel geometry
+ * schema checks the shape; this layer also checks the coordinate VALUES:
+ * exactly two ordinates, finite and inside WGS84 range. The time window and
+ * the nonce are the claim's own rules (`landClaim`).
  */
 
 export type PlausibilityReason =
@@ -16,23 +13,7 @@ export type PlausibilityReason =
   | "geometry_malformed"
   | "geometry_not_finite"
   | "geometry_not_point"
-  | "geometry_out_of_range"
-  | "reported_at_invalid"
-  | "reported_at_stale"
-  | "reported_at_future"
-  | "nonce_malformed";
-
-export interface PlausibilityResult {
-  ok: boolean;
-  reasons: PlausibilityReason[];
-}
-
-const NONCE_PATTERN = /^[A-Za-z0-9_-]{16,64}$/;
-
-/** Max age of a report relative to the server clock (24h). */
-const MAX_PAST_MS = 24 * 60 * 60 * 1000;
-/** Max clock skew a report may be ahead of the server (5 min). */
-const MAX_FUTURE_MS = 5 * 60 * 1000;
+  | "geometry_out_of_range";
 
 interface GeometryScan {
   count: number;
@@ -86,7 +67,7 @@ function scanGeometry(geometry: GeoJsonGeometry): GeometryScan {
 
 /**
  * A v1 position: EXACTLY two finite-typed numbers `[lon, lat]`. v1 is 2D and the
- * `observations.geom` column is 2D, so a 3-ordinate `[lon, lat, alt]` position is
+ * record tables' `geom` columns are 2D, so a 3-ordinate `[lon, lat, alt]` position is
  * rejected here as malformed (fast, before the DB) rather than silently dropping
  * the altitude at insert. Finiteness/range are checked separately by the scan.
  */
@@ -154,10 +135,8 @@ function hasValidStructure(geometry: GeoJsonGeometry): boolean {
 }
 
 /**
- * Geometry-only slice of the plausibility screen, sharable by any path that
- * needs to validate a bare GeoJSON geometry (the full report landing and the
- * optional sub-claim vote geometry). Returns the `geometry_*` reasons in the
- * SAME order `checkPlausibility` emits them (empty = valid). When
+ * The geometry screen, shared by the report landing and the optional
+ * sub-claim vote geometry. Returns the `geometry_*` reasons (empty = valid). When
  * `opts.requireType` is set and the geometry's `type` differs, the type
  * requirement short-circuits with `geometry_not_point` BEFORE the value scan —
  * a non-Point is rejected outright, not tallied.
@@ -184,24 +163,4 @@ export function checkGeometryPlausibility(
   if (scan.hasNonFinite) reasons.push("geometry_not_finite");
   if (scan.outOfRange) reasons.push("geometry_out_of_range");
   return reasons;
-}
-
-export function checkPlausibility(claim: ReportClaim, now: string): PlausibilityResult {
-  const reasons: PlausibilityReason[] = checkGeometryPlausibility(claim.geometry);
-
-  const reportedMs = Date.parse(claim.reportedAt);
-  const nowMs = Date.parse(now);
-  if (!Number.isFinite(reportedMs) || !Number.isFinite(nowMs)) {
-    reasons.push("reported_at_invalid");
-  } else if (reportedMs < nowMs - MAX_PAST_MS) {
-    reasons.push("reported_at_stale");
-  } else if (reportedMs > nowMs + MAX_FUTURE_MS) {
-    reasons.push("reported_at_future");
-  }
-
-  if (typeof claim.nonce !== "string" || !NONCE_PATTERN.test(claim.nonce)) {
-    reasons.push("nonce_malformed");
-  }
-
-  return { ok: reasons.length === 0, reasons };
 }

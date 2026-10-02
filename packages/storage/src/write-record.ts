@@ -31,7 +31,15 @@ export type RecordInput = { draft: Rec } | { stored: Rec };
 
 export type WriteRecordResult =
   | {
-      status: "created" | "updated" | "restored" | "unchanged" | "stale";
+      /**
+       * `stale`: a stored record no newer than the one kept. `refreshed`: a
+       * stored record at the kept revision with another expiry, which is all
+       * that is taken from it — its instance moved the lifetime (a crowd
+       * report's evidence) without a new revision. `foreign`: a stored record
+       * whose id another instance's record already holds — two instances
+       * ingesting one feed mint the same ids, and each keeps its own.
+       */
+      status: "created" | "updated" | "restored" | "unchanged" | "refreshed" | "stale" | "foreign";
       class: RevisionedClass | "observation";
       id: string;
       revision: number;
@@ -66,7 +74,8 @@ export async function writeRecord(
  * the stored record already has writes nothing; otherwise it is sealed with
  * the next revision. A stored record is validated as it is and written only
  * when its revision is newer than the stored one, so a peer's late or
- * repeated delivery changes nothing. An observation goes to its series.
+ * repeated delivery changes nothing but the expiry, and never over a record
+ * another instance wrote. An observation goes to its series.
  */
 export async function writeRecordIn(
   tx: Sql,
@@ -93,9 +102,11 @@ export async function writeRecordIn(
       tombstoned: boolean;
       record: Rec;
       expires_at: Date | null;
+      instance_id: string;
     }[]
   >(
-    `SELECT content_hash, revision, tombstoned_at IS NOT NULL AS tombstoned, record, expires_at
+    `SELECT content_hash, revision, tombstoned_at IS NOT NULL AS tombstoned, record, expires_at,
+            instance_id
        FROM conditions.${cls} WHERE id = $1`,
     [id ?? ""],
   );
@@ -125,7 +136,19 @@ export async function writeRecordIn(
     const result = ctx.registry.validate(input.stored);
     if (!result.ok) return { status: "rejected", class: cls, id, issues: result.issues };
     sealed = result.value;
+    const instanceId = (sealed["provenance"] as Rec)["instanceId"];
+    if (existing && existing.instance_id !== instanceId) {
+      return { status: "foreign", class: cls, id: id!, revision: existing.revision };
+    }
     if (existing && existing.revision >= (sealed["revision"] as number)) {
+      if (
+        existing.revision === sealed["revision"] &&
+        !existing.tombstoned &&
+        expiryOf(sealed) !== expiryOf(existing.record)
+      ) {
+        await refreshExpiries(tx, cls, [sealed]);
+        return { status: "refreshed", class: cls, id: id!, revision: existing.revision };
+      }
       return { status: "stale", class: cls, id: id!, revision: existing.revision };
     }
   }

@@ -114,7 +114,8 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
 
   const actorConfig = settings.actor!;
   // The running registry, not the operator, says which schemas this instance accepts.
-  const advertisedSchemaVersions = schemaVersions(productionRegistry());
+  const registry = productionRegistry();
+  const advertisedSchemaVersions = schemaVersions(registry);
   await ensureInstanceKey(sql, now());
 
   /** The newest active signing key, self-healing an all-expired table (same
@@ -266,6 +267,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
 
   registerInboxRoutes(app, {
     sql,
+    registry,
     peers: settings.peers,
     baseUrl: actorConfig.baseUrl,
     localInstanceId: actorConfig.instanceId,

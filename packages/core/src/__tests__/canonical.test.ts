@@ -6,13 +6,10 @@ import {
   centroid,
   coarseCell,
   gridCell,
+  isoUtcEpochMs,
   normalizeNamespace,
-  phenomenonFingerprint,
-  phenomenonFingerprintNeighborhood,
-  timeBucket,
-  truncateType,
 } from "../canonical.js";
-import type { ConditionEvent, Measurement, Observation } from "../model.js";
+import type { Observation } from "../model.js";
 
 function makeObservation(overrides: Partial<Observation> = {}): Observation {
   return {
@@ -32,49 +29,9 @@ function makeObservation(overrides: Partial<Observation> = {}): Observation {
   };
 }
 
-function makeEvent(overrides: Partial<ConditionEvent> = {}): ConditionEvent {
-  return {
-    ...makeObservation(),
-    kind: "event",
-    type: "incident",
-    subtype: "accident",
-    category: "incident",
-    severity: "medium",
-    severitySource: "declared",
-    headline: "Accident on A12",
-    ...overrides,
-  };
-}
-
 describe("canonicalIdentityParts", () => {
-  it("namespaces feed-origin rows on the source id, ignoring instanceId", () => {
+  it("namespaces rows on the source id, ignoring instanceId", () => {
     const obs = makeObservation({ instanceId: "instance-a" });
-    expect(canonicalIdentityParts(obs)).toEqual({ namespace: "ndw", recordId: "situation-123" });
-  });
-
-  it("namespaces crowd-origin rows on the originating instance", () => {
-    const obs = makeObservation({
-      instanceId: "maps.example.org",
-      origin: {
-        kind: "crowd",
-        attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
-        reporter: { keyId: "key-1", signature: "sig-1" },
-      },
-    });
-    expect(canonicalIdentityParts(obs)).toEqual({
-      namespace: "maps.example.org",
-      recordId: "situation-123",
-    });
-  });
-
-  it("falls back to source for crowd-origin rows without an instanceId", () => {
-    const obs = makeObservation({
-      origin: {
-        kind: "crowd",
-        attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
-        reporter: { keyId: "key-1", signature: "sig-1" },
-      },
-    });
     expect(canonicalIdentityParts(obs)).toEqual({ namespace: "ndw", recordId: "situation-123" });
   });
 });
@@ -82,7 +39,7 @@ describe("canonicalIdentityParts", () => {
 describe("normalizeNamespace", () => {
   it("trims, unicode-normalizes, and lowercases", () => {
     expect(normalizeNamespace("  NDW ")).toBe("ndw");
-    expect(normalizeNamespace("Café")).toBe(normalizeNamespace("Café"));
+    expect(normalizeNamespace("Café")).toBe(normalizeNamespace("Café"));
   });
 
   it("throws on an empty result", () => {
@@ -113,54 +70,9 @@ describe("canonicalId", () => {
     expect(canonicalId(a)).toBe(canonicalId(b));
   });
 
-  it("keeps independent crowd and official claims about one phenomenon distinct", () => {
-    const official = makeObservation();
-    const crowd = makeObservation({
-      source: "crowd",
-      instanceId: "maps.example.org",
-      origin: {
-        kind: "crowd",
-        attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
-        reporter: { keyId: "key-1", signature: "sig-1" },
-      },
-    });
-    expect(canonicalId(official)).not.toBe(canonicalId(crowd));
-  });
-
-  it("separates crowd claims with the same local id hosted on different instances", () => {
-    const crowdOrigin = {
-      kind: "crowd",
-      attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
-      reporter: { keyId: "key-1", signature: "sig-1" },
-    } as const;
-    const onA = makeObservation({ instanceId: "instance-a", origin: crowdOrigin });
-    const onB = makeObservation({ instanceId: "instance-b", origin: crowdOrigin });
-    expect(canonicalId(onA)).not.toBe(canonicalId(onB));
-
-    const rehosted = makeObservation({
-      instanceId: "instance-a",
-      origin: crowdOrigin,
-      fetchedAt: "2026-07-12T00:00:00Z",
-    });
-    expect(canonicalId(onA)).toBe(canonicalId(rehosted));
-  });
-
-  it("namespaces a crowd row's canonicalId on the instance id, not the source", () => {
-    const crowd = makeObservation({
-      id: "crowd:key-1:nonce-abcdefghij",
-      source: "crowd",
-      instanceId: "maps.example.org",
-      origin: {
-        kind: "crowd",
-        attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
-        reporter: { keyId: "key-1" },
-      },
-    });
-    expect(canonicalId(crowd)).toBe(
-      canonicalId({ namespace: "maps.example.org", recordId: "crowd:key-1:nonce-abcdefghij" }),
-    );
-    expect(canonicalId(crowd)).not.toBe(
-      canonicalId({ namespace: "crowd", recordId: "crowd:key-1:nonce-abcdefghij" }),
+  it("separates one local id published by different sources", () => {
+    expect(canonicalId(makeObservation())).not.toBe(
+      canonicalId(makeObservation({ source: "autobahn" })),
     );
   });
 
@@ -203,293 +115,6 @@ describe("canonicalId", () => {
     expect(canonicalId(makeObservation())).toBe(
       "fbd61b25e9b770e2f17402764326a8bcb22304148c01261123cd348ec95f8c29",
     );
-  });
-});
-
-describe("phenomenonFingerprint", () => {
-  it("matches nearby compatible events in the same cell and time bucket", () => {
-    const a = makeEvent({ geometry: { type: "Point", coordinates: [6.4995, 52.0] } });
-    const b = makeEvent({
-      id: "other-id",
-      geometry: { type: "Point", coordinates: [6.5, 52.0] },
-      validFrom: "2026-07-10T12:02:00Z",
-    });
-    expect(phenomenonFingerprint(a)).toBe(phenomenonFingerprint(b));
-  });
-
-  it("separates events more than one cell apart", () => {
-    const a = makeEvent({ geometry: { type: "Point", coordinates: [6.5, 52.0] } });
-    const b = makeEvent({ geometry: { type: "Point", coordinates: [6.6, 52.0] } });
-    expect(phenomenonFingerprint(a)).not.toBe(phenomenonFingerprint(b));
-  });
-
-  it("separates events in different 300 s buckets", () => {
-    const a = makeEvent({ validFrom: "2026-07-10T12:00:00Z" });
-    const b = makeEvent({ validFrom: "2026-07-10T12:10:00Z" });
-    expect(phenomenonFingerprint(a)).not.toBe(phenomenonFingerprint(b));
-  });
-
-  it("separates events with a different type or domain", () => {
-    const a = makeEvent();
-    expect(phenomenonFingerprint(a)).not.toBe(
-      phenomenonFingerprint(makeEvent({ type: "roadwork" })),
-    );
-    expect(phenomenonFingerprint(a)).not.toBe(
-      phenomenonFingerprint(makeEvent({ domain: "transit" })),
-    );
-  });
-
-  it("ignores subtype at the default type depth", () => {
-    const a = makeEvent({ subtype: "accident" });
-    const b = makeEvent({ subtype: "jackknifed-truck" });
-    expect(phenomenonFingerprint(a)).toBe(phenomenonFingerprint(b));
-  });
-
-  it("ignores source, sourceUri, and origin entirely", () => {
-    const official = makeEvent({ sourceUri: "https://ndw.nu/situation-123" });
-    const crowd = makeEvent({
-      source: "crowd",
-      sourceUri: "https://maps.example.org/claims/9",
-      origin: {
-        kind: "crowd",
-        attribution: { provider: "OpenConditions", license: "ODbL-1.0" },
-        reporter: { keyId: "key-1", signature: "sig-1" },
-      },
-    });
-    expect(phenomenonFingerprint(official)).toBe(phenomenonFingerprint(crowd));
-  });
-
-  it("throws a TypeError for measurements", () => {
-    const measurement: Measurement = {
-      ...makeObservation(),
-      kind: "measurement",
-      metric: "speed",
-      value: 87,
-      unit: "km/h",
-      aggregation: "live",
-    };
-    expect(() => phenomenonFingerprint(measurement as unknown as ConditionEvent)).toThrow(
-      TypeError,
-    );
-  });
-
-  it("throws a TypeError on a missing or invalid validFrom", () => {
-    expect(() => phenomenonFingerprint(makeEvent({ validFrom: null }))).toThrow(TypeError);
-    expect(() => phenomenonFingerprint(makeEvent({ validFrom: undefined }))).toThrow(TypeError);
-    expect(() => phenomenonFingerprint(makeEvent({ validFrom: "not-a-date" }))).toThrow(TypeError);
-  });
-
-  it("matches the pinned known-answer digest", () => {
-    expect(phenomenonFingerprint(makeEvent())).toBe(
-      "54f9e59c114a96807ab5818a9f4a8420a7b86802db3a4f1a91c2dea54f464f8b",
-    );
-  });
-
-  it("is immune to separator injection between domain and type", () => {
-    const a = makeEvent({ domain: "a/b", type: "c" });
-    const b = makeEvent({ domain: "a", type: "b/c" });
-    expect(phenomenonFingerprint(a)).not.toBe(phenomenonFingerprint(b));
-  });
-
-  it("throws a TypeError on non-finite event coordinates", () => {
-    const evt = makeEvent({ geometry: { type: "Point", coordinates: [Number.NaN, 52.0] } });
-    expect(() => phenomenonFingerprint(evt)).toThrow(TypeError);
-  });
-
-  it("throws a TypeError on invalid options", () => {
-    const evt = makeEvent();
-    expect(() => phenomenonFingerprint(evt, { gridMeters: 0 })).toThrow(TypeError);
-    expect(() => phenomenonFingerprint(evt, { gridMeters: -5 })).toThrow(TypeError);
-    expect(() => phenomenonFingerprint(evt, { gridMeters: Number.POSITIVE_INFINITY })).toThrow(
-      TypeError,
-    );
-    expect(() => phenomenonFingerprint(evt, { timeBucketSec: 0 })).toThrow(TypeError);
-    expect(() => phenomenonFingerprint(evt, { timeBucketSec: Number.NaN })).toThrow(TypeError);
-    expect(() => phenomenonFingerprint(evt, { typeDepth: 3 })).toThrow(TypeError);
-    expect(() => phenomenonFingerprint(evt, { typeDepth: 1.5 })).toThrow(TypeError);
-    expect(() => phenomenonFingerprint(evt, { typeDepth: 0 })).toThrow(TypeError);
-  });
-
-  it("merges with gridMeters=1000 what the 100 m default separates", () => {
-    const a = makeEvent({ geometry: { type: "Point", coordinates: [6.5, 52.0] } });
-    const b = makeEvent({ geometry: { type: "Point", coordinates: [6.502, 52.0] } });
-    expect(phenomenonFingerprint(a)).not.toBe(phenomenonFingerprint(b));
-    expect(phenomenonFingerprint(a, { gridMeters: 1000 })).toBe(
-      phenomenonFingerprint(b, { gridMeters: 1000 }),
-    );
-  });
-
-  it("separates with timeBucketSec=60 what the 300 s default merges", () => {
-    const a = makeEvent({ validFrom: "2026-07-10T12:00:00Z" });
-    const b = makeEvent({ validFrom: "2026-07-10T12:02:00Z" });
-    expect(phenomenonFingerprint(a)).toBe(phenomenonFingerprint(b));
-    expect(phenomenonFingerprint(a, { timeBucketSec: 60 })).not.toBe(
-      phenomenonFingerprint(b, { timeBucketSec: 60 }),
-    );
-  });
-
-  it("groups by domain only at typeDepth=1", () => {
-    const a = makeEvent({ type: "incident" });
-    const b = makeEvent({ type: "roadwork" });
-    expect(phenomenonFingerprint(a, { typeDepth: 1 })).toBe(
-      phenomenonFingerprint(b, { typeDepth: 1 }),
-    );
-  });
-});
-
-describe("phenomenonFingerprintNeighborhood", () => {
-  const METERS_PER_DEG_LAT = 111_320;
-
-  it("includes the event's own fingerprint", () => {
-    const evt = makeEvent();
-    expect(phenomenonFingerprintNeighborhood(evt)).toContain(phenomenonFingerprint(evt));
-  });
-
-  it("returns distinct fingerprints", () => {
-    const fps = phenomenonFingerprintNeighborhood(makeEvent());
-    expect(new Set(fps).size).toBe(fps.length);
-  });
-
-  // The neighborhood is the candidate OPENER for `matchPhenomenonCandidates`.
-  // It MUST be a superset of the matcher's acceptance region, or a compatible
-  // pair is silently never compared. The matcher's defaults are 250 m centroid
-  // distance and a 900 s validFrom delta.
-  describe("covers the matcher's acceptance window (opener must be a superset)", () => {
-    it("pairs two events 900 s apart at the same point (matcher's max validFrom delta)", () => {
-      const a = makeEvent({ validFrom: "2026-07-10T12:00:00Z" });
-      const b = makeEvent({ id: "other-id", validFrom: "2026-07-10T12:15:00Z" });
-      expect(phenomenonFingerprintNeighborhood(a)).toContain(phenomenonFingerprint(b));
-      expect(phenomenonFingerprintNeighborhood(b)).toContain(phenomenonFingerprint(a));
-    });
-
-    it("pairs two events 583 s apart across a bucket boundary (the live cross-validation miss)", () => {
-      // The real prod case: a feed accident valid_from 08:13:00 and a crowd
-      // report at 08:22:43 — 583 s apart, well inside the matcher's 900 s
-      // window, but two 300 s buckets apart, so a ±1-bucket opener never
-      // surfaced the feed and cross-validation could not fire.
-      const a = makeEvent({ validFrom: "2026-07-17T08:13:00Z" });
-      const b = makeEvent({ id: "other-id", validFrom: "2026-07-17T08:22:43Z" });
-      expect(phenomenonFingerprintNeighborhood(a)).toContain(phenomenonFingerprint(b));
-      expect(phenomenonFingerprintNeighborhood(b)).toContain(phenomenonFingerprint(a));
-    });
-
-    it("pairs two events 250 m apart at the same instant (matcher's max centroid distance)", () => {
-      const latDelta = 250 / METERS_PER_DEG_LAT;
-      const a = makeEvent({ geometry: { type: "Point", coordinates: [6.5, 52.0] } });
-      const b = makeEvent({
-        id: "other-id",
-        geometry: { type: "Point", coordinates: [6.5, 52.0 + latDelta] },
-      });
-      expect(phenomenonFingerprintNeighborhood(a)).toContain(phenomenonFingerprint(b));
-      expect(phenomenonFingerprintNeighborhood(b)).toContain(phenomenonFingerprint(a));
-    });
-
-    it("pairs a 250 m + 900 s corner case (both maxima at once)", () => {
-      const latDelta = 250 / METERS_PER_DEG_LAT;
-      const a = makeEvent({
-        geometry: { type: "Point", coordinates: [6.5, 52.0] },
-        validFrom: "2026-07-10T12:00:00Z",
-      });
-      const b = makeEvent({
-        id: "other-id",
-        geometry: { type: "Point", coordinates: [6.5, 52.0 + latDelta] },
-        validFrom: "2026-07-10T12:15:00Z",
-      });
-      expect(phenomenonFingerprintNeighborhood(a)).toContain(phenomenonFingerprint(b));
-      expect(phenomenonFingerprintNeighborhood(b)).toContain(phenomenonFingerprint(a));
-    });
-  });
-
-  it("closes the cell-boundary miss: two events 1 m apart across a cell edge each contain the other's own fingerprint", () => {
-    // 100 m grid → one longitude cell ≈ 0.000898°. Straddle a cell edge by ~1 m.
-    const lonStep = 100 / METERS_PER_DEG_LAT;
-    const edgeLon = Math.ceil(6.5 / lonStep) * lonStep;
-    const a = makeEvent({ geometry: { type: "Point", coordinates: [edgeLon - 0.000005, 52.0] } });
-    const b = makeEvent({
-      id: "other-id",
-      geometry: { type: "Point", coordinates: [edgeLon + 0.000005, 52.0] },
-    });
-    // Their exact fingerprints differ (different cells)...
-    expect(phenomenonFingerprint(a)).not.toBe(phenomenonFingerprint(b));
-    // ...yet each sits in the other's neighborhood.
-    expect(phenomenonFingerprintNeighborhood(a)).toContain(phenomenonFingerprint(b));
-    expect(phenomenonFingerprintNeighborhood(b)).toContain(phenomenonFingerprint(a));
-  });
-
-  it("yields all 9 surrounding cells for a centroid within 1e-12° of a cell edge at lon ≈ −179.974", () => {
-    // Near |lon| ≈ 180 a coordinate-offset implementation can lose a ±step
-    // offset to floating-point cancellation and skip a neighbor cell. Integer
-    // cell-index offsets must keep the immediate block regardless (the
-    // neighborhood spans further — it covers the whole match window — so this
-    // asserts the 3×3 core is present, not the total size).
-    const step = 100 / METERS_PER_DEG_LAT;
-    const edgeLon = Math.floor(-179.974 / step) * step;
-    const lonC = edgeLon + 1e-12;
-    const latC = (Math.floor(52.0 / step) + 0.5) * step;
-    const base = makeEvent({ geometry: { type: "Point", coordinates: [lonC, latC] } });
-    const hood = phenomenonFingerprintNeighborhood(base);
-    expect(new Set(hood).size).toBe(hood.length);
-
-    // Re-derive the base cell exactly as gridCell does, then demand the
-    // fingerprint of an event at the CENTER of each of the 9 surrounding cells.
-    const x = Math.floor(lonC / step);
-    const y = Math.floor(latC / step);
-    for (let dx = -1; dx <= 1; dx++) {
-      for (let dy = -1; dy <= 1; dy++) {
-        const neighbor = makeEvent({
-          id: `cell-${dx}-${dy}`,
-          geometry: {
-            type: "Point",
-            coordinates: [(x + dx + 0.5) * step, (y + dy + 0.5) * step],
-          },
-        });
-        expect(hood).toContain(phenomenonFingerprint(neighbor));
-      }
-    }
-  });
-
-  it("includes every time bucket the match window reaches, and stops beyond it", () => {
-    const at = makeEvent({ validFrom: "2026-07-10T12:00:00Z" });
-    const prev = makeEvent({ validFrom: "2026-07-10T11:55:00Z" });
-    const next = makeEvent({ validFrom: "2026-07-10T12:05:00Z" });
-    const hood = phenomenonFingerprintNeighborhood(at);
-    expect(hood).toContain(phenomenonFingerprint(prev));
-    expect(hood).toContain(phenomenonFingerprint(next));
-    // The window is 900 s over 300 s buckets, so ±3 buckets are still reachable
-    // (11:49 sits 3 buckets back and a 660 s delta the matcher would accept).
-    expect(hood).toContain(phenomenonFingerprint(makeEvent({ validFrom: "2026-07-10T11:49:00Z" })));
-    // ...but the neighborhood does not grow without bound: 30 min back is far
-    // outside the match window and must not be opened.
-    const farPast = makeEvent({ validFrom: "2026-07-10T11:30:00Z" });
-    expect(hood).not.toContain(phenomenonFingerprint(farPast));
-  });
-
-  it("carries the same TypeError guards as phenomenonFingerprint", () => {
-    expect(() => phenomenonFingerprintNeighborhood(makeEvent({ validFrom: null }))).toThrow(
-      TypeError,
-    );
-    expect(() =>
-      phenomenonFingerprintNeighborhood(
-        makeEvent({ geometry: { type: "Point", coordinates: [Number.NaN, 52.0] } }),
-      ),
-    ).toThrow(TypeError);
-    expect(() => phenomenonFingerprintNeighborhood(makeEvent(), { gridMeters: 0 })).toThrow(
-      TypeError,
-    );
-    expect(() => phenomenonFingerprintNeighborhood(makeEvent(), { typeDepth: 3 })).toThrow(
-      TypeError,
-    );
-    const measurement: Measurement = {
-      ...makeObservation(),
-      kind: "measurement",
-      metric: "speed",
-      value: 87,
-      unit: "km/h",
-      aggregation: "live",
-    };
-    expect(() =>
-      phenomenonFingerprintNeighborhood(measurement as unknown as ConditionEvent),
-    ).toThrow(TypeError);
   });
 });
 
@@ -587,29 +212,20 @@ describe("coarseCell", () => {
   });
 });
 
-describe("truncateType", () => {
-  it("keeps domain and type as separate parts at depth 2, domain only at depth 1", () => {
-    expect(truncateType("roads", "incident", 2)).toEqual(["roads", "incident"]);
-    expect(truncateType("roads", "incident", 1)).toEqual(["roads"]);
-  });
-});
-
-describe("timeBucket", () => {
-  it("buckets epoch seconds", () => {
-    expect(timeBucket("2026-07-10T12:00:00Z", 300)).toBe(5945616);
-    expect(timeBucket("2026-07-10T12:02:00Z", 300)).toBe(5945616);
-    expect(timeBucket("2026-07-10T12:10:00Z", 300)).toBe(5945618);
+describe("isoUtcEpochMs", () => {
+  it("parses a zoned ISO timestamp", () => {
+    expect(isoUtcEpochMs("2026-07-10T12:00:00Z")).toBe(Date.UTC(2026, 6, 10, 12));
   });
 
   it("parses offset-less timestamps as UTC regardless of host timezone", () => {
     // Force a non-UTC zone so this stays diagnostic on a UTC CI runner: Node
     // applies process.env.TZ to Date.parse immediately, so a regression that let
     // the legacy parser interpret the offset-less string in local time would make
-    // the two buckets diverge here.
+    // the two values diverge here.
     const prevTz = process.env.TZ;
     process.env.TZ = "America/New_York";
     try {
-      expect(timeBucket("2026-07-10T12:00:00", 300)).toBe(timeBucket("2026-07-10T12:00:00Z", 300));
+      expect(isoUtcEpochMs("2026-07-10T12:00:00")).toBe(isoUtcEpochMs("2026-07-10T12:00:00Z"));
     } finally {
       if (prevTz === undefined) delete process.env.TZ;
       else process.env.TZ = prevTz;
@@ -617,27 +233,22 @@ describe("timeBucket", () => {
   });
 
   it("accepts a date-only ISO string (UTC midnight)", () => {
-    expect(timeBucket("2026-07-10", 300)).toBe(timeBucket("2026-07-10T00:00:00Z", 300));
+    expect(isoUtcEpochMs("2026-07-10")).toBe(isoUtcEpochMs("2026-07-10T00:00:00Z"));
   });
 
   it("rejects non-ISO-shaped date strings instead of falling through to the legacy parser", () => {
-    expect(() => timeBucket("07/10/2026", 300)).toThrow(TypeError);
-    expect(() => timeBucket("Fri Jul 10 2026", 300)).toThrow(TypeError);
-    expect(() => timeBucket("July 10, 2026", 300)).toThrow(TypeError);
+    expect(isoUtcEpochMs("07/10/2026")).toBeNaN();
+    expect(isoUtcEpochMs("Fri Jul 10 2026")).toBeNaN();
+    expect(isoUtcEpochMs("July 10, 2026")).toBeNaN();
   });
 
   it("respects explicit UTC offsets", () => {
-    expect(timeBucket("2026-07-10T14:00:00+02:00", 300)).toBe(
-      timeBucket("2026-07-10T12:00:00Z", 300),
-    );
-    expect(timeBucket("2026-07-10T14:00:00+0200", 300)).toBe(
-      timeBucket("2026-07-10T12:00:00Z", 300),
-    );
+    expect(isoUtcEpochMs("2026-07-10T14:00:00+02:00")).toBe(isoUtcEpochMs("2026-07-10T12:00:00Z"));
+    expect(isoUtcEpochMs("2026-07-10T14:00:00+0200")).toBe(isoUtcEpochMs("2026-07-10T12:00:00Z"));
   });
 
-  it("throws a TypeError on missing or invalid input", () => {
-    expect(() => timeBucket(undefined, 300)).toThrow(TypeError);
-    expect(() => timeBucket(null, 300)).toThrow(TypeError);
-    expect(() => timeBucket("not-a-date", 300)).toThrow(TypeError);
+  it("returns NaN for unparseable input", () => {
+    expect(isoUtcEpochMs("not-a-date")).toBeNaN();
+    expect(isoUtcEpochMs("2026-13-45T99:00:00Z")).toBeNaN();
   });
 });

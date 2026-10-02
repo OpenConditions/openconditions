@@ -67,9 +67,20 @@ it("upgrades a populated previous schema concurrently and never reapplies versio
   const [functionBefore] = await sql<{ body: string }[]>`
     SELECT pg_get_functiondef('conditions.segment_flow(integer,integer,integer,json)'::regprocedure) AS body`;
   expect(functionBefore!.body).toContain("ST_AsMVT");
+  // The outbox journals the record tables; the flat observations table no longer has a capture.
+  const capture = await sql<{ relation: string }[]>`
+    SELECT tgrelid::regclass::text AS relation FROM pg_trigger
+    WHERE tgname = 'federation_capture' ORDER BY 1`;
+  expect(capture.map((t) => t.relation)).toEqual([
+    "conditions.feature",
+    "conditions.observation_latest",
+    "conditions.offer",
+    "conditions.situation",
+  ]);
   expect(
-    await sql`SELECT 1 FROM pg_trigger WHERE tgname = 'federation_outbox_capture_update'`,
-  ).toHaveLength(1);
+    await sql`SELECT tgname FROM pg_trigger
+      WHERE tgrelid = 'conditions.observations'::regclass AND tgname LIKE 'federation%'`,
+  ).toHaveLength(0);
 
   // A later deployed function must survive an older migrator starting again.
   await sql`CREATE OR REPLACE FUNCTION conditions.segment_flow(z integer, x integer, y integer, query_params json)

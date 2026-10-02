@@ -1,48 +1,22 @@
-import type { GeoJsonGeometry } from "@openconditions/core";
-import type { ReportClaim, SubClaimBody } from "./types.js";
+import {
+  type Registry,
+  type ReportClaim,
+  type SubClaimBody,
+  type ValidationIssue,
+  validateClaim,
+  validateSubClaim,
+} from "@openconditions/model";
 
 /**
- * Structural and I-JSON validation for report claims and sub-claim bodies.
- * Every rule here is a signing-time AND verification-time hard rule: signing
- * throws a TypeError, verification surfaces the same message as
- * `{ ok: false, error }`.
+ * Wire validation for report claims and sub-claim bodies. Every rule here is a
+ * signing-time AND verification-time hard rule: signing throws a TypeError,
+ * verification surfaces the same message as `{ ok: false, error }`. The
+ * claim's shape is the registry's (`validateClaim`, `validateSubClaim`); this
+ * module adds what a schema cannot say about bytes that get signed: I-JSON.
  */
-
-const NONCE_PATTERN = /^[A-Za-z0-9_-]{16,64}$/;
-
-// ISO-8601 instant WITH a zone designator (Z or ±hh[:]mm); seconds and a
-// fractional part are optional. Zone-less local times are rejected outright —
-// a portable, federatable claim must pin its instant.
-const ISO_ZONED_INSTANT =
-  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:?\d{2})$/;
-
-const DOMAINS = new Set(["roads", "transit", "places"]);
-
-const FUZZINESS_VALUES = new Set([
-  "exact",
-  "low_res",
-  "medium_res",
-  "end_unknown",
-  "start_unknown",
-  "extent_unknown",
-]);
-
-const GEOMETRY_TYPES = new Set([
-  "Point",
-  "MultiPoint",
-  "LineString",
-  "MultiLineString",
-  "Polygon",
-  "MultiPolygon",
-  "GeometryCollection",
-]);
-
-const SUB_CLAIM_TYPES = new Set(["confirm", "negate", "flag"]);
 
 /** Signature-envelope fields a signable body must never carry itself. */
 export const ENVELOPE_FIELDS = ["alg", "keyId", "pubJwk", "signature"] as const;
-
-const MAX_REASON_CHARS = 2000;
 
 /** True when the string contains an unpaired UTF-16 surrogate (not I-JSON). */
 function hasLoneSurrogate(text: string): boolean {
@@ -110,129 +84,40 @@ function assertIJsonTree(value: unknown, path: string, depth = 0): void {
   }
 }
 
-function assertNonce(nonce: unknown, path: string): void {
-  if (typeof nonce !== "string" || !NONCE_PATTERN.test(nonce)) {
-    throw new TypeError(`${path}: nonce must be 16..64 characters of [A-Za-z0-9_-]`);
-  }
-}
-
-function assertReportedAt(reportedAt: unknown, path: string): void {
-  if (
-    typeof reportedAt !== "string" ||
-    !ISO_ZONED_INSTANT.test(reportedAt) ||
-    !Number.isFinite(Date.parse(reportedAt))
-  ) {
-    throw new TypeError(
-      `${path}: reportedAt must be an ISO-8601 instant with a zone designator (e.g. "2026-07-11T12:00:00Z")`,
-    );
-  }
-  // V8 rolls impossible days-of-month within 01..31 ("2026-02-30" parses as
-  // March 2), so re-derive the calendar date from the string's own Y-M-D at
-  // UTC midnight and require it to survive the round trip unchanged.
-  const year = Number(reportedAt.slice(0, 4));
-  const month = Number(reportedAt.slice(5, 7));
-  const day = Number(reportedAt.slice(8, 10));
-  const roundTrip = new Date(Date.UTC(year, month - 1, day));
-  if (
-    roundTrip.getUTCFullYear() !== year ||
-    roundTrip.getUTCMonth() !== month - 1 ||
-    roundTrip.getUTCDate() !== day
-  ) {
-    throw new TypeError(`${path}: reportedAt has an impossible calendar date: ${reportedAt}`);
-  }
-}
-
-function assertGeometry(geometry: unknown, path: string): void {
-  if (
-    geometry === null ||
-    typeof geometry !== "object" ||
-    Array.isArray(geometry) ||
-    !GEOMETRY_TYPES.has((geometry as GeoJsonGeometry).type)
-  ) {
-    throw new TypeError(`${path}: geometry must be a GeoJSON geometry object`);
-  }
-}
-
-function assertPlainObject(value: unknown, path: string): void {
-  if (value === null || typeof value !== "object" || Array.isArray(value)) {
-    throw new TypeError(`${path} must be an object`);
-  }
+function issuesMessage(label: string, issues: readonly ValidationIssue[]): string {
+  const listed = issues.map((i) => `${[label, ...i.path].join(".")}: ${i.message}`);
+  return listed.join("; ");
 }
 
 /**
- * Validate a {@link ReportClaim} against the wire contract's hard rules.
+ * Validate a report claim: I-JSON first, then the registry's claim schema.
  *
- * @throws TypeError naming the first violated rule.
+ * @throws TypeError naming every violated rule.
  */
-export function validateReportClaim(claim: ReportClaim): void {
-  assertPlainObject(claim, "claim");
-  if (!DOMAINS.has(claim.domain)) {
-    throw new TypeError(`claim.domain must be one of "roads" | "transit" | "places"`);
-  }
-  if (typeof claim.type !== "string" || claim.type.length === 0) {
-    throw new TypeError("claim.type must be a non-empty canonical taxonomy value");
-  }
-  assertGeometry(claim.geometry, "claim");
-  if (typeof claim.fuzziness !== "string" || !FUZZINESS_VALUES.has(claim.fuzziness)) {
-    throw new TypeError("claim.fuzziness must be a canonical Fuzziness value");
-  }
-  if (claim.subject !== undefined) {
-    if (!Array.isArray(claim.subject)) {
-      throw new TypeError("claim.subject must be an array of subject refs");
-    }
-    for (const [index, ref] of claim.subject.entries()) {
-      assertPlainObject(ref, `claim.subject[${index}]`);
-      if (typeof ref.type !== "string" || !ref.type || typeof ref.id !== "string" || !ref.id) {
-        throw new TypeError(`claim.subject[${index}] must carry non-empty string type and id`);
+export function assertReportClaim(registry: Registry, claim: unknown): ReportClaim {
+  assertIJsonTree(claim, "claim");
+  const checked = validateClaim(registry, claim);
+  if (!checked.ok) throw new TypeError(issuesMessage("claim", checked.issues));
+  return checked.value;
+}
+
+/**
+ * Validate a sub-claim body. The body must not smuggle envelope fields: they
+ * are added by signSubClaim and stripped before verification, so a body
+ * carrying them would sign bytes the verifier never reconstructs.
+ *
+ * @throws TypeError naming every violated rule.
+ */
+export function assertSubClaimBody(body: unknown): SubClaimBody {
+  if (body !== null && typeof body === "object" && !Array.isArray(body)) {
+    for (const field of ENVELOPE_FIELDS) {
+      if (field in body) {
+        throw new TypeError(`subClaim body must not carry the envelope field "${field}"`);
       }
     }
   }
-  if (
-    claim.severityLevel !== undefined &&
-    (!Number.isInteger(claim.severityLevel) || claim.severityLevel < 1 || claim.severityLevel > 5)
-  ) {
-    throw new TypeError("claim.severityLevel must be an integer 1..5");
-  }
-  if (claim.attributes !== undefined) {
-    assertPlainObject(claim.attributes, "claim.attributes");
-  }
-  assertReportedAt(claim.reportedAt, "claim");
-  assertNonce(claim.nonce, "claim");
-  assertIJsonTree(claim, "claim");
-}
-
-/**
- * Validate a {@link SubClaimBody} against the wire contract's hard rules.
- * The body must not smuggle envelope fields: they are added by signSubClaim
- * and stripped before verification, so a body carrying them would sign bytes
- * the verifier never reconstructs.
- *
- * @throws TypeError naming the first violated rule.
- */
-export function validateSubClaimBody(body: SubClaimBody): void {
-  assertPlainObject(body, "subClaim");
-  for (const field of ENVELOPE_FIELDS) {
-    if (field in body) {
-      throw new TypeError(`subClaim body must not carry the envelope field "${field}"`);
-    }
-  }
-  if (typeof body.subject !== "string" || body.subject.length === 0) {
-    throw new TypeError("subClaim.subject must be a non-empty string");
-  }
-  if (typeof body.claimType !== "string" || !SUB_CLAIM_TYPES.has(body.claimType)) {
-    throw new TypeError(`subClaim.claimType must be one of "confirm" | "negate" | "flag"`);
-  }
-  if (body.reason !== undefined) {
-    if (typeof body.reason !== "string" || body.reason.length > MAX_REASON_CHARS) {
-      throw new TypeError(
-        `subClaim.reason must be a string of at most ${MAX_REASON_CHARS} characters`,
-      );
-    }
-  }
-  if (body.geometry !== undefined) {
-    assertGeometry(body.geometry, "subClaim");
-  }
-  assertReportedAt(body.reportedAt, "subClaim");
-  assertNonce(body.nonce, "subClaim");
   assertIJsonTree(body, "subClaim");
+  const checked = validateSubClaim(body);
+  if (!checked.ok) throw new TypeError(issuesMessage("subClaim", checked.issues));
+  return checked.value;
 }

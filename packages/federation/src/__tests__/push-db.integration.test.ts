@@ -1,17 +1,25 @@
-import { runMigrations } from "@openconditions/core/server";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import { tombstoneRecords } from "@openconditions/storage";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { InMemoryNonceStore, verifyMessage } from "../http-signature.js";
 import { ensureInstanceKey, type InstanceKey, loadActiveKeys } from "../keys.js";
-import { encodeOutboxCursor, type OutboxCursor, type OutboxEntry, readOutbox } from "../outbox.js";
+import { encodeOutboxCursor, type OutboxCursor, readOutbox } from "../outbox.js";
 import { deliverWebhook, PUSH_FAILURE_THRESHOLD } from "../push.js";
+import type { RecordOutboxEntry } from "../record-filter.js";
 import {
   createSubscription,
   type FederationSubscription,
   getSubscription,
   updateSubscription,
 } from "../subscriptions.js";
+import {
+  incidentDraft,
+  roadworksDraft,
+  situationId,
+  startDatabase,
+  writeCtx,
+  writeOwn,
+} from "./record-fixtures.integration.js";
 
 function deferred<T>() {
   let resolve!: (value: T | PromiseLike<T>) => void;
@@ -21,8 +29,8 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+let db: Awaited<ReturnType<typeof startDatabase>>;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 let signingKey: InstanceKey;
 
 const NOW = "2026-07-13T12:00:00.000Z";
@@ -33,7 +41,7 @@ const PEER_ID = "oc-neighbor";
 interface CapturedPush {
   headers: Record<string, string>;
   body: Buffer;
-  items: OutboxEntry[];
+  items: RecordOutboxEntry[];
   cursor: string;
   signatureOk: boolean;
 }
@@ -58,7 +66,7 @@ function mockInbox(statuses: number[]): {
       nonceStore: new InMemoryNonceStore(),
     });
     const page = JSON.parse(body.toString("utf8")) as {
-      orderedItems: OutboxEntry[];
+      orderedItems: RecordOutboxEntry[];
       highWaterMark: string;
     };
     captured.push({
@@ -83,27 +91,34 @@ async function frontier(): Promise<OutboxCursor> {
   return row ? { txid: row.txid, seq: Number(row.seq) } : { txid: "0", seq: 0 };
 }
 
-/** The wire composite cursor of a journalled object's (latest) entry. */
-async function cursorOfObject(objectId: string): Promise<string> {
+/** The wire composite cursor of a journalled situation's (latest) entry. */
+async function cursorOfObject(local: string): Promise<string> {
   const [row] = await sql<{ txid: string; seq: string }[]>`
     SELECT txid::text AS txid, seq::text AS seq
-    FROM conditions.federation_outbox
-    WHERE object_id = ${objectId}
-    ORDER BY txid DESC, seq DESC LIMIT 1`;
+    FROM conditions.federation_outbox o
+    WHERE record_id = ${situationId(local)}
+    ORDER BY o.txid DESC, o.seq DESC LIMIT 1`;
   return encodeOutboxCursor({ txid: row!.txid, seq: Number(row!.seq) });
 }
 
-async function insertEvent(id: string, opts: { type?: string; lon?: number } = {}): Promise<void> {
-  const geometry = { type: "Point", coordinates: [opts.lon ?? 5.1, 52.1] };
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, category, severity, severity_source,
-       headline, status, geom, origin, data_updated_at, fetched_at, privacy_class)
-    VALUES (${id}, 'push-test', 'datex2', 'roads', 'event', ${opts.type ?? "road_closure"},
-       'incident', 'high', 'declared', ${id}, 'active',
-       ST_SetSRID(ST_GeomFromGeoJSON(${JSON.stringify(geometry)}), 4326),
-       ${sql.json({ kind: "feed", attribution: { provider: "Auth", license: "CC-BY-4.0" } } as never)},
-       '2026-07-13T10:00:00Z', '2026-07-13T10:00:00Z', 'authoritative')`;
+/** The local part of an entry's record id, the name a test wrote it under. */
+const localOf = (entry: RecordOutboxEntry) =>
+  entry.recordId.slice(entry.recordId.lastIndexOf(":") + 1);
+
+/**
+ * Writes this instance's own situation: an incident (a priority entry) by
+ * default, or roadworks whose lane closure lies in a later phase (not one).
+ */
+async function insertEvent(
+  local: string,
+  opts: { kind?: "incident" | "roadworks"; lon?: number } = {},
+): Promise<void> {
+  const over = { lon: opts.lon ?? 5.1 };
+  const draft =
+    (opts.kind ?? "incident") === "incident"
+      ? incidentDraft(local, over)
+      : roadworksDraft(local, over);
+  await writeOwn(sql, draft);
 }
 
 /** Creates a webhook subscription whose cursor starts at the current frontier
@@ -129,34 +144,22 @@ async function webhookSubFromNow(opts: {
 }
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 4 });
-  await runMigrations(url);
+  db = await startDatabase();
+  sql = db.sql;
   await ensureInstanceKey(sql, NOW);
   [signingKey] = await loadActiveKeys(sql, NOW);
 }, 120_000);
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 describe("deliverWebhook — signed page, cursor advance, priority gating", () => {
   it("POSTs a signed page and advances the cursor to the page frontier on 2xx", async () => {
     const bbox: [number, number, number, number] = [10.0, 51.0, 11.0, 53.0];
     const sub = await webhookSubFromNow({ priorityOnly: true, bbox });
-    await insertEvent("push-a", { type: "road_closure", lon: 10.5 });
-    await insertEvent("push-b", { type: "accident", lon: 10.6 });
+    await insertEvent("push-a", { kind: "incident", lon: 10.5 });
+    await insertEvent("push-b", { kind: "incident", lon: 10.6 });
 
     const { fetchImpl, captured } = mockInbox([200]);
     const outcome = await deliverWebhook(sql, sub, {
@@ -169,7 +172,7 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
     expect(outcome.status).toBe("delivered");
     expect(captured).toHaveLength(1);
     expect(captured[0]!.signatureOk).toBe(true);
-    expect(captured[0]!.items.map((e) => e.objectId)).toEqual(["push-a", "push-b"]);
+    expect(captured[0]!.items.map(localOf)).toEqual(["push-a", "push-b"]);
 
     const after = await getSubscription(sql, sub.id);
     expect(after!.cursor).toBe(captured[0]!.cursor);
@@ -177,12 +180,12 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
   }, 30_000);
 
   it("under priorityOnly, a non-priority matching event is NOT pushed and the cursor never advances past it", async () => {
-    // The exact skip the review caught: types allows BOTH classes, priorityOnly
-    // restricts the push CHANNEL to closures. A trailing non-priority matching
+    // The exact skip the review caught: the filter's kinds allow BOTH, priorityOnly
+    // restricts the push CHANNEL to priority entries. A trailing non-priority matching
     // event must NOT be pushed AND the push cursor must stop on the priority
     // event, never jumping past the non-priority one (whose completeness is pull).
     const bbox: [number, number, number, number] = [12.0, 51.0, 13.0, 53.0];
-    const filter = { bbox, types: ["road_closure", "roadworks"], permissiveOnly: false };
+    const filter = { bbox, kinds: ["incident", "roadworks"], permissiveOnly: false };
     const sub = await createSubscription(
       sql,
       PEER_ID,
@@ -194,8 +197,8 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
     const fresh = (await getSubscription(sql, sub.id))!;
 
     // X (priority) FIRST, then Y (non-priority) — Y trails X in the journal.
-    await insertEvent("pri-closure", { type: "road_closure", lon: 12.4 });
-    await insertEvent("pri-works", { type: "roadworks", lon: 12.5 });
+    await insertEvent("pri-closure", { kind: "incident", lon: 12.4 });
+    await insertEvent("pri-works", { kind: "roadworks", lon: 12.5 });
     const closureCursor = await cursorOfObject("pri-closure");
 
     const { fetchImpl, captured } = mockInbox([200]);
@@ -208,21 +211,21 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
 
     // Only the closure is pushed; the roadwork is NOT.
     expect(outcome.status).toBe("delivered");
-    expect(captured[0]!.items.map((e) => e.objectId)).toEqual(["pri-closure"]);
+    expect(captured[0]!.items.map(localOf)).toEqual(["pri-closure"]);
 
     // The push cursor stops ON the closure — NOT past the trailing roadwork.
     const after = await getSubscription(sql, sub.id);
     expect(after!.cursor).toBe(closureCursor);
 
-    // Completeness: the peer's OWN pull (no priorityClasses) from its start cursor
+    // Completeness: the peer's OWN pull (not priorityOnly) from its start cursor
     // returns BOTH — the non-priority roadwork is never lost.
     const pull = await readOutbox(sql, { after: start, filter, now: NOW, limit: 500 });
-    expect(pull.orderedItems.map((e) => e.objectId)).toEqual(["pri-closure", "pri-works"]);
+    expect(pull.orderedItems.map(localOf)).toEqual(["pri-closure", "pri-works"]);
   }, 30_000);
 
   it("does not starve behind a long run of non-priority events (SQL-level restriction)", async () => {
     const bbox: [number, number, number, number] = [22.0, 51.0, 23.0, 53.0];
-    const filter = { bbox, types: ["road_closure", "roadworks"], permissiveOnly: false };
+    const filter = { bbox, kinds: ["incident", "roadworks"], permissiveOnly: false };
     const sub = await createSubscription(
       sql,
       PEER_ID,
@@ -236,10 +239,10 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
     // Three non-priority events then one priority, delivered with limit=2 — a
     // post-filter approach would starve (scan 2 roadworks, keep none, re-scan);
     // the SQL restriction reaches the closure regardless of the limit.
-    await insertEvent("starve-w1", { type: "roadworks", lon: 22.1 });
-    await insertEvent("starve-w2", { type: "roadworks", lon: 22.2 });
-    await insertEvent("starve-w3", { type: "roadworks", lon: 22.3 });
-    await insertEvent("starve-closure", { type: "road_closure", lon: 22.4 });
+    await insertEvent("starve-w1", { kind: "roadworks", lon: 22.1 });
+    await insertEvent("starve-w2", { kind: "roadworks", lon: 22.2 });
+    await insertEvent("starve-w3", { kind: "roadworks", lon: 22.3 });
+    await insertEvent("starve-closure", { kind: "incident", lon: 22.4 });
 
     const { fetchImpl, captured } = mockInbox([200]);
     const outcome = await deliverWebhook(sql, fresh, {
@@ -250,7 +253,31 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
       limit: 2,
     });
     expect(outcome.status).toBe("delivered");
-    expect(captured[0]!.items.map((e) => e.objectId)).toEqual(["starve-closure"]);
+    expect(captured[0]!.items.map(localOf)).toEqual(["starve-closure"]);
+  }, 30_000);
+
+  it("under priorityOnly, still pushes the retraction of a non-priority record", async () => {
+    const sub = await webhookSubFromNow({ priorityOnly: true, bbox: [26.0, 51.0, 27.0, 53.0] });
+    await insertEvent("retract-works", { kind: "roadworks", lon: 26.5 });
+    await sql.begin((tx) =>
+      tombstoneRecords(tx, "situation", [situationId("retract-works")], "withdrawn", writeCtx()),
+    );
+
+    const { fetchImpl, captured } = mockInbox([200]);
+    const outcome = await deliverWebhook(sql, sub, {
+      signingKey,
+      fetchImpl,
+      partOf: PARTOF,
+      now: NOW,
+    });
+    expect(outcome.status).toBe("delivered");
+    expect(captured[0]!.items).toEqual([
+      expect.objectContaining({
+        recordId: situationId("retract-works"),
+        operation: "delete",
+        reason: "withdrawn",
+      }),
+    ]);
   }, 30_000);
 });
 
@@ -258,7 +285,7 @@ describe("deliverWebhook — priorityRestricted self-describing marker", () => {
   it("stamps priorityRestricted:true on a priorityOnly pushed page", async () => {
     const bbox: [number, number, number, number] = [40.0, 51.0, 41.0, 53.0];
     const sub = await webhookSubFromNow({ priorityOnly: true, bbox });
-    await insertEvent("mark-pri", { type: "road_closure", lon: 40.5 });
+    await insertEvent("mark-pri", { kind: "incident", lon: 40.5 });
 
     const { fetchImpl, captured } = mockInbox([200]);
     await deliverWebhook(sql, sub, { signingKey, fetchImpl, partOf: PARTOF, now: NOW });
@@ -270,7 +297,7 @@ describe("deliverWebhook — priorityRestricted self-describing marker", () => {
   it("does NOT set priorityRestricted on a full-fidelity (priorityOnly:false) push", async () => {
     const bbox: [number, number, number, number] = [42.0, 51.0, 43.0, 53.0];
     const sub = await webhookSubFromNow({ priorityOnly: false, bbox });
-    await insertEvent("mark-full", { type: "road_closure", lon: 42.5 });
+    await insertEvent("mark-full", { kind: "incident", lon: 42.5 });
 
     const { fetchImpl, captured } = mockInbox([200]);
     await deliverWebhook(sql, sub, { signingKey, fetchImpl, partOf: PARTOF, now: NOW });
@@ -283,10 +310,10 @@ describe("deliverWebhook — priorityRestricted self-describing marker", () => {
     const bbox: [number, number, number, number] = [44.0, 51.0, 45.0, 53.0];
     const filter = { bbox, permissiveOnly: false };
     const start = encodeOutboxCursor(await frontier());
-    await insertEvent("mark-pull", { type: "road_closure", lon: 44.5 });
+    await insertEvent("mark-pull", { kind: "incident", lon: 44.5 });
 
     const pull = await readOutbox(sql, { after: start, filter, now: NOW, limit: 500 });
-    expect(pull.orderedItems.map((e) => e.objectId)).toContain("mark-pull");
+    expect(pull.orderedItems.map(localOf)).toContain("mark-pull");
     expect((pull as { priorityRestricted?: boolean }).priorityRestricted).toBeUndefined();
   }, 30_000);
 });
@@ -345,7 +372,7 @@ describe("deliverWebhook — priorityOnly=false is full-fidelity; push and pull 
       limit: 2,
     });
     expect(out1.status).toBe("delivered");
-    const pushed = first.captured[0]!.items.map((e) => e.objectId);
+    const pushed = first.captured[0]!.items.map(localOf);
     const peerLastCursor = first.captured[0]!.cursor; // the cursor the peer saw
     expect(pushed).toEqual(["share-a", "share-b"]);
 
@@ -367,7 +394,7 @@ describe("deliverWebhook — priorityOnly=false is full-fidelity; push and pull 
     // FALLBACK: the peer pulls /peer/outbox from the last cursor it saw. It gets
     // EXACTLY the events it missed, in order — no gap, no double-delivery.
     const pull = await readOutbox(sql, { after: peerLastCursor, filter, now: NOW, limit: 500 });
-    const pulled = pull.orderedItems.map((e) => e.objectId);
+    const pulled = pull.orderedItems.map(localOf);
     expect(pulled).toEqual(["share-c", "share-d"]);
 
     // The union of pushed + pulled = every matching event, each exactly once.
@@ -377,19 +404,14 @@ describe("deliverWebhook — priorityOnly=false is full-fidelity; push and pull 
 
     // And the pull re-run from the ORIGINAL start proves the same total set.
     const all = await readOutbox(sql, { after: startCursor, filter, now: NOW, limit: 500 });
-    expect(all.orderedItems.map((e) => e.objectId)).toEqual([
-      "share-a",
-      "share-b",
-      "share-c",
-      "share-d",
-    ]);
+    expect(all.orderedItems.map(localOf)).toEqual(["share-a", "share-b", "share-c", "share-d"]);
   }, 30_000);
 });
 
 describe("deliverWebhook — priorityOnly push (priority) + peer pull (all) = every event once", () => {
   it("a dropped priority push re-pushes; the peer's independent pull covers everything", async () => {
     const bbox: [number, number, number, number] = [24.0, 51.0, 25.0, 53.0];
-    const filter = { bbox, types: ["road_closure", "roadworks"], permissiveOnly: false };
+    const filter = { bbox, kinds: ["incident", "roadworks"], permissiveOnly: false };
     const sub = await createSubscription(
       sql,
       PEER_ID,
@@ -401,10 +423,10 @@ describe("deliverWebhook — priorityOnly push (priority) + peer pull (all) = ev
     const fresh = (await getSubscription(sql, sub.id))!;
 
     // Priority and non-priority matching events, interleaved.
-    await insertEvent("mix-p1", { type: "road_closure", lon: 24.1 });
-    await insertEvent("mix-n1", { type: "roadworks", lon: 24.2 });
-    await insertEvent("mix-p2", { type: "road_closure", lon: 24.3 });
-    await insertEvent("mix-n2", { type: "roadworks", lon: 24.4 });
+    await insertEvent("mix-p1", { kind: "incident", lon: 24.1 });
+    await insertEvent("mix-n1", { kind: "roadworks", lon: 24.2 });
+    await insertEvent("mix-p2", { kind: "incident", lon: 24.3 });
+    await insertEvent("mix-n2", { kind: "roadworks", lon: 24.4 });
 
     // First priority push (limit 1 priority) is ACKED → P1 delivered, cursor→P1.
     const first = mockInbox([200]);
@@ -416,8 +438,8 @@ describe("deliverWebhook — priorityOnly push (priority) + peer pull (all) = ev
       limit: 1,
     });
     expect(out1.status).toBe("delivered");
-    expect(first.captured[0]!.items.map((e) => e.objectId)).toEqual(["mix-p1"]);
-    const pushedPriority = [...first.captured[0]!.items.map((e) => e.objectId)];
+    expect(first.captured[0]!.items.map(localOf)).toEqual(["mix-p1"]);
+    const pushedPriority = [...first.captured[0]!.items.map(localOf)];
 
     // Second priority push (P2) is DROPPED → cursor NOT advanced past P1.
     const afterAck = (await getSubscription(sql, sub.id))!;
@@ -431,7 +453,7 @@ describe("deliverWebhook — priorityOnly push (priority) + peer pull (all) = ev
       limit: 1,
     });
     expect(out2.status).toBe("failed");
-    expect(second.captured[0]!.items.map((e) => e.objectId)).toEqual(["mix-p2"]);
+    expect(second.captured[0]!.items.map(localOf)).toEqual(["mix-p2"]);
     const afterDrop = (await getSubscription(sql, sub.id))!;
     expect(afterDrop.cursor).toBe(cursorAfterAck); // priority cursor unadvanced
 
@@ -446,12 +468,12 @@ describe("deliverWebhook — priorityOnly push (priority) + peer pull (all) = ev
       limit: 1,
     });
     expect(out3.status).toBe("delivered");
-    expect(retry.captured[0]!.items.map((e) => e.objectId)).toEqual(["mix-p2"]);
+    expect(retry.captured[0]!.items.map(localOf)).toEqual(["mix-p2"]);
 
     // COMPLETENESS: the peer's OWN pull (independent cursor, NOT priorityOnly)
     // returns every matching event — priority AND non-priority — exactly once.
     const pull = await readOutbox(sql, { after: startCursor, filter, now: NOW, limit: 500 });
-    const pulled = pull.orderedItems.map((e) => e.objectId);
+    const pulled = pull.orderedItems.map(localOf);
     expect(pulled).toEqual(["mix-p1", "mix-n1", "mix-p2", "mix-n2"]);
 
     // The push channel only ever carried priority events; the deduped union of

@@ -148,6 +148,12 @@ export function admitRecord(
   if (theirs === undefined || theirs.major !== mine.major) {
     return { admitted: false, skipped: `the peer does not run ${key}@${mine.major}` };
   }
+  for (const k of schemasOf(rec, key)) {
+    const [l, p] = [local.get(k), peer.get(k)];
+    if (l !== undefined && p !== undefined && p.major !== l.major) {
+      return { admitted: false, skipped: `the peer does not run ${k}@${l.major}` };
+    }
+  }
   const newer = schemasOf(rec, key).some((k) => {
     const [l, p] = [local.get(k), peer.get(k)];
     return l !== undefined && p !== undefined && p.major === l.major && p.minor > l.minor;

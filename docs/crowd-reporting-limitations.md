@@ -17,10 +17,12 @@ guarantees we deliberately do not make.
   P-256 keypair and addressed by the RFC 7638 thumbprint of its public key. There
   is no account, phone number, or real name. A key is a pseudonym, nothing more.
 - **Decay-first trust.** The primary trust mechanism is expiry, not moderation. A
-  fresh report has a short TTL and vanishes on its own unless corroboration or an
-  external resolution extends it. Stale crowd data removes itself. See the
-  per-type TTL policy in [`packages/roads/src/decay.ts`](../packages/roads/src/decay.ts)
-  and the evidence math in [`packages/core/src/evidence.ts`](../packages/core/src/evidence.ts).
+  fresh report has a short lifetime and ends on its own unless corroboration or an
+  external resolution extends it. Stale crowd data removes itself. Each
+  situation kind (and type) the crowd may report declares its lifetime, the
+  ceiling confirmations extend it to, its quorums and its match distance in the
+  registry (`crowd` rules, `crowdRulesFor`); the evidence math is in
+  [`packages/core/src/evidence.ts`](../packages/core/src/evidence.ts).
 - **Corroboration plus an external-resolution ladder.** Independent reports can
   corroborate one another, and only an external resolution (an official match, a
   reviewer decision, or an objective measurement) promotes a phenomenon to
@@ -74,19 +76,20 @@ publication.
 ## Privacy posture
 
 - **Device-keypair pseudonymity.** No phone number, no real name, no account.
-- **Per-row privacy class.** Every observation records the privacy tier it was
-  produced under.
+- **Per-record privacy class.** Every crowd record carries the
+  `crowd_pseudonym` privacy class; the reporter's key rests in its provenance
+  and is stripped at every egress (API, emitters, federation, archive).
 - **Probe/speed data is a separate, later, gated layer.** Continuous
   speed/flow contribution (with distributed aggregation and differential privacy)
   is out of scope here and is not covered by this page.
-- **Police and other sensitive categories are OFF by default.** The sensitive
-  police-presence category (canonical type `police`) is gated per instance and
-  only lands when an operator explicitly sets
-  `OPENCONDITIONS_ALLOW_POLICE_CATEGORY=true`. The gated set is exactly
-  `{"police"}`. The roads taxonomy's `authority` category is **not** gated: it is
-  legitimate official/road-authority activity (the canonical schema maps GTFS-RT
-  `POLICE_ACTIVITY → authority`), as are `security` (security incidents) and
-  `speed_restriction`. See
+- **Police presence is OFF by default.** The crowd cannot report police
+  presence at all under the production registry: the `authority` kind
+  (`authority.operation`, with the `police_checkpoint` and `police_activity`
+  subtypes) declares no crowd rules, so such a claim fails validation. As
+  defense in depth, an instance whose registry lets the crowd report it still
+  lands a police-presence report only when an operator explicitly sets
+  `OPENCONDITIONS_ALLOW_POLICE_CATEGORY=true`. Other authority activity (customs,
+  enforcement, weighing, …) is not gated. See
   [`services/contributions-api/src/policy/police.ts`](../services/contributions-api/src/policy/police.ts).
 
 ## Anti-abuse
@@ -94,7 +97,7 @@ publication.
 - **Rate limits per key and per area.** A key is capped both overall and per
   ~1 km cell within a short window.
 - **Kinematic plausibility is a post-hoc flag, not a pre-publish block.** A
-  physically impossible reporter transition flags the new observation for review;
+  physically impossible reporter transition flags the new report for review;
   it does not censor it, because a truthful fast mover must not be silenced.
 - **Post-hoc reviewer revert, no pre-publish moderation queue.** Nothing gates
   before publication. Reviewers act after the fact — accept, reject, or block.
@@ -105,17 +108,15 @@ publication.
 ## Media
 
 v1 accepts **no media**. There is no upload path, no server-side image storage,
-and no redaction pipeline. A report may carry a `media`/`photo`/`image` key in
-its free-form attributes, but it lands as inert opaque JSON with no special
-handling. Media is deferred pending a separate retention and redaction review.
+and no redaction pipeline. A claim is a strict model claim: a field the model
+does not define (a `media` or `photo` key included) is refused at verification.
+Media is deferred pending a separate retention and redaction review.
 
 ## Cross-references
 
-- The commons substrate (identity, evidence, decay, privacy columns) is
-  documented in [`commons-substrate.md`](commons-substrate.md), including the
-  decay TTL policy table and the evidence/reputation functions this page relies
-  on.
+- The commons substrate (identity, evidence, privacy columns) is documented in
+  [`commons-substrate.md`](commons-substrate.md), including the evidence policy
+  and the evidence/reputation functions this page relies on.
 - The evidence-state machine and the reliability posterior math live in
-  [`packages/core/src/evidence.ts`](../packages/core/src/evidence.ts); the
-  per-type decay TTLs live in
-  [`packages/roads/src/decay.ts`](../packages/roads/src/decay.ts).
+  [`packages/core/src/evidence.ts`](../packages/core/src/evidence.ts); the crowd
+  lifetimes and quorums are the registry's crowd rules (see `docs/model.md`).

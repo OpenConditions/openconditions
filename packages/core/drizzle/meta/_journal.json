@@ -316,6 +316,41 @@
       "when": 1790901659011,
       "tag": "0044_record_binding_queue",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1790939862397,
+      "tag": "0045_crowd_records",
+      "breakpoints": true
+    },
+    {
+      "idx": 46,
+      "version": "7",
+      "when": 1790942200338,
+      "tag": "0046_retire_observation_outbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1790942244690,
+      "tag": "0047_record_outbox",
+      "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1790942282855,
+      "tag": "0048_record_outbox_capture",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1790961513279,
+      "tag": "0049_peer_scoped_erasure",
+      "breakpoints": true
     }
   ]
 }

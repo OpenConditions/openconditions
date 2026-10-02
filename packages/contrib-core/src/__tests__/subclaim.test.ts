@@ -2,24 +2,21 @@ import { describe, expect, it } from "vitest";
 import {
   canonicalClaimBytes,
   generateReporterKey,
-  maresiUri,
-  type ReportClaim,
   type SignedSubClaim,
   type SubClaimBody,
-  signReport,
   signSubClaim,
   verifySubClaim,
 } from "../index.js";
 import { P256_ORDER } from "../lowS.js";
 
-function makeBody(overrides: Partial<SubClaimBody> = {}): SubClaimBody {
+function makeBody(overrides: Record<string, unknown> = {}): SubClaimBody {
   return {
-    subject: "urn:openconditions:report:c2lnbmF0dXJl",
+    subject: { class: "situation", id: "oc:situation:example:a46" },
     claimType: "confirm",
     reportedAt: "2026-07-11T12:05:00Z",
     nonce: "0123456789abcdef",
     ...overrides,
-  };
+  } as SubClaimBody;
 }
 
 describe("signSubClaim / verifySubClaim", () => {
@@ -105,14 +102,28 @@ describe("signSubClaim / verifySubClaim", () => {
 
   it("rejects an invalid claimType", async () => {
     const key = await generateReporterKey();
-    await expect(
-      signSubClaim(makeBody({ claimType: "deny" as SubClaimBody["claimType"] }), key),
-    ).rejects.toThrow(/claimType/);
+    await expect(signSubClaim(makeBody({ claimType: "deny" }), key)).rejects.toThrow(/claimType/);
   });
 
-  it("rejects an empty subject", async () => {
+  it("names its subject as a record: a class, an id, and a component only of a feature", async () => {
     const key = await generateReporterKey();
-    await expect(signSubClaim(makeBody({ subject: "" }), key)).rejects.toThrow(/subject/);
+    await expect(signSubClaim(makeBody({ subject: "oc:situation:x:1" }), key)).rejects.toThrow(
+      /subject/,
+    );
+    await expect(
+      signSubClaim(makeBody({ subject: { class: "situation", id: "" } }), key),
+    ).rejects.toThrow(/subject/);
+    await expect(
+      signSubClaim(
+        makeBody({ subject: { class: "situation", id: "oc:situation:x:1", componentKey: "evse" } }),
+        key,
+      ),
+    ).rejects.toThrow(/componentKey/);
+    const component = await signSubClaim(
+      makeBody({ subject: { class: "feature", id: "oc:feature:x:1", componentKey: "evse-1" } }),
+      key,
+    );
+    await expect(verifySubClaim(component)).resolves.toMatchObject({ ok: true });
   });
 
   it("caps reason at 2000 characters", async () => {
@@ -132,7 +143,7 @@ describe("signSubClaim / verifySubClaim", () => {
     await expect(signSubClaim(makeBody({ nonce: "short" }), key)).rejects.toThrow(/nonce/);
     await expect(
       signSubClaim(makeBody({ reportedAt: "2026-07-11T12:05:00" }), key),
-    ).rejects.toThrow(/zone designator/);
+    ).rejects.toThrow(/reportedAt/);
   });
 
   it("rejects a body that smuggles envelope fields", async () => {
@@ -152,27 +163,5 @@ describe("signSubClaim / verifySubClaim", () => {
     } as SignedSubClaim;
     const result = await verifySubClaim(moved);
     expect(result.ok).toBe(false);
-  });
-
-  it("round-trips a maresiUri as the sub-claim subject", async () => {
-    const key = await generateReporterKey();
-    const claim: ReportClaim = {
-      domain: "roads",
-      type: "hazard",
-      geometry: { type: "Point", coordinates: [6.0839, 50.7753] },
-      fuzziness: "exact",
-      reportedAt: "2026-07-11T12:00:00Z",
-      nonce: "abcdefgh12345678",
-    };
-    const report = await signReport(claim, key);
-    const uri = maresiUri(report);
-    const confirmer = await generateReporterKey();
-    const sub = await signSubClaim(makeBody({ subject: uri }), confirmer);
-    await expect(verifySubClaim(sub)).resolves.toStrictEqual({
-      ok: true,
-      keyId: confirmer.keyId,
-    });
-    // The URI's final segment is the report signature, recoverable verbatim.
-    expect(sub.subject.split(":").at(-1)).toBe(report.signature);
   });
 });

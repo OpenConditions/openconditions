@@ -9,9 +9,12 @@
  * rest — the peer advances its push-ack on the returned `maxCursor`.
  *
  * The body is an OrderedCollectionPage of outbox entries (the exact shape the
- * webhook push and the pull outbox serve); each event lands through the ONE
- * federated ingest path (`@openconditions/contributions-api/federation/
- * ingest`), so webhook push and consumer pull share the same trust boundary.
+ * webhook push and the pull outbox serve); each record lands through the ONE
+ * federation inbox (`@openconditions/contributions-api/federation/inbox`), so
+ * webhook push and consumer pull share the same trust boundary. Admission
+ * reads the schema versions the peer advertised when its actor document was
+ * last verified; until it has been, the page is answered 503 so the peer
+ * retries once the instance knows what it runs.
  *
  * Abuse controls here are TRANSPORT ONLY (ADR §8 — peer health ≠ event truth):
  * a blocked peer is refused (403); a per-peer, tier-aware rate limiter refuses
@@ -23,10 +26,11 @@
 import {
   FederatedPageError,
   ingestFederatedPage,
-} from "@openconditions/contributions-api/federation/ingest";
+} from "@openconditions/contributions-api/federation/inbox";
 import {
   FEDERATION_REASON_HEADER,
   type FederationFailureReason,
+  loadPeerVersions,
   type MtlsContext,
   type NonceStore,
   type PeerHealthFailure,
@@ -34,14 +38,20 @@ import {
   type RateLimiter,
   recordPeerFailure,
 } from "@openconditions/federation";
+import type { Registry } from "@openconditions/model";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type postgres from "postgres";
 import { requirePeer, respondIfBlocked } from "./peer-request.js";
 
 const INBOX_PATH = "/peer/inbox";
 
+/** How long a peer whose capabilities are not yet known waits before retrying. */
+const CAPABILITIES_RETRY_SEC = 60;
+
 export interface InboxRouteContext {
   sql: postgres.Sql;
+  /** The running registry peer records are admitted against. */
+  registry: Registry;
   /** The pinned peers registry (settings.peers). */
   peers: PeerRecord[];
   /** The instance's configured base URL — the authority the signed target-uri uses. */
@@ -135,25 +145,30 @@ export function registerInboxRoutes(app: FastifyInstance, ctx: InboxRouteContext
         .send({ error: "inbox rate limit exceeded", retryAfterSec: rate.retryAfterSec });
     }
 
+    const peerVersions = await loadPeerVersions(ctx.sql, peerId);
+    if (peerVersions === undefined) {
+      return reply
+        .status(503)
+        .header("Retry-After", String(CAPABILITIES_RETRY_SEC))
+        .header(FEDERATION_REASON_HEADER, "capabilities-unknown")
+        .send({ error: "this instance has not yet verified what the peer runs; retry later" });
+    }
+
     try {
       const result = await ingestFederatedPage(ctx.sql, page, {
+        registry: ctx.registry,
         localInstanceId: ctx.localInstanceId,
         peerInstanceId: peerId,
+        peerVersions,
         now: ctx.now(),
       });
-      // A skipped event is a malformed/unauthorized item inside an authenticated
+      // A skipped entry is a malformed/unauthorized item inside an authenticated
       // page — a SCHEMA-class health signal, never a truth judgement about the
-      // events that DID land.
+      // records that DID land.
       if (result.skipped.length > 0) {
         await recordPeerFailure(ctx.sql, peerId, "schema", ctx.now(), result.skipped.length);
       }
-      return reply.status(200).send({
-        accepted: result.accepted,
-        resupplied: result.resupplied,
-        tombstoned: result.tombstoned,
-        skipped: result.skipped,
-        maxCursor: result.maxCursor,
-      });
+      return reply.status(200).send(result);
     } catch (err) {
       if (err instanceof FederatedPageError) {
         return reply.status(400).send({ error: err.message });

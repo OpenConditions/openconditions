@@ -4,12 +4,15 @@ import {
   type InstanceKey,
   type MtlsContext,
   signMessage,
+  storePeerVersions,
 } from "@openconditions/federation";
+import { schemaVersions } from "@openconditions/model";
 import type { FastifyRequest } from "fastify";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
+import { pageOf, peerSituation, registry } from "./record-fixtures.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -26,7 +29,6 @@ const ACTOR_CONFIG = {
   operator: "Test Operator",
   jurisdiction: "NL",
   coverage: { iso3166: ["NL"] },
-  supportedTypes: ["incident", "roadwork"],
   license: "ODbL-1.0",
   trustTier: 1,
   capabilities: {
@@ -40,8 +42,6 @@ const ACTOR_CONFIG = {
 };
 
 let enabledEnv: Record<string, string>;
-
-const VALID_FROM = new Date(Date.now() - 5 * 60_000).toISOString();
 
 /**
  * Simulates the TLS layer's verdict from a test header, since `app.inject` has
@@ -75,50 +75,6 @@ async function signed(
   return { headers: s.headers, ...(body ? { payload: body } : {}) };
 }
 
-function fedEvent(id: string, instanceId: string, canonicalId: string): Record<string, unknown> {
-  return {
-    id,
-    source: "ndw",
-    sourceFormat: "datex2",
-    domain: "roads",
-    kind: "event",
-    type: "hazard",
-    category: "incident",
-    severity: "high",
-    severitySource: "declared",
-    headline: `Event ${id}`,
-    status: "active",
-    validFrom: VALID_FROM,
-    geometry: { type: "Point", coordinates: [5.1, 52.1] },
-    origin: { kind: "feed", attribution: { provider: "NDW", license: "CC0-1.0" } },
-    dataUpdatedAt: VALID_FROM,
-    fetchedAt: VALID_FROM,
-    isStale: false,
-    instanceId,
-    canonicalId,
-    privacyClass: "authoritative",
-  };
-}
-
-function pageOf(
-  entries: { seq: number; txid: string; observation: Record<string, unknown> }[],
-): Record<string, unknown> {
-  return {
-    type: "OrderedCollectionPage",
-    partOf: "https://a.example.net/peer/outbox",
-    highWaterMark: "0.0",
-    orderedItems: entries.map((e) => ({
-      seq: e.seq,
-      txid: e.txid,
-      operation: "create",
-      objectId: e.observation["id"],
-      canonicalId: e.observation["canonicalId"],
-      createdAt: VALID_FROM,
-      observation: e.observation,
-    })),
-  };
-}
-
 beforeAll(async () => {
   const container = await new GenericContainer("postgis/postgis:16-3.4")
     .withEnvironment({
@@ -137,6 +93,8 @@ beforeAll(async () => {
   const now = new Date().toISOString();
   mtlsPeer = await generateInstanceKey(now);
   plainPeer = await generateInstanceKey(now);
+  await storePeerVersions(sql, "peer-mtls", schemaVersions(registry), now);
+  await storePeerVersions(sql, "peer-plain", schemaVersions(registry), now);
 
   enabledEnv = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
@@ -174,7 +132,7 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
         {
           seq: 1,
           txid: "100",
-          observation: fedEvent("peer-mtls:m1", "peer-mtls", "a0".repeat(32)),
+          record: peerSituation("peer-mtls", "m1"),
         },
       ]);
       const req = await signed(mtlsPeer, "POST", "/peer/inbox", page);
@@ -186,7 +144,7 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
       });
       expect(res.statusCode).toBe(403);
       expect(res.headers["federation-reason"]).toBe("mtls-required");
-      expect(await countRows("peer-mtls:m1")).toBe(0);
+      expect(await countRows("m1")).toBe(0);
     } finally {
       await app.close();
     }
@@ -199,7 +157,7 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
         {
           seq: 1,
           txid: "110",
-          observation: fedEvent("peer-mtls:m2", "peer-mtls", "a1".repeat(32)),
+          record: peerSituation("peer-mtls", "m2"),
         },
       ]);
       const req = await signed(mtlsPeer, "POST", "/peer/inbox", page);
@@ -211,7 +169,7 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
       });
       expect(res.statusCode).toBe(403);
       expect(res.headers["federation-reason"]).toBe("mtls-required");
-      expect(await countRows("peer-mtls:m2")).toBe(0);
+      expect(await countRows("m2")).toBe(0);
     } finally {
       await app.close();
     }
@@ -224,7 +182,7 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
         {
           seq: 1,
           txid: "120",
-          observation: fedEvent("peer-mtls:m3", "peer-mtls", "a2".repeat(32)),
+          record: peerSituation("peer-mtls", "m3"),
         },
       ]);
       const req = await signed(mtlsPeer, "POST", "/peer/inbox", page);
@@ -236,7 +194,7 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
       });
       expect(res.statusCode).toBe(403);
       expect(res.headers["federation-reason"]).toBe("mtls-fingerprint-mismatch");
-      expect(await countRows("peer-mtls:m3")).toBe(0);
+      expect(await countRows("m3")).toBe(0);
     } finally {
       await app.close();
     }
@@ -249,7 +207,7 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
         {
           seq: 1,
           txid: "130",
-          observation: fedEvent("peer-mtls:m4", "peer-mtls", "a3".repeat(32)),
+          record: peerSituation("peer-mtls", "m4"),
         },
       ]);
       const req = await signed(mtlsPeer, "POST", "/peer/inbox", page);
@@ -261,7 +219,7 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
       });
       expect(res.statusCode).toBe(200);
       expect(res.json().accepted).toBe(1);
-      expect(await countRows("peer-mtls:m4")).toBe(1);
+      expect(await countRows("m4")).toBe(1);
     } finally {
       await app.close();
     }
@@ -274,7 +232,7 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
         {
           seq: 1,
           txid: "140",
-          observation: fedEvent("peer-mtls:m5", "peer-mtls", "a4".repeat(32)),
+          record: peerSituation("peer-mtls", "m5"),
         },
       ]);
       const req = await signed(mtlsPeer, "POST", "/peer/inbox", page);
@@ -287,7 +245,7 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
       });
       expect(res.statusCode).toBe(401);
       expect(res.headers["federation-reason"]).not.toMatch(/^mtls-/);
-      expect(await countRows("peer-mtls:m5")).toBe(0);
+      expect(await countRows("m5")).toBe(0);
     } finally {
       await app.close();
     }
@@ -300,7 +258,7 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
         {
           seq: 1,
           txid: "150",
-          observation: fedEvent("peer-plain:p1", "peer-plain", "a5".repeat(32)),
+          record: peerSituation("peer-plain", "p1"),
         },
       ]);
       const req = await signed(plainPeer, "POST", "/peer/inbox", page);
@@ -312,7 +270,7 @@ describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", (
       });
       expect(res.statusCode).toBe(200);
       expect(res.json().accepted).toBe(1);
-      expect(await countRows("peer-plain:p1")).toBe(1);
+      expect(await countRows("p1")).toBe(1);
     } finally {
       await app.close();
     }
@@ -412,7 +370,10 @@ describe("POST /peer/subscriptions — the mTLS gate is threaded uniformly (prox
   it("accepts a validly-signed mtlsRequired peer presenting an authorized, pinned cert", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false, mtlsContextFor });
     try {
-      const req = await signed(mtlsPeer, "POST", "/peer/subscriptions", { deliveryMode: "pull" });
+      const req = await signed(mtlsPeer, "POST", "/peer/subscriptions", {
+        deliveryMode: "pull",
+        filter: { classes: ["situation"], kinds: ["closure", "incident"] },
+      });
       const res = await app.inject({
         method: "POST",
         url: "/peer/subscriptions",
@@ -420,6 +381,7 @@ describe("POST /peer/subscriptions — the mTLS gate is threaded uniformly (prox
         payload: req.payload,
       });
       expect(res.statusCode).toBe(201);
+      expect(res.json().filter).toEqual({ classes: ["situation"], kinds: ["closure", "incident"] });
     } finally {
       await app.close();
     }
@@ -600,8 +562,9 @@ describe("GET /peer/outbox — the optionalPeer mTLS gate is threaded (proxy-awa
   }, 30_000);
 });
 
-async function countRows(id: string): Promise<number> {
+async function countRows(local: string): Promise<number> {
   const rows = await sql<{ n: string }[]>`
-    SELECT count(*)::text AS n FROM conditions.observations WHERE id = ${id}`;
+    SELECT count(*)::text AS n FROM conditions.situation
+    WHERE id = ${`oc:situation:nl-ndw:${local}`}`;
   return Number(rows[0]!.n);
 }

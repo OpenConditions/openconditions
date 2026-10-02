@@ -17,6 +17,7 @@ import {
   type FederatedRecord,
   federatedSnapshot,
   type RecordOutboxEntry,
+  readInboundEntry,
 } from "../index.js";
 
 const registry = buildRegistry([
@@ -281,5 +282,46 @@ describe("receiving a peer's record", () => {
     expect(
       admitFederatedRecord(registry, receipt, { ...feedClosure(), kind: "volcano_eruption" }),
     ).toEqual({ admitted: false, skipped: "situation/volcano_eruption is not registered here" });
+  });
+});
+
+describe("reading a peer's outbox entry", () => {
+  const head = {
+    seq: 7,
+    txid: "812",
+    recordClass: "situation",
+    recordId: "oc:situation:nl-ndw:x",
+    canonicalId: "c".repeat(64),
+  };
+
+  it("reads a change with its record and a retraction with its reason", () => {
+    const record = feedClosure();
+    expect(readInboundEntry({ ...head, operation: "update", record })).toEqual({
+      ok: true,
+      entry: { ...head, operation: "update", record },
+    });
+    expect(
+      readInboundEntry({ ...head, operation: "delete", tombstone: true, reason: "withdrawn" }),
+    ).toEqual({ ok: true, entry: { ...head, operation: "delete", reason: "withdrawn" } });
+    expect(readInboundEntry({ ...head, operation: "delete", reason: "erased" })).toEqual({
+      ok: true,
+      entry: { ...head, operation: "delete", reason: "withdrawn" },
+    });
+  });
+
+  it("refuses a retraction that carries a record, a change without one, and a malformed entry", () => {
+    expect(readInboundEntry({ ...head, operation: "delete", record: feedClosure() })).toEqual({
+      ok: false,
+      recordId: head.recordId,
+      reason: "a delete carries no record",
+    });
+    expect(readInboundEntry({ ...head, operation: "create" })).toMatchObject({
+      ok: false,
+      reason: "a create carries its record",
+    });
+    expect(readInboundEntry({ ...head, recordClass: "event", operation: "create" })).toMatchObject({
+      ok: false,
+    });
+    expect(readInboundEntry("x")).toEqual({ ok: false, reason: "malformed entry" });
   });
 });

@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 /**
- * Trust-boundary guard: the commons federation/privacy fields are set in exactly
+ * Trust-boundary guard: the commons provenance/privacy fields are set in exactly
  * ONE place (normalizeObservation). A parser that assigns one of them — directly
  * or via an object literal — would smuggle authority past the seam, so this test
  * scans every parser/catalog source under packages/roads/src and fails if any of
@@ -13,7 +13,6 @@ import { describe, expect, it } from "vitest";
 const RESERVED = [
   "instanceId",
   "canonicalId",
-  "phenomenonFingerprint",
   "privacyClass",
   "kAnonymity",
   "dpEpsilon",

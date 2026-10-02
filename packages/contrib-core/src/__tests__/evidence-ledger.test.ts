@@ -6,7 +6,6 @@ const NOW = "2026-07-11T12:00:00.000Z";
 function row(overrides: Partial<ReportEvidenceRow> = {}): ReportEvidenceRow {
   return {
     id: 1,
-    observationId: "obs-1",
     evidenceKind: "report",
     actorKeyId: "key-a",
     sourceId: null,
@@ -112,23 +111,27 @@ describe("evidenceRowsToLedger — kind mapping", () => {
     expect(entry!.external).toEqual({ source: "reviewer", outcome: "rejected" });
   });
 
-  it("ignores expired rows (expiry is derived, never input)", () => {
-    const ledger = evidenceRowsToLedger(
-      [row({ id: 1, evidenceKind: "report" }), row({ id: 2, evidenceKind: "expired" })],
-      NOW,
-    );
-    expect(ledger.entries).toHaveLength(1);
-    expect(ledger.entries[0]!.id).toBe("1");
-  });
-
   it("sets reporterKey to undefined when actorKeyId is null/undefined", () => {
     const [nullKey] = evidenceRowsToLedger([row({ actorKeyId: null })], NOW).entries;
     expect(nullKey!.reporterKey).toBeUndefined();
     const [missing] = evidenceRowsToLedger(
-      [{ id: 1, observationId: "o", evidenceKind: "report", occurredAt: NOW }],
+      [{ id: 1, evidenceKind: "report", occurredAt: NOW }],
       NOW,
     ).entries;
     expect(missing!.reporterKey).toBeUndefined();
+  });
+
+  it("dates a report when it was reported, never later than it arrived", () => {
+    const [backdated] = evidenceRowsToLedger(
+      [row({ details: { reportedAt: "2026-07-11T09:30:00.000Z" } })],
+      NOW,
+    ).entries;
+    expect(backdated!.at).toBe("2026-07-11T09:30:00.000Z");
+    const [ahead] = evidenceRowsToLedger(
+      [row({ details: { reportedAt: "2026-07-11T11:03:00.000Z" } })],
+      NOW,
+    ).entries;
+    expect(ahead!.at).toBe("2026-07-11T11:00:00.000Z");
   });
 
   it("throws TypeError on an unknown evidence_kind (corrupt ledger, fail loudly)", () => {

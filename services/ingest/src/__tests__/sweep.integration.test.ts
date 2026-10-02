@@ -1,4 +1,3 @@
-import { type QueryRunner, readObservations } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
@@ -10,16 +9,6 @@ let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
 
 const HOUR_MS = 3600_000;
-
-/** Adapt postgres-js to the QueryRunner (`execute`) interface readObservations expects. */
-function runner(): QueryRunner {
-  return {
-    async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
-      const rows = p ? await sql.unsafe(q, p as never[]) : await sql.unsafe(q);
-      return rows as T;
-    },
-  };
-}
 
 async function insertRow(
   id: string,
@@ -38,20 +27,12 @@ async function insertRow(
       : { kind: "feed", attribution: { provider: "test" } };
   await sql`
     INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, severity, headline,
+      (id, source, source_format, domain, kind, metric,
        geom, origin, data_updated_at, fetched_at, valid_to, expires_at, stale_after)
-    VALUES (${id}, ${opts.source ?? "sweeptest"}, 'seed', 'roads', 'event', 'accident', 'high', ${id},
+    VALUES (${id}, ${opts.source ?? "sweeptest"}, 'seed', 'roads', 'measurement', 'flow',
        ST_SetSRID(ST_GeomFromGeoJSON('{"type":"Point","coordinates":[13.4,52.5]}'), 4326),
        ${sql.json(origin)},
        now(), ${opts.fetchedAt}, ${opts.validTo ?? null}, ${opts.expiresAt ?? null}, ${opts.staleAfter ?? null})`;
-}
-
-/** Attach a `report` evidence row to an observation (crowd audit trail). */
-async function insertEvidence(observationId: string, keyId: string): Promise<void> {
-  await sql`
-    INSERT INTO conditions.report_evidence
-      (observation_id, evidence_kind, actor_key_id, occurred_at, details)
-    VALUES (${observationId}, 'report', ${keyId}, now(), ${sql.json({ cell: "test" })})`;
 }
 
 /** Directly controls last_success_at (including backdating it) so tests can
@@ -189,34 +170,6 @@ describe("sweepStaleObservations — crowd rows are not orphan-swept", () => {
       SELECT id FROM conditions.observations WHERE source = 'crowd' ORDER BY id`;
     expect(remaining.map((r) => r.id)).toEqual(["crowd:live-future-exp", "crowd:live-null-exp"]);
   }, 30_000);
-
-  it("removes an EXPIRED crowd report AND cascades its report_evidence (no orphans)", async () => {
-    const now = new Date();
-    await insertRow("crowd:expired", {
-      source: "crowd",
-      originKind: "crowd",
-      fetchedAt: now,
-      expiresAt: new Date(now.getTime() - HOUR_MS),
-    });
-    await insertEvidence("crowd:expired", "k-expired");
-    // A live crowd report whose evidence must survive the sweep untouched.
-    await insertRow("crowd:kept", { source: "crowd", originKind: "crowd", fetchedAt: now });
-    await insertEvidence("crowd:kept", "k-kept");
-
-    const result = await sweepStaleObservations(sql, { maxAgeSec: 3600 });
-    expect(result.deleted).toBe(1);
-
-    const remainingObs = await sql<{ id: string }[]>`
-      SELECT id FROM conditions.observations
-      WHERE id IN ('crowd:expired', 'crowd:kept') ORDER BY id`;
-    expect(remainingObs.map((r) => r.id)).toEqual(["crowd:kept"]);
-
-    // The expired report's evidence is gone; the live report's evidence stays.
-    const evidence = await sql<{ observation_id: string }[]>`
-      SELECT observation_id FROM conditions.report_evidence
-      WHERE observation_id IN ('crowd:expired', 'crowd:kept') ORDER BY observation_id`;
-    expect(evidence.map((r) => r.observation_id)).toEqual(["crowd:kept"]);
-  }, 30_000);
 });
 
 describe("upsertSourceStatus — the unchanged/304 write path", () => {
@@ -255,54 +208,5 @@ describe("upsertSourceStatus — the unchanged/304 write path", () => {
     const row = await sql<{ last_row_count: number | null }[]>`
       SELECT last_row_count FROM conditions.source_status WHERE source = 'upsert-rowcount'`;
     expect(row[0]!.last_row_count).toBe(42);
-  }, 30_000);
-});
-
-describe("readObservations isStale derivation (from source_status, not per-row stale_after)", () => {
-  it("flags a row as fresh when its source polled successfully within its freshness window, even if fetched_at is old", async () => {
-    const now = new Date();
-    await insertRow("bbox:fresh-source", {
-      source: "bbox-fresh",
-      fetchedAt: new Date(now.getTime() - 2 * HOUR_MS),
-    });
-    await setSourceStatus("bbox-fresh", { lastSuccessAt: now, freshnessWindowSec: 300 });
-
-    // dedupe: false — several tests in this describe block deliberately reuse
-    // the same geometry/type across different sources, which is exactly what
-    // the cross-source dedup pass (unrelated to this test) would merge.
-    const rows = await readObservations(runner(), {
-      domain: "roads",
-      bbox: [13, 52, 14, 53],
-      dedupe: false,
-    });
-    expect(rows.find((o) => o.id === "bbox:fresh-source")?.isStale).toBe(false);
-  }, 30_000);
-
-  it("flags a row as stale once its source's last success falls outside the freshness window", async () => {
-    const now = new Date();
-    await insertRow("bbox:stale-source", { source: "bbox-stale", fetchedAt: now });
-    await setSourceStatus("bbox-stale", {
-      lastSuccessAt: new Date(now.getTime() - 2 * HOUR_MS),
-      freshnessWindowSec: 300,
-    });
-
-    const rows = await readObservations(runner(), {
-      domain: "roads",
-      bbox: [13, 52, 14, 53],
-      dedupe: false,
-    });
-    expect(rows.find((o) => o.id === "bbox:stale-source")?.isStale).toBe(true);
-  }, 30_000);
-
-  it("flags a row as stale when its source has no source_status row at all", async () => {
-    const now = new Date();
-    await insertRow("bbox:no-status", { source: "bbox-no-status", fetchedAt: now });
-
-    const rows = await readObservations(runner(), {
-      domain: "roads",
-      bbox: [13, 52, 14, 53],
-      dedupe: false,
-    });
-    expect(rows.find((o) => o.id === "bbox:no-status")?.isStale).toBe(true);
   }, 30_000);
 });

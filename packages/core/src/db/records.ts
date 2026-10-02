@@ -81,6 +81,52 @@ export async function readRevisions(
   }));
 }
 
+type Runner = postgres.Sql | postgres.TransactionSql;
+
+/**
+ * Every live (not tombstoned) record of a class, with its evidence summary, a
+ * page at a time in id order — the archive's read. Run it inside one
+ * repeatable-read transaction for a consistent snapshot.
+ */
+export async function* scanRecords(
+  sql: Runner,
+  cls: RevisionedClass,
+  opts: { pageSize?: number } = {},
+): AsyncGenerator<Rec[]> {
+  assertRecordClass(cls);
+  const pageSize = opts.pageSize ?? 1000;
+  let after = "";
+  for (;;) {
+    const rows = await sql.unsafe<Rec[]>(
+      `SELECT id, record${EVIDENCE[cls]} FROM conditions.${cls}
+        WHERE tombstoned_at IS NULL AND id > $1 ORDER BY id LIMIT $2`,
+      [after, pageSize],
+    );
+    if (rows.length === 0) return;
+    yield rows.map(withEvidence);
+    if (rows.length < pageSize) return;
+    after = rows[rows.length - 1]!["id"] as string;
+  }
+}
+
+/** The latest reading of every series, a page at a time in series order — the archive's read. */
+export async function* scanLatestObservations(
+  sql: Runner,
+  opts: { pageSize?: number } = {},
+): AsyncGenerator<Rec[]> {
+  const pageSize = opts.pageSize ?? 1000;
+  let after = 0;
+  for (;;) {
+    const rows = await sql<{ series_id: string; record: Rec }[]>`
+      SELECT series_id::text AS series_id, record FROM conditions.observation_latest
+      WHERE series_id > ${after} ORDER BY series_id LIMIT ${pageSize}`;
+    if (rows.length === 0) return;
+    yield rows.map((r) => r.record);
+    if (rows.length < pageSize) return;
+    after = Number(rows[rows.length - 1]!.series_id);
+  }
+}
+
 /** The reading of a series in effect now (with `sinceAt`), or undefined. */
 export async function readLatestObservation(
   sql: postgres.Sql,

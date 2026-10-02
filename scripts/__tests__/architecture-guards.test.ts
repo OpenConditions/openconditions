@@ -51,6 +51,14 @@ describe("AST architecture boundaries", () => {
     expect(await violations(source, landing)).toBe(1);
   });
 
+  it("lets truth paths admit peer records through the transport-free admission entry", async () => {
+    const source = 'import { admitFederatedRecord } from "@openconditions/federation/admit";';
+    expect(await violations(source, landing)).toBe(0);
+    expect(
+      await violations('import { x } from "@openconditions/federation/admitted";', landing),
+    ).toBe(1);
+  });
+
   it.each(["packages/model/src/kernel/location.ts", "packages/model/src/__tests__/kernel.test.ts"])(
     "keeps the model package free of other OpenConditions packages: %s",
     async (path) => {

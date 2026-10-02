@@ -3,7 +3,7 @@ import { boundedCanonicalBytes } from "./jcs.js";
 import type { ReporterKey } from "./keys.js";
 import { normalizeLowS } from "./lowS.js";
 import type { SignedSubClaim, SubClaimBody, VerifyResult } from "./types.js";
-import { ENVELOPE_FIELDS, validateSubClaimBody } from "./validate.js";
+import { assertSubClaimBody, ENVELOPE_FIELDS } from "./validate.js";
 import {
   decodeRawSignature,
   ECDSA_SIGN_PARAMS,
@@ -35,11 +35,11 @@ function subClaimBodyOf(sub: SignedSubClaim): SubClaimBody {
  * whole tree.
  *
  * @throws TypeError when the body violates the wire contract (see
- *   `validateSubClaimBody`) or exceeds the 64 KiB canonical size cap.
+ *   `assertSubClaimBody`) or exceeds the 64 KiB canonical size cap.
  */
 export async function signSubClaim(body: SubClaimBody, key: ReporterKey): Promise<SignedSubClaim> {
   const bytes = boundedCanonicalBytes(body, "subClaim body");
-  validateSubClaimBody(body);
+  assertSubClaimBody(body);
   const raw = await globalThis.crypto.subtle.sign(ECDSA_SIGN_PARAMS, key.privateKey, bytes);
   return {
     ...body,
@@ -73,7 +73,7 @@ export async function verifySubClaim(
     }
     const body = subClaimBodyOf(sub);
     const bytes = boundedCanonicalBytes(body, "subClaim body");
-    validateSubClaimBody(body);
+    assertSubClaimBody(body);
     const signature = decodeRawSignature(sub.signature);
     const publicKey = await importVerifyKey(resolved.jwk);
     const ok = await globalThis.crypto.subtle.verify(

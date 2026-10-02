@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   type BetaPosterior,
   type CanonicalIdentityParts,
-  type ConditionEvent,
   canonicalId,
   canonicalIdentityParts,
   centroid,
@@ -11,13 +10,11 @@ import {
   type EvidencePolicy,
   evaluateEvidence,
   gridCell,
+  isoUtcEpochMs,
   normalizeNamespace,
   type Observation,
-  phenomenonFingerprint,
   reliabilityLowerBound,
   shrinkToward,
-  timeBucket,
-  truncateType,
   updateReliability,
 } from "../index.js";
 
@@ -53,20 +50,6 @@ function makeObservation(overrides: Partial<Observation> = {}): Observation {
   };
 }
 
-function makeEvent(overrides: Partial<ConditionEvent> = {}): ConditionEvent {
-  return {
-    ...makeObservation(),
-    kind: "event",
-    type: "accident",
-    category: "incident",
-    severity: "high",
-    severitySource: "declared",
-    headline: "Accident on the ring road",
-    validFrom: "2026-07-10T12:00:00Z",
-    ...overrides,
-  } as ConditionEvent;
-}
-
 describe("commons substrate public contract (packages/core barrel)", () => {
   it("canonical.ts identity functions are reachable and consistent", () => {
     const obs = makeObservation({ source: "ndw", id: "situation-123" });
@@ -81,15 +64,10 @@ describe("commons substrate public contract (packages/core barrel)", () => {
     expect(normalizeNamespace(" NDW ")).toBe("ndw");
   });
 
-  it("canonical.ts geometry/type/time helpers are reachable", () => {
+  it("canonical.ts geometry/time helpers are reachable", () => {
     expect(centroid({ type: "Point", coordinates: [6.5, 52.0] })).toEqual([6.5, 52.0]);
     expect(gridCell([6.5, 52.0], 100)).toMatch(GRID_CELL_FORMAT);
-    expect(truncateType("roads", "accident", 2)).toEqual(["roads", "accident"]);
-    expect(Number.isInteger(timeBucket("2026-07-10T12:00:00Z", 300))).toBe(true);
-  });
-
-  it("canonical.ts phenomenonFingerprint is reachable (events only)", () => {
-    expect(phenomenonFingerprint(makeEvent())).toMatch(HEX64);
+    expect(Number.isInteger(isoUtcEpochMs("2026-07-10T12:00:00Z"))).toBe(true);
   });
 
   it("evidence.ts evaluateEvidence + confidenceEnum are reachable", () => {

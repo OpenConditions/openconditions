@@ -28,9 +28,11 @@
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
+    "@openconditions/model": "workspace:*",
     "canonicalize": "3.0.0"
   },
   "devDependencies": {
+    "@openconditions/model-registry": "workspace:*",
     "@types/geojson": "^7946.0.16",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",

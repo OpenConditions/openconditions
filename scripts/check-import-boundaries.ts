@@ -43,8 +43,10 @@ const INGEST: Boundary = {
 
 const TRANSPORT: Boundary = {
   id: "transport",
+  // `@openconditions/federation/admit` is the package's transport-free entry:
+  // admitting a peer's record reads the registry, never the peer's health.
   pattern:
-    /^@openconditions\/federation(?:\/|$)|(?:^|\/)(?:peer-health|peer-blocklist|anomaly)(?:\.[cm]?[tj]s)?$|^\.\/rate(?:\.[cm]?[tj]s)?$/,
+    /^@openconditions\/federation(?:\/(?!admit$)|$)|(?:^|\/)(?:peer-health|peer-blocklist|anomaly)(?:\.[cm]?[tj]s)?$|^\.\/rate(?:\.[cm]?[tj]s)?$/,
   message: "Event truth must remain independent of federation transport health.",
 };
 

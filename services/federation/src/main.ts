@@ -9,9 +9,11 @@ import {
   loadActiveKeys,
   OUTBOX_PRUNE_INTERVAL_HOURS,
   pruneOutbox,
+  refreshPeerCapabilities,
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
 import { guardedFetch } from "@openconditions/ingest-framework";
+import { schemaVersions } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import postgres from "postgres";
 import { resolveFederationSettings } from "./config.js";
@@ -25,6 +27,9 @@ const WEBHOOK_CYCLE_MS = 5_000;
 
 /** How often the retention cron trims the append-only outbox journal. */
 const PRUNE_CYCLE_MS = OUTBOX_PRUNE_INTERVAL_HOURS * 60 * 60 * 1000;
+
+/** How often each pinned peer's capabilities are re-verified. */
+const CAPABILITIES_CYCLE_MS = 60 * 60 * 1000;
 
 async function boot() {
   const url = process.env["DATABASE_URL"];
@@ -91,8 +96,39 @@ async function boot() {
   };
   const pruneTimer = setInterval(() => void runPrune(), PRUNE_CYCLE_MS);
 
+  // Peer capabilities: what each pinned peer's actor document advertises,
+  // verified against its pin and negotiated, at boot and hourly after. Its
+  // records are admitted against them; a peer not yet verified is asked to
+  // retry its inbox delivery.
+  let capabilitiesTimer: NodeJS.Timeout | undefined;
+  if (settings.enabled) {
+    const actor = settings.actor!;
+    const local = {
+      ...actor.capabilities,
+      schemaVersions: schemaVersions(productionRegistry()),
+    };
+    const egress = guardedFetch();
+    const refreshAll = async () => {
+      for (const peer of settings.peers) {
+        const result = await refreshPeerCapabilities(sql, peer, {
+          local,
+          fetchImpl: egress,
+          now: new Date().toISOString(),
+        }).catch((err: unknown) => ({ ok: false as const, reason: String(err) }));
+        if (!result.ok) {
+          console.warn(
+            `[federation-api] capabilities of ${peer.instanceId} not refreshed: ${result.reason}`,
+          );
+        }
+      }
+    };
+    void refreshAll();
+    capabilitiesTimer = setInterval(() => void refreshAll(), CAPABILITIES_CYCLE_MS);
+  }
+
   const close = async () => {
     if (webhookTimer) clearInterval(webhookTimer);
+    if (capabilitiesTimer) clearInterval(capabilitiesTimer);
     clearInterval(pruneTimer);
     await app.close();
     await sql.end();

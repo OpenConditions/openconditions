@@ -1,26 +1,25 @@
 import { updateReliability } from "@openconditions/core";
-import type { EvidenceState } from "@openconditions/model";
+import type { EvidenceState, Registry } from "@openconditions/model";
 import type postgres from "postgres";
+import { lockCrowd } from "../crowd.js";
 import { recomputeEvidence } from "../evidence/recompute.js";
 
 type Sql = postgres.Sql;
 type Tx = postgres.TransactionSql;
 
-/** An external resolution of a crowd observation's truth. */
+/** An external resolution of a crowd report's truth. */
 export interface ExternalResolution {
   source: "official" | "reviewer" | "objective";
   outcome: "confirmed" | "rejected";
   /**
-   * The concrete observation that justified this resolution — for an `official`
-   * cross-validation, the matched FEED row. External resolution is the ONLY
-   * path to `routing_eligible`, so which row said so must be auditable: without
-   * it a routed report records "an official feed confirmed this" and nothing
-   * that can be checked, disputed or traced when the feed is later corrected.
-   * Recorded as `report_evidence.source_id` (the feed's source) plus
-   * `details.matchedObservationId` (the exact row). Optional: a reviewer or
-   * objective resolution has no matched row.
+   * The record that justified this resolution — for an `official`
+   * cross-validation, the agreeing FEED situation. External resolution is the
+   * ONLY path to routing eligibility, so which record said so must be
+   * auditable: it is recorded as `report_evidence.source_id` (the feed) plus
+   * `details.matchedRecord` (the exact record). A reviewer or objective
+   * resolution has none.
    */
-  matchedObservation?: { id: string; source: string };
+  matchedRecord?: { class: string; id: string; sourceId: string };
 }
 
 export interface ResolutionResult {
@@ -37,149 +36,119 @@ export interface ResolutionResult {
 function evidenceKindFor(
   resolution: ExternalResolution,
 ): "official_match" | "reviewer_accept" | "reviewer_reject" {
-  if (resolution.outcome === "rejected") {
-    return "reviewer_reject";
-  }
+  if (resolution.outcome === "rejected") return "reviewer_reject";
   return resolution.source === "reviewer" ? "reviewer_accept" : "official_match";
 }
 
 /**
  * Apply an EXTERNAL resolution (official feed match, reviewer decision, or
- * objective outcome) to a crowd observation — the ONE place reporter
- * reputation is trained. Everything runs in a single transaction holding
- * FOR UPDATE on the observation:
+ * objective outcome) to a crowd situation — the ONE place reporter
+ * reputation is trained. Everything runs in a single transaction under the
+ * crowd lock, holding FOR UPDATE on the situation:
  *
- * 1. Append the external `report_evidence` row (kind per
- *    {@link evidenceKindFor}, `details = { source, outcome }` plus
- *    `matchedObservationId` and `source_id` when the caller names the row that
- *    justified it, occurred_at = `now`), guarded by NOT EXISTS on the same
- *    (observation, source, outcome) so a double resolution is a no-op replay.
- * 2. Recompute the observation's evidence state in-tx: an external
- *    confirmation flips it to `externally_resolved` (the only routing-eligible
- *    state); a rejection negates.
+ * 1. Append the external `report_evidence` row, guarded by NOT EXISTS on the
+ *    same (situation, source, outcome) so a double resolution is a no-op.
+ * 2. Recompute the situation's evidence in-tx: a confirmation makes it
+ *    `externally_resolved` (the only routing-eligible state); a rejection
+ *    negates.
  * 3. Update Beta posteriors via core's `updateReliability` for the
- *    ORIGINATING reporter (the key on the first `report` evidence row — always
- *    trained) and every DISTINCT confirming key whose confirm occurred_at is
- *    STRICTLY BEFORE the observation was first settled (the MIN occurred_at of
- *    any pre-existing external row, or `now` on the first resolution). A
- *    confirm that postdates the first resolution earned no honest signal and
- *    is never trained — not by this resolution nor by any later distinct-source
- *    one. Confirmed → +α, rejected → +β. Pre-cutoff confirmers additionally
- *    get `corroborated_count + 1` on a confirmed resolution.
+ *    ORIGINATING reporter (the key on the first `report` row) and every
+ *    DISTINCT confirming key whose confirm came STRICTLY BEFORE the report
+ *    was first settled (the earliest external row, or `now` on the first
+ *    resolution). A confirm that postdates the first resolution earned no
+ *    honest signal and is never trained. Confirmed → +α, rejected → +β.
+ *    Pre-cutoff confirmers also get `corroborated_count + 1` on a confirmed
+ *    resolution.
  *
- * BINDING: only these externally RESOLVED outcomes touch any posterior. Crowd
- * corroboration alone changes evidence state but never reputation, so
- * colluding keys cannot train one another. Inactivity decay (`shrinkToward`
- * toward the cohort prior) is a separate read-time/maintenance concern and is
- * deliberately NOT applied here.
+ * BINDING: only these externally RESOLVED outcomes touch any posterior.
+ * Crowd corroboration alone changes evidence state but never reputation, so
+ * colluding keys cannot train one another.
  *
- * Idempotence: the posterior update only runs when step 1 actually inserted
- * the evidence row. A replay with the same (observation, source, outcome)
- * changes nothing and returns the current derived state. A resolution with a
- * DIFFERENT source or outcome is new evidence and trains again — the ledger
- * keeps both rows and the recompute lets the latest external entry decide.
+ * Pass a transaction handle as `tx` to COMPOSE the resolution inside a larger
+ * transaction (e.g. a reviewer reject that resolves then tombstones); the
+ * caller then holds the crowd lock.
  *
- * Pass an existing transaction handle as `tx` to COMPOSE the resolution inside a
- * larger transaction (e.g. a reviewer reject that resolves then tombstones the
- * observation atomically). Called standalone (no `tx`) it opens its own
- * transaction, preserving the FOR UPDATE row-lock and replay behaviour.
- *
- * Returns null when the observation does not exist.
+ * Returns null when the situation does not exist.
  */
 export async function applyExternalResolution(
   sql: Sql,
-  observationId: string,
+  registry: Registry,
+  situationId: string,
   resolution: ExternalResolution,
   now: string,
   tx?: Tx,
 ): Promise<ResolutionResult | null> {
-  if (tx !== undefined) {
-    return resolveWithin(tx, sql, observationId, resolution, now);
-  }
-  return sql.begin((t) => resolveWithin(t, sql, observationId, resolution, now));
+  if (tx !== undefined) return resolveWithin(tx, sql, registry, situationId, resolution, now);
+  return sql.begin(async (t) => {
+    await lockCrowd(t);
+    return resolveWithin(t, sql, registry, situationId, resolution, now);
+  });
 }
 
 async function resolveWithin(
   tx: Tx,
   sql: Sql,
-  observationId: string,
+  registry: Registry,
+  situationId: string,
   resolution: ExternalResolution,
   now: string,
 ): Promise<ResolutionResult | null> {
-  const observationRows = await tx<{ id: string }[]>`
-    SELECT id FROM conditions.observations WHERE id = ${observationId} FOR UPDATE
+  const [situation] = await tx<{ evidence_state: EvidenceState; routing_eligible: boolean }[]>`
+    SELECT evidence_state, routing_eligible FROM conditions.situation
+    WHERE id = ${situationId} FOR UPDATE
   `;
-  if (observationRows[0] === undefined) {
-    return null;
-  }
+  if (situation === undefined) return null;
 
   const kind = evidenceKindFor(resolution);
-  // The matched row travels in `details.matchedObservationId` + `source_id`, but
-  // NOT in the replay guard below — that stays keyed on (source, outcome), so a
-  // second official match from a different feed remains the same no-op replay it
-  // has always been. One official confirmation routes; the first one is recorded.
+  const matched = resolution.matchedRecord;
   const details = {
     source: resolution.source,
     outcome: resolution.outcome,
-    ...(resolution.matchedObservation !== undefined
-      ? { matchedObservationId: resolution.matchedObservation.id }
-      : {}),
+    ...(matched === undefined ? {} : { matchedRecord: { class: matched.class, id: matched.id } }),
   };
-  const sourceId = resolution.matchedObservation?.source ?? null;
 
-  // The reputation cutoff is the FIRST external resolution's occurred_at,
-  // computed BEFORE appending this one. Only confirmers who acted strictly
-  // before the observation was ever settled earned honest signal; a confirm
-  // that postdates the first resolution must never be trained — not by this
-  // resolution nor by any later distinct-source one. On the first resolution
-  // no external row exists yet, so the row we are about to append at `now`
-  // becomes the cutoff.
-  const priorExternalRows = await tx<{ first_external: Date | null }[]>`
+  const [prior] = await tx<{ first_external: Date | null }[]>`
     SELECT MIN(occurred_at) AS first_external FROM conditions.report_evidence
-    WHERE observation_id = ${observationId}
+    WHERE record_class = 'situation' AND record_id = ${situationId}
       AND evidence_kind IN ('official_match', 'reviewer_accept', 'reviewer_reject')
   `;
-  const priorExternal = priorExternalRows[0]?.first_external ?? null;
-  const cutoffIso = priorExternal === null ? now : new Date(priorExternal).toISOString();
+  const cutoffIso =
+    prior?.first_external == null ? now : new Date(prior.first_external).toISOString();
 
   const inserted = await tx<{ id: string }[]>`
     INSERT INTO conditions.report_evidence
-      (observation_id, evidence_kind, actor_key_id, source_id, occurred_at, details)
-    SELECT ${observationId}, ${kind}, NULL, ${sourceId}, ${now}, ${tx.json(details)}
+      (record_class, record_id, evidence_kind, actor_key_id, source_id, occurred_at, details)
+    SELECT 'situation', ${situationId}, ${kind}, NULL, ${matched?.sourceId ?? null}, ${now},
+           ${tx.json(details)}
     WHERE NOT EXISTS (
       SELECT 1 FROM conditions.report_evidence
-      WHERE observation_id = ${observationId}
+      WHERE record_class = 'situation' AND record_id = ${situationId}
         AND evidence_kind = ${kind}
         AND details->>'source' = ${resolution.source}
         AND details->>'outcome' = ${resolution.outcome}
     )
     RETURNING id
   `;
-
   if (inserted.length === 0) {
-    const current = await tx<{ evidence_state: EvidenceState; routing_eligible: boolean }[]>`
-      SELECT evidence_state, routing_eligible FROM conditions.observations
-      WHERE id = ${observationId}
-    `;
     return {
-      evidenceState: current[0]!.evidence_state,
-      routingEligible: current[0]!.routing_eligible,
+      evidenceState: situation.evidence_state,
+      routingEligible: situation.routing_eligible,
     };
   }
 
-  const result = await recomputeEvidence(sql, observationId, now, tx);
+  const result = await recomputeEvidence(sql, registry, situationId, now, tx);
 
-  const originatorRows = await tx<{ actor_key_id: string | null }[]>`
+  const [originator] = await tx<{ actor_key_id: string | null }[]>`
     SELECT actor_key_id FROM conditions.report_evidence
-    WHERE observation_id = ${observationId} AND evidence_kind = 'report'
+    WHERE record_class = 'situation' AND record_id = ${situationId} AND evidence_kind = 'report'
     ORDER BY occurred_at, id
     LIMIT 1
   `;
-  const originatingKey = originatorRows[0]?.actor_key_id ?? null;
+  const originatingKey = originator?.actor_key_id ?? null;
 
   const confirmerRows = await tx<{ actor_key_id: string }[]>`
     SELECT DISTINCT actor_key_id FROM conditions.report_evidence
-    WHERE observation_id = ${observationId}
+    WHERE record_class = 'situation' AND record_id = ${situationId}
       AND evidence_kind = 'confirm'
       AND actor_key_id IS NOT NULL
       AND occurred_at < ${cutoffIso}::timestamptz
@@ -191,10 +160,7 @@ async function resolveWithin(
   const affectedKeys = [...new Set([originatingKey, ...confirmerKeys])]
     .filter((key): key is string => key !== null)
     .sort();
-
   if (affectedKeys.length > 0) {
-    // Ordered FOR UPDATE keeps concurrent resolutions touching overlapping
-    // reporter sets deadlock-free; keys without a reporter row are skipped.
     const reporters = await tx<
       { key_id: string; reputation_alpha: number; reputation_beta: number }[]
     >`
@@ -215,7 +181,6 @@ async function resolveWithin(
       `;
     }
   }
-
   if (resolution.outcome === "confirmed" && confirmerKeys.length > 0) {
     await tx`
       UPDATE conditions.reporter
@@ -225,7 +190,7 @@ async function resolveWithin(
   }
 
   return {
-    evidenceState: result!.state,
-    routingEligible: result!.routingEligible,
+    evidenceState: result?.state ?? situation.evidence_state,
+    routingEligible: result?.routingEligible ?? situation.routing_eligible,
   };
 }

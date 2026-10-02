@@ -1,9 +1,10 @@
+import type { Registry } from "@openconditions/model";
 import { toBase64Url } from "./base64url.js";
 import { boundedCanonicalBytes } from "./jcs.js";
 import type { ReporterKey } from "./keys.js";
 import { normalizeLowS } from "./lowS.js";
 import type { ReportClaim, SignedReport, VerifyResult } from "./types.js";
-import { validateReportClaim } from "./validate.js";
+import { assertReportClaim } from "./validate.js";
 import {
   decodeRawSignature,
   ECDSA_SIGN_PARAMS,
@@ -21,12 +22,16 @@ import {
  * The size cap runs before the recursive claim validation so an oversized
  * payload is rejected without walking its whole tree.
  *
- * @throws TypeError when the claim violates the wire contract (see
- *   `validateReportClaim`) or exceeds the 64 KiB canonical size cap.
+ * @throws TypeError when the claim is not one the registry accepts (see
+ *   `assertReportClaim`) or exceeds the 64 KiB canonical size cap.
  */
-export async function signReport(claim: ReportClaim, key: ReporterKey): Promise<SignedReport> {
+export async function signReport(
+  registry: Registry,
+  claim: ReportClaim,
+  key: ReporterKey,
+): Promise<SignedReport> {
   const bytes = boundedCanonicalBytes(claim, "claim");
-  validateReportClaim(claim);
+  assertReportClaim(registry, claim);
   const raw = await globalThis.crypto.subtle.sign(ECDSA_SIGN_PARAMS, key.privateKey, bytes);
   return {
     alg: "ES256",
@@ -41,9 +46,11 @@ export async function signReport(claim: ReportClaim, key: ReporterKey): Promise<
  * Verify a signed report. Never throws: every failed check is surfaced as
  * `{ ok: false, error }`. A server-cached `knownJwk` takes precedence over
  * the embedded `pubJwk` (and both must agree when present); the envelope
- * `keyId` must equal the verification key's RFC 7638 thumbprint.
+ * `keyId` must equal the verification key's RFC 7638 thumbprint, and the
+ * claim must be one the registry accepts.
  */
 export async function verifyReport(
+  registry: Registry,
   report: SignedReport,
   knownJwk?: JsonWebKey,
 ): Promise<VerifyResult> {
@@ -59,7 +66,7 @@ export async function verifyReport(
       return { ok: false, error: resolved.error };
     }
     const bytes = boundedCanonicalBytes(report.claim, "claim");
-    validateReportClaim(report.claim);
+    assertReportClaim(registry, report.claim);
     const signature = decodeRawSignature(report.signature);
     const publicKey = await importVerifyKey(resolved.jwk);
     const ok = await globalThis.crypto.subtle.verify(
@@ -74,17 +81,4 @@ export async function verifyReport(
   } catch (err) {
     return { ok: false, error: errorMessage(err) };
   }
-}
-
-/**
- * The canonical URI naming a signed report — the subject a sub-claim
- * references. The signature is base64url, so the URN needs no escaping.
- *
- * @throws TypeError when the report carries no base64url signature.
- */
-export function maresiUri(report: SignedReport): string {
-  if (typeof report.signature !== "string" || !/^[A-Za-z0-9_-]+$/.test(report.signature)) {
-    throw new TypeError("maresiUri requires a report with a base64url signature");
-  }
-  return `urn:openconditions:report:${report.signature}`;
 }

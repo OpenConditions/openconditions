@@ -3,8 +3,8 @@
  *
  * ECDSA is inherently malleable: for any valid signature (r, s) the pair
  * (r, n - s) verifies too, so a third party observing a signed report could
- * mint a SECOND, different-but-valid signature — and with it a second
- * `maresiUri` — for the same artifact. Enforcing the low-S form (s <= n/2)
+ * mint a SECOND, different-but-valid signature for the same claim. Enforcing
+ * the low-S form (s <= n/2)
  * on the signing side and rejecting everything else on the verifying side
  * leaves exactly one accepted encoding per signature.
  *

@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
-import { readObservations } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import type { LookupFn } from "@openconditions/ingest-framework";
 import { encodeOpenlrLine } from "@openconditions/openlr";
@@ -294,22 +293,28 @@ describe("store round-trip — typed columns + flow attributes JSONB", () => {
     };
     await atomicSwap(sql, "rtflow", [flow]);
 
-    const db = {
-      async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
-        return (p ? await sql.unsafe(q, p as never[]) : await sql.unsafe(q)) as T;
-      },
-    };
-    const out = await readObservations(db, { domain: "roads", bbox: [13, 52, 14, 53] });
-    const got = out.find((o) => o.id === "flow:1") as RoadFlow | undefined;
-    expect(got).toBeDefined();
-    expect(got!.kind).toBe("measurement");
-    expect(got!.metric).toBe("flow"); // typed columns
-    expect(got!.value).toBe(1200);
-    expect(got!.unit).toBe("veh/h");
-    expect(got!.aggregation).toBe("live");
-    expect(got!.los).toBe("heavy"); // attributes JSONB
-    expect(got!.speedKph).toBe(40);
-    expect(got!.delaySeconds).toBe(120);
+    const rows = await sql<
+      {
+        kind: string;
+        metric: string;
+        value: number;
+        unit: string;
+        aggregation: string;
+        attributes: Record<string, unknown>;
+      }[]
+    >`
+      SELECT kind, metric, value, unit, aggregation, attributes
+      FROM conditions.observations WHERE id = 'flow:1'`;
+    expect(rows).toHaveLength(1);
+    const got = rows[0]!;
+    expect(got.kind).toBe("measurement");
+    expect(got.metric).toBe("flow"); // typed columns
+    expect(got.value).toBe(1200);
+    expect(got.unit).toBe("veh/h");
+    expect(got.aggregation).toBe("live");
+    expect(got.attributes["los"]).toBe("heavy"); // attributes JSONB
+    expect(got.attributes["speedKph"]).toBe(40);
+    expect(got.attributes["delaySeconds"]).toBe(120);
   }, 30_000);
 });
 

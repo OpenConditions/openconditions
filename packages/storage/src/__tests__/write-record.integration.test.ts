@@ -135,6 +135,24 @@ describe("writeRecord with a stored record", () => {
     expect(row).toEqual({ instance_id: "peer.example", revision: 3 });
   });
 
+  it("takes the expiry of a delivery at the kept revision", async () => {
+    await writeRecord(sql, { stored: peerRecord(1) }, ctx(T1));
+    const base = peerRecord(1);
+    const later = "2030-01-01T00:00:00.000Z";
+    const extended = { ...base, freshness: { ...(base["freshness"] as object), expiresAt: later } };
+    expect(await writeRecord(sql, { stored: extended }, ctx(T2))).toMatchObject({
+      status: "refreshed",
+      revision: 1,
+    });
+    const [row] = await sql`
+      SELECT revision, expires_at, record #>> '{freshness,expiresAt}' AS stated
+      FROM conditions.situation`;
+    expect(row).toEqual({ revision: 1, expires_at: new Date(later), stated: later });
+    expect(await writeRecord(sql, { stored: extended }, ctx(T2))).toMatchObject({
+      status: "stale",
+    });
+  });
+
   it("applies the peer's tombstone and drops the record's effects", async () => {
     await writeRecord(sql, { stored: peerRecord(1) }, ctx(T1));
     const tombstoned = peerRecord(2, { tombstone: { reason: "cancelled", at: T2 } });
@@ -152,6 +170,26 @@ describe("writeRecord with a stored record", () => {
   it("refuses a stored record that is not one", async () => {
     const result = await writeRecord(sql, { stored: situationDraft("x") }, ctx(T1));
     expect(result.status).toBe("rejected");
+  });
+
+  it("never lets a peer's record replace one another instance wrote under the same id", async () => {
+    const own = situationDraft("p1", {
+      id: "oc:situation:be-flanders:p1",
+      provenance: {
+        ...(situationDraft("p1")["provenance"] as object),
+        sourceId: "be-flanders",
+        recordId: "p1",
+      },
+    });
+    await writeRecord(sql, { draft: own }, ctx(T1));
+    expect(await writeRecord(sql, { stored: peerRecord(5) }, ctx(T2))).toEqual({
+      status: "foreign",
+      class: "situation",
+      id: "oc:situation:be-flanders:p1",
+      revision: 1,
+    });
+    const [row] = await sql`SELECT instance_id, revision FROM conditions.situation`;
+    expect(row).toEqual({ instance_id: "test.local", revision: 1 });
   });
 });
 

@@ -1,44 +1,71 @@
-import type { Observation } from "@openconditions/core";
-import { runMigrations } from "@openconditions/core/server";
-import { filterForPermissiveExport } from "@openconditions/publishers";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { encodeOutboxCursor, type OutboxCursor, type OutboxEntry, readOutbox } from "../outbox.js";
+import {
+  syncSources,
+  tombstoneRecords,
+  writeRecord,
+  writeRecordIn,
+  writeSnapshot,
+} from "@openconditions/storage";
+import type postgres from "postgres";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { encodeOutboxCursor, type OutboxCursor, readOutbox } from "../outbox.js";
+import type { RecordOutboxEntry } from "../record-filter.js";
+import {
+  crowdReportDraft,
+  featureDraft,
+  featureId,
+  incidentDraft,
+  laneRestriction,
+  offerDraft,
+  offerId,
+  peerSituation,
+  REPORTER_KEY,
+  roadworksDraft,
+  situationId,
+  speedReading,
+  startDatabase,
+  subscribe,
+  WRITTEN_AT,
+  writeCtx,
+  writeOwn,
+} from "./record-fixtures.integration.js";
 
+let db: Awaited<ReturnType<typeof startDatabase>>;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
-const FEED_ORIGIN = {
-  kind: "feed",
-  attribution: { provider: "Test Authority", license: "CC-BY-4.0" },
-};
-
-const CROWD_ORIGIN = {
-  kind: "crowd",
-  attribution: { provider: "OpenConditions crowd", license: "CC0-1.0" },
-  reporter: { keyId: "rk-secret-thumbprint-1", signature: "sig-bytes", reputation: 0.9 },
-};
+const LATER = "2026-10-01T10:05:05.000Z";
+const NOW = "2026-10-01T10:10:00.000Z";
 
 interface JournalRow {
-  seq: string | number;
-  object_id: string;
+  seq: string;
   operation: string;
+  record_class: string;
+  record_id: string;
   canonical_id: string | null;
-  payload_snapshot: Record<string, unknown>;
-  created_at: Date;
+  kind: string;
+  domain: string;
+  property: string | null;
+  priority: boolean;
+  snapshot: Record<string, unknown> | null;
+  tombstone_reason: string | null;
 }
 
-async function journalFor(objectId: string): Promise<JournalRow[]> {
+async function journalFor(recordId: string): Promise<JournalRow[]> {
   return sql<JournalRow[]>`
-    SELECT seq, object_id, operation, canonical_id, payload_snapshot, created_at
-    FROM conditions.federation_outbox
-    WHERE object_id = ${objectId}
-    ORDER BY seq ASC`;
+    SELECT seq::text AS seq, operation, record_class, record_id, canonical_id, kind, domain,
+           property, priority, snapshot, tombstone_reason
+    FROM conditions.federation_outbox o
+    WHERE record_id = ${recordId}
+    ORDER BY o.seq ASC`;
 }
 
-/** The current maximum committed composite `(txid, seq)` cursor — a baseline
- *  that any subsequent (higher-txid) insert sorts strictly after. */
+async function journalSize(): Promise<number> {
+  const [{ count }] = await sql<{ count: number }[]>`
+    SELECT count(*)::int AS count FROM conditions.federation_outbox`;
+  return count;
+}
+
+/** The current maximum committed composite `(txid, seq)` cursor: a baseline
+ *  any later (higher-txid) entry sorts strictly after. */
 async function frontier(): Promise<OutboxCursor> {
   const [row] = await sql<{ txid: string; seq: string }[]>`
     SELECT txid::text AS txid, seq::text AS seq
@@ -48,487 +75,694 @@ async function frontier(): Promise<OutboxCursor> {
   return row ? { txid: row.txid, seq: Number(row.seq) } : { txid: "0", seq: 0 };
 }
 
-/** The wire-encoded composite cursor of a served entry. */
-function cursorOf(entry: OutboxEntry): string {
-  return encodeOutboxCursor({ txid: entry.txid, seq: entry.seq });
+const cursorOf = (entry: RecordOutboxEntry) =>
+  encodeOutboxCursor({ txid: entry.txid, seq: entry.seq });
+
+const ids = (entries: readonly RecordOutboxEntry[]) => entries.map((e) => e.recordId);
+
+/** A tombstone of stored records, in its own transaction, as the sweep or an erasure writes it. */
+async function tombstone(cls: "situation" | "feature" | "offer", id: string, reason: string) {
+  await sql.begin((tx) => tombstoneRecords(tx, cls, [id], reason, writeCtx(LATER)));
 }
 
-async function insertObservation(
-  db: postgres.Sql | postgres.TransactionSql | postgres.ReservedSql,
-  id: string,
-  opts: {
-    headline?: string;
-    origin?: Record<string, unknown>;
-    canonicalId?: string | null;
-    lon?: number;
-    privacyClass?: string;
-    evidenceState?: string | null;
-  } = {},
-): Promise<void> {
-  const geometry = { type: "Point", coordinates: [opts.lon ?? 5.1, 52.1] };
-  await db`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, category, severity, severity_source,
-       headline, status, geom, origin, data_updated_at, fetched_at,
-       canonical_id, privacy_class, evidence_state)
-    VALUES (${id}, 'outbox-test', 'datex2', 'roads', 'event', 'incident', 'incident', 'medium',
-       'declared', ${opts.headline ?? "headline v1"}, 'active',
-       ST_SetSRID(ST_GeomFromGeoJSON(${JSON.stringify(geometry)}), 4326),
-       ${db.json((opts.origin ?? FEED_ORIGIN) as never)},
-       '2026-07-13T10:00:00Z', '2026-07-13T10:00:00Z',
-       ${opts.canonicalId ?? null}, ${opts.privacyClass ?? "authoritative"},
-       ${opts.evidenceState ?? null})`;
+/** Sets a crowd report's evidence columns, as the evidence recompute does. */
+async function setEvidence(id: string, state: string, corroborations: number) {
+  await sql`
+    UPDATE conditions.situation
+    SET evidence_state = ${state}, confidence_score = ${0.2 * (corroborations + 1)},
+        routing_eligible = ${state !== "self_reported"}, corroborations = ${corroborations}
+    WHERE id = ${id}`;
 }
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-  await runMigrations(url);
-  // The capture trigger only journals when a peer SUBSCRIBES (migration 0023) —
-  // an instance with no peers must not accumulate a journal nothing will read.
-  // These suites assert the capture itself, so give them a subscriber.
-  await seedSubscriber();
+  db = await startDatabase();
+  sql = db.sql;
 }, 120_000);
 
-/** One active pull subscription — the capture trigger's gate condition. */
-async function seedSubscriber(): Promise<void> {
-  await sql`
-    INSERT INTO conditions.federation_subscription
-      (id, peer_id, delivery_mode, created_at, updated_at)
-    VALUES ('sub-capture-gate', 'peer-capture-gate', 'pull', now(), now())
-    ON CONFLICT (id) DO NOTHING`;
-}
-
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
-describe("federation_outbox trigger — gated on there being a subscriber", () => {
-  // Regression: the ungated trigger journalled ~1.4M rows/hour of feed churn on
-  // an instance with zero peers, which nothing would ever read and the retention
-  // floor refused to prune. It filled the disk and took Postgres down.
-  it("journals NOTHING while no peer subscribes", async () => {
-    await sql`DELETE FROM conditions.federation_subscription`;
-    try {
-      await insertObservation(sql, "obs-nosub", { canonicalId: "can-nosub" });
-      await sql`UPDATE conditions.observations SET headline = 'v2' WHERE id = 'obs-nosub'`;
-      await sql`DELETE FROM conditions.observations WHERE id = 'obs-nosub'`;
-      expect(await journalFor("obs-nosub")).toEqual([]);
-    } finally {
-      await seedSubscriber();
-    }
-  }, 30_000);
-
-  it("starts journalling as soon as a peer subscribes", async () => {
-    await sql`DELETE FROM conditions.federation_subscription`;
-    await insertObservation(sql, "obs-latesub", { canonicalId: "can-latesub" });
-    expect(await journalFor("obs-latesub")).toEqual([]);
-
-    await seedSubscriber();
-    await sql`UPDATE conditions.observations SET headline = 'v2' WHERE id = 'obs-latesub'`;
-
-    // Only the post-subscription mutation is journalled — the pre-subscription
-    // create is deliberately absent (the documented trade-off in 0023).
-    const entries = await journalFor("obs-latesub");
-    expect(entries.map((e) => e.operation)).toEqual(["update"]);
-  }, 30_000);
+beforeEach(async () => {
+  await sql`TRUNCATE conditions.situation, conditions.feature, conditions.offer,
+    conditions.observation_latest, conditions.federation_outbox CASCADE`;
+  await sql`DELETE FROM conditions.federation_subscription`;
+  await subscribe(sql, "all");
 });
 
-describe("federation_outbox trigger — transactional capture", () => {
-  it("captures create, update and delete as three entries in order", async () => {
-    await insertObservation(sql, "obs-lifecycle", { canonicalId: "can-lifecycle" });
-    await sql`UPDATE conditions.observations SET headline = 'headline v2' WHERE id = 'obs-lifecycle'`;
-    await sql`DELETE FROM conditions.observations WHERE id = 'obs-lifecycle'`;
+describe("capture is gated on a subscription that wants the record", () => {
+  // Regression: an ungated capture journalled the whole feed churn of an
+  // instance with no peers, which nothing read and nothing pruned.
+  it("journals nothing while no peer subscribes", async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    await writeOwn(sql, incidentDraft("nosub"));
+    await writeOwn(sql, featureDraft("nosub"));
+    await writeOwn(sql, offerDraft("nosub"));
+    await tombstone("situation", situationId("nosub"), "withdrawn");
+    expect(await journalSize()).toBe(0);
+  });
 
-    const entries = await journalFor("obs-lifecycle");
-    expect(entries.map((e) => e.operation)).toEqual(["create", "update", "delete"]);
-    expect(entries.map((e) => e.canonical_id)).toEqual([
-      "can-lifecycle",
-      "can-lifecycle",
-      "can-lifecycle",
+  it("journals nothing of a class no subscription names", async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    await subscribe(sql, "features", { classes: ["feature"] });
+    await writeOwn(sql, incidentDraft("other-class"));
+    await writeOwn(sql, offerDraft("other-class"));
+    expect(await journalSize()).toBe(0);
+    await writeOwn(sql, featureDraft("named-class"));
+    expect((await journalFor(featureId("named-class"))).map((e) => e.operation)).toEqual([
+      "create",
     ]);
-    const seqs = entries.map((e) => Number(e.seq));
-    expect(seqs[0]).toBeLessThan(seqs[1]!);
-    expect(seqs[1]).toBeLessThan(seqs[2]!);
-  }, 30_000);
+  });
 
-  it("a bare delete appends a minimal tombstone marker with the default 'expired' reason", async () => {
-    await insertObservation(sql, "obs-tombstone", { canonicalId: "can-tombstone" });
-    await sql`DELETE FROM conditions.observations WHERE id = 'obs-tombstone'`;
+  it("starts journalling once a peer subscribes, without replaying what came before", async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    await writeOwn(sql, incidentDraft("latesub"));
+    await subscribe(sql, "late");
+    await writeOwn(
+      sql,
+      incidentDraft("latesub", { severity: { label: "minor", source: "declared" } }),
+      LATER,
+    );
+    expect((await journalFor(situationId("latesub"))).map((e) => e.operation)).toEqual(["update"]);
+  });
 
-    const entries = await journalFor("obs-tombstone");
-    expect(entries[1]!.payload_snapshot).toEqual({
-      id: "obs-tombstone",
-      canonical_id: "can-tombstone",
-      tombstone: true,
-      reason: "expired",
+  it("journals observations only for a subscription naming their property", async () => {
+    await writeOwn(sql, speedReading(80, "2026-10-01T10:00:00Z"));
+    await subscribe(sql, "situations-and-speed", {
+      classes: ["situation"],
+      properties: ["traffic.speed"],
     });
-  }, 30_000);
+    await writeOwn(sql, speedReading(81, "2026-10-01T10:01:00Z"));
+    await subscribe(sql, "flow", { classes: ["observation"], properties: ["traffic.flow"] });
+    await writeOwn(sql, speedReading(82, "2026-10-01T10:02:00Z"));
+    expect(await journalSize()).toBe(0);
 
-  it("a delete carries the row's tombstone_reason when one was set", async () => {
-    await insertObservation(sql, "obs-reason", { canonicalId: "can-reason" });
-    await sql`UPDATE conditions.observations SET tombstone_reason = 'legal_takedown' WHERE id = 'obs-reason'`;
-    await sql`DELETE FROM conditions.observations WHERE id = 'obs-reason'`;
-
-    const entries = await journalFor("obs-reason");
-    const del = entries.find((e) => e.operation === "delete")!;
-    expect(del.payload_snapshot).toMatchObject({ tombstone: true, reason: "legal_takedown" });
-  }, 30_000);
-
-  it("a soft-archive (status -> archived) propagates as a delete tombstone, not an update", async () => {
-    await insertObservation(sql, "obs-soft", { canonicalId: "can-soft" });
-    await sql`
-      UPDATE conditions.observations
-      SET status = 'archived', tombstone_reason = 'gdpr_erasure'
-      WHERE id = 'obs-soft'`;
-
-    const entries = await journalFor("obs-soft");
-    expect(entries.map((e) => e.operation)).toEqual(["create", "delete"]);
-    const del = entries[1]!;
-    expect(del.payload_snapshot).toEqual({
-      id: "obs-soft",
-      canonical_id: "can-soft",
-      tombstone: true,
-      reason: "gdpr_erasure",
+    await subscribe(sql, "speed", { classes: ["observation"], properties: ["traffic.speed"] });
+    const reading = speedReading(83, "2026-10-01T10:03:00Z");
+    await writeOwn(sql, reading);
+    const [entry] = await journalFor(reading["id"] as string);
+    expect(entry).toMatchObject({
+      operation: "update",
+      record_class: "observation",
+      kind: "observation",
+      property: "traffic.speed",
+      priority: false,
     });
-  }, 30_000);
+    expect(entry!.snapshot).toMatchObject({ id: reading["id"], result: { value: 83 } });
+    expect(entry!.domain).toBe(entry!.snapshot!["domain"]);
+  });
+});
 
-  it("keeps point-in-time snapshots: two real updates leave two distinct payloads", async () => {
-    await insertObservation(sql, "obs-pit", { headline: "pit v1" });
-    await sql`UPDATE conditions.observations SET headline = 'pit v2' WHERE id = 'obs-pit'`;
-    await sql`UPDATE conditions.observations SET headline = 'pit v3' WHERE id = 'obs-pit'`;
-
-    const entries = await journalFor("obs-pit");
-    expect(entries.map((e) => e.operation)).toEqual(["create", "update", "update"]);
-    expect(entries.map((e) => e.payload_snapshot["headline"])).toEqual([
-      "pit v1",
-      "pit v2",
-      "pit v3",
-    ]);
-  }, 30_000);
-
-  it("a no-op UPDATE (identical row image) appends nothing", async () => {
-    await insertObservation(sql, "obs-noop");
-    await sql`UPDATE conditions.observations SET headline = headline WHERE id = 'obs-noop'`;
-
-    const entries = await journalFor("obs-noop");
-    expect(entries.map((e) => e.operation)).toEqual(["create"]);
-  }, 30_000);
-
-  it("a rolled-back transaction appends nothing", async () => {
+describe("capture in the writing transaction", () => {
+  it("a rolled-back write appends nothing", async () => {
     await expect(
       sql.begin(async (tx) => {
-        await insertObservation(tx, "obs-rollback");
+        await writeRecordIn(tx, { draft: incidentDraft("rollback") }, writeCtx());
         throw new Error("boom");
       }),
     ).rejects.toThrow("boom");
+    expect(await journalFor(situationId("rollback"))).toEqual([]);
+    expect(await sql`SELECT id FROM conditions.situation`).toHaveLength(0);
+  });
 
-    expect(await journalFor("obs-rollback")).toEqual([]);
-    const rows = await sql`SELECT id FROM conditions.observations WHERE id = 'obs-rollback'`;
-    expect(rows).toHaveLength(0);
-  }, 30_000);
+  it("journals a situation's create, update and tombstone with its class, id, kind and domain", async () => {
+    const id = situationId("lifecycle");
+    await writeOwn(sql, incidentDraft("lifecycle"));
+    await writeOwn(
+      sql,
+      incidentDraft("lifecycle", { severity: { label: "minor", source: "declared" } }),
+      LATER,
+    );
+    await tombstone("situation", id, "withdrawn");
 
-  it("stores the geometry snapshot as GeoJSON", async () => {
-    await insertObservation(sql, "obs-geom", { lon: 6.6 });
-    const entries = await journalFor("obs-geom");
-    expect(entries[0]!.payload_snapshot["geom"]).toMatchObject({
-      type: "Point",
-      coordinates: [6.6, 52.1],
-    });
-  }, 30_000);
-});
+    const entries = await journalFor(id);
+    expect(entries.map((e) => e.operation)).toEqual(["create", "update", "delete"]);
+    const [stored] = await sql<{ canonical_id: string; domain: string }[]>`
+      SELECT canonical_id, domain FROM conditions.situation WHERE id = ${id}`;
+    for (const entry of entries) {
+      expect(entry).toMatchObject({
+        record_class: "situation",
+        record_id: id,
+        canonical_id: stored!.canonical_id,
+        kind: "incident",
+        domain: stored!.domain,
+        property: null,
+      });
+    }
+    expect(entries.map((e) => e.snapshot?.["revision"])).toEqual([1, 2, undefined]);
+    expect(entries[1]!.snapshot!["severity"]).toMatchObject({ label: "minor" });
+    expect(entries[2]).toMatchObject({ snapshot: null, tombstone_reason: "withdrawn" });
+    const seqs = entries.map((e) => Number(e.seq));
+    expect(seqs).toEqual([...seqs].sort((a, b) => a - b));
+  });
 
-describe("federation_outbox trigger — no raw reporter identity at rest", () => {
-  it("strips origin.reporter from crowd snapshots, matching the app-level stripReporter", async () => {
-    await insertObservation(sql, "obs-crowd", {
-      origin: CROWD_ORIGIN,
-      privacyClass: "crowd_pseudonym",
-      evidenceState: "self_reported",
-    });
+  it("journals a feature's and an offer's changes the same way", async () => {
+    await writeOwn(sql, featureDraft("f1", 2));
+    await writeOwn(sql, featureDraft("f1", 3), LATER);
+    await tombstone("feature", featureId("f1"), "withdrawn");
+    await writeOwn(sql, offerDraft("o1"));
+    await writeOwn(sql, offerDraft("o1", "25.00"), LATER);
+    await tombstone("offer", offerId("o1"), "superseded");
 
-    const entries = await journalFor("obs-crowd");
-    const origin = entries[0]!.payload_snapshot["origin"] as Record<string, unknown>;
-    expect(Object.keys(origin).sort()).toEqual(["attribution", "kind"]);
-
-    const serialized = JSON.stringify(entries[0]!.payload_snapshot);
-    expect(serialized).not.toContain("rk-secret-thumbprint-1");
-    expect(serialized).not.toContain("sig-bytes");
-    expect(serialized).not.toContain("reporter");
-
-    const [appStripped] = filterForPermissiveExport([
-      { origin: CROWD_ORIGIN } as unknown as Observation,
+    const features = await journalFor(featureId("f1"));
+    expect(features.map((e) => [e.operation, e.record_class, e.kind])).toEqual([
+      ["create", "feature", "measurement_site"],
+      ["update", "feature", "measurement_site"],
+      ["delete", "feature", "measurement_site"],
     ]);
-    expect(origin).toEqual(appStripped!.origin);
-  }, 30_000);
+    expect(features[2]).toMatchObject({ snapshot: null, tombstone_reason: "withdrawn" });
+    const offers = await journalFor(offerId("o1"));
+    expect(offers.map((e) => [e.operation, e.record_class, e.kind])).toEqual([
+      ["create", "offer", "parking_rate"],
+      ["update", "offer", "parking_rate"],
+      ["delete", "offer", "parking_rate"],
+    ]);
+    expect(offers[1]!.snapshot!["maxPrice"]).toMatchObject({ amount: "25.00" });
+    expect(offers[2]).toMatchObject({ snapshot: null, tombstone_reason: "superseded" });
+    expect([...features, ...offers].every((e) => !e.priority)).toBe(true);
+  });
+
+  it("journals a restored record as a create", async () => {
+    await writeOwn(sql, incidentDraft("restored"));
+    await tombstone("situation", situationId("restored"), "withdrawn");
+    await writeOwn(sql, incidentDraft("restored"), NOW);
+    expect((await journalFor(situationId("restored"))).map((e) => e.operation)).toEqual([
+      "create",
+      "delete",
+      "create",
+    ]);
+  });
+
+  it("journals nothing for an unchanged write, nor for a feed poll that only slides an expiry", async () => {
+    const id = situationId("steady");
+    const poll = (expiresAt: string) =>
+      writeSnapshot(
+        sql,
+        "nl-ndw",
+        {
+          situations: [
+            incidentDraft("steady", {
+              freshness: { fetchedAt: WRITTEN_AT, expiresAt },
+            }),
+          ],
+        },
+        { ...writeCtx(), complete: false },
+      );
+    await poll("2026-10-01T11:00:00.000Z");
+    await writeOwn(
+      sql,
+      incidentDraft("steady", {
+        freshness: { fetchedAt: WRITTEN_AT, expiresAt: "2026-10-01T11:00:00.000Z" },
+      }),
+      LATER,
+    );
+    await poll("2026-10-01T12:00:00.000Z");
+
+    const [row] = await sql<{ revision: number; expires_at: Date }[]>`
+      SELECT revision, expires_at FROM conditions.situation WHERE id = ${id}`;
+    expect(row).toEqual({ revision: 1, expires_at: new Date("2026-10-01T12:00:00.000Z") });
+    expect((await journalFor(id)).map((e) => e.operation)).toEqual(["create"]);
+  });
+
+  it("journals a crowd report's evidence and lifetime, but never a moderation flag", async () => {
+    const draft = crowdReportDraft("evidence");
+    const { id } = await writeOwn(sql, draft);
+    await setEvidence(id, "self_reported", 0);
+    await setEvidence(id, "corroborated", 1);
+    await sql`UPDATE conditions.situation SET flagged_at = ${NOW} WHERE id = ${id}`;
+    await sql`UPDATE conditions.situation SET expires_at = expires_at + interval '10 minutes'
+      WHERE id = ${id}`;
+
+    const entries = await journalFor(id);
+    expect(entries.map((e) => e.operation)).toEqual(["create", "update", "update", "update"]);
+    expect(entries.map((e) => e.snapshot!["revision"])).toEqual([1, 1, 1, 1]);
+    expect(entries[0]!.snapshot).not.toHaveProperty("evidence");
+    expect(entries[1]!.snapshot!["evidence"]).toEqual({
+      state: "self_reported",
+      confidenceScore: 0.2,
+      routingEligible: false,
+      corroborations: 0,
+    });
+    expect(entries[2]!.snapshot!["evidence"]).toEqual({
+      state: "corroborated",
+      confidenceScore: 0.4,
+      routingEligible: true,
+      corroborations: 1,
+    });
+    expect(entries[3]!.snapshot!["evidence"]).toEqual(entries[2]!.snapshot!["evidence"]);
+    expect(JSON.stringify(entries)).not.toContain("flagged");
+  });
+
+  it("never journals a peer's record, its update or its tombstone", async () => {
+    const ctx = writeCtx();
+    expect((await writeRecord(sql, { stored: peerSituation("p1", 1) }, ctx)).status).toBe(
+      "created",
+    );
+    expect((await writeRecord(sql, { stored: peerSituation("p1", 2) }, ctx)).status).toBe(
+      "updated",
+    );
+    const tombstoned = { ...peerSituation("p1", 3), tombstone: { reason: "cancelled", at: LATER } };
+    expect((await writeRecord(sql, { stored: tombstoned }, ctx)).status).toBe("updated");
+    const [row] = await sql`SELECT instance_id, tombstone_reason FROM conditions.situation`;
+    expect(row).toEqual({ instance_id: "peer.example.net", tombstone_reason: "cancelled" });
+    expect(await journalSize()).toBe(0);
+  });
+
+  it("never journals an on-demand answer", async () => {
+    const draft = incidentDraft("on-demand");
+    await writeOwn(sql, {
+      ...draft,
+      provenance: { ...(draft["provenance"] as object), accessMode: "on_demand" },
+      freshness: { fetchedAt: WRITTEN_AT, expiresAt: "2026-10-01T10:15:00.000Z" },
+    });
+    expect(await journalSize()).toBe(0);
+  });
+
+  it("an erasure removes the record's earlier entries and keeps the deletes", async () => {
+    const id = situationId("erased");
+    await writeOwn(sql, incidentDraft("erased"));
+    await writeOwn(sql, incidentDraft("bystander"));
+    await writeOwn(
+      sql,
+      incidentDraft("erased", { headline: [{ lang: "nl", text: "Ongeval, Jan de Vries" }] }),
+      LATER,
+    );
+    await tombstone("situation", id, "withdrawn");
+    await tombstone("situation", id, "rights_revoked");
+
+    const entries = await journalFor(id);
+    expect(entries.map((e) => [e.operation, e.tombstone_reason, e.snapshot])).toEqual([
+      ["delete", "withdrawn", null],
+      ["delete", "rights_revoked", null],
+    ]);
+    expect(JSON.stringify(entries)).not.toContain("Jan de Vries");
+    expect((await journalFor(situationId("bystander"))).map((e) => e.operation)).toEqual([
+      "create",
+    ]);
+  });
+
+  it("marks priority for a closure, all lanes closed, or an incident", async () => {
+    await writeOwn(sql, incidentDraft("incident-no-effects", { effects: [] }));
+    await writeOwn(
+      sql,
+      roadworksDraft("works-closure", {
+        effects: [(incidentDraft("works-closure")["effects"] as unknown[])[0]],
+      }),
+    );
+    await writeOwn(
+      sql,
+      roadworksDraft("works-all-lanes", {
+        effects: [laneRestriction("works-all-lanes/now", "all_lanes_closed")],
+      }),
+    );
+    await writeOwn(
+      sql,
+      roadworksDraft("works-some-lanes", {
+        effects: [laneRestriction("works-some-lanes/now", "some_lanes_closed")],
+      }),
+    );
+    await writeOwn(sql, roadworksDraft("works-phased"));
+
+    const priority = async (local: string) => (await journalFor(situationId(local)))[0]!.priority;
+    expect(await priority("incident-no-effects")).toBe(true);
+    expect(await priority("works-closure")).toBe(true);
+    expect(await priority("works-all-lanes")).toBe(true);
+    expect(await priority("works-some-lanes")).toBe(false);
+    expect(await priority("works-phased")).toBe(false);
+  });
 });
 
-describe("readOutbox — the composite (txid, seq) cursor page", () => {
+describe("readOutbox maps journal rows to record entries", () => {
+  it("serves a change with its record and a delete with its reason and no record", async () => {
+    const base = await frontier();
+    const id = situationId("wire");
+    await writeOwn(sql, incidentDraft("wire", { lon: 5.3 }));
+    await tombstone("situation", id, "withdrawn");
+
+    const page = await readOutbox(sql, { after: base, now: NOW });
+    const [change, del] = page.orderedItems;
+    const [stored] = await sql<{ canonical_id: string; domain: string }[]>`
+      SELECT canonical_id, domain FROM conditions.situation WHERE id = ${id}`;
+    expect(change).toMatchObject({
+      operation: "create",
+      recordClass: "situation",
+      recordId: id,
+      canonicalId: stored!.canonical_id,
+      kind: "incident",
+      domain: stored!.domain,
+    });
+    expect(change).not.toHaveProperty("property");
+    expect(change!.record).toMatchObject({
+      id,
+      class: "situation",
+      revision: 1,
+      location: { geometry: { type: "Point", coordinates: [5.3, 52.37] } },
+      provenance: { instanceId: "test.local", sourceId: "nl-ndw" },
+    });
+    expect(Date.parse(change!.createdAt)).not.toBeNaN();
+    expect(del).toMatchObject({
+      operation: "delete",
+      recordId: id,
+      tombstone: true,
+      reason: "withdrawn",
+    });
+    expect(del).not.toHaveProperty("record");
+  });
+
+  it("serves an observation with its property", async () => {
+    await subscribe(sql, "speed", { classes: ["observation"], properties: ["traffic.speed"] });
+    const base = await frontier();
+    const reading = speedReading(64, "2026-10-01T10:04:00Z");
+    await writeOwn(sql, reading);
+    const page = await readOutbox(sql, { after: base, now: NOW });
+    expect(page.orderedItems).toHaveLength(1);
+    expect(page.orderedItems[0]).toMatchObject({
+      recordClass: "observation",
+      recordId: reading["id"],
+      kind: "observation",
+      property: "traffic.speed",
+      record: { result: { value: 64 } },
+    });
+  });
+
+  it("strips the reporter and passes crowd reports only once corroborated, unless asked", async () => {
+    const base = await frontier();
+    const { id } = await writeOwn(sql, crowdReportDraft("read"));
+    const [stored] = await sql<{ record: { provenance: Record<string, unknown> } }[]>`
+      SELECT record FROM conditions.situation WHERE id = ${id}`;
+    expect(JSON.stringify(stored!.record)).toContain(REPORTER_KEY);
+    await setEvidence(id, "self_reported", 0);
+    await setEvidence(id, "corroborated", 1);
+
+    const byDefault = await readOutbox(sql, { after: base, now: NOW });
+    expect(byDefault.orderedItems.map((e) => e.record?.evidence?.state)).toEqual(["corroborated"]);
+    const asked = await readOutbox(sql, {
+      after: base,
+      now: NOW,
+      filter: { minEvidenceTier: "self_reported" },
+    });
+    expect(asked.orderedItems.map((e) => e.record?.evidence?.state)).toEqual([
+      "self_reported",
+      "corroborated",
+    ]);
+    expect(JSON.stringify([byDefault, asked])).not.toContain(REPORTER_KEY);
+    for (const entry of asked.orderedItems) {
+      expect(entry.record!.provenance).not.toHaveProperty("reporter");
+    }
+    expect(byDefault.highWaterMark).toBe(asked.highWaterMark);
+  });
+
+  it("carries a record's extras only from a source that federates them", async () => {
+    const source = (id: string, extrasFederate: boolean) => ({
+      id,
+      domain: "road",
+      format: "datex2",
+      tier: "authoritative",
+      country: "NL",
+      operator: "Test",
+      license: "CC0-1.0",
+      attribution: "Test",
+      cadenceSec: 60,
+      freshnessWindowSec: 600,
+      extrasAllow: ["situationRecordExtension"],
+      extrasFederate,
+    });
+    await syncSources(sql, [source("nl-ndw", false), source("nl-rws", true)]);
+    const base = await frontier();
+    const extras = { extras: { situationRecordExtension: "x" } };
+    await writeOwn(sql, incidentDraft("kept-home", extras));
+    await writeOwn(sql, incidentDraft("shared", { ...extras, sourceId: "nl-rws" }));
+
+    const page = await readOutbox(sql, { after: base, now: NOW });
+    const byId = new Map(page.orderedItems.map((e) => [e.recordId, e.record]));
+    expect(byId.get(situationId("kept-home"))).not.toHaveProperty("extras");
+    expect(byId.get(situationId("shared", "nl-rws"))!.extras).toEqual({
+      situationRecordExtension: "x",
+    });
+  });
+
+  it("applies the subscriber's filter on class, kind and domain", async () => {
+    const base = await frontier();
+    await writeOwn(sql, incidentDraft("filter-incident"));
+    await writeOwn(sql, roadworksDraft("filter-works"));
+    await writeOwn(sql, featureDraft("filter-site"));
+
+    const kinds = await readOutbox(sql, {
+      after: base,
+      now: NOW,
+      filter: { kinds: ["roadworks"] },
+    });
+    expect(ids(kinds.orderedItems)).toEqual([situationId("filter-works")]);
+    const classes = await readOutbox(sql, {
+      after: base,
+      now: NOW,
+      filter: { classes: ["feature"] },
+    });
+    expect(ids(classes.orderedItems)).toEqual([featureId("filter-site")]);
+    const domains = await readOutbox(sql, {
+      after: base,
+      now: NOW,
+      filter: { domains: ["not-a-domain"] },
+    });
+    expect(domains.orderedItems).toEqual([]);
+    expect(domains.highWaterMark).toBe(kinds.highWaterMark);
+  });
+});
+
+describe("readOutbox: the composite (txid, seq) cursor page", () => {
   it("returns entries after the cursor in order, respecting the limit", async () => {
     const base = await frontier();
-    await insertObservation(sql, "page-a", { headline: "page a" });
-    await insertObservation(sql, "page-b", { headline: "page b" });
-    await insertObservation(sql, "page-c", { headline: "page c" });
+    await writeOwn(sql, incidentDraft("page-a"));
+    await writeOwn(sql, incidentDraft("page-b"));
+    await writeOwn(sql, incidentDraft("page-c"));
 
-    const page = await readOutbox(sql, { after: base, limit: 2 });
+    const page = await readOutbox(sql, { after: base, limit: 2, now: NOW });
     expect(page.type).toBe("OrderedCollectionPage");
-    expect(page.orderedItems.map((e) => e.objectId)).toEqual(["page-a", "page-b"]);
+    expect(ids(page.orderedItems)).toEqual([situationId("page-a"), situationId("page-b")]);
     expect(page.highWaterMark).toBe(cursorOf(page.orderedItems[1]!));
     expect(page.next).toBe(`/peer/outbox?after=${page.highWaterMark}`);
 
-    const rest = await readOutbox(sql, { after: page.highWaterMark, limit: 100 });
-    expect(rest.orderedItems.map((e) => e.objectId)).toEqual(["page-c"]);
+    const rest = await readOutbox(sql, { after: page.highWaterMark, limit: 100, now: NOW });
+    expect(ids(rest.orderedItems)).toEqual([situationId("page-c")]);
     expect(rest.next).toBeUndefined();
-  }, 30_000);
-
-  it("maps create snapshots back to the wire Observation shape", async () => {
-    const base = await frontier();
-    await insertObservation(sql, "wire-a", { headline: "wire headline", lon: 5.3 });
-
-    const page = await readOutbox(sql, { after: base });
-    const item = page.orderedItems.find((e) => e.objectId === "wire-a")!;
-    expect(item.operation).toBe("create");
-    const observation = item.observation!;
-    expect(observation.id).toBe("wire-a");
-    expect(observation.geometry).toEqual({ type: "Point", coordinates: [5.3, 52.1] });
-    expect(observation.origin).toEqual(FEED_ORIGIN);
-    expect(observation.privacyClass).toBe("authoritative");
-    expect((observation as { headline?: string }).headline).toBe("wire headline");
-  }, 30_000);
-
-  it("keeps a delete entry as a tombstone marker and surfaces its reason", async () => {
-    const base = await frontier();
-    await insertObservation(sql, "wire-del", { canonicalId: "can-del" });
-    await sql`DELETE FROM conditions.observations WHERE id = 'wire-del'`;
-
-    const page = await readOutbox(sql, { after: base });
-    const del = page.orderedItems.find((e) => e.operation === "delete")!;
-    expect(del.tombstone).toBe(true);
-    expect(del.objectId).toBe("wire-del");
-    expect(del.canonicalId).toBe("can-del");
-    expect(del.reason).toBe("expired");
-    expect(del.observation).toBeUndefined();
-  }, 30_000);
+  });
 
   it("accepts the wire-encoded highWaterMark string as the next `after`", async () => {
     const base = await frontier();
-    await insertObservation(sql, "chain-a");
-    await insertObservation(sql, "chain-b");
+    await writeOwn(sql, incidentDraft("chain-a"));
+    await writeOwn(sql, incidentDraft("chain-b"));
 
-    const first = await readOutbox(sql, { after: base, limit: 1 });
-    expect(first.orderedItems.map((e) => e.objectId)).toEqual(["chain-a"]);
-    // highWaterMark is a "<txid>.<seq>" string fed straight back in.
-    const second = await readOutbox(sql, { after: first.highWaterMark, limit: 1 });
-    expect(second.orderedItems.map((e) => e.objectId)).toEqual(["chain-b"]);
-  }, 30_000);
+    const first = await readOutbox(sql, { after: base, limit: 1, now: NOW });
+    expect(ids(first.orderedItems)).toEqual([situationId("chain-a")]);
+    const second = await readOutbox(sql, { after: first.highWaterMark, limit: 1, now: NOW });
+    expect(ids(second.orderedItems)).toEqual([situationId("chain-b")]);
+  });
 
   it("is idempotent on retry: re-fetching the same cursor returns the same entries", async () => {
     const base = await frontier();
-    await insertObservation(sql, "retry-a");
-    await insertObservation(sql, "retry-b");
+    await writeOwn(sql, incidentDraft("retry-a"));
+    await writeOwn(sql, incidentDraft("retry-b"));
 
-    const first = await readOutbox(sql, { after: base });
-    const second = await readOutbox(sql, { after: base });
+    const first = await readOutbox(sql, { after: base, now: NOW });
+    const second = await readOutbox(sql, { after: base, now: NOW });
     expect(second.orderedItems).toEqual(first.orderedItems);
     expect(second.highWaterMark).toBe(first.highWaterMark);
-  }, 30_000);
+  });
 
   it("advances the highWaterMark even when the filter drops every scanned entry", async () => {
     const base = await frontier();
-    await insertObservation(sql, "filtered-a", { lon: 5.1 });
-    await insertObservation(sql, "filtered-b", { lon: 5.2 });
+    await writeOwn(sql, incidentDraft("filtered-a", { lon: 5.1 }));
+    await writeOwn(sql, incidentDraft("filtered-b", { lon: 5.2 }));
 
     const page = await readOutbox(sql, {
       after: base,
+      now: NOW,
       filter: { bbox: [100, 0, 101, 1] },
     });
     expect(page.orderedItems).toEqual([]);
     expect(page.highWaterMark).not.toBe(encodeOutboxCursor(base));
     expect(page.highWaterMark).toBe(encodeOutboxCursor(await frontier()));
-  }, 30_000);
+  });
 
   it("filters at source: an out-of-bbox entry leaves a seq gap", async () => {
     const base = await frontier();
-    await insertObservation(sql, "bbox-in", { lon: 5.1 });
-    await insertObservation(sql, "bbox-out", { lon: 100.5 });
-    await insertObservation(sql, "bbox-in-2", { lon: 5.2 });
+    await writeOwn(sql, incidentDraft("bbox-in", { lon: 5.1 }));
+    await writeOwn(sql, incidentDraft("bbox-out", { lon: 100.5 }));
+    await writeOwn(sql, incidentDraft("bbox-in-2", { lon: 5.2 }));
 
     const page = await readOutbox(sql, {
       after: base,
+      now: NOW,
       filter: { bbox: [5.0, 52.0, 5.5, 52.5] },
     });
-    expect(page.orderedItems.map((e) => e.objectId)).toEqual(["bbox-in", "bbox-in-2"]);
+    expect(ids(page.orderedItems)).toEqual([situationId("bbox-in"), situationId("bbox-in-2")]);
     const seqs = page.orderedItems.map((e) => e.seq);
     expect(seqs[1]! - seqs[0]!).toBe(2);
     expect(page.highWaterMark).toBe(cursorOf(page.orderedItems[1]!));
-  }, 30_000);
+  });
 
   it("leaves an untouched cursor when there is nothing new", async () => {
     const base = await frontier();
-    const page = await readOutbox(sql, { after: base });
+    const page = await readOutbox(sql, { after: base, now: NOW });
     expect(page.orderedItems).toEqual([]);
     expect(page.highWaterMark).toBe(encodeOutboxCursor(base));
     expect(page.next).toBeUndefined();
-  }, 30_000);
+  });
+
+  it("restricts the scan to priority entries and deletes under priorityOnly", async () => {
+    const base = await frontier();
+    await writeOwn(sql, roadworksDraft("pri-works"));
+    await writeOwn(sql, incidentDraft("pri-incident"));
+    await tombstone("situation", situationId("pri-works"), "withdrawn");
+
+    const page = await readOutbox(sql, { after: base, now: NOW, priorityOnly: true });
+    expect(page.orderedItems.map((e) => [e.recordId, e.operation])).toEqual([
+      [situationId("pri-incident"), "create"],
+      [situationId("pri-works"), "delete"],
+    ]);
+    expect(page.priorityRestricted).toBe(true);
+  });
 });
 
-describe("readOutbox — the aligned-case xmin fence (no permanent skip)", () => {
+/** Writes an own incident inside an open transaction, on a reserved connection. */
+async function writeIn(conn: postgres.ReservedSql, local: string): Promise<void> {
+  await writeRecordIn(conn, { draft: incidentDraft(local) }, writeCtx());
+}
+
+async function entryCursor(
+  conn: postgres.Sql,
+  local: string,
+): Promise<{ txid: string; seq: number }> {
+  const [row] = await conn<{ txid: string; seq: string }[]>`
+    SELECT txid::text AS txid, seq::text AS seq
+    FROM conditions.federation_outbox WHERE record_id = ${situationId(local)}`;
+  return { txid: row!.txid, seq: Number(row!.seq) };
+}
+
+describe("readOutbox: the xmin fence (no permanent skip)", () => {
   it("holds the frontier below an in-flight transaction, then delivers with no skip", async () => {
     const base = await frontier();
 
-    // A slow transaction grabs the LOWER seq (bigserial is assigned at INSERT,
-    // not COMMIT) but stays open, while a fast transaction commits a HIGHER seq.
+    // A slow transaction takes the LOWER seq (bigserial is assigned at INSERT,
+    // not COMMIT) and stays open while a fast one commits a HIGHER seq.
     const slow = await sql.reserve();
     let slowSeq: number;
-    let fastSeq: number;
     try {
       await slow`BEGIN`;
-      await insertObservation(slow, "fence-slow", { headline: "slow" });
-      const [slowRow] = await slow<{ seq: string }[]>`
-        SELECT seq::text AS seq FROM conditions.federation_outbox WHERE object_id = 'fence-slow'`;
-      slowSeq = Number(slowRow!.seq);
+      await writeIn(slow, "fence-slow");
+      slowSeq = (await entryCursor(slow, "fence-slow")).seq;
 
-      // A separate pooled connection: commits immediately with the higher seq.
-      await insertObservation(sql, "fence-fast", { headline: "fast" });
-      const [fastRow] = await sql<{ seq: string }[]>`
-        SELECT seq::text AS seq FROM conditions.federation_outbox WHERE object_id = 'fence-fast'`;
-      fastSeq = Number(fastRow!.seq);
+      await writeOwn(sql, incidentDraft("fence-fast"));
+      const fastSeq = (await entryCursor(sql, "fence-fast")).seq;
       expect(slowSeq).toBeLessThan(fastSeq);
 
-      // While the slow tx is in flight the fence withholds BOTH: the fast row's
-      // txid is >= the still-running slow tx's, so neither is below xmin. The
-      // reader's cursor cannot advance past the not-yet-committed slow tx.
-      const fenced = await readOutbox(sql, { after: base });
-      const servedIds = fenced.orderedItems.map((e) => e.objectId);
-      expect(servedIds).not.toContain("fence-fast");
-      expect(servedIds).not.toContain("fence-slow");
+      // While the slow transaction runs, the fence withholds both: neither txid
+      // is below xmin, so the cursor cannot pass the uncommitted slow write.
+      const fenced = await readOutbox(sql, { after: base, now: NOW });
+      expect(ids(fenced.orderedItems)).not.toContain(situationId("fence-fast"));
+      expect(ids(fenced.orderedItems)).not.toContain(situationId("fence-slow"));
       expect(fenced.highWaterMark).toBe(encodeOutboxCursor(base));
 
       await slow`COMMIT`;
     } finally {
-      await slow.release();
+      slow.release();
     }
 
-    // With no in-flight writer both settle below xmin; a poll from the same
-    // baseline delivers BOTH — the slow (lower) seq is never skipped.
-    const after = await readOutbox(sql, { after: base, limit: 500 });
-    const ids = after.orderedItems.map((e) => e.objectId);
-    expect(ids).toContain("fence-slow");
-    expect(ids).toContain("fence-fast");
-    const slowEntry = after.orderedItems.find((e) => e.objectId === "fence-slow")!;
+    const after = await readOutbox(sql, { after: base, limit: 500, now: NOW });
+    expect(ids(after.orderedItems)).toContain(situationId("fence-slow"));
+    expect(ids(after.orderedItems)).toContain(situationId("fence-fast"));
+    const slowEntry = after.orderedItems.find((e) => e.recordId === situationId("fence-slow"))!;
     expect(slowEntry.seq).toBe(slowSeq);
-  }, 30_000);
+  });
 });
 
-describe("readOutbox — the composite cursor closes the interleaving skip", () => {
-  // The reviewer's reachable scenario: R1 (earlier BEGIN → LOWER txid) holds
-  // seqs that interleave ABOVE R2 (later BEGIN → HIGHER txid). A bare seq cursor
-  // fenced only by xmin would serve R1's higher seqs, advance past them, and
-  // then permanently skip R2's lower seqs once R2 commits. The composite
-  // (txid, seq) cursor advances in TRANSACTION order, so R2 (higher txid) always
-  // sorts after the cursor and is delivered on the next poll.
+describe("readOutbox: the composite cursor closes the interleaving skip", () => {
+  // R1 (earlier BEGIN, lower txid) holds seqs that interleave ABOVE R2 (later
+  // BEGIN, higher txid). A bare seq cursor fenced only by xmin would serve R1's
+  // higher seqs, advance past them, and skip R2's lower seq once R2 commits.
+  // The (txid, seq) cursor advances in transaction order, so R2 always sorts
+  // after it and is delivered on the next poll.
   it("delivers a later-txid, lower-seq transaction after the reader passed the earlier-txid rows", async () => {
     const base = await frontier();
-
     const r1 = await sql.reserve();
     const r2 = await sql.reserve();
     try {
-      // R1 begins first → lower txid; its first row gets the lowest seq.
       await r1`BEGIN`;
-      await insertObservation(r1, "r1-first", { headline: "r1 first" });
-
-      // R2 begins next → higher txid; its row gets a MIDDLE seq.
+      await writeIn(r1, "r1-first");
       await r2`BEGIN`;
-      await insertObservation(r2, "r2-only", { headline: "r2 only" });
+      await writeIn(r2, "r2-only");
+      await writeIn(r1, "r1-second");
 
-      // R1 writes AGAIN → same (low) txid, but a seq ABOVE R2's row. This is the
-      // interleaving: (r1.txid, r1-first.seq) < (r2.txid, r2-only.seq) <
-      // (r1.txid, r1-second.seq) is FALSE under (txid, seq) order — r1-second
-      // sorts with r1-first (same low txid), both before r2-only.
-      await insertObservation(r1, "r1-second", { headline: "r1 second" });
+      const r1First = await entryCursor(r1, "r1-first");
+      const r1Second = await entryCursor(r1, "r1-second");
+      const r2Only = await entryCursor(r2, "r2-only");
+      expect(r1First.seq).toBeLessThan(r2Only.seq);
+      expect(r2Only.seq).toBeLessThan(r1Second.seq);
+      expect(BigInt(r1First.txid)).toBeLessThan(BigInt(r2Only.txid));
 
-      // Each row's (txid, seq) is only visible inside its own still-open
-      // transaction (READ COMMITTED hides uncommitted rows from other conns).
-      const r1Rows = await r1<{ object_id: string; txid: string; seq: string }[]>`
-        SELECT object_id, txid::text AS txid, seq::text AS seq
-        FROM conditions.federation_outbox
-        WHERE object_id IN ('r1-first', 'r1-second')
-        ORDER BY seq ASC`;
-      const [r2Row] = await r2<{ txid: string; seq: string }[]>`
-        SELECT txid::text AS txid, seq::text AS seq
-        FROM conditions.federation_outbox WHERE object_id = 'r2-only'`;
-      const r1First = r1Rows.find((r) => r.object_id === "r1-first")!;
-      const r1Second = r1Rows.find((r) => r.object_id === "r1-second")!;
-
-      // The interleaving that breaks a bare seq cursor: physical seq order is
-      // r1-first < r2-only < r1-second, yet r1's txid is BELOW r2's.
-      expect(Number(r1First.seq)).toBeLessThan(Number(r2Row!.seq));
-      expect(Number(r2Row!.seq)).toBeLessThan(Number(r1Second.seq));
-      expect(BigInt(r1First.txid)).toBeLessThan(BigInt(r2Row!.txid));
-
-      // R1 commits; R2 is still open. The fence withholds everything at/above
-      // R2's txid, so the reader sees NOTHING yet (R1's rows share no txid below
-      // xmin while R2 runs) — its cursor does not advance past R2.
       await r1`COMMIT`;
-      const afterR1 = await readOutbox(sql, { after: base, limit: 500 });
-      expect(afterR1.orderedItems.map((e) => e.objectId)).not.toContain("r2-only");
+      const afterR1 = await readOutbox(sql, { after: base, limit: 500, now: NOW });
+      expect(ids(afterR1.orderedItems)).not.toContain(situationId("r2-only"));
 
-      // R2 commits; now the reader drains from the SAME baseline. Both R1 rows
-      // and R2's row are delivered — critically R2's LOWER-seq row is NOT
-      // skipped even though the reader would have passed R1's higher seq.
       await r2`COMMIT`;
     } finally {
-      await r1.release();
-      await r2.release();
+      r1.release();
+      r2.release();
     }
 
-    const drained = await readOutbox(sql, { after: base, limit: 500 });
-    const ids = drained.orderedItems.map((e) => e.objectId);
-    expect(ids).toContain("r1-first");
-    expect(ids).toContain("r1-second");
-    expect(ids).toContain("r2-only");
-    // Delivery order is (txid, seq): both r1 rows (lower txid) precede r2-only.
-    expect(ids.indexOf("r1-first")).toBeLessThan(ids.indexOf("r2-only"));
-    expect(ids.indexOf("r1-second")).toBeLessThan(ids.indexOf("r2-only"));
-  }, 30_000);
+    const drained = ids(
+      (await readOutbox(sql, { after: base, limit: 500, now: NOW })).orderedItems,
+    );
+    expect(drained).toContain(situationId("r1-first"));
+    expect(drained).toContain(situationId("r1-second"));
+    expect(drained).toContain(situationId("r2-only"));
+    expect(drained.indexOf(situationId("r1-first"))).toBeLessThan(
+      drained.indexOf(situationId("r2-only")),
+    );
+    expect(drained.indexOf(situationId("r1-second"))).toBeLessThan(
+      drained.indexOf(situationId("r2-only")),
+    );
+  });
 
-  it("does not skip R2 when a reader drains R1 BEFORE R2 commits (the real skip case)", async () => {
+  it("does not skip R2 when a reader drains R1 before R2 commits", async () => {
     const base = await frontier();
-
     const r1 = await sql.reserve();
     const r2 = await sql.reserve();
     try {
       await r1`BEGIN`;
-      await insertObservation(r1, "skip-r1a", { headline: "r1 a" });
+      await writeIn(r1, "skip-r1a");
       await r2`BEGIN`;
-      await insertObservation(r2, "skip-r2", { headline: "r2" });
-      await insertObservation(r1, "skip-r1b", { headline: "r1 b" });
+      await writeIn(r2, "skip-r2");
+      await writeIn(r1, "skip-r1b");
 
-      // R1 commits and the reader ADVANCES its cursor over R1's rows while R2 is
-      // still open. Under a bare seq cursor this is the fatal step: the cursor
-      // would jump to skip-r1b's (highest) seq and skip R2's lower seq forever.
+      // The reader advances over R1's rows while R2 is still open: under a bare
+      // seq cursor this is where R2's lower seq would be lost.
       await r1`COMMIT`;
-      const firstPoll = await readOutbox(sql, { after: base, limit: 500 });
-      const advanced = firstPoll.highWaterMark;
+      const firstPoll = await readOutbox(sql, { after: base, limit: 500, now: NOW });
 
-      // Now R2 commits, and the reader polls from its ADVANCED cursor.
       await r2`COMMIT`;
-      const secondPoll = await readOutbox(sql, { after: advanced, limit: 500 });
-      // R2's row MUST appear: its higher txid sorts after the advanced cursor.
-      expect(secondPoll.orderedItems.map((e) => e.objectId)).toContain("skip-r2");
+      const secondPoll = await readOutbox(sql, {
+        after: firstPoll.highWaterMark,
+        limit: 500,
+        now: NOW,
+      });
+      expect(ids(secondPoll.orderedItems)).toContain(situationId("skip-r2"));
     } finally {
-      await r1.release();
-      await r2.release();
+      r1.release();
+      r2.release();
     }
-  }, 30_000);
+  });
+});
+
+describe("the outbox schema", () => {
+  it("refuses a delete with a snapshot or without a reason", async () => {
+    const insert = (operation: string, snapshot: object | null, reason: string | null) => sql`
+      INSERT INTO conditions.federation_outbox
+        (operation, record_class, record_id, kind, domain, snapshot, tombstone_reason)
+      VALUES (${operation}, 'situation', 'x', 'incident', 'road',
+              ${snapshot === null ? null : sql.json(snapshot as never)}, ${reason})`;
+    await expect(insert("delete", { id: "x" }, "withdrawn")).rejects.toThrow(/delete_shape/);
+    await expect(insert("delete", null, null)).rejects.toThrow(/delete_shape/);
+    await expect(insert("create", { id: "x" }, null)).resolves.toBeDefined();
+  });
 });

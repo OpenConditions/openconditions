@@ -40,7 +40,6 @@ export interface ActorConfig {
   jurisdiction: string;
   transparencyReportUrl?: string;
   coverage: ActorCoverage;
-  supportedTypes: string[];
   license: string;
   policyDocument?: string;
   trustTier: 0 | 1 | 2;
@@ -66,12 +65,10 @@ export interface ActorDocument {
   publicKey: ActorPublicKey[];
   outbox: string;
   inbox: string;
-  subscribe: string;
-  /** URI template — `{id}` is the event id placeholder. */
-  events: string;
-  tombstones: string;
+  subscriptions: string;
+  backfill: string;
+  stream: string;
   coverage: ActorCoverage;
-  supportedTypes: string[];
   capabilities: ActorCapabilities;
   license: string;
   policyDocument?: string;
@@ -118,11 +115,10 @@ export function buildActorDocument(
     })),
     outbox: `${base}/peer/outbox`,
     inbox: `${base}/peer/inbox`,
-    subscribe: `${base}/peer/subscribe`,
-    events: `${base}/peer/event/{id}`,
-    tombstones: `${base}/peer/tombstones`,
+    subscriptions: `${base}/peer/subscriptions`,
+    backfill: `${base}/peer/backfill`,
+    stream: `${base}/peer/stream`,
     coverage: cfg.coverage,
-    supportedTypes: cfg.supportedTypes,
     capabilities: { ...cfg.capabilities, schemaVersions: [...schemaVersions] },
     license: cfg.license,
     trustTier: cfg.trustTier,
@@ -183,8 +179,11 @@ export function parseActorConfig(source: string | unknown): ActorConfig {
   if (cfg["trustTier"] !== 0 && cfg["trustTier"] !== 1 && cfg["trustTier"] !== 2) {
     fail("trustTier", "must be 0, 1, or 2");
   }
-  if (!isStringArray(cfg["supportedTypes"]) || cfg["supportedTypes"].length === 0) {
-    fail("supportedTypes", "must be a non-empty string array");
+  if (cfg["supportedTypes"] !== undefined) {
+    fail(
+      "supportedTypes",
+      "is gone: the registry's schema versions say what this instance carries",
+    );
   }
 
   const coverage = cfg["coverage"];

@@ -1,65 +1,91 @@
 import {
-  crowdObservationId,
   generateReporterKey,
-  type ReportClaim,
   type ReporterKey,
   type SignedReport,
+  type SituationClaim,
   signReport,
 } from "@openconditions/contrib-core";
+import { reliabilityLowerBound } from "@openconditions/core";
 import {
-  type ConditionEvent,
-  phenomenonFingerprint,
-  reliabilityLowerBound,
-} from "@openconditions/core";
-import { runMigrations } from "@openconditions/core/server";
+  buildRegistry,
+  crowdLocalId,
+  crowdRulesFor,
+  type RegistryModule,
+} from "@openconditions/model";
+import { productionModules } from "@openconditions/model-registry";
 import type { FastifyInstance } from "fastify";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createReportingGrant } from "../attester/grant.js";
 import { build } from "../server.js";
+import {
+  createTestDatabase,
+  evidenceOf,
+  feedSituationDraft,
+  INSTANCE,
+  registry,
+  reportAs,
+  seedFeedSituation,
+  situationClaim,
+} from "./crowd-fixtures.integration.js";
 
 const NOW = "2026-07-12T08:00:00.000Z";
 const GRANT_SECRET_VALUE = "reports-route-test-secret";
 const GRANT_SECRET = new TextEncoder().encode(GRANT_SECRET_VALUE);
+const ENV = {
+  OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
+  OPENCONDITIONS_INSTANCE_ID: INSTANCE,
+};
+/** An obstruction's crowd lifetime: the default claim's. */
+const OBSTRUCTION_TTL_MS =
+  crowdRulesFor(registry, { class: "situation", kind: "incident", type: "obstruction" })!.ttlSec *
+  1000;
 
+/**
+ * The production registry with police presence open to the crowd, so the
+ * police gate itself can be reached: production gives `authority` no crowd
+ * rules, and such a claim fails verification before any gate.
+ */
+const policeRegistry = buildRegistry(
+  productionModules.map(
+    (module): RegistryModule =>
+      module.name !== "roads"
+        ? module
+        : {
+            ...module,
+            entries: module.entries.map((entry) =>
+              entry.entry === "kind" && entry.class === "situation" && entry.code === "authority"
+                ? { ...entry, crowd: { ttlSec: 3600, maxLifetimeSec: 4 * 3600 } }
+                : entry,
+            ),
+          },
+  ),
+);
+
+let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 let app: FastifyInstance;
-/** A second instance with the police category explicitly enabled. */
-let appPolice: FastifyInstance;
+/** An instance whose registry lets the crowd report police presence; the category stays off. */
+let appPoliceRegistry: FastifyInstance;
+/** The same registry with the police category explicitly enabled. */
+let appPoliceEnabled: FastifyInstance;
 let ipCounter = 0;
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 10 });
-  await runMigrations(url);
-  app = await build({
+  db = await createTestDatabase();
+  sql = db.sql;
+  app = await build({ sql, env: ENV, logger: false, now: () => NOW });
+  appPoliceRegistry = await build({
     sql,
-    env: {
-      OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
-      OPENCONDITIONS_INSTANCE_ID: "maps.example.org",
-    },
+    registry: policeRegistry,
+    env: ENV,
     logger: false,
     now: () => NOW,
   });
-  appPolice = await build({
+  appPoliceEnabled = await build({
     sql,
-    env: {
-      OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
-      OPENCONDITIONS_INSTANCE_ID: "maps.example.org",
-      OPENCONDITIONS_ALLOW_POLICE_CATEGORY: "true",
-    },
+    registry: policeRegistry,
+    env: { ...ENV, OPENCONDITIONS_ALLOW_POLICE_CATEGORY: "true" },
     logger: false,
     now: () => NOW,
   });
@@ -67,9 +93,9 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await app?.close();
-  await appPolice?.close();
-  await sql?.end();
-  await containerStop?.();
+  await appPoliceRegistry?.close();
+  await appPoliceEnabled?.close();
+  await db?.close();
 }, 30_000);
 
 /** A fresh per-call source IP so the enrollment per-IP limiter never trips. */
@@ -78,30 +104,23 @@ function nextIp(): string {
   return `198.51.100.${ipCounter % 250}`;
 }
 
-// Landing now auto-corroborates two INDEPENDENT reports of the same phenomenon,
-// so tests that don't override geometry each land at their OWN coordinate — the
-// default is unique per claim. Without this, unrelated default landings (happy
-// path, replay, media, …) would cross-corroborate at one shared neighborhood and,
-// with equal reportedAt, pick a survivor by the random-keyId tiebreak → flaky.
-// Tests that DO care about a shared phenomenon override geometry explicitly.
+/** The id a crowd report from a key with a nonce lands under here. */
+function crowdId(key: ReporterKey, nonce: string): string {
+  return `oc:situation:${INSTANCE}:${crowdLocalId(key.keyId, nonce)}`;
+}
+
+// Landing auto-corroborates two INDEPENDENT reports of the same phenomenon, so
+// tests that don't override geometry each land at their OWN coordinate. Tests
+// that care about a shared phenomenon override geometry explicitly.
 let claimGeomCounter = 0;
-function nextClaimGeometry(): ReportClaim["geometry"] {
+function nextClaimGeometry(): SituationClaim["geometry"] {
   const lon = 9.0 + claimGeomCounter * 0.3;
   claimGeomCounter += 1;
   return { type: "Point", coordinates: [lon, 44.0] };
 }
 
-function makeClaim(overrides: Partial<ReportClaim> = {}): ReportClaim {
-  const { geometry: overrideGeom, ...rest } = overrides;
-  return {
-    domain: "roads",
-    type: "congestion",
-    geometry: overrideGeom ?? nextClaimGeometry(),
-    fuzziness: "low_res",
-    reportedAt: NOW,
-    nonce: "nonce-000000000001",
-    ...rest,
-  };
+function makeClaim(overrides: Partial<SituationClaim> = {}): SituationClaim {
+  return situationClaim({ geometry: nextClaimGeometry(), reportedAt: NOW, ...overrides });
 }
 
 async function enroll(key: ReporterKey): Promise<string> {
@@ -114,8 +133,18 @@ async function enroll(key: ReporterKey): Promise<string> {
   return (res.json() as { reportingGrant: string }).reportingGrant;
 }
 
-async function sign(key: ReporterKey, overrides: Partial<ReportClaim> = {}): Promise<SignedReport> {
-  return signReport(makeClaim(overrides), key);
+function sign(key: ReporterKey, overrides: Partial<SituationClaim> = {}): Promise<SignedReport> {
+  return reportAs(key, makeClaim(overrides));
+}
+
+/**
+ * A report whose claim the registry refuses. Signing refuses such a claim, so
+ * a valid report's claim is swapped: verification checks the claim against
+ * the registry before it checks the signature.
+ */
+async function withClaim(key: ReporterKey, claim: unknown): Promise<SignedReport> {
+  const valid = await sign(key, { nonce: "forged-base-000001" });
+  return { ...valid, claim: claim as SignedReport["claim"] };
 }
 
 async function postReport(
@@ -131,76 +160,122 @@ async function postReport(
 }
 
 interface LandedRow {
-  privacy_class: string;
-  canonical_id: string | null;
-  phenomenon_fingerprint: string | null;
+  origin: string;
+  source_id: string;
   evidence_state: string | null;
   routing_eligible: boolean;
   confidence_score: number | null;
+  corroborations: number;
   expires_at: Date | null;
-  origin: { kind?: string } | null;
+  tombstone_reason: string | null;
+  record: Record<string, unknown>;
 }
 
-async function readObs(id: string): Promise<LandedRow | undefined> {
+async function readSituation(id: string): Promise<LandedRow | undefined> {
   const rows = await sql<LandedRow[]>`
-    SELECT privacy_class, canonical_id, phenomenon_fingerprint, evidence_state,
-           routing_eligible, confidence_score, expires_at, origin
-    FROM conditions.observations WHERE id = ${id}`;
+    SELECT origin, source_id, evidence_state, routing_eligible, confidence_score,
+           corroborations, expires_at, tombstone_reason, record
+    FROM conditions.situation WHERE id = ${id}`;
   return rows[0];
 }
 
+async function countEvidence(id: string, kind?: string): Promise<number> {
+  const [row] = kind
+    ? await sql<{ n: number }[]>`
+        SELECT count(*)::int AS n FROM conditions.report_evidence
+        WHERE record_class = 'situation' AND record_id = ${id} AND evidence_kind = ${kind}`
+    : await sql<{ n: number }[]>`
+        SELECT count(*)::int AS n FROM conditions.report_evidence
+        WHERE record_class = 'situation' AND record_id = ${id}`;
+  return row!.n;
+}
+
 describe("POST /contrib/reports — happy path landing", () => {
-  it("lands a signed report as a crowd observation with centrally-stamped provenance and evidence", async () => {
+  it("lands a signed claim as a crowd situation with landed provenance and evidence", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
     const report = await sign(key, { nonce: "happy-000000000001" });
 
     const res = await postReport(report, grant);
     expect(res.statusCode).toBe(200);
-    const body = res.json() as {
-      observationId: string;
-      evidenceState: string;
-      routingEligible: boolean;
-    };
-    const obsId = await crowdObservationId(key.keyId, "happy-000000000001");
-    expect(body.observationId).toBe(obsId);
-    expect(body.evidenceState).toBe("self_reported");
-    expect(body.routingEligible).toBe(false);
+    const id = crowdId(key, "happy-000000000001");
+    expect(res.json()).toEqual({
+      record: { class: "situation", id },
+      evidenceState: "self_reported",
+      routingEligible: false,
+    });
 
-    const row = await readObs(obsId);
-    expect(row).toBeDefined();
-    expect(row!.privacy_class).toBe("crowd_pseudonym");
-    expect(row!.canonical_id).toEqual(expect.any(String));
-    expect(row!.phenomenon_fingerprint).toEqual(expect.any(String));
-    expect(row!.evidence_state).toBe("self_reported");
-    expect(row!.routing_eligible).toBe(false);
+    const row = await readSituation(id);
+    expect(row).toMatchObject({
+      origin: "crowd",
+      source_id: "crowd",
+      evidence_state: "self_reported",
+      routing_eligible: false,
+      corroborations: 0,
+      tombstone_reason: null,
+    });
     expect(row!.confidence_score).toBeCloseTo(0.3, 10);
-    // congestion crowd TTL is 300s; occurred_at = server NOW → expiry NOW+300s.
-    expect(row!.expires_at!.toISOString()).toBe("2026-07-12T08:05:00.000Z");
-    expect(row!.origin?.kind).toBe("crowd");
+    // An obstruction lives its crowd lifetime from when it was reported.
+    const expires = new Date(Date.parse(NOW) + OBSTRUCTION_TTL_MS);
+    expect(row!.expires_at).toEqual(expires);
+    expect(row!.record).toMatchObject({
+      class: "situation",
+      kind: "incident",
+      type: "obstruction",
+      validity: { status: "active", start: NOW },
+      freshness: { fetchedAt: NOW, expiresAt: expires.toISOString() },
+      location: { geometryOrigin: "crowd_device" },
+      provenance: {
+        origin: "crowd",
+        sourceId: "crowd",
+        privacy: { class: "crowd_pseudonym" },
+        attribution: {
+          provider: `OpenConditions contributors at ${INSTANCE}`,
+          license: "ODbL-1.0",
+        },
+      },
+    });
 
-    const evidence = await sql<{ n: number }[]>`
-      SELECT count(*)::int AS n FROM conditions.report_evidence
-      WHERE observation_id = ${obsId} AND evidence_kind = 'report' AND actor_key_id = ${key.keyId}`;
-    expect(evidence[0]!.n).toBe(1);
+    const evidence = await sql<{ actor_key_id: string; details: Record<string, unknown> }[]>`
+      SELECT actor_key_id, details FROM conditions.report_evidence
+      WHERE record_class = 'situation' AND record_id = ${id} AND evidence_kind = 'report'`;
+    expect(evidence).toHaveLength(1);
+    expect(evidence[0]!.actor_key_id).toBe(key.keyId);
+    expect(evidence[0]!.details).toMatchObject({ reportedAt: NOW, cell: expect.any(String) });
   }, 60_000);
 
-  it("does not fold the reporter signature into the observation origin (kept minimal)", async () => {
+  it("keeps only the reporter's key on the record, never its signature, and the id hides the key", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
     const report = await sign(key, { nonce: "minimal-00000000001" });
-    await postReport(report, grant);
+    expect((await postReport(report, grant)).statusCode).toBe(200);
 
-    const rows = await sql<{ origin: Record<string, unknown> }[]>`
-      SELECT origin FROM conditions.observations WHERE id = ${await crowdObservationId(key.keyId, "minimal-00000000001")}`;
-    const reporter = rows[0]!.origin["reporter"] as Record<string, unknown>;
-    expect(reporter["keyId"]).toBe(key.keyId);
-    expect(reporter).not.toHaveProperty("signature");
+    const id = crowdId(key, "minimal-00000000001");
+    expect(id).not.toContain(key.keyId);
+    const row = await readSituation(id);
+    const provenance = row!.record["provenance"] as Record<string, unknown>;
+    expect(provenance["reporter"]).toEqual({ keyId: key.keyId });
+    expect(JSON.stringify(row!.record)).not.toContain(report.signature);
+  }, 60_000);
+
+  it("counts a late upload's lifetime from when it was reported, not when it arrived", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const reportedAt = "2026-07-12T07:50:00.000Z";
+    const res = await postReport(
+      await sign(key, { nonce: "late-upload-000001", reportedAt }),
+      grant,
+    );
+    expect(res.statusCode).toBe(200);
+
+    const row = await readSituation(crowdId(key, "late-upload-000001"));
+    expect(row!.expires_at).toEqual(new Date(Date.parse(reportedAt) + OBSTRUCTION_TTL_MS));
+    expect(row!.record).toMatchObject({ validity: { start: reportedAt } });
   }, 60_000);
 });
 
 describe("POST /contrib/reports — idempotent replay", () => {
-  it("replaying the same nonce returns the same observation and adds no evidence row", async () => {
+  it("replaying the same nonce returns the same record and adds no evidence row", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
     const report = await sign(key, { nonce: "replay-000000000001" });
@@ -209,14 +284,9 @@ describe("POST /contrib/reports — idempotent replay", () => {
     const second = await postReport(report, grant);
     expect(first.statusCode).toBe(200);
     expect(second.statusCode).toBe(200);
-    expect((first.json() as { observationId: string }).observationId).toBe(
-      (second.json() as { observationId: string }).observationId,
-    );
+    expect(second.json()).toEqual(first.json());
 
-    const obsId = await crowdObservationId(key.keyId, "replay-000000000001");
-    const evidence = await sql<{ n: number }[]>`
-      SELECT count(*)::int AS n FROM conditions.report_evidence WHERE observation_id = ${obsId}`;
-    expect(evidence[0]!.n).toBe(1);
+    expect(await countEvidence(crowdId(key, "replay-000000000001"))).toBe(1);
   }, 60_000);
 });
 
@@ -282,52 +352,113 @@ describe("POST /contrib/reports — rejections at the trust boundary", () => {
     expect(res.statusCode).toBe(400);
   }, 60_000);
 
-  it("rejects an out-of-range geometry with 422 and named reasons", async () => {
+  it("rejects a claim the registry refuses with 400 at verification and writes nothing", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
-    const report = await sign(key, {
+    const claim = makeClaim({ nonce: "bad-type-000000001", type: "teleporter" });
+
+    const res = await postReport(await withClaim(key, claim), grant);
+    expect(res.statusCode).toBe(400);
+    expect((res.json() as { error: string }).error).toMatch(/report verification failed/);
+    expect(await readSituation(crowdId(key, "bad-type-000000001"))).toBeUndefined();
+  }, 60_000);
+
+  it("rejects a claim carrying fields outside the model (an attributes bag) with 400", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const claim = {
+      ...makeClaim({ nonce: "attributes-0000001" }),
+      attributes: { media: "data:image/png;base64,AAAA" },
+    };
+
+    const res = await postReport(await withClaim(key, claim), grant);
+    expect(res.statusCode).toBe(400);
+    expect(await readSituation(crowdId(key, "attributes-0000001"))).toBeUndefined();
+  }, 60_000);
+
+  it("rejects an out-of-range geometry with 400: the claim schema refuses it before the screen", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const claim = makeClaim({
       nonce: "oob-geo-000000001",
       geometry: { type: "Point", coordinates: [999, 52] },
     });
 
-    const res = await postReport(report, grant);
-    expect(res.statusCode).toBe(422);
-    expect((res.json() as { reasons: string[] }).reasons).toContain("geometry_out_of_range");
+    const res = await postReport(await withClaim(key, claim), grant);
+    expect(res.statusCode).toBe(400);
+    expect(await readSituation(crowdId(key, "oob-geo-000000001"))).toBeUndefined();
   }, 60_000);
 
-  it("rejects a type/arity-mismatched geometry with 422 and never reaches the DB (no 500)", async () => {
+  it("rejects a nested-position geometry with 400 and never reaches the DB (no 500)", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
-    // A Point whose coordinates are a nested position array: passes the
-    // authenticity layer + finite/range scan but would crash ST_GeomFromGeoJSON.
-    const report = await sign(key, {
+    const claim = makeClaim({
       nonce: "arity-mismatch-0001",
       geometry: { type: "Point", coordinates: [[4.9, 52.37]] } as never,
     });
 
-    const res = await postReport(report, grant);
-    expect(res.statusCode).toBe(422);
-    expect((res.json() as { reasons: string[] }).reasons).toContain("geometry_malformed");
-
-    const row = await readObs(await crowdObservationId(key.keyId, "arity-mismatch-0001"));
-    expect(row).toBeUndefined();
+    const res = await postReport(await withClaim(key, claim), grant);
+    expect(res.statusCode).toBe(400);
+    expect(await readSituation(crowdId(key, "arity-mismatch-0001"))).toBeUndefined();
   }, 60_000);
 
-  it("rejects a 3D position with 422 at plausibility (v1 is 2D), no DB round-trip", async () => {
+  it("rejects a 3D position with 422 at the geometry screen (records are 2D), no DB round-trip", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
     const report = await sign(key, {
       nonce: "three-dee-00000001",
-      geometry: { type: "Point", coordinates: [4.9, 52.37, 12] } as never,
+      geometry: { type: "Point", coordinates: [4.9, 52.37, 12] },
     });
 
     const res = await postReport(report, grant);
     expect(res.statusCode).toBe(422);
     expect((res.json() as { reasons: string[] }).reasons).toContain("geometry_malformed");
-
-    const row = await readObs(await crowdObservationId(key.keyId, "three-dee-00000001"));
-    expect(row).toBeUndefined();
+    expect(await readSituation(crowdId(key, "three-dee-00000001"))).toBeUndefined();
   }, 60_000);
+
+  it("answers an observation claim with 422 unsupported_claim_class", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const report = await signReport(
+      registry,
+      {
+        claimClass: "observation",
+        subject: { featureId: "oc:feature:de-bnetza:site-1", componentKey: "evse-1" },
+        property: "charging.evse_status",
+        result: { type: "category", value: "out_of_order", vocabulary: "evse_status" },
+        geometry: { type: "Point", coordinates: [8.40478, 49.00062] },
+        reportedAt: NOW,
+        nonce: "observation-000001",
+      },
+      key,
+    );
+
+    const res = await postReport(report, grant);
+    expect(res.statusCode).toBe(422);
+    expect((res.json() as { reason: string }).reason).toBe("unsupported_claim_class");
+    const [{ n }] = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM conditions.report_evidence WHERE actor_key_id = ${key.keyId}`;
+    expect(n).toBe(0);
+  }, 60_000);
+
+  it.each([
+    ["reported_in_future", "2026-07-12T08:10:00.000Z"],
+    ["reported_too_long_ago", "2026-07-11T07:00:00.000Z"],
+    ["expired_on_arrival", "2026-07-12T07:40:00.000Z"],
+  ])(
+    "refuses a claim %s with 422 and its issue",
+    async (code, reportedAt) => {
+      const key = await generateReporterKey();
+      const grant = await enroll(key);
+      const nonce = `refused-${code}`.replaceAll("_", "-");
+      const res = await postReport(await sign(key, { nonce, reportedAt }), grant);
+
+      expect(res.statusCode).toBe(422);
+      expect(res.json()).toMatchObject({ error: "claim refused", issues: [{ code }] });
+      expect(await readSituation(crowdId(key, nonce))).toBeUndefined();
+    },
+    60_000,
+  );
 
   it("rate-limits the 11th report from one key inside 60s with 429", async () => {
     const key = await generateReporterKey();
@@ -336,7 +467,7 @@ describe("POST /contrib/reports — rejections at the trust boundary", () => {
     for (let i = 0; i < 11; i++) {
       // Spread the reports across distinct ~1km cells so only the per-key
       // ceiling is exercised here (the per-cell ceiling is covered in
-      // abuse.test.ts).
+      // abuse.integration.test.ts).
       const report = await sign(key, {
         nonce: `rate-00000000000${i}${i}`,
         geometry: { type: "Point", coordinates: [4.9 + i * 0.02, 52.37] },
@@ -356,23 +487,20 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
     return { alpha: rows[0]!.reputation_alpha, beta: rows[0]!.reputation_beta };
   }
 
-  it("two distinct keys of the same phenomenon corroborate: earlier survives, later inactive, still not routing, posteriors unchanged", async () => {
+  it("two distinct keys of the same phenomenon corroborate: earlier survives, later superseded, still not routing, posteriors unchanged", async () => {
     const keyA = await generateReporterKey();
     const keyB = await generateReporterKey();
     const grantA = await enroll(keyA);
     const grantB = await enroll(keyB);
 
-    // Same type/place → matching phenomenon fingerprint, distinct keys →
-    // independent witnesses. DISTINCT reportedAt a few seconds apart (well within
-    // the 900s match window, the realistic case: two reporters don't file at the
-    // same millisecond) so valid_from differs and the EARLIER report (A)
-    // deterministically survives — an identical valid_from would fall through to
-    // the id tiebreak over RANDOM keyIds and pick nondeterministically.
-    const geometry = { type: "Point" as const, coordinates: [5.1, 52.1] };
-    const EARLIER = "2026-07-12T07:59:55.000Z";
+    // Same kind, type and place, distinct keys → independent witnesses.
+    // DISTINCT reportedAt a few seconds apart so the EARLIER report (A)
+    // deterministically survives — an identical start would fall through to
+    // the id tiebreak over RANDOM keyIds.
+    const geometry = { type: "Point" as const, coordinates: [5.1, 52.1] as [number, number] };
     const reportA = await sign(keyA, {
       geometry,
-      reportedAt: EARLIER,
+      reportedAt: "2026-07-12T07:59:55.000Z",
       nonce: "corrob-A-000000001",
     });
     const reportB = await sign(keyB, { geometry, reportedAt: NOW, nonce: "corrob-B-000000001" });
@@ -383,28 +511,25 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
     expect((await postReport(reportA, grantA)).statusCode).toBe(200);
     expect((await postReport(reportB, grantB)).statusCode).toBe(200);
 
-    const idA = await crowdObservationId(keyA.keyId, "corrob-A-000000001");
-    const idB = await crowdObservationId(keyB.keyId, "corrob-B-000000001");
-    const rowA = await readObs(idA);
+    const idA = crowdId(keyA, "corrob-A-000000001");
+    const idB = crowdId(keyB, "corrob-B-000000001");
 
     // The earlier report (A) survives and is corroborated; the later (B) merges in.
-    expect(rowA!.evidence_state).toBe("corroborated");
-    expect(rowA!.routing_eligible).toBe(false);
-    const statusA = await sql<{ status: string }[]>`
-      SELECT status FROM conditions.observations WHERE id = ${idA}`;
-    const statusB = await sql<{ status: string }[]>`
-      SELECT status FROM conditions.observations WHERE id = ${idB}`;
-    expect(statusA[0]!.status).toBe("active");
-    expect(statusB[0]!.status).toBe("inactive");
+    expect(await evidenceOf(sql, idA)).toMatchObject({
+      evidence_state: "corroborated",
+      routing_eligible: false,
+      corroborations: 1,
+      tombstone_reason: null,
+    });
+    expect(await evidenceOf(sql, idB)).toMatchObject({ tombstone_reason: "superseded" });
 
-    // A's lineage records B; a confirm evidence row from B's key lands on A.
-    const lineage = await sql<{ corroborations: string[] | null }[]>`
-      SELECT corroborations FROM conditions.observations WHERE id = ${idA}`;
-    expect(lineage[0]!.corroborations).toContain(idB);
-    const confirms = await sql<{ n: number }[]>`
-      SELECT count(*)::int AS n FROM conditions.report_evidence
-      WHERE observation_id = ${idA} AND evidence_kind = 'confirm' AND actor_key_id = ${keyB.keyId}`;
-    expect(confirms[0]!.n).toBe(1);
+    // A's ledger records B: a confirm from B's key naming the merged report.
+    const confirms = await sql<{ details: Record<string, unknown> }[]>`
+      SELECT details FROM conditions.report_evidence
+      WHERE record_class = 'situation' AND record_id = ${idA}
+        AND evidence_kind = 'confirm' AND actor_key_id = ${keyB.keyId}`;
+    expect(confirms).toHaveLength(1);
+    expect(confirms[0]!.details).toMatchObject({ merged: idB });
 
     // Corroboration NEVER trains reputation: both posteriors are unchanged.
     expect(await posterior(keyA.keyId)).toEqual(beforeA);
@@ -419,85 +544,71 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
 
     const reportC = await sign(keyC, {
       geometry: { type: "Point", coordinates: [3.0, 51.0] },
-      reportedAt: NOW,
       nonce: "corrob-far-C-00001",
     });
     const reportD = await sign(keyD, {
       geometry: { type: "Point", coordinates: [3.5, 51.5] },
-      reportedAt: NOW,
       nonce: "corrob-far-D-00001",
     });
 
     expect((await postReport(reportC, grantC)).statusCode).toBe(200);
     expect((await postReport(reportD, grantD)).statusCode).toBe(200);
 
-    const rowC = await readObs(await crowdObservationId(keyC.keyId, "corrob-far-C-00001"));
-    const rowD = await readObs(await crowdObservationId(keyD.keyId, "corrob-far-D-00001"));
+    const rowC = await readSituation(crowdId(keyC, "corrob-far-C-00001"));
+    const rowD = await readSituation(crowdId(keyD, "corrob-far-D-00001"));
     expect(rowC!.evidence_state).toBe("self_reported");
     expect(rowD!.evidence_state).toBe("self_reported");
     expect(rowC!.confidence_score).toBeCloseTo(0.3, 10);
     expect(rowD!.confidence_score).toBeCloseTo(0.3, 10);
   }, 60_000);
 
-  it("cross-validates a crowd report against an OFFICIAL FEED of the same phenomenon and routes it via external resolution", async () => {
-    // A feed road_closure at the same phenomenon as the incoming crowd report.
-    const geometry = { type: "Point" as const, coordinates: [1.0, 48.0] };
-    const feedEvt = {
-      kind: "event",
-      domain: "roads",
-      type: "hazard",
-      geometry,
-      validFrom: NOW,
-    } as ConditionEvent;
-    const fp = phenomenonFingerprint(feedEvt);
-    await sql`
-      INSERT INTO conditions.observations
-        (id, source, source_format, domain, kind, type, status, geom, origin,
-         valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale)
-      VALUES
-        ('feed:closure:1', 'ndw', 'datex2', 'roads', 'event', 'hazard', 'active',
-         ST_SetSRID(ST_MakePoint(1.0, 48.0), 4326),
-         ${sql.json({ kind: "feed", attribution: { provider: "NDW", license: "CC0-1.0" } } as never)},
-         ${NOW}, ${fp}, ${NOW}, now(), false)`;
+  it("cross-validates a crowd report against a local feed situation of the same phenomenon and routes it", async () => {
+    const geometry = { type: "Point" as const, coordinates: [1.0, 48.0] as [number, number] };
+    const feedId = await seedFeedSituation(sql, "crowd-vs-feed-1", {
+      location: { ...(feedSituationDraft("x")["location"] as object), geometry },
+    });
 
     const key = await generateReporterKey();
     const grant = await enroll(key);
-    const report = await sign(key, { type: "hazard", geometry, nonce: "crowd-vs-feed-0001" });
+    const before = await sql<{ reputation_alpha: number }[]>`
+      SELECT reputation_alpha FROM conditions.reporter WHERE key_id = ${key.keyId}`;
+    const report = await sign(key, { geometry, nonce: "crowd-vs-feed-0001" });
     expect((await postReport(report, grant)).statusCode).toBe(200);
 
-    // The FEED observation is authoritative and untouched — external resolution
-    // is appended to the CROWD row, not the feed.
-    const feed = await sql<{ status: string; evidence_state: string | null }[]>`
-      SELECT status, evidence_state FROM conditions.observations WHERE id = 'feed:closure:1'`;
-    expect(feed[0]!.status).toBe("active");
-    expect(feed[0]!.evidence_state).toBeNull();
-    const feedEvidence = await sql<{ n: number }[]>`
-      SELECT count(*)::int AS n FROM conditions.report_evidence
-      WHERE observation_id = 'feed:closure:1'`;
-    expect(feedEvidence[0]!.n).toBe(0);
+    // The FEED situation is authoritative and untouched — the external
+    // resolution is appended to the CROWD report, never the feed.
+    expect(await evidenceOf(sql, feedId)).toMatchObject({
+      evidence_state: null,
+      routing_eligible: false,
+      flagged_at: null,
+    });
+    expect(await countEvidence(feedId)).toBe(0);
 
-    // The CROWD report is now externally resolved (routing-eligible) and carries
-    // exactly one official_match row; the reporter's α was trained (2 → 3).
-    const crowdId = await crowdObservationId(key.keyId, "crowd-vs-feed-0001");
-    const crowd = await readObs(crowdId);
-    expect(crowd!.evidence_state).toBe("externally_resolved");
-    expect(crowd!.routing_eligible).toBe(true);
-    const official = await sql<{ n: number }[]>`
-      SELECT count(*)::int AS n FROM conditions.report_evidence
-      WHERE observation_id = ${crowdId} AND evidence_kind = 'official_match'`;
-    expect(official[0]!.n).toBe(1);
-    const reporter = await sql<{ reputation_alpha: number }[]>`
+    // The CROWD report is externally resolved (routing-eligible) and carries
+    // exactly one official_match row naming the feed; the reporter was trained.
+    const crowd = crowdId(key, "crowd-vs-feed-0001");
+    expect(await evidenceOf(sql, crowd)).toMatchObject({
+      evidence_state: "externally_resolved",
+      routing_eligible: true,
+    });
+    const official = await sql<{ source_id: string; details: Record<string, unknown> }[]>`
+      SELECT source_id, details FROM conditions.report_evidence
+      WHERE record_class = 'situation' AND record_id = ${crowd}
+        AND evidence_kind = 'official_match'`;
+    expect(official).toHaveLength(1);
+    expect(official[0]).toMatchObject({
+      source_id: "de-autobahn",
+      details: { matchedRecord: { class: "situation", id: feedId } },
+    });
+    const after = await sql<{ reputation_alpha: number }[]>`
       SELECT reputation_alpha FROM conditions.reporter WHERE key_id = ${key.keyId}`;
-    expect(reporter[0]!.reputation_alpha).toBe(3);
+    expect(after[0]!.reputation_alpha).toBe(before[0]!.reputation_alpha + 1);
   }, 60_000);
 
   it("a failing official cross-validation hook never fails the landing (best-effort)", async () => {
     const throwingApp = await build({
       sql,
-      env: {
-        OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
-        OPENCONDITIONS_INSTANCE_ID: "maps.example.org",
-      },
+      env: ENV,
       logger: false,
       now: () => NOW,
       crossValidateAgainstFeeds: async () => {
@@ -513,7 +624,7 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
       });
       const res = await postReport(report, grant, throwingApp);
       expect(res.statusCode).toBe(200);
-      const row = await readObs(await crowdObservationId(key.keyId, "xval-boom-0000001"));
+      const row = await readSituation(crowdId(key, "xval-boom-0000001"));
       expect(row!.evidence_state).toBe("self_reported");
     } finally {
       await throwingApp.close();
@@ -523,10 +634,7 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
   it("a failing auto-corroboration hook never fails the landing (best-effort)", async () => {
     const throwingApp = await build({
       sql,
-      env: {
-        OPENCONDITIONS_GRANT_SECRET: GRANT_SECRET_VALUE,
-        OPENCONDITIONS_INSTANCE_ID: "maps.example.org",
-      },
+      env: ENV,
       logger: false,
       now: () => NOW,
       autoCorroborate: async () => {
@@ -542,7 +650,7 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
       });
       const res = await postReport(report, grant, throwingApp);
       expect(res.statusCode).toBe(200);
-      const row = await readObs(await crowdObservationId(key.keyId, "corrob-boom-000001"));
+      const row = await readSituation(crowdId(key, "corrob-boom-000001"));
       expect(row!.evidence_state).toBe("self_reported");
     } finally {
       await throwingApp.close();
@@ -551,86 +659,84 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
 });
 
 describe("POST /contrib/reports — police-category gate (DEFAULT OFF)", () => {
-  it("rejects a police-typed report with 422 police_category_disabled and writes no row", async () => {
+  function policeClaim(nonce: string, subtype = "police_checkpoint"): SituationClaim {
+    return makeClaim({ kind: "authority", type: "operation", subtype, nonce });
+  }
+
+  it("refuses police presence on a production instance: the crowd cannot report authority at all", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
-    const report = await sign(key, { type: "police", nonce: "police-off-0000001" });
+    await expect(signReport(registry, policeClaim("police-prod-000001"), key)).rejects.toThrow(
+      TypeError,
+    );
 
-    const res = await postReport(report, grant);
+    const res = await postReport(await withClaim(key, policeClaim("police-prod-000001")), grant);
+    expect(res.statusCode).toBe(400);
+    expect(await readSituation(crowdId(key, "police-prod-000001"))).toBeUndefined();
+  }, 60_000);
+
+  it("rejects police presence with 422 police_category_disabled where the registry allows it", async () => {
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const report = await signReport(policeRegistry, policeClaim("police-off-0000001"), key);
+
+    const res = await postReport(report, grant, appPoliceRegistry);
     expect(res.statusCode).toBe(422);
     expect((res.json() as { reason: string }).reason).toBe("police_category_disabled");
-
-    const row = await readObs(await crowdObservationId(key.keyId, "police-off-0000001"));
-    expect(row).toBeUndefined();
+    expect(await readSituation(crowdId(key, "police-off-0000001"))).toBeUndefined();
   }, 60_000);
 
-  it("lands a police-typed report normally when the instance enables the category", async () => {
+  it("lands police presence when the instance enables the category", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
-    const report = await sign(key, { type: "police", nonce: "police-on-00000001" });
+    const report = await signReport(policeRegistry, policeClaim("police-on-00000001"), key);
 
-    const res = await postReport(report, grant, appPolice);
+    const res = await postReport(report, grant, appPoliceEnabled);
     expect(res.statusCode).toBe(200);
-
-    const row = await readObs(await crowdObservationId(key.keyId, "police-on-00000001"));
-    expect(row).toBeDefined();
+    const row = await readSituation(crowdId(key, "police-on-00000001"));
     expect(row!.evidence_state).toBe("self_reported");
+    expect(row!.record).toMatchObject({ kind: "authority", subtype: "police_checkpoint" });
   }, 60_000);
 
-  it("does not gate 'authority' — legitimate official activity lands even with the toggle off", async () => {
+  it("does not gate other authority activity (customs) with the category off", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
-    const report = await sign(key, { type: "authority", nonce: "authority-0000001" });
+    const report = await signReport(
+      policeRegistry,
+      policeClaim("customs-000000001", "customs"),
+      key,
+    );
 
-    const res = await postReport(report, grant);
+    const res = await postReport(report, grant, appPoliceRegistry);
     expect(res.statusCode).toBe(200);
-
-    const row = await readObs(await crowdObservationId(key.keyId, "authority-0000001"));
-    expect(row).toBeDefined();
+    expect(await readSituation(crowdId(key, "customs-000000001"))).toBeDefined();
   }, 60_000);
 
-  it("does not gate 'security' — a security-incident report lands with the toggle off", async () => {
+  it("an obstruction report never trips the gate", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
-    const report = await sign(key, { type: "security", nonce: "security-00000001" });
+    const report = await signReport(
+      policeRegistry,
+      makeClaim({ nonce: "hazard-nogate-0001" }),
+      key,
+    );
 
-    const res = await postReport(report, grant);
-    expect(res.statusCode).toBe(200);
-  }, 60_000);
-
-  it("a hazard report never trips the gate (the gated set is exactly {police})", async () => {
-    const key = await generateReporterKey();
-    const grant = await enroll(key);
-    const report = await sign(key, { type: "hazard", nonce: "hazard-nogate-0001" });
-
-    const res = await postReport(report, grant);
+    const res = await postReport(report, grant, appPoliceRegistry);
     expect(res.statusCode).toBe(200);
   }, 60_000);
 });
 
-describe("POST /contrib/reports — media is disabled (no media path in v1)", () => {
-  it("lands a report carrying attributes.media as inert attributes with no special handling", async () => {
+describe("POST /contrib/reports — media is disabled (no media path)", () => {
+  it("serves no media route for a landed report", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
-    const report = await sign(key, {
-      nonce: "media-inert-000001",
-      attributes: { media: "data:image/png;base64,AAAA", note: "kept as opaque data" },
-    });
-
-    const res = await postReport(report, grant);
-    expect(res.statusCode).toBe(200);
-
-    const obsId = await crowdObservationId(key.keyId, "media-inert-000001");
-    const rows = await sql<{ attributes: Record<string, unknown> | null }[]>`
-      SELECT attributes FROM conditions.observations WHERE id = ${obsId}`;
-    // The media key survives as inert attribute data — there is no server-side
-    // media storage, redaction, or retrieval; it is just opaque JSON.
-    expect(rows[0]!.attributes).toMatchObject({ media: "data:image/png;base64,AAAA" });
-
-    // No media route/field exists: a media sub-path is simply not a route.
+    expect(
+      (await postReport(await sign(key, { nonce: "media-none-000001" }), grant)).statusCode,
+    ).toBe(200);
+    const id = crowdId(key, "media-none-000001");
     const noRoute = await app.inject({
       method: "GET",
-      url: `/contrib/reports/${encodeURIComponent(obsId)}/media`,
+      url: `/contrib/reports/situation/${encodeURIComponent(id)}/media`,
     });
     expect(noRoute.statusCode).toBe(404);
   }, 60_000);

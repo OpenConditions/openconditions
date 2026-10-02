@@ -195,6 +195,28 @@ describe("sweepRecords", () => {
     expect(await sql`SELECT 1 FROM conditions.record_segment`).toHaveLength(0);
   });
 
+  it("purges a record's crowd evidence and votes with it", async () => {
+    await polled("nl-ndw", LATER);
+    await writeSnapshot(
+      sql,
+      "nl-ndw",
+      { situations: [situationDraft("voted")] },
+      { ...write, complete: true },
+    );
+    const id = "oc:situation:nl-ndw:voted";
+    await sql`INSERT INTO conditions.report_evidence
+        (record_class, record_id, evidence_kind, actor_key_id, occurred_at)
+      VALUES ('situation', ${id}, 'confirm', 'k', now())`;
+    await sql`INSERT INTO conditions.sub_claim
+        (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
+      VALUES ('s1', 'situation', ${id}, 'confirm', 'k', 'sig', now())`;
+    await sql`UPDATE conditions.situation SET tombstoned_at = '2026-06-01T00:00:00Z',
+      tombstone_reason = 'withdrawn'`;
+    expect(await sweep(LATER)).toMatchObject({ purged: 1 });
+    expect(await sql`SELECT 1 FROM conditions.report_evidence`).toHaveLength(0);
+    expect(await sql`SELECT 1 FROM conditions.sub_claim`).toHaveLength(0);
+  });
+
   it("waits for a poll of the source before purging or dropping its rows", async () => {
     await polled("nl-ndw", LATER);
     await writeSnapshot(

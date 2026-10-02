@@ -24,7 +24,6 @@ const ACTOR_CONFIG: ActorConfig = {
   operator: "Test Operator",
   jurisdiction: "NL",
   coverage: { iso3166: ["NL"] },
-  supportedTypes: ["incident"],
   license: "ODbL-1.0",
   trustTier: 0,
   capabilities: {

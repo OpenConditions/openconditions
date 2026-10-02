@@ -6,9 +6,9 @@
   "type": "module",
   "private": true,
   "exports": {
-    "./federation/ingest": {
-      "types": "./dist/federation/ingest.d.ts",
-      "import": "./dist/federation/ingest.js"
+    "./federation/inbox": {
+      "types": "./dist/federation/inbox.d.ts",
+      "import": "./dist/federation/inbox.js"
     },
     "./contrib": {
       "types": "./dist/contrib.d.ts",
@@ -26,10 +26,10 @@
     "@cloudflare/privacypass-ts": "0.9.0",
     "@openconditions/contrib-core": "workspace:*",
     "@openconditions/core": "workspace:*",
+    "@openconditions/federation": "workspace:*",
     "@openconditions/model": "workspace:*",
     "@openconditions/model-registry": "workspace:*",
     "@openconditions/normalize": "workspace:*",
-    "@openconditions/roads": "workspace:*",
     "@openconditions/storage": "workspace:*",
     "fastify": "^5.12.1",
     "postgres": "^3.4.9",

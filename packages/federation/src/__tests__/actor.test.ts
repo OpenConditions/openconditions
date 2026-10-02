@@ -16,14 +16,13 @@ function config(overrides: Partial<ActorConfig> = {}): ActorConfig {
     operator: "Example Mobility Foundation",
     jurisdiction: "NL",
     coverage: { iso3166: ["NL"], bbox: [3.3, 50.7, 7.2, 53.6] },
-    supportedTypes: ["incident", "roadwork", "flow"],
     license: "ODbL-1.0",
     trustTier: 1,
     capabilities: {
       protocolVersion: "0.1",
       wireFormats: ["application/activity+json"],
       deliveryModes: ["pull"],
-      subscriptionFilters: ["bbox", "type"],
+      subscriptionFilters: ["bbox", "classes", "kinds"],
       maxEventRate: 10,
       convergenceBound: 300,
     },
@@ -42,15 +41,25 @@ describe("buildActorDocument", () => {
     expect(doc.jurisdiction).toBe("NL");
     expect(doc.outbox).toBe("https://conditions.example.org/peer/outbox");
     expect(doc.inbox).toBe("https://conditions.example.org/peer/inbox");
-    expect(doc.subscribe).toBe("https://conditions.example.org/peer/subscribe");
-    expect(doc.events).toBe("https://conditions.example.org/peer/event/{id}");
-    expect(doc.tombstones).toBe("https://conditions.example.org/peer/tombstones");
+    expect(doc.subscriptions).toBe("https://conditions.example.org/peer/subscriptions");
+    expect(doc.backfill).toBe("https://conditions.example.org/peer/backfill");
+    expect(doc.stream).toBe("https://conditions.example.org/peer/stream");
     expect(doc.coverage).toEqual({ iso3166: ["NL"], bbox: [3.3, 50.7, 7.2, 53.6] });
-    expect(doc.supportedTypes).toEqual(["incident", "roadwork", "flow"]);
     expect(doc.capabilities.protocolVersion).toBe("0.1");
     expect(doc.license).toBe("ODbL-1.0");
     expect(doc.trustTier).toBe(1);
     expect(doc.trustAnchor).toEqual([]);
+  });
+
+  it("advertises exactly the outbox, inbox, subscriptions, backfill and stream endpoints", async () => {
+    const key = await generateInstanceKey(NOW);
+    const doc = buildActorDocument(config(), [key], VERSIONS);
+    const endpoints = Object.entries(doc)
+      .filter(([, value]) => typeof value === "string" && value.includes("/peer/"))
+      .map(([field]) => field)
+      .sort();
+    expect(endpoints).toEqual(["backfill", "inbox", "outbox", "stream", "subscriptions"]);
+    expect("supportedTypes" in doc).toBe(false);
   });
 
   it("advertises the schema versions of the running registry", async () => {
@@ -143,10 +152,16 @@ describe("parseActorConfig", () => {
     expect(() => parseActorConfig(JSON.stringify({ instanceId: "x" }))).toThrow(TypeError);
     expect(() => parseActorConfig({ ...config(), baseUrl: "ftp://nope" })).toThrow(TypeError);
     expect(() => parseActorConfig({ ...config(), trustTier: 3 })).toThrow(TypeError);
-    expect(() => parseActorConfig({ ...config(), supportedTypes: "incident" })).toThrow(TypeError);
     expect(() =>
       parseActorConfig({ ...config(), capabilities: { protocolVersion: "0.1" } }),
     ).toThrow(TypeError);
+  });
+
+  it("refuses configured supportedTypes: the registry's schema versions say what is carried", () => {
+    expect(() => parseActorConfig({ ...config(), supportedTypes: ["incident"] })).toThrow(
+      /supportedTypes/,
+    );
+    expect(() => parseActorConfig({ ...config(), supportedTypes: [] })).toThrow(/supportedTypes/);
   });
 
   it("refuses configured schema versions: the registry advertises them", () => {

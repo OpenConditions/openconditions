@@ -27,6 +27,8 @@ export {
   readObservationHistory,
   readRecord,
   readRevisions,
+  scanLatestObservations,
+  scanRecords,
 } from "./records.js";
 export { assertStoredCodesRegistered, storedRegistryCodes } from "./registry-coverage.js";
 export {

@@ -1,9 +1,21 @@
 import { runMigrations } from "@openconditions/core/server";
-import { generateInstanceKey, type InstanceKey, signMessage } from "@openconditions/federation";
+import {
+  generateInstanceKey,
+  type InstanceKey,
+  type RecordOutboxEntry,
+  signMessage,
+} from "@openconditions/federation";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
+import {
+  type OwnSituationOptions,
+  ownSituation,
+  setOutboxAge,
+  situationId,
+  storeSituation,
+} from "./record-fixtures.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -20,7 +32,6 @@ const ACTOR_CONFIG = {
   operator: "Test Operator",
   jurisdiction: "NL",
   coverage: { iso3166: ["NL"] },
-  supportedTypes: ["incident", "roadwork"],
   license: "ODbL-1.0",
   trustTier: 1,
   capabilities: {
@@ -191,6 +202,30 @@ describe("subscription CRUD and ownership", () => {
     }
   }, 30_000);
 
+  it("stores a record filter naming classes, kinds and observation properties", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    try {
+      const filter = {
+        classes: ["situation", "observation"],
+        kinds: ["closure", "incident"],
+        properties: ["traffic.speed"],
+        domains: ["roads"],
+        minEvidenceTier: "self_reported",
+      };
+      const id = await createSub(app, peerA, { deliveryMode: "pull", filter });
+      const get = await signed(peerA, "GET", `/peer/subscriptions/${id}`);
+      const res = await app.inject({
+        method: "GET",
+        url: `/peer/subscriptions/${id}`,
+        headers: get.headers,
+      });
+      expect(res.statusCode).toBe(200);
+      expect(res.json().filter).toEqual(filter);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
   it("a peer lists only its OWN subscriptions", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false });
     try {
@@ -308,7 +343,73 @@ describe("subscription validation (422)", () => {
       });
       expect(res.statusCode).toBe(422);
       expect(res.json().code).toBe("over-broad-filter");
-      expect(res.json().recommended).toBeDefined();
+      expect(res.json().recommended).toEqual({ kinds: ["closure", "incident"] });
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("treats a filter naming only classes as over-broad, recommending kinds on top of it", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    try {
+      const req = await signed(peerA, "POST", "/peer/subscriptions", {
+        deliveryMode: "sse",
+        filter: { classes: ["situation"] },
+      });
+      const res = await app.inject({
+        method: "POST",
+        url: "/peer/subscriptions",
+        headers: req.headers,
+        payload: req.payload,
+      });
+      expect(res.statusCode).toBe(422);
+      expect(res.json().code).toBe("over-broad-filter");
+      expect(res.json().recommended).toEqual({
+        classes: ["situation"],
+        kinds: ["closure", "incident"],
+      });
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("rejects a subscription wanting observations without naming their properties", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    try {
+      const req = await signed(peerA, "POST", "/peer/subscriptions", {
+        deliveryMode: "pull",
+        filter: { classes: ["observation"], bbox: [4, 50, 6, 54] },
+      });
+      const res = await app.inject({
+        method: "POST",
+        url: "/peer/subscriptions",
+        headers: req.headers,
+        payload: req.payload,
+      });
+      expect(res.statusCode).toBe(422);
+      expect(res.json().code).toBe("invalid-filter");
+      expect(res.json().error).toMatch(/properties/);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("rejects a filter naming an unknown record class", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    try {
+      const req = await signed(peerA, "POST", "/peer/subscriptions", {
+        deliveryMode: "pull",
+        filter: { classes: ["event"] },
+      });
+      const res = await app.inject({
+        method: "POST",
+        url: "/peer/subscriptions",
+        headers: req.headers,
+        payload: req.payload,
+      });
+      expect(res.statusCode).toBe(422);
+      expect(res.json().code).toBe("invalid-filter");
+      expect(res.json().error).toMatch(/event/);
     } finally {
       await app.close();
     }
@@ -401,7 +502,7 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
     }
   }, 30_000);
 
-  it("streams a subscription's events (snapshot + live), each carrying the composite cursor", async () => {
+  it("streams a subscription's records (snapshot + live) as `record` frames carrying the composite cursor", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false });
     await app.listen({ port: 0, host: "127.0.0.1" });
     try {
@@ -413,7 +514,7 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
       });
       const path = `/peer/stream?subscriptionId=${id}`;
 
-      await insertEvent("sse-snap", 18.5);
+      await insertSituation("sse-snap", { lon: 18.5 });
 
       const req = await signed(peerA, "GET", path);
       const res = await fetch(`http://127.0.0.1:${port}${path}`, { headers: req.headers });
@@ -423,11 +524,26 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
       const reader = res.body!.getReader();
       const events = await readEvents(reader, 1, 8000, (e) => e.data.includes("sse-snap"));
       expect(events.length).toBeGreaterThan(0);
-      expect(JSON.parse(events[0]!.data).cursor).toMatch(/^\d+\.\d+$/);
+      const snap = events[0]!;
+      expect(snap.event).toBe("record");
+      const { cursor, entry } = JSON.parse(snap.data) as {
+        cursor: string;
+        entry: RecordOutboxEntry;
+      };
+      expect(cursor).toMatch(/^\d+\.\d+$/);
+      expect(snap.id).toBe(cursor);
+      expect(entry).toMatchObject({
+        operation: "create",
+        recordClass: "situation",
+        recordId: situationId("sse-snap"),
+        kind: "incident",
+      });
+      expect(entry.record?.id).toBe(situationId("sse-snap"));
 
-      await insertEvent("sse-live", 18.6);
+      await insertSituation("sse-live", { lon: 18.6 });
       const live = await readEvents(reader, 1, 8000, (e) => e.data.includes("sse-live"));
       expect(live.length).toBeGreaterThan(0);
+      expect(live[live.length - 1]!.event).toBe("record");
       expect(JSON.parse(live[live.length - 1]!.data).cursor as string).toMatch(/^\d+\.\d+$/);
 
       await reader.cancel();
@@ -436,7 +552,7 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
     }
   }, 30_000);
 
-  it("respects the subscription's priorityOnly — a non-priority matching event is NOT streamed", async () => {
+  it("respects the subscription's priorityOnly — a non-priority matching record is NOT streamed", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false });
     await app.listen({ port: 0, host: "127.0.0.1" });
     try {
@@ -446,21 +562,23 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
         priorityOnly: true,
         filter: {
           bbox: [20, 51, 21, 53],
-          types: ["road_closure", "roadworks"],
+          kinds: ["roadworks"],
           permissiveOnly: false,
         },
       });
       const path = `/peer/stream?subscriptionId=${id}`;
 
-      await insertEvent("sse-works", 20.4, "roadworks"); // non-priority, matches filter
-      await insertEvent("sse-closure", 20.5, "road_closure"); // priority
+      // Both match the filter; only works that close the carriageway are a priority entry.
+      await insertSituation("sse-works", { lon: 20.4, kind: "roadworks" });
+      await insertSituation("sse-closure", { lon: 20.5, kind: "roadworks", closure: true });
 
       const req = await signed(peerA, "GET", path);
       const res = await fetch(`http://127.0.0.1:${port}${path}`, { headers: req.headers });
       const reader = res.body!.getReader();
       const events = await readEvents(reader, 1, 8000, (e) => e.data.includes("sse-closure"));
       expect(events.length).toBeGreaterThan(0);
-      // The priority closure streamed; the non-priority roadwork did NOT.
+      expect(events[0]!.event).toBe("record");
+      // The priority closure streamed; the non-priority works did NOT.
       expect(events.some((e) => e.data.includes("sse-works"))).toBe(false);
 
       await reader.cancel();
@@ -474,16 +592,16 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
     await app.listen({ port: 0, host: "127.0.0.1" });
     try {
       const { port } = app.server.address() as { port: number };
-      await insertEvent("sse-t0-old", 30.5);
-      await insertEvent("sse-t0-new", 30.6);
-      await setAge("sse-t0-old", 2 * 24 * 3_600_000); // 2 days — beyond the Tier-0 floor
-
       // peer-tier0 (pinned Tier-0). Its subscription defaults to cursor 0.0.
       const id = await createSub(app, peer0, {
         deliveryMode: "sse",
         priorityOnly: false,
         filter: { bbox: [29, 51, 31, 53], permissiveOnly: false },
       });
+      await insertSituation("sse-t0-old", { lon: 30.5 });
+      await insertSituation("sse-t0-new", { lon: 30.6 });
+      await setAge("sse-t0-old", 2 * 24 * 3_600_000); // 2 days — beyond the Tier-0 floor
+
       const path = `/peer/stream?subscriptionId=${id}`;
       const req = await signed(peer0, "GET", path);
       const res = await fetch(`http://127.0.0.1:${port}${path}`, { headers: req.headers });
@@ -506,14 +624,14 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
     await app.listen({ port: 0, host: "127.0.0.1" });
     try {
       const { port } = app.server.address() as { port: number };
-      await insertEvent("sse-t1-old", 31.5);
-      await setAge("sse-t1-old", 2 * 24 * 3_600_000); // 2 days — within the Tier-1 30d window
-
       const id = await createSub(app, peerA, {
         deliveryMode: "sse",
         priorityOnly: false,
         filter: { bbox: [31, 51, 32, 53], permissiveOnly: false },
       });
+      await insertSituation("sse-t1-old", { lon: 31.5 });
+      await setAge("sse-t1-old", 2 * 24 * 3_600_000); // 2 days — within the Tier-1 30d window
+
       const path = `/peer/stream?subscriptionId=${id}`;
       const req = await signed(peerA, "GET", path);
       const res = await fetch(`http://127.0.0.1:${port}${path}`, { headers: req.headers });
@@ -562,27 +680,15 @@ describe("PATCH re-enables a push_disabled subscription (recovery)", () => {
   }, 30_000);
 });
 
-async function insertEvent(id: string, lon: number, type = "road_closure"): Promise<void> {
-  const geometry = { type: "Point", coordinates: [lon, 52.1] };
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, category, severity, severity_source,
-       headline, status, geom, origin, data_updated_at, fetched_at, privacy_class)
-    VALUES (${id}, 'sse-test', 'datex2', 'roads', 'event', ${type}, 'incident', 'high',
-       'declared', ${id}, 'active',
-       ST_SetSRID(ST_GeomFromGeoJSON(${JSON.stringify(geometry)}), 4326),
-       ${sql.json({ kind: "feed", attribution: { provider: "Auth", license: "CC-BY-4.0" } } as never)},
-       '2026-07-13T10:00:00Z', '2026-07-13T10:00:00Z', 'authoritative')`;
+/** Stores one of this instance's situations, which the capture journals. */
+async function insertSituation(local: string, opts: OwnSituationOptions): Promise<void> {
+  await storeSituation(sql, ownSituation(local, opts));
 }
 
-/** Backdates the outbox row for an object to `msAgo` before the real clock
+/** Backdates a situation's journal entries to `msAgo` before the real clock
  *  (the SSE handler floors against the real clock — no injected `now` here). */
-async function setAge(objectId: string, msAgo: number): Promise<void> {
-  const ts = new Date(Date.now() - msAgo).toISOString();
-  await sql`
-    UPDATE conditions.federation_outbox
-    SET created_at = ${ts}::timestamptz
-    WHERE object_id = ${objectId}`;
+async function setAge(local: string, msAgo: number): Promise<void> {
+  await setOutboxAge(sql, situationId(local), msAgo, new Date().toISOString());
 }
 
 /** Creates a subscription via the signed route and returns its id. */

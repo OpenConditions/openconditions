@@ -1,6 +1,4 @@
-import { runMigrations } from "@openconditions/core/server";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { readOutbox } from "../outbox.js";
 import {
@@ -8,9 +6,16 @@ import {
   OUTBOX_RETENTION_TIER1_FLOOR_SEC,
   pruneOutbox,
 } from "../outbox-retention.js";
+import {
+  incidentDraft,
+  situationId,
+  startDatabase,
+  subscribe,
+  writeOwn,
+} from "./record-fixtures.integration.js";
 
+let db: Awaited<ReturnType<typeof startDatabase>>;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
 /** A fixed evaluation instant so every age is deterministic. */
 const NOW = "2026-07-15T00:00:00.000Z";
@@ -22,64 +27,37 @@ function daysAgo(n: number): string {
   return new Date(NOW_MS - n * DAY_SEC * 1000).toISOString();
 }
 
-/** Inserts a journal row directly (bypassing the trigger) with an explicit
+/** Inserts a journal row directly (bypassing the capture) with an explicit
  *  `created_at`, so ages can be seeded across the retention floor. */
-async function seedEntry(objectId: string, createdAt: string): Promise<void> {
+async function seedEntry(recordId: string, createdAt: string): Promise<void> {
   await sql`
     INSERT INTO conditions.federation_outbox
-      (object_id, operation, canonical_id, payload_snapshot, created_at)
-    VALUES (${objectId}, 'create', null,
-            ${sql.json({ id: objectId } as never)}, ${createdAt}::timestamptz)`;
+      (operation, record_class, record_id, canonical_id, kind, domain, snapshot, created_at)
+    VALUES ('create', 'situation', ${recordId}, null, 'incident', 'road',
+            ${sql.json({ id: recordId } as never)}, ${createdAt}::timestamptz)`;
 }
 
-/** Inserts a real observation, firing the outbox trigger (row created at now()). */
-async function insertObservation(id: string): Promise<void> {
-  const geometry = { type: "Point", coordinates: [5.1, 52.1] };
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, category, severity, severity_source,
-       headline, status, geom, origin, data_updated_at, fetched_at,
-       canonical_id, privacy_class)
-    VALUES (${id}, 'retention-test', 'datex2', 'roads', 'event', 'incident', 'incident',
-       'medium', 'declared', 'headline', 'active',
-       ST_SetSRID(ST_GeomFromGeoJSON(${JSON.stringify(geometry)}), 4326),
-       ${sql.json({ kind: "feed", attribution: { provider: "T", license: "CC-BY-4.0" } } as never)},
-       '2026-07-13T10:00:00Z', '2026-07-13T10:00:00Z', null, 'authoritative')`;
+/** Writes this instance's own situation, which the capture journals at now(). */
+async function writeSituation(local: string): Promise<void> {
+  await writeOwn(sql, incidentDraft(local));
 }
 
-async function survivingObjectIds(): Promise<string[]> {
-  const rows = await sql<{ object_id: string }[]>`
-    SELECT object_id FROM conditions.federation_outbox ORDER BY seq ASC`;
-  return rows.map((r) => r.object_id);
+async function survivingRecordIds(): Promise<string[]> {
+  const rows = await sql<{ record_id: string }[]>`
+    SELECT record_id FROM conditions.federation_outbox ORDER BY seq ASC`;
+  return rows.map((r) => r.record_id);
 }
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-  await runMigrations(url);
-  // The capture trigger only journals for a SUBSCRIBER (migration 0023) — an
-  // instance with no peers must not journal its feed churn. This suite needs a
-  // journal to prune, so give it one.
-  await sql`
-    INSERT INTO conditions.federation_subscription
-      (id, peer_id, delivery_mode, created_at, updated_at)
-    VALUES ('sub-retention', 'peer-retention', 'pull', now(), now())
-    ON CONFLICT (id) DO NOTHING`;
+  db = await startDatabase();
+  sql = db.sql;
+  // The capture only journals for a subscriber: an instance with no peers
+  // must not journal its feed churn. This suite needs a journal to prune.
+  await subscribe(sql, "retention");
 }, 120_000);
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 beforeEach(async () => {
@@ -100,7 +78,7 @@ describe("pruneOutbox — the tier-time-floor retention bound", () => {
     expect(floorSec).toBe(OUTBOX_RETENTION_TIER1_FLOOR_SEC + 7 * DAY_SEC);
     expect(result.floorIso).toBe(new Date(NOW_MS - floorSec * 1000).toISOString());
     expect(result.deleted).toBe(2);
-    expect(await survivingObjectIds()).toEqual(["recent-10d", "edge-36d"]);
+    expect(await survivingRecordIds()).toEqual(["recent-10d", "edge-36d"]);
   }, 30_000);
 
   it("is idempotent: a second prune deletes nothing", async () => {
@@ -112,7 +90,7 @@ describe("pruneOutbox — the tier-time-floor retention bound", () => {
 
     const second = await pruneOutbox(sql, { now: NOW });
     expect(second.deleted).toBe(0);
-    expect(await survivingObjectIds()).toEqual(["recent-5d"]);
+    expect(await survivingRecordIds()).toEqual(["recent-5d"]);
   }, 30_000);
 
   it("never lets the floor fall below the Tier-1 window plus safety margin even with a tiny retentionSec", async () => {
@@ -129,7 +107,7 @@ describe("pruneOutbox — the tier-time-floor retention bound", () => {
     // The bare Tier-1 floor (30d) still holds strictly below the effective floor.
     expect(DEFAULT_OUTBOX_RETENTION_SEC).toBeGreaterThan(OUTBOX_RETENTION_TIER1_FLOOR_SEC);
     expect(result.deleted).toBe(1);
-    expect(await survivingObjectIds()).toEqual(["twenty-20d"]);
+    expect(await survivingRecordIds()).toEqual(["twenty-20d"]);
   }, 30_000);
 
   it("survives a row exactly at the floor (strict `<`, not `<=`)", async () => {
@@ -143,7 +121,7 @@ describe("pruneOutbox — the tier-time-floor retention bound", () => {
     const result = await pruneOutbox(sql, { now: NOW });
 
     expect(result.deleted).toBe(1);
-    expect(await survivingObjectIds()).toEqual(["exactly-at-floor"]);
+    expect(await survivingRecordIds()).toEqual(["exactly-at-floor"]);
   }, 30_000);
 
   it("fails CLOSED on a provided-but-unparseable archiveHighWaterIso (does not prune)", async () => {
@@ -159,7 +137,7 @@ describe("pruneOutbox — the tier-time-floor retention bound", () => {
     );
 
     // Nothing was deleted — the throw happened before the DELETE.
-    expect(await survivingObjectIds()).toEqual(["old-60d"]);
+    expect(await survivingRecordIds()).toEqual(["old-60d"]);
   }, 30_000);
 
   it("widens the floor to a governance window that exceeds Tier-1", async () => {
@@ -175,7 +153,7 @@ describe("pruneOutbox — the tier-time-floor retention bound", () => {
 
     expect(result.floorIso).toBe(new Date(NOW_MS - 60 * DAY_SEC * 1000).toISOString());
     expect(result.deleted).toBe(1);
-    expect(await survivingObjectIds()).toEqual(["forty-40d"]);
+    expect(await survivingRecordIds()).toEqual(["forty-40d"]);
   }, 30_000);
 
   it("archive-coverage guard: never prunes past what the archive has captured", async () => {
@@ -195,7 +173,7 @@ describe("pruneOutbox — the tier-time-floor retention bound", () => {
       new Date(NOW_MS - DEFAULT_OUTBOX_RETENTION_SEC * 1000).toISOString(),
     );
     expect(result.deleted).toBe(1);
-    expect(await survivingObjectIds()).toEqual(["forty-40d"]);
+    expect(await survivingRecordIds()).toEqual(["forty-40d"]);
   }, 30_000);
 
   it("archive high-water newer than the floor never widens pruning past the floor", async () => {
@@ -210,15 +188,15 @@ describe("pruneOutbox — the tier-time-floor retention bound", () => {
     });
 
     expect(result.deleted).toBe(1);
-    expect(await survivingObjectIds()).toEqual(["recent-10d"]);
+    expect(await survivingRecordIds()).toEqual(["recent-10d"]);
   }, 30_000);
 });
 
 describe("pruneOutbox — the composite-cursor serve path is unaffected", () => {
   it("readOutbox still reads forward after old rows are pruned", async () => {
     const base = { txid: "0", seq: 0 };
-    await insertObservation("keep-a");
-    await insertObservation("keep-b");
+    await writeSituation("keep-a");
+    await writeSituation("keep-b");
     // An already-served old entry, past the floor, that pruning removes.
     await seedEntry("old-journal", daysAgo(40));
 
@@ -228,22 +206,25 @@ describe("pruneOutbox — the composite-cursor serve path is unaffected", () => 
     // The live pull from the start cursor delivers the surviving entries in
     // (txid, seq) order; the pruned old row is simply gone.
     const page = await readOutbox(sql, { after: base, limit: 500 });
-    expect(page.orderedItems.map((e) => e.objectId)).toEqual(["keep-a", "keep-b"]);
+    expect(page.orderedItems.map((e) => e.recordId)).toEqual([
+      situationId("keep-a"),
+      situationId("keep-b"),
+    ]);
   }, 30_000);
 
   it("a peer whose cursor already advanced past the pruned range keeps reading forward", async () => {
     const base = { txid: "0", seq: 0 };
-    await insertObservation("fwd-a");
-    await insertObservation("fwd-b");
+    await writeSituation("fwd-a");
+    await writeSituation("fwd-b");
 
     const first = await readOutbox(sql, { after: base, limit: 1 });
-    expect(first.orderedItems.map((e) => e.objectId)).toEqual(["fwd-a"]);
+    expect(first.orderedItems.map((e) => e.recordId)).toEqual([situationId("fwd-a")]);
 
     // Prune old history (nothing here is old, but the prune must not disturb the
     // reader's advanced cursor); then continue from the advanced high-water mark.
     await pruneOutbox(sql, { now: NOW });
     const second = await readOutbox(sql, { after: first.highWaterMark, limit: 500 });
-    expect(second.orderedItems.map((e) => e.objectId)).toEqual(["fwd-b"]);
+    expect(second.orderedItems.map((e) => e.recordId)).toEqual([situationId("fwd-b")]);
   }, 30_000);
 
   it("deletes a backlog larger than one batch across multiple chunks", async () => {
@@ -256,10 +237,10 @@ describe("pruneOutbox — the composite-cursor serve path is unaffected", () => 
     const result = await pruneOutbox(sql, { now: NOW, batchSize: 2 });
 
     expect(result.deleted).toBe(7);
-    expect(await survivingObjectIds()).toEqual(["recent"]);
+    expect(await survivingRecordIds()).toEqual(["recent"]);
     // Idempotent under batching: a second pass finds nothing to chunk.
     const again = await pruneOutbox(sql, { now: NOW, batchSize: 2 });
     expect(again.deleted).toBe(0);
-    expect(await survivingObjectIds()).toEqual(["recent"]);
+    expect(await survivingRecordIds()).toEqual(["recent"]);
   }, 30_000);
 });

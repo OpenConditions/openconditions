@@ -1,6 +1,6 @@
 /**
  * Tier-bounded backfill — the SAME composite `(txid, seq)` cursor primitive as
- * the live pull (T3 readOutbox), with a LOWER TIME FLOOR on how far back an
+ * the live pull (readOutbox), with a LOWER TIME FLOOR on how far back an
  * instance serves history to a peer. The floor is a function of the peer's
  * TRUST TIER (authoritative from the bilateral pin, never a client field):
  *  - Tier 0 (public): the last 24 hours.
@@ -10,9 +10,10 @@
  * WITHIN the window backfill is identical to the outbox pull: same cursor, same
  * gap-freeness, same signed page. BEYOND the window there is no protocol — a
  * request whose range reaches before the floor gets `beyondWindow: true` and an
- * `archiveUrl` pointing at the static GeoParquet archive (Plan 3 T9 —
- * docs/archive.md), which the peer fetches directly over HTTP Range. So the live
- * exchange stays bounded and the deep past is served by a single mirrorable file.
+ * `archiveUrl` naming the static GeoParquet archive's latest file of each
+ * record class (docs/archive.md), which the peer fetches directly over HTTP
+ * Range. So the live exchange stays bounded and the deep past is served by
+ * four mirrorable files.
  *
  * The floor is applied as an ADDITIONAL `WHERE created_at >= now - windowSec` on
  * the readOutbox query (via its `minCreatedAt`), composed with the composite
@@ -22,12 +23,13 @@
 
 import {
   decodeOutboxCursor,
-  type FederationFilter,
   OUTBOX_CURSOR_START,
   type OutboxCursor,
   type OutboxPage,
+  type RecordFilter,
   readOutbox,
 } from "@openconditions/federation";
+import type { RecordClass } from "@openconditions/model";
 import type postgres from "postgres";
 
 /** Tier 0 (public) serves the last 24 hours. */
@@ -86,13 +88,13 @@ export function backfillFloorIso(
 export interface BackfillQuery {
   /** Serve entries strictly after this composite cursor; default the start. */
   after?: OutboxCursor | string;
-  filter?: FederationFilter;
+  filter?: RecordFilter;
   /** The peer's trust tier — authoritative from the pinned peer record. */
   tier: 0 | 1 | 2;
   /** The window instant (ISO 8601); defaults to the real clock. */
   now?: string;
   limit?: number;
-  /** The static archive URL served when the request reaches before the window. */
+  /** The static archive's base URL, whose class files a page names when the request reaches before the window. */
   archiveUrl?: string;
   /** The collection URL this page is part of; default "/peer/backfill". */
   partOf?: string;
@@ -102,12 +104,23 @@ export interface BackfillQuery {
   governanceWindowSec?: number;
 }
 
+/** The archive's classes; the nightly build writes one file per class. */
+const ARCHIVE_CLASSES: readonly RecordClass[] = ["situation", "feature", "offer", "observation"];
+
+/** The latest archive file of every class under the archive's base URL. */
+export function archiveFileUrls(baseUrl: string): Record<RecordClass, string> {
+  const base = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+  return Object.fromEntries(
+    ARCHIVE_CLASSES.map((cls) => [cls, `${base}/archive-${cls}.parquet`]),
+  ) as Record<RecordClass, string>;
+}
+
 /** An outbox page plus the beyond-window redirect: when the request's range
- *  reaches before the tier floor, `beyondWindow` is set and `archiveUrl` points
- *  at the static archive that covers the pre-floor history. */
+ *  reaches before the tier floor, `beyondWindow` is set and `archiveUrl` names
+ *  the static archive's file of each class, which covers the pre-floor history. */
 export interface BackfillPage extends OutboxPage {
   beyondWindow?: boolean;
-  archiveUrl?: string;
+  archiveUrl?: Record<RecordClass, string>;
 }
 
 function normalizeCursor(after: OutboxCursor | string | undefined): OutboxCursor {
@@ -164,7 +177,7 @@ export async function readBackfill(sql: postgres.Sql, q: BackfillQuery): Promise
   const result: BackfillPage = { ...page };
   if (await hasPreFloorEntries(sql, after, floorIso)) {
     result.beyondWindow = true;
-    if (q.archiveUrl !== undefined) result.archiveUrl = q.archiveUrl;
+    if (q.archiveUrl !== undefined) result.archiveUrl = archiveFileUrls(q.archiveUrl);
   }
   return result;
 }

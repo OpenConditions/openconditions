@@ -10,8 +10,13 @@ import { federationEligible, type RecordClass } from "@openconditions/model";
 import { type EgressRecord, permissiveRecords, withoutReporter } from "@openconditions/publishers";
 import type { Geometry } from "geojson";
 import { intersectsBbox } from "./bbox.js";
-import { DEFAULT_MIN_EVIDENCE_TIER, EVIDENCE_TIERS } from "./filter.js";
 import type { OutboxOperation } from "./outbox.js";
+
+/** The evidence tiers a subscriber can ask for, weakest first. */
+export const EVIDENCE_TIERS = ["self_reported", "corroborated", "externally_resolved"] as const;
+
+/** Crowd records reach a subscriber once corroborated, unless it asks for less. */
+export const DEFAULT_MIN_EVIDENCE_TIER = "corroborated";
 
 /** The parts of a stored model record federation reads. */
 export interface FederatedRecord extends EgressRecord {

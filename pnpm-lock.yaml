@@ -90,10 +90,16 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../core
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
       canonicalize:
         specifier: 3.0.0
         version: 3.0.0
     devDependencies:
+      '@openconditions/model-registry':
+        specifier: workspace:*
+        version: link:../model-registry
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16
@@ -143,9 +149,6 @@ importers:
 
   packages/federation:
     dependencies:
-      '@openconditions/core':
-        specifier: workspace:*
-        version: link:../core
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:../ingest-framework
@@ -177,9 +180,15 @@ importers:
         specifier: 2.9.1
         version: 2.9.1
     devDependencies:
+      '@openconditions/core':
+        specifier: workspace:*
+        version: link:../core
       '@openconditions/model-registry':
         specifier: workspace:*
         version: link:../model-registry
+      '@openconditions/storage':
+        specifier: workspace:*
+        version: link:../storage
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16
@@ -593,9 +602,6 @@ importers:
         specifier: 0.16.10
         version: 0.16.10
     devDependencies:
-      '@openconditions/contrib-core':
-        specifier: workspace:*
-        version: link:../contrib-core
       '@openconditions/model-registry':
         specifier: workspace:*
         version: link:../model-registry
@@ -694,6 +700,9 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@openconditions/federation':
+        specifier: workspace:*
+        version: link:../../packages/federation
       '@openconditions/model':
         specifier: workspace:*
         version: link:../../packages/model
@@ -703,9 +712,6 @@ importers:
       '@openconditions/normalize':
         specifier: workspace:*
         version: link:../../packages/normalize
-      '@openconditions/roads':
-        specifier: workspace:*
-        version: link:../../packages/roads
       '@openconditions/storage':
         specifier: workspace:*
         version: link:../../packages/storage

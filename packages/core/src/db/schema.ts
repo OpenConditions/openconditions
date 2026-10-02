@@ -1,4 +1,10 @@
-import { EVIDENCE_STATES, enumCheckSql, FUZZINESS, PRIVACY_CLASSES } from "@openconditions/model";
+import {
+  EVIDENCE_STATES,
+  enumCheckSql,
+  FUZZINESS,
+  PRIVACY_CLASSES,
+  RECORD_CLASSES,
+} from "@openconditions/model";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -72,9 +78,8 @@ export const observations = conditionsSchema.table(
     // Commons substrate: identity/lineage, uncertainty, privacy and provenance
     // fields for crowd-reporting/federation. The ingest pipeline's
     // normalizeObservation seam stamps instance_id, canonical_id,
-    // phenomenon_fingerprint, privacy_class and source_uri/source_license on
-    // every feed row; the remaining fields await their consumers (crowd
-    // reporting, probe aggregation, federation).
+    // privacy_class and source_uri/source_license on every feed row; the
+    // event and crowd columns are no longer written.
     instanceId: text("instance_id"),
     canonicalId: text("canonical_id"),
     phenomenonFingerprint: text("phenomenon_fingerprint"),
@@ -527,60 +532,6 @@ export const reporter = conditionsSchema.table(
 );
 
 /**
- * A signed reaction to an existing report/observation: a confirm, negate, or
- * flag from one reporter key. The unique index enforces one reaction per
- * (subject, key, type) so a key cannot stuff the ballot on a single subject.
- */
-export const subClaim = conditionsSchema.table(
-  "sub_claim",
-  {
-    id: text("id").primaryKey(),
-    subjectId: text("subject_id").notNull(),
-    claimType: text("claim_type").notNull(),
-    keyId: text("key_id").notNull(),
-    reason: text("reason"),
-    geom: geometryPoint("geom"),
-    signature: text("signature").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-  },
-  (t) => [
-    uniqueIndex("uq_sub_claim_subject_key_type").on(t.subjectId, t.keyId, t.claimType),
-    index("idx_sub_claim_subject").on(t.subjectId),
-    index("idx_sub_claim_key").on(t.keyId),
-    check("sub_claim_claim_type_enum", sql`${t.claimType} IN ('confirm','negate','flag')`),
-  ],
-);
-
-/**
- * The append-only, authoritative evidence ledger for a crowd observation: one
- * row per admissible piece of evidence (report/confirm/negate/external
- * resolution/expiry). The observation's derived evidence_state/routing_eligible
- * are a replayable projection of these rows (see evidenceRowsToLedger +
- * evaluateEvidence).
- */
-export const reportEvidence = conditionsSchema.table(
-  "report_evidence",
-  {
-    id: bigserial("id", { mode: "number" }).primaryKey(),
-    observationId: text("observation_id").notNull(),
-    evidenceKind: text("evidence_kind").notNull(),
-    actorKeyId: text("actor_key_id"),
-    sourceId: text("source_id"),
-    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
-    details: jsonb("details").notNull().default(sql`'{}'::jsonb`),
-  },
-  (t) => [
-    index("idx_report_evidence_observation").on(t.observationId, t.occurredAt),
-    // Supports the per-key report-rate limiter's trailing-window count.
-    index("idx_report_evidence_actor").on(t.actorKeyId, t.occurredAt),
-    check(
-      "report_evidence_kind_enum",
-      sql`${t.evidenceKind} IN ('report','confirm','negate','official_match','reviewer_accept','reviewer_reject','expired')`,
-    ),
-  ],
-);
-
-/**
  * Per-(key, epoch) count of anti-abuse tokens already issued — the rate-limit
  * ledger for a reporter's submission entitlement.
  */
@@ -630,16 +581,18 @@ export const blockList = conditionsSchema.table("block_list", {
 
 /**
  * The append-only federation outbox journal — the single ordering authority
- * for what this instance federates. A row-level trigger on
- * `conditions.observations` (DDL in this table's migration; drizzle-kit cannot
- * model triggers) appends exactly one entry per observation mutation IN THE
- * MUTATION'S OWN TRANSACTION, so a rollback appends nothing and a committed
- * change is journalled atomically. `payload_snapshot` is the point-in-time row
- * as jsonb with `origin.reporter` STRIPPED by the trigger — no pseudonymous
- * reporter key/signature ever rests here — and geometry rendered as GeoJSON.
- * A delete appends a minimal tombstone marker instead of a payload. `seq`
+ * for what this instance federates. Row-level triggers on the situation,
+ * feature and offer tables and on `observation_latest` (custom migration
+ * `record_outbox_capture`; drizzle-kit cannot model triggers) append one entry
+ * per change of one of this instance's own records IN THE CHANGE'S OWN
+ * TRANSACTION, so a rollback appends nothing and a committed change is
+ * journalled atomically. The columns say what an entry is without reading it
+ * (class, id, kind, domain, property, priority); `snapshot` is the stored
+ * record with its evidence summary, the reporter stripped at read. A
+ * tombstone appends a `delete` entry with its reason and no snapshot. `seq`
  * (bigserial) is the strictly monotonic peer cursor; entries are never
- * updated or deleted by the application.
+ * updated by the application, except that an erasure scrubs the earlier
+ * snapshots of the erased record.
  *
  * `txid` (the row's creating transaction id, `pg_current_xact_id()` captured
  * by the column DEFAULT) is the HIGH-ORDER half of the gap-free peer cursor.
@@ -654,42 +607,62 @@ export const federationOutbox = conditionsSchema.table(
   "federation_outbox",
   {
     seq: bigserial("seq", { mode: "number" }).primaryKey(),
-    objectId: text("object_id").notNull(),
     operation: text("operation").notNull(),
+    recordClass: text("record_class").notNull(),
+    recordId: text("record_id").notNull(),
     canonicalId: text("canonical_id"),
-    payloadSnapshot: jsonb("payload_snapshot").notNull(),
+    kind: text("kind").notNull(),
+    domain: text("domain").notNull(),
+    property: text("property"),
+    priority: boolean("priority").notNull().default(false),
+    snapshot: jsonb("snapshot"),
+    tombstoneReason: text("tombstone_reason"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     txid: xid8("txid").notNull().default(sql`pg_current_xact_id()`),
   },
   (t) => [
-    index("idx_federation_outbox_object").on(t.objectId, t.seq),
+    index("idx_federation_outbox_record").on(t.recordClass, t.recordId, t.seq),
     // The composite peer cursor's covering index: WHERE/ORDER BY are (txid, seq).
     index("idx_federation_outbox_cursor").on(t.txid, t.seq),
     // The daily retention prune deletes on `created_at < floor`; this btree
     // keeps that a range scan instead of a full seq-scan as the journal grows.
     index("idx_federation_outbox_created_at").on(t.createdAt),
     check("federation_outbox_operation_enum", sql`${t.operation} IN ('create','update','delete')`),
+    check(
+      "federation_outbox_record_class_enum",
+      sql.raw(enumCheckSql("record_class", RECORD_CLASSES)),
+    ),
+    // A change carries its record, a delete its reason and nothing else.
+    check(
+      "federation_outbox_delete_shape",
+      sql`(${t.operation} = 'delete') = (${t.snapshot} IS NULL AND ${t.tombstoneReason} IS NOT NULL)`,
+    ),
   ],
 );
 
 /**
- * The persistent TERMINAL-tombstone fact, keyed by `canonical_id`. When a row is
- * tombstoned (via `emitTombstone` or an applied federation tombstone) its
- * canonicalId is recorded here so a later resupply or a re-discovered create of
- * the SAME upstream record cannot resurrect it while the fact is live: the
- * federated ingest refuses to create/reactivate any canonicalId with an active
- * (non-expired) row here. This also closes the create-after-tombstone race — a
- * tombstone that arrives before the object does still records the fact, so the
- * later federated create is refused. `expires_at` is the ADR §7.2 30-day
- * retention of the deletion fact; after it lapses re-discovery may resurrect.
- * The ROW is the deletion fact — never the erased content.
+ * The erasure fact, keyed by `canonical_id` and the instance that erased it.
+ * When a record is erased (tombstoned `rights_revoked`, here or by the peer
+ * that owns it) its canonical id is recorded so no later delivery of the same
+ * record is admitted while the fact is live. This also closes the
+ * erasure-before-delivery race: an erasure that arrives before the record
+ * still records the fact. A peer's erasure (`peer_instance_id` that peer)
+ * refuses only that peer's deliveries, so no peer can block another's
+ * records; this instance's own (`peer_instance_id` empty) refuses every
+ * peer's. `expires_at` is the 30-day retention of the deletion fact. The ROW
+ * is the deletion fact — never the erased content.
  */
-export const federationTombstone = conditionsSchema.table("federation_tombstone", {
-  canonicalId: text("canonical_id").primaryKey(),
-  reason: text("reason").notNull(),
-  tombstonedAt: timestamp("tombstoned_at", { withTimezone: true }).notNull().defaultNow(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-});
+export const federationTombstone = conditionsSchema.table(
+  "federation_tombstone",
+  {
+    canonicalId: text("canonical_id").notNull(),
+    peerInstanceId: text("peer_instance_id").notNull().default(""),
+    reason: text("reason").notNull(),
+    tombstonedAt: timestamp("tombstoned_at", { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.canonicalId, t.peerInstanceId] })],
+);
 
 /**
  * This instance's rotating token-issuer keypairs, each valid across a
@@ -745,6 +718,18 @@ export const federationPeerHealth = conditionsSchema.table("federation_peer_heal
   rateViolations: integer("rate_violations").notNull().default(0),
   effectiveTierUntil: timestamp("effective_tier_until", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * The schema versions a pinned peer advertises (`<key>@<major>.<minor>`, as
+ * its actor document lists them), refreshed whenever this instance fetches
+ * and verifies that document. Admitting the peer's records reads them: a
+ * record of a schema the two do not share at one major is skipped.
+ */
+export const federationPeerCapabilities = conditionsSchema.table("federation_peer_capabilities", {
+  peerInstanceId: text("peer_instance_id").primaryKey(),
+  schemaVersions: text("schema_versions").array().notNull(),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
 });
 
 /**

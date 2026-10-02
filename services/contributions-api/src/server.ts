@@ -12,14 +12,19 @@
 
 import {
   checkGeometryPlausibility,
-  checkPlausibility,
-  type LandingContext,
   type SignedReport,
   type SignedSubClaim,
   verifyReport,
   verifySubClaim,
 } from "@openconditions/contrib-core";
-import { reliabilityLowerBound } from "@openconditions/core";
+import { type GeoJsonGeometry, reliabilityLowerBound } from "@openconditions/core";
+import {
+  type Attribution,
+  type LandingContext,
+  RECORD_CLASSES,
+  type Registry,
+} from "@openconditions/model";
+import { productionRegistry } from "@openconditions/model-registry";
 import { resolveInstanceId } from "@openconditions/normalize";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type postgres from "postgres";
@@ -39,11 +44,11 @@ import { type PublicContext, reportEpoch } from "./issuer/context.js";
 import { issueToken } from "./issuer/issue.js";
 import { DEFAULT_ISSUER_NAME, ensureIssuerKeys, loadActiveIssuerKeys } from "./issuer/keys.js";
 import { TokenVerifier } from "./issuer/verify.js";
-import { GeometryInvalidError, landReport } from "./landing/insert.js";
-import { isPoliceCategory, isPoliceCategoryEnabled } from "./policy/police.js";
+import { ClaimRefusedError, GeometryInvalidError, landReport } from "./landing/land.js";
+import { isPoliceCategoryEnabled, isPoliceClaim } from "./policy/police.js";
 import { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
 import { blockKey, listBlocked, unblockKey } from "./reviewer/blocklist.js";
-import { acceptObservation, rejectObservation } from "./reviewer/decide.js";
+import { acceptSituation, rejectSituation } from "./reviewer/decide.js";
 import {
   ADVISORY_CREDIBLE_LEVEL,
   ADVISORY_REPUTATION_NOTE,
@@ -59,8 +64,18 @@ declare module "fastify" {
   }
 }
 
+/** A post-hoc landing hook over the just-landed situation. */
+type LandingHook<T> = (
+  sql: postgres.Sql,
+  registry: Registry,
+  situationId: string,
+  now: string,
+) => Promise<T>;
+
 export interface BuildOptions {
   sql: postgres.Sql;
+  /** The registry claims are validated and landed against; defaults to production. */
+  registry?: Registry;
   env?: Record<string, string | undefined>;
   logger?: FastifyServerOptions["logger"];
   /** Injectable clock (ISO 8601); defaults to the real clock. */
@@ -70,25 +85,21 @@ export interface BuildOptions {
    * the real {@link flagOntoOpenFlagged}; injected in tests to prove that a
    * failure in this best-effort hook can never fail an already-committed landing.
    */
-  streetCompleteCheck?: (sql: postgres.Sql, observationId: string, now: string) => Promise<boolean>;
+  streetCompleteCheck?: LandingHook<boolean>;
   /**
    * Override the post-hoc auto-corroboration hook (a landing seam). Defaults to
    * the real {@link autoCorroborateOnLanding}; injected in tests to prove that a
    * matcher failure in this best-effort hook can never fail an already-committed
    * landing.
    */
-  autoCorroborate?: (sql: postgres.Sql, observationId: string, now: string) => Promise<string[]>;
+  autoCorroborate?: LandingHook<string[]>;
   /**
    * Override the post-hoc official-feed cross-validation hook (a landing seam).
    * Defaults to the real {@link crossValidateAgainstFeeds}; injected in tests to
    * prove that a failure in this best-effort routing hook can never fail an
    * already-committed landing.
    */
-  crossValidateAgainstFeeds?: (
-    sql: postgres.Sql,
-    observationId: string,
-    now: string,
-  ) => Promise<string | null>;
+  crossValidateAgainstFeeds?: LandingHook<string | null>;
   /**
    * Platform-attestation verifier for the enrollment flow. Defaults to
    * {@link UNVERIFIED_ATTESTATION} (confirms nothing — no real platform verifier
@@ -163,11 +174,14 @@ class EnrollLimiter {
 
 export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const { sql } = options;
+  const registry = options.registry ?? productionRegistry();
   const env = options.env ?? process.env;
   const now = options.now ?? (() => new Date().toISOString());
   const streetCompleteCheck = options.streetCompleteCheck ?? flagOntoOpenFlagged;
   const autoCorroborate = options.autoCorroborate ?? autoCorroborateOnLanding;
-  const crossValidate = options.crossValidateAgainstFeeds ?? crossValidateAgainstFeeds;
+  const crossValidate: LandingHook<string | null> =
+    options.crossValidateAgainstFeeds ??
+    ((db, reg, id, at) => crossValidateAgainstFeeds(db, reg, id, at));
   const attestationVerifier = options.attestationVerifier ?? UNVERIFIED_ATTESTATION;
   const osmAuthVerifier = options.osmAuthVerifier ?? UNVERIFIED_OSM_AUTH;
   const issuerName = env["OPENCONDITIONS_ISSUER_NAME"] || DEFAULT_ISSUER_NAME;
@@ -293,9 +307,14 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     return reply.send({ token: Buffer.from(result.tokenResponse).toString("base64url") });
   });
 
-  const crowdSourceUri =
-    env["OPENCONDITIONS_CROWD_SOURCE_URI"] || `urn:openconditions:crowd:${resolveInstanceId(env)}`;
-  const crowdSourceLicense = env["OPENCONDITIONS_CROWD_LICENSE"] || "ODbL-1.0";
+  // How this instance credits its crowd on every report it lands.
+  const instanceId = resolveInstanceId(env);
+  const crowdUrl = env["OPENCONDITIONS_CROWD_SOURCE_URI"];
+  const crowdAttribution: Attribution = {
+    provider: `OpenConditions contributors at ${instanceId}`,
+    license: env["OPENCONDITIONS_CROWD_LICENSE"] || "ODbL-1.0",
+    ...(crowdUrl ? { url: crowdUrl } : {}),
+  };
 
   // Per-instance police-category toggle, resolved once at boot (DEFAULT OFF).
   const policeCategoryEnabled = isPoliceCategoryEnabled(env);
@@ -326,11 +345,11 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     `;
     const reporter = reporterRows[0];
 
-    // 2. The signature must verify and the envelope keyId must equal its RFC
-    // 7638 thumbprint (contrib-core enforces). The cached JWK is preferred when
-    // the key is known; otherwise the embedded pubJwk (bound by the thumbprint)
-    // is used.
-    const verified = await verifyReport(report, reporter?.pub_jwk);
+    // 2. The signature must verify, the envelope keyId must equal its RFC 7638
+    // thumbprint, and the claim must be one the registry accepts (contrib-core
+    // enforces). The cached JWK is preferred when the key is known; otherwise
+    // the embedded pubJwk (bound by the thumbprint) is used.
+    const verified = await verifyReport(registry, report, reporter?.pub_jwk);
     if (!verified.ok || verified.keyId !== report.keyId) {
       return reply
         .status(400)
@@ -344,37 +363,48 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       return reply.status(403).send({ error: "reporter is not enrolled or is blocked" });
     }
 
-    // 4. Deterministic plausibility: coordinates finite + in WGS84 range, a
-    // sane reportedAt window, a well-formed nonce.
-    const plausibility = checkPlausibility(report.claim, nowIso);
-    if (!plausibility.ok) {
-      return reply.status(422).send({ error: "implausible report", reasons: plausibility.reasons });
+    // 4. A reading of a feature or a place lands once observations are stored
+    // as series; until then only situations are reported.
+    const claim = report.claim;
+    if (claim.claimClass !== "situation") {
+      return reply.status(422).send({
+        error: "this instance takes situation reports only",
+        reason: "unsupported_claim_class",
+      });
     }
 
-    // 4b. Per-instance police-category gate (DEFAULT OFF). Only a NEW report
-    // landing in the sensitive police-presence category is gated; a vote on an
-    // existing observation is never re-gated (it already passed the gate when it
-    // landed). "authority"/"security"/"speed_restriction" are legitimate
-    // categories and are NOT gated — see policy/police.ts.
-    if (isPoliceCategory(report.claim.type) && !policeCategoryEnabled) {
+    // 5. Deterministic geometry screen: exactly two finite ordinates in WGS84
+    // range everywhere (the claim schema checks the shape only).
+    const geometryReasons = checkGeometryPlausibility(claim.geometry as GeoJsonGeometry);
+    if (geometryReasons.length > 0) {
+      return reply.status(422).send({ error: "implausible report", reasons: geometryReasons });
+    }
+
+    // 5b. Per-instance police-presence gate (DEFAULT OFF). Only a NEW report is
+    // gated; a vote on an existing situation is never re-gated (it already
+    // passed the gate when it landed). Other authority activity is not gated —
+    // see policy/police.ts.
+    if (isPoliceClaim(claim) && !policeCategoryEnabled) {
       return reply.status(422).send({
         error: "police category is disabled on this instance",
         reason: "police_category_disabled",
       });
     }
 
-    // 5. Map → central normalize seam → crowd insert + initial evidence +
-    // recompute, all in one transaction.
+    // 6. Land the claim as a crowd situation + initial evidence + recompute, all
+    // in one transaction.
     const landingCtx: LandingContext = {
-      instanceId: resolveInstanceId(env),
+      instanceId,
       now: nowIso,
-      sourceUri: crowdSourceUri,
-      sourceLicense: crowdSourceLicense,
+      attribution: crowdAttribution,
     };
     let result: Awaited<ReturnType<typeof landReport>>;
     try {
-      result = await landReport(sql, report, landingCtx);
+      result = await landReport(sql, registry, report, landingCtx);
     } catch (err) {
+      if (err instanceof ClaimRefusedError) {
+        return reply.status(422).send({ error: "claim refused", issues: err.issues });
+      }
       if (err instanceof ReportRateLimitError) {
         return reply.status(429).send({ error: err.message, reason: err.reason });
       }
@@ -385,12 +415,13 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       }
       throw err;
     }
+    const situationId = result.record.id;
     if (result.kinematicFlagged) {
       // Post-hoc anomaly signal only: the report landed anyway (a truthful
       // fast mover must not be censored) and the flag is not evidence.
       req.log.warn(
-        { observationId: result.observationId },
-        "kinematically implausible reporter transition; new observation flagged",
+        { situationId },
+        "kinematically implausible reporter transition; new report flagged",
       );
     }
     // StreetComplete rule: a fresh landing onto an already-disputed element is
@@ -399,16 +430,16 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     // is logged and swallowed so the client still gets its 200.
     if (result.inserted) {
       try {
-        const pileOn = await streetCompleteCheck(sql, result.observationId, nowIso);
+        const pileOn = await streetCompleteCheck(sql, registry, situationId, nowIso);
         if (pileOn) {
           req.log.warn(
-            { observationId: result.observationId },
-            "new report landed onto an open-flagged phenomenon; new observation flagged",
+            { situationId },
+            "new report landed onto an open-flagged phenomenon; new report flagged",
           );
         }
       } catch (err) {
         req.log.warn(
-          { err, observationId: result.observationId },
+          { err, situationId },
           "StreetComplete flag check failed; landing is unaffected",
         );
       }
@@ -419,168 +450,177 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       // a matcher error must NEVER fail it. Corroboration merges the later report
       // onto the earlier survivor; it never routes and never trains reputation.
       try {
-        const corroborated = await autoCorroborate(sql, result.observationId, nowIso);
+        const corroborated = await autoCorroborate(sql, registry, situationId, nowIso);
         if (corroborated.length > 0) {
           req.log.info(
-            { observationId: result.observationId, corroborated },
+            { situationId, corroborated },
             "landing auto-corroborated an independent report of the same phenomenon",
           );
         }
       } catch (err) {
-        req.log.warn(
-          { err, observationId: result.observationId },
-          "auto-corroboration failed; landing is unaffected",
-        );
+        req.log.warn({ err, situationId }, "auto-corroboration failed; landing is unaffected");
       }
 
-      // ADR §4 official cross-validation: if the fresh crowd landing phenomenon-
-      // matches an authoritative FEED observation of the same event, route it via
-      // external resolution (which flips routing_eligible AND trains the
-      // reporter). Post-hoc and best-effort like the hooks above — the report has
-      // landed 200 and a matcher error must NEVER fail it. Crowd↔crowd agreement
-      // is handled by autoCorroborate above and never routes; only a FEED match
+      // Official cross-validation: if the fresh crowd report agrees with a
+      // situation this instance's own feeds publish, route it via external
+      // resolution (which makes it routing-eligible AND trains the reporter).
+      // Post-hoc and best-effort like the hooks above — the report has landed
+      // 200 and a matcher error must NEVER fail it. Crowd↔crowd agreement is
+      // handled by autoCorroborate above and never routes; only a FEED match
       // routes here.
       try {
-        const matchedFeedId = await crossValidate(sql, result.observationId, nowIso);
+        const matchedFeedId = await crossValidate(sql, registry, situationId, nowIso);
         if (matchedFeedId !== null) {
           req.log.info(
-            { observationId: result.observationId, matchedFeedId },
+            { situationId, matchedFeedId },
             "landing cross-validated against an official feed; routed via external resolution",
           );
         }
       } catch (err) {
         req.log.warn(
-          { err, observationId: result.observationId },
+          { err, situationId },
           "official-feed cross-validation failed; landing is unaffected",
         );
       }
     }
     return reply.status(200).send({
-      observationId: result.observationId,
+      record: result.record,
       evidenceState: result.evidenceState,
       routingEligible: result.routingEligible,
     });
   });
 
-  // A signed vote (confirm/negate/flag) ON an existing observation. It appends
+  // A signed vote (confirm/negate/flag) ON an existing record. It appends
   // evidence and recomputes state, honoring the binding trust rules: two
   // distinct keys corroborate but NEVER route; a self-vote never corroborates;
   // the same key never double-counts. The corroboration/negation/retraction
   // math lives in core's evaluateEvidence — this route only appends the right
   // report_evidence row and recomputes (or, for a flag, sets flagged_at).
-  app.post<{ Params: { id: string; action: string }; Body: SubClaimBody }>(
-    "/contrib/reports/:id/:action",
-    async (req, reply) => {
-      const { id, action } = req.params;
-      // 1. The action must name a real vote kind, else the route does not exist.
-      if (!SUB_CLAIM_ACTIONS.has(action)) {
-        return reply.status(404).send({ error: "unknown sub-claim action" });
-      }
+  app.post<{
+    Params: { class: string; id: string; action: string };
+    Querystring: { component?: string };
+    Body: SubClaimBody;
+  }>("/contrib/reports/:class/:id/:action", async (req, reply) => {
+    const { class: recordClass, id, action } = req.params;
+    const component = req.query.component;
+    // 1. The class must name a record class and the action a real vote kind,
+    // else the route does not exist.
+    if (!(RECORD_CLASSES as readonly string[]).includes(recordClass)) {
+      return reply.status(404).send({ error: "unknown record class" });
+    }
+    if (!SUB_CLAIM_ACTIONS.has(action)) {
+      return reply.status(404).send({ error: "unknown sub-claim action" });
+    }
 
-      const body = req.body ?? {};
-      const { subClaim, reportingGrant } = body;
-      if (subClaim === null || typeof subClaim !== "object" || typeof reportingGrant !== "string") {
-        return reply.status(400).send({ error: "subClaim and reportingGrant are required" });
-      }
-      if (typeof subClaim.keyId !== "string" || subClaim.keyId.length === 0) {
-        return reply.status(400).send({ error: "subClaim.keyId is required" });
-      }
-      const nowIso = now();
+    const body = req.body ?? {};
+    const { subClaim, reportingGrant } = body;
+    if (subClaim === null || typeof subClaim !== "object" || typeof reportingGrant !== "string") {
+      return reply.status(400).send({ error: "subClaim and reportingGrant are required" });
+    }
+    if (typeof subClaim.keyId !== "string" || subClaim.keyId.length === 0) {
+      return reply.status(400).send({ error: "subClaim.keyId is required" });
+    }
+    const nowIso = now();
 
-      // 2. The grant binds the key: valid, unexpired, issued FOR this exact key.
-      const grant = await verifyReportingGrant(reportingGrant, grantSecret, nowIso, subClaim.keyId);
-      if (!grant.valid || grant.keyId !== subClaim.keyId) {
-        return reply.status(401).send({ error: `invalid reporting grant (${grant.reason})` });
-      }
+    // 2. The grant binds the key: valid, unexpired, issued FOR this exact key.
+    const grant = await verifyReportingGrant(reportingGrant, grantSecret, nowIso, subClaim.keyId);
+    if (!grant.valid || grant.keyId !== subClaim.keyId) {
+      return reply.status(401).send({ error: `invalid reporting grant (${grant.reason})` });
+    }
 
-      // The reporter row is fetched now for its cached JWK, but the enrollment
-      // verdict is withheld until AFTER the signature check so an unauthenticated
-      // caller can never probe whether a key is enrolled.
-      const reporterRows = await sql<{ status: string; pub_jwk: JsonWebKey }[]>`
+    // The reporter row is fetched now for its cached JWK, but the enrollment
+    // verdict is withheld until AFTER the signature check so an unauthenticated
+    // caller can never probe whether a key is enrolled.
+    const reporterRows = await sql<{ status: string; pub_jwk: JsonWebKey }[]>`
         SELECT status, pub_jwk FROM conditions.reporter WHERE key_id = ${subClaim.keyId}
       `;
-      const reporter = reporterRows[0];
+    const reporter = reporterRows[0];
 
-      // 3. The signature must verify and the envelope keyId must equal its RFC
-      // 7638 thumbprint (contrib-core enforces).
-      const verified = await verifySubClaim(subClaim, reporter?.pub_jwk);
-      if (!verified.ok || verified.keyId !== subClaim.keyId) {
-        return reply
-          .status(400)
-          .send({ error: `sub-claim verification failed (${verified.error ?? "keyId mismatch"})` });
-      }
+    // 3. The signature must verify and the envelope keyId must equal its RFC
+    // 7638 thumbprint (contrib-core enforces).
+    const verified = await verifySubClaim(subClaim, reporter?.pub_jwk);
+    if (!verified.ok || verified.keyId !== subClaim.keyId) {
+      return reply
+        .status(400)
+        .send({ error: `sub-claim verification failed (${verified.error ?? "keyId mismatch"})` });
+    }
 
-      // 4. The SIGNED claimType and the route action must agree — a confirm-signed
-      // claim must never be replayable on the negate route.
-      if (subClaim.claimType !== action) {
-        return reply.status(400).send({
-          error: `claimType "${subClaim.claimType}" does not match route action "${action}"`,
-        });
-      }
-
-      // 5. The subject must resolve to the target observation id. v1 accepts the
-      // observation id ONLY. A maresi-uri subject cannot be resolved without a
-      // report-signature→observation index, which this task deliberately does
-      // not build, so any subject that is not the id is refused.
-      if (subClaim.subject !== id) {
-        return reply
-          .status(400)
-          .send({ error: "subClaim.subject must be the target observation id in v1" });
-      }
-
-      // 6. The reporter row MUST exist and be active — enrollment is the only gate
-      // that creates a reporter; an unknown/blocked key can never vote.
-      if (reporter === undefined || reporter.status !== "active") {
-        return reply.status(403).send({ error: "reporter is not enrolled or is blocked" });
-      }
-
-      // 6b. A sub-claim geometry is OPTIONAL ("where the vote was made"), but when
-      // present it must be a plausibility-valid Point — the SAME deterministic
-      // geometry screen the report path uses (per-type arity, exactly-two finite
-      // in-WGS84-range coordinates). A non-Point is rejected rather than silently
-      // dropped; a malformed/3D/out-of-range Point is caught here, before any DB
-      // round-trip, so no sub_claim or evidence row is written and PostGIS never
-      // sees a shape it would 500 on.
-      if (subClaim.geometry !== undefined) {
-        const geometryReasons = checkGeometryPlausibility(subClaim.geometry, {
-          requireType: "Point",
-        });
-        if (geometryReasons.length > 0) {
-          return reply
-            .status(422)
-            .send({ error: "implausible sub-claim geometry", reasons: geometryReasons });
-        }
-      }
-
-      // 7-9. Lock the observation, store the sub-claim, append evidence, recompute.
-      let outcome: Awaited<ReturnType<typeof castSubClaimVote>>;
-      try {
-        outcome = await castSubClaimVote(sql, id, subClaim, nowIso);
-      } catch (err) {
-        if (err instanceof GeometryInvalidError) {
-          return reply
-            .status(422)
-            .send({ error: "implausible sub-claim geometry", reasons: ["geometry_invalid"] });
-        }
-        throw err;
-      }
-      if (outcome.code === 404) {
-        return reply.status(404).send({ error: outcome.error });
-      }
-      if (outcome.code === 409) {
-        return reply.status(409).send({ error: outcome.error });
-      }
-      if (outcome.action === "flag") {
-        return reply.status(200).send({ flagged: true });
-      }
-      return reply.status(200).send({
-        observationId: outcome.observationId,
-        evidenceState: outcome.evidenceState,
-        routingEligible: outcome.routingEligible,
-        action: outcome.action,
+    // 4. The SIGNED claimType and the route action must agree — a confirm-signed
+    // claim must never be replayable on the negate route.
+    if (subClaim.claimType !== action) {
+      return reply.status(400).send({
+        error: `claimType "${subClaim.claimType}" does not match route action "${action}"`,
       });
-    },
-  );
+    }
+
+    // 5. The SIGNED subject must name the route's record — its class, id and
+    // component — so a vote can never be replayed onto another record.
+    const subject = subClaim.subject;
+    if (subject.class !== recordClass || subject.id !== id || subject.componentKey !== component) {
+      return reply.status(400).send({ error: "subClaim.subject must name the route's record" });
+    }
+
+    // 6. The reporter row MUST exist and be active — enrollment is the only gate
+    // that creates a reporter; an unknown/blocked key can never vote.
+    if (reporter === undefined || reporter.status !== "active") {
+      return reply.status(403).send({ error: "reporter is not enrolled or is blocked" });
+    }
+
+    // 6b. A sub-claim geometry is OPTIONAL ("where the vote was made"), but when
+    // present it must be a plausibility-valid Point — the SAME deterministic
+    // geometry screen the report path uses (per-type arity, exactly-two finite
+    // in-WGS84-range coordinates). A non-Point is rejected rather than silently
+    // dropped; a malformed/3D/out-of-range Point is caught here, before any DB
+    // round-trip, so no sub_claim or evidence row is written and PostGIS never
+    // sees a shape it would 500 on.
+    if (subClaim.geometry !== undefined) {
+      const geometryReasons = checkGeometryPlausibility(subClaim.geometry, {
+        requireType: "Point",
+      });
+      if (geometryReasons.length > 0) {
+        return reply
+          .status(422)
+          .send({ error: "implausible sub-claim geometry", reasons: geometryReasons });
+      }
+    }
+
+    // 7. Crowd evidence lives on situations; votes on features, offers and
+    // their components come with observation reports.
+    if (recordClass !== "situation") {
+      return reply.status(422).send({
+        error: "this instance takes votes on situations only",
+        reason: "unsupported_record_class",
+      });
+    }
+
+    // 8-10. Lock the situation, store the sub-claim, append evidence, recompute.
+    let outcome: Awaited<ReturnType<typeof castSubClaimVote>>;
+    try {
+      outcome = await castSubClaimVote(sql, registry, id, subClaim, nowIso);
+    } catch (err) {
+      if (err instanceof GeometryInvalidError) {
+        return reply
+          .status(422)
+          .send({ error: "implausible sub-claim geometry", reasons: ["geometry_invalid"] });
+      }
+      throw err;
+    }
+    if (outcome.code === 404) {
+      return reply.status(404).send({ error: outcome.error });
+    }
+    if (outcome.code === 409) {
+      return reply.status(409).send({ error: outcome.error });
+    }
+    if (outcome.action === "flag") {
+      return reply.status(200).send({ flagged: true });
+    }
+    return reply.status(200).send({
+      record: outcome.record,
+      evidenceState: outcome.evidenceState,
+      routingEligible: outcome.routingEligible,
+      action: outcome.action,
+    });
+  });
 
   // Advisory own-reputation read. Authenticated by a valid reporting grant in
   // the `Authorization: Bearer <grant>` header ONLY — never a query param, so a
@@ -653,33 +693,31 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     },
   );
 
-  app.post<{ Params: { id: string } }>(
-    "/contrib/reviewer/observations/:id/accept",
+  // The flag queue lists situations, the only class that carries a flag, so
+  // decisions take a situation; any other class is not one a reviewer decides.
+  app.post<{ Params: { class: string; id: string; decision: string } }>(
+    "/contrib/reviewer/:class/:id/:decision",
     { preHandler: requireReviewer },
     async (req, reply) => {
-      const outcome = await acceptObservation(sql, req.params.id, now());
+      const { class: recordClass, id, decision } = req.params;
+      if (decision !== "accept" && decision !== "reject") {
+        return reply.status(404).send({ error: "unknown decision" });
+      }
+      if (recordClass !== "situation") {
+        return reply.status(422).send({
+          error: "a reviewer decides on situations only",
+          reason: "unsupported_record_class",
+        });
+      }
+      const decide = decision === "accept" ? acceptSituation : rejectSituation;
+      const outcome = await decide(sql, registry, id, now());
       if (outcome.code !== 200) {
         return reply.status(outcome.code).send({ error: outcome.error });
       }
       return reply.status(200).send({
-        observationId: outcome.observationId,
+        record: outcome.record,
         evidenceState: outcome.evidenceState,
         routingEligible: outcome.routingEligible,
-      });
-    },
-  );
-
-  app.post<{ Params: { id: string } }>(
-    "/contrib/reviewer/observations/:id/reject",
-    { preHandler: requireReviewer },
-    async (req, reply) => {
-      const outcome = await rejectObservation(sql, req.params.id, now());
-      if (outcome.code !== 200) {
-        return reply.status(outcome.code).send({ error: outcome.error });
-      }
-      return reply.status(200).send({
-        observationId: outcome.observationId,
-        evidenceState: outcome.evidenceState,
         tombstoned: outcome.tombstoned === true,
       });
     },

@@ -1,241 +1,84 @@
-import { type ConditionEvent, phenomenonFingerprint } from "@openconditions/core";
-import { runMigrations } from "@openconditions/core/server";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import type { ReporterKey } from "@openconditions/contrib-core";
+import { writeRecord } from "@openconditions/storage";
+import type postgres from "postgres";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { crossValidateAgainstFeeds } from "../evidence/crossValidate.js";
-import { recomputeEvidence } from "../evidence/recompute.js";
+import {
+  createTestDatabase,
+  enrolledKey,
+  evidenceOf,
+  feedSituationDraft,
+  INSTANCE,
+  landAs,
+  peerRecord,
+  registry,
+  seedFeedSituation,
+  seedPeerCrowdReport,
+  situationClaim,
+} from "./crowd-fixtures.integration.js";
 
 const T_REPORT = "2026-07-12T08:00:00.000Z";
 const T_RESOLVE = "2026-07-12T08:10:00.000Z";
+const M_PER_DEG = 111_320;
+const LON = 8.4;
+const LAT = 49;
 
+type Rec = Record<string, unknown>;
+
+let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 5 });
-  await runMigrations(url);
-}, 120_000);
+  db = await createTestDatabase();
+  sql = db.sql;
+}, 180_000);
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
-interface EventOpts {
-  id: string;
-  lon: number;
-  lat: number;
-  validFrom: string;
-  type?: string;
-  reporterKey?: string;
-  source?: string;
-  status?: string;
-}
+beforeEach(async () => {
+  await sql`TRUNCATE conditions.situation, conditions.report_evidence, conditions.reporter CASCADE`;
+});
 
-/** A crowd EVENT observation carrying a reporter keyId in its origin. */
-async function insertCrowdEvent(opts: EventOpts): Promise<void> {
-  const type = opts.type ?? "hazard";
-  const fp = phenomenonFingerprint({
-    kind: "event",
-    domain: "roads",
-    type,
-    geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
-    validFrom: opts.validFrom,
-  } as ConditionEvent);
-  const origin =
-    opts.reporterKey !== undefined
-      ? { kind: "crowd", reporter: { keyId: opts.reporterKey } }
-      : { kind: "crowd" };
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, status, geom, origin,
-       valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale)
-    VALUES
-      (${opts.id}, ${opts.source ?? "crowd"}, 'native', 'roads', 'event', ${type},
-       ${opts.status ?? "active"},
-       ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
-       ${sql.json(origin as never)}, ${opts.validFrom}, ${fp},
-       ${opts.validFrom}, now(), false)`;
-}
-
-/** An OFFICIAL FEED EVENT observation — origin.kind "feed", no reporter key. */
-async function insertFeedEvent(opts: EventOpts): Promise<void> {
-  const type = opts.type ?? "hazard";
-  const fp = phenomenonFingerprint({
-    kind: "event",
-    domain: "roads",
-    type,
-    geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
-    validFrom: opts.validFrom,
-  } as ConditionEvent);
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, status, geom, origin,
-       valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale)
-    VALUES
-      (${opts.id}, ${opts.source ?? "ndw"}, 'datex2', 'roads', 'event', ${type},
-       ${opts.status ?? "active"},
-       ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
-       ${sql.json({ kind: "feed", attribution: { provider: "NDW", license: "CC0-1.0" } } as never)},
-       ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false)`;
-}
-
-/**
- * A FEDERATED (peer-relayed) FEED EVENT — origin.kind "feed" WITH a non-empty
- * originChain (≥1 hop stamped by federation ingest). This is the weaker,
- * peer-dependent trust signal that must NOT grant local routing eligibility.
- */
-async function insertFederatedFeedEvent(opts: EventOpts): Promise<void> {
-  const type = opts.type ?? "hazard";
-  const fp = phenomenonFingerprint({
-    kind: "event",
-    domain: "roads",
-    type,
-    geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
-    validFrom: opts.validFrom,
-  } as ConditionEvent);
-  const origin = {
-    kind: "feed",
-    attribution: { provider: "NDW", license: "CC0-1.0" },
-    originChain: [{ instanceId: "peer-b", receivedAt: opts.validFrom }],
+/** A point `metres` north of the base point. */
+function pointNorth(metres = 0): Rec {
+  return {
+    geometry: { type: "Point", coordinates: [LON, LAT + metres / M_PER_DEG] },
+    extent: "point",
+    geometryOrigin: "source",
+    fuzziness: "exact",
   };
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, status, geom, origin,
-       valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale)
-    VALUES
-      (${opts.id}, ${opts.source ?? "peer-b"}, 'datex2', 'roads', 'event', ${type},
-       ${opts.status ?? "active"},
-       ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
-       ${sql.json(origin as never)},
-       ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false)`;
 }
 
-/**
- * A FEDERATED (peer-relayed) CROWD EVENT — origin.kind "crowd" with the reporter
- * (and its keyId) STRIPPED on export, carrying a NON-EMPTY originChain (≥1 hop).
- * This is the genuinely-federated crowd row the strict landing guard skips and
- * that only `allowFederatedTarget: true` may route (on a LOCAL feed).
- */
-async function insertFederatedCrowdEvent(opts: EventOpts): Promise<void> {
-  const type = opts.type ?? "hazard";
-  const fp = phenomenonFingerprint({
-    kind: "event",
-    domain: "roads",
-    type,
-    geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
-    validFrom: opts.validFrom,
-  } as ConditionEvent);
-  const origin = {
-    kind: "crowd",
-    attribution: { provider: "Peer X", license: "ODbL-1.0" },
-    originChain: [{ instanceId: "peer-x", viaPeer: "peer-x", receivedAt: opts.validFrom }],
-  };
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, status, geom, origin,
-       valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale)
-    VALUES
-      (${opts.id}, ${opts.source ?? "peer-x"}, 'native', 'roads', 'event', ${type},
-       ${opts.status ?? "active"},
-       ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
-       ${sql.json(origin as never)},
-       ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false)`;
-  // Mirror the federated landing: a `report` evidence row with a NULL actor key
-  // (no federated reporter key), so applyExternalResolution has an originator row
-  // to read — resolving to NULL → trains nobody.
-  await sql`
-    INSERT INTO conditions.report_evidence
-      (observation_id, evidence_kind, actor_key_id, occurred_at, details)
-    VALUES (${opts.id}, 'report', ${null}, ${opts.validFrom}, '{}'::jsonb)`;
+/** A local crowd report of an obstruction at the base point, by a fresh reporter. */
+async function seedCrowdReport(): Promise<{ id: string; reporter: ReporterKey }> {
+  const reporter = await enrolledKey(sql, T_REPORT);
+  const landed = await landAs(sql, reporter, situationClaim({ reportedAt: T_REPORT }), T_REPORT);
+  return { id: landed.record.id, reporter };
 }
 
-/**
- * A keyId-less CROWD EVENT WITHOUT an originChain — a local anomaly that should
- * never exist (a local crowd row always carries a reporter keyId). Even under
- * allowFederatedTarget it must NOT route: an empty/absent originChain fails the
- * genuinely-federated check.
- */
-async function insertKeyIdlessCrowdNoChain(opts: EventOpts): Promise<void> {
-  const type = opts.type ?? "hazard";
-  const fp = phenomenonFingerprint({
-    kind: "event",
-    domain: "roads",
-    type,
-    geometry: { type: "Point", coordinates: [opts.lon, opts.lat] },
-    validFrom: opts.validFrom,
-  } as ConditionEvent);
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, status, geom, origin,
-       valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale)
-    VALUES
-      (${opts.id}, ${opts.source ?? "peer-x"}, 'native', 'roads', 'event', ${type},
-       ${opts.status ?? "active"},
-       ST_SetSRID(ST_MakePoint(${opts.lon}, ${opts.lat}), 4326),
-       ${sql.json({ kind: "crowd" } as never)},
-       ${opts.validFrom}, ${fp}, ${opts.validFrom}, now(), false)`;
+/** A local feed's obstruction `metres` north of the base point. */
+function seedFeed(local: string, metres = 10, over: Rec = {}): Promise<string> {
+  return seedFeedSituation(sql, local, { location: pointNorth(metres), ...over });
 }
 
-async function addReport(obsId: string, key: string, occurredAt: string): Promise<void> {
-  await sql`
-    INSERT INTO conditions.report_evidence
-      (observation_id, evidence_kind, actor_key_id, occurred_at, details)
-    VALUES (${obsId}, 'report', ${key}, ${occurredAt}, '{}'::jsonb)`;
+/** A feed situation a peer federated here (it carries an origin-chain hop). */
+async function seedFederatedFeed(local: string, metres = 10): Promise<string> {
+  const record = peerRecord(feedSituationDraft(local, { location: pointNorth(metres) }));
+  const written = await writeRecord(
+    sql,
+    { stored: record },
+    { registry, instanceId: INSTANCE, now: T_REPORT },
+  );
+  if (written.status === "rejected") throw new Error(JSON.stringify(written.issues));
+  return record["id"] as string;
 }
 
-async function insertReporter(keyId: string, alpha = 2, beta = 2): Promise<void> {
-  await sql`
-    INSERT INTO conditions.reporter
-      (key_id, pub_jwk, reputation_alpha, reputation_beta,
-       entitlement_expires_at, status, created_at, last_active_at)
-    VALUES
-      (${keyId}, '{}'::jsonb, ${alpha}, ${beta},
-       '2027-01-01T00:00:00Z', 'active', ${T_REPORT}, ${T_REPORT})`;
-}
-
-/** Seed a crowd report with its reporter row + originating report evidence. */
-async function seedCrowdReport(opts: EventOpts & { reporterKey: string }): Promise<void> {
-  await insertCrowdEvent(opts);
-  await insertReporter(opts.reporterKey);
-  await addReport(opts.id, opts.reporterKey, opts.validFrom);
-  await recomputeEvidence(sql, opts.id, opts.validFrom);
-}
-
-interface ReporterRow {
-  reputation_alpha: number;
-  reputation_beta: number;
-}
-
-async function readReporter(keyId: string): Promise<ReporterRow> {
-  const rows = await sql<ReporterRow[]>`
-    SELECT reputation_alpha, reputation_beta FROM conditions.reporter WHERE key_id = ${keyId}`;
-  return rows[0]!;
-}
-
-interface ObsRow {
-  status: string;
-  evidence_state: string | null;
-  routing_eligible: boolean;
-}
-
-async function obs(id: string): Promise<ObsRow> {
-  const rows = await sql<ObsRow[]>`
-    SELECT status, evidence_state, routing_eligible
-    FROM conditions.observations WHERE id = ${id}`;
-  return rows[0]!;
+async function readReporter(key: ReporterKey): Promise<{ alpha: number; beta: number }> {
+  const [row] = await sql<{ reputation_alpha: number; reputation_beta: number }[]>`
+    SELECT reputation_alpha, reputation_beta FROM conditions.reporter WHERE key_id = ${key.keyId}`;
+  return { alpha: row!.reputation_alpha, beta: row!.reputation_beta };
 }
 
 /** A stable snapshot of every reporter's trainable columns, to assert nobody was trained. */
@@ -246,542 +89,275 @@ async function reporterSnapshot(): Promise<string> {
   return JSON.stringify(rows);
 }
 
-async function externalEvidenceCount(obsId: string): Promise<number> {
-  const rows = await sql<{ n: number }[]>`
+async function externalEvidenceCount(id: string): Promise<number> {
+  const [row] = await sql<{ n: number }[]>`
     SELECT count(*)::int AS n FROM conditions.report_evidence
-    WHERE observation_id = ${obsId}
+    WHERE record_class = 'situation' AND record_id = ${id}
       AND evidence_kind IN ('official_match', 'reviewer_accept', 'reviewer_reject')`;
-  return rows[0]!.n;
+  return row!.n;
+}
+
+/** Asserts a crowd report was left unrouted, without external evidence. */
+async function expectUnrouted(id: string): Promise<void> {
+  const row = await evidenceOf(sql, id);
+  expect(row.routing_eligible).toBe(false);
+  expect(row.evidence_state).not.toBe("externally_resolved");
+  expect(await externalEvidenceCount(id)).toBe(0);
 }
 
 describe("crossValidateAgainstFeeds — official cross-validation routing", () => {
-  it("routes a crowd report that phenomenon-matches an OFFICIAL FEED: externally_resolved + routing + reputation trained", async () => {
-    await seedCrowdReport({
-      id: "xv:crowd-match",
-      lon: 6.5,
-      lat: 52.0,
-      validFrom: T_REPORT,
-      reporterKey: "xv-rep-match",
+  it("routes a crowd report agreeing with a LOCAL feed: externally_resolved + routing + reputation trained", async () => {
+    const { id, reporter } = await seedCrowdReport();
+    const feed = await seedFeed("xv-match");
+
+    expect(await crossValidateAgainstFeeds(sql, registry, id, T_RESOLVE)).toBe(feed);
+
+    expect(await evidenceOf(sql, id)).toMatchObject({
+      evidence_state: "externally_resolved",
+      routing_eligible: true,
     });
-    await insertFeedEvent({
-      id: "xv:feed-match",
-      lon: 6.5001,
-      lat: 52.0,
-      validFrom: "2026-07-12T08:04:00.000Z",
-    });
+    expect(await readReporter(reporter)).toEqual({ alpha: 3, beta: 2 });
 
-    const matched = await crossValidateAgainstFeeds(sql, "xv:crowd-match", T_RESOLVE);
-    expect(matched).toBe("xv:feed-match");
-
-    const crowd = await obs("xv:crowd-match");
-    expect(crowd.evidence_state).toBe("externally_resolved");
-    expect(crowd.routing_eligible).toBe(true);
-
-    // The reporter's Beta posterior was trained (α incremented from the prior 2).
-    expect((await readReporter("xv-rep-match")).reputation_alpha).toBe(3);
-
-    // Exactly one external `official_match` row on the CROWD observation.
-    expect(await externalEvidenceCount("xv:crowd-match")).toBe(1);
-
-    // ...and it NAMES the feed row that routed the report. External resolution
-    // is the only path to routing_eligible, so which row said so must be
-    // auditable — not an unattributable "an official feed confirmed this".
-    const official = await sql<
-      { source_id: string | null; details: { source?: string; matchedObservationId?: string } }[]
-    >`
+    // The one external row NAMES the feed record that routed the report:
+    // external resolution is the only path to routing, so it must be auditable.
+    const official = await sql<{ source_id: string | null; details: Rec }[]>`
       SELECT source_id, details FROM conditions.report_evidence
-      WHERE observation_id = 'xv:crowd-match' AND evidence_kind = 'official_match'`;
-    expect(official[0]!.details.matchedObservationId).toBe("xv:feed-match");
-    expect(official[0]!.source_id).toBe("ndw");
-    expect(official[0]!.details.source).toBe("official");
+      WHERE record_id = ${id} AND evidence_kind = 'official_match'`;
+    expect(official).toHaveLength(1);
+    expect(official[0]!.source_id).toBe("de-autobahn");
+    expect(official[0]!.details).toEqual({
+      source: "official",
+      outcome: "confirmed",
+      matchedRecord: { class: "situation", id: feed },
+    });
 
-    // The FEED observation is authoritative and untouched — no evidence appended.
-    expect(await externalEvidenceCount("xv:feed-match")).toBe(0);
-    expect((await obs("xv:feed-match")).status).toBe("active");
+    // The feed situation is authoritative and untouched.
+    expect(await externalEvidenceCount(feed)).toBe(0);
+    expect(await evidenceOf(sql, feed)).toMatchObject({
+      evidence_state: null,
+      routing_eligible: false,
+      tombstone_reason: null,
+    });
   }, 30_000);
 
-  it("does NOT route when the only neighbor is another CROWD report (crowd↔crowd stays non-routing, reputation untouched)", async () => {
-    await seedCrowdReport({
-      id: "xv:crowd-only",
-      lon: 5.0,
-      lat: 51.0,
-      validFrom: T_REPORT,
-      reporterKey: "xv-rep-crowdonly",
+  it("routes on a feed line whose nearest part is within the match distance", async () => {
+    const { id } = await seedCrowdReport();
+    const feed = await seedFeed("xv-line", 0, {
+      location: {
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [LON, LAT + 200 / M_PER_DEG],
+            [LON, LAT + 3000 / M_PER_DEG],
+          ],
+        },
+        extent: "linear",
+        geometryOrigin: "source",
+        fuzziness: "exact",
+      },
     });
-    // A second, independent CROWD report of the same phenomenon (no feed nearby).
-    await insertCrowdEvent({
-      id: "xv:crowd-neighbor",
-      lon: 5.0001,
-      lat: 51.0,
-      validFrom: "2026-07-12T08:04:00.000Z",
-      reporterKey: "xv-rep-neighbor",
-    });
-
-    const matched = await crossValidateAgainstFeeds(sql, "xv:crowd-only", T_RESOLVE);
-    expect(matched).toBeNull();
-
-    const crowd = await obs("xv:crowd-only");
-    expect(crowd.routing_eligible).toBe(false);
-    expect(crowd.evidence_state).not.toBe("externally_resolved");
-    expect(await externalEvidenceCount("xv:crowd-only")).toBe(0);
-    // Reputation is NEVER trained by a crowd-only landing.
-    expect((await readReporter("xv-rep-crowdonly")).reputation_alpha).toBe(2);
-    expect((await readReporter("xv-rep-crowdonly")).reputation_beta).toBe(2);
+    expect(await crossValidateAgainstFeeds(sql, registry, id, T_RESOLVE)).toBe(feed);
   }, 30_000);
 
-  it("does NOT route against a keyId-less REMOTE CROWD row (federation strips reporter, keeps kind=crowd)", async () => {
-    await seedCrowdReport({
-      id: "xv:crowd-vs-remote",
-      lon: 7.0,
-      lat: 53.0,
-      validFrom: T_REPORT,
-      reporterKey: "xv-rep-remote",
-    });
-    // A federation-exported peer crowd report: origin.kind stays "crowd" but the
-    // reporter (and its keyId) was stripped on export. It lands active with a
-    // phenomenon_fingerprint, so it enters the neighborhood — but it is NOT a feed
-    // and must never route a local crowd report.
-    const fp = phenomenonFingerprint({
-      kind: "event",
-      domain: "roads",
-      type: "hazard",
-      geometry: { type: "Point", coordinates: [7.0001, 53.0] },
-      validFrom: "2026-07-12T08:04:00.000Z",
-    } as ConditionEvent);
-    await sql`
-      INSERT INTO conditions.observations
-        (id, source, source_format, domain, kind, type, status, geom, origin,
-         valid_from, phenomenon_fingerprint, data_updated_at, fetched_at, is_stale)
-      VALUES
-        ('xv:remote-crowd', 'peer-a', 'native', 'roads', 'event', 'hazard', 'active',
-         ST_SetSRID(ST_MakePoint(7.0001, 53.0), 4326),
-         ${sql.json({ kind: "crowd" } as never)},
-         '2026-07-12T08:04:00.000Z', ${fp}, '2026-07-12T08:04:00.000Z', now(), false)`;
+  it("does NOT route when the only neighbour is another CROWD report (reputation untouched)", async () => {
+    const { id, reporter } = await seedCrowdReport();
+    await seedCrowdReport();
 
-    expect(await crossValidateAgainstFeeds(sql, "xv:crowd-vs-remote", T_RESOLVE)).toBeNull();
-    const crowd = await obs("xv:crowd-vs-remote");
-    expect(crowd.routing_eligible).toBe(false);
-    expect(crowd.evidence_state).not.toBe("externally_resolved");
-    expect(await externalEvidenceCount("xv:crowd-vs-remote")).toBe(0);
-    // The keyId-less crowd row was not treated as a feed → reporter untrained.
-    expect((await readReporter("xv-rep-remote")).reputation_alpha).toBe(2);
+    expect(await crossValidateAgainstFeeds(sql, registry, id, T_RESOLVE)).toBeNull();
+    await expectUnrouted(id);
+    expect(await readReporter(reporter)).toEqual({ alpha: 2, beta: 2 });
   }, 30_000);
 
-  it("does NOT route a FLAGGED (disputed) crowd report even when a feed matches", async () => {
-    await seedCrowdReport({
-      id: "xv:crowd-flagged",
-      lon: 6.9,
-      lat: 52.9,
-      validFrom: T_REPORT,
-      reporterKey: "xv-rep-flagged",
-    });
-    await sql`UPDATE conditions.observations SET flagged_at = ${T_REPORT} WHERE id = 'xv:crowd-flagged'`;
-    await insertFeedEvent({
-      id: "xv:feed-for-flagged",
-      lon: 6.9001,
-      lat: 52.9,
-      validFrom: "2026-07-12T08:04:00.000Z",
-    });
+  it("does NOT route against a peer's keyless CROWD report", async () => {
+    const { id, reporter } = await seedCrowdReport();
+    await seedPeerCrowdReport(sql, "xv-peer-crowd", [LON, LAT], T_REPORT);
 
-    expect(await crossValidateAgainstFeeds(sql, "xv:crowd-flagged", T_RESOLVE)).toBeNull();
-    const crowd = await obs("xv:crowd-flagged");
-    expect(crowd.routing_eligible).toBe(false);
-    expect(await externalEvidenceCount("xv:crowd-flagged")).toBe(0);
-    expect((await readReporter("xv-rep-flagged")).reputation_alpha).toBe(2);
+    expect(await crossValidateAgainstFeeds(sql, registry, id, T_RESOLVE)).toBeNull();
+    await expectUnrouted(id);
+    expect(await readReporter(reporter)).toEqual({ alpha: 2, beta: 2 });
   }, 30_000);
 
-  it("does NOT route against a feed within the fingerprint neighborhood but TOO FAR (> 250 m)", async () => {
-    // Both points sit inside the same 3x3 fingerprint neighborhood (so the feed
-    // IS a candidate), but their centroids are ~267 m apart — past the matcher's
-    // 250 m gate — so matchPhenomenonCandidates rejects on distance, not because
-    // the feed was never a candidate.
-    await seedCrowdReport({
-      id: "xv:crowd-far",
-      lon: 0.00005,
-      lat: 0.00005,
-      validFrom: T_REPORT,
-      reporterKey: "xv-rep-far",
-    });
-    await insertFeedEvent({
-      id: "xv:feed-far",
-      lon: 0.00175,
-      lat: 0.00175,
-      validFrom: "2026-07-12T08:04:00.000Z",
-    });
+  it("does NOT route a FLAGGED (disputed) crowd report even when a feed agrees", async () => {
+    const { id, reporter } = await seedCrowdReport();
+    await sql`UPDATE conditions.situation SET flagged_at = ${T_REPORT} WHERE id = ${id}`;
+    await seedFeed("xv-flagged");
 
-    expect(await crossValidateAgainstFeeds(sql, "xv:crowd-far", T_RESOLVE)).toBeNull();
-    expect((await obs("xv:crowd-far")).routing_eligible).toBe(false);
-    expect((await readReporter("xv-rep-far")).reputation_alpha).toBe(2);
+    expect(await crossValidateAgainstFeeds(sql, registry, id, T_RESOLVE)).toBeNull();
+    await expectUnrouted(id);
+    expect(await readReporter(reporter)).toEqual({ alpha: 2, beta: 2 });
+  }, 30_000);
+
+  it("does NOT route against a feed beyond the kind's match distance (> 250 m)", async () => {
+    const { id, reporter } = await seedCrowdReport();
+    await seedFeed("xv-far", 270);
+
+    expect(await crossValidateAgainstFeeds(sql, registry, id, T_RESOLVE)).toBeNull();
+    await expectUnrouted(id);
+    expect(await readReporter(reporter)).toEqual({ alpha: 2, beta: 2 });
   }, 30_000);
 
   it("does NOT route against a feed of a DIFFERENT type", async () => {
-    await seedCrowdReport({
-      id: "xv:crowd-diff-type",
-      lon: 4.0,
-      lat: 50.0,
-      validFrom: T_REPORT,
-      type: "hazard",
-      reporterKey: "xv-rep-difftype",
-    });
-    await insertFeedEvent({
-      id: "xv:feed-diff-type",
-      lon: 4.0001,
-      lat: 50.0,
-      validFrom: "2026-07-12T08:04:00.000Z",
-      type: "congestion",
-    });
+    const { id, reporter } = await seedCrowdReport();
+    await seedFeed("xv-diff-type", 10, { type: "accident" });
 
-    expect(await crossValidateAgainstFeeds(sql, "xv:crowd-diff-type", T_RESOLVE)).toBeNull();
-    expect((await obs("xv:crowd-diff-type")).routing_eligible).toBe(false);
-    expect((await readReporter("xv-rep-difftype")).reputation_alpha).toBe(2);
+    expect(await crossValidateAgainstFeeds(sql, registry, id, T_RESOLVE)).toBeNull();
+    await expectUnrouted(id);
+    expect(await readReporter(reporter)).toEqual({ alpha: 2, beta: 2 });
   }, 30_000);
 
-  it("does NOT route against a feed OUTSIDE the temporal window", async () => {
-    await seedCrowdReport({
-      id: "xv:crowd-late",
-      lon: 3.0,
-      lat: 49.0,
-      validFrom: T_REPORT,
-      reporterKey: "xv-rep-late",
+  it("does NOT route against a feed not in effect when the report was made", async () => {
+    const { id } = await seedCrowdReport();
+    await seedFeed("xv-not-yet", 10, {
+      validity: { status: "active", start: "2026-07-12T08:40:00Z" },
     });
-    // Same cell but > 15 min apart (default maxValidFromDeltaSec = 900).
-    await insertFeedEvent({
-      id: "xv:feed-late",
-      lon: 3.0001,
-      lat: 49.0,
-      validFrom: "2026-07-12T08:40:00.000Z",
+    await seedFeed("xv-ended", 20, {
+      validity: { status: "active", start: "2026-07-12T06:00:00Z", end: "2026-07-12T07:30:00Z" },
     });
 
-    expect(await crossValidateAgainstFeeds(sql, "xv:crowd-late", T_RESOLVE)).toBeNull();
-    expect((await obs("xv:crowd-late")).routing_eligible).toBe(false);
-  }, 30_000);
-
-  it("treats a crowd↔feed pair as INDEPENDENT even when their source strings coincide", async () => {
-    // The crowd report's `source` deliberately equals the feed's `source`. The
-    // matcher's same-source guard applies only to feed↔feed pairs, so this must
-    // still route.
-    await seedCrowdReport({
-      id: "xv:crowd-samesrc",
-      lon: 2.0,
-      lat: 48.0,
-      validFrom: T_REPORT,
-      source: "ndw",
-      reporterKey: "xv-rep-samesrc",
-    });
-    await insertFeedEvent({
-      id: "xv:feed-samesrc",
-      lon: 2.0001,
-      lat: 48.0,
-      validFrom: "2026-07-12T08:04:00.000Z",
-      source: "ndw",
-    });
-
-    expect(await crossValidateAgainstFeeds(sql, "xv:crowd-samesrc", T_RESOLVE)).toBe(
-      "xv:feed-samesrc",
-    );
-    expect((await obs("xv:crowd-samesrc")).evidence_state).toBe("externally_resolved");
-    expect((await readReporter("xv-rep-samesrc")).reputation_alpha).toBe(3);
+    expect(await crossValidateAgainstFeeds(sql, registry, id, T_RESOLVE)).toBeNull();
+    await expectUnrouted(id);
   }, 30_000);
 
   it("is idempotent: replaying the cross-validation does not double-insert or double-train", async () => {
-    await seedCrowdReport({
-      id: "xv:crowd-idem",
-      lon: 1.0,
-      lat: 47.0,
-      validFrom: T_REPORT,
-      reporterKey: "xv-rep-idem",
-    });
-    await insertFeedEvent({
-      id: "xv:feed-idem",
-      lon: 1.0001,
-      lat: 47.0,
-      validFrom: "2026-07-12T08:04:00.000Z",
-    });
+    const { id, reporter } = await seedCrowdReport();
+    await seedFeed("xv-idem");
 
-    await crossValidateAgainstFeeds(sql, "xv:crowd-idem", T_RESOLVE);
-    await crossValidateAgainstFeeds(sql, "xv:crowd-idem", "2026-07-12T08:20:00.000Z");
+    await crossValidateAgainstFeeds(sql, registry, id, T_RESOLVE);
+    await crossValidateAgainstFeeds(sql, registry, id, "2026-07-12T08:12:00.000Z");
 
-    expect(await externalEvidenceCount("xv:crowd-idem")).toBe(1);
-    expect((await readReporter("xv-rep-idem")).reputation_alpha).toBe(3);
+    expect(await externalEvidenceCount(id)).toBe(1);
+    expect(await readReporter(reporter)).toEqual({ alpha: 3, beta: 2 });
   }, 30_000);
 
-  it("does NOT route against a FEDERATED (peer-relayed) feed — only local official feeds cross-validate", async () => {
-    await seedCrowdReport({
-      id: "xv:crowd-vs-federated",
-      lon: 8.0,
-      lat: 54.0,
-      validFrom: T_REPORT,
-      reporterKey: "xv-rep-federated",
-    });
-    // An official feed relayed from a peer: origin.kind "feed" but carrying an
-    // originChain hop. A weaker, peer-dependent signal that must not route.
-    await insertFederatedFeedEvent({
-      id: "xv:feed-federated",
-      lon: 8.0001,
-      lat: 54.0,
-      validFrom: "2026-07-12T08:04:00.000Z",
-    });
+  it("does NOT route against a FEDERATED feed — only local feeds cross-validate", async () => {
+    const { id, reporter } = await seedCrowdReport();
+    await seedFederatedFeed("xv-federated");
 
-    expect(await crossValidateAgainstFeeds(sql, "xv:crowd-vs-federated", T_RESOLVE)).toBeNull();
-    const crowd = await obs("xv:crowd-vs-federated");
-    expect(crowd.routing_eligible).toBe(false);
-    expect(crowd.evidence_state).not.toBe("externally_resolved");
-    expect(await externalEvidenceCount("xv:crowd-vs-federated")).toBe(0);
-    // The federated feed did not train the reporter.
-    expect((await readReporter("xv-rep-federated")).reputation_alpha).toBe(2);
+    expect(await crossValidateAgainstFeeds(sql, registry, id, T_RESOLVE)).toBeNull();
+    await expectUnrouted(id);
+    expect(await readReporter(reporter)).toEqual({ alpha: 2, beta: 2 });
   }, 30_000);
 
-  it("routes via the LOCAL feed only when both a LOCAL and a FEDERATED feed match", async () => {
-    await seedCrowdReport({
-      id: "xv:crowd-both",
-      lon: 9.0,
-      lat: 55.0,
-      validFrom: T_REPORT,
-      reporterKey: "xv-rep-both",
-    });
-    // A local official feed AND a federated (peer-relayed) feed both match the
-    // same crowd report; routing must go through the LOCAL one.
-    await insertFeedEvent({
-      id: "xv:feed-local-both",
-      lon: 9.0001,
-      lat: 55.0,
-      validFrom: "2026-07-12T08:04:00.000Z",
-    });
-    await insertFederatedFeedEvent({
-      id: "xv:feed-federated-both",
-      lon: 9.00015,
-      lat: 55.0,
-      validFrom: "2026-07-12T08:05:00.000Z",
-    });
+  it("routes via the LOCAL feed only when both a LOCAL and a FEDERATED feed agree", async () => {
+    const { id, reporter } = await seedCrowdReport();
+    const federated = await seedFederatedFeed("xv-federated-both", 5);
+    const local = await seedFeed("xv-local-both", 15);
 
-    const matched = await crossValidateAgainstFeeds(sql, "xv:crowd-both", T_RESOLVE);
-    expect(matched).toBe("xv:feed-local-both");
-
-    const crowd = await obs("xv:crowd-both");
-    expect(crowd.evidence_state).toBe("externally_resolved");
-    expect(crowd.routing_eligible).toBe(true);
-    expect((await readReporter("xv-rep-both")).reputation_alpha).toBe(3);
-    // The crowd report resolved via exactly ONE external (official_match) row —
-    // the local feed — not two: the federated feed did not also cross-validate it.
-    expect(await externalEvidenceCount("xv:crowd-both")).toBe(1);
-    // The federated feed is authoritative-but-untrusted-for-routing and untouched.
-    expect(await externalEvidenceCount("xv:feed-federated-both")).toBe(0);
+    expect(await crossValidateAgainstFeeds(sql, registry, id, T_RESOLVE)).toBe(local);
+    expect(await evidenceOf(sql, id)).toMatchObject({
+      evidence_state: "externally_resolved",
+      routing_eligible: true,
+    });
+    expect(await readReporter(reporter)).toEqual({ alpha: 3, beta: 2 });
+    expect(await externalEvidenceCount(id)).toBe(1);
+    expect(await externalEvidenceCount(federated)).toBe(0);
   }, 30_000);
 
-  it("no-ops (returns null) when the just-landed observation is itself a FEED", async () => {
-    await insertFeedEvent({
-      id: "xv:target-is-feed",
-      lon: 0.0,
-      lat: 46.0,
-      validFrom: T_REPORT,
-    });
-    await insertFeedEvent({
-      id: "xv:feed-neighbor",
-      lon: 0.0001,
-      lat: 46.0,
-      validFrom: "2026-07-12T08:04:00.000Z",
-      source: "other",
+  it("returns null when the target is itself a FEED situation", async () => {
+    const target = await seedFeed("xv-target-feed", 0);
+    await seedFeedSituation(sql, "xv-feed-neighbour", {
+      location: pointNorth(10),
+      provenance: {
+        ...(feedSituationDraft("x")["provenance"] as Rec),
+        sourceId: "nl-ndw",
+        recordId: "xv-feed-neighbour",
+      },
+      id: "oc:situation:nl-ndw:xv-feed-neighbour",
     });
 
-    expect(await crossValidateAgainstFeeds(sql, "xv:target-is-feed", T_RESOLVE)).toBeNull();
-    expect(await externalEvidenceCount("xv:target-is-feed")).toBe(0);
+    expect(await crossValidateAgainstFeeds(sql, registry, target, T_RESOLVE)).toBeNull();
+    expect(await externalEvidenceCount(target)).toBe(0);
   }, 30_000);
 
-  it("returns null for a non-existent observation", async () => {
-    expect(await crossValidateAgainstFeeds(sql, "xv:nope", T_RESOLVE)).toBeNull();
+  it("returns null for a non-existent situation", async () => {
+    expect(
+      await crossValidateAgainstFeeds(sql, registry, "oc:situation:nope", T_RESOLVE),
+    ).toBeNull();
   }, 30_000);
 });
 
 describe("crossValidateAgainstFeeds — allowFederatedTarget (route-without-training)", () => {
-  it("routes a FEDERATED crowd target on a LOCAL feed and trains NOBODY", async () => {
-    await insertFederatedCrowdEvent({
-      id: "xvf:fed-crowd",
-      lon: 10.5,
-      lat: 48.5,
-      validFrom: T_REPORT,
-    });
-    await insertFeedEvent({
-      id: "xvf:local-feed",
-      lon: 10.5001,
-      lat: 48.5,
-      validFrom: "2026-07-12T08:04:00.000Z",
-    });
-    // Seed a reporter so the "trains nobody" snapshot is a genuine, self-contained
-    // comparison even when this test runs in isolation (not an empty [] === []).
-    await insertReporter("xvf-witness");
+  it("routes a peer's crowd report on a LOCAL feed and trains NOBODY", async () => {
+    const report = await seedPeerCrowdReport(sql, "xvf-crowd", [LON, LAT], T_REPORT);
+    const feed = await seedFeed("xvf-local");
+    // A reporter row makes the "trains nobody" snapshot a real comparison.
+    await enrolledKey(sql, T_REPORT);
 
     const before = await reporterSnapshot();
-    const matched = await crossValidateAgainstFeeds(sql, "xvf:fed-crowd", T_RESOLVE, {
-      allowFederatedTarget: true,
-    });
-    expect(matched).toBe("xvf:local-feed");
+    expect(
+      await crossValidateAgainstFeeds(sql, registry, report, T_RESOLVE, {
+        allowFederatedTarget: true,
+      }),
+    ).toBe(feed);
 
-    const crowd = await obs("xvf:fed-crowd");
-    expect(crowd.evidence_state).toBe("externally_resolved");
-    expect(crowd.routing_eligible).toBe(true);
-    expect(await externalEvidenceCount("xvf:fed-crowd")).toBe(1);
-    // The trust anchor is OUR local feed; the feed itself is untouched.
-    expect(await externalEvidenceCount("xvf:local-feed")).toBe(0);
-    // No reporter row's alpha/beta/corroborated_count changed anywhere.
+    expect(await evidenceOf(sql, report)).toMatchObject({
+      evidence_state: "externally_resolved",
+      routing_eligible: true,
+    });
+    expect(await externalEvidenceCount(report)).toBe(1);
+    expect(await externalEvidenceCount(feed)).toBe(0);
     expect(await reporterSnapshot()).toBe(before);
   }, 30_000);
 
-  it("THE #3 FIX: routes a federated crowd target on a LOCAL feed whose SOURCE STRING COINCIDES, training nobody", async () => {
-    // The federated crowd row's `source` deliberately equals the local feed's
-    // `source` ("ndw"). Before A4, the matcher inferred crowd-vs-feed from keyId
-    // presence: a federated crowd row is keyId-less, so it read as feed-like and
-    // the same-source guard fail-closed BLOCKED the route (the #3 missed route).
-    // Keyed on the real origin.kind, the crowd/feed pair is independent → routes.
-    await insertFederatedCrowdEvent({
-      id: "xvf:fed-crowd-samesrc",
-      lon: 16.5,
-      lat: 44.5,
-      validFrom: T_REPORT,
-      source: "ndw",
-    });
-    await insertFeedEvent({
-      id: "xvf:local-feed-samesrc",
-      lon: 16.5001,
-      lat: 44.5,
-      validFrom: "2026-07-12T08:04:00.000Z",
-      source: "ndw",
-    });
-    await insertReporter("xvf-samesrc-witness");
+  it("does NOT route a peer's crowd report agreeing only with a FEDERATED feed", async () => {
+    const report = await seedPeerCrowdReport(sql, "xvf-vs-fedfeed", [LON, LAT], T_REPORT);
+    await seedFederatedFeed("xvf-fedfeed");
+
+    expect(
+      await crossValidateAgainstFeeds(sql, registry, report, T_RESOLVE, {
+        allowFederatedTarget: true,
+      }),
+    ).toBeNull();
+    await expectUnrouted(report);
+  }, 30_000);
+
+  it("does NOT route a FEDERATED FEED situation as target, even with allowFederatedTarget", async () => {
+    const target = await seedFederatedFeed("xvf-fedfeed-target", 0);
+    await seedFeed("xvf-local-for-fedtarget");
+
+    expect(
+      await crossValidateAgainstFeeds(sql, registry, target, T_RESOLVE, {
+        allowFederatedTarget: true,
+      }),
+    ).toBeNull();
+    expect(await externalEvidenceCount(target)).toBe(0);
+  }, 30_000);
+
+  it("does NOT route a keyless crowd report WITHOUT an origin chain, even with allowFederatedTarget", async () => {
+    const report = await seedPeerCrowdReport(sql, "xvf-no-chain", [LON, LAT], T_REPORT);
+    await sql`
+      UPDATE conditions.situation SET record = record #- '{provenance,originChain}'
+      WHERE id = ${report}`;
+    await seedFeed("xvf-feed-for-nochain");
+
+    expect(
+      await crossValidateAgainstFeeds(sql, registry, report, T_RESOLVE, {
+        allowFederatedTarget: true,
+      }),
+    ).toBeNull();
+    await expectUnrouted(report);
+  }, 30_000);
+
+  it("keeps the STRICT guard by default: a peer's crowd report does not route without allowFederatedTarget", async () => {
+    const report = await seedPeerCrowdReport(sql, "xvf-strict", [LON, LAT], T_REPORT);
+    await seedFeed("xvf-feed-strict");
+
+    expect(await crossValidateAgainstFeeds(sql, registry, report, T_RESOLVE)).toBeNull();
+    await expectUnrouted(report);
+  }, 30_000);
+
+  it("is idempotent under allowFederatedTarget: replaying does not double-insert", async () => {
+    const report = await seedPeerCrowdReport(sql, "xvf-idem", [LON, LAT], T_REPORT);
+    await seedFeed("xvf-feed-idem");
+    await enrolledKey(sql, T_REPORT);
 
     const before = await reporterSnapshot();
-    const matched = await crossValidateAgainstFeeds(sql, "xvf:fed-crowd-samesrc", T_RESOLVE, {
-      allowFederatedTarget: true,
-    });
-    expect(matched).toBe("xvf:local-feed-samesrc");
+    for (const now of [T_RESOLVE, "2026-07-12T08:12:00.000Z"]) {
+      await crossValidateAgainstFeeds(sql, registry, report, now, { allowFederatedTarget: true });
+    }
 
-    const crowd = await obs("xvf:fed-crowd-samesrc");
-    expect(crowd.evidence_state).toBe("externally_resolved");
-    expect(crowd.routing_eligible).toBe(true);
-    expect(await externalEvidenceCount("xvf:fed-crowd-samesrc")).toBe(1);
-    // The feed itself is authoritative and untouched, and nobody was trained.
-    expect(await externalEvidenceCount("xvf:local-feed-samesrc")).toBe(0);
-    expect(await reporterSnapshot()).toBe(before);
-  }, 30_000);
-
-  it("does NOT route a federated crowd target matching only a FEDERATED feed", async () => {
-    await insertFederatedCrowdEvent({
-      id: "xvf:fed-crowd-vs-fedfeed",
-      lon: 11.5,
-      lat: 49.5,
-      validFrom: T_REPORT,
-    });
-    await insertFederatedFeedEvent({
-      id: "xvf:fed-feed-only",
-      lon: 11.5001,
-      lat: 49.5,
-      validFrom: "2026-07-12T08:04:00.000Z",
-    });
-
-    expect(
-      await crossValidateAgainstFeeds(sql, "xvf:fed-crowd-vs-fedfeed", T_RESOLVE, {
-        allowFederatedTarget: true,
-      }),
-    ).toBeNull();
-    const crowd = await obs("xvf:fed-crowd-vs-fedfeed");
-    expect(crowd.routing_eligible).toBe(false);
-    expect(crowd.evidence_state).not.toBe("externally_resolved");
-    expect(await externalEvidenceCount("xvf:fed-crowd-vs-fedfeed")).toBe(0);
-  }, 30_000);
-
-  it("does NOT route a federated FEED row as target even with allowFederatedTarget (kind==='crowd' guard)", async () => {
-    // A federated FEED row is ALSO keyId-less + originChain-present, but it is a
-    // feed, not crowd — it must never become a routable target.
-    await insertFederatedFeedEvent({
-      id: "xvf:fed-feed-target",
-      lon: 12.5,
-      lat: 50.5,
-      validFrom: T_REPORT,
-    });
-    await insertFeedEvent({
-      id: "xvf:local-feed-for-fedtarget",
-      lon: 12.5001,
-      lat: 50.5,
-      validFrom: "2026-07-12T08:04:00.000Z",
-      source: "other",
-    });
-
-    expect(
-      await crossValidateAgainstFeeds(sql, "xvf:fed-feed-target", T_RESOLVE, {
-        allowFederatedTarget: true,
-      }),
-    ).toBeNull();
-    expect(await externalEvidenceCount("xvf:fed-feed-target")).toBe(0);
-  }, 30_000);
-
-  it("does NOT route a keyId-less crowd target WITHOUT an originChain even with allowFederatedTarget", async () => {
-    await insertKeyIdlessCrowdNoChain({
-      id: "xvf:crowd-no-chain",
-      lon: 13.5,
-      lat: 51.5,
-      validFrom: T_REPORT,
-    });
-    await insertFeedEvent({
-      id: "xvf:feed-for-nochain",
-      lon: 13.5001,
-      lat: 51.5,
-      validFrom: "2026-07-12T08:04:00.000Z",
-    });
-
-    expect(
-      await crossValidateAgainstFeeds(sql, "xvf:crowd-no-chain", T_RESOLVE, {
-        allowFederatedTarget: true,
-      }),
-    ).toBeNull();
-    expect((await obs("xvf:crowd-no-chain")).routing_eligible).toBe(false);
-    expect(await externalEvidenceCount("xvf:crowd-no-chain")).toBe(0);
-  }, 30_000);
-
-  it("keeps the STRICT guard by default: a federated crowd target does NOT route without allowFederatedTarget", async () => {
-    await insertFederatedCrowdEvent({
-      id: "xvf:fed-crowd-strict",
-      lon: 14.5,
-      lat: 52.5,
-      validFrom: T_REPORT,
-    });
-    await insertFeedEvent({
-      id: "xvf:feed-strict",
-      lon: 14.5001,
-      lat: 52.5,
-      validFrom: "2026-07-12T08:04:00.000Z",
-    });
-
-    // No deps → allowFederatedTarget defaults false → the crowd-landing/sweep guard.
-    expect(await crossValidateAgainstFeeds(sql, "xvf:fed-crowd-strict", T_RESOLVE)).toBeNull();
-    expect((await obs("xvf:fed-crowd-strict")).routing_eligible).toBe(false);
-    expect(await externalEvidenceCount("xvf:fed-crowd-strict")).toBe(0);
-  }, 30_000);
-
-  it("is idempotent under allowFederatedTarget: replaying does not double-insert or re-route", async () => {
-    await insertFederatedCrowdEvent({
-      id: "xvf:fed-crowd-idem",
-      lon: 15.5,
-      lat: 53.5,
-      validFrom: T_REPORT,
-    });
-    await insertFeedEvent({
-      id: "xvf:feed-idem",
-      lon: 15.5001,
-      lat: 53.5,
-      validFrom: "2026-07-12T08:04:00.000Z",
-    });
-    // Self-contained snapshot: at least one reporter exists to prove nobody trained.
-    await insertReporter("xvf-idem-witness");
-
-    const before = await reporterSnapshot();
-    await crossValidateAgainstFeeds(sql, "xvf:fed-crowd-idem", T_RESOLVE, {
-      allowFederatedTarget: true,
-    });
-    await crossValidateAgainstFeeds(sql, "xvf:fed-crowd-idem", "2026-07-12T08:20:00.000Z", {
-      allowFederatedTarget: true,
-    });
-
-    expect(await externalEvidenceCount("xvf:fed-crowd-idem")).toBe(1);
-    expect((await obs("xvf:fed-crowd-idem")).routing_eligible).toBe(true);
+    expect(await externalEvidenceCount(report)).toBe(1);
+    expect(await evidenceOf(sql, report)).toMatchObject({ routing_eligible: true });
     expect(await reporterSnapshot()).toBe(before);
   }, 30_000);
 });

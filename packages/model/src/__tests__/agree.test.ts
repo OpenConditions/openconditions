@@ -97,6 +97,25 @@ describe("situations agree", () => {
     ).toBe(false);
   });
 
+  it("anchors a report drawn across the antimeridian on its line", () => {
+    const across = {
+      ...crowdAccident,
+      location: {
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [179.999, -16.5],
+            [-179.999, -16.5],
+          ],
+        },
+      },
+    };
+    const nearby = feed({
+      location: { geometry: { type: "Point", coordinates: [-179.9995, -16.5] } },
+    });
+    expect(situationsAgree(crowdRegistry, across, nearby)).toBe(true);
+  });
+
   it("uses the kind's match distance", () => {
     const queue = { ...crowdAccident, kind: "congestion", type: "congestion" };
     const away = { location: { geometry: { type: "Point", coordinates: [8.4, 49.004] } } };
@@ -164,6 +183,16 @@ describe("observations agree", () => {
     ).toBe(true);
     expect(
       observationConfirms(crowdRegistry, price("1.479"), price("1.48", "2026-10-01T14:58:01Z")),
+    ).toBe(false);
+  });
+
+  it("confirm a report with a reading that arrives while confirmations keep it alive", () => {
+    const confirmed = { ...price("1.479"), expiresAt: "2026-10-01T18:00:00Z" };
+    expect(
+      observationConfirms(crowdRegistry, confirmed, price("1.48", "2026-10-01T17:00:00Z")),
+    ).toBe(true);
+    expect(
+      observationConfirms(crowdRegistry, confirmed, price("1.48", "2026-10-01T18:00:01Z")),
     ).toBe(false);
   });
 

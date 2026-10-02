@@ -1,16 +1,31 @@
 import { randomUUID } from "node:crypto";
-import { mkdir, rename, rm, stat } from "node:fs/promises";
+import { link, mkdir, rename, rm, stat } from "node:fs/promises";
 import path from "node:path";
-import { scanObservations } from "@openconditions/core";
-import { writeDailyGeoParquet } from "@openconditions/publishers";
+import { scanLatestObservations, scanRecords } from "@openconditions/core/server";
+import type { RecordClass } from "@openconditions/model";
+import { type ArchivableRecord, writeRecordArchive } from "@openconditions/publishers";
 import { fileWriter } from "hyparquet-writer";
 import type postgres from "postgres";
 
 type Sql = postgres.Sql;
 
-/** Where dated archive files land when no dir is configured. Deliberately a
- * local path — object storage / S3 upload is operator infra, not wired here. */
+/** Where archive files land when no dir is configured. Deliberately a local
+ * path — object storage / S3 upload is operator infra, not wired here. */
 const DEFAULT_ARCHIVE_DIR = "./data/archive";
+
+/** The archive's classes, one file each: each class has its own columns. */
+export const ARCHIVE_CLASSES: readonly RecordClass[] = [
+  "situation",
+  "feature",
+  "offer",
+  "observation",
+];
+
+/** The dated file of a class's archive. */
+export const archiveFileName = (cls: RecordClass, day: string) => `archive-${cls}-${day}.parquet`;
+
+/** The stable name of a class's latest archive, which a peer fetches. */
+export const latestArchiveFileName = (cls: RecordClass) => `archive-${cls}.parquet`;
 
 export interface ArchiveBuildDeps {
   /** Injectable clock; defaults to the real wall clock (runtime, not pure). */
@@ -19,10 +34,7 @@ export interface ArchiveBuildDeps {
   outputDir?: string;
 }
 
-export interface ArchiveBuildResult {
-  path: string;
-  bytes: number;
-}
+export type ArchiveBuildResult = Record<RecordClass, { path: string; bytes: number }>;
 
 function resolveOutputDir(override?: string): string {
   // `||`, not `??`: Compose injects an empty string for an unset `${VAR:-}`,
@@ -30,28 +42,28 @@ function resolveOutputDir(override?: string): string {
   return override || process.env.OPENCONDITIONS_ARCHIVE_DIR || DEFAULT_ARCHIVE_DIR;
 }
 
-/** Adapt postgres-js to the QueryRunner (`execute`) interface the readers expect. */
-function runner(sql: Sql | postgres.TransactionSql) {
-  return {
-    async execute<T = unknown>(q: string, p?: unknown[]): Promise<T> {
-      const rows = p ? await sql.unsafe(q, p as never[]) : await sql.unsafe(q);
-      return rows as T;
-    },
-  };
+function pagesOf(
+  tx: postgres.TransactionSql,
+  cls: RecordClass,
+): AsyncIterable<readonly ArchivableRecord[]> {
+  const pages = cls === "observation" ? scanLatestObservations(tx) : scanRecords(tx, cls);
+  return pages as AsyncIterable<readonly ArchivableRecord[]>;
 }
 
 /**
- * Builds the nightly static archive — the mirrorable GeoParquet snapshot of the
- * published view across all domains, written to a dated file in the archive dir.
+ * Builds the nightly static archive: one GeoParquet file per record class
+ * (`archive-<class>-YYYY-MM-DD.parquet`), the live situations, features and
+ * offers and the latest reading of every series, and points the class's
+ * stable name (`archive-<class>.parquet`) at it. All four read one
+ * repeatable-read snapshot. The writer applies the published view
+ * (`publishedRecords`: no on-demand answers or fused rows, nothing
+ * tombstoned or out of date, crowd records only once corroborated,
+ * permissive licences, reporters stripped, a source's extras only when the
+ * source federates them), so the artifact carries what a peer may receive.
  *
- * A repeatable-read transaction pages the active, in-validity, unexpired
- * view; the streaming GeoParquet writer re-applies the authoritative published-view
- * filter (license, tombstone, expiry, privacy tier, crowd-identity strip), so
- * the artifact can never carry raw crowd evidence, probe staging, expired, or
- * tombstoned rows.
- *
- * Best-effort: an unwritable/misconfigured output dir is logged and swallowed
- * (returns `null`) so a failed archive write never crashes the scheduler.
+ * Best-effort: an unwritable or misconfigured output dir is logged and
+ * swallowed (returns `null`) so a failed archive write never crashes the
+ * scheduler, and no stable name moves unless every class was written.
  */
 export async function buildDailyArchive(
   sql: Sql,
@@ -59,23 +71,49 @@ export async function buildDailyArchive(
 ): Promise<ArchiveBuildResult | null> {
   const now = (deps.now ?? (() => new Date()))();
   const nowIso = now.toISOString();
+  const day = nowIso.slice(0, 10);
   const dir = resolveOutputDir(deps.outputDir);
-  const outPath = path.join(dir, `archive-${nowIso.slice(0, 10)}.parquet`);
-
-  const temporaryPath = `${outPath}.${randomUUID()}.tmp`;
+  const temporary: string[] = [];
   try {
     await mkdir(dir, { recursive: true });
-    const writer = fileWriter(temporaryPath);
+    const federated = new Set(
+      (await sql<{ id: string }[]>`SELECT id FROM conditions.source WHERE extras_federate`).map(
+        (r) => r.id,
+      ),
+    );
+    const opts = { federateExtras: (sourceId: string) => federated.has(sourceId) };
+    const written = {} as Record<RecordClass, { temp: string; path: string }>;
     await sql.begin("isolation level repeatable read read only", async (tx) => {
-      await writeDailyGeoParquet(scanObservations(runner(tx), { asOf: nowIso }), nowIso, writer);
+      for (const cls of ARCHIVE_CLASSES) {
+        const outPath = path.join(dir, archiveFileName(cls, day));
+        const temp = `${outPath}.${randomUUID()}.tmp`;
+        temporary.push(temp);
+        await writeRecordArchive(cls, pagesOf(tx, cls), nowIso, fileWriter(temp), opts);
+        written[cls] = { temp, path: outPath };
+      }
     });
-    const { size: bytes } = await stat(temporaryPath);
-    await rename(temporaryPath, outPath);
-    console.info(`[archive] wrote ${outPath} (${bytes} bytes)`);
-    return { path: outPath, bytes };
+    const result = {} as ArchiveBuildResult;
+    for (const cls of ARCHIVE_CLASSES) {
+      const { temp, path: outPath } = written[cls];
+      const { size: bytes } = await stat(temp);
+      await rename(temp, outPath);
+      result[cls] = { path: outPath, bytes };
+    }
+    // The stable names move last, each atomically, once every dated file exists.
+    for (const cls of ARCHIVE_CLASSES) {
+      const alias = path.join(dir, latestArchiveFileName(cls));
+      const aliasTemp = `${alias}.${randomUUID()}.tmp`;
+      temporary.push(aliasTemp);
+      await link(result[cls].path, aliasTemp);
+      await rename(aliasTemp, alias);
+    }
+    for (const cls of ARCHIVE_CLASSES) {
+      console.info(`[archive] wrote ${result[cls].path} (${result[cls].bytes} bytes)`);
+    }
+    return result;
   } catch (err) {
-    await rm(temporaryPath, { force: true }).catch(() => {});
-    console.error(`[archive] failed to write ${outPath}`, err);
+    await Promise.all(temporary.map((t) => rm(t, { force: true }).catch(() => {})));
+    console.error(`[archive] failed to write the ${day} archive in ${dir}`, err);
     return null;
   }
 }

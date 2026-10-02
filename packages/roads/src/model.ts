@@ -1,8 +1,8 @@
 import type {
-  ConditionEvent,
   LineStringGeometry,
   Measurement,
   MultiLineStringGeometry,
+  Observation,
   PointGeometry,
   Severity,
 } from "@openconditions/core";
@@ -213,10 +213,23 @@ export interface FlowSiteHints {
   losDerived?: true;
 }
 
-export interface RoadEvent extends ConditionEvent {
+/**
+ * A parser's intermediate record of one road event, before the situation
+ * assembler turns it into a model situation.
+ */
+export interface RoadEvent extends Observation {
+  kind: "event";
   domain: "roads";
   situation?: SituationHints;
   type: RoadEventType;
+  subtype?: string;
+  category: "incident" | "planned" | "conditions" | "report";
+  severity: Severity;
+  /** Numeric 1–5 severity, when a controller assigns a graded level. */
+  severityLevel?: 1 | 2 | 3 | 4 | 5;
+  severitySource: "declared" | "derived";
+  headline: string;
+  description?: string;
   isPlanned: boolean;
   direction?: string;
   roads: RoadRef[];

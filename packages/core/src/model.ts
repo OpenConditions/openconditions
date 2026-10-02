@@ -1,6 +1,5 @@
-import type { EvidenceState, RoutingRights, Schedule } from "@openconditions/model";
+import type { RoutingRights, Schedule } from "@openconditions/model";
 import type { Geometry, LineString, MultiLineString, Point } from "geojson";
-import type { RoadConditionRoutingEvidence } from "./routing-evidence.js";
 
 export type GeoJsonGeometry = Geometry;
 export type LineStringGeometry = LineString;
@@ -15,18 +14,6 @@ export interface Attribution {
   childSourceId?: string;
   policyIds?: string[];
   rights?: RoutingRights;
-}
-
-/**
- * A non-primary source folded into an observation by cross-source dedup. The
- * surviving (primary) observation keeps its own `origin`; every other source
- * that described the same real-world condition is recorded here so no source's
- * attribution is ever dropped when duplicates are merged.
- */
-export interface MergedSource {
-  source: string;
-  id: string;
-  attribution: Attribution;
 }
 
 export type ObservationDomain = "roads" | "transit" | "places" | string;
@@ -82,56 +69,16 @@ export interface SegmentSpan {
   endFraction: number;
 }
 
-export interface ObservationBinding {
-  status: BindingStatus;
-  confidence?: number;
-  directionMode?: DirectionMode;
-}
-
 export interface SubjectRef {
   type: "geo" | "osm" | "gtfs-stop" | "gtfs-trip" | "gtfs-route" | "place" | "segment";
   id: string;
   role?: string;
 }
 
-export interface ReporterRef {
-  keyId: string;
-  /**
-   * The report's detached signature. Optional because a crowd observation's
-   * `origin` is kept minimal — the authoritative signature lives in the
-   * `report_evidence` ledger, not in provenance. Present only where an older
-   * caller folds it in.
-   */
-  signature?: string;
-  reputation?: number;
+export interface Provenance {
+  kind: "feed";
+  attribution: Attribution;
 }
-
-/**
- * One hop in a federated observation's provenance chain: the source record
- * followed by each restating instance (the DATEX II creation-reference
- * precedent). `instanceId` is the instance whose PUBLISHED view the hop
- * restates; `viaPeer` is the authenticated peer the event arrived from (absent
- * on a record this instance originated itself). Stored inside `origin`
- * (`origin.originChain`), so it rides the existing jsonb column and stays
- * queryable via `origin->'originChain'`.
- */
-export interface OriginHop {
-  instanceId: string;
-  viaPeer?: string;
-  /** When the receiving instance recorded the hop (ISO 8601). */
-  receivedAt: string;
-}
-
-/**
- * `reporter` is optional on the crowd member because it exists ONLY on the
- * local instance's own rows: the federation outbox trigger and every publisher
- * strip it before a crowd observation leaves the instance, so a federated or
- * journalled crowd origin legitimately has no reporter. Local landing always
- * sets it.
- */
-export type Provenance =
-  | { kind: "feed"; attribution: Attribution; originChain?: OriginHop[] }
-  | { kind: "crowd"; attribution: Attribution; reporter?: ReporterRef; originChain?: OriginHop[] };
 
 export interface Observation {
   id: string;
@@ -158,58 +105,15 @@ export interface Observation {
   fetchedAt: string;
   expiresAt?: string;
   isStale: boolean;
-  /**
-   * When this observation's source was last checked successfully, joined from
-   * generic source status at read time. It is read metadata, never a
-   * persistence input and never part of the content hash: a poll that confirms
-   * unchanged content advances this without changing the observation.
-   * Distinct from `dataUpdatedAt` (what the publisher says) and `fetchedAt`
-   * (when this row's content last changed).
-   */
-  sourceCheckedAt?: string | null;
-  /** The source's configured freshness window in seconds, joined at read time. */
-  freshnessWindowSec?: number | null;
 
   relatedIds?: string[];
 
-  /**
-   * Other sources whose duplicate of this condition was merged into this one by
-   * the aggregator's cross-source dedup. Absent on observations that were never
-   * merged. See `dedupeAcrossSources`.
-   */
-  mergedSources?: MergedSource[];
-
-  /** Stable id of the concrete report instance this observation came from. */
+  /** Stable id of the instance that wrote this observation. */
   instanceId?: string;
-  /** Id of the canonical condition this observation resolves to (fusion key). */
+  /** Exact, source-stable record identity (see `canonicalId`). */
   canonicalId?: string;
-  /** Hash grouping observations that describe the same real-world phenomenon. */
-  phenomenonFingerprint?: string;
-  /** Canonical ids this observation supersedes. */
-  replaces?: string[];
-  /** Ids of independent observations that corroborate this one. */
-  corroborations?: string[];
   /** How precisely the geometry/extent is known (defaults to `exact`). */
   fuzziness?: Fuzziness;
-  /** Normalized [0,1] confidence for this observation. */
-  confidenceScore?: number;
-  /**
-   * Crowd-evidence lifecycle state, materialized from the authoritative
-   * `report_evidence` ledger by the evidence policy. NULL/absent on non-crowd
-   * (feed) rows; a parser must never assert it.
-   */
-  evidenceState?: EvidenceState;
-  /**
-   * Whether this observation is routing-eligible. Only an external resolution
-   * sets it; peer corroboration never does. Derived, never parser-supplied.
-   */
-  routingEligible?: boolean;
-  /**
-   * When the observation was first flagged by a reporter (a `flag` sub-claim).
-   * Feeds the reviewer queue; a flag is not evidence of truth, so it never
-   * changes evidenceState. Set only post-landing by the flag route.
-   */
-  flaggedAt?: string;
   /** Privacy tier this observation was produced under. */
   privacyClass?: PrivacyClass;
   /** k for k-anonymity, when the observation is a k-anonymized aggregate. */
@@ -224,25 +128,6 @@ export interface Observation {
   sourceUri?: string;
   /** SPDX license the upstream source is published under. */
   sourceLicense?: string;
-  /** Graph-binding outcome. Derived by the ingest resolver; absent until bound. */
-  binding?: ObservationBinding;
-  /** Ordered directed segments this event occupies (only when `binding.status` is exact/likely/ambiguous). */
-  segments?: SegmentSpan[];
-  /** Current, fail-closed routing authority; absent legacy rows remain display-only. */
-  routingEvidence?: RoadConditionRoutingEvidence;
-}
-
-export interface ConditionEvent extends Observation {
-  kind: "event";
-  type: string;
-  subtype?: string;
-  category: "incident" | "planned" | "conditions" | "report";
-  severity: Severity;
-  /** Numeric 1–5 severity, when a controller assigns a graded level. */
-  severityLevel?: 1 | 2 | 3 | 4 | 5;
-  severitySource: "declared" | "derived";
-  headline: string;
-  description?: string;
 }
 
 export interface Measurement extends Observation {

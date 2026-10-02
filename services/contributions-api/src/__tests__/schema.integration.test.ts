@@ -1,30 +1,17 @@
-import { runMigrations } from "@openconditions/core/server";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { createTestDatabase, seedFeedSituation } from "./crowd-fixtures.integration.js";
 
+let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-  await runMigrations(url);
+  db = await createTestDatabase();
+  sql = db.sql;
 }, 120_000);
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 async function tableColumns(table: string): Promise<Set<string>> {
@@ -34,7 +21,7 @@ async function tableColumns(table: string): Promise<Set<string>> {
   return new Set(cols.map((c) => c.column_name));
 }
 
-describe("migration 0008 — contribution tables exist", () => {
+describe("contribution tables exist", () => {
   it("creates all five contribution tables", async () => {
     const tables = await sql<{ table_name: string }[]>`
       SELECT table_name FROM information_schema.tables
@@ -71,11 +58,22 @@ describe("migration 0008 — contribution tables exist", () => {
     }
   }, 30_000);
 
-  it("sub_claim, report_evidence, token_quota, issuer_key have their columns", async () => {
+  it("token_quota and issuer_key have their columns", async () => {
+    expect(await tableColumns("token_quota")).toEqual(new Set(["key_id", "epoch", "issued"]));
+    expect(await tableColumns("issuer_key")).toEqual(
+      new Set(["key_id", "public_key", "private_key", "not_before", "not_after"]),
+    );
+  }, 30_000);
+});
+
+describe("migration 0045 — crowd evidence keyed by record", () => {
+  it("sub_claim names its subject by class, id and component", async () => {
     expect(await tableColumns("sub_claim")).toEqual(
       new Set([
         "id",
+        "subject_class",
         "subject_id",
+        "subject_component_key",
         "claim_type",
         "key_id",
         "reason",
@@ -84,10 +82,15 @@ describe("migration 0008 — contribution tables exist", () => {
         "created_at",
       ]),
     );
+  }, 30_000);
+
+  it("report_evidence names its record by class, id and component", async () => {
     expect(await tableColumns("report_evidence")).toEqual(
       new Set([
         "id",
-        "observation_id",
+        "record_class",
+        "record_id",
+        "component_key",
         "evidence_kind",
         "actor_key_id",
         "source_id",
@@ -95,24 +98,58 @@ describe("migration 0008 — contribution tables exist", () => {
         "details",
       ]),
     );
-    expect(await tableColumns("token_quota")).toEqual(new Set(["key_id", "epoch", "issued"]));
-    expect(await tableColumns("issuer_key")).toEqual(
-      new Set(["key_id", "public_key", "private_key", "not_before", "not_after"]),
-    );
   }, 30_000);
 
-  it("adds evidence_state + routing_eligible to observations with the right nullability", async () => {
+  it("defaults the component keys to the empty string, never null", async () => {
+    const cols = await sql<
+      { table_name: string; column_name: string; is_nullable: string; column_default: string }[]
+    >`
+      SELECT table_name, column_name, is_nullable, column_default FROM information_schema.columns
+      WHERE table_schema = 'conditions'
+        AND ((table_name = 'report_evidence' AND column_name = 'component_key')
+          OR (table_name = 'sub_claim' AND column_name = 'subject_component_key'))`;
+    expect(cols).toHaveLength(2);
+    for (const col of cols) {
+      expect(col.is_nullable).toBe("NO");
+      expect(col.column_default).toContain("''");
+    }
+  }, 30_000);
+
+  it("carries the evidence summary on situation with the right nullability", async () => {
     const cols = await sql<
       { column_name: string; is_nullable: string; column_default: string | null }[]
     >`
       SELECT column_name, is_nullable, column_default FROM information_schema.columns
-      WHERE table_schema = 'conditions' AND table_name = 'observations'
-        AND column_name IN ('evidence_state', 'routing_eligible')`;
+      WHERE table_schema = 'conditions' AND table_name = 'situation'
+        AND column_name IN ('evidence_state', 'routing_eligible', 'confidence_score',
+                            'corroborations', 'flagged_at')`;
     const byName = new Map(cols.map((c) => [c.column_name, c]));
     expect(byName.get("evidence_state")?.is_nullable).toBe("YES");
+    expect(byName.get("confidence_score")?.is_nullable).toBe("YES");
+    expect(byName.get("flagged_at")?.is_nullable).toBe("YES");
     const routing = byName.get("routing_eligible");
     expect(routing?.is_nullable).toBe("NO");
     expect(routing?.column_default).toContain("false");
+    const corroborations = byName.get("corroborations");
+    expect(corroborations?.is_nullable).toBe("NO");
+    expect(corroborations?.column_default).toBe("0");
+  }, 30_000);
+
+  it("creates the record-keyed indexes and drops the observation ones", async () => {
+    const idx = await sql<{ indexname: string }[]>`
+      SELECT indexname FROM pg_indexes WHERE schemaname = 'conditions'`;
+    const names = idx.map((i) => i.indexname);
+    expect(names).toEqual(
+      expect.arrayContaining([
+        "uq_sub_claim_subject_key_type",
+        "idx_sub_claim_key",
+        "idx_report_evidence_record",
+        "idx_report_evidence_merged",
+        "idx_situation_crowd_evidence",
+      ]),
+    );
+    expect(names).not.toContain("idx_report_evidence_observation");
+    expect(names).not.toContain("idx_sub_claim_subject");
   }, 30_000);
 });
 
@@ -140,24 +177,7 @@ describe("migration 0009 — spent_token single-use ledger", () => {
   }, 30_000);
 });
 
-describe("migration 0008 — indexes", () => {
-  it("creates the contribution indexes", async () => {
-    const idx = await sql<{ indexname: string }[]>`
-      SELECT indexname FROM pg_indexes WHERE schemaname = 'conditions'`;
-    const names = idx.map((i) => i.indexname);
-    expect(names).toEqual(
-      expect.arrayContaining([
-        "uq_sub_claim_subject_key_type",
-        "idx_sub_claim_subject",
-        "idx_sub_claim_key",
-        "idx_report_evidence_observation",
-        "idx_conditions_obs_evidence_state",
-      ]),
-    );
-  }, 30_000);
-});
-
-describe("migration 0008 — CHECK constraints", () => {
+describe("CHECK constraints", () => {
   it("rejects a reporter with non-positive reputation_alpha", async () => {
     await expect(
       sql`INSERT INTO conditions.reporter (key_id, pub_jwk, reputation_alpha, reputation_beta,
@@ -176,43 +196,84 @@ describe("migration 0008 — CHECK constraints", () => {
 
   it("rejects a sub_claim with an unknown claim_type", async () => {
     await expect(
-      sql`INSERT INTO conditions.sub_claim (id, subject_id, claim_type, key_id, signature, created_at)
-          VALUES ('sc-bad', 'subj-1', 'shout', 'k-1', 'sig', now())`,
+      sql`INSERT INTO conditions.sub_claim
+            (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
+          VALUES ('sc-bad', 'situation', 'subj-1', 'shout', 'k-1', 'sig', now())`,
     ).rejects.toThrow(/sub_claim_claim_type_enum/);
+  }, 30_000);
+
+  it("rejects a sub_claim whose subject is not a record class", async () => {
+    await expect(
+      sql`INSERT INTO conditions.sub_claim
+            (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
+          VALUES ('sc-bad-class', 'observations', 'subj-1', 'confirm', 'k-1', 'sig', now())`,
+    ).rejects.toThrow(/sub_claim_subject_class_enum/);
   }, 30_000);
 
   it("rejects a report_evidence with an unknown evidence_kind", async () => {
     await expect(
-      sql`INSERT INTO conditions.report_evidence (observation_id, evidence_kind, occurred_at)
-          VALUES ('obs-1', 'telepathy', now())`,
+      sql`INSERT INTO conditions.report_evidence
+            (record_class, record_id, evidence_kind, occurred_at)
+          VALUES ('situation', 'sit-1', 'telepathy', now())`,
     ).rejects.toThrow(/report_evidence_kind_enum/);
   }, 30_000);
 
-  it("rejects an observation with an unknown evidence_state", async () => {
+  it("rejects a report_evidence whose record is not a record class", async () => {
     await expect(
-      sql`INSERT INTO conditions.observations
-            (id, source, source_format, domain, kind, status, geom, origin,
-             data_updated_at, fetched_at, is_stale, evidence_state)
-          VALUES ('obs-es-bad', 'chk', 'native', 'roads', 'event', 'active',
-             ST_SetSRID(ST_MakePoint(0,0), 4326), '{}'::jsonb, now(), now(), false, 'nonsense')`,
-    ).rejects.toThrow(/obs_evidence_state_enum/);
+      sql`INSERT INTO conditions.report_evidence
+            (record_class, record_id, evidence_kind, occurred_at)
+          VALUES ('observations', 'obs-1', 'report', now())`,
+    ).rejects.toThrow(/report_evidence_record_class_enum/);
+  }, 30_000);
+
+  it("rejects a situation with an unknown evidence_state", async () => {
+    const id = await seedFeedSituation(sql, "evidence-state-check");
+    await expect(
+      sql`UPDATE conditions.situation SET evidence_state = 'nonsense' WHERE id = ${id}`,
+    ).rejects.toThrow(/situation_evidence_state_enum/);
+    await expect(
+      sql`UPDATE conditions.situation SET evidence_state = 'self_reported' WHERE id = ${id}`,
+    ).resolves.toBeDefined();
   }, 30_000);
 });
 
-describe("migration 0008 — unique sub_claim (subject, key, type)", () => {
-  it("rejects a duplicate (subject_id, key_id, claim_type) sub-claim", async () => {
-    await sql`INSERT INTO conditions.sub_claim (id, subject_id, claim_type, key_id, signature, created_at)
-      VALUES ('sc-1', 'subj-dup', 'confirm', 'key-dup', 'sig-1', now())`;
+describe("unique sub_claim (subject, key, type)", () => {
+  it("rejects a duplicate (subject, key, claim_type) sub-claim", async () => {
+    await sql`INSERT INTO conditions.sub_claim
+        (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
+      VALUES ('sc-1', 'situation', 'subj-dup', 'confirm', 'key-dup', 'sig-1', now())`;
     await expect(
-      sql`INSERT INTO conditions.sub_claim (id, subject_id, claim_type, key_id, signature, created_at)
-        VALUES ('sc-2', 'subj-dup', 'confirm', 'key-dup', 'sig-2', now())`,
+      sql`INSERT INTO conditions.sub_claim
+          (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
+        VALUES ('sc-2', 'situation', 'subj-dup', 'confirm', 'key-dup', 'sig-2', now())`,
     ).rejects.toThrow(/uq_sub_claim_subject_key_type/);
   }, 30_000);
 
   it("allows the same key a different claim_type on the same subject", async () => {
     await expect(
-      sql`INSERT INTO conditions.sub_claim (id, subject_id, claim_type, key_id, signature, created_at)
-        VALUES ('sc-3', 'subj-dup', 'flag', 'key-dup', 'sig-3', now())`,
+      sql`INSERT INTO conditions.sub_claim
+          (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
+        VALUES ('sc-3', 'situation', 'subj-dup', 'flag', 'key-dup', 'sig-3', now())`,
     ).resolves.toBeDefined();
+  }, 30_000);
+
+  it("tells subjects apart by class and component", async () => {
+    await expect(
+      sql`INSERT INTO conditions.sub_claim
+          (id, subject_class, subject_id, claim_type, key_id, signature, created_at)
+        VALUES ('sc-4', 'feature', 'subj-dup', 'confirm', 'key-dup', 'sig-4', now())`,
+    ).resolves.toBeDefined();
+    await expect(
+      sql`INSERT INTO conditions.sub_claim
+          (id, subject_class, subject_id, subject_component_key, claim_type, key_id, signature,
+           created_at)
+        VALUES ('sc-5', 'feature', 'subj-dup', 'evse-1', 'confirm', 'key-dup', 'sig-5', now())`,
+    ).resolves.toBeDefined();
+    await expect(
+      sql`INSERT INTO conditions.sub_claim
+          (id, subject_class, subject_id, subject_component_key, claim_type, key_id, signature,
+           created_at)
+        VALUES ('sc-6', 'feature', 'subj-dup', 'evse-1', 'confirm', 'key-dup', 'sig-6', now())`,
+    ).rejects.toThrow(/uq_sub_claim_subject_key_type/);
   }, 30_000);
 });

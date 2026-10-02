@@ -2,13 +2,12 @@ import type { EvidenceEntry, EvidenceLedger } from "@openconditions/core";
 
 /**
  * A single row from `conditions.report_evidence` — the authoritative,
- * append-only evidence ledger for a crowd observation. This is the raw storage
+ * append-only evidence ledger for a crowd record. This is the raw storage
  * shape; {@link evidenceRowsToLedger} maps it into core's replayable
  * {@link EvidenceEntry} model.
  */
 export interface ReportEvidenceRow {
   id: string | number;
-  observationId: string;
   evidenceKind: string;
   actorKeyId?: string | null;
   sourceId?: string | null;
@@ -41,7 +40,24 @@ function outcomeFromDetails(details: unknown, rowId: string | number): "confirme
 }
 
 /**
- * Map the stored `report_evidence` rows for one observation into core's
+ * When a report entry counts from: the instant the reporter states
+ * (`details.reportedAt`), so a report uploaded late lives only what is left
+ * of its lifetime, but never later than the server received it — the row's
+ * own time, which a reporter cannot move.
+ */
+function reportedAt(row: ReportEvidenceRow): string {
+  const stated =
+    row.details !== null && typeof row.details === "object"
+      ? (row.details as { reportedAt?: unknown }).reportedAt
+      : undefined;
+  if (typeof stated !== "string" || !Number.isFinite(Date.parse(stated))) return row.occurredAt;
+  return Date.parse(stated) < Date.parse(row.occurredAt)
+    ? new Date(Date.parse(stated)).toISOString()
+    : row.occurredAt;
+}
+
+/**
+ * Map the stored `report_evidence` rows for one record into core's
  * {@link EvidenceLedger}, the input to `evaluateEvidence`. The raw ledger stays
  * authoritative — this is a pure, deterministic projection, so re-running it on
  * the same rows always yields the same ledger.
@@ -51,11 +67,10 @@ function outcomeFromDetails(details: unknown, rowId: string | number): "confirme
  * - `official_match` → external `{ source: "official" }`, its outcome read from
  *   `details.outcome` ("confirmed" when absent; any other present value throws);
  * - `reviewer_accept` → external `{ source: "reviewer", outcome: "confirmed" }`;
- * - `reviewer_reject` → external `{ source: "reviewer", outcome: "rejected" }`;
- * - `expired` rows are IGNORED — expiry is derived by the policy, never input.
+ * - `reviewer_reject` → external `{ source: "reviewer", outcome: "rejected" }`.
  *
- * Entry `id` is `String(row.id)`, `at` is `occurredAt`, and `reporterKey` is
- * `actorKeyId ?? undefined`.
+ * Entry `id` is `String(row.id)`, `at` is `occurredAt` (a report's
+ * {@link reportedAt}), and `reporterKey` is `actorKeyId ?? undefined`.
  *
  * @throws TypeError on an unknown `evidenceKind`, or on an official_match row
  *   whose present `details.outcome` is unrecognized — a corrupt ledger must
@@ -64,9 +79,6 @@ function outcomeFromDetails(details: unknown, rowId: string | number): "confirme
 export function evidenceRowsToLedger(rows: ReportEvidenceRow[], now: string): EvidenceLedger {
   const entries: EvidenceEntry[] = [];
   for (const row of rows) {
-    if (row.evidenceKind === "expired") {
-      continue;
-    }
     const base = {
       id: String(row.id),
       at: row.occurredAt,
@@ -74,6 +86,8 @@ export function evidenceRowsToLedger(rows: ReportEvidenceRow[], now: string): Ev
     };
     switch (row.evidenceKind) {
       case "report":
+        entries.push({ ...base, at: reportedAt(row), kind: "report" });
+        break;
       case "confirm":
       case "negate":
         entries.push({ ...base, kind: row.evidenceKind });

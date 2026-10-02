@@ -1,5 +1,5 @@
 import { runMigrations } from "@openconditions/core/server";
-import type { InstanceKey, OutboxEntry, OutboxPage } from "@openconditions/federation";
+import type { InstanceKey, OutboxPage, RecordOutboxEntry } from "@openconditions/federation";
 import {
   encodeOutboxCursor,
   generateInstanceKey,
@@ -12,6 +12,15 @@ import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
+import {
+  type OwnSituationOptions,
+  ownSituation,
+  setOutboxAge,
+  situationId,
+  storeSituation,
+  subscribeAll,
+  tombstoneSituation,
+} from "./record-fixtures.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -20,7 +29,7 @@ const NOW = "2026-07-13T12:00:00.000Z";
 const OUTBOX_URL = "https://conditions.example.org/peer/outbox";
 
 /** The wire-encoded composite cursor of a served entry. */
-function cursorOf(entry: OutboxEntry): string {
+function cursorOf(entry: RecordOutboxEntry): string {
   return encodeOutboxCursor({ txid: entry.txid, seq: entry.seq });
 }
 
@@ -30,7 +39,6 @@ const ACTOR_CONFIG = {
   operator: "Test Operator",
   jurisdiction: "NL",
   coverage: { iso3166: ["NL"] },
-  supportedTypes: ["incident", "roadwork"],
   license: "ODbL-1.0",
   trustTier: 1,
   capabilities: {
@@ -48,25 +56,12 @@ const ENABLED_ENV = {
   OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(ACTOR_CONFIG),
 };
 
-async function insertObservation(
-  id: string,
-  opts: { lon?: number; license?: string; evidenceState?: string | null; origin?: object } = {},
-): Promise<void> {
-  const geometry = { type: "Point", coordinates: [opts.lon ?? 5.1, 52.1] };
-  const origin = opts.origin ?? {
-    kind: "feed",
-    attribution: { provider: "Test Authority", license: opts.license ?? "CC-BY-4.0" },
-  };
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, type, category, severity, severity_source,
-       headline, status, geom, origin, data_updated_at, fetched_at, evidence_state)
-    VALUES (${id}, 'route-test', 'datex2', 'roads', 'event', 'incident', 'incident', 'medium',
-       'declared', ${id}, 'active',
-       ST_SetSRID(ST_GeomFromGeoJSON(${JSON.stringify(geometry)}), 4326),
-       ${sql.json(origin as never)}, '2026-07-13T10:00:00Z', '2026-07-13T10:00:00Z',
-       ${opts.evidenceState ?? null})`;
+/** Stores one of this instance's situations, which the capture journals. */
+async function seed(local: string, opts: OwnSituationOptions = {}): Promise<void> {
+  await storeSituation(sql, ownSituation(local, opts));
 }
+
+const ids = (page: OutboxPage) => page.orderedItems.map((e) => e.recordId);
 
 function headerStrings(headers: Record<string, unknown>): Record<string, string> {
   const out: Record<string, string> = {};
@@ -91,13 +86,7 @@ beforeAll(async () => {
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
   sql = postgres(url, { max: 3 });
   await runMigrations(url);
-  // The outbox capture trigger only journals for a SUBSCRIBER (migration 0023);
-  // this route serves that journal, so give it one.
-  await sql`
-    INSERT INTO conditions.federation_subscription
-      (id, peer_id, delivery_mode, created_at, updated_at)
-    VALUES ('sub-outbox-route', 'peer-outbox-route', 'pull', now(), now())
-    ON CONFLICT (id) DO NOTHING`;
+  await subscribeAll(sql, "sub-outbox-route");
 }, 120_000);
 
 afterAll(async () => {
@@ -116,9 +105,9 @@ describe("GET /peer/outbox", () => {
     }
   }, 30_000);
 
-  it("serves a signed OrderedCollectionPage with a strong ETag", async () => {
-    await insertObservation("route-a");
-    await insertObservation("route-b");
+  it("serves a signed OrderedCollectionPage of record entries with a strong ETag", async () => {
+    await seed("route-a");
+    await seed("route-b");
     const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
     try {
       const res = await app.inject({ method: "GET", url: "/peer/outbox" });
@@ -129,8 +118,21 @@ describe("GET /peer/outbox", () => {
       const page = res.json() as OutboxPage;
       expect(page.type).toBe("OrderedCollectionPage");
       expect(page.partOf).toBe(OUTBOX_URL);
-      expect(page.orderedItems.map((e) => e.objectId)).toEqual(["route-a", "route-b"]);
+      expect(ids(page)).toEqual([situationId("route-a"), situationId("route-b")]);
       expect(page.highWaterMark).toBe(cursorOf(page.orderedItems[1]!));
+      const [first] = page.orderedItems;
+      expect(first).toMatchObject({
+        operation: "create",
+        recordClass: "situation",
+        kind: "incident",
+        domain: "roads",
+      });
+      expect(first!.record).toMatchObject({
+        id: situationId("route-a"),
+        class: "situation",
+        revision: 1,
+        provenance: { instanceId: "oc-test", sourceId: "nl-ndw" },
+      });
 
       const [key] = await loadActiveKeys(sql, NOW);
       const verified = await verifyMessage({
@@ -154,8 +156,7 @@ describe("GET /peer/outbox", () => {
     try {
       const first = await app.inject({ method: "GET", url: "/peer/outbox?limit=1" });
       const firstPage = first.json() as OutboxPage;
-      expect(firstPage.orderedItems).toHaveLength(1);
-      expect(firstPage.orderedItems[0]!.objectId).toBe("route-a");
+      expect(ids(firstPage)).toEqual([situationId("route-a")]);
       expect(firstPage.next).toContain(`after=${firstPage.highWaterMark}`);
       expect(firstPage.next).toContain("limit=1");
 
@@ -163,15 +164,14 @@ describe("GET /peer/outbox", () => {
         method: "GET",
         url: `/peer/outbox?after=${firstPage.highWaterMark}`,
       });
-      const secondPage = second.json() as OutboxPage;
-      expect(secondPage.orderedItems.map((e) => e.objectId)).toEqual(["route-b"]);
+      expect(ids(second.json() as OutboxPage)).toEqual([situationId("route-b")]);
     } finally {
       await app.close();
     }
   }, 30_000);
 
   it("applies the subscriber filter at source and still advances the highWaterMark", async () => {
-    await insertObservation("route-far", { lon: 100.5 });
+    await seed("route-far", { lon: 100.5 });
     const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
     try {
       const res = await app.inject({
@@ -179,9 +179,60 @@ describe("GET /peer/outbox", () => {
         url: "/peer/outbox?bbox=100,52,101,53",
       });
       const page = res.json() as OutboxPage;
-      expect(page.orderedItems.map((e) => e.objectId)).toEqual(["route-far"]);
+      expect(ids(page)).toEqual([situationId("route-far")]);
       expect(page.highWaterMark).toBe(cursorOf(page.orderedItems[0]!));
       expect(page.next).toBeUndefined();
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("filters by record class, kind and domain from the journal columns", async () => {
+    await seed("route-works", { kind: "roadworks" });
+    const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
+    try {
+      const works = await app.inject({ method: "GET", url: "/peer/outbox?kinds=roadworks" });
+      expect(ids(works.json() as OutboxPage)).toEqual([situationId("route-works")]);
+
+      const incidents = await app.inject({
+        method: "GET",
+        url: "/peer/outbox?classes=situation&kinds=incident&domains=roads",
+      });
+      const incidentIds = ids(incidents.json() as OutboxPage);
+      expect(incidentIds).toContain(situationId("route-a"));
+      expect(incidentIds).not.toContain(situationId("route-works"));
+
+      const features = await app.inject({ method: "GET", url: "/peer/outbox?classes=feature" });
+      expect(ids(features.json() as OutboxPage)).toEqual([]);
+
+      const otherDomain = await app.inject({
+        method: "GET",
+        url: "/peer/outbox?domains=parking",
+      });
+      expect(ids(otherDomain.json() as OutboxPage)).toEqual([]);
+
+      // Naming properties narrows to the observations named: no situation passes.
+      const properties = await app.inject({
+        method: "GET",
+        url: "/peer/outbox?properties=traffic.speed",
+      });
+      expect(ids(properties.json() as OutboxPage)).toEqual([]);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("drops share-alike records unless the subscriber accepts them", async () => {
+    await seed("route-odbl", { license: "ODbL-1.0" });
+    const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
+    try {
+      const permissive = await app.inject({ method: "GET", url: "/peer/outbox?limit=500" });
+      expect(ids(permissive.json() as OutboxPage)).not.toContain(situationId("route-odbl"));
+      const all = await app.inject({
+        method: "GET",
+        url: "/peer/outbox?limit=500&permissiveOnly=false",
+      });
+      expect(ids(all.json() as OutboxPage)).toContain(situationId("route-odbl"));
     } finally {
       await app.close();
     }
@@ -192,11 +243,13 @@ describe("GET /peer/outbox", () => {
     try {
       const res = await app.inject({
         method: "GET",
-        url: "/peer/outbox?limit=1&bbox=4,50,6,54&permissiveOnly=false",
+        url: "/peer/outbox?limit=1&bbox=4,50,6,54&classes=situation&kinds=incident&permissiveOnly=false",
       });
       const page = res.json() as OutboxPage;
       expect(page.next).toContain("after=");
       expect(page.next).toContain("bbox=4%2C50%2C6%2C54");
+      expect(page.next).toContain("classes=situation");
+      expect(page.next).toContain("kinds=incident");
       expect(page.next).toContain("permissiveOnly=false");
     } finally {
       await app.close();
@@ -230,7 +283,7 @@ describe("GET /peer/outbox", () => {
       });
       expect(verified.ok).toBe(true);
 
-      await insertObservation("route-etag-new");
+      await seed("route-etag-new");
       const changed = await app.inject({
         method: "GET",
         url: "/peer/outbox",
@@ -249,10 +302,12 @@ describe("GET /peer/outbox", () => {
       const plain = await app.inject({ method: "GET", url: "/peer/outbox" });
       const cursor = await app.inject({ method: "GET", url: "/peer/outbox?after=1.1" });
       const limited = await app.inject({ method: "GET", url: "/peer/outbox?limit=1" });
+      const filtered = await app.inject({ method: "GET", url: "/peer/outbox?kinds=incident" });
       expect(cursor.statusCode).toBe(200);
       expect(plain.headers["etag"]).not.toBe(cursor.headers["etag"]);
       // Same cursor + filter, different page size ⇒ different representation.
       expect(plain.headers["etag"]).not.toBe(limited.headers["etag"]);
+      expect(plain.headers["etag"]).not.toBe(filtered.headers["etag"]);
     } finally {
       await app.close();
     }
@@ -295,6 +350,8 @@ describe("GET /peer/outbox", () => {
         "/peer/outbox?after=abc",
         "/peer/outbox?after=-1",
         "/peer/outbox?bbox=1,2,3",
+        "/peer/outbox?classes=observations",
+        "/peer/outbox?kinds=",
         "/peer/outbox?minEvidenceTier=bogus",
         "/peer/outbox?maxAgeSec=-5",
         "/peer/outbox?limit=0",
@@ -307,26 +364,24 @@ describe("GET /peer/outbox", () => {
     }
   }, 30_000);
 
-  it("serves a soft-archive tombstone as a signed delete entry; a tampered page fails verification", async () => {
-    await insertObservation("route-tomb");
-    // Soft-archive it: the outbox trigger emits a reasoned delete tombstone.
-    await sql`
-      UPDATE conditions.observations
-      SET status = 'archived', tombstone_reason = 'gdpr_erasure'
-      WHERE id = 'route-tomb'`;
+  it("serves a tombstone as a signed delete entry with its reason; a tampered page fails verification", async () => {
+    await seed("route-tomb");
+    await tombstoneSituation(sql, situationId("route-tomb"), "withdrawn");
     const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
     try {
       const res = await app.inject({ method: "GET", url: "/peer/outbox?limit=500" });
       expect(res.statusCode).toBe(200);
       const page = res.json() as OutboxPage;
-      const tomb = page.orderedItems.find(
-        (e) => e.objectId === "route-tomb" && e.operation === "delete",
-      );
-      expect(tomb).toBeDefined();
-      expect(tomb!.operation).toBe("delete");
-      expect(tomb!.tombstone).toBe(true);
-      expect(tomb!.reason).toBe("gdpr_erasure");
-      expect(tomb!.observation).toBeUndefined();
+      const entries = page.orderedItems.filter((e) => e.recordId === situationId("route-tomb"));
+      expect(entries.map((e) => e.operation)).toEqual(["create", "delete"]);
+      const tomb = entries[1]!;
+      expect(tomb).toMatchObject({
+        recordClass: "situation",
+        kind: "incident",
+        tombstone: true,
+        reason: "withdrawn",
+      });
+      expect(tomb.record).toBeUndefined();
 
       const [key] = await loadActiveKeys(sql, NOW);
       const verified = await verifyMessage({
@@ -348,7 +403,7 @@ describe("GET /peer/outbox", () => {
         status: 200,
         isResponse: true,
         headers: headerStrings(res.headers as Record<string, unknown>),
-        body: Buffer.from(res.rawPayload.toString("utf8").replace("gdpr_erasure", "expired")),
+        body: Buffer.from(res.rawPayload.toString("utf8").replace('"withdrawn"', '"expired"')),
         resolvePublicKey: async (keyId) => (keyId === key!.keyId ? key!.publicKey : null),
         nonceStore: new InMemoryNonceStore(),
       });
@@ -357,16 +412,27 @@ describe("GET /peer/outbox", () => {
       await app.close();
     }
   }, 30_000);
-});
 
-/** Backdates the outbox row for an object to `msAgo` before NOW. */
-async function setAge(objectId: string, msAgo: number): Promise<void> {
-  const ts = new Date(Date.parse(NOW) - msAgo).toISOString();
-  await sql`
-    UPDATE conditions.federation_outbox
-    SET created_at = ${ts}::timestamptz
-    WHERE object_id = ${objectId}`;
-}
+  it("serves nothing of an erased record but its rights_revoked delete", async () => {
+    await seed("route-erased", { headline: "Reporter's free text" });
+    await tombstoneSituation(sql, situationId("route-erased"), "rights_revoked");
+    const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
+    try {
+      const res = await app.inject({ method: "GET", url: "/peer/outbox?limit=500" });
+      const page = res.json() as OutboxPage;
+      const entries = page.orderedItems.filter((e) => e.recordId === situationId("route-erased"));
+      expect(entries).toHaveLength(1);
+      expect(entries[0]).toMatchObject({
+        operation: "delete",
+        tombstone: true,
+        reason: "rights_revoked",
+      });
+      expect(res.body).not.toContain("Reporter's free text");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+});
 
 async function signedGet(key: InstanceKey, path: string): Promise<Record<string, string>> {
   const s = await signMessage({
@@ -400,31 +466,38 @@ function peersEnv(peer: InstanceKey, tier: 0 | 1 | 2): Record<string, string> {
 
 describe("GET /peer/outbox — the tier-bounded public snapshot", () => {
   it("floors an UNAUTHENTICATED request to Tier-0 (24h) and redirects older history to the archive", async () => {
-    await insertObservation("snap-fresh");
-    await insertObservation("snap-2day");
-    await setAge("snap-fresh", 2 * HOUR);
-    await setAge("snap-2day", 2 * DAY);
+    await seed("snap-fresh");
+    await seed("snap-2day");
+    await setOutboxAge(sql, situationId("snap-fresh"), 2 * HOUR, NOW);
+    await setOutboxAge(sql, situationId("snap-2day"), 2 * DAY, NOW);
 
     const env = { ...ENABLED_ENV, OPENCONDITIONS_FEDERATION_ARCHIVE_URL: ARCHIVE_URL };
     const app = await build({ sql, env, logger: false, now: () => NOW });
     try {
       const res = await app.inject({ method: "GET", url: "/peer/outbox?limit=500" });
       expect(res.statusCode).toBe(200);
-      const page = res.json() as OutboxPage & { beyondWindow?: boolean; archiveUrl?: string };
-      const ids = page.orderedItems.map((e) => e.objectId);
+      const page = res.json() as OutboxPage & {
+        beyondWindow?: boolean;
+        archiveUrl?: Record<string, string>;
+      };
       // A within-24h entry is always served; the 2-day-old one is beyond the floor.
-      expect(ids).toContain("snap-fresh");
-      expect(ids).not.toContain("snap-2day");
+      expect(ids(page)).toContain(situationId("snap-fresh"));
+      expect(ids(page)).not.toContain(situationId("snap-2day"));
       expect(page.beyondWindow).toBe(true);
-      expect(page.archiveUrl).toBe(ARCHIVE_URL);
+      expect(page.archiveUrl).toEqual({
+        situation: `${ARCHIVE_URL}/archive-situation.parquet`,
+        feature: `${ARCHIVE_URL}/archive-feature.parquet`,
+        offer: `${ARCHIVE_URL}/archive-offer.parquet`,
+        observation: `${ARCHIVE_URL}/archive-observation.parquet`,
+      });
     } finally {
       await app.close();
     }
   }, 30_000);
 
   it("serves an AUTHENTICATED Tier-1 peer its 30-day window (an entry the Tier-0 floor excludes)", async () => {
-    await insertObservation("snap-t1-2day");
-    await setAge("snap-t1-2day", 2 * DAY);
+    await seed("snap-t1-2day");
+    await setOutboxAge(sql, situationId("snap-t1-2day"), 2 * DAY, NOW);
     const peer = await generateInstanceKey(new Date().toISOString());
 
     const app = await build({ sql, env: peersEnv(peer, 1), logger: false, now: () => NOW });
@@ -436,8 +509,7 @@ describe("GET /peer/outbox — the tier-bounded public snapshot", () => {
         headers: await signedGet(peer, path),
       });
       expect(res.statusCode).toBe(200);
-      const page = res.json() as OutboxPage;
-      expect(page.orderedItems.map((e) => e.objectId)).toContain("snap-t1-2day");
+      expect(ids(res.json() as OutboxPage)).toContain(situationId("snap-t1-2day"));
     } finally {
       await app.close();
     }

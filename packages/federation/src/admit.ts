@@ -9,8 +9,78 @@ import {
   type Admission,
   admitRecord,
   federationEligible,
+  RECORD_CLASSES,
+  type RecordClass,
   type Registry,
+  TOMBSTONE_REASONS,
 } from "@openconditions/model";
+
+/** What one entry of a peer's outbox page says, once its shape is checked. */
+export type InboundEntry = {
+  seq: number;
+  txid: string;
+  recordClass: RecordClass;
+  recordId: string;
+  canonicalId: string | null;
+} & (
+  | { operation: "create" | "update"; record: unknown }
+  | { operation: "delete"; reason: (typeof TOMBSTONE_REASONS)[number] }
+);
+
+const isString = (v: unknown): v is string => typeof v === "string" && v.length > 0;
+
+/**
+ * Reads one entry of a peer's outbox page: a change carries the record, a
+ * retraction carries a reason and never a record — a delete that also
+ * carries one says two things at once and is refused. A retraction's reason
+ * outside the model's vocabulary reads as `withdrawn`. The record itself is
+ * checked on admission ({@link admitFederatedRecord}).
+ */
+export function readInboundEntry(
+  wire: unknown,
+): { ok: true; entry: InboundEntry } | { ok: false; reason: string; recordId?: string } {
+  if (wire === null || typeof wire !== "object" || Array.isArray(wire)) {
+    return { ok: false, reason: "malformed entry" };
+  }
+  const e = wire as Record<string, unknown>;
+  const recordId = isString(e["recordId"]) ? e["recordId"] : undefined;
+  if (
+    recordId === undefined ||
+    !(RECORD_CLASSES as readonly unknown[]).includes(e["recordClass"]) ||
+    !isString(e["txid"]) ||
+    typeof e["seq"] !== "number"
+  ) {
+    return {
+      ok: false,
+      reason: "malformed entry",
+      ...(recordId === undefined ? {} : { recordId }),
+    };
+  }
+  const head = {
+    seq: e["seq"],
+    txid: e["txid"],
+    recordClass: e["recordClass"] as RecordClass,
+    recordId,
+    canonicalId: isString(e["canonicalId"]) ? e["canonicalId"] : null,
+  };
+  const operation = e["operation"];
+  if (operation === "delete") {
+    if (e["record"] !== undefined) {
+      return { ok: false, recordId, reason: "a delete carries no record" };
+    }
+    const reason = (TOMBSTONE_REASONS as readonly unknown[]).includes(e["reason"])
+      ? (e["reason"] as (typeof TOMBSTONE_REASONS)[number])
+      : "withdrawn";
+    return { ok: true, entry: { ...head, operation, reason } };
+  }
+  if (operation === "create" || operation === "update") {
+    if (e["record"] === undefined) {
+      return { ok: false, recordId, reason: `a ${operation} carries its record` };
+    }
+    return { ok: true, entry: { ...head, operation, record: e["record"] } };
+  }
+  return { ok: false, recordId, reason: "malformed entry" };
+}
 
 export interface PeerReceipt {
   /** The peer the record came from; it must be the record's own instance. */

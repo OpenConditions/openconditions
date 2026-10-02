@@ -31,8 +31,9 @@ export {
   UNVERIFIED_ATTESTATION,
   UNVERIFIED_OSM_AUTH,
 } from "./attester/verifier.js";
-export { applyCorroboration, applyNegation, findCandidates } from "./evidence/phenomenon.js";
+export { applyCorroboration, resolveSurvivors } from "./evidence/corroborate.js";
 export { recomputeEvidence } from "./evidence/recompute.js";
+export { eraseRecord } from "./federation/tombstone.js";
 export {
   isValidContextPart,
   type PublicContext,
@@ -56,7 +57,7 @@ export {
 } from "./reputation/resolve.js";
 export { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
 export { type BlockListItem, blockKey, listBlocked, unblockKey } from "./reviewer/blocklist.js";
-export { acceptObservation, type DecisionOutcome, rejectObservation } from "./reviewer/decide.js";
+export { acceptSituation, type DecisionOutcome, rejectSituation } from "./reviewer/decide.js";
 export {
   ADVISORY_CREDIBLE_LEVEL,
   ADVISORY_REPUTATION_NOTE,
