@@ -29,7 +29,7 @@
   "dependencies": {
     "@openconditions/core": "workspace:*",
     "@openconditions/model": "workspace:*",
-    "canonicalize": "3.0.0"
+    "canonicalize": "5.1.0"
   },
   "devDependencies": {
     "@openconditions/model-registry": "workspace:*",
