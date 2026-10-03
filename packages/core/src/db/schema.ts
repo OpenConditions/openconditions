@@ -25,159 +25,14 @@ import {
 import { bytea, conditionsSchema, geometry, geometryPoint, xid8 } from "./columns.js";
 
 /**
- * The single generic store for every domain (roads/transit/places/crowd).
- * This Drizzle definition is the SCHEMA SOURCE OF TRUTH — drizzle-kit generates
- * the versioned SQL migrations in `packages/core/drizzle/` from it.
- */
-export const observations = conditionsSchema.table(
-  "observations",
-  {
-    id: text("id").primaryKey(),
-    source: text("source").notNull(),
-    sourceFormat: text("source_format").notNull(),
-    domain: text("domain").notNull(),
-    kind: text("kind").notNull(),
-
-    type: text("type"),
-    subtype: text("subtype"),
-    category: text("category"),
-    severity: text("severity"),
-    severitySource: text("severity_source"),
-    headline: text("headline"),
-    description: text("description"),
-    label: text("label"),
-
-    metric: text("metric"),
-    value: doublePrecision("value"),
-    level: text("level"),
-    unit: text("unit"),
-    aggregation: text("aggregation"),
-
-    status: text("status").notNull().default("active"),
-    geom: geometry("geom").notNull(),
-    subject: jsonb("subject"),
-    attributes: jsonb("attributes"),
-    validFrom: timestamp("valid_from", { withTimezone: true }),
-    validTo: timestamp("valid_to", { withTimezone: true }),
-    schedule: jsonb("schedule"),
-    confidence: text("confidence"),
-    isForecast: boolean("is_forecast").notNull().default(false),
-    relatedIds: jsonb("related_ids"),
-    origin: jsonb("origin").notNull(),
-    dataUpdatedAt: timestamp("data_updated_at", { withTimezone: true }).notNull(),
-    fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull(),
-    expiresAt: timestamp("expires_at", { withTimezone: true }),
-    isStale: boolean("is_stale").notNull().default(false),
-    // fetched_at + freshness window; read derives is_stale as now() > stale_after.
-    staleAfter: timestamp("stale_after", { withTimezone: true }),
-    // Deterministic hash of the observation's meaningful fields (see
-    // write-postgis.ts computeContentHash). Diff key for the swap upsert —
-    // never queried directly, only compared inside `ON CONFLICT ... WHERE`.
-    contentHash: text("content_hash"),
-
-    // Commons substrate: identity/lineage, uncertainty, privacy and provenance
-    // fields for crowd-reporting/federation. The ingest pipeline's
-    // normalizeObservation seam stamps instance_id, canonical_id,
-    // privacy_class and source_uri/source_license on every feed row; the
-    // event and crowd columns are no longer written.
-    instanceId: text("instance_id"),
-    canonicalId: text("canonical_id"),
-    phenomenonFingerprint: text("phenomenon_fingerprint"),
-    replaces: jsonb("replaces"),
-    corroborations: jsonb("corroborations"),
-    fuzziness: text("fuzziness").notNull().default("exact"),
-    confidenceScore: doublePrecision("confidence_score"),
-    // Materialized outputs of the crowd evidence policy (evaluateEvidence). The
-    // raw report_evidence ledger stays authoritative; these are derived and a
-    // replay recomputes them, so they are excluded from content_hash. NULL on
-    // non-crowd rows.
-    evidenceState: text("evidence_state"),
-    routingEligible: boolean("routing_eligible").notNull().default(false),
-    // First-flag marker for the reviewer queue (set by the sub-claim flag route,
-    // never at landing). A flag is not evidence of truth/falsehood, so it does
-    // not touch the evidence ledger; it only lights up this timestamp. Excluded
-    // from content_hash (never set on feed/crowd insert).
-    flaggedAt: timestamp("flagged_at", { withTimezone: true }),
-    severityLevel: smallint("severity_level"),
-    privacyClass: text("privacy_class").notNull().default("unknown"),
-    kAnonymity: integer("k_anonymity"),
-    dpEpsilon: doublePrecision("dp_epsilon"),
-    dpDelta: doublePrecision("dp_delta"),
-    informed: jsonb("informed"),
-    sourceUri: text("source_uri"),
-    sourceLicense: text("source_license"),
-    // Why a row became a tombstone, set at the moment of tombstoning and read by
-    // the federation outbox trigger so a soft-archive (or hard delete) propagates
-    // its reason. NULL on a live row. TTL-driven sweep deletes default to
-    // 'expired' in the trigger, so this stays NULL for the common expiry path.
-    tombstoneReason: text("tombstone_reason"),
-  },
-  (t) => [
-    index("idx_conditions_obs_geom").using("gist", t.geom),
-    index("idx_conditions_obs_domain").on(t.domain),
-    index("idx_conditions_obs_dom_type").on(t.domain, t.type),
-    index("idx_conditions_obs_severity").on(t.severity),
-    index("idx_conditions_obs_metric").on(t.metric),
-    index("idx_conditions_obs_valid_to").on(t.validTo),
-    index("idx_conditions_obs_expires").on(t.expiresAt),
-    index("idx_conditions_obs_subject").using("gin", t.subject),
-    index("idx_conditions_obs_source").on(t.source),
-    index("idx_conditions_obs_canonical").on(t.canonicalId),
-    // The federated-ingest byte-equivalence fallback looks a resupplied record
-    // up by its content hash when the canonicalId was lost; without this index
-    // every such lookup is a full scan.
-    index("idx_conditions_obs_content_hash").on(t.contentHash),
-    index("idx_conditions_obs_phenomenon").on(t.phenomenonFingerprint),
-    index("idx_conditions_obs_instance").on(t.instanceId),
-    index("idx_conditions_obs_privacy").on(t.privacyClass),
-    index("idx_conditions_obs_evidence_state").on(t.evidenceState),
-    index("idx_conditions_obs_flagged").on(t.flaggedAt).where(sql`${t.flaggedAt} IS NOT NULL`),
-    // Corroboration/version lineage is queried by containment (`corroborations
-    // @> [id]`) during survivor resolution; GIN keeps that a index lookup rather
-    // than a full scan as crowd volume grows.
-    index("idx_conditions_obs_corroborations").using("gin", t.corroborations),
-    index("idx_conditions_obs_replaces").using("gin", t.replaces),
-    check(
-      "obs_confidence_score_range",
-      sql`${t.confidenceScore} IS NULL OR (${t.confidenceScore} >= 0 AND ${t.confidenceScore} <= 1)`,
-    ),
-    check("obs_dp_epsilon_nonneg", sql`${t.dpEpsilon} IS NULL OR ${t.dpEpsilon} >= 0`),
-    check(
-      "obs_dp_delta_range",
-      sql`${t.dpDelta} IS NULL OR (${t.dpDelta} >= 0 AND ${t.dpDelta} < 1)`,
-    ),
-    check("obs_k_anonymity_positive", sql`${t.kAnonymity} IS NULL OR ${t.kAnonymity} > 0`),
-    check(
-      "obs_severity_level_range",
-      sql`${t.severityLevel} IS NULL OR (${t.severityLevel} >= 1 AND ${t.severityLevel} <= 5)`,
-    ),
-    check("obs_fuzziness_enum", sql.raw(enumCheckSql("fuzziness", FUZZINESS))),
-    // The column default 'unknown' marks a row no writer stamped; it is not a
-    // privacy class, so the table allows it beside the kernel's classes.
-    check(
-      "obs_privacy_class_enum",
-      sql.raw(enumCheckSql("privacy_class", [...PRIVACY_CLASSES, "unknown"])),
-    ),
-    check(
-      "obs_evidence_state_enum",
-      sql`${t.evidenceState} IS NULL OR ${sql.raw(enumCheckSql("evidence_state", EVIDENCE_STATES))}`,
-    ),
-    check(
-      "obs_tombstone_reason_enum",
-      sql`${t.tombstoneReason} IS NULL OR ${t.tombstoneReason} IN ('deleted_by_source','gdpr_erasure','retracted_as_wrong','expired','legal_takedown')`,
-    ),
-  ],
-);
-
-/**
  * One row per feed source, updated on every poll cycle (including a 304/
  * unchanged no-op) so freshness and orphan-status can be derived from *when
  * the source last polled/succeeded* rather than from any individual row's
  * `fetched_at`. This is what lets a healthy feed sitting behind a 304 keep
- * its last-good rows indefinitely instead of aging out of `sweepStale
- * Observations` after `ORPHAN_MAX_AGE_SEC` — the swap only touches
- * `fetched_at` for rows that actually changed, so a per-row freshness check
- * would otherwise treat an unchanged-but-healthy source as gone stale.
+ * its last-good records indefinitely instead of being swept as orphaned
+ * after `ORPHAN_MAX_AGE_SEC` — a write leaves unchanged records untouched, so
+ * a per-record freshness check would otherwise treat an unchanged-but-healthy
+ * source as gone stale.
  */
 export const sourceStatus = conditionsSchema.table("source_status", {
   source: text("source").primaryKey(),
@@ -237,95 +92,16 @@ export const sourcePollAttempt = conditionsSchema.table(
 );
 
 /**
- * Append-only per-sensor speed history. One row per flow observation that
- * carries a speed. `dow`/`tod_hour` are UTC (getUTCDay / getUTCHours).
- *
- * SHORT-LIVED: this is the landing buffer, not the history. It takes ~20M
- * rows/day, so it is rolled up into {@link sensorSpeedHourly} and pruned within
- * days — the weeks-long history every consumer reads lives in the rollup.
- */
-export const sensorSpeedSample = conditionsSchema.table(
-  "sensor_speed_sample",
-  {
-    id: bigserial("id", { mode: "number" }).primaryKey(),
-    sensorKey: text("sensor_key").notNull(),
-    source: text("source").notNull(),
-    observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
-    speedKph: doublePrecision("speed_kph").notNull(),
-    dow: smallint("dow").notNull(),
-    todHour: smallint("tod_hour").notNull(),
-    geom: geometry("geom").notNull(),
-  },
-  (t) => [
-    index("idx_sensor_sample_key_bucket").on(t.sensorKey, t.dow, t.todHour),
-    index("idx_sensor_sample_observed").on(t.observedAt),
-    unique("uq_sensor_sample_key_observed").on(t.sensorKey, t.observedAt),
-  ],
-);
-
-/** Completed finalization frontier across all sensors, advanced with each rollup batch. */
-export const speedRollupProgress = conditionsSchema.table(
-  "speed_rollup_progress",
-  {
-    id: integer("id").primaryKey().default(1),
-    finalizedBefore: timestamp("finalized_before", { withTimezone: true }).notNull(),
-  },
-  (t) => [check("speed_rollup_progress_singleton", sql`${t.id} = 1`)],
-);
-
-/**
- * Per-(sensor, UTC hour) rollup of {@link sensorSpeedSample} — the durable speed
- * history. One row replaces ~25 raw rows, so the weeks of history the baseline
- * and segment-profile derivations need cost ~5 GB instead of ~210 GB.
- *
- * The distribution is kept, not a summary statistic, because every consumer wants
- * a PERCENTILE (free-flow p85, typical-speed p50) over a window spanning many of
- * these rows — and percentiles do not decompose: the p85 of 28 days cannot be
- * recovered from 28 daily p85s. A histogram does decompose (bins add
- * element-wise), so a window is merged by summing counts per bin and reading the
- * percentile off the cumulative distribution.
- *
- * `speedBins`/`speedCounts` are PARALLEL arrays — bin index and its count — held
- * SPARSE (only non-empty bins, bin-ascending). A sensor-hour holds ~25 samples
- * across ~9 distinct bins, so sparse keeps both the row (~190 B) and the merge
- * (~9 rows per sensor-hour, not 128) small. Bin width and the index<->kph mapping
- * are owned by the ingest rollup, which is the only writer.
- *
- * `source`/`geom` are carried per row rather than normalised into a sensor table:
- * they are what identifies and locates the sensor for consumers that no longer
- * have raw samples to read, and the duplication costs ~1 GB against a 37x saving.
- */
-export const sensorSpeedHourly = conditionsSchema.table(
-  "sensor_speed_hourly",
-  {
-    sensorKey: text("sensor_key").notNull(),
-    /** date_trunc('hour', observed_at) — UTC; completed hours only. */
-    hourUtc: timestamp("hour_utc", { withTimezone: true }).notNull(),
-    source: text("source").notNull(),
-    geom: geometry("geom").notNull(),
-    /** Total samples rolled into this hour = sum(speedCounts). */
-    sampleCount: integer("sample_count").notNull(),
-    speedBins: smallint("speed_bins").array().notNull(),
-    speedCounts: integer("speed_counts").array().notNull(),
-    finalized: boolean("finalized").notNull().default(false),
-  },
-  (t) => [
-    primaryKey({ columns: [t.sensorKey, t.hourUtc] }),
-    // The derivations scan a trailing window across all sensors; the prune
-    // deletes by the same key.
-    index("idx_sensor_hourly_hour").on(t.hourUtc),
-  ],
-);
-
-/**
- * Derived / native / osm free-flow baselines, upserted. `dow_bucket`:
- * 0 = weekday (Mon–Fri), 1 = weekend, -1 = per-sensor overall. `tod_bucket`:
- * 0–23 hour, -1 = overall. `method`: 'native' | 'derived' | 'osm_maxspeed'.
+ * Derived / native / osm free-flow baselines of measurement sites, by the
+ * subject key of the site's `traffic.speed` series (`feature:<featureId>`),
+ * upserted. `dow_bucket`: 0 = weekday (Mon–Fri), 1 = weekend, -1 = per-site
+ * overall. `tod_bucket`: 0–23 hour, -1 = overall. `method`: 'native' |
+ * 'derived' | 'osm_maxspeed'.
  */
 export const sensorBaseline = conditionsSchema.table(
   "sensor_baseline",
   {
-    sensorKey: text("sensor_key").notNull(),
+    subjectKey: text("subject_key").notNull(),
     source: text("source").notNull(),
     dowBucket: smallint("dow_bucket").notNull(),
     todBucket: smallint("tod_bucket").notNull(),
@@ -335,7 +111,7 @@ export const sensorBaseline = conditionsSchema.table(
     computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
   },
   (t) => [
-    primaryKey({ columns: [t.sensorKey, t.dowBucket, t.todBucket, t.method] }),
+    primaryKey({ columns: [t.subjectKey, t.dowBucket, t.todBucket, t.method] }),
     index("idx_sensor_baseline_source_bucket").on(t.source, t.dowBucket, t.todBucket),
   ],
 );
@@ -393,13 +169,13 @@ export const roadSegment = conditionsSchema.table(
 );
 
 /**
- * Sensor -> segment binding (KNN snap + carriageway disambiguation).
- * `sensorKey` matches Phase A's convention exactly (flow.id).
+ * A measurement site -> segment binding (KNN snap), by the subject key of the
+ * site's `traffic.speed` series.
  */
 export const sensorSegment = conditionsSchema.table(
   "sensor_segment",
   {
-    sensorKey: text("sensor_key").primaryKey(),
+    subjectKey: text("subject_key").primaryKey(),
     segmentId: text("segment_id").notNull(),
     fraction: doublePrecision("fraction").notNull(),
     offsetM: doublePrecision("offset_m").notNull(),
@@ -456,7 +232,7 @@ export const segmentObservation = conditionsSchema.table(
 
 /**
  * Weekly per-(segment, weekday, hour) typical-speed profiles, derived from
- * `sensor_speed_sample` history and bucketed in the segment's REGION-LOCAL
+ * the hourly `traffic.speed` rollups and bucketed in the segment's REGION-LOCAL
  * time (Valhalla convention: `dow` 0=Sun…6=Sat, `tod_hour` 0-23). Exported
  * to bake Valhalla's predicted-traffic tiles (see plan 12).
  */

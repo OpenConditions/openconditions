@@ -5,9 +5,12 @@ import { gzipSync } from "node:zlib";
 import { runMigrations } from "@openconditions/core/server";
 import type { LookupFn } from "@openconditions/ingest-framework";
 import { encodeOpenlrLine } from "@openconditions/openlr";
-import type { RoadFlow } from "@openconditions/roads";
 import { FEED_SOURCES, recordSkippedNoGeometry } from "@openconditions/roads";
-import { writeSnapshotIn } from "@openconditions/storage";
+import {
+  ensureObservationPartitions,
+  retentionClasses,
+  writeSnapshotIn,
+} from "@openconditions/storage";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -15,7 +18,6 @@ import { clearResolveCache } from "../pipeline/resolve.js";
 import type { DomainFeedSource } from "../pipeline/run.js";
 import { runSource } from "../pipeline/run.js";
 import { clearSiteTableCache } from "../pipeline/site-table.js";
-import { atomicSwap, MAX_ROWS_PER_SOURCE } from "../pipeline/write-postgis.js";
 import { bindSituation, registry, situationDraft, writeSituations } from "./helpers/situations.js";
 
 const NDW_FIXTURE_PATH = path.resolve(
@@ -121,9 +123,6 @@ describe("pipeline — happy path", () => {
       WHERE domain <> 'roads' OR source_id <> 'nl-ndw'
     `;
     expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
-    // No road event reaches the legacy observation table any more.
-    const legacy = await sql`SELECT id FROM conditions.observations WHERE source = 'nl-ndw'`;
-    expect(legacy).toHaveLength(0);
   }, 60_000);
 
   it("all inserted geometries are valid PostGIS geometries", async () => {
@@ -257,294 +256,7 @@ describe("pipeline — open511 (DriveBC)", () => {
   }, 30_000);
 });
 
-describe("store round-trip — typed columns + flow attributes JSONB", () => {
-  it("persists a RoadFlow measurement (metric/value columns + flow attributes)", async () => {
-    // NOTE: this is just the direct atomicSwap round-trip; the full flow-feed
-    // e2e test (parseFor dispatch → DB) lives in the "flow feed — e2e pipeline"
-    // suite below.
-    const flow: RoadFlow = {
-      id: "flow:1",
-      source: "rtflow",
-      sourceFormat: "native",
-      domain: "roads",
-      kind: "measurement",
-      metric: "flow",
-      geometry: {
-        type: "LineString",
-        coordinates: [
-          [13.4, 52.5],
-          [13.5, 52.6],
-        ],
-      },
-      los: "heavy",
-      speedKph: 40,
-      freeFlowKph: 100,
-      speedRatio: 0.4,
-      delaySeconds: 120,
-      jamFactor: 6,
-      value: 1200,
-      unit: "veh/h",
-      aggregation: "live",
-      status: "active",
-      origin: { kind: "feed", attribution: { provider: "X", license: "CC0-1.0" } },
-      dataUpdatedAt: "2026-06-23T10:00:00Z",
-      fetchedAt: "2026-06-23T10:00:00Z",
-      isStale: false,
-    };
-    await atomicSwap(sql, "rtflow", [flow]);
-
-    const rows = await sql<
-      {
-        kind: string;
-        metric: string;
-        value: number;
-        unit: string;
-        aggregation: string;
-        attributes: Record<string, unknown>;
-      }[]
-    >`
-      SELECT kind, metric, value, unit, aggregation, attributes
-      FROM conditions.observations WHERE id = 'flow:1'`;
-    expect(rows).toHaveLength(1);
-    const got = rows[0]!;
-    expect(got.kind).toBe("measurement");
-    expect(got.metric).toBe("flow"); // typed columns
-    expect(got.value).toBe(1200);
-    expect(got.unit).toBe("veh/h");
-    expect(got.aggregation).toBe("live");
-    expect(got.attributes["los"]).toBe("heavy"); // attributes JSONB
-    expect(got.attributes["speedKph"]).toBe(40);
-    expect(got.attributes["delaySeconds"]).toBe(120);
-  }, 30_000);
-});
-
-describe("atomicSwap — bulk insert at volume", () => {
-  it("inserts many rows correctly across chunk boundaries", async () => {
-    const COUNT = 1500; // spans multiple insert chunks
-    const flows: RoadFlow[] = Array.from({ length: COUNT }, (_, i) => ({
-      id: `bulk:${i}`,
-      source: "bulk",
-      sourceFormat: "native",
-      domain: "roads",
-      kind: "measurement",
-      metric: "flow",
-      geometry: { type: "Point", coordinates: [4.0 + i * 1e-4, 52.0] },
-      los: i % 2 === 0 ? "free_flow" : "heavy",
-      speedKph: 30 + (i % 70),
-      value: 30 + (i % 70),
-      unit: "km/h",
-      aggregation: "live",
-      status: "active",
-      origin: { kind: "feed", attribution: { provider: "Bulk", license: "CC0-1.0" } },
-      dataUpdatedAt: "2026-06-24T10:00:00Z",
-      fetchedAt: "2026-06-24T10:00:00Z",
-      isStale: false,
-    }));
-
-    await atomicSwap(sql, "bulk", flows, 300);
-
-    const counted = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'bulk'
-    `;
-    expect(parseInt(counted[0]!.count, 10)).toBe(COUNT);
-
-    // Typed columns, JSONB attributes, geometry and the derived stale_after all
-    // survive the bulk path for a spot-checked row.
-    const one = await sql<
-      {
-        metric: string | null;
-        value: string | null;
-        gtype: string;
-        los: unknown;
-        stale: string | null;
-      }[]
-    >`
-      SELECT metric, value::text AS value, ST_GeometryType(geom) AS gtype,
-             attributes->>'los' AS los, stale_after::text AS stale
-      FROM conditions.observations WHERE id = 'bulk:1000'
-    `;
-    expect(one.length).toBe(1);
-    expect(one[0]!.metric).toBe("flow");
-    expect(Number(one[0]!.value)).toBe(30 + (1000 % 70));
-    expect(one[0]!.gtype).toBe("ST_Point");
-    expect(one[0]!.los).toBe("free_flow");
-    expect(one[0]!.stale).not.toBeNull();
-
-    const invalid = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations
-      WHERE source = 'bulk' AND NOT ST_IsValid(geom)
-    `;
-    expect(parseInt(invalid[0]!.count, 10)).toBe(0);
-  }, 60_000);
-
-  it("replaces the row set on a second swap (delete-all + insert)", async () => {
-    const flows: RoadFlow[] = [
-      {
-        id: "bulk:new",
-        source: "bulk",
-        sourceFormat: "native",
-        domain: "roads",
-        kind: "measurement",
-        metric: "flow",
-        geometry: { type: "Point", coordinates: [5.0, 52.0] },
-        los: "heavy",
-        aggregation: "live",
-        status: "active",
-        origin: { kind: "feed", attribution: { provider: "Bulk", license: "CC0-1.0" } },
-        dataUpdatedAt: "2026-06-24T11:00:00Z",
-        fetchedAt: "2026-06-24T11:00:00Z",
-        isStale: false,
-      },
-    ];
-    await atomicSwap(sql, "bulk", flows, 300);
-
-    const rows = await sql<{ id: string }[]>`
-      SELECT id FROM conditions.observations WHERE source = 'bulk'
-    `;
-    expect(rows.length).toBe(1);
-    expect(rows[0]!.id).toBe("bulk:new");
-  }, 30_000);
-
-  it("rejects an over-limit snapshot before delete-missing can remove the retained tail", async () => {
-    const retained: RoadFlow = {
-      id: `overflow:${MAX_ROWS_PER_SOURCE}`,
-      source: "overflow",
-      sourceFormat: "native",
-      domain: "roads",
-      kind: "measurement",
-      metric: "flow",
-      geometry: { type: "Point", coordinates: [5, 52] },
-      los: "unknown",
-      aggregation: "live",
-      status: "active",
-      origin: { kind: "feed", attribution: { provider: "Overflow", license: "CC0-1.0" } },
-      dataUpdatedAt: "2026-06-24T11:00:00Z",
-      fetchedAt: "2026-06-24T11:00:00Z",
-      isStale: false,
-    };
-    await atomicSwap(sql, "overflow", [retained], 300);
-
-    const oversized = Array.from({ length: MAX_ROWS_PER_SOURCE + 1 }, (_, i) => ({
-      ...retained,
-      id: `overflow:${i}`,
-    }));
-    await expect(atomicSwap(sql, "overflow", oversized, 300)).rejects.toThrow(
-      /100001 rows.*limit 100000/,
-    );
-
-    const rows = await sql<{ id: string }[]>`
-      SELECT id FROM conditions.observations WHERE source = 'overflow'`;
-    expect(rows.map((row) => row.id)).toEqual([retained.id]);
-  }, 60_000);
-
-  it("diff-upserts on a second swap: unchanged row untouched, changed row updated, new row inserted, missing row deleted", async () => {
-    const mkFlow = (id: string, speedKph: number, dataUpdatedAt: string): RoadFlow => ({
-      id,
-      source: "diffsrc",
-      sourceFormat: "native",
-      domain: "roads",
-      kind: "measurement",
-      metric: "flow",
-      geometry: { type: "Point", coordinates: [6.0, 50.0] },
-      los: "heavy",
-      speedKph,
-      aggregation: "live",
-      status: "active",
-      origin: { kind: "feed", attribution: { provider: "Diff", license: "CC0-1.0" } },
-      dataUpdatedAt,
-      fetchedAt: dataUpdatedAt,
-      isStale: false,
-    });
-
-    const first = await atomicSwap(
-      sql,
-      "diffsrc",
-      [
-        mkFlow("diffsrc:unchanged", 50, "2026-06-24T11:00:00Z"),
-        mkFlow("diffsrc:changed", 50, "2026-06-24T11:00:00Z"),
-        mkFlow("diffsrc:removed", 50, "2026-06-24T11:00:00Z"),
-      ],
-      300,
-    );
-    expect(first.inserted).toBe(3);
-    expect(first.updated).toBe(0);
-    expect(first.deleted).toBe(0);
-
-    const before = await sql<{ id: string; fetched_at: Date }[]>`
-      SELECT id, fetched_at FROM conditions.observations WHERE source = 'diffsrc' ORDER BY id
-    `;
-    const unchangedFetchedAtBefore = before.find((r) => r.id === "diffsrc:unchanged")!.fetched_at;
-
-    const second = await atomicSwap(
-      sql,
-      "diffsrc",
-      [
-        mkFlow("diffsrc:unchanged", 50, "2026-06-24T11:00:00Z"),
-        mkFlow("diffsrc:changed", 90, "2026-06-24T12:00:00Z"),
-        mkFlow("diffsrc:new", 50, "2026-06-24T12:00:00Z"),
-      ],
-      300,
-    );
-    expect(second.inserted).toBe(1);
-    expect(second.updated).toBe(1);
-    expect(second.deleted).toBe(1);
-
-    const after = await sql<{ id: string; fetched_at: Date }[]>`
-      SELECT id, fetched_at FROM conditions.observations
-      WHERE source = 'diffsrc' ORDER BY id
-    `;
-    expect(after.map((r) => r.id)).toEqual(["diffsrc:changed", "diffsrc:new", "diffsrc:unchanged"]);
-
-    // The unchanged row's fetched_at was never rewritten by the diff-upsert.
-    const unchangedAfter = after.find((r) => r.id === "diffsrc:unchanged")!;
-    expect(unchangedAfter.fetched_at.toISOString()).toBe(unchangedFetchedAtBefore.toISOString());
-
-    // The changed row picked up its new speed and a fresh fetched_at.
-    const changedAfter = after.find((r) => r.id === "diffsrc:changed")!;
-    expect(changedAfter.fetched_at.toISOString()).not.toBe(unchangedFetchedAtBefore.toISOString());
-  }, 30_000);
-
-  it("collapses duplicate ids in the fresh set before chunking (last-wins), swap succeeds", async () => {
-    const mkFlow = (id: string, value: number): RoadFlow => ({
-      id,
-      source: "dupsrc",
-      sourceFormat: "native",
-      domain: "roads",
-      kind: "measurement",
-      metric: "flow",
-      geometry: { type: "Point", coordinates: [8.0, 50.0] },
-      los: "heavy",
-      value,
-      unit: "veh/h",
-      aggregation: "live",
-      status: "active",
-      origin: { kind: "feed", attribution: { provider: "Dup", license: "CC0-1.0" } },
-      dataUpdatedAt: "2026-06-24T10:00:00Z",
-      fetchedAt: "2026-06-24T10:00:00Z",
-      isStale: false,
-    });
-
-    // Two observations sharing an id, differing content — the exact shape a
-    // streaming parser or an `${src.id}:${externalId}` id scheme can produce
-    // without cross-document dedup. Without the fix, `ON CONFLICT (id) DO
-    // UPDATE` throws "command cannot affect row a second time" and the whole
-    // swap rolls back.
-    const counts = await atomicSwap(
-      sql,
-      "dupsrc",
-      [mkFlow("dupsrc:1", 10), mkFlow("dupsrc:1", 20)],
-      300,
-    );
-    expect(counts).toEqual({ inserted: 1, updated: 0, deleted: 0 });
-
-    const rows = await sql<{ id: string; value: string | null }[]>`
-      SELECT id, value::text AS value FROM conditions.observations WHERE source = 'dupsrc'
-    `;
-    expect(rows.length).toBe(1);
-    expect(rows[0]!.id).toBe("dupsrc:1");
-    expect(Number(rows[0]!.value)).toBe(20); // last one in the fresh set wins
-  }, 30_000);
-
+describe("writeSnapshotIn — binding work", () => {
   it("queues a changed situation's binding work in the same transaction as its new revision", async () => {
     const id = "oc:situation:binding-atomic:event";
     const changed = situationDraft(
@@ -593,41 +305,23 @@ describe("atomicSwap — bulk insert at volume", () => {
     // one, so it no longer counts as current for the situation.
     expect(row).toEqual({ current: 2, queued: 2, bound: 1 });
   }, 30_000);
-
-  it("writes the success source_status row atomically with a brand-new source's rows", async () => {
-    const flow: RoadFlow = {
-      id: "atomicstatus:1",
-      source: "atomicstatussrc",
-      sourceFormat: "native",
-      domain: "roads",
-      kind: "measurement",
-      metric: "flow",
-      geometry: { type: "Point", coordinates: [7.0, 51.0] },
-      los: "heavy",
-      aggregation: "live",
-      status: "active",
-      origin: { kind: "feed", attribution: { provider: "X", license: "CC0-1.0" } },
-      dataUpdatedAt: "2026-06-24T10:00:00Z",
-      fetchedAt: "2026-06-24T10:00:00Z",
-      isStale: false,
-    };
-
-    // Before this fix, atomicSwap alone never touched source_status — the
-    // caller had to make a second, separate call after the swap committed.
-    // Calling ONLY atomicSwap here and immediately reading source_status back
-    // proves the success write now lands in the same transaction as the swap.
-    const counts = await atomicSwap(sql, "atomicstatussrc", [flow], 300);
-    expect(counts.inserted).toBe(1);
-
-    const status = await sql<{ last_success_at: Date | null; last_row_count: number | null }[]>`
-      SELECT last_success_at, last_row_count FROM conditions.source_status
-      WHERE source = 'atomicstatussrc'
-    `;
-    expect(status.length).toBe(1);
-    expect(status[0]!.last_success_at).not.toBeNull();
-    expect(status[0]!.last_row_count).toBe(1);
-  }, 30_000);
 });
+
+/** Live measurement sites of a source: a site missing from one poll is not withdrawn. */
+async function liveFeatures(source: string): Promise<number> {
+  const [row] = await sql<{ n: number }[]>`
+    SELECT count(*)::int AS n FROM conditions.feature
+     WHERE source_id = ${source} AND tombstoned_at IS NULL`;
+  return row!.n;
+}
+
+/** Series of a source, as `<property>@<site>[#<channel>]`. */
+async function seriesOf(source: string): Promise<string[]> {
+  const rows = await sql<{ s: string }[]>`
+    SELECT property || '@' || substr(subject_key, length(${`feature:oc:feature:${source}:`}) + 1) AS s
+      FROM conditions.observation_latest WHERE source_id = ${source} ORDER BY 1`;
+  return rows.map((r) => r.s);
+}
 
 describe("flow feed — e2e pipeline (NDW site-table join)", () => {
   // A fetch stub that serves the trafficspeed measurements for the data URL and
@@ -635,42 +329,45 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
   // feed declares gzip. The site-table cache is cleared first so the stub is hit.
   const speedPayload = readFileSync(NDW_FLOW_SPEED_FIXTURE_PATH);
   const sitePayload = readFileSync(NDW_FLOW_SITE_TABLE_FIXTURE_PATH);
+  const fetchServing =
+    (speed: Buffer) =>
+    async (url: string | URL | Request): Promise<Response> => {
+      const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+      const body = href.includes("measurement.xml.gz") ? gzipSync(sitePayload) : gzipSync(speed);
+      return new Response(body, { status: 200 });
+    };
+  const fakeFetch = fetchServing(speedPayload);
+  const poll = (fetchFn: typeof fakeFetch, now = () => new Date().toISOString()) =>
+    runSource(ndwFlowFeed, { sql, fetch: fetchFn as typeof fetch, now, lookup: fakeLookup });
 
-  const fakeFetch = async (url: string | URL | Request): Promise<Response> => {
-    const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
-    const body = href.includes("measurement.xml.gz")
-      ? gzipSync(sitePayload)
-      : gzipSync(speedPayload);
-    return new Response(body, { status: 200 });
-  };
-
-  it("runSource joins the site table and writes RoadFlow measurements with real geometry", async () => {
+  it("runSource joins the site table and writes measurement sites and their readings", async () => {
     clearSiteTableCache();
-
-    const result = await runSource(ndwFlowFeed, {
-      sql,
-      fetch: fakeFetch as typeof fetch,
-      now: () => new Date().toISOString(),
-      lookup: fakeLookup,
-    });
-
+    const result = await poll(fakeFetch);
+    expect(result.error).toBeUndefined();
     expect(result.count).toBeGreaterThan(0);
-    console.info(`[test] ndw-flow: inserted ${result.count} rows`);
 
-    const rows = await sql<{ id: string; kind: string; source: string }[]>`
-      SELECT id, kind, source
-      FROM conditions.observations
-      WHERE source = 'nl-ndw-flow'
-    `;
-
-    const measurements = rows.filter((r) => r.kind === "measurement");
     // Three sites resolve (Point + LineString + the genuine standstill); the
     // rest are skipped (no-data zero/sentinel, absurd speed, missing geometry).
-    expect(measurements.length).toBe(3);
-    // Only readings live in the observation table now.
-    expect(rows.filter((r) => r.kind === "event")).toHaveLength(0);
-    // los is unknown for NDW (no baseline), so no derived congestion situations.
+    expect(await liveFeatures("nl-ndw-flow")).toBe(3);
+    expect(await seriesOf("nl-ndw-flow")).toEqual([
+      "traffic.speed@PZH01_MST_0029-00",
+      "traffic.speed@PZH01_MST_0065_00",
+      "traffic.speed@PZH01_MST_0065_00#11",
+      "traffic.speed@PZH01_MST_0065_00#8",
+      "traffic.speed@PZH01_MST_0065_00#9",
+      "traffic.speed@PZH01_MST_STANDSTILL_00",
+      "traffic.volume@PZH01_MST_0065_00",
+      "traffic.volume@PZH01_MST_0065_00#1",
+      "traffic.volume@PZH01_MST_0065_00#3",
+      "traffic.volume@PZH01_MST_0065_00#5",
+    ]);
+    // No baseline is stored, so no level of service and no derived congestion.
     expect(await liveSituations("nl-ndw-flow")).toBe(0);
+    const [status] = await sql<{ last_row_count: number; last_success_at: Date | null }[]>`
+      SELECT last_row_count, last_success_at FROM conditions.source_status
+       WHERE source = 'nl-ndw-flow'`;
+    expect(status).toMatchObject({ last_row_count: 3 });
+    expect(status!.last_success_at).not.toBeNull();
   }, 60_000);
 
   it("records the digest of the decoded streamed document on the poll attempt", async () => {
@@ -682,62 +379,129 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     expect(attempts[0]!.payload_hashes).toEqual([decoded]);
   });
 
-  it("flow rows use 'roads' domain and 'nl-ndw-flow' source", async () => {
-    const wrongRows = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count
-      FROM conditions.observations
-      WHERE source = 'nl-ndw-flow' AND (domain <> 'roads')
-    `;
-    expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
-  }, 30_000);
-
-  it("all flow geometries are valid PostGIS geometries", async () => {
-    const invalid = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count
-      FROM conditions.observations
-      WHERE source = 'nl-ndw-flow' AND NOT ST_IsValid(geom)
-    `;
-    expect(parseInt(invalid[0]!.count, 10)).toBe(0);
-  }, 30_000);
-
-  it("writes a real Point geometry resolved from the site table", async () => {
+  it("writes a real Point geometry resolved from the site table, and valid geometries only", async () => {
     const rows = await sql<{ gtype: string; lon: number; lat: number }[]>`
       SELECT ST_GeometryType(geom) AS gtype, ST_X(geom) AS lon, ST_Y(geom) AS lat
-      FROM conditions.observations
-      WHERE id = 'nl-ndw-flow:PZH01_MST_0065_00'
+      FROM conditions.feature
+      WHERE id = 'oc:feature:nl-ndw-flow:PZH01_MST_0065_00'
     `;
     expect(rows.length).toBe(1);
     expect(rows[0]!.gtype).toBe("ST_Point");
     expect(rows[0]!.lon).toBeCloseTo(4.536069, 5);
     expect(rows[0]!.lat).toBeCloseTo(52.0235558, 5);
+    const [{ invalid }] = await sql<{ invalid: number }[]>`
+      SELECT (SELECT count(*) FROM conditions.feature
+               WHERE source_id = 'nl-ndw-flow' AND NOT ST_IsValid(geom))
+           + (SELECT count(*) FROM conditions.observation_latest
+               WHERE source_id = 'nl-ndw-flow' AND NOT ST_IsValid(geom)) AS invalid`;
+    expect(Number(invalid)).toBe(0);
   }, 30_000);
 
-  it("flow measurements have metric='flow' and the live speed value", async () => {
-    const rows = await sql<{ metric: string | null; value: string | null }[]>`
-      SELECT metric, value::text AS value
-      FROM conditions.observations
-      WHERE source = 'nl-ndw-flow' AND kind = 'measurement'
-    `;
-    expect(rows.length).toBe(3);
-    expect(rows.every((r) => r.metric === "flow")).toBe(true);
-    const best = rows.find((r) => r.value != null && Number(r.value) === 64);
-    expect(best).toBeDefined();
+  it("stores the site speed, keeps no history of a lane, and stamps the catalogue's rights", async () => {
+    const rows = await sql<
+      {
+        value_num: number;
+        retention_days: number | null;
+        rights: unknown;
+        channel: string | null;
+      }[]
+    >`
+      SELECT value_num, retention_days, component_key AS channel,
+             record #> '{provenance,attribution,rights}' AS rights
+        FROM conditions.observation_latest
+       WHERE feature_id = 'oc:feature:nl-ndw-flow:PZH01_MST_0065_00' AND property = 'traffic.speed'
+       ORDER BY component_key NULLS FIRST`;
+    expect(rows[0]).toMatchObject({ channel: null, retention_days: 3 });
+    expect(rows[0]!.value_num).toBeCloseTo(63.28, 2);
+    expect(rows.slice(1).map((r) => r.retention_days)).toEqual([null, null, null]);
+    expect(rows.every((r) => r.rights !== null)).toBe(true);
   }, 30_000);
 
-  it("preserves last-good rows on a cold site-table failure (no atomicSwap to empty)", async () => {
-    // Existing ndw-flow rows from the successful runs above.
-    const beforeCount = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw-flow'
-    `;
-    const countBefore = parseInt(beforeCount[0]!.count, 10);
-    expect(countBefore).toBeGreaterThan(0);
+  it("keeps a site one poll does not report, as a live feature with its last reading", async () => {
+    clearSiteTableCache();
+    const without0029 = Buffer.from(
+      speedPayload
+        .toString("utf8")
+        .replace(
+          /<siteMeasurements>\s*<measurementSiteReference id="PZH01_MST_0029-00"[\s\S]*?<\/siteMeasurements>/,
+          "",
+        ),
+    );
+    const result = await poll(fetchServing(without0029));
+    expect(result.error).toBeUndefined();
+    expect(await liveFeatures("nl-ndw-flow")).toBe(3);
+    expect(await seriesOf("nl-ndw-flow")).toContain("traffic.speed@PZH01_MST_0029-00");
+  }, 60_000);
 
+  it("derives congestion from a stored baseline, and withdraws it once the queue clears", async () => {
+    await sql`
+      INSERT INTO conditions.sensor_baseline
+        (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
+      VALUES ('feature:oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00', 'nl-ndw-flow', -1, -1,
+        100, 'derived', 50, now())`;
+    clearSiteTableCache();
+    const congested = await poll(fakeFetch);
+    expect(congested.error).toBeUndefined();
+    expect(congested.activeEvents).toBe(1);
+    expect(await liveSituations("nl-ndw-flow")).toBe(1);
+    const [speed] = await sql<{ baseline: Record<string, unknown> }[]>`
+      SELECT record->'baseline' AS baseline FROM conditions.observation_latest
+       WHERE subject_key = 'feature:oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00'
+         AND property = 'traffic.speed'`;
+    expect(speed!.baseline).toMatchObject({ source: "derived", los: "stationary" });
+
+    await sql`DELETE FROM conditions.sensor_baseline`;
+    const cleared = await poll(fakeFetch);
+    expect(cleared.error).toBeUndefined();
+    expect(await liveSituations("nl-ndw-flow")).toBe(0);
+    expect(cleared.deleted).toBe(1);
+    expect(await liveFeatures("nl-ndw-flow")).toBe(3);
+  }, 60_000);
+
+  it("keeps site readings as history and counts those the rollup has already passed", async () => {
+    // The fixture's readings are of 2026-06-24 10:08–10:09: poll as of then.
+    const at = "2026-06-24T10:10:00.000Z";
+    await ensureObservationPartitions(sql, {
+      classes: retentionClasses(registry),
+      now: new Date(at),
+    });
+    await sql`INSERT INTO conditions.observation_rollup_progress (period, finalized_before)
+      VALUES ('hourly', '2026-06-24T10:00:00Z')`;
+    // Earlier polls already hold these readings; history is kept when a reading is new.
+    const forget = () =>
+      sql`DELETE FROM conditions.observation_latest WHERE source_id = 'nl-ndw-flow'`;
+    try {
+      await forget();
+      clearSiteTableCache();
+      const onTime = await poll(fakeFetch, () => at);
+      expect(onTime.error).toBeUndefined();
+      expect(onTime.pastRollup).toBeUndefined();
+      const history = await sql<{ property: string; n: number }[]>`
+        SELECT l.property, count(*)::int AS n FROM conditions.observation o
+          JOIN conditions.observation_latest l USING (series_id)
+         WHERE l.source_id = 'nl-ndw-flow' GROUP BY 1 ORDER BY 1`;
+      // Site series only: three speeds and the site volume.
+      expect(history).toEqual([
+        { property: "traffic.speed", n: 3 },
+        { property: "traffic.volume", n: 1 },
+      ]);
+
+      await sql`UPDATE conditions.observation_rollup_progress SET finalized_before = '2026-06-24T11:00:00Z'`;
+      await forget();
+      clearSiteTableCache();
+      const late = await poll(fakeFetch, () => "2026-06-24T10:11:00.000Z");
+      expect(late.error).toBeUndefined();
+      expect(late.pastRollup).toBe(4);
+    } finally {
+      await sql`DELETE FROM conditions.observation_rollup_progress`;
+    }
+  }, 60_000);
+
+  it("preserves the last good publication on a cold site-table failure", async () => {
+    const before = await seriesOf("nl-ndw-flow");
+    expect(before.length).toBeGreaterThan(0);
     // Clear the cache so there is NO cached site map — the failure is cold.
     clearSiteTableCache();
-
-    // Measurements still fetch fine, but the site table fails outright. Without
-    // the cold-failure guard this would parse measurements with no geometry,
-    // yield [], and atomicSwap an empty set — deleting all ndw-flow rows.
     const partialFetch = async (url: string | URL | Request): Promise<Response> => {
       const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
       if (href.includes("measurement.xml.gz")) {
@@ -745,20 +509,11 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
       }
       return new Response(gzipSync(speedPayload), { status: 200 });
     };
-
-    const result = await runSource(ndwFlowFeed, {
-      sql,
-      fetch: partialFetch as typeof fetch,
-      now: () => new Date().toISOString(),
-      lookup: fakeLookup,
-    });
-
+    const result = await poll(partialFetch);
     expect(result.count).toBe(0);
-
-    const afterCount = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw-flow'
-    `;
-    expect(parseInt(afterCount[0]!.count, 10)).toBe(countBefore);
+    expect(result.error).toMatch(/site-table cold failure/);
+    expect(await seriesOf("nl-ndw-flow")).toEqual(before);
+    expect(await liveFeatures("nl-ndw-flow")).toBe(3);
   }, 60_000);
 });
 
@@ -805,7 +560,7 @@ describe("pipeline — streaming SAX parse failure preserves last-good rows", ()
   const sitePayload = readFileSync(NDW_FLOW_SITE_TABLE_FIXTURE_PATH);
   const speedPayload = readFileSync(NDW_FLOW_SPEED_FIXTURE_PATH);
 
-  it("parse-failure-preserves-last-good: a truncated document sets failed:true, skips the swap, and does not advance last_success_at", async () => {
+  it("parse-failure-preserves-last-good: a truncated document sets failed:true, skips the write, and does not advance last_success_at", async () => {
     // Establish a known-good baseline for this source first, independent of
     // whatever earlier describe blocks in this file left behind.
     clearSiteTableCache();
@@ -820,17 +575,13 @@ describe("pipeline — streaming SAX parse failure preserves last-good rows", ()
       now: () => new Date().toISOString(),
       lookup: fakeLookup,
     });
-    // `count` reflects rows the diff-upsert actually touched this cycle, which
-    // can legitimately be 0 if content is byte-identical to an earlier run in
-    // this file (an unchanged row is left untouched) — the real assertion is
-    // "no failure" plus the row-count check just below.
+    // `count` reflects records this poll actually wrote, which can
+    // legitimately be 0 if content is identical to an earlier run in this
+    // file — the real assertion is "no failure" plus the series check below.
     expect(goodResult.error).toBeUndefined();
 
-    const before = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw-flow'
-    `;
-    const countBefore = parseInt(before[0]!.count, 10);
-    expect(countBefore).toBeGreaterThan(0);
+    const seriesBefore = await seriesOf("nl-ndw-flow");
+    expect(seriesBefore.length).toBeGreaterThan(0);
 
     const statusBefore = await sql<{ last_success_at: Date | null }[]>`
       SELECT last_success_at FROM conditions.source_status WHERE source = 'nl-ndw-flow'
@@ -864,10 +615,8 @@ describe("pipeline — streaming SAX parse failure preserves last-good rows", ()
     expect(result.error).toBeDefined();
     expect(result.error).toMatch(/streaming parse failed/i);
 
-    const after = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw-flow'
-    `;
-    expect(parseInt(after[0]!.count, 10)).toBe(countBefore);
+    expect(await seriesOf("nl-ndw-flow")).toEqual(seriesBefore);
+    expect(await liveFeatures("nl-ndw-flow")).toBe(3);
 
     const statusAfter = await sql<{ last_error: string | null; last_success_at: Date | null }[]>`
       SELECT last_error, last_success_at FROM conditions.source_status WHERE source = 'nl-ndw-flow'
@@ -881,7 +630,7 @@ describe("pipeline — flow feed 200-with-garbage (well-formed empty publication
   const sitePayload = readFileSync(NDW_FLOW_SITE_TABLE_FIXTURE_PATH);
   const speedPayload = readFileSync(NDW_FLOW_SPEED_FIXTURE_PATH);
 
-  it("200-with-garbage (flow): a body that parses to zero measurements skips the swap; rows survive", async () => {
+  it("200-with-garbage (flow): a body that parses to zero measurements skips the write; records survive", async () => {
     // Establish a known-good baseline for this source first, independent of
     // whatever earlier describe blocks in this file left behind (mirrors the
     // SAX-failure test above).
@@ -899,11 +648,8 @@ describe("pipeline — flow feed 200-with-garbage (well-formed empty publication
     });
     expect(goodResult.error).toBeUndefined();
 
-    const before = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw-flow'
-    `;
-    const countBefore = parseInt(before[0]!.count, 10);
-    expect(countBefore).toBeGreaterThan(0);
+    const seriesBefore = await seriesOf("nl-ndw-flow");
+    expect(seriesBefore.length).toBeGreaterThan(0);
 
     clearSiteTableCache();
     // A 200 response whose body is well-formed XML and DOES contain a
@@ -934,10 +680,8 @@ describe("pipeline — flow feed 200-with-garbage (well-formed empty publication
     expect(result.error).toBeDefined();
     expect(result.error).toMatch(/zero measurements/i);
 
-    const after = await sql<{ count: string }[]>`
-      SELECT COUNT(*)::text AS count FROM conditions.observations WHERE source = 'nl-ndw-flow'
-    `;
-    expect(parseInt(after[0]!.count, 10)).toBe(countBefore);
+    expect(await seriesOf("nl-ndw-flow")).toEqual(seriesBefore);
+    expect(await liveFeatures("nl-ndw-flow")).toBe(3);
   }, 60_000);
 });
 

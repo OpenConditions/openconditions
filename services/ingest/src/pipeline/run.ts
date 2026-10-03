@@ -1,5 +1,4 @@
 import { Readable } from "node:stream";
-import type { Observation } from "@openconditions/core";
 import type { RawTier } from "@openconditions/core/server";
 import type { LookupFn, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
 import {
@@ -11,14 +10,14 @@ import {
 } from "@openconditions/ingest-framework";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
-import type { FeedSource, FlowParse, SiteGeometry } from "@openconditions/roads";
-import { drainSkippedNoGeometry, enrichFlows, parseXmlDocument } from "@openconditions/roads";
-import { type WriteSummary, writeSnapshotIn } from "@openconditions/storage";
+import type { FeedSource, FlowContext, FlowOutput, FlowSites } from "@openconditions/roads";
+import { drainSkippedNoGeometry, enrichReadings, parseXmlDocument } from "@openconditions/roads";
+import type { WriteSummary } from "@openconditions/storage";
 import type postgres from "postgres";
 import type { RawArchive } from "../raw/archive.js";
 import { archivingTee, digestOnlyTee } from "../raw/stream-tee.js";
 import { rawTierFor } from "../raw/tiers.js";
-import { loadBaselineMap, writeSpeedSamples } from "./baseline-store.js";
+import { loadBaselineMap } from "./baseline-store.js";
 import { bindRecords } from "./bind-records.js";
 import { isStreamingFlowFeed, streamMeasuredData } from "./measured-data.js";
 import { parseEventFeed, parseFlowFeed } from "./parse.js";
@@ -26,8 +25,8 @@ import {
   changedSituations,
   logRejections,
   type PollIdentity,
+  publishFlows,
   publishSituations,
-  situationContext,
   stampAttribution,
   type WriteModel,
   writeModel,
@@ -43,13 +42,12 @@ import {
   upsertSourceStatus,
 } from "./source-status.js";
 import { loadStationRegistry } from "./station-registry.js";
-import { atomicSwap } from "./write-postgis.js";
 
 type Sql = postgres.Sql;
 
 /**
  * Ratio (0-1) of an event feed's previous `source_status.last_row_count` that
- * its fresh count must exceed, or the swap is skipped as a suspected
+ * its fresh count must exceed, or the write is skipped as a suspected
  * partial-failure wipe rather than applied (see the shrink tripwire below).
  * Default 0: conservative, only guards the unambiguous drop-to-zero case (a
  * fresh count of exactly 0 while the previous cycle had rows) — a feed whose
@@ -71,10 +69,11 @@ function shrinkTripwireRatioFromEnv(env: NodeJS.ProcessEnv = process.env): numbe
 
 export interface RunResult {
   /**
-   * Records or rows actually written this cycle: new, changed and restored
-   * situations of an event feed, inserted and updated readings of a flow feed
-   * (an unchanged one counts toward neither). 0 for an unchanged/304 poll and
-   * for every swallowed failure below — not the size of the parsed set.
+   * Records actually written this cycle: new, changed and restored situations
+   * of an event feed; new, changed and restored sites and situations and new
+   * readings of a flow feed (an unchanged one counts toward neither). 0 for an
+   * unchanged/304 poll and for every swallowed failure below — not the size of
+   * the parsed set.
    */
   count: number;
   durationMs: number;
@@ -101,6 +100,11 @@ export interface RunResult {
   updated?: number;
   deleted?: number;
   rejected?: number;
+  /**
+   * Readings of a flow feed kept as history in an hour or day the rollup had
+   * already closed: they never reach it. Absent when none.
+   */
+  pastRollup?: number;
   /**
    * Per-run source-record accounting for a complete-snapshot source. Bounded
    * counts only — never record ids as metric labels and never record bodies.
@@ -289,10 +293,11 @@ export function createOpenlrClient(): MapMatchClient | null {
 /**
  * Runs the full ingest pipeline for one feed source:
  *   1. Fetch all URLs for the source (gunzip transparently).
- *   2. Parse the payloads into situation drafts (and, for a flow feed, readings).
+ *   2. Parse the payloads into situation drafts (and, for a flow feed,
+ *      measurement sites and their readings).
  *   3. Resolve any OpenLR-only situations via the map-match service.
- *   4. Write the situations as one complete snapshot (a flow feed's readings
- *      are swapped into `conditions.observations` in the same transaction).
+ *   4. Write the situations as one complete snapshot (a flow feed's sites and
+ *      readings in the same transaction).
  *   5. Bind the situations that changed to the segment spine.
  *
  * Feed-downtime safety: if fetching throws, nothing is written and the
@@ -387,7 +392,7 @@ async function runAttempt(
 
   // Discard whatever a PREVIOUS run left behind. Most failure paths below return
   // before the drain at the end, so without this reset a run that parsed and then
-  // failed (shrink tripwire, fan-out threshold, swap error) would carry its count
+  // failed (shrink tripwire, fan-out threshold, write error) would carry its count
   // into the next successful run and report the two summed — reading as a sudden
   // doubling of the loss rather than the same loss counted twice.
   drainSkippedNoGeometry(src.id);
@@ -395,9 +400,9 @@ async function runAttempt(
   // Load the companion site table (cached, tolerant of failure) so flow feeds
   // that key measurements by site id can resolve geometry. Loaded before the feed
   // fetch so the streaming flow path has the join map ready.
-  let siteMap: Map<string, SiteGeometry> | undefined;
+  let sites: FlowSites | undefined;
   if (src.siteTable) {
-    siteMap = await loadSiteTable(
+    sites = await loadSiteTable(
       src,
       streamFactoryFromFetch(fetchFn),
       Date.now,
@@ -405,13 +410,12 @@ async function runAttempt(
         ? archivingTee(referenceCapture.archive, referenceCapture.meta)
         : digestOnlyTee,
     );
-    // A COLD site-table failure (no map ever built, not even stale) means every
-    // measurement would lose its geometry and be skipped — parsing on would
-    // hand atomicSwap an empty set, deleting all existing last-good rows. Treat
-    // this like a fetch failure: skip the swap and preserve last-good.
-    if (siteMap === undefined) {
+    // A COLD site-table failure (no table ever loaded, not even stale) means
+    // every measurement would lose its geometry and be skipped. Treat this like
+    // a fetch failure: skip the write and preserve the last good publication.
+    if (sites === undefined) {
       const error = "site-table cold failure — no geometry map built";
-      console.warn(`[ingest] ${src.id}: ${error} — skipping swap, preserving last-good rows`);
+      console.warn(`[ingest] ${src.id}: ${error} — skipping the write, preserving last-good`);
       await recordStatus({
         freshnessWindowSec: src.freshnessWindowSec,
         outcome: "error",
@@ -427,7 +431,7 @@ async function runAttempt(
   // the same guarded `fetchFn` the feed fetch uses, so the registry request is
   // egress-guarded too.
   if (src.stationRegistry) {
-    siteMap = await loadStationRegistry(
+    sites = await loadStationRegistry(
       src,
       fetchFn,
       Date.now,
@@ -440,9 +444,9 @@ async function runAttempt(
             )
         : undefined,
     );
-    if (siteMap === undefined) {
+    if (sites === undefined) {
       const error = "station-registry cold failure — no geometry map built";
-      console.warn(`[ingest] ${src.id}: ${error} — skipping swap, preserving last-good rows`);
+      console.warn(`[ingest] ${src.id}: ${error} — skipping the write, preserving last-good`);
       await recordStatus({
         freshnessWindowSec: src.freshnessWindowSec,
         outcome: "error",
@@ -452,23 +456,25 @@ async function runAttempt(
     }
   }
 
+  // A flow reading the source does not date is dated by the poll, floored to the cadence.
+  const flowContext: FlowContext = { now: attemptAt, cadenceSec: src.cadenceSec };
   let acceptFetch: (() => void) | undefined;
-  let flowParse: FlowParse | undefined;
+  let flowParse: FlowOutput | undefined;
   let eventParse: ParseOutput | undefined;
   let snapshotInspection: ReturnType<typeof inspectSnapshotCompleteness> | undefined;
   if (isStreamingFlowFeed(src)) {
     // Large DATEX flow feed: stream fetch → gunzip → SAX so the ~50 MB document
     // is never buffered or DOM-parsed (the memory-cap OOM this path replaces).
     try {
-      const streamed = await streamMeasuredData(
+      const { payload, ...streamed } = await streamMeasuredData(
         src,
         streamFactoryFromFetch(fetchFn),
-        siteMap,
-        deps.now,
+        sites,
+        flowContext,
         feedCapture ? archivingTee(feedCapture.archive, feedCapture.meta) : digestOnlyTee,
       );
-      flowParse = { flows: streamed.flows, situations: streamed.situations };
-      payloadHashes = [streamed.payload.sha256];
+      flowParse = streamed;
+      payloadHashes = [payload.sha256];
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] stream failed for source ${src.id}:`, err);
@@ -548,7 +554,7 @@ async function runAttempt(
       // A complete-snapshot source is read through its format's reporting
       // path, which reconciles partitions by source identity and refuses a
       // candidate it cannot fully account for.
-      if (src.produces === "flow") flowParse = parseFlowFeed(src, buffers, siteMap);
+      if (src.produces === "flow") flowParse = parseFlowFeed(src, buffers, sites, flowContext);
       else eventParse = parseEventFeed(src, buffers, { fetchedAt: attemptAt });
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
@@ -742,106 +748,79 @@ async function finishEventPoll(
 }
 
 /**
- * The last stages of a flow feed's poll: apply the free-flow baselines, then
- * swap the readings into `conditions.observations` and write the derived
- * congestion situations in the same transaction, then bind what changed.
+ * The last stages of a flow feed's poll: apply the stored free-flow
+ * baselines, stamp the catalogue's rights, write the measurement sites, their
+ * readings and the derived congestion situations in one transaction with the
+ * poll's status, then bind what changed.
  */
-async function finishFlowPoll(poll: PollContext, parse: FlowParse): Promise<RunResult> {
+async function finishFlowPoll(poll: PollContext, parse: FlowOutput): Promise<RunResult> {
   const { src, deps } = poll;
-  let flows = parse.flows;
-  const congestion = new Map(parse.situations.map((d) => [String(d["id"]), d]));
+  let output = parse;
   // Best-effort: a baseline-load failure must never throw away a good fetch —
   // fall back to the unenriched readings rather than reverting the feed.
   try {
-    const baselineMap = await loadBaselineMap(deps.sql, src.id);
-    if (baselineMap.size > 0) {
-      const enriched = enrichFlows(src, flows, baselineMap);
-      flows = enriched.flows;
-      for (const draft of enriched.situations) congestion.set(String(draft["id"]), draft);
-    }
+    const baselines = await loadBaselineMap(deps.sql, src.id);
+    if (baselines.size > 0) output = enrichReadings(src, output, baselines);
   } catch (err) {
     console.warn(`[ingest] ${src.id}: baseline-map load failed, skipping enrichment:`, err);
   }
   // A sensor network never legitimately vanishes to zero — this also covers a
   // 200-with-garbage body (parses to nothing) and any parse path that yields an
   // empty set without throwing.
-  if (flows.length === 0) {
-    const error = `flow feed produced zero measurements this cycle — skipping swap to avoid wiping sensor data`;
+  if (output.observations.length === 0) {
+    const error = `flow feed produced zero measurements this cycle — skipping the write to keep the last good publication`;
     console.warn(`[ingest] ${src.id}: ${error}`);
     return fail(poll, "error", error);
   }
-  const situations = [...congestion.values()].map((draft) => stampAttribution(draft, src));
+  const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampAttribution(d, src));
+  const stamped: FlowOutput = {
+    features: stamp(output.features),
+    observations: stamp(output.observations),
+    situations: stamp(output.situations),
+  };
   const skippedNoGeometry = drainSkippedNoGeometry(src.id);
-  const model = writeModel(deps.model);
-  let summary: WriteSummary | undefined;
-  let swap: Awaited<ReturnType<typeof atomicSwap>>;
+  let published: Awaited<ReturnType<typeof publishFlows>>;
   try {
-    swap = await atomicSwap(
-      deps.sql,
-      src.id,
-      flows as unknown as Observation[],
-      src.freshnessWindowSec,
-      undefined,
-      {
-        attemptAt: poll.identity.at,
-        rejected: skippedNoGeometry,
-        durationMs: Date.now() - poll.start,
-        attemptId: poll.identity.id,
-        ...(poll.identity.payloadHashes ? { payloadHashes: poll.identity.payloadHashes } : {}),
-        activeEvents: situations.length,
-      },
-      async (tx) => {
-        summary = await writeSnapshotIn(
-          tx,
-          src.id,
-          { situations },
-          situationContext({ poll: poll.identity, now: deps.now(), model }),
-        );
-      },
-    );
+    published = await publishFlows(deps.sql, src, {
+      output: stamped,
+      rejected: skippedNoGeometry,
+      poll: poll.identity,
+      durationMs: Date.now() - poll.start,
+      now: deps.now(),
+      model: writeModel(deps.model),
+    });
     poll.attempt.closed = true;
   } catch (err) {
     console.error(`[ingest] publish failed for source ${src.id}:`, err);
     return fail(poll, "failed", err instanceof Error ? err.message : String(err));
   }
-  if (summary) logRejections(src.id, summary);
+  const { summary, counts } = published;
+  logRejections(src.id, summary);
   poll.acceptFetch?.();
+  await bindChanged(poll, summary);
 
-  // Append this cycle's speeds to the rolling per-sensor history (the raw
-  // material the nightly baseline derivation consumes). Best-effort: a history
-  // write must never fail the live swap that already succeeded.
-  try {
-    const samples = await writeSpeedSamples(
-      deps.sql,
-      src.id,
-      flows as unknown as Observation[],
-      deps.now,
-      src.cadenceSec,
-    );
-    if (samples.rejectedLate > 0) {
-      console.warn(`[ingest] ${src.id}: rejected ${samples.rejectedLate} late speed samples`);
-    }
-  } catch (err) {
-    console.warn(`[ingest] ${src.id}: speed-sample write failed:`, err);
+  const { pastRollup } = summary.observations;
+  if (pastRollup > 0) {
+    console.warn(`[ingest] ${src.id}: ${pastRollup} reading(s) arrived after their rollup closed`);
   }
-  if (summary) await bindChanged(poll, summary);
-
   const durationMs = Date.now() - poll.start;
+  const o = summary.observations;
   console.info(
-    `[ingest] ${src.id}: swap inserted=${swap.inserted} updated=${swap.updated} ` +
-      `deleted=${swap.deleted} of ${flows.length} readings, ${situations.length} ` +
-      `congestion situations in ${durationMs}ms`,
+    `[ingest] ${src.id}: ${stamped.features.length} sites, ${stamped.observations.length} readings ` +
+      `(latest ${o.latest}, history ${o.history}, unchanged ${o.unchanged}), ` +
+      `${counts.activeEvents} congestion situations in ${durationMs}ms`,
   );
   return {
-    count: swap.inserted + swap.updated,
+    count: counts.inserted + counts.updated,
     durationMs,
     outcome: "changed",
-    activeEvents: situations.length,
-    inserted: swap.inserted,
-    updated: swap.updated,
-    deleted: swap.deleted,
-    rejected: skippedNoGeometry + (summary?.rejected.length ?? 0),
+    activeEvents: counts.activeEvents,
+    inserted: counts.inserted,
+    updated: counts.updated,
+    deleted: counts.deleted,
+    rejected: counts.rejected,
     ...(skippedNoGeometry > 0 ? { skippedNoGeometry } : {}),
+    ...(pastRollup > 0 ? { pastRollup } : {}),
   };
 }
 

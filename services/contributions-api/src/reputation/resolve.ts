@@ -2,7 +2,7 @@ import { updateReliability } from "@openconditions/core";
 import type { EvidenceState, Registry } from "@openconditions/model";
 import type postgres from "postgres";
 import { lockCrowd } from "../crowd.js";
-import { recomputeEvidence } from "../evidence/recompute.js";
+import { recomputeEvidence, recomputeObservationEvidence } from "../evidence/recompute.js";
 
 type Sql = postgres.Sql;
 type Tx = postgres.TransactionSql;
@@ -42,7 +42,8 @@ function evidenceKindFor(
 
 /**
  * Apply an EXTERNAL resolution (official feed match, reviewer decision, or
- * objective outcome) to a crowd situation — the ONE place reporter
+ * objective outcome) to a crowd situation or crowd observation (`target`: a
+ * situation id, or the record it names) — the ONE place reporter
  * reputation is trained. Everything runs in a single transaction under the
  * crowd lock, holding FOR UPDATE on the situation:
  *
@@ -73,30 +74,46 @@ function evidenceKindFor(
 export async function applyExternalResolution(
   sql: Sql,
   registry: Registry,
-  situationId: string,
+  target: string | CrowdRecordRef,
   resolution: ExternalResolution,
   now: string,
   tx?: Tx,
 ): Promise<ResolutionResult | null> {
-  if (tx !== undefined) return resolveWithin(tx, sql, registry, situationId, resolution, now);
+  const ref: CrowdRecordRef =
+    typeof target === "string" ? { class: "situation", id: target } : target;
+  if (tx !== undefined) return resolveWithin(tx, sql, registry, ref, resolution, now);
   return sql.begin(async (t) => {
     await lockCrowd(t);
-    return resolveWithin(t, sql, registry, situationId, resolution, now);
+    return resolveWithin(t, sql, registry, ref, resolution, now);
   });
+}
+
+/** A crowd record evidence is kept for: a situation, or an observation by its record id. */
+export interface CrowdRecordRef {
+  class: "situation" | "observation";
+  id: string;
 }
 
 async function resolveWithin(
   tx: Tx,
   sql: Sql,
   registry: Registry,
-  situationId: string,
+  ref: CrowdRecordRef,
   resolution: ExternalResolution,
   now: string,
 ): Promise<ResolutionResult | null> {
-  const [situation] = await tx<{ evidence_state: EvidenceState; routing_eligible: boolean }[]>`
-    SELECT evidence_state, routing_eligible FROM conditions.situation
-    WHERE id = ${situationId} FOR UPDATE
-  `;
+  const situationId = ref.id;
+  const recordClass = ref.class;
+  const [situation] =
+    recordClass === "situation"
+      ? await tx<{ evidence_state: EvidenceState; routing_eligible: boolean }[]>`
+          SELECT evidence_state, routing_eligible FROM conditions.situation
+          WHERE id = ${situationId} FOR UPDATE
+        `
+      : await tx<{ evidence_state: EvidenceState; routing_eligible: boolean }[]>`
+          SELECT evidence_state, false AS routing_eligible FROM conditions.observation_latest
+          WHERE source_id = 'crowd' AND record->>'id' = ${situationId} FOR UPDATE
+        `;
   if (situation === undefined) return null;
 
   const kind = evidenceKindFor(resolution);
@@ -109,7 +126,7 @@ async function resolveWithin(
 
   const [prior] = await tx<{ first_external: Date | null }[]>`
     SELECT MIN(occurred_at) AS first_external FROM conditions.report_evidence
-    WHERE record_class = 'situation' AND record_id = ${situationId}
+    WHERE record_class = ${recordClass} AND record_id = ${situationId}
       AND evidence_kind IN ('official_match', 'reviewer_accept', 'reviewer_reject')
   `;
   const cutoffIso =
@@ -118,11 +135,11 @@ async function resolveWithin(
   const inserted = await tx<{ id: string }[]>`
     INSERT INTO conditions.report_evidence
       (record_class, record_id, evidence_kind, actor_key_id, source_id, occurred_at, details)
-    SELECT 'situation', ${situationId}, ${kind}, NULL, ${matched?.sourceId ?? null}, ${now},
+    SELECT ${recordClass}, ${situationId}, ${kind}, NULL, ${matched?.sourceId ?? null}, ${now},
            ${tx.json(details)}
     WHERE NOT EXISTS (
       SELECT 1 FROM conditions.report_evidence
-      WHERE record_class = 'situation' AND record_id = ${situationId}
+      WHERE record_class = ${recordClass} AND record_id = ${situationId}
         AND evidence_kind = ${kind}
         AND details->>'source' = ${resolution.source}
         AND details->>'outcome' = ${resolution.outcome}
@@ -136,11 +153,14 @@ async function resolveWithin(
     };
   }
 
-  const result = await recomputeEvidence(sql, registry, situationId, now, tx);
+  const result =
+    recordClass === "situation"
+      ? await recomputeEvidence(sql, registry, situationId, now, tx)
+      : await recomputeObservationEvidence(tx, registry, situationId, now);
 
   const [originator] = await tx<{ actor_key_id: string | null }[]>`
     SELECT actor_key_id FROM conditions.report_evidence
-    WHERE record_class = 'situation' AND record_id = ${situationId} AND evidence_kind = 'report'
+    WHERE record_class = ${recordClass} AND record_id = ${situationId} AND evidence_kind = 'report'
     ORDER BY occurred_at, id
     LIMIT 1
   `;
@@ -148,7 +168,7 @@ async function resolveWithin(
 
   const confirmerRows = await tx<{ actor_key_id: string }[]>`
     SELECT DISTINCT actor_key_id FROM conditions.report_evidence
-    WHERE record_class = 'situation' AND record_id = ${situationId}
+    WHERE record_class = ${recordClass} AND record_id = ${situationId}
       AND evidence_kind = 'confirm'
       AND actor_key_id IS NOT NULL
       AND occurred_at < ${cutoffIso}::timestamptz

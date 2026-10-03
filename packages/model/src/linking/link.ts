@@ -90,7 +90,17 @@ export function representativePoint(geometry: unknown): [number, number] | undef
   return [lon, lat];
 }
 
-const idKey = (id: { scheme: string; id: string }) => `${id.scheme}\u0000${id.id}`;
+type ExternalIdRef = { scheme: string; id: string; authority?: string };
+
+/**
+ * Two ids are comparable when one issuer stands behind both: the same scheme
+ * and the same authority, or no authority on either side (a global scheme).
+ * An aggregator's row id or an OCPI uid means something only within its
+ * authority, so the same value from two authorities is two things, and an id
+ * whose authority one side does not state is no evidence either way.
+ */
+const comparable = (a: ExternalIdRef, b: ExternalIdRef) =>
+  a.scheme === b.scheme && a.authority === b.authority;
 
 /**
  * Whether two features name different things under one id scheme. Two
@@ -100,11 +110,11 @@ const idKey = (id: { scheme: string; id: string }) => `${id.scheme}\u0000${id.id
  */
 function conflictingIds(a: LinkableFeature, b: LinkableFeature, schemes: readonly string[]) {
   for (const scheme of schemes) {
-    const left = (a.externalIds ?? []).filter((e) => e.scheme === scheme);
-    const right = (b.externalIds ?? []).filter((e) => e.scheme === scheme);
-    if (left.length === 0 || right.length === 0) continue;
-    const shared = left.some((l) => right.some((r) => idKey(l) === idKey(r)));
-    if (!shared) return scheme;
+    const pairs = (a.externalIds ?? [])
+      .filter((e) => e.scheme === scheme)
+      .flatMap((l) => (b.externalIds ?? []).filter((r) => comparable(l, r)).map((r) => [l, r]));
+    if (pairs.length === 0) continue;
+    if (!pairs.some(([l, r]) => l!.id === r!.id)) return scheme;
   }
   return undefined;
 }
@@ -140,9 +150,10 @@ export function proposeLink(
   if (conflict !== undefined) return undefined;
 
   for (const scheme of rules.idSchemes) {
-    const left = (a.externalIds ?? []).filter((e) => e.scheme === scheme);
-    const right = new Set((b.externalIds ?? []).map(idKey));
-    const shared = left.find((e) => right.has(idKey(e)));
+    const shared = (a.externalIds ?? []).find(
+      (l) =>
+        l.scheme === scheme && (b.externalIds ?? []).some((r) => comparable(l, r) && l.id === r.id),
+    );
     if (shared !== undefined) {
       return link("external_id", EXTERNAL_ID_CONFIDENCE, "accepted", [`${scheme} ${shared.id}`]);
     }

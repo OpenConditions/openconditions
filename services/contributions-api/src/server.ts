@@ -18,6 +18,7 @@ import {
   verifySubClaim,
 } from "@openconditions/contrib-core";
 import { type GeoJsonGeometry, reliabilityLowerBound } from "@openconditions/core";
+import { resolveInstanceId } from "@openconditions/core/server";
 import {
   type Attribution,
   type LandingContext,
@@ -25,7 +26,6 @@ import {
   type Registry,
 } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
-import { resolveInstanceId } from "@openconditions/normalize";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type postgres from "postgres";
 import { ReportRateLimitError } from "./abuse/rate.js";
@@ -40,11 +40,13 @@ import {
 } from "./attester/verifier.js";
 import { autoCorroborateOnLanding } from "./evidence/autoCorroborate.js";
 import { crossValidateAgainstFeeds } from "./evidence/crossValidate.js";
+import { crossValidateObservation } from "./evidence/crossValidateObservation.js";
 import { type PublicContext, reportEpoch } from "./issuer/context.js";
 import { issueToken } from "./issuer/issue.js";
 import { DEFAULT_ISSUER_NAME, ensureIssuerKeys, loadActiveIssuerKeys } from "./issuer/keys.js";
 import { TokenVerifier } from "./issuer/verify.js";
 import { ClaimRefusedError, GeometryInvalidError, landReport } from "./landing/land.js";
+import { ConflictingReportError, landObservationReport } from "./landing/observation.js";
 import { isPoliceCategoryEnabled, isPoliceClaim } from "./policy/police.js";
 import { makeRequireReviewer, resolveReviewerToken } from "./reviewer/auth.js";
 import { blockKey, listBlocked, unblockKey } from "./reviewer/blocklist.js";
@@ -55,6 +57,7 @@ import {
   listFlagged,
 } from "./reviewer/queue.js";
 import { flagOntoOpenFlagged } from "./reviewer/streetcomplete.js";
+import { castObservationVote } from "./subclaim/observationVote.js";
 import { castSubClaimVote } from "./subclaim/vote.js";
 
 declare module "fastify" {
@@ -100,6 +103,12 @@ export interface BuildOptions {
    * already-committed landing.
    */
   crossValidateAgainstFeeds?: LandingHook<string | null>;
+  /**
+   * Override the post-hoc cross-validation of a landed crowd observation
+   * against this instance's feed readings (a landing seam), as
+   * {@link crossValidateAgainstFeeds} is for situations.
+   */
+  crossValidateObservation?: LandingHook<string | null>;
   /**
    * Platform-attestation verifier for the enrollment flow. Defaults to
    * {@link UNVERIFIED_ATTESTATION} (confirms nothing — no real platform verifier
@@ -182,6 +191,9 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const crossValidate: LandingHook<string | null> =
     options.crossValidateAgainstFeeds ??
     ((db, reg, id, at) => crossValidateAgainstFeeds(db, reg, id, at));
+  const crossValidateReading: LandingHook<string | null> =
+    options.crossValidateObservation ??
+    ((db, reg, id, at) => crossValidateObservation(db, reg, id, at));
   const attestationVerifier = options.attestationVerifier ?? UNVERIFIED_ATTESTATION;
   const osmAuthVerifier = options.osmAuthVerifier ?? UNVERIFIED_OSM_AUTH;
   const issuerName = env["OPENCONDITIONS_ISSUER_NAME"] || DEFAULT_ISSUER_NAME;
@@ -363,21 +375,69 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       return reply.status(403).send({ error: "reporter is not enrolled or is blocked" });
     }
 
-    // 4. A reading of a feature or a place lands once observations are stored
-    // as series; until then only situations are reported.
+    // 4. Deterministic geometry screen: exactly two finite ordinates in WGS84
+    // range everywhere (the claim schema checks the shape only). An
+    // observation claim's geometry is where the reporter stood.
     const claim = report.claim;
-    if (claim.claimClass !== "situation") {
-      return reply.status(422).send({
-        error: "this instance takes situation reports only",
-        reason: "unsupported_claim_class",
-      });
-    }
-
-    // 5. Deterministic geometry screen: exactly two finite ordinates in WGS84
-    // range everywhere (the claim schema checks the shape only).
     const geometryReasons = checkGeometryPlausibility(claim.geometry as GeoJsonGeometry);
     if (geometryReasons.length > 0) {
       return reply.status(422).send({ error: "implausible report", reasons: geometryReasons });
+    }
+
+    // 5. A reading of a feature, a component or a place lands on the
+    // canonical subject as a crowd observation.
+    if (claim.claimClass === "observation") {
+      let landed: Awaited<ReturnType<typeof landObservationReport>>;
+      try {
+        landed = await landObservationReport(sql, registry, report, {
+          instanceId,
+          now: nowIso,
+          attribution: crowdAttribution,
+        });
+      } catch (err) {
+        if (err instanceof ClaimRefusedError) {
+          return reply.status(422).send({ error: "claim refused", issues: err.issues });
+        }
+        if (err instanceof ConflictingReportError) {
+          return reply.status(409).send({
+            error: "another reporter gave a different reading of this subject at this instant",
+            reason: "conflicting_report",
+          });
+        }
+        if (err instanceof ReportRateLimitError) {
+          return reply.status(429).send({ error: err.message, reason: err.reason });
+        }
+        if (err instanceof GeometryInvalidError) {
+          return reply
+            .status(422)
+            .send({ error: "implausible report", reasons: ["geometry_invalid"] });
+        }
+        throw err;
+      }
+      const observationId = landed.record.id;
+      if (landed.kinematicFlagged) {
+        req.log.warn({ observationId }, "kinematically implausible reporter transition");
+      }
+      // Official cross-validation against this instance's feed readings of the
+      // subject: best-effort, like the situation hooks, and never failing the
+      // landing.
+      if (landed.inserted) {
+        try {
+          const matched = await crossValidateReading(sql, registry, observationId, nowIso);
+          if (matched !== null) {
+            req.log.info(
+              { observationId, matched },
+              "crowd reading cross-validated against a feed reading",
+            );
+          }
+        } catch (err) {
+          req.log.warn(
+            { err, observationId },
+            "observation cross-validation failed; landing is unaffected",
+          );
+        }
+      }
+      return reply.status(200).send({ record: landed.record, evidenceState: landed.evidenceState });
     }
 
     // 5b. Per-instance police-presence gate (DEFAULT OFF). Only a NEW report is
@@ -584,11 +644,31 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       }
     }
 
-    // 7. Crowd evidence lives on situations; votes on features, offers and
-    // their components come with observation reports.
+    // 7. Crowd evidence lives on situations and crowd observations; a feature
+    // or an offer takes corrections, which are not votes.
+    if (recordClass === "observation") {
+      let voted: Awaited<ReturnType<typeof castObservationVote>>;
+      try {
+        voted = await castObservationVote(sql, registry, id, subClaim, nowIso);
+      } catch (err) {
+        if (err instanceof GeometryInvalidError) {
+          return reply
+            .status(422)
+            .send({ error: "implausible sub-claim geometry", reasons: ["geometry_invalid"] });
+        }
+        throw err;
+      }
+      if (voted.code !== 200) return reply.status(voted.code).send({ error: voted.error });
+      if (voted.action === "flag") return reply.status(200).send({ flagged: true });
+      return reply.status(200).send({
+        record: voted.record,
+        evidenceState: voted.evidenceState,
+        action: voted.action,
+      });
+    }
     if (recordClass !== "situation") {
       return reply.status(422).send({
-        error: "this instance takes votes on situations only",
+        error: "this instance takes votes on situations and crowd observations only",
         reason: "unsupported_record_class",
       });
     }

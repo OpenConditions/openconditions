@@ -23,6 +23,7 @@ afterAll(async () => {
 }, 30_000);
 
 const NOW = new Date("2026-10-01T12:00:00Z");
+const registry = productionRegistry();
 
 async function insertReading(retentionDays: number, start: string) {
   await sql`
@@ -52,10 +53,11 @@ describe("partitionCovers", () => {
 describe("retention classes", () => {
   it("come from the registry: raw days, 0 to keep everything, none for latest-only", () => {
     const registry = productionRegistry();
-    expect(retentionDaysOf(registry.property("traffic.speed")!)).toBe(7);
+    expect(retentionDaysOf(registry.property("traffic.speed")!)).toBe(3);
     expect(retentionDaysOf(registry.property("camera.image")!)).toBeUndefined();
-    expect(retentionDaysOf(registry.property("traffic.los")!)).toBe(0);
-    expect(retentionClasses(registry)).toEqual(expect.arrayContaining([0, 2, 7, 30]));
+    expect(retentionDaysOf(registry.property("traffic.los")!)).toBe(7);
+    expect(retentionDaysOf(registry.property("device.status")!)).toBe(0);
+    expect(retentionClasses(registry)).toEqual(expect.arrayContaining([0, 2, 3, 7, 30]));
   });
 });
 
@@ -91,18 +93,34 @@ describe("observation partitions", () => {
   });
 
   it("drop whole days a day after every reading in them is past retention, never keep-everything months", async () => {
-    expect(
-      await dropExpiredObservationPartitions(sql, { now: new Date("2026-10-02T00:30:00Z") }),
-    ).toEqual([]);
-    const later = new Date("2026-10-03T00:30:00Z");
-    expect(await dropExpiredObservationPartitions(sql, { now: later })).toEqual([
-      "observation_r2_d20260929",
-    ]);
+    const drop = (at: string) =>
+      dropExpiredObservationPartitions(sql, { now: new Date(at), registry });
+    await sql`INSERT INTO conditions.observation_rollup_progress (period, finalized_before)
+      VALUES ('hourly', '2026-10-02T00:00:00Z')`;
+    expect(await drop("2026-10-02T00:30:00Z")).toEqual([]);
+    expect(await drop("2026-10-03T00:30:00Z")).toEqual(["observation_r2_d20260929"]);
     const [{ count }] = await sql`SELECT count(*)::int AS count FROM conditions.observation`;
     expect(count).toBe(2);
-    expect(
-      await dropExpiredObservationPartitions(sql, { now: new Date("2027-06-01T00:00:00Z") }),
-    ).not.toContain("observation_r0_m202609");
+    expect(await drop("2027-06-01T00:00:00Z")).not.toContain("observation_r0_m202609");
+    await sql`DELETE FROM conditions.observation_rollup_progress`;
+  });
+
+  it("keep a day of a rolled-up property until the rollup has passed it, unless it holds nothing", async () => {
+    // Class 2 holds traffic.volume, which rolls up hourly.
+    await ensureObservationPartitions(sql, { classes: [2], now: NOW, aheadDays: 1 });
+    await insertReading(2, "2026-09-30T08:00:00Z");
+    const drop = (at: string) =>
+      dropExpiredObservationPartitions(sql, { now: new Date(at), registry });
+    expect(await drop("2026-10-05T00:30:00Z")).toEqual([
+      "observation_r2_d20260929",
+      "observation_r2_d20261001",
+    ]);
+    await sql`INSERT INTO conditions.observation_rollup_progress (period, finalized_before)
+      VALUES ('hourly', '2026-09-30T23:00:00Z')`;
+    expect(await drop("2026-10-05T00:30:00Z")).toEqual([]);
+    await sql`UPDATE conditions.observation_rollup_progress SET finalized_before = '2026-10-01T00:00:00Z'`;
+    expect(await drop("2026-10-05T00:30:00Z")).toEqual(["observation_r2_d20260930"]);
+    await sql`DELETE FROM conditions.observation_rollup_progress`;
   });
 });
 
@@ -123,7 +141,7 @@ describe("partition maintenance an hour away from a write", () => {
 
   async function maintain(days: number, at: string) {
     await ensureObservationPartitions(sql, { classes: [days], now: new Date(at) });
-    await dropExpiredObservationPartitions(sql, { now: new Date(at) });
+    await dropExpiredObservationPartitions(sql, { now: new Date(at), registry });
   }
 
   it("holds the look-ahead a writer counts on just after midnight, before the next run", async () => {

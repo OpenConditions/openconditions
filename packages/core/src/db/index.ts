@@ -22,7 +22,9 @@ export {
   situationRevision,
 } from "./record-schema.js";
 export {
+  type CanonicalFeature,
   type Revision,
+  readCanonical,
   readLatestObservation,
   readObservationHistory,
   readRecord,
@@ -32,7 +34,6 @@ export {
 } from "./records.js";
 export { assertStoredCodesRegistered, storedRegistryCodes } from "./registry-coverage.js";
 export {
-  observations,
   osmRoad,
   roadSegment,
   segmentObservation,
@@ -40,7 +41,6 @@ export {
   segmentSpeed,
   sensorBaseline,
   sensorSegment,
-  sensorSpeedSample,
   sourceStatus,
 } from "./schema.js";
 export { source } from "./source-schema.js";

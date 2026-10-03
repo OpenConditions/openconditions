@@ -7,9 +7,10 @@ traffic. A road with no nearby sensor carries no speed observation.
 ## Feed roster
 
 Every feed below is a `produces: "flow"` source in `packages/roads/feeds/roads`;
-each emits a per-sensor speed reading where the upstream carries one. This table
-is the current set — the authoritative definition (URLs, cadence, credential
-fields) lives in those feed files, and the credential-bearing subset is
+each emits a per-sensor speed reading where the upstream carries one. The feed
+files hold 24 flow feeds in all; this table lists a part of them — the
+authoritative definition (URLs, cadence, credential fields) lives in those feed
+files, and the credential-bearing subset is
 regenerated into [`road-feed-credentials.md`](./road-feed-credentials.md).
 
 | feed id                | region               | format              | keyed                           | license              |

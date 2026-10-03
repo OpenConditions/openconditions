@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseLtaSpeedBands } from "../flow-lta-speedbands.js";
-import type { SourceDescriptor } from "../types.js";
+import { flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const src = {
-  id: "sg-lta-speedbands",
-  attribution: "Land Transport Authority (Singapore)",
-  country: "SG",
-  license: "Singapore-ODL-1.0",
-} as SourceDescriptor;
+const FEED = "sg-lta-speedbands";
+const feed = flowFeed(FEED);
 
 // Shape mirrors the DataMall Traffic Speed Bands `value` array.
 const payload = JSON.stringify({
@@ -27,15 +22,13 @@ const payload = JSON.stringify({
   ],
 });
 
-describe("parseLtaSpeedBands", () => {
-  it("builds a Start→End LineString and the band-midpoint speed", () => {
-    const { flows } = parseLtaSpeedBands(payload, src);
-    expect(flows).toHaveLength(1);
-    expect(flows[0]!.id).toBe("sg-lta-speedbands:103000000");
-    expect(flows[0]!.sourceFormat).toBe("lta-speedbands");
-    expect(flows[0]!.speedKph).toBe(25); // (21 + 29) / 2
-    expect(flows[0]!.los).toBe("unknown");
-    expect(flows[0]!.geometry).toEqual({
+describe("LTA traffic speed bands", () => {
+  it("draws the link Start→End and keeps the band-midpoint speed", () => {
+    const out = flows(feed, payload);
+    expect(siteIds(out, FEED)).toEqual(["103000000"]);
+    expect(value(out, FEED, "103000000", "traffic.speed")).toBe(25); // (21 + 29) / 2
+    expect(readings(out, FEED, "103000000", "traffic.los")).toEqual([]);
+    expect((site(out, FEED, "103000000")!["location"] as { geometry: unknown }).geometry).toEqual({
       type: "LineString",
       coordinates: [
         [103.8515, 1.322],
@@ -44,8 +37,8 @@ describe("parseLtaSpeedBands", () => {
     });
   });
 
-  it("flags a hard parse failure", () => {
-    expect(parseLtaSpeedBands("nope", src).failed).toBe(true);
-    expect(parseLtaSpeedBands(JSON.stringify({}), src).failed).toBe(true);
+  it("refuses an unreadable body or one without a value array", () => {
+    expect(() => flows(feed, "nope")).toThrow("hard parse failure");
+    expect(() => flows(feed, JSON.stringify({}))).toThrow("hard parse failure");
   });
 });

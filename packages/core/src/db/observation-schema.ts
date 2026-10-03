@@ -1,4 +1,4 @@
-import { ACCESS_MODES, enumCheckSql } from "@openconditions/model";
+import { ACCESS_MODES, EVIDENCE_STATES, enumCheckSql } from "@openconditions/model";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -25,7 +25,9 @@ import { conditionsSchema, geometry, tstz } from "./columns.js";
  * `template` holds what does not (location, subject, qualifiers, provenance
  * without the raw reference), so a history row reads back as a whole record.
  * Crowd rows (source `crowd`) and the fused row (source `@fused`) sit beside
- * the per-source rows. Created with `fillfactor = 70` (in the custom
+ * the per-source rows. A crowd row carries the evidence summary of the report
+ * it holds, materialised from its `report_evidence` ledger as a crowd
+ * situation's is. Created with `fillfactor = 70` (in the custom
  * migration): nothing indexes `value_num`, `record` or the times, so the
  * per-minute updates of a flow series stay HOT.
  */
@@ -55,6 +57,9 @@ export const observationLatest = conditionsSchema.table(
     effectiveUntil: tstz("effective_until"),
     sinceAt: tstz("since_at").notNull(),
     fusedFrom: text("fused_from").array(),
+    evidenceState: text("evidence_state"),
+    confidenceScore: doublePrecision("confidence_score"),
+    corroborations: integer("corroborations").notNull().default(0),
     expiresAt: tstz("expires_at"),
     retentionDays: smallint("retention_days"),
     updatedAt: tstz("updated_at").notNull().defaultNow(),
@@ -65,6 +70,10 @@ export const observationLatest = conditionsSchema.table(
       "observation_latest_access_mode_enum",
       sql.raw(enumCheckSql("access_mode", ACCESS_MODES)),
     ),
+    check(
+      "observation_latest_evidence_state_enum",
+      sql.raw(`evidence_state IS NULL OR ${enumCheckSql("evidence_state", EVIDENCE_STATES)}`),
+    ),
     index("idx_observation_latest_geom").using("gist", t.geom),
     index("idx_observation_latest_property").on(t.property),
     index("idx_observation_latest_property_text").on(t.property, t.valueText),
@@ -73,6 +82,10 @@ export const observationLatest = conditionsSchema.table(
       .on(t.valueMoney)
       .where(sql`${t.property} = 'fuel.price'`),
     index("idx_observation_latest_expires").on(t.expiresAt).where(sql`${t.expiresAt} IS NOT NULL`),
+    // A crowd report is found by its record id: votes, replays and re-keying name it.
+    index("idx_observation_latest_crowd_record")
+      .on(sql`(${t.record} ->> 'id')`)
+      .where(sql`${t.sourceId} = 'crowd'`),
   ],
 );
 

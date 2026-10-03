@@ -129,8 +129,8 @@ describe("proposeLink", () => {
   });
 
   it("leaves a weak match for review instead of linking it", () => {
-    const a = site("oc:feature:a:1", 8.4, 49, { name: name("Rathaus Nord Ost Garage") });
-    const b = site("oc:feature:b:1", 8.4, 49.0009, { name: name("Rathaus West Turm") });
+    const a = site("oc:feature:a:1", 8.4, 49, { name: name("Rathaus Altstadt Garage") });
+    const b = site("oc:feature:b:1", 8.4, 49.0009, { name: name("Rathaus Markt Turm") });
     const link = proposeLink(a, b, RULES);
     expect(link?.status).toBe("pending");
     expect(link?.confidence).toBe(0.4);
@@ -149,6 +149,76 @@ describe("proposeLink", () => {
       RULES,
     );
     expect([link?.aId, link?.bId]).toEqual(["oc:feature:a:1", "oc:feature:z:1"]);
+  });
+
+  describe("an id one authority issued", () => {
+    const rules: LinkingRules = { ...RULES, idSchemes: ["provider"] };
+    const issued = (authority: string, id: string) => ({
+      externalIds: [{ scheme: "provider", id, authority }],
+    });
+
+    it("links the same id from the same authority, however far apart", () => {
+      const link = proposeLink(
+        site("oc:feature:a:1", 8.4, 49, issued("cpo-a", "1")),
+        site("oc:feature:b:1", 8.5, 49, issued("cpo-a", "1")),
+        rules,
+      );
+      expect(link).toMatchObject({ method: "external_id", status: "accepted" });
+    });
+
+    it("never links one id value two authorities issued", () => {
+      expect(
+        proposeLink(
+          site("oc:feature:a:1", 8.4, 49, issued("cpo-a", "1")),
+          site("oc:feature:b:1", 8.5, 49, issued("cpo-b", "1")),
+          rules,
+        ),
+      ).toBeUndefined();
+    });
+
+    it("takes ids two authorities issued as no conflict", () => {
+      const link = proposeLink(
+        site("oc:feature:a:1", 8.4, 49, issued("cpo-a", "1")),
+        site("oc:feature:b:1", 8.4001, 49, issued("cpo-b", "2")),
+        rules,
+      );
+      expect(link).toMatchObject({ method: "spatial_attribute", status: "accepted" });
+    });
+
+    it("takes an id with an authority and one without as no conflict", () => {
+      const link = proposeLink(
+        site("oc:feature:a:1", 8.4, 49, issued("cpo-a", "1")),
+        site("oc:feature:b:1", 8.4001, 49, { externalIds: [{ scheme: "provider", id: "2" }] }),
+        rules,
+      );
+      expect(link).toMatchObject({ status: "accepted" });
+    });
+  });
+
+  it("keeps apart names that differ only by a direction", () => {
+    const rules: LinkingRules = { ...RULES, alwaysMetres: 20, attribute: { name: 0.45 } };
+    expect(
+      proposeLink(
+        site("oc:feature:a:1", 8.4, 49, { name: name("Neuhaus O") }),
+        site("oc:feature:a:2", 8.4015, 49, { name: name("Neuhaus W") }),
+        rules,
+      ),
+    ).toBeUndefined();
+    expect(
+      proposeLink(
+        site("oc:feature:a:1", 8.4, 49, { name: name("Neuhaus") }),
+        site("oc:feature:b:2", 8.4015, 49, { name: name("Neuhaus W") }),
+        rules,
+      ),
+    ).toMatchObject({ status: "accepted" });
+  });
+});
+
+describe("tokenSimilarity and directions", () => {
+  it("scores names with different direction markers as unrelated", () => {
+    expect(tokenSimilarity("Rastplatz Nord", "Rastplatz Süd")).toBe(0);
+    expect(tokenSimilarity("Neuhaus O", "Neuhaus W")).toBe(0);
+    expect(tokenSimilarity("Rest Area North", "Rest Area N")).toBe(1);
   });
 });
 

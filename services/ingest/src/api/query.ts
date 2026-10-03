@@ -94,6 +94,132 @@ export const StreamQuery = SituationListQuery.pick({
 
 export type StreamQuery = z.output<typeof StreamQuery>;
 
+const at = (what: string) =>
+  z.iso.datetime({ offset: true }).describe(`the instant ${what} are current at`).optional();
+const cursor = z.string().min(1).describe("the `next` of the previous page").optional();
+const limit = z.coerce.number().int().min(1).max(5000).default(500);
+const canonical = (what: string) => z.enum(["0", "1"]).describe(`1 serves ${what}`).optional();
+
+/** Query of a feature collection: filters, the canonical view, components, and the page. */
+export const FeatureListQuery = z.strictObject({
+  ...SituationListQuery.pick({
+    bbox: true,
+    kind: true,
+    type: true,
+    domain: true,
+    source: true,
+    origin: true,
+  }).shape,
+  at: at("features"),
+  canonical: canonical(
+    "the canonical view: one feature per cluster of linked features, under its canonical id",
+  ),
+  expand: z
+    .enum(["components"])
+    .describe("components includes each feature's components, which collections leave out")
+    .optional(),
+  cursor,
+  limit,
+});
+
+export type FeatureListQuery = z.output<typeof FeatureListQuery>;
+
+/** Query of an offer collection: filters, the instant offers are valid at, and the page. */
+export const OfferListQuery = z.strictObject({
+  ...SituationListQuery.pick({
+    bbox: true,
+    kind: true,
+    type: true,
+    domain: true,
+    source: true,
+    origin: true,
+    horizonDays: true,
+  }).shape,
+  at: at("offers"),
+  cursor,
+  limit,
+});
+
+export type OfferListQuery = z.output<typeof OfferListQuery>;
+
+/** Query of the latest readings: filters, the canonical view, and the page (keyed by series). */
+export const LatestObservationQuery = z.strictObject({
+  bbox: bbox.optional(),
+  property: list.describe("comma-separated property codes").optional(),
+  domain: z.string().min(1).describe("only properties of this domain").optional(),
+  source: list.describe("comma-separated source ids").optional(),
+  origin: list.describe("comma-separated origins: feed, crowd, federation, derived").optional(),
+  at: at("readings"),
+  canonical: canonical(
+    "the canonical view: the fused reading of each property several sources or the crowd may report, and the per-source readings of the rest",
+  ),
+  cursor: z
+    .string()
+    .regex(/^\d+$/, "cursor is the `next` of the previous page")
+    .describe("the `next` of the previous page: a series id")
+    .optional(),
+  limit,
+});
+
+export type LatestObservationQuery = z.output<typeof LatestObservationQuery>;
+
+/** Query of one series: what names it, the range, the resolution and the page. */
+export const SeriesQuery = z
+  .strictObject({
+    subject: z
+      .string()
+      .min(1)
+      .describe(
+        "the series' subject key (`feature:<id>`, `feature:<id>#<component>`, …) or a record id",
+      ),
+    component: z.string().min(1).describe("a component of the feature `subject` names").optional(),
+    property: z.string().min(1).describe("the property code"),
+    qualifiers: z
+      .string()
+      .describe("the series' qualifiers as a JSON object")
+      .transform((value, ctx) => {
+        try {
+          const parsed: unknown = JSON.parse(value);
+          if (parsed !== null && typeof parsed === "object" && !Array.isArray(parsed)) {
+            return parsed as Record<string, unknown>;
+          }
+        } catch {}
+        ctx.addIssue({ code: "custom", message: "qualifiers must be a JSON object" });
+        return z.NEVER;
+      })
+      .optional(),
+    source: z
+      .string()
+      .min(1)
+      .describe("the source, where several report on one subject")
+      .optional(),
+    from: z.iso
+      .datetime({ offset: true })
+      .describe("start of the range; default a day before `to`")
+      .optional(),
+    to: z.iso
+      .datetime({ offset: true })
+      .describe("end of the range (exclusive); default now")
+      .optional(),
+    resolution: z
+      .enum(["raw", "hourly", "daily"])
+      .describe(
+        "raw readings or rollups; default raw within the property's raw retention, its rollup beyond",
+      )
+      .optional(),
+    cursor,
+    limit,
+  })
+  .refine(
+    (q) => q.from === undefined || q.to === undefined || Date.parse(q.from) < Date.parse(q.to),
+    {
+      message: "from must be before to",
+      path: ["from"],
+    },
+  );
+
+export type SeriesQuery = z.output<typeof SeriesQuery>;
+
 /** Query of a single record or history read: the instant effect states are evaluated at. */
 export const AtQuery = z.strictObject({
   at: z.iso.datetime({ offset: true }).optional(),

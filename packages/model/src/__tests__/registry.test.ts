@@ -205,6 +205,22 @@ describe("buildRegistry", () => {
       ],
       /latest-only property keeps no history/,
     ],
+    [
+      "a component-history rule on a latest-only property",
+      [
+        defineDomain({ code: "roads", description: "x" }),
+        defineProperty({
+          code: "x.image",
+          domain: "roads",
+          version: "1.0",
+          description: "x",
+          result: { type: "text" },
+          subjects: [{ kind: "location" }],
+          retention: { latestOnly: true, componentHistory: false },
+        }),
+      ],
+      /latest-only property keeps no history/,
+    ],
   ])("rejects %s", (_label, entries, message) => {
     expect(() => buildRegistry([kernelModule, { name: "bad", entries }])).toThrow(message);
   });

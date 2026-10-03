@@ -6,14 +6,14 @@ import { runSource } from "../pipeline/run.js";
 
 /**
  * A sql double whose transaction opener throws if the pipeline ever reaches
- * the swap. Every statement answers with one row, as opening the poll's
- * attempt does.
+ * the publication. Every statement answers with one row, as opening the
+ * poll's attempt does.
  */
 const noSwapSql = Object.assign(
   ((..._args: unknown[]) => Promise.resolve([{ id: "1" }])) as unknown as Record<string, unknown>,
   {
     begin: vi.fn(async () => {
-      throw new Error("atomicSwap opened a transaction for a blocked feed");
+      throw new Error("the publication opened a transaction for a blocked feed");
     }),
   },
 ) as unknown as postgres.Sql;
@@ -35,7 +35,7 @@ function blockedFeed(url: string): DomainFeedSource {
 }
 
 describe("runSource egress guard", () => {
-  it("blocks a feed pointing at the metadata IP and preserves last-good (no swap)", async () => {
+  it("blocks a feed pointing at the metadata IP and preserves last-good (no publication)", async () => {
     const upstream = vi.fn(async () => new Response("secret", { status: 200 }));
     const res = await runSource(blockedFeed("http://169.254.169.254/latest/meta-data"), {
       sql: noSwapSql,

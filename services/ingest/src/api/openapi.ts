@@ -1,5 +1,14 @@
 import { z } from "zod";
-import { AtQuery, RecordClassParam, SituationListQuery, StreamQuery } from "./query.js";
+import {
+  AtQuery,
+  FeatureListQuery,
+  LatestObservationQuery,
+  OfferListQuery,
+  RecordClassParam,
+  SeriesQuery,
+  SituationListQuery,
+  StreamQuery,
+} from "./query.js";
 
 /** One public route as the OpenAPI document describes it. */
 export interface ApiRoute {
@@ -74,6 +83,69 @@ export const API_ROUTES: readonly ApiRoute[] = [
     notFound: true,
   },
   {
+    path: "/features",
+    operationId: "listFeatures",
+    summary:
+      "Live features as records, one keyset page ordered by id; `canonical=1` serves one feature per cluster of linked features under its canonical id. Components only with `expand=components`.",
+    query: FeatureListQuery,
+    produces: ["application/json"],
+  },
+  {
+    path: "/features.geojson",
+    operationId: "listFeaturesGeoJson",
+    summary: "Live features as a GeoJSON FeatureCollection, one keyset page.",
+    query: FeatureListQuery,
+    produces: ["application/geo+json"],
+  },
+  {
+    path: "/features.jsonld",
+    operationId: "listFeaturesJsonLd",
+    summary: "Live features as GeoJSON-LD (schema.org and SOSA context), one keyset page.",
+    query: FeatureListQuery,
+    produces: ["application/ld+json"],
+  },
+  {
+    path: "/features/{id}",
+    operationId: "getFeature",
+    summary:
+      "One feature, tombstoned or not, with its components and the canonical cluster it belongs to; a canonical id serves the cluster's canonical feature.",
+    params: { id: RecordId },
+    produces: ["application/json"],
+    notFound: true,
+  },
+  {
+    path: "/offers",
+    operationId: "listOffers",
+    summary: "Live offers (tariffs) as records, one keyset page ordered by id.",
+    query: OfferListQuery,
+    produces: ["application/json"],
+  },
+  {
+    path: "/offers/{id}",
+    operationId: "getOffer",
+    summary: "One offer, tombstoned or not.",
+    params: { id: RecordId },
+    produces: ["application/json"],
+    notFound: true,
+  },
+  {
+    path: "/observations/latest",
+    operationId: "listLatestObservations",
+    summary:
+      "The reading in effect of every matching series, one keyset page ordered by series (the cursor is a series id); `canonical=1` serves fused readings where several sources or the crowd report a property.",
+    query: LatestObservationQuery,
+    produces: ["application/json"],
+  },
+  {
+    path: "/observations",
+    operationId: "getSeries",
+    summary:
+      "One series over a range: raw readings within the property's raw retention, hourly or daily rollups beyond it (or as `resolution` asks), oldest first, one page.",
+    query: SeriesQuery,
+    produces: ["application/json"],
+    notFound: true,
+  },
+  {
     path: "/history/{class}/{id}",
     operationId: "getHistory",
     summary: "A record's revisions, oldest first: what changed and the record as it stood.",
@@ -98,7 +170,8 @@ export const API_ROUTES: readonly ApiRoute[] = [
   {
     path: "/coverage",
     operationId: "getCoverage",
-    summary: "Live records per country, subdivision, class, kind and access mode.",
+    summary:
+      "Live records per country, subdivision, class, kind and access mode, and live series per property.",
     produces: ["application/json"],
   },
   {
@@ -157,7 +230,7 @@ export function openApiDocument() {
             content: Object.fromEntries(route.produces.map((type) => [type, {}])),
           },
           ...(route.query || route.params ? { "400": { description: "Invalid request" } } : {}),
-          ...(route.notFound ? { "404": { description: "No such record or schema" } } : {}),
+          ...(route.notFound ? { "404": { description: "No such record, series or schema" } } : {}),
         },
       },
     };

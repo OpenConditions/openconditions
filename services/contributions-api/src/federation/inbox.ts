@@ -33,7 +33,13 @@ import type postgres from "postgres";
 import { actorOf, lockCrowd } from "../crowd.js";
 import { crossValidateAgainstFeeds } from "../evidence/crossValidate.js";
 import { recomputeEvidence } from "../evidence/recompute.js";
-import { ERASURE_REASON, isErased, lockRecord, recordErasure } from "./tombstone.js";
+import {
+  ERASURE_REASON,
+  isErased,
+  leaveCanonicalView,
+  lockRecord,
+  recordErasure,
+} from "./tombstone.js";
 
 type Sql = postgres.Sql;
 
@@ -289,6 +295,10 @@ async function applyRetraction(
     await tx`SELECT pg_advisory_xact_lock(hashtext(${row.source_id}))`;
     await tombstoneRecords(tx, cls, [entry.recordId], entry.reason, {
       registry: ctx.registry,
+      now: ctx.now,
+    });
+    await leaveCanonicalView(tx, ctx.registry, { class: cls, id: entry.recordId }, row.source_id, {
+      instanceId: ctx.localInstanceId,
       now: ctx.now,
     });
     return "tombstoned";

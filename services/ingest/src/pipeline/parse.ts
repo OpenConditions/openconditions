@@ -1,9 +1,10 @@
 import type { ParseOutput } from "@openconditions/ingest-framework";
 import {
   type FeedSource,
-  type FlowParse,
+  type FlowContext,
+  type FlowOutput,
+  type FlowSites,
   parseFlows,
-  type SiteGeometry,
 } from "@openconditions/roads";
 import { DOMAIN_REGISTRY } from "../domains.js";
 
@@ -25,20 +26,22 @@ export function parseEventFeed(
 }
 
 /**
- * One poll of a flow feed: the readings of every payload and the congestion
- * situations derived from them. `siteMap` gives sites keyed only by id their
- * geometry (the NDW site-table join). A hard parse failure throws, so it can
- * never read as "no readings this cycle".
+ * One poll of a flow feed: the measurement sites, readings and derived
+ * congestion situations of every payload. `sites` is the feed's site table or
+ * station registry, for sites a payload names only by id. A hard parse
+ * failure throws, so it can never read as "no readings this cycle".
  */
 export function parseFlowFeed(
   src: FeedSource,
   buffers: readonly Buffer[],
-  siteMap?: Map<string, SiteGeometry>,
-): FlowParse {
-  const out: FlowParse = { flows: [], situations: [] };
+  sites: FlowSites | undefined,
+  ctx: FlowContext,
+): FlowOutput {
+  const out: FlowOutput = { features: [], observations: [], situations: [] };
   for (const buffer of buffers) {
-    const parsed = parseFlows(src, buffer, siteMap);
-    out.flows.push(...parsed.flows);
+    const parsed = parseFlows(src, buffer, sites, ctx);
+    out.features.push(...parsed.features);
+    out.observations.push(...parsed.observations);
     out.situations.push(...parsed.situations);
   }
   return out;

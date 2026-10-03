@@ -14,9 +14,10 @@ but the data and the libraries are designed to be reused anywhere.
 Road domain, v0.1:
 
 - **Live feeds:** NDW (NL), Die Autobahn (DE), Fintraffic / Digitraffic (FI), DriveBC (CA), and WZDx (US),
-  spanning DATEX II, Open511, and WZDx GeoJSON — plus government point-sensor **traffic speed** as
-  `Measurement` flow from Fintraffic (FI), WebTRIS (GB), NYC DOT (US-NY), NDW (NL), OHGO (US-OH, keyed),
-  and Trafikverket (SE, keyed). Congestion is computed from a self-derived free-flow baseline (85th
+  spanning DATEX II, Open511, and WZDx GeoJSON — plus government point-sensor **traffic flow** (speed,
+  volume, occupancy, level of service) from 24 flow feeds, among them Fintraffic (FI), WebTRIS (GB),
+  NYC DOT (US-NY), NDW (NL), OHGO (US-OH, keyed) and Trafikverket (SE, keyed), as measurement sites and
+  their readings. Congestion is computed from a self-derived free-flow baseline (85th
   percentile), with native reference speeds where a feed ships one and OSM `maxspeed` as a day-one proxy.
   See [docs/speed-coverage.md](docs/speed-coverage.md).
 - **Emitters:** a paged record API, GeoJSON, JSON-LD, TraFF, DATEX II, Valhalla exclusions, and an SSE stream —
@@ -33,7 +34,9 @@ Road domain, v0.1:
 ## Architecture
 
 Road events are stored as model situations, each with its effects and revisions ([model](docs/model.md),
-[storage](docs/storage.md)); flow speeds and crowd reports are `Observation` rows in `conditions.observations`.
+[storage](docs/storage.md)); flow feeds write measurement sites as model features and their speeds,
+volumes and levels of service as model observations (the latest reading per series, a partitioned history
+and hourly rollups).
 Three layers:
 
 ```
@@ -71,25 +74,35 @@ The service applies its migrations, starts polling the enabled feeds, and serves
 
 ### Public API
 
-Road situations are served as model records ([model](docs/model.md)). Collections take the same
-filters (`bbox=west,south,east,north`, `kind`, `type`, `domain`, `source`, `origin`, `minSeverity`,
-`at`, `horizonDays`) and are paged by a keyset cursor: follow `next` (JSON) or the `Link: rel="next"`
-header (XML) until there is none. Everything is rate-limited; `GET /openapi.json` describes it all.
+Road situations, measurement sites and facilities (features), tariffs (offers) and readings
+(observations) are served as model records ([model](docs/model.md)). Collections take the same
+filters (`bbox=west,south,east,north`, `kind`, `type`, `domain`, `source`, `origin`, `at`; situations
+also `minSeverity` and `horizonDays`, readings `property`) and are paged by a keyset cursor: follow
+`next` (JSON) or the `Link: rel="next"` header (XML) until there is none. `canonical=1` serves the
+canonical view: one feature per cluster of features several sources describe, and the fused reading of
+a property several sources or the crowd report. Everything is rate-limited; `GET /openapi.json`
+describes it all, and [storage](docs/storage.md#read-api) says what each route reads.
 
-| Endpoint                             | Content                                                                                       |
-| ------------------------------------ | --------------------------------------------------------------------------------------------- |
-| `GET /situations`                    | Situations as JSON records `{records, next}`                                                  |
-| `GET /situations.geojson`, `.jsonld` | The same as GeoJSON, or GeoJSON-LD (SOSA/Schema.org `@context`)                               |
-| `GET /situations/{id}`               | One situation with its evidence and graph binding                                             |
-| `GET /history/{class}/{id}`          | A record's revisions and what changed                                                         |
-| `GET /traff.xml`                     | TraFF (CoMaps / Navit)                                                                        |
-| `GET /datex2/situations.xml`         | DATEX II v3 SituationPublication, one record per effect ([status](docs/datex-conformance.md)) |
-| `GET /stream`                        | Server-Sent Events: live situations, then each change and removal                             |
-| `GET /valhalla/exclusions.json`      | Valhalla `exclude_locations` / `exclude_polygons` and speed caps                              |
-| `GET /segments/conditions.json`      | Bound effects in force, keyed by directed OSM way spans (routing feed)                        |
-| `GET /taxonomy`, `/schemas/{path}`   | The running registry and its JSON Schemas                                                     |
-| `GET /coverage`                      | Live records per country, kind and access mode                                                |
-| `GET /status`                        | health (unlimited)                                                                            |
+| Endpoint                             | Content                                                                                                                        |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /situations`                    | Situations as JSON records `{records, next}`                                                                                   |
+| `GET /situations.geojson`, `.jsonld` | The same as GeoJSON, or GeoJSON-LD (SOSA/Schema.org `@context`)                                                                |
+| `GET /situations/{id}`               | One situation with its evidence and graph binding                                                                              |
+| `GET /features`                      | Features as JSON records; components with `expand=components`, the canonical view with `canonical=1`                           |
+| `GET /features.geojson`, `.jsonld`   | The same as GeoJSON, or GeoJSON-LD                                                                                             |
+| `GET /features/{id}`                 | One feature with its components and its canonical cluster (a canonical id serves the cluster)                                  |
+| `GET /offers`, `/offers/{id}`        | Tariffs as JSON records, or one                                                                                                |
+| `GET /observations/latest`           | The reading in effect of every series, paged by series                                                                         |
+| `GET /observations`                  | One series (`subject`, `property`, `qualifiers`, `from`, `to`): raw readings, or hourly/daily rollups beyond the raw retention |
+| `GET /history/{class}/{id}`          | A record's revisions and what changed                                                                                          |
+| `GET /traff.xml`                     | TraFF (CoMaps / Navit)                                                                                                         |
+| `GET /datex2/situations.xml`         | DATEX II v3 SituationPublication, one record per effect ([status](docs/datex-conformance.md))                                  |
+| `GET /stream`                        | Server-Sent Events: live situations, then each change and removal                                                              |
+| `GET /valhalla/exclusions.json`      | Valhalla `exclude_locations` / `exclude_polygons` and speed caps                                                               |
+| `GET /segments/conditions.json`      | Bound effects in force, keyed by directed OSM way spans (routing feed)                                                         |
+| `GET /taxonomy`, `/schemas/{path}`   | The running registry and its JSON Schemas                                                                                      |
+| `GET /coverage`                      | Live records per country, kind and access mode; live series per property                                                       |
+| `GET /status`                        | health (unlimited)                                                                                                             |
 
 ## Using OpenConditions with OpenMapX
 

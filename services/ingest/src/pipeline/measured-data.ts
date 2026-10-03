@@ -9,7 +9,12 @@ import {
   resolvedEnv,
   resolveFeedUrls,
 } from "@openconditions/ingest-framework";
-import { type FlowParse, measuredDataReader, type SiteGeometry } from "@openconditions/roads";
+import {
+  type FlowContext,
+  type FlowOutput,
+  type FlowSites,
+  measuredDataReader,
+} from "@openconditions/roads";
 import { digestOnlyTee, type StreamTeeFactory } from "../raw/stream-tee.js";
 import type { DomainFeedSource } from "./run.js";
 import type { SiteTableStreamFactory } from "./site-table.js";
@@ -45,18 +50,18 @@ function resolveUrl(src: DomainFeedSource): string {
  * Streams a DATEX II MeasuredData (traffic-speed/flow) feed through the SAX flow
  * parser: fetch → optional gunzip → {@link measuredDataReader}. The large
  * document is never buffered whole nor materialised as a DOM — peak memory is the
- * output arrays plus a small per-site accumulator. Returns the readings, the
- * congestion situations derived from them, and the digest of the decoded
- * document — hashed on the way through, the same identity a buffered fetch
- * would give it.
+ * drafts plus a small per-site accumulator. Returns the measurement sites, their
+ * readings, the congestion situations derived from them, and the digest of the
+ * decoded document — hashed on the way through, the same identity a buffered
+ * fetch would give it.
  */
 export async function streamMeasuredData(
   src: DomainFeedSource,
   streamFactory: SiteTableStreamFactory,
-  siteMap: Map<string, SiteGeometry> | undefined,
-  now: () => string,
+  sites: FlowSites | undefined,
+  ctx: FlowContext,
   teeFor: StreamTeeFactory = digestOnlyTee,
-): Promise<FlowParse & { payload: PayloadDigest }> {
+): Promise<FlowOutput & { payload: PayloadDigest }> {
   const url = resolveUrl(src);
 
   // Re-fetch + re-parse from scratch on a transient mid-stream socket drop (NDW
@@ -65,7 +70,7 @@ export async function streamMeasuredData(
   // 60 s tick. A decompression-bomb abort is a plain Error, not transient, so it
   // is not retried.
   return withStreamRetry(async () => {
-    const parser = measuredDataReader(src, siteMap, now);
+    const parser = measuredDataReader(src, sites, ctx);
     // The tee opens before the download starts: a stream that errors while the
     // tee is still being opened would have no listener yet.
     const { tee, finish } = await teeFor(redactSecrets(redactUrl(url), feedSecretValues(src)));
@@ -107,16 +112,16 @@ export async function streamMeasuredData(
       await finish(complete);
     }
 
-    const { flows, situations, failed } = parser.close();
+    const { failed, ...output } = parser.close();
     // A SAX error (mid-document glitch, malformed chunk) stopped accumulation
     // partway through the ~50 MB document: the readings are only whatever
     // resolved before the break, which `runSource` must not treat as a
     // legitimate (possibly empty) fresh set — throwing routes this through the
     // same fetch/parse-failure handling `runSource` already has around this
-    // call, skipping the swap and preserving last-good rows.
+    // call, skipping the write and preserving the last good publication.
     if (failed) {
       throw new Error(`streaming parse failed for source ${src.id} (partial/truncated document)`);
     }
-    return { flows, situations, payload: tee.digest() };
+    return { ...output, payload: tee.digest() };
   }, src.id);
 }

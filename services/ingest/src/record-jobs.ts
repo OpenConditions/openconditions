@@ -72,7 +72,7 @@ export async function maintainPartitions(
     classes: retentionClasses(registry),
     now,
   });
-  const dropped = await dropExpiredObservationPartitions(sql, { now });
+  const dropped = await dropExpiredObservationPartitions(sql, { now, registry });
   return { created, dropped };
 }
 

@@ -1,6 +1,9 @@
-import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core/server";
+import {
+  assertStoredCodesRegistered,
+  resolveInstanceId,
+  runMigrations,
+} from "@openconditions/core/server";
 import { productionRegistry } from "@openconditions/model-registry";
-import { resolveInstanceId } from "@openconditions/normalize";
 import { syncSources } from "@openconditions/storage";
 import Fastify from "fastify";
 import { registerApiRoutes } from "./api/routes.js";

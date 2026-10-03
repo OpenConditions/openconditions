@@ -1,8 +1,14 @@
 import type { LineString, Point } from "geojson";
-import type { FlowGeometry, FlowParseResult } from "./flow.js";
-import { ABSURD_SPEED_KPH, buildMeasuredSiteFlow, makeOrigin } from "./flow.js";
-import type { RoadEvent, RoadFlow } from "./model.js";
+import type { FlowContext, FlowSites } from "./flow-output.js";
+import {
+  type FlowParse,
+  type FlowReading,
+  measuredReading,
+  plausibleSpeed,
+} from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
+
+type FlowGeometry = Point | LineString;
 
 function num(raw: unknown): number | undefined {
   if (raw == null || raw === "") return undefined;
@@ -48,39 +54,38 @@ function toFlowGeometry(geom: unknown): FlowGeometry | null {
 }
 
 /**
- * Parse a plain GeoJSON `FeatureCollection` traffic feed into RoadFlow
- * measurements, one per road segment. Driven entirely by the feed's `flowMap`
- * field mapping, so a single parser serves every feed that publishes features
- * with inline geometry plus flat `properties` carrying a per-segment average
- * speed and/or categorical traffic status — OpenDataSoft exports (Rennes,
- * Bordeaux) and Azure-APIM GeoJSON (Victoria Freeway Travel Time) alike.
- * Segments with no resolvable geometry, or with neither a speed nor a resolvable
- * level-of-service, are skipped. los, speed-ratio, free-flow provenance and the
- * derived congestion events are all produced by the shared
- * {@link buildMeasuredSiteFlow}; only the sourceFormat is restamped here.
+ * Parse a plain GeoJSON `FeatureCollection` traffic feed, one reading per
+ * road segment. Driven entirely by the feed's `flowMap` field mapping, so a
+ * single parser serves every feed that publishes features with inline
+ * geometry plus flat `properties` carrying a per-segment average speed and/or
+ * categorical traffic status — OpenDataSoft exports (Rennes, Bordeaux) and
+ * Azure-APIM GeoJSON (Victoria Freeway Travel Time) alike. Segments with no
+ * resolvable geometry, or with neither a speed nor a resolvable level of
+ * service, are skipped.
  */
-export function parseGeojsonFlow(input: string | Buffer, src: SourceDescriptor): FlowParseResult {
+export function parseGeojsonFlow(
+  input: string | Buffer,
+  src: SourceDescriptor,
+  _sites: FlowSites | undefined,
+  _ctx: FlowContext,
+): FlowParse {
   const mapping = src.flowMap;
-  if (!mapping) return { flows: [], events: [], failed: true };
+  if (!mapping) return { readings: [], failed: true };
 
   let payload: unknown;
   try {
     const str = Buffer.isBuffer(input) ? input.toString("utf8") : input;
     payload = typeof str === "string" ? JSON.parse(str) : str;
   } catch {
-    return { flows: [], events: [], failed: true };
+    return { readings: [], failed: true };
   }
 
   const features = (payload as { features?: unknown })?.features;
   // A hard failure (error page, wrong shape) has no features array at all; a
   // well-formed FeatureCollection with zero features is a legitimate empty cycle.
-  if (!Array.isArray(features)) return { flows: [], events: [], failed: true };
+  if (!Array.isArray(features)) return { readings: [], failed: true };
 
-  const flows: RoadFlow[] = [];
-  const events: RoadEvent[] = [];
-  const now = new Date().toISOString();
-  const origin = makeOrigin(src);
-
+  const readings: FlowReading[] = [];
   for (const feature of features) {
     try {
       if (!feature || typeof feature !== "object") continue;
@@ -88,17 +93,14 @@ export function parseGeojsonFlow(input: string | Buffer, src: SourceDescriptor):
         string,
         unknown
       >;
-      const geom = toFlowGeometry((feature as { geometry?: unknown }).geometry);
-      if (!geom) continue;
+      const geometry = toFlowGeometry((feature as { geometry?: unknown }).geometry);
+      if (!geometry) continue;
 
       const rawId = props[mapping.idField];
-      const siteId = rawId != null && rawId !== "" ? String(rawId) : `feat-${flows.length + 1}`;
+      const siteId = rawId != null && rawId !== "" ? String(rawId) : `feat-${readings.length + 1}`;
 
       const rawSpeed = mapping.speedField ? num(props[mapping.speedField]) : undefined;
-      // Reject no-data sentinels (negatives) and sensor-glitch readings, keeping a
-      // genuine 0 (real standstill).
-      const speedKph =
-        rawSpeed != null && rawSpeed >= 0 && rawSpeed < ABSURD_SPEED_KPH ? rawSpeed : undefined;
+      const speedKph = plausibleSpeed(rawSpeed) ? rawSpeed : undefined;
       const rawFreeFlow = mapping.freeFlowField ? num(props[mapping.freeFlowField]) : undefined;
       const freeFlowKph = rawFreeFlow != null && rawFreeFlow > 0 ? rawFreeFlow : undefined;
 
@@ -108,32 +110,24 @@ export function parseGeojsonFlow(input: string | Buffer, src: SourceDescriptor):
         const rawStr = raw != null ? String(raw) : undefined;
         trafficStatus = rawStr != null ? (mapping.statusMap?.[rawStr] ?? rawStr) : undefined;
       }
-
-      const measuredAt =
-        (mapping.updatedField && typeof props[mapping.updatedField] === "string"
+      const at =
+        mapping.updatedField && typeof props[mapping.updatedField] === "string"
           ? (props[mapping.updatedField] as string)
-          : undefined) ?? now;
+          : undefined;
 
-      const built = buildMeasuredSiteFlow(
-        {
-          siteId,
-          measuredAt,
-          geom,
-          ...(speedKph != null ? { speedKph } : {}),
-          ...(trafficStatus != null ? { trafficStatus } : {}),
-          ...(freeFlowKph != null ? { freeFlowKph } : {}),
-        },
-        src,
-        origin,
-        now,
-      );
-      if (!built) continue;
-      flows.push({ ...built.flow, sourceFormat: "geojson-flow" });
-      if (built.event) events.push({ ...built.event, sourceFormat: "geojson-flow" });
+      const reading = measuredReading({
+        site: siteId,
+        geometry,
+        ...(at !== undefined ? { at } : {}),
+        ...(speedKph != null ? { speedKph } : {}),
+        ...(trafficStatus != null ? { trafficStatus } : {}),
+        ...(freeFlowKph != null ? { freeFlowKph } : {}),
+      });
+      if (reading) readings.push(reading);
     } catch (err) {
       console.warn("[geojson-flow] skipped malformed feature:", err);
     }
   }
 
-  return { flows, events };
+  return { readings };
 }

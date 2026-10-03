@@ -14,7 +14,7 @@ describe("parseFranceComptageStations", () => {
     const map = parseFranceComptageStations(CSV);
     // The row with empty coords is skipped.
     expect(map.size).toBe(1);
-    const geom = map.get("MUM76.h1");
+    const geom = map.get("MUM76.h1")?.geometry;
     expect(geom?.type).toBe("LineString");
     const coords = (geom as { coordinates: number[][] }).coordinates;
     expect(coords).toHaveLength(2);

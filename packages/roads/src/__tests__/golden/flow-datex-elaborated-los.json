@@ -36,12 +36,18 @@
       },
       "canonicalId": "b5b4459fc26a4a9d516cf7aceeb3108aa3381633977f128caf504061a001ed24",
       "domain": "roads",
-      "contentHash": "7812929073d600f20a4e81bc799e3c4793aa64b5fa694ed4f88faefd5495743c",
+      "contentHash": "ba8229279de4f23524d6a0779ac88e7f268c605faa467bb3e64b2cb61e124e2b",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
+      "name": [
+        {
+          "lang": "de",
+          "text": "A1 km 42"
+        }
+      ],
       "lifecycle": "operational",
       "details": {
         "kind": "measurement_site",
@@ -150,7 +156,7 @@
       },
       "canonicalId": "a07c10ca7406489cc77c934c625d5adfa5c3bd975bdaeee758126f2cbe670a6f",
       "domain": "roads",
-      "contentHash": "9e33acb2b678352c89cf4730ddbb0af0d900d402a57ac577e1415e29d90832fb",
+      "contentHash": "a3704e862c3b24a7d4b1063f7d3495aab5ee2dcdfa90283ed0628384fc9313f7",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
@@ -168,7 +174,10 @@
       "phenomenonTime": {
         "instant": "2026-09-18T10:00:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "quality": {
+        "sampleCount": 20
+      }
     },
     {
       "id": "oc:observation:de-nw-autobahn-loslane:ef00d55762139ca5f8b79ff4aff614c3ad46a9c7b45b70af2729f3fd36a03fcb",
@@ -324,7 +333,7 @@
       },
       "canonicalId": "d6e6ffdff76aa73e71eee6db2696586802ce5aa07cc512db97581bc52cf765bb",
       "domain": "roads",
-      "contentHash": "c24226c11b5b27d49707545feb426d57f2c983ace8facc2640c746672e5bbd45",
+      "contentHash": "57d72d2f78ffe65ae517b009f11a85fc65efb2ac40231391b51d4edfc49dd322",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
@@ -342,7 +351,10 @@
       "phenomenonTime": {
         "instant": "2026-09-18T10:00:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "quality": {
+        "sampleCount": 15
+      }
     },
     {
       "id": "oc:observation:de-nw-autobahn-loslane:73e48513d12b516e9bf0e23ff462bf3eea1c0f62df92f6b1f79dc438162a4a21",

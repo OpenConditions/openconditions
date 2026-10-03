@@ -1,15 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseBcnTramsFlow } from "../flow-bcn.js";
-import type { SiteGeometry } from "../siteTable.js";
 import { parseBcnTramsStations } from "../stations-bcn.js";
-import type { SourceDescriptor } from "../types.js";
+import { flowFeed, flows, readings, siteIds, value } from "./flow-fixtures.js";
 
-const src = {
-  id: "es-bcn-ajuntament",
-  attribution: "Ajuntament de Barcelona",
-  country: "ES",
-  license: "CC-BY-4.0",
-} as SourceDescriptor;
+const FEED = "es-bcn-ajuntament";
+const feed = flowFeed(FEED);
 
 const CSV = `Tram,Tram_Components,Descripció,Longitud,Latitud
 1,1,"Diagonal (Ronda de Dalt a Doctor Marañón)",2.11203535639414,41.3841912394771
@@ -19,47 +13,46 @@ const CSV = `Tram,Tram_Components,Descripció,Longitud,Latitud
 9,1,"Single vertex only",2.0,41.0`;
 
 describe("parseBcnTramsStations", () => {
-  it("groups vertices per tram (ordered) into LineStrings and drops single-vertex trams", () => {
-    const map = parseBcnTramsStations(CSV);
-    expect(map.size).toBe(2); // tram 9 has one vertex → dropped
-    const geom = map.get("1") as Extract<SiteGeometry, { type: "LineString" }>;
-    expect(geom.type).toBe("LineString");
-    expect(geom.coordinates).toEqual([
-      [2.11203535639414, 41.3841912394771],
-      [2.101502862881051, 41.3816307921222],
-    ]);
+  it("groups vertices per tram (ordered) into lines with their description, dropping single-vertex trams", () => {
+    const sites = parseBcnTramsStations(CSV);
+    expect(sites.size).toBe(2);
+    expect(sites.get("1")).toEqual({
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          [2.11203535639414, 41.3841912394771],
+          [2.101502862881051, 41.3816307921222],
+        ],
+      },
+      name: "Diagonal (Ronda de Dalt a Doctor Marañón)",
+    });
   });
 });
 
-describe("parseBcnTramsFlow", () => {
-  const siteMap = parseBcnTramsStations(CSV);
+describe("Barcelona TRAMS flow", () => {
+  const sites = parseBcnTramsStations(CSV);
 
-  it("joins status rows to geometry and maps the 0-6 scale to level-of-service", () => {
-    const dat = ["1#20260729131557#2#2", "2#20260729131557#5#5"].join("\n");
-    const { flows, events } = parseBcnTramsFlow(dat, src, siteMap);
-    expect(flows).toHaveLength(2);
-    const t1 = flows.find((f) => f.id === "es-bcn-ajuntament:1")!;
-    expect(t1.los).toBe("free_flow");
-    expect(t1.speedKph).toBeUndefined();
-    expect(t1.geometry.type).toBe("LineString");
+  it("joins status rows to their segment and maps the 0-6 scale to a level of service", () => {
+    const out = flows(feed, ["1#20260729131557#2#2", "2#20260729131557#5#5"].join("\n"), sites);
+    expect(siteIds(out, FEED)).toEqual(["1", "2"]);
+    expect(value(out, FEED, "1", "traffic.los")).toBe("free_flow");
+    expect(readings(out, FEED, "1", "traffic.speed")).toEqual([]);
     // Barcelona wall-clock time (CEST) read as an instant.
-    expect(t1.dataUpdatedAt).toBe("2026-07-29T11:15:57.000Z");
-    const t2 = flows.find((f) => f.id === "es-bcn-ajuntament:2")!;
-    expect(t2.los).toBe("stationary");
-    expect(t2.sourceFormat).toBe("bcn-trams");
-    // Only the congested (stationary) segment yields a derived congestion event.
-    expect(events).toHaveLength(1);
-    expect(events[0]!.type).toBe("congestion");
+    expect(readings(out, FEED, "1", "traffic.los")[0]!["phenomenonTime"]).toEqual({
+      instant: "2026-07-29T11:15:57.000Z",
+    });
+    expect(value(out, FEED, "2", "traffic.los")).toBe("stationary");
+    // Only the congested (stationary) segment yields a derived congestion situation.
+    expect(out.situations.map((s) => s["id"])).toEqual([`oc:situation:${FEED}:2:congestion`]);
   });
 
   it("skips status 0 (sensor down) and segments with no known geometry", () => {
-    const dat = ["1#20260729131557#0#0", "999#20260729131557#3#3"].join("\n");
-    const { flows } = parseBcnTramsFlow(dat, src, siteMap);
-    expect(flows).toHaveLength(0);
+    const out = flows(feed, ["1#20260729131557#0#0", "999#20260729131557#3#3"].join("\n"), sites);
+    expect(out.features).toEqual([]);
   });
 
-  it("flags a hard parse failure on an empty/garbage body", () => {
-    expect(parseBcnTramsFlow("", src, siteMap).failed).toBe(true);
-    expect(parseBcnTramsFlow("<html>error</html>", src, siteMap).failed).toBe(true);
+  it("refuses an empty or garbage body as a hard parse failure", () => {
+    expect(() => flows(feed, "", sites)).toThrow("hard parse failure");
+    expect(() => flows(feed, "<html>error</html>", sites)).toThrow("hard parse failure");
   });
 });

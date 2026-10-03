@@ -1,13 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseNycDotFlow } from "../flow-nycdot.js";
-import type { SourceDescriptor } from "../types.js";
+import { flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const src = {
-  id: "us-nyc-dot",
-  attribution: "NYC DOT",
-  country: "US",
-  license: "NYC-Open-Data",
-} as SourceDescriptor;
+const FEED = "us-nyc-dot";
+const feed = flowFeed(FEED);
+const empty = { features: [], observations: [], situations: [] };
 
 const payload = JSON.stringify([
   {
@@ -20,14 +16,11 @@ const payload = JSON.stringify([
   { link_id: "bad", speed: "20", link_points: "40.7,-74.0" },
 ]);
 
-describe("parseNycDotFlow", () => {
-  it("emits a LineString flow with lon,lat order and mph→kph", () => {
-    const { flows, events } = parseNycDotFlow(payload, src);
-    expect(flows).toHaveLength(1);
-    expect(flows[0]!.id).toBe("us-nyc-dot:4616240");
-    expect(flows[0]!.source).toBe("us-nyc-dot");
-    expect(flows[0]!.sourceFormat).toBe("nyc-dot");
-    expect(flows[0]!.geometry).toEqual({
+describe("NYC DOT traffic speeds", () => {
+  it("draws the link in lon,lat order and converts mph to km/h", () => {
+    const out = flows(feed, payload);
+    expect(siteIds(out, FEED)).toEqual(["4616240"]);
+    expect((site(out, FEED, "4616240")!["location"] as { geometry: unknown }).geometry).toEqual({
       type: "LineString",
       coordinates: [
         [-74.0, 40.7],
@@ -35,30 +28,26 @@ describe("parseNycDotFlow", () => {
         [-74.02, 40.72],
       ],
     });
-    expect(flows[0]!.speedKph).toBeCloseTo(31.06 * 1.609344, 2);
-    expect(flows[0]!.los).toBe("unknown");
+    expect(value(out, FEED, "4616240", "traffic.speed")).toBeCloseTo(31.06 * 1.609344, 2);
+    expect(readings(out, FEED, "4616240", "traffic.los")).toEqual([]);
     // Socrata floating time is New York wall-clock time (EST).
-    expect(flows[0]!.dataUpdatedAt).toBe("2026-03-04T19:30:00.000Z");
-    expect(events).toEqual([]);
+    expect(readings(out, FEED, "4616240", "traffic.speed")[0]!["phenomenonTime"]).toEqual({
+      instant: "2026-03-04T19:30:00.000Z",
+    });
+    expect(out.situations).toEqual([]);
   });
 
-  it("skips links with fewer than 2 points and malformed input", () => {
-    expect(parseNycDotFlow("x", src)).toEqual({ flows: [], events: [] });
+  it("drafts nothing for malformed input or a payload that is not an array", () => {
+    expect(flows(feed, "x")).toEqual(empty);
+    expect(flows(feed, JSON.stringify({ foo: "bar" }))).toEqual(empty);
   });
 
   it("skips records with empty or missing speed", () => {
     const withEmptySpeed = JSON.stringify([
-      {
-        link_id: "111",
-        speed: "",
-        link_points: "40.7,-74.0 40.71,-74.01",
-      },
-      {
-        link_id: "222",
-        link_points: "40.7,-74.0 40.71,-74.01",
-      },
+      { link_id: "111", speed: "", link_points: "40.7,-74.0 40.71,-74.01" },
+      { link_id: "222", link_points: "40.7,-74.0 40.71,-74.01" },
     ]);
-    expect(parseNycDotFlow(withEmptySpeed, src).flows).toHaveLength(0);
+    expect(flows(feed, withEmptySpeed)).toEqual(empty);
   });
 
   it("skips records with an empty or unparseable polyline", () => {
@@ -67,13 +56,6 @@ describe("parseNycDotFlow", () => {
       { link_id: "222", speed: "25", link_points: "not-a-polyline" },
       { link_id: "333", speed: "25" },
     ]);
-    expect(parseNycDotFlow(withBadPolyline, src).flows).toHaveLength(0);
-  });
-
-  it("returns empty flows when the payload is not an array", () => {
-    expect(parseNycDotFlow(JSON.stringify({ foo: "bar" }), src)).toEqual({
-      flows: [],
-      events: [],
-    });
+    expect(flows(feed, withBadPolyline)).toEqual(empty);
   });
 });

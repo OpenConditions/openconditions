@@ -33,9 +33,9 @@ describe("loadStationRegistry", () => {
     expect(await loadStationRegistry(feed(undefined), okFetch)).toBeUndefined();
   });
 
-  it("parses a fintraffic-stations registry into a site map", async () => {
+  it("parses a fintraffic-stations registry into its sites", async () => {
     const map = await loadStationRegistry(feed(REG), okFetch);
-    expect(map?.get("1")).toEqual({ type: "Point", coordinates: [24.9, 60.2] });
+    expect(map?.get("1")?.geometry).toEqual({ type: "Point", coordinates: [24.9, 60.2] });
   });
 
   it("returns undefined (never throws) on a cold fetch failure", async () => {
@@ -52,7 +52,7 @@ describe("loadStationRegistry", () => {
     // Force a refetch by advancing the clock past the 6h TTL, then fail.
     const later = () => Date.now() + 7 * 60 * 60 * 1000;
     const out = await loadStationRegistry(feed(REG), badFetch, later);
-    expect(out?.get("1")).toEqual({ type: "Point", coordinates: [24.9, 60.2] });
+    expect(out?.get("1")?.geometry).toEqual({ type: "Point", coordinates: [24.9, 60.2] });
   });
 
   it("forwards the feed's requestHeaders on the registry fetch when declared", async () => {

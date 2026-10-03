@@ -245,19 +245,21 @@ II measured values of both versions (every value of every measured-data class
 maps to a property or is marked `null`), and the WZDx device types and
 statuses. Coverage tests hold them against the vendored value lists.
 
-The flow parsers keep their parse records and add a site hint: the site's
-source id, the channel when the source reports directions separately, and
-whether the level of service was computed. `measurementDrafts` turns one parsed
-flow snapshot into `measurement_site` features and `traffic.speed`,
-`traffic.volume` and `traffic.los` observations. A level of service
-OpenConditions computed from speed and free-flow speed stays on the speed's
-`baseline` instead of becoming a reading of the source, and the congestion
-situations derived from flow point at their site (`derivedFrom`) and carry no
-invented headline. Golden files hold the sealed records of every flow format's
-fixture. What the flow parse records still lose, and the ingest switchover
-recovers: per-lane and per-vehicle-class values, occupancy, volumes most
-parsers read but drop, the measurement period, and the site-table metadata
-(names, lanes, sides) the loaders reduce to geometry.
+The flow parsers return drafts: `parseFlows` (and the streaming
+`measuredDataReader` for DATEX measured data) turns one payload into
+`measurement_site` features, `traffic.*` observations and the congestion
+situations derived from them. A site's lanes and vehicle classes are
+`sensor_channel` components with readings of their own; volumes, occupancy,
+per-class speed vectors and measurement periods (`phenomenonTime` intervals)
+are kept where the source states them, and site tables and station registries
+give sites their names, lane counts, equipment and per-index lane, class and
+period. DATEX lanes are converted to the model's left-first numbering with the
+site's lane count. A level of service OpenConditions computed from speed and
+free-flow speed stays on the speed's `baseline` instead of becoming a reading
+of the source (`enrichReadings` applies stored baselines the same way), and the
+congestion situations derived from flow point at their site (`derivedFrom`)
+and carry no invented headline. Golden files hold the sealed records of every
+flow format's fixture, and pin the streaming reader to the buffered parse.
 
 A fit check (`infrastructure-fit.test.ts`) maps real records of every kind
 onto the production registry: a Digitraffic road-weather station and weather
@@ -852,11 +854,11 @@ Kernel version `1.0`; modules: `kernel`, `roads`, `weather`, `vehicles`, `parkin
 
 | property                      | domain     | version | result                          | subjects                                                                                    | retention                         |
 | ----------------------------- | ---------- | ------- | ------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------- |
-| `traffic.speed`               | roads      | 1.0     | quantity (km/h)                 | feature (measurement_site, component sensor_channel); segments                              | raw 7 d, hourly histogram (bin 2) |
-| `traffic.volume`              | roads      | 1.0     | quantity (1/h)                  | feature (measurement_site, component sensor_channel)                                        | raw 7 d, hourly rollup            |
-| `traffic.occupancy`           | roads      | 1.0     | quantity (%)                    | feature (measurement_site, component sensor_channel)                                        | raw 7 d, hourly rollup            |
-| `traffic.los`                 | roads      | 1.0     | category (los)                  | feature (measurement_site, component sensor_channel); feature (travel_time_route); segments | change-only                       |
-| `traffic.vehicle_class_speed` | roads      | 1.0     | vector (km/h)                   | feature (measurement_site, component sensor_channel)                                        | raw 7 d                           |
+| `traffic.speed`               | roads      | 1.0     | quantity (km/h)                 | feature (measurement_site, component sensor_channel); segments                              | raw 3 d, hourly histogram (bin 2) |
+| `traffic.volume`              | roads      | 1.0     | quantity (1/h)                  | feature (measurement_site, component sensor_channel)                                        | raw 2 d, hourly rollup            |
+| `traffic.occupancy`           | roads      | 1.0     | quantity (%)                    | feature (measurement_site, component sensor_channel)                                        | raw 2 d, hourly rollup            |
+| `traffic.los`                 | roads      | 1.0     | category (los)                  | feature (measurement_site, component sensor_channel); feature (travel_time_route); segments | change-only, raw 7 d              |
+| `traffic.vehicle_class_speed` | roads      | 1.0     | vector (km/h)                   | feature (measurement_site, component sensor_channel)                                        | raw 2 d                           |
 | `vms.display`                 | roads      | 1.0     | structured (vms_display)        | feature (vms, component sign_face)                                                          | change-only, raw 30 d             |
 | `camera.image`                | roads      | 1.0     | structured (camera_image)       | feature (camera, component camera_view)                                                     | latest only                       |
 | `device.status`               | roads      | 1.0     | category (device_status)        | feature (trait field_device)                                                                | change-only                       |

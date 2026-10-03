@@ -235,6 +235,69 @@ describe("writeSnapshot", () => {
     expect(live).toBe(2);
   });
 
+  it("withdraws only the classes a snapshot holds in full", async () => {
+    const flowSituation = (local: string) => {
+      const draft = situationDraft(local);
+      return {
+        ...draft,
+        id: `oc:situation:nl-ndw-flow:${local}`,
+        provenance: { ...(draft["provenance"] as object), sourceId: "nl-ndw-flow" },
+      };
+    };
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      {
+        features: [featureDraft("s1"), featureDraft("s2")],
+        situations: [flowSituation("a")],
+      },
+      ctx(T1),
+    );
+    const next = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { features: [featureDraft("s1")], situations: [] },
+      { ...ctx(T2), complete: { situation: true } },
+    );
+    expect(next.counts.feature).toMatchObject({ unchanged: 1, withdrawn: 0 });
+    expect(next.counts.situation).toMatchObject({ withdrawn: 1 });
+    const live =
+      await sql`SELECT id FROM conditions.feature WHERE tombstoned_at IS NULL ORDER BY id`;
+    expect(live.map((r) => r["id"])).toEqual([
+      "oc:feature:nl-ndw-flow:s1",
+      "oc:feature:nl-ndw-flow:s2",
+    ]);
+  });
+
+  it("refuses a poll holding more records of a class than a source may publish", async () => {
+    await expect(
+      writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        { features: [featureDraft("s1"), featureDraft("s2"), featureDraft("s3")] },
+        { ...ctx(T1), maxRowsPerClass: 2 },
+      ),
+    ).rejects.toThrow(/3 feature rows, exceeding publication limit 2/);
+    await expect(
+      writeSnapshot(
+        sql,
+        "nl-ndw",
+        { situations: [situationDraft("a"), situationDraft("b"), situationDraft("c")] },
+        { ...ctx(T1), maxRowsPerClass: 2 },
+      ),
+    ).rejects.toThrow(/3 situation rows, exceeding publication limit 2/);
+    const [{ n }] = await sql`SELECT count(*)::int AS n FROM conditions.feature`;
+    expect(n).toBe(0);
+  });
+
+  it("publishes a first poll of more sites than the lock table holds", async () => {
+    // A transaction's advisory locks share max_locks_per_transaction × max_connections
+    // slots (6400 by default, with some slack); NDW's first poll writes ~30k sites.
+    const sites = Array.from({ length: 30_000 }, (_, i) => featureDraft(`s${i}`, 1));
+    const summary = await writeSnapshot(sql, "nl-ndw-flow", { features: sites }, ctx(T1, false));
+    expect(summary.counts.feature.created).toBe(30_000);
+  }, 240_000);
+
   it("rejects an invalid draft without losing the rest of the poll or its stored version", async () => {
     await writeSnapshot(
       sql,

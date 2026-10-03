@@ -10,6 +10,7 @@
 import type { Registry } from "@openconditions/model";
 import type postgres from "postgres";
 import { crossValidateAgainstFeeds as defaultCrossValidate } from "./crossValidate.js";
+import { crossValidateObservation as defaultCrossValidateObservation } from "./crossValidateObservation.js";
 
 type Sql = postgres.Sql;
 
@@ -119,6 +120,45 @@ export function sweepFederatedCrossValidate(
   deps: SweepCrossValidateDeps = {},
 ): Promise<SweepResult> {
   return sweep(sql, registry, now, "federated", deps);
+}
+
+export interface SweepObservationDeps {
+  crossValidateObservation?: typeof defaultCrossValidateObservation;
+  maxBatch?: number;
+  log?: (message: string) => void;
+}
+
+/**
+ * Cross-validate this instance's live, unsettled crowd readings against its
+ * feed readings: a feed that publishes the same reading after the report,
+ * while it is alive, resolves it then. Soonest-expiring first, bounded per
+ * cycle as the situation sweep is.
+ */
+export async function sweepCrossValidateObservations(
+  sql: Sql,
+  registry: Registry,
+  now: string,
+  deps: SweepObservationDeps = {},
+): Promise<SweepResult> {
+  const crossValidate = deps.crossValidateObservation ?? defaultCrossValidateObservation;
+  const maxBatch = deps.maxBatch ?? DEFAULT_SWEEP_MAX_BATCH;
+  const log = deps.log ?? (() => {});
+  const rows = await sql<{ id: string }[]>`
+    SELECT record->>'id' AS id FROM conditions.observation_latest
+     WHERE source_id = 'crowd' AND expires_at > ${now}
+       AND evidence_state IN ('self_reported', 'corroborated')
+       AND record #>> '{provenance,reporter,keyId}' IS NOT NULL
+     ORDER BY expires_at, series_id
+     LIMIT ${maxBatch}`;
+  let routed = 0;
+  for (const { id } of rows) {
+    try {
+      if ((await crossValidate(sql, registry, id, now)) !== null) routed += 1;
+    } catch (err) {
+      log(`[observation-cross-validate-sweep] candidate ${id} failed: ${String(err)}`);
+    }
+  }
+  return { scanned: rows.length, routed };
 }
 
 /** The sweep runs unless `OPENCONDITIONS_CROSS_VALIDATE_SWEEP=off`. */

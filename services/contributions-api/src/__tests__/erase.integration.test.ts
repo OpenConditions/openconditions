@@ -1,9 +1,51 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { buildRegistry, extendVocabulary } from "@openconditions/model";
+import { productionModules } from "@openconditions/model-registry";
+import { writeSnapshot } from "@openconditions/storage";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ERASURE_REASON, eraseRecord, isErased } from "../federation/tombstone.js";
-import { createTestDatabase, registry, seedFeedSituation } from "./crowd-fixtures.integration.js";
+import {
+  createTestDatabase,
+  INSTANCE,
+  registry,
+  seedFeedSituation,
+} from "./crowd-fixtures.integration.js";
 
 type Rec = Record<string, unknown>;
+
+/** The ministry's fuel stations from the facilities golden records (MINETUR, CC BY 4.0). */
+const facilityRegistry = buildRegistry([
+  ...productionModules,
+  {
+    name: "facilities-fit",
+    entries: [extendVocabulary({ vocabulary: "source_format", values: ["minetur"] })],
+  },
+]);
+/** A golden record as the draft it was sealed from: sealing adds only these fields. */
+const goldenFeature = (id: string): Rec => {
+  const {
+    canonicalId: _canonical,
+    domain: _domain,
+    revision: _revision,
+    recordedAt: _recorded,
+    contentHash: _hash,
+    ...draft
+  } = (
+    JSON.parse(
+      readFileSync(
+        path.resolve(
+          import.meta.dirname,
+          "../../../../packages/model-registry/src/__tests__/golden/facilities.json",
+        ),
+        "utf8",
+      ),
+    ) as Rec[]
+  ).find((r) => r["id"] === id)!;
+  const { instanceId: _instance, ...provenance } = draft["provenance"] as Rec;
+  return { ...draft, provenance };
+};
 
 const T0 = "2026-07-12T07:00:00.000Z";
 const T1 = "2026-07-12T07:30:00.000Z";
@@ -170,4 +212,41 @@ describe("eraseRecord", () => {
     expect(await eraseRecord(sql, registry, { class: "situation", id }, ERASED_AT)).toBe("erased");
     expect(await journal(id)).toEqual([]);
   }, 30_000);
+
+  it("takes an erased feature out of the canonical feature it was linked into", async () => {
+    const station = goldenFeature("oc:feature:es-minetur:3119");
+    const twin = {
+      ...station,
+      id: "oc:feature:es-fuel-test:3119",
+      provenance: { ...(station["provenance"] as Rec), sourceId: "es-fuel-test" },
+    };
+    const write = (source: string, feature: Rec) =>
+      writeSnapshot(
+        sql,
+        source,
+        { features: [feature] },
+        { registry: facilityRegistry, instanceId: INSTANCE, now: T0, complete: false },
+      );
+    await write("es-minetur", station);
+    await write("es-fuel-test", twin);
+    const membersOf = async (id: string) =>
+      (
+        await sql<{ member_ids: string[] }[]>`
+          SELECT member_ids FROM conditions.feature_canonical WHERE ${id} = ANY(member_ids)`
+      )[0]?.member_ids;
+    expect(await membersOf(twin.id)).toEqual([twin.id, station["id"]]);
+
+    expect(
+      await eraseRecord(
+        sql,
+        facilityRegistry,
+        { class: "feature", id: twin.id },
+        ERASED_AT,
+        INSTANCE,
+      ),
+    ).toBe("erased");
+
+    expect(await membersOf(station["id"] as string)).toEqual([station["id"]]);
+    expect(await membersOf(twin.id)).toBeUndefined();
+  }, 60_000);
 });

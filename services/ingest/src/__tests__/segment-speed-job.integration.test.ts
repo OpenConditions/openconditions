@@ -3,6 +3,7 @@ import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { refreshSegmentSpeed } from "../pipeline/segment-speed.js";
+import { siteKey, writeSiteReadings } from "./helpers/flow-series.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -26,26 +27,32 @@ async function seedSegment(
 }
 
 async function seedFlow(
-  id: string,
+  site: string,
   source: string,
   value: number,
   freeFlowKph: number,
-): Promise<void> {
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, metric, value, status, geom, attributes, origin,
-       data_updated_at, fetched_at)
-    VALUES (${id}, ${source}, 'test-fmt', 'roads', 'measurement', 'flow', ${value}, 'active',
-      ST_SetSRID(ST_GeomFromText('POINT(6.05 50.0)'), 4326),
-      ${sql.json({ freeFlowKph })},
-      ${sql.json({ kind: "feed", attribution: { provider: "test" } })},
-      ${NOW}, ${NOW})`;
+): Promise<string> {
+  await writeSiteReadings(
+    sql,
+    source,
+    [
+      {
+        site,
+        geometry: { type: "Point", coordinates: [6.05, 50.0] },
+        at: NOW,
+        speed: value,
+        freeFlowKph,
+      },
+    ],
+    NOW,
+  );
+  return siteKey(source, site);
 }
 
-async function seedSensorSegment(sensorKey: string, segmentId: string): Promise<void> {
+async function seedSensorSegment(subjectKey: string, segmentId: string): Promise<void> {
   await sql`
-    INSERT INTO conditions.sensor_segment (sensor_key, segment_id, fraction, offset_m, matched_at)
-    VALUES (${sensorKey}, ${segmentId}, 0.5, 5.0, ${NOW})`;
+    INSERT INTO conditions.sensor_segment (subject_key, segment_id, fraction, offset_m, matched_at)
+    VALUES (${subjectKey}, ${segmentId}, 0.5, 5.0, ${NOW})`;
 }
 
 beforeAll(async () => {
@@ -75,8 +82,8 @@ describe("refreshSegmentSpeed", () => {
     // A: bound flow sensor via sensor_segment, current 40 kph on a 100 kph
     // free-flow segment.
     await seedSegment("940:f", 940, "f", "job-a1", "LINESTRING(6.0 50.0, 6.1 50.0)", 100);
-    await seedFlow("job-sensor:1", "job-test-src", 40, 100);
-    await seedSensorSegment("job-sensor:1", "940:f");
+    const site = await seedFlow("job-sensor:1", "job-test-src", 40, 100);
+    await seedSensorSegment(site, "940:f");
 
     // B: continuation of A (B's start = A's end, same ref/highway), no
     // sensor of its own -- the row propagateSegmentSpeed should fill.

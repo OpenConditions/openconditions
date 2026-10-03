@@ -60,7 +60,7 @@ afterAll(async () => {
 }, 30_000);
 
 describe("updateFintrafficNativeBaselines", () => {
-  it("upserts native overall baselines from VVAPAAS constants, keyed to match the flow parser", async () => {
+  it("upserts native overall baselines from VVAPAAS constants, keyed to the flow parser's per-direction site", async () => {
     const { updated } = await updateFintrafficNativeBaselines(sql, feed, {
       fetch: fetchFn,
       now: () => new Date("2026-07-15T00:00:00Z"),
@@ -72,7 +72,7 @@ describe("updateFintrafficNativeBaselines", () => {
       { free_flow_kph: number; method: string; dow_bucket: number; tod_bucket: number }[]
     >`
       SELECT free_flow_kph, method, dow_bucket, tod_bucket FROM conditions.sensor_baseline
-      WHERE sensor_key = 'fi-fintraffic:23001-1'`;
+      WHERE subject_key = 'feature:oc:feature:fi-fintraffic:23001-1'`;
     expect(rows).toHaveLength(1);
     expect(rows[0]!.method).toBe("native");
     expect(rows[0]!.dow_bucket).toBe(-1);
@@ -100,7 +100,7 @@ describe("updateFintrafficNativeBaselines", () => {
 
     const rows = await sql<{ free_flow_kph: number }[]>`
       SELECT free_flow_kph FROM conditions.sensor_baseline
-      WHERE sensor_key = 'fi-fintraffic:23001-1'`;
+      WHERE subject_key = 'feature:oc:feature:fi-fintraffic:23001-1'`;
     expect(rows).toHaveLength(1);
     expect(rows[0]!.free_flow_kph).toBe(130);
   }, 30_000);
@@ -255,10 +255,10 @@ describe("updateFintrafficNativeBaselines", () => {
       // one. 40002/40004/40005 (B/D/E) have none and must win priority.
       await sql`
         INSERT INTO conditions.sensor_baseline
-          (sensor_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
+          (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
         VALUES
-          ('fintraffic-tms-fi-priority:40001-1', ${priorityFeed.id}, -1, -1, 100, 'native', 0, '2020-01-01T00:00:00Z'),
-          ('fintraffic-tms-fi-priority:40003-1', ${priorityFeed.id}, -1, -1, 100, 'native', 0, '2025-01-01T00:00:00Z')`;
+          ('feature:oc:feature:fintraffic-tms-fi-priority:40001-1', ${priorityFeed.id}, -1, -1, 100, 'native', 0, '2020-01-01T00:00:00Z'),
+          ('feature:oc:feature:fintraffic-tms-fi-priority:40003-1', ${priorityFeed.id}, -1, -1, 100, 'native', 0, '2025-01-01T00:00:00Z')`;
 
       const seen: string[] = [];
       await updateFintrafficNativeBaselines(sql, priorityFeed, {
@@ -275,7 +275,7 @@ describe("updateFintrafficNativeBaselines", () => {
       const throwingSql = new Proxy(sql, {
         apply(target, thisArg, args) {
           const strings = args[0] as TemplateStringsArray;
-          if (strings[0]?.includes("SELECT sensor_key")) {
+          if (strings[0]?.includes("SELECT subject_key")) {
             selectAttempts += 1;
             throw new Error("existing-rows query failed");
           }
@@ -322,10 +322,10 @@ describe("updateFintrafficNativeBaselines", () => {
       // and must visit the older one (B) before the newer one (A).
       await sql`
         INSERT INTO conditions.sensor_baseline
-          (sensor_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
+          (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
         VALUES
-          ('fintraffic-tms-fi-priority-covered:50001-1', ${coveredFeed.id}, -1, -1, 100, 'native', 0, '2025-06-01T00:00:00Z'),
-          ('fintraffic-tms-fi-priority-covered:50002-1', ${coveredFeed.id}, -1, -1, 100, 'native', 0, '2020-01-01T00:00:00Z')`;
+          ('feature:oc:feature:fintraffic-tms-fi-priority-covered:50001-1', ${coveredFeed.id}, -1, -1, 100, 'native', 0, '2025-06-01T00:00:00Z'),
+          ('feature:oc:feature:fintraffic-tms-fi-priority-covered:50002-1', ${coveredFeed.id}, -1, -1, 100, 'native', 0, '2020-01-01T00:00:00Z')`;
 
       const seen: string[] = [];
       const trackingFetch = (async (url: string) => {

@@ -273,7 +273,7 @@ export interface ImportOsmRoadsDeps {
 
 const DEFAULT_SWAP_THRESHOLD = 0.9;
 
-// Rows per bulk INSERT — mirrors the chunking in write-postgis.ts/baseline-store.ts.
+// Rows per bulk INSERT — one statement per chunk keeps a large import to a few round-trips.
 const CHUNK_SIZE = 1000;
 
 // biome-ignore lint/suspicious/noExplicitAny: the driver's JSONB parameter type is intentionally open
@@ -299,7 +299,7 @@ interface OsmRoadRow {
   imported_at: string;
 }
 
-function toRow(way: OsmWay, region: OsmRegion, importedAt: string): OsmRoadRow {
+function osmRoadRowOf(way: OsmWay, region: OsmRegion, importedAt: string): OsmRoadRow {
   return {
     way_id: way.wayId,
     geometry_json: JSON.stringify({ type: "LineString", coordinates: way.coords }),
@@ -342,7 +342,7 @@ export async function importOsmRoads(
     try {
       const ways = await deps.source.fetchRegion(region);
       const importedAt = deps.now();
-      const rows = ways.map((way) => toRow(way, region, importedAt));
+      const rows = ways.map((way) => osmRoadRowOf(way, region, importedAt));
 
       await sql.begin(async (tx) => {
         // Undercoverage guard: throwing here rolls back the transaction BEFORE

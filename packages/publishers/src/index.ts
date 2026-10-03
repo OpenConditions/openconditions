@@ -1,3 +1,4 @@
+export * from "./feature-geojson.js";
 export * from "./license.js";
 export * from "./record-archive.js";
 export * from "./segment-conditions.js";

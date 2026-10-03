@@ -14,39 +14,62 @@ export interface WriteSensorObservationsResult {
   written: number;
 }
 
+/** How long a site's reading stands for its segment. */
+const READING_LIFETIME_MIN = 15;
+
 /**
  * Writes one `segment_observation` row per (segment, feed source), tier
  * `'sensor'` — the multi-source/crowd/federation fusion seam (see the
  * `segmentObservation` schema doc comment). A segment routinely carries
- * several sensors from the same source (NDW spacing is ~500 m, so a segment
+ * several sites from the same source (NDW spacing is ~500 m, so a segment
  * typically sees 2-4 stations); freshest-only would arbitrarily discard the
- * rest, so this averages `current_kph`/`free_flow_kph` across every sensor of
- * that source bound to the segment via `sensor_segment` and feeds `count(*)`
- * into `sample_count`. The LOS ladder mirrors `losFromSpeedRatio` in
- * `packages/roads/src/flow.ts` exactly, computed on the aggregated means so a
- * segment's classification reflects its overall condition rather than any
- * single sensor. `free_flow_kph` prefers the per-reading
- * `attributes.freeFlowKph` (Phase A's per-sensor baseline) and falls back to
- * the segment's own `road_segment.free_flow_kph`; when neither is known
- * (e.g. a Trafikverket-style feed with no baseline, on a segment OSM never
- * gave a maxspeed) the ratio and LOS are left `NULL`/`'unknown'`.
- * `expires_at` is the freshest reading's `data_updated_at` plus 15 minutes,
- * so the fusion step (2b) can drop a source that has gone stale.
+ * rest, so this averages `current_kph`/`free_flow_kph` across every site of
+ * that source bound to the segment via `sensor_segment` and feeds the count
+ * into `sample_count`.
+ *
+ * A site contributes its `traffic.speed` and `traffic.los` readings younger
+ * than 15 minutes (`observation_latest`, site level). The LOS ladder mirrors
+ * the flow parsers' `losFromSpeedRatio` exactly, computed on the aggregated
+ * means so a segment's classification reflects its overall condition rather
+ * than any single site. `free_flow_kph` prefers the free-flow speed of the
+ * reading's own baseline and falls back to the segment's
+ * `road_segment.free_flow_kph`; when neither is known (e.g. a
+ * Trafikverket-style feed with no baseline, on a segment OSM never gave a
+ * maxspeed) the ratio and LOS are left `NULL`/`'unknown'`. `expires_at` is
+ * the freshest reading's time plus 15 minutes, so the fusion step can drop a
+ * source that has gone stale.
  */
 export async function writeSensorObservations(
   sql: Sql,
-  _now: () => string,
+  now: () => string,
 ): Promise<WriteSensorObservationsResult> {
-  // A flow observation contributes either a measured speed (`o.value` set) or,
-  // for a declared-LoS feed (Autobahn Verkehrslage), a speed-less row that
-  // carries only `attributes.los`. Both are admitted; a speed-less row writes
-  // NULL current_kph/speed_ratio and takes its los straight from the declared
-  // status, aggregated worst-first across the sites in a (segment, source)
-  // group (a mix of blocked+queuing fuses to blocked, not the alphabetical
-  // max). The declared los, when present, wins over the ratio ladder — and the
-  // ratio ladder's ELSE 'stationary' arm is only reached when there is a real
-  // avg(value), so an all-declared group never misfuses free_flow to stationary.
+  // A site contributes either a measured speed or, for a declared-LoS feed
+  // (Autobahn Verkehrslage), only the level of service it states. Both are
+  // admitted; a speed-less site writes NULL current_kph/speed_ratio and takes
+  // its los straight from the declared status, aggregated worst-first across
+  // the sites in a (segment, source) group (a mix of blocked+queuing fuses to
+  // blocked, not the alphabetical max). The declared los, when present, wins
+  // over the ratio ladder — and the ladder's ELSE 'stationary' arm is only
+  // reached when there is a real mean speed, so an all-declared group never
+  // misfuses free_flow to stationary.
   const rows = await sql`
+    WITH fresh AS (
+      SELECT l.subject_key, l.source_id, l.property, l.value_num, l.value_text,
+        (l.record #>> '{baseline,freeFlow,value}')::double precision AS free_flow,
+        COALESCE(l.effective_until, l.effective_from) AS at
+      FROM conditions.sensor_segment ss
+      JOIN conditions.observation_latest l ON l.subject_key = ss.subject_key
+      JOIN conditions.source s ON s.id = l.source_id AND s.produces = 'flow'
+      WHERE l.property IN ('traffic.speed', 'traffic.los')
+        AND l.effective_from >= ${now()}::timestamptz - make_interval(mins => ${READING_LIFETIME_MIN})
+    ), site AS (
+      SELECT subject_key, source_id AS source,
+        max(value_num) FILTER (WHERE property = 'traffic.speed') AS speed,
+        max(free_flow) FILTER (WHERE property = 'traffic.speed') AS free_flow,
+        max(value_text) FILTER (WHERE property = 'traffic.los') AS los,
+        max(at) AS observed_at
+      FROM fresh GROUP BY subject_key, source_id
+    )
     INSERT INTO conditions.segment_observation
       (segment_id, source, source_tier, current_kph, free_flow_kph, speed_ratio, los, confidence, sample_count, observed_at, expires_at)
     SELECT agg.segment_id, agg.source, 'sensor',
@@ -63,27 +86,29 @@ export async function writeSensorObservations(
         WHEN agg.current_kph / agg.free_flow_kph >= 0.15 THEN 'queuing'
         ELSE 'stationary'
       END,
-      0.9, agg.sample_count, agg.observed_at, agg.observed_at + interval '15 minutes'
+      0.9, agg.sample_count, agg.observed_at,
+      agg.observed_at + make_interval(mins => ${READING_LIFETIME_MIN})
     FROM (
-      SELECT ss.segment_id, o.source,
-        avg(o.value) AS current_kph,
+      SELECT ss.segment_id, site.source,
+        avg(site.speed) AS current_kph,
         avg(ff.kph) AS free_flow_kph,
-        CASE WHEN avg(ff.kph) > 0 AND avg(o.value) IS NOT NULL THEN avg(o.value) / avg(ff.kph) END AS speed_ratio,
+        CASE WHEN avg(ff.kph) > 0 AND avg(site.speed) IS NOT NULL
+          THEN avg(site.speed) / avg(ff.kph) END AS speed_ratio,
         max(
-          CASE WHEN o.value IS NULL AND o.attributes->>'los' <> 'unknown' THEN
-            CASE o.attributes->>'los'
+          CASE WHEN site.speed IS NULL THEN
+            CASE site.los
               WHEN 'blocked' THEN 4 WHEN 'stationary' THEN 3 WHEN 'queuing' THEN 2
               WHEN 'heavy' THEN 1 WHEN 'free_flow' THEN 0 ELSE -1 END
           ELSE -1 END
         ) AS declared_rank,
         count(*) AS sample_count,
-        max(o.data_updated_at) AS observed_at
-      FROM conditions.sensor_segment ss
-      JOIN conditions.observations o ON o.id = ss.sensor_key AND o.metric = 'flow'
-        AND (o.value IS NOT NULL OR (o.value IS NULL AND o.attributes->>'los' <> 'unknown'))
+        max(site.observed_at) AS observed_at
+      FROM site
+      JOIN conditions.sensor_segment ss ON ss.subject_key = site.subject_key
       JOIN conditions.road_segment rs ON rs.segment_id = ss.segment_id
-      CROSS JOIN LATERAL (SELECT COALESCE((o.attributes->>'freeFlowKph')::float, rs.free_flow_kph) AS kph) ff
-      GROUP BY ss.segment_id, o.source
+      CROSS JOIN LATERAL (SELECT COALESCE(site.free_flow, rs.free_flow_kph) AS kph) ff
+      WHERE site.speed IS NOT NULL OR site.los <> 'unknown'
+      GROUP BY ss.segment_id, site.source
     ) agg
     ON CONFLICT (segment_id, source) DO UPDATE SET
       current_kph=EXCLUDED.current_kph, free_flow_kph=EXCLUDED.free_flow_kph, speed_ratio=EXCLUDED.speed_ratio,

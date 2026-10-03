@@ -212,6 +212,11 @@ export const feature = conditionsSchema.table(
     index("idx_feature_source").on(t.sourceId),
     index("idx_feature_canonical").on(t.canonicalId),
     index("idx_feature_kind_lifecycle").on(t.kind, t.lifecycle),
+    // Linking finds the features that share an external id with a written one.
+    index("idx_feature_external_ids").using(
+      "gin",
+      sql`(${t.record} -> 'externalIds') jsonb_path_ops`,
+    ),
   ],
 );
 
@@ -266,7 +271,12 @@ export const featureLink = conditionsSchema.table(
   ],
 );
 
-/** The canonical view: one row per cluster of linked features, a lone feature included. */
+/**
+ * The canonical view: one row per cluster of linked features, a lone feature
+ * included. `components` is the cluster's canonical component set
+ * (`canonicalComponents`): each canonical key with the member components it
+ * stands for, which crowd landing and the fused rows map subjects through.
+ */
 export const featureCanonical = conditionsSchema.table(
   "feature_canonical",
   {
@@ -274,6 +284,7 @@ export const featureCanonical = conditionsSchema.table(
     survivorId: text("survivor_id").notNull(),
     memberIds: text("member_ids").array().notNull(),
     mergedSources: jsonb("merged_sources"),
+    components: jsonb("components").notNull().default(sql`'[]'::jsonb`),
     computedAt: tstz("computed_at").notNull(),
   },
   (t) => [index("idx_feature_canonical_members").using("gin", t.memberIds)],

@@ -3,14 +3,12 @@ import type postgres from "postgres";
 
 /**
  * The registry-governed codes stored rows hold: the wire formats of the
- * loaded sources and of legacy observation rows, the kinds of every class
- * table and component, and the properties of every observation series.
+ * loaded sources, the kinds of every class table and component, and the
+ * properties of every observation series.
  */
 export async function storedRegistryCodes(sql: postgres.Sql): Promise<HeldCodes> {
   const formats = await sql<{ format: string }[]>`
-    SELECT source_format AS format FROM conditions.observations
-    UNION SELECT format FROM conditions.source
-    ORDER BY format`;
+    SELECT DISTINCT format FROM conditions.source ORDER BY format`;
   const kinds = await sql<
     { class: "feature" | "component" | "situation" | "offer"; code: string }[]
   >`

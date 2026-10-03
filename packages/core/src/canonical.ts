@@ -1,49 +1,6 @@
-import { createHash } from "node:crypto";
-import type { GeoJsonGeometry, Observation } from "./model.js";
-
-/**
- * Canonical identity for the commons: `canonicalId` is exact, source-stable
- * RECORD identity (collapses byte-different resupplies of the same upstream
- * record, never two independent witnesses).
- */
-
-export interface CanonicalIdentityParts {
-  namespace: string;
-  recordId: string;
-}
+import type { GeoJsonGeometry } from "./types.js";
 
 const METERS_PER_DEG_LAT = 111_320;
-
-function sha256Hex(parts: string[]): string {
-  // JSON.stringify of an array of strings is byte-deterministic and free of
-  // separator ambiguity ("a:b"+"c" vs "a"+"b:c" must not collide).
-  return createHash("sha256").update(JSON.stringify(parts), "utf8").digest("hex");
-}
-
-export function normalizeNamespace(ns: string): string {
-  // The final NFC pass keeps the function idempotent: lowercasing a decomposed
-  // sequence can produce a pair that composes to a new precomposed character.
-  const normalized = ns.trim().normalize("NFC").toLowerCase().normalize("NFC");
-  if (normalized === "") {
-    throw new TypeError("namespace must not be empty after normalization");
-  }
-  return normalized;
-}
-
-/** Default extraction: an observation namespaces on its source id. */
-export function canonicalIdentityParts(obs: Observation): CanonicalIdentityParts {
-  return { namespace: normalizeNamespace(obs.source), recordId: obs.id };
-}
-
-export function canonicalId(obs: Observation): string;
-export function canonicalId(parts: CanonicalIdentityParts): string;
-export function canonicalId(input: Observation | CanonicalIdentityParts): string {
-  const parts = "namespace" in input ? input : canonicalIdentityParts(input);
-  if (typeof parts.namespace !== "string" || typeof parts.recordId !== "string") {
-    throw new TypeError("canonicalId requires string namespace and recordId");
-  }
-  return sha256Hex([normalizeNamespace(parts.namespace), parts.recordId]);
-}
 
 /**
  * Arithmetic mean of all positions (vertex mean, NOT area-weighted): the

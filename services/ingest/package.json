@@ -20,7 +20,6 @@
     "@openconditions/model": "workspace:*",
     "@openconditions/model-registry": "workspace:*",
     "@openconditions/model-roads": "workspace:*",
-    "@openconditions/normalize": "workspace:*",
     "@openconditions/openlr": "workspace:*",
     "@openconditions/publishers": "workspace:*",
     "@openconditions/roads": "workspace:*",

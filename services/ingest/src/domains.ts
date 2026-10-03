@@ -1,7 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { Observation } from "@openconditions/core";
 import {
   type DomainRegistry,
   type IngestDomain,
@@ -9,33 +8,27 @@ import {
   materializeApprovedCatalogChildren,
   registerFeedSchema,
 } from "@openconditions/ingest-framework";
-import type { FeedSource, RoadFlow } from "@openconditions/roads";
-import {
-  feedToSourceDescriptor,
-  parseEvents,
-  roadFeedSchema,
-  roadFlowAttributes,
-} from "@openconditions/roads";
+import type { FeedSource } from "@openconditions/roads";
+import { feedToSourceDescriptor, parseEvents, roadFeedSchema } from "@openconditions/roads";
 
 // The roads schema is registered once so the framework's loadFeeds can validate
 // mounted/remote descriptors without depending on @openconditions/roads.
 registerFeedSchema("roads", roadFeedSchema);
 
-// Parse/attribute dispatch — feed-independent, used by parse.ts + write-postgis.ts
-// to look up a domain's parser/attributes by name. The feed set is populated
-// per-boot by buildDomainRegistry(); this static entry carries none.
+// Parse dispatch — feed-independent, used by parse.ts to look up a domain's
+// event parser by name. The feed set is populated per-boot by
+// buildDomainRegistry(); this static entry carries none.
 const roadsDispatch: IngestDomain = {
   name: "roads",
   feeds: [],
   parse: (feed, buffers, opts) => parseEvents(feed as FeedSource, buffers, opts),
-  attributes: (obs: Observation) => roadFlowAttributes(obs as RoadFlow),
 };
 
 /**
  * Dispatch-only registry keyed by domain name. `feeds` is intentionally empty —
  * the scheduler receives the populated registry from buildDomainRegistry(); the
- * pipeline (parse.ts/write-postgis.ts) uses this table solely for the
- * feed-independent parser/attribute lookup.
+ * pipeline (parse.ts) uses this table solely for the feed-independent parser
+ * lookup.
  */
 export const DOMAIN_REGISTRY: DomainRegistry = { roads: roadsDispatch };
 
@@ -62,7 +55,7 @@ function roadsRemoteSnapshotPath(): string {
 }
 
 /**
- * Builds the runtime registry: the same parser/attribute dispatch, with each
+ * Builds the runtime registry: the same parser dispatch, with each
  * domain's feed set loaded (baked-in + operator-mounted + optional remote-pull).
  * Called once in boot(), before the scheduler starts.
  */

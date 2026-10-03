@@ -1,13 +1,25 @@
 # @openconditions/storage
 
-Pure observation-to-database row projection and deterministic content hashing,
-shared by the ingest and contributions services. Callers supply domain attributes
-explicitly; this package does not own a registry, perform SQL, normalize inputs,
-or decide writer authority.
+The write side of the model record tables, shared by the ingest and
+contributions services: one poll's situations, features, offers and
+observations sealed against the registry and written in the caller's
+transaction (revisions, tombstones, a per-class row cap), observation series
+with their partitioned history and rollups, the partition maintenance and the
+record sweep. Callers supply the registry and hold the source's advisory lock.
 
 ```ts
-import { toRow } from "@openconditions/storage";
-const row = toRow(normalizedObservation, domainAttributes);
+import { writeSnapshot } from "@openconditions/storage";
+const summary = await writeSnapshot(
+  sql,
+  sourceId,
+  { features, observations },
+  {
+    registry,
+    instanceId,
+    now,
+    complete: { situation: true },
+  },
+);
 ```
 
 The implementation was extracted from the ingest service and remains

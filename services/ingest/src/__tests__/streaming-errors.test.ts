@@ -54,12 +54,10 @@ describe("streaming feed error handling", () => {
     const src = { ...feed, domain: "roads" } as DomainFeedSource;
 
     await expect(
-      streamMeasuredData(
-        src,
-        async () => erroringStream(),
-        undefined,
-        () => new Date(0).toISOString(),
-      ),
+      streamMeasuredData(src, async () => erroringStream(), undefined, {
+        now: new Date(0).toISOString(),
+        cadenceSec: 60,
+      }),
     ).rejects.toThrow();
   });
 });
@@ -75,13 +73,14 @@ describe("streamed payload digest", () => {
         "</siteMeasurements></payloadPublication></d2LogicalModel>",
     );
     const body = src.gzip ? gzipSync(xml) : xml;
-    const { flows, situations, payload } = await streamMeasuredData(
+    const { features, observations, situations, payload } = await streamMeasuredData(
       src,
       async () => Readable.from([body]),
       undefined,
-      () => new Date(0).toISOString(),
+      { now: new Date(0).toISOString(), cadenceSec: 60 },
     );
-    expect(flows).toEqual([]);
+    expect(features).toEqual([]);
+    expect(observations).toEqual([]);
     expect(situations).toEqual([]);
     expect(payload.sha256).toBe(digestPayload("", xml).sha256);
     expect(payload.bytes).toBe(xml.length);

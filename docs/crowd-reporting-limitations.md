@@ -23,6 +23,16 @@ guarantees we deliberately do not make.
   ceiling confirmations extend it to, its quorums and its match distance in the
   registry (`crowd` rules, `crowdRulesFor`); the evidence math is in
   [`packages/core/src/evidence.ts`](../packages/core/src/evidence.ts).
+- **Readings as well as situations.** A contributor can also report a
+  reading of something an instance already knows: a charge point out of order,
+  the price on a station's pole, how full a car park is. The reading sits
+  beside the operators' own readings of the same thing and never replaces a
+  fresh one: the value an instance shows (its fused row) prefers a fresh feed,
+  and shows a crowd reading only while the feed is stale or silent. A reading
+  is accepted only from someone standing within the property's reach of the
+  subject, and only about a subject the instance holds; where the reporter
+  stood is checked and then dropped. Crowd readings stay on the instance that
+  took them: they are not federated.
 - **Corroboration plus an external-resolution ladder.** Independent reports can
   corroborate one another, and only an external resolution (an official match, a
   reviewer decision, or an objective measurement) promotes a phenomenon to
@@ -39,6 +49,10 @@ guarantees we deliberately do not make.
   mint keys can mint reputation-bearing identities. Collusion remains an unsolved
   problem in the literature — the "Ghost Riders" analysis of crowd-traffic
   spoofing is still the state of the art, with no meaningful advance since 2018.
+- **We do NOT keep two different readings of one moment.** Two contributors
+  reporting the same subject at the same instant with different values cannot
+  both be right; the second is refused, and the first stands until evidence or
+  a feed settles it.
 - **Attestation is a soft advisory signal, never a gate.** Optional device
   attestation nudges a score at most. Privacy-OS, de-Googled, and F-Droid users
   fail attestation _by design_, so it can never be load-bearing: a report is

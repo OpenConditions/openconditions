@@ -1,54 +1,34 @@
 import { describe, expect, it } from "vitest";
-import { parseOhgoFlow } from "../flow-ohgo.js";
-import type { SourceDescriptor } from "../types.js";
+import { fixture, flowFeed, flows, readings, site } from "./flow-fixtures.js";
 
-const src = {
-  id: "us-oh-ohgo",
-  attribution: "Ohio DOT",
-  country: "US",
-  license: "US-Gov-Public-Domain",
-} as SourceDescriptor;
+const FEED = "us-oh-ohgo";
+const feed = flowFeed(FEED);
 
-const payload = JSON.stringify({
-  Results: [
-    {
-      Id: "d1",
-      Latitude: 40.0,
-      Longitude: -82.9,
-      CurrentAvgSpeed: 20,
-      NormalAvgSpeed: 65,
-      Direction: "EB",
-      LastUpdated: "2026-03-04T14:30:00Z",
-    },
-    {
-      Id: "d2",
-      Latitude: 40.1,
-      Longitude: -83.0,
-      CurrentAvgSpeed: 62,
-      NormalAvgSpeed: 65,
-      Direction: "WB",
-      LastUpdated: "2026-03-04T14:30:00Z",
-    },
-  ],
-});
-
-describe("parseOhgoFlow", () => {
-  it("uses inline NormalAvgSpeed as the native freeFlowKph and classifies via reclassifyFlow", () => {
-    const { flows, events } = parseOhgoFlow(payload, src);
-    const slow = flows.find((f) => f.id === "us-oh-ohgo:d1")!;
-    expect(slow.speedKph).toBeCloseTo(20 * 1.609344, 2);
-    expect(slow.freeFlowKph).toBeCloseTo(65 * 1.609344, 2);
-    expect(slow.freeFlowSource).toBe("native");
-    expect(slow.direction).toBe("EB");
-    expect(slow.los).toBe("queuing"); // ratio 20/65 ≈ 0.31
-    expect(events.some((e) => e.id === "us-oh-ohgo:d1:congestion" && e.direction === "EB")).toBe(
-      true,
+describe("OHGO travel delays", () => {
+  it("classifies the speed against the inline NormalAvgSpeed as a native baseline", () => {
+    const out = flows(feed, fixture("flow/ohgo.json"));
+    const [slow] = readings(out, FEED, "d1", "traffic.speed");
+    expect((slow!["result"] as { value: number }).value).toBeCloseTo(20 * 1.609344, 2);
+    expect(slow!["baseline"]).toMatchObject({ source: "native", los: "queuing" }); // 20/65 ≈ 0.31
+    expect((slow!["baseline"] as { freeFlow: { value: number } }).freeFlow.value).toBeCloseTo(
+      65 * 1.609344,
+      2,
     );
-    const ok = flows.find((f) => f.id === "us-oh-ohgo:d2")!;
-    expect(ok.los).toBe("free_flow"); // 62/65 ≈ 0.95
+    const [ok] = readings(out, FEED, "d2", "traffic.speed");
+    expect(ok!["baseline"]).toMatchObject({ los: "free_flow" }); // 62/65 ≈ 0.95
   });
 
-  it("returns empty on malformed input", () => {
-    expect(parseOhgoFlow("x", src)).toEqual({ flows: [], events: [] });
+  it("derives a congestion situation in the site's direction", () => {
+    const out = flows(feed, fixture("flow/ohgo.json"));
+    expect(out.situations.map((s) => s["id"])).toEqual([`oc:situation:${FEED}:d1:congestion`]);
+    const direction = { value: "unknown", basis: "compass", compass: "E", text: "EB" };
+    expect((out.situations[0]!["location"] as { direction: unknown }).direction).toEqual(direction);
+    expect((site(out, FEED, "d1")!["location"] as { direction: unknown }).direction).toEqual(
+      direction,
+    );
+  });
+
+  it("drafts nothing for malformed input", () => {
+    expect(flows(feed, "x")).toEqual({ features: [], observations: [], situations: [] });
   });
 });

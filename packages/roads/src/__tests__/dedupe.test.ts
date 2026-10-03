@@ -77,4 +77,38 @@ describe("dedupeRoadEvents", () => {
     const result = dedupeRoadEvents([a, b]);
     expect(result).toHaveLength(1);
   });
+
+  it("merges two events 20 m apart, keeping the one updated last", () => {
+    const older = makeRoadEvent({ lng: 4.9, lat: 52.3, dataUpdatedAt: "2026-01-01T10:00:00Z" });
+    const newer = makeRoadEvent({
+      lng: 4.900178,
+      lat: 52.3,
+      dataUpdatedAt: "2026-01-01T12:00:00Z",
+    });
+
+    const result = dedupeRoadEvents([older, newer]);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.dataUpdatedAt).toBe("2026-01-01T12:00:00Z");
+  });
+
+  it("keeps two events 500 m apart separate", () => {
+    const a = makeRoadEvent({ lng: 4.9, lat: 52.3 });
+    const b = makeRoadEvent({ lng: 4.9, lat: 52.3045 });
+
+    expect(dedupeRoadEvents([a, b])).toHaveLength(2);
+  });
+
+  it("does not over-merge a transitive A-B-C chain when A-C exceeds the distance threshold", () => {
+    // At lat 52.3, 1° lng ≈ 67 930 m: A–B ≈ 40 m, B–C ≈ 40 m, A–C ≈ 80 m (> 60 m).
+    // Only the all-pairs guard keeps the chain from collapsing into one.
+    const A = makeRoadEvent({ lng: 4.9, lat: 52.3 });
+    const B = makeRoadEvent({ lng: 4.900589, lat: 52.3 });
+    const C = makeRoadEvent({ lng: 4.901178, lat: 52.3 });
+
+    expect(dedupeRoadEvents([A, B, C])).toHaveLength(2);
+  });
+
+  it("returns an empty array for no events", () => {
+    expect(dedupeRoadEvents([])).toEqual([]);
+  });
 });

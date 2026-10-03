@@ -45,12 +45,18 @@
       },
       "canonicalId": "e6900ec3935759d9c7115b58dee4d4200bbaf6659f0dbd93a31df726d79c7d6c",
       "domain": "roads",
-      "contentHash": "1dd6c1b7f5b054b8e454e2d7fbd8ee5caf09de5d7bca66e6b97847e64f6a96d4",
+      "contentHash": "44709049031e8f260ddb6cdeb265af7dd86b18bfcc008f358e8b7377be721c2d",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
+      "name": [
+        {
+          "lang": "fi",
+          "text": "Vt 1 Kehä I — free flow"
+        }
+      ],
       "lifecycle": "operational",
       "details": {
         "kind": "measurement_site",
@@ -102,12 +108,18 @@
       },
       "canonicalId": "8e3f8b6c319c37ca8a39ff80da6d908a520fe2f494a63f1097b21e88a4eb7a0f",
       "domain": "roads",
-      "contentHash": "3a94b002166363b5851e5834e45ea835a5fd3e079002adb7cf3fd499d9ac34dd",
+      "contentHash": "72e6d251ab0756f9a86d31dea64327e5f855ebd1666459b89289c3129046c05a",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
+      "name": [
+        {
+          "lang": "fi",
+          "text": "Vt 3 — heavy traffic"
+        }
+      ],
       "lifecycle": "operational",
       "details": {
         "kind": "measurement_site",
@@ -163,12 +175,18 @@
       },
       "canonicalId": "bc725e085b881df8415857a69baf278326347ede8b959d3841936ff83eb856dd",
       "domain": "roads",
-      "contentHash": "f4e26d09712451c74c86ebe606643404990e6f6c2bbebac0d5e956d1fb585bfa",
+      "contentHash": "811c322dc6970cf638564b4a3a3b0d3e4c1b4563fdd5631c222076282135ba9b",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
+      "name": [
+        {
+          "lang": "fi",
+          "text": "Vt 4 — stationary queue"
+        }
+      ],
       "lifecycle": "operational",
       "details": {
         "kind": "measurement_site",
@@ -224,12 +242,18 @@
       },
       "canonicalId": "bc7515396ef6d7a85b6652d52b2b5eadf6f94d869fc26cb4a2f716dd2b942d57",
       "domain": "roads",
-      "contentHash": "b45709f8d86b6ea5bfd14597625a98923fc5cb7b6f149a833ac4df56bd1c9085",
+      "contentHash": "0d0732ae1a7176dac7c7255d5450da08245f9731f9990a749836920d564dcfba",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
+      "name": [
+        {
+          "lang": "fi",
+          "text": "Vt 5 — queuing traffic"
+        }
+      ],
       "lifecycle": "operational",
       "details": {
         "kind": "measurement_site",
@@ -846,7 +870,7 @@
       },
       "canonicalId": "745fbea80cbe2e151694a993f22c3c3829c7fe1ea43216975113db0ecff45f18",
       "domain": "roads",
-      "contentHash": "0cd6476e915265fa1159e3452167cfe425d7c9ac0a2c06ee7f372f006532075c",
+      "contentHash": "65e5d1b1d3f4547d09d9a496832e13effb9282757e75bdfae35d83b89c4dec36",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
@@ -860,7 +884,7 @@
       },
       "validity": {
         "status": "active",
-        "start": "2026-06-24T09:55:00Z"
+        "start": "2026-06-24T09:55:00.000Z"
       },
       "effects": [],
       "details": {
@@ -932,7 +956,7 @@
       },
       "canonicalId": "fa8b7dd49088019925732fe7350c5487cd70d427322eac8f00341d69b421c50e",
       "domain": "roads",
-      "contentHash": "8601c2ab05763d3b0b0a18c7a501bc567ad592ebe2ca40b659528681fbbe9795",
+      "contentHash": "800d6cb3a911637d79fd786aed874dbc96b1b88f8ee602f20c934f9d06fae462",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
@@ -946,7 +970,7 @@
       },
       "validity": {
         "status": "active",
-        "start": "2026-06-24T10:00:00Z"
+        "start": "2026-06-24T10:00:00.000Z"
       },
       "effects": [],
       "details": {

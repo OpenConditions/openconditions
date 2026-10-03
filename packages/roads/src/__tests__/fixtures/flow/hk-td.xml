@@ -7,8 +7,8 @@
   </detectors></period>
   <period><period_from>01:55:00</period_from><period_to>01:55:30</period_to><detectors>
     <detector><detector_id>AID01101</detector_id><lanes>
-      <lane><lane_id>Fast Lane</lane_id><speed>100</speed><volume>3</volume><valid>Y</valid></lane>
-      <lane><lane_id>Slow Lane</lane_id><speed>60</speed><volume>1</volume><valid>Y</valid></lane>
+      <lane><lane_id>Fast Lane</lane_id><speed>100</speed><occupancy>8</occupancy><volume>3</volume><valid>Y</valid></lane>
+      <lane><lane_id>Slow Lane</lane_id><speed>60</speed><occupancy>4</occupancy><volume>1</volume><valid>Y</valid></lane>
       <lane><lane_id>Broken</lane_id><speed>0</speed><volume>0</volume><valid>N</valid></lane>
     </lanes></detector>
   </detectors></period>

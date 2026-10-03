@@ -34,7 +34,6 @@ COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
-COPY packages/normalize/package.json packages/normalize/
 COPY services/ingest/package.json services/ingest/
 COPY services/contributions-api/package.json services/contributions-api/
 RUN pnpm install --filter @openconditions/contributions-api... --frozen-lockfile --prod --ignore-scripts
@@ -50,7 +49,6 @@ COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
-COPY packages/normalize/package.json packages/normalize/
 COPY services/ingest/package.json services/ingest/
 COPY services/contributions-api/package.json services/contributions-api/
 RUN pnpm install --filter @openconditions/contributions-api... --frozen-lockfile --ignore-scripts
@@ -62,7 +60,6 @@ COPY packages/ingest-framework/ packages/ingest-framework/
 COPY packages/roads/ packages/roads/
 COPY packages/publishers/ packages/publishers/
 COPY packages/openlr/ packages/openlr/
-COPY packages/normalize/ packages/normalize/
 COPY services/ingest/ services/ingest/
 COPY services/contributions-api/ services/contributions-api/
 # `...` builds the contributions-api's workspace dependencies first (topological),

@@ -1,12 +1,9 @@
 import type { Point } from "geojson";
-import type { FlowParseResult } from "./flow.js";
-import { makeOrigin } from "./flow.js";
-import type { RoadFlow } from "./model.js";
+import type { FlowContext, FlowSites } from "./flow-output.js";
+import type { FlowParse, FlowReading, Los } from "./flow-reading.js";
 import { reprojectorFor } from "./reproject.js";
 import type { SourceDescriptor } from "./types.js";
 import { getXmlChild, getXmlChildren, isXmlObject, parseXmlDocument, xmlText } from "./xml.js";
-
-type Los = RoadFlow["los"];
 
 // INFORMO's nivelServicio: 0 fluido, 1 lento, 2 retenido, 3 congestionado.
 function losFromNivel(raw: string | undefined): Los {
@@ -24,8 +21,6 @@ function losFromNivel(raw: string | undefined): Los {
   }
 }
 
-const QUEUING_LOS = new Set<Los>(["queuing", "stationary", "blocked"]);
-
 /** Parse a Madrid INFORMO number, which uses a comma decimal separator. */
 function numEs(raw: string | undefined): number | undefined {
   if (raw == null || raw.trim() === "") return undefined;
@@ -35,16 +30,19 @@ function numEs(raw: string | undefined): number | undefined {
 
 /**
  * Parse the City of Madrid INFORMO realtime traffic XML
- * (`informo.madrid.es/informo/tmadrid/pm.xml`) into RoadFlow point
- * measurements. Each `<pm>` is a measurement point carrying a
- * `nivelServicio` level-of-service, `intensidad` (veh/h) and `ocupacion`
- * (%), with UTM (ETRS89 / EPSG:25830) `st_x`/`st_y` coordinates reprojected
- * to WGS84. The feed carries no measured speed, so flows are level-of-service
- * only; a derived congestion event is appended when the LOS reaches queuing
- * or worse. Points with an error flag, no valid coordinate, or an
- * unresolvable LOS are skipped.
+ * (`informo.madrid.es/informo/tmadrid/pm.xml`). Each `<pm>` is a measurement
+ * point carrying a `nivelServicio` level of service, `intensidad` (vehicles
+ * per hour) and `ocupacion` (%), with UTM (ETRS89 / EPSG:25830) `st_x`/`st_y`
+ * coordinates reprojected to WGS84. The feed carries no measured speed and no
+ * per-point time, so readings are dated by the poll. Points with an error
+ * flag, no valid coordinate, or an unresolvable level are skipped.
  */
-export function parseMadridFlow(input: string | Buffer, src: SourceDescriptor): FlowParseResult {
+export function parseMadridFlow(
+  input: string | Buffer,
+  _src: SourceDescriptor,
+  _sites: FlowSites | undefined,
+  _ctx: FlowContext,
+): FlowParse {
   let doc: ReturnType<typeof parseXmlDocument>;
   try {
     doc = parseXmlDocument(input, {
@@ -53,20 +51,15 @@ export function parseMadridFlow(input: string | Buffer, src: SourceDescriptor): 
       isArray: (n) => n === "pm",
     });
   } catch {
-    return { flows: [], events: [], failed: true };
+    return { readings: [], failed: true };
   }
 
   const root = isXmlObject(doc) ? (getXmlChild(doc, "pms") ?? doc) : null;
-  if (!root) return { flows: [], events: [], failed: true };
-  const points = getXmlChildren(root, "pm");
+  if (!root) return { readings: [], failed: true };
 
   const toWgs = reprojectorFor("EPSG:25830");
-  const now = new Date().toISOString();
-  const origin = makeOrigin(src);
-  const flows: RoadFlow[] = [];
-  const events: FlowParseResult["events"] = [];
-
-  for (const pm of points) {
+  const readings: FlowReading[] = [];
+  for (const pm of getXmlChildren(root, "pm")) {
     try {
       if (xmlText(pm["error"]) === "S") continue; // sensor fault this cycle
       const id = xmlText(pm["idelem"]);
@@ -80,57 +73,23 @@ export function parseMadridFlow(input: string | Buffer, src: SourceDescriptor): 
 
       const los = losFromNivel(xmlText(pm["nivelServicio"]));
       if (los === "unknown") continue;
+      const volume = numEs(xmlText(pm["intensidad"]));
+      const occupancy = numEs(xmlText(pm["ocupacion"]));
+      const name = xmlText(pm["descripcion"])?.trim();
 
       const geometry: Point = { type: "Point", coordinates: [lon, lat] };
-
-      const flow: RoadFlow = {
-        id: `${src.id}:${id}`,
-        source: src.id,
-        sourceFormat: "informo",
-        domain: "roads",
-        kind: "measurement",
-        metric: "flow",
-        level: los,
-        aggregation: "live",
-        status: "active",
+      readings.push({
+        site: id,
         geometry,
         los,
-        site: { id },
-        origin,
-        dataUpdatedAt: now,
-        fetchedAt: now,
-        isStale: false,
-      };
-      flows.push(flow);
-
-      if (QUEUING_LOS.has(los)) {
-        events.push({
-          id: `${flow.id}:congestion`,
-          source: src.id,
-          sourceFormat: "informo",
-          domain: "roads",
-          kind: "event",
-          type: "congestion",
-          category: "conditions",
-          isPlanned: false,
-          severity: los === "stationary" || los === "blocked" ? "critical" : "high",
-          severitySource: "derived",
-          headline: `Traffic congestion (${id})`,
-          situation: { headlineFromSource: false, derivedFromSite: id },
-          status: "active",
-          geometry,
-          roads: [],
-          origin,
-          dataUpdatedAt: now,
-          fetchedAt: now,
-          isStale: false,
-          validFrom: now,
-        });
-      }
+        ...(volume !== undefined && volume >= 0 ? { volume } : {}),
+        ...(occupancy !== undefined && occupancy >= 0 && occupancy <= 100 ? { occupancy } : {}),
+        ...(name ? { name, nameLang: "es" } : {}),
+      });
     } catch (err) {
       console.warn("[madrid-flow] skipped malformed pm:", err);
     }
   }
 
-  return { flows, events };
+  return { readings };
 }

@@ -240,7 +240,11 @@ export const ROADS_PROPERTIES = [
     result: { type: "quantity", unit: "km/h" },
     subjects: [SITE, { kind: "segments" }],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { rawDays: 7, rollup: { period: "hourly", histogram: { binWidth: 2 } } },
+    retention: {
+      rawDays: 3,
+      componentHistory: false,
+      rollup: { period: "hourly", histogram: { binWidth: 2 } },
+    },
     routingRelevant: true,
   }),
   defineProperty({
@@ -251,7 +255,7 @@ export const ROADS_PROPERTIES = [
     result: { type: "quantity", unit: "1/h" },
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { rawDays: 7, rollup: { period: "hourly" } },
+    retention: { rawDays: 2, componentHistory: false, rollup: { period: "hourly" } },
   }),
   defineProperty({
     code: "traffic.occupancy",
@@ -261,7 +265,7 @@ export const ROADS_PROPERTIES = [
     result: { type: "quantity", unit: "%" },
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { rawDays: 7, rollup: { period: "hourly" } },
+    retention: { rawDays: 2, componentHistory: false, rollup: { period: "hourly" } },
   }),
   defineProperty({
     code: "traffic.los",
@@ -276,7 +280,7 @@ export const ROADS_PROPERTIES = [
       { kind: "segments" },
     ],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, rawDays: 7, componentHistory: false },
     routingRelevant: true,
   }),
   defineProperty({
@@ -287,7 +291,7 @@ export const ROADS_PROPERTIES = [
     result: { type: "vector", unit: "km/h", keys: VEHICLE_CLASSES },
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { rawDays: 7 },
+    retention: { rawDays: 2, componentHistory: false },
   }),
   defineProperty({
     code: "vms.display",

@@ -15,11 +15,40 @@ export function tokenize(value: string, stopwords: ReadonlySet<string> = new Set
   return tokens.filter((t) => t.length > 1 && !stopwords.has(t));
 }
 
+const DIRECTIONS: Readonly<Record<string, string>> = {
+  n: "n",
+  nord: "n",
+  north: "n",
+  noord: "n",
+  s: "s",
+  süd: "s",
+  sud: "s",
+  south: "s",
+  zuid: "s",
+  e: "e",
+  o: "e",
+  ost: "e",
+  east: "e",
+  est: "e",
+  oost: "e",
+  w: "w",
+  west: "w",
+  ouest: "w",
+};
+
+/** The compass directions a name states ("Neuhaus O", "Rastplatz Nord"). */
+function directionsOf(value: string): Set<string> {
+  const tokens = value.toLowerCase().normalize("NFC").match(TOKEN) ?? [];
+  return new Set(tokens.flatMap((t) => (DIRECTIONS[t] === undefined ? [] : [DIRECTIONS[t]])));
+}
+
 /**
  * |A ∩ B| / min(|A|, |B|): 1 when one name's tokens are all contained in the
  * other's, so a source that adds a house number or a lot number to the same
  * name still scores 1. Empty on either side scores 0 — an absent name is no
- * evidence, never agreement.
+ * evidence, never agreement. Two names that state different directions score
+ * 0: the rest areas on either carriageway ("Neuhaus O", "Neuhaus W") share
+ * every other token.
  */
 export function tokenSimilarity(
   a: string | undefined,
@@ -27,6 +56,9 @@ export function tokenSimilarity(
   stopwords: ReadonlySet<string> = new Set(),
 ): number {
   if (a === undefined || b === undefined) return 0;
+  const [da, db] = [directionsOf(a), directionsOf(b)];
+  const differ = da.size !== db.size || [...da].some((d) => !db.has(d));
+  if (da.size > 0 && db.size > 0 && differ) return 0;
   const left = new Set(tokenize(a, stopwords));
   const right = new Set(tokenize(b, stopwords));
   if (left.size === 0 || right.size === 0) return 0;

@@ -38,7 +38,7 @@ const INGEST: Boundary = {
   id: "ingest",
   pattern:
     /^@openconditions\/ingest(?:\/|$)|(?:^|\/)services\/ingest(?:\/|$)|(?:^|\/)ingest\/src\//,
-  message: "Use @openconditions/normalize or @openconditions/storage, not the ingest service.",
+  message: "Use @openconditions/core/server or @openconditions/storage, not the ingest service.",
 };
 
 const TRANSPORT: Boundary = {

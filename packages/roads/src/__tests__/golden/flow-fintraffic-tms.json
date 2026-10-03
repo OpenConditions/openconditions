@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:fi-fintraffic:23001",
+      "id": "oc:feature:fi-fintraffic:23001-1",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -13,14 +13,18 @@
         },
         "extent": "point",
         "geometryOrigin": "site_table",
-        "fuzziness": "exact"
+        "fuzziness": "exact",
+        "direction": {
+          "value": "positive",
+          "basis": "road_reference"
+        }
       },
       "provenance": {
         "origin": "feed",
         "sourceId": "fi-fintraffic",
         "sourceFormat": "fintraffic-tms",
         "accessMode": "bulk",
-        "recordId": "23001",
+        "recordId": "23001-1",
         "attribution": {
           "provider": "Fintraffic / Digitraffic",
           "license": "CC-BY-4.0",
@@ -34,57 +38,96 @@
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "308cfe8e05963d2b4a700e1c2e92ff9fc002d9ef118f6d0706bf580cfc195919",
+      "canonicalId": "45dabb3bc7534ff0b20fb716dde2c61201f377d6b81cb4e57a2fe6c36addc790",
       "domain": "roads",
-      "contentHash": "ec7d72c04a0272e956767650696fedabb97d7b947b16f4917234bf3b8d506bcb",
+      "contentHash": "3b6fe06d108895585c72fcb13405282b84131714a6b4fc3ea941f59512043a86",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
-      "lifecycle": "operational",
-      "components": [
+      "name": [
         {
-          "key": "1",
-          "kind": "sensor_channel",
-          "details": {
-            "kind": "sensor_channel",
-            "v": 1,
-            "index": 1,
-            "direction": {
-              "value": "positive",
-              "basis": "road_reference"
-            },
-            "property": "traffic.speed"
-          }
-        },
-        {
-          "key": "2",
-          "kind": "sensor_channel",
-          "details": {
-            "kind": "sensor_channel",
-            "v": 1,
-            "index": 2,
-            "direction": {
-              "value": "negative",
-              "basis": "road_reference"
-            },
-            "property": "traffic.speed"
-          }
+          "lang": "fi",
+          "text": "vt1_Espoo_Kehä_I"
         }
       ],
+      "lifecycle": "operational",
       "details": {
         "kind": "measurement_site",
         "v": 1,
         "measuredProperties": [
-          "traffic.speed"
+          "traffic.speed",
+          "traffic.volume"
+        ]
+      }
+    },
+    {
+      "id": "oc:feature:fi-fintraffic:23001-2",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            24.9,
+            60.2
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact",
+        "direction": {
+          "value": "negative",
+          "basis": "road_reference"
+        }
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-fintraffic",
+        "sourceFormat": "fintraffic-tms",
+        "accessMode": "bulk",
+        "recordId": "23001-2",
+        "attribution": {
+          "provider": "Fintraffic / Digitraffic",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://www.fintraffic.fi/en/fintraffic/open-data"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "40dae3344e891a8b32b1470845c168a9050e3bd9f67679808faeec27d3747f67",
+      "domain": "roads",
+      "contentHash": "501bc26a837e10db51f9e16bbcd54cf625f18b8f039958a3dd5fb3f9001858fe",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "name": [
+        {
+          "lang": "fi",
+          "text": "vt1_Espoo_Kehä_I"
+        }
+      ],
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.volume"
         ]
       }
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:fi-fintraffic:d5a1dd487701b01891bb2e43c280afdf8d282905c6ae367233e448d1a1ff3290",
+      "id": "oc:observation:fi-fintraffic:825ec7577c4eae43aef54070f55b9f8f4fbdae0082d569e1489a002cff53d949",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -96,14 +139,18 @@
         },
         "extent": "point",
         "geometryOrigin": "site_table",
-        "fuzziness": "exact"
+        "fuzziness": "exact",
+        "direction": {
+          "value": "positive",
+          "basis": "road_reference"
+        }
       },
       "provenance": {
         "origin": "feed",
         "sourceId": "fi-fintraffic",
         "sourceFormat": "fintraffic-tms",
         "accessMode": "bulk",
-        "recordId": "23001/1",
+        "recordId": "23001-1",
         "attribution": {
           "provider": "Fintraffic / Digitraffic",
           "license": "CC-BY-4.0",
@@ -117,9 +164,9 @@
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "9a39d44e84ea1b196ac186bb3b9b90ca577bc03d65e179da8b5365b13b3489f0",
+      "canonicalId": "43f87c98775a85ccf9213b6539f8539acf77a025c15bd231f388ad0bdd109d51",
       "domain": "roads",
-      "contentHash": "f993c45d7a7822bc814168c99ae894458b20097cfada432e93a5bbce50a868d3",
+      "contentHash": "44d6b37d4c77830bdc9621fbbd81b47c8acb1e4c7141792827439b8031eac5b3",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
@@ -127,8 +174,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:fi-fintraffic:23001",
-        "componentKey": "1"
+        "featureId": "oc:feature:fi-fintraffic:23001-1"
       },
       "result": {
         "type": "quantity",
@@ -136,12 +182,13 @@
         "unit": "km/h"
       },
       "phenomenonTime": {
-        "instant": "2026-03-04T14:30:00.000Z"
+        "start": "2026-03-04T14:25:00.000Z",
+        "end": "2026-03-04T14:30:00.000Z"
       },
       "aggregation": "mean"
     },
     {
-      "id": "oc:observation:fi-fintraffic:1b141acce20785c8c51caba28fc03877c8c8df2ce862136159160bf0a31a8f14",
+      "id": "oc:observation:fi-fintraffic:361f7cc944e087dabb35870f4fd6b1d4f3d77048d510f2ac639fdd22ee40f426",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -153,14 +200,18 @@
         },
         "extent": "point",
         "geometryOrigin": "site_table",
-        "fuzziness": "exact"
+        "fuzziness": "exact",
+        "direction": {
+          "value": "positive",
+          "basis": "road_reference"
+        }
       },
       "provenance": {
         "origin": "feed",
         "sourceId": "fi-fintraffic",
         "sourceFormat": "fintraffic-tms",
         "accessMode": "bulk",
-        "recordId": "23001/2",
+        "recordId": "23001-1",
         "attribution": {
           "provider": "Fintraffic / Digitraffic",
           "license": "CC-BY-4.0",
@@ -174,9 +225,70 @@
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "7ba43e1599e82a2ba90dc96f5db7d2e90f60eb0022d23592fd0052faf148b0af",
+      "canonicalId": "2513fdc1a1dcbfece04f356cd84cf04ad4dea5816f9efa44b4d11992868e27f2",
       "domain": "roads",
-      "contentHash": "729cdb82b157652536d156d04aaf63b50abb51a04f3c5fb85705474bf73a1df3",
+      "contentHash": "54d54c5d81024600bea04a4e258686c3f7f932857118f8bb4cb2c121dd30269f",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fi-fintraffic:23001-1"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 840,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "start": "2026-03-04T14:25:00.000Z",
+        "end": "2026-03-04T14:30:00.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:fi-fintraffic:4dc96d497512d02f8e4c18c78f8c6dbd238f29e34adf5d339ab398ff82b69eac",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            24.9,
+            60.2
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact",
+        "direction": {
+          "value": "negative",
+          "basis": "road_reference"
+        }
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-fintraffic",
+        "sourceFormat": "fintraffic-tms",
+        "accessMode": "bulk",
+        "recordId": "23001-2",
+        "attribution": {
+          "provider": "Fintraffic / Digitraffic",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://www.fintraffic.fi/en/fintraffic/open-data"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "c25f20563574d0a4c5d2f19b6894ef16c0221c43c5007e4ceedbf5f09c49f94c",
+      "domain": "roads",
+      "contentHash": "0664ffd01fbc2dbec5ebcecd9d1a57b44e603a247ad19ff184213b3e362da93c",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
@@ -184,8 +296,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:fi-fintraffic:23001",
-        "componentKey": "2"
+        "featureId": "oc:feature:fi-fintraffic:23001-2"
       },
       "result": {
         "type": "quantity",
@@ -193,7 +304,8 @@
         "unit": "km/h"
       },
       "phenomenonTime": {
-        "instant": "2026-03-04T14:30:00.000Z"
+        "start": "2026-03-04T14:25:00.000Z",
+        "end": "2026-03-04T14:30:00.000Z"
       },
       "aggregation": "mean"
     }

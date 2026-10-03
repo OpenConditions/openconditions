@@ -9,18 +9,21 @@
  * rejected an OpenStreetMap-derived table (55% of codes present, ~900 m median)
  * in favour of the published one.
  *
- * Ground truth comes from the ingest database, where such records are already
- * stored with their raw Alert-C block:
+ * Ground truth comes from the ingest database, where situations located by the
+ * source's own coordinates also carry the Alert-C reference they were
+ * published with (the record keeps the primary location and its extent, not
+ * the secondary code):
  *
  *   COPY (
  *     select
- *       o.source,
- *       (jsonb_path_query_first(o.attributes->'sourceRaw', '$.**.alertCLocationTableVersion'))#>>'{}' as ver,
- *       (jsonb_path_query_first(o.attributes->'sourceRaw', '$.**.alertCMethod4PrimaryPointLocation.alertCLocation.specificLocation'))#>>'{}'   as prim,
- *       (jsonb_path_query_first(o.attributes->'sourceRaw', '$.**.alertCMethod4SecondaryPointLocation.alertCLocation.specificLocation'))#>>'{}' as sec,
- *       ST_AsGeoJSON(o.geom, 6) as gj
- *     from conditions.observations o
- *     where o.source like 'de-%' and o.attributes->>'sourceRaw' like '%alertC%'
+ *       s.source_id as source,
+ *       s.record #>> '{location,tmc,version}' as ver,
+ *       s.record #>> '{location,tmc,code}' as prim,
+ *       '' as sec,
+ *       ST_AsGeoJSON(s.geom, 6) as gj
+ *     from conditions.situation s
+ *     where s.source_id like 'de-%' and s.record #> '{location,tmc}' is not null
+ *       and s.record #>> '{location,geometryOrigin}' = 'source'
  *   ) TO STDOUT WITH CSV HEADER;
  *
  *   pnpm tsx scripts/validate-tmc-table.ts ground-truth.csv

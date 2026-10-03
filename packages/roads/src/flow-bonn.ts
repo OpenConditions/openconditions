@@ -1,10 +1,7 @@
 import type { LineString } from "geojson";
-import type { FlowParseResult } from "./flow.js";
-import { makeOrigin } from "./flow.js";
-import type { RoadFlow } from "./model.js";
+import type { FlowContext, FlowSites } from "./flow-output.js";
+import type { FlowParse, FlowReading, Los } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
-
-type Los = RoadFlow["los"];
 
 /**
  * Bonn publishes `verkehrsstatus` as a German level-of-service phrase. Map the
@@ -20,8 +17,6 @@ function mapVerkehrsstatus(raw: unknown): Los {
   if (s.includes("stau") || s.includes("gestaut")) return "stationary";
   return "unknown";
 }
-
-const QUEUING_LOS = new Set<Los>(["queuing", "stationary", "blocked"]);
 
 interface BonnFeature {
   geometry?: { type?: unknown; coordinates?: unknown } | null;
@@ -43,28 +38,28 @@ function toLineString(ring: unknown): LineString | null {
 
 /**
  * Parse the City of Bonn realtime traffic GeoJSON (`stadtplan.bonn.de/geojson?
- * Thema=19584`) into RoadFlow segments. Each feature is a road section
- * (`strecke_id`) with a `geschwindigkeit` (current speed, km/h), a
- * `verkehrsstatus` level-of-service phrase, and an `auswertezeit` timestamp.
- * MultiLineString geometries emit one RoadFlow per member line so each
- * observation carries a plain LineString (model constraint). A derived
- * congestion RoadEvent is appended when the LOS reaches queuing or worse.
+ * Thema=19584`). Each feature is a road section (`strecke_id`) with a
+ * `geschwindigkeit` (current speed, km/h), a `verkehrsstatus` level-of-service
+ * phrase, and an `auswertezeit` timestamp. A MultiLineString section is one
+ * site whose member lines each carry the reading (and a derived congestion
+ * situation each).
  */
-export function parseBonnFlow(input: string | Buffer, src: SourceDescriptor): FlowParseResult {
+export function parseBonnFlow(
+  input: string | Buffer,
+  _src: SourceDescriptor,
+  _sites: FlowSites | undefined,
+  _ctx: FlowContext,
+): FlowParse {
   let doc: unknown;
   try {
     doc = JSON.parse(Buffer.isBuffer(input) ? input.toString("utf8") : input);
   } catch {
-    return { flows: [], events: [], failed: true };
+    return { readings: [], failed: true };
   }
   const features = (doc as { features?: unknown })?.features;
-  if (!Array.isArray(features)) return { flows: [], events: [], failed: true };
+  if (!Array.isArray(features)) return { readings: [], failed: true };
 
-  const now = new Date().toISOString();
-  const origin = makeOrigin(src);
-  const flows: RoadFlow[] = [];
-  const events: FlowParseResult["events"] = [];
-
+  const readings: FlowReading[] = [];
   for (const raw of features as BonnFeature[]) {
     try {
       const geometry = raw?.geometry;
@@ -89,61 +84,23 @@ export function parseBonnFlow(input: string | Buffer, src: SourceDescriptor): Fl
       const los = mapVerkehrsstatus(props["verkehrsstatus"]);
       // Nothing to say if we have neither a resolvable LOS nor a speed.
       if (los === "unknown" && speedKph == null) continue;
-      const measuredAt = typeof props["auswertezeit"] === "string" ? props["auswertezeit"] : now;
+      const at = typeof props["auswertezeit"] === "string" ? props["auswertezeit"] : undefined;
 
       const lines = rings.map(toLineString).filter((l): l is LineString => l != null);
-      lines.forEach((geom, i) => {
-        const lineId = lines.length > 1 ? `${streckeId}:${i}` : streckeId;
-        const flow: RoadFlow = {
-          id: `${src.id}:${lineId}`,
-          source: src.id,
-          sourceFormat: "bonn",
-          domain: "roads",
-          kind: "measurement",
-          metric: "flow",
-          ...(speedKph != null ? { value: speedKph, unit: "km/h" } : {}),
-          level: los,
-          aggregation: "live",
-          status: "active",
-          geometry: geom,
+      lines.forEach((line, i) => {
+        readings.push({
+          site: streckeId,
+          ...(lines.length > 1 ? { line: `${streckeId}:${i}` } : {}),
+          geometry: line,
+          ...(at !== undefined ? { at } : {}),
           los,
           ...(speedKph != null ? { speedKph } : {}),
-          site: { id: streckeId },
-          origin,
-          dataUpdatedAt: measuredAt,
-          fetchedAt: now,
-          isStale: false,
-        };
-        flows.push(flow);
-        if (QUEUING_LOS.has(los)) {
-          events.push({
-            id: `${flow.id}:congestion`,
-            source: src.id,
-            sourceFormat: "bonn",
-            domain: "roads",
-            kind: "event",
-            type: "congestion",
-            category: "conditions",
-            isPlanned: false,
-            severity: los === "stationary" || los === "blocked" ? "critical" : "high",
-            severitySource: "derived",
-            headline: `Traffic congestion (${lineId})`,
-            situation: { headlineFromSource: false, derivedFromSite: streckeId },
-            status: "active",
-            geometry: geom,
-            roads: [],
-            origin,
-            dataUpdatedAt: measuredAt,
-            fetchedAt: now,
-            isStale: false,
-            validFrom: measuredAt,
-          });
-        }
+        });
       });
     } catch (err) {
       console.warn("[bonn-flow] skipped malformed feature:", err);
     }
   }
 
-  return { flows, events };
+  return { readings };
 }

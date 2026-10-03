@@ -1,5 +1,5 @@
 import { recordFromHistory } from "@openconditions/core";
-import { contentHash } from "@openconditions/model";
+import { contentHash, observationId } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -41,6 +41,9 @@ const speed = (value: number, at: string) =>
 const los = (value: string, at: string) =>
   observationDraft("traffic.los", { type: "category", value, vocabulary: "los" }, { at });
 
+const observationIdOf = (draft: Record<string, unknown>) =>
+  observationId("nl-ndw-flow", draft as Parameters<typeof observationId>[1]);
+
 async function history() {
   return sql`SELECT retention_days, phenomenon_start, value_num, value_text
     FROM conditions.observation ORDER BY phenomenon_start`;
@@ -59,6 +62,7 @@ describe("observation writes", () => {
       history: 1,
       unchanged: 0,
       outsideRetention: 0,
+      pastRollup: 0,
     });
     const [latest] = await sql`
       SELECT subject_key, property, qualifier_key, source_id, subject_kind, feature_id,
@@ -77,13 +81,13 @@ describe("observation writes", () => {
       unit: "km/h",
       effective_from: new Date("2026-10-01T10:00:00Z"),
       since_at: new Date("2026-10-01T10:00:00Z"),
-      retention_days: 7,
+      retention_days: 3,
       access_mode: "bulk",
       geom: "POINT(4.536069 52.0235558)",
     });
     expect(await history()).toEqual([
       {
-        retention_days: 7,
+        retention_days: 3,
         phenomenon_start: new Date("2026-10-01T10:00:00Z"),
         value_num: 87,
         value_text: null,
@@ -109,6 +113,7 @@ describe("observation writes", () => {
       history: 0,
       unchanged: 1,
       outsideRetention: 0,
+      pastRollup: 0,
     });
   });
 
@@ -128,6 +133,24 @@ describe("observation writes", () => {
     const [latest] = await sql`SELECT value_num, effective_from FROM conditions.observation_latest`;
     expect(latest).toEqual({ value_num: 70, effective_from: new Date("2026-10-01T10:02:00Z") });
     expect((await history()).map((r) => r["value_num"])).toEqual([60, 80, 70]);
+  });
+
+  it("replace the reading in effect with a correction of the same instant", async () => {
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [speed(80, "2026-10-01T10:01:00Z")] },
+      ctx,
+    );
+    const corrected = {
+      ...speed(80, "2026-10-01T10:01:00Z"),
+      baseline: { freeFlow: { value: 100, unit: "km/h" }, source: "derived", ratio: 0.8 },
+    };
+    const summary = await writeSnapshot(sql, "nl-ndw-flow", { observations: [corrected] }, ctx);
+    expect(summary.observations).toMatchObject({ latest: 1, history: 1 });
+    const [latest] = await sql`SELECT record #>> '{baseline,source}' AS source
+      FROM conditions.observation_latest`;
+    expect(latest).toEqual({ source: "derived" });
   });
 
   it("rewrite nothing for an older reading a later poll sends again", async () => {
@@ -179,8 +202,8 @@ describe("observation writes", () => {
       ctx,
     );
     expect((await history()).map((r) => [r["retention_days"], r["value_text"]])).toEqual([
-      [0, "free_flow"],
-      [0, "queuing"],
+      [7, "free_flow"],
+      [7, "queuing"],
     ]);
     await writeSnapshot(
       sql,
@@ -273,6 +296,7 @@ describe("observation writes", () => {
       history: 0,
       unchanged: 0,
       outsideRetention: 1,
+      pastRollup: 0,
     });
   });
 
@@ -327,6 +351,81 @@ describe("observation writes", () => {
     );
     const summary = await writeSnapshot(sql, "nl-ndw-flow", { observations: [far] }, ctx);
     expect(summary.observations).toMatchObject({ latest: 1, history: 0, outsideRetention: 1 });
+  });
+
+  it("keep no history of a reading about a component when the property keeps none", async () => {
+    const lane = (value: number, at: string) => ({
+      ...speed(value, at),
+      subject: { kind: "feature", featureId: "oc:feature:nl-ndw-flow:s1", componentKey: "lane1" },
+    });
+    const drafts = [lane(80, "2026-10-01T10:00:00Z"), lane(81, "2026-10-01T10:01:00Z")].map(
+      (d) => ({ ...d, id: observationIdOf(d) }),
+    );
+    const summary = await writeSnapshot(sql, "nl-ndw-flow", { observations: drafts }, ctx);
+    expect(summary.rejected).toEqual([]);
+    expect(summary.observations).toMatchObject({ latest: 1, history: 0, outsideRetention: 0 });
+    const [latest] = await sql`SELECT subject_key, value_num FROM conditions.observation_latest`;
+    expect(latest).toEqual({
+      subject_key: "feature:oc:feature:nl-ndw-flow:s1#lane1",
+      value_num: 81,
+    });
+    expect(await history()).toEqual([]);
+  });
+
+  it("count readings the rollup has already passed, and keep them as history", async () => {
+    await sql`INSERT INTO conditions.observation_rollup_progress (period, finalized_before)
+      VALUES ('hourly', '2026-10-01T10:00:00Z')`;
+    try {
+      const summary = await writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        {
+          observations: [
+            speed(50, "2026-10-01T09:59:00Z"),
+            speed(51, "2026-10-01T10:00:00Z"),
+            los("queuing", "2026-10-01T09:30:00Z"),
+          ],
+        },
+        ctx,
+      );
+      expect(summary.observations).toMatchObject({ history: 3, pastRollup: 1 });
+    } finally {
+      await sql`DELETE FROM conditions.observation_rollup_progress`;
+    }
+  });
+
+  it("refuse a poll holding more readings than a source may publish", async () => {
+    await expect(
+      writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        {
+          observations: [
+            speed(50, "2026-10-01T09:58:00Z"),
+            speed(51, "2026-10-01T09:59:00Z"),
+            speed(52, "2026-10-01T10:00:00Z"),
+          ],
+        },
+        { ...ctx, maxObservationsPerPoll: 2 },
+      ),
+    ).rejects.toThrow(/3 observation rows, exceeding publication limit 2/);
+    expect(await history()).toEqual([]);
+  });
+
+  it("are capped apart from records: more readings than records a poll may hold still land", async () => {
+    const summary = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      {
+        observations: [
+          speed(50, "2026-10-01T09:58:00Z"),
+          speed(51, "2026-10-01T09:59:00Z"),
+          speed(52, "2026-10-01T10:00:00Z"),
+        ],
+      },
+      { ...ctx, maxRowsPerClass: 2 },
+    );
+    expect(summary.observations.history).toBe(3);
   });
 
   it("reject a reading of another source without losing the rest", async () => {

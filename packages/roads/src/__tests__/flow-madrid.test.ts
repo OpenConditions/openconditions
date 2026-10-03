@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseMadridFlow } from "../flow-madrid.js";
-import type { SourceDescriptor } from "../types.js";
+import { flowFeed, flows, site, siteIds, value } from "./flow-fixtures.js";
 
-const src = {
-  id: "es-madrid",
-  attribution: "Ayuntamiento de Madrid",
-  country: "ES",
-  license: "CC-BY-4.0",
-} as SourceDescriptor;
+const FEED = "es-madrid";
+const feed = flowFeed(FEED);
 
 // Coordinates are ETRS89 / UTM 30N (EPSG:25830) with comma decimals, as the
 // live pm.xml publishes them; they reproject to central Madrid (~-3.7°, 40.4°).
@@ -37,33 +32,28 @@ const payload = `<?xml version="1.0" encoding="UTF-8"?>
   </pm>
 </pms>`;
 
-describe("parseMadridFlow", () => {
-  it("reprojects UTM→WGS84 points and maps nivelServicio→los", () => {
-    const { flows, events } = parseMadridFlow(payload, src);
+describe("Madrid INFORMO", () => {
+  it("reprojects UTM→WGS84 points and states nivelServicio as the level of service", () => {
+    const out = flows(feed, payload);
     // The errored (error=S) point is dropped; two remain.
-    expect(flows).toHaveLength(2);
-
-    const congested = flows.find((f) => f.id === "es-madrid:9841")!;
-    expect(congested.sourceFormat).toBe("informo");
-    expect(congested.los).toBe("stationary");
-    expect(congested.geometry.type).toBe("Point");
-    const [lon, lat] = (congested.geometry as { coordinates: number[] }).coordinates;
+    expect(siteIds(out, FEED)).toEqual(["9841", "9842"]);
+    expect(value(out, FEED, "9841", "traffic.los")).toBe("stationary");
+    const geometry = (
+      site(out, FEED, "9841")!["location"] as { geometry: { type: string; coordinates: number[] } }
+    ).geometry;
+    expect(geometry.type).toBe("Point");
+    const [lon, lat] = geometry.coordinates;
     expect(lon).toBeGreaterThan(-4);
     expect(lon).toBeLessThan(-3);
     expect(lat).toBeGreaterThan(40);
     expect(lat).toBeLessThan(41);
-
-    const free = flows.find((f) => f.id === "es-madrid:9842")!;
-    expect(free.los).toBe("free_flow");
-
-    // Only the stationary point emits a derived congestion event.
-    expect(events).toHaveLength(1);
-    expect(events[0]!.id).toBe("es-madrid:9841:congestion");
-    expect(events[0]!.severity).toBe("critical");
+    expect(value(out, FEED, "9842", "traffic.los")).toBe("free_flow");
+    // Only the stationary point derives a congestion situation.
+    expect(out.situations.map((s) => s["id"])).toEqual([`oc:situation:${FEED}:9841:congestion`]);
   });
 
-  it("flags a hard parse failure but not a legitimately empty document", () => {
-    expect(parseMadridFlow("<html>nope", src).failed).toBe(true);
-    expect(parseMadridFlow("<pms></pms>", src)).toEqual({ flows: [], events: [] });
+  it("refuses an unreadable body but reads an empty document as an empty cycle", () => {
+    expect(() => flows(feed, "<html>nope")).toThrow("hard parse failure");
+    expect(flows(feed, "<pms></pms>")).toEqual({ features: [], observations: [], situations: [] });
   });
 });

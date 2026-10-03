@@ -14,13 +14,20 @@ export interface FintrafficNativeDeps {
 const CONSTANTS_BASE = "https://tie.digitraffic.fi/api/tms/v1/stations";
 
 /**
- * Derives a station id from a stored native sensor_key, mirroring the exact
- * format the writer below produces (`${feed.id}:${stationId}-${dir}`): strip
- * the feed-id prefix, then strip the trailing `-${dir}` direction suffix.
+ * The subject key of a Fintraffic per-direction site (`<station>-<dir>`):
+ * its `traffic.speed` series, which the flow parser writes under the site
+ * feature `oc:feature:<feed>:<station>-<dir>`.
  */
-function stationIdFromSensorKey(sensorKey: string, feedId: string): string {
-  const prefix = `${feedId}:`;
-  const unprefixed = sensorKey.startsWith(prefix) ? sensorKey.slice(prefix.length) : sensorKey;
+const siteKeyOf = (feedId: string, site: string) => `feature:oc:feature:${feedId}:${site}`;
+
+/**
+ * Derives a station id from a stored native baseline's subject key, mirroring
+ * the exact format the writer below produces: strip the site prefix, then the
+ * trailing `-${dir}` direction suffix.
+ */
+function stationIdFromSubjectKey(subjectKey: string, feedId: string): string {
+  const prefix = siteKeyOf(feedId, "");
+  const unprefixed = subjectKey.startsWith(prefix) ? subjectKey.slice(prefix.length) : subjectKey;
   return unprefixed.replace(/-\d+$/, "");
 }
 
@@ -57,12 +64,12 @@ function orderStationsByPriority(
  * back to plain registry order on failure rather than aborting the run.
  */
 async function loadStationPriority(sql: Sql, feedId: string): Promise<Map<string, Date>> {
-  const rows = await sql<{ sensor_key: string; computed_at: Date }[]>`
-    SELECT sensor_key, computed_at FROM conditions.sensor_baseline
+  const rows = await sql<{ subject_key: string; computed_at: Date }[]>`
+    SELECT subject_key, computed_at FROM conditions.sensor_baseline
     WHERE source = ${feedId} AND method = 'native'`;
   const oldest = new Map<string, Date>();
   for (const row of rows) {
-    const stationId = stationIdFromSensorKey(row.sensor_key, feedId);
+    const stationId = stationIdFromSubjectKey(row.subject_key, feedId);
     const current = oldest.get(stationId);
     if (!current || row.computed_at < current) oldest.set(stationId, row.computed_at);
   }
@@ -73,8 +80,8 @@ async function loadStationPriority(sql: Sql, feedId: string): Promise<Map<string
  * Low-frequency native-baseline refresh: reads a Fintraffic feed's station
  * registry, then for a bounded batch of stations fetches per-station
  * sensor-constants and upserts the seasonal VVAPAAS free-flow speed as a
- * native, per-sensor overall (dow=-1, tod=-1) baseline. Sensor keys are
- * `${feed.id}:${stationId}-${dir}`, matching the flow parser's `flow.id` so
+ * native, per-site overall (dow=-1, tod=-1) baseline, keyed by the subject
+ * key of the flow parser's per-direction site (`<station>-<dir>`) so
  * `loadBaselineMap` joins them at ingest time. The batch is prioritized
  * (stations with no native baseline first, then oldest-refreshed first) so
  * successive nightly runs cover the whole registry instead of always
@@ -127,9 +134,9 @@ export async function updateFintrafficNativeBaselines(
       for (const r of rows) {
         await sql`
           INSERT INTO conditions.sensor_baseline
-            (sensor_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
-          VALUES (${`${feed.id}:${r.sensorKey}`}, ${feed.id}, -1, -1, ${r.freeFlowKph}, 'native', 0, now())
-          ON CONFLICT (sensor_key, dow_bucket, tod_bucket, method)
+            (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
+          VALUES (${siteKeyOf(feed.id, r.sensorKey)}, ${feed.id}, -1, -1, ${r.freeFlowKph}, 'native', 0, now())
+          ON CONFLICT (subject_key, dow_bucket, tod_bucket, method)
           DO UPDATE SET free_flow_kph = EXCLUDED.free_flow_kph, computed_at = EXCLUDED.computed_at`;
         updated += 1;
       }

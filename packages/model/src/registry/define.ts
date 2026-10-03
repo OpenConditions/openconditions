@@ -263,11 +263,16 @@ export type SubjectSpec =
  * property's unit), because percentiles over a window cannot be rebuilt from
  * per-hour percentiles. A property without a retention entry keeps every row,
  * which only suits a sparse series (a regulated price cap).
+ * `componentHistory: false` keeps readings about a component (a lane, a
+ * vehicle class) latest-only while the feature's own series keeps its
+ * history: per-lane traffic history would multiply the site series many
+ * times over.
  */
 export interface Retention {
   rawDays?: number;
   changeOnly?: boolean;
   latestOnly?: boolean;
+  componentHistory?: false;
   rollup?: { period: "hourly" | "daily" } | { period: "hourly"; histogram: { binWidth: number } };
 }
 

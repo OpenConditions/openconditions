@@ -1,5 +1,5 @@
 import { feedSecretValues, redactSecrets } from "@openconditions/ingest-framework";
-import type { FeedSource, SiteGeometry } from "@openconditions/roads";
+import type { FeedSource, FlowSites } from "@openconditions/roads";
 import {
   parseBcnTramsStations,
   parseFintrafficStations,
@@ -13,7 +13,7 @@ import {
 const REGISTRY_TTL_MS = 6 * 60 * 60 * 1000;
 
 interface CacheEntry {
-  map: Map<string, SiteGeometry>;
+  map: FlowSites;
   fetchedAt: number;
 }
 const cache = new Map<string, CacheEntry>();
@@ -23,7 +23,7 @@ export function clearStationRegistryCache(): void {
   cache.clear();
 }
 
-const PARSERS: Record<string, (input: string) => Map<string, SiteGeometry>> = {
+const PARSERS: Record<string, (input: string) => FlowSites> = {
   "fintraffic-stations": parseFintrafficStations,
   "webtris-sites": parseWebtrisSites,
   "miv-config": parseMivConfig,
@@ -33,8 +33,8 @@ const PARSERS: Record<string, (input: string) => Map<string, SiteGeometry>> = {
 };
 
 /**
- * Loads a feed's JSON/GeoJSON station registry into a station-id → geometry
- * map, cached in-process so it is not refetched on every ingest run. Fetched
+ * Loads a feed's JSON/GeoJSON/CSV station registry into its sites by station
+ * id (geometry, name, lane count), cached in-process so it is not refetched on every ingest run. Fetched
  * through the caller's egress-guarded fetch — never a raw `fetch` — the same
  * way the DATEX `siteTable` loader is guarded, and carrying the feed's
  * `requestHeaders` (e.g. Fintraffic's `Digitraffic-User`) when it declares any.
@@ -50,7 +50,7 @@ export async function loadStationRegistry(
   fetchFn: typeof fetch,
   now: () => number = Date.now,
   capture?: (body: Buffer, url: string) => Promise<void>,
-): Promise<Map<string, SiteGeometry> | undefined> {
+): Promise<FlowSites | undefined> {
   const reg = src.stationRegistry;
   if (!reg) return undefined;
 

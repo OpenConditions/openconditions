@@ -127,16 +127,65 @@ export async function* scanLatestObservations(
   }
 }
 
-/** The reading of a series in effect now (with `sinceAt`), or undefined. */
+/**
+ * The reading of a series in effect now (with `sinceAt`), or undefined. A
+ * crowd reading carries its evidence summary, materialised beside it as a
+ * crowd situation's is; an observation is never routing-eligible.
+ */
 export async function readLatestObservation(
   sql: postgres.Sql,
   key: SeriesKey,
 ): Promise<Rec | undefined> {
-  const [row] = await sql<{ record: Rec }[]>`
-    SELECT record FROM conditions.observation_latest
+  const [row] = await sql<Rec[]>`
+    SELECT record, evidence_state, confidence_score, false AS routing_eligible, corroborations
+      FROM conditions.observation_latest
      WHERE subject_key = ${key.subjectKey} AND property = ${key.property}
        AND qualifier_key = ${key.qualifierKey} AND source_id = ${key.sourceId}`;
-  return row?.record;
+  return row === undefined ? undefined : withEvidence(row);
+}
+
+/** One cluster of the canonical view: the canonical feature, its members and components. */
+export interface CanonicalFeature {
+  canonicalFeatureId: string;
+  survivorId: string;
+  memberIds: string[];
+  components: {
+    key: string;
+    kind: string;
+    parentKey?: string;
+    members: { featureId: string; key: string }[];
+  }[];
+}
+
+/**
+ * The canonical feature a feature belongs to, by a member's id or the
+ * canonical id itself: one lookup, since every feature, linked or alone, has
+ * a canonical row. Undefined for a feature this instance does not hold live.
+ */
+export async function readCanonical(
+  sql: Runner,
+  featureId: string,
+): Promise<CanonicalFeature | undefined> {
+  const [row] = await sql<
+    {
+      canonical_feature_id: string;
+      survivor_id: string;
+      member_ids: string[];
+      components: CanonicalFeature["components"];
+    }[]
+  >`
+    SELECT canonical_feature_id, survivor_id, member_ids, components
+      FROM conditions.feature_canonical
+     WHERE canonical_feature_id = ${featureId} OR member_ids @> ARRAY[${featureId}]::text[]
+     LIMIT 1`;
+  return row === undefined
+    ? undefined
+    : {
+        canonicalFeatureId: row.canonical_feature_id,
+        survivorId: row.survivor_id,
+        memberIds: row.member_ids,
+        components: row.components,
+      };
 }
 
 /**

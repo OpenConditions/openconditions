@@ -38,10 +38,10 @@
     },
   },
   {
-    // Separate source id from "ndw" (events) so atomicSwap stays source-id-scoped
-    // and the two NDW feeds never clobber each other's rows. The trafficspeed feed
-    // carries measurements keyed by site id only; the companion measurement.xml.gz
-    // site table supplies each site's geometry.
+    // Separate source id from "ndw" (events) so each poll's write stays
+    // source-scoped and the two NDW feeds never withdraw each other's records.
+    // The trafficspeed feed carries measurements keyed by site id only; the
+    // companion measurement.xml.gz site table supplies each site's geometry.
     operator: "ndw",
     tier: "authoritative",
     stream: "flow",

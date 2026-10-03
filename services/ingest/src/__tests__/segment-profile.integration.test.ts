@@ -1,9 +1,10 @@
 import { runMigrations } from "@openconditions/core/server";
+import { SPEED_BIN_WIDTH_KPH } from "@openconditions/storage";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { deriveSegmentProfiles } from "../pipeline/segment-profile.js";
-import { rollupSpeedSamples, SPEED_BIN_WIDTH_KPH } from "../pipeline/speed-rollup.js";
+import { seedSpeedHour, siteKey } from "./helpers/flow-series.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -27,7 +28,7 @@ async function seedChain(opts: {
   wayId: number;
   region: string;
   segmentId: string;
-  sensorKey: string;
+  site: string;
 }): Promise<void> {
   await sql`
     INSERT INTO conditions.osm_road (way_id, geom, highway, oneway, region, imported_at)
@@ -40,25 +41,13 @@ async function seedChain(opts: {
       ST_SetSRID(ST_GeomFromText('LINESTRING(5.0 52.0, 5.1 52.0)'), 4326),
       'motorway', 8000, 5, 120, ${NOW})`;
   await sql`
-    INSERT INTO conditions.sensor_segment (sensor_key, segment_id, fraction, offset_m, matched_at)
-    VALUES (${opts.sensorKey}, ${opts.segmentId}, 0.5, 5.0, ${NOW})`;
+    INSERT INTO conditions.sensor_segment (subject_key, segment_id, fraction, offset_m, matched_at)
+    VALUES (${siteKey("src", opts.site)}, ${opts.segmentId}, 0.5, 5.0, ${NOW})`;
 }
 
-async function seedSpeedSamples(sensorKey: string, speeds: number[], base: Date): Promise<void> {
-  for (let i = 0; i < speeds.length; i++) {
-    const observedAt = new Date(base.getTime() + i * 1000); // distinct instant, same UTC/local hour
-    await sql`
-      INSERT INTO conditions.sensor_speed_sample
-        (sensor_key, source, observed_at, speed_kph, dow, tod_hour, geom)
-      VALUES (${sensorKey}, 'src', ${observedAt}, ${speeds[i]},
-        ${observedAt.getUTCDay()}, ${observedAt.getUTCHours()},
-        ST_SetSRID(ST_GeomFromGeoJSON('{"type":"Point","coordinates":[5.05,52.0]}'), 4326))`;
-  }
-  // The profiles read the hourly rollup, not the raw samples. These fixtures sit
-  // at a pinned instant years back (the local-hour assertions need a known DST
-  // offset), so the rollup — which by default refuses to reach past its own
-  // retention — is told to cover them, matching the widened windowDays below.
-  await rollupSpeedSamples(sql, { retentionDays: 3650 });
+/** One hour of a site's rolled-up speeds; the profiles read the hourly rollup. */
+async function seedSpeedSamples(site: string, speeds: number[], base: Date): Promise<void> {
+  await seedSpeedHour(sql, "src", site, speeds, base, { type: "Point", coordinates: [5.05, 52.0] });
 }
 
 beforeEach(() =>
@@ -92,10 +81,10 @@ afterAll(async () => {
 
 describe("deriveSegmentProfiles", () => {
   it("buckets by REGION-LOCAL hour, not the UTC instant (rush-hour offset regression)", async () => {
-    await seedChain({ wayId: 1, region: "nl", segmentId: "A:f", sensorKey: "nl:a" });
+    await seedChain({ wayId: 1, region: "nl", segmentId: "A:f", site: "a" });
 
     const speeds = [50, 60, 70, 80, 90]; // median 70
-    await seedSpeedSamples("nl:a", speeds, SUMMER_UTC_HOUR6);
+    await seedSpeedSamples("a", speeds, SUMMER_UTC_HOUR6);
 
     // The pinned instant is ~2 years before now(); widen the window so it stays
     // inside the rolling window regardless of the wall clock.
@@ -122,10 +111,10 @@ describe("deriveSegmentProfiles", () => {
   }, 60_000);
 
   it("drops samples for a region absent from the tz CASE via the tzmap.tz IS NOT NULL guard", async () => {
-    await seedChain({ wayId: 2, region: "xx-unmapped", segmentId: "B:f", sensorKey: "xx:b" });
+    await seedChain({ wayId: 2, region: "xx-unmapped", segmentId: "B:f", site: "b" });
 
     const base = utcHour6Base(6);
-    await seedSpeedSamples("xx:b", [50, 60, 70, 80, 90], base);
+    await seedSpeedSamples("b", [50, 60, 70, 80, 90], base);
 
     await deriveSegmentProfiles(sql, () => "2026-07-08T03:30:00.000Z", {
       windowDays: 42,
@@ -138,10 +127,10 @@ describe("deriveSegmentProfiles", () => {
   }, 30_000);
 
   it("skips an in-window bucket seeded below minSamples via the HAVING clause", async () => {
-    await seedChain({ wayId: 3, region: "nl", segmentId: "C:f", sensorKey: "nl:c" });
+    await seedChain({ wayId: 3, region: "nl", segmentId: "C:f", site: "c" });
 
     const base = utcHour6Base(5);
-    await seedSpeedSamples("nl:c", [70, 72, 74], base); // 3 rows, below minSamples
+    await seedSpeedSamples("c", [70, 72, 74], base); // 3 rows, below minSamples
 
     await deriveSegmentProfiles(sql, () => "2026-07-08T03:30:00.000Z", {
       windowDays: 42,

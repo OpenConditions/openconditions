@@ -1,9 +1,10 @@
 import { runMigrations } from "@openconditions/core/server";
+import { SPEED_BIN_WIDTH_KPH } from "@openconditions/storage";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { deriveBaselines } from "../pipeline/baseline-derive.js";
-import { rollupSpeedSamples, SPEED_BIN_WIDTH_KPH } from "../pipeline/speed-rollup.js";
+import { seedSpeedHour } from "./helpers/flow-series.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -21,16 +22,8 @@ function buckets(base: Date): { dowBucket: number; tod: number } {
   return { dowBucket: dow === 0 || dow === 6 ? 1 : 0, tod: base.getUTCHours() };
 }
 
-async function seed(sensorKey: string, speeds: number[], base: Date): Promise<void> {
-  for (let i = 0; i < speeds.length; i++) {
-    const observedAt = new Date(base.getTime() + i * 1000); // distinct instant, same bucket
-    await sql`
-      INSERT INTO conditions.sensor_speed_sample
-        (sensor_key, source, observed_at, speed_kph, dow, tod_hour, geom)
-      VALUES (${sensorKey}, 'src', ${observedAt}, ${speeds[i]},
-        ${observedAt.getUTCDay()}, ${observedAt.getUTCHours()},
-        ST_SetSRID(ST_GeomFromGeoJSON('{"type":"Point","coordinates":[0,0]}'), 4326))`;
-  }
+async function seed(site: string, speeds: number[], base: Date): Promise<string> {
+  return seedSpeedHour(sql, "src", site, speeds, base);
 }
 
 beforeAll(async () => {
@@ -59,16 +52,14 @@ describe("deriveBaselines", () => {
     const base = inWindowBase(7); // 7 days ago → safely inside the 28-day window
     const { dowBucket, tod } = buckets(base);
     const speeds = Array.from({ length: 40 }, (_, i) => 60 + i); // 60..99
-    await seed("src:x", speeds, base);
-    // The baselines read the rollup, not the raw samples.
-    await rollupSpeedSamples(sql);
+    const key = await seed("x", speeds, base);
 
     const { upserted } = await deriveBaselines(sql, { windowDays: 28, minSamples: 30 });
     expect(upserted).toBeGreaterThanOrEqual(2);
 
     const specific = await sql<{ free_flow_kph: number; method: string; sample_count: number }[]>`
       SELECT free_flow_kph, method, sample_count FROM conditions.sensor_baseline
-      WHERE sensor_key = 'src:x' AND dow_bucket = ${dowBucket} AND tod_bucket = ${tod}`;
+      WHERE subject_key = ${key} AND dow_bucket = ${dowBucket} AND tod_bucket = ${tod}`;
     expect(specific[0]!.method).toBe("derived");
     expect(specific[0]!.sample_count).toBe(40);
     // percentile_cont(0.85) over 60..99 == 60 + 0.85*39 == 93.15; the histogram
@@ -78,18 +69,39 @@ describe("deriveBaselines", () => {
 
     const overall = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM conditions.sensor_baseline
-      WHERE sensor_key = 'src:x' AND dow_bucket = -1 AND tod_bucket = -1 AND method = 'derived'`;
+      WHERE subject_key = ${key} AND dow_bucket = -1 AND tod_bucket = -1 AND method = 'derived'`;
     expect(overall[0]!.n).toBe(1);
   }, 60_000);
 
   it("skips an in-window bucket seeded below minSamples via the HAVING clause", async () => {
     // In-window but only 3 rows: excluded by HAVING count >= minSamples, NOT by
     // the time window — so this fails (would produce a row) if HAVING were dropped.
-    await seed("src:sparse", [70, 72, 74], inWindowBase(5));
-    await rollupSpeedSamples(sql);
+    const key = await seed("sparse", [70, 72, 74], inWindowBase(5));
     await deriveBaselines(sql, { windowDays: 28, minSamples: 30 });
     const rows = await sql<{ n: number }[]>`
-      SELECT count(*)::int AS n FROM conditions.sensor_baseline WHERE sensor_key = 'src:sparse'`;
+      SELECT count(*)::int AS n FROM conditions.sensor_baseline WHERE subject_key = ${key}`;
     expect(rows[0]!.n).toBe(0);
+  }, 30_000);
+
+  it("ignores standstills: a queue's zeros neither drag the free flow down nor make up the count", async () => {
+    const base = inWindowBase(3);
+    const free = Array.from({ length: 30 }, (_, i) => 100 + (i % 10)); // 100..109
+    const key = await seed("queue", [...free, ...Array.from({ length: 40 }, () => 0.5)], base);
+    await deriveBaselines(sql, { windowDays: 28, minSamples: 30 });
+    const [overall] = await sql<{ free_flow_kph: number; sample_count: number }[]>`
+      SELECT free_flow_kph, sample_count FROM conditions.sensor_baseline
+       WHERE subject_key = ${key} AND dow_bucket = -1 AND tod_bucket = -1`;
+    expect(overall!.sample_count).toBe(30);
+    expect(overall!.free_flow_kph).toBeGreaterThan(105);
+
+    const sparse = await seed(
+      "mostly-stopped",
+      [...free.slice(0, 20), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      base,
+    );
+    await deriveBaselines(sql, { windowDays: 28, minSamples: 30 });
+    expect(
+      await sql`SELECT 1 FROM conditions.sensor_baseline WHERE subject_key = ${sparse}`,
+    ).toEqual([]);
   }, 30_000);
 });

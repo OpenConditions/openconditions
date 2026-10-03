@@ -3,12 +3,7 @@ import {
   runMigrations,
   storedRegistryCodes,
 } from "@openconditions/core/server";
-import {
-  EVIDENCE_STATES,
-  FUZZINESS,
-  PRIVACY_CLASSES,
-  RegistryCoverageError,
-} from "@openconditions/model";
+import { PRIVACY_CLASSES, RegistryCoverageError } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
@@ -43,42 +38,36 @@ afterAll(async () => {
   await containerStop?.();
 }, 30_000);
 
-async function insert(id: string, format: string, extra: Record<string, string> = {}) {
-  const cols = Object.keys(extra);
-  const vals = Object.values(extra).map((v) => `'${v}'`);
-  await sql.unsafe(
-    `INSERT INTO conditions.observations (id, source, source_format, domain, kind, status, geom,
-       origin, data_updated_at, fetched_at, is_stale${cols.map((c) => `, ${c}`).join("")})
-     VALUES ('${id}', 'nl-ndw', '${format}', 'roads', 'event', 'active',
-       ST_SetSRID(ST_MakePoint(4.9, 52.4), 4326), '{}'::jsonb, now(), now(), false
-       ${vals.map((v) => `, ${v}`).join("")})`,
-  );
+async function insertSource(id: string, format: string) {
+  await sql`
+    INSERT INTO conditions.source (id, domain, format, produces, access_mode, tier, country,
+      operator, license, attribution, cadence_sec, freshness_window_sec)
+    VALUES (${id}, 'roads', ${format}, 'events', 'bulk', 'authoritative', 'NL', 'ndw',
+      'CC0-1.0', 'NDW', 60, 300)`;
 }
 
 describe("kernel-closed CHECK constraints", () => {
   it("accept every value of the model's closed vocabularies", async () => {
-    for (const [i, fuzziness] of FUZZINESS.entries()) {
-      await insert(`chk:fz:${i}`, "datex2", { fuzziness });
+    for (const [i, privacyClass] of PRIVACY_CLASSES.entries()) {
+      await insertRecord("feature", `oc:feature:nl-ndw-flow:chk${i}`, "measurement_site", {
+        privacyClass,
+      });
     }
-    for (const [i, privacy_class] of PRIVACY_CLASSES.entries()) {
-      await insert(`chk:pc:${i}`, "datex2", { privacy_class });
-    }
-    for (const [i, evidence_state] of EVIDENCE_STATES.entries()) {
-      await insert(`chk:es:${i}`, "crowd", { evidence_state });
-    }
-    await expect(insert("chk:es:bad", "crowd", { evidence_state: "bogus" })).rejects.toThrow(
-      /obs_evidence_state_enum/,
-    );
-    await sql`DELETE FROM conditions.observations WHERE id LIKE 'chk:%'`;
+    await expect(
+      insertRecord("feature", "oc:feature:nl-ndw-flow:bad", "measurement_site", {
+        privacyClass: "bogus",
+      }),
+    ).rejects.toThrow(/feature_privacy_class_enum/);
+    await sql`DELETE FROM conditions.feature`;
   }, 60_000);
 });
 
 describe("boot coverage check", () => {
-  it("passes when every stored source format is registered", async () => {
-    await insert("cov:1", "datex2");
-    await insert("cov:2", "crowd");
+  it("passes when every loaded source's format is registered", async () => {
+    await insertSource("nl-ndw", "datex2");
+    await insertSource("be-miv", "miv");
     expect(await storedRegistryCodes(sql)).toEqual({
-      sourceFormats: ["crowd", "datex2"],
+      sourceFormats: ["datex2", "miv"],
       kinds: [],
       properties: [],
     });
@@ -86,21 +75,17 @@ describe("boot coverage check", () => {
   }, 30_000);
 
   it("fails when the database holds a format the registry does not register", async () => {
-    await insert("cov:3", "retired-format");
+    await insertSource("xx-old", "retired-format");
     const error = await assertStoredCodesRegistered(sql, productionRegistry()).catch((e) => e);
     expect(error).toBeInstanceOf(RegistryCoverageError);
     expect((error as RegistryCoverageError).gaps).toEqual(['source_format "retired-format"']);
-    await sql`DELETE FROM conditions.observations WHERE id LIKE 'cov:%'`;
+    await sql`DELETE FROM conditions.source`;
   }, 30_000);
 
   it("reads the kinds of the class tables and the formats of the loaded sources", async () => {
     await insertRecord("situation", "oc:situation:nl-ndw:s1", "incident");
     await insertRecord("feature", "oc:feature:nl-ndw-flow:f1", "measurement_site");
-    await sql`
-      INSERT INTO conditions.source (id, domain, format, produces, access_mode, tier, country,
-        operator, license, attribution, cadence_sec, freshness_window_sec)
-      VALUES ('nl-ndw', 'roads', 'datex2', 'events', 'bulk', 'authoritative', 'NL', 'ndw',
-        'CC0-1.0', 'NDW', 60, 300)`;
+    await insertSource("nl-ndw", "datex2");
     expect(await storedRegistryCodes(sql)).toEqual({
       sourceFormats: ["datex2"],
       kinds: [
@@ -134,7 +119,12 @@ describe("boot coverage check", () => {
 });
 
 /** A class-table row with only its required columns; the record body is irrelevant here. */
-async function insertRecord(table: "situation" | "feature", id: string, kind: string) {
+async function insertRecord(
+  table: "situation" | "feature",
+  id: string,
+  kind: string,
+  over: { privacyClass?: string } = {},
+) {
   const extra =
     table === "situation"
       ? {
@@ -147,6 +137,6 @@ async function insertRecord(table: "situation" | "feature", id: string, kind: st
        source_id, source_record_id, origin, access_mode, privacy_class, instance_id, revision,
        recorded_at, content_hash, fetched_at${extra.cols})
      VALUES ('${id}', '{}'::jsonb, 'c', '${kind}', 'roads', 'live', 'nl-ndw', 'x', 'feed',
-       'bulk', 'authoritative', 'local', 1, now(), 'h', now()${extra.vals})`,
+       'bulk', '${over.privacyClass ?? "authoritative"}', 'local', 1, now(), 'h', now()${extra.vals})`,
   );
 }

@@ -46,7 +46,7 @@
       },
       "canonicalId": "0ac714699552ba7bd10c3b2eb41259c9c924325e6d57ace75279f630968bfa51",
       "domain": "roads",
-      "contentHash": "a53b2399171655bdeefadb1ac3a3124f490c98451f8376a2eb656384524a34a2",
+      "contentHash": "aa810f084a63ea1649a821651632615c299bf7fa6103c4e3ab0d6b8729226872",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
@@ -58,6 +58,8 @@
         "v": 1,
         "measuredProperties": [
           "traffic.speed",
+          "traffic.volume",
+          "traffic.occupancy",
           "traffic.los"
         ]
       }
@@ -104,7 +106,7 @@
       },
       "canonicalId": "f2d3e028bc12dc263de22d306abea72242368a3b67f9bf93813dfff6b68c48a0",
       "domain": "roads",
-      "contentHash": "c17abae0442d70fc24605b199da1826b920c07021f1bfc0887728f20f8de72fc",
+      "contentHash": "72027ea4548105e8fad7779900d9e1b1e54cbe59c847a7723f3274b286b1f582",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
@@ -116,6 +118,8 @@
         "v": 1,
         "measuredProperties": [
           "traffic.speed",
+          "traffic.volume",
+          "traffic.occupancy",
           "traffic.los"
         ]
       }
@@ -166,7 +170,7 @@
       },
       "canonicalId": "ce7e25201c8f5b69cc7cfb9a6ef76691c55d3a2c36faba3fe6968fd04d883450",
       "domain": "roads",
-      "contentHash": "23067235eb60bbb16a839a75e9ebf55cfefa26c86390bc3e6710f8125407c5a8",
+      "contentHash": "d8b71e9a0c5e96773dab3024050410874802501e7d00ca433ea0c9fa49911733",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
@@ -178,6 +182,8 @@
         "v": 1,
         "measuredProperties": [
           "traffic.speed",
+          "traffic.volume",
+          "traffic.occupancy",
           "traffic.los"
         ]
       }
@@ -590,7 +596,7 @@
       },
       "canonicalId": "2fa408b7a63f9c42a1c14c0b2501e15e9cfd193e662d6463dfc64dfbcb9b63c2",
       "domain": "roads",
-      "contentHash": "15af54f4f2d56f24023373c462139f489426db6e6e241d22d195ecc4c90a4875",
+      "contentHash": "a9d45e7af3957099d24316ef14ae68ab34a993793ac986ab6fca235e899c5059",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
@@ -604,7 +610,7 @@
       },
       "validity": {
         "status": "active",
-        "start": "2026-06-24T09:55:00Z"
+        "start": "2026-06-24T09:55:00.000Z"
       },
       "effects": [],
       "details": {

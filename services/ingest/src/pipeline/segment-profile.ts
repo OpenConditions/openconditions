@@ -1,18 +1,15 @@
+import { histogramPercentileKph, rollupRetentionDaysFromEnv } from "@openconditions/storage";
 import type postgres from "postgres";
 import { loadOsmRegions, type OsmRegion } from "./osm-import.js";
-import { HOURLY_RETENTION_DAYS, histogramPercentileKph } from "./speed-rollup.js";
 
 type Sql = postgres.Sql;
 
 /**
- * Window this derivation reads from the hourly rollup.
- *
- * Capped at the rollup retention: asking for more days than are kept does not
- * widen the history, it just misdescribes it — the extra days were pruned before
- * this ever runs. (It read 42 days against a 35-day retention, so days 36-42
- * were always empty and the profiles were quietly derived from 35.)
+ * Window this derivation reads from the hourly rollup: the rollup's retention.
+ * Asking for more days than are kept does not widen the history, it just
+ * misdescribes it — the extra days were pruned before this ever runs.
  */
-export const SEGMENT_PROFILE_WINDOW_DAYS = HOURLY_RETENTION_DAYS;
+export const SEGMENT_PROFILE_WINDOW_DAYS = rollupRetentionDaysFromEnv().hourly;
 
 export interface DeriveSegmentProfilesOpts {
   windowDays?: number;
@@ -33,7 +30,7 @@ function regionTzCase(sql: Sql, regions: OsmRegion[]) {
 
 /**
  * Derives per-(segment, weekday, hour) typical-speed profiles from the rolling
- * `sensor_speed_hourly` window, mirroring `baseline-derive.ts`'s
+ * hourly `traffic.speed` rollup, mirroring `baseline-derive.ts`'s
  * percentile/upsert shape but grouped by segment (via `sensor_segment` ->
  * `road_segment` -> `osm_road`) and bucketed in the segment's
  * REGION-LOCAL time — NOT the rollup's UTC `hour_utc`. Valhalla evaluates
@@ -42,8 +39,8 @@ function regionTzCase(sql: Sql, regions: OsmRegion[]) {
  * hours by 1-3 hours (see plan 12's Time semantics note).
  *
  * The median comes off each hour's merged histogram rather than a sort over raw
- * samples — the raw table only keeps a few days, so this window exists solely in
- * the rollup (see speed-rollup.ts).
+ * readings — raw speed history only keeps a few days, so this window exists
+ * solely in the rollup.
  *
  * Bucketing whole UTC hours into local time is exact for every whole-hour zone,
  * such as Europe/Amsterdam. A HALF-hour zone (e.g.
@@ -75,12 +72,14 @@ export async function deriveSegmentProfiles(
              extract(dow  from h.hour_utc AT TIME ZONE tzmap.tz)::smallint AS local_dow,
              extract(hour from h.hour_utc AT TIME ZONE tzmap.tz)::smallint AS local_hour,
              u.bin, u.cnt
-      FROM conditions.sensor_speed_hourly h
-      JOIN conditions.sensor_segment ss ON ss.sensor_key = h.sensor_key
+      FROM conditions.observation_rollup_hourly h
+      JOIN conditions.observation_latest l ON l.series_id = h.series_id
+        AND l.property = 'traffic.speed' AND l.component_key IS NULL
+      JOIN conditions.sensor_segment ss ON ss.subject_key = l.subject_key
       JOIN conditions.road_segment rs ON rs.segment_id = ss.segment_id
       JOIN conditions.osm_road r ON r.way_id = rs.way_id
       CROSS JOIN LATERAL (SELECT CASE r.region${tzCase} END AS tz) tzmap
-      CROSS JOIN LATERAL unnest(h.speed_bins, h.speed_counts) AS u(bin, cnt)
+      CROSS JOIN LATERAL unnest(h.bins, h.counts) AS u(bin, cnt)
       WHERE h.hour_utc >= now() - make_interval(days => ${windowDays})
         AND tzmap.tz IS NOT NULL
     ),

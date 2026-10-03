@@ -174,7 +174,7 @@ export interface RoadConditionsProvider {
   getRoutingEvents?(bbox: BBox): Promise<{ complete: true; events: RoadConditionEvent[] }>;
 
   /** Optional: colored-segment traffic-flow source. Undefined for providers
-   * that only surface incidents (the orchestrator's `aggregateRoadFlow`
+   * that only surface incidents (the orchestrator's flow aggregation
    * filters to providers that implement this). */
   getFlow?(bbox: BBox, opts?: RoadFlowQuery): Promise<RoadFlowSegment[]>;
   getOperationalEvidence?(): Promise<RoadConditionsOperationalEvidence>;

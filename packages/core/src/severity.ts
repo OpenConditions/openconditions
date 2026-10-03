@@ -1,4 +1,4 @@
-import type { Severity } from "./model.js";
+import type { Severity } from "./types.js";
 
 export interface NormalisedSeverity {
   severity: Severity;

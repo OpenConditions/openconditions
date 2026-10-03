@@ -1,7 +1,6 @@
-import type { FlowParseResult } from "./flow.js";
-import { buildMeasuredSiteFlow, localTimestamp, makeOrigin } from "./flow.js";
-import type { RoadEvent, RoadFlow } from "./model.js";
-import type { SiteGeometry } from "./siteTable.js";
+import { localTimestamp } from "./flow.js";
+import type { FlowContext, FlowSites } from "./flow-output.js";
+import { type FlowParse, type FlowReading, measuredReading } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -28,52 +27,44 @@ function parseBcnTimestamp(raw: string): string | undefined {
 /**
  * Parse Barcelona's live "estat del trànsit" TRAMS feed — one `#`-delimited row
  * per segment: `tramId#YYYYMMDDHHMMSS#estatActual#estatPrevist15min`, the status
- * a 0-6 congestion scale. Geometry comes from the injected TRAMS registry
- * (tram id → LineString). Categorical status only (no speed); segments with
- * status 0 (sensor down) or no resolvable geometry are skipped. los and the
- * derived congestion events come from the shared {@link buildMeasuredSiteFlow};
- * only the sourceFormat is restamped here.
+ * a 0-6 congestion scale. Geometry and name come from the TRAMS registry.
+ * Categorical status only (no speed); segments with status 0 (sensor down) or
+ * no resolvable geometry are skipped.
  */
 export function parseBcnTramsFlow(
   input: string | Buffer,
-  src: SourceDescriptor,
-  siteMap?: Map<string, SiteGeometry>,
-): FlowParseResult {
+  _src: SourceDescriptor,
+  sites: FlowSites | undefined,
+  _ctx: FlowContext,
+): FlowParse {
   const text = Buffer.isBuffer(input) ? input.toString("utf8") : input;
-  if (typeof text !== "string" || text.trim() === "") {
-    return { flows: [], events: [], failed: true };
-  }
+  if (typeof text !== "string" || text.trim() === "") return { readings: [], failed: true };
 
-  const flows: RoadFlow[] = [];
-  const events: RoadEvent[] = [];
-  const now = new Date().toISOString();
-  const origin = makeOrigin(src);
+  const readings: FlowReading[] = [];
   let sawRow = false;
-
   for (const line of text.split(/\r?\n/)) {
     const parts = line.split("#");
     if (parts.length < 3) continue;
     const [tramId, ts, status] = parts;
     if (!tramId) continue;
     sawRow = true;
-    const geom = siteMap?.get(tramId.trim());
-    if (!geom) continue;
+    const site = sites?.get(tramId.trim());
+    if (!site) continue;
     const trafficStatus = status != null ? STATUS_TO_DATEX[status.trim()] : undefined;
     if (!trafficStatus) continue; // status 0 (no data) or unrecognised value
-    const measuredAt = (ts ? parseBcnTimestamp(ts.trim()) : undefined) ?? now;
-    const built = buildMeasuredSiteFlow(
-      { siteId: tramId.trim(), measuredAt, geom, trafficStatus },
-      src,
-      origin,
-      now,
-    );
-    if (!built) continue;
-    flows.push({ ...built.flow, sourceFormat: "bcn-trams" });
-    if (built.event) events.push({ ...built.event, sourceFormat: "bcn-trams" });
+    const at = ts ? parseBcnTimestamp(ts.trim()) : undefined;
+    const reading = measuredReading({
+      site: tramId.trim(),
+      geometry: site.geometry,
+      ...(at !== undefined ? { at } : {}),
+      trafficStatus,
+      ...(site.name !== undefined ? { name: site.name, nameLang: "ca" } : {}),
+    });
+    if (reading) readings.push(reading);
   }
 
   // A body that parsed to zero recognizable rows is a hard failure (error page),
   // not a legitimately empty cycle — every real fetch carries ~530 segments.
-  if (!sawRow) return { flows: [], events: [], failed: true };
-  return { flows, events };
+  if (!sawRow) return { readings: [], failed: true };
+  return { readings };
 }

@@ -36,7 +36,7 @@
       },
       "canonicalId": "696125ecee85fb6aa4184e34d3e78de55cebf680489ab9a663f281df5a7918da",
       "domain": "roads",
-      "contentHash": "ff4dd07eeff5719fd09efb2fef12b0b481085a2b188901c1243ba65a5b18ddd0",
+      "contentHash": "68e07d8cdcfcaa620676e9e7a32ffc8c8d392d3dc6972e40a1387a4eea89ac78",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
@@ -47,6 +47,8 @@
         "kind": "measurement_site",
         "v": 1,
         "measuredProperties": [
+          "traffic.volume",
+          "traffic.occupancy",
           "traffic.los"
         ]
       }
@@ -87,7 +89,7 @@
       },
       "canonicalId": "627186ccf46f6e46d7876f9d370f1d2abf01ed24e47f01224b77dc0c0319ca0a",
       "domain": "roads",
-      "contentHash": "aae4805b9dac7290989cc3dd6979bfe13e79a24b5e5568a10274e3aedd00fe9b",
+      "contentHash": "149bdde08f2362133a24c80cee402b71ab5d46cf652126e16e35dd8f3678c031",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
@@ -98,12 +100,126 @@
         "kind": "measurement_site",
         "v": 1,
         "measuredProperties": [
+          "traffic.volume",
+          "traffic.occupancy",
           "traffic.los"
         ]
       }
     }
   ],
   "observations": [
+    {
+      "id": "oc:observation:es-madrid:35fc8451d8d58511c730da86cdc0f2eafe692db13831cd5df06460b8a50a8f9e",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -3.7071932540661376,
+            40.414462781873056
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "es-madrid",
+        "sourceFormat": "informo",
+        "accessMode": "bulk",
+        "recordId": "9841",
+        "attribution": {
+          "provider": "Ayuntamiento de Madrid",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "e4b7523de129e793d8ade7aca51ed9a6982a19654dda776ff850e34754ac32c6",
+      "domain": "roads",
+      "contentHash": "a7334f26aa730275c44018105e8b57ce9a061c18d7bf705a850e6c33f979724f",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:es-madrid:9841"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 840,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-09-18T10:00:00.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:es-madrid:cc252ce2cdd4cd56f6f6c37a144fb058e5c4c7100f7ffb6a63d344df2967a382",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -3.7071932540661376,
+            40.414462781873056
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "es-madrid",
+        "sourceFormat": "informo",
+        "accessMode": "bulk",
+        "recordId": "9841",
+        "attribution": {
+          "provider": "Ayuntamiento de Madrid",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "bd43d833d87775e703c5230949da910ca5029b07f1a3324941ca4558ddfdc2ed",
+      "domain": "roads",
+      "contentHash": "91b4d2dcfdefd1b88f8cc2664e2f0d134577aa2877f69fddcf93106087dec6a9",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.occupancy",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:es-madrid:9841"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 35,
+        "unit": "%"
+      },
+      "phenomenonTime": {
+        "instant": "2026-09-18T10:00:00.000Z"
+      },
+      "aggregation": "mean"
+    },
     {
       "id": "oc:observation:es-madrid:6fdb4e8dea41c3c165ccf917295e30f4183869e37431f9af797ef5b770ba321a",
       "temporality": "live",

@@ -42,12 +42,18 @@
       },
       "canonicalId": "3bd2e29954800d22c0292debe77ce94e9042290343fcdff538695e52ab7af360",
       "domain": "roads",
-      "contentHash": "02ef0732ed2acf915c21fb6649626eeedbe909fa8545f322eda7b8fc726268b2",
+      "contentHash": "37b9c0a0a54a4131cbd5e0703ab944b179aaef39188df75822524ad0b113ef1f",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
+      "name": [
+        {
+          "lang": "en",
+          "text": "KENT ROAD"
+        }
+      ],
       "lifecycle": "operational",
       "details": {
         "kind": "measurement_site",

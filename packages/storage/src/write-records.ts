@@ -9,6 +9,8 @@ import {
 } from "@openconditions/model";
 import type postgres from "postgres";
 import { type ColumnSpec, insertRows, type Sql, upsertClause } from "./bulk.js";
+import { updateCanonicalView } from "./canonical-view.js";
+import { capRows, maxObservationsPerPollFromEnv } from "./caps.js";
 import { componentRows, effectRows, expiryOf, relationRows, rowOf } from "./record-rows.js";
 import { type ObservationCounts, type PollRef, writeObservationsIn } from "./write-observations.js";
 
@@ -30,10 +32,24 @@ export interface WriteContext extends PollRef {
   now: string;
   /**
    * The snapshot holds every record the source publishes, so a stored record
-   * it no longer holds has been withdrawn. False for a partial poll.
+   * it no longer holds has been withdrawn. False for a partial poll; per
+   * class for a poll that holds some classes in full and others not (a flow
+   * poll holds all its derived congestion, but only the sites that reported).
    * Observations are never withdrawn: a series outlives a missing reading.
    */
-  complete: boolean;
+  complete: boolean | Readonly<Partial<Record<RevisionedClass, boolean>>>;
+  /** The most records of one class a poll may hold (default `MAX_ROWS_PER_SOURCE`). */
+  maxRowsPerClass?: number;
+  /**
+   * The most readings a poll may hold (default
+   * `OPENCONDITIONS_MAX_OBSERVATIONS_PER_POLL`, else `MAX_OBSERVATIONS_PER_POLL`).
+   */
+  maxObservationsPerPoll?: number;
+}
+
+/** Whether a write holds every record of a class its source publishes. */
+export function completeFor(ctx: Pick<WriteContext, "complete">, cls: RevisionedClass): boolean {
+  return typeof ctx.complete === "boolean" ? ctx.complete : ctx.complete[cls] === true;
 }
 
 export interface ClassCounts {
@@ -194,7 +210,10 @@ export async function writeSnapshot(
  * naming what changed; a draft that fails validation is rejected and the
  * poll goes on. When the snapshot is complete, a stored record it no longer
  * holds is tombstoned `withdrawn`; one that comes back is restored with a
- * new revision.
+ * new revision. A poll holding more records of one class than a source may
+ * publish is refused as a whole. The features that changed are relinked and
+ * the fused rows they and the written readings feed are recomputed, in the
+ * same transaction.
  */
 export async function writeSnapshotIn(
   tx: Sql,
@@ -204,10 +223,18 @@ export async function writeSnapshotIn(
 ): Promise<WriteSummary> {
   const summary: WriteSummary = {
     counts: { situation: emptyCounts(), feature: emptyCounts(), offer: emptyCounts() },
-    observations: { latest: 0, history: 0, unchanged: 0, outsideRetention: 0 },
+    observations: { latest: 0, history: 0, unchanged: 0, outsideRetention: 0, pastRollup: 0 },
     rejected: [],
     changed: [],
   };
+  for (const cls of ["feature", "situation", "offer"] as const) {
+    capRows(drafts[DRAFTS_OF[cls]] ?? [], cls, ctx.maxRowsPerClass);
+  }
+  capRows(
+    drafts.observations ?? [],
+    "observation",
+    ctx.maxObservationsPerPoll ?? maxObservationsPerPollFromEnv(),
+  );
   for (const cls of ["feature", "situation", "offer"] as const) {
     await writeClass(tx, cls, sourceId, drafts[DRAFTS_OF[cls]] ?? [], ctx, summary);
   }
@@ -217,6 +244,16 @@ export async function writeSnapshotIn(
     drafts.observations ?? [],
     ctx,
     summary.rejected,
+  );
+  await updateCanonicalView(
+    tx,
+    ctx.registry,
+    {
+      sourceId,
+      featureIds: summary.changed.filter((c) => c.class === "feature").map((c) => c.id),
+      observations: drafts.observations ?? [],
+    },
+    ctx,
   );
   return summary;
 }
@@ -351,7 +388,7 @@ async function writeClass(
   await storeRecords(tx, cls, records, ctx.registry);
   await insertRows(tx, `${cls}_revision`, REVISION_COLUMNS(cls), revisions);
 
-  if (ctx.complete) {
+  if (completeFor(ctx, cls)) {
     const gone = [...existing.entries()]
       .filter(([id, r]) => !r.tombstoned && !seen.has(id))
       .map(([id]) => id);

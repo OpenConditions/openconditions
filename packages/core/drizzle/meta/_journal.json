@@ -351,6 +351,27 @@
       "when": 1790961513279,
       "tag": "0049_peer_scoped_erasure",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1790973744599,
+      "tag": "0050_retire_legacy_flow_tables",
+      "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1790975219030,
+      "tag": "0051_canonical_components_crowd_evidence",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1790975228135,
+      "tag": "0052_crowd_observations_stay_local",
+      "breakpoints": true
     }
   ]
 }

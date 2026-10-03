@@ -5,6 +5,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { activateRoadGraph } from "../pipeline/graph-state.js";
 import { importOsmRoads, type OsmRegion } from "../pipeline/osm-import.js";
 import { runSegmentRebuild } from "../pipeline/segment-rebuild.js";
+import { seedFlowSource, siteKey, writeSiteReadings } from "./helpers/flow-series.js";
 import { situationDraft, writeSituations } from "./helpers/situations.js";
 
 let sql: postgres.Sql;
@@ -37,16 +38,16 @@ const fetchFn = (async () => new Response(fixture, { status: 200 })) as unknown 
 
 async function seedFlowSensor(): Promise<void> {
   // ~11 m north of the way, at its midpoint longitude — inside the 35 m snap gate.
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, metric, status, geom, attributes, origin,
-       data_updated_at, fetched_at)
-    VALUES ('flow:1', 'test-src', 'test-fmt', 'roads', 'measurement', 'flow', 'active',
-      ST_SetSRID(ST_GeomFromText('POINT(5.05 52.0001)'), 4326),
-      ${sql.json({ roads: "A12" })},
-      ${sql.json({ kind: "feed", attribution: { provider: "test" } })},
-      ${NOW}, ${NOW})`;
+  await seedFlowSource(sql, "test-flow");
+  await writeSiteReadings(
+    sql,
+    "test-flow",
+    [{ site: "1", geometry: { type: "Point", coordinates: [5.05, 52.0001] }, at: NOW, speed: 90 }],
+    NOW,
+  );
 }
+
+const SITE = siteKey("test-flow", "1");
 
 /** A closure along the fixture way, so the rebind stage has something to bind. */
 async function seedClosureSituation(): Promise<void> {
@@ -100,7 +101,8 @@ afterAll(async () => {
 afterEach(async () => {
   delete process.env["SEGMENT_REGIONS"];
   await sql`DELETE FROM conditions.sensor_segment`;
-  await sql`DELETE FROM conditions.observations`;
+  await sql`TRUNCATE conditions.observation_latest CASCADE`;
+  await sql`TRUNCATE conditions.observation`;
   await sql`TRUNCATE conditions.situation, conditions.record_binding, conditions.record_segment,
     conditions.binding_queue CASCADE`;
   await sql`DELETE FROM conditions.road_segment`;
@@ -145,7 +147,7 @@ describe("runSegmentRebuild", () => {
     expect(segRows[0]!.openlr).not.toBeNull();
 
     const sensorRows =
-      await sql`SELECT segment_id FROM conditions.sensor_segment WHERE sensor_key = 'flow:1'`;
+      await sql`SELECT segment_id FROM conditions.sensor_segment WHERE subject_key = ${SITE}`;
     expect(sensorRows).toHaveLength(1);
     expect(sensorRows[0]!.segment_id).toBe("9:f");
 
@@ -194,7 +196,7 @@ describe("runSegmentRebuild", () => {
     // The later stage's effect is observable: sensor matching ran after the
     // encode stage threw and still snapped the seeded flow sensor.
     const sensorRows =
-      await sql`SELECT segment_id FROM conditions.sensor_segment WHERE sensor_key = 'flow:1'`;
+      await sql`SELECT segment_id FROM conditions.sensor_segment WHERE subject_key = ${SITE}`;
     expect(sensorRows).toHaveLength(1);
     expect(sensorRows[0]!.segment_id).toBe("9:f");
   }, 30_000);

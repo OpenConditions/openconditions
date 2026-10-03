@@ -42,12 +42,18 @@
       },
       "canonicalId": "a73183f4607b52c86d60bb904276cc6baa385bcdcbcba499041cb75f0ab63f53",
       "domain": "roads",
-      "contentHash": "283752953cf7dc3914e282a33899714bf1cab5adffb533981511e4c366c48698",
+      "contentHash": "b92cbaf15849c389b466d4d72c1540beaa499a0f9444dddbfb63a01939a7ac95",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
+      "name": [
+        {
+          "lang": "ca",
+          "text": "Diagonal (Ronda de Dalt a Doctor Marañón)"
+        }
+      ],
       "lifecycle": "operational",
       "details": {
         "kind": "measurement_site",
@@ -99,12 +105,18 @@
       },
       "canonicalId": "e337d0f44cc73a986ef629295c21890733b7e00ac0f1ed3228a46b529792d926",
       "domain": "roads",
-      "contentHash": "2692b163d5c2c72837575060e68d0775d59e55b0469240859ea7635752905ba7",
+      "contentHash": "5e2dcd001941b853e99ab6bf50784eebadc71f462832b1ba4f6faae618b987da",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
+      "name": [
+        {
+          "lang": "ca",
+          "text": "Meridiana"
+        }
+      ],
       "lifecycle": "operational",
       "details": {
         "kind": "measurement_site",

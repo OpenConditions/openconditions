@@ -1,23 +1,16 @@
-import type { Observation } from "@openconditions/core";
 import {
   emptyParseOutput,
   type ParseOutput,
-  type RecordDraft,
   type SnapshotAccounting,
 } from "@openconditions/ingest-framework";
 import { parseDatexSnapshot } from "./datex.js";
 import { parseDigitrafficSnapshot } from "./digitraffic.js";
-import {
-  type DescribedFeed,
-  type FeedSource,
-  feedToSourceDescriptor,
-  flowParserFor,
-  parserFor,
-} from "./feeds.js";
-import { enrichFlowsWithBaseline } from "./flow.js";
+import { type DescribedFeed, type FeedSource, feedToSourceDescriptor, parserFor } from "./feeds.js";
+import type { FlowBaseline, FlowContext, FlowOutput, FlowSites } from "./flow-output.js";
+import { flowParserOf } from "./flow-parsers.js";
 import { createMeasuredDataParser } from "./measuredData.js";
-import type { BaselineMethod, RoadFlow } from "./model.js";
-import type { SiteGeometry } from "./siteTable.js";
+import { flowOutput } from "./sites/assemble.js";
+import { enrichDrafts } from "./sites/enrich.js";
 import { situationDrafts } from "./situation/assemble.js";
 import {
   type ReconciledRoadSnapshot,
@@ -126,66 +119,70 @@ function accountingOf(
   };
 }
 
-/** One poll of a roads flow feed: its readings, and the congestion situations derived from them. */
-export interface FlowParse {
-  flows: RoadFlow[];
-  situations: RecordDraft[];
-}
-
 /**
- * One payload of a roads flow feed. `siteMap` gives sites keyed only by id
- * their geometry. Throws on a hard parse failure (an unreadable document or
- * no recognisable publication), which must never read as "no readings".
+ * One payload of a roads flow feed as drafts: its measurement sites (with
+ * their lane and vehicle-class channels), their `traffic.*` readings, and the
+ * congestion situations derived from the levels of service. `sites` is the
+ * feed's site table or station registry, when it has one. Throws on a hard
+ * parse failure (an unreadable document or no recognisable publication),
+ * which must never read as "no readings".
  */
 export function parseFlows(
   feed: RoadFeed,
   input: string | Buffer,
-  siteMap?: Map<string, SiteGeometry>,
-): FlowParse {
+  sites: FlowSites | undefined,
+  ctx: FlowContext,
+): FlowOutput {
   const source = feedToSourceDescriptor(feed);
-  const { flows, events, failed } = flowParserFor(feed.format)(input, source, siteMap);
+  const { readings, failed } = flowParserOf(feed.format)(input, source, sites, ctx);
   if (failed) throw new Error(`flow parser reported a hard parse failure for source ${feed.id}`);
-  return { flows, situations: situationDrafts(events, { source }) };
+  return flowOutput(readings, { source, format: feed.format, ctx });
 }
 
 /**
  * A streaming reader of one DATEX II MeasuredData document of a flow feed:
- * write the decoded text in chunks, then close. `failed` is set when the
- * document broke off or could not be read, and the readings are then partial.
+ * write the document in chunks (text, or bytes of its UTF-8 encoding), then
+ * close. `failed` is set when the document broke off or could not be read,
+ * and the drafts are then partial.
  */
 export function measuredDataReader(
   feed: RoadFeed,
-  siteMap: Map<string, SiteGeometry> | undefined,
-  now: () => string,
-): { write(chunk: string): void; close(): FlowParse & { failed: boolean } } {
+  sites: FlowSites | undefined,
+  ctx: FlowContext,
+): { write(chunk: string | Uint8Array): void; close(): FlowOutput & { failed: boolean } } {
   const source = feedToSourceDescriptor(feed);
-  const parser = createMeasuredDataParser(source, siteMap, now);
+  const parser = createMeasuredDataParser(source, sites);
+  const decoder = new TextDecoder("utf-8");
   return {
-    write: (chunk) => parser.write(chunk),
+    write: (chunk) =>
+      parser.write(typeof chunk === "string" ? chunk : decoder.decode(chunk, { stream: true })),
     close: () => {
-      const { flows, events, failed } = parser.close();
-      return { flows, situations: situationDrafts(events, { source }), failed: failed === true };
+      const tail = decoder.decode();
+      if (tail !== "") parser.write(tail);
+      const { readings, failed } = parser.close();
+      return {
+        ...flowOutput(readings, { source, format: feed.format, ctx }),
+        failed: failed === true,
+      };
     },
   };
 }
 
 /**
- * Applies each flow's free-flow baseline (keyed by flow id) where the feed
- * gave none, recomputing its level of service, and drafts the congestion
- * situations the newly derived levels call for.
+ * Applies stored free-flow baselines, keyed by subject key
+ * (`feature:<featureId>`), to the site speeds a poll left unclassified (no
+ * stated level of service, no free-flow speed of the feed's own): the
+ * reading's baseline gains the free-flow speed, its method, the ratio and the
+ * level the ratio gives, and a level of queuing or worse drafts a derived
+ * congestion situation. Returns the enriched output; the input is not changed.
  */
-export function enrichFlows(
+export function enrichReadings(
   feed: RoadFeed,
-  flows: readonly RoadFlow[],
-  baselineMap: Map<string, { kph: number; method: BaselineMethod }>,
-): FlowParse {
-  const source = feedToSourceDescriptor(feed);
-  const enriched = enrichFlowsWithBaseline([...flows] as Observation[], baselineMap, source);
-  const isFlow = (o: Observation) => o.kind === "measurement";
-  return {
-    flows: enriched.filter(isFlow) as RoadFlow[],
-    situations: situationDrafts(enriched.filter((o) => !isFlow(o)) as unknown as SnapshotEvent[], {
-      source,
-    }),
-  };
+  output: FlowOutput,
+  baselines: ReadonlyMap<string, FlowBaseline>,
+): FlowOutput {
+  return enrichDrafts(output, baselines, {
+    source: feedToSourceDescriptor(feed),
+    format: feed.format,
+  });
 }

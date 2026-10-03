@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   type BetaPosterior,
-  type CanonicalIdentityParts,
-  canonicalId,
-  canonicalIdentityParts,
   centroid,
   confidenceEnum,
   type EvidenceLedger,
@@ -11,8 +8,6 @@ import {
   evaluateEvidence,
   gridCell,
   isoUtcEpochMs,
-  normalizeNamespace,
-  type Observation,
   reliabilityLowerBound,
   shrinkToward,
   updateReliability,
@@ -30,40 +25,9 @@ import {
  * first, not in a downstream package.
  */
 
-const HEX64 = /^[0-9a-f]{64}$/;
 const GRID_CELL_FORMAT = /^-?\d+:-?\d+$/;
 
-function makeObservation(overrides: Partial<Observation> = {}): Observation {
-  return {
-    id: "situation-123",
-    source: "ndw",
-    sourceFormat: "datex2",
-    domain: "roads",
-    kind: "event",
-    geometry: { type: "Point", coordinates: [6.5, 52.0] },
-    status: "active",
-    origin: { kind: "feed", attribution: { provider: "NDW", license: "CC0-1.0" } },
-    dataUpdatedAt: "2026-07-10T12:00:00Z",
-    fetchedAt: "2026-07-10T12:01:00Z",
-    isStale: false,
-    ...overrides,
-  };
-}
-
 describe("commons substrate public contract (packages/core barrel)", () => {
-  it("canonical.ts identity functions are reachable and consistent", () => {
-    const obs = makeObservation({ source: "ndw", id: "situation-123" });
-
-    const id = canonicalId(obs);
-    expect(id).toMatch(HEX64);
-
-    const parts: CanonicalIdentityParts = canonicalIdentityParts(obs);
-    expect(parts).toEqual({ namespace: "ndw", recordId: "situation-123" });
-    expect(canonicalId(parts)).toBe(id);
-
-    expect(normalizeNamespace(" NDW ")).toBe("ndw");
-  });
-
   it("canonical.ts geometry/time helpers are reachable", () => {
     expect(centroid({ type: "Point", coordinates: [6.5, 52.0] })).toEqual([6.5, 52.0]);
     expect(gridCell([6.5, 52.0], 100)).toMatch(GRID_CELL_FORMAT);

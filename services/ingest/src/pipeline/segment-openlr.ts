@@ -3,7 +3,7 @@ import type postgres from "postgres";
 
 type Sql = postgres.Sql;
 
-// Rows per bulk UPDATE — mirrors the chunking in osm-import.ts/write-postgis.ts.
+// Rows per bulk UPDATE — mirrors the chunking in osm-import.ts.
 const CHUNK_SIZE = 1000;
 
 function chunk<T>(arr: T[], size: number): T[][] {

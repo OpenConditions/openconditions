@@ -50,7 +50,8 @@ tagged release receive security fixes. Older releases are not patched.
 In scope:
 
 - `services/ingest` — the Fastify ingest service, including the public,
-  rate-limited record API and emitter feeds (`/situations`, `/traff.xml`,
+  rate-limited record API and emitter feeds (`/situations`, `/features`,
+  `/offers`, `/observations/latest`, `/observations`, `/traff.xml`,
   `/datex2/situations.xml`, `/valhalla/exclusions.json`, `/stream`, …).
 - `services/openlr-resolver` — the Python OpenLR map-matcher.
 - The published `@openconditions/*` packages (`core`, `roads`, `publishers`,

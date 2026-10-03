@@ -117,6 +117,8 @@ describe("parseFlows", () => {
       attribution: "NDW",
       license: "CC0-1.0",
     };
-    expect(() => parseFlows(feed, "not xml")).toThrow("hard parse failure");
+    expect(() =>
+      parseFlows(feed, "not xml", undefined, { now: "2026-09-18T10:00:00Z", cadenceSec: 60 }),
+    ).toThrow("hard parse failure");
   });
 });

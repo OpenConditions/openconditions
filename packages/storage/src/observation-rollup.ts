@@ -35,6 +35,27 @@ function rolledUp(registry: Registry, period: RollupPeriod) {
 const floorTo = (t: number, step: number) => Math.floor(t / step) * step;
 
 /**
+ * The bin width of the `traffic.speed` histogram: bin b covers [2b, 2b+2)
+ * km/h, so a percentile read off a merged histogram lands within 2 km/h of
+ * the exact value (~1.7% at motorway free flow). Stored rollups hold bin
+ * indexes, so it changes only with the property's registry entry.
+ */
+export const SPEED_BIN_WIDTH_KPH = 2;
+
+/**
+ * Reads the `frac` percentile off a merged speed histogram, as an expression
+ * over the `bin`/`cum_c`/`total` columns a caller's cumulative CTE exposes:
+ * the first bin whose cumulative count reaches `frac` of the total, at its
+ * midpoint (the least biased speed for a value known only to lie in the bin).
+ * Percentiles over many hours do not decompose; histograms do, which is why
+ * the rollup keeps them.
+ */
+export function histogramPercentileKph(sql: postgres.Sql, frac: number) {
+  return sql`(min(bin) FILTER (WHERE cum_c >= ${frac} * total))::double precision
+             * ${SPEED_BIN_WIDTH_KPH} + ${SPEED_BIN_WIDTH_KPH / 2}`;
+}
+
+/**
  * Aggregates finished periods of history into rollups: count, minimum,
  * maximum and mean of each series per hour or day, and for a property that
  * declares one a histogram (sparse bins of the declared width, bin-ascending,

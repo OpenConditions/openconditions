@@ -16,6 +16,20 @@
               </basicData>
             </measuredValue>
           </measuredValue>
+          <measuredValue index="3">
+            <measuredValue>
+              <basicData xsi:type="TrafficFlow">
+                <vehicleFlow><vehicleFlowRate>840</vehicleFlowRate></vehicleFlow>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+          <measuredValue index="5">
+            <measuredValue>
+              <basicData xsi:type="TrafficFlow">
+                <vehicleFlow><vehicleFlowRate>120</vehicleFlowRate></vehicleFlow>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
           <measuredValue index="7">
             <measuredValue>
               <basicData xsi:type="TrafficSpeed">
@@ -34,6 +48,13 @@
             <measuredValue>
               <basicData xsi:type="TrafficSpeed">
                 <averageVehicleSpeed numberOfInputValuesUsed="1"><speed>51</speed></averageVehicleSpeed>
+              </basicData>
+            </measuredValue>
+          </measuredValue>
+          <measuredValue index="11">
+            <measuredValue>
+              <basicData xsi:type="TrafficSpeed">
+                <averageVehicleSpeed numberOfInputValuesUsed="4"><speed>80</speed></averageVehicleSpeed>
               </basicData>
             </measuredValue>
           </measuredValue>

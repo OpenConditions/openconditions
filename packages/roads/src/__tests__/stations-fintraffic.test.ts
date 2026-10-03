@@ -7,7 +7,7 @@ const geojson = JSON.stringify({
     {
       type: "Feature",
       id: 23001,
-      properties: { tmsNumber: 1 },
+      properties: { tmsNumber: 1, name: "vt1_Espoo" },
       geometry: { type: "Point", coordinates: [24.9, 60.2] },
     },
     {
@@ -20,10 +20,13 @@ const geojson = JSON.stringify({
 });
 
 describe("parseFintrafficStations", () => {
-  it("maps station id → Point geometry", () => {
+  it("places each station at its point, with its name", () => {
     const map = parseFintrafficStations(geojson);
-    expect(map.get("23001")).toEqual({ type: "Point", coordinates: [24.9, 60.2] });
-    expect(map.get("23002")).toEqual({ type: "Point", coordinates: [25.1, 60.3] });
+    expect(map.get("23001")).toEqual({
+      geometry: { type: "Point", coordinates: [24.9, 60.2] },
+      name: "vt1_Espoo",
+    });
+    expect(map.get("23002")).toEqual({ geometry: { type: "Point", coordinates: [25.1, 60.3] } });
     expect(map.has("23003")).toBe(false);
   });
 

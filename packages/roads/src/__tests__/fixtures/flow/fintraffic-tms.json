@@ -22,6 +22,14 @@
           "value": 42
         },
         {
+          "id": 5056,
+          "stationId": 23001,
+          "name": "OHITUKSET_5MIN_LIUKUVA_SUUNTA1",
+          "measuredTime": "2026-03-04T14:30:00Z",
+          "unit": "kpl/h",
+          "value": 840
+        },
+        {
           "id": 5033,
           "stationId": 23001,
           "name": "OHITUKSET_60MIN_KIINTEA_SUUNTA1",

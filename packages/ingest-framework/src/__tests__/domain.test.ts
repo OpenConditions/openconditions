@@ -20,7 +20,6 @@ describe("IngestDomain", () => {
       name: "roads",
       feeds: [feed],
       parse: () => emptyParseOutput(),
-      attributes: () => ({}),
     };
     expect(domain.feeds[0]?.id).toBe("x");
     expect(domain.parse(feed, [Buffer.from("")])).toEqual({

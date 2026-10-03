@@ -95,7 +95,13 @@ const ROLLUP_RESULTS = new Set(["quantity", "count", "vector", "money"]);
 function checkRetention(p: PropertyEntry, where: string): void {
   const r = p.retention;
   if (r === undefined) return;
-  if (r.latestOnly && (r.rawDays !== undefined || r.rollup !== undefined || r.changeOnly)) {
+  if (
+    r.latestOnly &&
+    (r.rawDays !== undefined ||
+      r.rollup !== undefined ||
+      r.changeOnly ||
+      r.componentHistory !== undefined)
+  ) {
     throw new RegistryError(`${where}: a latest-only property keeps no history`);
   }
   if (r.rawDays !== undefined && !(r.rawDays > 0)) {

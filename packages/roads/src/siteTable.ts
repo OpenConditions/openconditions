@@ -3,12 +3,13 @@
  * site registry that pairs with a MeasuredDataPublication. Many real feeds
  * (notably NDW) ship measurements in one document keyed only by a site id, and
  * the geometry for those sites in a separate, slowly-changing table document.
- * This parser turns that table into an id→Geometry map the measured-data parser
- * can join against.
+ * This parser turns that table into the site metadata the measured-data parser
+ * joins against: geometry, name, lane count, equipment, and per measured-value
+ * index the lane, vehicle class, period and value type.
  *
  * The table document is large — NDW's is ~362 MB uncompressed — so it is parsed
  * with a streaming SAX scanner rather than a full DOM. Memory is bounded to the
- * output Map (tens of MB) plus a few small per-record accumulators, regardless
+ * output Map plus a few small per-record accumulators, regardless
  * of input size: at no point is the whole document, or even a whole record's
  * subtree, materialised.
  *
@@ -21,17 +22,48 @@
  */
 import type { LineString, Point } from "geojson";
 import { SaxesParser } from "saxes";
+import type { FlowChannel, FlowSite, FlowSites } from "./flow-output.js";
+import { datexLaneNumber, datexValueProperty, datexVehicleClass } from "./flow-reading.js";
 import { flattenString, stripXmlNamespace } from "./xml.js";
 
 /** Geometry shapes a measurement site can resolve to. */
-export type SiteGeometry = Point | LineString;
+type SiteGeometry = Point | LineString;
 
-/** Incremental, streaming DATEX site-table parser. */
+/** Incremental, streaming site-table parser. */
 export interface SiteTableParser {
   /** Feed a chunk of decoded XML text. Chunks may split mid-element. */
   write(chunk: string): void;
-  /** Finalise parsing and return the accumulated id→Geometry map. */
-  close(): Map<string, SiteGeometry>;
+  /** Finalise parsing and return the sites by id. */
+  close(): FlowSites;
+}
+
+/**
+ * A free-text equipment description (DATEX `measurementEquipmentTypeUsed`,
+ * in whatever language the publisher writes) as a `measurement_site`
+ * equipment value; undefined when it names none.
+ */
+export function equipmentOf(raw: string | undefined): string | undefined {
+  const t = raw?.toLowerCase() ?? "";
+  if (/\b(lus|loop|schleife|induct|induktion)/.test(t)) return "loop";
+  if (/radar/.test(t)) return "radar";
+  if (/anpr|kenteken|license plate|numberplate/.test(t)) return "anpr";
+  if (/bluetooth|wifi/.test(t)) return "bluetooth";
+  if (/camera|video|kamera/.test(t)) return "camera";
+  if (/fcd|probe|floating/.test(t)) return "probe";
+  return undefined;
+}
+
+/**
+ * Channels repeat the same few lane/class/period combinations across a whole
+ * table: one shared object per combination keeps the large NDW table small.
+ */
+function internChannel(cache: Map<string, FlowChannel>, channel: FlowChannel): FlowChannel {
+  const key = `${channel.lane}|${channel.vehicleClass}|${channel.periodSec}|${channel.property}`;
+  const known = cache.get(key);
+  if (known !== undefined) return known;
+  const frozen = Object.freeze({ ...channel });
+  cache.set(key, frozen);
+  return frozen;
 }
 
 function finiteOrNaN(raw: string | undefined): number {
@@ -55,6 +87,19 @@ interface RecordState {
   endLon?: number;
   // posList linear coordinates (highest priority): [lon, lat] pairs.
   posListCoords: [number, number][];
+  name?: string;
+  nameLang?: string;
+  laneCount?: number;
+  equipment?: string;
+  channels?: Map<string, FlowChannel>;
+  // The measurementSpecificCharacteristics index being read.
+  characteristic?: {
+    index: string;
+    lane?: number;
+    vehicleClass?: string;
+    periodSec?: number;
+    property?: string;
+  };
 }
 
 function freshRecord(id: string | undefined): RecordState {
@@ -105,7 +150,8 @@ function geometryForRecord(r: RecordState): SiteGeometry | null {
  * constant-ish per-record overhead — never a DOM.
  */
 export function createSiteTableParser(): SiteTableParser {
-  const map = new Map<string, SiteGeometry>();
+  const map = new Map<string, FlowSite>();
+  const channelCache = new Map<string, FlowChannel>();
 
   // Stack of stripped local element names, used to know where text belongs.
   const stack: string[] = [];
@@ -113,7 +159,19 @@ export function createSiteTableParser(): SiteTableParser {
   // Which coordinate-pair endpoint we are inside (start/end), if any.
   let endpoint: "start" | "end" | null = null;
   // The lat/lon leaf we are currently capturing text into.
-  let textTarget: "latitude" | "longitude" | "posList" | null = null;
+  let textTarget:
+    | "latitude"
+    | "longitude"
+    | "posList"
+    | "name"
+    | "lanes"
+    | "equipment"
+    | "period"
+    | "lane"
+    | "valueType"
+    | "vehicleType"
+    | null = null;
+  let nameLang: string | undefined;
   let textBuffer = "";
   let failed = false;
 
@@ -145,7 +203,31 @@ export function createSiteTableParser(): SiteTableParser {
       return;
     }
 
-    if (textTarget === "posList") {
+    if (textTarget === "name" || textTarget === "equipment") {
+      const t = textBuffer.trim();
+      if (t !== "") {
+        if (textTarget === "name" && record.name === undefined) {
+          record.name = flattenString(t);
+          if (nameLang !== undefined) record.nameLang = flattenString(nameLang);
+        }
+        if (textTarget === "equipment") record.equipment ??= equipmentOf(t);
+      }
+    } else if (textTarget === "lanes") {
+      const n = Number(textBuffer.trim());
+      if (Number.isInteger(n) && n > 0) record.laneCount = n;
+    } else if (record.characteristic !== undefined && textTarget === "period") {
+      const n = Number(textBuffer.trim());
+      if (Number.isFinite(n) && n > 0) record.characteristic.periodSec = n;
+    } else if (record.characteristic !== undefined && textTarget === "lane") {
+      const lane = datexLaneNumber(textBuffer);
+      if (lane !== undefined) record.characteristic.lane = lane;
+    } else if (record.characteristic !== undefined && textTarget === "valueType") {
+      const property = datexValueProperty(textBuffer);
+      if (property !== undefined) record.characteristic.property = property;
+    } else if (record.characteristic !== undefined && textTarget === "vehicleType") {
+      const vehicleClass = datexVehicleClass(textBuffer);
+      if (vehicleClass !== undefined) record.characteristic.vehicleClass ??= vehicleClass;
+    } else if (textTarget === "posList") {
       const nums = textBuffer.trim().split(/\s+/).map(Number);
       for (let i = 0; i + 1 < nums.length; i += 2) {
         const lat = nums[i]!;
@@ -197,7 +279,32 @@ export function createSiteTableParser(): SiteTableParser {
 
     if (record == null) return;
 
-    if (local === "linearCoordinatesStartPoint") endpoint = "start";
+    const capture = (target: typeof textTarget) => {
+      textTarget = target;
+      textBuffer = "";
+    };
+    if (local === "measurementSpecificCharacteristics") {
+      const index = (tag.attributes as Record<string, string>)["index"];
+      if (index != null) record.characteristic = { index: flattenString(index) };
+      return;
+    }
+    if (local === "value" && stack.includes("measurementSiteName")) {
+      nameLang = (tag.attributes as Record<string, string>)["lang"];
+      capture("name");
+    } else if (local === "value" && stack.includes("measurementEquipmentTypeUsed")) {
+      capture("equipment");
+    } else if (local === "measurementSiteNumberOfLanes") capture("lanes");
+    else if (record.characteristic !== undefined && local === "period") capture("period");
+    else if (record.characteristic !== undefined && local === "specificLane") capture("lane");
+    else if (record.characteristic !== undefined && local === "specificMeasurementValueType") {
+      capture("valueType");
+    } else if (
+      record.characteristic !== undefined &&
+      local === "vehicleType" &&
+      stack.includes("specificVehicleCharacteristics")
+    ) {
+      capture("vehicleType");
+    } else if (local === "linearCoordinatesStartPoint") endpoint = "start";
     else if (local === "linearCoordinatesEndPoint") endpoint = "end";
     else if (local === "posList") {
       textTarget = "posList";
@@ -222,9 +329,18 @@ export function createSiteTableParser(): SiteTableParser {
   parser.on("closetag", (tag) => {
     const local = stripXmlNamespace(tag.name);
 
-    if (local === "latitude" || local === "longitude" || local === "posList") {
+    if (textTarget !== null && local !== "measurementSpecificCharacteristics") {
       flushText();
       textTarget = null;
+    }
+    if (local === "measurementSpecificCharacteristics" && record?.characteristic !== undefined) {
+      // The outer element carries the index; the inner one of the same name closes first.
+      if (stack[stack.length - 2] !== "measurementSpecificCharacteristics") {
+        const { index, ...channel } = record.characteristic;
+        record.channels ??= new Map();
+        record.channels.set(index, internChannel(channelCache, channel));
+        record.characteristic = undefined;
+      }
     }
 
     if (local === "linearCoordinatesStartPoint" || local === "linearCoordinatesEndPoint") {
@@ -232,8 +348,17 @@ export function createSiteTableParser(): SiteTableParser {
     }
 
     if (local === "measurementSiteRecord" && record != null) {
-      const geom = geometryForRecord(record);
-      if (record.id != null && geom != null) map.set(record.id, geom);
+      const geometry = geometryForRecord(record);
+      if (record.id != null && geometry != null) {
+        map.set(record.id, {
+          geometry,
+          ...(record.name !== undefined ? { name: record.name } : {}),
+          ...(record.nameLang !== undefined ? { nameLang: record.nameLang } : {}),
+          ...(record.laneCount !== undefined ? { laneCount: record.laneCount } : {}),
+          ...(record.equipment !== undefined ? { equipment: record.equipment } : {}),
+          ...(record.channels !== undefined ? { channels: record.channels } : {}),
+        });
+      }
       record = null;
       endpoint = null;
       textTarget = null;
@@ -252,7 +377,7 @@ export function createSiteTableParser(): SiteTableParser {
         failed = true;
       }
     },
-    close(): Map<string, SiteGeometry> {
+    close(): FlowSites {
       if (!failed) {
         try {
           parser.close();
@@ -266,8 +391,8 @@ export function createSiteTableParser(): SiteTableParser {
 }
 
 /**
- * Parse a DATEX II MeasurementSiteTablePublication into a map of
- * `measurementSiteRecord id` → resolved geometry. The id is the join key used by
+ * Parse a DATEX II MeasurementSiteTablePublication into the sites keyed by
+ * `measurementSiteRecord id`. The id is the join key used by
  * a MeasuredDataPublication's `measurementSiteReference id`.
  *
  * This is a thin convenience over {@link createSiteTableParser} for unit tests
@@ -275,7 +400,7 @@ export function createSiteTableParser(): SiteTableParser {
  * feeding the whole document in one write. Production callers handling the large
  * NDW table should stream chunks through `createSiteTableParser` instead.
  */
-export function parseDatexSiteTable(input: string | Buffer): Map<string, SiteGeometry> {
+export function parseDatexSiteTable(input: string | Buffer): FlowSites {
   const str = Buffer.isBuffer(input) ? input.toString("utf8") : input;
   const parser = createSiteTableParser();
   parser.write(str);

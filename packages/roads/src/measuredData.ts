@@ -3,27 +3,42 @@
  * traffic-speed/flow feed that pairs with a MeasurementSiteTablePublication.
  *
  * The production NDW trafficspeed feed is ~50 MB uncompressed and is fetched
- * every ~60 s; parsing it into a full DOM (fast-xml-parser) balloons to several
- * hundred MB and OOMs a memory-capped ingest. This parser scans the document
- * with a streaming SAX reader instead: peak memory is the output flow/event
- * arrays plus a small per-site accumulator, regardless of input size. It mirrors
- * {@link createSiteTableParser}, the streaming reader already used for the
- * (much larger) companion site table.
+ * every ~60 s; parsing it into a full DOM balloons to several hundred MB and
+ * OOMs a memory-capped ingest. This parser scans the document with a
+ * streaming SAX reader instead: peak memory is the output readings plus a
+ * small per-site accumulator, regardless of input size. A whole buffered
+ * document goes through the same scanner ({@link parseDatexMeasuredData}), so
+ * the two paths cannot drift apart.
  *
- * Geometry resolution per site, in priority order:
- *   1. an inline `locationReference`/`gml:posList` on the measurement, then
- *   2. the external `siteMap` (the NDW layout: geometry lives in the separate,
- *      slowly-changing site-table document, joined by `measurementSiteReference id`).
+ * Every `measuredValue` index of a site is kept: speeds, flow rates and
+ * occupancies, each as a channel reading carrying the lane, vehicle class and
+ * period the site table states for that index. The site speed is the mean of
+ * the speed indexes weighted by `numberOfInputValuesUsed`, the site volume
+ * the sum of the all-vehicle flow indexes, the site occupancy the mean of the
+ * occupancy indexes.
  *
- * An inline `measurementSiteTable` embedded in the measured-data document is NOT
- * resolved here (no production streaming feed uses that layout); the buffered
- * {@link parseDatexMeasuredData} still covers that case for small inputs/tests.
+ * Geometry per site, in priority order: an inline `locationReference`
+ * `gml:posList` on a measurement, then the site table entry joined by
+ * `measurementSiteReference id` (the NDW layout).
  */
 import type { LineString } from "geojson";
 import { SaxesParser } from "saxes";
-import type { FlowGeometry, FlowParseResult } from "./flow.js";
-import { ABSURD_SPEED_KPH, buildMeasuredSiteFlow, makeOrigin } from "./flow.js";
-import type { RoadEvent, RoadFlow } from "./model.js";
+import type { FlowContext, FlowSites } from "./flow-output.js";
+import {
+  type ChannelReading,
+  type ChannelSpec,
+  type FlowParse,
+  type FlowReading,
+  laneIndex,
+  mean,
+  measuredReading,
+  OCCUPANCY,
+  plausibleSpeed,
+  SPEED,
+  siteSpeed,
+  siteVolume,
+  VOLUME,
+} from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
 import { flattenString, stripXmlNamespace } from "./xml.js";
 
@@ -31,43 +46,44 @@ import { flattenString, stripXmlNamespace } from "./xml.js";
 export interface MeasuredDataParser {
   /** Feed a chunk of decoded XML text. Chunks may split mid-element. */
   write(chunk: string): void;
-  /** Finalise parsing and return the accumulated flows + derived events. */
-  close(): FlowParseResult;
+  /** Finalise parsing and return the accumulated readings. */
+  close(): FlowParse;
 }
 
-/** A representative speed sample weighted by its supporting input count. */
-interface SpeedSample {
-  speedKph: number;
-  inputCount: number;
+/** What one `measuredValue` index of the open site carried. */
+interface ValueState {
+  key: string;
+  speed?: number;
+  /** `numberOfInputValuesUsed`, when the feed publishes it. */
+  count?: number;
+  speedError: boolean;
+  flow?: number;
+  flowError: boolean;
+  occupancy?: number;
+  periodSec?: number;
+  /** The streams the index carries, whether or not their value counts this interval. */
+  streams: Set<string>;
 }
 
-/**
- * Per-site accumulator. Only the small set of best-sample/status/geometry fields
- * for the open `siteMeasurements` is held; the surrounding subtree streams past
- * and is discarded.
- */
+/** Per-site accumulator; the surrounding subtree streams past and is discarded. */
 interface SiteState {
   siteId?: string;
   timeDefault?: string;
   obsTime?: string;
   trafficStatus?: string;
   freeFlowKph?: number;
-  best: SpeedSample | null;
   posListCoords: [number, number][];
-  // The averageVehicleSpeed sample currently being read.
-  curInputCount: number;
-  curSpeed?: number;
-  curDataError: boolean;
-}
-
-function freshSite(): SiteState {
-  return { best: null, posListCoords: [], curInputCount: 0, curDataError: false };
+  values: Map<string, ValueState>;
 }
 
 type TextTarget =
   | "avgspeed"
   | "avgspeedDirect"
   | "freeflow"
+  | "flowRate"
+  | "flowDirect"
+  | "occupancy"
+  | "period"
   | "trafficStatus"
   | "timeDefault"
   | "obsTime"
@@ -76,52 +92,58 @@ type TextTarget =
   | "siteRef"
   | null;
 
+const num = (raw: string) => (raw.trim() === "" ? Number.NaN : Number(raw.trim()));
+
 /**
  * Creates a streaming DATEX MeasuredData parser. The returned object accepts
  * decoded XML in arbitrary chunks (which may split mid-element) and, on
- * `close()`, returns the accumulated flows and derived congestion events.
- * Malformed input is tolerated: a SAX error stops further accumulation and
- * `close()` returns whatever resolved before the error rather than throwing.
- *
- * Output is identical to {@link parseDatexMeasuredData} given the same input and
- * `siteMap` — both feed the same {@link buildMeasuredSiteFlow} builder.
+ * `close()`, returns the readings. Malformed input is tolerated: a SAX error
+ * stops further accumulation and `close()` reports the parse `failed` with
+ * whatever resolved before the error.
  */
 export function createMeasuredDataParser(
   src: SourceDescriptor,
-  siteMap?: Map<string, FlowGeometry>,
-  now: () => string = () => new Date().toISOString(),
+  sites: FlowSites | undefined,
 ): MeasuredDataParser {
-  const flows: RoadFlow[] = [];
-  const events: RoadEvent[] = [];
-  const origin = makeOrigin(src);
-  const nowIso = now();
+  const readings: FlowReading[] = [];
 
   const stack: string[] = [];
   let site: SiteState | null = null;
+  // The measuredValue index open, and the stack depth of the element that opened it.
+  let current: ValueState | null = null;
+  let currentDepth = -1;
+  let ordinal = 0;
   let textTarget: TextTarget = null;
   let textBuffer = "";
-  // SAX-error flag: a parser error or thrown write()/close() stops further
-  // accumulation — mirrors the buffered parser's "XML parse threw" hard failure.
   let parseError = false;
-  // Set the first time a `siteMeasurements` element is entered — mirrors
-  // findMeasuredPublication's `"siteMeasurements" in root` check in the
-  // buffered parser (flow.ts), i.e. "did this document ever contain the
-  // expected DATEX publication", independent of how many records it held.
+  // Did the document ever contain the DATEX publication, however few records it held.
   let sawPublication = false;
 
   // No namespace resolution: tag names arrive verbatim (e.g. `gml:posList`) and
-  // are normalised with stripXmlNamespace, the same way the site-table parser
-  // tolerates prefixes bound by xmlns attributes it ignores.
+  // are normalised with stripXmlNamespace.
   const parser = new SaxesParser({ position: false });
 
   // Entity-bomb safety: a feed shipping a DOCTYPE/internal subset is rejected.
   parser.on("doctype", () => {
     throw new Error("XML DOCTYPE/entity declarations are not allowed");
   });
-
   parser.on("error", () => {
     parseError = true;
   });
+
+  const capture = (target: TextTarget) => {
+    textTarget = target;
+    textBuffer = "";
+  };
+
+  const valueFor = (key: string): ValueState => {
+    let v = site!.values.get(key);
+    if (v === undefined) {
+      v = { key, speedError: false, flowError: false, streams: new Set() };
+      site!.values.set(key, v);
+    }
+    return v;
+  };
 
   parser.on("opentag", (tag) => {
     const local = stripXmlNamespace(tag.name);
@@ -129,9 +151,10 @@ export function createMeasuredDataParser(
 
     if (local === "siteMeasurements") {
       sawPublication = true;
-      site = freshSite();
-      textTarget = null;
-      textBuffer = "";
+      site = { posListCoords: [], values: new Map() };
+      current = null;
+      ordinal = 0;
+      capture(null);
       return;
     }
     if (site == null) return;
@@ -139,63 +162,76 @@ export function createMeasuredDataParser(
     const attrs = tag.attributes as Record<string, string>;
     switch (local) {
       case "measurementSiteReference": {
-        // Flatten: the id is baked into every emitted flow's id and looked up in
-        // the site map, so a sliced-string id would pin its input chunk. NDW
-        // carries the id as an attribute; some DATEX v1 feeds carry it as the
-        // element's text instead, captured on close via the "siteRef" target.
+        // Flattened: the id outlives the chunk it came from. Some DATEX v1
+        // feeds carry it as text rather than an attribute.
         const ref = attrs["id"] ?? attrs["targetClass"];
         if (ref != null) site.siteId ??= flattenString(ref);
-        else {
-          textTarget = "siteRef";
-          textBuffer = "";
+        else capture("siteRef");
+        break;
+      }
+      case "measuredValue": {
+        const index = attrs["index"];
+        if (index != null) {
+          current = valueFor(flattenString(index));
+          currentDepth = stack.length;
+        } else if (current == null) {
+          ordinal += 1;
+          current = valueFor(String(ordinal));
+          currentDepth = stack.length;
         }
         break;
       }
       case "averageVehicleSpeed": {
-        // Defaults to 1 (not 0) when the attribute is absent altogether — the
-        // zero-input gate in the "averageVehicleSpeed" closetag below must only
-        // reject a count explicitly reported as <= 0, not a feed that simply
-        // never publishes numberOfInputValuesUsed. Mirrors readMeasuredSpeedSample
-        // in flow.ts, which the buffered parser uses for the same reason.
+        if (current == null) break;
+        // An absent count is "not published", not zero: only a count stated
+        // as <= 0 ("no vehicles this interval") rejects the speed.
         const rawCount = attrs["numberOfInputValuesUsed"];
-        site.curInputCount = rawCount != null ? Number(rawCount) || 0 : 1;
-        site.curSpeed = undefined;
-        site.curDataError = false;
-        // Some DATEX v1 feeds put the speed as this element's direct text rather
-        // than a nested <speed>; capture it, to be used on close only if no
-        // nested <speed> supplied a value first.
-        textTarget = "avgspeedDirect";
-        textBuffer = "";
+        current.streams.add(SPEED);
+        current.count = rawCount != null ? Number(rawCount) || 0 : undefined;
+        current.speed = undefined;
+        current.speedError = false;
+        // Some DATEX v1 feeds put the speed as this element's text rather than a nested <speed>.
+        capture("avgspeedDirect");
         break;
       }
       case "speed": {
-        // `<speed>` appears under both averageVehicleSpeed and freeFlowSpeed;
-        // the parent on the stack disambiguates which value we are reading.
         const parent = stack[stack.length - 2];
-        if (parent === "averageVehicleSpeed") textTarget = "avgspeed";
-        else if (parent === "freeFlowSpeed") textTarget = "freeflow";
-        textBuffer = "";
+        if (parent === "averageVehicleSpeed") capture("avgspeed");
+        else if (parent === "freeFlowSpeed") capture("freeflow");
         break;
       }
+      case "vehicleFlow":
+        // DATEX v1 states the rate as this element's text, v2 nests a <vehicleFlowRate>.
+        current?.streams.add(VOLUME);
+        capture("flowDirect");
+        break;
+      case "vehicleFlowRate":
+        capture("flowRate");
+        break;
+      case "percentage":
+        if (stack[stack.length - 2] === "occupancy") {
+          current?.streams.add(OCCUPANCY);
+          capture("occupancy");
+        }
+        break;
+      case "measurementOrCalculationPeriod":
+        capture("period");
+        break;
       case "dataError":
-        textTarget = "dataError";
-        textBuffer = "";
+        capture("dataError");
         break;
       case "trafficStatus":
-        textTarget = "trafficStatus";
-        textBuffer = "";
+      case "trafficStatusValue":
+        capture("trafficStatus");
         break;
       case "measurementTimeDefault":
-        textTarget = "timeDefault";
-        textBuffer = "";
+        capture("timeDefault");
         break;
       case "observationTime":
-        textTarget = "obsTime";
-        textBuffer = "";
+        capture("obsTime");
         break;
       case "posList":
-        textTarget = "posList";
-        textBuffer = "";
+        capture("posList");
         break;
     }
   });
@@ -213,41 +249,68 @@ export function createMeasuredDataParser(
     if (site != null) {
       switch (local) {
         case "speed": {
-          const v = Number(textBuffer.trim());
-          if (textTarget === "avgspeed") {
-            // A speed < 0 is NDW's no-data sentinel (e.g. -1); drop it. A speed
-            // >= ABSURD_SPEED_KPH is an implausible sensor glitch; drop that too.
-            // A genuine 0 survives here and is gated on curInputCount instead
-            // (see the "averageVehicleSpeed" case below), so a real standstill
-            // (count > 0) is kept while a no-data zero (count <= 0) is not.
-            site.curSpeed = Number.isFinite(v) && v >= 0 && v < ABSURD_SPEED_KPH ? v : undefined;
-          } else if (textTarget === "freeflow") {
-            if (Number.isFinite(v) && v > 0) site.freeFlowKph ??= v;
+          const v = num(textBuffer);
+          if (textTarget === "avgspeed" && current != null) {
+            // Negative speeds are no-data sentinels (NDW's -1); speeds at or
+            // above the glitch bound are sensor faults. A genuine 0 survives
+            // and is gated on the input count instead.
+            current.speed = plausibleSpeed(v) ? v : undefined;
+          } else if (textTarget === "freeflow" && Number.isFinite(v) && v > 0) {
+            site.freeFlowKph ??= v;
           }
           textTarget = null;
           break;
         }
-        case "dataError":
-          if (textBuffer.trim() === "true") site.curDataError = true;
-          textTarget = null;
-          break;
         case "averageVehicleSpeed":
-          // DATEX v1 direct-text speed: use it only when no nested <speed> was
-          // read (curSpeed still unset and the direct-text target still open).
-          if (site.curSpeed == null && textTarget === "avgspeedDirect") {
-            const v = Number(textBuffer.trim());
-            site.curSpeed = Number.isFinite(v) && v >= 0 && v < ABSURD_SPEED_KPH ? v : undefined;
+          if (current != null && current.speed == null && textTarget === "avgspeedDirect") {
+            const v = num(textBuffer);
+            current.speed = plausibleSpeed(v) ? v : undefined;
           }
           if (textTarget === "avgspeedDirect") textTarget = null;
-          // Keep the best-supported (highest input count) valid sample. A
-          // count explicitly reported as <= 0 means "no vehicles observed this
-          // interval" — never let it become best, even at speed 0, so a
-          // no-data zero cannot masquerade as a genuine standstill.
-          if (!site.curDataError && site.curSpeed != null && site.curInputCount > 0) {
-            if (site.best == null || site.curInputCount > site.best.inputCount) {
-              site.best = { speedKph: site.curSpeed, inputCount: site.curInputCount };
+          break;
+        case "vehicleFlowRate": {
+          const v = num(textBuffer);
+          if (current != null && Number.isFinite(v) && v >= 0) current.flow = v;
+          textTarget = null;
+          break;
+        }
+        case "vehicleFlow": {
+          if (textTarget === "flowDirect") {
+            const v = num(textBuffer);
+            if (current != null && current.flow == null && Number.isFinite(v) && v >= 0) {
+              current.flow = v;
             }
+            textTarget = null;
           }
+          break;
+        }
+        case "percentage": {
+          const v = num(textBuffer);
+          if (
+            textTarget === "occupancy" &&
+            current != null &&
+            Number.isFinite(v) &&
+            v >= 0 &&
+            v <= 100
+          ) {
+            current.occupancy = v;
+          }
+          textTarget = null;
+          break;
+        }
+        case "measurementOrCalculationPeriod": {
+          const v = num(textBuffer);
+          if (current != null && Number.isFinite(v) && v > 0) current.periodSec = v;
+          textTarget = null;
+          break;
+        }
+        case "dataError":
+          if (textBuffer.trim() === "true" && current != null) {
+            const parent = stack[stack.length - 2];
+            if (parent === "vehicleFlow") current.flowError = true;
+            else current.speedError = true;
+          }
+          textTarget = null;
           break;
         case "measurementSiteReference":
           if (textTarget === "siteRef") {
@@ -257,15 +320,18 @@ export function createMeasuredDataParser(
           }
           break;
         case "trafficStatus":
-          site.trafficStatus ??= textBuffer.trim();
+        case "trafficStatusValue": {
+          const t = textBuffer.trim();
+          if (t) site.trafficStatus ??= flattenString(t);
           textTarget = null;
           break;
+        }
         case "measurementTimeDefault":
-          site.timeDefault = textBuffer.trim();
+          site.timeDefault = flattenString(textBuffer.trim());
           textTarget = null;
           break;
         case "observationTime":
-          site.obsTime = textBuffer.trim();
+          site.obsTime = flattenString(textBuffer.trim());
           textTarget = null;
           break;
         case "posList": {
@@ -273,41 +339,22 @@ export function createMeasuredDataParser(
           for (let i = 0; i + 1 < nums.length; i += 2) {
             const lat = nums[i]!;
             const lon = nums[i + 1]!;
-            if (Number.isFinite(lat) && Number.isFinite(lon)) {
-              site.posListCoords.push([lon, lat]);
-            }
+            if (Number.isFinite(lat) && Number.isFinite(lon)) site.posListCoords.push([lon, lat]);
           }
           textTarget = null;
           break;
         }
+        case "measuredValue":
+          if (stack.length === currentDepth) {
+            current = null;
+            currentDepth = -1;
+          }
+          break;
         case "siteMeasurements": {
-          const measuredAt = site.timeDefault ?? site.obsTime ?? nowIso;
-          let geom: FlowGeometry | null = null;
-          if (site.posListCoords.length >= 2) {
-            geom = { type: "LineString", coordinates: site.posListCoords } satisfies LineString;
-          } else if (site.siteId != null) {
-            geom = siteMap?.get(site.siteId) ?? null;
-          }
-
-          const built = buildMeasuredSiteFlow(
-            {
-              siteId: site.siteId ?? `site-${flows.length + 1}`,
-              measuredAt,
-              geom,
-              ...(site.best?.speedKph != null ? { speedKph: site.best.speedKph } : {}),
-              ...(site.trafficStatus != null ? { trafficStatus: site.trafficStatus } : {}),
-              ...(site.freeFlowKph != null ? { freeFlowKph: site.freeFlowKph } : {}),
-            },
-            src,
-            origin,
-            nowIso,
-          );
-          if (built) {
-            flows.push(built.flow);
-            if (built.event) events.push(built.event);
-          }
-
+          const reading = siteReading(site, readings.length, src, sites);
+          if (reading) readings.push(reading);
           site = null;
+          current = null;
           textTarget = null;
           break;
         }
@@ -326,7 +373,7 @@ export function createMeasuredDataParser(
         parseError = true;
       }
     },
-    close(): FlowParseResult {
+    close(): FlowParse {
       if (!parseError) {
         try {
           parser.close();
@@ -334,16 +381,130 @@ export function createMeasuredDataParser(
           parseError = true;
         }
       }
-      // A hard failure is either a SAX error/throw, or a document that closed
-      // without ever entering the expected DATEX publication/root element at
-      // all (mirrors parseDatexMeasuredData's `!publication` check in flow.ts)
-      // — otherwise both look identical to a document that legitimately
-      // closed with zero accumulated sites, and a mid-document glitch or a
-      // wrong-shape/error-page body would silently hand `atomicSwap` an empty
-      // set. A well-formed document that DID contain the publication (just
-      // zero records) stays `failed: false`.
+      // A SAX error, or a document that never entered the publication (an
+      // error page or a wrong-shape body), is a hard failure, never "no readings".
       const failed = parseError || !sawPublication;
-      return { flows, events, ...(failed ? { failed: true } : {}) };
+      return { readings, ...(failed ? { failed: true } : {}) };
     },
   };
+}
+
+/** One closed `siteMeasurements` as a site reading; null when it has nothing to say. */
+function siteReading(
+  site: SiteState,
+  position: number,
+  src: SourceDescriptor,
+  sites: FlowSites | undefined,
+): FlowReading | null {
+  const siteId = site.siteId ?? `site-${position + 1}`;
+  const meta = site.siteId !== undefined ? sites?.get(site.siteId) : undefined;
+  const specOf = (key: string, property: string): ChannelSpec => {
+    const declared = meta?.channels?.get(key);
+    const lane = laneIndex(declared?.lane, src, meta?.laneCount);
+    return {
+      key,
+      property: declared?.property ?? property,
+      ...(lane !== undefined ? { lane } : {}),
+      ...(declared?.vehicleClass !== undefined ? { vehicleClass: declared.vehicleClass } : {}),
+    };
+  };
+
+  const speeds: { speed: number; count?: number; vehicleClass?: string }[] = [];
+  const flows: { rate: number; vehicleClass?: string }[] = [];
+  const occupancies: number[] = [];
+  const channels: ChannelReading[] = [];
+  const periods = new Set<number | undefined>();
+  for (const v of site.values.values()) {
+    const periodSec = meta?.channels?.get(v.key)?.periodSec ?? v.periodSec;
+    const period = periodSec !== undefined ? { periodSec } : {};
+    if (v.speed !== undefined && !v.speedError && (v.count === undefined || v.count > 0)) {
+      const spec = specOf(v.key, SPEED);
+      speeds.push({
+        speed: v.speed,
+        ...(v.count !== undefined ? { count: v.count } : {}),
+        ...(spec.vehicleClass !== undefined ? { vehicleClass: spec.vehicleClass } : {}),
+      });
+      channels.push({
+        ...spec,
+        value: v.speed,
+        ...period,
+        ...(v.count !== undefined ? { sampleCount: v.count } : {}),
+      });
+      periods.add(periodSec);
+    }
+    if (v.flow !== undefined && !v.flowError) {
+      const spec = specOf(v.key, VOLUME);
+      flows.push({
+        rate: v.flow,
+        ...(spec.vehicleClass !== undefined ? { vehicleClass: spec.vehicleClass } : {}),
+      });
+      channels.push({ ...spec, value: v.flow, ...period });
+      periods.add(periodSec);
+    }
+    if (v.occupancy !== undefined) {
+      occupancies.push(v.occupancy);
+      channels.push({ ...specOf(v.key, OCCUPANCY), value: v.occupancy, ...period });
+      periods.add(periodSec);
+    }
+  }
+
+  const declaredChannels: ChannelSpec[] = [];
+  for (const [key, declared] of meta?.channels ?? []) {
+    if (declared.property !== undefined) declaredChannels.push(specOf(key, declared.property));
+  }
+  // A site of one stream says it all at site level; channels are kept when
+  // the site table declares them or the site reports several streams.
+  const keepChannels = declaredChannels.length > 0 || site.values.size > 1;
+  // Every stream the document carries is a channel of the site, also one
+  // whose value does not count this interval (no vehicles at night): the
+  // site stays the same feature from poll to poll.
+  if (keepChannels) {
+    for (const v of site.values.values()) {
+      for (const property of v.streams) declaredChannels.push(specOf(v.key, property));
+    }
+  }
+
+  const speed = siteSpeed(speeds);
+  const volume = siteVolume(flows);
+  const occupancy = mean(occupancies);
+  const [period] = periods.size === 1 ? [...periods] : [undefined];
+  const geometry: FlowReading["geometry"] | undefined =
+    site.posListCoords.length >= 2
+      ? ({ type: "LineString", coordinates: site.posListCoords } satisfies LineString)
+      : meta?.geometry;
+  const at = site.timeDefault ?? site.obsTime;
+
+  return measuredReading({
+    site: siteId,
+    geometry,
+    ...(at !== undefined ? { at } : {}),
+    ...(period !== undefined ? { periodSec: period } : {}),
+    ...(speed !== undefined ? { speedKph: speed.speedKph } : {}),
+    ...(speed?.sampleCount !== undefined ? { sampleCount: speed.sampleCount } : {}),
+    ...(site.trafficStatus !== undefined ? { trafficStatus: site.trafficStatus } : {}),
+    ...(site.freeFlowKph !== undefined ? { freeFlowKph: site.freeFlowKph } : {}),
+    ...(volume !== undefined ? { volume } : {}),
+    ...(occupancy !== undefined ? { occupancy } : {}),
+    ...(keepChannels && channels.length > 0 ? { channels } : {}),
+    ...(declaredChannels.length > 0 ? { declaredChannels } : {}),
+    ...(meta?.name !== undefined ? { name: meta.name } : {}),
+    ...(meta?.nameLang !== undefined ? { nameLang: meta.nameLang } : {}),
+    ...(meta?.laneCount !== undefined ? { laneCount: meta.laneCount } : {}),
+    ...(meta?.equipment !== undefined ? { equipment: meta.equipment } : {}),
+  });
+}
+
+/**
+ * A whole DATEX II MeasuredDataPublication, read by the streaming scanner in
+ * one write.
+ */
+export function parseDatexMeasuredData(
+  input: string | Buffer,
+  src: SourceDescriptor,
+  sites: FlowSites | undefined,
+  _ctx: FlowContext,
+): FlowParse {
+  const parser = createMeasuredDataParser(src, sites);
+  parser.write(Buffer.isBuffer(input) ? input.toString("utf8") : input);
+  return parser.close();
 }

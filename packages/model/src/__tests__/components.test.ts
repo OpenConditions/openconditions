@@ -155,3 +155,32 @@ describe("canonical components", () => {
     expect(keys).toEqual(expect.arrayContaining(["de-aggregator/B", "9/B"]));
   });
 });
+
+describe("canonical components and id authority", () => {
+  const holder = (id: string, authority: string): ComponentHolder => ({
+    id,
+    provenance: { sourceId: id.split(":")[2]! },
+    components: [
+      {
+        key: "1",
+        kind: "evse",
+        externalIds: [{ scheme: "ocpi:evse", id: "1", authority }],
+        details: {},
+      },
+    ],
+  });
+
+  it("never takes one uid two operators issued for one component", () => {
+    const a = holder("oc:feature:cpo-a:L1", "DE*AAA");
+    const b = holder("oc:feature:cpo-b:L1", "DE*BBB");
+    const set = canonicalComponents(crowdRegistry, cluster(a.id, [a.id, b.id]), [a, b]);
+    expect(set.map((c) => c.members.length)).toEqual([1, 1]);
+  });
+
+  it("takes one uid one operator issued as one component", () => {
+    const a = holder("oc:feature:cpo-a:L1", "DE*AAA");
+    const b = holder("oc:feature:agg:L9", "DE*AAA");
+    const set = canonicalComponents(crowdRegistry, cluster(a.id, [a.id, b.id]), [a, b]);
+    expect(set.map((c) => c.members.length)).toEqual([2]);
+  });
+});

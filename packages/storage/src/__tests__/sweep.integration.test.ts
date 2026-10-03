@@ -117,7 +117,13 @@ describe("sweepRecords", () => {
       { situations: [situationDraft("live")] },
       { ...write, complete: true },
     );
-    expect(await sweep(LATER)).toEqual({ expired: 0, orphaned: 0, purged: 0, dropped: 0 });
+    expect(await sweep(LATER)).toEqual({
+      expired: 0,
+      orphaned: 0,
+      purged: 0,
+      dropped: 0,
+      crowdExpired: 0,
+    });
   });
 
   it("deletes on-demand rows at expiry, records and series alike", async () => {

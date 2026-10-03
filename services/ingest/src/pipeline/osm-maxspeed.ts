@@ -22,10 +22,10 @@ interface OverpassElement {
 }
 
 /**
- * Day-one free-flow proxy: for a bounded batch of sensors seen in the last 7
- * days that have NO baseline of any method, query Overpass for the nearest
- * highway way's maxspeed at the sensor point and upsert it as a per-sensor
- * overall osm_maxspeed baseline. Bounded (batchCap), egress-guarded (caller's
+ * Day-one free-flow proxy: for a bounded batch of measurement sites with speed
+ * history in the last 7 days that have NO baseline of any method, query
+ * Overpass for the nearest highway way's maxspeed at the site and upsert it as
+ * a per-site overall osm_maxspeed baseline. Bounded (batchCap), egress-guarded (caller's
  * fetch), rate-limited by the batch cap, and tolerant of Overpass errors — it
  * never throws. Runs after deriveBaselines so native/derived always win.
  */
@@ -35,18 +35,21 @@ export async function resolveOsmMaxspeed(
 ): Promise<{ updated: number }> {
   if (!osmFallbackEnabled()) return { updated: 0 };
 
-  let targets: { sensor_key: string; source: string; lon: number; lat: number }[];
+  let targets: { subject_key: string; source: string; lon: number; lat: number }[];
   try {
-    // Reads the hourly rollup, not the raw samples: raw is only a few days of
-    // rollup buffer now, so a 7-day lookback over it would quietly shrink to
-    // that. The rollup carries each sensor's source/geom for exactly this.
+    // Sites with a rolled-up speed hour in the last week: raw history keeps
+    // only a few days, so a 7-day lookback over it would quietly shrink to
+    // that. A line site is located on the line.
     targets = await sql`
-      SELECT DISTINCT ON (h.sensor_key)
-        h.sensor_key, h.source, ST_X(h.geom) AS lon, ST_Y(h.geom) AS lat
-      FROM conditions.sensor_speed_hourly h
-      LEFT JOIN conditions.sensor_baseline b ON b.sensor_key = h.sensor_key
-      WHERE h.hour_utc >= now() - make_interval(days => 7) AND b.sensor_key IS NULL
-      ORDER BY h.sensor_key, h.hour_utc DESC
+      SELECT DISTINCT ON (l.subject_key)
+        l.subject_key, l.source_id AS source,
+        ST_X(ST_PointOnSurface(l.geom)) AS lon, ST_Y(ST_PointOnSurface(l.geom)) AS lat
+      FROM conditions.observation_rollup_hourly h
+      JOIN conditions.observation_latest l ON l.series_id = h.series_id
+      LEFT JOIN conditions.sensor_baseline b ON b.subject_key = l.subject_key
+      WHERE l.property = 'traffic.speed' AND l.component_key IS NULL AND l.geom IS NOT NULL
+        AND h.hour_utc >= now() - make_interval(days => 7) AND b.subject_key IS NULL
+      ORDER BY l.subject_key, h.hour_utc DESC
       LIMIT ${deps.batchCap}`;
   } catch (err) {
     console.warn("[ingest] osm-maxspeed: target query failed:", err);
@@ -69,13 +72,13 @@ export async function resolveOsmMaxspeed(
       if (kph == null) continue;
       await sql`
         INSERT INTO conditions.sensor_baseline
-          (sensor_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
-        VALUES (${t.sensor_key}, ${t.source}, -1, -1, ${kph}, 'osm_maxspeed', 0, ${deps.now()})
-        ON CONFLICT (sensor_key, dow_bucket, tod_bucket, method)
+          (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
+        VALUES (${t.subject_key}, ${t.source}, -1, -1, ${kph}, 'osm_maxspeed', 0, ${deps.now()})
+        ON CONFLICT (subject_key, dow_bucket, tod_bucket, method)
         DO UPDATE SET free_flow_kph = EXCLUDED.free_flow_kph, computed_at = EXCLUDED.computed_at`;
       updated += 1;
     } catch (err) {
-      console.warn(`[ingest] osm-maxspeed: sensor ${t.sensor_key} failed:`, err);
+      console.warn(`[ingest] osm-maxspeed: site ${t.subject_key} failed:`, err);
     }
   }
   return { updated };

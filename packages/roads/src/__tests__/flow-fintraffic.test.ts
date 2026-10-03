@@ -1,19 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { parseFintrafficFlow } from "../flow-fintraffic.js";
-import type { SiteGeometry } from "../siteTable.js";
-import type { SourceDescriptor } from "../types.js";
+import type { FlowSites } from "../flow-output.js";
+import { flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const src = {
-  id: "fi-fintraffic",
-  attribution: "Fintraffic",
-  country: "FI",
-  license: "CC-BY-4.0",
-} as SourceDescriptor;
-
-const siteMap = new Map<string, SiteGeometry>([
-  ["23001", { type: "Point", coordinates: [24.9, 60.2] }],
+const FEED = "fi-fintraffic";
+const feed = flowFeed(FEED);
+const sites: FlowSites = new Map([
+  ["23001", { geometry: { type: "Point", coordinates: [24.9, 60.2] } }],
 ]);
 
+const sensor = (stationId: number, name: string, value: number) => ({
+  stationId,
+  name,
+  measuredTime: "2026-03-04T14:30:00Z",
+  value,
+});
 const payload = JSON.stringify({
   dataUpdatedTime: "2026-03-04T14:30:00Z",
   stations: [
@@ -21,87 +21,48 @@ const payload = JSON.stringify({
       id: 23001,
       dataUpdatedTime: "2026-03-04T14:30:00Z",
       sensorValues: [
-        {
-          id: 5016,
-          stationId: 23001,
-          name: "KESKINOPEUS_5MIN_LIUKUVA_SUUNTA1",
-          measuredTime: "2026-03-04T14:30:00Z",
-          unit: "km/h",
-          value: 95,
-        },
-        {
-          id: 5017,
-          stationId: 23001,
-          name: "KESKINOPEUS_5MIN_LIUKUVA_SUUNTA2",
-          measuredTime: "2026-03-04T14:30:00Z",
-          unit: "km/h",
-          value: 42,
-        },
-        {
-          id: 5033,
-          stationId: 23001,
-          name: "OHITUKSET_60MIN_KIINTEA_SUUNTA1",
-          measuredTime: "2026-03-04T14:30:00Z",
-          unit: "kpl/h",
-          value: 700,
-        },
+        sensor(23001, "KESKINOPEUS_5MIN_LIUKUVA_SUUNTA1", 95),
+        sensor(23001, "KESKINOPEUS_5MIN_LIUKUVA_SUUNTA2", 42),
+        sensor(23001, "OHITUKSET_60MIN_KIINTEA_SUUNTA1", 700),
       ],
     },
     {
       id: 999999,
       dataUpdatedTime: "2026-03-04T14:30:00Z",
-      sensorValues: [
-        {
-          id: 5016,
-          stationId: 999999,
-          name: "KESKINOPEUS_5MIN_LIUKUVA_SUUNTA1",
-          measuredTime: "2026-03-04T14:30:00Z",
-          unit: "km/h",
-          value: 80,
-        },
-      ],
+      sensorValues: [sensor(999999, "KESKINOPEUS_5MIN_LIUKUVA_SUUNTA1", 80)],
     },
   ],
 });
 
-describe("parseFintrafficFlow", () => {
-  it("emits one flow per direction with a 5-min avg speed and geometry", () => {
-    const { flows, events } = parseFintrafficFlow(payload, src, siteMap);
-    expect(flows.map((f) => f.id).sort()).toEqual([
-      "fi-fintraffic:23001-1",
-      "fi-fintraffic:23001-2",
-    ]);
-    const dir1 = flows.find((f) => f.id.endsWith("-1"))!;
-    expect(dir1.speedKph).toBe(95);
-    expect(dir1.los).toBe("unknown");
-    expect(dir1.direction).toBe("SUUNTA1");
-    expect(dir1.geometry).toEqual({ type: "Point", coordinates: [24.9, 60.2] });
-    expect(dir1.sourceFormat).toBe("fintraffic-tms");
-    const dir2 = flows.find((f) => f.id.endsWith("-2"))!;
-    expect(dir2.direction).toBe("SUUNTA2");
-    expect(events).toEqual([]);
+describe("Fintraffic TMS flow", () => {
+  it("drafts a site per station direction with its five-minute average speed", () => {
+    const out = flows(feed, payload, sites);
+    expect(siteIds(out, FEED)).toEqual(["23001-1", "23001-2"]);
+    expect(value(out, FEED, "23001-1", "traffic.speed")).toBe(95);
+    expect(value(out, FEED, "23001-2", "traffic.speed")).toBe(42);
+    expect((site(out, FEED, "23001-1")!["location"] as { geometry: unknown }).geometry).toEqual({
+      type: "Point",
+      coordinates: [24.9, 60.2],
+    });
+    // The level of service is left to enrichment.
+    expect(readings(out, FEED, "23001-1", "traffic.los")).toEqual([]);
+    expect(out.situations).toEqual([]);
+  });
+
+  it("ignores the fixed sixty-minute passings: a different period from the speed", () => {
+    expect(readings(flows(feed, payload, sites), FEED, "23001-1", "traffic.volume")).toEqual([]);
   });
 
   it("skips stations with no geometry in the registry", () => {
-    const { flows } = parseFintrafficFlow(payload, src, siteMap);
-    expect(flows.some((f) => f.id.startsWith("fi-fintraffic:999999"))).toBe(false);
+    expect(siteIds(flows(feed, payload, sites), FEED).some((id) => id.startsWith("999999"))).toBe(
+      false,
+    );
   });
 
-  it("returns empty on malformed input", () => {
-    expect(parseFintrafficFlow("not json", src, siteMap)).toEqual({ flows: [], events: [] });
-  });
-
-  it("handles a station with absent sensorValues gracefully", () => {
-    const noSensors = JSON.stringify({
-      stations: [{ id: 23001, sensorValues: undefined }],
-    });
-    expect(parseFintrafficFlow(noSensors, src, siteMap)).toEqual({ flows: [], events: [] });
-  });
-
-  it("returns empty when stations is missing entirely", () => {
-    expect(parseFintrafficFlow(JSON.stringify({ dataUpdatedTime: "now" }), src, siteMap)).toEqual({
-      flows: [],
-      events: [],
-    });
+  it("drafts nothing for malformed input, absent sensor values or stations", () => {
+    const empty = { features: [], observations: [], situations: [] };
+    expect(flows(feed, "not json", sites)).toEqual(empty);
+    expect(flows(feed, JSON.stringify({ stations: [{ id: 23001 }] }), sites)).toEqual(empty);
+    expect(flows(feed, JSON.stringify({ dataUpdatedTime: "now" }), sites)).toEqual(empty);
   });
 });

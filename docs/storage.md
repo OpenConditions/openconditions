@@ -3,7 +3,8 @@
 The model's records ([`model.md`](model.md)) live in the Postgres schema
 `conditions`. One table family holds each record class. Every write goes
 through the write seam (`sealRecord`) in `@openconditions/storage`; reads go
-through `@openconditions/core/server`.
+through `@openconditions/core` and `@openconditions/core/server` (see
+[Read API](#read-api)).
 
 ## Record tables
 
@@ -119,11 +120,18 @@ A property's registry `retention` decides what is kept:
 | `latestOnly`       | None                               |
 | On-demand readings | None                               |
 
+`componentHistory: false` keeps no history of readings about a component (a
+lane or vehicle-class channel of a measurement site): they update their latest
+row only, and the site's own series carries the history.
+
 History is partitioned by retention class (a property's `rawDays`, 0 for
 keep-everything), then by day (by month for keep-everything). Retention drops
 whole partitions. The ingest service creates partitions 16 days ahead and drops
-expired ones hourly. A reading no partition holds is counted and kept out of
-history; it still updates the latest row.
+expired ones hourly; a day of a class holding a rolled-up property is dropped
+only once the rollup has finalized past it (or when it holds no reading). A
+reading no partition holds is counted and kept out of history; it still
+updates the latest row. A changed reading of the instant in effect corrects
+the latest row.
 
 Rollups:
 
@@ -133,7 +141,94 @@ Rollups:
 - **Daily** (`observation_rollup_daily`): for slow series such as fuel prices.
   Kept 400 days.
 
-A period is rolled up six hours after it ends.
+A period is rolled up six hours after it ends. A reading that arrives later
+stays in the history but never reaches the rollup; a write counts it
+(`pastRollup`).
+
+A poll holds at most 100 000 records of one class (`MAX_ROWS_PER_SOURCE`) and at
+most 1 000 000 readings (`OPENCONDITIONS_MAX_OBSERVATIONS_PER_POLL`): a national
+flow feed sends a speed and a volume per site plus a reading per lane or vehicle
+class. A larger poll is refused whole, keeping the last good publication.
+
+### History budget
+
+History is meant to stay within 10 GiB at the default retention for the 24 flow
+feeds. No instance is deployed yet, so this is an estimate from the figures the
+retired speed store kept (about 7 million site speeds a day), at about 110 bytes
+a row plus about 40 bytes of primary-key index:
+
+| Series                                  | Kept                        | Estimate         |
+| --------------------------------------- | --------------------------- | ---------------- |
+| `traffic.speed`, per site               | 3 days (`rawDays: 3`)       | about 3 GiB      |
+| `traffic.volume`, per site              | 2 days                      | about 2 GiB      |
+| `traffic.occupancy`, per site           | 2 days (fewer sites)        | about 1 GiB      |
+| `traffic.los`, per site                 | 7 days, changes only        | about 1 GiB      |
+| Lane and vehicle-class channel readings | latest row only, no history | none             |
+| Hourly rollups                          | 35 days                     | well under 1 GiB |
+
+That is about 7 GiB. Keeping speeds for 7 days, as the retired store did, would
+take 8–10 GiB for speeds alone, and lane history would multiply it several
+times. Measure against a day of captured raw payloads before raising a
+property's `rawDays`.
+
+## Read API
+
+The ingest service's public routes read through `@openconditions/core`
+(Apache-2.0, so OpenMapX's bridge can use the same readers); every record
+leaves through the licence egress of `@openconditions/publishers`: a
+share-alike record is withheld and a crowd reporter's key is stripped.
+
+| Route                                      | Reader                                            | Reads                                                                 |
+| ------------------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------- |
+| `/situations` (`.geojson`, `.jsonld`, XML) | `listSituations`                                  | `situation`, `situation_effect` for a box                             |
+| `/situations/{id}`                         | `readRecord`                                      | `situation`, `record_binding`                                         |
+| `/features` (`.geojson`, `.jsonld`)        | `listFeatures`                                    | `feature`                                                             |
+| `/features?canonical=1`                    | `listCanonicalFeatures`, `canonicalFeatureRecord` | `feature_canonical` and its members in `feature`                      |
+| `/features/{id}`                           | `readRecord`, `readCanonical`                     | `feature`, `feature_canonical`                                        |
+| `/offers`, `/offers/{id}`                  | `listOffers`, `readRecord`                        | `offer`                                                               |
+| `/observations/latest`                     | `listLatestObservations`                          | `observation_latest`                                                  |
+| `/observations`                            | `readSeries`                                      | `observation_latest`, then `observation` or a rollup table            |
+| `/history/{class}/{id}`                    | `readRevisions`                                   | `situation_revision`, `feature_revision`, `offer_revision`            |
+| `/coverage`                                | `readCoverage`                                    | the class tables, `observation_latest` with `source`, `source_status` |
+
+Collections are pages of one statement each, keyed by a cursor: situations,
+features and offers by id, canonical features by canonical id, latest readings
+by series id. A series keeps its id for life while its reading (and so the
+record id) moves on with every poll, so a walk over latest readings never
+returns a series twice and never skips one that exists throughout it. A record
+or reading that changes mid-walk may appear in either state.
+
+**Canonical view.** `canonical=1` on `/features` serves one feature per cluster
+of `feature_canonical`, a lone feature's cluster included. The record is the
+survivor's under the cluster's canonical id (the id fused and crowd readings
+name as their subject), with the canonical component set (the members'
+components, keyed as the canonical view keys them), the other members credited
+in `provenance.mergedSources` and every member listed in
+`provenance.derivedFrom`. It is built from the members the egress lets out, so
+a share-alike member lends it neither components nor credit, and a withheld
+survivor is replaced by the next member. A cluster matches a filter when one of
+its live members does. `/features/{id}` with a member id adds the cluster's
+summary; with a canonical id it serves the canonical feature.
+
+**Fused readings.** `/observations/latest` serves per-source and crowd rows by
+default and no fused row. `canonical=1` serves the `@fused` row of every
+fusable property (one a linkable feature kind carries, or the crowd reports)
+and the per-source rows of the rest (traffic readings, which never link). A
+fused row credits its contributors in `provenance.mergedSources` and carries
+the most restrictive of their rights; a share-alike winner withholds it. A
+crowd reading carries its evidence summary; one expired or negated is no longer
+listed.
+
+**Series.** `/observations` names one series by subject (a subject key, or a
+record id plus `component`), property, qualifiers (a JSON object) and, where
+several sources report on one subject, `source`. It reads raw readings while
+`from` is within the property's `rawDays` (or the property keeps raw readings
+for good), its hourly or daily rollup beyond that, or what `resolution` asks
+for; one read is one resolution. Raw readings come back as the records they
+were written from; rollups as periods with count, minimum, maximum, mean, the
+unit and, for speeds, the histogram. Fused rows, channel readings
+(`componentHistory: false`) and `latestOnly` properties keep no history, so a
+series read of them is empty.
 
 ## Raw payloads
 

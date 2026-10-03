@@ -1,11 +1,11 @@
 import type { LineString } from "geojson";
-import type { FlowParseResult } from "./flow.js";
-import { makeOrigin } from "./flow.js";
-import type { RoadFlow } from "./model.js";
+import type { FlowContext, FlowSites } from "./flow-output.js";
+import type { FlowParse, FlowReading } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
 
 interface SpeedBandRow {
   LinkID?: unknown;
+  RoadName?: unknown;
   SpeedBand?: unknown;
   MinimumSpeed?: unknown;
   MaximumSpeed?: unknown;
@@ -23,29 +23,33 @@ function num(raw: unknown): number | undefined {
 
 /**
  * Parse the LTA DataMall Traffic Speed Bands (v2/v3) JSON — records under a
- * top-level `value` array — into RoadFlow segments. Each link carries a
+ * top-level `value` array — one reading per link. Each link carries a
  * `SpeedBand` (1–8) and a `MinimumSpeed`/`MaximumSpeed` band in km/h; the
  * representative speed is the band midpoint. Geometry is the Start→End
  * coordinate pair as a two-point LineString. los is left "unknown" (absolute
- * speed is road-class–dependent) so the baseline enrichment classifies it.
+ * speed is road-class–dependent) so the baseline enrichment classifies it. The
+ * feed dates nothing, so readings are dated by the poll.
  *
  * DataMall caps this resource at 500 links per call via `$skip`; the feed
  * declares `pagination` so the ingest fetch layer follows every page and this
- * parser runs once per page, its flows concatenated for full national coverage.
+ * parser runs once per page, its readings concatenated for full national coverage.
  */
-export function parseLtaSpeedBands(input: string | Buffer, src: SourceDescriptor): FlowParseResult {
+export function parseLtaSpeedBands(
+  input: string | Buffer,
+  _src: SourceDescriptor,
+  _sites: FlowSites | undefined,
+  _ctx: FlowContext,
+): FlowParse {
   let doc: unknown;
   try {
     doc = JSON.parse(Buffer.isBuffer(input) ? input.toString("utf8") : input);
   } catch {
-    return { flows: [], events: [], failed: true };
+    return { readings: [], failed: true };
   }
   const rows = (doc as { value?: unknown })?.value;
-  if (!Array.isArray(rows)) return { flows: [], events: [], failed: true };
+  if (!Array.isArray(rows)) return { readings: [], failed: true };
 
-  const now = new Date().toISOString();
-  const origin = makeOrigin(src);
-  const flows: RoadFlow[] = [];
+  const readings: FlowReading[] = [];
 
   for (const raw of rows as SpeedBandRow[]) {
     try {
@@ -72,31 +76,18 @@ export function parseLtaSpeedBands(input: string | Buffer, src: SourceDescriptor
       const speedKph = min != null && max != null ? (min + max) / 2 : (max ?? min ?? undefined);
       if (speedKph == null) continue;
 
-      flows.push({
-        id: `${src.id}:${linkId}`,
-        source: src.id,
-        sourceFormat: "lta-speedbands",
-        domain: "roads",
-        kind: "measurement",
-        metric: "flow",
-        value: speedKph,
-        unit: "km/h",
-        level: "unknown",
-        aggregation: "live",
-        status: "active",
+      const name = typeof raw.RoadName === "string" ? raw.RoadName.trim() : "";
+      readings.push({
+        site: linkId,
         geometry,
         los: "unknown",
         speedKph,
-        site: { id: linkId },
-        origin,
-        dataUpdatedAt: now,
-        fetchedAt: now,
-        isStale: false,
+        ...(name ? { name, nameLang: "en" } : {}),
       });
     } catch (err) {
       console.warn("[lta-speedbands] skipped malformed row:", err);
     }
   }
 
-  return { flows, events: [] };
+  return { readings };
 }

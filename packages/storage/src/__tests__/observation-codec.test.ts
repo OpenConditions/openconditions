@@ -151,4 +151,38 @@ describe("observation history rows", () => {
     expect(row).toMatchObject({ fetch_id: null, raw_part: null });
     expect(back).toEqual(record);
   });
+
+  it("keep each crowd reading's reporter and record id with the reading, not the series", () => {
+    const crowdReading = (keyId: string, recordId: string, at: string) =>
+      observationDraft(
+        "charging.evse_status",
+        { type: "category", value: "out_of_order", vocabulary: "evse_status" },
+        {
+          at,
+          sourceId: "crowd",
+          subject: { kind: "feature", featureId: "oc:feature:test.local:abc", componentKey: "1" },
+          provenance: {
+            origin: "crowd",
+            sourceId: "crowd",
+            sourceFormat: "crowd",
+            accessMode: "bulk",
+            recordId,
+            attribution: { provider: "OpenConditions contributors", license: "ODbL-1.0" },
+            reporter: { keyId },
+            privacy: { class: "crowd_pseudonym" },
+          },
+        },
+      );
+    const first = seal(crowdReading("key-one", "a".repeat(64), "2026-10-01T09:00:00.000Z"));
+    const second = seal(crowdReading("key-two", "b".repeat(64), "2026-10-01T09:30:00.000Z"));
+    const template = templateOf(second);
+    expect(template["provenance"]).not.toHaveProperty("reporter");
+    expect(template["provenance"]).not.toHaveProperty("recordId");
+    const spec = registry.property("charging.evse_status")!.result;
+    const row = historyRowOf(first, spec, {});
+    expect(row["extra"]).toEqual({
+      provenance: { recordId: "a".repeat(64), reporter: { keyId: "key-one" } },
+    });
+    expect(recordFromHistory(registry, template, fromDatabase(row))).toEqual(first);
+  });
 });

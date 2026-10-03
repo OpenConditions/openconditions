@@ -15,12 +15,34 @@
  * peers and removes its earlier outbox entries, and its fact is recorded.
  */
 
-import type { RevisionedClass } from "@openconditions/core/server";
+import { type RevisionedClass, resolveInstanceId } from "@openconditions/core/server";
 import type { Registry } from "@openconditions/model";
-import { tombstoneRecords } from "@openconditions/storage";
+import { tombstoneRecords, updateCanonicalView } from "@openconditions/storage";
 import type postgres from "postgres";
 
 type Sql = postgres.Sql | postgres.TransactionSql;
+
+/**
+ * A feature that ended outside a source's poll (an erasure, a peer's
+ * retraction) leaves the canonical feature it was linked into, as a
+ * withdrawn one does: its cluster is recomputed without it and the fused
+ * rows it fed follow, so its readings and location stop showing there.
+ */
+export async function leaveCanonicalView(
+  tx: postgres.TransactionSql,
+  registry: Registry,
+  ref: { class: string; id: string },
+  sourceId: string,
+  ctx: { instanceId: string; now: string },
+): Promise<void> {
+  if (ref.class !== "feature") return;
+  await updateCanonicalView(
+    tx,
+    registry,
+    { sourceId, featureIds: [ref.id], observations: [] },
+    ctx,
+  );
+}
 
 /** Serializes work on one record across the inbox and erasure: a delivery against a retraction. */
 export async function lockRecord(
@@ -42,6 +64,7 @@ export async function eraseRecord(
   registry: Registry,
   ref: { class: RevisionedClass; id: string },
   now: string,
+  instanceId: string = resolveInstanceId(),
 ): Promise<"erased" | "already erased" | "not found"> {
   return sql.begin(async (tx) => {
     await lockRecord(tx, ref.class, ref.id);
@@ -55,6 +78,7 @@ export async function eraseRecord(
     if (row.tombstone_reason === ERASURE_REASON) return "already erased";
     await tx`SELECT pg_advisory_xact_lock(hashtext(${row.source_id}))`;
     await tombstoneRecords(tx, ref.class, [ref.id], ERASURE_REASON, { registry, now });
+    await leaveCanonicalView(tx, registry, ref, row.source_id, { instanceId, now });
     await recordErasure(tx, row.canonical_id, now);
     return "erased";
   }) as Promise<"erased" | "already erased" | "not found">;

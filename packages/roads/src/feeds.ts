@@ -7,30 +7,14 @@ import { parseDatexSituations } from "./datex.js";
 import { parseDigitraffic } from "./digitraffic.js";
 import { roadFeedSchema } from "./feed-schema.js";
 import { parseFlatJson } from "./flatjson.js";
-import type { FlowParseResult } from "./flow.js";
-import { parseDatexMeasuredData, parseDigitrafficFlow } from "./flow.js";
-import { parseBcnTramsFlow } from "./flow-bcn.js";
-import { parseBonnFlow } from "./flow-bonn.js";
-import { parseElaboratedFlow } from "./flow-elaborated.js";
-import { parseFintrafficFlow } from "./flow-fintraffic.js";
-import { parseGeojsonFlow } from "./flow-geojson.js";
-import { parseLtaSpeedBands } from "./flow-lta-speedbands.js";
-import { parseMadridFlow } from "./flow-madrid.js";
-import { parseNycDotFlow } from "./flow-nycdot.js";
-import { parseOhgoFlow } from "./flow-ohgo.js";
-import { parseTrafikverketFlow } from "./flow-trafikverket.js";
-import { parseTurinFlow } from "./flow-turin.js";
-import { parseWebtrisFlow } from "./flow-webtris.js";
+import { FLOW_FORMAT_CODES } from "./flow-parsers.js";
 import { parseGddkia } from "./gddkia.js";
 import { parseGeoJson } from "./geojson.js";
-import { parseHkRawFlow } from "./hk.js";
 import { parseIbi511, parseIbi511Conditions } from "./ibi511.js";
 import { parseLtaIncidents } from "./lta.js";
-import { parseMivFlow } from "./miv.js";
 import type { GeoJsonMapping } from "./model.js";
 import { parseOhgoEvents } from "./ohgo-events.js";
 import { parseOpen511 } from "./open511.js";
-import type { SiteGeometry } from "./siteTable.js";
 import { parseTrafikverket } from "./trafikverket.js";
 import type { GeojsonFlowMapping, SourceDescriptor } from "./types.js";
 import { parseVicDisruptions } from "./vic-disruptions.js";
@@ -136,12 +120,6 @@ function resolveFeedsDir(): string {
 }
 
 type ParserFn = typeof parseDatexSituations;
-type FlowParserFn = (
-  input: string | Buffer,
-  src: SourceDescriptor,
-  siteMap?: Map<string, SiteGeometry>,
-) => FlowParseResult;
-
 const EVENT_PARSERS = {
   datex2: parseDatexSituations,
   open511: parseOpen511,
@@ -159,31 +137,12 @@ const EVENT_PARSERS = {
   "ibi511-conditions": parseIbi511Conditions as ParserFn,
 } satisfies Record<string, ParserFn>;
 
-const FLOW_PARSERS = {
-  digitraffic: parseDigitrafficFlow,
-  datex2: parseDatexMeasuredData,
-  "datex-elaborated": parseElaboratedFlow,
-  "fintraffic-tms": parseFintrafficFlow,
-  webtris: parseWebtrisFlow,
-  "nyc-dot": parseNycDotFlow,
-  ohgo: parseOhgoFlow,
-  "trafikverket-flow": parseTrafikverketFlow,
-  bonn: parseBonnFlow,
-  informo: parseMadridFlow,
-  "lta-speedbands": parseLtaSpeedBands,
-  miv: parseMivFlow,
-  fdt: parseTurinFlow,
-  "hk-td": parseHkRawFlow,
-  "geojson-flow": parseGeojsonFlow,
-  "bcn-trams": parseBcnTramsFlow,
-} satisfies Record<string, FlowParserFn>;
-
 /** A wire format some roads parser reads — the roads contribution to `source_format`. */
-export type RoadSourceFormat = keyof typeof EVENT_PARSERS | keyof typeof FLOW_PARSERS;
+export type RoadSourceFormat = keyof typeof EVENT_PARSERS | (typeof FLOW_FORMAT_CODES)[number];
 
 /** Every roads wire format, sorted. */
 export const ROAD_SOURCE_FORMATS = [
-  ...new Set([...Object.keys(EVENT_PARSERS), ...Object.keys(FLOW_PARSERS)]),
+  ...new Set([...Object.keys(EVENT_PARSERS), ...FLOW_FORMAT_CODES]),
 ].sort() as RoadSourceFormat[];
 
 /**
@@ -210,17 +169,6 @@ export function parserFor(format: string): ParserFn {
     throw new Error(`No parser registered for format: ${format}`);
   }
   return EVENT_PARSERS[format as keyof typeof EVENT_PARSERS];
-}
-
-/**
- * Returns the flow parser function for a given source format.
- * Throws when no flow parser is registered for the format.
- */
-export function flowParserFor(format: string): FlowParserFn {
-  if (!Object.hasOwn(FLOW_PARSERS, format)) {
-    throw new Error(`No flow parser registered for format: ${format}`);
-  }
-  return FLOW_PARSERS[format as keyof typeof FLOW_PARSERS];
 }
 
 /** The catalogue fields a parser's source descriptor is made of. */

@@ -7,6 +7,7 @@ import {
   propagateSegmentSpeed,
   writeSensorObservations,
 } from "../pipeline/segment-speed.js";
+import { siteKey, writeSiteReadings } from "./helpers/flow-series.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -26,40 +27,36 @@ async function seedSegment(
       'motorway', 8000, 5, ${freeFlowKph}, ${NOW})`;
 }
 
+/** The source each seeded site belongs to, for its subject key. */
+const sourceOf = new Map<string, string>();
+const SITE = { type: "Point" as const, coordinates: [5.05, 52.0] };
+
 async function seedFlow(
-  id: string,
+  site: string,
   source: string,
   value: number,
   freeFlowKph: number | null,
+  at = NOW,
 ): Promise<void> {
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, metric, value, status, geom, attributes, origin,
-       data_updated_at, fetched_at)
-    VALUES (${id}, ${source}, 'test-fmt', 'roads', 'measurement', 'flow', ${value}, 'active',
-      ST_SetSRID(ST_GeomFromText('POINT(5.05 52.0)'), 4326),
-      ${freeFlowKph !== null ? sql.json({ freeFlowKph }) : null},
-      ${sql.json({ kind: "feed", attribution: { provider: "test" } })},
-      ${NOW}, ${NOW})`;
+  sourceOf.set(site, source);
+  await writeSiteReadings(
+    sql,
+    source,
+    [{ site, geometry: SITE, at, speed: value, ...(freeFlowKph !== null ? { freeFlowKph } : {}) }],
+    NOW,
+  );
 }
 
-/** A declared-LoS flow: no measured speed (value NULL), los in attributes only. */
-async function seedDeclaredFlow(id: string, source: string, los: string): Promise<void> {
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, metric, value, status, geom, attributes, origin,
-       data_updated_at, fetched_at)
-    VALUES (${id}, ${source}, 'datex2', 'roads', 'measurement', 'flow', NULL, 'active',
-      ST_SetSRID(ST_GeomFromText('POINT(5.05 52.0)'), 4326),
-      ${sql.json({ los })},
-      ${sql.json({ kind: "feed", attribution: { provider: "test" } })},
-      ${NOW}, ${NOW})`;
+/** A declared-LoS site: no measured speed, a level of service the source states. */
+async function seedDeclaredFlow(site: string, source: string, los: string): Promise<void> {
+  sourceOf.set(site, source);
+  await writeSiteReadings(sql, source, [{ site, geometry: SITE, at: NOW, los }], NOW);
 }
 
-async function seedSensorSegment(sensorKey: string, segmentId: string): Promise<void> {
+async function seedSensorSegment(site: string, segmentId: string): Promise<void> {
   await sql`
-    INSERT INTO conditions.sensor_segment (sensor_key, segment_id, fraction, offset_m, matched_at)
-    VALUES (${sensorKey}, ${segmentId}, 0.5, 5.0, ${NOW})`;
+    INSERT INTO conditions.sensor_segment (subject_key, segment_id, fraction, offset_m, matched_at)
+    VALUES (${siteKey(sourceOf.get(site)!, site)}, ${segmentId}, 0.5, 5.0, ${NOW})`;
 }
 
 async function seedRefSegment(
@@ -214,6 +211,36 @@ describe("writeSensorObservations", () => {
     expect(rows[0]!.los).toBe("unknown");
     expect(rows[0]!.speed_ratio).toBeNull();
     expect(rows[0]!.free_flow_kph).toBeNull();
+  }, 30_000);
+});
+
+describe("writeSensorObservations — readings", () => {
+  it("reads only readings younger than 15 minutes", async () => {
+    await seedSegment("204:f", 204, 100);
+    await seedFlow("old-1", "de-nw-verkehr", 30, 100, "2025-12-31T23:40:00.000Z");
+    await seedSensorSegment("old-1", "204:f");
+    await seedFlow("new-1", "de-nw-verkehr", 80, 100, "2025-12-31T23:50:00.000Z");
+    await seedSensorSegment("new-1", "204:f");
+
+    await writeSensorObservations(sql, () => NOW);
+    const [row] = await sql<{ current_kph: number; sample_count: number; observed_at: Date }[]>`
+      SELECT current_kph, sample_count, observed_at FROM conditions.segment_observation
+       WHERE segment_id = '204:f'`;
+    expect(Number(row!.current_kph)).toBeCloseTo(80, 5);
+    expect(Number(row!.sample_count)).toBe(1);
+    expect(row!.observed_at).toEqual(new Date("2025-12-31T23:50:00.000Z"));
+  }, 30_000);
+
+  it("falls back to the segment's free-flow speed when the reading carries no baseline", async () => {
+    await seedSegment("205:f", 205, 80);
+    await seedFlow("nobase-1", "de-nw-verkehr", 40, null);
+    await seedSensorSegment("nobase-1", "205:f");
+
+    await writeSensorObservations(sql, () => NOW);
+    const [row] = await sql<{ free_flow_kph: number; los: string }[]>`
+      SELECT free_flow_kph, los FROM conditions.segment_observation WHERE segment_id = '205:f'`;
+    expect(Number(row!.free_flow_kph)).toBe(80);
+    expect(row!.los).toBe("heavy");
   }, 30_000);
 });
 

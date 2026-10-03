@@ -27,7 +27,11 @@ export interface ValidateFeedDeps {
 const countRoadRecords: RecordCounter = (feed, buffers) => {
   const roadFeed = feed as FeedSource;
   if (feed.produces === "flow") {
-    return buffers.reduce((n, buf) => n + parseFlows(roadFeed, buf).flows.length, 0);
+    const ctx = { now: new Date().toISOString(), cadenceSec: feed.cadenceSec };
+    return buffers.reduce(
+      (n, buf) => n + parseFlows(roadFeed, buf, undefined, ctx).observations.length,
+      0,
+    );
   }
   return parseEvents(roadFeed, buffers).situations.length;
 };

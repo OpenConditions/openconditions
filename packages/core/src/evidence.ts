@@ -1,5 +1,5 @@
 import type { EvidenceState } from "@openconditions/model";
-import type { Confidence } from "./model.js";
+import type { Confidence } from "./types.js";
 
 /**
  * Replayable evidence policy + resolved-outcome Bayesian reliability.

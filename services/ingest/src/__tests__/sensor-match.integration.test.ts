@@ -3,6 +3,12 @@ import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { matchSensors } from "../pipeline/sensor-match.js";
+import {
+  type SiteReading,
+  seedFlowSource,
+  siteKey,
+  writeSiteReadings,
+} from "./helpers/flow-series.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -20,17 +26,16 @@ async function seedSegment(segmentId: string, wayId: number, wkt: string): Promi
       8000, 5, 120, ${NOW})`;
 }
 
-async function seedFlow(id: string, wkt: string, roads: string | null): Promise<void> {
-  await sql`
-    INSERT INTO conditions.observations
-      (id, source, source_format, domain, kind, metric, status, geom, attributes, origin,
-       data_updated_at, fetched_at)
-    VALUES (${id}, 'test-src', 'test-fmt', 'roads', 'measurement', 'flow', 'active',
-      ST_SetSRID(ST_GeomFromText(${wkt}), 4326),
-      ${roads ? sql.json({ roads }) : null},
-      ${sql.json({ kind: "feed", attribution: { provider: "test" } })},
-      ${NOW}, ${NOW})`;
+const SRC = "test-src";
+const at = NOW;
+
+/** A site's speed reading at `geometry`, as a flow poll writes it. */
+async function seedSite(site: string, geometry: SiteReading["geometry"], source = SRC) {
+  await seedFlowSource(sql, source);
+  await writeSiteReadings(sql, source, [{ site, geometry, at, speed: 80 }], NOW);
 }
+
+const point = (lon: number, lat: number) => ({ type: "Point" as const, coordinates: [lon, lat] });
 
 beforeAll(async () => {
   const container = await new GenericContainer("postgis/postgis:16-3.4")
@@ -54,49 +59,101 @@ afterAll(async () => {
 }, 30_000);
 
 describe("matchSensors", () => {
-  it("snaps a nearby flow sensor to its ref-matching segment, rejects a far one, and matches a LineString sensor via its midpoint", async () => {
+  it("snaps a nearby site to its segment, rejects a far one, and matches line sites via the first line's midpoint", async () => {
     await seedSegment("111:f", 111, SEGMENT_WKT);
 
     // ~11 m north of the segment (0.0001 deg lat), at the segment's midpoint longitude.
-    await seedFlow("a12-near:1", "POINT(5.05 52.0001)", "A12");
+    await seedSite("near", point(5.05, 52.0001));
     // ~200 m north of the segment — well past the 35 m offset gate.
-    await seedFlow("a12-far:1", "POINT(5.05 52.0018)", "A12");
+    await seedSite("far", point(5.05, 52.0018));
 
     const first = await matchSensors(sql, () => NOW);
     expect(first.matched).toBe(1);
 
     const nearRow = await sql<{ segment_id: string; fraction: number; offset_m: number }[]>`
-      SELECT segment_id, fraction, offset_m FROM conditions.sensor_segment WHERE sensor_key = 'a12-near:1'`;
+      SELECT segment_id, fraction, offset_m FROM conditions.sensor_segment
+       WHERE subject_key = ${siteKey(SRC, "near")}`;
     expect(nearRow).toHaveLength(1);
     expect(nearRow[0]).toMatchObject({ segment_id: "111:f" });
     expect(Number(nearRow[0]!.offset_m)).toBeLessThan(35);
     expect(Number(nearRow[0]!.fraction)).toBeGreaterThan(0);
     expect(Number(nearRow[0]!.fraction)).toBeLessThan(1);
 
-    const farRow =
-      await sql`SELECT 1 FROM conditions.sensor_segment WHERE sensor_key = 'a12-far:1'`;
+    const farRow = await sql`SELECT 1 FROM conditions.sensor_segment
+      WHERE subject_key = ${siteKey(SRC, "far")}`;
     expect(farRow).toHaveLength(0);
 
-    // Regression: a LineString observation (the NYC DOT shape) must be reduced
-    // to its midpoint by the `sp` lateral before ST_LineLocatePoint runs, or
-    // the whole INSERT errors. Its midpoint sits at the same ~11 m offset as
-    // the near point above.
-    await seedFlow("a12-line:1", "LINESTRING(5.02 52.0001, 5.08 52.0001)", "A12");
+    // A LineString site (the NYC DOT shape) is reduced to its midpoint, and a
+    // MultiLineString site (a site whose readings span several lines) to the
+    // midpoint of its first line, before ST_LineLocatePoint runs.
+    await seedSite("line", {
+      type: "LineString",
+      coordinates: [
+        [5.02, 52.0001],
+        [5.08, 52.0001],
+      ],
+    });
+    await seedSite("multi", {
+      type: "MultiLineString",
+      coordinates: [
+        [
+          [5.03, 52.0001],
+          [5.07, 52.0001],
+        ],
+        [
+          [5.5, 52.5],
+          [5.6, 52.5],
+        ],
+      ],
+    });
 
     const second = await matchSensors(sql, () => NOW);
-    expect(second.matched).toBe(2);
+    expect(second.matched).toBe(3);
 
-    const lineRow = await sql<{ segment_id: string; offset_m: number; fraction: number }[]>`
-      SELECT segment_id, offset_m, fraction FROM conditions.sensor_segment WHERE sensor_key = 'a12-line:1'`;
-    expect(lineRow).toHaveLength(1);
-    expect(lineRow[0]).toMatchObject({ segment_id: "111:f" });
-    expect(Number(lineRow[0]!.offset_m)).toBeLessThan(35);
-    expect(Number(lineRow[0]!.fraction)).toBeGreaterThan(0);
-    expect(Number(lineRow[0]!.fraction)).toBeLessThan(1);
+    const lineRows = await sql<{ subject_key: string; segment_id: string; offset_m: number }[]>`
+      SELECT subject_key, segment_id, offset_m FROM conditions.sensor_segment
+       WHERE subject_key IN (${siteKey(SRC, "line")}, ${siteKey(SRC, "multi")})
+       ORDER BY subject_key`;
+    expect(lineRows.map((r) => r.segment_id)).toEqual(["111:f", "111:f"]);
+    expect(lineRows.every((r) => Number(r.offset_m) < 35)).toBe(true);
+  }, 30_000);
 
-    // The far sensor is still gated out on the re-run.
-    const farRowAgain =
-      await sql`SELECT 1 FROM conditions.sensor_segment WHERE sensor_key = 'a12-far:1'`;
-    expect(farRowAgain).toHaveLength(0);
+  it("snaps a site that states only a level of service", async () => {
+    await seedSegment("333:f", 333, "LINESTRING(7.0 52.0, 7.1 52.0)");
+    await seedFlowSource(sql, SRC);
+    await writeSiteReadings(
+      sql,
+      SRC,
+      [{ site: "los-only", geometry: point(7.05, 52.0001), at, los: "queuing" }],
+      NOW,
+    );
+    await matchSensors(sql, () => NOW);
+    const rows = await sql`SELECT subject_key FROM conditions.sensor_segment
+      WHERE segment_id = '333:f'`;
+    expect(rows).toEqual([{ subject_key: siteKey(SRC, "los-only") }]);
+  }, 30_000);
+
+  it("snaps only the site-level speed series of flow sources", async () => {
+    await seedSegment("222:f", 222, "LINESTRING(6.0 52.0, 6.1 52.0)");
+    // A lane channel of a site, beside the site's own series.
+    await seedFlowSource(sql, SRC);
+    await writeSiteReadings(
+      sql,
+      SRC,
+      [{ site: "lanes", geometry: point(6.05, 52.0001), at, speed: 70, componentKey: "1" }],
+      NOW,
+    );
+    // A source the catalogue does not list as a flow feed.
+    await writeSiteReadings(
+      sql,
+      "not-a-flow-feed",
+      [{ site: "x", geometry: point(6.05, 52.0001), at, speed: 70 }],
+      NOW,
+      { catalogued: false },
+    );
+    await matchSensors(sql, () => NOW);
+    const rows = await sql`SELECT subject_key FROM conditions.sensor_segment
+      WHERE segment_id = '222:f'`;
+    expect(rows).toEqual([]);
   }, 30_000);
 });

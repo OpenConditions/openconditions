@@ -1,139 +1,110 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { parseElaboratedFlow } from "../flow-elaborated.js";
 import { parsePredefinedLocations } from "../predefined-locations.js";
-import type { SourceDescriptor } from "../types.js";
+import { fixture, flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const SRC: SourceDescriptor = {
-  id: "de-hh-autobahn",
-  attribution: "Quelle: Die Autobahn GmbH des Bundes",
-  country: "DE",
-  license: "GeoNutzV",
-};
+const FEED = "de-nw-autobahn-loslane";
+const feed = flowFeed(FEED);
+const sites = parsePredefinedLocations(fixture("autobahn-bab/verortung.xml"));
+const xml = fixture("autobahn-bab/elaborated.xml");
 
-const siteMap = parsePredefinedLocations(
-  readFileSync(join(import.meta.dirname, "fixtures/autobahn-bab/verortung.xml")),
-);
-const xml = readFileSync(join(import.meta.dirname, "fixtures/autobahn-bab/elaborated.xml"));
+const doc = (...items: string[]) => `<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <payloadPublication xsi:type="ElaboratedDataPublication">
+    ${items.map((i) => `<elaboratedData>${i}</elaboratedData>`).join("\n")}
+  </payloadPublication>
+</d2LogicalModel>`;
+const at = (inner: string, type: string) => `<basicData xsi:type="${type}">${inner}
+  <pertinentLocation xsi:type="Location"><predefinedLocationReference id="MQ_A1_0042"/></pertinentLocation>
+</basicData>`;
 
-describe("parseElaboratedFlow", () => {
-  it("emits one flow per site, joining geometry from the siteMap", () => {
-    const { flows } = parseElaboratedFlow(xml, SRC, siteMap);
-    expect(flows).toHaveLength(2);
-    const byId = Object.fromEntries(flows.map((f) => [f.id, f]));
-    expect(byId["de-hh-autobahn:MQ_A1_0042"]!.geometry).toEqual({
+describe("DATEX elaborated data", () => {
+  it("drafts one site per location, placed by the predefined locations", () => {
+    const out = flows(feed, xml, sites);
+    expect(siteIds(out, FEED)).toEqual(["MQ_A1_0042", "MQ_A7_0100"]);
+    expect((site(out, FEED, "MQ_A1_0042")!["location"] as { geometry: unknown }).geometry).toEqual({
       type: "Point",
       coordinates: [10.0574, 53.60864],
     });
   });
 
-  it("carries speed (v), volume (q) and derives los from trafficStatus", () => {
-    const { flows } = parseElaboratedFlow(xml, SRC, siteMap);
-    const a1 = flows.find((f) => f.id === "de-hh-autobahn:MQ_A1_0042")!;
-    expect(a1.speedKph).toBe(48);
-    expect(a1.volume).toBe(1800);
-    expect(a1.los).toBe("heavy");
-    expect(a1.sourceFormat).toBe("datex-elaborated");
+  it("keeps speed (v), volume (q) and the stated status", () => {
+    const out = flows(feed, xml, sites);
+    expect(value(out, FEED, "MQ_A1_0042", "traffic.speed")).toBe(48);
+    expect(value(out, FEED, "MQ_A1_0042", "traffic.volume")).toBe(1800);
+    expect(value(out, FEED, "MQ_A1_0042", "traffic.los")).toBe("heavy");
+    // Heavy is no congestion.
+    expect(out.situations).toEqual([]);
   });
 
-  it("emits a congestion event when los is queuing or worse (none here at 'heavy')", () => {
-    const { events } = parseElaboratedFlow(xml, SRC, siteMap);
-    expect(events).toHaveLength(0);
+  it("refuses a document that is no ElaboratedDataPublication", () => {
+    expect(() => flows(feed, "<foo/>", sites)).toThrow("hard parse failure");
   });
 
-  it("hard-fails on a non-ElaboratedData document", () => {
-    const res = parseElaboratedFlow("<foo/>", SRC, siteMap);
-    expect(res.failed).toBe(true);
+  it("maps a 'congested' status, nested or a plain-text leaf, to queuing with a situation", () => {
+    for (const status of [
+      "<trafficStatus><trafficStatusValue>congested</trafficStatusValue></trafficStatus>",
+      "<trafficStatus>congested</trafficStatus>",
+    ]) {
+      const out = flows(feed, doc(at(status, "TrafficStatus")), sites);
+      expect(value(out, FEED, "MQ_A1_0042", "traffic.los")).toBe("queuing");
+      expect(out.situations).toHaveLength(1);
+    }
   });
 
-  it("maps a DATEX 'congested' TrafficStatus to queuing los and a congestion event", () => {
-    const doc = `<?xml version="1.0" encoding="UTF-8"?>
-<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <payloadPublication xsi:type="ElaboratedDataPublication">
-    <elaboratedData>
-      <basicData xsi:type="TrafficStatus">
-        <trafficStatus><trafficStatusValue>congested</trafficStatusValue></trafficStatus>
-        <pertinentLocation xsi:type="Location">
-          <predefinedLocationReference id="MQ_A1_0042"/>
-        </pertinentLocation>
-      </basicData>
-    </elaboratedData>
-  </payloadPublication>
-</d2LogicalModel>`;
-    const { flows, events } = parseElaboratedFlow(doc, SRC, siteMap);
-    const a1 = flows.find((f) => f.id === "de-hh-autobahn:MQ_A1_0042")!;
-    expect(a1.los).toBe("queuing");
-    expect(events).toHaveLength(1);
-    expect(events[0]!.type).toBe("congestion");
+  it("never publishes a dataError-flagged volume", () => {
+    const out = flows(
+      feed,
+      doc(
+        at(
+          `<averageVehicleSpeed numberOfInputValuesUsed="20"><speed>48</speed></averageVehicleSpeed>`,
+          "TrafficSpeed",
+        ),
+        at(
+          `<vehicleFlow><dataError>true</dataError><vehicleFlowRate>9999</vehicleFlowRate></vehicleFlow>`,
+          "TrafficFlow",
+        ),
+      ),
+      sites,
+    );
+    expect(value(out, FEED, "MQ_A1_0042", "traffic.speed")).toBe(48);
+    expect(readings(out, FEED, "MQ_A1_0042", "traffic.volume")).toEqual([]);
   });
 
-  it("reads a plain-text leaf trafficStatus (the DATEX v2 enum-member form)", () => {
-    const doc = `<?xml version="1.0" encoding="UTF-8"?>
-<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <payloadPublication xsi:type="ElaboratedDataPublication">
-    <elaboratedData>
-      <basicData xsi:type="TrafficStatus">
-        <trafficStatus>congested</trafficStatus>
-        <pertinentLocation xsi:type="Location">
-          <predefinedLocationReference id="MQ_A1_0042"/>
-        </pertinentLocation>
-      </basicData>
-    </elaboratedData>
-  </payloadPublication>
-</d2LogicalModel>`;
-    const { flows } = parseElaboratedFlow(doc, SRC, siteMap);
-    const a1 = flows.find((f) => f.id === "de-hh-autobahn:MQ_A1_0042")!;
-    expect(a1.los).toBe("queuing");
-  });
-
-  it("ignores a dataError-flagged volume so an invalid rate is never published", () => {
-    const doc = `<?xml version="1.0" encoding="UTF-8"?>
-<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <payloadPublication xsi:type="ElaboratedDataPublication">
-    <elaboratedData>
-      <basicData xsi:type="TrafficSpeed">
-        <averageVehicleSpeed numberOfInputValuesUsed="20"><speed>48</speed></averageVehicleSpeed>
-        <pertinentLocation xsi:type="Location">
-          <predefinedLocationReference id="MQ_A1_0042"/>
-        </pertinentLocation>
-      </basicData>
-    </elaboratedData>
-    <elaboratedData>
-      <basicData xsi:type="TrafficFlow">
-        <vehicleFlow><dataError>true</dataError><vehicleFlowRate>9999</vehicleFlowRate></vehicleFlow>
-        <pertinentLocation xsi:type="Location">
-          <predefinedLocationReference id="MQ_A1_0042"/>
-        </pertinentLocation>
-      </basicData>
-    </elaboratedData>
-  </payloadPublication>
-</d2LogicalModel>`;
-    const { flows } = parseElaboratedFlow(doc, SRC, siteMap);
-    const a1 = flows.find((f) => f.id === "de-hh-autobahn:MQ_A1_0042")!;
-    expect(a1.speedKph).toBe(48);
-    expect(a1.volume).toBeUndefined();
+  it("weights the site speed by vehicle counts across classes", () => {
+    const out = flows(
+      feed,
+      doc(
+        at(
+          `<forVehiclesWithCharacteristicsOf><vehicleType>car</vehicleType></forVehiclesWithCharacteristicsOf>
+           <averageVehicleSpeed numberOfInputValuesUsed="30"><speed>100</speed></averageVehicleSpeed>`,
+          "TrafficSpeed",
+        ),
+        at(
+          `<forVehiclesWithCharacteristicsOf><vehicleType>lorry</vehicleType></forVehiclesWithCharacteristicsOf>
+           <averageVehicleSpeed numberOfInputValuesUsed="10"><speed>80</speed></averageVehicleSpeed>`,
+          "TrafficSpeed",
+        ),
+      ),
+      sites,
+    );
+    expect(value(out, FEED, "MQ_A1_0042", "traffic.speed")).toBe(95);
+    expect(value(out, FEED, "MQ_A1_0042", "traffic.speed", "speed:truck")).toBe(80);
   });
 });
 
-describe("parseElaboratedFlow — Verkehrslage (TrafficStatus only)", () => {
-  const losSiteMap = parsePredefinedLocations(
-    readFileSync(join(import.meta.dirname, "fixtures/autobahn-bab/verortung.xml")),
-  );
-  const losXml = readFileSync(join(import.meta.dirname, "fixtures/autobahn-bab/verkehrslage.xml"));
+describe("DATEX elaborated data — Verkehrslage (status only)", () => {
+  const out = () => flows(feed, fixture("autobahn-bab/verkehrslage.xml"), sites);
 
-  it("emits los-only flows (no speed) with los from the declared status", () => {
-    const { flows } = parseElaboratedFlow(losXml, SRC, losSiteMap);
-    const a1 = flows.find((f) => f.id === "de-hh-autobahn:MQ_A1_0042")!;
-    expect(a1.speedKph).toBeUndefined();
-    expect(a1.los).toBe("queuing"); // congested → queuing
-    const a7 = flows.find((f) => f.id === "de-hh-autobahn:MQ_A7_0100")!;
-    expect(a7.los).toBe("free_flow");
+  it("states the level of service without a speed", () => {
+    const o = out();
+    expect(readings(o, FEED, "MQ_A1_0042", "traffic.speed")).toEqual([]);
+    expect(value(o, FEED, "MQ_A1_0042", "traffic.los")).toBe("queuing");
+    expect(value(o, FEED, "MQ_A7_0100", "traffic.los")).toBe("free_flow");
   });
 
-  it("derives a congestion event for the queuing site only", () => {
-    const { events } = parseElaboratedFlow(losXml, SRC, losSiteMap);
-    expect(events).toHaveLength(1);
-    expect(events[0]!.type).toBe("congestion");
+  it("derives a congestion situation for the queuing site only", () => {
+    expect(out().situations.map((s) => s["id"])).toEqual([
+      `oc:situation:${FEED}:MQ_A1_0042:congestion`,
+    ]);
   });
 });

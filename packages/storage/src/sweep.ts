@@ -1,6 +1,8 @@
 import type { RevisionedClass } from "@openconditions/core/server";
 import type { Registry } from "@openconditions/model";
 import type postgres from "postgres";
+import { updateCanonicalView } from "./canonical-view.js";
+import { refreshFused } from "./fused-rows.js";
 import { tombstoneRecords } from "./write-records.js";
 
 export interface SweepOptions {
@@ -26,6 +28,8 @@ export interface SweepCounts {
   purged: number;
   /** On-demand rows (records and series) deleted at expiry. */
   dropped: number;
+  /** Crowd readings whose report's lifetime ended, marked expired. */
+  crowdExpired: number;
 }
 
 const CLASSES: readonly RevisionedClass[] = ["situation", "feature", "offer"];
@@ -52,17 +56,26 @@ const ORPHANED = `r.tombstoned_at IS NULL AND r.instance_id = $2 AND r.origin IN
  *    its records itself, by leaving them out of its snapshot;
  *  - a record tombstoned more than `historyDays` ago is purged with its
  *    revisions, effects, components, bindings, crowd evidence and votes;
- *  - an on-demand row is deleted at expiry: it was a cache, with no history.
- * A declared validity end is never a reason: a source that still publishes
+ *  - an on-demand row is deleted at expiry: it was a cache, with no history;
+ *  - a crowd reading whose report's lifetime ended is marked `expired`, and
+ *    the fused rows it fed are recomputed without it. Its series row stays:
+ *    it is what the reading's history is read back through.
+ * A feature that ends or goes leaves the canonical view with it. A declared validity end is never a reason: a source that still publishes
  * an ended record keeps it, and reads filter by time. Every tombstone and
  * delete is chosen and written under its source's advisory lock, like any
  * other write, so a poll or a confirmation in between is never undone.
  */
 export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promise<SweepCounts> {
-  const counts: SweepCounts = { expired: 0, orphaned: 0, purged: 0, dropped: 0 };
+  const counts: SweepCounts = { expired: 0, orphaned: 0, purged: 0, dropped: 0, crowdExpired: 0 };
   const params = [opts.now, opts.instanceId, opts.maxAgeSec];
-  const tombstone = (cls: RevisionedClass) => (tx: postgres.TransactionSql, ids: string[]) =>
-    tombstoneRecords(tx, cls, ids, "expired", opts);
+  const relink = (tx: postgres.TransactionSql, sourceId: string, featureIds: string[]) =>
+    updateCanonicalView(tx, opts.registry, { sourceId, featureIds, observations: [] }, opts);
+  const tombstone =
+    (cls: RevisionedClass) =>
+    async (tx: postgres.TransactionSql, ids: string[], sourceId: string) => {
+      await tombstoneRecords(tx, cls, ids, "expired", opts);
+      if (cls === "feature") await relink(tx, sourceId, ids);
+    };
   const remove =
     (table: string, key: string, type = "text") =>
     (tx: postgres.TransactionSql, ids: string[]) =>
@@ -88,9 +101,15 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
       );
       await remove(cls, "id")(tx, ids);
     };
+  const dropOnDemand =
+    (cls: RevisionedClass) =>
+    async (tx: postgres.TransactionSql, ids: string[], sourceId: string) => {
+      await removeRecords(cls)(tx, ids);
+      if (cls === "feature") await relink(tx, sourceId, ids);
+    };
   for (const cls of CLASSES) {
     const rows = { table: cls, key: "id" };
-    counts.dropped += await perSource(sql, rows, ON_DEMAND_EXPIRED, [opts.now], removeRecords(cls));
+    counts.dropped += await perSource(sql, rows, ON_DEMAND_EXPIRED, [opts.now], dropOnDemand(cls));
     counts.expired += await perSource(sql, rows, EXPIRED, [opts.now], tombstone(cls));
     counts.orphaned += await perSource(sql, rows, ORPHANED, params, tombstone(cls));
     counts.purged += await perSource(
@@ -108,7 +127,33 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
     [opts.now],
     remove("observation_latest", "series_id", "bigint"),
   );
+  counts.crowdExpired = await expireCrowdObservations(sql, opts);
   return counts;
+}
+
+/**
+ * Marks the crowd readings whose report's lifetime has passed `expired`,
+ * under the crowd's lock, and recomputes the fused rows they fed. A negated
+ * report stays negated: that is the stronger statement.
+ */
+async function expireCrowdObservations(sql: postgres.Sql, opts: SweepOptions): Promise<number> {
+  return (await sql.begin(async (tx) => {
+    await tx`SELECT pg_advisory_xact_lock(hashtext('crowd'))`;
+    const rows = await tx<{ feature_id: string | null; property: string }[]>`
+      UPDATE conditions.observation_latest SET evidence_state = 'expired'
+       WHERE source_id = 'crowd' AND expires_at < ${opts.now}
+         AND evidence_state IS DISTINCT FROM 'expired' AND evidence_state IS DISTINCT FROM 'negated'
+      RETURNING feature_id, property`;
+    await refreshFused(
+      tx,
+      opts.registry,
+      rows.flatMap((r) =>
+        r.feature_id === null ? [] : [{ featureId: r.feature_id, properties: [r.property] }],
+      ),
+      opts,
+    );
+    return rows.length;
+  })) as number;
 }
 
 /** An on-demand row past its expiry. ($1 = now) */
@@ -128,7 +173,7 @@ async function perSource(
   { table, key }: { table: string; key: string },
   where: string,
   params: readonly (string | number)[],
-  act: (tx: postgres.TransactionSql, ids: string[]) => Promise<unknown>,
+  act: (tx: postgres.TransactionSql, ids: string[], sourceId: string) => Promise<unknown>,
 ): Promise<number> {
   const sources = await sql.unsafe<{ source_id: string }[]>(
     `SELECT DISTINCT r.source_id FROM conditions.${table} r WHERE ${where}`,
@@ -147,6 +192,7 @@ async function perSource(
       await act(
         tx,
         rows.map((r) => String(r.id)),
+        source_id,
       );
       n += rows.length;
     });

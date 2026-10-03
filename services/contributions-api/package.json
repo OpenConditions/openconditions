@@ -29,7 +29,6 @@
     "@openconditions/federation": "workspace:*",
     "@openconditions/model": "workspace:*",
     "@openconditions/model-registry": "workspace:*",
-    "@openconditions/normalize": "workspace:*",
     "@openconditions/storage": "workspace:*",
     "fastify": "^5.12.1",
     "postgres": "^3.4.9",

@@ -36,25 +36,116 @@
       },
       "canonicalId": "1e13f00dfba9f6718a7689fc839ceb38c31cc86e3ba46c3a9f5d60680f037346",
       "domain": "roads",
-      "contentHash": "2f2207095ad645ba93105b0f6704b4e78f91adc228d56c903b053f38f4aa3825",
+      "contentHash": "3afd7d5c83b43ab4cd7444dbcec5e18e90b978ba79c504dc55aac0a78f3ea98f",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
+      "name": [
+        {
+          "lang": "en",
+          "text": "Aberdeen Praya Road"
+        }
+      ],
       "lifecycle": "operational",
+      "components": [
+        {
+          "key": "fast_lane:speed",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "property": "traffic.speed"
+          }
+        },
+        {
+          "key": "fast_lane:volume",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "property": "traffic.volume"
+          }
+        },
+        {
+          "key": "fast_lane:occupancy",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "property": "traffic.occupancy"
+          }
+        },
+        {
+          "key": "slow_lane:speed",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "property": "traffic.speed"
+          }
+        },
+        {
+          "key": "slow_lane:volume",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "property": "traffic.volume"
+          }
+        },
+        {
+          "key": "slow_lane:occupancy",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "property": "traffic.occupancy"
+          }
+        },
+        {
+          "key": "broken:speed",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "property": "traffic.speed"
+          }
+        },
+        {
+          "key": "broken:volume",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "property": "traffic.volume"
+          }
+        },
+        {
+          "key": "broken:occupancy",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "property": "traffic.occupancy"
+          }
+        }
+      ],
       "details": {
         "kind": "measurement_site",
         "v": 1,
         "measuredProperties": [
-          "traffic.speed"
+          "traffic.speed",
+          "traffic.volume",
+          "traffic.occupancy"
         ]
       }
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:hk-td:ad091ed777b4c6eeb856725184153cd09668e3b70cbe2eb75839448c65434f8c",
+      "id": "oc:observation:hk-td:83b67cf48ca94f0b75d332fe51d7492745da09787b42079fa0ef352d0a969aba",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -87,9 +178,9 @@
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "6bcbcaec8b9ceb46ef1e90bab542f93fd50b327947c511f3fce0d93f40eb16d2",
+      "canonicalId": "41bff4722f1e867e598424b23819e3bb425952eb655073e6b6f517d4ab485d8a",
       "domain": "roads",
-      "contentHash": "4aeabf4dee3cf3b31f9515d1bb70f14d26416e2c64f446c678e2d0dd35cd1d31",
+      "contentHash": "78558f732cb61d3573c05ae0da7f1f924cd709a9244e3df06a54da2a6433b5ca",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
@@ -105,7 +196,470 @@
         "unit": "km/h"
       },
       "phenomenonTime": {
-        "instant": "2026-09-19T17:55:30.000Z"
+        "start": "2026-09-19T17:55:00.000Z",
+        "end": "2026-09-19T17:55:30.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:hk-td:4b99317532e1be2ada46283c2fdd4eb051b1b78641958a8425c4e3263731863f",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            114.152525,
+            22.248091
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "hk-td",
+        "sourceFormat": "hk-td",
+        "accessMode": "bulk",
+        "recordId": "AID01101",
+        "attribution": {
+          "provider": "Transport Department, HKSAR",
+          "license": "HK-Gov-Open-Data",
+          "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "214ec835c6b71ee02b1973425cf7023e7e0c397fd19010d7c9eb212729cb5421",
+      "domain": "roads",
+      "contentHash": "bfc956fa98daed6abd04ce4899d2e7443862b42e27b202f8ce3c32fedb4ba969",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:hk-td:AID01101"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 480,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "start": "2026-09-19T17:55:00.000Z",
+        "end": "2026-09-19T17:55:30.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:hk-td:6548cf0f22971c509a87df95f1df3c393729ca248c24cde8aeed506197433c47",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            114.152525,
+            22.248091
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "hk-td",
+        "sourceFormat": "hk-td",
+        "accessMode": "bulk",
+        "recordId": "AID01101",
+        "attribution": {
+          "provider": "Transport Department, HKSAR",
+          "license": "HK-Gov-Open-Data",
+          "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "959be4ac44aee155d74a9774bf3e8da81f1a1c21d5cc37763c1bee930cba5e4d",
+      "domain": "roads",
+      "contentHash": "5f288bc38250c4b2997a174b03c8b9676eaa374c6c1ff81d960ae81ffaeeebfd",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.occupancy",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:hk-td:AID01101"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 6,
+        "unit": "%"
+      },
+      "phenomenonTime": {
+        "start": "2026-09-19T17:55:00.000Z",
+        "end": "2026-09-19T17:55:30.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:hk-td:ebf48de3de28f1f869c6417fd7e043dcd940233af35809770a6dabfa20f3bb82",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            114.152525,
+            22.248091
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "hk-td",
+        "sourceFormat": "hk-td",
+        "accessMode": "bulk",
+        "recordId": "AID01101/fast_lane:speed",
+        "attribution": {
+          "provider": "Transport Department, HKSAR",
+          "license": "HK-Gov-Open-Data",
+          "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "f807a9407c1756c146f10215efab6417f547b274c68a50da2327d48ca4d4d8c6",
+      "domain": "roads",
+      "contentHash": "d5c3b852024ae011e508f454575bd46cd312d123198d4f1979e1dc1d4e4513a8",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:hk-td:AID01101",
+        "componentKey": "fast_lane:speed"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 100,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "start": "2026-09-19T17:55:00.000Z",
+        "end": "2026-09-19T17:55:30.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:hk-td:a2caf57d052febd07a77017d7285b1d662689352da9e21a769339f37630eede9",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            114.152525,
+            22.248091
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "hk-td",
+        "sourceFormat": "hk-td",
+        "accessMode": "bulk",
+        "recordId": "AID01101/fast_lane:volume",
+        "attribution": {
+          "provider": "Transport Department, HKSAR",
+          "license": "HK-Gov-Open-Data",
+          "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "79346cc2f1320bcddbaef6149a85f5076037ef87f9ddc95bf7c528ebf3bfca2b",
+      "domain": "roads",
+      "contentHash": "929f481932f8cb9967196513031948fcfdb2aa20ba032de2134b532e58342ae0",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:hk-td:AID01101",
+        "componentKey": "fast_lane:volume"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 360,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "start": "2026-09-19T17:55:00.000Z",
+        "end": "2026-09-19T17:55:30.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:hk-td:f8782a6adfd4be712b49ec15a4da5ac58135e4dcd751577fc08e5d163be143b4",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            114.152525,
+            22.248091
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "hk-td",
+        "sourceFormat": "hk-td",
+        "accessMode": "bulk",
+        "recordId": "AID01101/fast_lane:occupancy",
+        "attribution": {
+          "provider": "Transport Department, HKSAR",
+          "license": "HK-Gov-Open-Data",
+          "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "da314882213ad593aa71d5564777260f69dcbb1b20b8be7d9be7abd0e73c61c0",
+      "domain": "roads",
+      "contentHash": "c9ccb8d24282961656d3500ad9295f26c05abc4d80920f15c5291df0b9440d6a",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.occupancy",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:hk-td:AID01101",
+        "componentKey": "fast_lane:occupancy"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 8,
+        "unit": "%"
+      },
+      "phenomenonTime": {
+        "start": "2026-09-19T17:55:00.000Z",
+        "end": "2026-09-19T17:55:30.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:hk-td:d85767d4f33914e8b0f056bcf3d587d6b4fdb011fff5738d78360e290f274b67",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            114.152525,
+            22.248091
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "hk-td",
+        "sourceFormat": "hk-td",
+        "accessMode": "bulk",
+        "recordId": "AID01101/slow_lane:speed",
+        "attribution": {
+          "provider": "Transport Department, HKSAR",
+          "license": "HK-Gov-Open-Data",
+          "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "42d004a7cf50ec9804eeccf863067a5759d8a268e9a0c37641f49694d918c6b7",
+      "domain": "roads",
+      "contentHash": "f2e514c121f0dff96027ac2ac5fbbbbfeeee2c56475748f0b899be7b0da03f7d",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:hk-td:AID01101",
+        "componentKey": "slow_lane:speed"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 60,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "start": "2026-09-19T17:55:00.000Z",
+        "end": "2026-09-19T17:55:30.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:hk-td:aacc387c5a4a9a909c641c8b1cb3cd63ceac444eec033624c31a559aa14049c8",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            114.152525,
+            22.248091
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "hk-td",
+        "sourceFormat": "hk-td",
+        "accessMode": "bulk",
+        "recordId": "AID01101/slow_lane:volume",
+        "attribution": {
+          "provider": "Transport Department, HKSAR",
+          "license": "HK-Gov-Open-Data",
+          "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "a4245fb0524638c98c34e58488e62d561e69355b31fb9e128528715e63e1bca8",
+      "domain": "roads",
+      "contentHash": "7093ffef57b6bdccacd5e4ed9a0e0252bb4671174f9408c47dacf3a4a41f539b",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:hk-td:AID01101",
+        "componentKey": "slow_lane:volume"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 120,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "start": "2026-09-19T17:55:00.000Z",
+        "end": "2026-09-19T17:55:30.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:hk-td:09fb28f7e59918fed893b0fe35d9c320ec6d0396cfab0323812a893620f1ccda",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            114.152525,
+            22.248091
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "hk-td",
+        "sourceFormat": "hk-td",
+        "accessMode": "bulk",
+        "recordId": "AID01101/slow_lane:occupancy",
+        "attribution": {
+          "provider": "Transport Department, HKSAR",
+          "license": "HK-Gov-Open-Data",
+          "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "76c90046c78a18e444ce9c52b7a792b41d70240382ff779bcbd51a9cbf3fd5ca",
+      "domain": "roads",
+      "contentHash": "ae9442c7daeb710a88ff38279915f68039526d6e1c23e24b3653b54dd6c06619",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.occupancy",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:hk-td:AID01101",
+        "componentKey": "slow_lane:occupancy"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 4,
+        "unit": "%"
+      },
+      "phenomenonTime": {
+        "start": "2026-09-19T17:55:00.000Z",
+        "end": "2026-09-19T17:55:30.000Z"
       },
       "aggregation": "mean"
     }

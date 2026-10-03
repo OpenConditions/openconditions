@@ -53,7 +53,7 @@ interface RawHealthRow {
   updated_at: Date;
 }
 
-function toRow(raw: RawHealthRow): PeerHealthRow {
+function healthRowOf(raw: RawHealthRow): PeerHealthRow {
   return {
     peerId: raw.peer_id,
     availabilityOk: Number(raw.availability_ok),
@@ -71,7 +71,7 @@ function toRow(raw: RawHealthRow): PeerHealthRow {
 export async function getPeerHealth(sql: Sql, peerId: string): Promise<PeerHealthRow | null> {
   const rows = await sql<RawHealthRow[]>`
     SELECT * FROM conditions.federation_peer_health WHERE peer_id = ${peerId}`;
-  return rows[0] ? toRow(rows[0]) : null;
+  return rows[0] ? healthRowOf(rows[0]) : null;
 }
 
 /**

@@ -8,11 +8,14 @@ describe("parsePredefinedLocations", () => {
   const map = parsePredefinedLocations(xml);
 
   it("resolves a point predefinedLocation to a WGS84 Point", () => {
-    expect(map.get("MQ_A1_0042")).toEqual({ type: "Point", coordinates: [10.0574, 53.60864] });
+    expect(map.get("MQ_A1_0042")?.geometry).toEqual({
+      type: "Point",
+      coordinates: [10.0574, 53.60864],
+    });
   });
 
   it("resolves a linear predefinedLocation to a LineString", () => {
-    expect(map.get("MQ_A7_0100")).toEqual({
+    expect(map.get("MQ_A7_0100")?.geometry).toEqual({
       type: "LineString",
       coordinates: [
         [9.9822, 53.5488],

@@ -32,12 +32,25 @@ export function seriesKeyOf(record: Rec): SeriesKey {
 const VARYING_PROVENANCE = ["rawRef", "sourceUpdatedAt", "recordVersion"] as const;
 
 /**
+ * Provenance fields that vary between the readings of a crowd series: each
+ * reading is another report, by its own reporter under its own record id. A
+ * feed series keeps its record id in the template, so its readings do not
+ * each pay for it.
+ */
+const CROWD_VARYING_PROVENANCE = ["reporter", "recordId"] as const;
+
+const varyingProvenance = (provenance: Rec): readonly string[] =>
+  provenance["origin"] === "crowd"
+    ? [...VARYING_PROVENANCE, ...CROWD_VARYING_PROVENANCE]
+    : VARYING_PROVENANCE;
+
+/**
  * The parts of an observation every reading of its series shares: what it
  * is about and who published it. A history row stores none of them.
  */
 export function templateOf(record: Rec): Rec {
   const provenance = { ...(record["provenance"] as Rec) };
-  for (const key of VARYING_PROVENANCE) delete provenance[key];
+  for (const key of varyingProvenance(provenance)) delete provenance[key];
   return {
     namespace: parseRecordId(record["id"] as string)?.namespace,
     class: record["class"],
@@ -159,8 +172,8 @@ export function historyRowOf(
   ) {
     extraProvenance["rawRef"] = rawRef;
   }
-  for (const key of ["sourceUpdatedAt", "recordVersion"] as const) {
-    if (provenance[key] !== undefined) extraProvenance[key] = provenance[key];
+  for (const key of varyingProvenance(provenance)) {
+    if (key !== "rawRef" && provenance[key] !== undefined) extraProvenance[key] = provenance[key];
   }
   const { fetchedAt, ...freshness } = record["freshness"] as Rec;
   const extra: Rec = {

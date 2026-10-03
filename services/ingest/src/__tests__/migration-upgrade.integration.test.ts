@@ -52,22 +52,32 @@ it("upgrades a populated previous schema concurrently and never reapplies versio
         VALUES (${createHash("sha256").update(migration).digest("hex")}, ${entry.when})`;
     }
   });
+  await sql`INSERT INTO conditions.osm_road (way_id, geom, highway, region, imported_at)
+    VALUES (4711, ST_SetSRID(ST_MakeLine(ST_MakePoint(5, 52), ST_MakePoint(5.01, 52)), 4326),
+      'primary', 'nl', now())`;
   await sql`INSERT INTO conditions.observations
     (id, source, source_format, domain, kind, status, geom, origin, data_updated_at, fetched_at)
-    VALUES ('upgrade:preserved', 'upgrade', 'native', 'roads', 'event', 'active',
+    VALUES ('upgrade:legacy', 'upgrade', 'native', 'roads', 'measurement', 'active',
       ST_SetSRID(ST_MakePoint(5, 52), 4326), '{"kind":"feed","attribution":{"license":"CC0-1.0"}}', now(), now())`;
+  await sql`INSERT INTO conditions.sensor_baseline
+    (sensor_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
+    VALUES ('upgrade:s1', 'upgrade', -1, -1, 100, 'derived', 40, now())`;
+  await sql`INSERT INTO conditions.sensor_segment
+    (sensor_key, segment_id, fraction, offset_m, matched_at) VALUES ('upgrade:s1', '4711:f', 0.5, 3, now())`;
 
   await Promise.all([runMigrations(url), runMigrations(url), runMigrations(url)]);
-  expect(
-    await sql`SELECT id FROM conditions.observations WHERE id = 'upgrade:preserved'`,
-  ).toHaveLength(1);
+  expect(await sql`SELECT way_id FROM conditions.osm_road WHERE way_id = 4711`).toHaveLength(1);
+  // The legacy flow store is gone; derived baselines and snaps are recomputed under the new keys.
+  expect(await sql`SELECT to_regclass('conditions.observations') AS t`).toEqual([{ t: null }]);
+  expect(await sql`SELECT subject_key FROM conditions.sensor_baseline`).toEqual([]);
+  expect(await sql`SELECT subject_key FROM conditions.sensor_segment`).toEqual([]);
   const [count] = await sql<{ n: number; distinct_n: number }[]>`
     SELECT count(*)::int AS n, count(DISTINCT created_at)::int AS distinct_n FROM drizzle.__drizzle_migrations_oc`;
   expect(count).toMatchObject({ n: journal.entries.length, distinct_n: journal.entries.length });
   const [functionBefore] = await sql<{ body: string }[]>`
     SELECT pg_get_functiondef('conditions.segment_flow(integer,integer,integer,json)'::regprocedure) AS body`;
   expect(functionBefore!.body).toContain("ST_AsMVT");
-  // The outbox journals the record tables; the flat observations table no longer has a capture.
+  // The outbox journals the record tables.
   const capture = await sql<{ relation: string }[]>`
     SELECT tgrelid::regclass::text AS relation FROM pg_trigger
     WHERE tgname = 'federation_capture' ORDER BY 1`;
@@ -77,10 +87,6 @@ it("upgrades a populated previous schema concurrently and never reapplies versio
     "conditions.offer",
     "conditions.situation",
   ]);
-  expect(
-    await sql`SELECT tgname FROM pg_trigger
-      WHERE tgrelid = 'conditions.observations'::regclass AND tgname LIKE 'federation%'`,
-  ).toHaveLength(0);
 
   // A later deployed function must survive an older migrator starting again.
   await sql`CREATE OR REPLACE FUNCTION conditions.segment_flow(z integer, x integer, y integer, query_params json)

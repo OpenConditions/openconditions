@@ -29,6 +29,42 @@ describe("the OpenAPI document", () => {
     await app.close();
   });
 
+  it("leaves out no route the record API registers", async () => {
+    const app = Fastify();
+    const registered: string[] = [];
+    app.addHook("onRoute", (route) => {
+      if (route.method === "GET" || (Array.isArray(route.method) && route.method.includes("GET"))) {
+        registered.push(route.url);
+      }
+    });
+    registerApiRoutes(app, {} as postgres.Sql, { registry: productionRegistry() });
+    await app.ready();
+    const documented = API_ROUTES.map((r) =>
+      r.path.replace("{path}", "*").replace(/\{(\w+)\}/g, ":$1"),
+    );
+    expect([...new Set(registered)].sort()).toEqual([...documented].sort());
+    await app.close();
+  });
+
+  it("describes the feature, offer and observation routes with their own filters", () => {
+    const doc = openApiDocument();
+    const names = (path: string) =>
+      (
+        doc.paths[path] as { get: { parameters: { name: string }[] } } | undefined
+      )?.get.parameters.map((p) => p.name);
+    expect(names("/features")).toEqual(
+      expect.arrayContaining(["bbox", "kind", "canonical", "expand", "cursor", "limit"]),
+    );
+    expect(names("/observations/latest")).toEqual(
+      expect.arrayContaining(["property", "canonical", "cursor"]),
+    );
+    expect(names("/observations")).toEqual(
+      expect.arrayContaining(["subject", "property", "qualifiers", "from", "to", "resolution"]),
+    );
+    expect(names("/features/{id}")).toEqual(["id"]);
+    expect(names("/offers/{id}")).toEqual(["id"]);
+  });
+
   it("describes every query parameter of a collection, with the page limit's bounds", () => {
     const doc = openApiDocument();
     const params = (

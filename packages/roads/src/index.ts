@@ -11,27 +11,25 @@ export * from "./feed-schema.js";
 export * from "./feeds.js";
 export * from "./fintraffic-constants.js";
 export * from "./flatjson.js";
-export * from "./flow.js";
-export * from "./flow-elaborated.js";
-export * from "./flow-fintraffic.js";
-export * from "./flow-nycdot.js";
-export * from "./flow-ohgo.js";
-export * from "./flow-trafikverket.js";
-export * from "./flow-turin.js";
-export * from "./flow-webtris.js";
+export type {
+  FlowBaseline,
+  FlowChannel,
+  FlowContext,
+  FlowOutput,
+  FlowSite,
+  FlowSites,
+} from "./flow-output.js";
+export { ABSURD_SPEED_KPH } from "./flow-reading.js";
 export * from "./gddkia.js";
 export * from "./geojson.js";
-export * from "./hk.js";
+export { parseHkDetectors } from "./hk.js";
 export * from "./ibi511.js";
 export * from "./lta.js";
 export * from "./maxspeed.js";
-export * from "./measuredData.js";
-export * from "./miv.js";
-// A parser's event intermediate (`RoadEvent`, `UnresolvedRoadEvent`) stays
-// inside this package: other packages see situation drafts only.
+export { parseMivConfig } from "./miv.js";
+// A parser's intermediates (`RoadEvent`, `UnresolvedRoadEvent`, the flow
+// readings) stay inside this package: other packages see drafts only.
 export {
-  type BaselineMethod,
-  type FlowSiteHints,
   type GeoJsonMapping,
   type GeoJsonRecordFilter,
   isRoadEventType,
@@ -39,9 +37,7 @@ export {
   type Restriction,
   ROAD_EVENT_TYPES,
   type RoadEventType,
-  type RoadFlow,
   type RoadRef,
-  roadFlowAttributes,
   type SituationHints,
 } from "./model.js";
 export * from "./open511.js";
@@ -51,7 +47,6 @@ export * from "./pbf-geojson.js";
 export * from "./predefined-locations.js";
 export * from "./routing.js";
 export * from "./segment.js";
-export * from "./sites/index.js";
 export * from "./siteTable.js";
 export * from "./situation/index.js";
 export * from "./skip-metrics.js";

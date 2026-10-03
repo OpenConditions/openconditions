@@ -1,16 +1,18 @@
-import type { FlowParseResult } from "./flow.js";
-import { localTimestamp, makeOrigin } from "./flow.js";
-import type { RoadFlow } from "./model.js";
-import type { SiteGeometry } from "./siteTable.js";
+import { localTimestamp } from "./flow.js";
+import type { FlowContext, FlowSites } from "./flow-output.js";
+import { type FlowParse, type FlowReading, parseJson, plausibleSpeed } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
 
 const MPH_TO_KPH = 1.609344;
+/** A WebTRIS report row covers the quarter hour ending at its "Time Period Ending". */
+const PERIOD_SEC = 900;
 
 interface Row {
   "Site Name"?: unknown;
   "Report Date"?: unknown;
   "Time Period Ending"?: unknown;
   "Avg mph"?: unknown;
+  "Total Volume"?: unknown;
 }
 
 /** Leading numeric token of a WebTRIS "Site Name" (e.g. "5607" from "5607/1 …"). */
@@ -20,37 +22,37 @@ function siteToken(name: unknown): string | null {
   return m ? m[0] : null;
 }
 
+const numeric = (raw: unknown) =>
+  typeof raw === "string" && raw.trim() !== "" ? Number(raw) : Number.NaN;
+
 /**
- * Parse a WebTRIS daily report into one RoadFlow per site, using the latest row
- * (by report date + period ending) for each site. Average speed is a "NN"
- * string in mph, converted to km/h. Geometry comes from the `/sites` registry
- * map keyed by site id. los stays "unknown"; the baseline enrichment
- * classifies it.
+ * Parse a WebTRIS daily report into one reading per site, from the latest
+ * row (by report date + period ending) of each: the average speed (mph,
+ * converted to km/h) and the quarter-hour's total count as an hourly volume,
+ * over the period the row covers. Geometry and name come from the `/sites`
+ * registry. The level of service is left to the baseline enrichment.
  */
 export function parseWebtrisFlow(
   input: string | Buffer,
-  src: SourceDescriptor,
-  siteMap?: Map<string, SiteGeometry>,
-): FlowParseResult {
-  let payload: { Rows?: unknown };
-  try {
-    payload = JSON.parse(Buffer.isBuffer(input) ? input.toString("utf8") : input);
-  } catch {
-    return { flows: [], events: [] };
-  }
-  if (!Array.isArray(payload.Rows)) return { flows: [], events: [] };
+  _src: SourceDescriptor,
+  sites: FlowSites | undefined,
+  _ctx: FlowContext,
+): FlowParse {
+  const payload = parseJson(input) as { Rows?: unknown } | undefined;
+  if (!Array.isArray(payload?.Rows)) return { readings: [] };
 
-  const now = new Date().toISOString();
-  const origin = makeOrigin(src);
-  const latest = new Map<string, { speedKph: number; measuredAt: string; sort: string }>();
-
+  const latest = new Map<
+    string,
+    { speedKph?: number; volume?: number; at: string | undefined; sort: string }
+  >();
   for (const row of payload.Rows as Row[]) {
     const token = siteToken(row["Site Name"]);
     if (!token) continue;
-    const rawMph = row["Avg mph"];
-    if (typeof rawMph !== "string" || rawMph.trim() === "") continue;
-    const mph = Number(rawMph);
-    if (!Number.isFinite(mph) || mph < 0) continue;
+    const mph = numeric(row["Avg mph"]);
+    const speedKph = Number.isFinite(mph) && mph >= 0 ? mph * MPH_TO_KPH : undefined;
+    const count = numeric(row["Total Volume"]);
+    const volume = Number.isFinite(count) && count >= 0 ? count * (3600 / PERIOD_SEC) : undefined;
+    if (!plausibleSpeed(speedKph) && volume === undefined) continue;
     // "Report Date" is a midnight timestamp ("2026-03-04T00:00:00"); the period
     // ending is the UK wall-clock time of day the row covers up to.
     const date = typeof row["Report Date"] === "string" ? row["Report Date"].slice(0, 10) : "";
@@ -58,36 +60,29 @@ export function parseWebtrisFlow(
     const sort = `${date}T${ending}`;
     const prev = latest.get(token);
     if (!prev || sort > prev.sort) {
-      const measuredAt = localTimestamp(sort, "Europe/London") ?? now;
-      latest.set(token, { speedKph: mph * MPH_TO_KPH, measuredAt, sort });
+      latest.set(token, {
+        ...(plausibleSpeed(speedKph) ? { speedKph } : {}),
+        ...(volume !== undefined ? { volume } : {}),
+        at: localTimestamp(sort, "Europe/London"),
+        sort,
+      });
     }
   }
 
-  const flows: RoadFlow[] = [];
+  const readings: FlowReading[] = [];
   for (const [token, v] of latest) {
-    const geom = siteMap?.get(token);
-    if (!geom) continue;
-    flows.push({
-      id: `${src.id}:${token}`,
-      source: src.id,
-      sourceFormat: "webtris",
-      domain: "roads",
-      kind: "measurement",
-      metric: "flow",
-      value: v.speedKph,
-      unit: "km/h",
-      level: "unknown",
-      aggregation: "live",
-      status: "active",
-      geometry: geom,
+    const site = sites?.get(token);
+    if (!site) continue;
+    readings.push({
+      site: token,
+      geometry: site.geometry,
+      ...(v.at !== undefined ? { at: v.at } : {}),
+      periodSec: PERIOD_SEC,
       los: "unknown",
-      speedKph: v.speedKph,
-      site: { id: token },
-      origin,
-      dataUpdatedAt: v.measuredAt,
-      fetchedAt: now,
-      isStale: false,
+      ...(v.speedKph !== undefined ? { speedKph: v.speedKph } : {}),
+      ...(v.volume !== undefined ? { volume: v.volume } : {}),
+      ...(site.name !== undefined ? { name: site.name, nameLang: "en" } : {}),
     });
   }
-  return { flows, events: [] };
+  return { readings };
 }

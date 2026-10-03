@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseTurinFlow } from "../flow-turin.js";
-import type { SourceDescriptor } from "../types.js";
+import { flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const src = {
-  id: "it-turin",
-  attribution: "5T / Città di Torino",
-  country: "IT",
-  license: "CC-BY-4.0",
-} as SourceDescriptor;
+const FEED = "it-turin";
+const feed = flowFeed(FEED);
 
 const XML = `<?xml version="1.0" encoding="utf-8"?>
 <traffic_data xmlns="https://simone.5t.torino.it/ns/traffic_data.xsd" generation_time="2026-07-10T18:00:03.516Z">
@@ -15,19 +10,23 @@ const XML = `<?xml version="1.0" encoding="utf-8"?>
   <FDT_data lcd1="40121" Road_name="Corso Regina Margherita(TO)" direction="positive" lat="45.096231" lng="7.625643" accuracy="0" period="5"><speedflow flow="0" speed="0"/></FDT_data>
 </traffic_data>`;
 
-describe("parseTurinFlow", () => {
-  it("emits an inline-Point flow with km/h speed and drops accuracy=0 detectors", () => {
-    const { flows } = parseTurinFlow(XML, src);
-    expect(flows).toHaveLength(1);
-    expect(flows[0]!.id).toBe("it-turin:39983");
-    expect(flows[0]!.sourceFormat).toBe("fdt");
-    expect(flows[0]!.speedKph).toBe(54.5);
-    expect(flows[0]!.direction).toBe("positive");
-    expect(flows[0]!.geometry).toEqual({ type: "Point", coordinates: [7.6225, 45.0507] });
-    expect(flows[0]!.dataUpdatedAt).toBe("2026-07-10T18:00:03.516Z");
+describe("Turin FDT", () => {
+  it("places the detector at its inline point with its km/h speed, dropping accuracy=0 detectors", () => {
+    const out = flows(feed, XML);
+    expect(siteIds(out, FEED)).toEqual(["39983"]);
+    expect(value(out, FEED, "39983", "traffic.speed")).toBe(54.5);
+    const location = site(out, FEED, "39983")!["location"] as {
+      geometry: unknown;
+      direction: unknown;
+    };
+    expect(location.geometry).toEqual({ type: "Point", coordinates: [7.6225, 45.0507] });
+    expect(location.direction).toEqual({ value: "positive", basis: "alert_c" });
+    expect(readings(out, FEED, "39983", "traffic.speed")[0]!["phenomenonTime"]).toMatchObject({
+      end: "2026-07-10T18:00:03.516Z",
+    });
   });
 
-  it("flags a hard parse failure", () => {
-    expect(parseTurinFlow("not xml <", src).failed).toBe(true);
+  it("refuses an unreadable body as a hard parse failure", () => {
+    expect(() => flows(feed, "not xml <")).toThrow("hard parse failure");
   });
 });

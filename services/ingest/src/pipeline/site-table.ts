@@ -9,7 +9,7 @@ import {
   resolvedEnv,
   resolveUrlTemplate,
 } from "@openconditions/ingest-framework";
-import type { FeedSource, SiteGeometry, SiteTableParser } from "@openconditions/roads";
+import type { FeedSource, FlowSites, SiteTableParser } from "@openconditions/roads";
 import { createPredefinedLocationsParser, createSiteTableParser } from "@openconditions/roads";
 import { digestOnlyTee, type StreamTee, type StreamTeeFactory } from "../raw/stream-tee.js";
 import { withStreamRetry } from "./stream-retry.js";
@@ -23,7 +23,7 @@ const MAX_DECOMPRESSED_BYTES = Number(
 );
 
 interface CacheEntry {
-  map: Map<string, SiteGeometry>;
+  map: FlowSites;
   fetchedAt: number;
 }
 
@@ -63,7 +63,7 @@ async function streamIntoParser(
   gzip: boolean,
   makeParser: () => SiteTableParser,
   { tee, finish }: StreamTee,
-): Promise<Map<string, SiteGeometry>> {
+): Promise<FlowSites> {
   const parser = makeParser();
   // `.pipe()` does not forward the source's errors to the gunzip stream, so a
   // mid-stream socket drop on the (multi-hundred-MB) download would surface as an
@@ -97,14 +97,15 @@ async function streamIntoParser(
 }
 
 /**
- * Loads and parses a feed's DATEX II site table into an id→Geometry map, caching
- * the result in-process so a large (multi-hundred-MB) table is not refetched on
+ * Loads and parses a feed's DATEX II site table into its sites by id
+ * (geometry, name, lane count, equipment and per-index channels), caching the
+ * result in-process so a large (multi-hundred-MB) table is not refetched on
  * every (e.g. 60 s) ingest run.
  *
  * The fetch → gunzip → parse path is fully streaming: the 362 MB NDW site table
- * is never held in memory as a whole — only the resolved id→Geometry map (tens
- * of MB) survives the call. Returns undefined when the feed declares no site
- * table or when the fetch/parse fails with no usable cache — in which case the
+ * is never held in memory as a whole — only the resolved sites (tens of MB)
+ * survive the call. Returns undefined when the feed declares no site table or
+ * when the fetch/parse fails with no usable cache — in which case the
  * measured-data parser simply lacks external geometry and skips sites it cannot
  * resolve, never crashing the run.
  */
@@ -113,7 +114,7 @@ export async function loadSiteTable(
   streamFactory: SiteTableStreamFactory = defaultStreamFactory,
   now: () => number = Date.now,
   teeFor: StreamTeeFactory = digestOnlyTee,
-): Promise<Map<string, SiteGeometry> | undefined> {
+): Promise<FlowSites | undefined> {
   const table = src.siteTable;
   if (!table) return undefined;
 

@@ -1,12 +1,13 @@
 import type {
+  Attribution,
+  Confidence,
+  Fuzziness,
+  GeoJsonGeometry,
   LineStringGeometry,
-  Measurement,
   MultiLineStringGeometry,
-  Observation,
-  PointGeometry,
   Severity,
 } from "@openconditions/core";
-import type { Text, Validity } from "@openconditions/model";
+import type { Schedule, Text, Validity } from "@openconditions/model";
 import type { RoadClassification, RoadRestrictionDetailsV1 } from "@openconditions/model-roads";
 
 /**
@@ -201,25 +202,36 @@ export interface SituationHints {
 }
 
 /**
- * What a flow parse record says about the measurement site behind it, beyond
- * the old fields: the site is the feature, the record one reading of it.
- */
-export interface FlowSiteHints {
-  /** The site's source-local id; every reading of one site shares it. */
-  id: string;
-  /** The stream within the site when the source reports directions separately (its own numbering). */
-  channel?: string;
-  /** Set when `los` was computed from speed and free-flow speed rather than stated by the source. */
-  losDerived?: true;
-}
-
-/**
  * A parser's intermediate record of one road event, before the situation
- * assembler turns it into a model situation.
+ * assembler turns it into a model situation. It is local to this package: no
+ * other package reads it.
  */
-export interface RoadEvent extends Observation {
+export interface RoadEvent {
+  /** The source-local record id. */
+  id: string;
+  source: string;
+  /** The wire format the parser read. */
+  sourceFormat: string;
   kind: "event";
   domain: "roads";
+  geometry: GeoJsonGeometry;
+  /** How precisely the geometry is known (default `exact`). */
+  fuzziness?: Fuzziness;
+  status: "active" | "inactive" | "archived" | "cancelled";
+  validFrom?: string | null;
+  validTo?: string | null;
+  schedule?: Schedule[];
+  confidence?: Confidence;
+  /** A forecast condition (Autobahn `future`), not one in effect now. */
+  isForecast?: boolean;
+  label?: string;
+  origin: { kind: "feed"; attribution: Attribution };
+  /** The publisher's record time, else the fetch time. */
+  dataUpdatedAt: string;
+  fetchedAt: string;
+  expiresAt?: string;
+  isStale: boolean;
+  relatedIds?: string[];
   situation?: SituationHints;
   type: RoadEventType;
   subtype?: string;
@@ -303,9 +315,8 @@ export interface RoadEvent extends Observation {
     external?: { system: string; code: string };
     linear?: unknown;
   };
-  /** The original provider record, verbatim — a lossless passthrough so no
-   * source field is ever dropped, even if not (yet) mapped to a typed field.
-   * Persisted under `attributes.sourceRaw`. */
+  /** The original provider record, verbatim. The situation assembler does not
+   * store it: the raw payload archive keeps the whole response for replay. */
   sourceRaw?: Record<string, unknown>;
   /**
    * Set when the geometry did not come from the feed but was derived from a TMC
@@ -329,32 +340,8 @@ export interface RoadEvent extends Observation {
   };
 }
 
-/** Provenance of a resolved free-flow baseline; matches sensor_baseline.method. */
+/** Provenance of a free-flow baseline behind a derived congestion situation. */
 export type BaselineMethod = "native" | "derived" | "osm_maxspeed";
-
-export interface RoadFlow extends Measurement {
-  domain: "roads";
-  metric: "flow";
-  site?: FlowSiteHints;
-  geometry: PointGeometry | LineStringGeometry;
-  los: "free_flow" | "heavy" | "queuing" | "stationary" | "blocked" | "unknown";
-  speedKph?: number;
-  freeFlowKph?: number;
-  /**
-   * Which provenance produced freeFlowKph (native > derived > osm_maxspeed),
-   * independent of how los was resolved. Unset only when no baseline (inline
-   * feed reference or DB-resolved) was applied.
-   */
-  freeFlowSource?: BaselineMethod;
-  /** Carriageway direction where the feed carries it; unset otherwise. */
-  direction?: string;
-  speedRatio?: number;
-  delaySeconds?: number;
-  jamFactor?: number;
-  /** Traffic volume q in vehicles per hour, where the feed reports it (DATEX
-   * TrafficFlow / vehicleFlowRate). Independent of speed/los. */
-  volume?: number;
-}
 
 /**
  * A RoadEvent that carries an OpenLR reference but whose geometry has not yet
@@ -370,21 +357,3 @@ export type UnresolvedRoadEvent = Omit<RoadEvent, "geometry"> & {
   geometry?: undefined;
   externalRefs: NonNullable<RoadEvent["externalRefs"]> & { openlr: string };
 };
-
-/**
- * Map flow-specific fields from a RoadFlow measurement into a plain object for
- * the store's `attributes` JSONB column (metric/value/level/unit/aggregation
- * go to typed columns).
- */
-export function roadFlowAttributes(flow: RoadFlow): Record<string, unknown> {
-  const attrs: Record<string, unknown> = { los: flow.los };
-  if (flow.speedKph != null) attrs["speedKph"] = flow.speedKph;
-  if (flow.freeFlowKph != null) attrs["freeFlowKph"] = flow.freeFlowKph;
-  if (flow.freeFlowSource != null) attrs["freeFlowSource"] = flow.freeFlowSource;
-  if (flow.direction != null) attrs["direction"] = flow.direction;
-  if (flow.speedRatio != null) attrs["speedRatio"] = flow.speedRatio;
-  if (flow.delaySeconds != null) attrs["delaySeconds"] = flow.delaySeconds;
-  if (flow.jamFactor != null) attrs["jamFactor"] = flow.jamFactor;
-  if (flow.volume != null) attrs["volume"] = flow.volume;
-  return attrs;
-}

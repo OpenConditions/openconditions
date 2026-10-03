@@ -1,13 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseHkDetectors, parseHkRawFlow } from "../hk.js";
-import type { SourceDescriptor } from "../types.js";
+import { parseHkDetectors } from "../hk.js";
+import { flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const src = {
-  id: "hk-td",
-  attribution: "Transport Department, HKSAR",
-  country: "HK",
-  license: "HK-Gov-Open-Data",
-} as SourceDescriptor;
+const FEED = "hk-td";
+const feed = flowFeed(FEED);
 
 // Leading ﻿ mirrors the live file's UTF-8 BOM.
 const CSV = `﻿AID_ID_Number,District,Road_EN,Road_TC,Road_SC,Easting,Northing,Latitude,Longitude,Direction,Rotation
@@ -32,31 +28,39 @@ const XML = `<?xml version="1.0" encoding="utf-8"?>
 </periods></raw_speed_volume_list>`;
 
 describe("parseHkDetectors", () => {
-  it("maps AID id → WGS84 Point, strips the BOM, and drops out-of-bounds rows", () => {
-    const map = parseHkDetectors(CSV);
-    expect(map.size).toBe(1);
-    expect(map.get("AID01101")).toEqual({ type: "Point", coordinates: [114.152525, 22.248091] });
+  it("places each AID detector at its WGS84 point with its road, strips the BOM, drops out-of-bounds rows", () => {
+    const sites = parseHkDetectors(CSV);
+    expect(sites.size).toBe(1);
+    expect(sites.get("AID01101")).toEqual({
+      geometry: { type: "Point", coordinates: [114.152525, 22.248091] },
+      name: "Aberdeen Praya Road",
+      nameLang: "en",
+    });
   });
 });
 
-describe("parseHkRawFlow", () => {
+describe("HK TD raw speed and volume", () => {
   it("uses the latest period and the volume-weighted mean of valid lanes", () => {
-    const siteMap = parseHkDetectors(CSV);
-    const { flows } = parseHkRawFlow(XML, src, siteMap);
-    expect(flows).toHaveLength(1);
-    expect(flows[0]!.id).toBe("hk-td:AID01101");
+    const out = flows(feed, XML, parseHkDetectors(CSV));
+    expect(siteIds(out, FEED)).toEqual(["AID01101"]);
     // Latest period: (100·3 + 60·1) / (3+1) = 90; the valid=N lane is ignored.
-    expect(flows[0]!.speedKph).toBe(90);
-    expect(flows[0]!.geometry).toEqual({ type: "Point", coordinates: [114.152525, 22.248091] });
-    // The document date plus the period end, in Hong Kong time.
-    expect(flows[0]!.dataUpdatedAt).toBe("2026-09-19T17:55:30.000Z");
+    expect(value(out, FEED, "AID01101", "traffic.speed")).toBe(90);
+    expect((site(out, FEED, "AID01101")!["location"] as { geometry: unknown }).geometry).toEqual({
+      type: "Point",
+      coordinates: [114.152525, 22.248091],
+    });
+    // The document date plus the period, in Hong Kong time.
+    expect(readings(out, FEED, "AID01101", "traffic.speed")[0]!["phenomenonTime"]).toEqual({
+      start: "2026-09-19T17:55:00.000Z",
+      end: "2026-09-19T17:55:30.000Z",
+    });
   });
 
   it("skips detectors with no geometry", () => {
-    expect(parseHkRawFlow(XML, src, new Map()).flows).toHaveLength(0);
+    expect(flows(feed, XML, new Map()).features).toEqual([]);
   });
 
-  it("flags a hard parse failure", () => {
-    expect(parseHkRawFlow("nope <", src, new Map()).failed).toBe(true);
+  it("refuses an unreadable body as a hard parse failure", () => {
+    expect(() => flows(feed, "nope <", new Map())).toThrow("hard parse failure");
   });
 });

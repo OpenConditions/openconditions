@@ -38,8 +38,8 @@ function resolveMigrationsFolder(): string {
  *
  * The PostGIS extension and the `conditions` schema are created here, not in a
  * migration: drizzle-kit cannot model `CREATE EXTENSION`, and the generated
- * migrations reference `conditions.observations` + the `geometry` type, both of
- * which must already exist before the first migration runs.
+ * migrations reference the `conditions` schema and the `geometry` type, both
+ * of which must already exist before the first migration runs.
  */
 export async function runMigrations(connectionString: string): Promise<void> {
   const migrationsFolder = resolveMigrationsFolder();

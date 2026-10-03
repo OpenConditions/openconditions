@@ -1,22 +1,28 @@
 /**
  * Buffered parser for a DATEX II ElaboratedDataPublication as published by the
- * Autobahn GmbH BAB detector feeds: dynamic per-minute speed (v), volume (q) and
- * traffic status, one `elaboratedData` item per basicData type (and per lane for
- * the fahrstreifenfein variant), joined to geometry from a companion
- * PredefinedLocations siteMap (see predefined-locations.ts) or an inline
- * location. Items are grouped by their `predefinedLocationReference` id and one
- * RoadFlow is emitted per site, reusing the shared los/speed-ratio rules in
- * buildMeasuredSiteFlow.
+ * Autobahn GmbH BAB detector feeds: per-minute speed (v), volume (q) and
+ * traffic status, one `elaboratedData` item per basicData type, vehicle class
+ * and (for the fahrstreifenfein variant) lane, joined to geometry from a
+ * companion PredefinedLocations table or an inline location. Items are
+ * grouped by their `predefinedLocationReference` id into one site reading;
+ * a value stated for one vehicle class is also kept as a channel of the site.
  */
-import type { LineString, Point } from "geojson";
+import type { Point } from "geojson";
+import type { FlowContext, FlowSites } from "./flow-output.js";
 import {
-  ABSURD_SPEED_KPH,
-  buildMeasuredSiteFlow,
-  type FlowGeometry,
-  type FlowParseResult,
-  makeOrigin,
-} from "./flow.js";
-import type { RoadEvent, RoadFlow } from "./model.js";
+  type ChannelReading,
+  type ChannelSpec,
+  datexVehicleClass,
+  type FlowParse,
+  type FlowReading,
+  laneIndex,
+  measuredReading,
+  plausibleSpeed,
+  SPEED,
+  siteSpeed,
+  siteVolume,
+  VOLUME,
+} from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
 import type { XmlObject } from "./xml.js";
 import {
@@ -32,11 +38,12 @@ import {
 /** Per-site accumulator across the elaboratedData items that share a location. */
 interface SiteAcc {
   siteId: string;
-  bestSpeed?: number;
-  bestSpeedInputs: number;
-  volume?: number;
+  speeds: { speed: number; count?: number; vehicleClass?: string }[];
+  flows: { rate: number; vehicleClass?: string }[];
+  /** The class streams the document carries, whether or not their value counts this interval. */
+  streams: Map<string, { property: string; vehicleClass: string }>;
   trafficStatus?: string;
-  inlineGeom?: FlowGeometry;
+  inlineGeom?: Point;
   measuredAt?: string;
 }
 
@@ -95,7 +102,7 @@ function locationRefId(node: XmlObject): string | undefined {
 }
 
 /** Inline point geometry directly on an item (Bayern), if present. WGS84 lat/lon. */
-function inlinePoint(node: XmlObject): Point | LineString | undefined {
+function inlinePoint(node: XmlObject): Point | undefined {
   const find = (n: unknown): Point | undefined => {
     if (Array.isArray(n)) {
       for (const it of n) {
@@ -127,11 +134,20 @@ function num(v: unknown): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+/** The vehicle class an item states (`forVehiclesWithCharacteristicsOf`), as a model class. */
+function vehicleClassOf(basic: XmlObject): string | undefined {
+  const of = getXmlChild(basic, "forVehiclesWithCharacteristicsOf");
+  return of ? datexVehicleClass(getXmlChildText(of, "vehicleType")) : undefined;
+}
+
+const SHORT: Record<string, string> = { [SPEED]: "speed", [VOLUME]: "volume" };
+
 export function parseElaboratedFlow(
   input: string | Buffer,
   src: SourceDescriptor,
-  siteMap?: Map<string, FlowGeometry>,
-): FlowParseResult {
+  sites: FlowSites | undefined,
+  _ctx: FlowContext,
+): FlowParse {
   let doc: ReturnType<typeof parseXmlDocument>;
   try {
     doc = parseXmlDocument(input, {
@@ -142,14 +158,12 @@ export function parseElaboratedFlow(
     });
   } catch (err) {
     console.warn("[datex-elaborated] failed to parse XML:", err);
-    return { flows: [], events: [], failed: true };
+    return { readings: [], failed: true };
   }
 
   const publication = findElaboratedPublication(doc);
-  if (!publication) return { flows: [], events: [], failed: true };
+  if (!publication) return { readings: [], failed: true };
 
-  const now = new Date().toISOString();
-  const origin = makeOrigin(src);
   const items = xmlNodeToArray(publication["elaboratedData"]);
   const acc = new Map<string, SiteAcc>();
 
@@ -159,9 +173,15 @@ export function parseElaboratedFlow(
     for (const basic of basics) {
       const siteId = locationRefId(item) ?? locationRefId(basic);
       if (!siteId) continue;
-      const cur = acc.get(siteId) ?? { siteId, bestSpeedInputs: -1 };
-
+      const cur: SiteAcc = acc.get(siteId) ?? { siteId, speeds: [], flows: [], streams: new Map() };
       const type = basicDataType(basic);
+      const vehicleClass = vehicleClassOf(basic);
+      const classed = vehicleClass !== undefined ? { vehicleClass } : {};
+      const stream = (property: string) => {
+        if (vehicleClass !== undefined) {
+          cur.streams.set(`${SHORT[property]}:${vehicleClass}`, { property, vehicleClass });
+        }
+      };
       const measuredAt =
         getXmlChildText(basic, "measurementOrCalculationTime") ??
         getXmlChildText(item, "measurementOrCalculationTime");
@@ -170,83 +190,88 @@ export function parseElaboratedFlow(
       if (type === "TrafficSpeed" || getXmlChild(basic, "averageVehicleSpeed")) {
         const sp = getXmlChild(basic, "averageVehicleSpeed");
         if (sp) {
-          const dataError = xmlText(sp["dataError"]);
+          stream(SPEED);
           const speed = num(sp["speed"]);
-          // Default to 1 when the attribute is absent; a count EXPLICITLY <= 0
-          // means "no vehicles observed this interval" (a no-data zero) and must
-          // never win — mirrors parseDatexMeasuredData's guard in flow.ts.
+          // An absent count is "not published"; a count stated as <= 0 means
+          // no vehicles this interval, and its speed is no reading.
           const inputRaw = sp["@_numberOfInputValuesUsed"];
-          const inputCount = inputRaw != null ? Number(xmlText(inputRaw) ?? inputRaw) : 1;
-          const usableCount = Number.isFinite(inputCount) ? inputCount : 1;
+          const count = inputRaw != null ? Number(xmlText(inputRaw) ?? inputRaw) : undefined;
           if (
-            dataError !== "true" &&
-            speed != null &&
-            speed >= 0 &&
-            speed < ABSURD_SPEED_KPH &&
-            usableCount > 0 &&
-            usableCount > cur.bestSpeedInputs
+            xmlText(sp["dataError"]) !== "true" &&
+            plausibleSpeed(speed) &&
+            (count === undefined || !Number.isFinite(count) || count > 0)
           ) {
-            cur.bestSpeed = speed;
-            cur.bestSpeedInputs = usableCount;
+            cur.speeds.push({
+              speed,
+              ...(count !== undefined && Number.isFinite(count) ? { count } : {}),
+              ...classed,
+            });
           }
         }
       }
       if (type === "TrafficFlow" || getXmlChild(basic, "vehicleFlow")) {
         const vf = getXmlChild(basic, "vehicleFlow");
-        // Skip a publisher-flagged invalid rate, mirroring the speed path's
-        // dataError guard — otherwise a bad-but-first reading is published AND
-        // (via `??=`) shadows a valid later reading for the same site.
-        const dataError = xmlText(vf?.["dataError"]);
-        // Prefer the mainCarriageway/aggregate rate; summing every TrafficFlow
-        // item risks double-counting per-lane + carriageway totals. Task 12
-        // validates the real shape; provisional behavior: take the first rate
-        // seen per site (do not sum).
+        stream(VOLUME);
         const rate = vf
           ? num(vf["vehicleFlowRate"])
           : num(getXmlChildText(basic, "vehicleFlowRate"));
-        if (dataError !== "true" && rate != null) cur.volume ??= rate;
+        // A publisher-flagged invalid rate is no reading.
+        if (xmlText(vf?.["dataError"]) !== "true" && rate != null && rate >= 0) {
+          cur.flows.push({ rate, ...classed });
+        }
       }
-      // trafficStatus arrives either nested (`<trafficStatus><trafficStatusValue>
-      // …</trafficStatusValue></trafficStatus>`) or as a plain-text leaf
-      // (`<trafficStatus>…</trafficStatus>`) — the DATEX v2 enum-member form NDW
-      // uses. getXmlChild returns undefined for the leaf, so read it via
-      // getXmlChildText (see the xml.ts pitfall note) or the leaf would be dropped.
+      // trafficStatus arrives nested (`<trafficStatus><trafficStatusValue>`)
+      // or as a plain-text leaf, the DATEX v2 enum-member form.
       const statusValue =
         xmlText(getXmlChild(basic, "trafficStatus")?.["trafficStatusValue"]) ??
         getXmlChildText(basic, "trafficStatus");
-      if (type === "TrafficStatus" || statusValue != null) {
-        cur.trafficStatus ??= statusValue;
-      }
+      if (type === "TrafficStatus" || statusValue != null) cur.trafficStatus ??= statusValue;
       cur.inlineGeom ??= inlinePoint(basic) ?? inlinePoint(item);
       acc.set(siteId, cur);
     }
   }
 
-  const flows: RoadFlow[] = [];
-  const events: RoadEvent[] = [];
+  const readings: FlowReading[] = [];
   for (const site of acc.values()) {
-    const geom = site.inlineGeom ?? siteMap?.get(site.siteId) ?? null;
-    const built = buildMeasuredSiteFlow(
-      {
-        siteId: site.siteId,
-        measuredAt: site.measuredAt ?? now,
-        geom,
-        ...(site.bestSpeed != null ? { speedKph: site.bestSpeed } : {}),
-        ...(site.trafficStatus != null ? { trafficStatus: site.trafficStatus } : {}),
-      },
-      src,
-      origin,
-      now,
-    );
-    if (!built) continue;
-    const flow: RoadFlow = {
-      ...built.flow,
-      sourceFormat: "datex-elaborated",
-      ...(site.volume != null ? { volume: site.volume } : {}),
+    const meta = sites?.get(site.siteId);
+    const lane = laneIndex(meta?.lane, src, meta?.laneCount);
+    const channels: ChannelReading[] = [];
+    const add = (property: string, value: number, vehicleClass: string | undefined) => {
+      if (vehicleClass === undefined) return;
+      channels.push({
+        key: `${SHORT[property]}:${vehicleClass}`,
+        property,
+        value,
+        vehicleClass,
+        ...(lane !== undefined ? { lane } : {}),
+      });
     };
-    flows.push(flow);
-    if (built.event) events.push({ ...built.event, sourceFormat: "datex-elaborated" });
+    for (const s of site.speeds) add(SPEED, s.speed, s.vehicleClass);
+    for (const f of site.flows) add(VOLUME, f.rate, f.vehicleClass);
+    // Every class stream the document carries is a channel of the site, also
+    // one with no vehicles this interval: the site stays the same feature.
+    const declaredChannels: ChannelSpec[] = [...site.streams].map(([key, s]) => ({
+      key,
+      property: s.property,
+      vehicleClass: s.vehicleClass,
+      ...(lane !== undefined ? { lane } : {}),
+    }));
+    const speed = siteSpeed(site.speeds);
+    const volume = siteVolume(site.flows);
+    const reading = measuredReading({
+      site: site.siteId,
+      geometry: site.inlineGeom ?? meta?.geometry,
+      ...(site.measuredAt !== undefined ? { at: site.measuredAt } : {}),
+      ...(speed !== undefined ? { speedKph: speed.speedKph } : {}),
+      ...(speed?.sampleCount !== undefined ? { sampleCount: speed.sampleCount } : {}),
+      ...(site.trafficStatus !== undefined ? { trafficStatus: site.trafficStatus } : {}),
+      ...(volume !== undefined ? { volume } : {}),
+      ...(channels.length > 0 ? { channels } : {}),
+      ...(declaredChannels.length > 0 ? { declaredChannels } : {}),
+      ...(meta?.name !== undefined ? { name: meta.name } : {}),
+      ...(meta?.nameLang !== undefined ? { nameLang: meta.nameLang } : {}),
+    });
+    if (reading) readings.push(reading);
   }
-
-  return { flows, events };
+  return { readings };
 }

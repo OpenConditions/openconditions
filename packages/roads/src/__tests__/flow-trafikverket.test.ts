@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { parseTrafikverketFlow } from "../flow-trafikverket.js";
-import type { SourceDescriptor } from "../types.js";
+import { flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const src = {
-  id: "se-trafikverket-flow",
-  attribution: "Trafikverket",
-  country: "SE",
-  license: "CC0-1.0",
-} as SourceDescriptor;
+const FEED = "se-trafikverket-flow";
+const feed = flowFeed(FEED);
 
 const payload = JSON.stringify({
   RESPONSE: {
@@ -41,24 +36,24 @@ const payload = JSON.stringify({
   },
 });
 
-describe("parseTrafikverketFlow", () => {
-  it("emits a Point flow with km/h speed from the inline WGS84 geometry", () => {
-    const { flows, events } = parseTrafikverketFlow(payload, src);
-    expect(flows.map((f) => f.id)).toEqual(["se-trafikverket-flow:TMS-1"]);
-    expect(flows[0]!.geometry).toEqual({ type: "Point", coordinates: [18.06, 59.33] });
-    expect(flows[0]!.speedKph).toBe(92);
-    expect(flows[0]!.los).toBe("unknown");
-    expect(events).toEqual([]);
+describe("Trafikverket TrafficFlow", () => {
+  it("places the site at the inline WGS84 point with its km/h speed and flow rate", () => {
+    const out = flows(feed, payload);
+    expect((site(out, FEED, "TMS-1")!["location"] as { geometry: unknown }).geometry).toEqual({
+      type: "Point",
+      coordinates: [18.06, 59.33],
+    });
+    expect(value(out, FEED, "TMS-1", "traffic.speed")).toBe(92);
+    expect(value(out, FEED, "TMS-1", "traffic.volume")).toBe(800);
+    expect(readings(out, FEED, "TMS-1", "traffic.los")).toEqual([]);
+    expect(out.situations).toEqual([]);
   });
 
-  it("skips records missing speed or geometry", () => {
-    const { flows } = parseTrafikverketFlow(payload, src);
-    expect(flows.some((f) => f.id === "se-trafikverket-flow:TMS-2")).toBe(false);
-    expect(flows.some((f) => f.id === "se-trafikverket-flow:TMS-3")).toBe(false);
-    expect(flows.some((f) => f.id === "se-trafikverket-flow:TMS-4")).toBe(false);
+  it("skips records with neither a usable speed nor a flow rate, or without geometry", () => {
+    expect(siteIds(flows(feed, payload), FEED)).toEqual(["TMS-1", "TMS-3"]);
   });
 
-  it("returns empty on malformed input", () => {
-    expect(parseTrafikverketFlow("x", src)).toEqual({ flows: [], events: [] });
+  it("drafts nothing for malformed input", () => {
+    expect(flows(feed, "x")).toEqual({ features: [], observations: [], situations: [] });
   });
 });

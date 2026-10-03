@@ -315,7 +315,7 @@
       },
       "canonicalId": "3fba68b17ee283d6c07899ae2195a1d18d19cb033dd7a092d45d10eca3adb643",
       "domain": "roads",
-      "contentHash": "6f34d27a3937e2b2f5a4f7466eb8a34ecd7d8f7d4ea9c6ee506dd74e43895e4b",
+      "contentHash": "e4a371b55ec720a968a8a80a1263b4310678a969a261c8b6f80d9ecf0f89df22",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
@@ -329,7 +329,7 @@
       },
       "validity": {
         "status": "active",
-        "start": "2026-03-04T14:30:00Z"
+        "start": "2026-03-04T14:30:00.000Z"
       },
       "effects": [],
       "details": {

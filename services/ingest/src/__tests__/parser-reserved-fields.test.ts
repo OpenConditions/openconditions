@@ -5,7 +5,8 @@ import { describe, expect, it } from "vitest";
 
 /**
  * Trust-boundary guard: the commons provenance/privacy fields are set in exactly
- * ONE place (normalizeObservation). A parser that assigns one of them — directly
+ * ONE place, the write seam (`sealRecord`, run by the storage writer when it
+ * seals a draft). A parser that assigns one of them — directly
  * or via an object literal — would smuggle authority past the seam, so this test
  * scans every parser/catalog source under packages/roads/src and fails if any of
  * them names a reserved field on the left of a `:` or `=`.
@@ -35,9 +36,8 @@ const ROADS_SRC = resolve(
 
 /**
  * Only test files may legitimately name a reserved field. model.ts/types.ts are
- * NOT exempt: the roads model reuses core's Observation type and declares none of
- * these fields, so it must stay clean too — the seam (normalizeObservation) is the
- * one writer.
+ * NOT exempt: the roads model declares none of these fields, so it must stay
+ * clean too — the write seam is the one writer.
  */
 function isAllowlisted(path: string): boolean {
   return path.includes("__tests__") || path.includes(".test.");
@@ -65,8 +65,8 @@ describe("parsers never assign commons provenance fields", () => {
     }
     expect(
       offenders,
-      `A parser assigns a reserved commons field. These are set centrally in ` +
-        `normalizeObservation (see packages/normalize/src/normalize.ts), never by a parser:\n` +
+      `A parser assigns a reserved commons field. These are set centrally when the ` +
+        `writer seals a draft (sealRecord in @openconditions/model), never by a parser:\n` +
         offenders.join("\n"),
     ).toEqual([]);
   });

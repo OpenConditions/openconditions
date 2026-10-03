@@ -1,19 +1,27 @@
-import type { FlowParseResult } from "./flow.js";
-import { makeOrigin } from "./flow.js";
-import type { RoadFlow } from "./model.js";
-import type { SiteGeometry } from "./siteTable.js";
+import type { DirectionRef } from "@openconditions/model";
+import type { FlowContext, FlowSites } from "./flow-output.js";
+import { type FlowParse, type FlowReading, parseJson, plausibleSpeed } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
 
+/** The sliding five-minute sensors, by direction; their value is already an hourly rate for volumes. */
 const SPEED_SENSORS: Record<string, "1" | "2"> = {
   KESKINOPEUS_5MIN_LIUKUVA_SUUNTA1: "1",
   KESKINOPEUS_5MIN_LIUKUVA_SUUNTA2: "2",
 };
+const VOLUME_SENSORS: Record<string, "1" | "2"> = {
+  OHITUKSET_5MIN_LIUKUVA_SUUNTA1: "1",
+  OHITUKSET_5MIN_LIUKUVA_SUUNTA2: "2",
+};
+const SLIDING_PERIOD_SEC = 300;
+
+/** Digitraffic direction 1 runs with increasing road address, direction 2 against it. */
+const DIRECTIONS: Record<"1" | "2", DirectionRef> = {
+  "1": { value: "positive", basis: "road_reference" },
+  "2": { value: "negative", basis: "road_reference" },
+};
 
 interface SensorValue {
   name?: unknown;
-  // Digitraffic's TMS sensorValues entries carry the reading in `value`
-  // (e.g. {"name":"KESKINOPEUS_5MIN_LIUKUVA_SUUNTA1","value":98}), not
-  // `sensorValue`.
   value?: unknown;
   measuredTime?: unknown;
 }
@@ -24,69 +32,72 @@ interface Station {
 }
 
 /**
- * Parse a Fintraffic TMS `/stations/data` JSON payload into RoadFlow
- * measurements — one per station direction carrying a 5-minute sliding-average
- * speed. Geometry comes from the injected station registry map keyed by station
- * id. los is left "unknown"; the baseline enrichment classifies it.
+ * Parse a Fintraffic TMS `/stations/data` JSON payload. Each direction of a
+ * station is its own measurement site (`<station>-<direction>`), as its
+ * native free-flow constants are: the five-minute sliding average speed and
+ * the five-minute sliding passing count (vehicles per hour) of that
+ * direction. Geometry and name come from the station registry. The level of
+ * service is left to the baseline enrichment.
  */
 export function parseFintrafficFlow(
   input: string | Buffer,
-  src: SourceDescriptor,
-  siteMap?: Map<string, SiteGeometry>,
-): FlowParseResult {
-  let payload: { stations?: unknown };
-  try {
-    payload = JSON.parse(Buffer.isBuffer(input) ? input.toString("utf8") : input);
-  } catch {
-    return { flows: [], events: [] };
+  _src: SourceDescriptor,
+  sites: FlowSites | undefined,
+  _ctx: FlowContext,
+): FlowParse {
+  const payload = parseJson(input) as { stations?: unknown } | undefined;
+  if (payload === undefined || payload === null || typeof payload !== "object") {
+    return { readings: [] };
   }
   const stations = payload.stations;
-  if (!Array.isArray(stations)) return { flows: [], events: [] };
+  if (!Array.isArray(stations)) return { readings: [] };
 
-  const flows: RoadFlow[] = [];
-  const now = new Date().toISOString();
-  const origin = makeOrigin(src);
-
+  const readings: FlowReading[] = [];
   for (const raw of stations as Station[]) {
     const stationId = raw?.id != null ? String(raw.id) : null;
     if (stationId == null) continue;
-    const geom = siteMap?.get(stationId);
-    if (!geom) continue;
+    const station = sites?.get(stationId);
+    if (!station) continue;
     const sensors = Array.isArray(raw.sensorValues) ? (raw.sensorValues as SensorValue[]) : [];
+    const timeOf = (s: SensorValue) =>
+      typeof s.measuredTime === "string"
+        ? s.measuredTime
+        : typeof raw.dataUpdatedTime === "string"
+          ? raw.dataUpdatedTime
+          : undefined;
+    const byDirection = new Map<"1" | "2", { speed?: number; volume?: number; at?: string }>();
     for (const s of sensors) {
-      const dir = typeof s.name === "string" ? SPEED_SENSORS[s.name] : undefined;
-      if (!dir) continue;
-      const speedKph = typeof s.value === "number" ? s.value : NaN;
-      if (!Number.isFinite(speedKph) || speedKph < 0) continue;
-      const measuredAt =
-        typeof s.measuredTime === "string"
-          ? s.measuredTime
-          : typeof raw.dataUpdatedTime === "string"
-            ? raw.dataUpdatedTime
-            : now;
-      flows.push({
-        id: `${src.id}:${stationId}-${dir}`,
-        source: src.id,
-        sourceFormat: "fintraffic-tms",
-        domain: "roads",
-        kind: "measurement",
-        metric: "flow",
-        value: speedKph,
-        unit: "km/h",
-        level: "unknown",
-        aggregation: "live",
-        status: "active",
-        geometry: geom,
+      const name = typeof s.name === "string" ? s.name : "";
+      const value = typeof s.value === "number" ? s.value : Number.NaN;
+      const speedDir = SPEED_SENSORS[name];
+      const volumeDir = VOLUME_SENSORS[name];
+      const dir = speedDir ?? volumeDir;
+      if (dir === undefined) continue;
+      const entry = byDirection.get(dir) ?? {};
+      if (speedDir !== undefined && plausibleSpeed(value)) {
+        entry.speed = value;
+        entry.at = timeOf(s) ?? entry.at;
+      } else if (volumeDir !== undefined && Number.isFinite(value) && value >= 0) {
+        entry.volume = value;
+        entry.at ??= timeOf(s);
+      }
+      byDirection.set(dir, entry);
+    }
+    for (const [dir, entry] of [...byDirection].sort(([a], [b]) => a.localeCompare(b))) {
+      if (entry.speed === undefined && entry.volume === undefined) continue;
+      readings.push({
+        site: `${stationId}-${dir}`,
+        geometry: station.geometry,
+        ...(entry.at !== undefined ? { at: entry.at } : {}),
+        periodSec: SLIDING_PERIOD_SEC,
         los: "unknown",
-        speedKph,
+        ...(entry.speed !== undefined ? { speedKph: entry.speed } : {}),
+        ...(entry.volume !== undefined ? { volume: entry.volume } : {}),
         direction: `SUUNTA${dir}`,
-        site: { id: stationId, channel: dir },
-        origin,
-        dataUpdatedAt: measuredAt,
-        fetchedAt: now,
-        isStale: false,
+        directionRef: DIRECTIONS[dir],
+        ...(station.name !== undefined ? { name: station.name, nameLang: "fi" } : {}),
       });
     }
   }
-  return { flows, events: [] };
+  return { readings };
 }

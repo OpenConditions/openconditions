@@ -22,6 +22,11 @@ export interface ObservationCounts {
   unchanged: number;
   /** Readings not kept as history because their retention window or the look-ahead does not reach them. */
   outsideRetention: number;
+  /**
+   * Readings kept as history in a period their property's rollup has already
+   * closed: they arrived after its lateness allowance and never reach it.
+   */
+  pastRollup: number;
 }
 
 /** The poll an observation came from, for its raw-payload reference. */
@@ -30,7 +35,7 @@ export interface PollRef {
   payloadHashes?: readonly string[];
 }
 
-const SERIES_COLUMNS: ColumnSpec[] = [
+export const SERIES_COLUMNS: ColumnSpec[] = [
   { name: "subject_key", type: "text" },
   { name: "property", type: "text" },
   { name: "qualifier_key", type: "text" },
@@ -57,7 +62,7 @@ const SERIES_COLUMNS: ColumnSpec[] = [
   { name: "updated_at", type: "timestamptz" },
 ];
 
-const SERIES_KEY = ["subject_key", "property", "qualifier_key", "source_id"];
+export const SERIES_KEY = ["subject_key", "property", "qualifier_key", "source_id"];
 
 const HISTORY_COLUMNS: ColumnSpec[] = [
   { name: "series_id", type: "bigint" },
@@ -104,9 +109,12 @@ interface Latest {
 
 /**
  * Writes one source's observations: each reading moves its series' latest
- * row when it is newer, and is kept as history as its property says — every
+ * row when it is newer (or corrects the reading in effect), and is kept as history as its property says — every
  * reading, only changes (`changeOnly`), or none (`latestOnly`, on-demand
- * rows). A reading identical to its series' latest is not written at all.
+ * rows, and readings about a component of a property that keeps no
+ * component history). A reading identical to its series' latest is not
+ * written at all. A history reading in a period the property's rollup has
+ * already closed is counted (`pastRollup`).
  * A reading its series' retention window or the partition look-ahead does
  * not reach is counted and kept from history; it still updates the latest
  * row when it is the newest. `stage` says whether the inputs are drafts to
@@ -120,7 +128,13 @@ export async function writeObservationsIn(
   rejected: Rejection[],
   stage: "draft" | "stored" = "draft",
 ): Promise<ObservationCounts> {
-  const counts: ObservationCounts = { latest: 0, history: 0, unchanged: 0, outsideRetention: 0 };
+  const counts: ObservationCounts = {
+    latest: 0,
+    history: 0,
+    unchanged: 0,
+    outsideRetention: 0,
+    pastRollup: 0,
+  };
   if (drafts.length === 0) return counts;
   const now = Date.parse(ctx.now);
 
@@ -191,6 +205,7 @@ export async function writeObservationsIn(
     );
   }
 
+  const frontiers = await rollupFrontiers(tx);
   const seriesRows: Rec[] = [];
   const history: { key: string; row: Rec }[] = [];
   for (const [k, { records }] of bySeries) {
@@ -200,12 +215,23 @@ export async function writeObservationsIn(
     let result = prev?.result;
     let since = prev?.since_at.toISOString();
     let newest: Rec | undefined;
-    const retentionDays = retentionDaysOf(property);
+    // A lane's or a vehicle class's readings of a property that keeps no
+    // component history move the latest row only: the site's own series
+    // carries the history, at a fraction of the rows.
+    const component = (records[0]!["subject"] as Rec)["componentKey"] !== undefined;
+    const retentionDays =
+      component && property.retention?.componentHistory === false
+        ? undefined
+        : retentionDaysOf(property);
+    const rollupPeriod = property.retention?.rollup?.period;
+    const frontier = rollupPeriod === undefined ? undefined : frontiers.get(rollupPeriod);
     for (const record of records) {
       const changed = result === undefined || !sameResult(result, record["result"]);
       const effective = effectiveFrom(record);
       if (changed) since = effective;
-      if (prev === undefined || Date.parse(effective) > prev.effective_from.getTime()) {
+      // A changed reading of the instant in effect is a correction of it (a
+      // baseline applied later, a source revising its value): it replaces it.
+      if (prev === undefined || Date.parse(effective) >= prev.effective_from.getTime()) {
         newest = { ...record, sinceAt: since };
       }
       if (
@@ -214,6 +240,7 @@ export async function writeObservationsIn(
         (changed || !property.retention?.changeOnly)
       ) {
         if (partitionCovers(retentionDays, startOf(record), now)) {
+          if (frontier !== undefined && startOf(record) < frontier) counts.pastRollup++;
           history.push({
             key: k,
             row: {
@@ -302,7 +329,7 @@ function effectiveFrom(record: Rec): string {
 }
 
 /** The latest row of a series, from the reading now in effect. */
-function seriesRowOf(
+export function seriesRowOf(
   record: Rec,
   property: PropertyEntry,
   retentionDays: number | undefined,
@@ -340,6 +367,13 @@ function seriesRowOf(
     retention_days: retentionDays ?? null,
     updated_at: now,
   };
+}
+
+/** How far each rollup period has finalized, in ms since the epoch. */
+async function rollupFrontiers(tx: Sql): Promise<Map<string, number>> {
+  const rows = await tx<{ period: string; finalized_before: Date }[]>`
+    SELECT period, finalized_before FROM conditions.observation_rollup_progress`;
+  return new Map(rows.map((r) => [r.period, r.finalized_before.getTime()]));
 }
 
 async function loadLatest(tx: Sql, keys: readonly SeriesKey[]): Promise<Map<string, Latest>> {

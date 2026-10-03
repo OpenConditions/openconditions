@@ -7,11 +7,78 @@
         <publicationTime>2026-06-24T11:00:00.000Z</publicationTime>
         <measurementSiteTable id="NDW01_MT" version="1716">
           <measurementSiteRecord id="PZH01_MST_0065_00" version="12">
+            <computationMethod>arithmeticAverageOfSamplesInATimePeriod</computationMethod>
+            <measurementEquipmentTypeUsed>
+              <values><value lang="nl">lus</value></values>
+            </measurementEquipmentTypeUsed>
             <measurementSiteName>
               <values><value lang="nl">N211 hmp 6.5 Re</value></values>
             </measurementSiteName>
-            <measurementSiteNumberOfLanes>1</measurementSiteNumberOfLanes>
+            <measurementSiteNumberOfLanes>2</measurementSiteNumberOfLanes>
             <measurementSide>northBound</measurementSide>
+            <measurementSpecificCharacteristics index="1">
+              <measurementSpecificCharacteristics>
+                <accuracy>95.0</accuracy>
+                <period>60.0</period>
+                <specificLane>lane1</specificLane>
+                <specificMeasurementValueType>trafficFlow</specificMeasurementValueType>
+                <specificVehicleCharacteristics><vehicleType>anyVehicle</vehicleType></specificVehicleCharacteristics>
+              </measurementSpecificCharacteristics>
+            </measurementSpecificCharacteristics>
+            <measurementSpecificCharacteristics index="3">
+              <measurementSpecificCharacteristics>
+                <accuracy>95.0</accuracy>
+                <period>60.0</period>
+                <specificLane>lane2</specificLane>
+                <specificMeasurementValueType>trafficFlow</specificMeasurementValueType>
+                <specificVehicleCharacteristics><vehicleType>anyVehicle</vehicleType></specificVehicleCharacteristics>
+              </measurementSpecificCharacteristics>
+            </measurementSpecificCharacteristics>
+            <measurementSpecificCharacteristics index="5">
+              <measurementSpecificCharacteristics>
+                <accuracy>95.0</accuracy>
+                <period>60.0</period>
+                <specificLane>lane2</specificLane>
+                <specificMeasurementValueType>trafficFlow</specificMeasurementValueType>
+                <specificVehicleCharacteristics><lengthCharacteristic><comparisonOperator>greaterThan</comparisonOperator><vehicleLength>12.2</vehicleLength></lengthCharacteristic></specificVehicleCharacteristics>
+              </measurementSpecificCharacteristics>
+            </measurementSpecificCharacteristics>
+            <measurementSpecificCharacteristics index="7">
+              <measurementSpecificCharacteristics>
+                <accuracy>95.0</accuracy>
+                <period>60.0</period>
+                <specificLane>lane1</specificLane>
+                <specificMeasurementValueType>trafficSpeed</specificMeasurementValueType>
+                <specificVehicleCharacteristics><vehicleType>anyVehicle</vehicleType></specificVehicleCharacteristics>
+              </measurementSpecificCharacteristics>
+            </measurementSpecificCharacteristics>
+            <measurementSpecificCharacteristics index="8">
+              <measurementSpecificCharacteristics>
+                <accuracy>95.0</accuracy>
+                <period>60.0</period>
+                <specificLane>lane2</specificLane>
+                <specificMeasurementValueType>trafficSpeed</specificMeasurementValueType>
+                <specificVehicleCharacteristics><vehicleType>anyVehicle</vehicleType></specificVehicleCharacteristics>
+              </measurementSpecificCharacteristics>
+            </measurementSpecificCharacteristics>
+            <measurementSpecificCharacteristics index="9">
+              <measurementSpecificCharacteristics>
+                <accuracy>95.0</accuracy>
+                <period>60.0</period>
+                <specificLane>lane1</specificLane>
+                <specificMeasurementValueType>trafficSpeed</specificMeasurementValueType>
+                <specificVehicleCharacteristics><vehicleType>anyVehicle</vehicleType></specificVehicleCharacteristics>
+              </measurementSpecificCharacteristics>
+            </measurementSpecificCharacteristics>
+            <measurementSpecificCharacteristics index="11">
+              <measurementSpecificCharacteristics>
+                <accuracy>95.0</accuracy>
+                <period>60.0</period>
+                <specificLane>lane1</specificLane>
+                <specificMeasurementValueType>trafficSpeed</specificMeasurementValueType>
+                <specificVehicleCharacteristics><vehicleType>lorry</vehicleType></specificVehicleCharacteristics>
+              </measurementSpecificCharacteristics>
+            </measurementSpecificCharacteristics>
             <measurementSiteLocation xsi:type="Point">
               <locationForDisplay>
                 <latitude>52.0235558</latitude>

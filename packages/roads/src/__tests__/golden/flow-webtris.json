@@ -35,25 +35,32 @@
       },
       "canonicalId": "dfaae729977f3bef21b51b0d9f7fef02569e88d898320acd904b949280cee86d",
       "domain": "roads",
-      "contentHash": "e7b1584d24ebb0b0bcea34ae2ee090fb2df7e6a66d4f87c60c42906b08601352",
+      "contentHash": "591da339385f42f287be73a856770563a3ea25dd383e48d5a9d6613c29a35c97",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
+      "name": [
+        {
+          "lang": "en",
+          "text": "MIDAS 5607"
+        }
+      ],
       "lifecycle": "operational",
       "details": {
         "kind": "measurement_site",
         "v": 1,
         "measuredProperties": [
-          "traffic.speed"
+          "traffic.speed",
+          "traffic.volume"
         ]
       }
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:gb-webtris:9200acb217c5e4cd880b063567648ba82b852885445c99345581630dad59ec98",
+      "id": "oc:observation:gb-webtris:dda37a5fc7532e85fdd5c4587615a826d45b86a735eb16aaa60133fe50029d29",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -85,9 +92,9 @@
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "d60b5811641466a79cc81a932ca5fae8d04041382b77a580daa6bc4b151c5ab8",
+      "canonicalId": "cbbe2a4ca2991429c1485da95792955041f4bf3cbe527396818619de37975ae3",
       "domain": "roads",
-      "contentHash": "511ff86c40aad365ff953315caefc458926398d061e3ef176aa0dcf7fe66c9e5",
+      "contentHash": "042c95a713f94693d4a965acb9c19061f4cb71d84759b0d43659de614af85a00",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
@@ -103,7 +110,64 @@
         "unit": "km/h"
       },
       "phenomenonTime": {
-        "instant": "2026-03-04T23:59:00.000Z"
+        "start": "2026-03-04T23:44:00.000Z",
+        "end": "2026-03-04T23:59:00.000Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:gb-webtris:e4dd21c3cd73750d8a814a61b822e6c7f12c044f75631517282ad2c5662329ae",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            -1.5,
+            52.4
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "gb-webtris",
+        "sourceFormat": "webtris",
+        "accessMode": "bulk",
+        "recordId": "5607",
+        "attribution": {
+          "provider": "gb-webtris",
+          "license": "CC-BY-4.0"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "377f79d4e69691fe5f084f9f20145367f9fd7ab41f5d71b390a05201a1deea4a",
+      "domain": "roads",
+      "contentHash": "5c892d0f6bfe2204835d98bf9e0ffdaa8935970203dae7d3f54b3c25a94be781",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:gb-webtris:5607"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 6000,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "start": "2026-03-04T23:44:00.000Z",
+        "end": "2026-03-04T23:59:00.000Z"
       },
       "aggregation": "mean"
     }

@@ -1,12 +1,11 @@
+import { resolveInstanceId } from "@openconditions/core/server";
 import type { RecordDraft } from "@openconditions/ingest-framework";
 import type { Registry } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
-import { resolveInstanceId } from "@openconditions/normalize";
-import type { FeedSource } from "@openconditions/roads";
+import type { FeedSource, FlowOutput } from "@openconditions/roads";
 import { type WriteContext, type WriteSummary, writeSnapshotIn } from "@openconditions/storage";
 import type postgres from "postgres";
 import { upsertSourceStatus } from "./source-status.js";
-import { capRows } from "./write-postgis.js";
 
 type Sql = postgres.Sql;
 
@@ -87,7 +86,9 @@ export class UnlocatableRetainedError extends Error {}
  * complete: a stored situation it no longer holds is withdrawn, except that a
  * situation still published but unplaceable this poll (`unlocatable`) is never
  * ended or stripped of an unplaceable record's effects by it — such a poll
- * fails as a whole instead, keeping the last good publication. A draft that does not validate is rejected and counted.
+ * fails as a whole instead, keeping the last good publication. A draft that
+ * does not validate is rejected and counted; a poll holding more situations
+ * than a source may publish is refused whole.
  */
 export async function publishSituations(
   sql: Sql,
@@ -104,7 +105,7 @@ export async function publishSituations(
     model: WriteModel;
   },
 ): Promise<WriteSummary> {
-  const situations = capRows([...input.situations]);
+  const situations = input.situations;
   const ids = situations.map((d) => String(d["id"]));
   return sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
@@ -127,7 +128,7 @@ export async function publishSituations(
           `(${unlocatable.length} unlocatable in source ${src.id})`,
       );
     }
-    const summary = await writeSnapshotIn(tx, src.id, { situations }, situationContext(input));
+    const summary = await writeSnapshotIn(tx, src.id, { situations }, writeContext(input));
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.situation
        WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
@@ -153,8 +154,87 @@ export async function publishSituations(
   }) as Promise<WriteSummary>;
 }
 
+/**
+ * Writes one poll of a flow feed and closes its attempt, in one transaction
+ * under the source's lock: its measurement sites, their readings and the
+ * congestion situations derived from them. The poll holds every derived
+ * situation, so a cleared one is withdrawn; it holds only the sites that
+ * reported, so a site is never withdrawn for missing one poll (the sweep
+ * retires the sites of a source that stopped polling).
+ *
+ * The publication counts keep their meaning, records written: a new or
+ * restored site or situation is inserted, a changed one or a new reading is
+ * updated, a cleared situation deleted; the row count is the source's live
+ * sites and situations.
+ */
+export async function publishFlows(
+  sql: Sql,
+  src: FeedSource,
+  input: {
+    output: FlowOutput;
+    rejected: number;
+    poll: PollIdentity;
+    durationMs: number;
+    now: string;
+    model: WriteModel;
+  },
+): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
+  return sql.begin(async (tx) => {
+    await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
+    const { output } = input;
+    const summary = await writeSnapshotIn(
+      tx,
+      src.id,
+      {
+        situations: output.situations,
+        features: output.features,
+        observations: output.observations,
+      },
+      { ...writeContext(input), complete: { situation: true } },
+    );
+    const [live] = await tx<{ features: number; situations: number }[]>`
+      SELECT (SELECT count(*)::int FROM conditions.feature
+               WHERE source_id = ${src.id} AND tombstoned_at IS NULL) AS features,
+             (SELECT count(*)::int FROM conditions.situation
+               WHERE source_id = ${src.id} AND tombstoned_at IS NULL) AS situations`;
+    const f = summary.counts.feature;
+    const s = summary.counts.situation;
+    const rejectedReadings = summary.rejected.filter((r) => r.class === "observation").length;
+    const readings = output.observations.length - summary.observations.unchanged - rejectedReadings;
+    const counts: PublicationCounts = {
+      activeEvents: live!.situations,
+      rowCount: live!.features + live!.situations,
+      inserted: f.created + f.restored + s.created + s.restored,
+      updated: f.updated + s.updated + Math.max(0, readings),
+      deleted: s.withdrawn,
+      rejected: input.rejected + summary.rejected.length,
+    };
+    await upsertSourceStatus(tx, src.id, {
+      freshnessWindowSec: src.freshnessWindowSec,
+      outcome: "changed",
+      attemptAt: input.poll.at,
+      networkValidated: true,
+      durationMs: input.durationMs,
+      attemptId: input.poll.id,
+      ...(input.poll.payloadHashes ? { payloadHashes: input.poll.payloadHashes } : {}),
+      publication: counts,
+    });
+    return { summary, counts };
+  }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
+}
+
+/** What a poll's publication reports on its source's status. */
+export interface PublicationCounts {
+  activeEvents: number;
+  rowCount: number;
+  inserted: number;
+  updated: number;
+  deleted: number;
+  rejected: number;
+}
+
 /** The write context of a poll's complete snapshot. */
-export function situationContext(input: {
+export function writeContext(input: {
   poll: PollIdentity;
   now: string;
   model: WriteModel;

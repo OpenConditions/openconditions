@@ -22,8 +22,6 @@ import { deriveSegmentProfiles } from "./pipeline/segment-profile.js";
 import { runSegmentRebuild } from "./pipeline/segment-rebuild.js";
 import { refreshSegmentSpeed } from "./pipeline/segment-speed.js";
 import { pruneSourcePollAttempts, upsertSourceStatus } from "./pipeline/source-status.js";
-import { pruneHourlyRollup, pruneRawSamples, rollupSpeedSamples } from "./pipeline/speed-rollup.js";
-import { sweepStaleObservations } from "./pipeline/sweep.js";
 import { createRawArchive, rawArchiveOptionsFromEnv } from "./raw/archive.js";
 
 type Sql = postgres.Sql;
@@ -74,15 +72,14 @@ export async function runFeedOnce(
   }
 }
 
-/** How often the stale-observation sweep runs. */
-const SWEEP_CRON = "*/5 * * * *";
+/** How often the segment speeds are refreshed from the latest readings. */
+const SEGMENT_SPEED_CRON = "*/5 * * * *";
+/** How often the source-poll history is pruned. */
+const POLL_HISTORY_CRON = "*/5 * * * *";
 /**
- * How often raw speed samples are rolled into per-(sensor, hour) histograms.
- * Runs a few minutes past the hour so the hour it closes is complete (the rollup
- * only ever aggregates finished hours).
+ * When the nightly baseline derivation runs (UTC). It reads the hourly
+ * `traffic.speed` rollup the record jobs keep current.
  */
-const SPEED_ROLLUP_CRON = "10 * * * *";
-/** When the nightly baseline derivation + sample prune runs (UTC). */
 const BASELINE_CRON = "0 3 * * *";
 /** When the nightly static-archive (GeoParquet published-view) build runs (UTC) — after the baseline derivation. */
 const ARCHIVE_CRON = "30 3 * * *";
@@ -90,13 +87,6 @@ const ARCHIVE_CRON = "30 3 * * *";
 const SEGMENT_CRON = "0 4 * * 1";
 /** When the weekly segment speed-profile derivation runs (UTC) — after the nightly baseline, before the segment rebuild. */
 const SEGMENT_PROFILE_CRON = "30 3 * * 1";
-/**
- * A source is swept as orphaned when its `conditions.source_status.
- * last_success_at` is older than this, or it has no source_status row at all
- * (see sweepStaleObservations). Far larger than the slowest feed cadence
- * (300s) so a healthy source is never removed.
- */
-const ORPHAN_MAX_AGE_SEC = 3600;
 
 function cadenceToCron(cadenceSec: number): string {
   if (cadenceSec < 60) return `*/${cadenceSec} * * * * *`;
@@ -197,22 +187,10 @@ export function startScheduler(
     }
   }
 
-  // Periodic cleanup: remove expired conditions + orphaned rows from sources
-  // that stopped polling (the per-source atomic swap only cleans live feeds).
-  let sweeping = false;
+  // Fuses the latest site readings onto the segment spine. Expired and
+  // orphaned records are swept by the record jobs.
   let refreshingSegments = false;
-  const sweepJob = new Cron(SWEEP_CRON, { catch: true }, async () => {
-    if (sweeping) return;
-    sweeping = true;
-    try {
-      const { deleted } = await sweepStaleObservations(sql, { maxAgeSec: ORPHAN_MAX_AGE_SEC });
-      if (deleted > 0) console.info(`[scheduler] sweep removed ${deleted} stale observation(s)`);
-    } catch (err) {
-      console.error("[scheduler] sweep failed", err);
-    } finally {
-      sweeping = false;
-    }
-
+  const segmentSpeedJob = new Cron(SEGMENT_SPEED_CRON, { catch: true }, async () => {
     if (refreshingSegments) return;
     refreshingSegments = true;
     try {
@@ -223,13 +201,13 @@ export function startScheduler(
       refreshingSegments = false;
     }
   });
-  console.info(`[scheduler] registered stale-observation sweep (${SWEEP_CRON})`);
-  jobs.push(sweepJob);
+  console.info(`[scheduler] registered segment-speed refresh (${SEGMENT_SPEED_CRON})`);
+  jobs.push(segmentSpeedJob);
 
-  // Poll history is independent of publishing a source's observations. Keep
-  // each cleanup bounded and single-flight, including during a catch-up backlog.
+  // Poll history is independent of publishing a source's records. Keep each
+  // cleanup bounded and single-flight, including during a catch-up backlog.
   let pruningPollHistory = false;
-  const pollHistoryJob = new Cron(SWEEP_CRON, { catch: true }, async () => {
+  const pollHistoryJob = new Cron(POLL_HISTORY_CRON, { catch: true }, async () => {
     if (pruningPollHistory) return;
     pruningPollHistory = true;
     try {
@@ -242,28 +220,6 @@ export function startScheduler(
     }
   });
   jobs.push(pollHistoryJob);
-
-  // Roll raw speed samples into per-(sensor, hour) histograms. Hourly rather
-  // than nightly so raw never has to hold more than a few hours of unaggregated
-  // backlog (it takes ~20M rows/day), and so the raw prune always has a fresh
-  // watermark to stay behind.
-  let rollingUpSpeed = false;
-  const speedRollupJob = new Cron(SPEED_ROLLUP_CRON, { catch: true }, async () => {
-    if (rollingUpSpeed) return;
-    rollingUpSpeed = true;
-    try {
-      const { hours, rows } = await rollupSpeedSamples(sql);
-      if (rows > 0) {
-        console.info(`[scheduler] speed rollup: ${rows} hour-row(s) over ${hours}h`);
-      }
-    } catch (err) {
-      console.error("[scheduler] speed rollup failed", err);
-    } finally {
-      rollingUpSpeed = false;
-    }
-  });
-  console.info(`[scheduler] registered speed rollup (${SPEED_ROLLUP_CRON})`);
-  jobs.push(speedRollupJob);
 
   let derivingBaselines = false;
   const baselineJob = new Cron(BASELINE_CRON, { catch: true }, async () => {
@@ -281,17 +237,8 @@ export function startScheduler(
           console.info(`[scheduler] fintraffic native baselines: ${updated} updated`);
         }
       }
-      // Roll up before deriving so the window includes the hours since the last
-      // hourly run, and before pruning so the prune has a current watermark to
-      // stay behind (it refuses to outrun the rollup).
-      const rolled = await rollupSpeedSamples(sql);
       const { upserted } = await deriveBaselines(sql);
-      const { deleted } = await pruneRawSamples(sql);
-      const prunedHours = await pruneHourlyRollup(sql);
-      console.info(
-        `[scheduler] baselines: rolled up ${rolled.rows} hour-row(s) over ${rolled.hours}h, ` +
-          `upserted ${upserted}, pruned ${deleted} raw sample(s) and ${prunedHours.deleted} rollup hour(s)`,
-      );
+      console.info(`[scheduler] baselines: upserted ${upserted}`);
 
       // Fills sensors that still lack any baseline (native/derived always win —
       // this only runs after both, so it never clobbers a better method).

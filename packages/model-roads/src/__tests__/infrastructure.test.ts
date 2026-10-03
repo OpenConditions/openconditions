@@ -116,12 +116,39 @@ describe("roads infrastructure", () => {
     ).toMatchObject({ ok: true });
   });
 
-  it("keeps speed history as an hourly histogram and sign displays as changes", () => {
-    expect(registry.property("traffic.speed")?.retention).toEqual({
-      rawDays: 7,
-      rollup: { period: "hourly", histogram: { binWidth: 2 } },
-    });
+  it("keeps sign displays as changes and camera images latest-only", () => {
     expect(registry.property("vms.display")?.retention).toEqual({ changeOnly: true, rawDays: 30 });
     expect(registry.property("camera.image")?.retention).toEqual({ latestOnly: true });
+  });
+});
+
+describe("traffic retention", () => {
+  const retention = (code: string) => registry.property(code)?.retention;
+
+  it("keeps lane and vehicle-class readings latest-only and site series within the budget", () => {
+    expect(retention("traffic.speed")).toEqual({
+      rawDays: 3,
+      componentHistory: false,
+      rollup: { period: "hourly", histogram: { binWidth: 2 } },
+    });
+    expect(retention("traffic.volume")).toEqual({
+      rawDays: 2,
+      componentHistory: false,
+      rollup: { period: "hourly" },
+    });
+    expect(retention("traffic.occupancy")).toEqual({
+      rawDays: 2,
+      componentHistory: false,
+      rollup: { period: "hourly" },
+    });
+    expect(retention("traffic.vehicle_class_speed")).toEqual({
+      rawDays: 2,
+      componentHistory: false,
+    });
+    expect(retention("traffic.los")).toEqual({
+      changeOnly: true,
+      rawDays: 7,
+      componentHistory: false,
+    });
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { RoadFlow } from "../model.js";
-import { measurementDrafts } from "../sites/assemble.js";
+import { localTimestamp } from "../flow.js";
+import type { FlowReading } from "../flow-reading.js";
+import { flowOutput, zonedInstant } from "../sites/assemble.js";
 import type { SourceDescriptor } from "../types.js";
 
 const source: SourceDescriptor = {
@@ -9,18 +10,12 @@ const source: SourceDescriptor = {
   country: "FI",
   license: "CC-BY-4.0",
 };
+const ctx = { now: "2026-09-18T10:00:30.000Z", cadenceSec: 60 };
 const AT = "2026-09-18T09:59:00Z";
 
-function flow(overrides: Partial<RoadFlow>): RoadFlow {
+function reading(overrides: Partial<FlowReading>): FlowReading {
   return {
-    id: "fi-digitraffic-flow:L1",
-    source: source.id,
-    sourceFormat: "digitraffic",
-    domain: "roads",
-    kind: "measurement",
-    metric: "flow",
-    aggregation: "live",
-    status: "active",
+    site: "L1",
     geometry: {
       type: "LineString",
       coordinates: [
@@ -28,26 +23,23 @@ function flow(overrides: Partial<RoadFlow>): RoadFlow {
         [24.91, 60.21],
       ],
     },
+    at: AT,
     los: "unknown",
-    site: { id: "L1" },
-    origin: { kind: "feed", attribution: { provider: "Fintraffic", license: "CC-BY-4.0" } },
-    dataUpdatedAt: AT,
-    fetchedAt: "2026-09-18T10:00:00Z",
-    isStale: false,
     ...overrides,
-  } as RoadFlow;
+  };
 }
 
-describe("measurementDrafts", () => {
+const assemble = (readings: FlowReading[], format = "digitraffic") =>
+  flowOutput(readings, { source, format, ctx });
+
+describe("flowOutput", () => {
   it("makes one site per source site and one reading per property", () => {
-    const { features, observations } = measurementDrafts(
-      [flow({ speedKph: 87, los: "free_flow" })],
-      { source },
-    );
+    const { features, observations } = assemble([reading({ speedKph: 87, los: "free_flow" })]);
     expect(features).toHaveLength(1);
     expect(features[0]).toMatchObject({
       id: "oc:feature:fi-digitraffic-flow:L1",
       kind: "measurement_site",
+      lifecycle: "operational",
       details: { measuredProperties: ["traffic.speed", "traffic.los"] },
     });
     expect(observations.map((o) => o["property"])).toEqual(["traffic.speed", "traffic.los"]);
@@ -60,19 +52,16 @@ describe("measurementDrafts", () => {
   });
 
   it("keeps a level of service computed from speed on the baseline, not as a reading", () => {
-    const { observations } = measurementDrafts(
-      [
-        flow({
-          speedKph: 40,
-          freeFlowKph: 100,
-          freeFlowSource: "derived",
-          speedRatio: 0.4,
-          los: "queuing",
-          site: { id: "L1", losDerived: true },
-        }),
-      ],
-      { source },
-    );
+    const { observations } = assemble([
+      reading({
+        speedKph: 40,
+        freeFlowKph: 100,
+        freeFlowSource: "derived",
+        speedRatio: 0.4,
+        los: "queuing",
+        losDerived: true,
+      }),
+    ]);
     expect(observations.map((o) => o["property"])).toEqual(["traffic.speed"]);
     expect(observations[0]!["baseline"]).toEqual({
       freeFlow: { value: 100, unit: "km/h" },
@@ -83,21 +72,18 @@ describe("measurementDrafts", () => {
   });
 
   it("joins the lines of one site and collapses their identical readings", () => {
-    const second = flow({
-      id: "fi-digitraffic-flow:L1:1",
+    const second = reading({
+      line: "L1:1",
       geometry: {
         type: "LineString",
         coordinates: [
-          [25, 60.3],
-          [25.1, 60.31],
+          [24.92, 60.22],
+          [24.93, 60.23],
         ],
       },
       speedKph: 70,
     });
-    const { features, observations } = measurementDrafts(
-      [flow({ id: "fi-digitraffic-flow:L1:0", speedKph: 70 }), second],
-      { source },
-    );
+    const { features, observations } = assemble([reading({ line: "L1:0", speedKph: 70 }), second]);
     expect(features).toHaveLength(1);
     expect((features[0]!["location"] as { geometry: { type: string } }).geometry.type).toBe(
       "MultiLineString",
@@ -105,42 +91,78 @@ describe("measurementDrafts", () => {
     expect(observations).toHaveLength(1);
   });
 
-  it("gives separately reported directions their own channel and series", () => {
-    const station = (channel: string, speedKph: number) =>
-      flow({
-        id: `fi-fintraffic:23001-${channel}`,
-        sourceFormat: "fintraffic-tms",
-        geometry: { type: "Point", coordinates: [24.9, 60.2] },
-        speedKph,
-        site: { id: "23001", channel },
-      });
-    const { features, observations } = measurementDrafts([station("1", 95), station("2", 88)], {
-      source,
-    });
+  it("gives channels their own components and series", () => {
+    const { features, observations } = assemble(
+      [
+        reading({
+          site: "S",
+          geometry: { type: "Point", coordinates: [24.9, 60.2] },
+          speedKph: 90,
+          channels: [
+            { key: "1", property: "traffic.speed", value: 95, lane: 1 },
+            { key: "2", property: "traffic.speed", value: 85, lane: 2, vehicleClass: "any" },
+          ],
+        }),
+      ],
+      "datex2",
+    );
     expect(features[0]!["components"]).toEqual([
-      expect.objectContaining({ key: "1", kind: "sensor_channel" }),
-      expect.objectContaining({ key: "2", kind: "sensor_channel" }),
+      {
+        key: "1",
+        kind: "sensor_channel",
+        details: {
+          kind: "sensor_channel",
+          v: 1,
+          index: 1,
+          lane: { index: 1 },
+          property: "traffic.speed",
+        },
+      },
+      {
+        key: "2",
+        kind: "sensor_channel",
+        details: {
+          kind: "sensor_channel",
+          v: 1,
+          index: 2,
+          lane: { index: 2 },
+          vehicleClass: "any",
+          property: "traffic.speed",
+        },
+      },
     ]);
     expect(
-      observations.map((o) => (o["subject"] as { componentKey: string }).componentKey),
-    ).toEqual(["1", "2"]);
+      observations.map((o) => (o["subject"] as { componentKey?: string }).componentKey),
+    ).toEqual([undefined, "1", "2"]);
   });
 
-  it("refuses flows a parser did not hint or whose format is not registered", () => {
-    expect(() => measurementDrafts([flow({ site: undefined })], { source })).toThrow(
-      /no site hints/,
-    );
-    expect(() => measurementDrafts([flow({ sourceFormat: "nope" })], { source })).toThrow(
-      /not registered/,
-    );
+  it("refuses a format with no registered flow format", () => {
+    expect(() => assemble([reading({ speedKph: 1 })], "nope")).toThrow(/not registered/);
   });
 
-  it("skips a reading whose time is not an instant", () => {
-    const { features, observations } = measurementDrafts(
-      [flow({ speedKph: 50, dataUpdatedAt: "01:55:30" })],
-      { source },
+  it("dates a reading without a zone-bearing time by the poll, floored to the cadence", () => {
+    const { observations } = assemble([reading({ speedKph: 50, at: "2026-09-18T01:55:30" })]);
+    expect(observations[0]!["phenomenonTime"]).toEqual({ instant: "2026-09-18T10:00:00.000Z" });
+  });
+
+  it("drops a reading with nothing to say", () => {
+    expect(assemble([reading({})])).toEqual({ features: [], observations: [], situations: [] });
+  });
+});
+
+describe("reading times", () => {
+  it("accepts only instants that name their zone", () => {
+    expect(zonedInstant("2026-03-04T14:30:00Z")).toBe("2026-03-04T14:30:00.000Z");
+    expect(zonedInstant("2026-07-27T02:02:30.880+02:00")).toBe("2026-07-27T00:02:30.880Z");
+    expect(zonedInstant("2026-03-04T14:30:00")).toBeUndefined();
+    expect(zonedInstant("01:55:30")).toBeUndefined();
+  });
+
+  it("reads a zoneless local timestamp in the publisher's zone", () => {
+    expect(localTimestamp("2026-03-04T14:30:00.000", "America/New_York")).toBe(
+      "2026-03-04T19:30:00.000Z",
     );
-    expect(features).toHaveLength(1);
-    expect(observations).toEqual([]);
+    expect(localTimestamp("2026-07-29T13:15:57", "Europe/Madrid")).toBe("2026-07-29T11:15:57.000Z");
+    expect(localTimestamp("01:55:30", "Asia/Hong_Kong")).toBeUndefined();
   });
 });

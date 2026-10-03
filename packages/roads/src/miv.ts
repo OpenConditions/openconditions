@@ -1,14 +1,7 @@
-import type { Point } from "geojson";
-import type { FlowParseResult } from "./flow.js";
-import { makeOrigin } from "./flow.js";
-import type { RoadFlow } from "./model.js";
-import type { SiteGeometry } from "./siteTable.js";
+import type { FlowContext, FlowSite, FlowSites } from "./flow-output.js";
+import { type FlowParse, type FlowReading, plausibleSpeed } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
 import { getXmlChild, getXmlChildren, isXmlObject, parseXmlDocument, xmlText } from "./xml.js";
-
-// MIV's no-data speed sentinel is 252 km/h; anything at/above this plausibility
-// bound is not a real vehicle speed.
-const ABSURD_SPEED_KPH = 250;
 
 /** Parse a MIV number, which uses a comma decimal separator (no thousands sep). */
 function numNl(raw: string | undefined): number | undefined {
@@ -18,14 +11,29 @@ function numNl(raw: string | undefined): number | undefined {
 }
 
 /**
- * Build a `unieke_id → Point` map from the Flanders MIV configuration document
+ * MIV vehicle classes (`klasse_id`) as model vehicle classes: motorcycles,
+ * cars, vans, lorries, and articulated lorries.
+ */
+const MIV_CLASSES: Record<string, string> = {
+  "1": "motorcycle",
+  "2": "car",
+  "3": "van",
+  "4": "truck",
+  "5": "hgv",
+};
+
+/** A MIV measuring point counts the vehicles of each one-minute period. */
+const MIV_PERIOD_SEC = 60;
+
+/**
+ * Build the measuring points (point and full name) from the Flanders MIV configuration document
  * (`miv.opendata.belfla.be/miv/configuratie/xml`). Each `<meetpunt>` carries
  * WGS84 coordinates directly (`lengtegraad_EPSG_4326`/`breedtegraad_EPSG_4326`,
  * comma decimals), so no reprojection is needed. The id joins to the traffic
  * feed's `<meetpunt unieke_id>`. Points without a valid coordinate are skipped.
  */
-export function parseMivConfig(input: string | Buffer): Map<string, SiteGeometry> {
-  const map = new Map<string, SiteGeometry>();
+export function parseMivConfig(input: string | Buffer): FlowSites {
+  const map = new Map<string, FlowSite>();
   let doc: ReturnType<typeof parseXmlDocument>;
   try {
     doc = parseXmlDocument(input, {
@@ -45,29 +53,35 @@ export function parseMivConfig(input: string | Buffer): Map<string, SiteGeometry
     const lon = numNl(xmlText(mp["lengtegraad_EPSG_4326"]));
     const lat = numNl(xmlText(mp["breedtegraad_EPSG_4326"]));
     if (lon == null || lat == null) continue;
-    map.set(String(id), { type: "Point", coordinates: [lon, lat] });
+    const name = xmlText(mp["volledige_naam"])?.trim();
+    map.set(String(id), {
+      geometry: { type: "Point", coordinates: [lon, lat] },
+      ...(name ? { name, nameLang: "nl" } : {}),
+    });
   }
   return map;
 }
 
 /**
- * Parse the Flanders MIV traffic feed (`miv.opendata.belfla.be/miv/verkeersdata`)
- * into RoadFlow point measurements. Each `<meetpunt>` reports per-vehicle-class
- * `<meetdata>` with a `verkeersintensiteit` (count/min) and a
- * `voertuigsnelheid_harmonisch` (harmonic mean speed, km/h); the representative
- * speed is the harmonic speed of the highest-intensity valid class (252 = no
- * data). Geometry comes from the config `siteMap`, joined on `unieke_id`. los is
- * left "unknown" (absolute speed is road-class–dependent) for baseline
- * enrichment. Faulty (`defect`), ungeolocated, or no-vehicle points are
- * skipped. (`geldig` is NOT a per-cycle data-validity flag — it is 0 for the
- * vast majority of live points that nonetheless carry real speeds — so the
- * 252-km/h no-data sentinel and a positive intensity are the validity signal.)
+ * Parse the Flanders MIV traffic feed (`miv.opendata.belfla.be/miv/verkeersdata`).
+ * Each `<meetpunt>` is one lane detector reporting per vehicle class
+ * (`<meetdata klasse_id>`) the vehicles counted in the minute
+ * (`verkeersintensiteit`) and their harmonic mean speed (252 = no data), and
+ * the minute's occupancy (`rekendata/bezettingsgraad`). The site speed is
+ * the harmonic speed of the highest-intensity valid class; the per-class
+ * speeds are kept as a vector, and the counts summed into an hourly volume.
+ * Geometry comes from the configuration, joined on `unieke_id`. Faulty
+ * (`defect`), ungeolocated, or no-vehicle points are skipped. (`geldig` is NOT
+ * a per-cycle data-validity flag — it is 0 for most live points that carry
+ * real speeds — so the no-data sentinel and a positive count are the
+ * validity signal.)
  */
 export function parseMivFlow(
   input: string | Buffer,
-  src: SourceDescriptor,
-  siteMap?: Map<string, SiteGeometry>,
-): FlowParseResult {
+  _src: SourceDescriptor,
+  sites: FlowSites | undefined,
+  _ctx: FlowContext,
+): FlowParse {
   let doc: ReturnType<typeof parseXmlDocument>;
   try {
     doc = parseXmlDocument(input, {
@@ -76,66 +90,59 @@ export function parseMivFlow(
       isArray: (n) => n === "meetpunt" || n === "meetdata",
     });
   } catch {
-    return { flows: [], events: [], failed: true };
+    return { readings: [], failed: true };
   }
   const root = isXmlObject(doc) ? (getXmlChild(doc, "miv") ?? doc) : null;
-  if (!root) return { flows: [], events: [], failed: true };
+  if (!root) return { readings: [], failed: true };
 
-  const points = getXmlChildren(root, "meetpunt");
-  const now = new Date().toISOString();
-  const origin = makeOrigin(src);
-  const flows: RoadFlow[] = [];
-
-  for (const mp of points) {
+  const readings: FlowReading[] = [];
+  for (const mp of getXmlChildren(root, "meetpunt")) {
     try {
       const id = mp["@_unieke_id"];
       if (id == null) continue;
       if (xmlText(mp["defect"]) === "1") continue;
+      const site = sites?.get(String(id));
+      if (!site) continue;
 
-      const geom = siteMap?.get(String(id)) as Point | undefined;
-      if (!geom) continue;
-
-      // Representative speed = harmonic speed of the highest-intensity valid class.
       let bestIntensity = -1;
       let speedKph: number | undefined;
+      let count = 0;
+      const classSpeeds: Record<string, number> = {};
       for (const md of getXmlChildren(mp, "meetdata")) {
         const intensity = numNl(xmlText(md["verkeersintensiteit"]));
         const speed = numNl(xmlText(md["voertuigsnelheid_harmonisch"]));
-        if (intensity == null || speed == null) continue;
-        if (intensity <= 0 || speed < 0 || speed >= ABSURD_SPEED_KPH) continue;
+        if (intensity == null || intensity < 0) continue;
+        count += intensity;
+        if (intensity === 0 || !plausibleSpeed(speed)) continue;
+        const vehicleClass = MIV_CLASSES[String(md["@_klasse_id"] ?? "")];
+        if (vehicleClass !== undefined) classSpeeds[vehicleClass] = speed;
         if (intensity > bestIntensity) {
           bestIntensity = intensity;
           speedKph = speed;
         }
       }
       if (speedKph == null) continue;
+      const rekendata = getXmlChild(mp, "rekendata");
+      const occupancy = rekendata ? numNl(xmlText(rekendata["bezettingsgraad"])) : undefined;
+      const at = xmlText(mp["tijd_waarneming"]);
 
-      const measuredAt = xmlText(mp["tijd_waarneming"]) ?? now;
-      flows.push({
-        id: `${src.id}:${id}`,
-        source: src.id,
-        sourceFormat: "miv",
-        domain: "roads",
-        kind: "measurement",
-        metric: "flow",
-        value: speedKph,
-        unit: "km/h",
-        level: "unknown",
-        aggregation: "live",
-        status: "active",
-        geometry: geom,
+      readings.push({
+        site: String(id),
+        geometry: site.geometry,
+        ...(at !== undefined ? { at } : {}),
+        periodSec: MIV_PERIOD_SEC,
         los: "unknown",
         speedKph,
-        site: { id: String(id) },
-        origin,
-        dataUpdatedAt: measuredAt,
-        fetchedAt: now,
-        isStale: false,
+        volume: count * (3600 / MIV_PERIOD_SEC),
+        ...(occupancy !== undefined && occupancy >= 0 && occupancy <= 100 ? { occupancy } : {}),
+        ...(Object.keys(classSpeeds).length > 0 ? { classSpeeds } : {}),
+        ...(site.name !== undefined ? { name: site.name } : {}),
+        ...(site.nameLang !== undefined ? { nameLang: site.nameLang } : {}),
       });
     } catch (err) {
       console.warn("[miv-flow] skipped malformed meetpunt:", err);
     }
   }
 
-  return { flows, events: [] };
+  return { readings };
 }

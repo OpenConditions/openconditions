@@ -1,11 +1,8 @@
 import type { Point } from "geojson";
-import type { FlowParseResult } from "./flow.js";
-import { makeOrigin } from "./flow.js";
-import type { RoadFlow } from "./model.js";
+import type { FlowContext, FlowSites } from "./flow-output.js";
+import { type FlowParse, type FlowReading, plausibleSpeed } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
 import { getXmlChild, getXmlChildren, isXmlObject, parseXmlDocument, xmlText } from "./xml.js";
-
-const ABSURD_SPEED_KPH = 250;
 
 function num(raw: unknown): number | undefined {
   if (raw == null || raw === "") return undefined;
@@ -14,14 +11,21 @@ function num(raw: unknown): number | undefined {
 }
 
 /**
- * Parse the Turin 5T real-time traffic-flow feed (`opendata.5t.torino.it/get_fdt`)
- * into RoadFlow point measurements. Each `<FDT_data>` is a detector carrying
- * inline WGS84 `lat`/`lng`, an `accuracy` confidence, and a child
- * `<speedflow speed=.. flow=..>` (speed in km/h). Detectors with no confidence
- * (`accuracy=0`, published with a placeholder `speed=0`) or no coordinate are
- * skipped. los is left "unknown" for baseline enrichment.
+ * Parse the Turin 5T real-time traffic-flow feed (`opendata.5t.torino.it/get_fdt`).
+ * Each `<FDT_data>` is a detector carrying inline WGS84 `lat`/`lng`, an
+ * `accuracy` confidence in percent, its averaging `period` in minutes, and a
+ * child `<speedflow speed=.. flow=..>` (km/h, vehicles per hour). The period
+ * is taken to end at the document's generation time. Detectors with no
+ * confidence (`accuracy=0`, published with a placeholder `speed=0`) or no
+ * coordinate are skipped. The level of service is left to the baseline
+ * enrichment.
  */
-export function parseTurinFlow(input: string | Buffer, src: SourceDescriptor): FlowParseResult {
+export function parseTurinFlow(
+  input: string | Buffer,
+  _src: SourceDescriptor,
+  _sites: FlowSites | undefined,
+  _ctx: FlowContext,
+): FlowParse {
   let doc: ReturnType<typeof parseXmlDocument>;
   try {
     doc = parseXmlDocument(input, {
@@ -30,18 +34,14 @@ export function parseTurinFlow(input: string | Buffer, src: SourceDescriptor): F
       isArray: (n) => n === "FDT_data",
     });
   } catch {
-    return { flows: [], events: [], failed: true };
+    return { readings: [], failed: true };
   }
   const root = isXmlObject(doc) ? (getXmlChild(doc, "traffic_data") ?? doc) : null;
-  if (!root) return { flows: [], events: [], failed: true };
+  if (!root) return { readings: [], failed: true };
 
-  const detectors = getXmlChildren(root, "FDT_data");
   const genTime = xmlText(root["@_generation_time"]);
-  const now = new Date().toISOString();
-  const origin = makeOrigin(src);
-  const flows: RoadFlow[] = [];
-
-  for (const fdt of detectors) {
+  const readings: FlowReading[] = [];
+  for (const fdt of getXmlChildren(root, "FDT_data")) {
     try {
       const id = xmlText(fdt["@_lcd1"]);
       if (!id) continue;
@@ -53,36 +53,29 @@ export function parseTurinFlow(input: string | Buffer, src: SourceDescriptor): F
 
       const sf = getXmlChild(fdt, "speedflow");
       const speedKph = num(xmlText(sf?.["@_speed"]));
-      if (speedKph == null || speedKph < 0 || speedKph >= ABSURD_SPEED_KPH) continue;
+      if (!plausibleSpeed(speedKph)) continue;
+      const flow = num(xmlText(sf?.["@_flow"]));
+      const periodMin = num(xmlText(fdt["@_period"]));
 
       const geometry: Point = { type: "Point", coordinates: [lon, lat] };
       const direction = xmlText(fdt["@_direction"]);
-      flows.push({
-        id: `${src.id}:${id}`,
-        source: src.id,
-        sourceFormat: "fdt",
-        domain: "roads",
-        kind: "measurement",
-        metric: "flow",
-        value: speedKph,
-        unit: "km/h",
-        level: "unknown",
-        aggregation: "live",
-        status: "active",
+      const name = xmlText(fdt["@_Road_name"]);
+      readings.push({
+        site: id,
         geometry,
+        ...(genTime !== undefined ? { at: genTime } : {}),
+        ...(periodMin !== undefined && periodMin > 0 ? { periodSec: periodMin * 60 } : {}),
         los: "unknown",
         speedKph,
+        confidence: Math.min(accuracy, 100) / 100,
+        ...(flow !== undefined && flow >= 0 ? { volume: flow } : {}),
         ...(direction ? { direction } : {}),
-        site: { id },
-        origin,
-        dataUpdatedAt: genTime ?? now,
-        fetchedAt: now,
-        isStale: false,
+        ...(name ? { name, nameLang: "it" } : {}),
       });
     } catch (err) {
       console.warn("[turin-flow] skipped malformed FDT_data:", err);
     }
   }
 
-  return { flows, events: [] };
+  return { readings };
 }

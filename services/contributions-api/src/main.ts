@@ -11,6 +11,7 @@ import {
   isCrossValidateSweepEnabled,
   singleFlight,
   sweepCrossValidate,
+  sweepCrossValidateObservations,
   sweepFederatedCrossValidate,
 } from "./evidence/crossValidateSweep.js";
 import { build } from "./server.js";
@@ -73,6 +74,21 @@ async function boot() {
         }
       } catch (err) {
         console.error("[contributions-api] federated cross-validate sweep failed:", err);
+      }
+      try {
+        const readings = await sweepCrossValidateObservations(
+          sql,
+          registry,
+          new Date().toISOString(),
+          { log: (msg) => console.info(msg) },
+        );
+        if (readings.scanned > 0) {
+          console.info(
+            `[contributions-api] observation cross-validate sweep: scanned ${readings.scanned}, resolved ${readings.routed}`,
+          );
+        }
+      } catch (err) {
+        console.error("[contributions-api] observation cross-validate sweep failed:", err);
       }
     });
     sweepTimer = setInterval(() => void runSweep(), CROSS_VALIDATE_SWEEP_MS);

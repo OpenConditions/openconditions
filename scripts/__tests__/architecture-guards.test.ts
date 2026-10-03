@@ -113,11 +113,11 @@ describe("AST architecture boundaries", () => {
 
   it.each([
     "@openconditions/ingest/pipeline/normalize",
-    "@openconditions/ingest/pipeline/write-postgis",
-    "../../ingest/src/pipeline/write-postgis.js",
+    "@openconditions/ingest/pipeline/publish",
+    "../../ingest/src/pipeline/publish.js",
   ])("rejects the removed ingest-service dependency: %s", async (specifier) => {
     // Relative paths resolving to the sibling service are rejected as well.
-    const source = `import { toRow } from "${specifier}";`;
+    const source = `import { stampAttribution } from "${specifier}";`;
     expect(await violations(source, "services/contributions-api/src/server.ts")).toBe(1);
   });
 
@@ -140,8 +140,8 @@ describe("AST architecture boundaries", () => {
     expect(
       await violations(
         `
-      import { normalizeObservation } from "@openconditions/normalize";
-      import { toRow } from "@openconditions/storage";
+      import { resolveInstanceId } from "@openconditions/core/server";
+      import { writeSnapshot } from "@openconditions/storage";
       import { checkReportRate } from "../abuse/rate.js";
     `,
         landing,

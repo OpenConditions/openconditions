@@ -40,25 +40,32 @@
       },
       "canonicalId": "50105fb339015bea98cc9d96ee0202ef8e4e3f7e214b57159e698de5cc5bd45e",
       "domain": "roads",
-      "contentHash": "2ec9bebff33db0f38805fa650e19b1a2f01c2463472f8415f578cada97397d75",
+      "contentHash": "61c1db039ae800c03cf6cd5ff7b156e6e16836a6236f5f5be2691073c7da040d",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
+      "name": [
+        {
+          "lang": "it",
+          "text": "Corso Allamano(TO)"
+        }
+      ],
       "lifecycle": "operational",
       "details": {
         "kind": "measurement_site",
         "v": 1,
         "measuredProperties": [
-          "traffic.speed"
+          "traffic.speed",
+          "traffic.volume"
         ]
       }
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:it-turin:35f34c989b53d3dcf54a5e5e64a1f7c0b698c54fb4f0717a90eef7e640a17d5e",
+      "id": "oc:observation:it-turin:656fa01358f101776667fc12b9aed3f3f81354b544b8ad20b65a4bd6511d0874",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -95,9 +102,9 @@
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "d34d64129d4d6227ad7a97cb659f869e12a22b94cfe9f12279f84e292219b26e",
+      "canonicalId": "44e674257c2fbdd8a68b3fe1b443a33c95fb6da1a8da32cb29f7b7c1fc063356",
       "domain": "roads",
-      "contentHash": "a80f2080a0cc2126822db6e242bee948570ae495024907c906ca188c2b1cd0fc",
+      "contentHash": "60bf19dbf9a76d2933f75832419184b5f979cbce99436763cb25f25352ecced7",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
@@ -113,7 +120,72 @@
         "unit": "km/h"
       },
       "phenomenonTime": {
-        "instant": "2026-07-10T18:00:03.516Z"
+        "start": "2026-07-10T17:55:03.516Z",
+        "end": "2026-07-10T18:00:03.516Z"
+      },
+      "aggregation": "mean",
+      "quality": {
+        "confidence": 0.95
+      }
+    },
+    {
+      "id": "oc:observation:it-turin:411b721e71fbfd0a2a5ef3ecf8c3b74bd53b6fec85044b28e78d46c7c71d5b9f",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            7.6225,
+            45.0507
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "direction": {
+          "value": "positive",
+          "basis": "alert_c"
+        }
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "it-turin",
+        "sourceFormat": "fdt",
+        "accessMode": "bulk",
+        "recordId": "39983",
+        "attribution": {
+          "provider": "5T / Città di Torino",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "ef5d1b270c1c040898f7ac1700d0e1dc571136b0cdb849b818e03f1d92fe03f5",
+      "domain": "roads",
+      "contentHash": "c7d1868e77bc4fdba1a2464e34c3e2befa85e9f547c6a8b82247dd7b81f6e964",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:it-turin:39983"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 360,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "start": "2026-07-10T17:55:03.516Z",
+        "end": "2026-07-10T18:00:03.516Z"
       },
       "aggregation": "mean"
     }

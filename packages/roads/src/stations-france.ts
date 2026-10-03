@@ -1,8 +1,8 @@
+import type { FlowSite, FlowSites } from "./flow-output.js";
 import { reprojectorFor } from "./reproject.js";
-import type { SiteGeometry } from "./siteTable.js";
 
 /**
- * Build a `code_pme → LineString` map from the French national road counting-
+ * Build the `code_pme` → LineString sites from the French national road counting-
  * station reference CSV (transport.data.gouv.fr "Référentiel des stations de
  * comptage"). The CSV is semicolon-delimited; each station's start/end
  * coordinates (`x_deb`/`y_deb`/`x_fin`/`y_fin`) are in RGF93 / Lambert-93
@@ -10,8 +10,8 @@ import type { SiteGeometry } from "./siteTable.js";
  * MeasuredData feed's `measurementSiteReference id`. Rows missing an id or a
  * finite coordinate pair are skipped.
  */
-export function parseFranceComptageStations(input: string | Buffer): Map<string, SiteGeometry> {
-  const map = new Map<string, SiteGeometry>();
+export function parseFranceComptageStations(input: string | Buffer): FlowSites {
+  const map = new Map<string, FlowSite>();
   const text = Buffer.isBuffer(input) ? input.toString("utf8") : input;
   const lines = text.split(/\r?\n/);
   if (lines.length < 2) return map;
@@ -50,12 +50,17 @@ export function parseFranceComptageStations(input: string | Buffer): Map<string,
     const [lonF, latF] = toWgs([xf, yf]);
     if (![lonD, latD, lonF, latF].every(Number.isFinite)) continue;
 
+    // `nb_voies` precedes the coordinate block; 0 means "not stated".
+    const lanes = num(cells[n - 6]);
     map.set(id, {
-      type: "LineString",
-      coordinates: [
-        [lonD, latD],
-        [lonF, latF],
-      ],
+      ...(lanes !== undefined && Number.isInteger(lanes) && lanes > 0 ? { laneCount: lanes } : {}),
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          [lonD, latD],
+          [lonF, latF],
+        ],
+      },
     });
   }
   return map;

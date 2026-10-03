@@ -36,7 +36,7 @@
       },
       "canonicalId": "3dd20720f694886cc84658a00948b3601b14e3bc98707d918e04c3bdba152aa1",
       "domain": "roads",
-      "contentHash": "347ad90d33b9267622959e7b67f157d89574f44ba5852292aac1a391934b168a",
+      "contentHash": "0bdb3a8b71ad34008663d747947b81e35549aed5bc234e9d84ad0dd5e09a065c",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
@@ -48,6 +48,8 @@
         "v": 1,
         "measuredProperties": [
           "traffic.speed",
+          "traffic.volume",
+          "traffic.occupancy",
           "traffic.los"
         ]
       }
@@ -90,7 +92,7 @@
       },
       "canonicalId": "a5e346d07ffc77d515aa56395b9693856bb61e9cc17cafe44eded41d0be4b89c",
       "domain": "roads",
-      "contentHash": "b9611906f0461b5aea7fb67e4b5c53cb10982c92e248bb7680ba1ec20171562d",
+      "contentHash": "1c4b5b67090303e3f5eb4bc7c9c53cd4533f87e8094cacd5865d9a69faf3dc94",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
@@ -108,7 +110,10 @@
       "phenomenonTime": {
         "instant": "2026-07-24T17:11:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "quality": {
+        "sampleCount": 20
+      }
     }
   ],
   "situations": []

@@ -36,13 +36,25 @@
       },
       "canonicalId": "839d1ec3fc5c378bb96b83d3446f551618cbd404684318f42d155ccc5ea47f6a",
       "domain": "roads",
-      "contentHash": "4d8379f1c7780db987409679fd434f317978916867c179b9b324a3f25d70f006",
+      "contentHash": "aab2af2ad83d547cb46f9bede1ecf4785f4b8dd9b5a4125a38d6e0ee0bdc0f49",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
       "lifecycle": "operational",
+      "components": [
+        {
+          "key": "volume:car",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "vehicleClass": "car",
+            "property": "traffic.volume"
+          }
+        }
+      ],
       "details": {
         "kind": "measurement_site",
         "v": 1,
@@ -91,7 +103,7 @@
       },
       "canonicalId": "1820068b608b9118ed99a06a4a48a009975309755e179a9eb141ce680106c235",
       "domain": "roads",
-      "contentHash": "eed0a6a6b72c901195b51f01495cde74b882296c078e444d1a34b9b0bbfa4951",
+      "contentHash": "3853c3faf30b51ac68271547f0abcc74ac34f1f29a41908ee5f689eaea9cf2ea",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
@@ -109,7 +121,10 @@
       "phenomenonTime": {
         "instant": "2026-07-27T00:02:30.880Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "quality": {
+        "sampleCount": 18
+      }
     },
     {
       "id": "oc:observation:de-nw-autobahn-fahrstreifen:acb79f3c79cbf9e112a0853b618a554153813278df86502b6bd5c72744d2a275",
@@ -156,6 +171,63 @@
       "subject": {
         "kind": "feature",
         "featureId": "oc:feature:de-nw-autobahn-fahrstreifen:fs.MQ_555.050_AB_SW_R_1"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 60,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-27T00:02:30.880Z"
+      },
+      "aggregation": "mean"
+    },
+    {
+      "id": "oc:observation:de-nw-autobahn-fahrstreifen:46957c1bcd533b374d3ab828b4f50c32a482f0a583dc3d85a87f14759086eb43",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            7.545113,
+            51.474907
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-fahrstreifen",
+        "sourceFormat": "datex-elaborated",
+        "accessMode": "bulk",
+        "recordId": "fs.MQ_555.050_AB_SW_R_1/volume:car",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "instanceId": "golden.test",
+        "privacy": {
+          "class": "authoritative"
+        }
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "canonicalId": "4d383a37d616190212d40225e4cdddc7eecb01fca7b8960ba5bd5b6c0ba7d083",
+      "domain": "roads",
+      "contentHash": "e8febfead3963074221eed684b65cafc7ffebee90f2ec2bacf9ea1d66b644d80",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:de-nw-autobahn-fahrstreifen:fs.MQ_555.050_AB_SW_R_1",
+        "componentKey": "volume:car"
       },
       "result": {
         "type": "quantity",

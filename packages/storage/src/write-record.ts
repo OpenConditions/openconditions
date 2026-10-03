@@ -8,6 +8,7 @@ import {
 } from "@openconditions/model";
 import type postgres from "postgres";
 import { insertRows, type Sql } from "./bulk.js";
+import { updateCanonicalView } from "./canonical-view.js";
 import { expiryOf } from "./record-rows.js";
 import { writeObservationsIn } from "./write-observations.js";
 import {
@@ -162,6 +163,18 @@ export async function writeRecordIn(
       revisionRow(cls, sealed, changeKinds),
     ]);
   }
+  if (cls === "feature") {
+    await updateCanonicalView(
+      tx,
+      ctx.registry,
+      {
+        sourceId: (sealed["provenance"] as Rec)["sourceId"] as string,
+        featureIds: [id!],
+        observations: [],
+      },
+      ctx,
+    );
+  }
   return { status, class: cls, id: id!, revision: sealed["revision"] as number };
 }
 
@@ -185,6 +198,12 @@ async function writeObservation(
   if (rejected.length > 0) {
     return { status: "rejected", class: "observation", id, issues: rejected[0]!.issues };
   }
+  await updateCanonicalView(
+    tx,
+    ctx.registry,
+    { sourceId, featureIds: [], observations: [record] },
+    ctx,
+  );
   const status =
     counts.unchanged > 0
       ? "unchanged"

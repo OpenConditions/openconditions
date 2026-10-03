@@ -251,3 +251,41 @@ describe("durable source operational status", () => {
     ]);
   });
 });
+describe("upsertSourceStatus — the unchanged/304 write path", () => {
+  it("advances last_success_at and clears last_error on an unchanged (304) success", async () => {
+    await upsertSourceStatus(sql, "upsert-src", {
+      freshnessWindowSec: 120,
+      outcome: "error",
+      error: "boom",
+    });
+    let row = await sql<{ last_error: string | null; last_success_at: Date | null }[]>`
+      SELECT last_error, last_success_at FROM conditions.source_status WHERE source = 'upsert-src'`;
+    expect(row[0]!.last_error).toBe("boom");
+    expect(row[0]!.last_success_at).toBeNull();
+
+    // Simulates the 304/unchanged early-return path in runSource: a success
+    // with no row-count recomputation.
+    await upsertSourceStatus(sql, "upsert-src", { freshnessWindowSec: 120, outcome: "success" });
+
+    row = await sql<{ last_error: string | null; last_success_at: Date | null }[]>`
+      SELECT last_error, last_success_at FROM conditions.source_status WHERE source = 'upsert-src'`;
+    expect(row[0]!.last_error).toBeNull();
+    expect(row[0]!.last_success_at).not.toBeNull();
+  }, 30_000);
+
+  it("keeps the prior last_row_count when a success omits rowCount (304 case)", async () => {
+    await upsertSourceStatus(sql, "upsert-rowcount", {
+      freshnessWindowSec: 60,
+      outcome: "success",
+      rowCount: 42,
+    });
+    await upsertSourceStatus(sql, "upsert-rowcount", {
+      freshnessWindowSec: 60,
+      outcome: "success",
+    });
+
+    const row = await sql<{ last_row_count: number | null }[]>`
+      SELECT last_row_count FROM conditions.source_status WHERE source = 'upsert-rowcount'`;
+    expect(row[0]!.last_row_count).toBe(42);
+  }, 30_000);
+});

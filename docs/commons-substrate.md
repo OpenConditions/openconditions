@@ -3,58 +3,38 @@
 The "commons substrate" is the shared identity, evidence, decay, and privacy
 plumbing that every forthcoming data-commons feature — crowd reporting,
 federation, publishing emitters, probe aggregation — builds on instead of
-reinventing. It landed as five additions: a migration on
-`conditions.observations`, `packages/core`'s `canonical.ts` and
-`evidence.ts`, `packages/roads`'s `decay.ts`, and the provenance-stamping seam
-`normalizeObservation` in `packages/normalize/src/normalize.ts`. The soft observed-property
-registry that once sat beside them is replaced by the hard-validating model
-registry ([model.md](model.md)).
+reinventing. It is `packages/core`'s `canonical.ts` and `evidence.ts`,
+`packages/contrib-core`'s evidence policy, and
+the identity, privacy and provenance columns every model record table carries.
+The soft observed-property registry that once sat beside them is replaced by
+the hard-validating model registry ([model.md](model.md)).
 
 This page is the consumer-readiness check: every field and function below has
 at least one named downstream consumer, so nothing here is speculative or
-orphaned. "Consumer" means either an already-wired call site (`normalize.ts`
-today) or the feature area that is designed to call it next — those calls
-don't exist yet, but the substrate's shape is fixed by the contract they need.
+orphaned. "Consumer" means either an already-wired call site or the feature
+area that is designed to call it next.
 
-## `conditions.observations` columns (migration `0007_commons_observation_fields`)
+## Record columns
 
-| Column                         | Purpose                                                                          | Downstream consumer(s)                                                                                                                                                             |
-| ------------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `instance_id`                  | The federated instance that wrote the row.                                       | Federation (outbox scopes what it exports by originating instance; a receiving instance uses it to tell local rows from mirrored ones).                                            |
-| `canonical_id`                 | Exact, source-stable record identity (collapses re-supplies of the same record). | Federation (dedup keys on `canonical_id` across instances); crowd reporting (fusion key grouping repeat reports of one record).                                                    |
-| `phenomenon_fingerprint`       | Candidate-generation key for "may describe the same real-world phenomenon".      | Federation (fingerprint candidate matching before a cross-instance merge); crowd reporting (finds existing observations a new report might corroborate).                           |
-| `replaces`                     | Canonical ids this observation supersedes.                                       | Federation (supersession chain when a merged/updated condition replaces an earlier one).                                                                                           |
-| `corroborations`               | Ids of independent observations that corroborate this one.                       | Crowd reporting (evidence ledger corroboration trail feeding `evaluateEvidence`).                                                                                                  |
-| `fuzziness`                    | How precisely the geometry/extent is known.                                      | Crowd reporting (deliberately coarsened report geometry, e.g. a device's approximate location); publishing emitters (flag degraded-precision geometry to consumers).               |
-| `confidence_score`             | Normalized `[0,1]` presentation ranking.                                         | Crowd reporting (contributions-api reads it to rank/display reports; written by `evaluateEvidence`); publishing emitters (`confidenceEnum` maps it to the wire `Confidence` enum). |
-| `severity_level`               | Numeric 1–5 severity, when a controller assigns a graded level.                  | Publishing emitters (STA/SIRI severity mapping needs a graded level, not just the `Severity` string enum).                                                                         |
-| `privacy_class`                | The privacy tier an observation was produced under.                              | Federation (outbox filters/redacts by `privacy_class` before a row leaves the instance); probe aggregation (marks `k_anon`/`dp_noised` rows).                                      |
-| `k_anonymity`                  | `k` for k-anonymity, when the observation is a k-anonymized aggregate.           | Probe aggregation (the aggregation batch size backing a `k_anon` row).                                                                                                             |
-| `dp_epsilon`, `dp_delta`       | Differential-privacy budget spent, when DP-noised.                               | Probe aggregation (accounting for a `dp_noised` row's noise parameters).                                                                                                           |
-| `informed`                     | Transit entities (modes/routes/stops/trips) this observation informs.            | Publishing emitters (STA/SIRI `InformedEntity`/affected-route wiring).                                                                                                             |
-| `source_uri`, `source_license` | Canonical URI and SPDX license of the upstream record.                           | Publishing emitters (attribution passthrough); federation (attribution carried across an instance boundary).                                                                       |
-
-The four indexes (`idx_conditions_obs_canonical`, `idx_conditions_obs_phenomenon`,
-`idx_conditions_obs_instance`, `idx_conditions_obs_privacy`) exist for the same
-lookups: federation and crowd reporting both query by `canonical_id` and
-`phenomenon_fingerprint`, federation's outbox filters by `instance_id` and
-`privacy_class`. The seven `CHECK` constraints (range/enum bounds on
-`confidence_score`, `dp_epsilon`, `dp_delta`, `k_anonymity`, `severity_level`,
-`fuzziness`, `privacy_class`) are the last line of defence against a bad row
-from any of those consumers reaching the table at all.
-
-Note: these are the generic `conditions.observations` privacy columns.
-Probe aggregation's own per-segment continuous-measurement table
-(`segment_observation`) is a **separate** table added by the probe plan's own
-migration — it is not part of this substrate and isn't covered here.
+The record tables (`situation`, `feature`, `offer`) and the observation series
+(`observation_latest`) carry the substrate's identity and privacy fields as
+promoted columns beside the sealed record ([storage.md](storage.md)):
+`instance_id` (the instance that sealed the record), `canonical_id` (the
+record's own federation identity, `sha256([namespace, localId])`; the
+cross-source cluster lives in `feature_canonical`), `privacy_class`, and on
+situations the crowd evidence state and presentation score. The record body
+keeps the rest of the provenance (attribution, rights, reporter, raw payload
+reference), so the commons fields travel with a record across federation.
+Records are sealed by the model's write seam (`sealRecord`), which derives the
+canonical id (`canonicalIdOf` in `@openconditions/model`).
 
 ## `packages/core/src/canonical.ts`
 
-| Export                   | Purpose                                                         | Downstream consumer(s)                                                                                                                     |
-| ------------------------ | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `canonicalId`            | Hashes a namespace + record id into the stable `canonical_id`.  | Ingest pipeline (`normalize.ts`, already wired — stamps every flow measurement row); federation (dedup key); crowd reporting (fusion key). |
-| `canonicalIdentityParts` | Extracts the `(namespace, recordId)` pair `canonicalId` hashes. | Federation (constructs the same namespace a receiving instance must reproduce to match rows).                                              |
-| `normalizeNamespace`     | Idempotent NFC-lowercase normalization of a namespace string.   | Federation (namespace comparison across instances must be case/normalization-insensitive).                                                 |
+| Export          | Purpose                                                                 | Downstream consumer(s)                                                                   |
+| --------------- | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `centroid`      | Vertex mean of a geometry: the stable cheap point for a quantized key.  | Crowd reporting (landing places a report; the kinematic check measures between reports). |
+| `coarseCell`    | A ~1 km grid cell of a point (`gridCell` at 1000 m), for abuse buckets. | Crowd reporting (the rate limiter counts reports per key per cell).                      |
+| `isoUtcEpochMs` | ISO-shaped instant to epoch ms, offset-less times pinned to UTC.        | Crowd reporting (the kinematic check's report interval).                                 |
 
 ## `packages/core/src/evidence.ts`
 
@@ -72,19 +52,3 @@ migration — it is not part of this substrate and isn't covered here.
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | `EVIDENCE_POLICY_DEFAULTS` | The per-state presentation scores, reliability weight and asymmetric peer-confirmation constants.                  | Crowd reporting (every evidence policy carries them).                                                                    |
 | `crowdEvidencePolicy`      | Builds the `EvidencePolicy` for a kind and type, or a property, from the registry's crowd rules (`crowdRulesFor`). | Crowd reporting (the contributions-api's recompute: lifetime, corroboration ceiling and quorums come from the registry). |
-
-## `packages/normalize/src/normalize.ts`
-
-`normalizeObservation` is the single write choke point that stamps
-`instance_id`, `canonical_id`, `privacy_class`, `source_uri`, and
-`source_license` onto every row of `conditions.observations` (flow
-measurements) before it is persisted, and rejects
-any parser-supplied `privacy_class`/`instance_id`/`k_anonymity`/`dp_epsilon`/
-`dp_delta` as a bug. Because `source_uri`/`source_license` are content-bearing
-(folded into `content_hash` when present), stamping them changes every
-existing feed row's hash exactly once — a deliberate one-time diff-upsert
-rewrite on the first poll after deploying this seam. It is already the live consumer of `canonicalId`
-— every other
-row in the tables above names a feature area that has not landed yet, but
-whose contract this normalization seam and the columns/functions above are
-already shaped to serve.

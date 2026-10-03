@@ -1,12 +1,12 @@
 import type { Point } from "geojson";
-import type { FlowParseResult } from "./flow.js";
-import { makeOrigin } from "./flow.js";
-import type { RoadFlow } from "./model.js";
+import type { FlowContext, FlowSites } from "./flow-output.js";
+import { type FlowParse, type FlowReading, parseJson, plausibleSpeed } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
 
 interface Flow {
   SiteId?: unknown;
   AverageVehicleSpeed?: unknown;
+  VehicleFlowRate?: unknown;
   MeasurementTime?: unknown;
   Geometry?: { WGS84?: unknown };
 }
@@ -23,30 +23,24 @@ function parseWktPoint(raw: unknown): Point | null {
 }
 
 /**
- * Parse a Trafikverket TrafficFlow (v1.4) data.json response into RoadFlow
- * measurements. Speed (`AverageVehicleSpeed`) is already km/h; geometry is the
- * inline WGS84 WKT point (`Geometry.WGS84`, "POINT (lon lat)"), so no separate
- * station registry join is needed. los stays "unknown"; the baseline
- * enrichment pipeline step classifies it. Distinct from the event parser
- * registered under `trafikverket-json` (`trafikverket.ts`).
+ * Parse a Trafikverket TrafficFlow (v1.4) data.json response: per site the
+ * average speed (km/h) and the flow rate (vehicles per hour), located by the
+ * inline WGS84 WKT point (`Geometry.WGS84`), so no station registry join is
+ * needed. A site that measured only a flow rate is kept. The level of service
+ * is left to the baseline enrichment. Distinct from the event parser
+ * (`trafikverket.ts`).
  */
 export function parseTrafikverketFlow(
   input: string | Buffer,
-  src: SourceDescriptor,
-): FlowParseResult {
-  let payload: { RESPONSE?: { RESULT?: unknown } };
-  try {
-    payload = JSON.parse(Buffer.isBuffer(input) ? input.toString("utf8") : input);
-  } catch {
-    return { flows: [], events: [] };
-  }
-  const results = payload.RESPONSE?.RESULT;
-  if (!Array.isArray(results)) return { flows: [], events: [] };
+  _src: SourceDescriptor,
+  _sites: FlowSites | undefined,
+  _ctx: FlowContext,
+): FlowParse {
+  const payload = parseJson(input) as { RESPONSE?: { RESULT?: unknown } } | undefined;
+  const results = payload?.RESPONSE?.RESULT;
+  if (!Array.isArray(results)) return { readings: [] };
 
-  const now = new Date().toISOString();
-  const origin = makeOrigin(src);
-  const flows: RoadFlow[] = [];
-
+  const readings: FlowReading[] = [];
   for (const result of results as { TrafficFlow?: unknown }[]) {
     const items = Array.isArray(result?.TrafficFlow) ? (result.TrafficFlow as Flow[]) : [];
     for (const item of items) {
@@ -54,31 +48,20 @@ export function parseTrafikverketFlow(
       if (!siteId) continue;
       const geometry = parseWktPoint(item.Geometry?.WGS84);
       if (!geometry) continue;
-      const speedKph = Number(item.AverageVehicleSpeed);
-      if (!Number.isFinite(speedKph) || speedKph < 0) continue;
-      const measuredAt = typeof item.MeasurementTime === "string" ? item.MeasurementTime : now;
-      flows.push({
-        id: `${src.id}:${siteId}`,
-        source: src.id,
-        sourceFormat: "trafikverket-flow",
-        domain: "roads",
-        kind: "measurement",
-        metric: "flow",
-        value: speedKph,
-        unit: "km/h",
-        level: "unknown",
-        aggregation: "live",
-        status: "active",
+      const speed = item.AverageVehicleSpeed != null ? Number(item.AverageVehicleSpeed) : undefined;
+      const rate = item.VehicleFlowRate != null ? Number(item.VehicleFlowRate) : undefined;
+      const speedKph = plausibleSpeed(speed) ? speed : undefined;
+      const volume = rate !== undefined && Number.isFinite(rate) && rate >= 0 ? rate : undefined;
+      if (speedKph === undefined && volume === undefined) continue;
+      readings.push({
+        site: siteId,
         geometry,
+        ...(typeof item.MeasurementTime === "string" ? { at: item.MeasurementTime } : {}),
         los: "unknown",
-        speedKph,
-        site: { id: siteId },
-        origin,
-        dataUpdatedAt: measuredAt,
-        fetchedAt: now,
-        isStale: false,
+        ...(speedKph !== undefined ? { speedKph } : {}),
+        ...(volume !== undefined ? { volume } : {}),
       });
     }
   }
-  return { flows, events: [] };
+  return { readings };
 }

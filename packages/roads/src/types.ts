@@ -25,7 +25,7 @@ export interface GeojsonFlowMapping {
    * Omit when the feed already emits DATEX tokens (e.g. Rennes "freeFlow").
    */
   statusMap?: Record<string, string>;
-  /** Measurement timestamp field, when the feed carries one per record. */
+  /** The reading timestamp field, when the feed carries one per record. */
   updatedField?: string;
 }
 

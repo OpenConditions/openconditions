@@ -114,24 +114,42 @@ export async function ensureObservationPartitions(
 
 /**
  * Drops the daily partitions whose every reading is older than its class's
- * retention. Keep-everything partitions are never dropped. Returns the
- * partitions it dropped.
+ * retention. A day of a class holding a property that rolls up stays until
+ * the rollup has finalized past its end, unless it holds no reading: its
+ * readings are the rollup's only input. Keep-everything partitions are never
+ * dropped. Returns the partitions it dropped.
  */
 export async function dropExpiredObservationPartitions(
   sql: postgres.Sql,
-  opts: { now: Date },
+  opts: { now: Date; registry: Registry },
 ): Promise<string[]> {
   const now = opts.now.getTime();
+  const rolledUp = new Map<number, Set<string>>();
+  for (const p of opts.registry.properties()) {
+    const days = retentionDaysOf(p);
+    const period = p.retention?.rollup?.period;
+    if (days === undefined || period === undefined) continue;
+    rolledUp.set(days, (rolledUp.get(days) ?? new Set()).add(period));
+  }
+  const progress = await sql<{ period: string; finalized_before: Date }[]>`
+    SELECT period, finalized_before FROM conditions.observation_rollup_progress`;
+  const frontiers = new Map(progress.map((r) => [r.period, r.finalized_before.getTime()]));
   const dropped: string[] = [];
   for (const name of await partitionNames(sql)) {
     const m = /^observation_r(\d+)_d(\d{4})(\d{2})(\d{2})$/.exec(name);
     if (m === null) continue;
     const days = Number(m[1]);
     const end = Date.UTC(Number(m[2]), Number(m[3]) - 1, Number(m[4])) + DAY_MS;
-    if (days > 0 && end <= now - (days + MAINTENANCE_MARGIN_DAYS) * DAY_MS) {
-      await sql.unsafe(`DROP TABLE conditions.${name}`);
-      dropped.push(name);
+    if (days === 0 || end > now - (days + MAINTENANCE_MARGIN_DAYS) * DAY_MS) continue;
+    const pending = [...(rolledUp.get(days) ?? [])].some((p) => (frontiers.get(p) ?? 0) < end);
+    if (pending) {
+      const [held] = await sql.unsafe<{ any: boolean }[]>(
+        `SELECT EXISTS (SELECT 1 FROM conditions.${name}) AS any`,
+      );
+      if (held?.any) continue;
     }
+    await sql.unsafe(`DROP TABLE conditions.${name}`);
+    dropped.push(name);
   }
   return dropped;
 }

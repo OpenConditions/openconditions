@@ -1,73 +1,124 @@
-import { observationId } from "@openconditions/model";
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { gzipSync } from "node:zlib";
+import type { LookupFn } from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
+import { FEED_SOURCES } from "@openconditions/roads";
 import {
   ensureObservationPartitions,
   retentionClasses,
   rollupObservations,
-  writeSnapshot,
 } from "@openconditions/storage";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { rollupSpeedSamples } from "../pipeline/speed-rollup.js";
+import { type DomainFeedSource, runSource } from "../pipeline/run.js";
+import { clearSiteTableCache } from "../pipeline/site-table.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 /**
- * The generic observation rollup must give the speed histograms the baseline
- * and segment-profile derivations read today: the same samples in one hour
- * through the legacy speed rollup and through traffic.speed history.
+ * The hourly rollup of `traffic.speed`, written through the flow poll, gives
+ * the speed histogram the baseline and segment-profile derivations read. The
+ * expectation is frozen from the retired per-sensor speed rollup run on the
+ * same samples, with two deliberate differences:
+ *  - standstills are data: a reading of 0 km/h lands in bin 0 (the old sample
+ *    writer dropped it; baselines ignore bin 0 instead);
+ *  - readings are no longer floored to the feed cadence: two readings of one
+ *    site at distinct instants of one cadence step are two samples (the old
+ *    writer kept the first only).
+ * Speeds at or above 250 km/h are rejected by the parsers, as before.
  */
 let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
 let sql: postgres.Sql;
 const registry = productionRegistry();
-const HOUR = new Date("2026-10-01T08:00:00Z");
-const NOW = new Date("2026-10-01T16:30:00Z");
-// A spread across many bins, a repeat, a half-bin edge and speeds near the top bins.
-const SPEEDS = [0, 1.9, 2, 47.5, 48, 81, 81, 81.9, 99.99, 130, 250.4];
+const HOUR = "2026-10-01T08:00:00.000Z";
+const NOW = "2026-10-01T16:30:00.000Z";
+const FIXTURES = path.resolve(
+  import.meta.dirname,
+  "../../../../packages/roads/src/__tests__/fixtures",
+);
+const SITES = readFileSync(path.join(FIXTURES, "ndw-flow/measurement_site_table.xml"));
+
+/** A spread across many bins, a repeat, a half-bin edge, a standstill and an absurd speed. */
+const SAMPLES: [string, number][] = [
+  ["08:00:00", 0],
+  ["08:01:00", 1.9],
+  ["08:02:00", 2],
+  ["08:03:00", 47.5],
+  ["08:04:00", 48],
+  ["08:05:00", 81],
+  ["08:05:30", 81], // same cadence step as the one before
+  ["08:07:00", 81.9],
+  ["08:08:00", 99.99],
+  ["08:09:00", 130],
+  ["08:10:00", 250.4],
+];
+
+/**
+ * The retired rollup's hour of these samples: 0 km/h, 250.4 km/h and the
+ * second reading of 08:05 dropped, `LEAST(127, GREATEST(0, floor(v / 2)))`.
+ */
+const LEGACY = { sample_count: 8, bins: [0, 1, 23, 24, 40, 49, 65], counts: [1, 1, 1, 1, 2, 1, 1] };
+
+/** The same hour now: the standstill in bin 0, both readings of 08:05 kept. */
+const EXPECTED = {
+  sample_count: LEGACY.sample_count + 2,
+  bins: LEGACY.bins,
+  counts: [2, 1, 1, 1, 3, 1, 1],
+};
+
+const feed: DomainFeedSource = {
+  ...FEED_SOURCES.find((f) => f.id === "nl-ndw-flow")!,
+  domain: "roads",
+};
+const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
+
+/** An NDW measured-data document holding one reading of the line site. */
+function document(at: string, speed: number): Buffer {
+  return Buffer.from(`<?xml version="1.0" encoding="UTF-8"?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" modelBaseVersion="2"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <payloadPublication xsi:type="MeasuredDataPublication" lang="nl">
+    <publicationTime>${at}</publicationTime>
+    <measurementSiteTableReference id="NDW01_MT" version="1715" targetClass="MeasurementSiteTable"/>
+    <siteMeasurements>
+      <measurementSiteReference id="PZH01_MST_0029-00" version="13" targetClass="MeasurementSiteRecord"/>
+      <measurementTimeDefault>${at}</measurementTimeDefault>
+      <measuredValue index="8">
+        <measuredValue>
+          <basicData xsi:type="TrafficSpeed">
+            <averageVehicleSpeed numberOfInputValuesUsed="8"><speed>${speed}</speed></averageVehicleSpeed>
+          </basicData>
+        </measuredValue>
+      </measuredValue>
+    </siteMeasurements>
+  </payloadPublication>
+</d2LogicalModel>`);
+}
 
 beforeAll(async () => {
   db = await createRestrictionDatabase();
   sql = db.sql;
-  await ensureObservationPartitions(sql, { classes: retentionClasses(registry), now: NOW });
-  for (const [i, speed] of SPEEDS.entries()) {
-    const at = new Date(HOUR.getTime() + i * 60_000);
-    await sql`
-      INSERT INTO conditions.sensor_speed_sample
-        (sensor_key, source, observed_at, speed_kph, dow, tod_hour, geom)
-      VALUES ('nl-ndw-flow:s1', 'nl-ndw-flow', ${at}, ${speed}, ${at.getUTCDay()},
-        ${at.getUTCHours()}, ST_SetSRID(ST_MakePoint(4.9, 52.4), 4326))`;
-    const draft: Record<string, unknown> = {
-      class: "observation",
-      kind: "observation",
-      property: "traffic.speed",
-      subject: { kind: "feature", featureId: "oc:feature:nl-ndw-flow:s1" },
-      result: { type: "quantity", value: speed, unit: "km/h" },
-      phenomenonTime: { instant: at.toISOString() },
-      aggregation: "mean",
-      temporality: "live",
-      location: {
-        geometry: { type: "Point", coordinates: [4.9, 52.4] },
-        extent: "point",
-        geometryOrigin: "site_table",
-        fuzziness: "exact",
-      },
-      provenance: {
-        origin: "feed",
-        sourceId: "nl-ndw-flow",
-        sourceFormat: "datex2",
-        accessMode: "bulk",
-        recordId: "s1",
-        attribution: { provider: "NDW", license: "CC0-1.0" },
-        privacy: { class: "authoritative" },
-      },
-      freshness: { fetchedAt: at.toISOString() },
-    };
-    draft["id"] = observationId("nl-ndw-flow", draft as Parameters<typeof observationId>[1]);
-    await writeSnapshot(
+  await ensureObservationPartitions(sql, {
+    classes: retentionClasses(registry),
+    now: new Date(NOW),
+  });
+  clearSiteTableCache();
+  for (const [time, speed] of SAMPLES) {
+    const at = `2026-10-01T${time}Z`;
+    const fetchFn = (async (url: string | URL | Request) => {
+      const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+      return new Response(
+        gzipSync(href.includes("measurement.xml.gz") ? SITES : document(at, speed)),
+        { status: 200 },
+      );
+    }) as typeof fetch;
+    await runSource(feed, {
       sql,
-      "nl-ndw-flow",
-      { observations: [draft] },
-      { registry, instanceId: "test.local", now: NOW.toISOString(), complete: true },
-    );
+      fetch: fetchFn,
+      now: () => NOW,
+      lookup: fakeLookup,
+      model: { registry, instanceId: "test.local" },
+    });
   }
 }, 120_000);
 
@@ -75,17 +126,14 @@ afterAll(async () => {
   await db?.close();
 }, 30_000);
 
-describe("the observation rollup of traffic.speed", () => {
-  it("gives the same hourly histogram as the legacy speed rollup", async () => {
-    await rollupSpeedSamples(sql, { now: () => NOW });
-    await rollupObservations(sql, { registry, period: "hourly", now: NOW });
-    const [legacy] = await sql`
-      SELECT sample_count, speed_bins AS bins, speed_counts AS counts
-      FROM conditions.sensor_speed_hourly WHERE hour_utc = ${HOUR}`;
-    const [rollup] = await sql`
-      SELECT sample_count, bins, counts FROM conditions.observation_rollup_hourly
-      WHERE hour_utc = ${HOUR}`;
-    expect(legacy).toBeDefined();
-    expect(rollup).toEqual(legacy);
+describe("the hourly rollup of traffic.speed", () => {
+  it("gives the retired speed rollup's histogram, plus standstills and every distinct reading", async () => {
+    await rollupObservations(sql, { registry, period: "hourly", now: new Date(NOW) });
+    const rows = await sql`
+      SELECT h.sample_count, h.bins, h.counts FROM conditions.observation_rollup_hourly h
+        JOIN conditions.observation_latest l USING (series_id)
+       WHERE h.hour_utc = ${HOUR} AND l.property = 'traffic.speed'
+         AND l.subject_key = 'feature:oc:feature:nl-ndw-flow:PZH01_MST_0029-00'`;
+    expect(rows).toEqual([EXPECTED]);
   });
 });

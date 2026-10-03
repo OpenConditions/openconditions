@@ -862,7 +862,847 @@
             "description": "Invalid request"
           },
           "404": {
-            "description": "No such record or schema"
+            "description": "No such record, series or schema"
+          }
+        }
+      }
+    },
+    "/features": {
+      "get": {
+        "operationId": "listFeatures",
+        "summary": "Live features as records, one keyset page ordered by id; `canonical=1` serves one feature per cluster of linked features under its canonical id. Components only with `expand=components`.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated type codes",
+              "type": "string"
+            },
+            "description": "comma-separated type codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant features are current at"
+            },
+            "description": "the instant features are current at"
+          },
+          {
+            "name": "canonical",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "description": "1 serves the canonical view: one feature per cluster of linked features, under its canonical id"
+            },
+            "description": "1 serves the canonical view: one feature per cluster of linked features, under its canonical id"
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["components"],
+              "description": "components includes each feature's components, which collections leave out"
+            },
+            "description": "components includes each feature's components, which collections leave out"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the `next` of the previous page"
+            },
+            "description": "the `next` of the previous page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/features.geojson": {
+      "get": {
+        "operationId": "listFeaturesGeoJson",
+        "summary": "Live features as a GeoJSON FeatureCollection, one keyset page.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated type codes",
+              "type": "string"
+            },
+            "description": "comma-separated type codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant features are current at"
+            },
+            "description": "the instant features are current at"
+          },
+          {
+            "name": "canonical",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "description": "1 serves the canonical view: one feature per cluster of linked features, under its canonical id"
+            },
+            "description": "1 serves the canonical view: one feature per cluster of linked features, under its canonical id"
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["components"],
+              "description": "components includes each feature's components, which collections leave out"
+            },
+            "description": "components includes each feature's components, which collections leave out"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the `next` of the previous page"
+            },
+            "description": "the `next` of the previous page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/geo+json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/features.jsonld": {
+      "get": {
+        "operationId": "listFeaturesJsonLd",
+        "summary": "Live features as GeoJSON-LD (schema.org and SOSA context), one keyset page.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated type codes",
+              "type": "string"
+            },
+            "description": "comma-separated type codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant features are current at"
+            },
+            "description": "the instant features are current at"
+          },
+          {
+            "name": "canonical",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "description": "1 serves the canonical view: one feature per cluster of linked features, under its canonical id"
+            },
+            "description": "1 serves the canonical view: one feature per cluster of linked features, under its canonical id"
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["components"],
+              "description": "components includes each feature's components, which collections leave out"
+            },
+            "description": "components includes each feature's components, which collections leave out"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the `next` of the previous page"
+            },
+            "description": "the `next` of the previous page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/ld+json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/features/{id}": {
+      "get": {
+        "operationId": "getFeature",
+        "summary": "One feature, tombstoned or not, with its components and the canonical cluster it belongs to; a canonical id serves the cluster's canonical feature.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the record id, URL-encoded"
+            },
+            "description": "the record id, URL-encoded"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "404": {
+            "description": "No such record, series or schema"
+          }
+        }
+      }
+    },
+    "/offers": {
+      "get": {
+        "operationId": "listOffers",
+        "summary": "Live offers (tariffs) as records, one keyset page ordered by id.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated type codes",
+              "type": "string"
+            },
+            "description": "comma-separated type codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "horizonDays",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 366,
+              "description": "only situations starting within this many days after `at`"
+            },
+            "description": "only situations starting within this many days after `at`"
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant offers are current at"
+            },
+            "description": "the instant offers are current at"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the `next` of the previous page"
+            },
+            "description": "the `next` of the previous page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/offers/{id}": {
+      "get": {
+        "operationId": "getOffer",
+        "summary": "One offer, tombstoned or not.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the record id, URL-encoded"
+            },
+            "description": "the record id, URL-encoded"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "404": {
+            "description": "No such record, series or schema"
+          }
+        }
+      }
+    },
+    "/observations/latest": {
+      "get": {
+        "operationId": "listLatestObservations",
+        "summary": "The reading in effect of every matching series, one keyset page ordered by series (the cursor is a series id); `canonical=1` serves fused readings where several sources or the crowd report a property.",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "west,south,east,north in WGS84 degrees"
+            },
+            "description": "west,south,east,north in WGS84 degrees"
+          },
+          {
+            "name": "property",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated property codes",
+              "type": "string"
+            },
+            "description": "comma-separated property codes"
+          },
+          {
+            "name": "domain",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "only properties of this domain"
+            },
+            "description": "only properties of this domain"
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
+          },
+          {
+            "name": "origin",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated origins: feed, crowd, federation, derived",
+              "type": "string"
+            },
+            "description": "comma-separated origins: feed, crowd, federation, derived"
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant readings are current at"
+            },
+            "description": "the instant readings are current at"
+          },
+          {
+            "name": "canonical",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["0", "1"],
+              "description": "1 serves the canonical view: the fused reading of each property several sources or the crowd may report, and the per-source readings of the rest"
+            },
+            "description": "1 serves the canonical view: the fused reading of each property several sources or the crowd may report, and the per-source readings of the rest"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+$",
+              "description": "the `next` of the previous page: a series id"
+            },
+            "description": "the `next` of the previous page: a series id"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          }
+        }
+      }
+    },
+    "/observations": {
+      "get": {
+        "operationId": "getSeries",
+        "summary": "One series over a range: raw readings within the property's raw retention, hourly or daily rollups beyond it (or as `resolution` asks), oldest first, one page.",
+        "parameters": [
+          {
+            "name": "subject",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the series' subject key (`feature:<id>`, `feature:<id>#<component>`, …) or a record id"
+            },
+            "description": "the series' subject key (`feature:<id>`, `feature:<id>#<component>`, …) or a record id"
+          },
+          {
+            "name": "component",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "a component of the feature `subject` names"
+            },
+            "description": "a component of the feature `subject` names"
+          },
+          {
+            "name": "property",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the property code"
+            },
+            "description": "the property code"
+          },
+          {
+            "name": "qualifiers",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "the series' qualifiers as a JSON object"
+            },
+            "description": "the series' qualifiers as a JSON object"
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the source, where several report on one subject"
+            },
+            "description": "the source, where several report on one subject"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "start of the range; default a day before `to`"
+            },
+            "description": "start of the range; default a day before `to`"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "end of the range (exclusive); default now"
+            },
+            "description": "end of the range (exclusive); default now"
+          },
+          {
+            "name": "resolution",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["raw", "hourly", "daily"],
+              "description": "raw readings or rollups; default raw within the property's raw retention, its rollup beyond"
+            },
+            "description": "raw readings or rollups; default raw within the property's raw retention, its rollup beyond"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the `next` of the previous page"
+            },
+            "description": "the `next` of the previous page"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "default": 500,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "404": {
+            "description": "No such record, series or schema"
           }
         }
       }
@@ -904,7 +1744,7 @@
             "description": "Invalid request"
           },
           "404": {
-            "description": "No such record or schema"
+            "description": "No such record, series or schema"
           }
         }
       }
@@ -952,7 +1792,7 @@
             "description": "Invalid request"
           },
           "404": {
-            "description": "No such record or schema"
+            "description": "No such record, series or schema"
           }
         }
       }
@@ -960,7 +1800,7 @@
     "/coverage": {
       "get": {
         "operationId": "getCoverage",
-        "summary": "Live records per country, subdivision, class, kind and access mode.",
+        "summary": "Live records per country, subdivision, class, kind and access mode, and live series per property.",
         "parameters": [],
         "responses": {
           "200": {

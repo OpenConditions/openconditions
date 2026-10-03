@@ -1,81 +1,53 @@
 import { describe, expect, it } from "vitest";
-import { parseBonnFlow } from "../flow-bonn.js";
-import type { SourceDescriptor } from "../types.js";
+import { flowFeed, flows, readings, site, value } from "./flow-fixtures.js";
 
-const src = {
-  id: "de-nw-bonn",
-  attribution: "Bundesstadt Bonn",
-  country: "DE",
-  license: "dl-de/zero-2-0",
-} as SourceDescriptor;
+const FEED = "de-nw-bonn";
+const feed = flowFeed(FEED);
 
 // Shapes mirror the live feed at stadtplan.bonn.de/geojson?Thema=19584.
+const section = (id: number, speed: number, status: string, coordinates: number[][]) => ({
+  type: "Feature",
+  geometry: { type: "MultiLineString", coordinates: [coordinates] },
+  properties: {
+    strecke_id: id,
+    auswertezeit: "2026-07-10T17:10:00Z",
+    geschwindigkeit: speed,
+    verkehrsstatus: status,
+  },
+});
 const payload = JSON.stringify({
   type: "FeatureCollection",
   features: [
-    {
-      type: "Feature",
-      geometry: {
-        type: "MultiLineString",
-        coordinates: [
-          [
-            [7.1832, 50.6686],
-            [7.1829, 50.6688],
-            [7.1825, 50.6692],
-          ],
-        ],
-      },
-      properties: {
-        strecke_id: 144,
-        auswertezeit: "2026-07-10T17:10:00Z",
-        geschwindigkeit: 12,
-        verkehrsstatus: "stockender Verkehr",
-      },
-    },
-    {
-      type: "Feature",
-      geometry: {
-        type: "MultiLineString",
-        coordinates: [
-          [
-            [7.177, 50.6727],
-            [7.1773, 50.6725],
-          ],
-        ],
-      },
-      properties: {
-        strecke_id: 143,
-        auswertezeit: "2026-07-10T17:10:00Z",
-        geschwindigkeit: 45,
-        verkehrsstatus: "normales Verkehrsaufkommen",
-      },
-    },
+    section(144, 12, "stockender Verkehr", [
+      [7.1832, 50.6686],
+      [7.1829, 50.6688],
+      [7.1825, 50.6692],
+    ]),
+    section(143, 45, "normales Verkehrsaufkommen", [
+      [7.177, 50.6727],
+      [7.1773, 50.6725],
+    ]),
   ],
 });
 
-describe("parseBonnFlow", () => {
-  it("maps geschwindigkeit→speedKph and verkehrsstatus→los with lon,lat geometry", () => {
-    const { flows, events } = parseBonnFlow(payload, src);
-    expect(flows).toHaveLength(2);
-
-    const congested = flows.find((f) => f.id === "de-nw-bonn:144")!;
-    expect(congested.sourceFormat).toBe("bonn");
-    expect(congested.speedKph).toBe(12);
-    expect(congested.los).toBe("queuing");
-    expect(congested.geometry.type).toBe("LineString");
-    expect(congested.dataUpdatedAt).toBe("2026-07-10T17:10:00Z");
-
-    const free = flows.find((f) => f.id === "de-nw-bonn:143")!;
-    expect(free.los).toBe("free_flow");
-    expect(free.speedKph).toBe(45);
-
-    // Only the queuing section emits a derived congestion event.
-    expect(events).toHaveLength(1);
-    expect(events[0]!.id).toBe("de-nw-bonn:144:congestion");
-    expect(events[0]!.type).toBe("congestion");
+describe("Bonn traffic flow", () => {
+  it("keeps the speed and the stated level of service of each section, on its line", () => {
+    const out = flows(feed, payload);
+    expect(value(out, FEED, "144", "traffic.speed")).toBe(12);
+    expect(value(out, FEED, "144", "traffic.los")).toBe("queuing");
+    expect(readings(out, FEED, "144", "traffic.speed")[0]!["phenomenonTime"]).toEqual({
+      instant: "2026-07-10T17:10:00.000Z",
+    });
+    expect(
+      (site(out, FEED, "144")!["location"] as { geometry: { type: string } }).geometry.type,
+    ).toBe("LineString");
+    expect(value(out, FEED, "143", "traffic.los")).toBe("free_flow");
+    expect(value(out, FEED, "143", "traffic.speed")).toBe(45);
+    // Only the queuing section derives a congestion situation.
+    expect(out.situations.map((s) => s["id"])).toEqual([`oc:situation:${FEED}:144:congestion`]);
   });
 
-  it("splits a MultiLineString into one flow per member line", () => {
+  it("joins the member lines of a MultiLineString into one site, with a situation per line", () => {
     const multi = JSON.stringify({
       features: [
         {
@@ -92,20 +64,27 @@ describe("parseBonnFlow", () => {
               ],
             ],
           },
-          properties: { strecke_id: 9, geschwindigkeit: 50, verkehrsstatus: "frei" },
+          properties: { strecke_id: 9, geschwindigkeit: 5, verkehrsstatus: "Stau" },
         },
       ],
     });
-    const { flows } = parseBonnFlow(multi, src);
-    expect(flows.map((f) => f.id)).toEqual(["de-nw-bonn:9:0", "de-nw-bonn:9:1"]);
+    const out = flows(feed, multi);
+    expect(out.features).toHaveLength(1);
+    expect(
+      (site(out, FEED, "9")!["location"] as { geometry: { type: string } }).geometry.type,
+    ).toBe("MultiLineString");
+    expect(out.situations.map((s) => s["id"])).toEqual([
+      `oc:situation:${FEED}:9:0:congestion`,
+      `oc:situation:${FEED}:9:1:congestion`,
+    ]);
   });
 
-  it("flags a hard parse failure (not a legitimately empty cycle)", () => {
-    expect(parseBonnFlow("not json", src).failed).toBe(true);
-    expect(parseBonnFlow(JSON.stringify({ type: "X" }), src).failed).toBe(true);
+  it("refuses an unreadable body or a non-collection as a hard parse failure", () => {
+    expect(() => flows(feed, "not json")).toThrow("hard parse failure");
+    expect(() => flows(feed, JSON.stringify({ type: "X" }))).toThrow("hard parse failure");
   });
 
-  it("skips features with neither a speed nor a resolvable status", () => {
+  it("skips sections with neither a speed nor a resolvable status", () => {
     const noSignal = JSON.stringify({
       features: [
         {
@@ -120,6 +99,6 @@ describe("parseBonnFlow", () => {
         },
       ],
     });
-    expect(parseBonnFlow(noSignal, src).flows).toHaveLength(0);
+    expect(flows(feed, noSignal).features).toEqual([]);
   });
 });

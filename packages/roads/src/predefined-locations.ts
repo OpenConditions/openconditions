@@ -6,14 +6,23 @@
  * and coordinates live in `pointCoordinates` (latitude/longitude children),
  * either directly (Point) or inside `linearByCoordinates` start/intermediate/end
  * points (LineString). Coordinates are WGS84 lat/lon (VRZ doc §4.3.1.2), emitted
- * as GeoJSON [lon, lat].
+ * as GeoJSON [lon, lat]. A location that stands for one lane (the NRW
+ * fahrstreifen feeds) names it in `affectedCarriagewayAndLanes`.
  */
+import type { LineString, Point } from "geojson";
 import { SaxesParser } from "saxes";
-import type { SiteGeometry, SiteTableParser } from "./siteTable.js";
+import type { FlowSite, FlowSites } from "./flow-output.js";
+import { datexLaneNumber } from "./flow-reading.js";
+import type { SiteTableParser } from "./siteTable.js";
 import { flattenString, stripXmlNamespace } from "./xml.js";
+
+type SiteGeometry = Point | LineString;
 
 interface RecordState {
   id?: string;
+  lanes: number[];
+  name?: string;
+  nameLang?: string;
   points: [number, number][]; // ordered [lon, lat]; length 1 => Point, >=2 => LineString
   isLinear: boolean;
   curLat?: number;
@@ -21,7 +30,7 @@ interface RecordState {
 }
 
 function freshRecord(id: string | undefined): RecordState {
-  return { ...(id != null ? { id } : {}), points: [], isLinear: false };
+  return { ...(id != null ? { id } : {}), points: [], isLinear: false, lanes: [] };
 }
 
 function geometryForRecord(r: RecordState): SiteGeometry | null {
@@ -36,9 +45,11 @@ function geometryForRecord(r: RecordState): SiteGeometry | null {
 }
 
 export function createPredefinedLocationsParser(): SiteTableParser {
-  const map = new Map<string, SiteGeometry>();
+  const map = new Map<string, FlowSite>();
+  const stack: string[] = [];
   let record: RecordState | null = null;
-  let textTarget: "latitude" | "longitude" | null = null;
+  let textTarget: "latitude" | "longitude" | "lane" | "name" | null = null;
+  let nameLang: string | undefined;
   let textBuffer = "";
   let failed = false;
 
@@ -61,6 +72,7 @@ export function createPredefinedLocationsParser(): SiteTableParser {
 
   parser.on("opentag", (tag) => {
     const local = stripXmlNamespace(tag.name);
+    stack.push(local);
 
     if (local === "predefinedLocation") {
       const id = (tag.attributes as Record<string, string>)["id"];
@@ -75,6 +87,13 @@ export function createPredefinedLocationsParser(): SiteTableParser {
     } else if (local === "longitude") {
       textTarget = "longitude";
       textBuffer = "";
+    } else if (local === "lane" && stack.includes("affectedCarriagewayAndLanes")) {
+      textTarget = "lane";
+      textBuffer = "";
+    } else if (local === "value" && stack.includes("predefinedLocationName")) {
+      nameLang = (tag.attributes as Record<string, string>)["lang"];
+      textTarget = "name";
+      textBuffer = "";
     }
   });
 
@@ -87,6 +106,20 @@ export function createPredefinedLocationsParser(): SiteTableParser {
 
   parser.on("closetag", (tag) => {
     const local = stripXmlNamespace(tag.name);
+    stack.pop();
+    if (local === "lane" && textTarget === "lane" && record != null) {
+      const lane = datexLaneNumber(textBuffer);
+      if (lane !== undefined) record.lanes.push(lane);
+      textTarget = null;
+    }
+    if (local === "value" && textTarget === "name" && record != null) {
+      const name = textBuffer.trim();
+      if (name !== "" && record.name === undefined) {
+        record.name = flattenString(name);
+        if (nameLang !== undefined) record.nameLang = flattenString(nameLang);
+      }
+      textTarget = null;
+    }
     if ((local === "latitude" || local === "longitude") && record != null) {
       const value = textBuffer.trim() !== "" ? Number(textBuffer) : NaN;
       if (Number.isFinite(value)) {
@@ -98,8 +131,16 @@ export function createPredefinedLocationsParser(): SiteTableParser {
     }
     if (local === "pointCoordinates") flushCoordinatePair();
     if (local === "predefinedLocation" && record != null) {
-      const geom = geometryForRecord(record);
-      if (record.id != null && geom != null) map.set(record.id, geom);
+      const geometry = geometryForRecord(record);
+      if (record.id != null && geometry != null) {
+        map.set(record.id, {
+          geometry,
+          // A location of exactly one lane is a lane-level site.
+          ...(record.lanes.length === 1 ? { lane: record.lanes[0]! } : {}),
+          ...(record.name !== undefined ? { name: record.name } : {}),
+          ...(record.nameLang !== undefined ? { nameLang: record.nameLang } : {}),
+        });
+      }
       record = null;
       textTarget = null;
       textBuffer = "";
@@ -115,7 +156,7 @@ export function createPredefinedLocationsParser(): SiteTableParser {
         failed = true;
       }
     },
-    close(): Map<string, SiteGeometry> {
+    close(): FlowSites {
       if (!failed) {
         try {
           parser.close();
@@ -128,7 +169,7 @@ export function createPredefinedLocationsParser(): SiteTableParser {
   };
 }
 
-export function parsePredefinedLocations(input: string | Buffer): Map<string, SiteGeometry> {
+export function parsePredefinedLocations(input: string | Buffer): FlowSites {
   const str = Buffer.isBuffer(input) ? input.toString("utf8") : input;
   const parser = createPredefinedLocationsParser();
   parser.write(str);

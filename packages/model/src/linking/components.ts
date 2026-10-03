@@ -7,7 +7,7 @@ export interface LinkableComponent {
   key: string;
   parentKey?: string;
   kind: string;
-  externalIds?: readonly { scheme: string; id: string }[];
+  externalIds?: readonly { scheme: string; id: string; authority?: string }[];
   details: Record<string, unknown>;
 }
 
@@ -28,13 +28,19 @@ export interface CanonicalComponent {
 
 interface Building extends CanonicalComponent {
   members: { featureId: string; key: string }[];
-  /** Ids of the member components, `scheme\u0000id`. */
+  /** Ids of the member components, `scheme\u0000authority\u0000id`. */
   ids: Set<string>;
   /** The identity fields of the first member, as JCS. */
   fields?: string;
 }
 
-const idKey = (id: { scheme: string; id: string }) => `${id.scheme}\u0000${id.id}`;
+/**
+ * An id is the same id only from the same authority: OCPI EVSE uids are unique
+ * within one operator's platform, so uid "1" from two operators is two charge
+ * points.
+ */
+const idKey = (id: { scheme: string; id: string; authority?: string }) =>
+  `${id.scheme}\u0000${id.authority ?? ""}\u0000${id.id}`;
 
 /**
  * The component set of one canonical feature: the union of its members'

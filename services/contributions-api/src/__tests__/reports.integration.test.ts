@@ -416,7 +416,7 @@ describe("POST /contrib/reports — rejections at the trust boundary", () => {
     expect(await readSituation(crowdId(key, "three-dee-00000001"))).toBeUndefined();
   }, 60_000);
 
-  it("answers an observation claim with 422 unsupported_claim_class", async () => {
+  it("refuses an observation claim about a feature this instance does not hold with 422", async () => {
     const key = await generateReporterKey();
     const grant = await enroll(key);
     const report = await signReport(
@@ -435,7 +435,7 @@ describe("POST /contrib/reports — rejections at the trust boundary", () => {
 
     const res = await postReport(report, grant);
     expect(res.statusCode).toBe(422);
-    expect((res.json() as { reason: string }).reason).toBe("unsupported_claim_class");
+    expect(res.json()).toMatchObject({ issues: [{ code: "unknown_subject" }] });
     const [{ n }] = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM conditions.report_evidence WHERE actor_key_id = ${key.keyId}`;
     expect(n).toBe(0);

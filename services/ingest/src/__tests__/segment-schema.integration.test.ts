@@ -66,10 +66,10 @@ describe("segment schema", () => {
         ST_SetSRID(ST_GeomFromGeoJSON('{"type":"LineString","coordinates":[[24.9,60.2],[24.91,60.21]]}'), 4326),
         'primary', 650.0, 9, now())`;
     await sql`
-      INSERT INTO conditions.sensor_segment (sensor_key, segment_id, fraction, offset_m, matched_at)
-      VALUES ('fi:1', '12345:f', 0.5, 3.2, now())`;
+      INSERT INTO conditions.sensor_segment (subject_key, segment_id, fraction, offset_m, matched_at)
+      VALUES ('feature:oc:feature:fi:1', '12345:f', 0.5, 3.2, now())`;
     const rows = await sql<{ segment_id: string }[]>`
-      SELECT segment_id FROM conditions.sensor_segment WHERE sensor_key = 'fi:1'`;
+      SELECT segment_id FROM conditions.sensor_segment WHERE subject_key = 'feature:oc:feature:fi:1'`;
     expect(rows[0]!.segment_id).toBe("12345:f");
   }, 30_000);
 });

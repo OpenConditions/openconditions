@@ -1,13 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseMivConfig, parseMivFlow } from "../miv.js";
-import type { SourceDescriptor } from "../types.js";
+import { parseMivConfig } from "../miv.js";
+import { flowFeed, flows, readings, siteIds, value } from "./flow-fixtures.js";
 
-const src = {
-  id: "be-miv",
-  attribution: "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",
-  country: "BE",
-  license: "CC-BY-4.0",
-} as SourceDescriptor;
+const FEED = "be-miv";
+const feed = flowFeed(FEED);
 
 const CONFIG = `<?xml version="1.0" encoding="UTF-8"?>
 <mivconfig>
@@ -38,34 +34,33 @@ const DATA = `<?xml version="1.0" encoding="UTF-8"?>
 </miv>`;
 
 describe("parseMivConfig", () => {
-  it("maps unieke_id → WGS84 Point (comma decimals, lon=lengtegraad)", () => {
-    const map = parseMivConfig(CONFIG);
-    expect(map.size).toBe(2);
-    expect(map.get("4970")).toEqual({ type: "Point", coordinates: [4.4842054, 50.9828171] });
-    expect(map.get("29")).toEqual({ type: "Point", coordinates: [3.7, 51.05] });
+  it("places each unieke_id at its WGS84 point (comma decimals, lon=lengtegraad)", () => {
+    const sites = parseMivConfig(CONFIG);
+    expect(sites.size).toBe(2);
+    expect(sites.get("4970")).toEqual({
+      geometry: { type: "Point", coordinates: [4.4842054, 50.9828171] },
+    });
+    expect(sites.get("29")).toEqual({ geometry: { type: "Point", coordinates: [3.7, 51.05] } });
   });
 });
 
-describe("parseMivFlow", () => {
-  it("uses the highest-intensity valid class's harmonic speed, joined to config geometry", () => {
-    const siteMap = parseMivConfig(CONFIG);
-    const { flows } = parseMivFlow(DATA, src, siteMap);
+describe("MIV traffic data", () => {
+  it("uses the highest-intensity valid class's harmonic speed, joined to the configured point", () => {
+    const out = flows(feed, DATA, parseMivConfig(CONFIG));
     // meetpunt 29 has no valid class (intensity 0 + the 252 no-data sentinel) → skipped.
-    expect(flows).toHaveLength(1);
-    expect(flows[0]!.id).toBe("be-miv:4970");
+    expect(siteIds(out, FEED)).toEqual(["4970"]);
     // Class 2 has the higher intensity (120 > 30) → its 88 km/h wins.
-    expect(flows[0]!.speedKph).toBe(88);
-    expect(flows[0]!.sourceFormat).toBe("miv");
-    expect(flows[0]!.geometry).toEqual({ type: "Point", coordinates: [4.4842054, 50.9828171] });
-    expect(flows[0]!.dataUpdatedAt).toBe("2026-07-10T16:21:00+01:00");
+    expect(value(out, FEED, "4970", "traffic.speed")).toBe(88);
+    expect(readings(out, FEED, "4970", "traffic.speed")[0]!["phenomenonTime"]).toMatchObject({
+      end: "2026-07-10T15:21:00.000Z",
+    });
   });
 
-  it("skips points with no config geometry", () => {
-    const { flows } = parseMivFlow(DATA, src, new Map());
-    expect(flows).toHaveLength(0);
+  it("skips points with no configured location", () => {
+    expect(flows(feed, DATA, new Map()).features).toEqual([]);
   });
 
-  it("flags a hard parse failure", () => {
-    expect(parseMivFlow("not xml <", src, new Map()).failed).toBe(true);
+  it("refuses an unreadable body as a hard parse failure", () => {
+    expect(() => flows(feed, "not xml <", new Map())).toThrow("hard parse failure");
   });
 });

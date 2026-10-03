@@ -1,14 +1,28 @@
 import {
+  canonicalFeatureRecord,
   dedupeSituations,
+  listCanonicalFeatures,
+  listFeatures,
+  listLatestObservations,
+  listOffers,
   listSituations,
   type QueryRunner,
   readCoverage,
+  readSeries,
+  withoutComponents,
 } from "@openconditions/core";
-import { readRecord, readRevisions } from "@openconditions/core/server";
-import { jsonSchemaArtifacts, type Registry } from "@openconditions/model";
+import {
+  type CanonicalFeature,
+  readCanonical,
+  readRecord,
+  readRevisions,
+} from "@openconditions/core/server";
+import { jsonSchemaArtifacts, parseRecordId, type Registry } from "@openconditions/model";
 import {
   type EgressRecord,
   type FeedInfo,
+  featuresToGeoJSON,
+  featuresToJsonLd,
   isPermissiveRecord,
   nextEffectTransition,
   permissiveRecords,
@@ -22,7 +36,17 @@ import type postgres from "postgres";
 import type { z } from "zod";
 import { startRecordStream } from "../record-stream.js";
 import { openApiDocument } from "./openapi.js";
-import { AtQuery, queryError, RecordClassParam, SituationListQuery, StreamQuery } from "./query.js";
+import {
+  AtQuery,
+  FeatureListQuery,
+  LatestObservationQuery,
+  OfferListQuery,
+  queryError,
+  RecordClassParam,
+  SeriesQuery,
+  SituationListQuery,
+  StreamQuery,
+} from "./query.js";
 import { taxonomyOf } from "./taxonomy.js";
 
 type Rec = Record<string, unknown>;
@@ -69,7 +93,7 @@ function cacheFor(reply: FastifyReply, records: readonly Rec[], at: Date): void 
 }
 
 /** The reader filters a collection or stream query names. */
-function filtersOf(q: StreamQuery) {
+function filtersOf(q: Omit<StreamQuery, "class" | "minSeverity"> & Partial<StreamQuery>) {
   return {
     ...(q.bbox ? { bbox: q.bbox } : {}),
     ...(q.kind ? { kinds: q.kind } : {}),
@@ -79,6 +103,38 @@ function filtersOf(q: StreamQuery) {
     ...(q.origin ? { origins: q.origin } : {}),
     ...(q.minSeverity ? { minSeverity: q.minSeverity } : {}),
   };
+}
+
+/** Readings change every poll: a collection or series is cached this long. */
+const OBSERVATION_CACHE_SECONDS = 30;
+
+/** Features and offers change with their source's poll. */
+function cacheRecords(reply: FastifyReply): void {
+  reply.header("Cache-Control", `public, max-age=${MAX_CACHE_SECONDS}`);
+}
+
+/** Records as the egress serves them: share-alike withheld, reporters stripped. */
+const egress = (records: readonly Rec[]) =>
+  permissiveRecords(records as unknown as EgressRecord[]) as unknown as Rec[];
+
+/**
+ * A cluster's canonical feature as the egress serves it: built from its
+ * permissive members only, so a share-alike member lends it neither
+ * components nor credit. Undefined when every member is withheld.
+ */
+function canonicalEgress(cluster: CanonicalFeature, members: readonly Rec[]): Rec | undefined {
+  const record = canonicalFeatureRecord(cluster, egress(members));
+  return record === undefined ? undefined : egress([record])[0];
+}
+
+/**
+ * The subject key a series query names: a subject key as given, or a record
+ * id (`oc:feature:…`) as its subject key, with the component appended.
+ */
+function subjectKeyOf(subject: string, component: string | undefined): string {
+  const parts = parseRecordId(subject);
+  const key = parts === null ? subject : `${parts.class}:${subject}`;
+  return component === undefined ? key : `${key}#${component}`;
 }
 
 /**
@@ -109,27 +165,38 @@ function parse<S extends z.ZodType>(
 }
 
 /**
- * The record API: situation collections (JSON, GeoJSON, JSON-LD) paginated
- * by a keyset cursor, one situation with its evidence and binding, a
- * record's history, the registry's taxonomy and JSON Schemas, coverage and
- * the OpenAPI document. Every record leaves through the licence egress:
- * share-alike records are withheld and a crowd reporter's key is stripped.
+ * The record API: situation, feature and offer collections (JSON; GeoJSON
+ * and JSON-LD for situations and features) paginated by a keyset cursor on
+ * id, the latest readings paginated by series, one series' readings or
+ * rollups, one situation with its evidence and binding, one feature with its
+ * canonical cluster, one offer, a record's history, the registry's taxonomy
+ * and JSON Schemas, coverage and the OpenAPI document. Every record leaves
+ * through the licence egress: share-alike records are withheld (a canonical
+ * feature is built from its permissive members only) and a crowd reporter's
+ * key is stripped.
  */
 export function registerApiRoutes(
   app: FastifyInstance,
   sql: postgres.Sql,
-  deps: { registry: Registry; streamPollMs?: number; streamMaxConnections?: number },
+  deps: {
+    registry: Registry;
+    streamPollMs?: number;
+    streamMaxConnections?: number;
+    /** The clock an absent `at` and the series retention read; default the system clock. */
+    now?: () => Date;
+  },
 ): void {
   const db: QueryRunner = {
     execute: async <T>(query: string, params?: unknown[]) =>
       (await sql.unsafe(query, params as never)) as T,
   };
+  const now = deps.now ?? (() => new Date());
   let artifacts: Map<string, unknown> | undefined;
   let taxonomy: ReturnType<typeof taxonomyOf> | undefined;
 
   /** One page of situations as the egress serves them, and the instant they were read at. */
   async function page(q: z.output<typeof SituationListQuery>) {
-    const at = q.at ? new Date(q.at) : new Date();
+    const at = q.at ? new Date(q.at) : now();
     const read = await listSituations(db, {
       at,
       limit: q.limit,
@@ -304,6 +371,205 @@ export function registerApiRoutes(
     });
   });
 
+  /**
+   * One page of features as the egress serves them: per source, or the
+   * canonical view (one feature per cluster); components only when asked.
+   */
+  async function featurePage(q: FeatureListQuery) {
+    const query = {
+      at: q.at ? new Date(q.at) : now(),
+      limit: q.limit,
+      ...filtersOf(q),
+      ...(q.cursor ? { cursor: q.cursor } : {}),
+    };
+    let records: Rec[];
+    let next: string | null;
+    if (q.canonical === "1") {
+      const read = await listCanonicalFeatures(db, query);
+      records = read.clusters.flatMap((c) => {
+        const record = canonicalEgress(c, c.members);
+        return record === undefined ? [] : [record];
+      });
+      next = read.next;
+    } else {
+      const read = await listFeatures(db, query);
+      records = egress(read.records);
+      next = read.next;
+    }
+    return {
+      records: q.expand === "components" ? records : records.map(withoutComponents),
+      next,
+    };
+  }
+
+  app.get("/features", async (req, reply) => {
+    const q = parse(FeatureListQuery, req.query, reply);
+    if (!q) return reply;
+    const { records, next } = await featurePage(q);
+    cacheRecords(reply);
+    reply.header("X-Data-License", licensesOf(records));
+    return reply.send({ records, next });
+  });
+
+  app.get("/features.geojson", async (req, reply) => {
+    const q = parse(FeatureListQuery, req.query, reply);
+    if (!q) return reply;
+    const { records, next } = await featurePage(q);
+    cacheRecords(reply);
+    reply.header("Content-Type", "application/geo+json");
+    reply.header("X-Data-License", licensesOf(records));
+    const info = { ...FEED_INFO, timestamp: now().toISOString() };
+    return reply.send(featuresToGeoJSON(records, info, { next }));
+  });
+
+  app.get("/features.jsonld", async (req, reply) => {
+    const q = parse(FeatureListQuery, req.query, reply);
+    if (!q) return reply;
+    const { records, next } = await featurePage(q);
+    cacheRecords(reply);
+    reply.header("Content-Type", "application/ld+json");
+    reply.header("X-Data-License", licensesOf(records));
+    const info = { ...FEED_INFO, timestamp: now().toISOString() };
+    return reply.send(featuresToJsonLd(records, info, { next }));
+  });
+
+  app.get("/features/:id", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const cluster = await readCanonical(sql, id);
+    let record: Rec | undefined;
+    if (cluster !== undefined && cluster.canonicalFeatureId === id) {
+      const members = await Promise.all(
+        cluster.memberIds.map((m) => readRecord(sql, "feature", m)),
+      );
+      record = canonicalEgress(
+        cluster,
+        members.filter((m): m is Rec => m !== undefined && m["tombstone"] === undefined),
+      );
+    } else {
+      const stored = await readRecord(sql, "feature", id);
+      record = stored === undefined ? undefined : egress([stored])[0];
+    }
+    if (record === undefined) return reply.status(404).send({ error: "no such feature" });
+    cacheRecords(reply);
+    reply.header("X-Data-License", licensesOf([record]));
+    return reply.send({
+      record,
+      canonical:
+        cluster === undefined
+          ? null
+          : {
+              canonicalFeatureId: cluster.canonicalFeatureId,
+              survivorId: cluster.survivorId,
+              memberIds: cluster.memberIds,
+            },
+    });
+  });
+
+  app.get("/offers", async (req, reply) => {
+    const q = parse(OfferListQuery, req.query, reply);
+    if (!q) return reply;
+    const read = await listOffers(db, {
+      at: q.at ? new Date(q.at) : now(),
+      limit: q.limit,
+      ...filtersOf(q),
+      ...(q.horizonDays !== undefined ? { horizonDays: q.horizonDays } : {}),
+      ...(q.cursor ? { cursor: q.cursor } : {}),
+    });
+    const records = egress(read.records);
+    cacheRecords(reply);
+    reply.header("X-Data-License", licensesOf(records));
+    return reply.send({ records, next: read.next });
+  });
+
+  app.get("/offers/:id", async (req, reply) => {
+    const { id } = req.params as { id: string };
+    const stored = await readRecord(sql, "offer", id);
+    const record = stored === undefined ? undefined : egress([stored])[0];
+    if (record === undefined) return reply.status(404).send({ error: "no such offer" });
+    cacheRecords(reply);
+    reply.header("X-Data-License", licensesOf([record]));
+    return reply.send({ record });
+  });
+
+  app.get("/observations/latest", async (req, reply) => {
+    const q = parse(LatestObservationQuery, req.query, reply);
+    if (!q) return reply;
+    const read = await listLatestObservations(db, deps.registry, {
+      at: q.at ? new Date(q.at) : now(),
+      limit: q.limit,
+      canonical: q.canonical === "1",
+      ...(q.bbox ? { bbox: q.bbox } : {}),
+      ...(q.property ? { properties: q.property } : {}),
+      ...(q.domain ? { domain: q.domain } : {}),
+      ...(q.source ? { sources: q.source } : {}),
+      ...(q.origin ? { origins: q.origin } : {}),
+      ...(q.cursor ? { cursor: Number(q.cursor) } : {}),
+    });
+    const records = egress(read.records);
+    reply.header("Cache-Control", `public, max-age=${OBSERVATION_CACHE_SECONDS}`);
+    reply.header("X-Data-License", licensesOf(records));
+    return reply.send({ records, next: read.next });
+  });
+
+  app.get("/observations", async (req, reply) => {
+    const q = parse(SeriesQuery, req.query, reply);
+    if (!q) return reply;
+    const clock = now();
+    const to = q.to ? new Date(q.to) : clock;
+    const from = q.from ? new Date(q.from) : new Date(to.getTime() - 86_400_000);
+    if (from >= to)
+      return reply.status(400).send({
+        error: "invalid query",
+        issues: [{ path: "from", message: "from must be before to" }],
+      });
+    const read = await readSeries(
+      db,
+      deps.registry,
+      {
+        subjectKey: subjectKeyOf(q.subject, q.component),
+        property: q.property,
+        ...(q.qualifiers ? { qualifiers: q.qualifiers } : {}),
+        ...(q.source ? { sourceId: q.source } : {}),
+      },
+      {
+        from,
+        to,
+        now: clock,
+        limit: q.limit,
+        ...(q.resolution ? { resolution: q.resolution } : {}),
+        ...(q.cursor ? { cursor: q.cursor } : {}),
+      },
+    );
+    if (read.status === "ambiguous") {
+      return reply.status(400).send({
+        error: "several sources report this series; name one with `source`",
+        sources: read.sources,
+      });
+    }
+    if (read.status === "no_rollup") {
+      return reply.status(400).send({ error: `${read.property} keeps no ${q.resolution} rollup` });
+    }
+    const egressSeries =
+      read.status === "found" &&
+      isPermissiveRecord({ provenance: read.series.provenance } as unknown as EgressRecord);
+    if (read.status === "none" || !egressSeries) {
+      return reply.status(404).send({ error: "no such series" });
+    }
+    const { provenance: _provenance, ...series } = read.series;
+    const license = (read.series.provenance["attribution"] as Rec)["license"] as string;
+    reply.header("Cache-Control", `public, max-age=${OBSERVATION_CACHE_SECONDS}`);
+    reply.header("X-Data-License", license);
+    return reply.send({
+      series,
+      resolution: read.resolution,
+      from: from.toISOString(),
+      to: to.toISOString(),
+      ...(read.records !== undefined ? { records: egress(read.records) } : {}),
+      ...(read.rollups !== undefined ? { rollups: read.rollups } : {}),
+      next: read.next,
+    });
+  });
+
   app.get("/taxonomy", async (_req, reply) => {
     taxonomy ??= taxonomyOf(deps.registry);
     reply.header("Cache-Control", "public, max-age=3600");
@@ -322,7 +588,8 @@ export function registerApiRoutes(
 
   app.get("/coverage", async (_req, reply) => {
     reply.header("Cache-Control", "public, max-age=300");
-    return reply.send({ generatedAt: new Date().toISOString(), coverage: await readCoverage(db) });
+    const at = now();
+    return reply.send({ generatedAt: at.toISOString(), coverage: await readCoverage(db, { at }) });
   });
 
   app.get("/openapi.json", async (_req, reply) => {

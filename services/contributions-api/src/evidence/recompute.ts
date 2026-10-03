@@ -5,6 +5,7 @@ import {
 } from "@openconditions/contrib-core";
 import { type EvidencePolicyResult, evaluateEvidence } from "@openconditions/core";
 import { crowdRulesFor, type Registry } from "@openconditions/model";
+import { refreshFused } from "@openconditions/storage";
 import type postgres from "postgres";
 
 type Sql = postgres.Sql;
@@ -81,33 +82,9 @@ async function recomputeWithin(
   });
   if (rules === undefined) return null;
 
-  const evidenceRows = await tx<EvidenceDbRow[]>`
-    SELECT id, evidence_kind, actor_key_id, source_id, occurred_at, details
-    FROM conditions.report_evidence
-    WHERE record_class = 'situation' AND record_id = ${situationId} AND component_key = ''
-    ORDER BY occurred_at, id
-  `;
-  if (evidenceRows.length === 0) return null;
-
-  const rows: ReportEvidenceRow[] = evidenceRows.map((row) => ({
-    id: row.id,
-    evidenceKind: row.evidence_kind,
-    actorKeyId: row.actor_key_id,
-    sourceId: row.source_id,
-    occurredAt: new Date(row.occurred_at).toISOString(),
-    details: row.details,
-  }));
-  const ledger = evidenceRowsToLedger(rows, now);
-  const result = evaluateEvidence(ledger, crowdEvidencePolicy(rules));
-  const nowMs = Date.parse(now);
-  const admissible = ledger.entries.filter((e) => Date.parse(e.at) <= nowMs);
-  const originator = admissible.find((e) => e.kind === "report")?.reporterKey;
-  const corroborations = new Set(
-    admissible
-      .filter((e) => e.kind === "confirm" || e.kind === "report")
-      .map((e) => e.reporterKey)
-      .filter((key) => key !== undefined && key !== originator),
-  ).size;
+  const evaluated = await evaluate(tx, "situation", situationId, rules, now);
+  if (evaluated === null) return null;
+  const { result, corroborations } = evaluated;
 
   if (situation.peer_copy) {
     // A peer's report lives as long as its own instance says (its evidence
@@ -137,5 +114,97 @@ async function recomputeWithin(
       record = jsonb_set(record, '{freshness,expiresAt}', to_jsonb(${result.expiresAt}::text))
     WHERE id = ${situationId}
   `;
+  return { ...result, corroborations };
+}
+
+/**
+ * Evaluates one crowd record's ledger under its crowd rules: the evidence
+ * state, its lifetime, and how many distinct keys besides the reporter's
+ * confirmed it. Null when the record has no evidence rows.
+ */
+async function evaluate(
+  tx: Tx,
+  recordClass: "situation" | "observation",
+  recordId: string,
+  rules: NonNullable<ReturnType<typeof crowdRulesFor>>,
+  now: string,
+): Promise<{ result: EvidencePolicyResult; corroborations: number } | null> {
+  const evidenceRows = await tx<EvidenceDbRow[]>`
+    SELECT id, evidence_kind, actor_key_id, source_id, occurred_at, details
+    FROM conditions.report_evidence
+    WHERE record_class = ${recordClass} AND record_id = ${recordId} AND component_key = ''
+    ORDER BY occurred_at, id
+  `;
+  if (evidenceRows.length === 0) return null;
+  const rows: ReportEvidenceRow[] = evidenceRows.map((row) => ({
+    id: row.id,
+    evidenceKind: row.evidence_kind,
+    actorKeyId: row.actor_key_id,
+    sourceId: row.source_id,
+    occurredAt: new Date(row.occurred_at).toISOString(),
+    details: row.details,
+  }));
+  const ledger = evidenceRowsToLedger(rows, now);
+  const result = evaluateEvidence(ledger, crowdEvidencePolicy(rules));
+  const nowMs = Date.parse(now);
+  const admissible = ledger.entries.filter((e) => Date.parse(e.at) <= nowMs);
+  const originator = admissible.find((e) => e.kind === "report")?.reporterKey;
+  const corroborations = new Set(
+    admissible
+      .filter((e) => e.kind === "confirm" || e.kind === "report")
+      .map((e) => e.reporterKey)
+      .filter((key) => key !== undefined && key !== originator),
+  ).size;
+  return { result, corroborations };
+}
+
+/**
+ * Recomputes a crowd observation's evidence from its ledger, as
+ * {@link recomputeEvidence} does a crowd situation's, into the columns of
+ * the crowd row holding it (`evidence_state`, `confidence_score`,
+ * `corroborations`) and its lifetime (`expires_at` and the record's
+ * `freshness.expiresAt`, no revision: observations have none), then
+ * recomputes the fused row its subject shows, since a report's evidence is
+ * its fusion tier. The caller holds the crowd lock. `now` is the evaluation
+ * instant, as for situations. Null when no crowd row
+ * holds the observation any more (a later report of its series replaced
+ * it) or it has no evidence.
+ */
+export async function recomputeObservationEvidence(
+  tx: Tx,
+  registry: Registry,
+  observationId: string,
+  now: string,
+): Promise<EvidenceResult | null> {
+  const [row] = await tx<
+    { series_id: string; property: string; feature_id: string | null; instance_id: string }[]
+  >`
+    SELECT series_id::text AS series_id, property, feature_id,
+           record #>> '{provenance,instanceId}' AS instance_id
+      FROM conditions.observation_latest
+     WHERE source_id = 'crowd' AND record->>'id' = ${observationId} FOR UPDATE
+  `;
+  if (row === undefined) return null;
+  const rules = crowdRulesFor(registry, { class: "observation", property: row.property });
+  if (rules === undefined) return null;
+  const evaluated = await evaluate(tx, "observation", observationId, rules, now);
+  if (evaluated === null) return null;
+  const { result, corroborations } = evaluated;
+  await tx`
+    UPDATE conditions.observation_latest SET
+      evidence_state = ${result.state},
+      confidence_score = ${result.confidenceScore},
+      corroborations = ${corroborations},
+      expires_at = ${result.expiresAt},
+      record = jsonb_set(record, '{freshness,expiresAt}', to_jsonb(${result.expiresAt}::text))
+    WHERE series_id = ${row.series_id}::bigint
+  `;
+  if (row.feature_id !== null) {
+    // The fused row is this instance's, the one that landed the report.
+    await refreshFused(tx, registry, [{ featureId: row.feature_id, properties: [row.property] }], {
+      instanceId: row.instance_id,
+      now,
+    });
+  }
   return { ...result, corroborations };
 }
