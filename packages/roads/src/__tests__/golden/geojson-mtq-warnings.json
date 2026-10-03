@@ -38,19 +38,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.donneesquebec.ca/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "fc30ffbc35356cbde6ab07bbb99c46b5de0a63fd65c597c8ad5bc62fac22da54",
-    "domain": "roads",
-    "contentHash": "43cf4b22295d5941bfd115f11a6fe570c48dc3111f0bc96fd8406d2f0acd6302",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "closure",
     "type": "closure",
@@ -93,7 +88,12 @@
     "details": {
       "kind": "closure",
       "v": 1
-    }
+    },
+    "canonicalId": "fc30ffbc35356cbde6ab07bbb99c46b5de0a63fd65c597c8ad5bc62fac22da54",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "43cf4b22295d5941bfd115f11a6fe570c48dc3111f0bc96fd8406d2f0acd6302"
   },
   {
     "id": "oc:situation:ca-qc-mtq-warnings:81387",
@@ -130,19 +130,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.donneesquebec.ca/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "53bc1fffdc4d9d464d9795d5339249381bfbb07c46ab4fb8b4352c89dcbeb41c",
-    "domain": "roads",
-    "contentHash": "6040ea7a9079e4f871c9586bcf6029eb268aa9a9ef427a22b97235823b55f799",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "closure",
     "type": "closure",
@@ -185,7 +180,12 @@
     "details": {
       "kind": "closure",
       "v": 1
-    }
+    },
+    "canonicalId": "53bc1fffdc4d9d464d9795d5339249381bfbb07c46ab4fb8b4352c89dcbeb41c",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "6040ea7a9079e4f871c9586bcf6029eb268aa9a9ef427a22b97235823b55f799"
   },
   {
     "id": "oc:situation:ca-qc-mtq-warnings:115026",
@@ -222,19 +222,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.donneesquebec.ca/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "6ca5c20b9a2452e2f404906fe0002e49789ab90339a84079c3c608c87b9e1842",
-    "domain": "roads",
-    "contentHash": "5492bc170a65d1610712cf25766a21647f40a993594ffc82ebc5cd23f7c11de2",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "other",
     "type": "other",
@@ -275,7 +270,12 @@
     "details": {
       "kind": "other",
       "v": 1
-    }
+    },
+    "canonicalId": "6ca5c20b9a2452e2f404906fe0002e49789ab90339a84079c3c608c87b9e1842",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "5492bc170a65d1610712cf25766a21647f40a993594ffc82ebc5cd23f7c11de2"
   },
   {
     "id": "oc:situation:ca-qc-mtq-warnings:125259",
@@ -322,19 +322,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.donneesquebec.ca/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "ea69be7eb1ca962e24cf976b0dc0429e50fd38460690035c69b0b5d810947ad2",
-    "domain": "roads",
-    "contentHash": "ac423db743d5b44235768745cb74aa6505aa9d1ab0ee642f3c6a800bac09d384",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "restriction",
     "type": "access",
@@ -366,7 +361,12 @@
       "kind": "restriction",
       "v": 1,
       "basis": "temporary"
-    }
+    },
+    "canonicalId": "ea69be7eb1ca962e24cf976b0dc0429e50fd38460690035c69b0b5d810947ad2",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "ac423db743d5b44235768745cb74aa6505aa9d1ab0ee642f3c6a800bac09d384"
   },
   {
     "id": "oc:situation:ca-qc-mtq-warnings:111875",
@@ -413,19 +413,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.donneesquebec.ca/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "6622b20e8f12ea653a45840f00189127c2e2ab887daa2c7dd948213cc4963fb7",
-    "domain": "roads",
-    "contentHash": "450ff113d85811b319fd05a1f3d94bb4430b7dce60bde3dcc63a13f03dbc6d3d",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "other",
     "type": "other",
@@ -448,6 +443,11 @@
     "details": {
       "kind": "other",
       "v": 1
-    }
+    },
+    "canonicalId": "6622b20e8f12ea653a45840f00189127c2e2ab887daa2c7dd948213cc4963fb7",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "450ff113d85811b319fd05a1f3d94bb4430b7dce60bde3dcc63a13f03dbc6d3d"
   }
 ]

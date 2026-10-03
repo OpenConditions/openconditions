@@ -26,19 +26,14 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://api.trafikinfo.trafikverket.se/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "1f0dbd1dd62dde8f07666f50b4b18b7fa92e54cefabfd4e3ab10eb8c58c3b334",
-      "domain": "roads",
-      "contentHash": "3e5563a542f72866a0fe26f21bb0aaf4c44c7db713b37eabad44cbb1338ad707",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -50,7 +45,12 @@
           "traffic.speed",
           "traffic.volume"
         ]
-      }
+      },
+      "canonicalId": "1f0dbd1dd62dde8f07666f50b4b18b7fa92e54cefabfd4e3ab10eb8c58c3b334",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "3e5563a542f72866a0fe26f21bb0aaf4c44c7db713b37eabad44cbb1338ad707"
     },
     {
       "id": "oc:feature:se-trafikverket-flow:TMS-3",
@@ -78,19 +78,14 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://api.trafikinfo.trafikverket.se/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "d1987852fbfc483218efd09b7d0a1a2fcda8f875c1e291436ab89528341e6dc7",
-      "domain": "roads",
-      "contentHash": "364dd7bfa0f1389d0b73e66f2f7cbd27ce709145540c1daacfaf888774771bea",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -102,7 +97,12 @@
           "traffic.speed",
           "traffic.volume"
         ]
-      }
+      },
+      "canonicalId": "d1987852fbfc483218efd09b7d0a1a2fcda8f875c1e291436ab89528341e6dc7",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "364dd7bfa0f1389d0b73e66f2f7cbd27ce709145540c1daacfaf888774771bea"
     }
   ],
   "observations": [
@@ -132,19 +132,14 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://api.trafikinfo.trafikverket.se/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "9b1e44ee16eefcc0ad9972edad58b1518de55afaf52ffa56c64699ad787552a2",
-      "domain": "roads",
-      "contentHash": "0cbe58284b43169d9d3a5efd2f1986dfbe9f3dde7d5a573614e2187bc17d80d4",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -160,7 +155,12 @@
       "phenomenonTime": {
         "instant": "2026-03-04T14:30:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "9b1e44ee16eefcc0ad9972edad58b1518de55afaf52ffa56c64699ad787552a2",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "0cbe58284b43169d9d3a5efd2f1986dfbe9f3dde7d5a573614e2187bc17d80d4"
     },
     {
       "id": "oc:observation:se-trafikverket-flow:da4d168ba8a0c9ccf95435e613806e3386fbd26ce71854ad0ebcac36b91ffa54",
@@ -188,19 +188,14 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://api.trafikinfo.trafikverket.se/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "293b43241936c82f6fcad1214629f47ab6eb15804f394689488fde87a41b816d",
-      "domain": "roads",
-      "contentHash": "fdfefd2cc0a29f161756e543321e299181f5e74fda97dfa630c150287724c9c9",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.volume",
@@ -216,7 +211,12 @@
       "phenomenonTime": {
         "instant": "2026-03-04T14:30:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "293b43241936c82f6fcad1214629f47ab6eb15804f394689488fde87a41b816d",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "fdfefd2cc0a29f161756e543321e299181f5e74fda97dfa630c150287724c9c9"
     },
     {
       "id": "oc:observation:se-trafikverket-flow:d5cbc2df09a4c791ac1b69f655af3874d7d6b08be8a8bae8ecc73157d75c9d10",
@@ -244,19 +244,14 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://api.trafikinfo.trafikverket.se/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "a8f1ef6903ed07f0b1a2abe7705d647630d3cfa2e185b4e8538c4ce63e2bf3ef",
-      "domain": "roads",
-      "contentHash": "1064681417325bfd09038c5ec4b9e56606f536626f3bec45fd368c20a4130232",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.volume",
@@ -272,7 +267,12 @@
       "phenomenonTime": {
         "instant": "2026-09-18T10:00:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "a8f1ef6903ed07f0b1a2abe7705d647630d3cfa2e185b4e8538c4ce63e2bf3ef",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "1064681417325bfd09038c5ec4b9e56606f536626f3bec45fd368c20a4130232"
     }
   ],
   "situations": []

@@ -94,19 +94,14 @@
         "license": "OGL-ON",
         "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "8521a36a8990d5b3785481de9897e17635da43863b777133457e6a3244d324a9",
-    "domain": "roads",
-    "contentHash": "7ce74754b3946ff9e4ba9ac578b54391fcd920bfc9e7fdc96937ed6b75b49cd2",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -137,7 +132,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "8521a36a8990d5b3785481de9897e17635da43863b777133457e6a3244d324a9",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "7ce74754b3946ff9e4ba9ac578b54391fcd920bfc9e7fdc96937ed6b75b49cd2"
   },
   {
     "id": "oc:situation:ca-on-511:101",
@@ -189,19 +189,14 @@
         "license": "OGL-ON",
         "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "2383705905bd4410986991c16553b719704f28873af5eb8ec0ebf3a980225b47",
-    "domain": "roads",
-    "contentHash": "bd789673751167b24c3dd399ed0023d3d092d3918aaab05e262dde0c871c3524",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -231,7 +226,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "2383705905bd4410986991c16553b719704f28873af5eb8ec0ebf3a980225b47",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "bd789673751167b24c3dd399ed0023d3d092d3918aaab05e262dde0c871c3524"
   },
   {
     "id": "oc:situation:ca-on-511:2",
@@ -262,19 +262,14 @@
         "license": "OGL-ON",
         "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "7876fcf4da0c08c764258b9dc1eb98df07fe68c11944d16f57b9a5b01a23975f",
-    "domain": "roads",
-    "contentHash": "53f8af2aa2b4bac2c47a876a850151513ed176b742994081dc7f9a91b1a7f20f",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "closure",
     "type": "closure",
@@ -304,6 +299,11 @@
     "details": {
       "kind": "closure",
       "v": 1
-    }
+    },
+    "canonicalId": "7876fcf4da0c08c764258b9dc1eb98df07fe68c11944d16f57b9a5b01a23975f",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "53f8af2aa2b4bac2c47a876a850151513ed176b742994081dc7f9a91b1a7f20f"
   }
 ]

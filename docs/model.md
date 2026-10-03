@@ -854,8 +854,8 @@ Kernel version `1.0`; modules: `kernel`, `roads`, `weather`, `vehicles`, `parkin
 
 | property                      | domain     | version | result                          | subjects                                                                                    | retention                         |
 | ----------------------------- | ---------- | ------- | ------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------- |
-| `traffic.speed`               | roads      | 1.0     | quantity (km/h)                 | feature (measurement_site, component sensor_channel); segments                              | raw 3 d, hourly histogram (bin 2) |
-| `traffic.volume`              | roads      | 1.0     | quantity (1/h)                  | feature (measurement_site, component sensor_channel)                                        | raw 2 d, hourly rollup            |
+| `traffic.speed`               | roads      | 1.0     | quantity (km/h)                 | feature (measurement_site, component sensor_channel); segments                              | raw 2 d, hourly histogram (bin 2) |
+| `traffic.volume`              | roads      | 1.0     | quantity (1/h)                  | feature (measurement_site, component sensor_channel)                                        | raw 1 d, hourly rollup            |
 | `traffic.occupancy`           | roads      | 1.0     | quantity (%)                    | feature (measurement_site, component sensor_channel)                                        | raw 2 d, hourly rollup            |
 | `traffic.los`                 | roads      | 1.0     | category (los)                  | feature (measurement_site, component sensor_channel); feature (travel_time_route); segments | change-only, raw 7 d              |
 | `traffic.vehicle_class_speed` | roads      | 1.0     | vector (km/h)                   | feature (measurement_site, component sensor_channel)                                        | raw 2 d                           |

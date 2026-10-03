@@ -36,19 +36,14 @@
           "license": "NYC-Open-Data",
           "licenseUrl": "https://www.nyc.gov/html/data/terms.html"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "6db030abc78dac0a934a1661397e585e55a64554872a80c9e07d7ceac5b98cd7",
-      "domain": "roads",
-      "contentHash": "86dfc94dd91f97059643810e6b1522472673fc19711c207099a4c8fcdd2b70ab",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -59,7 +54,12 @@
         "measuredProperties": [
           "traffic.speed"
         ]
-      }
+      },
+      "canonicalId": "6db030abc78dac0a934a1661397e585e55a64554872a80c9e07d7ceac5b98cd7",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "86dfc94dd91f97059643810e6b1522472673fc19711c207099a4c8fcdd2b70ab"
     }
   ],
   "observations": [
@@ -99,19 +99,14 @@
           "license": "NYC-Open-Data",
           "licenseUrl": "https://www.nyc.gov/html/data/terms.html"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "36dc48a459b4be03c6b1de907a8ad49f05e3b24491839e2f27a7478bc8f75304",
-      "domain": "roads",
-      "contentHash": "acee1a84e2d87f860950571c9148b4339ef6ce0b9bdf1dd8a5def343e02a801c",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -127,7 +122,12 @@
       "phenomenonTime": {
         "instant": "2026-03-04T19:30:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "36dc48a459b4be03c6b1de907a8ad49f05e3b24491839e2f27a7478bc8f75304",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "acee1a84e2d87f860950571c9148b4339ef6ce0b9bdf1dd8a5def343e02a801c"
     }
   ],
   "situations": []

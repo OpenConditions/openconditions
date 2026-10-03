@@ -95,7 +95,21 @@ publishes an ended record keeps it, and reads filter by time.
 ## Observations
 
 `observation_latest` is the series registry: one row per subject, property,
-qualifiers and source, holding the reading in effect now.
+qualifiers and source, holding the reading in effect now. A flow source
+rewrites tens of thousands of these rows a minute, so a row stays small and
+its update stays heap-only (HOT):
+
+- `reading` is the stored record minus its series template (`readingOf`); the
+  record is `conditions.observation_record(template, reading)` in SQL,
+  `recordOf` in code.
+- `template` is stored out of line and written only when `template_hash`
+  changes; an update that keeps it carries a pointer.
+- Nothing indexes what a quantity reading without an expiry changes (every
+  flow reading): a crowd row's record id has its own column,
+  `crowd_record_id`, rather than an index over `reading`. The table keeps half
+  of each page free (`fillfactor = 50`) for the next version of its rows.
+  Category and boolean series (`value_text`) and series with an expiry
+  (`expires_at`) are indexed by what they change, and change far less often.
 
 The history is `observation`, compact by design: about 110 bytes a reading,
 where a sealed record is about 1.2 KB. A row holds only what varies between
@@ -126,8 +140,10 @@ row only, and the site's own series carries the history.
 
 History is partitioned by retention class (a property's `rawDays`, 0 for
 keep-everything), then by day (by month for keep-everything). Retention drops
-whole partitions. The ingest service creates partitions 16 days ahead and drops
-expired ones hourly; a day of a class holding a rolled-up property is dropped
+whole partitions: a day goes an hour after its last reading is `rawDays` old,
+so a class keeps between `rawDays` and `rawDays + 1` days. The ingest service
+creates partitions 16 days ahead and drops expired ones hourly; a day of a
+class holding a rolled-up property is dropped
 only once the rollup has finalized past it (or when it holds no reading). A
 reading no partition holds is counted and kept out of history; it still
 updates the latest row. A changed reading of the instant in effect corrects
@@ -152,24 +168,26 @@ class. A larger poll is refused whole, keeping the last good publication.
 
 ### History budget
 
-History is meant to stay within 10 GiB at the default retention for the 24 flow
-feeds. No instance is deployed yet, so this is an estimate from the figures the
-retired speed store kept (about 7 million site speeds a day), at about 110 bytes
-a row plus about 40 bytes of primary-key index:
+Measured on NDW's own payloads (19 000 sites, a poll a minute): a poll writes
+about 10 800 site speeds and 19 000 site volumes to history and moves about
+141 000 latest rows (sites, lanes and vehicle classes); a history row takes
+about 185 bytes with its primary-key index. A steady poll takes about 25 s
+(laptop, PostGIS in a container). At the default retention, a class keeps on
+average half a day more than `rawDays`:
 
-| Series                                  | Kept                        | Estimate         |
-| --------------------------------------- | --------------------------- | ---------------- |
-| `traffic.speed`, per site               | 3 days (`rawDays: 3`)       | about 3 GiB      |
-| `traffic.volume`, per site              | 2 days                      | about 2 GiB      |
-| `traffic.occupancy`, per site           | 2 days (fewer sites)        | about 1 GiB      |
-| `traffic.los`, per site                 | 7 days, changes only        | about 1 GiB      |
-| Lane and vehicle-class channel readings | latest row only, no history | none             |
-| Hourly rollups                          | 35 days                     | well under 1 GiB |
+| NDW series                              | Kept                        | Size            |
+| --------------------------------------- | --------------------------- | --------------- |
+| `traffic.speed`, per site               | 2 days (`rawDays: 2`)       | about 7 GB      |
+| `traffic.volume`, per site              | 1 day                       | about 8 GB      |
+| Lane and vehicle-class channel readings | latest row only, no history | none            |
+| `observation_latest`                    | one row a series            | about 0.6 GB    |
+| Hourly rollups                          | 35 days                     | well under 1 GB |
 
-That is about 7 GiB. Keeping speeds for 7 days, as the retired store did, would
-take 8–10 GiB for speeds alone, and lane history would multiply it several
-times. Measure against a day of captured raw payloads before raising a
-property's `rawDays`.
+NDW is the largest flow source by far; all 24 flow feeds together come to
+roughly 20 GB of history. Minute-level history of every site's speed and volume
+is what that buys; the hourly rollups keep the long tail for baselines and
+profiles. Measure against captured payloads before raising a property's
+`rawDays`: a day of NDW volumes is about 5 GB.
 
 ## Read API
 

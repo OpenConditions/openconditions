@@ -39,19 +39,14 @@
         "license": "US-Gov-Public-Domain",
         "licenseUrl": "https://www.usa.gov/government-works"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "a1928968aef87929d612c50b31fd33c4e7034a4cdbf76d8e420c5e3cb1b354bb",
-    "domain": "roads",
-    "contentHash": "e3bb98218c671cb60eadce8aa57219e04c69e3c6771d27ea1f24f720ac160456",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "accident",
@@ -92,7 +87,12 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "a1928968aef87929d612c50b31fd33c4e7034a4cdbf76d8e420c5e3cb1b354bb",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "e3bb98218c671cb60eadce8aa57219e04c69e3c6771d27ea1f24f720ac160456"
   },
   {
     "id": "oc:situation:us-oh-ohgo-incidents:OH-INC-2002",
@@ -133,19 +133,14 @@
         "license": "US-Gov-Public-Domain",
         "licenseUrl": "https://www.usa.gov/government-works"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "09a82935e2f32439580572c7156942171c3aa7b48bd828ec2604beda2eecf8dc",
-    "domain": "roads",
-    "contentHash": "21c5d19fee9b4eff4de285efe62dc050a50dabe9f75f11a9d634c082e0ff2511",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "obstruction",
@@ -175,7 +170,12 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "09a82935e2f32439580572c7156942171c3aa7b48bd828ec2604beda2eecf8dc",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "21c5d19fee9b4eff4de285efe62dc050a50dabe9f75f11a9d634c082e0ff2511"
   },
   {
     "id": "oc:situation:us-oh-ohgo-incidents:OH-INC-2003",
@@ -216,19 +216,14 @@
         "license": "US-Gov-Public-Domain",
         "licenseUrl": "https://www.usa.gov/government-works"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "3b4059037672cf267162b8edc1620190b92f74ce4f305a9e373a63bc2b0370e0",
-    "domain": "roads",
-    "contentHash": "28498b99b9af91a605a82173c470ae6477627351f881ae9e5009b5f5610524c8",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "other",
     "type": "other",
@@ -269,6 +264,11 @@
     "details": {
       "kind": "other",
       "v": 1
-    }
+    },
+    "canonicalId": "3b4059037672cf267162b8edc1620190b92f74ce4f305a9e373a63bc2b0370e0",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "28498b99b9af91a605a82173c470ae6477627351f881ae9e5009b5f5610524c8"
   }
 ]

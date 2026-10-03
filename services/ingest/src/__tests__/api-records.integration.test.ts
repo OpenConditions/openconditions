@@ -379,7 +379,7 @@ describe("GET /observations/latest", () => {
 
   it("withholds a fused row whose winning source is share-alike", async () => {
     await sql`UPDATE conditions.observation_latest
-                 SET record = jsonb_set(record, '{provenance,attribution,license}', '"CC-BY-SA-4.0"')
+                 SET template = jsonb_set(template, '{provenance,attribution,license}', '"CC-BY-SA-4.0"')
                WHERE source_id = '@fused' AND property = 'parking.occupied'`;
     const { body } = await get("/observations/latest?canonical=1&property=parking.occupied");
     expect(ids(body)).toEqual([]);

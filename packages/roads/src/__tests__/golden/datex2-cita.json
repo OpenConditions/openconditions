@@ -142,19 +142,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "5681598e2cf6d11399264a584e2af211f1a1f9c924cee957225c78038b98bea1",
-    "domain": "roads",
-    "contentHash": "8844a9c226de214c41e2ad0c2eb01fab20edbfdb44eba3e0f6cfa1dabd86f45b",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -327,7 +322,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "5681598e2cf6d11399264a584e2af211f1a1f9c924cee957225c78038b98bea1",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "8844a9c226de214c41e2ad0c2eb01fab20edbfdb44eba3e0f6cfa1dabd86f45b"
   },
   {
     "id": "oc:situation:lu-cita:234859",
@@ -608,19 +608,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "ea08ecfb65024456b1cfa9705d730b114f4404ba38cfc659702aedcf8447c6d3",
-    "domain": "roads",
-    "contentHash": "ac21b250653490ff488f186785742ac02ee8f9f5d2c4d16ee191fc2b6a7ca668",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -654,7 +649,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "ea08ecfb65024456b1cfa9705d730b114f4404ba38cfc659702aedcf8447c6d3",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "ac21b250653490ff488f186785742ac02ee8f9f5d2c4d16ee191fc2b6a7ca668"
   },
   {
     "id": "oc:situation:lu-cita:234858",
@@ -751,19 +751,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "4dadaec36f56b5431ecb7ad3fdcdcef2abee57fa213ada16b7b5d256c9b131b5",
-    "domain": "roads",
-    "contentHash": "4466eece6be467a2b7d8f913cc5696f29df95ac77ac66ab3bd93f733b4335816",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -797,7 +792,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "4dadaec36f56b5431ecb7ad3fdcdcef2abee57fa213ada16b7b5d256c9b131b5",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "4466eece6be467a2b7d8f913cc5696f29df95ac77ac66ab3bd93f733b4335816"
   },
   {
     "id": "oc:situation:lu-cita:234857",
@@ -842,19 +842,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "c34d77242637251714f1d4b0fd148a46a984a6e161af1a7bdf5aed85cdd96eaf",
-    "domain": "roads",
-    "contentHash": "58c0e09ecf00ae1d996a4ab0183e71e47415fc4ace4d274588279571c0f67ebd",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "accident",
@@ -887,7 +882,12 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "c34d77242637251714f1d4b0fd148a46a984a6e161af1a7bdf5aed85cdd96eaf",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "58c0e09ecf00ae1d996a4ab0183e71e47415fc4ace4d274588279571c0f67ebd"
   },
   {
     "id": "oc:situation:lu-cita:234810",
@@ -932,19 +932,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "a891a3ac758402ef718cc755cd2b7462fbfa112938a65403730104101ed8732f",
-    "domain": "roads",
-    "contentHash": "a6687146cc7cf634fba26fddf607743ab5fc09fcbd75e37be926a1bcb0f9b67e",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "equipment_fault",
     "type": "fault",
@@ -1007,6 +1002,11 @@
     "details": {
       "kind": "equipment_fault",
       "v": 1
-    }
+    },
+    "canonicalId": "a891a3ac758402ef718cc755cd2b7462fbfa112938a65403730104101ed8732f",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "a6687146cc7cf634fba26fddf607743ab5fc09fcbd75e37be926a1bcb0f9b67e"
   }
 ]

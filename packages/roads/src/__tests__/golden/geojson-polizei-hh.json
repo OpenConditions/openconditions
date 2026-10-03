@@ -28,19 +28,14 @@
         "license": "dl-de/by-2-0",
         "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "a8b25572298c8dc85f5b05d2a33f1c3b0ef9c3db0d5760dcd3f4f352a1b0d45f",
-    "domain": "roads",
-    "contentHash": "a70d466882f02bf358926be0e440a314b0cbaf30a5f3bb0749f0088044b4494b",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "congestion",
     "type": "congestion",
@@ -64,7 +59,12 @@
       "kind": "congestion",
       "v": 1,
       "los": "unknown"
-    }
+    },
+    "canonicalId": "a8b25572298c8dc85f5b05d2a33f1c3b0ef9c3db0d5760dcd3f4f352a1b0d45f",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "a70d466882f02bf358926be0e440a314b0cbaf30a5f3bb0749f0088044b4494b"
   },
   {
     "id": "oc:situation:de-hh-polizei:LMS/r_LMS/700113_LMS-TH/12.0",
@@ -95,19 +95,14 @@
         "license": "dl-de/by-2-0",
         "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "2abcd1e7e1358e7e02194f1ce17cb3c5505e58837314cf3ec279b39795e41ec5",
-    "domain": "roads",
-    "contentHash": "d10c1e6d53540b0331782139b95267121070d83e8fdb061cd8cf5c73e2fd9bb6",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "accident",
@@ -130,7 +125,12 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "2abcd1e7e1358e7e02194f1ce17cb3c5505e58837314cf3ec279b39795e41ec5",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "d10c1e6d53540b0331782139b95267121070d83e8fdb061cd8cf5c73e2fd9bb6"
   },
   {
     "id": "oc:situation:de-hh-polizei:LMS/r_LMS/698002_LMS-TH/3.0",
@@ -161,19 +161,14 @@
         "license": "dl-de/by-2-0",
         "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "eb6eb224d72a4b7df909b63f77e290cbcf8ea532bdd0a9d629d452021b843e3a",
-    "domain": "roads",
-    "contentHash": "89e269f9421a571b5e3f0cf540c37e662e1bf501e16e4af978a53fb1d3c86927",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "closure",
     "type": "closure",
@@ -209,7 +204,12 @@
     "details": {
       "kind": "closure",
       "v": 1
-    }
+    },
+    "canonicalId": "eb6eb224d72a4b7df909b63f77e290cbcf8ea532bdd0a9d629d452021b843e3a",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "89e269f9421a571b5e3f0cf540c37e662e1bf501e16e4af978a53fb1d3c86927"
   },
   {
     "id": "oc:situation:de-hh-polizei:LMS/r_LMS/695431_LMS-TH/7.0",
@@ -240,19 +240,14 @@
         "license": "dl-de/by-2-0",
         "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "7feef0b15adaf39c40018e3f4f88247ce494011e2f6b267ba238aaf2e779943b",
-    "domain": "roads",
-    "contentHash": "1e6ce7f9024c0df07628a2ef57e1c3f1c3b085f69796f5a9447d495e8d1dc91d",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -276,7 +271,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "7feef0b15adaf39c40018e3f4f88247ce494011e2f6b267ba238aaf2e779943b",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "1e6ce7f9024c0df07628a2ef57e1c3f1c3b085f69796f5a9447d495e8d1dc91d"
   },
   {
     "id": "oc:situation:de-hh-polizei:LMS/r_LMS/701550_LMS-TH/1.0",
@@ -307,19 +307,14 @@
         "license": "dl-de/by-2-0",
         "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "8c2fc3fa4d408c3266af89849b16806c220ce31c1823f02418802e6d369294a6",
-    "domain": "roads",
-    "contentHash": "af139a18881913c45f4c2b0b595608b347cea5a312c54097ee2a2c4076b89d47",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -343,6 +338,11 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "8c2fc3fa4d408c3266af89849b16806c220ce31c1823f02418802e6d369294a6",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "af139a18881913c45f4c2b0b595608b347cea5a312c54097ee2a2c4076b89d47"
   }
 ]

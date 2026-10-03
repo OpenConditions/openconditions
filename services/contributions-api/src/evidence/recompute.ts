@@ -180,9 +180,9 @@ export async function recomputeObservationEvidence(
     { series_id: string; property: string; feature_id: string | null; instance_id: string }[]
   >`
     SELECT series_id::text AS series_id, property, feature_id,
-           record #>> '{provenance,instanceId}' AS instance_id
+           template #>> '{provenance,instanceId}' AS instance_id
       FROM conditions.observation_latest
-     WHERE source_id = 'crowd' AND record->>'id' = ${observationId} FOR UPDATE
+     WHERE crowd_record_id = ${observationId} FOR UPDATE
   `;
   if (row === undefined) return null;
   const rules = crowdRulesFor(registry, { class: "observation", property: row.property });
@@ -196,7 +196,7 @@ export async function recomputeObservationEvidence(
       confidence_score = ${result.confidenceScore},
       corroborations = ${corroborations},
       expires_at = ${result.expiresAt},
-      record = jsonb_set(record, '{freshness,expiresAt}', to_jsonb(${result.expiresAt}::text))
+      reading = jsonb_set(reading, '{freshness,expiresAt}', to_jsonb(${result.expiresAt}::text))
     WHERE series_id = ${row.series_id}::bigint
   `;
   if (row.feature_id !== null) {

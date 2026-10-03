@@ -42,19 +42,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://nap.dgt.es"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "eeb11af45197efdfc7e6e592173947f6ac63db3068e8423a31e90037ddb7978d",
-    "domain": "roads",
-    "contentHash": "a373cfd111696f13948df60df99f04ea0f4d79d44465ddd0306b7cb7594e8f56",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -78,7 +73,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "eeb11af45197efdfc7e6e592173947f6ac63db3068e8423a31e90037ddb7978d",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "a373cfd111696f13948df60df99f04ea0f4d79d44465ddd0306b7cb7594e8f56"
   },
   {
     "id": "oc:situation:es-dgt:3343801",
@@ -123,19 +123,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://nap.dgt.es"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "52ad79987d0bcb467320b570c4e820774f3a1a3d5f6aee914cac140d9e12ad83",
-    "domain": "roads",
-    "contentHash": "526ad9d14cda98c3263654e0c949baa652e781a918efbf5cbcbb7a9f02886f34",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -176,7 +171,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "52ad79987d0bcb467320b570c4e820774f3a1a3d5f6aee914cac140d9e12ad83",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "526ad9d14cda98c3263654e0c949baa652e781a918efbf5cbcbb7a9f02886f34"
   },
   {
     "id": "oc:situation:es-dgt:8212884",
@@ -221,19 +221,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://nap.dgt.es"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "9be61cc741cf1cf5f50b93e0d04b49ff36c3c8f5e5b2e3970d6c6f4e6011f18e",
-    "domain": "roads",
-    "contentHash": "9d3ace21703dd2a1a4422283a1bdef60ca5d2839ec8cca7afe69009e3b94c5f2",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -353,7 +348,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "9be61cc741cf1cf5f50b93e0d04b49ff36c3c8f5e5b2e3970d6c6f4e6011f18e",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "9d3ace21703dd2a1a4422283a1bdef60ca5d2839ec8cca7afe69009e3b94c5f2"
   },
   {
     "id": "oc:situation:es-dgt:8660292",
@@ -398,19 +398,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://nap.dgt.es"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "9f4a55a8fb6e89e675e5938c476d7c5d3127dc216fdf6e4d79f244476e73acc8",
-    "domain": "roads",
-    "contentHash": "4a72002bd61fa120d8695328f33f369733e7dcc45945c95172fb4bba35c132dd",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -475,7 +470,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "9f4a55a8fb6e89e675e5938c476d7c5d3127dc216fdf6e4d79f244476e73acc8",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "4a72002bd61fa120d8695328f33f369733e7dcc45945c95172fb4bba35c132dd"
   },
   {
     "id": "oc:situation:es-dgt:9479421",
@@ -520,19 +520,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://nap.dgt.es"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "3a056b633e6b103c66fa6efa0c3b5abbe16445878e611b0c50ed95b5cd1591a5",
-    "domain": "roads",
-    "contentHash": "1322336cc4a1ece88aee3fa8e444b7130029c06d29ec44f67d3b84290cccaa87",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -556,7 +551,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "3a056b633e6b103c66fa6efa0c3b5abbe16445878e611b0c50ed95b5cd1591a5",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "1322336cc4a1ece88aee3fa8e444b7130029c06d29ec44f67d3b84290cccaa87"
   },
   {
     "id": "oc:situation:es-dgt:10852398",
@@ -610,19 +610,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://nap.dgt.es"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "e7f1699284881845b2c6344cec583d61eccd73f997933e172739ed9625003df4",
-    "domain": "roads",
-    "contentHash": "942dcd2e5939c2af0aa728e17aabe34fb9ee830b68c9628fba0001efe4fed7b1",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -705,6 +700,11 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "e7f1699284881845b2c6344cec583d61eccd73f997933e172739ed9625003df4",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "942dcd2e5939c2af0aa728e17aabe34fb9ee830b68c9628fba0001efe4fed7b1"
   }
 ]

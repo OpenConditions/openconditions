@@ -32,19 +32,14 @@
           "license": "US-Gov-Public-Domain",
           "licenseUrl": "https://www.usa.gov/government-works"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "36fe341497718ee3c20cff49906aed89805383612dfdd9609fcb452d515575b8",
-      "domain": "roads",
-      "contentHash": "5ce010d34f7baa52db795b5e40a275dae62f3e9f08bb9ee233a0875ba2b4daa4",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -55,7 +50,12 @@
         "measuredProperties": [
           "traffic.speed"
         ]
-      }
+      },
+      "canonicalId": "36fe341497718ee3c20cff49906aed89805383612dfdd9609fcb452d515575b8",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "5ce010d34f7baa52db795b5e40a275dae62f3e9f08bb9ee233a0875ba2b4daa4"
     },
     {
       "id": "oc:feature:us-oh-ohgo:d2",
@@ -89,19 +89,14 @@
           "license": "US-Gov-Public-Domain",
           "licenseUrl": "https://www.usa.gov/government-works"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "897bbf5bc2d211f9d9ce7c3697b9d0b738e095d332edefd9704d5c507fb75493",
-      "domain": "roads",
-      "contentHash": "4dc2ebc27f610b8324af6597b1964341a500b1390184c552f1f81f79fa4c0e5a",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -112,7 +107,12 @@
         "measuredProperties": [
           "traffic.speed"
         ]
-      }
+      },
+      "canonicalId": "897bbf5bc2d211f9d9ce7c3697b9d0b738e095d332edefd9704d5c507fb75493",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "4dc2ebc27f610b8324af6597b1964341a500b1390184c552f1f81f79fa4c0e5a"
     }
   ],
   "observations": [
@@ -148,19 +148,14 @@
           "license": "US-Gov-Public-Domain",
           "licenseUrl": "https://www.usa.gov/government-works"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "d8b126fde510a108088170e4ffd7a7c903967196641ed05db87fecb1e6cae56e",
-      "domain": "roads",
-      "contentHash": "09e36b85e47a04de1d6d77bb1d98361deb89b0097c030b0b7d1a4769579fb653",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -185,7 +180,12 @@
         "source": "native",
         "ratio": 0.3076923076923077,
         "los": "queuing"
-      }
+      },
+      "canonicalId": "d8b126fde510a108088170e4ffd7a7c903967196641ed05db87fecb1e6cae56e",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "09e36b85e47a04de1d6d77bb1d98361deb89b0097c030b0b7d1a4769579fb653"
     },
     {
       "id": "oc:observation:us-oh-ohgo:200c22d9013ae9904ebf344ae5d39c3f5a771d7891d39697c26a94b74c7f8710",
@@ -219,19 +219,14 @@
           "license": "US-Gov-Public-Domain",
           "licenseUrl": "https://www.usa.gov/government-works"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "e79de0b9eb56497d9fc4dd1895c712793bdd4e765a60cbe414c7c0b04a6b9363",
-      "domain": "roads",
-      "contentHash": "e177def13e9edd791b9dece769ef5ac29b2467bfaea667fffb618cf48957d0da",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -256,7 +251,12 @@
         "source": "native",
         "ratio": 0.9538461538461539,
         "los": "free_flow"
-      }
+      },
+      "canonicalId": "e79de0b9eb56497d9fc4dd1895c712793bdd4e765a60cbe414c7c0b04a6b9363",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "e177def13e9edd791b9dece769ef5ac29b2467bfaea667fffb618cf48957d0da"
     }
   ],
   "situations": [
@@ -295,7 +295,6 @@
           "license": "US-Gov-Public-Domain",
           "licenseUrl": "https://www.usa.gov/government-works"
         },
-        "instanceId": "golden.test",
         "derivedFrom": {
           "records": [
             {
@@ -308,16 +307,12 @@
         },
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "3fba68b17ee283d6c07899ae2195a1d18d19cb033dd7a092d45d10eca3adb643",
-      "domain": "roads",
-      "contentHash": "e4a371b55ec720a968a8a80a1263b4310678a969a261c8b6f80d9ecf0f89df22",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
       "kind": "congestion",
       "type": "congestion",
@@ -341,7 +336,12 @@
           "id": "oc:feature:us-oh-ohgo:d1"
         },
         "freeFlowSource": "native"
-      }
+      },
+      "canonicalId": "3fba68b17ee283d6c07899ae2195a1d18d19cb033dd7a092d45d10eca3adb643",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "e4a371b55ec720a968a8a80a1263b4310678a969a261c8b6f80d9ecf0f89df22"
     }
   ]
 }

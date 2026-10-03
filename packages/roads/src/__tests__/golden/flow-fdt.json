@@ -30,19 +30,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "50105fb339015bea98cc9d96ee0202ef8e4e3f7e214b57159e698de5cc5bd45e",
-      "domain": "roads",
-      "contentHash": "61c1db039ae800c03cf6cd5ff7b156e6e16836a6236f5f5be2691073c7da040d",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -60,7 +55,12 @@
           "traffic.speed",
           "traffic.volume"
         ]
-      }
+      },
+      "canonicalId": "50105fb339015bea98cc9d96ee0202ef8e4e3f7e214b57159e698de5cc5bd45e",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "61c1db039ae800c03cf6cd5ff7b156e6e16836a6236f5f5be2691073c7da040d"
     }
   ],
   "observations": [
@@ -94,19 +94,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "44e674257c2fbdd8a68b3fe1b443a33c95fb6da1a8da32cb29f7b7c1fc063356",
-      "domain": "roads",
-      "contentHash": "60bf19dbf9a76d2933f75832419184b5f979cbce99436763cb25f25352ecced7",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -126,7 +121,12 @@
       "aggregation": "mean",
       "quality": {
         "confidence": 0.95
-      }
+      },
+      "canonicalId": "44e674257c2fbdd8a68b3fe1b443a33c95fb6da1a8da32cb29f7b7c1fc063356",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "60bf19dbf9a76d2933f75832419184b5f979cbce99436763cb25f25352ecced7"
     },
     {
       "id": "oc:observation:it-turin:411b721e71fbfd0a2a5ef3ecf8c3b74bd53b6fec85044b28e78d46c7c71d5b9f",
@@ -158,19 +158,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "ef5d1b270c1c040898f7ac1700d0e1dc571136b0cdb849b818e03f1d92fe03f5",
-      "domain": "roads",
-      "contentHash": "c7d1868e77bc4fdba1a2464e34c3e2befa85e9f547c6a8b82247dd7b81f6e964",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.volume",
@@ -187,7 +182,12 @@
         "start": "2026-07-10T17:55:03.516Z",
         "end": "2026-07-10T18:00:03.516Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "ef5d1b270c1c040898f7ac1700d0e1dc571136b0cdb849b818e03f1d92fe03f5",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "c7d1868e77bc4fdba1a2464e34c3e2befa85e9f547c6a8b82247dd7b81f6e964"
     }
   ],
   "situations": []

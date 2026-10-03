@@ -32,19 +32,14 @@
           "license": "Singapore-ODL-1.0",
           "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "3bd2e29954800d22c0292debe77ce94e9042290343fcdff538695e52ab7af360",
-      "domain": "roads",
-      "contentHash": "37b9c0a0a54a4131cbd5e0703ab944b179aaef39188df75822524ad0b113ef1f",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -61,7 +56,12 @@
         "measuredProperties": [
           "traffic.speed"
         ]
-      }
+      },
+      "canonicalId": "3bd2e29954800d22c0292debe77ce94e9042290343fcdff538695e52ab7af360",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "37b9c0a0a54a4131cbd5e0703ab944b179aaef39188df75822524ad0b113ef1f"
     }
   ],
   "observations": [
@@ -97,19 +97,14 @@
           "license": "Singapore-ODL-1.0",
           "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "7a57a8b60c7b6c661e070de62d73baf2c5a1d0d418f735836144da384a9d3417",
-      "domain": "roads",
-      "contentHash": "7675c41cc124682fcdd9668be0038664bd60eee7017b491fbe2a49e32cba165e",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -125,7 +120,12 @@
       "phenomenonTime": {
         "instant": "2026-09-18T10:00:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "7a57a8b60c7b6c661e070de62d73baf2c5a1d0d418f735836144da384a9d3417",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "7675c41cc124682fcdd9668be0038664bd60eee7017b491fbe2a49e32cba165e"
     }
   ],
   "situations": []

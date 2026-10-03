@@ -1,4 +1,11 @@
-import { historyRowOf, recordFromHistory, templateOf } from "@openconditions/core";
+import {
+  historyRowOf,
+  readingOf,
+  recordFromHistory,
+  recordOf,
+  templateHash,
+  templateOf,
+} from "@openconditions/core";
 import { sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import { describe, expect, it } from "vitest";
@@ -184,5 +191,65 @@ describe("observation history rows", () => {
       provenance: { recordId: "a".repeat(64), reporter: { keyId: "key-one" } },
     });
     expect(recordFromHistory(registry, template, fromDatabase(row))).toEqual(first);
+  });
+});
+
+describe("latest readings", () => {
+  const drafts = () => [
+    observationDraft(
+      "traffic.speed",
+      { type: "quantity", value: 87.5, unit: "km/h" },
+      {
+        subject: SITE_CHANNEL,
+        aggregation: "mean",
+        provenance: {
+          ...(observationDraft("traffic.speed", {})["provenance"] as object),
+          rawRef: { hash: PAYLOADS[1] },
+          sourceUpdatedAt: "2026-10-01T09:59:00Z",
+        },
+      },
+    ),
+    observationDraft(
+      "fuel.price",
+      { type: "money", amount: "1.4590", currency: "EUR", per: "L" },
+      { subject: PRODUCT, sourceId: "es-minetur" },
+    ),
+    observationDraft(
+      "charging.evse_status",
+      { type: "category", value: "out_of_order", vocabulary: "evse_status" },
+      {
+        sourceId: "crowd",
+        subject: { kind: "feature", featureId: "oc:feature:test.local:abc", componentKey: "1" },
+        provenance: {
+          origin: "crowd",
+          sourceId: "crowd",
+          sourceFormat: "crowd",
+          accessMode: "bulk",
+          recordId: "a".repeat(64),
+          attribution: { provider: "OpenConditions contributors", license: "ODbL-1.0" },
+          reporter: { keyId: "key-one" },
+          privacy: { class: "crowd_pseudonym" },
+        },
+      },
+    ),
+  ];
+
+  it("keep only what varies, and rebuild the record from its series template", () => {
+    for (const record of drafts().map(seal)) {
+      const reading = readingOf(record);
+      for (const key of ["location", "subject", "property", "class", "domain"]) {
+        expect(reading).not.toHaveProperty(key);
+      }
+      expect(reading["id"]).toBe(record["id"]);
+      expect(recordOf(templateOf(record), reading)).toEqual(record);
+    }
+  });
+
+  it("hash a series template as written, the same for every reading of one series", () => {
+    const [first, second] = [seal(drafts()[0]!), seal({ ...drafts()[0]!, aggregation: "max" })];
+    expect(templateHash(templateOf(second))).toBe(templateHash(templateOf(first)));
+    expect(templateHash({ ...templateOf(first), location: null })).not.toBe(
+      templateHash(templateOf(first)),
+    );
   });
 });

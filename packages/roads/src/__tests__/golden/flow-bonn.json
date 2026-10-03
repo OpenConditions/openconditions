@@ -36,19 +36,14 @@
           "license": "dl-de/zero-2-0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "06beaa21d22d006d377a5dac8bc7cbb18f071d1c239ddc2305c3001f22d4f50f",
-      "domain": "roads",
-      "contentHash": "ab4a354a16b8018f161583bcb4736f3623e677a362d72c54efc27f824391c664",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -60,7 +55,12 @@
           "traffic.speed",
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "06beaa21d22d006d377a5dac8bc7cbb18f071d1c239ddc2305c3001f22d4f50f",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "ab4a354a16b8018f161583bcb4736f3623e677a362d72c54efc27f824391c664"
     },
     {
       "id": "oc:feature:de-nw-bonn:143",
@@ -94,19 +94,14 @@
           "license": "dl-de/zero-2-0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "a97bd2e01844be90cddf23af7a06f0002aa84013930fc68d520685d698a4bfed",
-      "domain": "roads",
-      "contentHash": "648ceb7f50aa01947cef7f6ca75ed820463c2d04f2ab8a5383a4be88f69b2bde",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -118,7 +113,12 @@
           "traffic.speed",
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "a97bd2e01844be90cddf23af7a06f0002aa84013930fc68d520685d698a4bfed",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "648ceb7f50aa01947cef7f6ca75ed820463c2d04f2ab8a5383a4be88f69b2bde"
     }
   ],
   "observations": [
@@ -158,19 +158,14 @@
           "license": "dl-de/zero-2-0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "e6f3c38e82cc8fc5a0e8fa7136944219dd2f7f86be5d94d2128543c8ae00b083",
-      "domain": "roads",
-      "contentHash": "d7b6964db7b2371a9c64211871f1948d84a1c8a8f8d313ee3143badb3f9f17f9",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -186,7 +181,12 @@
       "phenomenonTime": {
         "instant": "2026-07-10T17:10:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "e6f3c38e82cc8fc5a0e8fa7136944219dd2f7f86be5d94d2128543c8ae00b083",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "d7b6964db7b2371a9c64211871f1948d84a1c8a8f8d313ee3143badb3f9f17f9"
     },
     {
       "id": "oc:observation:de-nw-bonn:99f0ca916963309e50d9bb033e53b17751f90f5b7964dd38c02608bb5006720b",
@@ -224,19 +224,14 @@
           "license": "dl-de/zero-2-0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "5dad6eba560c34332b83575e97adfdc9295f03f8e4e82eceb7d68dd42ec7ee2b",
-      "domain": "roads",
-      "contentHash": "0cb5a09a4a4495c9d36825c1251565d760c9b07d063d15205432eb7e25d88094",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.los",
@@ -252,7 +247,12 @@
       "phenomenonTime": {
         "instant": "2026-07-10T17:10:00.000Z"
       },
-      "aggregation": "instantaneous"
+      "aggregation": "instantaneous",
+      "canonicalId": "5dad6eba560c34332b83575e97adfdc9295f03f8e4e82eceb7d68dd42ec7ee2b",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "0cb5a09a4a4495c9d36825c1251565d760c9b07d063d15205432eb7e25d88094"
     },
     {
       "id": "oc:observation:de-nw-bonn:6a2f533b3bd000f117b700968875fd00939db78143c3ec44ad7d15655543e2cb",
@@ -286,19 +286,14 @@
           "license": "dl-de/zero-2-0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "5d63ca0863f8abdc99474a40445359f37846ce294ed09f0988fb1436de15630f",
-      "domain": "roads",
-      "contentHash": "88ff6d5775d4ac955bd49f97bf38d43b2effbc65212ad65cc7d9fe3e264bfa18",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -314,7 +309,12 @@
       "phenomenonTime": {
         "instant": "2026-07-10T17:10:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "5d63ca0863f8abdc99474a40445359f37846ce294ed09f0988fb1436de15630f",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "88ff6d5775d4ac955bd49f97bf38d43b2effbc65212ad65cc7d9fe3e264bfa18"
     },
     {
       "id": "oc:observation:de-nw-bonn:394c8cba0de8b43bece51cfc3bcc50c927ee7d4ee47509e3119287aeaf9c6293",
@@ -348,19 +348,14 @@
           "license": "dl-de/zero-2-0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "e681330b95324302f6244bf2f99ec29d9491751dbc0b8d3f80a58c2a2d5b1c49",
-      "domain": "roads",
-      "contentHash": "79c4950ae5de998f12284a1afc3b3127a97f4eb764e6b223344bd044dc564c61",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.los",
@@ -376,7 +371,12 @@
       "phenomenonTime": {
         "instant": "2026-07-10T17:10:00.000Z"
       },
-      "aggregation": "instantaneous"
+      "aggregation": "instantaneous",
+      "canonicalId": "e681330b95324302f6244bf2f99ec29d9491751dbc0b8d3f80a58c2a2d5b1c49",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "79c4950ae5de998f12284a1afc3b3127a97f4eb764e6b223344bd044dc564c61"
     }
   ],
   "situations": [
@@ -419,7 +419,6 @@
           "license": "dl-de/zero-2-0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
-        "instanceId": "golden.test",
         "derivedFrom": {
           "records": [
             {
@@ -432,16 +431,12 @@
         },
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "662ea47b25471d251aaaee926b81eed4ac8573f22c0a5b8d92008f480783e487",
-      "domain": "roads",
-      "contentHash": "2789c88245d320b10846a986a3f00ec3ceed8c80ba08b3f1401bc8bf621df709",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
       "kind": "congestion",
       "type": "congestion",
@@ -464,7 +459,12 @@
           "class": "feature",
           "id": "oc:feature:de-nw-bonn:144"
         }
-      }
+      },
+      "canonicalId": "662ea47b25471d251aaaee926b81eed4ac8573f22c0a5b8d92008f480783e487",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "2789c88245d320b10846a986a3f00ec3ceed8c80ba08b3f1401bc8bf621df709"
     }
   ]
 }

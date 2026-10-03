@@ -1,4 +1,4 @@
-import { recordFromHistory } from "@openconditions/core";
+import { recordFromHistory, recordOf } from "@openconditions/core";
 import { contentHash, observationId } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import type postgres from "postgres";
@@ -81,13 +81,13 @@ describe("observation writes", () => {
       unit: "km/h",
       effective_from: new Date("2026-10-01T10:00:00Z"),
       since_at: new Date("2026-10-01T10:00:00Z"),
-      retention_days: 3,
+      retention_days: 2,
       access_mode: "bulk",
       geom: "POINT(4.536069 52.0235558)",
     });
     expect(await history()).toEqual([
       {
-        retention_days: 3,
+        retention_days: 2,
         phenomenon_start: new Date("2026-10-01T10:00:00Z"),
         value_num: 87,
         value_text: null,
@@ -148,7 +148,7 @@ describe("observation writes", () => {
     };
     const summary = await writeSnapshot(sql, "nl-ndw-flow", { observations: [corrected] }, ctx);
     expect(summary.observations).toMatchObject({ latest: 1, history: 1 });
-    const [latest] = await sql`SELECT record #>> '{baseline,source}' AS source
+    const [latest] = await sql`SELECT reading #>> '{baseline,source}' AS source
       FROM conditions.observation_latest`;
     expect(latest).toEqual({ source: "derived" });
   });
@@ -276,7 +276,7 @@ describe("observation writes", () => {
       ctx,
     );
     expect(again.observations).toMatchObject({ unchanged: 1, latest: 0 });
-    const [row] = await sql`SELECT expires_at, record #>> '{freshness,expiresAt}' AS stated
+    const [row] = await sql`SELECT expires_at, reading #>> '{freshness,expiresAt}' AS stated
       FROM conditions.observation_latest`;
     expect(row).toEqual({
       expires_at: new Date("2026-10-01T10:20:00Z"),
@@ -307,7 +307,8 @@ describe("observation writes", () => {
       { observations: [speed(87, "2026-10-01T10:00:00Z")] },
       ctx,
     );
-    const [series] = await sql`SELECT template, record FROM conditions.observation_latest`;
+    const [series] = await sql`SELECT template,
+      conditions.observation_record(template, reading) AS record FROM conditions.observation_latest`;
     const [row] = await sql`SELECT * FROM conditions.observation`;
     const { sinceAt: _since, ...stored } = series!["record"] as Record<string, unknown>;
     const back = recordFromHistory(registry, series!["template"], row!);
@@ -318,6 +319,81 @@ describe("observation writes", () => {
     const { phenomenonTime: _c, contentHash: _d, ...storedRest } = stored;
     expect(rest).toEqual(storedRest);
     expect(back["contentHash"]).toBe(contentHash(back));
+  });
+
+  it("keep the reading in effect compact, rebuilt the same in SQL and in code", async () => {
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [speed(87, "2026-10-01T10:00:00Z")] },
+      ctx,
+    );
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [speed(91, "2026-10-01T10:01:00Z")] },
+      ctx,
+    );
+    const [row] = await sql<
+      { reading: Record<string, unknown>; template: Record<string, unknown>; record: unknown }[]
+    >`SELECT reading, template, conditions.observation_record(template, reading) AS record
+        FROM conditions.observation_latest`;
+    expect(row!.reading).not.toHaveProperty("location");
+    expect(row!.reading).not.toHaveProperty("subject");
+    expect(row!.reading["result"]).toEqual({ type: "quantity", value: 91, unit: "km/h" });
+    expect(row!.record).toEqual(recordOf(row!.template, row!.reading));
+    expect((row!.record as Record<string, unknown>)["location"]).toEqual(
+      speed(91, "2026-10-01T10:01:00Z")["location"],
+    );
+  });
+
+  it("move a feed series' reading without touching an index", async () => {
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [speed(87, "2026-10-01T10:00:00Z")] },
+      ctx,
+    );
+    const hot = async () =>
+      (
+        await sql`SELECT n_tup_hot_upd::int AS n FROM pg_stat_user_tables
+                   WHERE relname = 'observation_latest'`
+      )[0]!["n"] as number;
+    await sql`SELECT pg_stat_force_next_flush()`;
+    const before = await hot();
+    for (const [value, at] of [
+      [88, "2026-10-01T10:01:00Z"],
+      [89, "2026-10-01T10:02:00Z"],
+    ] as const) {
+      await writeSnapshot(sql, "nl-ndw-flow", { observations: [speed(value, at)] }, ctx);
+    }
+    await sql`SELECT pg_stat_force_next_flush()`;
+    // A flow source moves tens of thousands of readings a minute: an update
+    // that changed an indexed value would rewrite every index of the table.
+    expect((await hot()) - before).toBe(2);
+  });
+
+  it("rewrite a series' template when the site it describes moved", async () => {
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [speed(87, "2026-10-01T10:00:00Z")] },
+      ctx,
+    );
+    const moved = { type: "Point", coordinates: [4.6, 52.1] };
+    const draft = speed(91, "2026-10-01T10:01:00Z");
+    const relocated: Record<string, unknown> = {
+      ...draft,
+      location: { ...(draft["location"] as object), geometry: moved },
+    };
+    relocated["id"] = observationIdOf(relocated);
+    const [before] = await sql`SELECT template_hash FROM conditions.observation_latest`;
+    await writeSnapshot(sql, "nl-ndw-flow", { observations: [relocated] }, ctx);
+    const [after] = await sql`
+      SELECT template_hash, template #> '{location,geometry}' AS geometry
+        FROM conditions.observation_latest`;
+    expect(after!["template_hash"]).not.toBe(before!["template_hash"]);
+    expect(after!["geometry"]).toEqual(moved);
   });
 
   it("keep one history row for a reading a poll repeats", async () => {

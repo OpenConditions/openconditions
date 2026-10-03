@@ -166,7 +166,7 @@ async function replay(
     SELECT e.record_id, l.evidence_state
       FROM conditions.report_evidence e
       LEFT JOIN conditions.observation_latest l
-        ON l.source_id = 'crowd' AND l.record->>'id' = e.record_id
+        ON l.crowd_record_id = e.record_id
      WHERE e.record_class = 'observation' AND e.actor_key_id = ${keyId}
        AND e.details->>'localId' = ${localId}
      LIMIT 1`;
@@ -192,8 +192,8 @@ async function heldReading(
   { result: unknown; evidenceState: EvidenceState | null; reporters: string[] } | undefined
 > {
   const [current] = await tx<{ result: unknown; evidence_state: EvidenceState | null }[]>`
-    SELECT record->'result' AS result, evidence_state FROM conditions.observation_latest
-     WHERE source_id = 'crowd' AND record->>'id' = ${id}`;
+    SELECT reading->'result' AS result, evidence_state FROM conditions.observation_latest
+     WHERE crowd_record_id = ${id}`;
   const reporters = await tx<{ actor_key_id: string }[]>`
     SELECT DISTINCT actor_key_id FROM conditions.report_evidence
      WHERE record_class = 'observation' AND record_id = ${id}
@@ -240,10 +240,10 @@ async function resolveSubject(
       throw refused(["subject"], "unknown_subject", "the place names no location");
     }
     const [series] = await tx<{ location: LocationRef }[]>`
-      SELECT record->'location' AS location FROM conditions.observation_latest
+      SELECT template->'location' AS location FROM conditions.observation_latest
        WHERE subject_key = ${key} AND property = ${claim.property}
          AND qualifier_key = ${qualifierKey(claim.qualifiers)}
-         AND source_id NOT IN ('crowd', '@fused') AND record #>> '{provenance,origin}' = 'feed'
+         AND source_id NOT IN ('crowd', '@fused') AND template #>> '{provenance,origin}' = 'feed'
        ORDER BY effective_from DESC LIMIT 1`;
     if (series === undefined) {
       throw refused(
@@ -299,7 +299,7 @@ async function implausibleFromLast(
                WHERE e.record_class = 'situation' AND s.id = e.record_id),
              (SELECT ST_AsGeoJSON(l.geom) FROM conditions.observation_latest l
                WHERE e.record_class = 'observation' AND l.source_id = 'crowd'
-                 AND l.record->>'id' = e.record_id)) AS geometry,
+                 AND l.crowd_record_id = e.record_id)) AS geometry,
            e.occurred_at
       FROM conditions.report_evidence e
      WHERE e.actor_key_id = ${keyId} AND e.evidence_kind = 'report'

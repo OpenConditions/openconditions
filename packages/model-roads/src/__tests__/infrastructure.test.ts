@@ -127,12 +127,12 @@ describe("traffic retention", () => {
 
   it("keeps lane and vehicle-class readings latest-only and site series within the budget", () => {
     expect(retention("traffic.speed")).toEqual({
-      rawDays: 3,
+      rawDays: 2,
       componentHistory: false,
       rollup: { period: "hourly", histogram: { binWidth: 2 } },
     });
     expect(retention("traffic.volume")).toEqual({
-      rawDays: 2,
+      rawDays: 1,
       componentHistory: false,
       rollup: { period: "hourly" },
     });

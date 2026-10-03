@@ -243,8 +243,9 @@ const crowdRow = async (id: string) => {
       record: Rec;
     }[]
   >`
-    SELECT feature_id, component_key, evidence_state, corroborations, expires_at, record
-      FROM conditions.observation_latest WHERE source_id = 'crowd' AND record->>'id' = ${id}`;
+    SELECT feature_id, component_key, evidence_state, corroborations, expires_at,
+           conditions.observation_record(template, reading) AS record
+      FROM conditions.observation_latest WHERE crowd_record_id = ${id}`;
   return row;
 };
 

@@ -35,19 +35,14 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "e6900ec3935759d9c7115b58dee4d4200bbaf6659f0dbd93a31df726d79c7d6c",
-      "domain": "roads",
-      "contentHash": "44709049031e8f260ddb6cdeb265af7dd86b18bfcc008f358e8b7377be721c2d",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -65,7 +60,12 @@
           "traffic.speed",
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "e6900ec3935759d9c7115b58dee4d4200bbaf6659f0dbd93a31df726d79c7d6c",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "44709049031e8f260ddb6cdeb265af7dd86b18bfcc008f358e8b7377be721c2d"
     },
     {
       "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_HEAVY",
@@ -98,19 +98,14 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "8e3f8b6c319c37ca8a39ff80da6d908a520fe2f494a63f1097b21e88a4eb7a0f",
-      "domain": "roads",
-      "contentHash": "72e6d251ab0756f9a86d31dea64327e5f855ebd1666459b89289c3129046c05a",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -128,7 +123,12 @@
           "traffic.speed",
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "8e3f8b6c319c37ca8a39ff80da6d908a520fe2f494a63f1097b21e88a4eb7a0f",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "72e6d251ab0756f9a86d31dea64327e5f855ebd1666459b89289c3129046c05a"
     },
     {
       "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_STATIONARY",
@@ -165,19 +165,14 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "bc725e085b881df8415857a69baf278326347ede8b959d3841936ff83eb856dd",
-      "domain": "roads",
-      "contentHash": "811c322dc6970cf638564b4a3a3b0d3e4c1b4563fdd5631c222076282135ba9b",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -195,7 +190,12 @@
           "traffic.speed",
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "bc725e085b881df8415857a69baf278326347ede8b959d3841936ff83eb856dd",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "811c322dc6970cf638564b4a3a3b0d3e4c1b4563fdd5631c222076282135ba9b"
     },
     {
       "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_QUEUING",
@@ -232,19 +232,14 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "bc7515396ef6d7a85b6652d52b2b5eadf6f94d869fc26cb4a2f716dd2b942d57",
-      "domain": "roads",
-      "contentHash": "0d0732ae1a7176dac7c7255d5450da08245f9731f9990a749836920d564dcfba",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -262,7 +257,12 @@
           "traffic.speed",
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "bc7515396ef6d7a85b6652d52b2b5eadf6f94d869fc26cb4a2f716dd2b942d57",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "0d0732ae1a7176dac7c7255d5450da08245f9731f9990a749836920d564dcfba"
     }
   ],
   "observations": [
@@ -301,19 +301,14 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "abc3ec988021ae95497c66bd68ae36e9be9e6183e3b0d27191e8bbe6e8cb5cb1",
-      "domain": "roads",
-      "contentHash": "e5dcda00b56f43295b4cf80f7a6504753a62c6abc76b56cff7aea365e4af8b7b",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -337,7 +332,12 @@
         },
         "source": "native",
         "ratio": 0.9520000000000001
-      }
+      },
+      "canonicalId": "abc3ec988021ae95497c66bd68ae36e9be9e6183e3b0d27191e8bbe6e8cb5cb1",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "e5dcda00b56f43295b4cf80f7a6504753a62c6abc76b56cff7aea365e4af8b7b"
     },
     {
       "id": "oc:observation:fi-digitraffic-flow:3e02ce1ce38847a6940d27ff2391a8a2500dd4d1a6aa9cd38f00eb61469c03f2",
@@ -374,19 +374,14 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "867d3bc8bfdcc0878189b527cc738e0797e75e0cbeeda98a75d3e038909aa1f1",
-      "domain": "roads",
-      "contentHash": "c6bd4ac95dbfa4d9dc30c23a22473e3fe4f15e61403ddb7a610efe819ee0946d",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.los",
@@ -402,7 +397,12 @@
       "phenomenonTime": {
         "instant": "2026-06-24T10:00:00.000Z"
       },
-      "aggregation": "instantaneous"
+      "aggregation": "instantaneous",
+      "canonicalId": "867d3bc8bfdcc0878189b527cc738e0797e75e0cbeeda98a75d3e038909aa1f1",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "c6bd4ac95dbfa4d9dc30c23a22473e3fe4f15e61403ddb7a610efe819ee0946d"
     },
     {
       "id": "oc:observation:fi-digitraffic-flow:10a248e5cdb5eb461b982ca14e87b4c1b83fac440d132029925b0844671ca95d",
@@ -435,19 +435,14 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "37be1dcde76303c8e52236212a8635258c2cc06ac3c3450587d8e60ef98e51d8",
-      "domain": "roads",
-      "contentHash": "e50c70ce5ebac0daf85336694af9d814a93d8639e182ca860d4da40a46d97695",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -471,7 +466,12 @@
         },
         "source": "native",
         "ratio": 0.52
-      }
+      },
+      "canonicalId": "37be1dcde76303c8e52236212a8635258c2cc06ac3c3450587d8e60ef98e51d8",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "e50c70ce5ebac0daf85336694af9d814a93d8639e182ca860d4da40a46d97695"
     },
     {
       "id": "oc:observation:fi-digitraffic-flow:ef7806ce230d624a578c500c38ab213d4cd0a19091abeb64514db32991d5af83",
@@ -504,19 +504,14 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "1bbe0b0ee6d88bb283b645e5ad496b6d335d3663d15a9c7b77ee57f3405305c2",
-      "domain": "roads",
-      "contentHash": "56b0d49e4498c75c51b45de5f5b83e2087a84d1b7a644ed348d47168b28c5dad",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.los",
@@ -532,7 +527,12 @@
       "phenomenonTime": {
         "instant": "2026-06-24T10:00:00.000Z"
       },
-      "aggregation": "instantaneous"
+      "aggregation": "instantaneous",
+      "canonicalId": "1bbe0b0ee6d88bb283b645e5ad496b6d335d3663d15a9c7b77ee57f3405305c2",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "56b0d49e4498c75c51b45de5f5b83e2087a84d1b7a644ed348d47168b28c5dad"
     },
     {
       "id": "oc:observation:fi-digitraffic-flow:538b258b20f5cf36ba25e769f27c945cbff648882beaa3f3282a5508789ba059",
@@ -569,19 +569,14 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "ddd3e58dafa0a9d8ae60a962d5d2ab7adc6d559e3f23472f9d2d2f506da045a0",
-      "domain": "roads",
-      "contentHash": "ce6e9d23cb1d2161de67f6b6cf172539bc33dd694566f80244e2ce84a681d0be",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -605,7 +600,12 @@
         },
         "source": "native",
         "ratio": 0.04375
-      }
+      },
+      "canonicalId": "ddd3e58dafa0a9d8ae60a962d5d2ab7adc6d559e3f23472f9d2d2f506da045a0",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "ce6e9d23cb1d2161de67f6b6cf172539bc33dd694566f80244e2ce84a681d0be"
     },
     {
       "id": "oc:observation:fi-digitraffic-flow:a8b4c13f34a904be2c9c03fd342b541b229f38edbc8d8e48d7853155f2f77b64",
@@ -642,19 +642,14 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "dfcfdeddde1245b586ccb1ff641ec61167dcc2d8f0acb5cdc3cbbf95db0fe257",
-      "domain": "roads",
-      "contentHash": "31dc7efd107e667a20c0cd384ec0fb24893dd3f03d1ac267716b70ae278c1d69",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.los",
@@ -670,7 +665,12 @@
       "phenomenonTime": {
         "instant": "2026-06-24T09:55:00.000Z"
       },
-      "aggregation": "instantaneous"
+      "aggregation": "instantaneous",
+      "canonicalId": "dfcfdeddde1245b586ccb1ff641ec61167dcc2d8f0acb5cdc3cbbf95db0fe257",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "31dc7efd107e667a20c0cd384ec0fb24893dd3f03d1ac267716b70ae278c1d69"
     },
     {
       "id": "oc:observation:fi-digitraffic-flow:4ce82d9a08e69b1552bb7f2b0f5b60367f507d25ee45556e6793dd9895fdbaa4",
@@ -707,19 +707,14 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "c3a9ca5147e8d5c182b57c56b32f253d50c1986e4e136aeb0e293333cf262d2b",
-      "domain": "roads",
-      "contentHash": "bb928ad26af56d488da649ad938fe374ea6e0a37a658458896ba214ab16d3019",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -743,7 +738,12 @@
         },
         "source": "native",
         "ratio": 0.18
-      }
+      },
+      "canonicalId": "c3a9ca5147e8d5c182b57c56b32f253d50c1986e4e136aeb0e293333cf262d2b",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "bb928ad26af56d488da649ad938fe374ea6e0a37a658458896ba214ab16d3019"
     },
     {
       "id": "oc:observation:fi-digitraffic-flow:4c5b00ff0b25e5c0632d184deb5fee618cffc1ce1da4529c3e7572c1e480a194",
@@ -780,19 +780,14 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "78f83768bf08104c302ee09c4f6ef296a40c935532629b691bf65d919195daa2",
-      "domain": "roads",
-      "contentHash": "03089790b0fe4bf1ea3619a261046538e44c295ddd4b0d5e49c692ff2091f257",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.los",
@@ -808,7 +803,12 @@
       "phenomenonTime": {
         "instant": "2026-06-24T10:00:00.000Z"
       },
-      "aggregation": "instantaneous"
+      "aggregation": "instantaneous",
+      "canonicalId": "78f83768bf08104c302ee09c4f6ef296a40c935532629b691bf65d919195daa2",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "03089790b0fe4bf1ea3619a261046538e44c295ddd4b0d5e49c692ff2091f257"
     }
   ],
   "situations": [
@@ -850,7 +850,6 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "derivedFrom": {
           "records": [
             {
@@ -863,16 +862,12 @@
         },
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "745fbea80cbe2e151694a993f22c3c3829c7fe1ea43216975113db0ecff45f18",
-      "domain": "roads",
-      "contentHash": "65e5d1b1d3f4547d09d9a496832e13effb9282757e75bdfae35d83b89c4dec36",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
       "kind": "congestion",
       "type": "congestion",
@@ -896,7 +891,12 @@
           "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_STATIONARY"
         },
         "freeFlowSource": "native"
-      }
+      },
+      "canonicalId": "745fbea80cbe2e151694a993f22c3c3829c7fe1ea43216975113db0ecff45f18",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "65e5d1b1d3f4547d09d9a496832e13effb9282757e75bdfae35d83b89c4dec36"
     },
     {
       "id": "oc:situation:fi-digitraffic-flow:DT_FLOW_QUEUING:congestion",
@@ -936,7 +936,6 @@
           "provider": "fi-digitraffic-flow",
           "license": "CC-BY-4.0"
         },
-        "instanceId": "golden.test",
         "derivedFrom": {
           "records": [
             {
@@ -949,16 +948,12 @@
         },
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "fa8b7dd49088019925732fe7350c5487cd70d427322eac8f00341d69b421c50e",
-      "domain": "roads",
-      "contentHash": "800d6cb3a911637d79fd786aed874dbc96b1b88f8ee602f20c934f9d06fae462",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
       "kind": "congestion",
       "type": "congestion",
@@ -982,7 +977,12 @@
           "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_QUEUING"
         },
         "freeFlowSource": "native"
-      }
+      },
+      "canonicalId": "fa8b7dd49088019925732fe7350c5487cd70d427322eac8f00341d69b421c50e",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "800d6cb3a911637d79fd786aed874dbc96b1b88f8ee602f20c934f9d06fae462"
     }
   ]
 }

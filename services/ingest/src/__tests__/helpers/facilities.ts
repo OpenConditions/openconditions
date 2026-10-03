@@ -240,6 +240,6 @@ export async function landEvseReport(
   if (written.status === "rejected") throw new Error(JSON.stringify(written));
   await sql`
     UPDATE conditions.observation_latest SET evidence_state = 'self_reported', confidence_score = 0.5
-     WHERE source_id = 'crowd' AND record->>'id' = ${landed.draft["id"] as string}`;
+     WHERE crowd_record_id = ${landed.draft["id"] as string}`;
   return landed.draft["id"] as string;
 }

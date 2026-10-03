@@ -62,19 +62,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "e87be43bb68d75f64b93c1ae68161f374f0b409d0c3816fd418e7a27a3729c29",
-    "domain": "roads",
-    "contentHash": "30e3ab94bc5b617698aa7b75b7402a5e1c84fdd62d63f4047916eadb492c8577",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "vehicle_hazard",
@@ -137,6 +132,11 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "e87be43bb68d75f64b93c1ae68161f374f0b409d0c3816fd418e7a27a3729c29",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "30e3ab94bc5b617698aa7b75b7402a5e1c84fdd62d63f4047916eadb492c8577"
   }
 ]

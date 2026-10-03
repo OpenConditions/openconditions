@@ -66,10 +66,10 @@ export async function crossValidateObservation(
 ): Promise<string | null> {
   const resolve = deps.applyExternalResolution ?? applyExternalResolution;
   const [crowd] = await sql<CrowdRow[]>`
-    SELECT subject_key, feature_id, component_key, property, qualifier_key, record,
-           evidence_state, expires_at
+    SELECT subject_key, feature_id, component_key, property, qualifier_key,
+           conditions.observation_record(template, reading) AS record, evidence_state, expires_at
       FROM conditions.observation_latest
-     WHERE source_id = 'crowd' AND record->>'id' = ${observationId}`;
+     WHERE crowd_record_id = ${observationId}`;
   if (crowd === undefined) return null;
   if (["externally_resolved", "negated", "expired"].includes(crowd.evidence_state ?? ""))
     return null;
@@ -113,12 +113,13 @@ export async function crossValidateObservation(
  */
 async function feedSeries(sql: Sql, crowd: CrowdRow): Promise<FeedSeries[]> {
   const own = sql`
-    l.source_id NOT IN ('crowd', '@fused') AND l.record #>> '{provenance,origin}' = 'feed'
-    AND jsonb_array_length(COALESCE(l.record #> '{provenance,originChain}', '[]'::jsonb)) = 0
+    l.source_id NOT IN ('crowd', '@fused') AND l.template #>> '{provenance,origin}' = 'feed'
+    AND jsonb_array_length(COALESCE(l.template #> '{provenance,originChain}', '[]'::jsonb)) = 0
     AND l.property = ${crowd.property} AND l.qualifier_key = ${crowd.qualifier_key}`;
   if (crowd.feature_id === null) {
     return sql<FeedSeries[]>`
-      SELECT series_id::text AS series_id, source_id, record, template
+      SELECT series_id::text AS series_id, source_id,
+             conditions.observation_record(template, reading) AS record, template
         FROM conditions.observation_latest l WHERE ${own} AND l.subject_key = ${crowd.subject_key}`;
   }
   const [canonical] = await loadCanonical(sql, [crowd.feature_id]);
@@ -131,7 +132,8 @@ async function feedSeries(sql: Sql, crowd: CrowdRow): Promise<FeedSeries[]> {
         );
   if (pairs.length === 0) return [];
   return sql<FeedSeries[]>`
-    SELECT l.series_id::text AS series_id, l.source_id, l.record, l.template
+    SELECT l.series_id::text AS series_id, l.source_id,
+           conditions.observation_record(l.template, l.reading) AS record, l.template
       FROM conditions.observation_latest l
       JOIN jsonb_to_recordset(${JSON.stringify(pairs)}::text::jsonb) AS p("featureId" text, key text)
         ON l.feature_id = p."featureId" AND l.component_key IS NOT DISTINCT FROM p.key

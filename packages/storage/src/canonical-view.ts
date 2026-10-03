@@ -388,11 +388,13 @@ export async function rekeyCrowdSeries(
       series_id: string;
       feature_id: string;
       component_key: string | null;
+      since_at: Date;
       record: Rec;
       retention_days: number | null;
     }[]
   >`
-    SELECT series_id::text AS series_id, feature_id, component_key, record, retention_days
+    SELECT series_id::text AS series_id, feature_id, component_key, since_at,
+           conditions.observation_record(template, reading) AS record, retention_days
       FROM conditions.observation_latest
      WHERE source_id = 'crowd'
        AND feature_id = ANY(${vanished.map((v) => v.canonicalFeatureId)}::text[])
@@ -450,19 +452,20 @@ export async function rekeyCrowdSeries(
     }
     const property = registry.property(key.property)!;
     const row = seriesRowOf(
-      { ...record, sinceAt: s.record["sinceAt"] ?? startOf(record) },
+      { ...record, sinceAt: s.since_at.toISOString() },
       property,
       s.retention_days ?? undefined,
       ctx.now,
     );
-    const { sinceAt: _since, ...stored } = record;
     await tx`
       UPDATE conditions.observation_latest
          SET subject_key = ${row["subject_key"] as string}, feature_id = ${target.canonicalFeatureId},
-             component_key = ${componentKey ?? null}, record = ${tx.json(stored as never)},
-             template = ${tx.json(templateOf(stored) as never)}, updated_at = ${ctx.now}
+             component_key = ${componentKey ?? null}, reading = ${tx.json(row["reading"] as never)},
+             template = ${tx.json(row["template"] as never)},
+             template_hash = ${row["template_hash"] as string},
+             crowd_record_id = ${row["crowd_record_id"] as string}, updated_at = ${ctx.now}
        WHERE series_id = ${s.series_id}::bigint`;
-    const newId = stored["id"] as string;
+    const newId = record["id"] as string;
     await tx`
       UPDATE conditions.report_evidence SET record_id = ${newId}
        WHERE record_class = 'observation' AND record_id = ${oldId}`;
@@ -474,7 +477,7 @@ export async function rekeyCrowdSeries(
   if (drop.length > 0) {
     const records = await tx<{ id: string }[]>`
       DELETE FROM conditions.observation_latest WHERE series_id = ANY(${drop}::bigint[])
-      RETURNING record->>'id' AS id`;
+      RETURNING crowd_record_id AS id`;
     await tx`DELETE FROM conditions.observation WHERE series_id = ANY(${drop}::bigint[])`;
     const ids = records.map((r) => r.id);
     await tx`

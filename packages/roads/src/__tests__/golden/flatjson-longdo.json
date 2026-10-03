@@ -29,19 +29,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.longdo.com/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "616ed6468fdb611694c1e1e2023757fb7a11ff84bdf0cf34e877dd1aeee71167",
-    "domain": "roads",
-    "contentHash": "dae35a1adb5ce7af921acf8a9a53d2096561da9a36061a92c5c7336d49ff3af1",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "accident",
@@ -70,7 +65,12 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "616ed6468fdb611694c1e1e2023757fb7a11ff84bdf0cf34e877dd1aeee71167",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "dae35a1adb5ce7af921acf8a9a53d2096561da9a36061a92c5c7336d49ff3af1"
   },
   {
     "id": "oc:situation:th-longdo:957413",
@@ -102,19 +102,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.longdo.com/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "5b19bbd8a63ab40cf546c1c0b183f15add75af7652e632306e6f688811577dac",
-    "domain": "roads",
-    "contentHash": "5f834c48022ce7db2de82d6bfdccea0e528a08bffea8e32518ad916b082efd88",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "accident",
@@ -143,7 +138,12 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "5b19bbd8a63ab40cf546c1c0b183f15add75af7652e632306e6f688811577dac",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "5f834c48022ce7db2de82d6bfdccea0e528a08bffea8e32518ad916b082efd88"
   },
   {
     "id": "oc:situation:th-longdo:957412",
@@ -175,19 +175,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.longdo.com/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "cd0f13ba86c0a59b6664edcc12b2f10a2fc2d47253694632f13ab82af3b823aa",
-    "domain": "roads",
-    "contentHash": "e37359e0a134ee7f0ab9882b1fbf544769fc926480c2831236e515750313579c",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "other",
     "type": "other",
@@ -215,7 +210,12 @@
     "details": {
       "kind": "other",
       "v": 1
-    }
+    },
+    "canonicalId": "cd0f13ba86c0a59b6664edcc12b2f10a2fc2d47253694632f13ab82af3b823aa",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "e37359e0a134ee7f0ab9882b1fbf544769fc926480c2831236e515750313579c"
   },
   {
     "id": "oc:situation:th-longdo:957092",
@@ -247,19 +247,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.longdo.com/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "fe36d6a89c11ac26579ec14204c0aed220e7a3e985868a88133032dc9219d104",
-    "domain": "roads",
-    "contentHash": "559a9075ca5fbb8c56d8a8a9d3d0f1725df767c33afb56d89a1cf4eaf181e7a2",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "other",
     "type": "other",
@@ -287,6 +282,11 @@
     "details": {
       "kind": "other",
       "v": 1
-    }
+    },
+    "canonicalId": "fe36d6a89c11ac26579ec14204c0aed220e7a3e985868a88133032dc9219d104",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "559a9075ca5fbb8c56d8a8a9d3d0f1725df767c33afb56d89a1cf4eaf181e7a2"
   }
 ]

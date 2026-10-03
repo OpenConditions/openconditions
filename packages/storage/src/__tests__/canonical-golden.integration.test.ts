@@ -66,7 +66,8 @@ const fusedRows = () =>
       record: Rec;
     }[]
   >`
-    SELECT feature_id, component_key, property, fused_from, access_mode, expires_at, record
+    SELECT feature_id, component_key, property, fused_from, access_mode, expires_at,
+           conditions.observation_record(template, reading) AS record
       FROM conditions.observation_latest WHERE source_id = '@fused'`;
 
 const canonicalOf = async (featureId: string) => {

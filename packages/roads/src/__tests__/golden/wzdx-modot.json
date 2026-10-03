@@ -67,19 +67,14 @@
         "provider": "WZDx publishers",
         "license": "UNKNOWN"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "3c7f9d2341696cc53a92015971a262b77a36cc9311c60b9307fda5be5245931f",
-    "domain": "roads",
-    "contentHash": "fc6e8c1ca7d75ed3c543f72ae869b8d47206dbc9848157393686cb0a3773069c",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -128,7 +123,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "3c7f9d2341696cc53a92015971a262b77a36cc9311c60b9307fda5be5245931f",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "fc6e8c1ca7d75ed3c543f72ae869b8d47206dbc9848157393686cb0a3773069c"
   },
   {
     "id": "oc:situation:us-wzdx:tms_work_zone:549748",
@@ -198,19 +198,14 @@
         "provider": "WZDx publishers",
         "license": "UNKNOWN"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "cd2f5310c4964d432c269809386a47f8ceedf99bd8fca77c468dceefcbdceff0",
-    "domain": "roads",
-    "contentHash": "2bbc987c806c9f1126dbe00f904ff734df28776cf71911c421c192e377370c8c",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -279,6 +274,11 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "cd2f5310c4964d432c269809386a47f8ceedf99bd8fca77c468dceefcbdceff0",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "2bbc987c806c9f1126dbe00f904ff734df28776cf71911c421c192e377370c8c"
   }
 ]

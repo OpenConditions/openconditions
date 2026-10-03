@@ -38,19 +38,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://data.trafikverket.se/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "555735a9eaeccb88451d4416b16ebb4b16ec81bf340cce50aed1ba9b92e09bb6",
-    "domain": "roads",
-    "contentHash": "e4aa470a313ced2a5f74ac4c05a035014b60f5e29bc72824ef8659fd9e5809f0",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "accident",
@@ -80,7 +75,12 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "555735a9eaeccb88451d4416b16ebb4b16ec81bf340cce50aed1ba9b92e09bb6",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "e4aa470a313ced2a5f74ac4c05a035014b60f5e29bc72824ef8659fd9e5809f0"
   },
   {
     "id": "oc:situation:se-trafikverket:d2",
@@ -117,19 +117,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://data.trafikverket.se/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "fcd80d111bf3ff037486ccf41e365ba8fae9d1157f604fc89abd425ba8a5fbdf",
-    "domain": "roads",
-    "contentHash": "b95010e7a6aba7e652494d74d91650169b126ae24d2ed3e9f2cf706d289597a1",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -158,6 +153,11 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "fcd80d111bf3ff037486ccf41e365ba8fae9d1157f604fc89abd425ba8a5fbdf",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "b95010e7a6aba7e652494d74d91650169b126ae24d2ed3e9f2cf706d289597a1"
   }
 ]

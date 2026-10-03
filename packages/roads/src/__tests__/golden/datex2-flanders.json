@@ -559,19 +559,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.verkeerscentrum.be/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "ea8fea00150d8b69f8fe60533ea36ee0d0e39d8a51a81a5c0370e20f0dcd0040",
-    "domain": "roads",
-    "contentHash": "4dbc13b319af655bf8a9168a0e40261c4e2c9b1ead8170a71dc514f30b3c53b5",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "congestion",
     "type": "congestion",
@@ -607,7 +602,12 @@
       "kind": "congestion",
       "v": 1,
       "los": "queuing"
-    }
+    },
+    "canonicalId": "ea8fea00150d8b69f8fe60533ea36ee0d0e39d8a51a81a5c0370e20f0dcd0040",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "4dbc13b319af655bf8a9168a0e40261c4e2c9b1ead8170a71dc514f30b3c53b5"
   },
   {
     "id": "oc:situation:be-flanders:EVT22290721",
@@ -893,19 +893,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.verkeerscentrum.be/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "d8c5d0ac4a752df8c007d4e793cc521fdbb524a6d2256aac6fbdb643a2ae3cf1",
-    "domain": "roads",
-    "contentHash": "f5e1e8ac587c96df9528726d27106f7893789c886b22e618c830ba64e941f8e0",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "restriction",
     "type": "dimension",
@@ -926,7 +921,12 @@
       "kind": "restriction",
       "v": 1,
       "basis": "temporary"
-    }
+    },
+    "canonicalId": "d8c5d0ac4a752df8c007d4e793cc521fdbb524a6d2256aac6fbdb643a2ae3cf1",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "f5e1e8ac587c96df9528726d27106f7893789c886b22e618c830ba64e941f8e0"
   },
   {
     "id": "oc:situation:be-flanders:EVT22290752",
@@ -1020,19 +1020,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.verkeerscentrum.be/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "7e7874a5788fe86ef308e1c0413361b288434f3059dc7f32f33e2fe9d24846d5",
-    "domain": "roads",
-    "contentHash": "a6c398cbd9aaa73afdf9710cf4a399040acb6f926ba2805666671e203e89c62b",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "closure",
     "type": "closure",
@@ -1065,7 +1060,12 @@
     "details": {
       "kind": "closure",
       "v": 1
-    }
+    },
+    "canonicalId": "7e7874a5788fe86ef308e1c0413361b288434f3059dc7f32f33e2fe9d24846d5",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "a6c398cbd9aaa73afdf9710cf4a399040acb6f926ba2805666671e203e89c62b"
   },
   {
     "id": "oc:situation:be-flanders:EVT22290563",
@@ -1439,19 +1439,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.verkeerscentrum.be/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "2c77c6326abce987121c09ac2d9a3a95dedf1d224f1bfd06ed281a091bef2f29",
-    "domain": "roads",
-    "contentHash": "851e7bd2aa28ee9f5b958fcfd3de8606f03c77d0ac9c7ffc3d8d286c9d8d0686",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -1470,6 +1465,11 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "2c77c6326abce987121c09ac2d9a3a95dedf1d224f1bfd06ed281a091bef2f29",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "851e7bd2aa28ee9f5b958fcfd3de8606f03c77d0ac9c7ffc3d8d286c9d8d0686"
   }
 ]

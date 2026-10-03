@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import { buildRegistry, kernelModule, sealRecord } from "@openconditions/model";
 import { roadsModule } from "@openconditions/model-roads";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -84,9 +85,14 @@ function sealAll(name: string, feedId: string, fixture: string, format: string) 
   const sealed = drafts.map((d) =>
     sealRecord(registry, d, { instanceId: "golden.test", revision: 1, recordedAt: FROZEN }),
   );
-  const failures = sealed.flatMap((s, i) =>
-    s.ok ? [] : [{ id: drafts[i]!["id"], issues: s.issues.slice(0, 5) }],
-  );
+  const failures = sealed.flatMap((s, i) => {
+    if (!s.ok) return [{ id: drafts[i]!["id"], issues: s.issues.slice(0, 5) }];
+    // A sealed record is a stored record as it is: validating it changes nothing.
+    const stored = registry.validate(s.value);
+    return stored.ok && isDeepStrictEqual(stored.value, s.value)
+      ? []
+      : [{ id: drafts[i]!["id"], issues: stored.ok ? ["changed by validation"] : stored.issues }];
+  });
   return { name, parsed, drafts, sealed, failures };
 }
 

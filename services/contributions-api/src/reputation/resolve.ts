@@ -112,7 +112,7 @@ async function resolveWithin(
         `
       : await tx<{ evidence_state: EvidenceState; routing_eligible: boolean }[]>`
           SELECT evidence_state, false AS routing_eligible FROM conditions.observation_latest
-          WHERE source_id = 'crowd' AND record->>'id' = ${situationId} FOR UPDATE
+          WHERE crowd_record_id = ${situationId} FOR UPDATE
         `;
   if (situation === undefined) return null;
 

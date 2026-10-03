@@ -144,10 +144,10 @@ export async function sweepCrossValidateObservations(
   const maxBatch = deps.maxBatch ?? DEFAULT_SWEEP_MAX_BATCH;
   const log = deps.log ?? (() => {});
   const rows = await sql<{ id: string }[]>`
-    SELECT record->>'id' AS id FROM conditions.observation_latest
+    SELECT crowd_record_id AS id FROM conditions.observation_latest
      WHERE source_id = 'crowd' AND expires_at > ${now}
        AND evidence_state IN ('self_reported', 'corroborated')
-       AND record #>> '{provenance,reporter,keyId}' IS NOT NULL
+       AND reading #>> '{provenance,reporter,keyId}' IS NOT NULL
      ORDER BY expires_at, series_id
      LIMIT ${maxBatch}`;
   let routed = 0;

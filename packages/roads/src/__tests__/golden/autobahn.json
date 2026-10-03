@@ -53,19 +53,14 @@
         "provider": "Quelle: Die Autobahn GmbH des Bundes",
         "license": "dl-de/by-2-0"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "5a62624f0b9104e05667260d9ef5cb43b8dfd487dff373b5451d183f9f733f5e",
-    "domain": "roads",
-    "contentHash": "301769ef7ef627e44dcc4c115a3a0ea507ec99870c34eaa34b0c47c8fcbadc65",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "congestion",
     "type": "congestion",
@@ -117,7 +112,12 @@
       "kind": "congestion",
       "v": 1,
       "los": "queuing"
-    }
+    },
+    "canonicalId": "5a62624f0b9104e05667260d9ef5cb43b8dfd487dff373b5451d183f9f733f5e",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "301769ef7ef627e44dcc4c115a3a0ea507ec99870c34eaa34b0c47c8fcbadc65"
   },
   {
     "id": "oc:situation:de-autobahn:EVA--vi-blk.2026-06-22_10-00-00-000.de1",
@@ -163,19 +163,14 @@
         "provider": "Quelle: Die Autobahn GmbH des Bundes",
         "license": "dl-de/by-2-0"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "f488d46dcde8f2e3e0a49aa0bc19af0bb79e3ccae56bab5cab83fecb7b4ee895",
-    "domain": "roads",
-    "contentHash": "20e48edcb1a252bf1a3722bf4d690d6675f7536132624115709a448f7797adc3",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_hazard",
     "type": "hazard",
@@ -222,6 +217,11 @@
     "details": {
       "kind": "road_hazard",
       "v": 1
-    }
+    },
+    "canonicalId": "f488d46dcde8f2e3e0a49aa0bc19af0bb79e3ccae56bab5cab83fecb7b4ee895",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "20e48edcb1a252bf1a3722bf4d690d6675f7536132624115709a448f7797adc3"
   }
 ]

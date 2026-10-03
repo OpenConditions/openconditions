@@ -73,19 +73,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "29a7e979057a5fdb6fecbd8bdafd58b7a7250d985d5ef87de35c61488261a735",
-    "domain": "roads",
-    "contentHash": "c7f7ef17228171d5c23db2fe900280e3967d2bb40df64ff1cda0b869631f7084",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_hazard",
     "type": "hazard",
@@ -116,7 +111,12 @@
     "details": {
       "kind": "road_hazard",
       "v": 1
-    }
+    },
+    "canonicalId": "29a7e979057a5fdb6fecbd8bdafd58b7a7250d985d5ef87de35c61488261a735",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "c7f7ef17228171d5c23db2fe900280e3967d2bb40df64ff1cda0b869631f7084"
   },
   {
     "id": "oc:situation:fi-digitraffic:GUID50465931",
@@ -171,19 +171,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "a4dfda34b3d76fb3648b6b0f36b5e9cb0c47460520eaf77c42d2470b6a98ddad",
-    "domain": "roads",
-    "contentHash": "6342ad2bb656da1a40cc51279f7281d68dbc785d857bda99e64a93c08ee4638b",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_hazard",
     "type": "hazard",
@@ -213,7 +208,12 @@
     "details": {
       "kind": "road_hazard",
       "v": 1
-    }
+    },
+    "canonicalId": "a4dfda34b3d76fb3648b6b0f36b5e9cb0c47460520eaf77c42d2470b6a98ddad",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "6342ad2bb656da1a40cc51279f7281d68dbc785d857bda99e64a93c08ee4638b"
   },
   {
     "id": "oc:situation:fi-digitraffic:GUID50466272",
@@ -273,19 +273,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "392ff7c6ccd246946ea03badca4e9c861cd9721ec6a68d017f799d31009ce920",
-    "domain": "roads",
-    "contentHash": "592693e0ec21bd3d72b49b5ab3015f133060386d933638b945eb28e6e44e27b4",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -366,7 +361,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "392ff7c6ccd246946ea03badca4e9c861cd9721ec6a68d017f799d31009ce920",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "592693e0ec21bd3d72b49b5ab3015f133060386d933638b945eb28e6e44e27b4"
   },
   {
     "id": "oc:situation:fi-digitraffic:GUID_FIXTURE_ACCIDENT",
@@ -421,19 +421,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "0017fb069bc1dd9f35d0feb1e1347aaf29a6de906ea880ecb8ca8c6ff2dbf552",
-    "domain": "roads",
-    "contentHash": "358169d2ad40a64d2ea4b56a001a926591f998240dd4bbad4d97a1c355fa2074",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "accident",
@@ -464,6 +459,11 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "0017fb069bc1dd9f35d0feb1e1347aaf29a6de906ea880ecb8ca8c6ff2dbf552",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "358169d2ad40a64d2ea4b56a001a926591f998240dd4bbad4d97a1c355fa2074"
   }
 ]

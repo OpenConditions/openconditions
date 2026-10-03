@@ -40,19 +40,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://dane.gov.pl/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "d7e2dbdd21421acef7b4b8525ecb4b06ee0abfaa69bc099d00beac1359841607",
-    "domain": "roads",
-    "contentHash": "621857845ba0bab1df9b4026561d4a5afc0cc4f31e2ac092ff423b66b4a90033",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -83,7 +78,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "d7e2dbdd21421acef7b4b8525ecb4b06ee0abfaa69bc099d00beac1359841607",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "621857845ba0bab1df9b4026561d4a5afc0cc4f31e2ac092ff423b66b4a90033"
   },
   {
     "id": "oc:situation:pl-gddkia:jnlp52",
@@ -126,19 +126,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://dane.gov.pl/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "19fe0d95f38bc2f6e77365900e01c86f453200829da9f157ad598cc6c3e495e3",
-    "domain": "roads",
-    "contentHash": "6a90e8e4f8bcaf9523d6162ad27e31ff3c02176bb13178dfcc52ca50767087cf",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -169,7 +164,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "19fe0d95f38bc2f6e77365900e01c86f453200829da9f157ad598cc6c3e495e3",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "6a90e8e4f8bcaf9523d6162ad27e31ff3c02176bb13178dfcc52ca50767087cf"
   },
   {
     "id": "oc:situation:pl-gddkia:16kn89p",
@@ -212,19 +212,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://dane.gov.pl/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "e1f8fac7037cc46ad57b1338393e12ccd34ce68e26e71272da662ab898240ba3",
-    "domain": "roads",
-    "contentHash": "d4966892c20c604bb9ace35d408c46c37780651d49f15d683b5ddd243aaf805a",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -255,7 +250,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "e1f8fac7037cc46ad57b1338393e12ccd34ce68e26e71272da662ab898240ba3",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "d4966892c20c604bb9ace35d408c46c37780651d49f15d683b5ddd243aaf805a"
   },
   {
     "id": "oc:situation:pl-gddkia:1lxs2sf",
@@ -298,19 +298,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://dane.gov.pl/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "6566a0da3f36f42862c44b56155e192fcc872fda3b1cdec65d7ca7e047dae455",
-    "domain": "roads",
-    "contentHash": "1b770c6f4a38ee42b5083396c8dbed5ead101f212d80077ee709addc022ce0d6",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -341,7 +336,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "6566a0da3f36f42862c44b56155e192fcc872fda3b1cdec65d7ca7e047dae455",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "1b770c6f4a38ee42b5083396c8dbed5ead101f212d80077ee709addc022ce0d6"
   },
   {
     "id": "oc:situation:pl-gddkia:1d9gp2x",
@@ -384,19 +384,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://dane.gov.pl/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "6f952dff566324f76ea608ce14b1bd0dc6b20afe92c193030e7fdf5dd7416609",
-    "domain": "roads",
-    "contentHash": "c63deda7daf21eedf5f97e8a4d2222261c6f9fd3fd7036b41a31b74b56ad9e1e",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -427,7 +422,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "6f952dff566324f76ea608ce14b1bd0dc6b20afe92c193030e7fdf5dd7416609",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "c63deda7daf21eedf5f97e8a4d2222261c6f9fd3fd7036b41a31b74b56ad9e1e"
   },
   {
     "id": "oc:situation:pl-gddkia:4tca7f",
@@ -470,19 +470,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://dane.gov.pl/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "bad87ff407a535e6ead309af023d794b72675da248f5eef4762f2a4a0518da7d",
-    "domain": "roads",
-    "contentHash": "c78dd64f30d200acf24cdc32d162811c93338567845b67c01b9b45b229e7087b",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -513,6 +508,11 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "bad87ff407a535e6ead309af023d794b72675da248f5eef4762f2a4a0518da7d",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "c78dd64f30d200acf24cdc32d162811c93338567845b67c01b9b45b229e7087b"
   }
 ]

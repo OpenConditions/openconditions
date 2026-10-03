@@ -145,11 +145,13 @@ export async function listLatestObservations(
   if (properties) clauses.push(`l.property = ANY(${p(properties)}::text[])`);
   if (q.sources?.length) clauses.push(`l.source_id = ANY(${p([...q.sources])}::text[])`);
   if (q.origins?.length) {
-    clauses.push(`l.record #>> '{provenance,origin}' = ANY(${p([...q.origins])}::text[])`);
+    clauses.push(`l.template #>> '{provenance,origin}' = ANY(${p([...q.origins])}::text[])`);
   }
   if (q.cursor !== undefined) clauses.push(`l.series_id > ${p(q.cursor)}`);
   const rows = await db.execute<Rec[]>(
-    `SELECT l.series_id::text AS series_id, l.record, l.evidence_state, l.confidence_score,
+    `SELECT l.series_id::text AS series_id,
+            conditions.observation_record(l.template, l.reading) AS record,
+            l.evidence_state, l.confidence_score,
             false AS routing_eligible, l.corroborations
        FROM conditions.observation_latest l
       WHERE ${clauses.join(" AND ")}

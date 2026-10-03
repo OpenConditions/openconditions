@@ -116,7 +116,9 @@ const links = (kind: string) =>
 
 const fusedOn = (canonicalId: string) =>
   sql<{ component_key: string | null; property: string; fused_from: string[]; record: Rec }[]>`
-    SELECT component_key, property, fused_from, record FROM conditions.observation_latest
+    SELECT component_key, property, fused_from,
+           conditions.observation_record(template, reading) AS record
+      FROM conditions.observation_latest
      WHERE source_id = '@fused' AND feature_id = ${canonicalId}`;
 
 describe("linking Karlsruhe's charge points and car parks through the tables", () => {
@@ -232,7 +234,7 @@ describe("a crowd reading on the canonical car park", () => {
     expect(written.status).not.toBe("rejected");
     await sql`
       UPDATE conditions.observation_latest SET evidence_state = 'self_reported', confidence_score = 0.5
-       WHERE source_id = 'crowd' AND record->>'id' = ${landed.draft["id"] as string}`;
+       WHERE crowd_record_id = ${landed.draft["id"] as string}`;
     return landed.draft["id"] as string;
   };
 
@@ -256,7 +258,8 @@ describe("a crowd reading on the canonical car park", () => {
 
   it("reads back with its evidence, and its subject resolves through the canonical view", async () => {
     const [row] = await sql<{ record: Rec }[]>`
-      SELECT record FROM conditions.observation_latest WHERE source_id = 'crowd' LIMIT 1`;
+      SELECT conditions.observation_record(template, reading) AS record
+        FROM conditions.observation_latest WHERE source_id = 'crowd' LIMIT 1`;
     const read = await readLatestObservation(sql, seriesKeyOf(row!.record));
     expect(read!["evidence"]).toEqual({
       state: "self_reported",
@@ -295,7 +298,9 @@ describe("a crowd reading on the canonical car park", () => {
     expect((await canonicalOf(REGISTER)).member_ids).toEqual([REGISTER]);
 
     const crowd = await sql<{ feature_id: string; component_key: string; record: Rec }[]>`
-      SELECT feature_id, component_key, record FROM conditions.observation_latest
+      SELECT feature_id, component_key,
+             conditions.observation_record(template, reading) AS record
+        FROM conditions.observation_latest
        WHERE source_id = 'crowd' ORDER BY feature_id = ${survivor.canonical_feature_id} DESC`;
     // Each reading follows the charge point it reports: the register's charge point
     // has no counterpart on the live feed's site, so its reading moves to the register's
@@ -360,7 +365,7 @@ describe("a crowd reading on the canonical car park", () => {
     // This report and the register's, which moved with its charge point.
     expect(counts.crowdExpired).toBe(2);
     const [row] = await sql`
-      SELECT evidence_state FROM conditions.observation_latest WHERE source_id = 'crowd' AND record->>'id' = ${id}`;
+      SELECT evidence_state FROM conditions.observation_latest WHERE crowd_record_id = ${id}`;
     expect(row).toMatchObject({ evidence_state: "expired" });
     expect((await shown()).fused_from).not.toContain(id);
   });
@@ -394,7 +399,7 @@ describe("federation of the canonical view", () => {
     expect(sources).toEqual(["de-bw-ocpdb"]);
 
     await sql`
-      UPDATE conditions.observation_latest SET record = jsonb_set(record, '{freshness,fetchedAt}', to_jsonb(${later}::text))
+      UPDATE conditions.observation_latest SET reading = jsonb_set(reading, '{freshness,fetchedAt}', to_jsonb(${later}::text))
        WHERE source_id IN ('crowd', '@fused')`;
     const [{ n }] = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM conditions.federation_outbox WHERE record_class = 'observation'`;

@@ -65,19 +65,14 @@
         "license": "OGL-ON",
         "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "d8be9249a772d3d8f7bda1f82c8ad8326e5cae55c4c0ca3f562e8b23b8e1e6fe",
-    "domain": "roads",
-    "contentHash": "0773c06b6ede31d5d0751db7238828be58a34444932c60c736ced3b9640f9641",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_condition",
     "type": "surface",
@@ -109,7 +104,12 @@
       "surface": [
         "unknown"
       ]
-    }
+    },
+    "canonicalId": "d8be9249a772d3d8f7bda1f82c8ad8326e5cae55c4c0ca3f562e8b23b8e1e6fe",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "0773c06b6ede31d5d0751db7238828be58a34444932c60c736ced3b9640f9641"
   },
   {
     "id": "oc:situation:ca-on-511-conditions:17-1",
@@ -160,19 +160,14 @@
         "license": "OGL-ON",
         "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "9237126d645b0b8cedc4090d719d6d38cf65cb541b4c894a65a8861c0862996f",
-    "domain": "roads",
-    "contentHash": "73713d18881da7a9768a610e7cfaaf0988f49d2509b25cb618a00907c5552eed",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_condition",
     "type": "surface",
@@ -198,6 +193,11 @@
       "surface": [
         "unknown"
       ]
-    }
+    },
+    "canonicalId": "9237126d645b0b8cedc4090d719d6d38cf65cb541b4c894a65a8861c0862996f",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "73713d18881da7a9768a610e7cfaaf0988f49d2509b25cb618a00907c5552eed"
   }
 ]

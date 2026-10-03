@@ -55,7 +55,7 @@ export async function writeSensorObservations(
   const rows = await sql`
     WITH fresh AS (
       SELECT l.subject_key, l.source_id, l.property, l.value_num, l.value_text,
-        (l.record #>> '{baseline,freeFlow,value}')::double precision AS free_flow,
+        (l.reading #>> '{baseline,freeFlow,value}')::double precision AS free_flow,
         COALESCE(l.effective_until, l.effective_from) AS at
       FROM conditions.sensor_segment ss
       JOIN conditions.observation_latest l ON l.subject_key = ss.subject_key

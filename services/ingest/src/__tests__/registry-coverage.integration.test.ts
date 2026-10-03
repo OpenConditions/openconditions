@@ -109,8 +109,8 @@ describe("boot coverage check", () => {
   it("fails when a series holds a property the registry does not register", async () => {
     await sql`
       INSERT INTO conditions.observation_latest (subject_key, property, source_id, subject_kind,
-        record, template, access_mode, result_type, effective_from, since_at)
-      VALUES ('location:x', 'air.pm10', 'de-uba', 'location', '{}'::jsonb, '{}'::jsonb, 'bulk',
+        reading, template, template_hash, access_mode, result_type, effective_from, since_at)
+      VALUES ('location:x', 'air.pm10', 'de-uba', 'location', '{}'::jsonb, '{}'::jsonb, '', 'bulk',
         'quantity', now(), now())`;
     const error = await assertStoredCodesRegistered(sql, productionRegistry()).catch((e) => e);
     expect((error as RegistryCoverageError).gaps).toEqual(['property "air.pm10"']);

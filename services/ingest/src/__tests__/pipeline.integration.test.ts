@@ -407,11 +407,11 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
       }[]
     >`
       SELECT value_num, retention_days, component_key AS channel,
-             record #> '{provenance,attribution,rights}' AS rights
+             template #> '{provenance,attribution,rights}' AS rights
         FROM conditions.observation_latest
        WHERE feature_id = 'oc:feature:nl-ndw-flow:PZH01_MST_0065_00' AND property = 'traffic.speed'
        ORDER BY component_key NULLS FIRST`;
-    expect(rows[0]).toMatchObject({ channel: null, retention_days: 3 });
+    expect(rows[0]).toMatchObject({ channel: null, retention_days: 2 });
     expect(rows[0]!.value_num).toBeCloseTo(63.28, 2);
     expect(rows.slice(1).map((r) => r.retention_days)).toEqual([null, null, null]);
     expect(rows.every((r) => r.rights !== null)).toBe(true);
@@ -445,7 +445,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     expect(congested.activeEvents).toBe(1);
     expect(await liveSituations("nl-ndw-flow")).toBe(1);
     const [speed] = await sql<{ baseline: Record<string, unknown> }[]>`
-      SELECT record->'baseline' AS baseline FROM conditions.observation_latest
+      SELECT reading->'baseline' AS baseline FROM conditions.observation_latest
        WHERE subject_key = 'feature:oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00'
          AND property = 'traffic.speed'`;
     expect(speed!.baseline).toMatchObject({ source: "derived", los: "stationary" });

@@ -56,19 +56,14 @@
         "provider": "WZDx publishers",
         "license": "UNKNOWN"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "fd65f29d77afa8512ea7852a0391b68ad64e7675bfd9b1776a0c1e0c359aa481",
-    "domain": "roads",
-    "contentHash": "6a9e510129d7b89fb69c24731b06242f328071b42cce4bc732ee982b65757df7",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -134,7 +129,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "fd65f29d77afa8512ea7852a0391b68ad64e7675bfd9b1776a0c1e0c359aa481",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "6a9e510129d7b89fb69c24731b06242f328071b42cce4bc732ee982b65757df7"
   },
   {
     "id": "oc:situation:us-wzdx:TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0",
@@ -205,19 +205,14 @@
         "provider": "WZDx publishers",
         "license": "UNKNOWN"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "bfd7bd1bd4533a83e04937ecc5d9f82571dfd2f4fa792a4c5721208ec813859e",
-    "domain": "roads",
-    "contentHash": "58b799a49b7c4d8098b2336da9aa34332a2b1986992697851d51c37e12c7212e",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "closure",
     "type": "closure",
@@ -305,6 +300,11 @@
     "details": {
       "kind": "closure",
       "v": 1
-    }
+    },
+    "canonicalId": "bfd7bd1bd4533a83e04937ecc5d9f82571dfd2f4fa792a4c5721208ec813859e",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "58b799a49b7c4d8098b2336da9aa34332a2b1986992697851d51c37e12c7212e"
   }
 ]

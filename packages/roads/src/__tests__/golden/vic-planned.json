@@ -45,19 +45,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "66d6a333320d79b92bec33b4ea924d6b3c0bfa816a8a8cb4736099ec140ec727",
-    "domain": "roads",
-    "contentHash": "7340dd889c8299fa076bd33645035f11788ee676a9ef4badf002934f624542e6",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -145,7 +140,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "66d6a333320d79b92bec33b4ea924d6b3c0bfa816a8a8cb4736099ec140ec727",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "7340dd889c8299fa076bd33645035f11788ee676a9ef4badf002934f624542e6"
   },
   {
     "id": "oc:situation:au-vic-transportvic-planned:PLN-90002",
@@ -198,19 +198,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "6dee7846e1df4e27428352932ffe85e5dbc000ffbc316f6b1974fc139d9f23bb",
-    "domain": "roads",
-    "contentHash": "d6b1ea006c2f43f1627eed57d950db1874394df9a7ffa56c0299360cea4699e5",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "public_event",
     "type": "event",
@@ -234,6 +229,11 @@
     "details": {
       "kind": "public_event",
       "v": 1
-    }
+    },
+    "canonicalId": "6dee7846e1df4e27428352932ffe85e5dbc000ffbc316f6b1974fc139d9f23bb",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "d6b1ea006c2f43f1627eed57d950db1874394df9a7ffa56c0299360cea4699e5"
   }
 ]

@@ -39,19 +39,14 @@
         "license": "US-Gov-Public-Domain",
         "licenseUrl": "https://www.usa.gov/government-works"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "eecbd6c7e41cd841b08033bd1b6b428afbf5465277a0ad67b1ee64fe9d9e6f14",
-    "domain": "roads",
-    "contentHash": "cd568302c2d522fe6368dcf3ee2f2b3a833227a052cd903938d98067afd57d06",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -95,7 +90,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "eecbd6c7e41cd841b08033bd1b6b428afbf5465277a0ad67b1ee64fe9d9e6f14",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "cd568302c2d522fe6368dcf3ee2f2b3a833227a052cd903938d98067afd57d06"
   },
   {
     "id": "oc:situation:us-oh-ohgo-construction:OH-CON-1002",
@@ -136,19 +136,14 @@
         "license": "US-Gov-Public-Domain",
         "licenseUrl": "https://www.usa.gov/government-works"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "7567fe3c188f069cb424bc144c686ba7ccee75345704d64ce7e7a22fd4621324",
-    "domain": "roads",
-    "contentHash": "28db0f0efccd6e78c85845c88e63884089c5573815e23d7b6be1d6f9d974533f",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -192,6 +187,11 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "7567fe3c188f069cb424bc144c686ba7ccee75345704d64ce7e7a22fd4621324",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "28db0f0efccd6e78c85845c88e63884089c5573815e23d7b6be1d6f9d974533f"
   }
 ]

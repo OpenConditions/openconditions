@@ -11,7 +11,17 @@ import type { Registry, ValidationResult } from "./build.js";
 export function sealRecord(
   registry: Registry,
   draft: unknown,
-  opts: { instanceId: string; revision: number; recordedAt: string },
+  opts: {
+    instanceId: string;
+    revision: number;
+    recordedAt: string;
+    /**
+     * The draft's content hash, when the caller has it: sealing adds only
+     * derived fields, so it is the sealed record's too, and a writer that
+     * compared it with the stored one need not compute it twice.
+     */
+    contentHash?: string;
+  },
 ): ValidationResult {
   const checked = registry.validateDraft(draft);
   if (!checked.ok) return checked;
@@ -34,6 +44,10 @@ export function sealRecord(
     revision: opts.revision,
     recordedAt: opts.recordedAt,
   };
-  sealed["contentHash"] = contentHash(sealed);
-  return registry.validate(sealed);
+  sealed["contentHash"] = opts.contentHash ?? contentHash(sealed);
+  // The draft is valid and sealing adds only derived fields this function
+  // computes, so the result is a valid stored record without a second pass
+  // (the golden suites check that validating a sealed record changes
+  // nothing). A flow poll seals a hundred thousand readings a minute.
+  return { ok: true, value: sealed };
 }

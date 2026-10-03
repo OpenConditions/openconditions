@@ -110,4 +110,16 @@ describe("rollupObservations", () => {
     });
     expect(pruned).toEqual({ hourly: 2, daily: 0 });
   });
+
+  it("reads an hour of history through a block range index, not the whole day", async () => {
+    const indexes = await sql<{ method: string; def: string }[]>`
+      SELECT am.amname AS method, pg_get_indexdef(i.indexrelid) AS def
+        FROM pg_index i
+        JOIN pg_class c ON c.oid = i.indexrelid
+        JOIN pg_am am ON am.oid = c.relam
+       WHERE i.indrelid = 'conditions.observation'::regclass`;
+    expect(indexes.some((i) => i.method === "brin" && i.def.includes("(phenomenon_start)"))).toBe(
+      true,
+    );
+  });
 });

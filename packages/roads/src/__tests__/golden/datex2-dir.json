@@ -52,19 +52,14 @@
         "license": "etalab-2.0",
         "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "3d3506d2ead58dd604fb2bf3acb9b779bcf4488aa09299e9bfb23dc3b48758b0",
-    "domain": "roads",
-    "contentHash": "1b401901108994500d80b0c3da7feb6570f8cc83dd5bec8bbf5c15fb890ff56f",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "restriction",
     "type": "dimension",
@@ -154,7 +149,12 @@
       "kind": "restriction",
       "v": 1,
       "basis": "temporary"
-    }
+    },
+    "canonicalId": "3d3506d2ead58dd604fb2bf3acb9b779bcf4488aa09299e9bfb23dc3b48758b0",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "1b401901108994500d80b0c3da7feb6570f8cc83dd5bec8bbf5c15fb890ff56f"
   },
   {
     "id": "oc:situation:fr-dir:251022-000640",
@@ -224,19 +224,14 @@
         "license": "etalab-2.0",
         "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "0fa699f74fde1538d0d52723ffbaeb42d10c7ebfcb9c09c0c74464cad9c89cc4",
-    "domain": "roads",
-    "contentHash": "2f8920db2ac275f981585cc8897ba8745cb644bc990413d96abe5f39cae79cc1",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "closure",
     "type": "closure",
@@ -304,7 +299,12 @@
     "details": {
       "kind": "closure",
       "v": 1
-    }
+    },
+    "canonicalId": "0fa699f74fde1538d0d52723ffbaeb42d10c7ebfcb9c09c0c74464cad9c89cc4",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "2f8920db2ac275f981585cc8897ba8745cb644bc990413d96abe5f39cae79cc1"
   },
   {
     "id": "oc:situation:fr-dir:251023-001144",
@@ -348,19 +348,14 @@
         "license": "etalab-2.0",
         "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "017d4500d9bc96274413b195bf64e34ac86bf79c6cc6ec54ca460e07d1dabd49",
-    "domain": "roads",
-    "contentHash": "a8b22f7988fdeb8a04df1da8a3d6dc66a45c86c4b1e21f8baaf9bf55244dfda8",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_condition",
     "type": "surface",
@@ -409,7 +404,12 @@
       "surface": [
         "snow"
       ]
-    }
+    },
+    "canonicalId": "017d4500d9bc96274413b195bf64e34ac86bf79c6cc6ec54ca460e07d1dabd49",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "a8b22f7988fdeb8a04df1da8a3d6dc66a45c86c4b1e21f8baaf9bf55244dfda8"
   },
   {
     "id": "oc:situation:fr-dir:241125-001455",
@@ -470,19 +470,14 @@
         "license": "etalab-2.0",
         "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "d38fe38d4f6f7f6dd68b343fb62231cabc68f0ded5e14048165a61076e29dc6e",
-    "domain": "roads",
-    "contentHash": "4686df35c3e3dc8b9c885bb410badd32113ba55f5e63cef2bbc15bf3d7e5379a",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "restriction",
     "type": "dimension",
@@ -527,7 +522,12 @@
       "kind": "restriction",
       "v": 1,
       "basis": "temporary"
-    }
+    },
+    "canonicalId": "d38fe38d4f6f7f6dd68b343fb62231cabc68f0ded5e14048165a61076e29dc6e",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "4686df35c3e3dc8b9c885bb410badd32113ba55f5e63cef2bbc15bf3d7e5379a"
   },
   {
     "id": "oc:situation:fr-dir:251209-001171",
@@ -588,19 +588,14 @@
         "license": "etalab-2.0",
         "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "4169b4ac575417d15d83bb5d6ad0f33affd3ee2db1dd75938a4ac340dacf62a6",
-    "domain": "roads",
-    "contentHash": "d1239e938eb86d6c30e897e792fa6f32e381081cc2bfa819437545fa7bde18d4",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -727,6 +722,11 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "4169b4ac575417d15d83bb5d6ad0f33affd3ee2db1dd75938a4ac340dacf62a6",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "d1239e938eb86d6c30e897e792fa6f32e381081cc2bfa819437545fa7bde18d4"
   }
 ]

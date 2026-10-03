@@ -26,19 +26,14 @@
           "license": "GeoNutzV",
           "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "839d1ec3fc5c378bb96b83d3446f551618cbd404684318f42d155ccc5ea47f6a",
-      "domain": "roads",
-      "contentHash": "aab2af2ad83d547cb46f9bede1ecf4785f4b8dd9b5a4125a38d6e0ee0bdc0f49",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -63,7 +58,12 @@
           "traffic.volume",
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "839d1ec3fc5c378bb96b83d3446f551618cbd404684318f42d155ccc5ea47f6a",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "aab2af2ad83d547cb46f9bede1ecf4785f4b8dd9b5a4125a38d6e0ee0bdc0f49"
     }
   ],
   "observations": [
@@ -93,19 +93,14 @@
           "license": "GeoNutzV",
           "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "1820068b608b9118ed99a06a4a48a009975309755e179a9eb141ce680106c235",
-      "domain": "roads",
-      "contentHash": "3853c3faf30b51ac68271547f0abcc74ac34f1f29a41908ee5f689eaea9cf2ea",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -124,7 +119,12 @@
       "aggregation": "mean",
       "quality": {
         "sampleCount": 18
-      }
+      },
+      "canonicalId": "1820068b608b9118ed99a06a4a48a009975309755e179a9eb141ce680106c235",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "3853c3faf30b51ac68271547f0abcc74ac34f1f29a41908ee5f689eaea9cf2ea"
     },
     {
       "id": "oc:observation:de-nw-autobahn-fahrstreifen:acb79f3c79cbf9e112a0853b618a554153813278df86502b6bd5c72744d2a275",
@@ -152,19 +152,14 @@
           "license": "GeoNutzV",
           "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "78e16629953aa710038efdc0173143ade1574cf37c4701b0fbe066e118dacd05",
-      "domain": "roads",
-      "contentHash": "cce7a8c7eb101ca00ecb0da9610bd1da8ac54ae5e603be94e700ec19c5c3a7f5",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.volume",
@@ -180,7 +175,12 @@
       "phenomenonTime": {
         "instant": "2026-07-27T00:02:30.880Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "78e16629953aa710038efdc0173143ade1574cf37c4701b0fbe066e118dacd05",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "cce7a8c7eb101ca00ecb0da9610bd1da8ac54ae5e603be94e700ec19c5c3a7f5"
     },
     {
       "id": "oc:observation:de-nw-autobahn-fahrstreifen:46957c1bcd533b374d3ab828b4f50c32a482f0a583dc3d85a87f14759086eb43",
@@ -208,19 +208,14 @@
           "license": "GeoNutzV",
           "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "4d383a37d616190212d40225e4cdddc7eecb01fca7b8960ba5bd5b6c0ba7d083",
-      "domain": "roads",
-      "contentHash": "e8febfead3963074221eed684b65cafc7ffebee90f2ec2bacf9ea1d66b644d80",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.volume",
@@ -237,7 +232,12 @@
       "phenomenonTime": {
         "instant": "2026-07-27T00:02:30.880Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "4d383a37d616190212d40225e4cdddc7eecb01fca7b8960ba5bd5b6c0ba7d083",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "e8febfead3963074221eed684b65cafc7ffebee90f2ec2bacf9ea1d66b644d80"
     }
   ],
   "situations": []

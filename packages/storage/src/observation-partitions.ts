@@ -63,6 +63,14 @@ export const PARTITION_AHEAD_DAYS = 16;
 const MAINTENANCE_MARGIN_DAYS = 1;
 
 /**
+ * How long past its class's retention a day partition stays. A writer's
+ * window only moves forward; the slack covers a poll whose clock started
+ * before a maintenance run that drops the day its oldest readings fall in.
+ * Retention means what it says: a day is kept rawDays, not a day more.
+ */
+const DROP_SLACK_MS = 60 * 60 * 1000;
+
+/**
  * Whether the partitions {@link ensureObservationPartitions} keeps around
  * `now` hold a reading of this retention class starting at `start`. A
  * writer checks this first: a reading outside is past its retention or too
@@ -140,7 +148,7 @@ export async function dropExpiredObservationPartitions(
     if (m === null) continue;
     const days = Number(m[1]);
     const end = Date.UTC(Number(m[2]), Number(m[3]) - 1, Number(m[4])) + DAY_MS;
-    if (days === 0 || end > now - (days + MAINTENANCE_MARGIN_DAYS) * DAY_MS) continue;
+    if (days === 0 || end > now - days * DAY_MS - DROP_SLACK_MS) continue;
     const pending = [...(rolledUp.get(days) ?? [])].some((p) => (frontiers.get(p) ?? 0) < end);
     if (pending) {
       const [held] = await sql.unsafe<{ any: boolean }[]>(

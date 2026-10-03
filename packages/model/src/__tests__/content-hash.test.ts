@@ -49,4 +49,20 @@ describe("sealRecord", () => {
     });
     expect(sealed.value["contentHash"]).toMatch(/^[0-9a-f]{64}$/);
   });
+
+  it("takes the content hash a writer already computed for the draft", () => {
+    const opts = {
+      instanceId: "maps.example.org",
+      revision: 1,
+      recordedAt: "2026-09-18T10:00:01Z",
+    };
+    const hash = contentHash(incidentDraft());
+    const sealed = sealRecord(registry, incidentDraft(), { ...opts, contentHash: hash });
+    const computed = sealRecord(registry, incidentDraft(), opts);
+    expect(sealed.ok && computed.ok).toBe(true);
+    if (!sealed.ok || !computed.ok) return;
+    expect(sealed.value).toEqual(computed.value);
+    const marked = sealRecord(registry, incidentDraft(), { ...opts, contentHash: "f".repeat(64) });
+    expect(marked.ok && marked.value["contentHash"]).toBe("f".repeat(64));
+  });
 });

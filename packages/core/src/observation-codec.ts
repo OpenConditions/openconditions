@@ -6,6 +6,7 @@ import {
   parseRecordId,
   qualifierKey,
   type Registry,
+  sha256Hex,
   subjectKey,
 } from "@openconditions/model";
 
@@ -62,6 +63,57 @@ export function templateOf(record: Rec): Rec {
     location: record["location"],
     provenance,
   };
+}
+
+/** The keys of a stored observation its series template holds. */
+const TEMPLATE_KEYS = ["class", "kind", "property", "domain", "subject", "qualifiers", "location"];
+
+/**
+ * What a series' latest row stores of its reading in effect: the stored
+ * observation minus what its series template holds, with only the
+ * provenance fields that vary between readings. It keeps the id, content
+ * hash and times as sealed, so the record is rebuilt without hashing
+ * ({@link recordOf}), and stays a few hundred bytes a reading: a flow
+ * source rewrites tens of thousands of latest rows every minute.
+ */
+export function readingOf(record: Rec): Rec {
+  const reading: Rec = { ...record };
+  for (const key of TEMPLATE_KEYS) delete reading[key];
+  const provenance = record["provenance"] as Rec;
+  const varying: Rec = {};
+  for (const key of varyingProvenance(provenance)) {
+    if (provenance[key] !== undefined) varying[key] = provenance[key];
+  }
+  delete reading["provenance"];
+  if (Object.keys(varying).length > 0) reading["provenance"] = varying;
+  return reading;
+}
+
+/**
+ * The stored observation a latest row holds: its series template with the
+ * reading's own fields, provenance merged. The SQL function
+ * `conditions.observation_record(template, reading)` builds the same.
+ */
+export function recordOf(template: Rec, reading: Rec): Rec {
+  const { namespace: _namespace, provenance, ...shared } = template;
+  const { provenance: varying, ...own } = reading;
+  return {
+    ...shared,
+    ...own,
+    provenance: { ...(provenance as Rec), ...((varying as Rec | undefined) ?? {}) },
+  };
+}
+
+/**
+ * Identifies a series template, so a writer sends it only when it changed.
+ * The text is the template as written, not canonical: a template is built in
+ * one key order (`templateOf`) from records a parser builds in one order, and
+ * a template only reordered would be written once more, nothing worse. A
+ * flow poll hashes a hundred thousand templates; canonicalising them cost
+ * seconds.
+ */
+export function templateHash(template: Rec): string {
+  return sha256Hex(JSON.stringify(template));
 }
 
 /** Result types whose value has a column of its own when the property declares that type. */

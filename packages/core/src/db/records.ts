@@ -118,7 +118,9 @@ export async function* scanLatestObservations(
   let after = 0;
   for (;;) {
     const rows = await sql<{ series_id: string; record: Rec }[]>`
-      SELECT series_id::text AS series_id, record FROM conditions.observation_latest
+      SELECT series_id::text AS series_id,
+             conditions.observation_record(template, reading) AS record
+        FROM conditions.observation_latest
       WHERE series_id > ${after} ORDER BY series_id LIMIT ${pageSize}`;
     if (rows.length === 0) return;
     yield rows.map((r) => r.record);
@@ -137,7 +139,8 @@ export async function readLatestObservation(
   key: SeriesKey,
 ): Promise<Rec | undefined> {
   const [row] = await sql<Rec[]>`
-    SELECT record, evidence_state, confidence_score, false AS routing_eligible, corroborations
+    SELECT conditions.observation_record(template, reading) AS record, evidence_state,
+           confidence_score, false AS routing_eligible, corroborations
       FROM conditions.observation_latest
      WHERE subject_key = ${key.subjectKey} AND property = ${key.property}
        AND qualifier_key = ${key.qualifierKey} AND source_id = ${key.sourceId}`;

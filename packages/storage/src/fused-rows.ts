@@ -200,7 +200,8 @@ export async function refreshFused(
 
   const rows = await tx<CandidateRow[]>`
     SELECT l.series_id::text AS series_id, l.feature_id, l.component_key, l.source_id, l.property,
-           l.qualifier_key, l.record, l.evidence_state, s.tier,
+           l.qualifier_key, conditions.observation_record(l.template, l.reading) AS record,
+           l.evidence_state, s.tier,
            COALESCE(l.source_id <> ALL(${fresh as string[]}::text[]) AND ss.source IS NOT NULL
              AND (ss.last_success_at IS NULL
                OR ss.last_success_at < ${ctx.now}::timestamptz
@@ -272,7 +273,8 @@ export async function refreshFused(
     ).map((r) => [r.id, r.location]),
   );
   const existing = await tx<FusedRow[]>`
-    SELECT series_id::text AS series_id, subject_key, property, qualifier_key, record, since_at
+    SELECT series_id::text AS series_id, subject_key, property, qualifier_key,
+           conditions.observation_record(template, reading) AS record, since_at
       FROM conditions.observation_latest
      WHERE source_id = ${FUSED_SOURCE_ID}
        AND feature_id = ANY(${[...byCanonical.keys()]}::text[])`;

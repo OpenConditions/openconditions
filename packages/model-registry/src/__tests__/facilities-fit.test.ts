@@ -1130,6 +1130,21 @@ describe("facilities fit", () => {
     expect(sealAll(noExpiry).length).toBe(records.length);
   });
 
+  it("seals records the stored schema takes as they are", () => {
+    const drafts = [...CASES.flatMap(([, make]) => recordsOf(make)), ...ocpiTariffs()];
+    for (const draft of drafts) {
+      const sealed = sealRecord(registry, draft, {
+        instanceId: "fit.example",
+        revision: 1,
+        recordedAt: FETCHED,
+      });
+      if (!sealed.ok) continue;
+      const validated = registry.validate(sealed.value);
+      expect(validated.ok, String(draft["id"])).toBe(true);
+      if (validated.ok) expect(validated.value).toEqual(sealed.value);
+    }
+  });
+
   // The storage tests write these records through the record tables.
   it("seals every record as its golden file holds it", async () => {
     const drafts = [...CASES.flatMap(([, make]) => recordsOf(make)), ...ocpiTariffs()];

@@ -42,7 +42,7 @@ export async function castObservationVote(
       const [target] = await tx<{ evidence_state: EvidenceState | null; expired: boolean }[]>`
         SELECT evidence_state, expires_at <= ${now}::timestamptz AS expired
           FROM conditions.observation_latest
-         WHERE source_id = 'crowd' AND record->>'id' = ${observationId} FOR UPDATE`;
+         WHERE crowd_record_id = ${observationId} FOR UPDATE`;
       if (target === undefined) return { code: 404, error: "target observation not found" };
       if (action !== "flag" && target.expired) {
         return { code: 409, error: "target observation has ended" };

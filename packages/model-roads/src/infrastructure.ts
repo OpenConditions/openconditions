@@ -241,7 +241,7 @@ export const ROADS_PROPERTIES = [
     subjects: [SITE, { kind: "segments" }],
     freshnessWindowSec: 15 * MINUTE,
     retention: {
-      rawDays: 3,
+      rawDays: 2,
       componentHistory: false,
       rollup: { period: "hourly", histogram: { binWidth: 2 } },
     },
@@ -255,7 +255,7 @@ export const ROADS_PROPERTIES = [
     result: { type: "quantity", unit: "1/h" },
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { rawDays: 2, componentHistory: false, rollup: { period: "hourly" } },
+    retention: { rawDays: 1, componentHistory: false, rollup: { period: "hourly" } },
   }),
   defineProperty({
     code: "traffic.occupancy",

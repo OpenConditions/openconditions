@@ -29,19 +29,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.vegagerdin.is/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "919b56334d8b0ec4aff89dc8cccede9cc2a5cff47a2c698d9d327628944bbeaa",
-    "domain": "roads",
-    "contentHash": "48f7ef785fb3302a16bcbdc1223b4ea0184a04ce95183e7ce10ff4e64020e0fe",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_condition",
     "type": "surface",
@@ -68,7 +63,12 @@
       "surface": [
         "unknown"
       ]
-    }
+    },
+    "canonicalId": "919b56334d8b0ec4aff89dc8cccede9cc2a5cff47a2c698d9d327628944bbeaa",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "48f7ef785fb3302a16bcbdc1223b4ea0184a04ce95183e7ce10ff4e64020e0fe"
   },
   {
     "id": "oc:situation:is-vegagerdin:1",
@@ -100,19 +100,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.vegagerdin.is/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "a4c779c99fb71723f63f0830bfb4aca1e32d133baf4fd658f48679a177501c42",
-    "domain": "roads",
-    "contentHash": "c22b82653c039c129579b5f6bcac1723afbc116c9d18a1fbae1fe498cf4c5b87",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_condition",
     "type": "surface",
@@ -139,7 +134,12 @@
       "surface": [
         "unknown"
       ]
-    }
+    },
+    "canonicalId": "a4c779c99fb71723f63f0830bfb4aca1e32d133baf4fd658f48679a177501c42",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "c22b82653c039c129579b5f6bcac1723afbc116c9d18a1fbae1fe498cf4c5b87"
   },
   {
     "id": "oc:situation:is-vegagerdin:2",
@@ -171,19 +171,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.vegagerdin.is/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "43b1f87100bbb0b2a6717d33449ab9e14032085842965f59de4d6eb079c27052",
-    "domain": "roads",
-    "contentHash": "8df69b2c8ea6defbddabfea722cca5bb8cf8a937fd759a536ce6a397c2bf0beb",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_condition",
     "type": "surface",
@@ -210,7 +205,12 @@
       "surface": [
         "unknown"
       ]
-    }
+    },
+    "canonicalId": "43b1f87100bbb0b2a6717d33449ab9e14032085842965f59de4d6eb079c27052",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "8df69b2c8ea6defbddabfea722cca5bb8cf8a937fd759a536ce6a397c2bf0beb"
   },
   {
     "id": "oc:situation:is-vegagerdin:3",
@@ -242,19 +242,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.vegagerdin.is/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "1828f217fddb9865f82f4b6077340ea27e6c6e061d0c38e7baa239f8c7f19fb0",
-    "domain": "roads",
-    "contentHash": "b55c2eee7592eca9d85777934fed2eab386a2275d72c269b9c8af4213e2cdbc8",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -277,7 +272,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "1828f217fddb9865f82f4b6077340ea27e6c6e061d0c38e7baa239f8c7f19fb0",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "b55c2eee7592eca9d85777934fed2eab386a2275d72c269b9c8af4213e2cdbc8"
   },
   {
     "id": "oc:situation:is-vegagerdin:4",
@@ -309,19 +309,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://www.vegagerdin.is/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "f77ff43f794073070546be9bf90139a13c50a820ecb4559870af6ee1803d6af0",
-    "domain": "roads",
-    "contentHash": "fced8a0075e625b5e2b9c4fcc04de4eb61a8fa08487bbe1ab36bf26185a5f852",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "road_condition",
     "type": "surface",
@@ -348,6 +343,11 @@
       "surface": [
         "unknown"
       ]
-    }
+    },
+    "canonicalId": "f77ff43f794073070546be9bf90139a13c50a820ecb4559870af6ee1803d6af0",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "fced8a0075e625b5e2b9c4fcc04de4eb61a8fa08487bbe1ab36bf26185a5f852"
   }
 ]

@@ -26,19 +26,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "16d61927ee6bff3a52f10569ff9c42493f30c8ed184429057dca90f8cb65c617",
-      "domain": "roads",
-      "contentHash": "9061e55683fc728f4e6d1e2af74d0241ffc255e9d84c481104a7ec7e6505426a",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -58,7 +53,12 @@
           "traffic.occupancy",
           "traffic.vehicle_class_speed"
         ]
-      }
+      },
+      "canonicalId": "16d61927ee6bff3a52f10569ff9c42493f30c8ed184429057dca90f8cb65c617",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "9061e55683fc728f4e6d1e2af74d0241ffc255e9d84c481104a7ec7e6505426a"
     }
   ],
   "observations": [
@@ -88,19 +88,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "e72a5405177caac75ce7f8a2d9adbb7f4c23391eeb2c4a770f0aa8667c7d3379",
-      "domain": "roads",
-      "contentHash": "17d38b3e4c5e759f21c06852d758b9d7c44a8c1e69085fb3fa17fae1c82127dd",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -117,7 +112,12 @@
         "start": "2026-07-10T15:20:00.000Z",
         "end": "2026-07-10T15:21:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "e72a5405177caac75ce7f8a2d9adbb7f4c23391eeb2c4a770f0aa8667c7d3379",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "17d38b3e4c5e759f21c06852d758b9d7c44a8c1e69085fb3fa17fae1c82127dd"
     },
     {
       "id": "oc:observation:be-miv:930379dfc4c221b416749f6ea0d1a30e1cf9e71750011e40a84dc04d3b9e7dcd",
@@ -145,19 +145,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "29f47245182329b629d8408e38251f43f6c44764dba2ec325c9dfcf51ef62790",
-      "domain": "roads",
-      "contentHash": "9fa9f447c3120b34a566409e07209fa6074e02208900fee331fb01f3fb540fb0",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.volume",
@@ -174,7 +169,12 @@
         "start": "2026-07-10T15:20:00.000Z",
         "end": "2026-07-10T15:21:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "29f47245182329b629d8408e38251f43f6c44764dba2ec325c9dfcf51ef62790",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "9fa9f447c3120b34a566409e07209fa6074e02208900fee331fb01f3fb540fb0"
     },
     {
       "id": "oc:observation:be-miv:b91c5ff4b7681de719933a8e5dc3ed47b40d4705e90d3b6a9286cc1ed1e7bc9b",
@@ -202,19 +202,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "6245802b439c7597dbd46430203c8b91039429b8e6b026260e78a1d177217589",
-      "domain": "roads",
-      "contentHash": "a89ca13de64bfe6cadf167739214958bad2fc2d5702363e594db1ffa2c80d8c8",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.occupancy",
@@ -231,7 +226,12 @@
         "start": "2026-07-10T15:20:00.000Z",
         "end": "2026-07-10T15:21:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "6245802b439c7597dbd46430203c8b91039429b8e6b026260e78a1d177217589",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "a89ca13de64bfe6cadf167739214958bad2fc2d5702363e594db1ffa2c80d8c8"
     },
     {
       "id": "oc:observation:be-miv:41364ed4e820c945e7b7b8e3e47cbd744305ab8bc88e593aa3f0c2495223b444",
@@ -259,19 +259,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "57e20dbd00caa10aae22d33fedbb7a5f0bbd73e6233d84a110464a3494cea122",
-      "domain": "roads",
-      "contentHash": "1c2bcb1fa64f6b671df2ec33db65b73ad31e16cb793833c786d75507793fa191",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.vehicle_class_speed",
@@ -291,7 +286,12 @@
         "start": "2026-07-10T15:20:00.000Z",
         "end": "2026-07-10T15:21:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "57e20dbd00caa10aae22d33fedbb7a5f0bbd73e6233d84a110464a3494cea122",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "1c2bcb1fa64f6b671df2ec33db65b73ad31e16cb793833c786d75507793fa191"
     }
   ],
   "situations": []

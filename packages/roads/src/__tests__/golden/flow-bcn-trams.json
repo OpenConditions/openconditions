@@ -32,19 +32,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "a73183f4607b52c86d60bb904276cc6baa385bcdcbcba499041cb75f0ab63f53",
-      "domain": "roads",
-      "contentHash": "b92cbaf15849c389b466d4d72c1540beaa499a0f9444dddbfb63a01939a7ac95",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -61,7 +56,12 @@
         "measuredProperties": [
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "a73183f4607b52c86d60bb904276cc6baa385bcdcbcba499041cb75f0ab63f53",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "b92cbaf15849c389b466d4d72c1540beaa499a0f9444dddbfb63a01939a7ac95"
     },
     {
       "id": "oc:feature:es-bcn-ajuntament:2",
@@ -95,19 +95,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "e337d0f44cc73a986ef629295c21890733b7e00ac0f1ed3228a46b529792d926",
-      "domain": "roads",
-      "contentHash": "5e2dcd001941b853e99ab6bf50784eebadc71f462832b1ba4f6faae618b987da",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -124,7 +119,12 @@
         "measuredProperties": [
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "e337d0f44cc73a986ef629295c21890733b7e00ac0f1ed3228a46b529792d926",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "5e2dcd001941b853e99ab6bf50784eebadc71f462832b1ba4f6faae618b987da"
     }
   ],
   "observations": [
@@ -160,19 +160,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "c5852cf6c8986c4f0a67cd160f0aaffe4e43951ed4a43fc45a1a0f2afbce1251",
-      "domain": "roads",
-      "contentHash": "0c3551bef3caf879e715865854b326b59342884f5c3e52260c28fbf6180ce169",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.los",
@@ -188,7 +183,12 @@
       "phenomenonTime": {
         "instant": "2026-07-29T11:15:57.000Z"
       },
-      "aggregation": "instantaneous"
+      "aggregation": "instantaneous",
+      "canonicalId": "c5852cf6c8986c4f0a67cd160f0aaffe4e43951ed4a43fc45a1a0f2afbce1251",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "0c3551bef3caf879e715865854b326b59342884f5c3e52260c28fbf6180ce169"
     },
     {
       "id": "oc:observation:es-bcn-ajuntament:843376c9a97f2fc22e3927ccddfb11a74c81b383d94406dd4a934fce51b3f63c",
@@ -222,19 +222,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "77fde0d712d31f5f26cfcd739e37e52517c6db60c44846603da50184f27b866a",
-      "domain": "roads",
-      "contentHash": "6927b2ca7f16c40c7d31b4af1d19caf73e27ee3779f717bb24dc1cc12b912166",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.los",
@@ -250,7 +245,12 @@
       "phenomenonTime": {
         "instant": "2026-07-29T11:15:57.000Z"
       },
-      "aggregation": "instantaneous"
+      "aggregation": "instantaneous",
+      "canonicalId": "77fde0d712d31f5f26cfcd739e37e52517c6db60c44846603da50184f27b866a",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "6927b2ca7f16c40c7d31b4af1d19caf73e27ee3779f717bb24dc1cc12b912166"
     }
   ],
   "situations": [
@@ -289,7 +289,6 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
         },
-        "instanceId": "golden.test",
         "derivedFrom": {
           "records": [
             {
@@ -302,16 +301,12 @@
         },
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "7ddb931c72e9f09ac52a4138f5bdbbf9a942b5c64c89c52fe30754fc82cfe195",
-      "domain": "roads",
-      "contentHash": "5694b312b35e0b89e64457c51044539a3435037989bf0581063bd22bb3522775",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
       "kind": "congestion",
       "type": "congestion",
@@ -334,7 +329,12 @@
           "class": "feature",
           "id": "oc:feature:es-bcn-ajuntament:2"
         }
-      }
+      },
+      "canonicalId": "7ddb931c72e9f09ac52a4138f5bdbbf9a942b5c64c89c52fe30754fc82cfe195",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "5694b312b35e0b89e64457c51044539a3435037989bf0581063bd22bb3522775"
     }
   ]
 }

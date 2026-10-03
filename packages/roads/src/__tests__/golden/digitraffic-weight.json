@@ -68,19 +68,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "52275717db2bce85717680d4061562b4df9b0e90add0a51dfc812524ca7933bb",
-    "domain": "roads",
-    "contentHash": "2a0a937b1912fae66434d4effecdf29dc7a74fc5c6f1cbcf9489211f0d0d81da",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "restriction",
     "type": "dimension",
@@ -144,6 +139,11 @@
       "kind": "restriction",
       "v": 1,
       "basis": "temporary"
-    }
+    },
+    "canonicalId": "52275717db2bce85717680d4061562b4df9b0e90add0a51dfc812524ca7933bb",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "2a0a937b1912fae66434d4effecdf29dc7a74fc5c6f1cbcf9489211f0d0d81da"
   }
 ]

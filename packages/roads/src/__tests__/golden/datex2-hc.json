@@ -36,19 +36,14 @@
         "license": "OD-HR",
         "licenseUrl": "https://data.gov.hr/otvorena-dozvola"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "bc0f70bd52e4d544640560acba90432bb1b6ae18ebe1bb9ab7781919de152cec",
-    "domain": "roads",
-    "contentHash": "f4b07a1f8e4a803ee72101ba261f12f2312d4c01ac417b61c1f6f5f8f3399173",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "obstruction",
@@ -74,7 +69,12 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "bc0f70bd52e4d544640560acba90432bb1b6ae18ebe1bb9ab7781919de152cec",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "f4b07a1f8e4a803ee72101ba261f12f2312d4c01ac417b61c1f6f5f8f3399173"
   },
   {
     "id": "oc:situation:hr-hc-events:HC_SIT_2",
@@ -113,19 +113,14 @@
         "license": "OD-HR",
         "licenseUrl": "https://data.gov.hr/otvorena-dozvola"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "11794fb4a6061ec00bd2eaa2d2a2d7c3685020b1d92f79d7b5cd8ecc0e58614a",
-    "domain": "roads",
-    "contentHash": "52d05d661e5336583c6f4ab54e54e19206f8e5556cd931f582a1821cfbd786df",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "obstruction",
@@ -151,7 +146,12 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "11794fb4a6061ec00bd2eaa2d2a2d7c3685020b1d92f79d7b5cd8ecc0e58614a",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "52d05d661e5336583c6f4ab54e54e19206f8e5556cd931f582a1821cfbd786df"
   },
   {
     "id": "oc:situation:hr-hc-events:HC_SIT_3",
@@ -190,19 +190,14 @@
         "license": "OD-HR",
         "licenseUrl": "https://data.gov.hr/otvorena-dozvola"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "1ee7df0be1c9fc6543ed40fc8991f661b538f1ac904ef97398718c7579b178ee",
-    "domain": "roads",
-    "contentHash": "c5bf112b01c520684d1a7616784ce37051ace656a13d914498e68bad4d9875bb",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "weather_condition",
     "type": "weather",
@@ -227,6 +222,11 @@
     "details": {
       "kind": "weather_condition",
       "v": 1
-    }
+    },
+    "canonicalId": "1ee7df0be1c9fc6543ed40fc8991f661b538f1ac904ef97398718c7579b178ee",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "c5bf112b01c520684d1a7616784ce37051ace656a13d914498e68bad4d9875bb"
   }
 ]

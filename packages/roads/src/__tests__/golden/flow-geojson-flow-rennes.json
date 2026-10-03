@@ -32,19 +32,14 @@
           "license": "ODbL-1.0",
           "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "10db0dfdeb931a0dd66e4ddac055d524efc17eb73dc1138bb21cccf6a25ab2ac",
-      "domain": "roads",
-      "contentHash": "5e9aa356f2146feb2ee6fb524955c323f26b83179ff4328abbce2cd76a4568e6",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -56,7 +51,12 @@
           "traffic.speed",
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "10db0dfdeb931a0dd66e4ddac055d524efc17eb73dc1138bb21cccf6a25ab2ac",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "5e9aa356f2146feb2ee6fb524955c323f26b83179ff4328abbce2cd76a4568e6"
     }
   ],
   "observations": [
@@ -92,19 +92,14 @@
           "license": "ODbL-1.0",
           "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "ae6cec9f71f667177d1fe2bf99da5a88e7838ced2c1648906d0b95b29d085d51",
-      "domain": "roads",
-      "contentHash": "76cda059521b8ffdea2e7c20ac0d9f99582b6036d378e1aa3d8b587855d3cce2",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -128,7 +123,12 @@
         },
         "source": "native",
         "ratio": 1.1857142857142857
-      }
+      },
+      "canonicalId": "ae6cec9f71f667177d1fe2bf99da5a88e7838ced2c1648906d0b95b29d085d51",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "76cda059521b8ffdea2e7c20ac0d9f99582b6036d378e1aa3d8b587855d3cce2"
     },
     {
       "id": "oc:observation:fr-rennesmetropole:fa7a343288088ab21a8e2bee02998b0a724660c16e030b760bce2d78640a7d7d",
@@ -162,19 +162,14 @@
           "license": "ODbL-1.0",
           "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "faab2a2464b273f09f2342be079adae5f1cc3572a3637daf4343661facb9279b",
-      "domain": "roads",
-      "contentHash": "8c6236184d6ee7b09b2388937fc284b5e865321dff5d984dc3c9a8b5ca74dc2a",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.los",
@@ -190,7 +185,12 @@
       "phenomenonTime": {
         "instant": "2026-07-29T10:49:00.000Z"
       },
-      "aggregation": "instantaneous"
+      "aggregation": "instantaneous",
+      "canonicalId": "faab2a2464b273f09f2342be079adae5f1cc3572a3637daf4343661facb9279b",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "8c6236184d6ee7b09b2388937fc284b5e865321dff5d984dc3c9a8b5ca74dc2a"
     }
   ],
   "situations": []

@@ -73,11 +73,18 @@ export async function rollupObservations(
   const step = opts.period === "hourly" ? HOUR_MS : DAY_MS;
   const cutoff = floorTo(opts.now.getTime() - ROLLUP_LATENESS_HOURS * HOUR_MS, step);
   if (properties.length === 0) return { rows: 0 };
-  const [progress] = await sql<{ finalized_before: Date | null; oldest: Date | null }[]>`
-    SELECT (SELECT finalized_before FROM conditions.observation_rollup_progress
-             WHERE period = ${opts.period}) AS finalized_before,
-           (SELECT min(phenomenon_start) FROM conditions.observation) AS oldest`;
-  const startAt = progress?.finalized_before ?? progress?.oldest;
+  const [progress] = await sql<{ finalized_before: Date }[]>`
+    SELECT finalized_before FROM conditions.observation_rollup_progress
+     WHERE period = ${opts.period}`;
+  // Only the first run looks for the oldest reading: later ones start at the
+  // frontier, and the block range index on time cannot answer a minimum
+  // without reading every partition's summary and its blocks.
+  const [first] =
+    progress === undefined
+      ? await sql<{ oldest: Date | null }[]>`
+          SELECT min(phenomenon_start) AS oldest FROM conditions.observation`
+      : [];
+  const startAt = progress?.finalized_before ?? first?.oldest;
   if (startAt == null) return { rows: 0 };
   let from = floorTo(new Date(startAt).getTime(), step);
   if (from >= cutoff) return { rows: 0 };

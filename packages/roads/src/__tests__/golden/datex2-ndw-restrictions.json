@@ -56,19 +56,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "06cbeb1fa14dcdd91731b64931c58c3243439cda933040c7b46e61e662c3ff38",
-    "domain": "roads",
-    "contentHash": "9685a58b2137b57cc8fb801d7ec04de9009430367f9aaac8aebd2b83ca14ddea",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "breakdown",
@@ -92,7 +87,12 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "06cbeb1fa14dcdd91731b64931c58c3243439cda933040c7b46e61e662c3ff38",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "9685a58b2137b57cc8fb801d7ec04de9009430367f9aaac8aebd2b83ca14ddea"
   },
   {
     "id": "oc:situation:nl-ndw:RWS01_SM1080891_D2_WWA",
@@ -152,19 +152,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "4c0ef902cf5d802d03d8f019e7ba00d8cb626f3af4af7175de9472e8a910b76f",
-    "domain": "roads",
-    "contentHash": "c3b86d6fbad2e926378d107ed6eeb93c35537c029ef0b67bfcd58f6d6173889e",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -295,7 +290,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "4c0ef902cf5d802d03d8f019e7ba00d8cb626f3af4af7175de9472e8a910b76f",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "c3b86d6fbad2e926378d107ed6eeb93c35537c029ef0b67bfcd58f6d6173889e"
   },
   {
     "id": "oc:situation:nl-ndw:NLRWS_0005382945",
@@ -378,19 +378,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "3e6f61427339883e0ea20a331dc061164e1d600c0fc5a4c3c9e0d49707f3d6d3",
-    "domain": "roads",
-    "contentHash": "814c5815d0e7d316a673b7014f9e4458123364711249e01455ec68660a460100",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "closure",
     "type": "closure",
@@ -480,7 +475,12 @@
     "details": {
       "kind": "closure",
       "v": 1
-    }
+    },
+    "canonicalId": "3e6f61427339883e0ea20a331dc061164e1d600c0fc5a4c3c9e0d49707f3d6d3",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "814c5815d0e7d316a673b7014f9e4458123364711249e01455ec68660a460100"
   },
   {
     "id": "oc:situation:nl-ndw:NLRWS_0005406494",
@@ -571,19 +571,14 @@
         "license": "CC0-1.0",
         "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "5cd2a3aa8f84663949adfe97f4a26ed67e4726fa735ba52a1e66f66d8febf768",
-    "domain": "roads",
-    "contentHash": "9743e75854a886407adaf105f40aac39bf95ba77b1dd9527561a77c4a07fea3d",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "closure",
     "type": "closure",
@@ -673,6 +668,11 @@
     "details": {
       "kind": "closure",
       "v": 1
-    }
+    },
+    "canonicalId": "5cd2a3aa8f84663949adfe97f4a26ed67e4726fa735ba52a1e66f66d8febf768",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "9743e75854a886407adaf105f40aac39bf95ba77b1dd9527561a77c4a07fea3d"
   }
 ]

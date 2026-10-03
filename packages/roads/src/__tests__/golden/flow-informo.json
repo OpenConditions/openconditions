@@ -26,19 +26,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "696125ecee85fb6aa4184e34d3e78de55cebf680489ab9a663f281df5a7918da",
-      "domain": "roads",
-      "contentHash": "68e07d8cdcfcaa620676e9e7a32ffc8c8d392d3dc6972e40a1387a4eea89ac78",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -51,7 +46,12 @@
           "traffic.occupancy",
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "696125ecee85fb6aa4184e34d3e78de55cebf680489ab9a663f281df5a7918da",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "68e07d8cdcfcaa620676e9e7a32ffc8c8d392d3dc6972e40a1387a4eea89ac78"
     },
     {
       "id": "oc:feature:es-madrid:9842",
@@ -79,19 +79,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "627186ccf46f6e46d7876f9d370f1d2abf01ed24e47f01224b77dc0c0319ca0a",
-      "domain": "roads",
-      "contentHash": "149bdde08f2362133a24c80cee402b71ab5d46cf652126e16e35dd8f3678c031",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -104,7 +99,12 @@
           "traffic.occupancy",
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "627186ccf46f6e46d7876f9d370f1d2abf01ed24e47f01224b77dc0c0319ca0a",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "149bdde08f2362133a24c80cee402b71ab5d46cf652126e16e35dd8f3678c031"
     }
   ],
   "observations": [
@@ -134,19 +134,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "e4b7523de129e793d8ade7aca51ed9a6982a19654dda776ff850e34754ac32c6",
-      "domain": "roads",
-      "contentHash": "a7334f26aa730275c44018105e8b57ce9a061c18d7bf705a850e6c33f979724f",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.volume",
@@ -162,7 +157,12 @@
       "phenomenonTime": {
         "instant": "2026-09-18T10:00:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "e4b7523de129e793d8ade7aca51ed9a6982a19654dda776ff850e34754ac32c6",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "a7334f26aa730275c44018105e8b57ce9a061c18d7bf705a850e6c33f979724f"
     },
     {
       "id": "oc:observation:es-madrid:cc252ce2cdd4cd56f6f6c37a144fb058e5c4c7100f7ffb6a63d344df2967a382",
@@ -190,19 +190,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "bd43d833d87775e703c5230949da910ca5029b07f1a3324941ca4558ddfdc2ed",
-      "domain": "roads",
-      "contentHash": "91b4d2dcfdefd1b88f8cc2664e2f0d134577aa2877f69fddcf93106087dec6a9",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.occupancy",
@@ -218,7 +213,12 @@
       "phenomenonTime": {
         "instant": "2026-09-18T10:00:00.000Z"
       },
-      "aggregation": "mean"
+      "aggregation": "mean",
+      "canonicalId": "bd43d833d87775e703c5230949da910ca5029b07f1a3324941ca4558ddfdc2ed",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "91b4d2dcfdefd1b88f8cc2664e2f0d134577aa2877f69fddcf93106087dec6a9"
     },
     {
       "id": "oc:observation:es-madrid:6fdb4e8dea41c3c165ccf917295e30f4183869e37431f9af797ef5b770ba321a",
@@ -246,19 +246,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "f00e0770ebc527bdbf41033897a5c91cb5ecfc60a8ff44b7d590f3dfd6426002",
-      "domain": "roads",
-      "contentHash": "7f3979b63dd3160c5785aa18336e707ea52b8c12ba7e83c8061d7ff5f0d11e33",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.los",
@@ -274,7 +269,12 @@
       "phenomenonTime": {
         "instant": "2026-09-18T10:00:00.000Z"
       },
-      "aggregation": "instantaneous"
+      "aggregation": "instantaneous",
+      "canonicalId": "f00e0770ebc527bdbf41033897a5c91cb5ecfc60a8ff44b7d590f3dfd6426002",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "7f3979b63dd3160c5785aa18336e707ea52b8c12ba7e83c8061d7ff5f0d11e33"
     },
     {
       "id": "oc:observation:es-madrid:65fd28fa65103bb9a65cf61909e9a6726bddb5231014a1717e1e7e96d44529c0",
@@ -302,19 +302,14 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "a3cce09a0aa41f9575ebed22b191334368acc2c286883e64338f3c2495190872",
-      "domain": "roads",
-      "contentHash": "5d8fea5a83965a04d457a79cc035b2f67a19036a22b04e1379ea6d2c8fbc4c13",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.los",
@@ -330,7 +325,12 @@
       "phenomenonTime": {
         "instant": "2026-09-18T10:00:00.000Z"
       },
-      "aggregation": "instantaneous"
+      "aggregation": "instantaneous",
+      "canonicalId": "a3cce09a0aa41f9575ebed22b191334368acc2c286883e64338f3c2495190872",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "5d8fea5a83965a04d457a79cc035b2f67a19036a22b04e1379ea6d2c8fbc4c13"
     }
   ],
   "situations": [
@@ -363,7 +363,6 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal"
         },
-        "instanceId": "golden.test",
         "derivedFrom": {
           "records": [
             {
@@ -376,16 +375,12 @@
         },
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "3c59732c7636735039ce6c187180cbb9631e0eb260789a7ed9856cfcf2efc277",
-      "domain": "roads",
-      "contentHash": "fdd56099f74d0af40d5ed56ff3e8d5149f6bf522d743f6d786e6ff6bc1659fd7",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "situation",
       "kind": "congestion",
       "type": "congestion",
@@ -408,7 +403,12 @@
           "class": "feature",
           "id": "oc:feature:es-madrid:9841"
         }
-      }
+      },
+      "canonicalId": "3c59732c7636735039ce6c187180cbb9631e0eb260789a7ed9856cfcf2efc277",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "fdd56099f74d0af40d5ed56ff3e8d5149f6bf522d743f6d786e6ff6bc1659fd7"
     }
   ]
 }

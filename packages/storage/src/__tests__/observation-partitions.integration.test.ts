@@ -53,11 +53,11 @@ describe("partitionCovers", () => {
 describe("retention classes", () => {
   it("come from the registry: raw days, 0 to keep everything, none for latest-only", () => {
     const registry = productionRegistry();
-    expect(retentionDaysOf(registry.property("traffic.speed")!)).toBe(3);
+    expect(retentionDaysOf(registry.property("traffic.speed")!)).toBe(2);
     expect(retentionDaysOf(registry.property("camera.image")!)).toBeUndefined();
     expect(retentionDaysOf(registry.property("traffic.los")!)).toBe(7);
     expect(retentionDaysOf(registry.property("device.status")!)).toBe(0);
-    expect(retentionClasses(registry)).toEqual(expect.arrayContaining([0, 2, 3, 7, 30]));
+    expect(retentionClasses(registry)).toEqual(expect.arrayContaining([0, 1, 2, 7, 30]));
   });
 });
 
@@ -92,13 +92,15 @@ describe("observation partitions", () => {
     ).toEqual([]);
   });
 
-  it("drop whole days a day after every reading in them is past retention, never keep-everything months", async () => {
+  it("drop whole days once every reading in them is past retention, never keep-everything months", async () => {
     const drop = (at: string) =>
       dropExpiredObservationPartitions(sql, { now: new Date(at), registry });
     await sql`INSERT INTO conditions.observation_rollup_progress (period, finalized_before)
       VALUES ('hourly', '2026-10-02T00:00:00Z')`;
     expect(await drop("2026-10-02T00:30:00Z")).toEqual([]);
-    expect(await drop("2026-10-03T00:30:00Z")).toEqual(["observation_r2_d20260929"]);
+    // The 29th's readings are all two days old by the 1st at midnight; an hour
+    // later than that (a poll begun before maintenance ran) it goes.
+    expect(await drop("2026-10-02T12:00:00Z")).toEqual(["observation_r2_d20260929"]);
     const [{ count }] = await sql`SELECT count(*)::int AS count FROM conditions.observation`;
     expect(count).toBe(2);
     expect(await drop("2027-06-01T00:00:00Z")).not.toContain("observation_r0_m202609");

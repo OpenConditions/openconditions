@@ -84,19 +84,14 @@
         "provider": "WZDx publishers",
         "license": "UNKNOWN"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "22392983d119f7721464da9b31ddbdf9765ec7aabde74a2e2c1dda853eecff55",
-    "domain": "roads",
-    "contentHash": "9839eedbc0fee8ee9bacba0e9dca37aeeb1548dac25677209e8107fb6548e9d3",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -165,7 +160,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "22392983d119f7721464da9b31ddbdf9765ec7aabde74a2e2c1dda853eecff55",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "9839eedbc0fee8ee9bacba0e9dca37aeeb1548dac25677209e8107fb6548e9d3"
   },
   {
     "id": "oc:situation:us-wzdx:1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8",
@@ -238,19 +238,14 @@
         "provider": "WZDx publishers",
         "license": "UNKNOWN"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "6018ee9d46ca3874199d08bfb0f5f31194f8cd7bfe8f297ae10065b1ba23187b",
-    "domain": "roads",
-    "contentHash": "7728d443a52430c9b8157ec1d78fd16ff99674b2e92f3074175adec5d6e68676",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -424,7 +419,12 @@
       "kind": "roadworks",
       "v": 1,
       "workersPresent": true
-    }
+    },
+    "canonicalId": "6018ee9d46ca3874199d08bfb0f5f31194f8cd7bfe8f297ae10065b1ba23187b",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "7728d443a52430c9b8157ec1d78fd16ff99674b2e92f3074175adec5d6e68676"
   },
   {
     "id": "oc:situation:us-wzdx:1:cf1092ba-3b8d-4e91-81ef-daa4a98662e1",
@@ -537,19 +537,14 @@
         "provider": "WZDx publishers",
         "license": "UNKNOWN"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "f1aaa0414496815b56d0adddf098704d5148f88b79e18e95884a826888824947",
-    "domain": "roads",
-    "contentHash": "4a1167fb82a3bd6e429fa82d3ee9d8eb460990baa5b9e801bb3e3b03c016d279",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "closure",
     "type": "closure",
@@ -652,6 +647,11 @@
     "details": {
       "kind": "closure",
       "v": 1
-    }
+    },
+    "canonicalId": "f1aaa0414496815b56d0adddf098704d5148f88b79e18e95884a826888824947",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "4a1167fb82a3bd6e429fa82d3ee9d8eb460990baa5b9e801bb3e3b03c016d279"
   }
 ]

@@ -26,19 +26,14 @@
           "license": "GeoNutzV",
           "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "3dd20720f694886cc84658a00948b3601b14e3bc98707d918e04c3bdba152aa1",
-      "domain": "roads",
-      "contentHash": "0bdb3a8b71ad34008663d747947b81e35549aed5bc234e9d84ad0dd5e09a065c",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "feature",
       "kind": "measurement_site",
       "type": "traffic",
@@ -52,7 +47,12 @@
           "traffic.occupancy",
           "traffic.los"
         ]
-      }
+      },
+      "canonicalId": "3dd20720f694886cc84658a00948b3601b14e3bc98707d918e04c3bdba152aa1",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "0bdb3a8b71ad34008663d747947b81e35549aed5bc234e9d84ad0dd5e09a065c"
     }
   ],
   "observations": [
@@ -82,19 +82,14 @@
           "license": "GeoNutzV",
           "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
         },
-        "instanceId": "golden.test",
         "privacy": {
           "class": "authoritative"
-        }
+        },
+        "instanceId": "golden.test"
       },
       "freshness": {
         "fetchedAt": "2026-09-18T10:00:00.000Z"
       },
-      "canonicalId": "a5e346d07ffc77d515aa56395b9693856bb61e9cc17cafe44eded41d0be4b89c",
-      "domain": "roads",
-      "contentHash": "1c4b5b67090303e3f5eb4bc7c9c53cd4533f87e8094cacd5865d9a69faf3dc94",
-      "revision": 1,
-      "recordedAt": "2026-09-18T10:00:00.000Z",
       "class": "observation",
       "kind": "observation",
       "property": "traffic.speed",
@@ -113,7 +108,12 @@
       "aggregation": "mean",
       "quality": {
         "sampleCount": 20
-      }
+      },
+      "canonicalId": "a5e346d07ffc77d515aa56395b9693856bb61e9cc17cafe44eded41d0be4b89c",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "1c4b5b67090303e3f5eb4bc7c9c53cd4533f87e8094cacd5865d9a69faf3dc94"
     }
   ],
   "situations": []

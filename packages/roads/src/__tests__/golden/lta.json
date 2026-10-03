@@ -28,19 +28,14 @@
         "license": "Singapore-ODL-1.0",
         "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "0d4a43af021aa5b43d37ff6a407e6f679b74f28adeed5e81035e9ebed9eb22cf",
-    "domain": "roads",
-    "contentHash": "9640e6bb642cfe502d044be4a995cf9524b8f2f1e3be8b0ea06ec43ac2c9adf9",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "accident",
@@ -69,7 +64,12 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "0d4a43af021aa5b43d37ff6a407e6f679b74f28adeed5e81035e9ebed9eb22cf",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "9640e6bb642cfe502d044be4a995cf9524b8f2f1e3be8b0ea06ec43ac2c9adf9"
   },
   {
     "id": "oc:situation:sg-lta:1f4enbp",
@@ -100,19 +100,14 @@
         "license": "Singapore-ODL-1.0",
         "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "63e5e56b1a0daf56b9557f2ba64a7944b4218bc563176e1c4f519ca755837419",
-    "domain": "roads",
-    "contentHash": "52f81c3521aba35cb8c6c632a85490fad408dabcbcbbcb085f1a7d687471dbf4",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -141,7 +136,12 @@
     "details": {
       "kind": "roadworks",
       "v": 1
-    }
+    },
+    "canonicalId": "63e5e56b1a0daf56b9557f2ba64a7944b4218bc563176e1c4f519ca755837419",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "52f81c3521aba35cb8c6c632a85490fad408dabcbcbbcb085f1a7d687471dbf4"
   },
   {
     "id": "oc:situation:sg-lta:1nxh11v",
@@ -172,19 +172,14 @@
         "license": "Singapore-ODL-1.0",
         "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "f48a5d2834c7d14ae62cf69b49d476985bbe1c74d9338ef4a2d55d02066ee7cf",
-    "domain": "roads",
-    "contentHash": "fce60db1e33aff323c2caa85991a636fe318a36b3424310be2d8a961caea5f9d",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "incident",
     "type": "breakdown",
@@ -213,6 +208,11 @@
     "details": {
       "kind": "incident",
       "v": 1
-    }
+    },
+    "canonicalId": "f48a5d2834c7d14ae62cf69b49d476985bbe1c74d9338ef4a2d55d02066ee7cf",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "fce60db1e33aff323c2caa85991a636fe318a36b3424310be2d8a961caea5f9d"
   }
 ]

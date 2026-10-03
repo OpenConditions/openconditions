@@ -1,4 +1,11 @@
-import { historyRowOf, type SeriesKey, seriesKeyOf, templateOf } from "@openconditions/core";
+import {
+  historyRowOf,
+  readingOf,
+  type SeriesKey,
+  seriesKeyOf,
+  templateHash,
+  templateOf,
+} from "@openconditions/core";
 import {
   contentHash,
   historyEligible,
@@ -6,7 +13,7 @@ import {
   type PropertyEntry,
   sealRecord,
 } from "@openconditions/model";
-import { type ColumnSpec, insertRows, type Sql, upsertClause } from "./bulk.js";
+import { type ColumnSpec, insertRows, type Sql, updateRows, upsertClause } from "./bulk.js";
 import { partitionCovers, retentionDaysOf } from "./observation-partitions.js";
 import { expiryOf } from "./record-rows.js";
 import type { Rejection, WriteContext } from "./write-records.js";
@@ -45,8 +52,10 @@ export const SERIES_COLUMNS: ColumnSpec[] = [
   { name: "component_key", type: "text" },
   { name: "situation_id", type: "text" },
   { name: "geom", type: "geometry", geometry: true },
-  { name: "record", type: "jsonb" },
+  { name: "reading", type: "jsonb" },
   { name: "template", type: "jsonb" },
+  { name: "template_hash", type: "text" },
+  { name: "crowd_record_id", type: "text" },
   { name: "access_mode", type: "text" },
   { name: "result_type", type: "text" },
   { name: "value_num", type: "double precision" },
@@ -63,6 +72,26 @@ export const SERIES_COLUMNS: ColumnSpec[] = [
 ];
 
 export const SERIES_KEY = ["subject_key", "property", "qualifier_key", "source_id"];
+
+/**
+ * What a latest row's update sets when its series template did not change:
+ * what a reading can change. The template stays as stored, out of line, and
+ * the update carries only its pointer; what the template determines (the
+ * subject, its geometry, the access mode, the result type) stays as it is.
+ */
+const TEMPLATE_DETERMINED = new Set([
+  ...SERIES_KEY,
+  "template",
+  "template_hash",
+  "subject_kind",
+  "feature_id",
+  "component_key",
+  "situation_id",
+  "geom",
+  "access_mode",
+  "result_type",
+]);
+const READING_COLUMNS_OF_LATEST = SERIES_COLUMNS.filter((c) => !TEMPLATE_DETERMINED.has(c.name));
 
 const HISTORY_COLUMNS: ColumnSpec[] = [
   { name: "series_id", type: "bigint" },
@@ -89,7 +118,9 @@ const HISTORY_COLUMNS: ColumnSpec[] = [
 
 const HISTORY_KEY = ["series_id", "phenomenon_start", "issued_at", "retention_days"];
 
-const keyString = (k: SeriesKey) => jcs([k.subjectKey, k.property, k.qualifierKey, k.sourceId]);
+// A map key within one write: none of the four parts holds a NUL.
+const keyString = (k: SeriesKey) =>
+  `${k.subjectKey}\u0000${k.property}\u0000${k.qualifierKey}\u0000${k.sourceId}`;
 
 const startOf = (o: Rec) => {
   const t = o["phenomenonTime"] as { instant?: string; start?: string };
@@ -104,6 +135,7 @@ interface Latest {
   since_at: Date;
   result: unknown;
   content_hash: string;
+  template_hash: string;
   expires_at: Date | null;
 }
 
@@ -157,6 +189,7 @@ export async function writeObservationsIn(
 
   const latest = await loadLatest(
     tx,
+    sourceId,
     keyed.map((k) => k.key),
   );
   const bySeries = new Map<string, { key: SeriesKey; records: Rec[] }>();
@@ -181,6 +214,7 @@ export async function writeObservationsIn(
             instanceId: ctx.instanceId,
             revision: 1,
             recordedAt: ctx.now,
+            contentHash: hash,
           });
     if (!sealed.ok) {
       rejected.push({ class: "observation", id: draft["id"] as string, issues: sealed.issues });
@@ -196,9 +230,9 @@ export async function writeObservationsIn(
     await tx.unsafe(
       `UPDATE conditions.observation_latest l
           SET expires_at = n.expires_at::timestamptz,
-              record = CASE WHEN n.expires_at IS NULL
-                THEN l.record #- '{freshness,expiresAt}'
-                ELSE jsonb_set(l.record, '{freshness,expiresAt}', to_jsonb(n.expires_at)) END
+              reading = CASE WHEN n.expires_at IS NULL
+                THEN l.reading #- '{freshness,expiresAt}'
+                ELSE jsonb_set(l.reading, '{freshness,expiresAt}', to_jsonb(n.expires_at)) END
          FROM jsonb_to_recordset($1::text::jsonb) AS n(series_id bigint, expires_at text)
         WHERE l.series_id = n.series_id`,
       [JSON.stringify(expiryMoved)],
@@ -207,6 +241,7 @@ export async function writeObservationsIn(
 
   const frontiers = await rollupFrontiers(tx);
   const seriesRows: Rec[] = [];
+  const readingRows: Rec[] = [];
   const history: { key: string; row: Rec }[] = [];
   for (const [k, { records }] of bySeries) {
     records.sort((a, b) => startOf(a) - startOf(b));
@@ -256,18 +291,33 @@ export async function writeObservationsIn(
       }
       result = record["result"];
     }
-    if (newest !== undefined)
-      seriesRows.push(seriesRowOf(newest, property, retentionDays, ctx.now));
+    if (newest !== undefined) {
+      const row = seriesRowOf(newest, property, retentionDays, ctx.now, prev?.template_hash);
+      if (row["template"] === null) readingRows.push({ ...row, series_id: prev!.series_id });
+      else seriesRows.push(row);
+    }
   }
 
-  const written = await insertRows<{ series_id: number } & Record<string, string>>(
-    tx,
-    "observation_latest",
-    SERIES_COLUMNS,
-    seriesRows,
-    upsertClause(SERIES_KEY, SERIES_COLUMNS),
-    "series_id, subject_key, property, qualifier_key, source_id",
-  );
+  const returning = "series_id, subject_key, property, qualifier_key, source_id";
+  const written = [
+    ...(await insertRows<{ series_id: number } & Record<string, string>>(
+      tx,
+      "observation_latest",
+      SERIES_COLUMNS,
+      seriesRows,
+      upsertClause(SERIES_KEY, SERIES_COLUMNS),
+      returning,
+    )),
+    // A series whose template did not change: only its reading moves.
+    ...(await updateRows<{ series_id: number } & Record<string, string>>(
+      tx,
+      "observation_latest",
+      { name: "series_id", type: "bigint" },
+      READING_COLUMNS_OF_LATEST,
+      readingRows,
+      returning,
+    )),
+  ];
   counts.latest = written.length;
   const ids = new Map([...latest].map(([k, l]) => [k, l.series_id]));
   for (const w of written) {
@@ -328,14 +378,20 @@ function effectiveFrom(record: Rec): string {
   return new Date((t.instant ?? t.start)!).toISOString();
 }
 
-/** The latest row of a series, from the reading now in effect. */
+/**
+ * The latest row of a series, from the reading now in effect. Its template
+ * is left out (null) when `storedTemplateHash` says the row already holds it.
+ */
 export function seriesRowOf(
   record: Rec,
   property: PropertyEntry,
   retentionDays: number | undefined,
   now: string,
+  storedTemplateHash?: string,
 ): Rec {
   const key = seriesKeyOf(record);
+  const template = templateOf(record);
+  const hash = templateHash(template);
   const subject = record["subject"] as Rec;
   const result = record["result"] as Rec;
   const time = record["phenomenonTime"] as { end?: string };
@@ -350,8 +406,10 @@ export function seriesRowOf(
     component_key: subject["componentKey"] ?? null,
     situation_id: subject["situationId"] ?? null,
     geom: (record["location"] as Rec)["geometry"] ?? null,
-    record,
-    template: templateOf(record),
+    reading: readingOf(record),
+    template: hash === storedTemplateHash ? null : template,
+    template_hash: hash,
+    crowd_record_id: key.sourceId === "crowd" ? record["id"] : null,
     access_mode: (record["provenance"] as Rec)["accessMode"],
     result_type: property.result.type,
     value_num: type === "quantity" || type === "count" ? result["value"] : null,
@@ -376,13 +434,49 @@ async function rollupFrontiers(tx: Sql): Promise<Map<string, number>> {
   return new Map(rows.map((r) => [r.period, r.finalized_before.getTime()]));
 }
 
-async function loadLatest(tx: Sql, keys: readonly SeriesKey[]): Promise<Map<string, Latest>> {
+/** Readings in one write above which comparing with all of the source's series is cheaper. */
+const WHOLE_SOURCE_ABOVE = 1000;
+
+const LATEST_COLUMNS = `l.series_id, l.effective_from, l.since_at, l.reading->'result' AS result,
+            l.reading->>'contentHash' AS content_hash, l.template_hash, l.expires_at,
+            l.subject_key, l.property, l.qualifier_key, l.source_id`;
+
+async function loadLatest(
+  tx: Sql,
+  sourceId: string,
+  keys: readonly SeriesKey[],
+): Promise<Map<string, Latest>> {
   if (keys.length === 0) return new Map();
-  const rows = await tx.unsafe<(Latest & { k: SeriesKey })[]>(
-    `SELECT l.series_id, l.effective_from, l.since_at, l.record->'result' AS result,
-            l.record->>'contentHash' AS content_hash, l.expires_at,
-            json_build_object('subjectKey', l.subject_key, 'property', l.property,
-              'qualifierKey', l.qualifier_key, 'sourceId', l.source_id) AS k
+  type Row = Latest & {
+    subject_key: string;
+    property: string;
+    qualifier_key: string;
+    source_id: string;
+  };
+  const byKey = (rows: readonly Row[]) =>
+    new Map(
+      rows.map((r) => [
+        keyString({
+          subjectKey: r.subject_key,
+          property: r.property,
+          qualifierKey: r.qualifier_key,
+          sourceId: r.source_id,
+        }),
+        r,
+      ]),
+    );
+  // A poll writes most of its source's series: reading them all by source is
+  // one index scan, where matching each key costs a join over every key.
+  if (keys.length > WHOLE_SOURCE_ABOVE) {
+    return byKey(
+      await tx.unsafe<Row[]>(
+        `SELECT ${LATEST_COLUMNS} FROM conditions.observation_latest l WHERE l.source_id = $1`,
+        [sourceId],
+      ),
+    );
+  }
+  const rows = await tx.unsafe<Row[]>(
+    `SELECT ${LATEST_COLUMNS}
        FROM conditions.observation_latest l
        JOIN jsonb_to_recordset($1::text::jsonb)
          AS r(subject_key text, property text, qualifier_key text, source_id text)
@@ -398,5 +492,5 @@ async function loadLatest(tx: Sql, keys: readonly SeriesKey[]): Promise<Map<stri
       ),
     ],
   );
-  return new Map(rows.map((r) => [keyString(r.k), r]));
+  return byKey(rows);
 }

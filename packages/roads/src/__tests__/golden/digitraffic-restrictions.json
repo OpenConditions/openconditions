@@ -154,19 +154,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "b7369443c1f8a6e2f45dda775cf6422d002e580a6442720e9765efa0d5894417",
-    "domain": "roads",
-    "contentHash": "d3545e00645e23e03ea9f3a91e6ebe589e93420b4e35ecef5437b5fc81d4d102",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -310,7 +305,12 @@
           ]
         }
       ]
-    }
+    },
+    "canonicalId": "b7369443c1f8a6e2f45dda775cf6422d002e580a6442720e9765efa0d5894417",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "d3545e00645e23e03ea9f3a91e6ebe589e93420b4e35ecef5437b5fc81d4d102"
   },
   {
     "id": "oc:situation:fi-digitraffic:GUID50468844",
@@ -369,19 +369,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "707fe80b8b6a66d7edbef2aa93ac7ffa5ccec205014432baad44f9a81e438620",
-    "domain": "roads",
-    "contentHash": "1b90e79253b036da4021fc9af90365d310c72301bcd3dff0bcfb289251027b74",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -507,7 +502,12 @@
           ]
         }
       ]
-    }
+    },
+    "canonicalId": "707fe80b8b6a66d7edbef2aa93ac7ffa5ccec205014432baad44f9a81e438620",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "1b90e79253b036da4021fc9af90365d310c72301bcd3dff0bcfb289251027b74"
   },
   {
     "id": "oc:situation:fi-digitraffic:GUID50466626",
@@ -566,19 +566,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "ee663c488a8b8f330f21a60457cfda11861f8c095f2d441a7bcc2011964c8640",
-    "domain": "roads",
-    "contentHash": "683c563c70709a605aa656fa5143ef2e1f95b6c3ac9182f09ca3a74b9ff1eea1",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -825,7 +820,12 @@
           ]
         }
       ]
-    }
+    },
+    "canonicalId": "ee663c488a8b8f330f21a60457cfda11861f8c095f2d441a7bcc2011964c8640",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "683c563c70709a605aa656fa5143ef2e1f95b6c3ac9182f09ca3a74b9ff1eea1"
   },
   {
     "id": "oc:situation:fi-digitraffic:GUID50465935",
@@ -884,19 +884,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "9d7b56b86c147cd903b4f25cdff9335b67753565d2593a51ff54fa649c22a13f",
-    "domain": "roads",
-    "contentHash": "fe0b3e517ff4dd5b0b99f8f591ad9e939eeb4615de4aa6aedccbe5114480b29c",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -1036,7 +1031,12 @@
           ]
         }
       ]
-    }
+    },
+    "canonicalId": "9d7b56b86c147cd903b4f25cdff9335b67753565d2593a51ff54fa649c22a13f",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "fe0b3e517ff4dd5b0b99f8f591ad9e939eeb4615de4aa6aedccbe5114480b29c"
   },
   {
     "id": "oc:situation:fi-digitraffic:GUID50461965",
@@ -1143,19 +1143,14 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
-      "instanceId": "golden.test",
       "privacy": {
         "class": "authoritative"
-      }
+      },
+      "instanceId": "golden.test"
     },
     "freshness": {
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
-    "canonicalId": "860c372aa0577f1d342b637b0b0e5d6dfb4cac797a106d62e9d225b6e5d8e465",
-    "domain": "roads",
-    "contentHash": "22ff79a03fc9f45dfed4121e5035b26f24e59ddb199c720cc202597eff68ae18",
-    "revision": 1,
-    "recordedAt": "2026-09-18T10:00:00.000Z",
     "class": "situation",
     "kind": "roadworks",
     "type": "works",
@@ -1356,6 +1351,11 @@
           ]
         }
       ]
-    }
+    },
+    "canonicalId": "860c372aa0577f1d342b637b0b0e5d6dfb4cac797a106d62e9d225b6e5d8e465",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "22ff79a03fc9f45dfed4121e5035b26f24e59ddb199c720cc202597eff68ae18"
   }
 ]
