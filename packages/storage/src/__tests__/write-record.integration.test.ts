@@ -103,10 +103,10 @@ describe("writeRecord with a stored record", () => {
   /** A peer's record, sealed by that peer at the given revision. */
   function peerRecord(revision: number, over: Record<string, unknown> = {}) {
     const draft = situationDraft("p1", {
-      id: "oc:situation:be-flanders:p1",
+      id: "oc:situation:be-flanders-events:p1",
       provenance: {
         ...(situationDraft("p1")["provenance"] as object),
-        sourceId: "be-flanders",
+        sourceId: "be-flanders-events",
         recordId: "p1",
       },
     });
@@ -174,10 +174,10 @@ describe("writeRecord with a stored record", () => {
 
   it("never lets a peer's record replace one another instance wrote under the same id", async () => {
     const own = situationDraft("p1", {
-      id: "oc:situation:be-flanders:p1",
+      id: "oc:situation:be-flanders-events:p1",
       provenance: {
         ...(situationDraft("p1")["provenance"] as object),
-        sourceId: "be-flanders",
+        sourceId: "be-flanders-events",
         recordId: "p1",
       },
     });
@@ -185,7 +185,7 @@ describe("writeRecord with a stored record", () => {
     expect(await writeRecord(sql, { stored: peerRecord(5) }, ctx(T2))).toEqual({
       status: "foreign",
       class: "situation",
-      id: "oc:situation:be-flanders:p1",
+      id: "oc:situation:be-flanders-events:p1",
       revision: 1,
     });
     const [row] = await sql`SELECT instance_id, revision FROM conditions.situation`;
@@ -194,23 +194,23 @@ describe("writeRecord with a stored record", () => {
 
   it("lets this instance's own poll take over a peer's copy of the same content", async () => {
     const own = situationDraft("p1", {
-      id: "oc:situation:be-flanders:p1",
+      id: "oc:situation:be-flanders-events:p1",
       provenance: {
         ...(situationDraft("p1")["provenance"] as object),
-        sourceId: "be-flanders",
+        sourceId: "be-flanders-events",
         recordId: "p1",
       },
     });
     await writeRecord(sql, { stored: peerRecord(3) }, ctx(T1));
     const summary = await writeSnapshot(
       sql,
-      "be-flanders",
+      "be-flanders-events",
       { situations: [own] },
       { ...ctx(T2), complete: true },
     );
     expect(summary.counts.situation).toMatchObject({ updated: 1, unchanged: 0 });
     expect(summary.changed).toEqual([
-      { class: "situation", id: "oc:situation:be-flanders:p1", revision: 4 },
+      { class: "situation", id: "oc:situation:be-flanders-events:p1", revision: 4 },
     ]);
     const [row] = await sql`
       SELECT instance_id, revision, record #>> '{provenance,instanceId}' AS sealed_by,
@@ -229,10 +229,10 @@ describe("writeRecord with a stored record", () => {
 
   it("lets a draft written here take over a peer's copy of the same content", async () => {
     const own = situationDraft("p1", {
-      id: "oc:situation:be-flanders:p1",
+      id: "oc:situation:be-flanders-events:p1",
       provenance: {
         ...(situationDraft("p1")["provenance"] as object),
-        sourceId: "be-flanders",
+        sourceId: "be-flanders-events",
         recordId: "p1",
       },
     });
@@ -254,7 +254,7 @@ describe("on-demand records", () => {
     });
     const summary = await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [draft] },
       { ...ctx(T1), complete: true },
     );
@@ -264,7 +264,7 @@ describe("on-demand records", () => {
       access_mode: "on_demand",
       expires_at: new Date("2026-10-01T10:15:00.000Z"),
     });
-    expect(await revisions("oc:situation:nl-ndw:od")).toEqual([]);
+    expect(await revisions("oc:situation:nl-ndw-events:od")).toEqual([]);
   });
 
   it("live until the expiry the latest answer states, when its content is the same", async () => {

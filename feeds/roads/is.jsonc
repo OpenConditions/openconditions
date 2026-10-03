@@ -1,0 +1,87 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "vegagerdin",
+      "product": "conditions",
+      "name": "Vegagerðin road conditions (Iceland)",
+      "tier": "authoritative",
+      "format": "geojson",
+      "endpoints": {
+        "main": {
+          "url": "https://gagnaveita.vegagerdin.is/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=gis:roadconditions_pointincident&outputFormat=application/json",
+          "cadenceSec": 300,
+        },
+      },
+      "geojson": {
+        "lonField": "X",
+        "latField": "Y",
+        "typeField": "DESCRIPTION",
+        "typeMap": {
+          "Closed": "road_closure",
+          "Road repairs": "roadworks",
+          "Uneven road": "road_condition.surface.rough",
+          "Flying gravel": "road_condition.surface.loose_chippings",
+          "Animals on the road": "incident.obstruction.animal",
+          "Holes in road": "incident.obstruction.pothole",
+          "Total axle weight limit": "restriction.dimension.axle_load",
+        },
+        "defaultType": "hazard",
+        "headlineField": "DESCRIPTION",
+        "updatedField": "CREATIONTIME",
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://www.vegagerdin.is/",
+      "attribution": "Vegagerðin (Icelandic Road and Coastal Administration)",
+      "privacyUrl": "https://www.vegagerdin.is/",
+    },
+    {
+      "operator": "vegagerdin",
+      "qualifier": "lines",
+      "product": "conditions",
+      "name": "Vegagerðin road conditions — segments (Iceland)",
+      "tier": "authoritative",
+      "format": "geojson",
+      "endpoints": {
+        "main": {
+          "url": "https://gagnaveita.vegagerdin.is/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=gis:roadconditions_lineincident&outputFormat=application/json",
+          "cadenceSec": 300,
+        },
+      },
+      "geojson": {
+        "idField": "IDBUTUR",
+        // Every feature ships `geometry: null`, and the layer's own geometry is
+        // EPSG:3057 anyway, while these four columns are already WGS84.
+        "startLonField": "STARTX",
+        "startLatField": "STARTY",
+        "endLonField": "ENDX",
+        "endLatField": "ENDY",
+        "typeField": "ROADCONDITION",
+        "typeMap": {
+          "Closed": "road_closure",
+          "Impassable": "road_closure",
+          "Impassable because of snow or weather": "weather",
+          "Road repairs": "roadworks",
+          "Spots of ice": "road_condition.surface.icy",
+          "Mountain vehicles": "dimension_restriction",
+          "No winter services": "road_condition.driving_condition.no_winter_maintenance",
+        },
+        "defaultType": "road_condition",
+        // Four fifths of the layer is the "nothing to report" baseline, which
+        // would bury the ~200 segments that actually say something. "Not known"
+        // is likewise an absence of information rather than a condition.
+        "filter": [{ "field": "ROADCONDITION", "exclude": ["Easily passable", "Not known"] }],
+        "headlineField": "ROADCONDITION",
+        "descriptionField": "ADDITIONALINFORMATION",
+        "roadField": "ROADNUMBER",
+        "updatedField": "CREATIONTIME",
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://www.vegagerdin.is/",
+      "attribution": "Vegagerðin (Icelandic Road and Coastal Administration)",
+      "privacyUrl": "https://www.vegagerdin.is/",
+    },
+  ],
+}

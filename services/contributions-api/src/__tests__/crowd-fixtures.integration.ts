@@ -112,7 +112,7 @@ export async function landAs(
 /** A feed situation draft: an obstruction published by a local feed. */
 export function feedSituationDraft(local: string, over: Rec = {}): Rec {
   return {
-    id: `oc:situation:de-autobahn:${local}`,
+    id: `oc:situation:de-autobahn-events:${local}`,
     class: "situation",
     kind: "incident",
     type: "obstruction",
@@ -131,7 +131,7 @@ export function feedSituationDraft(local: string, over: Rec = {}): Rec {
     },
     provenance: {
       origin: "feed",
-      sourceId: "de-autobahn",
+      sourceId: "de-autobahn-events",
       sourceFormat: "autobahn",
       accessMode: "bulk",
       recordId: local,

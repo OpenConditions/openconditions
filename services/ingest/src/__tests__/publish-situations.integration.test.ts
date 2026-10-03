@@ -1,4 +1,3 @@
-import type { FeedSource } from "@openconditions/roads";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { publishSituations, UnlocatableRetainedError, writeModel } from "../pipeline/publish.js";
@@ -11,7 +10,7 @@ type Rec = Record<string, unknown>;
 let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
 let sql: postgres.Sql;
 
-const src = { id: "nl-ndw", freshnessWindowSec: 900 } as unknown as FeedSource;
+const src = { id: "nl-ndw-events", freshnessWindowSec: 900 };
 const NOW = "2026-09-06T10:05:00.000Z";
 
 beforeAll(async () => {
@@ -50,7 +49,7 @@ const accident = (effects: Rec[]) =>
       effects,
       details: { kind: "incident", v: 1 },
     },
-    "nl-ndw",
+    "nl-ndw-events",
   );
 
 async function publish(situations: Rec[], unlocatable: string[], unlocatableRecords: string[]) {
@@ -70,22 +69,26 @@ async function publish(situations: Rec[], unlocatable: string[], unlocatableReco
 
 describe("publishSituations unlocatable guard", () => {
   it("refuses to strip a split situation of the effects of a record it could not place", async () => {
-    await writeSituations(sql, "nl-ndw", [
+    await writeSituations(sql, "nl-ndw-events", [
       accident([effect("CLO1/closure", "closure", { scope: "road" })]),
     ]);
     // CLO1 lost its location: it names its own id and its group's, neither of
     // which is the stored situation that carries its closure.
     await expect(
-      publish([accident([])], ["oc:situation:nl-ndw:CLO1", "oc:situation:nl-ndw:G1"], ["CLO1"]),
+      publish(
+        [accident([])],
+        ["oc:situation:nl-ndw-events:CLO1", "oc:situation:nl-ndw-events:G1"],
+        ["CLO1"],
+      ),
     ).rejects.toBeInstanceOf(UnlocatableRetainedError);
     const [row] = await sql<{ record: Rec }[]>`
-      SELECT record FROM conditions.situation WHERE id = 'oc:situation:nl-ndw:ACC1'`;
+      SELECT record FROM conditions.situation WHERE id = 'oc:situation:nl-ndw-events:ACC1'`;
     expect((row!.record["effects"] as Rec[]).map((e) => e["id"])).toEqual(["CLO1/closure"]);
   });
 
   it("publishes when the record it could not place carried nothing stored", async () => {
-    await writeSituations(sql, "nl-ndw", [accident([])]);
-    const summary = await publish([accident([])], ["oc:situation:nl-ndw:NEW1"], ["NEW1"]);
+    await writeSituations(sql, "nl-ndw-events", [accident([])]);
+    const summary = await publish([accident([])], ["oc:situation:nl-ndw-events:NEW1"], ["NEW1"]);
     expect(summary.counts.situation.unchanged).toBe(1);
   });
 });

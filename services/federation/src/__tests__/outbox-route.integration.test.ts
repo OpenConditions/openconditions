@@ -131,7 +131,7 @@ describe("GET /peer/outbox", () => {
         id: situationId("route-a"),
         class: "situation",
         revision: 1,
-        provenance: { instanceId: "oc-test", sourceId: "nl-ndw" },
+        provenance: { instanceId: "oc-test", sourceId: "nl-ndw-events" },
       });
 
       const [key] = await loadActiveKeys(sql, NOW);

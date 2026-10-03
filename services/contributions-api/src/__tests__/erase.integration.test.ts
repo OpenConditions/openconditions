@@ -154,7 +154,7 @@ describe("eraseRecord", () => {
   }, 30_000);
 
   it("records the erasure fact of the record's canonical id", async () => {
-    const id = "oc:situation:de-autobahn:E1";
+    const id = "oc:situation:de-autobahn-events:E1";
     const { canonical_id } = await stored(id);
     const facts = await sql<{ reason: string; tombstoned_at: Date; expires_at: Date }[]>`
       SELECT reason, tombstoned_at, expires_at FROM conditions.federation_tombstone
@@ -167,7 +167,7 @@ describe("eraseRecord", () => {
   }, 30_000);
 
   it("changes nothing when the record is already erased", async () => {
-    const id = "oc:situation:de-autobahn:E1";
+    const id = "oc:situation:de-autobahn-events:E1";
     expect(await eraseRecord(sql, registry, { class: "situation", id }, LATER)).toBe(
       "already erased",
     );
@@ -203,7 +203,7 @@ describe("eraseRecord", () => {
   }, 30_000);
 
   it("answers not found for a record this instance does not hold", async () => {
-    const ref = { class: "situation" as const, id: "oc:situation:de-autobahn:missing" };
+    const ref = { class: "situation" as const, id: "oc:situation:de-autobahn-events:missing" };
     expect(await eraseRecord(sql, registry, ref, ERASED_AT)).toBe("not found");
     const [facts] = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM conditions.federation_tombstone`;

@@ -8,7 +8,7 @@ type Params = Record<string, unknown> | undefined;
 /** A situation record as `GET /situations` serves it. */
 function situation(local: string, over: Rec = {}): Rec {
   return {
-    id: `oc:situation:nl-ndw:${local}`,
+    id: `oc:situation:nl-ndw-events:${local}`,
     class: "situation",
     kind: "closure",
     type: "closure",
@@ -40,7 +40,7 @@ function situation(local: string, over: Rec = {}): Rec {
     },
     provenance: {
       origin: "feed",
-      sourceId: "nl-ndw",
+      sourceId: "nl-ndw-events",
       attribution: { provider: "NDW", license: "CC0-1.0" },
     },
     freshness: { fetchedAt: "2026-09-11T10:00:00.000Z" },
@@ -130,7 +130,7 @@ describe("road-conditions-openconditions provider", () => {
     const events = await provider({ serve: api(records) }).getEvents([4, 51, 6, 53]);
     expect(events.map((e) => e.id)).toEqual(records.map((r) => r["id"]));
     expect(events[0]).toMatchObject({
-      source: "nl-ndw",
+      source: "nl-ndw-events",
       provider: "road-conditions-openconditions",
       kind: "closure",
       type: "closure",
@@ -165,7 +165,7 @@ describe("road-conditions-openconditions provider", () => {
         minSeverity: "major",
         horizonDays: 7,
       },
-      expect.objectContaining({ cursor: "oc:situation:nl-ndw:s0999" }),
+      expect.objectContaining({ cursor: "oc:situation:nl-ndw-events:s0999" }),
     ]);
   });
 
@@ -215,7 +215,7 @@ describe("road-conditions-openconditions provider", () => {
       [4, 51, 6, 53],
       { excludedSourceIds: ["nl-parent"] },
     );
-    expect(events.map((e) => e.id)).toEqual(["oc:situation:nl-ndw:a"]);
+    expect(events.map((e) => e.id)).toEqual(["oc:situation:nl-ndw-events:a"]);
   });
 
   it("maps bounded operational status and graph evidence", async () => {
@@ -412,7 +412,7 @@ describe("complete routing reads", () => {
     const conditions = {
       schema_version: 2,
       complete: true,
-      conditions: [evidence("oc:situation:nl-ndw:elsewhere", "x/closure")],
+      conditions: [evidence("oc:situation:nl-ndw-events:elsewhere", "x/closure")],
     };
     const { events } = await provider({ serve: api([situation("a")], conditions) })
       .getRoutingEvents!([4, 51, 6, 53]);

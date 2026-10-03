@@ -5,14 +5,14 @@ import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
-import { buildDomainRegistry } from "../domains.js";
 import { FeedStatusStore } from "../feed-status.js";
 import { bindRecords, drainBindingQueue } from "../pipeline/bind-records.js";
 import { activateRoadGraph } from "../pipeline/graph-state.js";
 import { importOsmRoads } from "../pipeline/osm-import.js";
-import { type DomainFeedSource, runSource } from "../pipeline/run.js";
+import { runSource } from "../pipeline/run.js";
 import { buildSegments } from "../pipeline/segment-build.js";
 import { registerPublishRoutes } from "../publish-routes.js";
+import { REPO_CATALOG, testFeed } from "./helpers/catalog.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { registry as model, situationDraft, writeSituations } from "./helpers/situations.js";
 
@@ -89,7 +89,7 @@ function spineToWays(subgraph: SpineSubgraph): OsmWay[] {
 const ways = spineToWays(spine);
 
 const ROAD40 = "GUID50470575";
-const situationId = (local: string) => `oc:situation:fi-digitraffic:${local}`;
+const situationId = (local: string) => `oc:situation:fi-digitraffic-events:${local}`;
 
 function feature(local: string): Feature {
   return structuredClone(sourceFeatures().find((f) => f.properties["situationId"] === local)!);
@@ -109,21 +109,19 @@ function openEnded(f: Feature): Feature {
   return f;
 }
 
-const feed = {
-  id: "fi-digitraffic",
-  domain: "roads",
+const feed = testFeed({
+  id: "fi-digitraffic-events",
   operator: "digitraffic",
   name: "Digitraffic (Finland)",
   format: "digitraffic",
-  url: [ROADWORKS],
+  endpoints: { main: { url: ROADWORKS, cadenceSec: 120 } },
   snapshot: { completeness: "complete", recordsPath: "features" },
-  cadenceSec: 120,
   freshnessWindowSec: 600,
   license: "CC-BY-4.0",
   licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
   attribution: "Fintraffic / Digitraffic",
   country: "FI",
-} as unknown as DomainFeedSource;
+});
 
 const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 
@@ -298,8 +296,7 @@ describe("stored restriction publication through the real HTTP path", () => {
 
   async function app() {
     const instance = Fastify();
-    const registry = await buildDomainRegistry();
-    registerPublishRoutes(instance, sql, new FeedStatusStore(), registry);
+    registerPublishRoutes(instance, sql, new FeedStatusStore(), REPO_CATALOG);
     registerApiRoutes(instance, sql, { registry: model });
     await instance.ready();
     return instance;
@@ -325,7 +322,7 @@ describe("stored restriction publication through the real HTTP path", () => {
     await seedConditional();
     const [status] = await sql<{ last_network_success_at: Date; freshness_deadline: Date }[]>`
       SELECT last_network_success_at, freshness_deadline FROM conditions.source_status
-       WHERE source = 'fi-digitraffic'`;
+       WHERE source = 'fi-digitraffic-events'`;
     // The weight restriction itself is stored with the situation.
     const [weight] = await sql<{ value: { value: { value: number; unit: string } } }[]>`
       SELECT value FROM conditions.situation_effect

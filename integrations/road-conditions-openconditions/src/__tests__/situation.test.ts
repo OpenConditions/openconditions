@@ -16,7 +16,7 @@ const effect = (id: string, kind: string, fields: Rec = {}): Rec => ({
 
 function record(over: Rec = {}): Rec {
   return {
-    id: "oc:situation:fi-digitraffic:GUID1",
+    id: "oc:situation:fi-digitraffic-events:GUID1",
     class: "situation",
     kind: "roadworks",
     type: "works",
@@ -83,7 +83,7 @@ function record(over: Rec = {}): Rec {
     },
     provenance: {
       origin: "feed",
-      sourceId: "fi-digitraffic",
+      sourceId: "fi-digitraffic-events",
       sourceUpdatedAt: "2026-09-19T12:00:00Z",
       attribution: {
         provider: "Fintraffic / Digitraffic",
@@ -99,8 +99,8 @@ function record(over: Rec = {}): Rec {
 describe("situationToRoadConditionEvent", () => {
   it("maps a situation record field for field", () => {
     expect(situationToRoadConditionEvent(record(), "road-conditions-openconditions")).toEqual({
-      id: "oc:situation:fi-digitraffic:GUID1",
-      source: "fi-digitraffic",
+      id: "oc:situation:fi-digitraffic-events:GUID1",
+      source: "fi-digitraffic-events",
       provider: "road-conditions-openconditions",
       groupId: "GUID1",
       kind: "roadworks",

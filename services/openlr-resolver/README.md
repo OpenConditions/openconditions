@@ -25,8 +25,8 @@ OpenLR-only location referencing is largely a commercial-feed (TomTom/HERE)
 convention; open government feeds publish coordinates or TMC. So the resolver is
 ready infrastructure waiting on a source. To activate it:
 
-1. **Add a reference-only / OpenLR-carrying feed** to `@openconditions/roads`'
-   `FEED_SOURCES` (set `openlrResolver: true`), set `OPENLR_RESOLVER_URL` on the
+1. **Add a reference-only / OpenLR-carrying feed** to its region file under
+   `feeds/roads/` (set `openlrResolver: true`), set `OPENLR_RESOLVER_URL` on the
    ingest service, and load a real OSM graph (see [Building the graph](#building-the-graph)).
    The ingest resolve stage then fills geometry for those records automatically.
 2. Or use it for **edge precision** when a feed carries *both* a coordinate and

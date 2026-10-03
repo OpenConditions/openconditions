@@ -37,7 +37,7 @@ function situation(
   effects: Effect[],
 ) {
   return {
-    id: "oc:situation:nl-ndw:SIT-1",
+    id: "oc:situation:nl-ndw-events:SIT-1",
     class: "situation",
     kind,
     type,
@@ -50,7 +50,7 @@ function situation(
     },
     provenance: {
       origin: "feed",
-      sourceId: "nl-ndw",
+      sourceId: "nl-ndw-events",
       sourceFormat: "datex2",
       accessMode: "bulk",
       recordId: "SIT-1",

@@ -334,10 +334,10 @@ The payload is snake_case at the top; `effect` is the model effect itself:
   "resolver_version": "2.0.0",
   "conditions": [
     {
-      "id": "oc:situation:de-autobahn-a46-closure:…#…/closure",
-      "record_id": "oc:situation:de-autobahn-a46-closure:…",
+      "id": "oc:situation:de-autobahn-a46-closure-events:…#…/closure",
+      "record_id": "oc:situation:de-autobahn-a46-closure-events:…",
       "effect_id": "…/closure",
-      "source": "de-autobahn-a46-closure",
+      "source": "de-autobahn-a46-closure-events",
       "kind": "closure",
       "type": "closure",
       "subtype": "full",
@@ -358,7 +358,7 @@ The payload is snake_case at the top; `effect` is the model effect itself:
       "routing_evidence": {
         "schema_version": 2,
         "record_class": "situation",
-        "record_id": "oc:situation:de-autobahn-a46-closure:…",
+        "record_id": "oc:situation:de-autobahn-a46-closure-events:…",
         "effect_id": "…/closure",
         "record_revision": 3,
         "binding_revision": 3,
@@ -471,7 +471,7 @@ binding of each situation's own location:
 
 ```json
 {
-  "id": "de-autobahn-a46-roadworks",
+  "id": "de-autobahn-a46-roadworks-events",
   "binding": {
     "activeEvents": 1450,
     "attempted": 1420,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fixture, flowFeed, flows, readings, site } from "./flow-fixtures.js";
 
-const FEED = "us-oh-ohgo";
+const FEED = "us-oh-ohgo-flow";
 const feed = flowFeed(FEED);
 
 describe("OHGO travel delays", () => {

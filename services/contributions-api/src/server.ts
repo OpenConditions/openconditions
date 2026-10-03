@@ -38,6 +38,7 @@ import {
   UNVERIFIED_ATTESTATION,
   UNVERIFIED_OSM_AUTH,
 } from "./attester/verifier.js";
+import { resolveCrowdLicense } from "./crowd.js";
 import { autoCorroborateOnLanding } from "./evidence/autoCorroborate.js";
 import { crossValidateAgainstFeeds } from "./evidence/crossValidate.js";
 import { crossValidateObservation } from "./evidence/crossValidateObservation.js";
@@ -197,6 +198,8 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const attestationVerifier = options.attestationVerifier ?? UNVERIFIED_ATTESTATION;
   const osmAuthVerifier = options.osmAuthVerifier ?? UNVERIFIED_OSM_AUTH;
   const issuerName = env["OPENCONDITIONS_ISSUER_NAME"] || DEFAULT_ISSUER_NAME;
+  // Validated before anything starts, so a misspelt licence aborts the boot.
+  const crowdLicense = resolveCrowdLicense(env);
 
   const app = Fastify({ logger: options.logger ?? true });
 
@@ -324,7 +327,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const crowdUrl = env["OPENCONDITIONS_CROWD_SOURCE_URI"];
   const crowdAttribution: Attribution = {
     provider: `OpenConditions contributors at ${instanceId}`,
-    license: env["OPENCONDITIONS_CROWD_LICENSE"] || "ODbL-1.0",
+    license: crowdLicense,
     ...(crowdUrl ? { url: crowdUrl } : {}),
   };
 

@@ -25,7 +25,7 @@ import { productionModules } from "../index.js";
 /**
  * Crowd fit check: reports a driver can make, landed on the production
  * registry and judged against real published records. The road closure is
- * Autobahn GmbH's (dl-de/by-2-0), captured 2026-10-01 from the A5 closure
+ * Autobahn GmbH's (DL-DE-BY-2.0), captured 2026-10-01 from the A5 closure
  * service; the charging sites come from the MobiData BW charge-point database
  * (CC BY 4.0), captured 2026-09-22 for central Karlsruhe and 2026-10-01 for
  * one car park that two of its sources describe — a live feed relayed from
@@ -216,7 +216,7 @@ interface AutobahnClosure {
 describe("a closure the motorway operator publishes", () => {
   const record = json("crowd", "autobahn-a5-closure.json").closure[0] as AutobahnClosure;
   const ramp = sealed({
-    id: `oc:situation:de-autobahn:${record.identifier}`,
+    id: `oc:situation:de-autobahn-events:${record.identifier}`,
     class: "situation",
     kind: "closure",
     type: "closure",
@@ -230,11 +230,11 @@ describe("a closure the motorway operator publishes", () => {
       roads: [{ ref: "A5", class: "motorway", designation: { scheme: "de_bab", ref: "A5" } }],
     },
     provenance: feed(
-      "de-autobahn",
+      "de-autobahn-events",
       "autobahn-closure",
       record.identifier,
       "Die Autobahn GmbH des Bundes",
-      "dl-de/by-2-0",
+      "DL-DE-BY-2.0",
     ),
     freshness: { fetchedAt: "2026-10-01T11:40:00Z" },
     planned: true,

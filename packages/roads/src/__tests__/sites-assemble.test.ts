@@ -29,7 +29,7 @@ function reading(overrides: Partial<FlowReading>): FlowReading {
   };
 }
 
-const assemble = (readings: FlowReading[], format = "digitraffic") =>
+const assemble = (readings: FlowReading[], format = "digitraffic-traffic-measurement") =>
   flowOutput(readings, { source, format, ctx });
 
 describe("flowOutput", () => {
@@ -113,7 +113,7 @@ describe("flowOutput", () => {
           ],
         }),
       ],
-      "datex2",
+      "datex2-measured",
     );
     expect(features[0]!["components"]).toEqual([
       {

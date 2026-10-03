@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const FEED = "us-nyc-dot";
+const FEED = "us-nyc-dot-flow";
 const feed = flowFeed(FEED);
 const empty = { features: [], observations: [], situations: [] };
 

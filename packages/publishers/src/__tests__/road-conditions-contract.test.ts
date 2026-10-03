@@ -1,7 +1,9 @@
 import { readFileSync, writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { ROUTING_EFFECT_KINDS, type SegmentConditionRow } from "@openconditions/core";
+import { readCatalogDir, toCatalogFeed } from "@openconditions/ingest-framework";
 import { type Effect, isRestrictionEvidence } from "@openconditions/model";
-import { FEED_SOURCES, parseEvents, type RoadFeed } from "@openconditions/roads";
+import { parseEvents, type RoadFeed, roadsDomain } from "@openconditions/roads";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { segmentConditionsToJson } from "../segment-conditions.js";
 import { segmentConditionsToExclusions } from "../valhalla.js";
@@ -31,12 +33,25 @@ function project(rows: SegmentConditionRow[], at: Date, resolverVersion: string)
 }
 
 const ROADS_FIXTURES = "../../../roads/src/__tests__/fixtures/";
+const REPO_FEEDS = fileURLToPath(new URL("../../../../feeds", import.meta.url));
 
 /** A road feed of the catalogue, read as a complete snapshot (the path that carries versions). */
 function feed(id: string): RoadFeed {
-  const found = FEED_SOURCES.find((f) => f.id === id);
+  const { files } = readCatalogDir(REPO_FEEDS, [roadsDomain]);
+  const found = files
+    .flatMap((file) =>
+      file.feeds.map((def) =>
+        toCatalogFeed(def, {
+          domain: file.domain,
+          region: file.region,
+          file: file.path,
+          maintainers: file.maintainers,
+        }),
+      ),
+    )
+    .find((f) => f.id === id);
   if (!found) throw new Error(`no feed ${id}`);
-  return { ...found, snapshot: { completeness: "complete" } };
+  return { ...found, snapshot: { completeness: "complete" } } as RoadFeed;
 }
 
 /**
@@ -48,10 +63,10 @@ function feed(id: string): RoadFeed {
  */
 function restrictionRows(control: SegmentConditionRow): SegmentConditionRow[] {
   const drafts = [
-    ...parseEvents(feed("nl-ndw"), [
+    ...parseEvents(feed("nl-ndw-events"), [
       readFileSync(new URL(`${ROADS_FIXTURES}ndw/restrictions-v3.xml`, import.meta.url)),
     ]).situations,
-    ...parseEvents(feed("fi-digitraffic"), [
+    ...parseEvents(feed("fi-digitraffic-events"), [
       readFileSync(
         new URL(`${ROADS_FIXTURES}digitraffic/weight-restriction.json`, import.meta.url),
       ),

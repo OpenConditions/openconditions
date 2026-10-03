@@ -55,8 +55,8 @@ describe("reconcileRoadSnapshots", () => {
     };
     const c = {
       ...a,
-      id: "fi-digitraffic:another",
-      event: { ...base, id: "fi-digitraffic:another" },
+      id: "fi-digitraffic-events:another",
+      event: { ...base, id: "fi-digitraffic-events:another" },
     };
     for (const records of [
       [a, b, c],
@@ -248,7 +248,7 @@ describe("reconcileRoadSnapshots", () => {
 });
 
 const src = {
-  id: "fi-digitraffic",
+  id: "fi-digitraffic-events",
   attribution: "Fintraffic / Digitraffic",
   country: "FI",
   license: "CC-BY-4.0",
@@ -297,9 +297,9 @@ describe("parseDigitrafficSnapshot", () => {
       "terminal",
     ]);
     const reconciled = reconcileRoadSnapshots([report]);
-    expect(reconciled.acceptedIds).toEqual(["fi-digitraffic:A"]);
-    expect(reconciled.unlocatableIds).toEqual(["fi-digitraffic:B"]);
-    expect(reconciled.terminalIds).toEqual(["fi-digitraffic:C"]);
+    expect(reconciled.acceptedIds).toEqual(["fi-digitraffic-events:A"]);
+    expect(reconciled.unlocatableIds).toEqual(["fi-digitraffic-events:B"]);
+    expect(reconciled.terminalIds).toEqual(["fi-digitraffic-events:C"]);
   });
 
   it("reports a record with no stable identity instead of numbering it", () => {
@@ -357,15 +357,15 @@ describe("parseDigitrafficSnapshot", () => {
       src,
     );
     expect(reconcileRoadSnapshots([report]).observations.map((o) => o.id)).toEqual([
-      "fi-digitraffic:A",
-      "fi-digitraffic:B",
+      "fi-digitraffic-events:A",
+      "fi-digitraffic-events:B",
     ]);
   });
 });
 
 describe("parseDatexSnapshot", () => {
   const datexSrc = {
-    id: "nl-ndw",
+    id: "nl-ndw-events",
     attribution: "NDW",
     country: "NL",
     license: "CC0-1.0",

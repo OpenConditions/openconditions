@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const FEED = "it-turin";
+const FEED = "it-turin-flow";
 const feed = flowFeed(FEED);
 
 const XML = `<?xml version="1.0" encoding="utf-8"?>

@@ -22,15 +22,15 @@ describe("seven-day road-condition readiness", () => {
     const rows = Array.from({ length: 100 }, (_, i) =>
       attempt(NOW - 7 * 86_400_000 + i * interval, i === 50 ? "failed" : "validated_unchanged"),
     );
-    rows.push(attempt(NOW, "skipped_cadence"), attempt(NOW, "skipped_overlap"));
+    rows.push(attempt(NOW, "skipped_overlap"), attempt(NOW, "missing_configuration"));
 
     expect(assessReadiness(rows, new Date(NOW))[0]).toMatchObject({
       source: "wzdx-kansas",
       networkAttempts: 100,
       successfulValidations: 99,
       failed: 1,
-      skippedCadence: 1,
       skippedOverlap: 1,
+      missingConfiguration: 1,
       networkReliability: 0.99,
       networkReliabilityReady: true,
       sevenDayCoverageReady: true,

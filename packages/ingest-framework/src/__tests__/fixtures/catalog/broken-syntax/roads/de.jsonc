@@ -1,0 +1,6 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    { "operator": "ndw" "product": "events" },
+  ],
+}

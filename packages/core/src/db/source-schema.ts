@@ -17,10 +17,12 @@ export const source = conditionsSchema.table(
     id: text("id").primaryKey(),
     domain: text("domain").notNull(),
     format: text("format").notNull(),
-    produces: text("produces").notNull(),
+    /** What the source publishes, from its domain's product list. */
+    product: text("product").notNull(),
     accessMode: text("access_mode").notNull(),
     tier: text("tier").notNull(),
-    country: text("country").notNull(),
+    /** Null for a source of no single country (`eu`, `global`). */
+    country: text("country"),
     subdivision: text("subdivision"),
     operator: text("operator").notNull(),
     license: text("license").notNull(),
@@ -39,9 +41,8 @@ export const source = conditionsSchema.table(
     active: boolean("active").notNull().default(true),
     updatedAt: tstz("updated_at").notNull().defaultNow(),
   },
-  (t) => [
+  () => [
     check("source_access_mode_enum", sql.raw(enumCheckSql("access_mode", ACCESS_MODES))),
     check("source_tier_enum", sql.raw(enumCheckSql("tier", SOURCE_TIERS))),
-    check("source_produces_enum", sql`${t.produces} IN ('events', 'flow')`),
   ],
 );

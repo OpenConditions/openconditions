@@ -71,7 +71,7 @@ async function held() {
 
 describe("evictRawPayloads", () => {
   it("deletes evicted blobs and keeps their index rows, marked", async () => {
-    await archive("ca-bc-drivebc", "hot", 60);
+    await archive("ca-bc-drivebc-events", "hot", 60);
     const result = await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
     expect(result.evict).toHaveLength(60 - 49);
     const rows = await held();
@@ -80,14 +80,14 @@ describe("evictRawPayloads", () => {
   });
 
   it("keeps a payload a live situation was read from", async () => {
-    const hashes = await archive("nl-ndw", "situation", 1, 20 * 24);
-    await archive("nl-ndw", "situation", 3);
+    const hashes = await archive("nl-ndw-events", "situation", 1, 20 * 24);
+    await archive("nl-ndw-events", "situation", 3);
     await sql`
       INSERT INTO conditions.situation (id, record, canonical_id, kind, domain, temporality,
         source_id, source_record_id, origin, access_mode, privacy_class, instance_id, revision,
         recorded_at, content_hash, fetched_at, severity, certainty, planned, validity_status)
-      VALUES ('oc:situation:nl-ndw:a', ${sql.json({ provenance: { rawRef: { hash: hashes[0] } } })},
-        'c', 'incident', 'roads', 'live', 'nl-ndw', 'a', 'feed', 'bulk', 'authoritative',
+      VALUES ('oc:situation:nl-ndw-events:a', ${sql.json({ provenance: { rawRef: { hash: hashes[0] } } })},
+        'c', 'incident', 'roads', 'live', 'nl-ndw-events', 'a', 'feed', 'bulk', 'authoritative',
         'local', 1, ${RECENT}, 'h', ${RECENT}, 'unknown', 'unknown', false, 'active')`;
     const result = await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
     expect(result.evict.map((r) => r.hash)).not.toContain(hashes[0]);
@@ -140,21 +140,21 @@ describe("evictRawPayloads", () => {
   });
 
   it("over the cap, warns on the sources that lost hot-window payloads", async () => {
-    await sql`INSERT INTO conditions.source_status (source, freshness_window_sec) VALUES ('nl-ndw', 900)`;
-    await archive("nl-ndw", "situation", 20);
+    await sql`INSERT INTO conditions.source_status (source, freshness_window_sec) VALUES ('nl-ndw-events', 900)`;
+    await archive("nl-ndw-events", "situation", 20);
     const result = await evictRawPayloads(sql, {
       dir,
       policy: policy({ maxBytes: 1 }),
       historyDays: 90,
     });
-    expect(result).toMatchObject({ rung: 3, hotEvicted: ["nl-ndw"] });
+    expect(result).toMatchObject({ rung: 3, hotEvicted: ["nl-ndw-events"] });
     expect(result.evict).toHaveLength(17);
     const [status] = await sql`SELECT raw_hot_evicted_at FROM conditions.source_status`;
     expect(status!["raw_hot_evicted_at"]).toEqual(new Date(NOW));
   });
 
   it("plans without touching anything on a dry run", async () => {
-    await archive("ca-bc-drivebc", "hot", 60);
+    await archive("ca-bc-drivebc-events", "hot", 60);
     const result = await evictRawPayloads(sql, {
       dir,
       policy: policy(),
@@ -166,7 +166,7 @@ describe("evictRawPayloads", () => {
   });
 
   it("keeps a payload a poll fetched again after eviction planned it away", async () => {
-    const hashes = await archive("ca-bc-drivebc", "hot", 60);
+    const hashes = await archive("ca-bc-drivebc-events", "hot", 60);
     const oldest = hashes[59]!;
     const raw = createRawArchive(sql, { dir });
     // The poll lands between eviction reading the archive and applying its plan.
@@ -177,9 +177,9 @@ describe("evictRawPayloads", () => {
         if (!Array.isArray(strings) || !strings.join("").includes("FROM conditions.raw_payload p"))
           return query;
         return query.then(async (rows: unknown) => {
-          const body = Buffer.from(`ca-bc-drivebc payload 59 ${"x".repeat(200)}`);
+          const body = Buffer.from(`ca-bc-drivebc-events payload 59 ${"x".repeat(200)}`);
           const digest = digestPayload("https://ca-bc-drivebc.example/feed", body);
-          const meta = { sourceId: "ca-bc-drivebc", fetchId: 99, tier: "hot" as const };
+          const meta = { sourceId: "ca-bc-drivebc-events", fetchId: 99, tier: "hot" as const };
           await raw.capture({ ...meta, fetchedAt: new Date(NOW), url: digest.url }, body, digest);
           return rows;
         });
@@ -193,7 +193,7 @@ describe("evictRawPayloads", () => {
   });
 
   it("removes the index rows of payloads evicted longer ago than the history window", async () => {
-    await archive("ca-bc-drivebc", "hot", 60);
+    await archive("ca-bc-drivebc-events", "hot", 60);
     await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
     const later = { ...policy(), now: NOW + 91 * 24 * HOUR };
     const result = await evictRawPayloads(sql, { dir, policy: later, historyDays: 90 });

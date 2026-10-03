@@ -23,7 +23,7 @@
   },
   "sample": [
     {
-      "id": "oc:situation:nl-ndw:NDW08_bedf8af2-f18a-419e-9bf0-d253689d7d5f_SIT",
+      "id": "oc:situation:nl-ndw-events:NDW08_bedf8af2-f18a-419e-9bf0-d253689d7d5f_SIT",
       "temporality": "live",
       "externalIds": [
         {
@@ -61,14 +61,14 @@
         {
           "ref": {
             "class": "situation",
-            "id": "oc:situation:nl-ndw:8b2ce65d-9cee-ef11-a542-00505698df49"
+            "id": "oc:situation:nl-ndw-events:8b2ce65d-9cee-ef11-a542-00505698df49"
           },
           "relation": "related"
         }
       ],
       "provenance": {
         "origin": "feed",
-        "sourceId": "nl-ndw",
+        "sourceId": "nl-ndw-events",
         "sourceFormat": "datex2",
         "accessMode": "bulk",
         "recordId": "NDW08_bedf8af2-f18a-419e-9bf0-d253689d7d5f_SIT",
@@ -111,14 +111,14 @@
         "kind": "incident",
         "v": 1
       },
-      "canonicalId": "9da9d028449732ca986da674f90e14e190eb54e60b49572257719e7b584cb789",
+      "canonicalId": "c5a0c371a3ab5beb2208cb95132f09f9e06f3413e41cf0d36b11af74891d4a7c",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "319639f647bce6e48016df8857ceb83549345a506cc03cc1f155763eb62aa7fb"
+      "contentHash": "a047d0742a97789eefee426f37ad66ef258f13cd13baad9c1bed857e49dfe3b9"
     },
     {
-      "id": "oc:situation:nl-ndw:RWS01_SM1146779_D2_WWA",
+      "id": "oc:situation:nl-ndw-events:RWS01_SM1146779_D2_WWA",
       "temporality": "live",
       "externalIds": [
         {
@@ -181,14 +181,14 @@
         {
           "ref": {
             "class": "situation",
-            "id": "oc:situation:nl-ndw:RWS01_M1146779_CLOSED_LANES_D2"
+            "id": "oc:situation:nl-ndw-events:RWS01_M1146779_CLOSED_LANES_D2"
           },
           "relation": "related"
         }
       ],
       "provenance": {
         "origin": "feed",
-        "sourceId": "nl-ndw",
+        "sourceId": "nl-ndw-events",
         "sourceFormat": "datex2",
         "accessMode": "bulk",
         "recordId": "RWS01_SM1146779_D2_WWA",
@@ -248,14 +248,14 @@
         "kind": "roadworks",
         "v": 1
       },
-      "canonicalId": "da01abc3f1001105806bc3a9d010e1d8e07173cdc960453d4cdc5efd3afbbf65",
+      "canonicalId": "34c4fdc2e7d076af83df7b90297f14b0f6b9ae5ef819616ebfbe21efa4a0e92d",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "d2bed3a8332f9c40bde2db0f42fe8b6ea30b17aadaeb1469fbe40d9abb591825"
+      "contentHash": "4349d90c0bc5511d59e4c903c1bd9ccda78c4881ddcbfd485b88a9e676be3380"
     },
     {
-      "id": "oc:situation:nl-ndw:RWS10_OBS0000038442",
+      "id": "oc:situation:nl-ndw-events:RWS10_OBS0000038442",
       "temporality": "live",
       "externalIds": [
         {
@@ -380,7 +380,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "nl-ndw",
+        "sourceId": "nl-ndw-events",
         "sourceFormat": "datex2",
         "accessMode": "bulk",
         "recordId": "RWS10_OBS0000038442",
@@ -418,14 +418,14 @@
         "kind": "other",
         "v": 1
       },
-      "canonicalId": "4c5c18e934bf300ffb2579ca86b02ded7b847b76a32fa5f6712032d0a881bd65",
+      "canonicalId": "8586b502fbcf20a0784215e14fdb5154d1eefba3e1f932675ce854a504e8d3b5",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "6e309c9b77324d066cce5f7f65db974e5ac62715f89c43cfe34542472a9adeb8"
+      "contentHash": "b095d5f9fa24717ae935ded436c30af8a06cc55cd4fa9baff4fe01be3ae37b41"
     },
     {
-      "id": "oc:situation:nl-ndw:NDW06_632fac64-2081-46da-96b3-7c4df763c6fb",
+      "id": "oc:situation:nl-ndw-events:NDW06_632fac64-2081-46da-96b3-7c4df763c6fb",
       "temporality": "live",
       "externalIds": [
         {
@@ -461,7 +461,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "nl-ndw",
+        "sourceId": "nl-ndw-events",
         "sourceFormat": "datex2",
         "accessMode": "bulk",
         "recordId": "NDW06_632fac64-2081-46da-96b3-7c4df763c6fb",
@@ -498,14 +498,14 @@
         "kind": "incident",
         "v": 1
       },
-      "canonicalId": "bf761c7cd8a996a61d0d478f1ecb05c96de729d7d26638460e9810935e4e0d59",
+      "canonicalId": "fd4d6a96220eba958ae1486efa9ec7acb33bb3c910af0b03bed7990bc0e43fbc",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "2ccc69727283b894cc8206e21dfd25dcdd3e6e112619e67e76bef255716b94c8"
+      "contentHash": "d57a9555a4fd8deab01a689f0238aa680ba5112774aeb84654021b4a3c79d3f5"
     },
     {
-      "id": "oc:situation:nl-ndw:RWS01_SM1148373_D2_WWA",
+      "id": "oc:situation:nl-ndw-events:RWS01_SM1148373_D2_WWA",
       "temporality": "live",
       "externalIds": [
         {
@@ -748,14 +748,14 @@
         {
           "ref": {
             "class": "situation",
-            "id": "oc:situation:nl-ndw:RWS01_M1148373_CLOSED_LANES_D2"
+            "id": "oc:situation:nl-ndw-events:RWS01_M1148373_CLOSED_LANES_D2"
           },
           "relation": "related"
         }
       ],
       "provenance": {
         "origin": "feed",
-        "sourceId": "nl-ndw",
+        "sourceId": "nl-ndw-events",
         "sourceFormat": "datex2",
         "accessMode": "bulk",
         "recordId": "RWS01_SM1148373_D2_WWA",
@@ -2108,11 +2108,11 @@
         "kind": "roadworks",
         "v": 1
       },
-      "canonicalId": "e4cc85adde587f7066ea1a70a76bb58383bb8de58a117ee527853e0dd3e556eb",
+      "canonicalId": "b1c8795db7830addac5c512625c1cbaba5123ea8ae38c6eb60bc9724468490a2",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "72eb0ca2ef3627d526585bff6db86357fe7bebfe62183b5d0885573b932d57c0"
+      "contentHash": "31cfa3f2c0e08ee45947fb33aeacfa48f40c3fc20b9d7d113da1c48124350340"
     }
   ]
 }

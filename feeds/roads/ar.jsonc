@@ -1,0 +1,45 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "subdivision": "ba",
+      "operator": "cortes",
+      "product": "events",
+      "name": "Buenos Aires road closures (cortes)",
+      "tier": "authoritative",
+      "format": "geojson",
+      "credentials": {
+        "client_id": {
+          "title": "Buenos Aires transport — client_id",
+          "setup": {
+            "url": "https://api-transporte.buenosaires.gob.ar/registro",
+            "urlLabel": "BA transport API registration",
+            "steps": [
+              "Register / request a key at api-transporte.buenosaires.gob.ar/registro. The client_id + client_secret pair is sent to you by email.",
+            ],
+            "notes": "CC-BY-2.5-AR (commercial OK).",
+          },
+        },
+        "client_secret": {
+          "title": "Buenos Aires transport — client_secret",
+        },
+      },
+      "endpoints": {
+        "main": {
+          "url": "https://apitransporte.buenosaires.gob.ar/transito/v1/cortes?client_id=${client_id}&client_secret=${client_secret}",
+          "cadenceSec": 300,
+        },
+      },
+      "geojson": {
+        "defaultType": "road_closure",
+        "headlineField": "nombre",
+        "descriptionField": "descripcion",
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-CC-BY-2.5-AR",
+      "licenseUrl": "https://data.buenosaires.gob.ar/",
+      "attribution": "Gobierno de la Ciudad de Buenos Aires",
+      "privacyUrl": "https://www.buenosaires.gob.ar/politicas-de-privacidad",
+    },
+  ],
+}

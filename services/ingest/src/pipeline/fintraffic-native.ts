@@ -1,4 +1,4 @@
-import type { FeedSource } from "@openconditions/roads";
+import { type CatalogFeed, resolveEndpointUrls } from "@openconditions/ingest-framework";
 import { parseFintrafficSensorConstants, parseFintrafficStations } from "@openconditions/roads";
 import type postgres from "postgres";
 
@@ -95,15 +95,19 @@ async function loadStationPriority(sql: Sql, feedId: string): Promise<Map<string
  */
 export async function updateFintrafficNativeBaselines(
   sql: Sql,
-  feed: FeedSource,
+  feed: CatalogFeed,
   deps: FintrafficNativeDeps,
 ): Promise<{ updated: number }> {
-  const regUrl = feed.stationRegistry?.url;
+  // The station list is the feed's `sites` endpoint; its headers (Digitraffic's
+  // user header) go on every request to the same API.
+  const sites = feed.endpoints["sites"];
+  const regUrl = sites ? resolveEndpointUrls(feed, "sites")[0] : undefined;
   if (!regUrl) return { updated: 0 };
+  const headers = sites?.headers;
 
   let stationIds: string[];
   try {
-    const res = await deps.fetch(regUrl, { headers: feed.requestHeaders });
+    const res = await deps.fetch(regUrl, { headers });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     stationIds = [...parseFintrafficStations(await res.text()).keys()];
   } catch (err) {
@@ -127,7 +131,7 @@ export async function updateFintrafficNativeBaselines(
   for (const stationId of orderedStationIds.slice(0, deps.batchCap)) {
     try {
       const res = await deps.fetch(`${CONSTANTS_BASE}/${stationId}/sensor-constants`, {
-        headers: feed.requestHeaders,
+        headers,
       });
       if (!res.ok) continue;
       const rows = parseFintrafficSensorConstants(await res.text(), { stationId, on });

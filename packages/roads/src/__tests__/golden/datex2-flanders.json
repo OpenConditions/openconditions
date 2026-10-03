@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:be-flanders:EVT22334494",
+    "id": "oc:situation:be-flanders-events:EVT22334494",
     "temporality": "live",
     "externalIds": [
       {
@@ -548,7 +548,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "be-flanders",
+      "sourceId": "be-flanders-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "EVT22334494",
@@ -603,14 +603,14 @@
       "v": 1,
       "los": "queuing"
     },
-    "canonicalId": "ea8fea00150d8b69f8fe60533ea36ee0d0e39d8a51a81a5c0370e20f0dcd0040",
+    "canonicalId": "e484238b0171e3eebd51bd0bdf6d706f3ca81c37f331d63c6a3ae00582257375",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "4dbc13b319af655bf8a9168a0e40261c4e2c9b1ead8170a71dc514f30b3c53b5"
+    "contentHash": "e7f66a4b39e6408276661e807292139f0b9b2771fb4cbea680feb48edb2ae50d"
   },
   {
-    "id": "oc:situation:be-flanders:EVT22290721",
+    "id": "oc:situation:be-flanders-events:EVT22290721",
     "temporality": "live",
     "externalIds": [
       {
@@ -882,7 +882,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "be-flanders",
+      "sourceId": "be-flanders-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "EVT22290721",
@@ -922,14 +922,14 @@
       "v": 1,
       "basis": "temporary"
     },
-    "canonicalId": "d8c5d0ac4a752df8c007d4e793cc521fdbb524a6d2256aac6fbdb643a2ae3cf1",
+    "canonicalId": "7966fbffdd7291c972eb9b505bccfa595b03a5e911a2a43f9ac97ba2c91d4733",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f5e1e8ac587c96df9528726d27106f7893789c886b22e618c830ba64e941f8e0"
+    "contentHash": "3b8de51c35469be821605d8c61845569a18aaa7b62b4232d19bdbd32f3f55ca8"
   },
   {
-    "id": "oc:situation:be-flanders:EVT22290752",
+    "id": "oc:situation:be-flanders-events:EVT22290752",
     "temporality": "live",
     "externalIds": [
       {
@@ -1009,7 +1009,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "be-flanders",
+      "sourceId": "be-flanders-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "EVT22290752",
@@ -1061,14 +1061,14 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "7e7874a5788fe86ef308e1c0413361b288434f3059dc7f32f33e2fe9d24846d5",
+    "canonicalId": "0e5dcc15101f956d2b057587922d21314e856f24798b45c759a15fbdfd8dc0b4",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "a6c398cbd9aaa73afdf9710cf4a399040acb6f926ba2805666671e203e89c62b"
+    "contentHash": "90dcd13d1099e6277ad007d654d5d0044420d572fec13f1d46f2c4ff730c997d"
   },
   {
-    "id": "oc:situation:be-flanders:EVT22290563",
+    "id": "oc:situation:be-flanders-events:EVT22290563",
     "temporality": "live",
     "externalIds": [
       {
@@ -1428,7 +1428,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "be-flanders",
+      "sourceId": "be-flanders-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "EVT22290563",
@@ -1466,10 +1466,10 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "2c77c6326abce987121c09ac2d9a3a95dedf1d224f1bfd06ed281a091bef2f29",
+    "canonicalId": "6a6b96a04e45dda452ff99c2431568b87f130ec3270f4890fc49727db06d3f9d",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "851e7bd2aa28ee9f5b958fcfd3de8606f03c77d0ac9c7ffc3d8d286c9d8d0686"
+    "contentHash": "17089659f74ac4179c903c28c4427cbc34a8467e316317a1f41a4c3200211294"
   }
 ]

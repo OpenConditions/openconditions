@@ -1,0 +1,1203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "maintainers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "github": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "name",
+          "github"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "feeds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "subdivision": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+$"
+          },
+          "operator": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+$"
+          },
+          "qualifier": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "product": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+$",
+            "enum": [
+              "events",
+              "conditions",
+              "flow"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "format": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "autobahn",
+              "bcn-trams",
+              "bonn",
+              "datex2",
+              "datex2-elaborated",
+              "datex2-measured",
+              "digitraffic",
+              "digitraffic-traffic-measurement",
+              "fdt",
+              "fintraffic-tms",
+              "flatjson",
+              "gddkia",
+              "geojson",
+              "geojson-flow",
+              "hk-td",
+              "ibi511",
+              "ibi511-conditions",
+              "informo",
+              "lta",
+              "lta-speedbands",
+              "miv",
+              "nyc-dot",
+              "ohgo",
+              "ohgo-events",
+              "open511",
+              "trafikverket",
+              "trafikverket-flow",
+              "vic-disruptions",
+              "webtris",
+              "wzdx"
+            ]
+          },
+          "tier": {
+            "type": "string",
+            "enum": [
+              "authoritative",
+              "operator",
+              "aggregator",
+              "community"
+            ]
+          },
+          "endpoints": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "urls": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "reference": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "mobilithek"
+                    },
+                    "offerId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "fileNamePrefix": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "offerId",
+                    "fileNamePrefix"
+                  ],
+                  "additionalProperties": false
+                },
+                "expand": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "fanout": {
+                  "type": "string",
+                  "enum": [
+                    "all",
+                    "tolerant"
+                  ]
+                },
+                "method": {
+                  "type": "string",
+                  "enum": [
+                    "GET",
+                    "POST"
+                  ]
+                },
+                "body": {
+                  "type": "string"
+                },
+                "headers": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "pagination": {
+                  "type": "object",
+                  "properties": {
+                    "skipParam": {
+                      "type": "string"
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "recordsPath": {
+                      "type": "string"
+                    },
+                    "maxPages": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "skipParam",
+                    "pageSize"
+                  ],
+                  "additionalProperties": false
+                },
+                "gzip": {
+                  "type": "boolean"
+                },
+                "decoder": {
+                  "type": "string",
+                  "minLength": 1,
+                  "enum": [
+                    "bcn-trams-csv",
+                    "datex2-locations",
+                    "datex2-sites",
+                    "fintraffic-stations",
+                    "france-comptage-csv",
+                    "hk-detector-csv",
+                    "miv-config",
+                    "webtris-sites"
+                  ]
+                },
+                "cadenceSec": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "cadenceSec"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "credentials": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": {
+                  "type": "string"
+                },
+                "setup": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "urlLabel": {
+                      "type": "string"
+                    },
+                    "steps": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "cost": {
+                      "type": "string"
+                    },
+                    "notes": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "object",
+                      "properties": {
+                        "to": {
+                          "type": "string"
+                        },
+                        "subject": {
+                          "type": "string"
+                        },
+                        "body": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "to"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "optional": {
+                  "type": "boolean"
+                },
+                "default": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "auth": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "none"
+                  }
+                },
+                "required": [
+                  "kind"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "query-key"
+                  },
+                  "param": {
+                    "type": "string"
+                  },
+                  "credential": {
+                    "type": "string",
+                    "pattern": "^(@[a-z0-9]+(-[a-z0-9]+)*\\.)?[a-z][a-z0-9_]*$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "param",
+                  "credential"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "header-key"
+                  },
+                  "header": {
+                    "type": "string"
+                  },
+                  "credential": {
+                    "type": "string",
+                    "pattern": "^(@[a-z0-9]+(-[a-z0-9]+)*\\.)?[a-z][a-z0-9_]*$"
+                  },
+                  "valuePrefix": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "header",
+                  "credential"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "basic"
+                  },
+                  "user": {
+                    "type": "string",
+                    "pattern": "^(@[a-z0-9]+(-[a-z0-9]+)*\\.)?[a-z][a-z0-9_]*$"
+                  },
+                  "password": {
+                    "type": "string",
+                    "pattern": "^(@[a-z0-9]+(-[a-z0-9]+)*\\.)?[a-z][a-z0-9_]*$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "user",
+                  "password"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "bearer"
+                  },
+                  "credential": {
+                    "type": "string",
+                    "pattern": "^(@[a-z0-9]+(-[a-z0-9]+)*\\.)?[a-z][a-z0-9_]*$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "credential"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "oauth2-client-credentials"
+                  },
+                  "tokenUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "clientId": {
+                    "type": "string",
+                    "pattern": "^(@[a-z0-9]+(-[a-z0-9]+)*\\.)?[a-z][a-z0-9_]*$"
+                  },
+                  "clientSecret": {
+                    "type": "string",
+                    "pattern": "^(@[a-z0-9]+(-[a-z0-9]+)*\\.)?[a-z][a-z0-9_]*$"
+                  },
+                  "scope": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "tokenUrl",
+                  "clientId",
+                  "clientSecret"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "mtls"
+                  },
+                  "cert": {
+                    "type": "string",
+                    "pattern": "^(@[a-z0-9]+(-[a-z0-9]+)*\\.)?[a-z][a-z0-9_]*$"
+                  },
+                  "key": {
+                    "type": "string",
+                    "pattern": "^(@[a-z0-9]+(-[a-z0-9]+)*\\.)?[a-z][a-z0-9_]*$"
+                  },
+                  "ca": {
+                    "type": "string",
+                    "pattern": "^(@[a-z0-9]+(-[a-z0-9]+)*\\.)?[a-z][a-z0-9_]*$"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "cert",
+                  "key"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "catalog": {
+            "type": "object",
+            "properties": {
+              "resolver": {
+                "type": "string",
+                "minLength": 1
+              },
+              "filter": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {}
+              },
+              "approvedChildren": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "required": [
+              "resolver"
+            ],
+            "additionalProperties": false
+          },
+          "snapshot": {
+            "type": "object",
+            "properties": {
+              "completeness": {
+                "type": "string",
+                "const": "complete"
+              },
+              "recordsPath": {
+                "type": "string",
+                "minLength": 1
+              },
+              "rootElement": {
+                "type": "string",
+                "minLength": 1
+              },
+              "publicationElement": {
+                "type": "string",
+                "minLength": 1
+              },
+              "publicationType": {
+                "type": "string",
+                "minLength": 1
+              },
+              "recordElement": {
+                "type": "string",
+                "minLength": 1
+              },
+              "totalCountPath": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "completeness"
+            ],
+            "additionalProperties": false
+          },
+          "freshnessWindowSec": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "accessMode": {
+            "type": "string",
+            "enum": [
+              "bulk",
+              "on_demand"
+            ]
+          },
+          "requestLimits": {
+            "type": "object",
+            "properties": {
+              "perMinute": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "perDay": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              },
+              "maxRadiusKm": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "keyScope": {
+                "type": "string",
+                "enum": [
+                  "instance",
+                  "consumer"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "extrasAllow": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "extrasFederate": {
+            "type": "boolean"
+          },
+          "rawRetention": {
+            "type": "string",
+            "enum": [
+              "situation",
+              "observation",
+              "reference"
+            ]
+          },
+          "license": {
+            "type": "string",
+            "minLength": 1,
+            "enum": [
+              "NOASSERTION",
+              "CC0-1.0",
+              "CC-BY-4.0",
+              "CC-BY-SA-4.0",
+              "LicenseRef-CC-BY-2.5-AR",
+              "ODbL-1.0",
+              "DL-DE-ZERO-2.0",
+              "DL-DE-BY-2.0",
+              "LicenseRef-GeoNutzV",
+              "etalab-2.0",
+              "NLOD-2.0",
+              "OGL-UK-3.0",
+              "LicenseRef-OGL-BC",
+              "LicenseRef-OGL-ON",
+              "LicenseRef-OD-HR",
+              "LicenseRef-511NY-DAA",
+              "LicenseRef-Singapore-ODL-1.0",
+              "LicenseRef-HK-Gov-Open-Data",
+              "LicenseRef-NYC-Open-Data",
+              "LicenseRef-US-Gov-Public-Domain"
+            ]
+          },
+          "licenseUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "attribution": {
+            "type": "string",
+            "minLength": 1
+          },
+          "terms": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri"
+              },
+              "reviewedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                  },
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                ]
+              },
+              "note": {
+                "type": "string",
+                "minLength": 1
+              },
+              "redistribution": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "derivedRedistribution": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "commercialUse": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "attributionRequired": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "retention": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "privacyUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "coverage": {
+            "type": "object",
+            "properties": {
+              "countries": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[A-Z]{2}(-[A-Z0-9]{1,3})?$"
+                }
+              },
+              "bbox": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "items": false,
+                "minItems": 4,
+                "maxItems": 4
+              }
+            },
+            "additionalProperties": false
+          },
+          "disabled": {
+            "type": "object",
+            "properties": {
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              },
+              "since": {
+                "type": "string",
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+              }
+            },
+            "required": [
+              "reason",
+              "since"
+            ],
+            "additionalProperties": false
+          },
+          "geojson": {
+            "type": "object",
+            "properties": {
+              "idField": {
+                "type": "string"
+              },
+              "typeField": {
+                "type": "string"
+              },
+              "typeMap": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "accident",
+                        "congestion",
+                        "roadworks",
+                        "lane_closure",
+                        "road_closure",
+                        "contraflow",
+                        "detour",
+                        "hazard",
+                        "weather",
+                        "road_condition",
+                        "obstruction",
+                        "broken_down_vehicle",
+                        "public_event",
+                        "authority",
+                        "speed_restriction",
+                        "dimension_restriction",
+                        "equipment_fault",
+                        "security",
+                        "transit_disruption",
+                        "other"
+                      ]
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "incident.accident",
+                        "incident.accident.multi_vehicle",
+                        "incident.accident.jackknifed_truck",
+                        "incident.accident.overturned",
+                        "incident.accident.pedestrian_involved",
+                        "incident.accident.cyclist_involved",
+                        "incident.accident.motorcycle_involved",
+                        "incident.accident.bus_involved",
+                        "incident.accident.heavy_vehicle_involved",
+                        "incident.accident.train_involved",
+                        "incident.accident.animal_collision",
+                        "incident.accident.hazmat_spill",
+                        "incident.accident.secondary",
+                        "incident.accident.fatal",
+                        "incident.breakdown",
+                        "incident.breakdown.disabled_vehicle",
+                        "incident.breakdown.abandoned_vehicle",
+                        "incident.breakdown.stuck_vehicle",
+                        "incident.breakdown.wrong_way_driver",
+                        "incident.vehicle_hazard",
+                        "incident.vehicle_hazard.slow_vehicle",
+                        "incident.vehicle_hazard.abnormal_load",
+                        "incident.vehicle_hazard.oversize_vehicle",
+                        "incident.vehicle_hazard.hazmat_vehicle",
+                        "incident.vehicle_hazard.emergency_vehicle",
+                        "incident.vehicle_hazard.maintenance_vehicle",
+                        "incident.vehicle_hazard.reckless_driver",
+                        "incident.vehicle_hazard.high_speed_chase",
+                        "incident.vehicle_hazard.unlit_vehicle",
+                        "incident.vehicle_hazard.prohibited_vehicle",
+                        "incident.obstruction",
+                        "incident.obstruction.debris",
+                        "incident.obstruction.spill",
+                        "incident.obstruction.animal",
+                        "incident.obstruction.object",
+                        "incident.obstruction.people_on_road",
+                        "incident.obstruction.fallen_tree",
+                        "incident.obstruction.infrastructure_damage",
+                        "incident.obstruction.pothole",
+                        "incident.obstruction.sinkhole",
+                        "incident.obstruction.landslide",
+                        "incident.obstruction.rockfall",
+                        "incident.obstruction.stranded_vehicle",
+                        "incident.fire",
+                        "incident.fire.vehicle_fire",
+                        "incident.fire.roadside_fire",
+                        "incident.fire.tunnel_fire",
+                        "roadworks.works",
+                        "roadworks.works.construction",
+                        "roadworks.works.maintenance",
+                        "roadworks.works.resurfacing",
+                        "roadworks.works.bridge_work",
+                        "roadworks.works.utility_work",
+                        "roadworks.works.tree_work",
+                        "roadworks.works.line_marking",
+                        "roadworks.works.inspection",
+                        "roadworks.works.winter_service",
+                        "roadworks.works.emergency_repair",
+                        "roadworks.works.roadside_work",
+                        "roadworks.works.overhead_work",
+                        "roadworks.works.barrier_work",
+                        "roadworks.works.demolition",
+                        "roadworks.works.blasting",
+                        "roadworks.works.cleaning",
+                        "closure.closure",
+                        "closure.closure.full",
+                        "closure.closure.carriageway",
+                        "closure.closure.ramp",
+                        "closure.closure.lane",
+                        "closure.closure.bridge",
+                        "closure.closure.tunnel",
+                        "closure.closure.seasonal",
+                        "closure.closure.night",
+                        "closure.closure.weekend",
+                        "closure.closure.emergency",
+                        "closure.closure.intermittent",
+                        "restriction.dimension",
+                        "restriction.dimension.height",
+                        "restriction.dimension.width",
+                        "restriction.dimension.length",
+                        "restriction.dimension.weight",
+                        "restriction.dimension.axle_load",
+                        "restriction.dimension.axle_count",
+                        "restriction.access",
+                        "restriction.access.truck_ban",
+                        "restriction.access.hazmat",
+                        "restriction.access.hov",
+                        "restriction.access.local_access_only",
+                        "restriction.access.permit_only",
+                        "restriction.access.no_overtaking",
+                        "restriction.access.no_parking",
+                        "restriction.access.towing_prohibited",
+                        "restriction.access.oversize_prohibited",
+                        "restriction.access.convoy",
+                        "restriction.access.low_emission_zone",
+                        "restriction.speed",
+                        "restriction.speed.temporary",
+                        "restriction.speed.variable",
+                        "restriction.speed.advisory",
+                        "restriction.seasonal_load",
+                        "restriction.seasonal_load.spring_thaw",
+                        "restriction.seasonal_load.frost_law",
+                        "weather_condition.weather",
+                        "weather_condition.weather.ice",
+                        "weather_condition.weather.snow",
+                        "weather_condition.weather.freezing_rain",
+                        "weather_condition.weather.rain",
+                        "weather_condition.weather.heavy_rain",
+                        "weather_condition.weather.hail",
+                        "weather_condition.weather.fog",
+                        "weather_condition.weather.high_wind",
+                        "weather_condition.weather.storm",
+                        "weather_condition.weather.thunderstorm",
+                        "weather_condition.weather.dust",
+                        "weather_condition.weather.black_ice",
+                        "weather_condition.weather.blizzard",
+                        "weather_condition.weather.extreme_heat",
+                        "weather_condition.weather.extreme_cold",
+                        "weather_condition.weather.low_sun",
+                        "weather_condition.weather.reduced_visibility",
+                        "weather_condition.weather.pollution",
+                        "road_condition.surface",
+                        "road_condition.surface.icy",
+                        "road_condition.surface.snow_covered",
+                        "road_condition.surface.slush",
+                        "road_condition.surface.wet",
+                        "road_condition.surface.dry",
+                        "road_condition.surface.frost",
+                        "road_condition.surface.standing_water",
+                        "road_condition.surface.mud",
+                        "road_condition.surface.oil",
+                        "road_condition.surface.gravel",
+                        "road_condition.surface.loose_chippings",
+                        "road_condition.surface.leaves",
+                        "road_condition.surface.rough",
+                        "road_condition.driving_condition",
+                        "road_condition.driving_condition.good",
+                        "road_condition.driving_condition.fair",
+                        "road_condition.driving_condition.poor",
+                        "road_condition.driving_condition.hazardous",
+                        "road_condition.driving_condition.impassable",
+                        "road_condition.driving_condition.no_winter_maintenance",
+                        "road_hazard.hazard",
+                        "road_hazard.hazard.avalanche_risk",
+                        "road_hazard.hazard.flooding",
+                        "road_hazard.hazard.wildfire_near_road",
+                        "road_hazard.hazard.smoke",
+                        "road_hazard.hazard.low_visibility",
+                        "road_hazard.hazard.wildlife",
+                        "road_hazard.hazard.ice_fall",
+                        "road_hazard.hazard.high_water",
+                        "road_hazard.hazard.storm_surge",
+                        "public_event.event",
+                        "public_event.event.sporting",
+                        "public_event.event.parade",
+                        "public_event.event.concert",
+                        "public_event.event.demonstration",
+                        "public_event.event.market",
+                        "public_event.event.festival",
+                        "public_event.event.exhibition",
+                        "public_event.event.filming",
+                        "public_event.event.procession",
+                        "public_event.event.state_visit",
+                        "public_event.event.fireworks",
+                        "authority.operation",
+                        "authority.operation.police_checkpoint",
+                        "authority.operation.police_activity",
+                        "authority.operation.customs",
+                        "authority.operation.escort",
+                        "authority.operation.enforcement",
+                        "authority.operation.vehicle_inspection",
+                        "authority.operation.weighing",
+                        "authority.operation.survey",
+                        "authority.operation.emergency_services",
+                        "authority.operation.military_convoy",
+                        "equipment_fault.fault",
+                        "equipment_fault.fault.traffic_signal",
+                        "equipment_fault.fault.vms",
+                        "equipment_fault.fault.tunnel_system",
+                        "equipment_fault.fault.lighting",
+                        "equipment_fault.fault.lift",
+                        "equipment_fault.fault.barrier",
+                        "equipment_fault.fault.camera",
+                        "equipment_fault.fault.weather_station",
+                        "equipment_fault.fault.communications",
+                        "equipment_fault.fault.emergency_phone",
+                        "equipment_fault.fault.level_crossing",
+                        "equipment_fault.fault.toll_system",
+                        "equipment_fault.fault.power",
+                        "security.incident",
+                        "security.incident.bomb_alert",
+                        "security.incident.unattended_object",
+                        "security.incident.evacuation",
+                        "security.incident.civil_unrest",
+                        "security.incident.attack",
+                        "winter_operation.chain_control",
+                        "winter_operation.chain_control.R1",
+                        "winter_operation.chain_control.R2",
+                        "winter_operation.chain_control.R3",
+                        "winter_operation.chain_control.chains_all",
+                        "winter_operation.chain_control.winter_tyres",
+                        "pass_status.pass",
+                        "pass_status.pass.open",
+                        "pass_status.pass.closed",
+                        "pass_status.pass.restricted",
+                        "congestion.congestion",
+                        "congestion.congestion.queuing",
+                        "congestion.congestion.stationary",
+                        "congestion.congestion.stop_and_go",
+                        "congestion.congestion.heavy",
+                        "congestion.congestion.slow",
+                        "other.other"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "defaultType": {
+                "type": "string",
+                "enum": [
+                  "accident",
+                  "congestion",
+                  "roadworks",
+                  "lane_closure",
+                  "road_closure",
+                  "contraflow",
+                  "detour",
+                  "hazard",
+                  "weather",
+                  "road_condition",
+                  "obstruction",
+                  "broken_down_vehicle",
+                  "public_event",
+                  "authority",
+                  "speed_restriction",
+                  "dimension_restriction",
+                  "equipment_fault",
+                  "security",
+                  "transit_disruption",
+                  "other"
+                ]
+              },
+              "headlineField": {
+                "type": "string"
+              },
+              "descriptionField": {
+                "type": "string"
+              },
+              "severityField": {
+                "type": "string"
+              },
+              "severityMap": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high",
+                    "critical",
+                    "unknown"
+                  ]
+                }
+              },
+              "roadField": {
+                "type": "string"
+              },
+              "updatedField": {
+                "type": "string"
+              },
+              "arrayPath": {
+                "type": "string"
+              },
+              "lonField": {
+                "type": "string"
+              },
+              "latField": {
+                "type": "string"
+              },
+              "validFromField": {
+                "type": "string"
+              },
+              "validToField": {
+                "type": "string"
+              },
+              "filter": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string"
+                    },
+                    "include": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "exclude": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "field"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "startLonField": {
+                "type": "string"
+              },
+              "startLatField": {
+                "type": "string"
+              },
+              "endLonField": {
+                "type": "string"
+              },
+              "endLatField": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "flowMap": {
+            "type": "object",
+            "properties": {
+              "idField": {
+                "type": "string"
+              },
+              "speedField": {
+                "type": "string"
+              },
+              "freeFlowField": {
+                "type": "string"
+              },
+              "statusField": {
+                "type": "string"
+              },
+              "statusMap": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string"
+                },
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "updatedField": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "idField"
+            ],
+            "additionalProperties": false
+          },
+          "posListLonLat": {
+            "type": "boolean"
+          },
+          "srsName": {
+            "type": "string",
+            "minLength": 1
+          },
+          "bbox": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "items": false,
+            "minItems": 4,
+            "maxItems": 4
+          },
+          "openlrResolver": {
+            "type": "boolean"
+          },
+          "laneNumbering": {
+            "type": "string",
+            "enum": [
+              "standard",
+              "left_first"
+            ]
+          }
+        },
+        "required": [
+          "operator",
+          "product",
+          "name",
+          "format",
+          "tier",
+          "endpoints",
+          "freshnessWindowSec",
+          "license",
+          "attribution",
+          "privacyUrl"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "feeds"
+  ],
+  "additionalProperties": false,
+  "allowTrailingCommas": true
+}

@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:us-oh-ohgo-incidents:OH-INC-2001",
+    "id": "oc:situation:us-oh-ohgo-events:OH-INC-2001",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -29,14 +29,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "us-oh-ohgo-incidents",
+      "sourceId": "us-oh-ohgo-events",
       "sourceFormat": "ohgo-events",
       "accessMode": "bulk",
       "recordId": "OH-INC-2001",
       "sourceUpdatedAt": "2026-07-31T07:42:00.000Z",
       "attribution": {
         "provider": "Ohio Department of Transportation (OHGO)",
-        "license": "US-Gov-Public-Domain",
+        "license": "LicenseRef-US-Gov-Public-Domain",
         "licenseUrl": "https://www.usa.gov/government-works"
       },
       "privacy": {
@@ -88,14 +88,14 @@
       "kind": "incident",
       "v": 1
     },
-    "canonicalId": "a1928968aef87929d612c50b31fd33c4e7034a4cdbf76d8e420c5e3cb1b354bb",
+    "canonicalId": "0d04057f6c4838fa39bf8f536e55342f0166b594eb9048d63379d47e5f7f9a88",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "e3bb98218c671cb60eadce8aa57219e04c69e3c6771d27ea1f24f720ac160456"
+    "contentHash": "58ea622ca08d1ec88936d15c2855aca14f336e3e08b9667d1456561790029166"
   },
   {
-    "id": "oc:situation:us-oh-ohgo-incidents:OH-INC-2002",
+    "id": "oc:situation:us-oh-ohgo-events:OH-INC-2002",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -124,13 +124,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "us-oh-ohgo-incidents",
+      "sourceId": "us-oh-ohgo-events",
       "sourceFormat": "ohgo-events",
       "accessMode": "bulk",
       "recordId": "OH-INC-2002",
       "attribution": {
         "provider": "Ohio Department of Transportation (OHGO)",
-        "license": "US-Gov-Public-Domain",
+        "license": "LicenseRef-US-Gov-Public-Domain",
         "licenseUrl": "https://www.usa.gov/government-works"
       },
       "privacy": {
@@ -171,14 +171,14 @@
       "kind": "incident",
       "v": 1
     },
-    "canonicalId": "09a82935e2f32439580572c7156942171c3aa7b48bd828ec2604beda2eecf8dc",
+    "canonicalId": "a0fdcd69b910eb422b3f120e1a2d5e2906f578efacb189d35cdc4984f99e14c1",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "21c5d19fee9b4eff4de285efe62dc050a50dabe9f75f11a9d634c082e0ff2511"
+    "contentHash": "b67a2b9c5926b4fda2438e3f370a81bb6132697ad186c894c95e05729aa9d9f6"
   },
   {
-    "id": "oc:situation:us-oh-ohgo-incidents:OH-INC-2003",
+    "id": "oc:situation:us-oh-ohgo-events:OH-INC-2003",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -207,13 +207,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "us-oh-ohgo-incidents",
+      "sourceId": "us-oh-ohgo-events",
       "sourceFormat": "ohgo-events",
       "accessMode": "bulk",
       "recordId": "OH-INC-2003",
       "attribution": {
         "provider": "Ohio Department of Transportation (OHGO)",
-        "license": "US-Gov-Public-Domain",
+        "license": "LicenseRef-US-Gov-Public-Domain",
         "licenseUrl": "https://www.usa.gov/government-works"
       },
       "privacy": {
@@ -265,10 +265,10 @@
       "kind": "other",
       "v": 1
     },
-    "canonicalId": "3b4059037672cf267162b8edc1620190b92f74ce4f305a9e373a63bc2b0370e0",
+    "canonicalId": "e3636b59f8a14075efa1165117d58a7e9e7ea6e0afc73e0f7222d813bef0862d",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "28498b99b9af91a605a82173c470ae6477627351f881ae9e5009b5f5610524c8"
+    "contentHash": "c06257f88fc7e83bff24e1f632b75d1f1a141c6d78181c931059f01960d7cab8"
   }
 ]

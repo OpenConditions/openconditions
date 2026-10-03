@@ -1,0 +1,33 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "cita",
+      "product": "events",
+      "name": "CITA (Luxembourg)",
+      "tier": "authoritative",
+      "format": "datex2",
+      "endpoints": {
+        "main": { "url": "https://cita.lu/info_trafic/datex/situationrecord36", "cadenceSec": 300 },
+      },
+      "freshnessWindowSec": 900,
+      "snapshot": {
+        "completeness": "complete",
+        "rootElement": "d2LogicalModel",
+        "publicationElement": "payloadPublication",
+        "publicationType": "SituationPublication",
+        "recordElement": "situationRecord",
+      },
+      "license": "CC0-1.0",
+      "licenseUrl": "https://data.public.lu/en/datasets/cita-evenements-trafic-en-datex-ii-v3-6/",
+      // CC0 as published, so the review records evidence and overrides nothing.
+      "terms": {
+        "url": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "reviewedAt": "2026-09-11",
+        "note": "Reviewed against the data.public.lu CITA DATEX II v3.6 dataset.",
+      },
+      "attribution": "CITA (Luxembourg)",
+      "privacyUrl": "https://data.public.lu/en/pages/legal_notice/",
+    },
+  ],
+}

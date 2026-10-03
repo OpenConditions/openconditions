@@ -7,6 +7,7 @@ export * from "./dedupe.js";
 export * from "./digitraffic.js";
 export * from "./digitraffic-restrictions.js";
 export * from "./digitraffic-token.js";
+export * from "./domain.js";
 export * from "./feed-schema.js";
 export * from "./feeds.js";
 export * from "./fintraffic-constants.js";

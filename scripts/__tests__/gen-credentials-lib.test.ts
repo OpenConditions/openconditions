@@ -1,50 +1,93 @@
-import type { FeedSourceBase } from "@openconditions/ingest-framework";
+import {
+  type CatalogFeed,
+  type FeedDefinition,
+  type SharedCredentials,
+  toCatalogFeed,
+} from "@openconditions/ingest-framework";
 import { describe, expect, it } from "vitest";
 import {
+  type CredentialCatalog,
   configSchemaPropertiesFor,
+  credentialsDocFor,
   envExampleFor,
-  feedEnvVars,
 } from "../lib/gen-credentials-lib.js";
 
-const ny: FeedSourceBase = {
-  id: "us-ny-511",
-  name: "511NY (New York)",
+function feed(over: Partial<FeedDefinition>, region = "us"): CatalogFeed {
+  const def: FeedDefinition = {
+    operator: "test",
+    product: "events",
+    name: "Test",
+    format: "geojson",
+    tier: "authoritative",
+    endpoints: { main: { url: "https://example.org/feed", cadenceSec: 300 } },
+    freshnessWindowSec: 900,
+    license: "CC0-1.0",
+    attribution: "t",
+    privacyUrl: "https://example.org/privacy",
+    ...over,
+  };
+  return toCatalogFeed(def, { domain: "roads", region, file: "f.jsonc", maintainers: [] });
+}
+
+const ny = feed({
   subdivision: "ny",
   operator: "511",
-  format: "ibi511",
-  url: "https://511ny.org/api/v2/get/event?format=json",
-  auth: { kind: "query-key", param: "key", envVar: "US_NY_511_API_KEY" },
-  cadenceSec: 300,
-  freshnessWindowSec: 900,
-  license: "511NY-DAA",
-  attribution: "Powered by 511NY",
-  country: "US",
-  privacyUrl: "https://511ny.org/privacy",
-  tier: "authoritative",
-  setup: {
-    US_NY_511_API_KEY: {
+  name: "511NY (New York)",
+  license: "LicenseRef-511NY-DAA",
+  credentials: {
+    api_key: {
       title: "511NY API key (New York)",
       description: "Query key.",
-      url: "https://511ny.org/my511/register",
-      cost: "Free",
+      setup: { url: "https://511ny.org/my511/register", cost: "Free" },
+    },
+  },
+  auth: { kind: "query-key", param: "key", credential: "api_key" },
+});
+
+const shared: SharedCredentials = {
+  groups: {
+    mobilithek: {
+      cert: {
+        title: "Mobilithek certificate",
+        setup: { url: "https://mobilithek.info", urlLabel: "Mobilithek" },
+      },
+      key: { title: "Mobilithek key" },
     },
   },
 };
 
-describe("gen-credentials-lib", () => {
-  it("extracts the env vars a feed needs", () => {
-    expect(feedEnvVars(ny)).toEqual(["US_NY_511_API_KEY"]);
-  });
+const mobilithek = (subdivision: string) =>
+  feed(
+    {
+      subdivision,
+      operator: "mobilithek",
+      name: `Mobilithek ${subdivision}`,
+      endpoints: {
+        main: { url: "https://m.example.org/${subscription_id}", cadenceSec: 300 },
+      },
+      credentials: { subscription_id: { title: `Subscription ${subdivision}` } },
+      auth: { kind: "mtls", cert: "@mobilithek.cert", key: "@mobilithek.key" },
+    },
+    "de",
+  );
 
-  it("emits an .env.example section with a header comment + the var", () => {
-    const out = envExampleFor([ny]);
-    expect(out).toContain("# 511NY (New York)");
-    expect(out).toContain("US_NY_511_API_KEY=");
+const ofFeeds = (feeds: CatalogFeed[], credentials = shared): CredentialCatalog => ({
+  feeds,
+  credentials,
+});
+
+describe("gen-credentials-lib", () => {
+  it("emits an .env.example block per keyed feed under its derived names", () => {
+    const out = envExampleFor(ofFeeds([ny, feed({ operator: "open" })]));
+    expect(out).toContain("# 511NY (New York) (us-ny-511-events)");
+    expect(out).toContain("# Get credentials: https://511ny.org/my511/register");
+    expect(out).toContain("US_NY_511_EVENTS_API_KEY=");
+    expect(out).not.toContain("us-open-events");
   });
 
   it("emits a configSchema property matching the admin-panel contract", () => {
-    const props = configSchemaPropertiesFor([ny]);
-    expect(props["US_NY_511_API_KEY"]).toEqual({
+    const props = configSchemaPropertiesFor(ofFeeds([ny]));
+    expect(props["US_NY_511_EVENTS_API_KEY"]).toEqual({
       type: "string",
       title: "511NY API key (New York)",
       description: "Query key.",
@@ -54,7 +97,7 @@ describe("gen-credentials-lib", () => {
   });
 
   it("emits the layered feed-delivery settings as non-secret service settings", () => {
-    const props = configSchemaPropertiesFor([]);
+    const props = configSchemaPropertiesFor(ofFeeds([]));
     for (const key of [
       "OPENCONDITIONS_FEEDS_DIR",
       "OPENCONDITIONS_FEEDS_REMOTE_URL",
@@ -64,81 +107,41 @@ describe("gen-credentials-lib", () => {
     }
   });
 
-  it("dedupes env vars shared across feeds (e.g. shared mTLS creds), emitting each once", () => {
-    const feedA: FeedSourceBase = {
-      id: "region-a",
-      name: "Region A",
-      operator: "test",
-      format: "geojson",
-      auth: { kind: "mtls", certEnvVar: "SHARED_CERT", keyEnvVar: "SHARED_KEY" },
-      requiredEnv: ["A_ID"],
-      cadenceSec: 300,
-      freshnessWindowSec: 900,
-      license: "CC0-1.0",
-      attribution: "t",
-      country: "DE",
-      privacyUrl: "https://x",
-      tier: "authoritative",
-    };
-    const feedB: FeedSourceBase = {
-      id: "region-b",
-      name: "Region B",
-      operator: "test",
-      format: "geojson",
-      auth: { kind: "mtls", certEnvVar: "SHARED_CERT", keyEnvVar: "SHARED_KEY" },
-      requiredEnv: ["B_ID"],
-      cadenceSec: 300,
-      freshnessWindowSec: 900,
-      license: "CC0-1.0",
-      attribution: "t",
-      country: "DE",
-      privacyUrl: "https://x",
-      tier: "authoritative",
-    };
-    const out = envExampleFor([feedA, feedB]);
-    expect(out.split("SHARED_CERT=").length - 1).toBe(1);
-    expect(out.split("SHARED_KEY=").length - 1).toBe(1);
-    expect(out).toContain("A_ID=");
-    expect(out).toContain("B_ID=");
-  });
-});
+  it("emits a shared group's fields once, with the group's setup guide", () => {
+    const catalog = ofFeeds([mobilithek("hh"), mobilithek("by")]);
+    const out = envExampleFor(catalog);
+    expect(out).toContain(
+      "# Shared: mobilithek (de-hh-mobilithek-events, de-by-mobilithek-events)",
+    );
+    expect(out).toContain("# Mobilithek: https://mobilithek.info");
+    expect(out.split("MOBILITHEK_CERT=").length - 1).toBe(1);
+    expect(out.split("MOBILITHEK_KEY=").length - 1).toBe(1);
+    expect(out).toContain("DE_HH_MOBILITHEK_EVENTS_SUBSCRIPTION_ID=");
+    expect(out).toContain("DE_BY_MOBILITHEK_EVENTS_SUBSCRIPTION_ID=");
 
-describe("configSchemaPropertiesFor — shared credentials", () => {
-  const keyed = (id: string, name: string, setup?: Record<string, unknown>) =>
-    ({
-      id,
-      name,
-      operator: "t",
-      format: "geojson",
-      url: `https://x.test/${id}`,
-      cadenceSec: 300,
-      freshnessWindowSec: 900,
-      license: "CC-BY-4.0",
-      attribution: "t",
-      country: "AU",
-      privacyUrl: "https://x.test/privacy",
-      tier: "authoritative",
-      auth: { kind: "header-key", header: "K", envVar: "SHARED_KEY" },
-      ...(setup ? { setup } : {}),
-    }) as never;
-
-  it("keeps a guide contributed by one feed when a later feed shares the key without one", () => {
-    const props = configSchemaPropertiesFor([
-      keyed("with-guide", "Feed with guide", {
-        SHARED_KEY: { title: "Portal key", url: "https://portal.test" },
-      }),
-      keyed("no-guide", "Feed without guide"),
-    ]) as Record<string, { title: string; "x-openmapx-setup"?: unknown }>;
-
-    expect(props.SHARED_KEY!.title).toBe("Portal key");
-    expect(props.SHARED_KEY!["x-openmapx-setup"]).toMatchObject({ url: "https://portal.test" });
+    const props = configSchemaPropertiesFor(catalog) as Record<string, Record<string, unknown>>;
+    expect(props["MOBILITHEK_CERT"]).toMatchObject({
+      title: "Mobilithek certificate",
+      "x-openmapx-setup": { url: "https://mobilithek.info", urlLabel: "Mobilithek" },
+    });
+    expect(props["MOBILITHEK_KEY"]).not.toHaveProperty("x-openmapx-setup");
   });
 
-  it("still scaffolds a placeholder when no feed declares a guide", () => {
-    const props = configSchemaPropertiesFor([keyed("no-guide", "Feed without guide")]) as Record<
-      string,
-      { title: string }
-    >;
-    expect(props.SHARED_KEY!.title).toBe("Feed without guide — SHARED_KEY");
+  it("names a catalogue child's credentials after its parent", () => {
+    const child: CatalogFeed = { ...ny, id: "us-ny-511-x-events", parentSourceId: ny.id };
+    const props = configSchemaPropertiesFor(ofFeeds([child]));
+    expect(Object.keys(props)).toContain("US_NY_511_EVENTS_API_KEY");
+    expect(Object.keys(props)).not.toContain("US_NY_511_X_EVENTS_API_KEY");
+  });
+
+  it("documents each keyed feed with its env vars, licence and guide", () => {
+    const doc = credentialsDocFor(ofFeeds([ny, mobilithek("hh"), mobilithek("by")]));
+    expect(doc).toContain("> Generated by `pnpm gen:credentials`. Do not edit by hand.");
+    expect(doc).toContain(
+      "| 511NY (New York) | `us-ny-511-events` | `US_NY_511_EVENTS_API_KEY` | LicenseRef-511NY-DAA | [portal](https://511ny.org/my511/register) |",
+    );
+    expect(doc).toContain(
+      "| `de-hh-mobilithek-events` | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_HH_MOBILITHEK_EVENTS_SUBSCRIPTION_ID` |",
+    );
   });
 });

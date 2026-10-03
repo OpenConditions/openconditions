@@ -6,7 +6,7 @@ import {
 import { fixture, flowFeed, flows, site, siteIds, text, value } from "./flow-fixtures.js";
 
 /**
- * Pins the datex-elaborated ElaboratedData + PredefinedLocations path against the
+ * Pins the datex2-elaborated ElaboratedData + PredefinedLocations path against the
  * shape the live NRW Autobahn GmbH BAB feeds actually publish (validated against a
  * real payload 2026-07-25): an `ElaboratedDataPublication` whose basicData is
  * located by `pertinentLocation > predefinedLocationReference id`, joined to a
@@ -14,11 +14,11 @@ import { fixture, flowFeed, flows, site, siteIds, text, value } from "./flow-fix
  * `location > pointByCoordinates > pointCoordinates > latitude/longitude`. NRW uses
  * this profile where Hessen VZD / Bayern use MeasuredData + MeasurementSiteTable.
  */
-const FEED = "de-nw-autobahn-fahrstreifen";
+const FEED = "de-nw-autobahn-flow";
 const SITE_ID = "fs.MQ_555.050_AB_SW_R_1";
 const POINT = { type: "Point", coordinates: [7.545113, 51.474907] };
 
-describe("Autobahn NRW ElaboratedData (datex-elaborated) — live payload shape", () => {
+describe("Autobahn NRW ElaboratedData (datex2-elaborated) — live payload shape", () => {
   it("resolves the Verortung point and the lane it stands for", () => {
     expect(
       parsePredefinedLocations(fixture("autobahn-bab-nrw/verortung.xml")).get(SITE_ID),

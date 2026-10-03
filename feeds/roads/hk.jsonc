@@ -1,0 +1,28 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "td",
+      "product": "flow",
+      "name": "Transport Department traffic detectors (Hong Kong)",
+      "tier": "authoritative",
+      "format": "hk-td",
+      "endpoints": {
+        "main": {
+          "url": "https://resource.data.one.gov.hk/td/traffic-detectors/rawSpeedVol-all.xml",
+          "cadenceSec": 120,
+        },
+        "sites": {
+          "url": "https://static.data.gov.hk/td/traffic-data-strategic-major-roads/info/traffic_speed_volume_occ_info.csv",
+          "decoder": "hk-detector-csv",
+          "cadenceSec": 21600,
+        },
+      },
+      "freshnessWindowSec": 600,
+      "license": "LicenseRef-HK-Gov-Open-Data",
+      "licenseUrl": "https://data.gov.hk/en/terms-and-conditions",
+      "attribution": "Transport Department, HKSAR",
+      "privacyUrl": "https://www.td.gov.hk/en/privacy_policy/index.html",
+    },
+  ],
+}

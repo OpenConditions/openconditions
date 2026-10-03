@@ -1,13 +1,12 @@
 import { Readable } from "node:stream";
 import { gzipSync } from "node:zlib";
 import { digestPayload } from "@openconditions/ingest-framework";
-import type { FeedSource } from "@openconditions/roads";
-import { FEED_SOURCES } from "@openconditions/roads";
 import { describe, expect, it } from "vitest";
-import { streamMeasuredData } from "../pipeline/measured-data.js";
-import type { DomainFeedSource } from "../pipeline/run.js";
-import { clearSiteTableCache, loadSiteTable } from "../pipeline/site-table.js";
+import { formatOf } from "../domains.js";
+import { streamFeed } from "../pipeline/measured-data.js";
+import { clearReferenceCaches, loadReference } from "../pipeline/reference.js";
 import { isTransientSocketError, withStreamRetry } from "../pipeline/stream-retry.js";
+import { repoFeed, testFeed } from "./helpers/catalog.js";
 
 /** undici's real shape for a mid-stream drop: `terminated` wrapping UND_ERR_SOCKET. */
 function terminatedError(): Error {
@@ -32,53 +31,72 @@ function erroringStream(): Readable {
   });
 }
 
-describe("streaming feed error handling", () => {
-  it("loadSiteTable catches a mid-stream source error and falls back (no crash)", async () => {
-    clearSiteTableCache();
-    const feed = {
-      id: "test-flow",
-      siteTable: { url: "http://example.test/site.xml.gz", gzip: true },
-    } as unknown as FeedSource;
+/** A response whose body breaks off on first read, as undici's does on a dropped socket. */
+function erroringResponse(): Response {
+  return new Response(
+    new ReadableStream({
+      pull(controller) {
+        controller.error(new Error("other side closed"));
+      },
+    }),
+    { status: 200 },
+  );
+}
 
-    const map = await loadSiteTable(
+const NDW_FLOW = repoFeed("nl-ndw-flow");
+const CTX = { fetchedAt: new Date(0).toISOString(), cadenceSec: 60, reference: {} };
+
+describe("streaming feed error handling", () => {
+  it("loadReference catches a mid-stream source error and falls back (no crash)", async () => {
+    clearReferenceCaches();
+    const feed = testFeed({
+      id: "test-flow",
+      product: "flow",
+      format: "datex2-measured",
+      endpoints: {
+        main: { url: "http://example.test/measured.xml", cadenceSec: 60 },
+        sites: {
+          url: "http://example.test/site.xml.gz",
+          gzip: true,
+          decoder: "datex2-sites",
+          cadenceSec: 21600,
+        },
+      },
+    });
+
+    const map = await loadReference(
       feed,
-      async () => erroringStream(),
+      "sites",
+      (async () => erroringResponse()) as unknown as typeof fetch,
       () => 0,
     );
     // The error is caught; with no prior cache there is nothing to fall back to.
     expect(map).toBeUndefined();
   });
 
-  it("streamMeasuredData rejects (does not crash) on a mid-stream source error", async () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "nl-ndw-flow")!;
-    const src = { ...feed, domain: "roads" } as DomainFeedSource;
-
+  it("streamFeed rejects (does not crash) on a mid-stream source error", async () => {
     await expect(
-      streamMeasuredData(src, async () => erroringStream(), undefined, {
-        now: new Date(0).toISOString(),
-        cadenceSec: 60,
-      }),
+      streamFeed(NDW_FLOW, formatOf(NDW_FLOW).stream!, async () => erroringStream(), CTX),
     ).rejects.toThrow();
   });
 });
 
 describe("streamed payload digest", () => {
   it("hashes the decoded document on its way to the parser", async () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "nl-ndw-flow")!;
-    const src = { ...feed, domain: "roads" } as DomainFeedSource;
     // One site with no geometry: the parser accepts the publication and skips the site.
     const xml = Buffer.from(
       '<?xml version="1.0"?><d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0">' +
         '<payloadPublication><siteMeasurements><measurementSiteReference id="S1"/>' +
         "</siteMeasurements></payloadPublication></d2LogicalModel>",
     );
-    const body = src.gzip ? gzipSync(xml) : xml;
-    const { features, observations, situations, payload } = await streamMeasuredData(
-      src,
+    const body = NDW_FLOW.endpoints["main"]?.gzip ? gzipSync(xml) : xml;
+    const { output, payload } = await streamFeed(
+      NDW_FLOW,
+      formatOf(NDW_FLOW).stream!,
       async () => Readable.from([body]),
-      undefined,
-      { now: new Date(0).toISOString(), cadenceSec: 60 },
+      CTX,
     );
+    const { features, observations, situations } = output;
     expect(features).toEqual([]);
     expect(observations).toEqual([]);
     expect(situations).toEqual([]);

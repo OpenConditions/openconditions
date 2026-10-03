@@ -14,7 +14,7 @@ export function restrictionDetails(): RoadRestrictionDetailsV1 {
     completeness: "complete",
     issues: [],
     source: {
-      sourceId: "fi-digitraffic",
+      sourceId: "fi-digitraffic-events",
       recordId: "GUID50465935",
       recordVersion: "31",
       sourceUpdatedAt: "2026-08-28T04:18:02.629Z",
@@ -102,8 +102,8 @@ export function restrictionDetails(): RoadRestrictionDetailsV1 {
 
 export function restrictionEvent(): RoadEvent {
   return {
-    id: "fi-digitraffic:GUID50465935",
-    source: "fi-digitraffic",
+    id: "fi-digitraffic-events:GUID50465935",
+    source: "fi-digitraffic-events",
     sourceFormat: "digitraffic",
     domain: "roads",
     kind: "event",

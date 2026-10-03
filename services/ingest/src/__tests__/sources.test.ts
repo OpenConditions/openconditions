@@ -1,15 +1,20 @@
 import { describe, expect, it } from "vitest";
-import { buildDomainRegistry } from "../domains.js";
 import { catalogueSources } from "../sources.js";
+import { REPO_CATALOG } from "./helpers/catalog.js";
 
 describe("catalogueSources", () => {
-  it("lists every scheduled feed once, with its domain and tier", async () => {
-    const registry = await buildDomainRegistry();
-    const sources = catalogueSources(registry);
-    expect(sources.length).toBe(registry["roads"]!.feeds.length);
+  it("lists every scheduled feed once, with its domain, product and tier", () => {
+    const sources = catalogueSources(REPO_CATALOG);
+    expect(sources.length).toBe(REPO_CATALOG.feeds.length);
     expect(new Set(sources.map((s) => s.id)).size).toBe(sources.length);
-    const ndw = sources.find((s) => s.id === "nl-ndw")!;
-    expect(ndw).toMatchObject({ domain: "roads", tier: "authoritative", format: "datex2" });
-    expect(sources.every((s) => s.tier !== undefined)).toBe(true);
+    expect(sources.find((s) => s.id === "nl-ndw-events")).toMatchObject({
+      domain: "roads",
+      product: "events",
+      tier: "authoritative",
+      format: "datex2",
+      country: "NL",
+    });
+    expect(sources.find((s) => s.id === "nl-ndw-flow")).toMatchObject({ product: "flow" });
+    expect(sources.every((s) => s.tier !== undefined && s.rights !== undefined)).toBe(true);
   });
 });

@@ -2,14 +2,13 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { LookupFn } from "@openconditions/ingest-framework";
-import { FEED_SOURCES } from "@openconditions/roads";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runRawCommand } from "../ops/raw.js";
 import { replayRaw } from "../ops/raw-replay.js";
-import type { DomainFeedSource } from "../pipeline/run.js";
 import { runSource } from "../pipeline/run.js";
 import { createRawArchive } from "../raw/archive.js";
+import { repoFeed } from "./helpers/catalog.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 const NDW = readFileSync(
@@ -19,10 +18,7 @@ const NDW = readFileSync(
   ),
 );
 const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
-const ndw: DomainFeedSource = {
-  ...FEED_SOURCES.find((f) => f.id === "nl-ndw")!,
-  domain: "roads",
-};
+const ndw = repoFeed("nl-ndw-events");
 const FROM = new Date("2000-01-01T00:00:00Z");
 
 /** How many situations the poll left live. */
@@ -82,10 +78,10 @@ describe("raw replay", () => {
     const [{ id }] = await sql<{ id: string }[]>`
       SELECT id FROM conditions.situation ORDER BY id LIMIT 1`;
     await sql`UPDATE conditions.situation_revision
-                 SET snapshot = jsonb_set(snapshot, '{id}', '"oc:situation:nl-ndw:renamed"')
+                 SET snapshot = jsonb_set(snapshot, '{id}', '"oc:situation:nl-ndw-events:renamed"')
                WHERE situation_id = ${id}`;
     const [poll] = (await replayRaw(sql, { feed: ndw, from: FROM, dir })).polls;
-    expect(poll).toMatchObject({ created: [id], gone: ["oc:situation:nl-ndw:renamed"] });
+    expect(poll).toMatchObject({ created: [id], gone: ["oc:situation:nl-ndw-events:renamed"] });
   });
 
   it("reports a poll whose payload was evicted instead of diffing a part of it", async () => {
@@ -99,7 +95,7 @@ describe("raw replay", () => {
     const lines: string[] = [];
     const code = await runRawCommand(
       sql,
-      ["replay", "nl-ndw", "--from", FROM.toISOString()],
+      ["replay", "nl-ndw-events", "--from", FROM.toISOString()],
       (l) => lines.push(l),
       { OPENCONDITIONS_RAW_DIR: dir },
     );
@@ -112,6 +108,6 @@ describe("raw replay", () => {
     expect(
       await runRawCommand(sql, ["replay", "nope", "--from", FROM.toISOString()], () => {}),
     ).toBe(1);
-    expect(await runRawCommand(sql, ["replay", "nl-ndw"], () => {})).toBe(2);
+    expect(await runRawCommand(sql, ["replay", "nl-ndw-events"], () => {})).toBe(2);
   });
 });

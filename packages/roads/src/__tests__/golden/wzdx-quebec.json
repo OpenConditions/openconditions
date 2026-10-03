@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:us-wzdx:TIC-Quebec/1:ACL-20260729-02-JFP-P6_1",
+    "id": "oc:situation:us-wzdx-events:TIC-Quebec/1:ACL-20260729-02-JFP-P6_1",
     "temporality": "live",
     "externalIds": [
       {
@@ -47,14 +47,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "us-wzdx",
+      "sourceId": "us-wzdx-events",
       "sourceFormat": "wzdx",
       "accessMode": "bulk",
       "recordId": "TIC-Quebec/1:ACL-20260729-02-JFP-P6_1",
       "sourceUpdatedAt": "2026-07-29T13:54:15.203Z",
       "attribution": {
         "provider": "WZDx publishers",
-        "license": "UNKNOWN"
+        "license": "NOASSERTION"
       },
       "privacy": {
         "class": "authoritative"
@@ -130,14 +130,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "fd65f29d77afa8512ea7852a0391b68ad64e7675bfd9b1776a0c1e0c359aa481",
+    "canonicalId": "b1cd8567ca19ad2cd5dcafe787bff3355bf6487ac6f87a6c131b21ec4b0dfa2a",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "6a9e510129d7b89fb69c24731b06242f328071b42cce4bc732ee982b65757df7"
+    "contentHash": "b225c81e01e6cd19cba4c15f226cc42ea2254ebd88f96141cfbb70b8373c0a3d"
   },
   {
-    "id": "oc:situation:us-wzdx:TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0",
+    "id": "oc:situation:us-wzdx-events:TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0",
     "temporality": "live",
     "externalIds": [
       {
@@ -196,14 +196,14 @@
     },
     "provenance": {
       "origin": "derived",
-      "sourceId": "us-wzdx",
+      "sourceId": "us-wzdx-events",
       "sourceFormat": "wzdx",
       "accessMode": "bulk",
       "recordId": "TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0",
       "sourceUpdatedAt": "2026-07-27T19:52:24.577Z",
       "attribution": {
         "provider": "WZDx publishers",
-        "license": "UNKNOWN"
+        "license": "NOASSERTION"
       },
       "privacy": {
         "class": "authoritative"
@@ -301,10 +301,10 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "bfd7bd1bd4533a83e04937ecc5d9f82571dfd2f4fa792a4c5721208ec813859e",
+    "canonicalId": "21f5f6ea3cf02aa1de59605172a66648dfc75de624fe830091c8a0715e27b332",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "58b799a49b7c4d8098b2336da9aa34332a2b1986992697851d51c37e12c7212e"
+    "contentHash": "e9cad462d173cd5b7e6ff0482a71a3f9c45460535c5b8a84a833e83faf384498"
   }
 ]

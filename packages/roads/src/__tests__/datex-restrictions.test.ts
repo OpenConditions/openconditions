@@ -14,19 +14,19 @@ import type { SourceDescriptor } from "../types.js";
 const xml = readFileSync(new URL("./fixtures/ndw/restrictions-v3.xml", import.meta.url), "utf8");
 
 const ndwSource: SourceDescriptor = {
-  id: "nl-ndw",
+  id: "nl-ndw-events",
   attribution: "NDW / Rijkswaterstaat",
   country: "NL",
   license: "CC0-1.0",
   licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
 };
 
-const HEIGHT_ID = "nl-ndw:RWS01_M1080891_NARROW_LANES_D2_WWA";
-const EMERGENCY_ID = "nl-ndw:RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA";
-const DISPLACEMENT_ID = "nl-ndw:RWS01_M1080891_DISPLACEMENT_D2_WWA";
-const OBSTRUCTION_ID = "nl-ndw:NDW08_2e188db4-9bff-492d-bf28-90e17bffac8c";
-const LORRY_POSITIVE_ID = "nl-ndw:NLRWS_0005382945_1";
-const LORRY_NEGATIVE_ID = "nl-ndw:NLRWS_0005406494_1";
+const HEIGHT_ID = "nl-ndw-events:RWS01_M1080891_NARROW_LANES_D2_WWA";
+const EMERGENCY_ID = "nl-ndw-events:RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA";
+const DISPLACEMENT_ID = "nl-ndw-events:RWS01_M1080891_DISPLACEMENT_D2_WWA";
+const OBSTRUCTION_ID = "nl-ndw-events:NDW08_2e188db4-9bff-492d-bf28-90e17bffac8c";
+const LORRY_POSITIVE_ID = "nl-ndw-events:NLRWS_0005382945_1";
+const LORRY_NEGATIVE_ID = "nl-ndw-events:NLRWS_0005406494_1";
 
 function snapshot(source = xml) {
   return reconcileRoadSnapshots([parseDatexSnapshot(source, ndwSource)]);
@@ -98,7 +98,7 @@ describe("ndw applicability extraction from the real capture", () => {
     ]);
     expect(height.restrictionDetails.vehicleScope).toBe("specific");
     expect(height.restrictionDetails.source).toMatchObject({
-      sourceId: "nl-ndw",
+      sourceId: "nl-ndw-events",
       recordId: "RWS01_M1080891_NARROW_LANES_D2_WWA",
       recordVersion: "133",
       license: "CC0-1.0",

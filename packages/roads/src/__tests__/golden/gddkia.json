@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:pl-gddkia:1qxek0t",
+    "id": "oc:situation:pl-gddkia-events:1qxek0t",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -30,7 +30,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "pl-gddkia",
+      "sourceId": "pl-gddkia-events",
       "sourceFormat": "gddkia",
       "accessMode": "bulk",
       "recordId": "1qxek0t",
@@ -79,14 +79,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "d7e2dbdd21421acef7b4b8525ecb4b06ee0abfaa69bc099d00beac1359841607",
+    "canonicalId": "62993d73535ac209b3600b63e86f3dbc0959c93bd96ebddfe77d155a6c63903e",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "621857845ba0bab1df9b4026561d4a5afc0cc4f31e2ac092ff423b66b4a90033"
+    "contentHash": "877dc488436d98a9a85d2f36035eea67852ba8448d842e8ac50bf71564d23cd9"
   },
   {
-    "id": "oc:situation:pl-gddkia:jnlp52",
+    "id": "oc:situation:pl-gddkia-events:jnlp52",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -116,7 +116,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "pl-gddkia",
+      "sourceId": "pl-gddkia-events",
       "sourceFormat": "gddkia",
       "accessMode": "bulk",
       "recordId": "jnlp52",
@@ -165,14 +165,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "19fe0d95f38bc2f6e77365900e01c86f453200829da9f157ad598cc6c3e495e3",
+    "canonicalId": "edd5cf824974577d890c3505b10f04e95c651b9881adc3769f5b5cb05d55cbad",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "6a90e8e4f8bcaf9523d6162ad27e31ff3c02176bb13178dfcc52ca50767087cf"
+    "contentHash": "2fa25d7dc85dabb9c22cce17d1f39e8ae63292fe8c916014df59dd659cd66e9a"
   },
   {
-    "id": "oc:situation:pl-gddkia:16kn89p",
+    "id": "oc:situation:pl-gddkia-events:16kn89p",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -202,7 +202,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "pl-gddkia",
+      "sourceId": "pl-gddkia-events",
       "sourceFormat": "gddkia",
       "accessMode": "bulk",
       "recordId": "16kn89p",
@@ -251,14 +251,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "e1f8fac7037cc46ad57b1338393e12ccd34ce68e26e71272da662ab898240ba3",
+    "canonicalId": "2339471dce769fd9dfab65a66ed8e77299c9a2e4146acacc2dc2659c19144f67",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "d4966892c20c604bb9ace35d408c46c37780651d49f15d683b5ddd243aaf805a"
+    "contentHash": "86b6146b9d7328ab8d2501526dff9b3173589c4715503cc3526c8c166f18218c"
   },
   {
-    "id": "oc:situation:pl-gddkia:1lxs2sf",
+    "id": "oc:situation:pl-gddkia-events:1lxs2sf",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -288,7 +288,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "pl-gddkia",
+      "sourceId": "pl-gddkia-events",
       "sourceFormat": "gddkia",
       "accessMode": "bulk",
       "recordId": "1lxs2sf",
@@ -337,14 +337,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "6566a0da3f36f42862c44b56155e192fcc872fda3b1cdec65d7ca7e047dae455",
+    "canonicalId": "db8c7f1ff09f95b675d229c501350331ab73e323a47e76a6a358bdfcc12fc243",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "1b770c6f4a38ee42b5083396c8dbed5ead101f212d80077ee709addc022ce0d6"
+    "contentHash": "4bbaf3cf73704497db4f73b5ef2cacf7eb10c75a87573627b0e0be66467caa0f"
   },
   {
-    "id": "oc:situation:pl-gddkia:1d9gp2x",
+    "id": "oc:situation:pl-gddkia-events:1d9gp2x",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -374,7 +374,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "pl-gddkia",
+      "sourceId": "pl-gddkia-events",
       "sourceFormat": "gddkia",
       "accessMode": "bulk",
       "recordId": "1d9gp2x",
@@ -423,14 +423,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "6f952dff566324f76ea608ce14b1bd0dc6b20afe92c193030e7fdf5dd7416609",
+    "canonicalId": "c40048fb68071eb7268f9a30ec79de5de4fe1cdf7de433d0cc94967500e47ac8",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "c63deda7daf21eedf5f97e8a4d2222261c6f9fd3fd7036b41a31b74b56ad9e1e"
+    "contentHash": "03f09b77cda9b424d2ac3c4ab022f27e76693cfbb97c4e904dc669981a08c740"
   },
   {
-    "id": "oc:situation:pl-gddkia:4tca7f",
+    "id": "oc:situation:pl-gddkia-events:4tca7f",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -460,7 +460,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "pl-gddkia",
+      "sourceId": "pl-gddkia-events",
       "sourceFormat": "gddkia",
       "accessMode": "bulk",
       "recordId": "4tca7f",
@@ -509,10 +509,10 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "bad87ff407a535e6ead309af023d794b72675da248f5eef4762f2a4a0518da7d",
+    "canonicalId": "3a127ee6df7afe210925e3a10cc52a0b5b4bc21cd903cbf52dc5a9eac08d2544",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "c78dd64f30d200acf24cdc32d162811c93338567845b67c01b9b45b229e7087b"
+    "contentHash": "3c134ecf29fb76f90c234d00e22114b0bddd7cde877c6028306fc53416ddd09b"
   }
 ]

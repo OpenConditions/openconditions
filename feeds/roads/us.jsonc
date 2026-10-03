@@ -1,0 +1,171 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      // The WZDx feed registry, resolved into one child per registered work-zone
+      // feed. The main endpoint names the registry the resolver reads; the
+      // children's own endpoints are what gets polled.
+      "operator": "wzdx",
+      "product": "events",
+      "name": "WZDx (United States)",
+      "tier": "authoritative",
+      "format": "wzdx",
+      "catalog": {
+        "resolver": "wzdx-registry",
+        "approvedChildren": ["us-wzdx-fe9b3423ea03546f-events"],
+      },
+      "endpoints": {
+        "main": {
+          "url": "https://datahub.transportation.gov/resource/69qe-yiui.json?$limit=5000",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "NOASSERTION",
+      "terms": {
+        "url": "https://datahub.transportation.gov/resource/69qe-yiui.json",
+        "note": "Licences vary per registry child: each WZDx publisher licenses its own feed, and a child is approved only once its dataset grant has been reviewed.",
+      },
+      "attribution": "WZDx publishers",
+      "privacyUrl": "https://www.transportation.gov/privacy",
+    },
+    {
+      "subdivision": "ny",
+      "operator": "511",
+      "product": "events",
+      "name": "511NY (New York)",
+      "tier": "authoritative",
+      "format": "ibi511",
+      "auth": { "kind": "query-key", "param": "key", "credential": "@us-ny-511.api_key" },
+      "endpoints": {
+        "main": { "url": "https://511ny.org/api/v2/get/event?format=json", "cadenceSec": 300 },
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-511NY-DAA",
+      "licenseUrl": "https://511ny.org/developers/daa",
+      "attribution": "Powered by 511NY",
+      "privacyUrl": "https://511ny.org/privacy",
+    },
+    {
+      "subdivision": "ny",
+      "operator": "511",
+      "product": "conditions",
+      "name": "511NY winter road conditions (New York)",
+      "tier": "authoritative",
+      "format": "ibi511-conditions",
+      "auth": { "kind": "query-key", "param": "key", "credential": "@us-ny-511.api_key" },
+      "endpoints": {
+        "main": {
+          "url": "https://511ny.org/api/v3/get/winterroads?format=json",
+          // 10 calls per 60s across the account, shared with the events feed above.
+          "cadenceSec": 600,
+        },
+      },
+      "freshnessWindowSec": 1800,
+      "license": "LicenseRef-511NY-DAA",
+      "licenseUrl": "https://511ny.org/developers/daa",
+      "attribution": "Powered by 511NY",
+      "privacyUrl": "https://511ny.org/privacy",
+      // Winter feed: outside the season every segment reports a nominal condition
+      // and the parser skips them all, so an empty result is the normal state.
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
+    },
+    {
+      "subdivision": "nyc",
+      "operator": "dot",
+      "product": "flow",
+      "name": "NYC DOT real-time traffic speeds (New York City)",
+      "tier": "authoritative",
+      "format": "nyc-dot",
+      "endpoints": {
+        "main": {
+          "url": "https://data.cityofnewyork.us/resource/i4gi-tjb9.json?$limit=5000",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-NYC-Open-Data",
+      "licenseUrl": "https://www.nyc.gov/html/data/terms.html",
+      "attribution": "New York City Department of Transportation",
+      "privacyUrl": "https://www.nyc.gov/home/privacy-policy.page",
+    },
+    {
+      "subdivision": "oh",
+      "operator": "ohgo",
+      "product": "flow",
+      "name": "OHGO travel delays (Ohio)",
+      "tier": "authoritative",
+      "format": "ohgo",
+      "auth": {
+        "kind": "header-key",
+        "header": "Authorization",
+        "credential": "@us-oh-ohgo.api_key",
+        "valuePrefix": "APIKEY ",
+      },
+      "endpoints": {
+        "main": {
+          "url": "https://publicapi.ohgo.com/api/v1/travel-delays?page-all=true",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-US-Gov-Public-Domain",
+      "licenseUrl": "https://www.usa.gov/government-works",
+      "attribution": "Ohio Department of Transportation (OHGO)",
+      "privacyUrl": "https://www.transportation.ohio.gov/about-us/privacy",
+    },
+    {
+      "subdivision": "oh",
+      "operator": "ohgo",
+      "qualifier": "construction",
+      "product": "events",
+      "name": "OHGO construction (Ohio)",
+      "tier": "authoritative",
+      "format": "ohgo-events",
+      "auth": {
+        "kind": "header-key",
+        "header": "Authorization",
+        "credential": "@us-oh-ohgo.api_key",
+        "valuePrefix": "APIKEY ",
+      },
+      "endpoints": {
+        "main": {
+          // `include-future=true` pulls work zones that have not started yet; the
+          // display-side horizon filter decides what a user actually sees.
+          "url": "https://publicapi.ohgo.com/api/v1/construction?page-all=true&include-future=true",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-US-Gov-Public-Domain",
+      "licenseUrl": "https://www.usa.gov/government-works",
+      "attribution": "Ohio Department of Transportation (OHGO)",
+      "privacyUrl": "https://www.transportation.ohio.gov/about-us/privacy",
+    },
+    {
+      "subdivision": "oh",
+      "operator": "ohgo",
+      "product": "events",
+      "name": "OHGO incidents (Ohio)",
+      "tier": "authoritative",
+      "format": "ohgo-events",
+      "auth": {
+        "kind": "header-key",
+        "header": "Authorization",
+        "credential": "@us-oh-ohgo.api_key",
+        "valuePrefix": "APIKEY ",
+      },
+      "endpoints": {
+        "main": {
+          "url": "https://publicapi.ohgo.com/api/v1/incidents?page-all=true",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-US-Gov-Public-Domain",
+      "licenseUrl": "https://www.usa.gov/government-works",
+      "attribution": "Ohio Department of Transportation (OHGO)",
+      "privacyUrl": "https://www.transportation.ohio.gov/about-us/privacy",
+    },
+  ],
+}

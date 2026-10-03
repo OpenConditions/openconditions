@@ -13,7 +13,7 @@ function entry(seq: number, txid = "10"): RecordOutboxEntry {
     txid,
     operation: "delete",
     recordClass: "situation",
-    recordId: `oc:situation:nl-ndw:s${seq}`,
+    recordId: `oc:situation:nl-ndw-events:s${seq}`,
     canonicalId: null,
     kind: "incident",
     domain: "roads",

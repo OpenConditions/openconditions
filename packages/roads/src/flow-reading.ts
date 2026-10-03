@@ -198,7 +198,7 @@ export function laneIndex(
 ): number | undefined {
   if (lane === undefined) return undefined;
   const index = datexLaneToIndex(lane, {
-    drivingSide: LEFT_HAND_TRAFFIC.has(src.country) ? "left" : "right",
+    drivingSide: src.country !== undefined && LEFT_HAND_TRAFFIC.has(src.country) ? "left" : "right",
     ...(laneCount !== undefined ? { lanesTotal: laneCount } : {}),
     numbering: src.laneNumbering ?? "standard",
   });

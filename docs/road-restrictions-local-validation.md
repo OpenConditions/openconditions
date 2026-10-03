@@ -4,14 +4,14 @@ How to validate the vehicle-restriction slices on a developer machine, and what
 was observed when each was implemented. Nothing here needs a deployed stack, a
 national database or a routing engine.
 
-Two sources are covered. Finland's `fi-digitraffic` introduced the common
-contract; the Netherlands' `nl-ndw` is a separately releasable slice that reuses
+Two sources are covered. Finland's `fi-digitraffic-events` introduced the common
+contract; the Netherlands' `nl-ndw-events` is a separately releasable slice that reuses
 it without changing the wire version. Either source can run with the other
 disabled.
 
 ## What the slice does
 
-Finland's `fi-digitraffic` event feed reads the four supported Digitraffic v2
+Finland's `fi-digitraffic-events` feed reads the four supported Digitraffic v2
 collections. Verified vehicle height, width, length and gross-weight limits are
 normalized through the restriction contract (`RoadRestrictionDetailsV1`, used
 inside the parse) into vehicle-conditioned effects of the situation. The record
@@ -19,7 +19,7 @@ API serves them, `/segments/conditions.json` lists them as restriction evidence,
 and the OpenMapX host provider shows them with their phase or detour scope,
 dates, source direction and rights.
 
-NDW's `nl-ndw` event feed reads the national current-events DATEX II v3
+NDW's `nl-ndw-events` feed reads the national current-events DATEX II v3
 snapshot. Verified vehicle applicability is taken only from a measure's own
 `forVehiclesWithCharacteristicsOf` role: a height comparison, the `lorry` class
 and the `emergencyServices` usage. Vehicles that are merely obstructing the road
@@ -41,7 +41,7 @@ Run in the OpenConditions checkout. Rebuild first: workspace exports resolve to
 pnpm build
 pnpm typecheck
 pnpm lint
-pnpm --filter @openconditions/roads feeds:lint
+pnpm feeds:lint
 ```
 
 Focused unit suites:
@@ -106,18 +106,18 @@ no loop.
 
 ```sh
 pnpm exec tsx scripts/smoke-road-restrictions.ts \
-  --source fi-digitraffic --output /tmp/oc-fi-restrictions-smoke
+  --source fi-digitraffic-events --output /tmp/oc-fi-restrictions-smoke
 
 pnpm exec tsx scripts/smoke-road-restrictions.ts \
-  --source fi-digitraffic --output /tmp/oc-fi-restrictions-db-smoke \
+  --source fi-digitraffic-events --output /tmp/oc-fi-restrictions-db-smoke \
   --database disposable \
   --spine packages/roads/src/bind/__tests__/fixtures/finland-road40/spine.json
 
 pnpm exec tsx scripts/smoke-road-restrictions.ts \
-  --source nl-ndw --output /tmp/oc-ndw-restrictions-smoke
+  --source nl-ndw-events --output /tmp/oc-ndw-restrictions-smoke
 
 pnpm exec tsx scripts/smoke-road-restrictions.ts \
-  --source nl-ndw --output /tmp/oc-ndw-restrictions-db-smoke \
+  --source nl-ndw-events --output /tmp/oc-ndw-restrictions-db-smoke \
   --database disposable \
   --spine packages/roads/src/bind/__tests__/fixtures/ndw-a76/spine.json
 ```
@@ -361,11 +361,11 @@ needed. Ship the OpenMapX consumer, display and refresh support and the rebuilt
 provider artifact before activating the producer, or restrictions travel with
 nothing able to show them. Finland operates with NDW disabled.
 
-For the NDW slice, roll back by disabling the `nl-ndw` event source or returning
+For the NDW slice, roll back by disabling the `nl-ndw-events` source or returning
 to a previously validated restriction-aware NDW release. Keep the conservative
 routing and export guards and the source freshness and orphan expiry in place: a
 rollback must never re-enable the legacy recursive gross-weight extraction or
-unconditional closure publication to restore apparent coverage. `nl-ndw` keeps
+unconditional closure publication to restore apparent coverage. `nl-ndw-events` keeps
 its id and rows, and the `nl-ndw-flow` feed is untouched, so no reset is needed.
 NDW operates with Finland disabled and vice versa.
 

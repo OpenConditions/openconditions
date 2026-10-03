@@ -60,7 +60,7 @@ export async function matchSensors(
         ST_LineInterpolatePoint(c.geom, LEAST(ST_LineLocatePoint(c.geom, sp.pt) + 0.001, 1)))),
       ${now()}
     FROM conditions.observation_latest l
-    JOIN conditions.source s ON s.id = l.source_id AND s.produces = 'flow'
+    JOIN conditions.source s ON s.id = l.source_id AND s.domain = 'roads' AND s.product = 'flow'
     CROSS JOIN LATERAL (
       SELECT CASE GeometryType(l.geom)
                WHEN 'POINT' THEN l.geom

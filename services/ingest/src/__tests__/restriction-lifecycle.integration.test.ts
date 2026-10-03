@@ -7,7 +7,8 @@ import { sweepRecords } from "@openconditions/storage";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createBindingMetricsReader } from "../pipeline/binding-metrics.js";
-import { type DomainFeedSource, runSource } from "../pipeline/run.js";
+import { runSource } from "../pipeline/run.js";
+import { testFeed } from "./helpers/catalog.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { bindSituation, registry } from "./helpers/situations.js";
 
@@ -28,39 +29,34 @@ const FIXTURE_URL = new URL(
 
 const V2 = "https://tie.digitraffic.fi/api/traffic-message/v2";
 const ROADWORKS = `${V2}/roadworks`;
-const SOURCE = "fi-digitraffic";
+const SOURCE = "fi-digitraffic-events";
 const WEIGHT_ID = `oc:situation:${SOURCE}:GUID50465935`;
 const LANES = `${WEIGHT_ID}#GUID50465935/lane_restriction`;
 
-const feed: DomainFeedSource = {
+const feed = testFeed({
   id: SOURCE,
-  domain: "roads",
   operator: "digitraffic",
   name: "Digitraffic (Finland)",
   format: "digitraffic",
-  url: [
-    `${V2}/traffic-announcements`,
-    ROADWORKS,
-    `${V2}/weight-restrictions`,
-    `${V2}/exempted-transports`,
-  ],
+  endpoints: {
+    main: {
+      urls: [
+        `${V2}/traffic-announcements`,
+        ROADWORKS,
+        `${V2}/weight-restrictions`,
+        `${V2}/exempted-transports`,
+      ],
+      cadenceSec: 120,
+    },
+  },
   snapshot: { completeness: "complete", recordsPath: "features" },
-  cadenceSec: 120,
   freshnessWindowSec: 600,
   license: "CC-BY-4.0",
   licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
   attribution: "Fintraffic / Digitraffic",
   country: "FI",
-  rights: {
-    sourceRedistribution: true,
-    derivedRedistribution: true,
-    commercialUse: true,
-    attributionRequired: true,
-    retention: true,
-    reviewedAt: "2026-09-01T00:00:00.000Z",
-    evidenceOrigin: "test",
-  },
-} as unknown as DomainFeedSource;
+  terms: { url: "https://example.test/digitraffic-terms", reviewedAt: "2026-09-01" },
+});
 
 const MODEL = { registry, instanceId: "test.local" };
 const GENERATION = "graph-lifecycle";
@@ -458,8 +454,8 @@ describe("restriction record lifecycle", () => {
         commercial_use: "yes",
         attribution_required: "yes",
         retention: "yes",
-        evidence_origin: "test",
-        evidence_version: null,
+        evidence_origin: "https://example.test/digitraffic-terms",
+        evidence_version: "CC-BY-4.0",
         reviewed_at: "2026-09-01T00:00:00.000Z",
       },
     });

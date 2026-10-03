@@ -4,11 +4,6 @@
     "rootDir": ".",
     "outDir": "dist"
   },
-  "include": [
-    "src/**/*",
-    "scripts/feeds-lint.ts",
-    "scripts/bind-inspect.ts",
-    "scripts/bind-corpus-spine.ts"
-  ],
+  "include": ["src/**/*", "scripts/bind-inspect.ts", "scripts/bind-corpus-spine.ts"],
   "exclude": ["node_modules", "dist"]
 }

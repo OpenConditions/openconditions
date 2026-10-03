@@ -1,13 +1,29 @@
-import { feedSourceBaseShape } from "@openconditions/ingest-framework";
-import { registeredClassification } from "@openconditions/model-roads";
+import { type CatalogFeed, feedBaseShape } from "@openconditions/ingest-framework";
+import { ROADS_SITUATION_KINDS } from "@openconditions/model-roads";
 import { z } from "zod";
 import { ROAD_EVENT_TYPES } from "./model.js";
 
+/**
+ * How a DATEX feed numbers lanes: `standard` (default) counts from the hard
+ * shoulder, `left_first` from the left, as NDW documents.
+ */
+export const LANE_NUMBERINGS = ["standard", "left_first"] as const;
+export type LaneNumbering = (typeof LANE_NUMBERINGS)[number];
+
 const roadEventType = z.enum(ROAD_EVENT_TYPES);
-const situationCode = z.custom<`${string}.${string}`>(
-  (v) => typeof v === "string" && registeredClassification(v) !== undefined,
-  { message: "not a registered roads situation code (kind.type[.subtype])" },
-);
+/** Every registered roads situation code: `kind.type` and `kind.type.subtype`. */
+const SITUATION_CODES = ROADS_SITUATION_KINDS.flatMap((kind) =>
+  Object.entries((kind.types ?? {}) as Readonly<Record<string, readonly string[]>>).flatMap(
+    ([type, subtypes]) => [
+      `${kind.code}.${type}`,
+      ...subtypes.map((subtype) => `${kind.code}.${type}.${subtype}`),
+    ],
+  ),
+) as [`${string}.${string}`, ...`${string}.${string}`[]];
+// A closed list rather than a predicate, so the catalogue's JSON Schema lists the codes too.
+const situationCode = z.enum(SITUATION_CODES, {
+  error: "not a registered roads situation code (kind.type[.subtype])",
+});
 const severity = z.enum(["low", "medium", "high", "critical", "unknown"]);
 
 /** Declarative GeoJSON field mapping — mirrors GeoJsonMapping in model.ts. */
@@ -61,88 +77,43 @@ const geojsonFlowMappingSchema = z
   })
   .strict();
 
-/** Matches a well-formed feed id: dash-joined lower-case alphanumeric tokens. */
-const FEED_ID_SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
-
-/** Derives the feed id from its region-first identity parts. */
-export function deriveFeedId(feed: {
-  country: string;
-  subdivision?: string;
-  operator: string;
-  stream?: string;
-}): string {
-  return [feed.country.toLowerCase(), feed.subdivision, feed.operator, feed.stream]
-    .filter(Boolean)
-    .join("-");
-}
+/**
+ * The fields a roads feed adds to the base feed: how its parser reads the
+ * payload. Reference data (a site table, a station registry) is not a field
+ * but an endpoint with a decoder.
+ */
+const roadsFeedExtension = {
+  /** Field mapping for `format: "geojson"` and `"flatjson"` feeds. */
+  geojson: geoJsonMappingSchema.optional(),
+  /** Field mapping for `format: "geojson-flow"` feeds. */
+  flowMap: geojsonFlowMappingSchema.optional(),
+  /**
+   * For DATEX feeds whose GML `posList` is "lon lat" rather than the WGS84
+   * "lat lon" default (e.g. Trafikverket).
+   */
+  posListLonLat: z.boolean().optional(),
+  /**
+   * CRS for DATEX feeds publishing a projected grid that declare no `srsName`
+   * in the payload (e.g. Mecklenburg-Vorpommern's UTM zone 33).
+   */
+  srsName: z.string().min(1).optional(),
+  bbox: z.tuple([z.number(), z.number(), z.number(), z.number()]).optional(),
+  /**
+   * Marks a reference-only feed whose records carry OpenLR but no coordinate,
+   * so the ingest resolve stage map-matches them via the openlr-resolver
+   * service. No current feed sets this: the open feeds we ingest carry
+   * coordinates or Alert-C/TMC, not OpenLR (which is largely a commercial-feed
+   * scheme). See services/openlr-resolver/README.md "Status".
+   */
+  openlrResolver: z.boolean().optional(),
+  laneNumbering: z.enum(LANE_NUMBERINGS).optional(),
+} as const;
 
 /**
- * The roads FeedSource schema: the base shape plus road-specific mapping/transport
- * fields. The `id` is DERIVED from country/subdivision/operator/stream by the
- * trailing transform, so feed data files omit it. A serialized feed (atlas /
- * remote snapshot) may carry an `id` only when it matches these identity parts.
- * A mismatch is rejected rather than silently renaming a source. Applied identically to every load layer via the schema, so the
- * baked-in, operator-mounted, and remote-pulled sets all derive ids the same way.
+ * Raw per-field shape of a roads feed: the base shape plus the roads fields.
+ * The catalogue builds `.strict()` region-file schemas from it.
  */
-export const roadFeedSchema = z
-  .object({
-    ...feedSourceBaseShape,
-    // Derived — a serialized id must agree with the identity parts below.
-    id: z.string().min(1).optional(),
-    geojson: geoJsonMappingSchema.optional(),
-    flowMap: geojsonFlowMappingSchema.optional(),
-    posListLonLat: z.boolean().optional(),
-    srsName: z.string().min(1).optional(),
-    siteTable: z
-      .object({
-        url: z.string().url(),
-        gzip: z.boolean().optional(),
-        format: z.enum(["datex-site-table", "datex-predefined-locations"]).optional(),
-        reference: z
-          .object({
-            kind: z.literal("mobilithek"),
-            offerId: z.string().regex(/^\d+$/),
-            fileNamePrefix: z.string().min(1),
-          })
-          .strict()
-          .optional(),
-      })
-      .strict()
-      .optional(),
-    stationRegistry: z
-      .object({
-        url: z.string().url(),
-        format: z.enum([
-          "fintraffic-stations",
-          "webtris-sites",
-          "miv-config",
-          "france-comptage-csv",
-          "hk-detector-csv",
-          "bcn-trams-csv",
-        ]),
-      })
-      .strict()
-      .optional(),
-    openlrResolver: z.boolean().optional(),
-    bbox: z.tuple([z.number(), z.number(), z.number(), z.number()]).optional(),
-  })
-  .strict()
-  .transform((feed, ctx) => {
-    const id = deriveFeedId(feed);
-    if (!FEED_ID_SLUG.test(id)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `derived feed id "${id}" is not a valid slug (^[a-z0-9]+(-[a-z0-9]+)*$)`,
-      });
-      return z.NEVER;
-    }
-    if (feed.id != null && feed.id !== id) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["id"],
-        message: `serialized feed id "${feed.id}" does not match derived id "${id}"`,
-      });
-      return z.NEVER;
-    }
-    return { ...feed, id };
-  });
+export const roadsFeedShape = { ...feedBaseShape, ...roadsFeedExtension } as const;
+
+/** A loaded roads feed: the catalogue feed plus the roads fields. */
+export type RoadFeed = CatalogFeed & z.infer<z.ZodObject<typeof roadsFeedExtension>>;

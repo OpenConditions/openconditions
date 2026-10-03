@@ -26,8 +26,8 @@ describe("no-geometry skips are reported by every parser that drops records", ()
   beforeEach(() => __resetSkipMetrics());
 
   it("autobahn", () => {
-    parseAutobahn(readFileSync(join(FIXTURES, "autobahn/warning.json")), src("de-autobahn"));
-    expect(drainSkippedNoGeometry("de-autobahn")).toBeGreaterThan(0);
+    parseAutobahn(readFileSync(join(FIXTURES, "autobahn/warning.json")), src("de-autobahn-events"));
+    expect(drainSkippedNoGeometry("de-autobahn-events")).toBeGreaterThan(0);
   });
 
   it("digitraffic", () => {
@@ -47,14 +47,14 @@ describe("no-geometry skips are reported by every parser that drops records", ()
         },
       ],
     };
-    parseWzdx(JSON.stringify(feed), src("us-wzdx"));
-    expect(drainSkippedNoGeometry("us-wzdx")).toBe(1);
+    parseWzdx(JSON.stringify(feed), src("us-wzdx-events"));
+    expect(drainSkippedNoGeometry("us-wzdx-events")).toBe(1);
   });
 
   it("open511", () => {
     const feed = { events: [{ id: "no-geo", status: "ACTIVE", headline: "x" }] };
-    parseOpen511(JSON.stringify(feed), src("ca-bc-drivebc"));
-    expect(drainSkippedNoGeometry("ca-bc-drivebc")).toBe(1);
+    parseOpen511(JSON.stringify(feed), src("ca-bc-drivebc-events"));
+    expect(drainSkippedNoGeometry("ca-bc-drivebc-events")).toBe(1);
   });
 
   it("keeps every source's count separate", () => {

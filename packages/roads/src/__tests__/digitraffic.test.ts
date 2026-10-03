@@ -6,7 +6,7 @@ import { parseDigitraffic } from "../digitraffic.js";
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/digitraffic/messages.json");
 
 const DIGITRAFFIC_SOURCE = {
-  id: "fi-digitraffic",
+  id: "fi-digitraffic-events",
   attribution: "Fintraffic / digitraffic.fi",
   country: "FI",
   license: "CC-BY-4.0",
@@ -75,7 +75,7 @@ describe("parseDigitraffic — fixture", () => {
   it("prefixes event id with source id", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseDigitraffic(json, DIGITRAFFIC_SOURCE);
-    expect(events.every((ev) => ev.id.startsWith("fi-digitraffic:"))).toBe(true);
+    expect(events.every((ev) => ev.id.startsWith("fi-digitraffic-events:"))).toBe(true);
   });
 
   it("sets headline from announcements[0].title", () => {
@@ -684,7 +684,7 @@ describe("parseDigitraffic — WEIGHT_RESTRICTION / EXEMPTED_TRANSPORT families"
   it("maps a weight restriction to dimension_restriction with its tonnage and geometry", () => {
     const [ev] = parseDigitraffic(load("weight-restriction"), DIGITRAFFIC_SOURCE);
     expect(ev).toBeDefined();
-    expect(ev!.id).toBe("fi-digitraffic:GUID50451433");
+    expect(ev!.id).toBe("fi-digitraffic-events:GUID50451433");
     expect(ev!.type).toBe("dimension_restriction");
     expect(ev!.geometry.type).toBe("MultiLineString");
     expect(ev!.restrictions).toContainEqual({ type: "weight", value: 12, unit: "t" });
@@ -698,7 +698,7 @@ describe("parseDigitraffic — WEIGHT_RESTRICTION / EXEMPTED_TRANSPORT families"
   it("maps an exempted transport to authority, carrying its validity window", () => {
     const [ev] = parseDigitraffic(load("exempted-transport"), DIGITRAFFIC_SOURCE);
     expect(ev).toBeDefined();
-    expect(ev!.id).toBe("fi-digitraffic:GUID50468062");
+    expect(ev!.id).toBe("fi-digitraffic-events:GUID50468062");
     expect(ev!.type).toBe("authority");
     expect(ev!.geometry.type).toBe("MultiPolygon");
     expect(ev!.validFrom).toBe("2026-07-31T07:30:00Z");

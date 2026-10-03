@@ -26,7 +26,7 @@ const TIERS = {
   "de-bw-ocpdb": "aggregator",
   "de-bw-parkapi": "aggregator",
   "nl-ndw-truckparking": "authoritative",
-  "de-autobahn": "operator",
+  "de-autobahn-events": "operator",
   "es-minetur": "authoritative",
   "it-mimit": "authoritative",
   "at-econtrol": "authoritative",
@@ -94,10 +94,10 @@ describe("the canonical view of the golden facilities", () => {
   it("keeps the two Neuhaus rest areas on opposite carriageways apart", async () => {
     const links = await sql`
       SELECT status FROM conditions.feature_link
-       WHERE a_id = 'oc:feature:de-autobahn:DE-SL-000008' AND b_id = 'oc:feature:de-autobahn:DE-SL-000009'`;
+       WHERE a_id = 'oc:feature:de-autobahn-events:DE-SL-000008' AND b_id = 'oc:feature:de-autobahn-events:DE-SL-000009'`;
     expect(links.filter((l) => l["status"] === "accepted")).toEqual([]);
-    const east = await canonicalOf("oc:feature:de-autobahn:DE-SL-000008");
-    expect(east!.member_ids).toEqual(["oc:feature:de-autobahn:DE-SL-000008"]);
+    const east = await canonicalOf("oc:feature:de-autobahn-events:DE-SL-000008");
+    expect(east!.member_ids).toEqual(["oc:feature:de-autobahn-events:DE-SL-000008"]);
   });
 
   it("stores a lone station's components as its canonical components, keys kept", async () => {

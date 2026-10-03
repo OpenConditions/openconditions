@@ -1,0 +1,47 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "hc",
+      "qualifier": "roadworks",
+      "product": "events",
+      "name": "Hrvatske ceste roadworks (Croatia)",
+      "tier": "authoritative",
+      "format": "datex2",
+      "auth": { "kind": "basic", "user": "@hr-hc.user", "password": "@hr-hc.password" },
+      "endpoints": {
+        "main": {
+          "url": "https://b2b.promet-info.hr/dc/b2b.hc.roadworks.datex",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-OD-HR",
+      "licenseUrl": "https://data.gov.hr/otvorena-dozvola",
+      "attribution": "Hrvatske ceste",
+      "privacyUrl": "https://www.hrvatske-ceste.hr/",
+    },
+    {
+      "operator": "hc",
+      "product": "events",
+      "name": "Hrvatske ceste traffic events (Croatia)",
+      "tier": "authoritative",
+      "format": "datex2",
+      "auth": { "kind": "basic", "user": "@hr-hc.user", "password": "@hr-hc.password" },
+      "endpoints": {
+        "main": {
+          // The v3 sibling of the roadworks publication, on the same B2B portal and
+          // credentials. Registered as its own feed rather than a second URL on the
+          // roadworks entry so the two publications are monitored independently.
+          "url": "https://b2b.promet-info.hr/dc/b2b.hc.events.datex3",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-OD-HR",
+      "licenseUrl": "https://data.gov.hr/otvorena-dozvola",
+      "attribution": "Hrvatske ceste",
+      "privacyUrl": "https://www.hrvatske-ceste.hr/",
+    },
+  ],
+}

@@ -7,7 +7,7 @@ const draft = provenanceSchema(anyVocab, "draft");
 
 const feed = {
   origin: "feed",
-  sourceId: "nl-ndw",
+  sourceId: "nl-ndw-events",
   sourceFormat: "datex2",
   accessMode: "bulk",
   recordId: "SRA-1",

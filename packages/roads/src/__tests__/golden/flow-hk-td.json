@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:hk-td:AID01101",
+      "id": "oc:feature:hk-td-flow:AID01101",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -17,13 +17,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "hk-td",
+        "sourceId": "hk-td-flow",
         "sourceFormat": "hk-td",
         "accessMode": "bulk",
         "recordId": "AID01101",
         "attribution": {
           "provider": "Transport Department, HKSAR",
-          "license": "HK-Gov-Open-Data",
+          "license": "LicenseRef-HK-Gov-Open-Data",
           "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
         },
         "privacy": {
@@ -136,16 +136,16 @@
           "traffic.occupancy"
         ]
       },
-      "canonicalId": "1e13f00dfba9f6718a7689fc839ceb38c31cc86e3ba46c3a9f5d60680f037346",
+      "canonicalId": "7227c33282f49cdbd6347d5d9aa686ecb85dc7148aae1f744990fc7c30b0c199",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "3afd7d5c83b43ab4cd7444dbcec5e18e90b978ba79c504dc55aac0a78f3ea98f"
+      "contentHash": "7239bef47745aa532bc6132e11122fbbefa4486123837d7e6cf16eaf4c2846ce"
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:hk-td:83b67cf48ca94f0b75d332fe51d7492745da09787b42079fa0ef352d0a969aba",
+      "id": "oc:observation:hk-td-flow:07848aa90135c33cb20ae0243b1105f81abd591ceb0f7e16b00e1ee56f3d1515",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -161,13 +161,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "hk-td",
+        "sourceId": "hk-td-flow",
         "sourceFormat": "hk-td",
         "accessMode": "bulk",
         "recordId": "AID01101",
         "attribution": {
           "provider": "Transport Department, HKSAR",
-          "license": "HK-Gov-Open-Data",
+          "license": "LicenseRef-HK-Gov-Open-Data",
           "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
         },
         "privacy": {
@@ -183,7 +183,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:hk-td:AID01101"
+        "featureId": "oc:feature:hk-td-flow:AID01101"
       },
       "result": {
         "type": "quantity",
@@ -195,14 +195,14 @@
         "end": "2026-09-19T17:55:30.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "41bff4722f1e867e598424b23819e3bb425952eb655073e6b6f517d4ab485d8a",
+      "canonicalId": "4728f1db75d6af3d7b8a9e662cfbb1eacfaf6900fe973984cde73bff3404974d",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "78558f732cb61d3573c05ae0da7f1f924cd709a9244e3df06a54da2a6433b5ca"
+      "contentHash": "49d0589cf88022ebe08ea5eb5005d68a74f59a3ff3f15b75c7393cac75fdeb32"
     },
     {
-      "id": "oc:observation:hk-td:4b99317532e1be2ada46283c2fdd4eb051b1b78641958a8425c4e3263731863f",
+      "id": "oc:observation:hk-td-flow:4178a64de6501073d8592bc48dcb8a508891563774ff5cc8da899b2ddaf9d4c0",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -218,13 +218,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "hk-td",
+        "sourceId": "hk-td-flow",
         "sourceFormat": "hk-td",
         "accessMode": "bulk",
         "recordId": "AID01101",
         "attribution": {
           "provider": "Transport Department, HKSAR",
-          "license": "HK-Gov-Open-Data",
+          "license": "LicenseRef-HK-Gov-Open-Data",
           "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
         },
         "privacy": {
@@ -240,7 +240,7 @@
       "property": "traffic.volume",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:hk-td:AID01101"
+        "featureId": "oc:feature:hk-td-flow:AID01101"
       },
       "result": {
         "type": "quantity",
@@ -252,14 +252,14 @@
         "end": "2026-09-19T17:55:30.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "214ec835c6b71ee02b1973425cf7023e7e0c397fd19010d7c9eb212729cb5421",
+      "canonicalId": "d11d3aafff9bc252a00f5710cad53291dd549e8f5f240d847fbfc46372299215",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "bfc956fa98daed6abd04ce4899d2e7443862b42e27b202f8ce3c32fedb4ba969"
+      "contentHash": "3f6ecd24b5d4fc7e3189d80b2a6ca3b3c7051f3bc08fb2a40b2fa8801d522572"
     },
     {
-      "id": "oc:observation:hk-td:6548cf0f22971c509a87df95f1df3c393729ca248c24cde8aeed506197433c47",
+      "id": "oc:observation:hk-td-flow:2d5c3a42e3f74fe5388274b7020028cf09e1cb3f994a6b967881e6e45f016f4b",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -275,13 +275,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "hk-td",
+        "sourceId": "hk-td-flow",
         "sourceFormat": "hk-td",
         "accessMode": "bulk",
         "recordId": "AID01101",
         "attribution": {
           "provider": "Transport Department, HKSAR",
-          "license": "HK-Gov-Open-Data",
+          "license": "LicenseRef-HK-Gov-Open-Data",
           "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
         },
         "privacy": {
@@ -297,7 +297,7 @@
       "property": "traffic.occupancy",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:hk-td:AID01101"
+        "featureId": "oc:feature:hk-td-flow:AID01101"
       },
       "result": {
         "type": "quantity",
@@ -309,14 +309,14 @@
         "end": "2026-09-19T17:55:30.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "959be4ac44aee155d74a9774bf3e8da81f1a1c21d5cc37763c1bee930cba5e4d",
+      "canonicalId": "c0cd3b3b8a4a60fceeffcc5b34a22ddebada22163c4af8d611dee4d44fe4adad",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "5f288bc38250c4b2997a174b03c8b9676eaa374c6c1ff81d960ae81ffaeeebfd"
+      "contentHash": "d764463d67df0d91d87935595602dc81bc4c0b6de9e0ed71f47d40d1df0d6f19"
     },
     {
-      "id": "oc:observation:hk-td:ebf48de3de28f1f869c6417fd7e043dcd940233af35809770a6dabfa20f3bb82",
+      "id": "oc:observation:hk-td-flow:a5051670b626aa5caf3529d1f097ad5b4b5f0e7027ae39f61debb9699d18207c",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -332,13 +332,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "hk-td",
+        "sourceId": "hk-td-flow",
         "sourceFormat": "hk-td",
         "accessMode": "bulk",
         "recordId": "AID01101/fast_lane:speed",
         "attribution": {
           "provider": "Transport Department, HKSAR",
-          "license": "HK-Gov-Open-Data",
+          "license": "LicenseRef-HK-Gov-Open-Data",
           "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
         },
         "privacy": {
@@ -354,7 +354,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:hk-td:AID01101",
+        "featureId": "oc:feature:hk-td-flow:AID01101",
         "componentKey": "fast_lane:speed"
       },
       "result": {
@@ -367,14 +367,14 @@
         "end": "2026-09-19T17:55:30.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "f807a9407c1756c146f10215efab6417f547b274c68a50da2327d48ca4d4d8c6",
+      "canonicalId": "89e069117851cfffa8541a36bfab05f6b19e606d91c0e50d0c7a1430576ad706",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "d5c3b852024ae011e508f454575bd46cd312d123198d4f1979e1dc1d4e4513a8"
+      "contentHash": "61e4aac02a7491bff8c06b08f2168bd7f65ed209915b5b35694f11a9133b752e"
     },
     {
-      "id": "oc:observation:hk-td:a2caf57d052febd07a77017d7285b1d662689352da9e21a769339f37630eede9",
+      "id": "oc:observation:hk-td-flow:680fbc657be6976e1310d7f2654c5dd0cb4de583eab6436e77c999963be9a9a0",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -390,13 +390,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "hk-td",
+        "sourceId": "hk-td-flow",
         "sourceFormat": "hk-td",
         "accessMode": "bulk",
         "recordId": "AID01101/fast_lane:volume",
         "attribution": {
           "provider": "Transport Department, HKSAR",
-          "license": "HK-Gov-Open-Data",
+          "license": "LicenseRef-HK-Gov-Open-Data",
           "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
         },
         "privacy": {
@@ -412,7 +412,7 @@
       "property": "traffic.volume",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:hk-td:AID01101",
+        "featureId": "oc:feature:hk-td-flow:AID01101",
         "componentKey": "fast_lane:volume"
       },
       "result": {
@@ -425,14 +425,14 @@
         "end": "2026-09-19T17:55:30.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "79346cc2f1320bcddbaef6149a85f5076037ef87f9ddc95bf7c528ebf3bfca2b",
+      "canonicalId": "9310160f58df3ad4b00ac8be21c10cc6fa7b40bd51c4db774ea6dc92d8b133ac",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "929f481932f8cb9967196513031948fcfdb2aa20ba032de2134b532e58342ae0"
+      "contentHash": "476b88f48711a8dd429f7cb71a47186b6c389a14797be9b3c6a268b7c469a189"
     },
     {
-      "id": "oc:observation:hk-td:f8782a6adfd4be712b49ec15a4da5ac58135e4dcd751577fc08e5d163be143b4",
+      "id": "oc:observation:hk-td-flow:2fc440e0df6c5076ae912a2f8dd80bd0502fa11d12bb86f50c9a4081b2ec5b4f",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -448,13 +448,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "hk-td",
+        "sourceId": "hk-td-flow",
         "sourceFormat": "hk-td",
         "accessMode": "bulk",
         "recordId": "AID01101/fast_lane:occupancy",
         "attribution": {
           "provider": "Transport Department, HKSAR",
-          "license": "HK-Gov-Open-Data",
+          "license": "LicenseRef-HK-Gov-Open-Data",
           "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
         },
         "privacy": {
@@ -470,7 +470,7 @@
       "property": "traffic.occupancy",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:hk-td:AID01101",
+        "featureId": "oc:feature:hk-td-flow:AID01101",
         "componentKey": "fast_lane:occupancy"
       },
       "result": {
@@ -483,14 +483,14 @@
         "end": "2026-09-19T17:55:30.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "da314882213ad593aa71d5564777260f69dcbb1b20b8be7d9be7abd0e73c61c0",
+      "canonicalId": "c4b68339d2bff8a1c44e35fe551385c7d03bd42a46c1d9488da1cc486dca4c30",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "c9ccb8d24282961656d3500ad9295f26c05abc4d80920f15c5291df0b9440d6a"
+      "contentHash": "9c01631cce84916369e63bda750ca3eea1cbcc6c0028db7aebbe6731a82c574a"
     },
     {
-      "id": "oc:observation:hk-td:d85767d4f33914e8b0f056bcf3d587d6b4fdb011fff5738d78360e290f274b67",
+      "id": "oc:observation:hk-td-flow:a63c21ad55ff532b97116137a8863d2df660fdc3c5e4446624b33c451b928098",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -506,13 +506,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "hk-td",
+        "sourceId": "hk-td-flow",
         "sourceFormat": "hk-td",
         "accessMode": "bulk",
         "recordId": "AID01101/slow_lane:speed",
         "attribution": {
           "provider": "Transport Department, HKSAR",
-          "license": "HK-Gov-Open-Data",
+          "license": "LicenseRef-HK-Gov-Open-Data",
           "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
         },
         "privacy": {
@@ -528,7 +528,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:hk-td:AID01101",
+        "featureId": "oc:feature:hk-td-flow:AID01101",
         "componentKey": "slow_lane:speed"
       },
       "result": {
@@ -541,14 +541,14 @@
         "end": "2026-09-19T17:55:30.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "42d004a7cf50ec9804eeccf863067a5759d8a268e9a0c37641f49694d918c6b7",
+      "canonicalId": "8145cb8d7bdd8eea8c36522d60a09df8ee30100afdc6c4a4aee221d41bccd815",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "f2e514c121f0dff96027ac2ac5fbbbbfeeee2c56475748f0b899be7b0da03f7d"
+      "contentHash": "bde5553cf6b9d8b42b8f6de30039b713dcae0f1ad9ddd6dae15113404121a26b"
     },
     {
-      "id": "oc:observation:hk-td:aacc387c5a4a9a909c641c8b1cb3cd63ceac444eec033624c31a559aa14049c8",
+      "id": "oc:observation:hk-td-flow:89a799d4a6fbf6452a7f1209c2b49b748de525ca5c710df7858e708d53d12e13",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -564,13 +564,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "hk-td",
+        "sourceId": "hk-td-flow",
         "sourceFormat": "hk-td",
         "accessMode": "bulk",
         "recordId": "AID01101/slow_lane:volume",
         "attribution": {
           "provider": "Transport Department, HKSAR",
-          "license": "HK-Gov-Open-Data",
+          "license": "LicenseRef-HK-Gov-Open-Data",
           "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
         },
         "privacy": {
@@ -586,7 +586,7 @@
       "property": "traffic.volume",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:hk-td:AID01101",
+        "featureId": "oc:feature:hk-td-flow:AID01101",
         "componentKey": "slow_lane:volume"
       },
       "result": {
@@ -599,14 +599,14 @@
         "end": "2026-09-19T17:55:30.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "a4245fb0524638c98c34e58488e62d561e69355b31fb9e128528715e63e1bca8",
+      "canonicalId": "4efbef08940102c9980e9b9337a110dae7c407fba66295271292f5ff984be863",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "7093ffef57b6bdccacd5e4ed9a0e0252bb4671174f9408c47dacf3a4a41f539b"
+      "contentHash": "bfeaeb76a92b86a4fe9458eae9dc6d13c1fd02325514f73f4ae98a2afb0e1d57"
     },
     {
-      "id": "oc:observation:hk-td:09fb28f7e59918fed893b0fe35d9c320ec6d0396cfab0323812a893620f1ccda",
+      "id": "oc:observation:hk-td-flow:8fc16e998ca06b889d311b6f99cc774b323b50b35916a1da4e10b5fd4f0b6451",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -622,13 +622,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "hk-td",
+        "sourceId": "hk-td-flow",
         "sourceFormat": "hk-td",
         "accessMode": "bulk",
         "recordId": "AID01101/slow_lane:occupancy",
         "attribution": {
           "provider": "Transport Department, HKSAR",
-          "license": "HK-Gov-Open-Data",
+          "license": "LicenseRef-HK-Gov-Open-Data",
           "licenseUrl": "https://data.gov.hk/en/terms-and-conditions"
         },
         "privacy": {
@@ -644,7 +644,7 @@
       "property": "traffic.occupancy",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:hk-td:AID01101",
+        "featureId": "oc:feature:hk-td-flow:AID01101",
         "componentKey": "slow_lane:occupancy"
       },
       "result": {
@@ -657,11 +657,11 @@
         "end": "2026-09-19T17:55:30.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "76c90046c78a18e444ce9c52b7a792b41d70240382ff779bcbd51a9cbf3fd5ca",
+      "canonicalId": "f08dea191eef5135531aa28822038aa37a36dde7999f0e81ca53cb2483407ae7",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "ae9442c7daeb710a88ff38279915f68039526d6e1c23e24b3653b54dd6c06619"
+      "contentHash": "7084e0817987d83927663e9533bcbdb81d87f9cea442ff2cf93d486fb9b90972"
     }
   ],
   "situations": []

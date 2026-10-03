@@ -3,10 +3,10 @@ import { parseLtaIncidents } from "../lta.js";
 import type { SourceDescriptor } from "../types.js";
 
 const SRC: SourceDescriptor = {
-  id: "sg-lta",
+  id: "sg-lta-events",
   attribution: "LTA Singapore",
   country: "SG",
-  license: "Singapore-ODL-1.0",
+  license: "LicenseRef-Singapore-ODL-1.0",
 };
 
 function body(value: unknown[]): string {
@@ -48,7 +48,7 @@ describe("parseLtaIncidents", () => {
     const a = parseLtaIncidents(body(ev), SRC);
     const b = parseLtaIncidents(body(ev), SRC);
     expect(a[0]!.id).toBe(b[0]!.id);
-    expect(a[0]!.id.startsWith("sg-lta:")).toBe(true);
+    expect(a[0]!.id.startsWith("sg-lta-events:")).toBe(true);
   });
 
   it("skips records without coordinates and tolerates malformed input", () => {

@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:us-wzdx:dtcd-cwz-1:5e289944-03b7-4694-9e30-116e9f0dd62d",
+    "id": "oc:situation:us-wzdx-events:dtcd-cwz-1:5e289944-03b7-4694-9e30-116e9f0dd62d",
     "temporality": "live",
     "externalIds": [
       {
@@ -51,14 +51,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "us-wzdx",
+      "sourceId": "us-wzdx-events",
       "sourceFormat": "wzdx",
       "accessMode": "bulk",
       "recordId": "dtcd-cwz-1:5e289944-03b7-4694-9e30-116e9f0dd62d",
       "sourceUpdatedAt": "2026-07-31T08:56:03.798Z",
       "attribution": {
         "provider": "WZDx publishers",
-        "license": "UNKNOWN"
+        "license": "NOASSERTION"
       },
       "privacy": {
         "class": "authoritative"
@@ -139,10 +139,10 @@
       "v": 1,
       "workZoneType": "static"
     },
-    "canonicalId": "413255af182a8e848ba079b282964b018883434c4196a4bc8b4e81a63e129c3b",
+    "canonicalId": "5894fb7c3970312b2351c02a2ebce9a03e51f4aafb599cf9f5074660ce9eb3ef",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "8ebc7aebc295ced37f13dfb2aff1f2d5ac63f40aaede59b4f7bbfe8e3fa9b86a"
+    "contentHash": "91ff8bb83bafd9b7b6a2c53ebd394e2bc170df749092e930708d232ad2d9930c"
   }
 ]

@@ -12,7 +12,7 @@ import { CTX, fixture, flowFeed, flows, site, siteIds, text, value } from "./flo
  * `measurementSiteLocation > pointByCoordinates > pointCoordinates >
  * latitude/longitude`.
  */
-const FEED = "de-he-autobahn-vzd";
+const FEED = "de-he-autobahn-flow";
 const feed = flowFeed(FEED);
 const POINT = { type: "Point", coordinates: [8.6821, 50.1109] };
 const sites = () => parseDatexSiteTable(fixture("autobahn-bab-datex2/verortung.xml"));

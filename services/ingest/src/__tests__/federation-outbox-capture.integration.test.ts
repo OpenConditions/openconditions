@@ -1,5 +1,4 @@
 import { observationId } from "@openconditions/model";
-import type { FeedSource } from "@openconditions/roads";
 import {
   ensureObservationPartitions,
   retentionClasses,
@@ -17,10 +16,10 @@ type Rec = Record<string, unknown>;
 let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
 let sql: postgres.Sql;
 
-const SOURCE = "de-autobahn";
+const SOURCE = "de-autobahn-events";
 const FLOW_SOURCE = "nl-ndw-flow";
 const INSTANCE = "test.local";
-const src = { id: SOURCE, freshnessWindowSec: 900 } as unknown as FeedSource;
+const src = { id: SOURCE, freshnessWindowSec: 900 };
 const closureId = `oc:situation:${SOURCE}:A46`;
 
 interface JournalRow {

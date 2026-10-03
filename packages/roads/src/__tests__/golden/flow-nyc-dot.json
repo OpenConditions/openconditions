@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:us-nyc-dot:4616240",
+      "id": "oc:feature:us-nyc-dot-flow:4616240",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -27,13 +27,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "us-nyc-dot",
+        "sourceId": "us-nyc-dot-flow",
         "sourceFormat": "nyc-dot",
         "accessMode": "bulk",
         "recordId": "4616240",
         "attribution": {
           "provider": "New York City Department of Transportation",
-          "license": "NYC-Open-Data",
+          "license": "LicenseRef-NYC-Open-Data",
           "licenseUrl": "https://www.nyc.gov/html/data/terms.html"
         },
         "privacy": {
@@ -55,16 +55,16 @@
           "traffic.speed"
         ]
       },
-      "canonicalId": "6db030abc78dac0a934a1661397e585e55a64554872a80c9e07d7ceac5b98cd7",
+      "canonicalId": "4ffa8b5188e01862749fb0c4d96f5a911534f840df572b55ef3c6c262b1dc4b4",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "86dfc94dd91f97059643810e6b1522472673fc19711c207099a4c8fcdd2b70ab"
+      "contentHash": "f29371284d005eff4c1bfe4d33d79cd00f7ea865143763f82f65a0f32ba39bc1"
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:us-nyc-dot:c431851da1cb8af45d9d1d90c3f6252341507d93a4bd2b21b2d2fa896b937ec6",
+      "id": "oc:observation:us-nyc-dot-flow:832aee56c769a45fb11190a5d51382c00f23fe867cc8936bf43da99cc81bb1d3",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -90,13 +90,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "us-nyc-dot",
+        "sourceId": "us-nyc-dot-flow",
         "sourceFormat": "nyc-dot",
         "accessMode": "bulk",
         "recordId": "4616240",
         "attribution": {
           "provider": "New York City Department of Transportation",
-          "license": "NYC-Open-Data",
+          "license": "LicenseRef-NYC-Open-Data",
           "licenseUrl": "https://www.nyc.gov/html/data/terms.html"
         },
         "privacy": {
@@ -112,7 +112,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:us-nyc-dot:4616240"
+        "featureId": "oc:feature:us-nyc-dot-flow:4616240"
       },
       "result": {
         "type": "quantity",
@@ -123,11 +123,11 @@
         "instant": "2026-03-04T19:30:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "36dc48a459b4be03c6b1de907a8ad49f05e3b24491839e2f27a7478bc8f75304",
+      "canonicalId": "a5ca576181beeaf8791fab2d2f9c50254670329ac7b39305830836c3d59810e1",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "acee1a84e2d87f860950571c9148b4339ef6ce0b9bdf1dd8a5def343e02a801c"
+      "contentHash": "f2b33cab3b67cbe375420a9f9ea8b99ae658c4daae82d6423d626b64368dadb0"
     }
   ],
   "situations": []

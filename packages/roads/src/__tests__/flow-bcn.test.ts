@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseBcnTramsStations } from "../stations-bcn.js";
 import { flowFeed, flows, readings, siteIds, value } from "./flow-fixtures.js";
 
-const FEED = "es-bcn-ajuntament";
+const FEED = "es-bcn-ajuntament-flow";
 const feed = flowFeed(FEED);
 
 const CSV = `Tram,Tram_Components,Descripció,Longitud,Latitud

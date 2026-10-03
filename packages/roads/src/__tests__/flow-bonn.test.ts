@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { flowFeed, flows, readings, site, value } from "./flow-fixtures.js";
 
-const FEED = "de-nw-bonn";
+const FEED = "de-nw-bonn-flow";
 const feed = flowFeed(FEED);
 
 // Shapes mirror the live feed at stadtplan.bonn.de/geojson?Thema=19584.

@@ -114,8 +114,8 @@ describe("DATEX measured data", () => {
   });
 
   it("converts DATEX lanes counted from the verge with the site's lane count", () => {
-    const out = ndw(flowFeed("de-by-autobahn"));
-    const components = site(out, "de-by-autobahn", SITE)!["components"] as {
+    const out = ndw(flowFeed("de-by-autobahn-flow"));
+    const components = site(out, "de-by-autobahn-flow", SITE)!["components"] as {
       key: string;
       details: { lane?: { index: number } };
     }[];
@@ -150,7 +150,7 @@ describe("DATEX measured data", () => {
 
 describe("DATEX elaborated data", () => {
   it("keeps the per-class volume as a channel and their sum as the site volume", () => {
-    const feed = "de-nw-autobahn-fahrstreifen";
+    const feed = "de-nw-autobahn-flow";
     const out = flows(
       flowFeed(feed),
       fixture("autobahn-bab-nrw/data.xml"),
@@ -170,7 +170,7 @@ describe("DATEX elaborated data", () => {
   });
 
   it("keeps a class stream with no vehicles this interval as the site's channel", () => {
-    const feed = "de-nw-autobahn-fahrstreifen";
+    const feed = "de-nw-autobahn-flow";
     const quiet = `<elaboratedData>
       <basicData xsi:type="TrafficSpeed">
         <measurementOrCalculationTime>2026-07-27T02:02:30.880+02:00</measurementOrCalculationTime>
@@ -201,7 +201,7 @@ describe("DATEX elaborated data", () => {
   });
 
   it("keeps the site volume of an unclassified flow", () => {
-    const feed = "de-nw-autobahn-loslane";
+    const feed = "de-nw-autobahn-los-flow";
     const out = flows(
       flowFeed(feed),
       fixture("autobahn-bab/elaborated.xml"),
@@ -213,7 +213,7 @@ describe("DATEX elaborated data", () => {
 });
 
 describe("Fintraffic TMS", () => {
-  const FEED = "fi-fintraffic";
+  const FEED = "fi-fintraffic-flow";
   const out = () =>
     flows(
       flowFeed(FEED),
@@ -249,7 +249,7 @@ describe("Fintraffic TMS", () => {
 });
 
 describe("MIV Flanders", () => {
-  const FEED = "be-miv";
+  const FEED = "be-miv-flow";
   const out = () =>
     flows(flowFeed(FEED), fixture("flow/miv.xml"), parseMivConfig(fixture("flow/miv-config.xml")));
 
@@ -276,7 +276,7 @@ describe("MIV Flanders", () => {
 });
 
 describe("HK TD", () => {
-  const FEED = "hk-td";
+  const FEED = "hk-td-flow";
   const out = () =>
     flows(
       flowFeed(FEED),
@@ -312,9 +312,9 @@ describe("HK TD", () => {
 
 describe("Turin FDT", () => {
   it("keeps the flow, the five-minute period and the stated accuracy", () => {
-    const o = flows(flowFeed("it-turin"), fixture("flow/fdt.xml"));
-    expect(value(o, "it-turin", "39983", "traffic.volume")).toBe(360);
-    const [speed] = readings(o, "it-turin", "39983", "traffic.speed");
+    const o = flows(flowFeed("it-turin-flow"), fixture("flow/fdt.xml"));
+    expect(value(o, "it-turin-flow", "39983", "traffic.volume")).toBe(360);
+    const [speed] = readings(o, "it-turin-flow", "39983", "traffic.speed");
     expect(speed!["phenomenonTime"]).toEqual({
       start: "2026-07-10T17:55:03.516Z",
       end: "2026-07-10T18:00:03.516Z",
@@ -325,13 +325,13 @@ describe("Turin FDT", () => {
 
 describe("Madrid INFORMO", () => {
   it("keeps the volume and occupancy, dated by the poll", () => {
-    const o = flows(flowFeed("es-madrid"), fixture("flow/informo.xml"), undefined, {
+    const o = flows(flowFeed("es-madrid-flow"), fixture("flow/informo.xml"), undefined, {
       now: "2026-09-18T10:03:20.000Z",
       cadenceSec: 300,
     });
-    expect(value(o, "es-madrid", "9841", "traffic.volume")).toBe(840);
-    expect(value(o, "es-madrid", "9841", "traffic.occupancy")).toBe(35);
-    expect(readings(o, "es-madrid", "9841", "traffic.los")[0]!["phenomenonTime"]).toEqual({
+    expect(value(o, "es-madrid-flow", "9841", "traffic.volume")).toBe(840);
+    expect(value(o, "es-madrid-flow", "9841", "traffic.occupancy")).toBe(35);
+    expect(readings(o, "es-madrid-flow", "9841", "traffic.los")[0]!["phenomenonTime"]).toEqual({
       instant: "2026-09-18T10:00:00.000Z",
     });
   });
@@ -366,23 +366,23 @@ describe("WebTRIS", () => {
 describe("Barcelona TRAMS", () => {
   it("names the segment after its description", () => {
     const o = flows(
-      flowFeed("es-bcn-ajuntament"),
+      flowFeed("es-bcn-ajuntament-flow"),
       fixture("flow/bcn-trams.dat"),
       parseBcnTramsStations(text("flow/bcn-trams.csv")),
     );
-    expect(site(o, "es-bcn-ajuntament", "2")!["name"]).toEqual([{ lang: "ca", text: "Meridiana" }]);
+    expect(site(o, "es-bcn-ajuntament-flow", "2")!["name"]).toEqual([
+      { lang: "ca", text: "Meridiana" },
+    ]);
   });
 });
 
 describe("reading times", () => {
   it("dates a reading without a zone-bearing time by the poll, floored to the cadence", () => {
-    const o = flows(flowFeed("sg-lta-speedbands"), fixture("flow/lta-speedbands.json"), undefined, {
+    const o = flows(flowFeed("sg-lta-flow"), fixture("flow/lta-speedbands.json"), undefined, {
       now: "2026-09-18T10:07:41.250Z",
       cadenceSec: 300,
     });
-    expect(
-      readings(o, "sg-lta-speedbands", "103000000", "traffic.speed")[0]!["phenomenonTime"],
-    ).toEqual({
+    expect(readings(o, "sg-lta-flow", "103000000", "traffic.speed")[0]!["phenomenonTime"]).toEqual({
       instant: "2026-09-18T10:05:00.000Z",
     });
   });

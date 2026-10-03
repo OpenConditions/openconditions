@@ -9,7 +9,6 @@ export type SourcePollOutcome =
   | "complete_empty"
   | "partial"
   | "failed"
-  | "skipped_cadence"
   | "skipped_overlap"
   | "missing_configuration";
 

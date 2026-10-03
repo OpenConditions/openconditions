@@ -350,9 +350,9 @@ interface OntarioCamera {
 
 function ontarioCamera() {
   const [cam] = json("ontario511-cameras.json") as [OntarioCamera];
-  const prov = provenance("ca-on-511", "ibi511", String(cam.Id), "Ontario 511", "unknown");
+  const prov = provenance("ca-on-511-events", "ibi511", String(cam.Id), "Ontario 511", "unknown");
   const feature = {
-    id: `oc:feature:ca-on-511:${cam.Id}`,
+    id: `oc:feature:ca-on-511-events:${cam.Id}`,
     class: "feature",
     kind: "camera",
     type: "traffic",

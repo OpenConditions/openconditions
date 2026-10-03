@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { FEED_SOURCES, parserFor } from "../feeds.js";
+import { roadsDomain } from "../domain.js";
+import { situationParserOf } from "../parse.js";
 import { __resetSkipMetrics, drainSkippedNoGeometry } from "../skip-metrics.js";
 import type { SourceDescriptor } from "../types.js";
 
@@ -99,17 +100,18 @@ const src = (id: string): SourceDescriptor => ({
   geojson: { idField: "id" },
 });
 
-/** Every format an EVENT feed actually ingests with (flow feeds are measurements). */
+/** Every situation format (measurement formats read flow, not events). */
 function eventFormats(): string[] {
-  return [
-    ...new Set(FEED_SOURCES.filter((f) => f.produces !== "flow").map((f) => String(f.format))),
-  ].sort();
+  return Object.values(roadsDomain.formats)
+    .filter((f) => f.kind === "situations")
+    .map((f) => f.id)
+    .sort();
 }
 
-describe("no-geometry accounting is instrumented for every event format in use", () => {
+describe("no-geometry accounting is instrumented for every situation format", () => {
   beforeEach(() => __resetSkipMetrics());
 
-  it("every event format a feed uses has a geometry-less sample or a written exemption", () => {
+  it("every situation format has a geometry-less sample or a written exemption", () => {
     const missing = eventFormats().filter((f) => !(f in GEOMETRYLESS_SAMPLE) && !(f in EXEMPT));
     expect(missing, `add a sample to GEOMETRYLESS_SAMPLE for: ${missing.join(", ")}`).toEqual([]);
   });
@@ -118,7 +120,7 @@ describe("no-geometry accounting is instrumented for every event format in use",
     "%s drops the record AND reports the loss",
     (format) => {
       const id = `conformance-${format}`;
-      const events = parserFor(format as never)(GEOMETRYLESS_SAMPLE[format]!, src(id));
+      const events = situationParserOf(format)(GEOMETRYLESS_SAMPLE[format]!, src(id));
 
       expect(events, `${format} should emit no event for a geometry-less record`).toEqual([]);
       expect(

@@ -4,9 +4,9 @@ import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
-import { buildDomainRegistry } from "../domains.js";
 import { FeedStatusStore } from "../feed-status.js";
 import { registerPublishRoutes } from "../publish-routes.js";
+import { REPO_CATALOG } from "./helpers/catalog.js";
 import { registry as model, situationDraft, writeSituations } from "./helpers/situations.js";
 
 const BBOX = "13,52,14,53";
@@ -68,8 +68,7 @@ describe("license enforcement on the redistributable export routes", () => {
     ]);
 
     const app = Fastify();
-    const registry = await buildDomainRegistry();
-    registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
+    registerPublishRoutes(app, sql, new FeedStatusStore(), REPO_CATALOG);
     await app.ready();
     try {
       const res = await app.inject({

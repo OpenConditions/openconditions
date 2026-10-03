@@ -1,0 +1,19 @@
+// A region file may carry comments and trailing commas.
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "ndw", // the publisher
+      "product": "events",
+      "name": "Commented feed",
+      "format": "datex2",
+      "tier": "authoritative",
+      /* one endpoint */
+      "endpoints": { "main": { "url": "https://example.test/ndw", "cadenceSec": 300, }, },
+      "freshnessWindowSec": 900,
+      "license": "CC0-1.0",
+      "attribution": "NDW",
+      "privacyUrl": "https://example.test/privacy",
+    },
+  ],
+}

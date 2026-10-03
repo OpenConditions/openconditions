@@ -29,7 +29,7 @@ const raw = JSON.parse(
 );
 
 const src: SourceDescriptor = {
-  id: "fi-digitraffic",
+  id: "fi-digitraffic-events",
   attribution: "Fintraffic / Digitraffic",
   country: "FI",
   license: "CC-BY-4.0",
@@ -46,7 +46,7 @@ function eventById(id: string) {
 
 describe("restriction event binding on a frozen spine", () => {
   it("resolves the Road 40 width record onto real directed segments", () => {
-    const event = eventById("fi-digitraffic:GUID50470575");
+    const event = eventById("fi-digitraffic-events:GUID50470575");
     const result = bindEvent(toBindInput(event), spine);
     expect(result.status).toBe("exact");
     expect(result.directionMode).toBe("single");
@@ -65,7 +65,7 @@ describe("restriction event binding on a frozen spine", () => {
   });
 
   it("never promotes the event binding to a restriction extent", () => {
-    const event = eventById("fi-digitraffic:GUID50470575");
+    const event = eventById("fi-digitraffic-events:GUID50470575");
     const result = bindEvent(toBindInput(event), spine);
     expect(result.segments.length).toBeGreaterThan(0);
     for (const fact of event.restrictionDetails!.facts) {
@@ -75,7 +75,7 @@ describe("restriction event binding on a frozen spine", () => {
   });
 
   it("keeps the source's own direction independent of the matched OSM direction", () => {
-    const event = eventById("fi-digitraffic:GUID50470575");
+    const event = eventById("fi-digitraffic-events:GUID50470575");
     const result = bindEvent(toBindInput(event), spine);
     // Every matched segment runs forward along its way, while the source says
     // the affected carriageway is the decreasing road reference. Neither
@@ -91,14 +91,14 @@ describe("restriction event binding on a frozen spine", () => {
   it("reports no coverage rather than binding to a nearby higher-class road", () => {
     // Road 7840 is far outside this spine's extract, and its own class is not
     // among the default imported ones.
-    const result = bindEvent(toBindInput(eventById("fi-digitraffic:GUID50468844")), spine);
+    const result = bindEvent(toBindInput(eventById("fi-digitraffic-events:GUID50468844")), spine);
     expect(result.segments).toEqual([]);
     expect(["unresolved", "no_coverage"]).toContain(result.status);
   });
 });
 
 describe("disconnected linear geometry", () => {
-  const base = () => toBindInput(eventById("fi-digitraffic:GUID50470575"));
+  const base = () => toBindInput(eventById("fi-digitraffic-events:GUID50470575"));
 
   it("refuses to join components across a gap", () => {
     const input = base();
@@ -200,7 +200,7 @@ describe("ndw restriction event binding on the frozen A76 spine", () => {
   ) as SpineSubgraph;
 
   const ndwSource: SourceDescriptor = {
-    id: "nl-ndw",
+    id: "nl-ndw-events",
     attribution: "NDW / Rijkswaterstaat",
     country: "NL",
     license: "CC0-1.0",
@@ -222,7 +222,7 @@ describe("ndw restriction event binding on the frozen A76 spine", () => {
     return event as Extract<typeof event, { geometry: object }>;
   }
 
-  const heightId = "nl-ndw:RWS01_M1080891_NARROW_LANES_D2_WWA";
+  const heightId = "nl-ndw-events:RWS01_M1080891_NARROW_LANES_D2_WWA";
 
   it("reports the endpoint geometry as ambiguous rather than inventing a path", () => {
     const result = bindEvent(toBindInput(ndwEventById(heightId)), a76);
@@ -261,7 +261,7 @@ describe("ndw restriction event binding on the frozen A76 spine", () => {
 
   it("reports no coverage for a record outside this extract", () => {
     // The lorry closures are near Gorinchem, far outside the A76 bbox.
-    const result = bindEvent(toBindInput(ndwEventById("nl-ndw:NLRWS_0005382945_1")), a76);
+    const result = bindEvent(toBindInput(ndwEventById("nl-ndw-events:NLRWS_0005382945_1")), a76);
     expect(result.segments).toEqual([]);
     expect(["unresolved", "no_coverage"]).toContain(result.status);
   });

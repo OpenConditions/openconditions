@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:us-wzdx:1:af2e3f51-611f-4ce0-9282-2f28ca68e62f",
+    "id": "oc:situation:us-wzdx-events:1:af2e3f51-611f-4ce0-9282-2f28ca68e62f",
     "temporality": "live",
     "externalIds": [
       {
@@ -75,14 +75,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "us-wzdx",
+      "sourceId": "us-wzdx-events",
       "sourceFormat": "wzdx",
       "accessMode": "bulk",
       "recordId": "1:af2e3f51-611f-4ce0-9282-2f28ca68e62f",
       "sourceUpdatedAt": "2009-12-31T18:01:01Z",
       "attribution": {
         "provider": "WZDx publishers",
-        "license": "UNKNOWN"
+        "license": "NOASSERTION"
       },
       "privacy": {
         "class": "authoritative"
@@ -161,14 +161,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "22392983d119f7721464da9b31ddbdf9765ec7aabde74a2e2c1dda853eecff55",
+    "canonicalId": "1fa49db8401d458bfc6cdadbf2ecde93afc1c6cc62bf58029eb834e674e21cf5",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "9839eedbc0fee8ee9bacba0e9dca37aeeb1548dac25677209e8107fb6548e9d3"
+    "contentHash": "aaeb5aa90229a1cb1b4316892b7a15e565abba9ac3ee4bf7a3c53e8fc1a0a369"
   },
   {
-    "id": "oc:situation:us-wzdx:1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8",
+    "id": "oc:situation:us-wzdx-events:1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8",
     "temporality": "live",
     "externalIds": [
       {
@@ -229,14 +229,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "us-wzdx",
+      "sourceId": "us-wzdx-events",
       "sourceFormat": "wzdx",
       "accessMode": "bulk",
       "recordId": "1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8",
       "sourceUpdatedAt": "2010-01-03T01:51:43Z",
       "attribution": {
         "provider": "WZDx publishers",
-        "license": "UNKNOWN"
+        "license": "NOASSERTION"
       },
       "privacy": {
         "class": "authoritative"
@@ -420,14 +420,14 @@
       "v": 1,
       "workersPresent": true
     },
-    "canonicalId": "6018ee9d46ca3874199d08bfb0f5f31194f8cd7bfe8f297ae10065b1ba23187b",
+    "canonicalId": "c6127bb6b0dd84146aad3aebd4f531421103db9edb67d614fb1a4710c79b3ded",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "7728d443a52430c9b8157ec1d78fd16ff99674b2e92f3074175adec5d6e68676"
+    "contentHash": "d8066d12ef7b9d42ce5d0052359fadc27b33cd08ac1a483cefa82b2a82ab9f50"
   },
   {
-    "id": "oc:situation:us-wzdx:1:cf1092ba-3b8d-4e91-81ef-daa4a98662e1",
+    "id": "oc:situation:us-wzdx-events:1:cf1092ba-3b8d-4e91-81ef-daa4a98662e1",
     "temporality": "live",
     "externalIds": [
       {
@@ -514,28 +514,28 @@
       {
         "ref": {
           "class": "situation",
-          "id": "oc:situation:us-wzdx:a15f7570-b7e6-4367-8ad9-3a462eea65dd"
+          "id": "oc:situation:us-wzdx-events:a15f7570-b7e6-4367-8ad9-3a462eea65dd"
         },
         "relation": "related_work_zone"
       },
       {
         "ref": {
           "class": "situation",
-          "id": "oc:situation:us-wzdx:4d151e7d-11d8-4b99-a192-51e189da0de7"
+          "id": "oc:situation:us-wzdx-events:4d151e7d-11d8-4b99-a192-51e189da0de7"
         },
         "relation": "next_occurrence"
       }
     ],
     "provenance": {
       "origin": "derived",
-      "sourceId": "us-wzdx",
+      "sourceId": "us-wzdx-events",
       "sourceFormat": "wzdx",
       "accessMode": "bulk",
       "recordId": "1:cf1092ba-3b8d-4e91-81ef-daa4a98662e1",
       "sourceUpdatedAt": "2010-01-01T01:03:01Z",
       "attribution": {
         "provider": "WZDx publishers",
-        "license": "UNKNOWN"
+        "license": "NOASSERTION"
       },
       "privacy": {
         "class": "authoritative"
@@ -648,10 +648,10 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "f1aaa0414496815b56d0adddf098704d5148f88b79e18e95884a826888824947",
+    "canonicalId": "ac3c2351fe8e260b3a83f81634def4f48167f122e4fa28a701de49ddc604819b",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "4a1167fb82a3bd6e429fa82d3ee9d8eb460990baa5b9e801bb3e3b03c016d279"
+    "contentHash": "2b44f6b0dfb3f1474d52721165a7708870416a646196a7e20a7854ae78300285"
   }
 ]

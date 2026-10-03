@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:fi-digitraffic:GUID50468062",
+    "id": "oc:situation:fi-digitraffic-events:GUID50468062",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -51,7 +51,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "fi-digitraffic",
+      "sourceId": "fi-digitraffic-events",
       "sourceFormat": "digitraffic",
       "accessMode": "bulk",
       "recordId": "GUID50468062",
@@ -133,10 +133,10 @@
       "kind": "incident",
       "v": 1
     },
-    "canonicalId": "e87be43bb68d75f64b93c1ae68161f374f0b409d0c3816fd418e7a27a3729c29",
+    "canonicalId": "31df80c54bbeab8ce6e1e4ac74d474b6480ce19db2e62c3a0f8b3a807813495c",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "30e3ab94bc5b617698aa7b75b7402a5e1c84fdd62d63f4047916eadb492c8577"
+    "contentHash": "f5d30ea9b96e53fffa52d11ec65e37c308d6aac2c9cdf4e7d57cb0ebbf8c524f"
   }
 ]

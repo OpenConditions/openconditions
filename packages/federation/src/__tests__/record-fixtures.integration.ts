@@ -91,7 +91,7 @@ const pointAt = (lon: number, lat = 52.37) => ({
   fuzziness: "exact",
 });
 
-export const situationId = (local: string, sourceId = "nl-ndw") =>
+export const situationId = (local: string, sourceId = "nl-ndw-events") =>
   `oc:situation:${sourceId}:${local}`;
 
 /** An accident closing a carriageway: kind `incident` with a `closure` effect. */
@@ -99,7 +99,7 @@ export function incidentDraft(
   local: string,
   over: Rec & { lon?: number; sourceId?: string } = {},
 ): Rec {
-  const { lon, sourceId = "nl-ndw", ...rest } = over;
+  const { lon, sourceId = "nl-ndw-events", ...rest } = over;
   return {
     id: situationId(local, sourceId),
     class: "situation",
@@ -263,7 +263,7 @@ export function crowdReportDraft(nonce: string, now = WRITTEN_AT): Rec {
 
 /** A peer's situation, sealed by the peer and admitted as the inbox admits it. */
 export function peerSituation(local: string, revision = 1): Rec {
-  const sealed = sealRecord(registry, incidentDraft(local, { sourceId: "be-flanders" }), {
+  const sealed = sealRecord(registry, incidentDraft(local, { sourceId: "be-flanders-events" }), {
     instanceId: PEER,
     revision,
     recordedAt: WRITTEN_AT,

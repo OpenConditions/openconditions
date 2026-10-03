@@ -712,7 +712,7 @@ function autobahnLorryParking() {
           ]),
     ];
     return {
-      id: `oc:feature:de-autobahn:${site.identifier}`,
+      id: `oc:feature:de-autobahn-events:${site.identifier}`,
       class: "feature",
       kind: "parking_site",
       type: "rest_area_parking",
@@ -721,7 +721,7 @@ function autobahnLorryParking() {
       name: de(site.subtitle),
       location: point(...site.coordinate.coordinates),
       provenance: provenance(
-        "de-autobahn",
+        "de-autobahn-events",
         "autobahn-parking",
         site.identifier,
         "Autobahn GmbH des Bundes",

@@ -1,6 +1,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
-import type { FeedSourceBase } from "@openconditions/ingest-framework";
+import { fileURLToPath } from "node:url";
+import { loadIngestCatalog } from "../services/ingest/src/domains.js";
 import {
+  type CredentialCatalog,
   configSchemaPropertiesFor,
   credentialsDocFor,
   envExampleFor,
@@ -13,7 +15,7 @@ export interface GenPaths {
 }
 
 /** Splice generated configSchema.properties into service.json, preserving every other key. */
-function nextServiceJson(current: string, feeds: FeedSourceBase[]): string {
+function nextServiceJson(current: string, catalog: CredentialCatalog): string {
   const svc = JSON.parse(current) as { configSchema?: { properties?: unknown } };
   svc.configSchema = {
     ...(svc.configSchema ?? {}),
@@ -25,10 +27,10 @@ function nextServiceJson(current: string, feeds: FeedSourceBase[]): string {
           "Complete JSON array of {id,bbox,tz,pbfUrls?,highwayClasses?}. Used by import, binding coverage and speed profiles. Unset or [] means no configured graph coverage. See graph-binding documentation.",
         "x-openmapx-secret": false,
       },
-      ...configSchemaPropertiesFor(feeds),
+      ...configSchemaPropertiesFor(catalog),
     },
   };
-  return JSON.stringify(svc, null, 2) + "\n";
+  return `${JSON.stringify(svc, null, 2)}\n`;
 }
 
 const ENV_MARKER =
@@ -36,9 +38,9 @@ const ENV_MARKER =
 
 const DEFAULT_ENV_PREAMBLE = `# OpenConditions ingest — environment configuration
 #
-# Copy to \`.env\` and fill in. Every road feed below is credential-gated: the
+# Copy to \`.env\` and fill in. Every feed below is credential-gated: the
 # scheduler skips a feed until all of its variables are set, so you only need the
-# ones for the sources you want live. See docs/road-feed-credentials.md for how to
+# ones for the sources you want live. See docs/feed-credentials.md for how to
 # obtain each key and any access conditions.
 
 # --- Service ---------------------------------------------------------------
@@ -71,14 +73,15 @@ OPENCONDITIONS_MAX_REDIRECTS=5
 # an operator-mounted directory + an optional (default-off) remote bundle,
 # merged by feed id with precedence mounted > remote > baked-in.
 #
-# Directory of mounted *.json5 feed override/add files (overrides baked-in by id,
-# no rebuild). Unset = baked-in feeds only.
+# Directory laid out like the baked catalogue (<domain>/<region>.jsonc, optional
+# credentials.jsonc) whose feeds add to or override baked-in ones by id, no
+# rebuild. Unset = baked-in feeds only.
 OPENCONDITIONS_FEEDS_DIR=
-# URL of a remote feed bundle (e.g. the public road-conditions-atlas). Only used
+# URL of a remote feed bundle (e.g. a published atlas/<domain>.json). Only used
 # when remote-pull is enabled below.
 OPENCONDITIONS_FEEDS_REMOTE_URL=
-# "true" opts into remote-pull (default off). Descriptors are schema-validated
-# and URL-guarded; a snapshot is vendored under the state dir
+# "true" opts into remote-pull (default off). The bundle is checked like the
+# baked catalogue and URL-guarded; a snapshot is kept under the state dir
 # (\${OPENCONDITIONS_STATE_DIR:-/data}/feeds) so the instance survives the remote
 # being down.
 OPENCONDITIONS_FEEDS_REMOTE_ENABLED=
@@ -86,22 +89,22 @@ OPENCONDITIONS_FEEDS_REMOTE_ENABLED=
 ${ENV_MARKER}`;
 
 /** Splice the generated credential blocks below the marker into `.env.example`, preserving the hand-authored preamble above it (or seeding the default preamble if the marker is missing). */
-export function nextEnvExample(current: string, feeds: FeedSourceBase[]): string {
+export function nextEnvExample(current: string, catalog: CredentialCatalog): string {
   const idx = current.indexOf(ENV_MARKER);
   const preamble = idx >= 0 ? current.slice(0, idx + ENV_MARKER.length) : DEFAULT_ENV_PREAMBLE;
-  return `${preamble}\n\n${envExampleFor(feeds)}`;
+  return `${preamble}\n\n${envExampleFor(catalog)}`;
 }
 
 /** In --write mode, writes the three artifacts. In check mode, compares and collects drift. */
 export function applyOrCheck(
-  feeds: FeedSourceBase[],
+  catalog: CredentialCatalog,
   paths: GenPaths,
   write: boolean,
 ): { drift: string[] } {
   const targets: [string, string][] = [
-    [paths.envExample, nextEnvExample(safeRead(paths.envExample), feeds)],
-    [paths.serviceJson, nextServiceJson(readFileSync(paths.serviceJson, "utf8"), feeds)],
-    [paths.doc, credentialsDocFor(feeds)],
+    [paths.envExample, nextEnvExample(safeRead(paths.envExample), catalog)],
+    [paths.serviceJson, nextServiceJson(readFileSync(paths.serviceJson, "utf8"), catalog)],
+    [paths.doc, credentialsDocFor(catalog)],
   ];
   const drift: string[] = [];
   for (const [file, next] of targets) {
@@ -121,18 +124,19 @@ function safeRead(file: string): string {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const { FEED_SOURCES } = await import("@openconditions/roads");
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  // The baked catalogue alone: what ships is documented, not an operator's mount.
+  const catalog = await loadIngestCatalog({});
   const paths: GenPaths = {
-    envExample: new URL("../.env.example", import.meta.url).pathname,
-    serviceJson: new URL("../services/ingest/service.json", import.meta.url).pathname,
-    doc: new URL("../docs/road-feed-credentials.md", import.meta.url).pathname,
+    envExample: fileURLToPath(new URL("../.env.example", import.meta.url)),
+    serviceJson: fileURLToPath(new URL("../services/ingest/service.json", import.meta.url)),
+    doc: fileURLToPath(new URL("../docs/feed-credentials.md", import.meta.url)),
   };
   const write = process.argv.includes("--write");
-  const { drift } = applyOrCheck(FEED_SOURCES as unknown as FeedSourceBase[], paths, write);
+  const { drift } = applyOrCheck(catalog, paths, write);
   if (!write && drift.length > 0) {
     console.error(
-      `✗ Credential metadata is out of sync:\n  ${drift.join("\n  ")}\n\nFix with:  pnpm gen:credentials --write`,
+      `✗ Credential metadata is out of sync:\n  ${drift.join("\n  ")}\n\nFix with:  pnpm gen:credentials`,
     );
     process.exit(1);
   }

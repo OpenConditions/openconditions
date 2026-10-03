@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:ca-qc-mtq:164507",
+    "id": "oc:situation:ca-qc-mtq-events:164507",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -83,7 +83,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "ca-qc-mtq",
+      "sourceId": "ca-qc-mtq-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "164507",
@@ -132,14 +132,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "2438d75d73b20de92eab2094b5307e4a946b6cfd983acc812a517f90bcd9e1ba",
+    "canonicalId": "a0a0497909ff069e4063e6464f91e83188d3d806347d9e6b0fef2bb5117d2318",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "ec67aa8c88a403a06dca168b7745c4fade2edb395ddf7ff3b7249b69be3a1c69"
+    "contentHash": "40b3dd14bfeddcdbc5da6530b88ef78797dc9d867c7f95b72a43f83aff8ce79a"
   },
   {
-    "id": "oc:situation:ca-qc-mtq:135768",
+    "id": "oc:situation:ca-qc-mtq-events:135768",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -366,7 +366,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "ca-qc-mtq",
+      "sourceId": "ca-qc-mtq-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "135768",
@@ -415,14 +415,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "d91943073ec86fc574994fa15fcac7af91d5766b4c2da2b53c17436022722c25",
+    "canonicalId": "ebec78f96209eea0149c6d38cd419b4f669ec599b7430e4a5ae9a1335907e9af",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f1dc1b67b070be8873f30b5b7f70906b5d72d276f0a3fed1dd9a7b2bd8e11bc5"
+    "contentHash": "31081c06b4c3ffd17ac4a5b98ea7ed5ca9e38f43c84b2326c6e44e517c8965e0"
   },
   {
-    "id": "oc:situation:ca-qc-mtq:143750",
+    "id": "oc:situation:ca-qc-mtq-events:143750",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -673,7 +673,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "ca-qc-mtq",
+      "sourceId": "ca-qc-mtq-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "143750",
@@ -722,14 +722,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "ee666bb71b9143bc25b5c786da4f8208d503f32fc80c2b486f753b8c2f62185b",
+    "canonicalId": "8f3a013cfe0532f3e94ec4728deb643785dc4b341981a18eba9eca6ef1050e89",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "7b4e698e819b33e79304314b297f155f79e73a0f8bf556d3d547eb7401316017"
+    "contentHash": "54edbf8988d691fc3337298d847072cd1ac2094f89a65c46715184dc8673cd43"
   },
   {
-    "id": "oc:situation:ca-qc-mtq:149555",
+    "id": "oc:situation:ca-qc-mtq-events:149555",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -1004,7 +1004,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "ca-qc-mtq",
+      "sourceId": "ca-qc-mtq-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "149555",
@@ -1053,10 +1053,10 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "f5ae263ea5ff124596469d0c777c526d2694091cf9c3438fa2204af764f09c74",
+    "canonicalId": "fd1dc4511177c57f71f755ad4010d5df203298f2454ae8bb7cd72ced9a052d92",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "d08b91eb561aecbb80d21b9a060f65ea3d87cb734b696a9dc0c139d9c8233902"
+    "contentHash": "72afce7e293585cc3a82ba94a046401ff6958ea656ff751d80bb2a9d1f838667"
   }
 ]

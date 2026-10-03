@@ -132,7 +132,7 @@ describe("writeSensorObservations", () => {
   it("upserts one segment_observation row per (segment, source), averaging across every " +
     "sensor of that source bound to the segment", async () => {
     await seedSegment("201:f", 201, 100);
-    await seedFlow("nrw-1:1", "de-nw-verkehr", 50, 100);
+    await seedFlow("nrw-1:1", "de-nw-verkehr-events", 50, 100);
     await seedSensorSegment("nrw-1:1", "201:f");
 
     const first = await writeSensorObservations(sql, () => NOW);
@@ -149,7 +149,7 @@ describe("writeSensorObservations", () => {
         expires_at: Date;
       }[]
     >`SELECT source_tier, current_kph, speed_ratio, los, sample_count, observed_at, expires_at
-        FROM conditions.segment_observation WHERE segment_id = '201:f' AND source = 'de-nw-verkehr'`;
+        FROM conditions.segment_observation WHERE segment_id = '201:f' AND source = 'de-nw-verkehr-events'`;
     expect(rows).toHaveLength(1);
     const row = rows[0]!;
     expect(row.source_tier).toBe("sensor");
@@ -161,7 +161,7 @@ describe("writeSensorObservations", () => {
 
     // A second sensor of the same source bound to the same segment: the
     // row must be averaged in place, not duplicated.
-    await seedFlow("nrw-2:1", "de-nw-verkehr", 70, 100);
+    await seedFlow("nrw-2:1", "de-nw-verkehr-events", 70, 100);
     await seedSensorSegment("nrw-2:1", "201:f");
 
     const second = await writeSensorObservations(sql, () => NOW);
@@ -169,7 +169,7 @@ describe("writeSensorObservations", () => {
 
     const merged = await sql<{ current_kph: number; sample_count: number }[]>`
         SELECT current_kph, sample_count FROM conditions.segment_observation
-        WHERE segment_id = '201:f' AND source = 'de-nw-verkehr'`;
+        WHERE segment_id = '201:f' AND source = 'de-nw-verkehr-events'`;
     expect(merged).toHaveLength(1);
     expect(Number(merged[0]!.current_kph)).toBeCloseTo(60, 5);
     expect(Number(merged[0]!.sample_count)).toBe(2);
@@ -177,9 +177,9 @@ describe("writeSensorObservations", () => {
 
   it("keeps one row per (segment, source): two sources on one segment produce two rows, each averaged within its own source", async () => {
     await seedSegment("203:f", 203, 100);
-    await seedFlow("nrw-a:1", "de-nw-verkehr", 50, 100);
+    await seedFlow("nrw-a:1", "de-nw-verkehr-events", 50, 100);
     await seedSensorSegment("nrw-a:1", "203:f");
-    await seedFlow("trv-a:1", "se-trafikverket", 70, 100);
+    await seedFlow("trv-a:1", "se-trafikverket-flow", 70, 100);
     await seedSensorSegment("trv-a:1", "203:f");
 
     await writeSensorObservations(sql, () => NOW);
@@ -188,17 +188,17 @@ describe("writeSensorObservations", () => {
       SELECT source, current_kph, sample_count FROM conditions.segment_observation
       WHERE segment_id = '203:f' ORDER BY source`;
     expect(rows).toHaveLength(2);
-    expect(rows.map((r) => r.source)).toEqual(["de-nw-verkehr", "se-trafikverket"]);
+    expect(rows.map((r) => r.source)).toEqual(["de-nw-verkehr-events", "se-trafikverket-flow"]);
     const bySource = new Map(rows.map((r) => [r.source, r]));
-    expect(Number(bySource.get("de-nw-verkehr")!.current_kph)).toBeCloseTo(50, 5);
-    expect(Number(bySource.get("de-nw-verkehr")!.sample_count)).toBe(1);
-    expect(Number(bySource.get("se-trafikverket")!.current_kph)).toBeCloseTo(70, 5);
-    expect(Number(bySource.get("se-trafikverket")!.sample_count)).toBe(1);
+    expect(Number(bySource.get("de-nw-verkehr-events")!.current_kph)).toBeCloseTo(50, 5);
+    expect(Number(bySource.get("de-nw-verkehr-events")!.sample_count)).toBe(1);
+    expect(Number(bySource.get("se-trafikverket-flow")!.current_kph)).toBeCloseTo(70, 5);
+    expect(Number(bySource.get("se-trafikverket-flow")!.sample_count)).toBe(1);
   }, 30_000);
 
   it("leaves los 'unknown' and speed_ratio NULL when no free-flow speed is known (Trafikverket-like)", async () => {
     await seedSegment("202:f", 202, null);
-    await seedFlow("trv-1:1", "se-trafikverket", 50, null);
+    await seedFlow("trv-1:1", "se-trafikverket-flow", 50, null);
     await seedSensorSegment("trv-1:1", "202:f");
 
     await writeSensorObservations(sql, () => NOW);
@@ -206,7 +206,7 @@ describe("writeSensorObservations", () => {
     const rows = await sql<
       { los: string; speed_ratio: number | null; free_flow_kph: number | null }[]
     >`SELECT los, speed_ratio, free_flow_kph FROM conditions.segment_observation
-      WHERE segment_id = '202:f' AND source = 'se-trafikverket'`;
+      WHERE segment_id = '202:f' AND source = 'se-trafikverket-flow'`;
     expect(rows).toHaveLength(1);
     expect(rows[0]!.los).toBe("unknown");
     expect(rows[0]!.speed_ratio).toBeNull();
@@ -214,12 +214,40 @@ describe("writeSensorObservations", () => {
   }, 30_000);
 });
 
+describe("writeSensorObservations — sources", () => {
+  it("reads only the flow feeds of the roads domain", async () => {
+    await seedSegment("206:f", 206, 100);
+    sourceOf.set("road-1", "nl-road-flow");
+    await writeSiteReadings(
+      sql,
+      "nl-road-flow",
+      [{ site: "road-1", geometry: SITE, at: NOW, speed: 80, freeFlowKph: 100 }],
+      NOW,
+    );
+    await seedSensorSegment("road-1", "206:f");
+    sourceOf.set("water-1", "nl-water-flow");
+    await writeSiteReadings(
+      sql,
+      "nl-water-flow",
+      [{ site: "water-1", geometry: SITE, at: NOW, speed: 10, freeFlowKph: 100 }],
+      NOW,
+      { domain: "waterways" },
+    );
+    await seedSensorSegment("water-1", "206:f");
+
+    await writeSensorObservations(sql, () => NOW);
+    const rows = await sql<{ source: string }[]>`
+      SELECT source FROM conditions.segment_observation WHERE segment_id = '206:f'`;
+    expect(rows).toEqual([{ source: "nl-road-flow" }]);
+  }, 30_000);
+});
+
 describe("writeSensorObservations — readings", () => {
   it("reads only readings younger than 15 minutes", async () => {
     await seedSegment("204:f", 204, 100);
-    await seedFlow("old-1", "de-nw-verkehr", 30, 100, "2025-12-31T23:40:00.000Z");
+    await seedFlow("old-1", "de-nw-verkehr-events", 30, 100, "2025-12-31T23:40:00.000Z");
     await seedSensorSegment("old-1", "204:f");
-    await seedFlow("new-1", "de-nw-verkehr", 80, 100, "2025-12-31T23:50:00.000Z");
+    await seedFlow("new-1", "de-nw-verkehr-events", 80, 100, "2025-12-31T23:50:00.000Z");
     await seedSensorSegment("new-1", "204:f");
 
     await writeSensorObservations(sql, () => NOW);
@@ -262,7 +290,7 @@ describe("writeSensorObservations — readings", () => {
 
   it("falls back to the segment's free-flow speed when the reading carries no baseline", async () => {
     await seedSegment("205:f", 205, 80);
-    await seedFlow("nobase-1", "de-nw-verkehr", 40, null);
+    await seedFlow("nobase-1", "de-nw-verkehr-events", 40, null);
     await seedSensorSegment("nobase-1", "205:f");
 
     await writeSensorObservations(sql, () => NOW);
@@ -278,7 +306,14 @@ describe("fuseSegmentSpeed", () => {
     "taking the highest tier (authoritative over sensor) and listing all live sources in " +
     "contributing; an expired observation is ignored entirely", async () => {
     await seedSegment("301:f", 301, 100);
-    await seedObservation("301:f", "de-nw-verkehr", "sensor", 50, NOW, "2026-01-01T00:15:00.000Z");
+    await seedObservation(
+      "301:f",
+      "de-nw-verkehr-events",
+      "sensor",
+      50,
+      NOW,
+      "2026-01-01T00:15:00.000Z",
+    );
     await seedObservation(
       "301:f",
       "incident-authority",
@@ -322,7 +357,7 @@ describe("fuseSegmentSpeed", () => {
     expect(row.source_tier).toBe("authoritative");
     expect(row.confidence).toBe("measured");
     expect(row.is_estimated).toBe(false);
-    expect([...row.contributing].sort()).toEqual(["de-nw-verkehr", "incident-authority"]);
+    expect([...row.contributing].sort()).toEqual(["de-nw-verkehr-events", "incident-authority"]);
   }, 30_000);
 });
 
@@ -455,7 +490,7 @@ describe("declared LoS fusion (Verkehrslage)", () => {
 
   it("a LoS-only segment fuses to a row with NULL current_kph and the declared los", async () => {
     await seedSegment("401:f", 401, 100);
-    await seedDeclaredFlow("los-a:1", "de-nw-autobahn-loslane", "queuing");
+    await seedDeclaredFlow("los-a:1", "de-nw-autobahn-los-flow", "queuing");
     await seedSensorSegment("los-a:1", "401:f");
 
     const row = await fuse("401:f");
@@ -465,9 +500,9 @@ describe("declared LoS fusion (Verkehrslage)", () => {
 
   it("a both-covered segment keeps the measured speed AND takes the declared los", async () => {
     await seedSegment("402:f", 402, 100);
-    await seedFlow("qv-b:1", "de-nw-autobahn-fahrstreifen", 90, 100); // ratio 0.9 -> free_flow
+    await seedFlow("qv-b:1", "de-nw-autobahn-flow", 90, 100); // ratio 0.9 -> free_flow
     await seedSensorSegment("qv-b:1", "402:f");
-    await seedDeclaredFlow("los-b:1", "de-nw-autobahn-loslane", "queuing");
+    await seedDeclaredFlow("los-b:1", "de-nw-autobahn-los-flow", "queuing");
     await seedSensorSegment("los-b:1", "402:f");
 
     const row = await fuse("402:f");
@@ -477,7 +512,7 @@ describe("declared LoS fusion (Verkehrslage)", () => {
 
   it("a declared free_flow with no speed fuses to free_flow, not the stationary trap", async () => {
     await seedSegment("403:f", 403, 100);
-    await seedDeclaredFlow("los-c:1", "de-bw-autobahn-los", "free_flow");
+    await seedDeclaredFlow("los-c:1", "de-bw-autobahn-los-flow", "free_flow");
     await seedSensorSegment("los-c:1", "403:f");
 
     const row = await fuse("403:f");
@@ -487,9 +522,9 @@ describe("declared LoS fusion (Verkehrslage)", () => {
 
   it("two declared sites in one source-group fuse worst-first (blocked over queuing)", async () => {
     await seedSegment("404:f", 404, 100);
-    await seedDeclaredFlow("los-d1:1", "de-nw-autobahn-loslane", "blocked");
+    await seedDeclaredFlow("los-d1:1", "de-nw-autobahn-los-flow", "blocked");
     await seedSensorSegment("los-d1:1", "404:f");
-    await seedDeclaredFlow("los-d2:1", "de-nw-autobahn-loslane", "queuing");
+    await seedDeclaredFlow("los-d2:1", "de-nw-autobahn-los-flow", "queuing");
     await seedSensorSegment("los-d2:1", "404:f");
 
     const row = await fuse("404:f");

@@ -18,9 +18,9 @@ import { parseMivFlow } from "./miv.js";
 
 /** Every flow format; the wire formats `FLOW_PARSERS` reads. */
 export const FLOW_FORMAT_CODES = [
-  "digitraffic",
-  "datex2",
-  "datex-elaborated",
+  "digitraffic-traffic-measurement",
+  "datex2-measured",
+  "datex2-elaborated",
   "fintraffic-tms",
   "webtris",
   "nyc-dot",
@@ -36,11 +36,13 @@ export const FLOW_FORMAT_CODES = [
   "bcn-trams",
 ] as const;
 
+export type FlowFormatCode = (typeof FLOW_FORMAT_CODES)[number];
+
 /** The flow parser of every flow format. */
-const FLOW_PARSERS: Record<(typeof FLOW_FORMAT_CODES)[number], FlowParser> = {
-  digitraffic: parseDigitrafficFlow,
-  datex2: parseDatexMeasuredData,
-  "datex-elaborated": parseElaboratedFlow,
+const FLOW_PARSERS: Record<FlowFormatCode, FlowParser> = {
+  "digitraffic-traffic-measurement": parseDigitrafficFlow,
+  "datex2-measured": parseDatexMeasuredData,
+  "datex2-elaborated": parseElaboratedFlow,
   "fintraffic-tms": parseFintrafficFlow,
   webtris: parseWebtrisFlow,
   "nyc-dot": parseNycDotFlow,
@@ -61,5 +63,5 @@ export function flowParserOf(format: string): FlowParser {
   if (!Object.hasOwn(FLOW_PARSERS, format)) {
     throw new Error(`No flow parser registered for format: ${format}`);
   }
-  return FLOW_PARSERS[format as keyof typeof FLOW_PARSERS];
+  return FLOW_PARSERS[format as FlowFormatCode];
 }

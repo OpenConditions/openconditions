@@ -1,0 +1,51 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "vegvesen",
+      "product": "events",
+      "name": "Statens vegvesen (Norway)",
+      "tier": "authoritative",
+      "format": "datex2",
+      "auth": { "kind": "basic", "user": "@no-vegvesen.user", "password": "@no-vegvesen.password" },
+      "endpoints": {
+        "main": {
+          "url": "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetSituation/pullSnapshotData",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "NLOD-2.0",
+      "licenseUrl": "https://data.norge.no/nlod/en/2.0",
+      "attribution": "Statens vegvesen",
+      "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
+    },
+    {
+      // Measured traffic data (speed/volume) joined to the MeasurementSiteTable for
+      // geometry. Shares the same free vegvesen DATEX account as the events feed
+      // above, so it runs whenever those credentials are set.
+      "operator": "vegvesen",
+      "product": "flow",
+      "name": "Statens vegvesen traffic speed (Norway)",
+      "tier": "authoritative",
+      "format": "datex2-measured",
+      "auth": { "kind": "basic", "user": "@no-vegvesen.user", "password": "@no-vegvesen.password" },
+      "endpoints": {
+        "main": {
+          "url": "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetMeasuredData/pullSnapshotData",
+          "cadenceSec": 300,
+        },
+        "sites": {
+          "url": "https://datex-server-get-v3-1.atlas.vegvesen.no/datexapi/GetMeasurementSiteTable/pullSnapshotData",
+          "decoder": "datex2-sites",
+          "cadenceSec": 21600,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "NLOD-2.0",
+      "licenseUrl": "https://data.norge.no/nlod/en/2.0",
+      "attribution": "Statens vegvesen",
+      "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
+    },
+  ],
+}

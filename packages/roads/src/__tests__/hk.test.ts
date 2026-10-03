@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseHkDetectors } from "../hk.js";
 import { flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const FEED = "hk-td";
+const FEED = "hk-td-flow";
 const feed = flowFeed(FEED);
 
 // Leading ﻿ mirrors the live file's UTF-8 BOM.

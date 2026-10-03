@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:de-be-berlin:8/2025",
+    "id": "oc:situation:de-be-berlin-events:8/2025",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -79,14 +79,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-be-berlin",
+      "sourceId": "de-be-berlin-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "8/2025",
       "sourceUpdatedAt": "2026-06-10T12:37:04.557Z",
       "attribution": {
         "provider": "Verkehrsinformationszentrale Berlin (VIZ)",
-        "license": "dl-de/by-2-0",
+        "license": "DL-DE-BY-2.0",
         "licenseUrl": "https://daten.berlin.de/"
       },
       "privacy": {
@@ -121,14 +121,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "0dbe4694500be56bf37b9ea2b6abd8a6639e160e26dccecc302ad89262b18f1a",
+    "canonicalId": "6b04be42a62f82f9cb9f24945fd7552363b75d48c1cae1850935c53a390a6cac",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "8e746053e0d67b436452bb08777ebccb27cc89028f6226ed8b6f6eee51247618"
+    "contentHash": "e448da45454a0fdd393c135279310daba5eb619b5b33820edf4e096ecb8e8fa4"
   },
   {
-    "id": "oc:situation:de-be-berlin:105/2025",
+    "id": "oc:situation:de-be-berlin-events:105/2025",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -157,14 +157,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-be-berlin",
+      "sourceId": "de-be-berlin-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "105/2025",
       "sourceUpdatedAt": "2026-04-13T17:06:28.973Z",
       "attribution": {
         "provider": "Verkehrsinformationszentrale Berlin (VIZ)",
-        "license": "dl-de/by-2-0",
+        "license": "DL-DE-BY-2.0",
         "licenseUrl": "https://daten.berlin.de/"
       },
       "privacy": {
@@ -199,14 +199,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "15e552d3ff072731a399de92d177141033c906f04595070c9ab0a1384249ee2d",
+    "canonicalId": "5910ae93108c956e23da1d42246fdc5eaec7f117c15cf6404fa314c48ae90872",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "65385bfd60dbb1ba5b26f974d4d1df701337d5a5de5206c546a273593b268ff7"
+    "contentHash": "17e381da4757af4c4f9aa6311e88e8cddcb143c7cfe15ef3ecccbcfe910da7d3"
   },
   {
-    "id": "oc:situation:de-be-berlin:17/2025",
+    "id": "oc:situation:de-be-berlin-events:17/2025",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -261,14 +261,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-be-berlin",
+      "sourceId": "de-be-berlin-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "17/2025",
       "sourceUpdatedAt": "2026-06-23T15:52:40.501Z",
       "attribution": {
         "provider": "Verkehrsinformationszentrale Berlin (VIZ)",
-        "license": "dl-de/by-2-0",
+        "license": "DL-DE-BY-2.0",
         "licenseUrl": "https://daten.berlin.de/"
       },
       "privacy": {
@@ -316,14 +316,14 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "5ddf87ca3a3aacf6e0945a2fbdf97c58b81b0dfc39ca6cc5de0f93570972374f",
+    "canonicalId": "d46bac47045cd17d8e4caf193186318e10441f47469cdb6ef6bfba89db45fdd3",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "a6a3f3f01042875da6712fb710ad40d3a7e59533932d7f0a0d91292f83a7afd6"
+    "contentHash": "40bbb5dfbc519f0cf717d4f87d371ed9b11188d5212b0f0f25ebee06e80096cc"
   },
   {
-    "id": "oc:situation:de-be-berlin:30/2025",
+    "id": "oc:situation:de-be-berlin-events:30/2025",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -387,14 +387,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-be-berlin",
+      "sourceId": "de-be-berlin-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "30/2025",
       "sourceUpdatedAt": "2026-04-13T17:04:06.091Z",
       "attribution": {
         "provider": "Verkehrsinformationszentrale Berlin (VIZ)",
-        "license": "dl-de/by-2-0",
+        "license": "DL-DE-BY-2.0",
         "licenseUrl": "https://daten.berlin.de/"
       },
       "privacy": {
@@ -442,14 +442,14 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "4fd875b48b484de3ca1ea18ba354a22a1c2501f61507526d56f33734c7454c73",
+    "canonicalId": "78b1de67a3fe9e9cdcb777fbd0a18e18e41b1b7422ae9cd00a0877ebe34b5f70",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "8ee3be7cab2b4ab935c65c7c734768b2f263ed26ab79a9d3a4a8c48974d70a3c"
+    "contentHash": "c1aef1fc54078eb9c2219cbff132219cd616d0a6a49154b75995248e797e8333"
   },
   {
-    "id": "oc:situation:de-be-berlin:44/2025",
+    "id": "oc:situation:de-be-berlin-events:44/2025",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -653,14 +653,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-be-berlin",
+      "sourceId": "de-be-berlin-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "44/2025",
       "sourceUpdatedAt": "2026-06-09T14:24:41.596Z",
       "attribution": {
         "provider": "Verkehrsinformationszentrale Berlin (VIZ)",
-        "license": "dl-de/by-2-0",
+        "license": "DL-DE-BY-2.0",
         "licenseUrl": "https://daten.berlin.de/"
       },
       "privacy": {
@@ -708,10 +708,10 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "8d57cd49b5335f4a18e0694f3b436b48345a3b058d94b469f0eeda9c450656b0",
+    "canonicalId": "4c5b939e4b9fd0173abd91447c25c5538425b7f7a6ef8c9a377a22079034ab4f",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "732368005c0775c4f4d3989848087c9dbc0872c35746d09bb09034f80efcb6a8"
+    "contentHash": "2133287ba25e6e75c999a096128cf4a11dc9d1ee6ba16a9283528ad55bb14671"
   }
 ]

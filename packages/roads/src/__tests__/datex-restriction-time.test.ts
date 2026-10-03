@@ -15,7 +15,7 @@ import type { SourceDescriptor } from "../types.js";
 const xml = readFileSync(new URL("./fixtures/ndw/restrictions-v3.xml", import.meta.url), "utf8");
 
 const ndwSource: SourceDescriptor = {
-  id: "nl-ndw",
+  id: "nl-ndw-events",
   attribution: "NDW / Rijkswaterstaat",
   country: "NL",
   license: "CC0-1.0",
@@ -23,8 +23,8 @@ const ndwSource: SourceDescriptor = {
 };
 
 const HEIGHT_SUFFIX = ":RWS01_M1080891_NARROW_LANES_D2_WWA";
-const LORRY_POSITIVE_ID = "nl-ndw:NLRWS_0005382945_1";
-const LORRY_NEGATIVE_ID = "nl-ndw:NLRWS_0005406494_1";
+const LORRY_POSITIVE_ID = "nl-ndw-events:NLRWS_0005382945_1";
+const LORRY_NEGATIVE_ID = "nl-ndw-events:NLRWS_0005406494_1";
 
 const HEIGHT_VALIDITY =
   "<sit:validity><com:validityStatus>definedByValidityTimeSpec</com:validityStatus><com:validityTimeSpecification><com:overallStartTime>2025-09-05T22:59:03Z</com:overallStartTime><com:overallEndTime>2027-03-30T21:59:00Z</com:overallEndTime></com:validityTimeSpecification></sit:validity>";
@@ -248,7 +248,7 @@ describe("ndw conservative restriction validity", () => {
         `<sit:validity><com:validityStatus>${status}</com:validityStatus><com:validityTimeSpecification><com:overallStartTime>2025-09-05T22:59:03Z</com:overallStartTime></com:validityTimeSpecification></sit:validity>`,
       );
       const snapshot = reconcileRoadSnapshots([parseDatexSnapshot(source, ndwSource)]);
-      expect(snapshot.terminalIds).toContain(`nl-ndw${HEIGHT_SUFFIX}`);
+      expect(snapshot.terminalIds).toContain(`nl-ndw-events${HEIGHT_SUFFIX}`);
       expect(snapshot.observations.some((event) => event.id.endsWith(HEIGHT_SUFFIX))).toBe(false);
       const event = parseDatexSituations(source, ndwSource).find((event) =>
         event.id.endsWith(HEIGHT_SUFFIX),

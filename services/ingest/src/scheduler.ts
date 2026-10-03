@@ -1,11 +1,12 @@
 import {
-  type DomainRegistry,
+  type Catalog,
+  type CatalogFeed,
+  type Env,
   guardedFetch,
   guardOptionsFromEnv,
   hasCredentials,
-  requiredEnvVars,
+  missingCredentials,
 } from "@openconditions/ingest-framework";
-import type { FeedSource } from "@openconditions/roads";
 import { Cron } from "croner";
 import type postgres from "postgres";
 import { fetch as undiciFetch } from "undici";
@@ -16,8 +17,12 @@ import { drainBindingQueue as defaultDrainBindingQueue } from "./pipeline/bind-r
 import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js";
 import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
 import { rebindOnBoot } from "./pipeline/rebind.js";
-import type { DomainFeedSource, RunDeps } from "./pipeline/run.js";
-import { createOpenlrClient, runSource as defaultRunSource } from "./pipeline/run.js";
+import type { RunDeps } from "./pipeline/run.js";
+import {
+  createOpenlrClient,
+  createRoleState,
+  runSource as defaultRunSource,
+} from "./pipeline/run.js";
 import { deriveSegmentProfiles } from "./pipeline/segment-profile.js";
 import { runSegmentRebuild } from "./pipeline/segment-rebuild.js";
 import { refreshSegmentSpeed } from "./pipeline/segment-speed.js";
@@ -35,7 +40,7 @@ export interface RunFeedOnceDeps {
 
 /** Run one feed once and record the outcome in the status store. */
 export async function runFeedOnce(
-  src: DomainFeedSource,
+  src: CatalogFeed,
   deps: RunDeps,
   statusStore: FeedStatusStore,
   o: RunFeedOnceDeps = {},
@@ -44,6 +49,9 @@ export async function runFeedOnce(
   const now = o.now ?? (() => new Date().toISOString());
   try {
     const result = await run(src, deps);
+    // No endpoint was due: the tick did no poll work, so there is nothing to
+    // record; the shared binding queue is drained by the ticks that poll.
+    if (result.notDue) return;
     if (result.error) {
       // runSource is fault-tolerant and swallows fetch/timeout/DNS/site-table
       // failures, returning {count:0, error} instead of throwing — record
@@ -106,15 +114,76 @@ function pickCronExpression(env: NodeJS.ProcessEnv, key: string, fallback: strin
   return raw;
 }
 
+/** What every feed job shares. */
+export interface FeedJobContext {
+  sql: Sql;
+  statusStore: FeedStatusStore;
+  /** The run deps of every poll; each job adds its own role state. */
+  deps: Omit<RunDeps, "roles" | "env">;
+  /** Where credentials are read; defaults to `process.env`. */
+  env?: Env;
+}
+
 /**
- * Starts one `croner` job per enabled feed source across all registered domains.
- * Each job holds a single-flight boolean so slow runs do not overlap.
- * Returns a cancel function that stops all scheduled jobs.
+ * Schedules one feed: a `croner` job on the feed's cadence, holding a
+ * single-flight flag so slow runs do not overlap and the feed's role state,
+ * so each poll fetches only the endpoints that are due. A feed missing a
+ * credential it needs is not scheduled (not an error): its status names the
+ * env vars to set, and it activates on the next start once they are.
+ */
+export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | undefined {
+  const { sql, statusStore } = ctx;
+  const env = ctx.env ?? process.env;
+  const missing = missingCredentials(feed, env);
+  if (missing.length > 0) {
+    console.warn(
+      `[scheduler] ${feed.domain}/${feed.id}: skipped — set ${missing.join(", ")} to enable`,
+    );
+    void upsertSourceStatus(sql, feed.id, {
+      freshnessWindowSec: feed.freshnessWindowSec,
+      outcome: "missing_configuration",
+      attemptAt: new Date().toISOString(),
+      networkValidated: false,
+      error: `missing required configuration: ${missing.join(", ")}`,
+    }).catch((err) => console.error(`[scheduler] ${feed.id}: status write failed`, err));
+    return undefined;
+  }
+
+  const cronExpr = cadenceToCron(feed.cadenceSec);
+  const deps: RunDeps = { ...ctx.deps, env, roles: createRoleState() };
+  let running = false;
+  const job = new Cron(cronExpr, { catch: true }, async () => {
+    if (running) {
+      console.debug(`[scheduler] ${feed.id}: skipping (previous run still active)`);
+      void upsertSourceStatus(sql, feed.id, {
+        freshnessWindowSec: feed.freshnessWindowSec,
+        outcome: "skipped_overlap",
+        attemptAt: new Date().toISOString(),
+        networkValidated: false,
+      }).catch((err) => console.error(`[scheduler] ${feed.id}: overlap status failed`, err));
+      return;
+    }
+    running = true;
+    try {
+      await runFeedOnce(feed, deps, statusStore);
+    } finally {
+      running = false;
+    }
+  });
+  console.info(
+    `[scheduler] registered ${feed.domain}/${feed.id} every ${feed.cadenceSec}s (${cronExpr})`,
+  );
+  return job;
+}
+
+/**
+ * Starts one job per scheduled feed of the catalogue, and the record and
+ * segment jobs. Returns a cancel function that stops all scheduled jobs.
  */
 export function startScheduler(
   sql: Sql,
   statusStore: FeedStatusStore,
-  registry: DomainRegistry,
+  catalog: Catalog,
 ): () => void {
   const jobs: Cron[] = [];
   const openlrClient = createOpenlrClient();
@@ -123,68 +192,21 @@ export function startScheduler(
   // low-frequency Fintraffic native-baseline refresh below.
   const guarded = guardedFetch(undiciFetch as unknown as typeof fetch, guardOptionsFromEnv());
 
-  for (const [domainName, plugin] of Object.entries(registry)) {
-    for (const feed of plugin.feeds) {
-      // A feed that declares credentials it doesn't have configured is skipped
-      // (not an error) — it activates automatically once its env vars are set.
-      // Credential presence is the only gate: a keyless feed always runs, a
-      // keyed one runs once its env vars are set.
-      if (!hasCredentials(feed)) {
-        const needed = [...requiredEnvVars(feed.auth), ...(feed.requiredEnv ?? [])];
-        console.warn(
-          `[scheduler] ${domainName}/${feed.id}: skipped — set ${needed.join(", ")} to enable`,
-        );
-        void upsertSourceStatus(sql, feed.id, {
-          freshnessWindowSec: feed.freshnessWindowSec,
-          outcome: "missing_configuration",
-          attemptAt: new Date().toISOString(),
-          networkValidated: false,
-          error: `missing required configuration: ${needed.join(", ")}`,
-        }).catch((err) => console.error(`[scheduler] ${feed.id}: status write failed`, err));
-        continue;
-      }
-      // plugin.feeds is typed against the domain-generic FeedSourceBase; runSource
-      // needs the concrete per-domain FeedSource shape the actual feed objects have.
-      const src = { ...feed, domain: domainName } as DomainFeedSource;
-      const cronExpr = cadenceToCron(feed.cadenceSec);
-      let running = false;
-
-      const job = new Cron(cronExpr, { catch: true }, async () => {
-        if (running) {
-          console.debug(`[scheduler] ${src.id}: skipping (previous run still active)`);
-          void upsertSourceStatus(sql, src.id, {
-            freshnessWindowSec: src.freshnessWindowSec,
-            outcome: "skipped_overlap",
-            attemptAt: new Date().toISOString(),
-            networkValidated: false,
-          }).catch((err) => console.error(`[scheduler] ${src.id}: overlap status failed`, err));
-          return;
-        }
-        running = true;
-        try {
-          await runFeedOnce(
-            src,
-            // undici's fetch (not the global) so the egress guard's IP-pinning
-            // dispatcher is honored — the global fetch rejects a foreign undici Agent.
-            {
-              sql,
-              fetch: undiciFetch as unknown as typeof fetch,
-              now: () => new Date().toISOString(),
-              openlrClient,
-              raw,
-            },
-            statusStore,
-          );
-        } finally {
-          running = false;
-        }
-      });
-
-      console.info(
-        `[scheduler] registered ${domainName}/${src.id} every ${feed.cadenceSec}s (${cronExpr})`,
-      );
-      jobs.push(job);
-    }
+  for (const feed of catalog.feeds) {
+    const job = scheduleFeed(feed, {
+      sql,
+      statusStore,
+      // undici's fetch (not the global) so the egress guard's IP-pinning
+      // dispatcher is honored — the global fetch rejects a foreign undici Agent.
+      deps: {
+        sql,
+        fetch: undiciFetch as unknown as typeof fetch,
+        now: () => new Date().toISOString(),
+        openlrClient,
+        raw,
+      },
+    });
+    if (job) jobs.push(job);
   }
 
   // Fuses the latest site readings onto the segment spine. Expired and
@@ -226,16 +248,14 @@ export function startScheduler(
     if (derivingBaselines) return;
     derivingBaselines = true;
     try {
-      for (const plugin of Object.values(registry)) {
-        for (const feed of plugin.feeds) {
-          if (feed.format !== "fintraffic-tms" || !hasCredentials(feed)) continue;
-          const { updated } = await updateFintrafficNativeBaselines(
-            sql,
-            feed as unknown as FeedSource,
-            { fetch: guarded, now: () => new Date(), batchCap: 200 },
-          );
-          console.info(`[scheduler] fintraffic native baselines: ${updated} updated`);
-        }
+      for (const feed of catalog.feeds) {
+        if (feed.format !== "fintraffic-tms" || !hasCredentials(feed)) continue;
+        const { updated } = await updateFintrafficNativeBaselines(sql, feed, {
+          fetch: guarded,
+          now: () => new Date(),
+          batchCap: 200,
+        });
+        console.info(`[scheduler] fintraffic native baselines: ${updated} updated`);
       }
       const { upserted } = await deriveBaselines(sql);
       console.info(`[scheduler] baselines: upserted ${upserted}`);

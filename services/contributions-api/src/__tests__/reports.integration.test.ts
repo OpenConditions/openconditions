@@ -597,7 +597,7 @@ describe("POST /contrib/reports — landing auto-corroborates independent report
         AND evidence_kind = 'official_match'`;
     expect(official).toHaveLength(1);
     expect(official[0]).toMatchObject({
-      source_id: "de-autobahn",
+      source_id: "de-autobahn-events",
       details: { matchedRecord: { class: "situation", id: feedId } },
     });
     const after = await sql<{ reputation_alpha: number }[]>`

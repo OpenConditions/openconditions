@@ -1,0 +1,423 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:de-nw-autobahn-los-flow:MQ_A1_0042",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            10.0574,
+            53.60864
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-los-flow",
+        "sourceFormat": "datex2-elaborated",
+        "accessMode": "bulk",
+        "recordId": "MQ_A1_0042",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "LicenseRef-GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "name": [
+        {
+          "lang": "de",
+          "text": "A1 km 42"
+        }
+      ],
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.volume",
+          "traffic.los"
+        ]
+      },
+      "canonicalId": "8f7a95f5e72814a1dbe208bd9e7f41713854c1185c3af8f4a82c8950d0efcd00",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "a22394c6743e48912d743a14195c3a6cbda43c094f2e264befec3e01cd23220d"
+    },
+    {
+      "id": "oc:feature:de-nw-autobahn-los-flow:MQ_A7_0100",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              9.9822,
+              53.5488
+            ],
+            [
+              10.0009,
+              53.5677
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-los-flow",
+        "sourceFormat": "datex2-elaborated",
+        "accessMode": "bulk",
+        "recordId": "MQ_A7_0100",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "LicenseRef-GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.volume",
+          "traffic.los"
+        ]
+      },
+      "canonicalId": "0bd6cc31227b9d0cdc9833e9bc9c5fd7693614d2574647fad44168c20ae03ef9",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "7f5286a9f5e465f5b4e1887b546eba67422f80dc76e1596dd18980604a415f7f"
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:de-nw-autobahn-los-flow:87414f1e53c20511ce0461479502669795f202b8780761940412dc247efb825a",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            10.0574,
+            53.60864
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-los-flow",
+        "sourceFormat": "datex2-elaborated",
+        "accessMode": "bulk",
+        "recordId": "MQ_A1_0042",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "LicenseRef-GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:de-nw-autobahn-los-flow:MQ_A1_0042"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 48,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-09-18T10:00:00.000Z"
+      },
+      "aggregation": "mean",
+      "quality": {
+        "sampleCount": 20
+      },
+      "canonicalId": "d7a6e4cc3193e38d22935d35b519e488d8194f7525091c0d3bfffee2f974a21d",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "3fb9c8d225a1cdf60253e2104470d2b2f16cf90f387b9748d57420b2d8a546d7"
+    },
+    {
+      "id": "oc:observation:de-nw-autobahn-los-flow:8f9ba624d985e100423c8081f890bfc1e890952a591a4bae6f5b1033b171a44c",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            10.0574,
+            53.60864
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-los-flow",
+        "sourceFormat": "datex2-elaborated",
+        "accessMode": "bulk",
+        "recordId": "MQ_A1_0042",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "LicenseRef-GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:de-nw-autobahn-los-flow:MQ_A1_0042"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 1800,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-09-18T10:00:00.000Z"
+      },
+      "aggregation": "mean",
+      "canonicalId": "007b4161333507accecb4c9431f18a3a508353b3503b2563a88a57450494499e",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "2d9ce49db6e27197ca57155f701bb5b7f830940fc30b19ce6a4e3405c05c648b"
+    },
+    {
+      "id": "oc:observation:de-nw-autobahn-los-flow:c40e7dee49b3a83c020ec057512e6f3e833b11cbdd52c267ebabd2458f08fa95",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            10.0574,
+            53.60864
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-los-flow",
+        "sourceFormat": "datex2-elaborated",
+        "accessMode": "bulk",
+        "recordId": "MQ_A1_0042",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "LicenseRef-GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.los",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:de-nw-autobahn-los-flow:MQ_A1_0042"
+      },
+      "result": {
+        "type": "category",
+        "value": "heavy",
+        "vocabulary": "los"
+      },
+      "phenomenonTime": {
+        "instant": "2026-09-18T10:00:00.000Z"
+      },
+      "aggregation": "instantaneous",
+      "canonicalId": "a5714af0927175b79a4b5b6ef335a07327907afab5ed00171fe735ae64188183",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "cd0c55f98c354b8cdf57e55ca58b315f5a23390cf33f8ce8d4b45fa8d754dc33"
+    },
+    {
+      "id": "oc:observation:de-nw-autobahn-los-flow:7971387043376e3f0ade80ec1308c23b2570112cbb288946f759cbb66a00f5e7",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              9.9822,
+              53.5488
+            ],
+            [
+              10.0009,
+              53.5677
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-los-flow",
+        "sourceFormat": "datex2-elaborated",
+        "accessMode": "bulk",
+        "recordId": "MQ_A7_0100",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "LicenseRef-GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:de-nw-autobahn-los-flow:MQ_A7_0100"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 112,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-09-18T10:00:00.000Z"
+      },
+      "aggregation": "mean",
+      "quality": {
+        "sampleCount": 15
+      },
+      "canonicalId": "6ac8deb8221452de18f903f4fb68b21fb74528621310e8bf1a4720b246f3616d",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "bab14d7958d89ee868d50083d94b51249d207ee9d077e932c32b6c1df7634c76"
+    },
+    {
+      "id": "oc:observation:de-nw-autobahn-los-flow:780e8e6b5a29cc6a5381a80d6c6dd9c9365b3563c9855bab1233e4ddbed34060",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              9.9822,
+              53.5488
+            ],
+            [
+              10.0009,
+              53.5677
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-los-flow",
+        "sourceFormat": "datex2-elaborated",
+        "accessMode": "bulk",
+        "recordId": "MQ_A7_0100",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "LicenseRef-GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:de-nw-autobahn-los-flow:MQ_A7_0100"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 900,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-09-18T10:00:00.000Z"
+      },
+      "aggregation": "mean",
+      "canonicalId": "57b3256ae4f7310cc63988d04fc82ca124ccc835797b87f8461e0455e2a252d1",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "78c9b42b742b064fd52d7d54db7cf3e9c02d2d7ca87fb2b01774880a688a091e"
+    }
+  ],
+  "situations": []
+}

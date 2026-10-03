@@ -17,7 +17,7 @@ export function peerSituation(instanceId: string, local: string, revision = 1): 
   const sealed = sealRecord(
     registry,
     {
-      id: `oc:situation:nl-ndw:${local}`,
+      id: `oc:situation:nl-ndw-events:${local}`,
       class: "situation",
       kind: "incident",
       type: "obstruction",
@@ -36,7 +36,7 @@ export function peerSituation(instanceId: string, local: string, revision = 1): 
       },
       provenance: {
         origin: "feed",
-        sourceId: "nl-ndw",
+        sourceId: "nl-ndw-events",
         sourceFormat: "datex2",
         accessMode: "bulk",
         recordId: local,
@@ -76,7 +76,7 @@ export function pageOf(entries: { seq: number; txid: string; record: Rec }[]): R
 export const OWN_INSTANCE = "oc-test";
 
 /** The record id of a test situation from the NDW feed. */
-export const situationId = (local: string) => `oc:situation:nl-ndw:${local}`;
+export const situationId = (local: string) => `oc:situation:nl-ndw-events:${local}`;
 
 export interface OwnSituationOptions {
   lon?: number;
@@ -130,7 +130,7 @@ export function ownSituation(local: string, opts: OwnSituationOptions = {}): Rec
       },
       provenance: {
         origin: "feed",
-        sourceId: "nl-ndw",
+        sourceId: "nl-ndw-events",
         sourceFormat: "datex2",
         accessMode: "bulk",
         recordId: local,

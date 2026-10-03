@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:se-trafikverket:d1",
+    "id": "oc:situation:se-trafikverket-events:d1",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -29,7 +29,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "se-trafikverket",
+      "sourceId": "se-trafikverket-events",
       "sourceFormat": "trafikverket",
       "accessMode": "bulk",
       "recordId": "d1",
@@ -76,14 +76,14 @@
       "kind": "incident",
       "v": 1
     },
-    "canonicalId": "555735a9eaeccb88451d4416b16ebb4b16ec81bf340cce50aed1ba9b92e09bb6",
+    "canonicalId": "9dfa7325881b90c558b4137ea59c54a8becf722c4d317236e5b7c6b1988cf53e",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "e4aa470a313ced2a5f74ac4c05a035014b60f5e29bc72824ef8659fd9e5809f0"
+    "contentHash": "0e27e2ba75cd57644fb0c059d202c0961311db7176342d89f02c7fd734f5cd78"
   },
   {
-    "id": "oc:situation:se-trafikverket:d2",
+    "id": "oc:situation:se-trafikverket-events:d2",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -108,7 +108,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "se-trafikverket",
+      "sourceId": "se-trafikverket-events",
       "sourceFormat": "trafikverket",
       "accessMode": "bulk",
       "recordId": "d2",
@@ -154,10 +154,10 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "fcd80d111bf3ff037486ccf41e365ba8fae9d1157f604fc89abd425ba8a5fbdf",
+    "canonicalId": "e82065d047fb13c9c989198218cf1e0faa3444b7e17ac5d3e11fe789aa8b07df",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "b95010e7a6aba7e652494d74d91650169b126ae24d2ed3e9f2cf706d289597a1"
+    "contentHash": "d47a50f5bb2cf66126fa451e3ee0a27daa7f5f876c38beccafc6143d61eaecff"
   }
 ]

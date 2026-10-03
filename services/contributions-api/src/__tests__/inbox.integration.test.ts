@@ -267,7 +267,7 @@ describe("a peer's crowd report", () => {
     const rows = await evidenceRows(id);
     expect(rows.map((r) => r.evidence_kind)).toEqual(["report", "official_match"]);
     expect(rows[1]).toMatchObject({
-      source_id: "de-autobahn",
+      source_id: "de-autobahn-events",
       details: { matchedRecord: { class: "situation", id: feed } },
     });
     expect(

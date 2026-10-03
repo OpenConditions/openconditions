@@ -33,7 +33,7 @@
       "sourceUpdatedAt": "2026-07-30T08:45:00Z",
       "attribution": {
         "provider": "Hrvatske ceste",
-        "license": "OD-HR",
+        "license": "LicenseRef-OD-HR",
         "licenseUrl": "https://data.gov.hr/otvorena-dozvola"
       },
       "privacy": {
@@ -74,7 +74,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f4b07a1f8e4a803ee72101ba261f12f2312d4c01ac417b61c1f6f5f8f3399173"
+    "contentHash": "7d3eb03624bd3244bcbe61fd0cdcbce55d8b6405a43ca2b739bebb2621acf830"
   },
   {
     "id": "oc:situation:hr-hc-events:HC_SIT_2",
@@ -110,7 +110,7 @@
       "sourceUpdatedAt": "2026-07-30T07:10:00Z",
       "attribution": {
         "provider": "Hrvatske ceste",
-        "license": "OD-HR",
+        "license": "LicenseRef-OD-HR",
         "licenseUrl": "https://data.gov.hr/otvorena-dozvola"
       },
       "privacy": {
@@ -151,7 +151,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "52d05d661e5336583c6f4ab54e54e19206f8e5556cd931f582a1821cfbd786df"
+    "contentHash": "2209d7974555b2835628efbd8da2076e7f5c5c6ae3c482db8bff1379ee23b864"
   },
   {
     "id": "oc:situation:hr-hc-events:HC_SIT_3",
@@ -187,7 +187,7 @@
       "sourceUpdatedAt": "2026-07-30T06:00:00Z",
       "attribution": {
         "provider": "Hrvatske ceste",
-        "license": "OD-HR",
+        "license": "LicenseRef-OD-HR",
         "licenseUrl": "https://data.gov.hr/otvorena-dozvola"
       },
       "privacy": {
@@ -227,6 +227,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "c5bf112b01c520684d1a7616784ce37051ace656a13d914498e68bad4d9875bb"
+    "contentHash": "cbc0ebc30b21c2762c956efabc2e848092bdf1325d1f02f953d8c11dd4325197"
   }
 ]

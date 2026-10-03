@@ -1,9 +1,9 @@
 import { runMigrations } from "@openconditions/core/server";
-import type { FeedSource } from "@openconditions/roads";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { updateFintrafficNativeBaselines } from "../pipeline/fintraffic-native.js";
+import { testFeed } from "./helpers/catalog.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -25,13 +25,19 @@ const constants = JSON.stringify({
   sensorConstantValues: [{ name: "VVAPAAS1", value: 118, validFrom: "01-01", validTo: "12-31" }],
 });
 
-const feed = {
-  id: "fi-fintraffic",
-  stationRegistry: {
-    url: "https://tie.digitraffic.fi/api/tms/v1/stations",
-    format: "fintraffic-stations",
+const feed = testFeed({
+  id: "fi-fintraffic-flow",
+  product: "flow",
+  format: "fintraffic-tms",
+  endpoints: {
+    main: { url: "https://tie.digitraffic.fi/api/tms/v1/stations/data", cadenceSec: 60 },
+    sites: {
+      url: "https://tie.digitraffic.fi/api/tms/v1/stations",
+      decoder: "fintraffic-stations",
+      cadenceSec: 21600,
+    },
   },
-} as unknown as FeedSource;
+});
 
 const fetchFn = (async (url: string) =>
   new Response(String(url).includes("sensor-constants") ? constants : stations, {
@@ -72,7 +78,7 @@ describe("updateFintrafficNativeBaselines", () => {
       { free_flow_kph: number; method: string; dow_bucket: number; tod_bucket: number }[]
     >`
       SELECT free_flow_kph, method, dow_bucket, tod_bucket FROM conditions.sensor_baseline
-      WHERE subject_key = 'feature:oc:feature:fi-fintraffic:23001-1'`;
+      WHERE subject_key = 'feature:oc:feature:fi-fintraffic-flow:23001-1'`;
     expect(rows).toHaveLength(1);
     expect(rows[0]!.method).toBe("native");
     expect(rows[0]!.dow_bucket).toBe(-1);
@@ -100,7 +106,7 @@ describe("updateFintrafficNativeBaselines", () => {
 
     const rows = await sql<{ free_flow_kph: number }[]>`
       SELECT free_flow_kph FROM conditions.sensor_baseline
-      WHERE subject_key = 'feature:oc:feature:fi-fintraffic:23001-1'`;
+      WHERE subject_key = 'feature:oc:feature:fi-fintraffic-flow:23001-1'`;
     expect(rows).toHaveLength(1);
     expect(rows[0]!.free_flow_kph).toBe(130);
   }, 30_000);
@@ -151,7 +157,7 @@ describe("updateFintrafficNativeBaselines", () => {
   }, 30_000);
 
   it("returns 0 and does nothing when the feed declares no station registry", async () => {
-    const noRegistry = { id: "fi-fintraffic" } as unknown as FeedSource;
+    const noRegistry = testFeed({ id: "fi-fintraffic-flow" });
     const { updated } = await updateFintrafficNativeBaselines(sql, noRegistry, {
       fetch: fetchFn,
       now: () => new Date(),
@@ -187,7 +193,7 @@ describe("updateFintrafficNativeBaselines", () => {
     expect(constantsRequests).toBe(2);
   }, 30_000);
 
-  it("sends the feed's requestHeaders on both the registry and sensor-constants sub-fetches", async () => {
+  it("sends the sites endpoint's headers on both the registry and sensor-constants sub-fetches", async () => {
     const seenHeaders: (Record<string, string> | undefined)[] = [];
     const headerFetch = (async (url: string, init?: RequestInit) => {
       seenHeaders.push(init?.headers as Record<string, string> | undefined);
@@ -197,8 +203,14 @@ describe("updateFintrafficNativeBaselines", () => {
     }) as unknown as typeof fetch;
     const feedWithHeaders = {
       ...feed,
-      requestHeaders: { "Digitraffic-User": "OpenConditions/1.0" },
-    } as unknown as FeedSource;
+      endpoints: {
+        ...feed.endpoints,
+        sites: {
+          ...feed.endpoints["sites"]!,
+          headers: { "Digitraffic-User": "OpenConditions/1.0" },
+        },
+      },
+    };
 
     await updateFintrafficNativeBaselines(sql, feedWithHeaders, {
       fetch: headerFetch,
@@ -214,13 +226,7 @@ describe("updateFintrafficNativeBaselines", () => {
   }, 30_000);
 
   describe("station batch prioritization", () => {
-    const priorityFeed = {
-      id: "fintraffic-tms-fi-priority",
-      stationRegistry: {
-        url: "https://tie.digitraffic.fi/api/tms/v1/stations",
-        format: "fintraffic-stations",
-      },
-    } as unknown as FeedSource;
+    const priorityFeed = { ...feed, id: "fintraffic-tms-fi-priority" };
 
     // Registry order: 40001 (A), 40002 (B), 40003 (C), 40004 (D), 40005 (E).
     const REGISTRY_IDS = [40001, 40002, 40003, 40004, 40005];
@@ -296,13 +302,7 @@ describe("updateFintrafficNativeBaselines", () => {
     }, 30_000);
 
     it("orders covered stations by oldest computed_at first once the batch exhausts uncovered stations", async () => {
-      const coveredFeed = {
-        id: "fintraffic-tms-fi-priority-covered",
-        stationRegistry: {
-          url: "https://tie.digitraffic.fi/api/tms/v1/stations",
-          format: "fintraffic-stations",
-        },
-      } as unknown as FeedSource;
+      const coveredFeed = { ...feed, id: "fintraffic-tms-fi-priority-covered" };
 
       // Registry order: 50001 (A), 50002 (B), 50003 (C).
       const ids = [50001, 50002, 50003];

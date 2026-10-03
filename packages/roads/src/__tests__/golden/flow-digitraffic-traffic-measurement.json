@@ -1,0 +1,990 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_FREE",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              24.9355,
+              60.1699
+            ],
+            [
+              24.938,
+              60.1712
+            ],
+            [
+              24.9405,
+              60.1725
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_FREE",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "name": [
+        {
+          "lang": "fi",
+          "text": "Vt 1 Kehä I — free flow"
+        }
+      ],
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.los"
+        ]
+      },
+      "canonicalId": "e6900ec3935759d9c7115b58dee4d4200bbaf6659f0dbd93a31df726d79c7d6c",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "fb492b470f6735d3a314ea367e7f1b6f336d0f8159ca051a472fa73ef0ab3510"
+    },
+    {
+      "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_HEAVY",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              25.01,
+              60.25
+            ],
+            [
+              25.015,
+              60.252
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_HEAVY",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "name": [
+        {
+          "lang": "fi",
+          "text": "Vt 3 — heavy traffic"
+        }
+      ],
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.los"
+        ]
+      },
+      "canonicalId": "8e3f8b6c319c37ca8a39ff80da6d908a520fe2f494a63f1097b21e88a4eb7a0f",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "41ce71b08dac2252660adc5d50cfaa65df0a09029d6ff8526e3972f340cbffe9"
+    },
+    {
+      "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_STATIONARY",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              25.02,
+              60.26
+            ],
+            [
+              25.025,
+              60.262
+            ],
+            [
+              25.03,
+              60.264
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_STATIONARY",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "name": [
+        {
+          "lang": "fi",
+          "text": "Vt 4 — stationary queue"
+        }
+      ],
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.los"
+        ]
+      },
+      "canonicalId": "bc725e085b881df8415857a69baf278326347ede8b959d3841936ff83eb856dd",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "3ff392e562b8d03300dcf4ce940dc7620fe2c815d9b1747f40876621585d7d3e"
+    },
+    {
+      "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_QUEUING",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              25.04,
+              60.27
+            ],
+            [
+              25.045,
+              60.272
+            ],
+            [
+              25.05,
+              60.274
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_QUEUING",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "name": [
+        {
+          "lang": "fi",
+          "text": "Vt 5 — queuing traffic"
+        }
+      ],
+      "lifecycle": "operational",
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.los"
+        ]
+      },
+      "canonicalId": "bc7515396ef6d7a85b6652d52b2b5eadf6f94d869fc26cb4a2f716dd2b942d57",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "b2458ff4f9655e0f52a70b08280e22e0b552a07073b72e6acdd2ea76b90e7595"
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:fi-digitraffic-flow:ba41ae3087d2d2e0551008740c02c0b61560d8d6c490dc0ed8d906909b528202",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              24.9355,
+              60.1699
+            ],
+            [
+              24.938,
+              60.1712
+            ],
+            [
+              24.9405,
+              60.1725
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_FREE",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fi-digitraffic-flow:DT_FLOW_FREE"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 95.2,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T10:00:00.000Z"
+      },
+      "aggregation": "mean",
+      "baseline": {
+        "freeFlow": {
+          "value": 100,
+          "unit": "km/h"
+        },
+        "source": "native",
+        "ratio": 0.9520000000000001
+      },
+      "canonicalId": "abc3ec988021ae95497c66bd68ae36e9be9e6183e3b0d27191e8bbe6e8cb5cb1",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "f39c277a5404ebd3f8b22220049545a208ddf479cf8c07ca36d7d0c3832367ac"
+    },
+    {
+      "id": "oc:observation:fi-digitraffic-flow:3e02ce1ce38847a6940d27ff2391a8a2500dd4d1a6aa9cd38f00eb61469c03f2",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              24.9355,
+              60.1699
+            ],
+            [
+              24.938,
+              60.1712
+            ],
+            [
+              24.9405,
+              60.1725
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_FREE",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.los",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fi-digitraffic-flow:DT_FLOW_FREE"
+      },
+      "result": {
+        "type": "category",
+        "value": "free_flow",
+        "vocabulary": "los"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T10:00:00.000Z"
+      },
+      "aggregation": "instantaneous",
+      "canonicalId": "867d3bc8bfdcc0878189b527cc738e0797e75e0cbeeda98a75d3e038909aa1f1",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "f3fc8667768b6db775766d26357a672d639ca858917064213c0ac729e945f47d"
+    },
+    {
+      "id": "oc:observation:fi-digitraffic-flow:10a248e5cdb5eb461b982ca14e87b4c1b83fac440d132029925b0844671ca95d",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              25.01,
+              60.25
+            ],
+            [
+              25.015,
+              60.252
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_HEAVY",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fi-digitraffic-flow:DT_FLOW_HEAVY"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 52,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T10:00:00.000Z"
+      },
+      "aggregation": "mean",
+      "baseline": {
+        "freeFlow": {
+          "value": 100,
+          "unit": "km/h"
+        },
+        "source": "native",
+        "ratio": 0.52
+      },
+      "canonicalId": "37be1dcde76303c8e52236212a8635258c2cc06ac3c3450587d8e60ef98e51d8",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "3cd942be8d2a30c0cea3b839f09ff1c4490c39446b335e714945977c9d0cf919"
+    },
+    {
+      "id": "oc:observation:fi-digitraffic-flow:ef7806ce230d624a578c500c38ab213d4cd0a19091abeb64514db32991d5af83",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              25.01,
+              60.25
+            ],
+            [
+              25.015,
+              60.252
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_HEAVY",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.los",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fi-digitraffic-flow:DT_FLOW_HEAVY"
+      },
+      "result": {
+        "type": "category",
+        "value": "heavy",
+        "vocabulary": "los"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T10:00:00.000Z"
+      },
+      "aggregation": "instantaneous",
+      "canonicalId": "1bbe0b0ee6d88bb283b645e5ad496b6d335d3663d15a9c7b77ee57f3405305c2",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "144eaeec288220ca5bd3f457806d4eb2163158584f42d098b20a666d106207e3"
+    },
+    {
+      "id": "oc:observation:fi-digitraffic-flow:538b258b20f5cf36ba25e769f27c945cbff648882beaa3f3282a5508789ba059",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              25.02,
+              60.26
+            ],
+            [
+              25.025,
+              60.262
+            ],
+            [
+              25.03,
+              60.264
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_STATIONARY",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fi-digitraffic-flow:DT_FLOW_STATIONARY"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 3.5,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T09:55:00.000Z"
+      },
+      "aggregation": "mean",
+      "baseline": {
+        "freeFlow": {
+          "value": 80,
+          "unit": "km/h"
+        },
+        "source": "native",
+        "ratio": 0.04375
+      },
+      "canonicalId": "ddd3e58dafa0a9d8ae60a962d5d2ab7adc6d559e3f23472f9d2d2f506da045a0",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "ec1e50cf2021ce6eff012d5e902ba0c54bde3c529f35f50a7c1aac1550ec383a"
+    },
+    {
+      "id": "oc:observation:fi-digitraffic-flow:a8b4c13f34a904be2c9c03fd342b541b229f38edbc8d8e48d7853155f2f77b64",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              25.02,
+              60.26
+            ],
+            [
+              25.025,
+              60.262
+            ],
+            [
+              25.03,
+              60.264
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_STATIONARY",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.los",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fi-digitraffic-flow:DT_FLOW_STATIONARY"
+      },
+      "result": {
+        "type": "category",
+        "value": "stationary",
+        "vocabulary": "los"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T09:55:00.000Z"
+      },
+      "aggregation": "instantaneous",
+      "canonicalId": "dfcfdeddde1245b586ccb1ff641ec61167dcc2d8f0acb5cdc3cbbf95db0fe257",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "ee2b1a5a312fe4b5f7c5bd55de521affbeb77ff53f3d6474bbb5cf82b4b73b45"
+    },
+    {
+      "id": "oc:observation:fi-digitraffic-flow:4ce82d9a08e69b1552bb7f2b0f5b60367f507d25ee45556e6793dd9895fdbaa4",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              25.04,
+              60.27
+            ],
+            [
+              25.045,
+              60.272
+            ],
+            [
+              25.05,
+              60.274
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_QUEUING",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fi-digitraffic-flow:DT_FLOW_QUEUING"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 18,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T10:00:00.000Z"
+      },
+      "aggregation": "mean",
+      "baseline": {
+        "freeFlow": {
+          "value": 100,
+          "unit": "km/h"
+        },
+        "source": "native",
+        "ratio": 0.18
+      },
+      "canonicalId": "c3a9ca5147e8d5c182b57c56b32f253d50c1986e4e136aeb0e293333cf262d2b",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "92a517cde806395b9cf4ef97ec47eeb943f3a3d41d812f2cd8e4596220682b92"
+    },
+    {
+      "id": "oc:observation:fi-digitraffic-flow:4c5b00ff0b25e5c0632d184deb5fee618cffc1ce1da4529c3e7572c1e480a194",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              25.04,
+              60.27
+            ],
+            [
+              25.045,
+              60.272
+            ],
+            [
+              25.05,
+              60.274
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_QUEUING",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.los",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:fi-digitraffic-flow:DT_FLOW_QUEUING"
+      },
+      "result": {
+        "type": "category",
+        "value": "queuing",
+        "vocabulary": "los"
+      },
+      "phenomenonTime": {
+        "instant": "2026-06-24T10:00:00.000Z"
+      },
+      "aggregation": "instantaneous",
+      "canonicalId": "78f83768bf08104c302ee09c4f6ef296a40c935532629b691bf65d919195daa2",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "d80d449c41c4c5211d20562a2e52ae721de513a2bebcca11f754e408827caf5d"
+    }
+  ],
+  "situations": [
+    {
+      "id": "oc:situation:fi-digitraffic-flow:DT_FLOW_STATIONARY:congestion",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              25.02,
+              60.26
+            ],
+            [
+              25.025,
+              60.262
+            ],
+            [
+              25.03,
+              60.264
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "admin": {
+          "country": "FI"
+        }
+      },
+      "provenance": {
+        "origin": "derived",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_STATIONARY:congestion",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "derivedFrom": {
+          "records": [
+            {
+              "class": "feature",
+              "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_STATIONARY"
+            }
+          ],
+          "method": "los_threshold",
+          "version": "1"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z",
+        "expiresAt": "2026-09-18T10:15:00.000Z"
+      },
+      "class": "situation",
+      "kind": "congestion",
+      "type": "congestion",
+      "planned": false,
+      "certainty": "unknown",
+      "severity": {
+        "label": "moderate",
+        "source": "derived"
+      },
+      "validity": {
+        "status": "active",
+        "start": "2026-06-24T09:55:00.000Z"
+      },
+      "effects": [],
+      "details": {
+        "kind": "congestion",
+        "v": 1,
+        "los": "unknown",
+        "derivedFrom": {
+          "class": "feature",
+          "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_STATIONARY"
+        },
+        "freeFlowSource": "native"
+      },
+      "canonicalId": "745fbea80cbe2e151694a993f22c3c3829c7fe1ea43216975113db0ecff45f18",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "2a0b228eaba0df45de1cc29a2413f4f3774a3eff97437260b65475920cdf325b"
+    },
+    {
+      "id": "oc:situation:fi-digitraffic-flow:DT_FLOW_QUEUING:congestion",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              25.04,
+              60.27
+            ],
+            [
+              25.045,
+              60.272
+            ],
+            [
+              25.05,
+              60.274
+            ]
+          ]
+        },
+        "extent": "linear",
+        "geometryOrigin": "source",
+        "fuzziness": "exact",
+        "admin": {
+          "country": "FI"
+        }
+      },
+      "provenance": {
+        "origin": "derived",
+        "sourceId": "fi-digitraffic-flow",
+        "sourceFormat": "digitraffic-traffic-measurement",
+        "accessMode": "bulk",
+        "recordId": "DT_FLOW_QUEUING:congestion",
+        "attribution": {
+          "provider": "fi-digitraffic-flow",
+          "license": "CC-BY-4.0"
+        },
+        "derivedFrom": {
+          "records": [
+            {
+              "class": "feature",
+              "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_QUEUING"
+            }
+          ],
+          "method": "los_threshold",
+          "version": "1"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z",
+        "expiresAt": "2026-09-18T10:15:00.000Z"
+      },
+      "class": "situation",
+      "kind": "congestion",
+      "type": "congestion",
+      "planned": false,
+      "certainty": "unknown",
+      "severity": {
+        "label": "moderate",
+        "source": "derived"
+      },
+      "validity": {
+        "status": "active",
+        "start": "2026-06-24T10:00:00.000Z"
+      },
+      "effects": [],
+      "details": {
+        "kind": "congestion",
+        "v": 1,
+        "los": "unknown",
+        "derivedFrom": {
+          "class": "feature",
+          "id": "oc:feature:fi-digitraffic-flow:DT_FLOW_QUEUING"
+        },
+        "freeFlowSource": "native"
+      },
+      "canonicalId": "fa8b7dd49088019925732fe7350c5487cd70d427322eac8f00341d69b421c50e",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "27efe758d018dc50be4984b5fe580c7c961dbdf61c8a54365852565001caca89"
+    }
+  ]
+}

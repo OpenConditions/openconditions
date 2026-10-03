@@ -10,7 +10,7 @@ const finland = JSON.parse(
   readFileSync(new URL("./fixtures/digitraffic/v2-restrictions.json", import.meta.url), "utf8"),
 );
 const source: SourceDescriptor = {
-  id: "nl-ndw",
+  id: "nl-ndw-events",
   country: "NL",
   attribution: "NDW",
   license: "CC0-1.0",
@@ -18,7 +18,7 @@ const source: SourceDescriptor = {
 };
 
 const finlandSource: SourceDescriptor = {
-  id: "fi-digitraffic",
+  id: "fi-digitraffic-events",
   country: "FI",
   attribution: "Fintraffic / Digitraffic",
   license: "CC-BY-4.0",

@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { FEED_SOURCES } from "../feeds.js";
+import type { RoadFeed } from "../feed-schema.js";
 import type { FlowContext, FlowOutput, FlowSites } from "../flow-output.js";
-import { parseFlows, type RoadFeed } from "../parse.js";
+import { parseFlows } from "../parse.js";
+import { roadFeed } from "./helpers/road-feed.js";
+import { hasTestFeed, testFeed } from "./helpers/test-feeds.js";
 
 /** The poll instant flow tests parse at. */
 export const NOW = "2026-09-18T10:00:00.000Z";
@@ -12,21 +14,21 @@ export const fixture = (path: string) => readFileSync(join(import.meta.dirname, 
 export const text = (path: string) => fixture(path).toString("utf8");
 
 /**
- * The catalogue entry of a flow feed, or a stand-in for a format with no live
- * feed (digitraffic, webtris) or a synthetic test source.
+ * The test feed of a flow source, or a stand-in for a format with no live
+ * feed (digitraffic-traffic-measurement, webtris) or a synthetic test source.
  */
 export function flowFeed(id: string, format?: string, extra: Partial<RoadFeed> = {}): RoadFeed {
-  const feed = FEED_SOURCES.find((f) => f.id === id);
-  if (feed !== undefined) return { ...feed, ...(format ? { format } : {}), ...extra } as RoadFeed;
+  if (hasTestFeed(id)) return testFeed(id, { ...(format ? { format } : {}), ...extra });
   if (format === undefined) throw new Error(`no feed ${id}; name its format`);
-  return {
+  return roadFeed({
     id,
+    region: "fi",
+    product: "flow",
     attribution: id,
-    country: "FI",
     license: "CC-BY-4.0",
     format,
     ...extra,
-  } as RoadFeed;
+  });
 }
 
 /** One poll of a flow feed at {@link NOW}. */

@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:sg-lta-speedbands:103000000",
+      "id": "oc:feature:sg-lta-flow:103000000",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -23,13 +23,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "sg-lta-speedbands",
+        "sourceId": "sg-lta-flow",
         "sourceFormat": "lta-speedbands",
         "accessMode": "bulk",
         "recordId": "103000000",
         "attribution": {
           "provider": "Land Transport Authority (Singapore)",
-          "license": "Singapore-ODL-1.0",
+          "license": "LicenseRef-Singapore-ODL-1.0",
           "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
         },
         "privacy": {
@@ -57,16 +57,16 @@
           "traffic.speed"
         ]
       },
-      "canonicalId": "3bd2e29954800d22c0292debe77ce94e9042290343fcdff538695e52ab7af360",
+      "canonicalId": "c1aa47b54db58d5570e3e56ad6aa573cc158179d37e43a3ef1a1f3c4e7e0e1fd",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "37b9c0a0a54a4131cbd5e0703ab944b179aaef39188df75822524ad0b113ef1f"
+      "contentHash": "78ac8adf39e43da3dc58a4e98b7cfa5d6bc2dd4bba683716a62bfbfd0e8a2cb3"
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:sg-lta-speedbands:16cfdefeaf54048452adfd3daa322d52da348656934d513cf6f1d5a69c2da151",
+      "id": "oc:observation:sg-lta-flow:78ea1cb3d9e609693eabba17da79b330be226d091b872da2c415384ccf8e9abb",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -88,13 +88,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "sg-lta-speedbands",
+        "sourceId": "sg-lta-flow",
         "sourceFormat": "lta-speedbands",
         "accessMode": "bulk",
         "recordId": "103000000",
         "attribution": {
           "provider": "Land Transport Authority (Singapore)",
-          "license": "Singapore-ODL-1.0",
+          "license": "LicenseRef-Singapore-ODL-1.0",
           "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
         },
         "privacy": {
@@ -110,7 +110,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:sg-lta-speedbands:103000000"
+        "featureId": "oc:feature:sg-lta-flow:103000000"
       },
       "result": {
         "type": "quantity",
@@ -121,11 +121,11 @@
         "instant": "2026-09-18T10:00:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "7a57a8b60c7b6c661e070de62d73baf2c5a1d0d418f735836144da384a9d3417",
+      "canonicalId": "2cace5a271c4cd77a7bf5a632eea2d95eb26b762a171542a54fc909ced16d949",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "7675c41cc124682fcdd9668be0038664bd60eee7017b491fbe2a49e32cba165e"
+      "contentHash": "2a4f66ee8860c6f1fbc79c03316b62ec394ed080907963facd4856996c4587ac"
     }
   ],
   "situations": []

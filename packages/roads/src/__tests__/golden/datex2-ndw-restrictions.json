@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:nl-ndw:NDW08_2e188db4-9bff-492d-bf28-90e17bffac8c_SIT",
+    "id": "oc:situation:nl-ndw-events:NDW08_2e188db4-9bff-492d-bf28-90e17bffac8c_SIT",
     "temporality": "live",
     "externalIds": [
       {
@@ -38,14 +38,14 @@
       {
         "ref": {
           "class": "situation",
-          "id": "oc:situation:nl-ndw:14b1fbe4-abbe-ef11-a53f-00505698df49"
+          "id": "oc:situation:nl-ndw-events:14b1fbe4-abbe-ef11-a53f-00505698df49"
         },
         "relation": "related"
       }
     ],
     "provenance": {
       "origin": "feed",
-      "sourceId": "nl-ndw",
+      "sourceId": "nl-ndw-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "NDW08_2e188db4-9bff-492d-bf28-90e17bffac8c_SIT",
@@ -88,14 +88,14 @@
       "kind": "incident",
       "v": 1
     },
-    "canonicalId": "06cbeb1fa14dcdd91731b64931c58c3243439cda933040c7b46e61e662c3ff38",
+    "canonicalId": "38258ddb5b2d450d3914bb22749148294176a0a20dddcf353811b06df298864b",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "9685a58b2137b57cc8fb801d7ec04de9009430367f9aaac8aebd2b83ca14ddea"
+    "contentHash": "1c8331e38398102aab5a12ab213a854a0f434acf4c27dcd9b784b4c7e290bdef"
   },
   {
-    "id": "oc:situation:nl-ndw:RWS01_SM1080891_D2_WWA",
+    "id": "oc:situation:nl-ndw-events:RWS01_SM1080891_D2_WWA",
     "temporality": "live",
     "externalIds": [
       {
@@ -134,14 +134,14 @@
       {
         "ref": {
           "class": "situation",
-          "id": "oc:situation:nl-ndw:RWS01_M1080891_NARROW_LANES_D2"
+          "id": "oc:situation:nl-ndw-events:RWS01_M1080891_NARROW_LANES_D2"
         },
         "relation": "related"
       }
     ],
     "provenance": {
       "origin": "feed",
-      "sourceId": "nl-ndw",
+      "sourceId": "nl-ndw-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "RWS01_SM1080891_D2_WWA",
@@ -291,14 +291,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "4c0ef902cf5d802d03d8f019e7ba00d8cb626f3af4af7175de9472e8a910b76f",
+    "canonicalId": "d1d2278eac4e9e3fccadc4b7948226a5673ec8486fa2a2d7755696aa627fa64a",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "c3b86d6fbad2e926378d107ed6eeb93c35537c029ef0b67bfcd58f6d6173889e"
+    "contentHash": "be7b53ef9f501c3d7b24ba83de52043dcb9e11ff4d764a94e3e3ab52e1952ab4"
   },
   {
-    "id": "oc:situation:nl-ndw:NLRWS_0005382945",
+    "id": "oc:situation:nl-ndw-events:NLRWS_0005382945",
     "temporality": "live",
     "externalIds": [
       {
@@ -367,7 +367,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nl-ndw",
+      "sourceId": "nl-ndw-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "NLRWS_0005382945",
@@ -476,14 +476,14 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "3e6f61427339883e0ea20a331dc061164e1d600c0fc5a4c3c9e0d49707f3d6d3",
+    "canonicalId": "8bd2e520558e2ba61380e6821b02d5f57457452033b40a6e968d42e903dcee50",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "814c5815d0e7d316a673b7014f9e4458123364711249e01455ec68660a460100"
+    "contentHash": "babd058614a13c0a012af9b6650d118b88dc2b01cca8d89b0feaebd7b1afbcf6"
   },
   {
-    "id": "oc:situation:nl-ndw:NLRWS_0005406494",
+    "id": "oc:situation:nl-ndw-events:NLRWS_0005406494",
     "temporality": "live",
     "externalIds": [
       {
@@ -560,7 +560,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nl-ndw",
+      "sourceId": "nl-ndw-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "NLRWS_0005406494",
@@ -669,10 +669,10 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "5cd2a3aa8f84663949adfe97f4a26ed67e4726fa735ba52a1e66f66d8febf768",
+    "canonicalId": "a57b992c54ca773109c22b7f8b8a214431d20bf2031d11de543256bedd9c816d",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "9743e75854a886407adaf105f40aac39bf95ba77b1dd9527561a77c4a07fea3d"
+    "contentHash": "2515ec689aee2a06900206a5f9ca667c5c787d9e09d6e469a6bd644334387747"
   }
 ]

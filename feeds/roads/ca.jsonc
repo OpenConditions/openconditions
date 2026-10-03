@@ -1,0 +1,160 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "subdivision": "bc",
+      "operator": "drivebc",
+      "product": "events",
+      "name": "DriveBC (British Columbia)",
+      "tier": "authoritative",
+      "format": "open511",
+      "endpoints": {
+        "main": {
+          "url": "https://api.open511.gov.bc.ca/events?format=json&limit=500",
+          // The endpoint's own default page is 50 rows of the ~250 it holds, so an
+          // unpaginated fetch silently dropped four fifths of British Columbia.
+          "pagination": { "skipParam": "offset", "pageSize": 500, "recordsPath": "events" },
+          "cadenceSec": 120,
+        },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "events" },
+      "freshnessWindowSec": 600,
+      "license": "LicenseRef-OGL-BC",
+      "attribution": "Contains information licensed under the Open Government Licence – British Columbia",
+      "privacyUrl": "https://www2.gov.bc.ca/gov/content/home/privacy",
+    },
+    {
+      "subdivision": "on",
+      "operator": "511",
+      "product": "events",
+      "name": "Ontario 511 (Canada)",
+      "tier": "authoritative",
+      "format": "ibi511",
+      "endpoints": {
+        "main": { "url": "https://511on.ca/api/v2/get/event?format=json", "cadenceSec": 300 },
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-OGL-ON",
+      "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
+      "attribution": "Contains information licensed under the Open Government Licence – Ontario",
+      "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
+    },
+    {
+      "subdivision": "on",
+      "operator": "511",
+      // Separate from the events feed: the two datasets share no ids (146
+      // construction projects vs. 623 events, disjoint) and are worth monitoring
+      // independently.
+      "qualifier": "construction",
+      "product": "events",
+      "name": "Ontario 511 construction projects (Canada)",
+      "tier": "authoritative",
+      "format": "ibi511",
+      "endpoints": {
+        "main": {
+          "url": "https://511on.ca/api/v2/get/constructionprojects?format=json",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-OGL-ON",
+      "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
+      "attribution": "Contains information licensed under the Open Government Licence – Ontario",
+      "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
+    },
+    {
+      "subdivision": "on",
+      "operator": "511",
+      "product": "conditions",
+      "name": "Ontario 511 road conditions (Canada)",
+      "tier": "authoritative",
+      "format": "ibi511-conditions",
+      "endpoints": {
+        "main": {
+          // v3, not v2: only v3 exposes roadconditions, and it sends EncodedPolyline
+          // as an array of lines rather than a single string.
+          "url": "https://511on.ca/api/v3/get/roadconditions?format=json",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-OGL-ON",
+      "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
+      "attribution": "Contains information licensed under the Open Government Licence – Ontario",
+      "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
+      // Winter feed: outside the season every segment reports a nominal condition
+      // and the parser skips them all, so an empty result is the normal state.
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
+    },
+    {
+      "subdivision": "qc",
+      "operator": "mtq",
+      "product": "events",
+      "name": "MTQ roadworks (Québec)",
+      "tier": "authoritative",
+      "format": "geojson",
+      "endpoints": {
+        "main": {
+          "url": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:chantiers_mtmdet&outputformat=geojson",
+          "cadenceSec": 600,
+        },
+      },
+      "geojson": {
+        "idField": "identifiant",
+        "defaultType": "roadworks",
+        "headlineField": "identificationDesTravaux",
+        "descriptionField": "descriptionFrancais",
+        "roadField": "routeAutoroute",
+        "updatedField": "miseAJour",
+        // Zone-less Québec local time ("2026/02/09 06:30:00") — read in the
+        // server's zone, an hours-level approximation that is fine for the
+        // days-granularity horizon filter.
+        "validFromField": "debut",
+        "validToField": "fin",
+      },
+      "freshnessWindowSec": 1800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://www.donneesquebec.ca/",
+      "attribution": "Ministère des Transports du Québec (MTQ)",
+      "privacyUrl": "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
+    },
+    {
+      "subdivision": "qc",
+      "operator": "mtq",
+      "qualifier": "warnings",
+      "product": "events",
+      "name": "MTQ road warnings (Québec)",
+      "tier": "authoritative",
+      "format": "geojson",
+      "endpoints": {
+        "main": {
+          "url": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:evenements&outputformat=geojson",
+          "cadenceSec": 600,
+        },
+      },
+      "geojson": {
+        "idField": "identifiant",
+        "typeField": "entrave",
+        // MTQ describes the obstruction in prose rather than with a code, so the
+        // crosswalk keys off the exact French phrasings the layer publishes.
+        "typeMap": {
+          "Fermeture": "road_closure",
+          "Fermeture de 1 voie sur 2": "lane_closure",
+          "Circulation en alternance": "lane_closure",
+          "Circulation à contresens": "contraflow",
+          "Circulation interdite aux véhicules lourds": "restriction.access.truck_ban",
+        },
+        "defaultType": "other",
+        "headlineField": "localisation",
+        "descriptionField": "cause",
+        "roadField": "numeroRoute",
+        "validFromField": "enVigueurDepuis",
+      },
+      "freshnessWindowSec": 1800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://www.donneesquebec.ca/",
+      "attribution": "Ministère des Transports du Québec (MTQ)",
+      "privacyUrl": "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
+    },
+  ],
+}

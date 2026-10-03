@@ -1,8 +1,8 @@
 name: Atlas refresh
 
-# Regenerates the road-conditions atlas + the vendored catalog snapshots on a
-# schedule. The atlas is ~83% live-resolved feeds (WZDx registry + Autobahn
-# index), so it is NON-deterministic and network-bound — it must NOT be a git
+# Regenerates the feed atlas (atlas/<domain>.json) + the vendored catalog
+# snapshots on a schedule. The atlas is mostly live-resolved catalogue children
+# (WZDx registry + Autobahn index), so it is NON-deterministic and network-bound — it must NOT be a git
 # hook (a pre-commit/pre-push drift-check would flap on every upstream change).
 # A weekly scheduled run keeps the public commons snapshot and the bundled
 # runtime fallback fresh, opening a PR only when something actually changed.
@@ -40,19 +40,19 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      # Build so export-atlas can import the compiled @openconditions/roads barrel.
-      - run: pnpm build
-      # Snapshot the resolved-feed counts BEFORE regenerating, so the guard below
+      # Snapshot the resolved child counts BEFORE regenerating, so the guard below
       # can detect an abnormal drop (a broken resolver or an upstream outage).
+      # Children are the atlas feeds with a parentSourceId, named under their
+      # parent: us-wzdx-<hash>-events, de-autobahn-<road>-<service>-events.
       - name: Baseline resolved-feed counts
         id: baseline
         run: |
-          node -e "const a=JSON.parse(require('fs').readFileSync('packages/roads/atlas/roads.json5','utf8'));const c=p=>a.filter(f=>String(f.id).startsWith(p)).length;console.log('wzdx='+c('wzdx-'));console.log('autobahn='+c('autobahn-'))" >> "$GITHUB_OUTPUT"
+          node -e "const a=JSON.parse(require('fs').readFileSync('atlas/roads.json','utf8'));const c=p=>a.feeds.filter(f=>f.parentSourceId&&f.id.startsWith(p)).length;console.log('wzdx='+c('us-wzdx-'));console.log('autobahn='+c('de-autobahn-'))" >> "$GITHUB_OUTPUT"
       # Live-resolve the WZDx registry + Autobahn index (both public, no secrets),
-      # rewriting atlas/roads.json5 and the vendored snapshots. resolveWithSnapshot
-      # falls back to the committed snapshot on a transient upstream failure.
+      # rewriting atlas/<domain>.json and the vendored snapshots. A resolver whose
+      # registry is down keeps its committed snapshot.
       - name: Regenerate atlas + snapshots
-        run: pnpm --filter @openconditions/roads export:atlas
+        run: pnpm export:atlas
       # The atlas is built from untrusted third-party registries and CI does not
       # validate its content — so refuse to open/merge a refresh that abnormally
       # loses feeds (below an absolute floor, or >30% under the pre-run baseline).
@@ -62,7 +62,7 @@ jobs:
           OLD_WZDX: ${{ steps.baseline.outputs.wzdx }}
           OLD_AUTOBAHN: ${{ steps.baseline.outputs.autobahn }}
         run: |
-          counts=$(node -e "const a=JSON.parse(require('fs').readFileSync('packages/roads/atlas/roads.json5','utf8'));const c=p=>a.filter(f=>String(f.id).startsWith(p)).length;console.log(c('wzdx-')+' '+c('autobahn-'))")
+          counts=$(node -e "const a=JSON.parse(require('fs').readFileSync('atlas/roads.json','utf8'));const c=p=>a.feeds.filter(f=>f.parentSourceId&&f.id.startsWith(p)).length;console.log(c('us-wzdx-')+' '+c('de-autobahn-'))")
           NEW_WZDX=${counts% *}; NEW_AUTOBAHN=${counts#* }
           echo "wzdx: ${OLD_WZDX} -> ${NEW_WZDX} | autobahn: ${OLD_AUTOBAHN} -> ${NEW_AUTOBAHN}"
           fail=0
@@ -84,16 +84,16 @@ jobs:
         with:
           token: ${{ secrets.ATLAS_PAT || secrets.GITHUB_TOKEN }}
           add-paths: |
-            packages/roads/atlas/roads.json5
-            packages/roads/src/catalog/snapshots/*.json
+            atlas/*.json
+            packages/*/src/catalog/snapshots/*.json
           branch: chore/atlas-refresh
           delete-branch: true
-          commit-message: "chore(roads): refresh road-conditions atlas + catalog snapshots"
-          title: "chore(roads): weekly atlas + catalog-snapshot refresh"
+          commit-message: "chore(feeds): refresh feed atlas + catalog snapshots"
+          title: "chore(feeds): weekly atlas + catalog-snapshot refresh"
           body: |
-            Automated weekly regeneration of `packages/roads/atlas/roads.json5` and the
-            vendored catalog snapshots (`packages/roads/src/catalog/snapshots/*.json`)
-            from the live WZDx registry + Autobahn index. Feed counts passed the drop guard.
+            Automated weekly regeneration of `atlas/<domain>.json` and the vendored
+            catalog snapshots (`packages/<domain>/src/catalog/snapshots/*.json`) from
+            the live WZDx registry + Autobahn index. Feed counts passed the drop guard.
 
             Generated artifact — auto-merges once required CI is green. The refreshed
             snapshots reach production on the next image build/deploy.

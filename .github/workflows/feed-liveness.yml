@@ -22,14 +22,14 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: pnpm install --frozen-lockfile
-      # Build so the scripts' @openconditions/* package imports resolve at runtime.
-      - run: pnpm build
       - name: Check keyless feeds
         id: liveness
-        # Keyless feeds only — forks/CI hold no feed secrets. The script never
-        # fails the job; it writes ./liveness/out.md and sets found=true when a
-        # feed is down, and we report via an issue below (non-gating).
-        run: node scripts/check-feed-liveness.ts
+        # Keyless feeds only: the runner holds no feed secrets, so every keyed
+        # feed is skipped. When a feed fails, the check writes ./liveness/out.md
+        # and sets found=true, and we report via an issue below. A parse error
+        # also exits 1; the job carries on to open the issue (non-gating).
+        continue-on-error: true
+        run: pnpm feeds:check --report liveness/out.md
       - name: Find existing failing-feed issue
         id: find-issue
         if: steps.liveness.outputs.found == 'true'

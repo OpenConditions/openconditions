@@ -1,0 +1,67 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "dgt",
+      "product": "events",
+      "name": "DGT (Spain)",
+      "tier": "authoritative",
+      "format": "datex2",
+      "endpoints": {
+        "main": {
+          "url": "https://nap.dgt.es/datex2/v3/dgt/SituationPublication/datex2_v36.xml",
+          "cadenceSec": 120,
+        },
+      },
+      "freshnessWindowSec": 600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://nap.dgt.es",
+      "attribution": "Dirección General de Tráfico (DGT)",
+      "privacyUrl": "https://www.dgt.es/protecciondedatos/",
+    },
+    {
+      "operator": "madrid",
+      "product": "flow",
+      "name": "Madrid INFORMO traffic (Spain)",
+      "tier": "authoritative",
+      "format": "informo",
+      "endpoints": {
+        "main": { "url": "https://informo.madrid.es/informo/tmadrid/pm.xml", "cadenceSec": 300 },
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal",
+      "attribution": "Ayuntamiento de Madrid",
+      "privacyUrl": "https://www.madrid.es/portal/site/munimadrid/menuitem.privacy",
+    },
+    {
+      "subdivision": "bcn",
+      "operator": "ajuntament",
+      "product": "flow",
+      "name": "Estat del trànsit TRAMS (Barcelona)",
+      "tier": "authoritative",
+      "format": "bcn-trams",
+      // Live status file: one `#`-delimited row per segment
+      // (tramId#YYYYMMDDHHMMSS#estatActual#estatPrevist15min) on a 0-6 congestion
+      // scale. Categorical only (no speed). The segment geometry lives in a
+      // separate long-format CSV dictionary, joined by tram id via the station
+      // registry below.
+      "endpoints": {
+        "main": {
+          "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/2d456eb5-4ea6-4f68-9794-2f3f1a58a933/download",
+          "cadenceSec": 300,
+        },
+        "sites": {
+          "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/0e3b6840-7dff-4731-a556-44fac28a7873/resource/c97072a3-3619-4547-84dd-f1999d2a3fec/download/transit_relacio_trams_format_long.csv",
+          "decoder": "bcn-trams-csv",
+          "cadenceSec": 21600,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Ajuntament de Barcelona",
+      "privacyUrl": "https://www.barcelona.cat/en/privacy-policy",
+    },
+  ],
+}

@@ -181,6 +181,14 @@ describe("matchSensors", () => {
       NOW,
       { catalogued: false },
     );
+    // A flow feed of another domain: its sites are not road sensors.
+    await writeSiteReadings(
+      sql,
+      "other-domain-flow",
+      [{ site: "y", geometry: point(6.05, 52.0001), at, speed: 70 }],
+      NOW,
+      { domain: "waterways" },
+    );
     await matchSensors(sql, () => NOW);
     const rows = await sql`SELECT subject_key FROM conditions.sensor_segment
       WHERE segment_id = '222:f'`;

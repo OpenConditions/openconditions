@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:it-turin:39983",
+      "id": "oc:feature:it-turin-flow:39983",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -21,7 +21,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "it-turin",
+        "sourceId": "it-turin-flow",
         "sourceFormat": "fdt",
         "accessMode": "bulk",
         "recordId": "39983",
@@ -56,16 +56,16 @@
           "traffic.volume"
         ]
       },
-      "canonicalId": "50105fb339015bea98cc9d96ee0202ef8e4e3f7e214b57159e698de5cc5bd45e",
+      "canonicalId": "4bdf421bd4efead99013a36f0200a16a7a1f329c5075cda76f92858e29eeaddd",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "61c1db039ae800c03cf6cd5ff7b156e6e16836a6236f5f5be2691073c7da040d"
+      "contentHash": "779bbf5e738629b0287589f3117e0adfca7db2ee968632e95e56644137047386"
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:it-turin:656fa01358f101776667fc12b9aed3f3f81354b544b8ad20b65a4bd6511d0874",
+      "id": "oc:observation:it-turin-flow:7af20cb28fec3d5811afc41a1c91f4c6cc6b735cd7605f2d8a601633b5f642db",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -85,7 +85,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "it-turin",
+        "sourceId": "it-turin-flow",
         "sourceFormat": "fdt",
         "accessMode": "bulk",
         "recordId": "39983",
@@ -107,7 +107,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:it-turin:39983"
+        "featureId": "oc:feature:it-turin-flow:39983"
       },
       "result": {
         "type": "quantity",
@@ -122,14 +122,14 @@
       "quality": {
         "confidence": 0.95
       },
-      "canonicalId": "44e674257c2fbdd8a68b3fe1b443a33c95fb6da1a8da32cb29f7b7c1fc063356",
+      "canonicalId": "b0f512b6d406e005e78392199cfea0c821ba971432a92a328e7a6c82e1e8e01c",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "60bf19dbf9a76d2933f75832419184b5f979cbce99436763cb25f25352ecced7"
+      "contentHash": "e52bd75a883b99fb10f162fe41a1d50bc7991b510f054ea9923989702033fa80"
     },
     {
-      "id": "oc:observation:it-turin:411b721e71fbfd0a2a5ef3ecf8c3b74bd53b6fec85044b28e78d46c7c71d5b9f",
+      "id": "oc:observation:it-turin-flow:ad81ad2e17712b4d7834ce887d3622314428f5c267e2202d0c627d5c45e4d9e8",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -149,7 +149,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "it-turin",
+        "sourceId": "it-turin-flow",
         "sourceFormat": "fdt",
         "accessMode": "bulk",
         "recordId": "39983",
@@ -171,7 +171,7 @@
       "property": "traffic.volume",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:it-turin:39983"
+        "featureId": "oc:feature:it-turin-flow:39983"
       },
       "result": {
         "type": "quantity",
@@ -183,11 +183,11 @@
         "end": "2026-07-10T18:00:03.516Z"
       },
       "aggregation": "mean",
-      "canonicalId": "ef5d1b270c1c040898f7ac1700d0e1dc571136b0cdb849b818e03f1d92fe03f5",
+      "canonicalId": "9bc3a9ebf4465da90f11838024fc7b3b00c3e3a42548dad0b54ead0848ca46e7",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "c7d1868e77bc4fdba1a2464e34c3e2befa85e9f547c6a8b82247dd7b81f6e964"
+      "contentHash": "d113b120b1b073c71c32410927914e395264b985232d6d3a62689a59f4aadcf0"
     }
   ],
   "situations": []

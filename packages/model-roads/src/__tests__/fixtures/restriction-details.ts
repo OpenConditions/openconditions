@@ -13,7 +13,7 @@ export function restrictionDetails(): RoadRestrictionDetailsV1 {
     completeness: "complete",
     issues: [],
     source: {
-      sourceId: "fi-digitraffic",
+      sourceId: "fi-digitraffic-events",
       recordId: "GUID50465935",
       recordVersion: "31",
       sourceUpdatedAt: "2026-08-28T04:18:02.629Z",

@@ -48,7 +48,10 @@ jobs:
         run: pnpm typecheck
 
       - name: Feeds lint
-        run: pnpm --filter @openconditions/roads feeds:lint
+        run: pnpm feeds:lint
+
+      - name: Feed schemas up to date
+        run: pnpm check:feed-schemas
 
       - name: Test
         run: pnpm test

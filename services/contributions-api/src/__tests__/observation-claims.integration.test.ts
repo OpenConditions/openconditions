@@ -170,6 +170,7 @@ beforeAll(async () => {
       id,
       domain: "facilities",
       format: "test",
+      product: "facilities",
       tier: id === "es-minetur" ? "authoritative" : "aggregator",
       country: "DE",
       operator: id,

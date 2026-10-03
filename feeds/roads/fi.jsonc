@@ -1,0 +1,69 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "digitraffic",
+      "product": "events",
+      "name": "Digitraffic (Finland)",
+      "tier": "authoritative",
+      "format": "digitraffic",
+      "endpoints": {
+        "main": {
+          // One collection per situation family on the supported v2 prefix. v1 is
+          // deprecated and announced for removal after 2026-10-20, so there is no
+          // fallback to it. v2 rejects the v1 `includeAreaGeometry` parameter, and
+          // its unfiltered collections keep their complete national scope.
+          "urls": [
+            "https://tie.digitraffic.fi/api/traffic-message/v2/traffic-announcements",
+            "https://tie.digitraffic.fi/api/traffic-message/v2/roadworks",
+            "https://tie.digitraffic.fi/api/traffic-message/v2/weight-restrictions",
+            "https://tie.digitraffic.fi/api/traffic-message/v2/exempted-transports",
+          ],
+          // Without accepted compression the API answers 406; the user header is
+          // required by the publisher's API instructions.
+          "headers": { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
+          "cadenceSec": 120,
+        },
+      },
+      // Each collection is the publisher's complete current set, so absence from
+      // an accepted snapshot is a withdrawal and every record is accounted for.
+      "snapshot": { "completeness": "complete", "recordsPath": "features" },
+      "freshnessWindowSec": 600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      // The publisher grants CC BY 4.0 as published, so the review records
+      // evidence and overrides nothing.
+      "terms": {
+        "url": "https://www.digitraffic.fi/en/terms-of-service/",
+        "reviewedAt": "2026-09-12",
+      },
+      "attribution": "Fintraffic / Digitraffic",
+      "privacyUrl": "https://www.fintraffic.fi/en/fintraffic/data-protection",
+    },
+    {
+      "operator": "fintraffic",
+      "product": "flow",
+      "name": "Fintraffic TMS traffic speed (Finland)",
+      "tier": "authoritative",
+      "format": "fintraffic-tms",
+      "endpoints": {
+        "main": {
+          "url": "https://tie.digitraffic.fi/api/tms/v1/stations/data",
+          "headers": { "Digitraffic-User": "OpenConditions/1.0" },
+          "cadenceSec": 300,
+        },
+        "sites": {
+          "url": "https://tie.digitraffic.fi/api/tms/v1/stations",
+          "headers": { "Digitraffic-User": "OpenConditions/1.0" },
+          "decoder": "fintraffic-stations",
+          "cadenceSec": 21600,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://www.fintraffic.fi/en/fintraffic/open-data",
+      "attribution": "Fintraffic / Digitraffic",
+      "privacyUrl": "https://www.fintraffic.fi/en/fintraffic/data-protection",
+    },
+  ],
+}

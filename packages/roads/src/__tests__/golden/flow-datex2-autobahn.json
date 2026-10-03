@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:de-by-autobahn:eq.test_001.f.de",
+      "id": "oc:feature:de-by-autobahn-flow:eq.test_001.f.de",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -17,13 +17,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "de-by-autobahn",
-        "sourceFormat": "datex2",
+        "sourceId": "de-by-autobahn-flow",
+        "sourceFormat": "datex2-measured",
         "accessMode": "bulk",
         "recordId": "eq.test_001.f.de",
         "attribution": {
           "provider": "Quelle: Die Autobahn GmbH des Bundes",
-          "license": "GeoNutzV",
+          "license": "LicenseRef-GeoNutzV",
           "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
         },
         "privacy": {
@@ -48,16 +48,16 @@
           "traffic.los"
         ]
       },
-      "canonicalId": "3dd20720f694886cc84658a00948b3601b14e3bc98707d918e04c3bdba152aa1",
+      "canonicalId": "8072c3982e965fba97d972cb3e7a27623b457562eca18de0769d23db6a96016b",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "0bdb3a8b71ad34008663d747947b81e35549aed5bc234e9d84ad0dd5e09a065c"
+      "contentHash": "735375bf3fd301ea8d4cbd5cabb4dab6146c003f44387f3bff04a5967cc58d30"
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:de-by-autobahn:f827357607da3542b5cc62c9d379c7c77ce536237531a061c2876ed6e39bbc04",
+      "id": "oc:observation:de-by-autobahn-flow:81f8203a92b0c4ee7240b751111031a6c1533a98cf38ce4ec45ffc7091d0401f",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -73,13 +73,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "de-by-autobahn",
-        "sourceFormat": "datex2",
+        "sourceId": "de-by-autobahn-flow",
+        "sourceFormat": "datex2-measured",
         "accessMode": "bulk",
         "recordId": "eq.test_001.f.de",
         "attribution": {
           "provider": "Quelle: Die Autobahn GmbH des Bundes",
-          "license": "GeoNutzV",
+          "license": "LicenseRef-GeoNutzV",
           "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
         },
         "privacy": {
@@ -95,7 +95,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:de-by-autobahn:eq.test_001.f.de"
+        "featureId": "oc:feature:de-by-autobahn-flow:eq.test_001.f.de"
       },
       "result": {
         "type": "quantity",
@@ -109,11 +109,11 @@
       "quality": {
         "sampleCount": 20
       },
-      "canonicalId": "a5e346d07ffc77d515aa56395b9693856bb61e9cc17cafe44eded41d0be4b89c",
+      "canonicalId": "e20c5e66861e6a1da3ea8b882fa7c7421a09d59a1bab4778e9a62ce4a265883a",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "1c4b5b67090303e3f5eb4bc7c9c53cd4533f87e8094cacd5865d9a69faf3dc94"
+      "contentHash": "0ef99ea3206be632fe2df201abcb49f60a036b88d08f6595146df85609b8d4ad"
     }
   ],
   "situations": []

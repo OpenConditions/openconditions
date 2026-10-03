@@ -89,6 +89,7 @@ export async function seedSources(sql: postgres.Sql, tiers: Record<string, strin
       id,
       domain: "facilities",
       format: "test",
+      product: "facilities",
       tier,
       country: "DE",
       operator: id,

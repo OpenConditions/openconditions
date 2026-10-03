@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:es-bcn-ajuntament:1",
+      "id": "oc:feature:es-bcn-ajuntament-flow:1",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -23,7 +23,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "es-bcn-ajuntament",
+        "sourceId": "es-bcn-ajuntament-flow",
         "sourceFormat": "bcn-trams",
         "accessMode": "bulk",
         "recordId": "1",
@@ -57,14 +57,14 @@
           "traffic.los"
         ]
       },
-      "canonicalId": "a73183f4607b52c86d60bb904276cc6baa385bcdcbcba499041cb75f0ab63f53",
+      "canonicalId": "80976edfb8e8a0077c5b75ef18fe60cad02cb46c4597dd9ee2199218fb01919d",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "b92cbaf15849c389b466d4d72c1540beaa499a0f9444dddbfb63a01939a7ac95"
+      "contentHash": "8e13fb5f29e8e1e545566f10f2a19ab064d8ff3624f4899c8ecb6dc9e62e9143"
     },
     {
-      "id": "oc:feature:es-bcn-ajuntament:2",
+      "id": "oc:feature:es-bcn-ajuntament-flow:2",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -86,7 +86,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "es-bcn-ajuntament",
+        "sourceId": "es-bcn-ajuntament-flow",
         "sourceFormat": "bcn-trams",
         "accessMode": "bulk",
         "recordId": "2",
@@ -120,16 +120,16 @@
           "traffic.los"
         ]
       },
-      "canonicalId": "e337d0f44cc73a986ef629295c21890733b7e00ac0f1ed3228a46b529792d926",
+      "canonicalId": "66857a21dc93af8b26b54b44fafcd2ef27ae1ea8dce28458d659572ee53dcbee",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "5e2dcd001941b853e99ab6bf50784eebadc71f462832b1ba4f6faae618b987da"
+      "contentHash": "fda71459b04b915ae20d17cd20b36c90ed7f1a6ca5d47339211bad11153b0928"
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:es-bcn-ajuntament:114a8fddd8cc00898cefeab1065d32b18a6c8df949862b191ae170ab78e68fc4",
+      "id": "oc:observation:es-bcn-ajuntament-flow:8e5df39a1c4e194de038bd5b9ebfa8d0f583626674a0ce5a2a276e6878e752b4",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -151,7 +151,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "es-bcn-ajuntament",
+        "sourceId": "es-bcn-ajuntament-flow",
         "sourceFormat": "bcn-trams",
         "accessMode": "bulk",
         "recordId": "1",
@@ -173,7 +173,7 @@
       "property": "traffic.los",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:es-bcn-ajuntament:1"
+        "featureId": "oc:feature:es-bcn-ajuntament-flow:1"
       },
       "result": {
         "type": "category",
@@ -184,14 +184,14 @@
         "instant": "2026-07-29T11:15:57.000Z"
       },
       "aggregation": "instantaneous",
-      "canonicalId": "c5852cf6c8986c4f0a67cd160f0aaffe4e43951ed4a43fc45a1a0f2afbce1251",
+      "canonicalId": "8bfa70505569e54cd0b3a53c98d418cc4ad6c93fef178dbdd1ef929a9aa8abc6",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "0c3551bef3caf879e715865854b326b59342884f5c3e52260c28fbf6180ce169"
+      "contentHash": "47a4a50e22aee34f400cde195aad8edc39cb87c3ddb746e0599f608af3e9ce32"
     },
     {
-      "id": "oc:observation:es-bcn-ajuntament:843376c9a97f2fc22e3927ccddfb11a74c81b383d94406dd4a934fce51b3f63c",
+      "id": "oc:observation:es-bcn-ajuntament-flow:761b6632b8a2c556bcce92afa8b74131a7c995fae6582447d8d5ef91de6f39c7",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -213,7 +213,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "es-bcn-ajuntament",
+        "sourceId": "es-bcn-ajuntament-flow",
         "sourceFormat": "bcn-trams",
         "accessMode": "bulk",
         "recordId": "2",
@@ -235,7 +235,7 @@
       "property": "traffic.los",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:es-bcn-ajuntament:2"
+        "featureId": "oc:feature:es-bcn-ajuntament-flow:2"
       },
       "result": {
         "type": "category",
@@ -246,16 +246,16 @@
         "instant": "2026-07-29T11:15:57.000Z"
       },
       "aggregation": "instantaneous",
-      "canonicalId": "77fde0d712d31f5f26cfcd739e37e52517c6db60c44846603da50184f27b866a",
+      "canonicalId": "241b66bad0d43ae939a918f2e2069ab74102c5952f65f8842e5c9c1fb9fa2e78",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "6927b2ca7f16c40c7d31b4af1d19caf73e27ee3779f717bb24dc1cc12b912166"
+      "contentHash": "b63b78b9bffc9adca03fdc1fc7b50245ab79230e6d6f1510d45162126ceae672"
     }
   ],
   "situations": [
     {
-      "id": "oc:situation:es-bcn-ajuntament:2:congestion",
+      "id": "oc:situation:es-bcn-ajuntament-flow:2:congestion",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -280,7 +280,7 @@
       },
       "provenance": {
         "origin": "derived",
-        "sourceId": "es-bcn-ajuntament",
+        "sourceId": "es-bcn-ajuntament-flow",
         "sourceFormat": "bcn-trams",
         "accessMode": "bulk",
         "recordId": "2:congestion",
@@ -293,7 +293,7 @@
           "records": [
             {
               "class": "feature",
-              "id": "oc:feature:es-bcn-ajuntament:2"
+              "id": "oc:feature:es-bcn-ajuntament-flow:2"
             }
           ],
           "method": "los_threshold",
@@ -328,14 +328,14 @@
         "los": "unknown",
         "derivedFrom": {
           "class": "feature",
-          "id": "oc:feature:es-bcn-ajuntament:2"
+          "id": "oc:feature:es-bcn-ajuntament-flow:2"
         }
       },
-      "canonicalId": "7ddb931c72e9f09ac52a4138f5bdbbf9a942b5c64c89c52fe30754fc82cfe195",
+      "canonicalId": "effe177f38aab2bc1b092d6cd4932ac7e14bc487d5e9ec151d667cf229908dc5",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "5694b312b35e0b89e64457c51044539a3435037989bf0581063bd22bb3522775"
+      "contentHash": "09e27aeb5ca037e02f0fc0df92caf6be1f38f3e9f4b1984c5496acf15bc7602c"
     }
   ]
 }

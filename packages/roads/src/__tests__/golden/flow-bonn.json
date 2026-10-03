@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:de-nw-bonn:144",
+      "id": "oc:feature:de-nw-bonn-flow:144",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -27,13 +27,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "de-nw-bonn",
+        "sourceId": "de-nw-bonn-flow",
         "sourceFormat": "bonn",
         "accessMode": "bulk",
         "recordId": "144",
         "attribution": {
           "provider": "Bundesstadt Bonn",
-          "license": "dl-de/zero-2-0",
+          "license": "DL-DE-ZERO-2.0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
         "privacy": {
@@ -56,14 +56,14 @@
           "traffic.los"
         ]
       },
-      "canonicalId": "06beaa21d22d006d377a5dac8bc7cbb18f071d1c239ddc2305c3001f22d4f50f",
+      "canonicalId": "8585e3260d2a72422c1292c1c3781a0af78eed520c55c5a346ca431c95e1ea51",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "ab4a354a16b8018f161583bcb4736f3623e677a362d72c54efc27f824391c664"
+      "contentHash": "b82f87008a453ac22454cb15210b8bcdd7d3c5d84ded213106ca8a16e905fe72"
     },
     {
-      "id": "oc:feature:de-nw-bonn:143",
+      "id": "oc:feature:de-nw-bonn-flow:143",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -85,13 +85,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "de-nw-bonn",
+        "sourceId": "de-nw-bonn-flow",
         "sourceFormat": "bonn",
         "accessMode": "bulk",
         "recordId": "143",
         "attribution": {
           "provider": "Bundesstadt Bonn",
-          "license": "dl-de/zero-2-0",
+          "license": "DL-DE-ZERO-2.0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
         "privacy": {
@@ -114,16 +114,16 @@
           "traffic.los"
         ]
       },
-      "canonicalId": "a97bd2e01844be90cddf23af7a06f0002aa84013930fc68d520685d698a4bfed",
+      "canonicalId": "bd36421ecf6035bed0697711cb8e4916db0ae415c52580337531ac6899d0f880",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "648ceb7f50aa01947cef7f6ca75ed820463c2d04f2ab8a5383a4be88f69b2bde"
+      "contentHash": "1e8626406b6919357501160ccfef48539ee92fb02dbf7831fd49e0335e7ebbf2"
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:de-nw-bonn:938840bb4191a1dcf127e60678a670fad398aa25af99ad144a3047af7c8076df",
+      "id": "oc:observation:de-nw-bonn-flow:bc8ce0fc901e95c8e30dde8538a1219e53f4e2dccb3ff730ca594253bd8eaa18",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -149,13 +149,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "de-nw-bonn",
+        "sourceId": "de-nw-bonn-flow",
         "sourceFormat": "bonn",
         "accessMode": "bulk",
         "recordId": "144",
         "attribution": {
           "provider": "Bundesstadt Bonn",
-          "license": "dl-de/zero-2-0",
+          "license": "DL-DE-ZERO-2.0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
         "privacy": {
@@ -171,7 +171,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:de-nw-bonn:144"
+        "featureId": "oc:feature:de-nw-bonn-flow:144"
       },
       "result": {
         "type": "quantity",
@@ -182,14 +182,14 @@
         "instant": "2026-07-10T17:10:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "e6f3c38e82cc8fc5a0e8fa7136944219dd2f7f86be5d94d2128543c8ae00b083",
+      "canonicalId": "6d4164789f9d77ccd9dfbcc85bb3225999b2b86da463234746d9225ff9b82f5a",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "d7b6964db7b2371a9c64211871f1948d84a1c8a8f8d313ee3143badb3f9f17f9"
+      "contentHash": "a5a23e4b2b4aeb73ef6adf3d5abeb391c58fd23b58d6dad9aa30569747ed8527"
     },
     {
-      "id": "oc:observation:de-nw-bonn:99f0ca916963309e50d9bb033e53b17751f90f5b7964dd38c02608bb5006720b",
+      "id": "oc:observation:de-nw-bonn-flow:9a963e73bae60b0d5d308d0067859269dbcbac0143ef17d8d9cacf7c9bd6327d",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -215,13 +215,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "de-nw-bonn",
+        "sourceId": "de-nw-bonn-flow",
         "sourceFormat": "bonn",
         "accessMode": "bulk",
         "recordId": "144",
         "attribution": {
           "provider": "Bundesstadt Bonn",
-          "license": "dl-de/zero-2-0",
+          "license": "DL-DE-ZERO-2.0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
         "privacy": {
@@ -237,7 +237,7 @@
       "property": "traffic.los",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:de-nw-bonn:144"
+        "featureId": "oc:feature:de-nw-bonn-flow:144"
       },
       "result": {
         "type": "category",
@@ -248,14 +248,14 @@
         "instant": "2026-07-10T17:10:00.000Z"
       },
       "aggregation": "instantaneous",
-      "canonicalId": "5dad6eba560c34332b83575e97adfdc9295f03f8e4e82eceb7d68dd42ec7ee2b",
+      "canonicalId": "832c2ee1f2bac6723b9023b08199bb85f6871bc693d172b2e8dd73bd581904dd",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "0cb5a09a4a4495c9d36825c1251565d760c9b07d063d15205432eb7e25d88094"
+      "contentHash": "356760b233fea3829e8ec9d27ebee4a266c66ebcb11b15532a36a7f62e7a8cbf"
     },
     {
-      "id": "oc:observation:de-nw-bonn:6a2f533b3bd000f117b700968875fd00939db78143c3ec44ad7d15655543e2cb",
+      "id": "oc:observation:de-nw-bonn-flow:a9cd418421062007ecfd53e756edde62d4c212839855d0f94e9d875b5a52eb8a",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -277,13 +277,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "de-nw-bonn",
+        "sourceId": "de-nw-bonn-flow",
         "sourceFormat": "bonn",
         "accessMode": "bulk",
         "recordId": "143",
         "attribution": {
           "provider": "Bundesstadt Bonn",
-          "license": "dl-de/zero-2-0",
+          "license": "DL-DE-ZERO-2.0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
         "privacy": {
@@ -299,7 +299,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:de-nw-bonn:143"
+        "featureId": "oc:feature:de-nw-bonn-flow:143"
       },
       "result": {
         "type": "quantity",
@@ -310,14 +310,14 @@
         "instant": "2026-07-10T17:10:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "5d63ca0863f8abdc99474a40445359f37846ce294ed09f0988fb1436de15630f",
+      "canonicalId": "b443b4b8708977cb4dc632e918323f6d4986a897962d864348aeda84b8c9936c",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "88ff6d5775d4ac955bd49f97bf38d43b2effbc65212ad65cc7d9fe3e264bfa18"
+      "contentHash": "cee3abed8a0d4a16ae743365df197dd47c3273caa79789b55ed46ba2b32aaa32"
     },
     {
-      "id": "oc:observation:de-nw-bonn:394c8cba0de8b43bece51cfc3bcc50c927ee7d4ee47509e3119287aeaf9c6293",
+      "id": "oc:observation:de-nw-bonn-flow:6266276f9ab7acb59ddd2a70bf9eb690ecdf13f46c6981795124243164449d80",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -339,13 +339,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "de-nw-bonn",
+        "sourceId": "de-nw-bonn-flow",
         "sourceFormat": "bonn",
         "accessMode": "bulk",
         "recordId": "143",
         "attribution": {
           "provider": "Bundesstadt Bonn",
-          "license": "dl-de/zero-2-0",
+          "license": "DL-DE-ZERO-2.0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
         "privacy": {
@@ -361,7 +361,7 @@
       "property": "traffic.los",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:de-nw-bonn:143"
+        "featureId": "oc:feature:de-nw-bonn-flow:143"
       },
       "result": {
         "type": "category",
@@ -372,16 +372,16 @@
         "instant": "2026-07-10T17:10:00.000Z"
       },
       "aggregation": "instantaneous",
-      "canonicalId": "e681330b95324302f6244bf2f99ec29d9491751dbc0b8d3f80a58c2a2d5b1c49",
+      "canonicalId": "93995db5b323f6642abba17828fbdb51420f9898041bc9064f0ad86ad5fa2594",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "79c4950ae5de998f12284a1afc3b3127a97f4eb764e6b223344bd044dc564c61"
+      "contentHash": "f3b84751db98dbeb283f65f0efa352f58360db6b987b0aa572159ee0b9339e2b"
     }
   ],
   "situations": [
     {
-      "id": "oc:situation:de-nw-bonn:144:congestion",
+      "id": "oc:situation:de-nw-bonn-flow:144:congestion",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -410,20 +410,20 @@
       },
       "provenance": {
         "origin": "derived",
-        "sourceId": "de-nw-bonn",
+        "sourceId": "de-nw-bonn-flow",
         "sourceFormat": "bonn",
         "accessMode": "bulk",
         "recordId": "144:congestion",
         "attribution": {
           "provider": "Bundesstadt Bonn",
-          "license": "dl-de/zero-2-0",
+          "license": "DL-DE-ZERO-2.0",
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0"
         },
         "derivedFrom": {
           "records": [
             {
               "class": "feature",
-              "id": "oc:feature:de-nw-bonn:144"
+              "id": "oc:feature:de-nw-bonn-flow:144"
             }
           ],
           "method": "los_threshold",
@@ -458,14 +458,14 @@
         "los": "unknown",
         "derivedFrom": {
           "class": "feature",
-          "id": "oc:feature:de-nw-bonn:144"
+          "id": "oc:feature:de-nw-bonn-flow:144"
         }
       },
-      "canonicalId": "662ea47b25471d251aaaee926b81eed4ac8573f22c0a5b8d92008f480783e487",
+      "canonicalId": "092d1cc225ad51b3d69ece711801d581d8ea7fe1d444fc6052dbdac82df943d3",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "2789c88245d320b10846a986a3f00ec3ceed8c80ba08b3f1401bc8bf621df709"
+      "contentHash": "fb36e6fbe106133883251a993247569c7d6afd69f041183df94a40cba4f4df0d"
     }
   ]
 }

@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:fr-rennesmetropole:10273_D",
+      "id": "oc:feature:fr-rennesmetropole-flow:10273_D",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -23,7 +23,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "fr-rennesmetropole",
+        "sourceId": "fr-rennesmetropole-flow",
         "sourceFormat": "geojson-flow",
         "accessMode": "bulk",
         "recordId": "10273_D",
@@ -52,16 +52,16 @@
           "traffic.los"
         ]
       },
-      "canonicalId": "10db0dfdeb931a0dd66e4ddac055d524efc17eb73dc1138bb21cccf6a25ab2ac",
+      "canonicalId": "963f52161cc2d77d5ea0997b7004ad99027b01b6a0b2c41d68d9f986591b945a",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "5e9aa356f2146feb2ee6fb524955c323f26b83179ff4328abbce2cd76a4568e6"
+      "contentHash": "47cb87583969a9698f6b6b05265dfbd7de4041cc75389b7ec7b027fe4f5f3da0"
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:fr-rennesmetropole:1e7f7ef0aa5dfe1d5dd1d8327e2db5172ea8d20047bc82ad097163b7f74375c2",
+      "id": "oc:observation:fr-rennesmetropole-flow:16f5f1bf9e57b2dc55c9e1f3ef7c7717921a7c3ce8dd70a994cd38fdd556bd77",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -83,7 +83,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "fr-rennesmetropole",
+        "sourceId": "fr-rennesmetropole-flow",
         "sourceFormat": "geojson-flow",
         "accessMode": "bulk",
         "recordId": "10273_D",
@@ -105,7 +105,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:fr-rennesmetropole:10273_D"
+        "featureId": "oc:feature:fr-rennesmetropole-flow:10273_D"
       },
       "result": {
         "type": "quantity",
@@ -124,14 +124,14 @@
         "source": "native",
         "ratio": 1.1857142857142857
       },
-      "canonicalId": "ae6cec9f71f667177d1fe2bf99da5a88e7838ced2c1648906d0b95b29d085d51",
+      "canonicalId": "02108631c09169e25204203f0417fc518e04d24ce8cc4ec3551cf9ec16bd28a6",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "76cda059521b8ffdea2e7c20ac0d9f99582b6036d378e1aa3d8b587855d3cce2"
+      "contentHash": "0fb3a798c1a312463eba17f66500df30bc602e61cd22102d209d908a1ff47bbe"
     },
     {
-      "id": "oc:observation:fr-rennesmetropole:fa7a343288088ab21a8e2bee02998b0a724660c16e030b760bce2d78640a7d7d",
+      "id": "oc:observation:fr-rennesmetropole-flow:f3bfc399fedff301e092baec43902f8fd137d0e67e59dc1620ee0149aa151949",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -153,7 +153,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "fr-rennesmetropole",
+        "sourceId": "fr-rennesmetropole-flow",
         "sourceFormat": "geojson-flow",
         "accessMode": "bulk",
         "recordId": "10273_D",
@@ -175,7 +175,7 @@
       "property": "traffic.los",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:fr-rennesmetropole:10273_D"
+        "featureId": "oc:feature:fr-rennesmetropole-flow:10273_D"
       },
       "result": {
         "type": "category",
@@ -186,11 +186,11 @@
         "instant": "2026-07-29T10:49:00.000Z"
       },
       "aggregation": "instantaneous",
-      "canonicalId": "faab2a2464b273f09f2342be079adae5f1cc3572a3637daf4343661facb9279b",
+      "canonicalId": "5b44ed630c3c7eeffad5a6263c0b9e0bbf0c35f4732e5c8c1a0bb8924d0b686e",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "8c6236184d6ee7b09b2388937fc284b5e865321dff5d984dc3c9a8b5ca74dc2a"
+      "contentHash": "3dac6d112f5879a7d875a5a1fe4791bd8cdf92ff81a66a28c6bf22ba278e8b79"
     }
   ],
   "situations": []

@@ -13,7 +13,7 @@ const base: RoadConditionRoutingEvidence = {
   resolver_version: "1.0.0",
   source_id: "de-autobahn-events",
   child_source_id: null,
-  source_license: "dl-de/by-2-0",
+  source_license: "DL-DE-BY-2.0",
   license_url: "https://www.govdata.de/dl-de/by-2-0",
   attribution: "Autobahn GmbH",
   record_url: null,

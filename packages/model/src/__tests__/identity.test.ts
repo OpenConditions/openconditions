@@ -27,7 +27,7 @@ describe("record ids", () => {
   });
 
   it("separates source ids from instance ids", () => {
-    expect(isSourceId("de-by-mobilithek")).toBe(true);
+    expect(isSourceId("de-by-mobilithek-events")).toBe(true);
     expect(isSourceId("maps.example.org")).toBe(false);
     expect(isInstanceId("maps.example.org")).toBe(true);
     expect(isInstanceId("Maps.example.org")).toBe(false);

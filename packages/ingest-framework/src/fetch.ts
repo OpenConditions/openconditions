@@ -1,11 +1,15 @@
-import { resolvedEnv } from "./auth.js";
-import { getCatalogResolverById, resolveWithSnapshot } from "./catalog.js";
-import { boundedGunzip, DEFAULT_MAX_FEED_BYTES } from "./egress.js";
-import type { FeedSourceBase } from "./feed-source.js";
+import type { Env } from "./catalog/credentials.js";
+import {
+  type CatalogResolver,
+  type ChildFeed,
+  catalogResolverFor,
+  resolveWithSnapshot,
+} from "./catalog/resolvers.js";
+import { feedEndpoint, resolveEndpointUrls, resolveFeedTemplate } from "./catalog/templates.js";
+import type { CatalogFeed, FeedEndpoint, FetchFn } from "./catalog/types.js";
+import { boundedGunzip, maxFeedBytes } from "./egress.js";
 import { digestPayload, type PayloadDigest } from "./payload.js";
-import { applyPreFetch } from "./pre-fetch.js";
 import { feedSecretValues, redactSecrets, redactUrl } from "./redact.js";
-import { allowedTemplateVars, resolveFeedUrls, resolveUrlTemplate } from "./template.js";
 
 const GZIP_MAGIC_0 = 0x1f;
 const GZIP_MAGIC_1 = 0x8b;
@@ -14,35 +18,28 @@ const GZIP_MAGIC_1 = 0x8b;
 const FANOUT_CONCURRENCY = 8;
 
 /**
- * `FeedSourceBase` carries every declarative transport field this module needs
- * (`url` template(s), `expandEnv`, `bodyTemplate`, `catalog`). Kept as an alias
- * so the internal helpers read against one name.
- */
-type FetchableFeed = FeedSourceBase;
-
-/**
- * Per-source politeness memory: the ETag/Last-Modified of each URL (for
- * conditional GET) and the last fetch time of each source (for the
- * `fetchIntervalSec` gate). A long-lived scheduler shares one instance across
- * cycles so conditional headers accumulate; tests pass a fresh one.
+ * Per-endpoint politeness memory: the ETag/Last-Modified of each URL (for
+ * conditional GET), keyed `${feed.id}#${role}\0${url}`, and the definition each
+ * endpoint was last fetched under. A long-lived scheduler shares one instance
+ * across cycles so conditional headers accumulate; tests pass a fresh one.
  *
- * `buffer` (the last decompressed body) is retained ONLY for multi-URL feeds,
- * where a URL that replies 304 must be re-combined with a sibling URL that
- * changed before the source is re-parsed. Single-URL feeds skip entirely on 304
- * (see {@link fetchAll}), so caching their bodies — often tens of MB each, ~1 GB
- * across the ~30 datex feeds — only bloats off-heap memory and is omitted.
+ * `buffer` (the last decompressed body) is retained ONLY for multi-URL
+ * endpoints, where a URL that replies 304 must be re-combined with a sibling URL
+ * that changed before the feed is re-parsed. Single-URL endpoints skip entirely
+ * on 304 (see {@link fetchEndpoint}), so caching their bodies — often tens of MB
+ * each, ~1 GB across the ~30 datex feeds — only bloats off-heap memory and is
+ * omitted.
  */
 export interface FetchState {
   conditional: Map<
     string,
     { etag?: string; lastModified?: string; buffer?: Buffer; payload?: PayloadDigest }
   >;
-  lastFetchAt: Map<string, number>;
   sourceConfig: Map<string, string>;
 }
 
 export function createFetchState(): FetchState {
-  return { conditional: new Map(), lastFetchAt: new Map(), sourceConfig: new Map() };
+  return { conditional: new Map(), sourceConfig: new Map() };
 }
 
 const sharedFetchState = createFetchState();
@@ -66,16 +63,18 @@ export type FetchResult =
       partitions: { succeeded: number; failed: number; total: number };
     }
   | { status: "not-modified"; validatedAtNetwork: true }
-  | { status: "skipped"; reason: "cadence"; validatedAtNetwork: false }
   | {
       status: "no-endpoint";
       reason: "missing-configuration";
       validatedAtNetwork: false;
     };
 
-interface FetchOptions {
+export interface FetchOptions {
   state?: FetchState;
-  now?: () => number;
+  /** The resolvers a catalogue parent may name: its domain's. */
+  resolvers?: readonly CatalogResolver[];
+  /** Where credentials are read; defaults to `process.env`. */
+  env?: Env;
 }
 
 function isGzip(buf: Buffer): boolean {
@@ -100,9 +99,7 @@ function looksLikeHtml(buf: Buffer): boolean {
 }
 
 /** Ceiling on a single feed's decompressed bytes; matches the guard's byte cap. */
-const MAX_DECOMPRESSED_BYTES = Number(
-  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES,
-);
+const MAX_DECOMPRESSED_BYTES = maxFeedBytes();
 
 const EMPTY_BUFFER = Buffer.alloc(0);
 
@@ -154,17 +151,19 @@ async function fetchOne(
   return { changed: true, buffer, payload };
 }
 
-/** Build the RequestInit for a feed: POST + body + headers when configured. */
-function requestInit(src: FetchableFeed): RequestInit | undefined {
-  if (src.method !== "POST") {
-    return src.requestHeaders ? { headers: src.requestHeaders } : undefined;
-  }
+/** Build the RequestInit for an endpoint: method, body and headers, their `${field}`s filled. */
+function requestInit(feed: CatalogFeed, role: string, env: Env): RequestInit | undefined {
+  const endpoint = feedEndpoint(feed, role);
+  const headers = endpoint.headers
+    ? Object.fromEntries(
+        Object.entries(endpoint.headers).map(([k, v]) => [k, resolveFeedTemplate(feed, v, env)]),
+      )
+    : undefined;
+  if (endpoint.method !== "POST") return headers ? { headers } : undefined;
   return {
     method: "POST",
-    body: src.bodyTemplate
-      ? resolveUrlTemplate(src.bodyTemplate, resolvedEnv(), allowedTemplateVars(src))
-      : undefined,
-    headers: src.requestHeaders,
+    body: endpoint.body !== undefined ? resolveFeedTemplate(feed, endpoint.body, env) : undefined,
+    headers,
   };
 }
 
@@ -194,7 +193,7 @@ async function fetchFanout(
   urls: string[],
   fetchFn: typeof fetch,
   redact: (s: string) => string = (s) => s,
-  // The feed's own RequestInit — its `requestHeaders`, and a POST method/body
+  // The endpoint's own RequestInit — its headers, and a POST method/body
   // where it has them. The static path has always sent these; the fan-out
   // dropped them, so a feed quietly lost its headers by being fanned out.
   init?: RequestInit,
@@ -309,14 +308,14 @@ function withOffset(baseUrl: string, param: string, offset: number): string {
  */
 async function fetchPaginated(
   baseUrls: string[],
-  src: FetchableFeed,
-  fetchFn: typeof fetch,
+  feedId: string,
+  pg: NonNullable<FeedEndpoint["pagination"]>,
+  init: RequestInit | undefined,
+  fetchFn: FetchFn,
   redact: (s: string) => string,
 ): Promise<{ buffers: Buffer[]; payloads: PayloadDigest[] }> {
-  const pg = src.pagination!;
   const recordsPath = pg.recordsPath ?? "value";
   const maxPages = pg.maxPages ?? DEFAULT_MAX_PAGES;
-  const init = requestInit(src);
   const out: Buffer[] = [];
   const payloads: PayloadDigest[] = [];
   for (const baseUrl of baseUrls) {
@@ -335,105 +334,119 @@ async function fetchPaginated(
       }
     }
     if (!reachedEnd) {
-      throw new Error(`pagination: ${src.id} reached maxPages=${maxPages} without a terminal page`);
+      throw new Error(`pagination: ${feedId} reached maxPages=${maxPages} without a terminal page`);
     }
   }
   return { buffers: out, payloads };
 }
 
-/** Shallow equality match of a resolved descriptor against a catalog filter. */
-function matchesFilter(feed: FeedSourceBase, filter?: Record<string, unknown>): boolean {
+/** Shallow equality match of a resolved child against a catalog filter. */
+function matchesFilter(child: ChildFeed, filter?: Record<string, unknown>): boolean {
   if (!filter) return true;
   return Object.entries(filter).every(
-    ([k, v]) => (feed as unknown as Record<string, unknown>)[k] === v,
+    ([k, v]) => (child as unknown as Record<string, unknown>)[k] === v,
   );
 }
 
+/** The static URLs of one role of a resolved child; a child without the role has none. */
+function childUrls(child: ChildFeed, role: string): string[] {
+  const endpoint = child.endpoints[role];
+  if (!endpoint) return [];
+  return endpoint.urls ?? (endpoint.url ? [endpoint.url] : []);
+}
+
+/** A tolerant fan-out as a result: "partial" when any sub-feed failed. */
+function fanoutResult(fanout: Awaited<ReturnType<typeof fetchFanout>>): FetchResult {
+  if (fanout.failures > 0) {
+    return {
+      status: "partial",
+      buffers: fanout.buffers,
+      payloads: fanout.payloads,
+      validatedAtNetwork: false,
+      partitions: {
+        succeeded: fanout.total - fanout.failures,
+        failed: fanout.failures,
+        total: fanout.total,
+      },
+    };
+  }
+  return {
+    status: "fetched",
+    accept: () => {},
+    buffers: fanout.buffers,
+    payloads: fanout.payloads,
+    validatedAtNetwork: true,
+    partitions: { succeeded: fanout.total, failed: 0, total: fanout.total },
+  };
+}
+
 /**
- * Resolves the URL(s) for a feed source and fetches each one, returning a
- * {@link FetchResult}. Buffers are gunzipped transparently when the response
- * bytes start with the gzip magic bytes 0x1f 0x8b.
+ * Resolves the URL(s) of one endpoint of a feed and fetches each one, returning
+ * a {@link FetchResult}. Buffers are gunzipped transparently when the response
+ * bytes start with the gzip magic bytes 0x1f 0x8b. Every request carries the
+ * endpoint's `method`, `body` and `headers`, their `${field}`s filled from the
+ * feed's credentials. When to call it is the caller's: see `dueRoles`.
  *
- * `src.catalog`, when present, resolves a registry into concrete feed
- * descriptors (live, with a vendored-snapshot fallback) and fans their URLs out
- * tolerantly (takes precedence over `src.url`) — always "fetched", since
- * registry sub-feeds are best-effort and not conditionally cached. Otherwise
- * `src.url` is a `${VAR}` template string or array of templates; `expandEnv`
- * fans one template out over a comma-separated env var. Multi-URL sets fetch
- * with bounded concurrency so a large resolved URL set cannot fire every
- * request at once. A static multi-URL feed with `fanoutTolerant: true` is
- * instead routed through the same per-URL tolerant fetcher as the catalog
- * path (see below).
+ * `feed.catalog`, when present, resolves a registry into children (live, with a
+ * vendored-snapshot fallback) and fans the URLs of their `role` endpoints out
+ * tolerantly (takes precedence over the feed's own URL) — always "fetched",
+ * since registry sub-feeds are best-effort and not conditionally cached.
+ * Otherwise the endpoint's `url` or `urls` are templates, and `expand` fans them
+ * out over a comma-separated credential. Multi-URL sets fetch with bounded
+ * concurrency so a large resolved URL set cannot fire every request at once. An
+ * endpoint with `fanout: "tolerant"` and more than one URL is instead routed
+ * through the same per-URL tolerant fetcher as the catalog path (see below).
  *
- * Politeness on the static/template path: a source fetched within its
- * `fetchIntervalSec` window is skipped ("unchanged"); each URL sends its cached
- * ETag/Last-Modified, and a source whose every URL replied 304 is "unchanged"
- * so the caller preserves last-good rows instead of re-swapping.
+ * Politeness on the static/template path: each URL sends its cached
+ * ETag/Last-Modified, kept per `${feed.id}#${role}`, and an endpoint whose every
+ * URL replied 304 is "not-modified" so the caller preserves last-good rows
+ * instead of re-swapping.
  */
-export async function fetchAll(
-  src: FetchableFeed,
-  fetchFn: typeof fetch,
+export async function fetchEndpoint(
+  feed: CatalogFeed,
+  role: string,
+  fetchFn: FetchFn,
   opts: FetchOptions = {},
 ): Promise<FetchResult> {
   const state = opts.state ?? sharedFetchState;
-  const now = opts.now ?? Date.now;
+  const env = opts.env ?? process.env;
+  const endpoint = feedEndpoint(feed, role);
 
-  // Scrubs `src`'s own secret values (its auth vars + `requiredEnv`) out of
-  // any string before it reaches a log or `FeedStatusStore` — computed once,
-  // at the source, from the ORIGINAL descriptor (not `active`; the one
-  // registered pre-fetch hook never rewrites `auth`/`requiredEnv`) so every
-  // downstream log/error is pre-scrubbed of values a syntax-only redactor
-  // like `redactUrl` would miss (e.g. a credential duplicated into the URL path).
-  const redact = (s: string) => redactSecrets(s, feedSecretValues(src));
+  // Scrubs the feed's own secret values out of any string before it reaches a
+  // log or `FeedStatusStore` — computed once, at the source, so every
+  // downstream log/error is pre-scrubbed of values a syntax-only redactor like
+  // `redactUrl` would miss (e.g. a credential duplicated into the URL path).
+  const redact = (s: string) => redactSecrets(s, feedSecretValues(feed, env));
 
-  // Reactive pre-fetch transform (dormant — no hooks registered today). When a
-  // hook is registered it may rewrite the descriptor before URL resolution; with
-  // none, this returns `src` unchanged.
-  const active = await applyPreFetch(src, resolvedEnv(), fetchFn);
-
-  if (active.catalog) {
-    const resolver = getCatalogResolverById(active.catalog.resolver);
-    const feeds = (await resolveWithSnapshot(resolver, fetchFn)).filter((f) =>
-      matchesFilter(f, active.catalog?.filter),
+  if (feed.catalog) {
+    const resolver = catalogResolverFor(feed, opts.resolvers ?? []);
+    const children = (await resolveWithSnapshot(resolver, feed, fetchFn)).filter((child) =>
+      matchesFilter(child, feed.catalog?.filter),
     );
-    const urls = feeds.flatMap((f) => (Array.isArray(f.url) ? f.url : f.url ? [f.url] : []));
-    const fanout = await fetchFanout(urls, fetchFn, redact, requestInit(active));
+    const urls = children.flatMap((child) => childUrls(child, role));
+    const fanout = await fetchFanout(urls, fetchFn, redact, requestInit(feed, role, env));
     if (fanout.total === 0) {
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
-    if (fanout.failures > 0) {
-      return {
-        status: "partial",
-        buffers: fanout.buffers,
-        payloads: fanout.payloads,
-        validatedAtNetwork: false,
-        partitions: {
-          succeeded: fanout.total - fanout.failures,
-          failed: fanout.failures,
-          total: fanout.total,
-        },
-      };
-    }
-    return {
-      status: "fetched",
-      accept: () => {},
-      buffers: fanout.buffers,
-      payloads: fanout.payloads,
-      validatedAtNetwork: true,
-      partitions: { succeeded: fanout.total, failed: 0, total: fanout.total },
-    };
+    return fanoutResult(fanout);
   }
 
   // Offset pagination: follow `$skip` over a single resolved URL until the last
   // (short) page. Skips conditional-GET/`unchanged` handling (a paged resource
   // changes each cycle, so an ETag buys nothing) — like the fan-out paths above.
-  if (active.pagination) {
-    const baseUrls = resolveFeedUrls(active, resolvedEnv());
-    state.lastFetchAt.set(active.id, now());
+  if (endpoint.pagination) {
+    const baseUrls = resolveEndpointUrls(feed, role, env);
     if (baseUrls.length === 0) {
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
-    const pages = await fetchPaginated(baseUrls, active, fetchFn, redact);
+    const pages = await fetchPaginated(
+      baseUrls,
+      feed.id,
+      endpoint.pagination,
+      requestInit(feed, role, env),
+      fetchFn,
+      redact,
+    );
     return {
       status: "fetched",
       accept: () => {},
@@ -444,70 +457,37 @@ export async function fetchAll(
     };
   }
 
-  // `fanoutTolerant` opts a large static multi-URL fan-out (e.g. WebTRIS's
-  // ~150 per-site URLs) into the same per-URL tolerant fetcher the catalog
-  // path uses, instead of the all-or-nothing `fetchAllBounded` below. This
-  // skips conditional-GET/`fetchIntervalSec`/`unchanged` handling entirely
-  // (fetchFanout doesn't do ETag/304) — an acceptable trade for these feeds,
-  // e.g. WebTRIS's URL date-window changes every run, so conditional GET buys
-  // nothing anyway. Feeds without the flag (or with a single URL) are
-  // unaffected and fall through to the static path unchanged.
-  if (active.fanoutTolerant) {
-    const fanoutUrls = resolveFeedUrls(active, resolvedEnv());
-    if (fanoutUrls.length > 1) {
-      const fanout = await fetchFanout(fanoutUrls, fetchFn, redact, requestInit(active));
-      if (fanout.failures > 0) {
-        return {
-          status: "partial",
-          buffers: fanout.buffers,
-          payloads: fanout.payloads,
-          validatedAtNetwork: false,
-          partitions: {
-            succeeded: fanout.total - fanout.failures,
-            failed: fanout.failures,
-            total: fanout.total,
-          },
-        };
-      }
-      return {
-        status: "fetched",
-        accept: () => {},
-        buffers: fanout.buffers,
-        payloads: fanout.payloads,
-        validatedAtNetwork: true,
-        partitions: { succeeded: fanout.total, failed: 0, total: fanout.total },
-      };
-    }
+  const urls = resolveEndpointUrls(feed, role, env);
+
+  // `fanout: "tolerant"` opts a large multi-URL fan-out (one URL per site or
+  // region) into the same per-URL tolerant fetcher the catalog path uses,
+  // instead of the all-or-nothing `fetchAllBounded` below, so one dead sub-URL
+  // yields a partial result rather than failing the poll. This skips
+  // conditional-GET/`unchanged` handling entirely (fetchFanout doesn't do
+  // ETag/304), the price of that tolerance. Endpoints without it (or with a
+  // single URL) fall through to the static path.
+  if (endpoint.fanout === "tolerant" && urls.length > 1) {
+    return fanoutResult(await fetchFanout(urls, fetchFn, redact, requestInit(feed, role, env)));
   }
 
   // A changed parser or grant must be applied even when upstream content is unchanged.
   // Invalidate the old conditional state so the next publication restamps provenance.
-  const config = JSON.stringify(active);
-  if (state.sourceConfig.get(active.id) !== config) {
+  const stateKey = `${feed.id}#${role}`;
+  const config = JSON.stringify(feed);
+  if (state.sourceConfig.get(stateKey) !== config) {
     for (const key of state.conditional.keys()) {
-      if (key.startsWith(`${active.id}\0`)) state.conditional.delete(key);
+      if (key.startsWith(`${stateKey}\0`)) state.conditional.delete(key);
     }
-    state.sourceConfig.set(active.id, config);
-    state.lastFetchAt.delete(active.id);
+    state.sourceConfig.set(stateKey, config);
   }
 
-  if (active.fetchIntervalSec != null) {
-    const last = state.lastFetchAt.get(active.id);
-    if (last != null && now() - last < active.fetchIntervalSec * 1000) {
-      return { status: "skipped", reason: "cadence", validatedAtNetwork: false };
-    }
-  }
-
-  const urls = resolveFeedUrls(active, resolvedEnv());
+  // An `expand` credential with no items yet — a dormant, uncredentialed feed.
   if (urls.length === 0) {
-    if (active.url == null) throw new Error(`feed ${active.id} has neither url nor catalog`);
-    // expandEnv configured but no items yet — a dormant, uncredentialed feed.
-    state.lastFetchAt.set(active.id, now());
     return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
   }
 
-  const cacheKey = (url: string) => `${active.id}\0${url}`;
-  const init = requestInit(active);
+  const cacheKey = (url: string) => `${stateKey}\0${url}`;
+  const init = requestInit(feed, role, env);
   // Retain last bodies only for multi-URL feeds — a single-URL feed skips whole
   // on 304 (below) and never re-reads its cached body, so caching it just holds
   // tens of MB of off-heap Buffer per feed for nothing.
@@ -520,11 +500,9 @@ export async function fetchAll(
         return prior ? [[url, prior] as const] : [];
       }),
     ),
-    lastFetchAt: state.lastFetchAt,
     sourceConfig: state.sourceConfig,
   };
   const results = await fetchAllBounded(urls, fetchFn, init, provisional, urls.length > 1, redact);
-  state.lastFetchAt.set(active.id, now());
 
   if (results.every((r) => !r.changed)) {
     return { status: "not-modified", validatedAtNetwork: true };

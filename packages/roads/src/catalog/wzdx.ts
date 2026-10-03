@@ -1,10 +1,15 @@
 import { createHash } from "node:crypto";
 import path from "node:path";
-import type { CatalogResolver, FeedSourceBase } from "@openconditions/ingest-framework";
-import { roadFeedSchema } from "../feed-schema.js";
+import {
+  type CatalogParent,
+  type CatalogResolver,
+  type ChildFeed,
+  registryUrl,
+} from "@openconditions/ingest-framework";
+import { roadChildren } from "./child-schema.js";
 import wzdxSnapshot from "./snapshots/wzdx-registry.json" with { type: "json" };
 
-const WZDX_REGISTRY_URL = "https://datahub.transportation.gov/resource/69qe-yiui.json?$limit=5000";
+const RESOLVER_ID = "wzdx-registry";
 
 // Many registry entries for keyed feeds carry an unfilled credential placeholder
 // in the URL instead of a real key. Requesting those just 401s/403s every cycle
@@ -45,50 +50,41 @@ interface WzdxRegistryRow {
   feedname?: unknown;
   state?: unknown;
   issuingorganization?: unknown;
-  needapikey?: unknown;
-  apikeyurl?: unknown;
 }
 
-const UNKNOWN_RIGHTS = {
-  sourceRedistribution: null,
-  derivedRedistribution: null,
-  commercialUse: null,
-  attributionRequired: null,
-  retention: null,
-  evidenceOrigin: "WZDx registry metadata (no dataset grant verified)",
-  evidenceVersion: "wzdx-registry-2026-09-11",
+/** What is known of a registry feed no one has reviewed: no licence, only where it was listed. */
+const UNVERIFIED = {
+  license: "NOASSERTION",
+  terms: {
+    note: "WZDx registry metadata (no dataset grant verified)",
+    reviewedAt: "2026-09-11",
+  },
 } as const;
 
-const VERIFIED_CHILD_GRANTS: Record<string, NonNullable<FeedSourceBase["rights"]>> = {
+/** The licences reviewed for a registry dataset, by its URL. */
+const VERIFIED_CHILD_GRANTS: Record<string, Pick<ChildFeed, "license" | "licenseUrl" | "terms">> = {
   "https://ks.carsprogram.org/carsapi_v1/api/wzdx": {
-    sourceRedistribution: true,
-    derivedRedistribution: true,
-    commercialUse: true,
-    attributionRequired: false,
-    retention: true,
-    termsUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
-    reviewedAt: "2026-09-11T00:00:00.000Z",
-    evidenceOrigin: "Kansas WZDx road_event_feed_info.license",
-    evidenceVersion: "CC0-1.0",
+    license: "CC0-1.0",
+    licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+    terms: { note: "Kansas WZDx road_event_feed_info.license", reviewedAt: "2026-09-11" },
   },
 };
 
-function withChildEvidence(feed: FeedSourceBase): FeedSourceBase {
+/**
+ * A child with the licence its dataset was reviewed under, approved; or, when
+ * none was, `NOASSERTION` with the registry note, discovered only. Applied to
+ * the snapshot too, so a grant reviewed later needs no snapshot refresh.
+ */
+function withChildEvidence(child: ChildFeed): ChildFeed {
   // A grant belongs to the reviewed dataset URL, never to a state label or
   // its position in the registry (several states publish multiple feeds).
-  const grant = typeof feed.url === "string" ? VERIFIED_CHILD_GRANTS[feed.url] : undefined;
-  const rights = grant ?? UNKNOWN_RIGHTS;
-  const approved = grant != null;
+  const url = child.endpoints["main"]?.url;
+  const grant = url !== undefined ? VERIFIED_CHILD_GRANTS[url] : undefined;
+  const { license: _license, licenseUrl: _licenseUrl, terms: _terms, ...rest } = child;
   return {
-    ...feed,
-    license: approved ? "CC0-1.0" : "UNKNOWN",
-    ...(approved
-      ? { licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/" }
-      : { licenseUrl: undefined }),
-    parentSourceId: "us-wzdx",
-    policyIds: ["us-wzdx", feed.id],
-    selectionState: approved ? "approved" : "discovered",
-    rights,
+    ...rest,
+    ...(grant ?? UNVERIFIED),
+    selectionState: grant ? "approved" : "discovered",
     snapshot: { completeness: "complete", recordsPath: "features" },
   };
 }
@@ -113,27 +109,23 @@ function str(v: unknown): string {
   return typeof v === "string" ? v.trim() : "";
 }
 
-function needsApiKey(v: unknown): boolean {
-  if (typeof v === "boolean") return v;
-  const s = str(v).toLowerCase();
-  return s === "yes" || s === "true";
-}
-
 /**
- * Maps each Socrata WZDx registry row to a full feed descriptor for feeds the
- * WZDx parser understands: active, version 4.x or 3.1, labeled geojson or json.
- * Earlier versions and the CWZ standard are different shapes and are skipped. Deduped by
- * URL and by generated id. Rows whose URL is an unfilled key placeholder are
- * dropped (they can only 401 without a key we don't hold).
+ * Maps each row of the Socrata WZDx registry the parent names to a child, for
+ * feeds the WZDx parser understands: active, version 4.x or 3.1, labeled
+ * geojson or json. Earlier
+ * versions and the CWZ standard are different shapes and are skipped. A child
+ * is named by a hash of its URL and deduped by URL. Rows whose URL is an
+ * unfilled key placeholder are dropped (they can only 401 without a key we
+ * don't hold).
  */
-async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
-  const res = await fetchFn(WZDX_REGISTRY_URL);
+async function resolve(parent: CatalogParent, fetchFn: typeof fetch): Promise<ChildFeed[]> {
+  const res = await fetchFn(registryUrl(parent, RESOLVER_ID));
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching the WZDx feed registry`);
 
   const rows = (await res.json()) as unknown;
   if (!Array.isArray(rows)) return [];
 
-  const feeds: FeedSourceBase[] = [];
+  const children: ChildFeed[] = [];
   const seenUrls = new Set<string>();
   let placeholderSkipped = 0;
 
@@ -163,41 +155,19 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
     const org = str(row.issuingorganization);
     // The registry has no stable dataset key: use the concrete URL so order,
     // display-name changes and multiple feeds in one state cannot swap IDs.
-    const stream = createHash("sha256").update(url).digest("hex").slice(0, 16);
+    const qualifier = createHash("sha256").update(url).digest("hex").slice(0, 16);
 
-    const apikeyurl = str(row.apikeyurl);
-    let feed: FeedSourceBase = roadFeedSchema.parse({
-      name: `WZDx — ${org || feedname || state || "feed"}${state ? ` (${state})` : ""}`,
-      operator: "wzdx",
-      // The registry lists the state agencies that publish their own work zones.
-      tier: "authoritative",
-      stream,
-      format: "wzdx",
-      url,
-      cadenceSec: 300,
-      freshnessWindowSec: 900,
-      license: "UNKNOWN",
-      attribution: org || "WZDx publishers",
-      country: "US",
-      privacyUrl: "https://www.transportation.gov/privacy",
-    });
-    if (needsApiKey(row.needapikey)) {
-      // The concrete URL is used as published (placeholder rows are dropped
-      // above); attach a documentation-only guide pointing operators at where a
-      // registered key can be obtained.
-      feed.auth = { kind: "none" };
-      const envVar = `WZDX_${(state || feedname || "US").toUpperCase().replace(/[^A-Z0-9]+/g, "_")}_API_KEY`;
-      feed.setup = {
-        [envVar]: {
-          title: `${feed.name} — API key`,
-          ...(apikeyurl ? { url: apikeyurl } : {}),
-          notes:
-            "This registry feed is marked as needing an API key. The registry URL is used as published; supply a registered key upstream if the feed requires one.",
-        },
-      };
-    }
-    feed = withChildEvidence(feed);
-    feeds.push(feed);
+    // A row marked as needing an API key is used as published: placeholder
+    // URLs are dropped above, and a concrete URL already carries its key.
+    children.push(
+      withChildEvidence({
+        qualifier,
+        name: `WZDx — ${org || feedname || state || "feed"}${state ? ` (${state})` : ""}`,
+        endpoints: { main: { url, cadenceSec: 300 } },
+        attribution: org || "WZDx publishers",
+        selectionState: "discovered",
+      }),
+    );
   }
 
   if (placeholderSkipped > 0) {
@@ -205,12 +175,12 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
       `[wzdx] skipped ${placeholderSkipped} registry feed(s) with an unfilled API-key placeholder`,
     );
   }
-  return feeds;
+  return roadChildren(children);
 }
 
 export const wzdxRegistryResolver: CatalogResolver = {
-  id: "wzdx-registry",
+  id: RESOLVER_ID,
   snapshotPath: path.resolve(import.meta.dirname, "snapshots/wzdx-registry.json"),
-  snapshot: wzdxSnapshot.map((feed) => withChildEvidence(roadFeedSchema.parse(feed))),
+  snapshot: roadChildren(wzdxSnapshot).map(withChildEvidence),
   resolve,
 };

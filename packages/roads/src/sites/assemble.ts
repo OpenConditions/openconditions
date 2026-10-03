@@ -32,9 +32,12 @@ interface FlowFormat {
 
 /** Every flow format and what its sites can report. */
 export const FLOW_FORMATS: Readonly<Record<string, FlowFormat>> = {
-  datex2: { geometryOrigin: "site_table", properties: [SPEED, VOLUME, OCCUPANCY, LOS] },
-  "datex-elaborated": { geometryOrigin: "site_table", properties: [SPEED, VOLUME, LOS] },
-  digitraffic: { geometryOrigin: "source", properties: [SPEED, LOS] },
+  "datex2-measured": {
+    geometryOrigin: "site_table",
+    properties: [SPEED, VOLUME, OCCUPANCY, LOS],
+  },
+  "datex2-elaborated": { geometryOrigin: "site_table", properties: [SPEED, VOLUME, LOS] },
+  "digitraffic-traffic-measurement": { geometryOrigin: "source", properties: [SPEED, LOS] },
   "fintraffic-tms": { geometryOrigin: "site_table", properties: [SPEED, VOLUME] },
   webtris: { geometryOrigin: "site_table", properties: [SPEED, VOLUME] },
   "nyc-dot": { geometryOrigin: "source", properties: [SPEED] },

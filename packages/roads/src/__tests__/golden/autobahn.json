@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:de-autobahn:INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0",
+    "id": "oc:situation:de-autobahn-events:INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -45,13 +45,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-autobahn",
+      "sourceId": "de-autobahn-events",
       "sourceFormat": "autobahn",
       "accessMode": "bulk",
       "recordId": "INRIX--vi-avl.2026-06-22_18-23-00-000_001.de0",
       "attribution": {
         "provider": "Quelle: Die Autobahn GmbH des Bundes",
-        "license": "dl-de/by-2-0"
+        "license": "DL-DE-BY-2.0"
       },
       "privacy": {
         "class": "authoritative"
@@ -113,14 +113,14 @@
       "v": 1,
       "los": "queuing"
     },
-    "canonicalId": "5a62624f0b9104e05667260d9ef5cb43b8dfd487dff373b5451d183f9f733f5e",
+    "canonicalId": "b61bb2936ee82ea44b765cca3913896aac16841cd2a000884f2f47c5c338aa55",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "301769ef7ef627e44dcc4c115a3a0ea507ec99870c34eaa34b0c47c8fcbadc65"
+    "contentHash": "4f0f670ed9030690791ab3e0d47fe2a580566bc8b6a3f81d10d058d8acbccd2d"
   },
   {
-    "id": "oc:situation:de-autobahn:EVA--vi-blk.2026-06-22_10-00-00-000.de1",
+    "id": "oc:situation:de-autobahn-events:EVA--vi-blk.2026-06-22_10-00-00-000.de1",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -155,13 +155,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-autobahn",
+      "sourceId": "de-autobahn-events",
       "sourceFormat": "autobahn",
       "accessMode": "bulk",
       "recordId": "EVA--vi-blk.2026-06-22_10-00-00-000.de1",
       "attribution": {
         "provider": "Quelle: Die Autobahn GmbH des Bundes",
-        "license": "dl-de/by-2-0"
+        "license": "DL-DE-BY-2.0"
       },
       "privacy": {
         "class": "authoritative"
@@ -218,10 +218,10 @@
       "kind": "road_hazard",
       "v": 1
     },
-    "canonicalId": "f488d46dcde8f2e3e0a49aa0bc19af0bb79e3ccae56bab5cab83fecb7b4ee895",
+    "canonicalId": "39b8b90ac9966bcee3beccab03284a9d4f31a600b86f67ac634b53e031c29908",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "20e48edcb1a252bf1a3722bf4d690d6675f7536132624115709a448f7797adc3"
+    "contentHash": "bfa01eebf4e0ac103ff730c97258ce167389cc0fc0e371da6c9ca8bd13d77bc6"
   }
 ]

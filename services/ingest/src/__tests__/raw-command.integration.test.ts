@@ -43,7 +43,7 @@ async function archive(count: number): Promise<string[]> {
     const digest = digestPayload("https://drivebc.example/events", body);
     await raw.capture(
       {
-        sourceId: "ca-bc-drivebc",
+        sourceId: "ca-bc-drivebc-events",
         fetchId: i + 1,
         fetchedAt: new Date(NOW.getTime() - i * HOUR),
         tier: "hot",
@@ -62,7 +62,7 @@ describe("raw command", () => {
     const hashes = await archive(60);
     const oldest = hashes.at(-1)!;
     expect(await run("pin", oldest, "--fixture", "drivebc-closure")).toBe(0);
-    expect(lines).toEqual([`pinned ${oldest} of ca-bc-drivebc`]);
+    expect(lines).toEqual([`pinned ${oldest} of ca-bc-drivebc-events`]);
     expect(await run("gc", "--dry-run")).toBe(0);
     expect(lines).toContain("would evict 10 payload(s); cap rung 0");
     const [row] =
@@ -79,7 +79,7 @@ describe("raw command", () => {
     expect(await run("gc")).toBe(0);
     expect(lines).toEqual([
       "evicted 11 payload(s); cap rung 0",
-      expect.stringMatching(/^ {2}ca-bc-drivebc: 11 payload\(s\), \d+ bytes$/),
+      expect.stringMatching(/^ {2}ca-bc-drivebc-events: 11 payload\(s\), \d+ bytes$/),
       "purged 0 index row(s) of long-evicted payloads",
     ]);
   });

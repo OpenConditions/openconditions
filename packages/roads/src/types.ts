@@ -1,5 +1,5 @@
-import type { LaneNumbering } from "@openconditions/ingest-framework";
 import type { AccessMode } from "@openconditions/model";
+import type { LaneNumbering } from "./feed-schema.js";
 import type { GeoJsonMapping } from "./model.js";
 
 /**
@@ -31,12 +31,13 @@ export interface GeojsonFlowMapping {
 
 /**
  * Minimal descriptor for the data source a parser needs at call time.
- * Subset of the full FeedSource; keeps parsers decoupled from the ingest layer.
+ * Subset of the full roads feed; keeps parsers decoupled from the ingest layer.
  */
 export interface SourceDescriptor {
   id: string;
   attribution: string;
-  country: string;
+  /** Upper-case ISO 3166-1 alpha-2; absent for a feed of the `eu` or `global` region. */
+  country?: string;
   license: string;
   licenseUrl?: string;
   /** Whether the source is polled whole (`bulk`, the default) or queried per consumer (`on_demand`). */

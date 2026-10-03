@@ -1,0 +1,45 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "asfinag",
+      "product": "events",
+      "name": "ASFINAG events (Austria)",
+      "tier": "authoritative",
+      "format": "datex2",
+      "credentials": {
+        "user": {
+          "title": "ASFINAG (Austria) — username",
+          "setup": {
+            "url": "https://contentportal.asfinag.at/",
+            "urlLabel": "ASFINAG content portal",
+            "steps": [
+              "Create an ASFINAG account at contentportal.asfinag.at.",
+              "Enable access to 'Verkehrsmeldungen zu ungeplanten und sicherheitsrelevanten Ereignissen' at contentportal.asfinag.at/data/details/unplannedevents.",
+              "Enable access to 'Verkehrsmeldungen zu geplanten Ereignissen' (roadworks) at contentportal.asfinag.at/data/details/roadworks_detailed.",
+            ],
+            "notes": "CC-BY-4.0 for the two open event packages (some ASFINAG packages are paid).",
+          },
+        },
+        "password": {
+          "title": "ASFINAG (Austria) — password",
+        },
+      },
+      "auth": { "kind": "basic", "user": "user", "password": "password" },
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://contentportal.asfinag.at/datex2/v3/unplanned-events",
+            "https://contentportal.asfinag.at/datex2/v3/planned-events",
+          ],
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://www.mobilitydata.gv.at/en/data",
+      "attribution": "ASFINAG",
+      "privacyUrl": "https://www.asfinag.at/datenschutz/",
+    },
+  ],
+}

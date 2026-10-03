@@ -1,94 +1,66 @@
-import { readFileSync } from "node:fs";
 import { fetch as undiciFetch } from "undici";
+import {
+  type CredentialRef,
+  type Env,
+  type FeedCredentialName,
+  feedCredentialNames,
+  resolveCredential,
+} from "./catalog/credentials.js";
+import type { CatalogFeed } from "./catalog/types.js";
 import { guardedFetch, guardOptionsFromEnv } from "./egress.js";
-import type { FeedAuth, FeedSourceBase } from "./feed-source.js";
 
 /**
- * Per-feed authentication. Turns a feed's declared {@link FeedAuth} into a
- * `fetch` wrapper that injects the right credential (from env) on every request,
- * and exposes credential-presence helpers so the scheduler can skip a feed whose
- * secrets are not configured. Keeping this here (not in the parser package) keeps
- * secrets and HTTP concerns out of the pure feed registry.
+ * Per-feed authentication. Turns a feed's declared `auth` into a `fetch`
+ * wrapper that injects the right credential (from env) on every request, and
+ * exposes credential-presence helpers so the scheduler can skip a feed whose
+ * secrets are not configured. Keeping this here (not in the parser package)
+ * keeps secrets and HTTP concerns out of the pure feed registry.
  */
 
-export type Env = Record<string, string | undefined>;
+type FeedAuth = NonNullable<CatalogFeed["auth"]>;
 
 /**
- * Resolve a credential value, supporting the `*_FILE` convention used by
- * file-based secret delivery (Docker `secrets:` mounts at `/run/secrets/<KEY>`).
- * Prefers a non-empty env var; otherwise reads the file named by `<KEY>_FILE`.
- * An empty/whitespace env var falls through to the file, so a blank placeholder
- * never shadows a mounted secret. Returns `undefined` when neither yields a
- * non-empty value.
+ * The env vars a feed still needs: every credential it reads (auth, endpoint
+ * `${field}`s and `expand`) that is unset in `env` and its `_FILE` variant.
+ * An optional field, or one with a `default`, is never missing.
  */
-export function resolveCredential(env: Env, key: string): string | undefined {
-  const direct = env[key]?.trim();
-  if (direct) return direct;
-  const filePath = env[`${key}_FILE`]?.trim();
-  if (filePath) {
-    try {
-      const contents = readFileSync(filePath, "utf8").trim();
-      if (contents) return contents;
-    } catch {
-      // Missing/unreadable secret file → treated as "not set".
-    }
-  }
-  return undefined;
+export function missingCredentials(feed: CatalogFeed, env: Env = process.env): string[] {
+  return feedCredentialNames(feed)
+    .filter((name) => !name.optional && name.default === undefined)
+    .filter((name) => resolveCredential(env, name.env) === undefined)
+    .map((name) => name.env);
 }
 
-/**
- * An env-like view that transparently applies the `*_FILE` fallback on every
- * lookup. Pass this (instead of raw `process.env`) to a feed's url/body builder
- * so credentials embedded in a request URL or body — e.g. Trafikverket's
- * POST-body key, Buenos Aires' client_id/secret, NRW's subscription id — also
- * resolve from mounted secret files. Non-credential keys fall back to the raw
- * env value unchanged.
- */
-export function resolvedEnv(env: Env = process.env): Env {
-  return new Proxy({} as Env, {
-    get: (_t, prop) =>
-      typeof prop === "string" ? (resolveCredential(env, prop) ?? env[prop]) : undefined,
-    has: (_t, prop) => typeof prop === "string" && (prop in env || `${prop}_FILE` in env),
-  });
+/** True when the feed needs no credentials, or every one it needs is set. */
+export function hasCredentials(feed: CatalogFeed, env: Env = process.env): boolean {
+  return missingCredentials(feed, env).length === 0;
 }
 
-/** The env-var names a given auth config needs to be usable. */
-export function requiredEnvVars(auth: FeedAuth | undefined): string[] {
-  if (!auth) return [];
-  switch (auth.kind) {
-    case "none":
-      return [];
-    case "query-key":
-      // A built-in default (e.g. a public API key) makes the env var optional.
-      return auth.defaultValue ? [] : [auth.envVar];
-    case "header-key":
-    case "bearer":
-      return [auth.envVar];
-    case "basic":
-      return [auth.userEnvVar, auth.passEnvVar];
-    case "oauth2-client-credentials":
-      return [auth.clientIdEnvVar, auth.clientSecretEnvVar];
-    case "mtls":
-      return [auth.certEnvVar, auth.keyEnvVar];
-  }
+/** Reads a feed's credentials by ref: env (or `_FILE`) first, then the field's `default`. */
+function credentialReader(feed: CatalogFeed, env: Env) {
+  const byRef = new Map<CredentialRef, FeedCredentialName>(
+    feedCredentialNames(feed).map((name) => [name.ref, name]),
+  );
+  const nameOf = (ref: CredentialRef): FeedCredentialName => {
+    const name = byRef.get(ref);
+    if (!name) throw new Error(`feed ${feed.id}: credential ${ref} is not declared`);
+    return name;
+  };
+  return {
+    optional: (ref: CredentialRef): string | undefined => {
+      const name = nameOf(ref);
+      return resolveCredential(env, name.env) ?? name.default;
+    },
+    need: (ref: CredentialRef): string => {
+      const name = nameOf(ref);
+      const value = resolveCredential(env, name.env) ?? name.default;
+      if (!value) throw new Error(`missing credential env var ${name.env} (or ${name.env}_FILE)`);
+      return value;
+    },
+  };
 }
 
-/** True when the feed needs no credentials, or all its required env vars are set.
- * Covers both `auth`-derived vars and any extra `requiredEnv` (e.g. a key the
- * feed embeds in its POST body). */
-export function hasCredentials(
-  src: Pick<FeedSourceBase, "auth" | "requiredEnv">,
-  env: Env = process.env,
-): boolean {
-  const required = [...requiredEnvVars(src.auth), ...(src.requiredEnv ?? [])];
-  return required.every((k) => resolveCredential(env, k) !== undefined);
-}
-
-function need(env: Env, key: string): string {
-  const v = resolveCredential(env, key);
-  if (!v) throw new Error(`missing credential env var ${key} (or ${key}_FILE)`);
-  return v;
-}
+type CredentialReader = ReturnType<typeof credentialReader>;
 
 /**
  * Reconstruct canonical PEM from a possibly-mangled credential value. Pasting a
@@ -134,7 +106,7 @@ interface TokenResponse {
 function oauthClientCredentialsFetch(
   auth: Extract<FeedAuth, { kind: "oauth2-client-credentials" }>,
   baseFetch: typeof fetch,
-  env: Env,
+  credentials: CredentialReader,
   now: () => number,
 ): typeof fetch {
   let cache: { token: string; expiresAt: number } | null = null;
@@ -145,8 +117,8 @@ function oauthClientCredentialsFetch(
     if (cache && cache.expiresAt > t + 30_000) return cache.token;
     const body = new URLSearchParams({
       grant_type: "client_credentials",
-      client_id: need(env, auth.clientIdEnvVar),
-      client_secret: need(env, auth.clientSecretEnvVar),
+      client_id: credentials.need(auth.clientId),
+      client_secret: credentials.need(auth.clientSecret),
     });
     if (auth.scope) body.set("scope", auth.scope);
     const res = await baseFetch(auth.tokenUrl, {
@@ -169,40 +141,43 @@ function oauthClientCredentialsFetch(
 }
 
 /**
- * Wraps `baseFetch` so every request for `src` carries its credential. Returns
- * `baseFetch` unchanged for keyless feeds. Reads secrets from `env`; throws if a
- * required static secret is missing (the scheduler gates on {@link hasCredentials}
- * first, so this only fires on misconfiguration).
+ * Wraps `baseFetch` so every request for `feed` carries its credential. Returns
+ * `baseFetch` unchanged for keyless feeds. Reads each credential from its
+ * derived env var (or `_FILE` variant), else its field's `default` (e.g. a
+ * public key); throws if a required static secret is missing (the scheduler
+ * gates on {@link hasCredentials} first, so this only fires on misconfiguration).
  */
 export function makeAuthorizedFetch(
-  src: Pick<FeedSourceBase, "auth">,
+  feed: CatalogFeed,
   baseFetch: typeof fetch,
   env: Env = process.env,
   now: () => number = Date.now,
 ): typeof fetch {
-  const auth = src.auth;
+  const auth = feed.auth;
   if (!auth || auth.kind === "none") return baseFetch;
+  const credentials = credentialReader(feed, env);
 
   switch (auth.kind) {
     case "query-key": {
-      // Env var (or `*_FILE`) wins when set; otherwise fall back to a built-in
-      // default (e.g. a public key). `||` (not `??`) so an empty value also falls back.
-      const value =
-        resolveCredential(env, auth.envVar) || auth.defaultValue || need(env, auth.envVar);
+      const value = credentials.need(auth.credential);
       return (input, init) => baseFetch(withQueryParam(input, auth.param, value), init);
     }
     case "header-key":
-      return withHeader(baseFetch, auth.header, (auth.valuePrefix ?? "") + need(env, auth.envVar));
+      return withHeader(
+        baseFetch,
+        auth.header,
+        (auth.valuePrefix ?? "") + credentials.need(auth.credential),
+      );
     case "bearer":
-      return withHeader(baseFetch, "Authorization", `Bearer ${need(env, auth.envVar)}`);
+      return withHeader(baseFetch, "Authorization", `Bearer ${credentials.need(auth.credential)}`);
     case "basic": {
       const creds = Buffer.from(
-        `${need(env, auth.userEnvVar)}:${need(env, auth.passEnvVar)}`,
+        `${credentials.need(auth.user)}:${credentials.need(auth.password)}`,
       ).toString("base64");
       return withHeader(baseFetch, "Authorization", `Basic ${creds}`);
     }
     case "oauth2-client-credentials":
-      return oauthClientCredentialsFetch(auth, baseFetch, env, now);
+      return oauthClientCredentialsFetch(auth, baseFetch, credentials, now);
     case "mtls": {
       // Fold the client certificate into the egress guard's OWN pinned
       // dispatcher, so mTLS gets the same SSRF/DNS-rebinding protection as every
@@ -211,10 +186,10 @@ export function makeAuthorizedFetch(
       // handshake path that a 302 could redirect to an internal address, and no
       // second unchecked DNS resolution. `dispatcher` is honored by undici's
       // fetch (the guard's default base), version-matched to its Agent.
-      const ca = auth.caEnvVar ? env[auth.caEnvVar] : undefined;
+      const ca = auth.ca ? credentials.optional(auth.ca) : undefined;
       return guardedFetch(undiciFetch as unknown as typeof fetch, guardOptionsFromEnv(), {
-        cert: normalizePem(need(env, auth.certEnvVar)),
-        key: normalizePem(need(env, auth.keyEnvVar)),
+        cert: normalizePem(credentials.need(auth.cert)),
+        key: normalizePem(credentials.need(auth.key)),
         ...(ca ? { ca: normalizePem(ca) } : {}),
       });
     }

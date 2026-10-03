@@ -1,0 +1,33 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "longdo",
+      "product": "events",
+      "name": "Longdo Traffic Events (Thailand)",
+      "tier": "aggregator",
+      "format": "flatjson",
+      "endpoints": {
+        "main": { "url": "https://event.longdo.com/feed/json", "cadenceSec": 300 },
+      },
+      "geojson": {
+        "lonField": "longitude",
+        "latField": "latitude",
+        "idField": "eid",
+        "typeField": "type",
+        "typeMap": {
+          "3": "accident",
+        },
+        "defaultType": "other",
+        "headlineField": "title_en",
+        "descriptionField": "description_en",
+        "updatedField": "start",
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://www.longdo.com/",
+      "attribution": "Longdo Traffic / iTIC Foundation",
+      "privacyUrl": "https://map.longdo.com/",
+    },
+  ],
+}

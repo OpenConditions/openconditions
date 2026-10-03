@@ -5,10 +5,10 @@ import { parseOhgoEvents } from "../ohgo-events.js";
 import type { SourceDescriptor } from "../types.js";
 
 const SRC: SourceDescriptor = {
-  id: "us-oh-ohgo-construction",
+  id: "us-oh-ohgo-construction-events",
   attribution: "Ohio Department of Transportation (OHGO)",
   country: "US",
-  license: "US-Gov-Public-Domain",
+  license: "LicenseRef-US-Gov-Public-Domain",
 };
 
 const load = (name: string) =>
@@ -18,7 +18,7 @@ describe("parseOhgoEvents — construction", () => {
   it("maps a work zone to planned roadworks with its validity window", () => {
     const [ev] = parseOhgoEvents(load("construction"), SRC);
     expect(ev).toBeDefined();
-    expect(ev!.id).toBe("us-oh-ohgo-construction:OH-CON-1001");
+    expect(ev!.id).toBe("us-oh-ohgo-construction-events:OH-CON-1001");
     expect(ev!.sourceFormat).toBe("ohgo-events");
     expect(ev!.type).toBe("roadworks");
     expect(ev!.category).toBe("planned");
@@ -40,7 +40,7 @@ describe("parseOhgoEvents — construction", () => {
 
   it("skips a record without usable coordinates", () => {
     const events = parseOhgoEvents(load("construction"), SRC);
-    expect(events.map((e) => e.id)).not.toContain("us-oh-ohgo-construction:OH-CON-NOGEO");
+    expect(events.map((e) => e.id)).not.toContain("us-oh-ohgo-construction-events:OH-CON-NOGEO");
     expect(events).toHaveLength(2);
   });
 
@@ -51,19 +51,19 @@ describe("parseOhgoEvents — construction", () => {
 });
 
 describe("parseOhgoEvents — incidents", () => {
-  const INCIDENT_SRC: SourceDescriptor = { ...SRC, id: "us-oh-ohgo-incidents" };
+  const INCIDENT_SRC: SourceDescriptor = { ...SRC, id: "us-oh-ohgo-events" };
 
   it("maps the incident category table and leaves the events unplanned", () => {
     const events = parseOhgoEvents(load("incidents"), INCIDENT_SRC);
     const byId = new Map(events.map((e) => [e.id, e]));
 
-    const crash = byId.get("us-oh-ohgo-incidents:OH-INC-2001")!;
+    const crash = byId.get("us-oh-ohgo-events:OH-INC-2001")!;
     expect(crash.type).toBe("accident");
     expect(crash.category).toBe("incident");
     expect(crash.isPlanned).toBe(false);
     expect(crash.validFrom).toBeNull();
 
-    expect(byId.get("us-oh-ohgo-incidents:OH-INC-2002")!.type).toBe("hazard");
+    expect(byId.get("us-oh-ohgo-events:OH-INC-2002")!.type).toBe("hazard");
   });
 
   it("degrades an unmapped category to `other` rather than dropping the record", () => {

@@ -62,7 +62,7 @@
       "sourceUpdatedAt": "2026-05-25T17:17:05.000Z",
       "attribution": {
         "provider": "Contains information licensed under the Open Government Licence – Ontario",
-        "license": "OGL-ON",
+        "license": "LicenseRef-OGL-ON",
         "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario"
       },
       "privacy": {
@@ -109,7 +109,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "0773c06b6ede31d5d0751db7238828be58a34444932c60c736ced3b9640f9641"
+    "contentHash": "652ff3ae1087ee6a3b30607c2334da38247f0f7c4284e590bed4c2ae4c27a0c6"
   },
   {
     "id": "oc:situation:ca-on-511-conditions:17-1",
@@ -157,7 +157,7 @@
       "recordId": "17-1",
       "attribution": {
         "provider": "Contains information licensed under the Open Government Licence – Ontario",
-        "license": "OGL-ON",
+        "license": "LicenseRef-OGL-ON",
         "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario"
       },
       "privacy": {
@@ -198,6 +198,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "73713d18881da7a9768a610e7cfaaf0988f49d2509b25cb618a00907c5552eed"
+    "contentHash": "b7b00256fec55c03cc567bc6b2b78fcacad5c4fda5e16beab03419b87a7589ee"
   }
 ]

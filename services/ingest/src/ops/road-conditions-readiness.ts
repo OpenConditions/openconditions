@@ -13,7 +13,6 @@ export interface SourceReadiness {
   successfulValidations: number;
   failed: number;
   partial: number;
-  skippedCadence: number;
   skippedOverlap: number;
   missingConfiguration: number;
   recordedAttempts: number;
@@ -88,7 +87,6 @@ export function assessReadiness(rows: PollAttempt[], now: Date = new Date()): So
         successfulValidations: successful.length,
         failed: outcomeCount("failed"),
         partial: outcomeCount("partial"),
-        skippedCadence: outcomeCount("skipped_cadence"),
         skippedOverlap: outcomeCount("skipped_overlap"),
         missingConfiguration: outcomeCount("missing_configuration"),
         recordedAttempts: attempts.length,

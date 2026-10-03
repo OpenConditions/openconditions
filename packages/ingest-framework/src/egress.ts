@@ -443,10 +443,15 @@ export function parseAllowedHosts(raw: string | undefined): ReadonlySet<string> 
  */
 export const DEFAULT_MAX_FEED_BYTES = 512 * 1024 * 1024;
 
+/** The byte cap on a feed's response and decompressed bytes: OPENCONDITIONS_MAX_FEED_BYTES or the default. */
+export function maxFeedBytes(env: NodeJS.ProcessEnv = process.env): number {
+  return envInt(env, "OPENCONDITIONS_MAX_FEED_BYTES", DEFAULT_MAX_FEED_BYTES);
+}
+
 /** Reads the guard caps from the environment (defaults ~512 MB / 60 s / 5 hops). */
 export function guardOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): FetchGuardOptions {
   return {
-    maxBytes: envInt(env, "OPENCONDITIONS_MAX_FEED_BYTES", DEFAULT_MAX_FEED_BYTES),
+    maxBytes: maxFeedBytes(env),
     timeoutMs: envInt(env, "OPENCONDITIONS_FETCH_TIMEOUT_MS", 60_000),
     maxRedirects: envInt(env, "OPENCONDITIONS_MAX_REDIRECTS", 5),
     allowedHosts: parseAllowedHosts(env["OPENCONDITIONS_EGRESS_ALLOWED_HOSTS"]),

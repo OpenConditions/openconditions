@@ -1,0 +1,17 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "op",
+      "product": "events",
+      "name": "Roads feed",
+      "format": "datex2",
+      "tier": "authoritative",
+      "endpoints": { "main": { "url": "https://example.test/roads", "cadenceSec": 300 } },
+      "freshnessWindowSec": 900,
+      "license": "CC0-1.0",
+      "attribution": "Op",
+      "privacyUrl": "https://example.test/privacy",
+    },
+  ],
+}

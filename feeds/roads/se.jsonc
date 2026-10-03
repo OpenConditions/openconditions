@@ -1,0 +1,63 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      // Trafikverket's road incident/roadworks data is NOT in the object API — it's
+      // the dedicated DATEX II URL endpoint /v2/datex2/{schemaversion}/{namespace}/
+      // sit:situation (plain GET, DATEX II v3). The Situation data is split into
+      // namespaces; we pull the two coordinate-bearing road ones: roadworks
+      // (roadworks + closures, the bulk) and accident. Auth = the key as
+      // ?authenticationkey=. Trafikverket publishes posList in lon-lat order.
+      "operator": "trafikverket",
+      "product": "events",
+      "name": "Trafikverket (Sweden)",
+      "tier": "authoritative",
+      "format": "datex2",
+      "auth": {
+        "kind": "query-key",
+        "param": "authenticationkey",
+        "credential": "@se-trafikverket.api_key",
+      },
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/roadworks/sit:situation",
+            "https://api.trafikinfo.trafikverket.se/v2/datex2/3.1/accident/sit:situation",
+          ],
+          "cadenceSec": 300,
+        },
+      },
+      "posListLonLat": true,
+      "freshnessWindowSec": 900,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://data.trafikverket.se/",
+      "attribution": "Trafikverket",
+      "privacyUrl": "https://www.trafikverket.se/integritetspolicy/",
+    },
+    {
+      // The TrafficFlow object (speed/flow sensors) lives on the object API, a
+      // separate endpoint from the DATEX2 situation feed above. It is queried
+      // via a POST XML request body (not a query-key), so the key travels
+      // through the body's ${@se-trafikverket.api_key} expansion instead of auth.
+      "operator": "trafikverket",
+      "product": "flow",
+      "name": "Trafikverket traffic flow (Sweden)",
+      "tier": "authoritative",
+      "format": "trafikverket-flow",
+      "endpoints": {
+        "main": {
+          "url": "https://api.trafikinfo.trafikverket.se/v2/data.json",
+          "method": "POST",
+          "headers": { "Content-Type": "text/xml" },
+          "body": "<REQUEST><LOGIN authenticationkey=\"${@se-trafikverket.api_key}\"/><QUERY objecttype=\"TrafficFlow\" schemaversion=\"1.4\"><INCLUDE>SiteId</INCLUDE><INCLUDE>AverageVehicleSpeed</INCLUDE><INCLUDE>VehicleFlowRate</INCLUDE><INCLUDE>MeasurementTime</INCLUDE><INCLUDE>Geometry.WGS84</INCLUDE></QUERY></REQUEST>",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://api.trafikinfo.trafikverket.se/",
+      "attribution": "Trafikverket",
+      "privacyUrl": "https://www.trafikverket.se/en/privacy-policy/",
+    },
+  ],
+}

@@ -1,5 +1,5 @@
-import { feedSecretValues, redactSecrets } from "@openconditions/ingest-framework";
-import type { FeedSource, FlowSites } from "@openconditions/roads";
+import type { FetchFn } from "@openconditions/ingest-framework";
+import type { FlowSites } from "@openconditions/roads";
 import {
   parseBcnTramsStations,
   parseFintrafficStations,
@@ -8,22 +8,11 @@ import {
   parseMivConfig,
   parseWebtrisSites,
 } from "@openconditions/roads";
+import type { StreamTeeFactory } from "../raw/stream-tee.js";
+import { bodyStreamFrom } from "./body-stream.js";
 
-/** Station registries change rarely; refetch at most every 6 hours. */
-const REGISTRY_TTL_MS = 6 * 60 * 60 * 1000;
-
-interface CacheEntry {
-  map: FlowSites;
-  fetchedAt: number;
-}
-const cache = new Map<string, CacheEntry>();
-
-/** Clears the in-process registry cache (used by tests). */
-export function clearStationRegistryCache(): void {
-  cache.clear();
-}
-
-const PARSERS: Record<string, (input: string) => FlowSites> = {
+/** The parsers of the JSON/GeoJSON/CSV station-registry decoders, by decoder. */
+const REGISTRY_PARSERS: Readonly<Record<string, (input: string) => FlowSites>> = {
   "fintraffic-stations": parseFintrafficStations,
   "webtris-sites": parseWebtrisSites,
   "miv-config": parseMivConfig,
@@ -33,53 +22,39 @@ const PARSERS: Record<string, (input: string) => FlowSites> = {
 };
 
 /**
- * Loads a feed's JSON/GeoJSON/CSV station registry into its sites by station
- * id (geometry, name, lane count), cached in-process so it is not refetched on every ingest run. Fetched
- * through the caller's egress-guarded fetch — never a raw `fetch` — the same
- * way the DATEX `siteTable` loader is guarded, and carrying the feed's
- * `requestHeaders` (e.g. Fintraffic's `Digitraffic-User`) when it declares any.
+ * Reads a JSON/GeoJSON/CSV station registry into its sites by station id
+ * (geometry, name, lane count). Fetched through the caller's egress-guarded
+ * fetch, never a raw `fetch`, with the endpoint's request headers (e.g.
+ * Fintraffic's `Digitraffic-User`). The body passes through the tee on its way
+ * in, so the archive keeps the bytes as fetched; the parser reads them as
+ * `Response.text()` would (UTF-8, a byte-order mark dropped). Throws on a
+ * failed fetch or an unknown decoder.
  *
- * Returns undefined when the feed declares no registry, or when the fetch or
- * parse fails with no usable cache yet — the flow parser then simply skips
- * sites it cannot resolve, never crashing the run. A later fetch failure with
- * a warm cache instead returns the last-good map, so a transient registry
- * outage never strips geometry mid-run.
+ * `label` is the URL with credentials scrubbed: what errors and the tee name.
  */
-export async function loadStationRegistry(
-  src: FeedSource,
-  fetchFn: typeof fetch,
-  now: () => number = Date.now,
-  capture?: (body: Buffer, url: string) => Promise<void>,
-): Promise<FlowSites | undefined> {
-  const reg = src.stationRegistry;
-  if (!reg) return undefined;
-
-  const cached = cache.get(reg.url);
-  if (cached && now() - cached.fetchedAt < REGISTRY_TTL_MS) return cached.map;
-
-  // Scrubs `src`'s own secret values out of any string before it reaches the
-  // warn log below — the registry url itself, AND any error message that
-  // embeds it (e.g. the HTTP-status error just below), so a credential
-  // duplicated into the URL path is never logged unredacted either way.
-  const redact = (s: string) => redactSecrets(s, feedSecretValues(src));
-
+export async function readStationRegistry(
+  url: string,
+  opts: {
+    decoder: string;
+    label: string;
+    init?: RequestInit;
+    fetchFn: FetchFn;
+    teeFor: StreamTeeFactory;
+  },
+): Promise<FlowSites> {
+  const parse = REGISTRY_PARSERS[opts.decoder];
+  if (!parse) throw new Error(`no station-registry parser for ${opts.decoder}`);
+  const { tee, finish } = await opts.teeFor(opts.label);
+  const chunks: Buffer[] = [];
+  let complete = false;
   try {
-    const res = await fetchFn(reg.url, { headers: src.requestHeaders });
-    if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${redact(reg.url)}`);
-    const parse = PARSERS[reg.format];
-    if (!parse) throw new Error(`no station-registry parser for ${reg.format}`);
-    // The archive keeps the bytes as fetched; the parser reads them as
-    // `Response.text()` would (UTF-8, a byte-order mark dropped).
-    const bytes = Buffer.from(await res.arrayBuffer());
-    await capture?.(bytes, redact(reg.url));
-    const map = parse(new TextDecoder().decode(bytes));
-    cache.set(reg.url, { map, fetchedAt: now() });
-    return map;
-  } catch (err) {
-    console.warn(
-      `[ingest] station-registry load failed for ${src.id} (${redact(reg.url)}):`,
-      err instanceof Error ? redact(err.message) : err,
-    );
-    return cached?.map;
+    const body = await bodyStreamFrom(opts.fetchFn, () => opts.label)(url, opts.init);
+    body.on("error", (err) => tee.destroy(err));
+    body.pipe(tee);
+    for await (const chunk of tee) chunks.push(chunk as Buffer);
+    complete = true;
+  } finally {
+    await finish(complete);
   }
+  return parse(new TextDecoder().decode(Buffer.concat(chunks)));
 }

@@ -421,6 +421,13 @@
       "when": 1791033128183,
       "tag": "0059_archive_erasure",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1791042150903,
+      "tag": "0060_feed_catalog",
+      "breakpoints": true
     }
   ]
 }

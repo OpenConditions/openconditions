@@ -6,10 +6,10 @@ import { parseOpen511 } from "../open511.js";
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/drivebc/events.json");
 
 const DRIVEBC_SOURCE = {
-  id: "ca-bc-drivebc",
+  id: "ca-bc-drivebc-events",
   attribution: "DriveBC / BC Ministry of Transportation",
   country: "CA",
-  license: "OGL-BC",
+  license: "LicenseRef-OGL-BC",
   licenseUrl: "https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc",
 } as const;
 
@@ -73,17 +73,17 @@ describe("parseOpen511 — DriveBC fixture", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseOpen511(json, DRIVEBC_SOURCE);
 
-    expect(events.every((ev) => ev.id.startsWith("ca-bc-drivebc:"))).toBe(true);
+    expect(events.every((ev) => ev.id.startsWith("ca-bc-drivebc-events:"))).toBe(true);
   });
 
-  it("carries OGL-BC license from the source descriptor via origin", () => {
+  it("carries LicenseRef-OGL-BC license from the source descriptor via origin", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseOpen511(json, DRIVEBC_SOURCE);
 
     for (const ev of events) {
       expect(ev.origin.kind).toBe("feed");
       if (ev.origin.kind === "feed") {
-        expect(ev.origin.attribution.license).toBe("OGL-BC");
+        expect(ev.origin.attribution.license).toBe("LicenseRef-OGL-BC");
       }
     }
   });
@@ -161,7 +161,7 @@ describe("parseOpen511 — DriveBC fixture", () => {
 
     const events = parseOpen511(payload, DRIVEBC_SOURCE);
     expect(events.length).toBe(1);
-    expect(events[0]!.id).toBe("ca-bc-drivebc:HAS-GEO");
+    expect(events[0]!.id).toBe("ca-bc-drivebc-events:HAS-GEO");
   });
 
   it("never throws on empty events array", () => {

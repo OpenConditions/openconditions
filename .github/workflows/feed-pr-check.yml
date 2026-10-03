@@ -3,7 +3,7 @@ name: Feed PR check
 on:
   pull_request:
     paths:
-      - "packages/*/feeds/**"
+      - "feeds/**"
 
 concurrency:
   group: feed-pr-check-${{ github.workflow }}-${{ github.ref }}
@@ -14,13 +14,13 @@ permissions:
 
 jobs:
   changed-feeds:
-    name: fetch + parse changed keyless feeds (non-gating)
+    name: fetch + parse the feeds of changed region files
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       TURBO_TELEMETRY_DISABLED: 1
       # fetch-depth:0 checks out all branches, so origin/<base_ref> resolves.
-      FEED_CHECK_BASE_REF: origin/${{ github.base_ref }}
+      BASE_REF: origin/${{ github.base_ref }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -36,12 +36,18 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # The script imports the built @openconditions/* workspace packages.
-      - run: pnpm build
+      # The check imports the built catalogue framework and domain packages.
+      - run: pnpm --filter @openconditions/roads... build
 
-      # Non-gating: the script always exits 0 and posts ::warning::/::error::
-      # annotations. continue-on-error is a second guard so an unexpected crash
-      # of the script still cannot fail the PR.
-      - name: Validate changed keyless feeds
-        continue-on-error: true
-        run: node scripts/validate-changed-feeds.ts
+      # Gating: a feed whose payload does not parse fails the check; a network or
+      # HTTP failure is only a warning annotation, and a feed whose credentials
+      # this runner does not hold (every keyed feed) is skipped. Deleted files
+      # have nothing to fetch, so the diff keeps added and modified ones.
+      - name: Check the feeds of changed region files
+        run: |
+          mapfile -t files < <(git diff --name-only --diff-filter=ACMRT "${BASE_REF}...HEAD" -- 'feeds/*/*.jsonc')
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No region file changed."
+            exit 0
+          fi
+          pnpm exec tsx scripts/feeds-check.ts "${files[@]}"

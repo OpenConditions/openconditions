@@ -7,5 +7,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outDir: "dist",
-  external: ["@openconditions/core", "undici", "zod", "json5"],
+  external: ["@openconditions/core", "undici", "zod", "jsonc-parser"],
 });

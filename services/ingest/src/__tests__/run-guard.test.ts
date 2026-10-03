@@ -1,8 +1,8 @@
-import type { LookupFn } from "@openconditions/ingest-framework";
+import type { CatalogFeed, LookupFn } from "@openconditions/ingest-framework";
 import type postgres from "postgres";
 import { describe, expect, it, vi } from "vitest";
-import type { DomainFeedSource } from "../pipeline/run.js";
 import { runSource } from "../pipeline/run.js";
+import { testFeed } from "./helpers/catalog.js";
 
 /**
  * A sql double whose transaction opener throws if the pipeline ever reaches
@@ -18,20 +18,12 @@ const noSwapSql = Object.assign(
   },
 ) as unknown as postgres.Sql;
 
-function blockedFeed(url: string): DomainFeedSource {
-  return {
-    domain: "roads",
+function blockedFeed(url: string): CatalogFeed {
+  return testFeed({
     id: "blocked",
-    name: "blocked",
     format: "autobahn",
-    cadenceSec: 300,
-    freshnessWindowSec: 900,
-    license: "test",
-    attribution: "test",
-    country: "XX",
-    privacyUrl: "https://example.test/privacy",
-    url,
-  } as DomainFeedSource;
+    endpoints: { main: { url, cadenceSec: 300 } },
+  });
 }
 
 describe("runSource egress guard", () => {

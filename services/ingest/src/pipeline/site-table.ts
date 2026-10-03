@@ -1,56 +1,24 @@
-import { Readable } from "node:stream";
+import type { Readable } from "node:stream";
 import { createGunzip } from "node:zlib";
-import {
-  allowedTemplateVars,
-  DEFAULT_MAX_FEED_BYTES,
-  feedSecretValues,
-  redactSecrets,
-  redactUrl,
-  resolvedEnv,
-  resolveUrlTemplate,
-} from "@openconditions/ingest-framework";
-import type { FeedSource, FlowSites, SiteTableParser } from "@openconditions/roads";
+import { maxFeedBytes, type StreamTee } from "@openconditions/ingest-framework";
+import type { FlowSites, SiteTableParser } from "@openconditions/roads";
 import { createPredefinedLocationsParser, createSiteTableParser } from "@openconditions/roads";
-import { digestOnlyTee, type StreamTee, type StreamTeeFactory } from "../raw/stream-tee.js";
+import type { StreamTeeFactory } from "../raw/stream-tee.js";
+import type { BodyStreamFactory } from "./body-stream.js";
 import { withStreamRetry } from "./stream-retry.js";
 
-/** Site tables change rarely (version-stamped); refetch at most every 6 hours. */
-const SITE_TABLE_TTL_MS = 6 * 60 * 60 * 1000;
-
 /** Ceiling on a single site table's decompressed bytes; matches the guard's byte cap. */
-const MAX_DECOMPRESSED_BYTES = Number(
-  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES,
-);
+const MAX_DECOMPRESSED_BYTES = maxFeedBytes();
 
-interface CacheEntry {
-  map: FlowSites;
-  fetchedAt: number;
-}
-
-const cache = new Map<string, CacheEntry>();
-
-/**
- * A stream factory for the raw (possibly gzipped) site-table body. Injectable so
- * tests can feed a fixture without a real network round-trip. The default
- * implementation fetches directly so it can consume `res.body` as a Node stream,
- * never materialising the multi-hundred-MB document in memory.
- */
-export type SiteTableStreamFactory = (url: string) => Promise<Readable>;
-
-const defaultStreamFactory: SiteTableStreamFactory = async (url) => {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`HTTP ${res.status} fetching ${url}`);
-  }
-  if (!res.body) {
-    throw new Error(`empty body fetching ${url}`);
-  }
-  return Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]);
+/** The streaming parsers of the DATEX reference decoders, by decoder. */
+const SITE_TABLE_PARSERS: Readonly<Record<string, () => SiteTableParser>> = {
+  "datex2-sites": createSiteTableParser,
+  "datex2-locations": createPredefinedLocationsParser,
 };
 
-/** Clears the in-process site-table cache (used by tests). */
-export function clearSiteTableCache(): void {
-  cache.clear();
+/** Whether `decoder` reads a DATEX site table (or predefined locations) as a stream. */
+export function isSiteTableDecoder(decoder: string): boolean {
+  return Object.hasOwn(SITE_TABLE_PARSERS, decoder);
 }
 
 /**
@@ -68,8 +36,8 @@ async function streamIntoParser(
   // `.pipe()` does not forward the source's errors to the gunzip stream, so a
   // mid-stream socket drop on the (multi-hundred-MB) download would surface as an
   // unhandled 'error' event and crash the process. Forward it so the loop rejects
-  // and loadSiteTable's try/catch turns it into a logged fall-back to the cached
-  // map; destroy `source` on the way out so a half-read connection never lingers.
+  // and the caller turns it into a logged fall-back to the cached map; destroy
+  // `source` on the way out so a half-read connection never lingers.
   const decoded: Readable = gzip ? source.pipe(createGunzip()) : source;
   if (decoded !== source) source.on("error", (err) => decoded.destroy(err));
   decoded.on("error", (err) => tee.destroy(err));
@@ -97,70 +65,40 @@ async function streamIntoParser(
 }
 
 /**
- * Loads and parses a feed's DATEX II site table into its sites by id
- * (geometry, name, lane count, equipment and per-index channels), caching the
- * result in-process so a large (multi-hundred-MB) table is not refetched on
- * every (e.g. 60 s) ingest run.
+ * Reads a DATEX II site table (or predefined-location table) into its sites by
+ * id: geometry, name, lane count, equipment and per-index channels. The fetch →
+ * gunzip → parse path is fully streaming: the 362 MB NDW site table is never
+ * held in memory as a whole, only the resolved sites survive the call. A
+ * transient mid-stream drop is retried with a fresh connection and parser;
+ * anything else throws.
  *
- * The fetch → gunzip → parse path is fully streaming: the 362 MB NDW site table
- * is never held in memory as a whole — only the resolved sites (tens of MB)
- * survive the call. Returns undefined when the feed declares no site table or
- * when the fetch/parse fails with no usable cache — in which case the
- * measured-data parser simply lacks external geometry and skips sites it cannot
- * resolve, never crashing the run.
+ * `label` is the URL with credentials scrubbed: what the tee (and the raw
+ * payload it archives) and the retry log name.
  */
-export async function loadSiteTable(
-  src: FeedSource,
-  streamFactory: SiteTableStreamFactory = defaultStreamFactory,
-  now: () => number = Date.now,
-  teeFor: StreamTeeFactory = digestOnlyTee,
-): Promise<FlowSites | undefined> {
-  const table = src.siteTable;
-  if (!table) return undefined;
-
-  // resolveUrlTemplate throws for a declared-but-unset ${VAR}; treat an unset
-  // Verortung id as "dormant, no site table" rather than an error.
-  let expanded: string;
-  try {
-    expanded = resolveUrlTemplate(table.url, resolvedEnv(), allowedTemplateVars(src));
-  } catch {
-    return undefined;
-  }
-
-  const cached = cache.get(expanded);
-  if (cached && now() - cached.fetchedAt < SITE_TABLE_TTL_MS) {
-    return cached.map;
-  }
-
-  const makeParser =
-    table.format === "datex-predefined-locations"
-      ? createPredefinedLocationsParser
-      : createSiteTableParser;
-
-  try {
-    // Retry a transient mid-stream drop with a fresh connection + parser before
-    // falling back — the cold 362 MB fetch is the one most likely to drop.
-    const redacted = redactSecrets(redactUrl(expanded), feedSecretValues(src));
+export async function readSiteTable(
+  url: string,
+  opts: {
+    decoder: string;
+    label: string;
+    gzip: boolean;
+    init?: RequestInit;
+    stream: BodyStreamFactory;
+    teeFor: StreamTeeFactory;
+  },
+): Promise<FlowSites> {
+  const makeParser = SITE_TABLE_PARSERS[opts.decoder];
+  if (!makeParser) throw new Error(`no site-table parser for ${opts.decoder}`);
+  return withStreamRetry(async () => {
     // The tee opens before the download starts: a stream that errors while the
     // tee is still being opened would have no listener yet.
-    const map = await withStreamRetry(async () => {
-      const tee = await teeFor(redacted);
-      let source: Readable;
-      try {
-        source = await streamFactory(expanded);
-      } catch (err) {
-        await tee.finish(false);
-        throw err;
-      }
-      return streamIntoParser(source, table.gzip ?? false, makeParser, tee);
-    }, `${src.id} site-table`);
-    cache.set(expanded, { map, fetchedAt: now() });
-    return map;
-  } catch (err) {
-    console.warn(
-      `[ingest] site-table load failed for ${src.id} (${expanded}):`,
-      err instanceof Error ? err.message : err,
-    );
-    return cached?.map;
-  }
+    const tee = await opts.teeFor(opts.label);
+    let source: Readable;
+    try {
+      source = await opts.stream(url, opts.init);
+    } catch (err) {
+      await tee.finish(false);
+      throw err;
+    }
+    return streamIntoParser(source, opts.gzip, makeParser, tee);
+  }, `${opts.label} site-table`);
 }

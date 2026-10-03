@@ -3,7 +3,6 @@ import path from "node:path";
 import { gzipSync } from "node:zlib";
 import type { LookupFn } from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
-import { FEED_SOURCES } from "@openconditions/roads";
 import {
   ensureObservationPartitions,
   retentionClasses,
@@ -11,8 +10,9 @@ import {
 } from "@openconditions/storage";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { type DomainFeedSource, runSource } from "../pipeline/run.js";
-import { clearSiteTableCache } from "../pipeline/site-table.js";
+import { clearReferenceCaches } from "../pipeline/reference.js";
+import { runSource } from "../pipeline/run.js";
+import { repoFeed } from "./helpers/catalog.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 /**
@@ -66,10 +66,7 @@ const EXPECTED = {
   counts: [2, 1, 1, 1, 3, 1, 1],
 };
 
-const feed: DomainFeedSource = {
-  ...FEED_SOURCES.find((f) => f.id === "nl-ndw-flow")!,
-  domain: "roads",
-};
+const feed = repoFeed("nl-ndw-flow");
 const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 
 /** An NDW measured-data document holding one reading of the line site. */
@@ -102,7 +99,7 @@ beforeAll(async () => {
     classes: retentionClasses(registry),
     now: new Date(NOW),
   });
-  clearSiteTableCache();
+  clearReferenceCaches();
   for (const [time, speed] of SAMPLES) {
     const at = `2026-10-01T${time}Z`;
     const fetchFn = (async (url: string | URL | Request) => {

@@ -60,7 +60,8 @@ export async function writeSensorObservations(
         COALESCE(l.effective_until, l.effective_from) AS at
       FROM conditions.sensor_segment ss
       JOIN conditions.observation_latest l ON l.subject_key = ss.subject_key
-      JOIN conditions.source s ON s.id = l.source_id AND s.produces = 'flow'
+      JOIN conditions.source s
+        ON s.id = l.source_id AND s.domain = 'roads' AND s.product = 'flow'
       WHERE l.property IN ('traffic.speed', 'traffic.los')
         AND COALESCE(l.effective_until, l.effective_from)
             >= ${now()}::timestamptz - make_interval(mins => ${READING_LIFETIME_MIN})

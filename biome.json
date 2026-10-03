@@ -22,9 +22,12 @@
       "!packages/roads/src/__tests__/golden",
       "!services/openlr-resolver",
       "!services/ingest/service.json",
+      "!feeds/schema",
+      "!atlas",
       "!packages/roads/src/tmc/snapshots",
       "!packages/roads/src/bind/__tests__/corpus/*/spine.json",
-      "!packages/roads/src/bind/__tests__/fixtures/*/spine.json"
+      "!packages/roads/src/bind/__tests__/fixtures/*/spine.json",
+      "!packages/ingest-framework/src/__tests__/fixtures/catalog"
     ]
   },
   "formatter": {
@@ -49,6 +52,14 @@
     }
   },
   "overrides": [
+    {
+      "includes": ["feeds/**/*.jsonc"],
+      "json": {
+        "formatter": {
+          "trailingCommas": "all"
+        }
+      }
+    },
     {
       "includes": ["**/__tests__/**", "**/*.test.ts", "**/*.integration.ts"],
       "linter": {

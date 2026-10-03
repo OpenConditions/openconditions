@@ -26,7 +26,7 @@ const LINE_GEOM = {
 /** A situation draft placed at a point. */
 function placedDraft(local: string): RecordDraft {
   return {
-    id: `oc:situation:nl-ndw:${local}`,
+    id: `oc:situation:nl-ndw-events:${local}`,
     location: {
       geometry: { type: "Point", coordinates: [4.75, 52.37] },
       extent: "point",
@@ -39,7 +39,7 @@ function placedDraft(local: string): RecordDraft {
 /** A situation draft only an OpenLR reference places. */
 function openLrDraft(local: string): RecordDraft {
   return {
-    id: `oc:situation:nl-ndw:${local}`,
+    id: `oc:situation:nl-ndw-events:${local}`,
     location: {
       geometry: null,
       extent: "linear",
@@ -91,7 +91,7 @@ describe("resolveOpenLr", () => {
     );
     expect(resolved).toEqual([]);
     expect(dropped).toBe(1);
-    expect(unlocatable).toEqual(["oc:situation:nl-ndw:c"]);
+    expect(unlocatable).toEqual(["oc:situation:nl-ndw-events:c"]);
   });
 
   it("caches a successful resolution — client called only once for a repeated reference", async () => {

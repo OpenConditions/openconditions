@@ -1575,7 +1575,7 @@
     "contentHash": "bb29e80d9e245fc4f0293a3a941dd28339106da9cdfddd4aa73d44e242ef302e"
   },
   {
-    "id": "oc:feature:de-autobahn:DE-SL-000009",
+    "id": "oc:feature:de-autobahn-events:DE-SL-000009",
     "temporality": "static",
     "location": {
       "geometry": {
@@ -1591,7 +1591,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-autobahn",
+      "sourceId": "de-autobahn-events",
       "sourceFormat": "autobahn-parking",
       "accessMode": "bulk",
       "recordId": "DE-SL-000009",
@@ -1647,14 +1647,14 @@
         "truck"
       ]
     },
-    "canonicalId": "9fb86b7f8325c3a5a4f0114e1160d35decd9efd3366cbb9e287807143a59d443",
+    "canonicalId": "6d4e27bc93574071af6527af6ddcec389e12b03be04450cb108154d7741a5311",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "f3ac37eac85fa9432ad6d2741473d57460703a471f851fc3b79ef7e4d951c358"
+    "contentHash": "2bef2a725661ad0fd4e025c9b0127baa08b5304a5735ed6810087f87fd845bf1"
   },
   {
-    "id": "oc:feature:de-autobahn:DE-SL-000008",
+    "id": "oc:feature:de-autobahn-events:DE-SL-000008",
     "temporality": "static",
     "location": {
       "geometry": {
@@ -1670,7 +1670,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-autobahn",
+      "sourceId": "de-autobahn-events",
       "sourceFormat": "autobahn-parking",
       "accessMode": "bulk",
       "recordId": "DE-SL-000008",
@@ -1726,11 +1726,11 @@
         "truck"
       ]
     },
-    "canonicalId": "0132f086e742192ccd8a97a7e93c827e60f1b426ead99b1ce5e8e42c9fcc0664",
+    "canonicalId": "b0dcd1da7071eb70d24cc0305ceb12f08b1ea118ec4742cb4f8687df4a477c87",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "288a55b804c373da365e5d95c9a0f3fd15079ffb33fd6f348e41c42e6d674371"
+    "contentHash": "94f4589c36d7261844707007b87770518dac7bc6d7b0cf0729c885df27db0966"
   },
   {
     "id": "oc:feature:es-minetur:3119",

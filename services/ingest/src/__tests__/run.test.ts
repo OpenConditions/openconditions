@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
-import { FEED_SOURCES } from "@openconditions/roads";
+import type { CatalogFeed } from "@openconditions/ingest-framework";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { stampAttribution } from "../pipeline/publish.js";
-import type { DomainFeedSource } from "../pipeline/run.js";
 import { createOpenlrClient, inspectSnapshotCompleteness } from "../pipeline/run.js";
+import { repoFeed, testFeed } from "./helpers/catalog.js";
+
+type SnapshotSource = Pick<CatalogFeed, "snapshot">;
 
 describe("createOpenlrClient", () => {
   let savedUrl: string | undefined;
@@ -48,35 +50,35 @@ describe("stampAttribution", () => {
         attribution: { provider: "a payload claim", license: "a payload claim" },
       },
     };
-    const stamped = stampAttribution(draft, {
-      id: "wzdx-kansas",
-      attribution: "Kansas DOT",
-      license: "CC0-1.0",
-      parentSourceId: "us-wzdx",
-      rights: {
-        sourceRedistribution: true,
-        derivedRedistribution: true,
-        commercialUse: true,
-        attributionRequired: false,
-        retention: true,
-        evidenceOrigin: "feed_info.license",
-        evidenceVersion: "CC0-1.0",
-        reviewedAt: "2026-09-11T00:00:00.000Z",
-      },
-    } as DomainFeedSource);
+    const stamped = stampAttribution(
+      draft,
+      testFeed({
+        id: "wzdx-kansas",
+        attribution: "Kansas DOT",
+        license: "CC0-1.0",
+        parentSourceId: "us-wzdx-events",
+        terms: {
+          url: "https://example.test/kansas-terms",
+          reviewedAt: "2026-09-11",
+        },
+      }),
+    );
 
     expect((stamped["provenance"] as { attribution: unknown }).attribution).toMatchObject({
       provider: "Kansas DOT",
       license: "CC0-1.0",
-      parentSourceId: "us-wzdx",
+      parentSourceId: "us-wzdx-events",
       childSourceId: "wzdx-kansas",
-      policyIds: ["us-wzdx", "wzdx-kansas"],
+      policyIds: ["us-wzdx-events", "wzdx-kansas"],
       rights: {
         source_redistribution: "yes",
         derived_redistribution: "yes",
         commercial_use: "yes",
         attribution_required: "no",
         retention: "yes",
+        evidence_origin: "https://example.test/kansas-terms",
+        evidence_version: "CC0-1.0",
+        reviewed_at: "2026-09-11T00:00:00.000Z",
       },
     });
   });
@@ -86,7 +88,7 @@ describe("inspectSnapshotCompleteness", () => {
   const source = {
     id: "complete-open511",
     snapshot: { completeness: "complete", recordsPath: "events" },
-  } as DomainFeedSource;
+  } as SnapshotSource;
 
   it("recognizes a structurally valid complete empty snapshot", () => {
     expect(inspectSnapshotCompleteness(source, [Buffer.from('{"events":[]}')])).toEqual({
@@ -121,7 +123,7 @@ describe("inspectSnapshotCompleteness", () => {
         publicationType: "SituationPublication",
         recordElement: "situationRecord",
       },
-    } as unknown as DomainFeedSource;
+    } as SnapshotSource;
     const xml = Buffer.from(
       '<?xml version="1.0"?><d2LogicalModel xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><payloadPublication xsi:type="SituationPublication"><publicationTime>2026-09-11T00:00:00Z</publicationTime></payloadPublication></d2LogicalModel>',
     );
@@ -143,7 +145,7 @@ describe("inspectSnapshotCompleteness", () => {
         publicationType: "SituationPublication",
         recordElement: "situationRecord",
       },
-    } as unknown as DomainFeedSource;
+    } as SnapshotSource;
 
     expect(() => inspectSnapshotCompleteness(datex, [Buffer.from("<d2LogicalModel>")])).toThrow(
       /Invalid XML/,
@@ -160,7 +162,7 @@ describe("inspectSnapshotCompleteness", () => {
         publicationType: "SituationPublication",
         recordElement: "situationRecord",
       },
-    } as unknown as DomainFeedSource;
+    } as SnapshotSource;
 
     expect(() =>
       inspectSnapshotCompleteness(datex, [Buffer.from("<html><body>maintenance</body></html>")]),
@@ -175,7 +177,7 @@ describe("inspectSnapshotCompleteness — the real NDW descriptor", () => {
       import.meta.url,
     ),
   );
-  const ndw = FEED_SOURCES.find((f) => f.id === "nl-ndw") as unknown as DomainFeedSource;
+  const ndw = repoFeed("nl-ndw-events");
 
   it("accounts for every situation record in the reviewed capture", () => {
     expect(inspectSnapshotCompleteness(ndw, [xml])).toEqual({

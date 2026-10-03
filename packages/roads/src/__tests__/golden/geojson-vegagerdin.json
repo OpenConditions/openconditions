@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:is-vegagerdin:0",
+    "id": "oc:situation:is-vegagerdin-conditions:0",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -19,7 +19,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "is-vegagerdin",
+      "sourceId": "is-vegagerdin-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "0",
@@ -64,14 +64,14 @@
         "unknown"
       ]
     },
-    "canonicalId": "919b56334d8b0ec4aff89dc8cccede9cc2a5cff47a2c698d9d327628944bbeaa",
+    "canonicalId": "d58ac8a10b5dbfb5ff9a6c2b1b570df827832dba118084e50473e27e39a3bc6f",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "48f7ef785fb3302a16bcbdc1223b4ea0184a04ce95183e7ce10ff4e64020e0fe"
+    "contentHash": "9be1303ce2465f562d636636ae6c32372c772db3a6c3cca4d21657c7d32a1113"
   },
   {
-    "id": "oc:situation:is-vegagerdin:1",
+    "id": "oc:situation:is-vegagerdin-conditions:1",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -90,7 +90,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "is-vegagerdin",
+      "sourceId": "is-vegagerdin-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "1",
@@ -135,14 +135,14 @@
         "unknown"
       ]
     },
-    "canonicalId": "a4c779c99fb71723f63f0830bfb4aca1e32d133baf4fd658f48679a177501c42",
+    "canonicalId": "9f885738a474f2c920b0961bbf74f2c661d1adfe3486ddf8dbddad345aa98102",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "c22b82653c039c129579b5f6bcac1723afbc116c9d18a1fbae1fe498cf4c5b87"
+    "contentHash": "00cd8867c9910cbe1b2e4cdb9583473f18a531a718891f3ed5e38123ed2b8e18"
   },
   {
-    "id": "oc:situation:is-vegagerdin:2",
+    "id": "oc:situation:is-vegagerdin-conditions:2",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -161,7 +161,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "is-vegagerdin",
+      "sourceId": "is-vegagerdin-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "2",
@@ -206,14 +206,14 @@
         "unknown"
       ]
     },
-    "canonicalId": "43b1f87100bbb0b2a6717d33449ab9e14032085842965f59de4d6eb079c27052",
+    "canonicalId": "f4bf9fb87489f2f8bc1966c9c2a80f3ac71988b276082fd7c2c88e08e745e887",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "8df69b2c8ea6defbddabfea722cca5bb8cf8a937fd759a536ce6a397c2bf0beb"
+    "contentHash": "5e2e205816790316d8c0b96b38080f93ca1d2b9cb1dc11638d0e69f2bb0cbd82"
   },
   {
-    "id": "oc:situation:is-vegagerdin:3",
+    "id": "oc:situation:is-vegagerdin-conditions:3",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -232,7 +232,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "is-vegagerdin",
+      "sourceId": "is-vegagerdin-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "3",
@@ -273,14 +273,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "1828f217fddb9865f82f4b6077340ea27e6c6e061d0c38e7baa239f8c7f19fb0",
+    "canonicalId": "8c9039189ea3853f9ed04c2ce7d8e04ec22f2e85f92baa4a1564b0e0a55cc84e",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "b55c2eee7592eca9d85777934fed2eab386a2275d72c269b9c8af4213e2cdbc8"
+    "contentHash": "4a4678c545948221a88b3a12fc7ff1dc3608e0e58e447a46ce7ab0f371fc646b"
   },
   {
-    "id": "oc:situation:is-vegagerdin:4",
+    "id": "oc:situation:is-vegagerdin-conditions:4",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -299,7 +299,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "is-vegagerdin",
+      "sourceId": "is-vegagerdin-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "4",
@@ -344,10 +344,10 @@
         "unknown"
       ]
     },
-    "canonicalId": "f77ff43f794073070546be9bf90139a13c50a820ecb4559870af6ee1803d6af0",
+    "canonicalId": "6db215ff77ed91eee6f59abaad726f58be28f1c2f90aa7fcbf0cd89fd415cdb3",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "fced8a0075e625b5e2b9c4fcc04de4eb61a8fa08487bbe1ab36bf26185a5f852"
+    "contentHash": "0b2c277ff500a6eb9a5f64e035aced8e4ea88f46551b474af5d5e417c3760efe"
   }
 ]

@@ -1,26 +1,36 @@
-import { Readable } from "node:stream";
 import type { RawTier } from "@openconditions/core/server";
-import type { LookupFn, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
+import type {
+  CatalogFeed,
+  Env,
+  FeedPayloads,
+  LookupFn,
+  ParseOutput,
+  RecordDraft,
+} from "@openconditions/ingest-framework";
 import {
-  digestPayload,
-  fetchAll,
+  dueRoles,
+  feedSecretValues,
+  fetchEndpoint,
   guardedFetch,
   guardOptionsFromEnv,
   makeAuthorizedFetch,
+  redactSecrets,
+  redactUrl,
 } from "@openconditions/ingest-framework";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
-import type { FeedSource, FlowContext, FlowOutput, FlowSites } from "@openconditions/roads";
+import type { FlowOutput } from "@openconditions/roads";
 import { drainSkippedNoGeometry, enrichReadings, parseXmlDocument } from "@openconditions/roads";
 import type { WriteSummary } from "@openconditions/storage";
 import type postgres from "postgres";
+import { domainOf, formatOf } from "../domains.js";
 import type { RawArchive } from "../raw/archive.js";
-import { archivingTee, digestOnlyTee } from "../raw/stream-tee.js";
+import { archivingTee, digestOnlyTee, type StreamTeeFactory } from "../raw/stream-tee.js";
 import { rawTierFor } from "../raw/tiers.js";
 import { loadBaselineMap } from "./baseline-store.js";
 import { bindRecords } from "./bind-records.js";
-import { isStreamingFlowFeed, streamMeasuredData } from "./measured-data.js";
-import { parseEventFeed, parseFlowFeed } from "./parse.js";
+import { bodyStreamFrom } from "./body-stream.js";
+import { streamFeed } from "./measured-data.js";
 import {
   changedSituations,
   logRejections,
@@ -31,17 +41,16 @@ import {
   type WriteModel,
   writeModel,
 } from "./publish.js";
+import { loadReference } from "./reference.js";
 import { resolveOpenLr } from "./resolve.js";
 import { tallyRestrictions } from "./restriction-tally.js";
-import type { SiteTableStreamFactory } from "./site-table.js";
-import { loadSiteTable } from "./site-table.js";
 import {
   getLastRowCount,
   openPollAttempt,
+  type SourcePollOutcome,
   type SourceStatusUpdate,
   upsertSourceStatus,
 } from "./source-status.js";
-import { loadStationRegistry } from "./station-registry.js";
 
 type Sql = postgres.Sql;
 
@@ -94,7 +103,12 @@ export interface RunResult {
    * this field, not just whether the call threw.
    */
   error?: string;
-  outcome?: import("./source-status.js").SourcePollOutcome;
+  /**
+   * Set when no endpoint was due, so nothing was fetched and no attempt opened:
+   * not a poll, and not to be recorded as one.
+   */
+  notDue?: true;
+  outcome?: SourcePollOutcome;
   activeEvents?: number;
   inserted?: number;
   updated?: number;
@@ -141,14 +155,46 @@ export interface RunDeps {
   lookup?: LookupFn;
   /** The registry records are sealed against and the instance id they are written as. */
   model?: Partial<WriteModel>;
+  /** Where credentials are read; defaults to `process.env`. */
+  env?: Env;
+  /**
+   * What the feed's earlier polls fetched, which the scheduler keeps per feed:
+   * with it, a poll fetches only the data roles whose cadence is due and
+   * parses the others' latest payloads; without it, every data role is due.
+   */
+  roles?: RoleState;
+}
+
+/** A feed's data roles across polls: when each was last fetched, and its latest payloads. */
+export interface RoleState {
+  /** Epoch ms of each role's last fetch. */
+  lastFetchedAt: Record<string, number>;
+  /**
+   * Each role's latest payloads, kept only for a feed with more than one data
+   * role, whose roles fall due apart: a single-role poll holds them all.
+   */
+  payloads: Record<string, readonly Buffer[]>;
+}
+
+export function createRoleState(): RoleState {
+  return { lastFetchedAt: {}, payloads: {} };
+}
+
+/** The data endpoints of a feed: those its format parses itself, not reference data. */
+function dataRoles(src: CatalogFeed): string[] {
+  return Object.entries(src.endpoints)
+    .filter(([, endpoint]) => endpoint.decoder === undefined)
+    .map(([role]) => role);
 }
 
 /**
- * A FeedSource annotated with its domain name so the pipeline can dispatch
- * to the correct domain plugin without coupling FeedSource to ingest internals.
+ * The data roles due this poll. A cron tick fires a little after its slot, so
+ * a role counts as due half a tick early: the roles on the feed's own cadence
+ * are due every tick, and a slower role on the tick its cadence ends.
  */
-export interface DomainFeedSource extends FeedSource {
-  domain: string;
+function rolesDue(src: CatalogFeed, roles: RoleState | undefined, now: number): string[] {
+  if (!roles) return dataRoles(src);
+  return dueRoles(src, roles.lastFetchedAt, now + src.cadenceSec * 500);
 }
 
 function valueAtPath(value: unknown, path: string): unknown {
@@ -193,8 +239,8 @@ function xmlPublicationType(value: unknown): string | undefined {
 }
 
 export function inspectSnapshotCompleteness(
-  src: DomainFeedSource,
-  buffers: Buffer[],
+  src: Pick<CatalogFeed, "snapshot">,
+  buffers: readonly Buffer[],
 ): { complete: boolean; inputRecords?: number; completeEmpty: boolean } {
   const contract = src.snapshot;
   if (!contract) return { complete: false, completeEmpty: false };
@@ -263,24 +309,6 @@ export function inspectSnapshotCompleteness(
 }
 
 /**
- * Builds a streaming site-table source from the run's `fetch` so a custom fetch
- * (tests, instrumented clients) still drives the loader, while the body is
- * consumed as a stream — the large site table is never buffered whole.
- */
-function streamFactoryFromFetch(fetchFn: typeof fetch): SiteTableStreamFactory {
-  return async (url: string): Promise<Readable> => {
-    const res = await fetchFn(url);
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} fetching ${url}`);
-    }
-    if (!res.body) {
-      throw new Error(`empty body fetching ${url}`);
-    }
-    return Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0]);
-  };
-}
-
-/**
  * Creates a map-match client from OPENLR_RESOLVER_URL if the env var is set.
  * Returns null when the variable is absent or empty.
  */
@@ -292,13 +320,21 @@ export function createOpenlrClient(): MapMatchClient | null {
 
 /**
  * Runs the full ingest pipeline for one feed source:
- *   1. Fetch all URLs for the source (gunzip transparently).
- *   2. Parse the payloads into situation drafts (and, for a flow feed,
- *      measurement sites and their readings).
- *   3. Resolve any OpenLR-only situations via the map-match service.
- *   4. Write the situations as one complete snapshot (a flow feed's sites and
- *      readings in the same transaction).
- *   5. Bind the situations that changed to the segment spine.
+ *   1. Load its reference data (site table, station registry) on the
+ *      reference endpoints' own cadence.
+ *   2. Fetch every data endpoint that is due (gunzip transparently), or
+ *      stream the main endpoint when the format reads it as a stream.
+ *   3. Parse the latest payloads of every data endpoint through the feed's
+ *      format into record drafts.
+ *   4. Resolve any OpenLR-only situations via the map-match service.
+ *   5. Write the drafts as one complete snapshot: a situations format's
+ *      situations, or a measurements format's sites, readings and derived
+ *      situations in one transaction.
+ *   6. Bind the situations that changed to the segment spine.
+ *
+ * A poll on which no data endpoint is due (the scheduler's role state says
+ * each was fetched within its cadence) does nothing, opens no attempt and
+ * returns `notDue`.
  *
  * Feed-downtime safety: if fetching throws, nothing is written and the
  * source's published records are left intact (last-good behavior). The error
@@ -319,15 +355,17 @@ export function createOpenlrClient(): MapMatchClient | null {
  * fetch id the poll's raw payloads are filed under). A poll that throws
  * closes it as an error on the way out, so no attempt stays `running`.
  */
-export async function runSource(src: DomainFeedSource, deps: RunDeps): Promise<RunResult> {
+export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunResult> {
   const attemptAt = deps.now();
+  const due = rolesDue(src, deps.roles, Date.parse(attemptAt));
+  if (due.length === 0) return { count: 0, durationMs: 0, notDue: true };
   const attempt: PollAttempt = {
     id: await openPollAttempt(deps.sql, src.id, attemptAt),
     at: attemptAt,
     closed: false,
   };
   try {
-    return await runAttempt(src, deps, attempt);
+    return await runAttempt(src, deps, attempt, due);
   } catch (err) {
     if (!attempt.closed) {
       await upsertSourceStatus(deps.sql, src.id, {
@@ -352,9 +390,10 @@ interface PollAttempt {
 }
 
 async function runAttempt(
-  src: DomainFeedSource,
+  src: CatalogFeed,
   deps: RunDeps,
   attempt: PollAttempt,
+  due: readonly string[],
 ): Promise<RunResult> {
   const start = Date.now();
   const attemptAt = attempt.at;
@@ -387,8 +426,12 @@ async function runAttempt(
   // only undici's fetch honors — so `deps.fetch` MUST be undici's fetch in
   // production (the scheduler passes it). Tests inject a fake fetch that serves
   // fixtures and ignores the dispatcher, keeping the run path hermetic.
+  const env = deps.env ?? process.env;
   const guarded = guardedFetch(deps.fetch, guardOptionsFromEnv(), {}, deps.lookup);
-  const fetchFn = makeAuthorizedFetch(src, guarded);
+  const fetchFn = makeAuthorizedFetch(src, guarded, env);
+  const format = formatOf(src);
+  const teeFor = (c: ReturnType<typeof capture>): StreamTeeFactory =>
+    c ? archivingTee(c.archive, c.meta) : digestOnlyTee;
 
   // Discard whatever a PREVIOUS run left behind. Most failure paths below return
   // before the drain at the end, so without this reset a run that parsed and then
@@ -397,84 +440,49 @@ async function runAttempt(
   // doubling of the loss rather than the same loss counted twice.
   drainSkippedNoGeometry(src.id);
 
-  // Load the companion site table (cached, tolerant of failure) so flow feeds
-  // that key measurements by site id can resolve geometry. Loaded before the feed
-  // fetch so the streaming flow path has the join map ready.
-  let sites: FlowSites | undefined;
-  if (src.siteTable) {
-    sites = await loadSiteTable(
-      src,
-      streamFactoryFromFetch(fetchFn),
-      Date.now,
-      referenceCapture
-        ? archivingTee(referenceCapture.archive, referenceCapture.meta)
-        : digestOnlyTee,
-    );
-    // A COLD site-table failure (no table ever loaded, not even stale) means
-    // every measurement would lose its geometry and be skipped. Treat this like
-    // a fetch failure: skip the write and preserve the last good publication.
-    if (sites === undefined) {
-      const error = "site-table cold failure — no geometry map built";
-      console.warn(`[ingest] ${src.id}: ${error} — skipping the write, preserving last-good`);
-      await recordStatus({
-        freshnessWindowSec: src.freshnessWindowSec,
-        outcome: "error",
-        error,
-      });
-      return { count: 0, durationMs: Date.now() - start, error };
+  // Load the reference data (a site table, a station registry) before the feed
+  // fetch, so the streaming path has its join map ready. Each loads on its
+  // endpoint's own cadence, through the same guarded fetch as the feed.
+  const reference: Record<string, unknown> = {};
+  for (const [role, endpoint] of Object.entries(src.endpoints)) {
+    if (endpoint.decoder === undefined) continue;
+    const data = await loadReference(src, role, fetchFn, Date.now, teeFor(referenceCapture), env);
+    if (data !== undefined) {
+      reference[role] = data;
+      continue;
     }
+    // A COLD failure of reference data the feed declares (none ever loaded,
+    // not even stale) means its readings would lose their geometry, whether or
+    // not the format requires the table. Treat it like a fetch failure: skip
+    // the write and preserve the last good publication.
+    const error = `${role} (${endpoint.decoder}) cold failure — no geometry map built`;
+    console.warn(`[ingest] ${src.id}: ${error} — skipping the write, preserving last-good`);
+    await recordStatus({ freshnessWindowSec: src.freshnessWindowSec, outcome: "error", error });
+    return { count: 0, durationMs: Date.now() - start, error };
   }
 
-  // Same join, JSON/GeoJSON shape: a station registry supplies geometry for
-  // flow feeds keyed only by station id (Fintraffic, WebTRIS) rather than a
-  // DATEX site table. Mutually exclusive with `siteTable` in practice. Uses
-  // the same guarded `fetchFn` the feed fetch uses, so the registry request is
-  // egress-guarded too.
-  if (src.stationRegistry) {
-    sites = await loadStationRegistry(
-      src,
-      fetchFn,
-      Date.now,
-      referenceCapture
-        ? (body, url) =>
-            referenceCapture.archive.capture(
-              { ...referenceCapture.meta, url },
-              body,
-              digestPayload(url, body),
-            )
-        : undefined,
-    );
-    if (sites === undefined) {
-      const error = "station-registry cold failure — no geometry map built";
-      console.warn(`[ingest] ${src.id}: ${error} — skipping the write, preserving last-good`);
-      await recordStatus({
-        freshnessWindowSec: src.freshnessWindowSec,
-        outcome: "error",
-        error,
-      });
-      return { count: 0, durationMs: Date.now() - start, error };
-    }
-  }
-
-  // A flow reading the source does not date is dated by the poll, floored to the cadence.
-  const flowContext: FlowContext = { now: attemptAt, cadenceSec: src.cadenceSec };
+  const ctx = { fetchedAt: attemptAt, cadenceSec: src.cadenceSec, reference };
   let acceptFetch: (() => void) | undefined;
-  let flowParse: FlowOutput | undefined;
-  let eventParse: ParseOutput | undefined;
+  let parse: ParseOutput;
   let snapshotInspection: ReturnType<typeof inspectSnapshotCompleteness> | undefined;
-  if (isStreamingFlowFeed(src)) {
-    // Large DATEX flow feed: stream fetch → gunzip → SAX so the ~50 MB document
-    // is never buffered or DOM-parsed (the memory-cap OOM this path replaces).
+  if (format.stream) {
+    // A payload too large to buffer (NDW's ~50 MB DATEX flow document): stream
+    // fetch → gunzip → SAX, so it is never buffered or DOM-parsed whole. An
+    // HTTP error names the URL with the feed's secrets scrubbed, path included.
+    const secrets = feedSecretValues(src, env);
+    const redact = (s: string) => redactSecrets(redactUrl(s), secrets);
     try {
-      const { payload, ...streamed } = await streamMeasuredData(
+      const streamed = await streamFeed(
         src,
-        streamFactoryFromFetch(fetchFn),
-        sites,
-        flowContext,
-        feedCapture ? archivingTee(feedCapture.archive, feedCapture.meta) : digestOnlyTee,
+        format.stream,
+        bodyStreamFrom(fetchFn, redact),
+        ctx,
+        teeFor(feedCapture),
+        env,
       );
-      flowParse = streamed;
-      payloadHashes = [payload.sha256];
+      parse = streamed.output;
+      payloadHashes = [streamed.payload.sha256];
+      if (deps.roles) deps.roles.lastFetchedAt["main"] = Date.parse(attemptAt);
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] stream failed for source ${src.id}:`, err);
@@ -486,22 +494,63 @@ async function runAttempt(
       return { count: 0, durationMs: Date.now() - start, error };
     }
   } else {
-    let buffers: Buffer[];
+    // Every due data role is fetched; a role not due this poll (or answering
+    // 304) contributes the payloads of its latest fetch.
+    const fresh: Record<string, readonly Buffer[]> = {};
+    const accepts: (() => void)[] = [];
+    const keepPayloads = deps.roles !== undefined && dataRoles(src).length > 1;
+    let payloads: FeedPayloads;
     try {
-      const result = await fetchAll(src, fetchFn);
-      if (result.status === "fetched" || result.status === "partial") {
-        payloadHashes = result.payloads.map((payload) => payload.sha256);
-        if (feedCapture) {
-          for (const [i, payload] of result.payloads.entries()) {
-            await feedCapture.archive.capture(
-              { ...feedCapture.meta, url: payload.url },
-              result.buffers[i]!,
-              payload,
-            );
+      for (const role of due) {
+        const result = await fetchEndpoint(src, role, fetchFn, {
+          resolvers: domainOf(src).resolvers,
+          env,
+        });
+        if (result.status === "fetched" || result.status === "partial") {
+          payloadHashes = [...(payloadHashes ?? []), ...result.payloads.map((p) => p.sha256)];
+          if (feedCapture) {
+            for (const [i, payload] of result.payloads.entries()) {
+              await feedCapture.archive.capture(
+                { ...feedCapture.meta, url: payload.url },
+                result.buffers[i]!,
+                payload,
+              );
+            }
           }
         }
+        if (result.status === "no-endpoint") {
+          await recordStatus({
+            freshnessWindowSec: src.freshnessWindowSec,
+            outcome: "missing_configuration",
+            attemptAt,
+            networkValidated: false,
+            durationMs: Date.now() - start,
+          });
+          return { count: 0, durationMs: Date.now() - start, outcome: "missing_configuration" };
+        }
+        if (result.status === "partial") {
+          const { failed, total } = result.partitions;
+          const error = `partial snapshot: ${failed}/${total} partitions failed — preserving last-good publication`;
+          console.warn(`[ingest] ${src.id}: ${error}`);
+          await recordStatus({
+            freshnessWindowSec: src.freshnessWindowSec,
+            outcome: "partial",
+            attemptAt,
+            networkValidated: false,
+            durationMs: Date.now() - start,
+            partitions: result.partitions,
+            error,
+          });
+          return { count: 0, durationMs: Date.now() - start, outcome: "partial", error };
+        }
+        if (result.status === "fetched") {
+          fresh[role] = result.buffers;
+          accepts.push(result.accept);
+          if (keepPayloads) deps.roles!.payloads[role] = result.buffers;
+        }
+        if (deps.roles) deps.roles.lastFetchedAt[role] = Date.parse(attemptAt);
       }
-      if (result.status === "not-modified") {
+      if (Object.keys(fresh).length === 0) {
         await recordStatus({
           freshnessWindowSec: src.freshnessWindowSec,
           outcome: "validated_unchanged",
@@ -511,35 +560,13 @@ async function runAttempt(
         });
         return { count: 0, durationMs: Date.now() - start, outcome: "validated_unchanged" };
       }
-      if (result.status === "skipped" || result.status === "no-endpoint") {
-        const outcome = result.status === "skipped" ? "skipped_cadence" : "missing_configuration";
-        await recordStatus({
-          freshnessWindowSec: src.freshnessWindowSec,
-          outcome,
-          attemptAt,
-          networkValidated: false,
-          durationMs: Date.now() - start,
-        });
-        return { count: 0, durationMs: Date.now() - start, outcome };
-      }
-      if (result.status === "partial") {
-        const { failed, total } = result.partitions;
-        const error = `partial snapshot: ${failed}/${total} partitions failed — preserving last-good publication`;
-        console.warn(`[ingest] ${src.id}: ${error}`);
-        await recordStatus({
-          freshnessWindowSec: src.freshnessWindowSec,
-          outcome: "partial",
-          attemptAt,
-          networkValidated: false,
-          durationMs: Date.now() - start,
-          partitions: result.partitions,
-          error,
-        });
-        return { count: 0, durationMs: Date.now() - start, outcome: "partial", error };
-      }
-      acceptFetch = result.accept;
-      buffers = result.buffers;
-      snapshotInspection = inspectSnapshotCompleteness(src, buffers);
+      payloads = Object.fromEntries(
+        dataRoles(src).map((role) => [role, fresh[role] ?? deps.roles?.payloads[role] ?? []]),
+      );
+      acceptFetch = () => {
+        for (const accept of accepts) accept();
+      };
+      snapshotInspection = inspectSnapshotCompleteness(src, payloads["main"] ?? []);
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] fetch failed for source ${src.id}:`, err);
@@ -554,8 +581,7 @@ async function runAttempt(
       // A complete-snapshot source is read through its format's reporting
       // path, which reconciles partitions by source identity and refuses a
       // candidate it cannot fully account for.
-      if (src.produces === "flow") flowParse = parseFlowFeed(src, buffers, sites, flowContext);
-      else eventParse = parseEventFeed(src, buffers, { fetchedAt: attemptAt });
+      parse = format.parse(src, payloads, ctx);
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] parse failed for source ${src.id}:`, err);
@@ -577,14 +603,18 @@ async function runAttempt(
     identity: { at: attemptAt, id: attemptId, ...(payloadHashes ? { payloadHashes } : {}) },
     ...(acceptFetch ? { acceptFetch } : {}),
   };
-  return flowParse !== undefined
-    ? finishFlowPoll(poll, flowParse)
-    : finishEventPoll(poll, eventParse!, snapshotInspection);
+  return format.kind === "measurements"
+    ? finishFlowPoll(poll, {
+        features: parse.features,
+        observations: parse.observations,
+        situations: parse.situations,
+      })
+    : finishEventPoll(poll, parse, snapshotInspection);
 }
 
 /** What the poll's last stages share once its payloads are parsed. */
 interface PollContext {
-  src: DomainFeedSource;
+  src: CatalogFeed;
   deps: RunDeps;
   attempt: PollAttempt;
   start: number;

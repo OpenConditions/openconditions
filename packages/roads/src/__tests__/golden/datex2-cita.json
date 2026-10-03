@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:lu-cita:234860",
+    "id": "oc:situation:lu-cita-events:234860",
     "temporality": "live",
     "externalIds": [
       {
@@ -131,7 +131,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "lu-cita",
+      "sourceId": "lu-cita-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "234860",
@@ -323,14 +323,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "5681598e2cf6d11399264a584e2af211f1a1f9c924cee957225c78038b98bea1",
+    "canonicalId": "f90936c802368d8c99e5bbbb50a675da6cee606cafebaec03953421ceb519688",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "8844a9c226de214c41e2ad0c2eb01fab20edbfdb44eba3e0f6cfa1dabd86f45b"
+    "contentHash": "f168e8b3f256d0aa084b7dcd5642d177e559f2831cff8815e6b262635b13fa79"
   },
   {
-    "id": "oc:situation:lu-cita:234859",
+    "id": "oc:situation:lu-cita-events:234859",
     "temporality": "live",
     "externalIds": [
       {
@@ -597,7 +597,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "lu-cita",
+      "sourceId": "lu-cita-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "234859",
@@ -650,14 +650,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "ea08ecfb65024456b1cfa9705d730b114f4404ba38cfc659702aedcf8447c6d3",
+    "canonicalId": "1198d4854e71879024b549ae1c0c3d9c00c203bd65c6b175f0ab7fb342355000",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "ac21b250653490ff488f186785742ac02ee8f9f5d2c4d16ee191fc2b6a7ca668"
+    "contentHash": "2bb670a6b73e1a14b9141617c019fd1cfe30869c611b0d4cfdf421329d6e412f"
   },
   {
-    "id": "oc:situation:lu-cita:234858",
+    "id": "oc:situation:lu-cita-events:234858",
     "temporality": "live",
     "externalIds": [
       {
@@ -740,7 +740,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "lu-cita",
+      "sourceId": "lu-cita-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "234858",
@@ -793,14 +793,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "4dadaec36f56b5431ecb7ad3fdcdcef2abee57fa213ada16b7b5d256c9b131b5",
+    "canonicalId": "27dab67ab5126aa449e27a8cfd54ada1bda47dd396c7ac7169e43d1ea4c2dafd",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "4466eece6be467a2b7d8f913cc5696f29df95ac77ac66ab3bd93f733b4335816"
+    "contentHash": "0319043c4927e7e9524b439490b9343f9f985324b45cf8afc2d9c177947f5d58"
   },
   {
-    "id": "oc:situation:lu-cita:234857",
+    "id": "oc:situation:lu-cita-events:234857",
     "temporality": "live",
     "externalIds": [
       {
@@ -831,7 +831,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "lu-cita",
+      "sourceId": "lu-cita-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "234857",
@@ -883,14 +883,14 @@
       "kind": "incident",
       "v": 1
     },
-    "canonicalId": "c34d77242637251714f1d4b0fd148a46a984a6e161af1a7bdf5aed85cdd96eaf",
+    "canonicalId": "688d45863bc6be9d7619240a27708756389fdb4a2d3386064e26d0ff24ed096a",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "58c0e09ecf00ae1d996a4ab0183e71e47415fc4ace4d274588279571c0f67ebd"
+    "contentHash": "99750629e6cd2866fe01f6d199c3395e5b8a79dd629e6076c492b2d373d54a6d"
   },
   {
-    "id": "oc:situation:lu-cita:234810",
+    "id": "oc:situation:lu-cita-events:234810",
     "temporality": "live",
     "externalIds": [
       {
@@ -921,7 +921,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "lu-cita",
+      "sourceId": "lu-cita-events",
       "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "234810",
@@ -1003,10 +1003,10 @@
       "kind": "equipment_fault",
       "v": 1
     },
-    "canonicalId": "a891a3ac758402ef718cc755cd2b7462fbfa112938a65403730104101ed8732f",
+    "canonicalId": "4fa03fd0b319709e282ff71bdac682b302094412ef780376281ea2449fdd5efd",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "a6687146cc7cf634fba26fddf607743ab5fc09fcbd75e37be926a1bcb0f9b67e"
+    "contentHash": "03b71f1e2b31bf2e85c24647dfc772f03807072163dd9cbacd069a4a9c13b39a"
   }
 ]

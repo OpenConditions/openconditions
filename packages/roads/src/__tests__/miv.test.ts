@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseMivConfig } from "../miv.js";
 import { flowFeed, flows, readings, siteIds, value } from "./flow-fixtures.js";
 
-const FEED = "be-miv";
+const FEED = "be-miv-flow";
 const feed = flowFeed(FEED);
 
 const CONFIG = `<?xml version="1.0" encoding="UTF-8"?>

@@ -15,9 +15,9 @@ export const closure = {
 /** One bound, current, licensed effect row as the routing read returns it; `over` replaces fields. */
 export function segmentRow(over: Partial<SegmentConditionRow> = {}): SegmentConditionRow {
   return {
-    record_id: "oc:situation:de-autobahn:a1",
+    record_id: "oc:situation:de-autobahn-events:a1",
     effect_id: "a1/closure",
-    source_id: "de-autobahn",
+    source_id: "de-autobahn-events",
     kind: "closure",
     type: "closure",
     subtype: "full",

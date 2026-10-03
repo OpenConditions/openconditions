@@ -10,12 +10,12 @@ import { defineConfig } from "tsup";
 const coreDrizzle = fileURLToPath(new URL("../../packages/core/drizzle", import.meta.url));
 const bundledDrizzle = fileURLToPath(new URL("./dist/drizzle", import.meta.url));
 
-// @openconditions/roads is inlined (noExternal), so its runtime-read feed data
-// files don't travel with the bundle. Copy them next to the entry; the inlined
-// resolveFeedsDir() finds them at ./feeds/roads. Lives in dist/ so it rides the
+// The feed catalogue is read at runtime, so the repo's `feeds/` (every domain's
+// region files and the shared credentials) is copied next to the entry, where
+// the baked catalogue layer finds it at ./feeds. Lives in dist/ so it rides the
 // turbo dist/** cache and the Docker `COPY dist`.
-const roadsFeeds = fileURLToPath(new URL("../../packages/roads/feeds/roads", import.meta.url));
-const bundledFeeds = fileURLToPath(new URL("./dist/feeds/roads", import.meta.url));
+const repoFeeds = fileURLToPath(new URL("../../feeds", import.meta.url));
+const bundledFeeds = fileURLToPath(new URL("./dist/feeds", import.meta.url));
 
 export default defineConfig({
   entry: ["src/index.ts"],
@@ -30,6 +30,6 @@ export default defineConfig({
     await rm(bundledDrizzle, { recursive: true, force: true });
     await cp(coreDrizzle, bundledDrizzle, { recursive: true });
     await rm(bundledFeeds, { recursive: true, force: true });
-    await cp(roadsFeeds, bundledFeeds, { recursive: true });
+    await cp(repoFeeds, bundledFeeds, { recursive: true });
   },
 });

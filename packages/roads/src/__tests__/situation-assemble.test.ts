@@ -8,7 +8,7 @@ import { restrictionEvent } from "./fixtures/restriction-event.js";
 
 const registry = buildRegistry([kernelModule, roadsModule]);
 const SRC: SourceDescriptor = {
-  id: "nl-ndw",
+  id: "nl-ndw-events",
   attribution: "NDW",
   country: "NL",
   license: "CC0-1.0",
@@ -17,8 +17,8 @@ const SRC: SourceDescriptor = {
 
 function event(id: string, over: Partial<RoadEvent> = {}): RoadEvent {
   return {
-    id: `nl-ndw:${id}`,
-    source: "nl-ndw",
+    id: `nl-ndw-events:${id}`,
+    source: "nl-ndw-events",
     sourceFormat: "datex2",
     domain: "roads",
     kind: "event",
@@ -113,7 +113,11 @@ describe("situationDrafts — DATEX situations", () => {
         validTo: "2026-09-18T12:00:00Z",
       }),
     ]);
-    expect(d).toMatchObject({ id: "oc:situation:nl-ndw:S1", kind: "incident", type: "accident" });
+    expect(d).toMatchObject({
+      id: "oc:situation:nl-ndw-events:S1",
+      kind: "incident",
+      type: "accident",
+    });
     expect(effects(d!)).toEqual([
       expect.objectContaining({
         id: "R2/lane_restriction",
@@ -134,8 +138,8 @@ describe("situationDrafts — DATEX situations", () => {
       event("R2", { situationId: "S2", type: "hazard", situation: cls("incident", "fire") }),
     ]);
     expect(drafts.map((d) => [d["id"], d["type"], d["groupId"]])).toEqual([
-      ["oc:situation:nl-ndw:R1", "accident", "S2"],
-      ["oc:situation:nl-ndw:R2", "fire", "S2"],
+      ["oc:situation:nl-ndw-events:R1", "accident", "S2"],
+      ["oc:situation:nl-ndw-events:R2", "fire", "S2"],
     ]);
   });
 
@@ -229,7 +233,7 @@ describe("situationDrafts — flow-derived congestion", () => {
         },
       }),
     ]);
-    const site = { class: "feature", id: "oc:feature:nl-ndw:S4" };
+    const site = { class: "feature", id: "oc:feature:nl-ndw-events:S4" };
     expect(d!["headline"]).toBeUndefined();
     expect(d!["provenance"]).toMatchObject({
       origin: "derived",
@@ -259,7 +263,7 @@ describe("situationDrafts — fields", () => {
 
   it("lets the restriction contract decide the vehicles of a closure", () => {
     const [d] = situationDrafts([{ ...restrictionEvent(), roadState: "closed" }], {
-      source: { ...SRC, id: "fi-digitraffic", country: "FI" },
+      source: { ...SRC, id: "fi-digitraffic-events", country: "FI" },
     });
     expect(registry.validateDraft(d).ok).toBe(true);
     const kinds = effects(d!).map((e) => e["kind"]);

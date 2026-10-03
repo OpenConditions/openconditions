@@ -1,20 +1,20 @@
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import type { LookupFn } from "@openconditions/ingest-framework";
-import { FEED_SOURCES, type OsmWay, type SpineSubgraph } from "@openconditions/roads";
+import type { OsmWay, SpineSubgraph } from "@openconditions/roads";
 import { sweepRecords } from "@openconditions/storage";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
-import { buildDomainRegistry } from "../domains.js";
 import { FeedStatusStore } from "../feed-status.js";
 import { drainBindingQueue } from "../pipeline/bind-records.js";
 import { activateRoadGraph } from "../pipeline/graph-state.js";
 import { importOsmRoads } from "../pipeline/osm-import.js";
-import { type DomainFeedSource, runSource } from "../pipeline/run.js";
+import { runSource } from "../pipeline/run.js";
 import { buildSegments } from "../pipeline/segment-build.js";
 import { registerPublishRoutes } from "../publish-routes.js";
+import { REPO_CATALOG, repoFeed, testFeed } from "./helpers/catalog.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { registry, writeSituations } from "./helpers/situations.js";
 
@@ -29,7 +29,7 @@ import { registry, writeSituations } from "./helpers/situations.js";
  * source status explicitly and says so.
  */
 
-const SOURCE = "nl-ndw";
+const SOURCE = "nl-ndw-events";
 const CHECKED_AT = "2026-09-12T07:14:00.000Z";
 const MODEL = { registry, instanceId: "test.local" };
 const situationId = (local: string) => `oc:situation:${SOURCE}:${local}`;
@@ -75,10 +75,7 @@ const spine = JSON.parse(
   ),
 ) as SpineSubgraph;
 
-const ndwFeed = {
-  ...FEED_SOURCES.find((f) => f.id === SOURCE),
-  domain: "roads",
-} as unknown as DomainFeedSource;
+const ndwFeed = repoFeed(SOURCE);
 
 const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 
@@ -92,14 +89,14 @@ function controlXml(): string {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><mc:messageContainer xmlns:sit="http://datex2.eu/schema/3/situation" xmlns:mc="http://datex2.eu/schema/3/messageContainer" xmlns:loc="http://datex2.eu/schema/3/locationReferencing" xmlns:com="http://datex2.eu/schema/3/common" modelBaseVersion="3"><mc:payload xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="sit:SituationPublication" lang="nl" modelBaseVersion="3"><com:publicationTime>2026-09-12T07:13:00Z</com:publicationTime><sit:situation id="CONTROL_SITUATION"><sit:situationVersionTime>2026-09-12T07:00:00Z</sit:situationVersionTime><sit:situationRecord xsi:type="sit:RoadOrCarriagewayOrLaneManagement" id="CONTROL_CLOSURE_1" version="1"><sit:situationRecordCreationTime>2025-01-01T00:00:00Z</sit:situationRecordCreationTime><sit:situationRecordVersionTime>2026-09-12T07:00:00Z</sit:situationRecordVersionTime><sit:validity><com:validityStatus>active</com:validityStatus><com:validityTimeSpecification><com:overallStartTime>2025-01-01T00:00:00Z</com:overallStartTime></com:validityTimeSpecification></sit:validity><sit:generalPublicComment><sit:comment><com:values><com:value lang="en">Control closure</com:value></com:values></sit:comment></sit:generalPublicComment><sit:locationReference xsi:type="loc:LinearLocation"><loc:roadNumber>N300</loc:roadNumber><loc:gmlLineString srsName="WGS 84"><loc:posList>${posList}</loc:posList></loc:gmlLineString></sit:locationReference><sit:operatorActionStatus>implemented</sit:operatorActionStatus><sit:complianceOption>mandatory</sit:complianceOption><sit:roadOrCarriagewayOrLaneManagementType>roadClosed</sit:roadOrCarriagewayOrLaneManagementType></sit:situationRecord></sit:situation></mc:payload></mc:messageContainer>`;
 }
 
-const controlFeed = {
+const controlFeed = testFeed({
   id: CONTROL_SOURCE,
-  domain: "roads",
   operator: "control",
   name: "Synthetic unconditional control",
   format: "datex2",
-  url: "https://control.invalid/situations.xml.gz",
-  gzip: true,
+  endpoints: {
+    main: { url: "https://control.invalid/situations.xml.gz", gzip: true, cadenceSec: 60 },
+  },
   snapshot: {
     completeness: "complete",
     rootElement: "messageContainer",
@@ -107,23 +104,13 @@ const controlFeed = {
     publicationType: "SituationPublication",
     recordElement: "situationRecord",
   },
-  cadenceSec: 60,
   freshnessWindowSec: 300,
   license: "CC0-1.0",
   licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
   attribution: "Synthetic control",
   country: "NL",
-  rights: {
-    sourceRedistribution: true,
-    derivedRedistribution: true,
-    commercialUse: true,
-    attributionRequired: false,
-    retention: true,
-    evidenceOrigin: "publisher",
-    evidenceVersion: "CC0-1.0",
-    reviewedAt: "2026-09-12T00:00:00.000Z",
-  },
-} as unknown as DomainFeedSource;
+  terms: { note: "publisher", reviewedAt: "2026-09-12" },
+});
 
 /**
  * Convert the frozen directed spine into the `OsmWay` rows the importer
@@ -263,8 +250,7 @@ async function seed(): Promise<void> {
 
 async function app() {
   const instance = Fastify();
-  const domains = await buildDomainRegistry();
-  registerPublishRoutes(instance, sql, new FeedStatusStore(), domains);
+  registerPublishRoutes(instance, sql, new FeedStatusStore(), REPO_CATALOG);
   registerApiRoutes(instance, sql, { registry });
   await instance.ready();
   return instance;

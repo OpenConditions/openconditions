@@ -678,7 +678,13 @@ function ontarioRestAreas() {
       ...(r.foodService === "Not Available" ? [] : ["restaurant"]),
     ];
     const site = feature(
-      provenance("ca-on-511", "ibi511-web", r.name, "Ontario Ministry of Transportation", "OGL-ON"),
+      provenance(
+        "ca-on-511-events",
+        "ibi511-web",
+        r.name,
+        "Ontario Ministry of Transportation",
+        "LicenseRef-OGL-ON",
+      ),
       kind,
       {
         ...at(null),
@@ -810,7 +816,7 @@ function ontarioFerries() {
         "ibi511-web",
         r.DT_RowId,
         "Ontario Ministry of Transportation",
-        "OGL-ON",
+        "LicenseRef-OGL-ON",
       ),
       "ferry_route",
       { ...at(null, "linear"), admin: { country: "CA", subdivision: "CA-ON" } },

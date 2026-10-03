@@ -124,7 +124,7 @@ describe("crossValidateAgainstFeeds — official cross-validation routing", () =
       SELECT source_id, details FROM conditions.report_evidence
       WHERE record_id = ${id} AND evidence_kind = 'official_match'`;
     expect(official).toHaveLength(1);
-    expect(official[0]!.source_id).toBe("de-autobahn");
+    expect(official[0]!.source_id).toBe("de-autobahn-events");
     expect(official[0]!.details).toEqual({
       source: "official",
       outcome: "confirmed",
@@ -259,10 +259,10 @@ describe("crossValidateAgainstFeeds — official cross-validation routing", () =
       location: pointNorth(10),
       provenance: {
         ...(feedSituationDraft("x")["provenance"] as Rec),
-        sourceId: "nl-ndw",
+        sourceId: "nl-ndw-events",
         recordId: "xv-feed-neighbour",
       },
-      id: "oc:situation:nl-ndw:xv-feed-neighbour",
+      id: "oc:situation:nl-ndw-events:xv-feed-neighbour",
     });
 
     expect(await crossValidateAgainstFeeds(sql, registry, target, T_RESOLVE)).toBeNull();

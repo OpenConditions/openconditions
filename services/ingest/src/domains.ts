@@ -2,84 +2,74 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
-  type DomainRegistry,
+  type Catalog,
+  type CatalogFeed,
+  type FeedFormat,
   type IngestDomain,
-  loadFeeds,
-  materializeApprovedCatalogChildren,
-  registerFeedSchema,
+  loadCatalog,
 } from "@openconditions/ingest-framework";
-import type { FeedSource } from "@openconditions/roads";
-import { feedToSourceDescriptor, parseEvents, roadFeedSchema } from "@openconditions/roads";
+import { roadsDomain } from "@openconditions/roads";
 
-// The roads schema is registered once so the framework's loadFeeds can validate
-// mounted/remote descriptors without depending on @openconditions/roads.
-registerFeedSchema("roads", roadFeedSchema);
-
-// Parse dispatch — feed-independent, used by parse.ts to look up a domain's
-// event parser by name. The feed set is populated per-boot by
-// buildDomainRegistry(); this static entry carries none.
-const roadsDispatch: IngestDomain = {
-  name: "roads",
-  feeds: [],
-  parse: (feed, buffers, opts) => parseEvents(feed as FeedSource, buffers, opts),
-};
+/** The domains this service ingests. */
+export const INGEST_DOMAINS: readonly IngestDomain[] = [roadsDomain as unknown as IngestDomain];
 
 /**
- * Dispatch-only registry keyed by domain name. `feeds` is intentionally empty —
- * the scheduler receives the populated registry from buildDomainRegistry(); the
- * pipeline (parse.ts) uses this table solely for the feed-independent parser
- * lookup.
+ * The baked-in catalogue, in both layouts the code runs in: the shipped
+ * bundle (`dist/index.js` → `./feeds`, copied there by the ingest build) and a
+ * source checkout (`src/domains.ts` → the repo's `feeds/`).
  */
-export const DOMAIN_REGISTRY: DomainRegistry = { roads: roadsDispatch };
-
-/**
- * Resolves the baked-in roads feed directory, tolerating both layouts the code
- * runs in: the shipped bundle (`dist/index.js` → `./feeds/roads`, copied there
- * by the ingest build) and a source checkout (dev/test/liveness script →
- * the roads package's `feeds/roads`).
- */
-function defaultRoadsFeedsDir(): string {
+function bakedFeedsDir(): string {
   const candidates = [
-    fileURLToPath(new URL("./feeds/roads", import.meta.url)),
-    fileURLToPath(new URL("../../../packages/roads/feeds/roads", import.meta.url)),
+    fileURLToPath(new URL("./feeds", import.meta.url)),
+    fileURLToPath(new URL("../../../feeds", import.meta.url)),
   ];
   return candidates.find(existsSync) ?? candidates[0]!;
 }
 
-// Where the remote-pull snapshot is vendored. A writable state dir survives
-// restarts; mount a volume there for the snapshot to outlive the container.
-// Only touched when remote-pull is explicitly enabled.
-function roadsRemoteSnapshotPath(): string {
-  const stateDir = process.env["OPENCONDITIONS_STATE_DIR"] || "/data";
-  return join(stateDir, "feeds", "roads.remote-snapshot.json");
-}
-
 /**
- * Builds the runtime registry: the same parser dispatch, with each
- * domain's feed set loaded (baked-in + operator-mounted + optional remote-pull).
- * Called once in boot(), before the scheduler starts.
+ * The catalogue the service runs: the baked feeds, an operator's mount
+ * (`OPENCONDITIONS_FEEDS_DIR`) and, when `OPENCONDITIONS_FEEDS_REMOTE_ENABLED`
+ * is `true`, the remote bundle at `OPENCONDITIONS_FEEDS_REMOTE_URL`, whose last
+ * good copy is kept in the state dir so it outlives a restart.
  */
-export async function buildDomainRegistry(
-  opts: { bakedInDir?: string } = {},
-): Promise<DomainRegistry> {
-  const feeds = await loadFeeds({
-    domain: "roads",
-    bakedInDir: opts.bakedInDir ?? defaultRoadsFeedsDir(),
-    mountDir: process.env["OPENCONDITIONS_FEEDS_DIR"],
-    remote: {
-      url: process.env["OPENCONDITIONS_FEEDS_REMOTE_URL"] || "",
-      enabled: process.env["OPENCONDITIONS_FEEDS_REMOTE_ENABLED"] === "true",
-      snapshotPath: roadsRemoteSnapshotPath(),
-    },
+export function loadIngestCatalog(env: NodeJS.ProcessEnv = process.env): Promise<Catalog> {
+  const remoteUrl = env["OPENCONDITIONS_FEEDS_REMOTE_URL"];
+  const remoteEnabled = env["OPENCONDITIONS_FEEDS_REMOTE_ENABLED"] === "true";
+  if (remoteEnabled && !remoteUrl) {
+    console.warn(
+      "[catalog] OPENCONDITIONS_FEEDS_REMOTE_ENABLED is true but OPENCONDITIONS_FEEDS_REMOTE_URL is not set; remote layer skipped",
+    );
+  }
+  const remote =
+    remoteEnabled && remoteUrl
+      ? {
+          url: remoteUrl,
+          snapshotPath: join(
+            env["OPENCONDITIONS_STATE_DIR"] || "/data",
+            "feeds",
+            "remote-snapshot.json",
+          ),
+        }
+      : undefined;
+  const mount = env["OPENCONDITIONS_FEEDS_DIR"];
+  return loadCatalog(INGEST_DOMAINS, {
+    baked: bakedFeedsDir(),
+    ...(mount ? { mount } : {}),
+    ...(remote ? { remote } : {}),
   });
-  const materialized = materializeApprovedCatalogChildren(feeds);
-  return {
-    roads: {
-      ...roadsDispatch,
-      feeds: materialized.scheduled,
-      discoveredFeeds: materialized.discovered,
-    },
-  };
 }
 
-export { feedToSourceDescriptor };
+/** The domain a feed belongs to; throws for one this service does not ingest. */
+export function domainOf(feed: Pick<CatalogFeed, "id" | "domain">): IngestDomain {
+  const domain = INGEST_DOMAINS.find((d) => d.id === feed.domain);
+  if (!domain) throw new Error(`feed ${feed.id}: unknown domain ${feed.domain}`);
+  return domain;
+}
+
+/** How a feed's payloads are read; throws for an unknown domain or format. */
+export function formatOf(feed: Pick<CatalogFeed, "id" | "domain" | "format">): FeedFormat {
+  const { formats } = domainOf(feed);
+  const format = Object.hasOwn(formats, feed.format) ? formats[feed.format] : undefined;
+  if (!format) throw new Error(`feed ${feed.id}: unknown ${feed.domain} format ${feed.format}`);
+  return format;
+}

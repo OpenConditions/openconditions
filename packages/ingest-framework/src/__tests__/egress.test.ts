@@ -8,6 +8,7 @@ import {
   guardedFetch,
   guardOptionsFromEnv,
   isPublicUrl,
+  maxFeedBytes,
   parseAllowedHosts,
   resolvePublicIps,
 } from "../egress.js";
@@ -349,6 +350,15 @@ describe("guardedFetch", () => {
         OPENCONDITIONS_FETCH_TIMEOUT_MS: "",
       }).maxBytes,
     ).toBe(1024);
+  });
+
+  it("maxFeedBytes is the one byte cap every reader applies", () => {
+    expect(maxFeedBytes({})).toBe(DEFAULT_MAX_FEED_BYTES);
+    expect(maxFeedBytes({ OPENCONDITIONS_MAX_FEED_BYTES: "" })).toBe(DEFAULT_MAX_FEED_BYTES);
+    expect(maxFeedBytes({ OPENCONDITIONS_MAX_FEED_BYTES: "lots" })).toBe(DEFAULT_MAX_FEED_BYTES);
+    expect(maxFeedBytes({ OPENCONDITIONS_MAX_FEED_BYTES: "2048" })).toBe(2048);
+    const env = { OPENCONDITIONS_MAX_FEED_BYTES: "4096" };
+    expect(guardOptionsFromEnv(env).maxBytes).toBe(maxFeedBytes(env));
   });
 });
 

@@ -15,24 +15,34 @@ afterAll(async () => {
   await db?.close();
 }, 30_000);
 
+const RIGHTS = {
+  redistribution: true,
+  derivedRedistribution: true,
+  commercialUse: true,
+  attributionRequired: false,
+  retention: true,
+  shareAlike: false,
+};
 const ndw: SourceEntry = {
-  id: "nl-ndw",
+  id: "nl-ndw-events",
   domain: "roads",
   format: "datex2",
+  product: "events",
   tier: "authoritative",
   country: "NL",
   operator: "ndw",
   license: "CC0-1.0",
   attribution: "NDW / Rijkswaterstaat",
-  rights: { retention: true },
+  rights: RIGHTS,
   cadenceSec: 60,
   freshnessWindowSec: 300,
   laneNumbering: "left_first",
 };
 const longdo: SourceEntry = {
-  id: "th-longdo",
+  id: "th-longdo-events",
   domain: "roads",
   format: "flatjson",
+  product: "events",
   tier: "aggregator",
   country: "TH",
   operator: "longdo",
@@ -47,25 +57,25 @@ describe("syncSources", () => {
   it("mirrors the loaded catalogue, with defaults for omitted fields", async () => {
     await syncSources(sql, [ndw, longdo]);
     const rows = await sql`
-      SELECT id, tier, access_mode, produces, lane_numbering, extras_allow, extras_federate,
+      SELECT id, tier, access_mode, product, lane_numbering, extras_allow, extras_federate,
         rights, active FROM conditions.source ORDER BY id`;
     expect(rows).toEqual([
       {
-        id: "nl-ndw",
+        id: "nl-ndw-events",
         tier: "authoritative",
         access_mode: "bulk",
-        produces: "events",
+        product: "events",
         lane_numbering: "left_first",
         extras_allow: [],
         extras_federate: false,
-        rights: { retention: true },
+        rights: RIGHTS,
         active: true,
       },
       {
-        id: "th-longdo",
+        id: "th-longdo-events",
         tier: "aggregator",
         access_mode: "bulk",
-        produces: "events",
+        product: "events",
         lane_numbering: null,
         extras_allow: ["category"],
         extras_federate: false,
@@ -79,8 +89,8 @@ describe("syncSources", () => {
     await syncSources(sql, [{ ...ndw, tier: "operator" }]);
     const rows = await sql`SELECT id, tier, active FROM conditions.source ORDER BY id`;
     expect(rows).toEqual([
-      { id: "nl-ndw", tier: "operator", active: true },
-      { id: "th-longdo", tier: "aggregator", active: false },
+      { id: "nl-ndw-events", tier: "operator", active: true },
+      { id: "th-longdo-events", tier: "aggregator", active: false },
     ]);
   });
 
@@ -94,5 +104,12 @@ describe("syncSources", () => {
     await expect(syncSources(sql, [{ ...ndw, tier: "official" }])).rejects.toThrow(
       /source_tier_enum/,
     );
+  });
+
+  it("stores a source of no single country with no country", async () => {
+    const { country: _country, ...noCountry } = longdo;
+    await syncSources(sql, [ndw, longdo, { ...noCountry, id: "test-flow", product: "flow" }]);
+    const [row] = await sql`SELECT product, country FROM conditions.source WHERE id = 'test-flow'`;
+    expect(row).toEqual({ product: "flow", country: null });
   });
 });

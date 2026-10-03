@@ -1,9 +1,57 @@
+import { missingCredentials } from "@openconditions/ingest-framework";
 import { describe, expect, it, vi } from "vitest";
 import { FeedStatusStore } from "../feed-status.js";
-import type { DomainFeedSource } from "../pipeline/run.js";
-import { runFeedOnce } from "../scheduler.js";
+import { upsertSourceStatus } from "../pipeline/source-status.js";
+import { runFeedOnce, scheduleFeed } from "../scheduler.js";
+import { repoFeed, testFeed } from "./helpers/catalog.js";
 
-const feed = { id: "demo", domain: "roads" } as unknown as DomainFeedSource;
+vi.mock("../pipeline/source-status.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../pipeline/source-status.js")>()),
+  upsertSourceStatus: vi.fn(async () => {}),
+}));
+
+const feed = testFeed({ id: "demo" });
+
+describe("scheduleFeed", () => {
+  it("a feed without its credential is skipped with the env var named", async () => {
+    const ohgo = repoFeed("us-oh-ohgo-flow");
+    const fetchSpy = vi.fn();
+    const sql = {} as never;
+    const job = scheduleFeed(ohgo, {
+      sql,
+      statusStore: new FeedStatusStore(),
+      deps: { sql, fetch: fetchSpy, now: () => "2026-10-03T00:00:00.000Z" },
+      env: {},
+    });
+
+    expect(job).toBeUndefined();
+    expect(missingCredentials(ohgo, {})).toEqual(["US_OH_OHGO_API_KEY"]);
+    expect(upsertSourceStatus).toHaveBeenCalledWith(
+      sql,
+      "us-oh-ohgo-flow",
+      expect.objectContaining({
+        outcome: "missing_configuration",
+        error: "missing required configuration: US_OH_OHGO_API_KEY",
+      }),
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("schedules a feed once its credential is set", () => {
+    const sql = {} as never;
+    const job = scheduleFeed(repoFeed("us-oh-ohgo-flow"), {
+      sql,
+      statusStore: new FeedStatusStore(),
+      deps: { sql, fetch: vi.fn(), now: () => "2026-10-03T00:00:00.000Z" },
+      env: { US_OH_OHGO_API_KEY: "key" },
+    });
+    try {
+      expect(job).toBeDefined();
+    } finally {
+      job?.stop();
+    }
+  });
+});
 
 describe("runFeedOnce", () => {
   it("records success with the run's row count + duration", async () => {
@@ -23,6 +71,18 @@ describe("runFeedOnce", () => {
       lastDurationMs: 500,
       lastSuccessAt: "2026-07-01T00:00:00.000Z",
     });
+  });
+
+  it("records nothing when no endpoint was due, success or otherwise", async () => {
+    const store = new FeedStatusStore();
+    const drainBindingQueue = vi.fn();
+    await runFeedOnce(feed, { sql: {} as never, fetch, now: () => "x" }, store, {
+      runSource: vi.fn(async () => ({ count: 0, durationMs: 0, notDue: true as const })),
+      drainBindingQueue,
+      now: () => "2026-07-01T00:00:00.000Z",
+    });
+    expect(store.get("demo")).toBeUndefined();
+    expect(drainBindingQueue).not.toHaveBeenCalled();
   });
 
   it("records an error when the run throws", async () => {

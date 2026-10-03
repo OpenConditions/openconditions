@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { FlowSites } from "../flow-output.js";
 import { flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const FEED = "fi-fintraffic";
+const FEED = "fi-fintraffic-flow";
 const feed = flowFeed(FEED);
 const sites: FlowSites = new Map([
   ["23001", { geometry: { type: "Point", coordinates: [24.9, 60.2] } }],

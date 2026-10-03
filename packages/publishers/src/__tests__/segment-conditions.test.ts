@@ -13,7 +13,7 @@ describe("segmentConditionsToJson", () => {
     const out = project([row()]);
     expect(out).toMatchObject({ schema_version: 2, complete: true, resolver_version: "2.0.0" });
     expect(out.conditions[0]).toMatchObject({
-      id: "oc:situation:de-autobahn:a1#a1/closure",
+      id: "oc:situation:de-autobahn-events:a1#a1/closure",
       kind: "closure",
       severity: "major",
       effect: closure,
@@ -25,7 +25,7 @@ describe("segmentConditionsToJson", () => {
     expect(out.conditions[0]!.routing_evidence).toMatchObject({
       schema_version: 2,
       record_class: "situation",
-      record_id: "oc:situation:de-autobahn:a1",
+      record_id: "oc:situation:de-autobahn-events:a1",
       effect_id: "a1/closure",
       record_revision: 3,
       binding_revision: 3,
@@ -56,12 +56,12 @@ describe("segmentConditionsToJson", () => {
 
   it("names the parent policy source while keeping the child it came from", () => {
     const [c] = project([
-      row({ routing_source_id: "de-parent", child_source_id: "de-autobahn" }),
+      row({ routing_source_id: "de-parent", child_source_id: "de-autobahn-events" }),
     ]).conditions;
-    expect(c?.source).toBe("de-autobahn");
+    expect(c?.source).toBe("de-autobahn-events");
     expect(c?.routing_evidence).toMatchObject({
       source_id: "de-parent",
-      child_source_id: "de-autobahn",
+      child_source_id: "de-autobahn-events",
     });
   });
 

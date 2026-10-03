@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FEED_SOURCES, feedToSourceDescriptor } from "../feeds.js";
+import { feedToSourceDescriptor } from "../feeds.js";
 import { parseFlatJson } from "../flatjson.js";
 import type { SourceDescriptor } from "../types.js";
+import { testFeed } from "./helpers/test-feeds.js";
 
 describe("parseFlatJson", () => {
   it("reads a bare JSON array, building points from lon/lat fields", () => {
@@ -59,7 +60,7 @@ describe("parseFlatJson", () => {
   });
 
   it("parses the Longdo (Thailand) fixture via the registered mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "th-longdo")!;
+    const feed = testFeed("th-longdo-events");
     const buf = readFileSync(join(import.meta.dirname, "fixtures/longdo-th/events.json"));
     const out = parseFlatJson(buf, feedToSourceDescriptor(feed));
     expect(out.length).toBeGreaterThan(0);

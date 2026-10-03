@@ -1,9 +1,14 @@
 import path from "node:path";
-import type { CatalogResolver, FeedSourceBase } from "@openconditions/ingest-framework";
-import { roadFeedSchema } from "../feed-schema.js";
+import {
+  type CatalogParent,
+  type CatalogResolver,
+  type ChildFeed,
+  registryUrl,
+} from "@openconditions/ingest-framework";
+import { roadChildren } from "./child-schema.js";
 import autobahnSnapshot from "./snapshots/autobahn-index.json" with { type: "json" };
 
-const AUTOBAHN_BASE = "https://verkehr.autobahn.de/o/autobahn";
+const RESOLVER_ID = "autobahn-index";
 
 /**
  * The three event services, with a per-service poll cadence. Roadworks is by far
@@ -30,12 +35,18 @@ function slug(s: string): string {
 }
 
 /**
- * Pulls the Autobahn road index and emits one feed descriptor per (road ×
- * service). Road names are trimmed (the upstream list contains stray whitespace,
- * e.g. `"A60 "`) and deduped before enumeration.
+ * Pulls the Autobahn road index the parent names and emits one child per
+ * (road × service), named `<road>-<service>` (e.g. `a1-warning`), each road's
+ * services under the index URL. Road names are trimmed (the upstream list
+ * contains stray whitespace, e.g. `"A60 "`) and deduped before enumeration.
+ * Every child is published under the Datenlizenz Deutschland.
  */
-async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
-  const res = await fetchFn(`${AUTOBAHN_BASE}/`);
+async function resolve(parent: CatalogParent, fetchFn: typeof fetch): Promise<ChildFeed[]> {
+  const index = registryUrl(parent, RESOLVER_ID);
+  const res = await fetchFn(index);
+  // Each road sits under the index path, written with or without its trailing slash.
+  const base = new URL(index);
+  if (!base.pathname.endsWith("/")) base.pathname += "/";
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching the Autobahn road index`);
 
   const data = (await res.json()) as AutobahnIndex;
@@ -48,32 +59,29 @@ async function resolve(fetchFn: typeof fetch): Promise<FeedSourceBase[]> {
     if (road) roads.add(road);
   }
 
-  const feeds: FeedSourceBase[] = [];
+  const children: ChildFeed[] = [];
   for (const road of roads) {
     for (const service of AUTOBAHN_SERVICES) {
-      const feed = roadFeedSchema.parse({
+      children.push({
+        qualifier: `${slug(road)}-${service.name}`,
         name: `Autobahn ${road} — ${service.name}`,
-        operator: "autobahn",
-        tier: "authoritative",
-        stream: `${slug(road)}-${service.name}`,
-        format: "autobahn",
-        url: `${AUTOBAHN_BASE}/${encodeURIComponent(road)}/services/${service.name}`,
-        cadenceSec: service.cadenceSec,
-        freshnessWindowSec: 900,
-        license: "dl-de/by-2-0",
-        attribution: "Quelle: Die Autobahn GmbH des Bundes",
-        country: "DE",
-        privacyUrl: "https://www.autobahn.de/datenschutz",
+        endpoints: {
+          main: {
+            url: new URL(`${encodeURIComponent(road)}/services/${service.name}`, base).href,
+            cadenceSec: service.cadenceSec,
+          },
+        },
+        license: "DL-DE-BY-2.0",
+        selectionState: "approved",
       });
-      feeds.push({ ...feed, parentSourceId: "de-autobahn", policyIds: ["de-autobahn", feed.id] });
     }
   }
-  return feeds;
+  return roadChildren(children);
 }
 
 export const autobahnIndexResolver: CatalogResolver = {
-  id: "autobahn-index",
+  id: RESOLVER_ID,
   snapshotPath: path.resolve(import.meta.dirname, "snapshots/autobahn-index.json"),
-  snapshot: autobahnSnapshot.map((feed) => roadFeedSchema.parse(feed)),
+  snapshot: roadChildren(autobahnSnapshot),
   resolve,
 };

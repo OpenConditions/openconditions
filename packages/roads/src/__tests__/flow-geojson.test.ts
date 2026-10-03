@@ -3,7 +3,7 @@ import type { GeojsonFlowMapping } from "../types.js";
 import { flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
 /** Rennes-style mapping: measured speed + native free-flow + DATEX status. */
-const RENNES = "fr-rennesmetropole";
+const RENNES = "fr-rennesmetropole-flow";
 const rennes = flowFeed(RENNES, "geojson-flow", {
   flowMap: {
     idField: "predefinedlocationreference",
@@ -15,7 +15,7 @@ const rennes = flowFeed(RENNES, "geojson-flow", {
 });
 
 /** Bordeaux-style mapping: categorical status only, mapped to DATEX tokens. */
-const BORDEAUX = "fr-bordeauxmetropole";
+const BORDEAUX = "fr-bordeauxmetropole-flow";
 const bordeaux = flowFeed(BORDEAUX, "geojson-flow", {
   flowMap: {
     idField: "ident",
@@ -114,7 +114,7 @@ describe("GeoJSON flow", () => {
   });
 
   it("maps averageSpeed + condition and unwraps a GeometryCollection (Victoria shape)", () => {
-    const VIC = "au-vic-vicroads";
+    const VIC = "au-vic-vicroads-flow";
     const flowMap: GeojsonFlowMapping = {
       idField: "id",
       speedField: "averageSpeed",

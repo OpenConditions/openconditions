@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:ca-qc-mtq-warnings:124315",
+    "id": "oc:situation:ca-qc-mtq-warnings-events:124315",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -29,7 +29,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "ca-qc-mtq-warnings",
+      "sourceId": "ca-qc-mtq-warnings-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "124315",
@@ -89,14 +89,14 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "fc30ffbc35356cbde6ab07bbb99c46b5de0a63fd65c597c8ad5bc62fac22da54",
+    "canonicalId": "512d43e60f65dc5a650b362ee79cfc6784295751a575e3de40a180ac45a35061",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "43cf4b22295d5941bfd115f11a6fe570c48dc3111f0bc96fd8406d2f0acd6302"
+    "contentHash": "15bd85e055367c61e13a534857dee2a849d82f4b0dbc7e29304cd3c47a1daa50"
   },
   {
-    "id": "oc:situation:ca-qc-mtq-warnings:81387",
+    "id": "oc:situation:ca-qc-mtq-warnings-events:81387",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -121,7 +121,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "ca-qc-mtq-warnings",
+      "sourceId": "ca-qc-mtq-warnings-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "81387",
@@ -181,14 +181,14 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "53bc1fffdc4d9d464d9795d5339249381bfbb07c46ab4fb8b4352c89dcbeb41c",
+    "canonicalId": "eee31b5d0cffc0db4321644daa16fd71604828cfdc9e62cbf0abd3315f8e48a6",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "6040ea7a9079e4f871c9586bcf6029eb268aa9a9ef427a22b97235823b55f799"
+    "contentHash": "c028012d86a1495388503df4c8590e4b655b00ab1857d3137c90ad895d4aa4ce"
   },
   {
-    "id": "oc:situation:ca-qc-mtq-warnings:115026",
+    "id": "oc:situation:ca-qc-mtq-warnings-events:115026",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -213,7 +213,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "ca-qc-mtq-warnings",
+      "sourceId": "ca-qc-mtq-warnings-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "115026",
@@ -271,14 +271,14 @@
       "kind": "other",
       "v": 1
     },
-    "canonicalId": "6ca5c20b9a2452e2f404906fe0002e49789ab90339a84079c3c608c87b9e1842",
+    "canonicalId": "fed941cd876a3b3663947e7bdd95b08c1f3d9087e4720fb1b5a49ac754c75daa",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "5492bc170a65d1610712cf25766a21647f40a993594ffc82ebc5cd23f7c11de2"
+    "contentHash": "4ad864979cf72a768bce0a9bb739d1e1f5e7f2daae821f2076a54c473a6089dd"
   },
   {
-    "id": "oc:situation:ca-qc-mtq-warnings:125259",
+    "id": "oc:situation:ca-qc-mtq-warnings-events:125259",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -313,7 +313,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "ca-qc-mtq-warnings",
+      "sourceId": "ca-qc-mtq-warnings-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "125259",
@@ -362,14 +362,14 @@
       "v": 1,
       "basis": "temporary"
     },
-    "canonicalId": "ea69be7eb1ca962e24cf976b0dc0429e50fd38460690035c69b0b5d810947ad2",
+    "canonicalId": "b692683e4d11ecf1bc5452bb7b76ea0085bcf841cefcf006c36256689127e46d",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "ac423db743d5b44235768745cb74aa6505aa9d1ab0ee642f3c6a800bac09d384"
+    "contentHash": "e6546c79d96bfdab01ffb053acba3483e3ae005b165298e838cad442d75a111a"
   },
   {
-    "id": "oc:situation:ca-qc-mtq-warnings:111875",
+    "id": "oc:situation:ca-qc-mtq-warnings-events:111875",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -404,7 +404,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "ca-qc-mtq-warnings",
+      "sourceId": "ca-qc-mtq-warnings-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "111875",
@@ -444,10 +444,10 @@
       "kind": "other",
       "v": 1
     },
-    "canonicalId": "6622b20e8f12ea653a45840f00189127c2e2ab887daa2c7dd948213cc4963fb7",
+    "canonicalId": "bcf926f16cb33c8b9e340dabd822ef28e949c7eef0edae8ca3de1ba6099a1114",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "450ff113d85811b319fd05a1f3d94bb4430b7dce60bde3dcc63a13f03dbc6d3d"
+    "contentHash": "f4c5ad837fbe7584980e5be64aa51227292f5c847206ef6ba0748cf56611fe87"
   }
 ]

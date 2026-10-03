@@ -19,7 +19,7 @@ import {
 } from "./flow-fixtures.js";
 
 const DT = "fi-digitraffic-flow";
-const dtFeed = flowFeed(DT, "digitraffic");
+const dtFeed = flowFeed(DT, "digitraffic-traffic-measurement");
 const digitraffic = (input: string | Buffer = fixture("digitraffic-flow/flow.json")) =>
   flows(dtFeed, input);
 
@@ -341,7 +341,7 @@ describe("DATEX measured data", () => {
 
 describe("regression — existing event parsers untouched", () => {
   const DT_SOURCE = {
-    id: "fi-digitraffic",
+    id: "fi-digitraffic-events",
     attribution: "Fintraffic / digitraffic.fi",
     country: "FI",
     license: "CC-BY-4.0",
@@ -360,7 +360,7 @@ describe("regression — existing event parsers untouched", () => {
   it("parseDatexSituations still produces RoadEvents from the NDW fixture", () => {
     const events = parseDatexSituations(fixture("ndw/actueel_beeld.xml"), {
       ...DT_SOURCE,
-      id: "nl-ndw",
+      id: "nl-ndw-events",
       country: "NL",
     });
     expect(events.length).toBeGreaterThan(0);

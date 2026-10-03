@@ -1,1 +1,1 @@
-pnpm lint && pnpm typecheck && pnpm check-credentials && pnpm check:model && pnpm --filter @openconditions/roads feeds:lint
+pnpm lint && pnpm typecheck && pnpm check-credentials && pnpm check:model && pnpm check:feed-schemas && pnpm feeds:lint

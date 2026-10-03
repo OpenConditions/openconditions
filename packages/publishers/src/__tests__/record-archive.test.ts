@@ -14,7 +14,7 @@ function record(
   overrides: Partial<ArchivableRecord> & Record<string, unknown> = {},
 ): ArchivableRecord {
   return {
-    id: "oc:situation:nl-ndw:SIT-1",
+    id: "oc:situation:nl-ndw-events:SIT-1",
     class: "situation",
     kind: "closure",
     type: "closure",
@@ -26,7 +26,7 @@ function record(
     location: { geometry: { type: "Point", coordinates: [4.9, 52.37] } },
     provenance: {
       origin: "feed",
-      sourceId: "nl-ndw",
+      sourceId: "nl-ndw-events",
       accessMode: "bulk",
       attribution: { provider: "NDW", license: "CC0-1.0" },
       privacy: { class: "authoritative" },
@@ -85,7 +85,7 @@ describe("the archive of model records", () => {
       NOW,
     );
     expect(kept.map((r) => r.id)).toEqual([
-      "oc:situation:nl-ndw:SIT-1",
+      "oc:situation:nl-ndw-events:SIT-1",
       "oc:situation:oc.example.org:abc",
     ]);
     expect(JSON.stringify(kept)).not.toContain(SECRET_KEY);
@@ -96,7 +96,7 @@ describe("the archive of model records", () => {
     const [plain] = publishedRecords("situation", [tokens], NOW);
     expect(plain).not.toHaveProperty("extras");
     const [shared] = publishedRecords("situation", [tokens], NOW, {
-      federateExtras: (sourceId) => sourceId === "nl-ndw",
+      federateExtras: (sourceId) => sourceId === "nl-ndw-events",
     });
     expect(shared!["extras"]).toEqual({ situationRecordExtension: "x" });
     const buffer = recordArchiveBuffer("situation", [tokens], NOW);
@@ -114,7 +114,7 @@ describe("the archive of model records", () => {
     const rows = await parquetReadObjects({ file, utf8: true });
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({
-      id: "oc:situation:nl-ndw:SIT-1",
+      id: "oc:situation:nl-ndw-events:SIT-1",
       kind: "closure",
       severity: "major",
       validity_status: "active",

@@ -1,11 +1,12 @@
 import { runMigrations } from "@openconditions/core/server";
-import { enrichReadings, FEED_SOURCES, type FlowOutput } from "@openconditions/roads";
+import { enrichReadings, type FlowOutput, type RoadFeed } from "@openconditions/roads";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { loadBaselineMap } from "../pipeline/baseline-store.js";
+import { repoFeed } from "./helpers/catalog.js";
 
-const feed = { ...FEED_SOURCES.find((f) => f.id === "nl-ndw-flow")!, id: "src" };
+const feed = { ...repoFeed("nl-ndw-flow"), id: "src" } as RoadFeed;
 const key = (site: string) => `feature:oc:feature:src:${site}`;
 
 /** One poll's site speed of `site`, with no level of service and no baseline of its own. */

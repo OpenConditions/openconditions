@@ -565,6 +565,6 @@ describe("GET /peer/outbox — the optionalPeer mTLS gate is threaded (proxy-awa
 async function countRows(local: string): Promise<number> {
   const rows = await sql<{ n: string }[]>`
     SELECT count(*)::text AS n FROM conditions.situation
-    WHERE id = ${`oc:situation:nl-ndw:${local}`}`;
+    WHERE id = ${`oc:situation:nl-ndw-events:${local}`}`;
   return Number(rows[0]!.n);
 }

@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:us-oh-ohgo-construction:OH-CON-1001",
+    "id": "oc:situation:us-oh-ohgo-construction-events:OH-CON-1001",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -29,14 +29,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "us-oh-ohgo-construction",
+      "sourceId": "us-oh-ohgo-construction-events",
       "sourceFormat": "ohgo-events",
       "accessMode": "bulk",
       "recordId": "OH-CON-1001",
       "sourceUpdatedAt": "2026-07-30T12:15:00.000Z",
       "attribution": {
         "provider": "Ohio Department of Transportation (OHGO)",
-        "license": "US-Gov-Public-Domain",
+        "license": "LicenseRef-US-Gov-Public-Domain",
         "licenseUrl": "https://www.usa.gov/government-works"
       },
       "privacy": {
@@ -91,14 +91,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "eecbd6c7e41cd841b08033bd1b6b428afbf5465277a0ad67b1ee64fe9d9e6f14",
+    "canonicalId": "782b78a74f57d217ed2b8da877cce4878d5acac5ce6b38b02ea4194ae9d71866",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "cd568302c2d522fe6368dcf3ee2f2b3a833227a052cd903938d98067afd57d06"
+    "contentHash": "96f084b3d685f8464e619b16b690c48fb0fa153ac5ec9065c0b24360783e869c"
   },
   {
-    "id": "oc:situation:us-oh-ohgo-construction:OH-CON-1002",
+    "id": "oc:situation:us-oh-ohgo-construction-events:OH-CON-1002",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -127,13 +127,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "us-oh-ohgo-construction",
+      "sourceId": "us-oh-ohgo-construction-events",
       "sourceFormat": "ohgo-events",
       "accessMode": "bulk",
       "recordId": "OH-CON-1002",
       "attribution": {
         "provider": "Ohio Department of Transportation (OHGO)",
-        "license": "US-Gov-Public-Domain",
+        "license": "LicenseRef-US-Gov-Public-Domain",
         "licenseUrl": "https://www.usa.gov/government-works"
       },
       "privacy": {
@@ -188,10 +188,10 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "7567fe3c188f069cb424bc144c686ba7ccee75345704d64ce7e7a22fd4621324",
+    "canonicalId": "701e36b58d6a6902c591f2dbad251e90b28f37162a4309c1b3171a59b8eb30c7",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "28db0f0efccd6e78c85845c88e63884089c5573815e23d7b6be1d6f9d974533f"
+    "contentHash": "edc20a6b6a8d81a1628e99d2294dac246ae6d52bd4754883d6aea306cf067a9c"
   }
 ]

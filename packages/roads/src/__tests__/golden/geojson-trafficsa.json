@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:au-sa-trafficsa:3214723105",
+    "id": "oc:situation:au-sa-trafficsa-events:3214723105",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -29,7 +29,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "au-sa-trafficsa",
+      "sourceId": "au-sa-trafficsa-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "3214723105",
@@ -69,14 +69,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "781c75e7bd0a85b5849a74cb91218ec688065446382f90f42072a872a1ceafca",
+    "canonicalId": "17fdcb3f4893b20b4eecddc78ccd7775cd34014bf1a704192fdf95c25d48cb3a",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "c7c9c215a5f477298111b44ff39f5d4a588135a02321fe85c734c83dfa630c2d"
+    "contentHash": "300888b1e9d2d524e9885d19c4cacab999b3d220605e81d9fc1d666f95ea2a01"
   },
   {
-    "id": "oc:situation:au-sa-trafficsa:3214723110",
+    "id": "oc:situation:au-sa-trafficsa-events:3214723110",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -105,7 +105,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "au-sa-trafficsa",
+      "sourceId": "au-sa-trafficsa-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "3214723110",
@@ -145,14 +145,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "93799077165f7a4f363e1eefbcbb0303b29b17fef7c762551c37f4beb1eb5d76",
+    "canonicalId": "edcdeb13e98dfbbdf56ba3db95ac6f2dfefa28b6756f5a6d43b1a77a875c79a1",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "59fc483a3662be8083140c2ff07ff5bb47c8a1295581c20eb8cbea3c7381c821"
+    "contentHash": "2c480d83c5edb44ea91ed81015f59dc1c9fb3a65b29946e6a12d4b43bd777676"
   },
   {
-    "id": "oc:situation:au-sa-trafficsa:3214723112",
+    "id": "oc:situation:au-sa-trafficsa-events:3214723112",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -181,7 +181,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "au-sa-trafficsa",
+      "sourceId": "au-sa-trafficsa-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "3214723112",
@@ -221,14 +221,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "c38f1880b28ac63352a5872d895458b84f0d68f2b6eded0523e66a3a2be6bad4",
+    "canonicalId": "134b2c3381e496309c04d9eb21b926212bd2bba1426ac590b04602c557fa6655",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "2618b3d003f1ffc2efba436ba521744c48769abda88f0cb3a9a3f138fa9a1732"
+    "contentHash": "89f35c5eb15537f605948b02d20158a2710700250ba6796635a02dfa9668282f"
   },
   {
-    "id": "oc:situation:au-sa-trafficsa:3214723113",
+    "id": "oc:situation:au-sa-trafficsa-events:3214723113",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -257,7 +257,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "au-sa-trafficsa",
+      "sourceId": "au-sa-trafficsa-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "3214723113",
@@ -297,10 +297,10 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "04a5a87f4d711e2c248476ac1a2d302127fa7833a55ff75771010faf63ffc240",
+    "canonicalId": "3f82628e40a4262a30e5711f6358eddfa94a229027862e8691cdf4793d70742b",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "e2f4d3d98646c30cc957cd8798869948722af78e87189571c8ba81b85883fca6"
+    "contentHash": "1e0d301a4467946f63067dd8d427ed2a7128bfd84487360e97549dcb7dcff7a0"
   }
 ]

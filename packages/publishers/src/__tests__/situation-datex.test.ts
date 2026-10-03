@@ -1,3 +1,4 @@
+import { toCatalogFeed } from "@openconditions/ingest-framework";
 import { parseEvents, type RoadFeed } from "@openconditions/roads";
 import { XMLParser } from "fast-xml-parser";
 import { describe, expect, it } from "vitest";
@@ -29,7 +30,7 @@ const closure = (over: Rec = {}): Rec =>
 
 function situation(over: Rec = {}): Rec {
   return {
-    id: "oc:situation:de-autobahn:a46",
+    id: "oc:situation:de-autobahn-events:a46",
     revision: 3,
     class: "situation",
     kind: "roadworks",
@@ -62,9 +63,9 @@ describe("datexRecordsOf", () => {
   it("writes the nature record, then one management record per effect, keeping the DATEX ids read", () => {
     const records = datexRecordsOf(situation(), AT);
     expect(records.map((r) => [r["@_xsi:type"], r["@_id"], r["@_version"]])).toEqual([
-      ["sit:MaintenanceWorks", "oc:situation:de-autobahn:a46", "3"],
+      ["sit:MaintenanceWorks", "oc:situation:de-autobahn-events:a46", "3"],
       ["sit:RoadOrCarriagewayOrLaneManagement", "NLRWS_a46_2", "3"],
-      ["sit:SpeedManagement", "oc:situation:de-autobahn:a46#a46/speed", "3"],
+      ["sit:SpeedManagement", "oc:situation:de-autobahn-events:a46#a46/speed", "3"],
     ]);
     expect(records[1]).toMatchObject({
       "sit:roadOrCarriagewayOrLaneManagementType": "laneClosures",
@@ -104,7 +105,7 @@ describe("datexRecordsOf", () => {
     expect(records).toEqual([
       expect.objectContaining({
         "@_xsi:type": "sit:RoadOrCarriagewayOrLaneManagement",
-        "@_id": "oc:situation:de-autobahn:a46#c/closure",
+        "@_id": "oc:situation:de-autobahn-events:a46#c/closure",
         "sit:severity": "high",
       }),
     ]);
@@ -164,13 +165,21 @@ describe("datexRecordsOf", () => {
 });
 
 describe("DATEX II round-trip through the ingest parser", () => {
-  const feed: RoadFeed = {
-    id: "rt",
-    format: "datex2",
-    country: "DE",
-    attribution: "OpenConditions",
-    license: "CC0-1.0",
-  };
+  const feed = toCatalogFeed(
+    {
+      operator: "rt",
+      product: "events",
+      name: "DATEX II round trip",
+      format: "datex2",
+      tier: "authoritative",
+      endpoints: { main: { url: "https://example.test/feed", cadenceSec: 300 } },
+      freshnessWindowSec: 900,
+      license: "CC0-1.0",
+      attribution: "OpenConditions",
+      privacyUrl: "https://example.test/privacy",
+    },
+    { domain: "roads", region: "de", file: "feeds/roads/de.jsonc", maintainers: [] },
+  ) as RoadFeed;
 
   it("re-ingests a full closure as a full closure, with its validity and place", () => {
     const xml = situationsToDatex([closure()], AT);

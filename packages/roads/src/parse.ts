@@ -3,12 +3,21 @@ import {
   type ParseOutput,
   type SnapshotAccounting,
 } from "@openconditions/ingest-framework";
-import { parseDatexSnapshot } from "./datex.js";
-import { parseDigitrafficSnapshot } from "./digitraffic.js";
-import { type DescribedFeed, type FeedSource, feedToSourceDescriptor, parserFor } from "./feeds.js";
+import { parseAutobahn } from "./autobahn.js";
+import { parseDatexSituations, parseDatexSnapshot } from "./datex.js";
+import { parseDigitraffic, parseDigitrafficSnapshot } from "./digitraffic.js";
+import type { RoadFeed } from "./feed-schema.js";
+import { type DescribedFeed, feedToSourceDescriptor } from "./feeds.js";
+import { parseFlatJson } from "./flatjson.js";
 import type { FlowBaseline, FlowContext, FlowOutput, FlowSites } from "./flow-output.js";
 import { flowParserOf } from "./flow-parsers.js";
+import { parseGddkia } from "./gddkia.js";
+import { parseGeoJson } from "./geojson.js";
+import { parseIbi511, parseIbi511Conditions } from "./ibi511.js";
+import { parseLtaIncidents } from "./lta.js";
 import { createMeasuredDataParser } from "./measuredData.js";
+import { parseOhgoEvents } from "./ohgo-events.js";
+import { parseOpen511 } from "./open511.js";
 import { flowOutput } from "./sites/assemble.js";
 import { enrichDrafts } from "./sites/enrich.js";
 import { situationDrafts } from "./situation/assemble.js";
@@ -18,10 +27,46 @@ import {
   reconcileRoadSnapshots,
   type SnapshotEvent,
 } from "./snapshot.js";
+import { parseTrafikverket } from "./trafikverket.js";
 import type { SourceDescriptor } from "./types.js";
+import { parseVicDisruptions } from "./vic-disruptions.js";
+import { parseWzdx } from "./wzdx.js";
 
 /** What a roads feed is parsed as: the catalogue fields its parser reads. */
-export type RoadFeed = DescribedFeed & Pick<FeedSource, "format" | "snapshot">;
+export type ParsedFeed = DescribedFeed & Pick<RoadFeed, "format" | "snapshot">;
+
+type SituationParser = typeof parseDatexSituations;
+
+/** The situation parser of every situation format. */
+const SITUATION_PARSERS = {
+  datex2: parseDatexSituations,
+  open511: parseOpen511,
+  wzdx: parseWzdx,
+  geojson: parseGeoJson,
+  ibi511: parseIbi511 as SituationParser,
+  "ibi511-conditions": parseIbi511Conditions as SituationParser,
+  lta: parseLtaIncidents as SituationParser,
+  gddkia: parseGddkia,
+  flatjson: parseFlatJson as SituationParser,
+  trafikverket: parseTrafikverket as SituationParser,
+  autobahn: parseAutobahn,
+  digitraffic: parseDigitraffic,
+  "ohgo-events": parseOhgoEvents as SituationParser,
+  "vic-disruptions": parseVicDisruptions as SituationParser,
+} satisfies Record<string, SituationParser>;
+
+/** Every situation format; the wire formats `SITUATION_PARSERS` reads. */
+export const SITUATION_FORMAT_CODES = Object.keys(SITUATION_PARSERS) as SituationFormatCode[];
+
+export type SituationFormatCode = keyof typeof SITUATION_PARSERS;
+
+/** The situation parser of a format; throws when no situation parser reads it. */
+export function situationParserOf(format: string): SituationParser {
+  if (!Object.hasOwn(SITUATION_PARSERS, format)) {
+    throw new Error(`No situation parser registered for format: ${format}`);
+  }
+  return SITUATION_PARSERS[format as SituationFormatCode];
+}
 
 /**
  * The formats whose parsers account for every input record. A source that
@@ -46,7 +91,7 @@ const SNAPSHOT_REPORTERS: Record<
  * is the instant the poll fetched the payloads, which drafts are dated by.
  */
 export function parseEvents(
-  feed: RoadFeed,
+  feed: ParsedFeed,
   buffers: readonly Buffer[],
   opts: { fetchedAt?: string } = {},
 ): ParseOutput {
@@ -58,7 +103,7 @@ export function parseEvents(
       : undefined;
   const out = emptyParseOutput();
   if (reporter === undefined) {
-    const parse = parserFor(feed.format);
+    const parse = situationParserOf(feed.format);
     const events: SnapshotEvent[] = buffers.flatMap((b) => parse(b, source));
     out.situations = situationDrafts(events, { source, ...at });
     return out;
@@ -128,7 +173,7 @@ function accountingOf(
  * which must never read as "no readings".
  */
 export function parseFlows(
-  feed: RoadFeed,
+  feed: ParsedFeed,
   input: string | Buffer,
   sites: FlowSites | undefined,
   ctx: FlowContext,
@@ -146,7 +191,7 @@ export function parseFlows(
  * and the drafts are then partial.
  */
 export function measuredDataReader(
-  feed: RoadFeed,
+  feed: ParsedFeed,
   sites: FlowSites | undefined,
   ctx: FlowContext,
 ): { write(chunk: string | Uint8Array): void; close(): FlowOutput & { failed: boolean } } {
@@ -177,7 +222,7 @@ export function measuredDataReader(
  * congestion situation. Returns the enriched output; the input is not changed.
  */
 export function enrichReadings(
-  feed: RoadFeed,
+  feed: ParsedFeed,
   output: FlowOutput,
   baselines: ReadonlyMap<string, FlowBaseline>,
 ): FlowOutput {

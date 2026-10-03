@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:nz-nzta:526478",
+    "id": "oc:situation:nz-nzta-events:526478",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -19,7 +19,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nz-nzta",
+      "sourceId": "nz-nzta-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "526478",
@@ -67,14 +67,14 @@
       "kind": "other",
       "v": 1
     },
-    "canonicalId": "29fcd933fcbac10db55bd559f694d47301f257a36fbca140e9c0069c2672661d",
+    "canonicalId": "487b026f95e8861222c146563f4d8b827af4e555c7db41f5c713f60f57bb9b2f",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "2f7ef3bdcd69ec0240d4d1cef3fd409bd96473ace1381e6883f846665f26e4cc"
+    "contentHash": "eeb8b0b40650a74216e5192a4fc2dfa66fc7eb188d26e1e3a021c5172e888a27"
   },
   {
-    "id": "oc:situation:nz-nzta:533846",
+    "id": "oc:situation:nz-nzta-events:533846",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -93,7 +93,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nz-nzta",
+      "sourceId": "nz-nzta-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "533846",
@@ -141,14 +141,14 @@
       "kind": "other",
       "v": 1
     },
-    "canonicalId": "6abcc9420bd3f5527a330f10b85c5f9f77ec0358ac104650c24c42348adfd82d",
+    "canonicalId": "42b60a017231eba18994d72d83ff0fd1049d4bdf66b11c8f64265a9d9ce47184",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "025068f98c8535730706be384469785f1c1a352f623147c23434deb6a02e2fb3"
+    "contentHash": "60b88a258e0409a37e69e5e2f5a8c2ddad0055eff47f175341622d71b986c4d7"
   },
   {
-    "id": "oc:situation:nz-nzta:540941",
+    "id": "oc:situation:nz-nzta-events:540941",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -167,7 +167,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nz-nzta",
+      "sourceId": "nz-nzta-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "540941",
@@ -215,14 +215,14 @@
       "kind": "other",
       "v": 1
     },
-    "canonicalId": "51030975264eaf4bef5d9b0cb5a02e39402e45f3f70d2044c611d2632894a858",
+    "canonicalId": "1fb8466446a77b7271fbb2692e1637c71dfc8c58636e2ec83a8aabfaf55f3977",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "b5f80056d75858657ee87ef1ce338ea0feaadb23b0c678910e30f92ccfb08a5a"
+    "contentHash": "db659c88af8a2001dac12387e33a44025aeceb3bef57cd808774e095a5b0de6c"
   },
   {
-    "id": "oc:situation:nz-nzta:541696",
+    "id": "oc:situation:nz-nzta-events:541696",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -241,7 +241,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nz-nzta",
+      "sourceId": "nz-nzta-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "541696",
@@ -290,14 +290,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "5ef0f5cbeb798618d28bc3d7c8835be48d3342db326a0cdeb55198a81b1f9a10",
+    "canonicalId": "745a0e151b483395640dbb09aad331c851d6ed02e2a2add54855262abb6e9540",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "dbe910f86a9c65c125155e23520bb1d6b2bcd5a47f51be98c18abbf73c68e8ad"
+    "contentHash": "0a1041fd13d17e028f535f9a7d6b68c5025ddd6087ab40a064aeebde61f51702"
   },
   {
-    "id": "oc:situation:nz-nzta:542780",
+    "id": "oc:situation:nz-nzta-events:542780",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -316,7 +316,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nz-nzta",
+      "sourceId": "nz-nzta-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "542780",
@@ -365,14 +365,14 @@
       "kind": "incident",
       "v": 1
     },
-    "canonicalId": "9bc0e9e8494dd2e22a1671c4abb90fbd6e319318693def34225ef4120fd5c929",
+    "canonicalId": "fd81471c20fa641eec60f1aac7c14bbfbcda843958f2368ad279a67fea4b10fc",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "e9b4d50c32634fad18b2597bb72c871adffb36d1fcf51d62d52f9387f5c231a3"
+    "contentHash": "cbadf3ca36061f7513b76ce75eda6ad2ce7ef84fb60625fd073d36045a8ba395"
   },
   {
-    "id": "oc:situation:nz-nzta:543025",
+    "id": "oc:situation:nz-nzta-events:543025",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -391,7 +391,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nz-nzta",
+      "sourceId": "nz-nzta-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "543025",
@@ -439,10 +439,10 @@
       "kind": "other",
       "v": 1
     },
-    "canonicalId": "c538bce8ba33428c23f92cb37205e0821af71ee3098d4449a15cf11813f9a0f9",
+    "canonicalId": "d4fdd48c3ef187c71a81a0b95da954c94a2ea4a502c2ed9b603d901334a3c57f",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "754cd28198fabf285d1ae07762945ba1d52355530ef8ac9839f2c52e24e683a2"
+    "contentHash": "a6ec6d25cfb95ec16dd4a912e8c49478725f494195ac19a85989277dbad18309"
   }
 ]

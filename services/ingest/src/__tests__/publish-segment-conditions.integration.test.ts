@@ -1,11 +1,11 @@
-import type { DomainRegistry } from "@openconditions/ingest-framework";
+import type { Catalog, CatalogFeed } from "@openconditions/ingest-framework";
 import { RESOLVER_VERSION } from "@openconditions/roads";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { buildDomainRegistry } from "../domains.js";
 import { FeedStatusStore } from "../feed-status.js";
 import { registerPublishRoutes } from "../publish-routes.js";
+import { REPO_CATALOG, testFeed } from "./helpers/catalog.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { bindSituation, situationDraft, writeSituations } from "./helpers/situations.js";
 
@@ -114,46 +114,35 @@ afterAll(async () => {
   await db?.close();
 }, 30_000);
 
+/** The repo catalogue with one scheduled test feed, open to changes a test makes. */
+interface TestCatalog extends Catalog {
+  feeds: CatalogFeed[];
+  discovered: CatalogFeed[];
+}
+
 async function withApp<T>(
-  fn: (app: ReturnType<typeof Fastify>, registry: DomainRegistry) => Promise<T>,
+  fn: (app: ReturnType<typeof Fastify>, catalog: TestCatalog) => Promise<T>,
 ): Promise<T> {
   const app = Fastify();
-  const loaded = await buildDomainRegistry();
-  const registry = {
-    ...loaded,
-    roads: {
-      ...loaded.roads,
-      feeds: [
-        {
-          id: SOURCE,
-          name: "Binding test",
-          format: "datex2",
-          operator: "test",
-          country: "DE",
-          cadenceSec: 60,
-          freshnessWindowSec: 3600,
-          license: "CC0-1.0",
-          attribution: SOURCE,
-          privacyUrl: "https://example.test/privacy",
-          tier: "authoritative",
-          rights: {
-            sourceRedistribution: true,
-            derivedRedistribution: true,
-            commercialUse: true,
-            attributionRequired: false,
-            retention: true,
-            reviewedAt: NOW,
-            evidenceOrigin: "test",
-            evidenceVersion: "1",
-          },
-        },
-      ],
-    },
-  } as typeof loaded;
-  registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
+  const catalog: TestCatalog = {
+    ...REPO_CATALOG,
+    feeds: [
+      testFeed({
+        id: SOURCE,
+        name: "Binding test",
+        cadenceSec: 60,
+        freshnessWindowSec: 3600,
+        license: "CC0-1.0",
+        attribution: SOURCE,
+        terms: { note: "test grant", reviewedAt: NOW },
+      }),
+    ],
+    discovered: [...REPO_CATALOG.discovered],
+  };
+  registerPublishRoutes(app, sql, new FeedStatusStore(), catalog);
   await app.ready();
   try {
-    return await fn(app, registry);
+    return await fn(app, catalog);
   } finally {
     await app.close();
   }
@@ -215,7 +204,7 @@ async function withStoredRights(fn: () => Promise<void>) {
 describe("GET /segments/conditions.json", () => {
   it("withdraws retained routing evidence when a catalogue child is no longer scheduled", async () => {
     await withStoredRights(() =>
-      withApp(async (app, registry) => {
+      withApp(async (app, catalog) => {
         const published = async () => [
           await conditionIds(app),
           (
@@ -229,31 +218,30 @@ describe("GET /segments/conditions.json", () => {
         ];
         for (const ids of await published()) expect(ids).toContain(conditionId("a1"));
 
-        const child = registry.roads!.feeds[0]!;
+        const child = catalog.feeds[0]!;
         child.parentSourceId = "catalog-parent";
         // Discovery may still carry an approved review after operators remove
         // this child from the catalogue's selected scheduling ids.
         child.selectionState = "approved";
-        registry.roads!.feeds = [];
-        registry.roads!.discoveredFeeds = [child];
+        catalog.feeds.length = 0;
+        catalog.discovered.push(child);
         for (const ids of await published()) expect(ids).not.toContain(conditionId("a1"));
 
         // A source absent from the local catalogue can be federated; its stored
         // provenance remains authoritative, unlike an explicitly unselected child.
-        registry.roads!.discoveredFeeds = [];
+        catalog.discovered.length = 0;
         for (const ids of await published()) expect(ids).toContain(conditionId("a1"));
       }),
     );
   });
 
   it.each([false, undefined])(
-    "uses current registry rights instead of a stored grant: commercialUse=%s",
+    "uses current catalogue rights instead of a stored grant: commercialUse=%s",
     async (commercialUse) => {
       await withStoredRights(() =>
-        withApp(async (app, registry) => {
-          const feed = registry.roads!.feeds[0]!;
-          feed.rights =
-            commercialUse === undefined ? undefined : { ...feed.rights!, commercialUse };
+        withApp(async (app, catalog) => {
+          const feed = catalog.feeds[0]!;
+          feed.rights = { ...feed.rights, commercialUse: commercialUse ?? null };
           expect(await conditionIds(app)).not.toContain(conditionId("a1"));
         }),
       );

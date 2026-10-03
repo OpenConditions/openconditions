@@ -37,26 +37,28 @@ const ctx = (now: string) => ({ registry, instanceId: "test.local", now, complet
 
 describe("record readers", () => {
   it("read a stored record and its revisions, oldest first", async () => {
-    await writeSnapshot(sql, "nl-ndw", { situations: [situationDraft("a")] }, ctx(T1));
+    await writeSnapshot(sql, "nl-ndw-events", { situations: [situationDraft("a")] }, ctx(T1));
     const worse = situationDraft("a", { certainty: "likely" });
-    await writeSnapshot(sql, "nl-ndw", { situations: [worse] }, ctx(T2));
-    const record = await readRecord(sql, "situation", "oc:situation:nl-ndw:a");
+    await writeSnapshot(sql, "nl-ndw-events", { situations: [worse] }, ctx(T2));
+    const record = await readRecord(sql, "situation", "oc:situation:nl-ndw-events:a");
     expect(record).toMatchObject({ certainty: "likely", revision: 2, recordedAt: T2 });
     expect(record).not.toHaveProperty("evidence");
-    const revisions = await readRevisions(sql, "situation", "oc:situation:nl-ndw:a");
+    const revisions = await readRevisions(sql, "situation", "oc:situation:nl-ndw-events:a");
     expect(revisions.map((r) => [r.revision, r.changeKinds, r.record["certainty"]])).toEqual([
       [1, ["created"], "observed"],
       [2, ["classification_change"], "likely"],
     ]);
-    expect(await readRecord(sql, "situation", "oc:situation:nl-ndw:none")).toBeUndefined();
+    expect(await readRecord(sql, "situation", "oc:situation:nl-ndw-events:none")).toBeUndefined();
   });
 
   it("merge a situation's materialised evidence back into it", async () => {
     await sql`UPDATE conditions.situation
       SET evidence_state = 'corroborated', confidence_score = 0.8, routing_eligible = false,
           corroborations = 2
-      WHERE id = 'oc:situation:nl-ndw:a'`;
-    expect((await readRecord(sql, "situation", "oc:situation:nl-ndw:a"))?.["evidence"]).toEqual({
+      WHERE id = 'oc:situation:nl-ndw-events:a'`;
+    expect(
+      (await readRecord(sql, "situation", "oc:situation:nl-ndw-events:a"))?.["evidence"],
+    ).toEqual({
       state: "corroborated",
       confidenceScore: 0.8,
       routingEligible: false,

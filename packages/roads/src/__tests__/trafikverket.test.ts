@@ -3,7 +3,7 @@ import { parseTrafikverket } from "../trafikverket.js";
 import type { SourceDescriptor } from "../types.js";
 
 const SRC: SourceDescriptor = {
-  id: "se-trafikverket",
+  id: "se-trafikverket-events",
   attribution: "Trafikverket",
   country: "SE",
   license: "CC0-1.0",
@@ -40,14 +40,14 @@ describe("parseTrafikverket", () => {
     );
     expect(out).toHaveLength(2);
     const byId = Object.fromEntries(out.map((e) => [e.id, e]));
-    expect(byId["se-trafikverket:d1"]!.type).toBe("accident");
-    expect(byId["se-trafikverket:d1"]!.severity).toBe("high");
-    expect(byId["se-trafikverket:d1"]!.geometry).toEqual({
+    expect(byId["se-trafikverket-events:d1"]!.type).toBe("accident");
+    expect(byId["se-trafikverket-events:d1"]!.severity).toBe("high");
+    expect(byId["se-trafikverket-events:d1"]!.geometry).toEqual({
       type: "Point",
       coordinates: [18.0686, 59.3293],
     });
-    expect(byId["se-trafikverket:d2"]!.type).toBe("roadworks");
-    expect(byId["se-trafikverket:d2"]!.geometry!.type).toBe("LineString");
+    expect(byId["se-trafikverket-events:d2"]!.type).toBe("roadworks");
+    expect(byId["se-trafikverket-events:d2"]!.geometry!.type).toBe("LineString");
     expect(out[0]!.sourceFormat).toBe("trafikverket");
   });
 

@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:au-vic-transportvic-planned:PLN-90001",
+    "id": "oc:situation:au-vic-transportvic-planned-events:PLN-90001",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -35,7 +35,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "au-vic-transportvic-planned",
+      "sourceId": "au-vic-transportvic-planned-events",
       "sourceFormat": "vic-disruptions",
       "accessMode": "bulk",
       "recordId": "PLN-90001",
@@ -141,14 +141,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "66d6a333320d79b92bec33b4ea924d6b3c0bfa816a8a8cb4736099ec140ec727",
+    "canonicalId": "799ce1df7c6bc4e76b9771f6ec61ecfe8a9ccaf8bd1fff1709ad7b245f7c8cd3",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "7340dd889c8299fa076bd33645035f11788ee676a9ef4badf002934f624542e6"
+    "contentHash": "6448c3bf4e6f6bb5d18470fb67fe2318f947164fbf70dcf83ebfe0279c9761a0"
   },
   {
-    "id": "oc:situation:au-vic-transportvic-planned:PLN-90002",
+    "id": "oc:situation:au-vic-transportvic-planned-events:PLN-90002",
     "temporality": "scheduled",
     "location": {
       "geometry": {
@@ -189,7 +189,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "au-vic-transportvic-planned",
+      "sourceId": "au-vic-transportvic-planned-events",
       "sourceFormat": "vic-disruptions",
       "accessMode": "bulk",
       "recordId": "PLN-90002",
@@ -230,10 +230,10 @@
       "kind": "public_event",
       "v": 1
     },
-    "canonicalId": "6dee7846e1df4e27428352932ffe85e5dbc000ffbc316f6b1974fc139d9f23bb",
+    "canonicalId": "b8b4533f5d0ce9c71c2ed56311ded22d7085989c6136ff82c7838655f2e0e0b6",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "d6b1ea006c2f43f1627eed57d950db1874394df9a7ffa56c0299360cea4699e5"
+    "contentHash": "bd466acffad9b76768db8864628d2fec896d28cf1b05395403101419b9521a7e"
   }
 ]

@@ -1,0 +1,244 @@
+{
+  "features": [
+    {
+      "id": "oc:feature:de-nw-autobahn-flow:fs.MQ_555.050_AB_SW_R_1",
+      "temporality": "static",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            7.545113,
+            51.474907
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-flow",
+        "sourceFormat": "datex2-elaborated",
+        "accessMode": "bulk",
+        "recordId": "fs.MQ_555.050_AB_SW_R_1",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "LicenseRef-GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "feature",
+      "kind": "measurement_site",
+      "type": "traffic",
+      "lifecycle": "operational",
+      "components": [
+        {
+          "key": "volume:car",
+          "kind": "sensor_channel",
+          "details": {
+            "kind": "sensor_channel",
+            "v": 1,
+            "vehicleClass": "car",
+            "property": "traffic.volume"
+          }
+        }
+      ],
+      "details": {
+        "kind": "measurement_site",
+        "v": 1,
+        "measuredProperties": [
+          "traffic.speed",
+          "traffic.volume",
+          "traffic.los"
+        ]
+      },
+      "canonicalId": "507f6698ed36647b6a8fbf89c73f8d47272e088bfb2114bfb00948c74ab3f1ad",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "e4b9a04f5d0030b8b34f2f22b1b64d83ae480b400502092e3d1293d1b87a688f"
+    }
+  ],
+  "observations": [
+    {
+      "id": "oc:observation:de-nw-autobahn-flow:e22061af8821be5af7ec8de362597006ca13c9af293ffce72fb15961247d90fd",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            7.545113,
+            51.474907
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-flow",
+        "sourceFormat": "datex2-elaborated",
+        "accessMode": "bulk",
+        "recordId": "fs.MQ_555.050_AB_SW_R_1",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "LicenseRef-GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.speed",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:de-nw-autobahn-flow:fs.MQ_555.050_AB_SW_R_1"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 92,
+        "unit": "km/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-27T00:02:30.880Z"
+      },
+      "aggregation": "mean",
+      "quality": {
+        "sampleCount": 18
+      },
+      "canonicalId": "1a2f33c3d5789750426bfa2596291965f20785ac532d80da47b419fa488a7d60",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "3be692ca72d619a7528f5c5d4f130964061ec17af12ad215a740d797b0d06196"
+    },
+    {
+      "id": "oc:observation:de-nw-autobahn-flow:eaa88cfff9a4eaefe33467e2182c23ed3b3788436df3659777fe76e6bfe13cc7",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            7.545113,
+            51.474907
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-flow",
+        "sourceFormat": "datex2-elaborated",
+        "accessMode": "bulk",
+        "recordId": "fs.MQ_555.050_AB_SW_R_1",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "LicenseRef-GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:de-nw-autobahn-flow:fs.MQ_555.050_AB_SW_R_1"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 60,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-27T00:02:30.880Z"
+      },
+      "aggregation": "mean",
+      "canonicalId": "19b578215e6909951c4ef5ad57dde0acc705ea4250181dd1d24faa103c86d802",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "4f6e0b12e6ad9488a9e29c74519621115d30a0ecf5d8f29292ff036bcb8c22fd"
+    },
+    {
+      "id": "oc:observation:de-nw-autobahn-flow:c305f63056c349151329de61c50f5b794760fbb9368919ef14ba6be66505b96b",
+      "temporality": "live",
+      "location": {
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            7.545113,
+            51.474907
+          ]
+        },
+        "extent": "point",
+        "geometryOrigin": "site_table",
+        "fuzziness": "exact"
+      },
+      "provenance": {
+        "origin": "feed",
+        "sourceId": "de-nw-autobahn-flow",
+        "sourceFormat": "datex2-elaborated",
+        "accessMode": "bulk",
+        "recordId": "fs.MQ_555.050_AB_SW_R_1/volume:car",
+        "attribution": {
+          "provider": "Quelle: Die Autobahn GmbH des Bundes",
+          "license": "LicenseRef-GeoNutzV",
+          "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/"
+        },
+        "privacy": {
+          "class": "authoritative"
+        },
+        "instanceId": "golden.test"
+      },
+      "freshness": {
+        "fetchedAt": "2026-09-18T10:00:00.000Z"
+      },
+      "class": "observation",
+      "kind": "observation",
+      "property": "traffic.volume",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:de-nw-autobahn-flow:fs.MQ_555.050_AB_SW_R_1",
+        "componentKey": "volume:car"
+      },
+      "result": {
+        "type": "quantity",
+        "value": 60,
+        "unit": "1/h"
+      },
+      "phenomenonTime": {
+        "instant": "2026-07-27T00:02:30.880Z"
+      },
+      "aggregation": "mean",
+      "canonicalId": "9fc7e0e9e4bbbe757ec4d8a5b24f4414e1ed04cb8f45d7eeaf87198f029eaae7",
+      "domain": "roads",
+      "revision": 1,
+      "recordedAt": "2026-09-18T10:00:00.000Z",
+      "contentHash": "9f7f41ca4eb0a771fee5914482df6db50ac53ccc2e870d1928f40d06d3fb756f"
+    }
+  ],
+  "situations": []
+}

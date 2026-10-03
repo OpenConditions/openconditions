@@ -5,12 +5,12 @@ import type { SourceDescriptor } from "../types.js";
 import { parseVicDisruptions } from "../vic-disruptions.js";
 
 const PLANNED: SourceDescriptor = {
-  id: "au-vic-transportvic-planned",
+  id: "au-vic-transportvic-planned-events",
   attribution: "Department of Transport and Planning (Victoria)",
   country: "AU",
   license: "CC-BY-4.0",
 };
-const UNPLANNED: SourceDescriptor = { ...PLANNED, id: "au-vic-transportvic-unplanned" };
+const UNPLANNED: SourceDescriptor = { ...PLANNED, id: "au-vic-transportvic-unplanned-events" };
 
 const load = (name: string) =>
   readFileSync(join(import.meta.dirname, `fixtures/vic-au/${name}.json`), "utf8");
@@ -19,7 +19,7 @@ describe("parseVicDisruptions — planned v1", () => {
   it("maps a planned disruption to roadworks with its validity window and impact", () => {
     const [ev] = parseVicDisruptions(load("planned"), PLANNED);
     expect(ev).toBeDefined();
-    expect(ev!.id).toBe("au-vic-transportvic-planned:PLN-90001");
+    expect(ev!.id).toBe("au-vic-transportvic-planned-events:PLN-90001");
     expect(ev!.sourceFormat).toBe("vic-disruptions");
     expect(ev!.type).toBe("roadworks");
     expect(ev!.category).toBe("planned");
@@ -66,7 +66,7 @@ describe("parseVicDisruptions — planned v1", () => {
 
   it("skips a record with no usable geometry", () => {
     const events = parseVicDisruptions(load("planned"), PLANNED);
-    expect(events.map((e) => e.id)).not.toContain("au-vic-transportvic-planned:PLN-NOGEO");
+    expect(events.map((e) => e.id)).not.toContain("au-vic-transportvic-planned-events:PLN-NOGEO");
     expect(events).toHaveLength(2);
   });
 
@@ -88,7 +88,7 @@ describe("parseVicDisruptions — unplanned v2", () => {
     const events = parseVicDisruptions(load("unplanned"), UNPLANNED);
     const byId = new Map(events.map((e) => [e.id, e]));
 
-    const crash = byId.get("au-vic-transportvic-unplanned:UNP-5001")!;
+    const crash = byId.get("au-vic-transportvic-unplanned-events:UNP-5001")!;
     expect(crash.type).toBe("accident");
     expect(crash.category).toBe("incident");
     expect(crash.isPlanned).toBe(false);
@@ -97,7 +97,7 @@ describe("parseVicDisruptions — unplanned v2", () => {
     expect(crash.dataUpdatedAt).toBe("2026-07-31T06:40:00.000Z");
     expect(crash.validFrom).toBe("2026-07-31T06:12:00.000Z");
 
-    expect(byId.get("au-vic-transportvic-unplanned:UNP-5002")!.type).toBe("weather");
+    expect(byId.get("au-vic-transportvic-unplanned-events:UNP-5002")!.type).toBe("weather");
   });
 
   it("skips a feature with null geometry", () => {

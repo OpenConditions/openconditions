@@ -68,7 +68,7 @@ async function signed(
   return { headers: s.headers, ...(body ? { payload: body } : {}) };
 }
 
-const idOf = (local: string) => `oc:situation:nl-ndw:${local}`;
+const idOf = (local: string) => `oc:situation:nl-ndw-events:${local}`;
 
 beforeAll(async () => {
   const container = await new GenericContainer("postgis/postgis:16-3.4")
@@ -249,7 +249,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
       const app = await build({ sql, env: enabledEnv, logger: false });
       await sql`CREATE FUNCTION conditions.fail_inbox_retry_test() RETURNS trigger AS $$
       BEGIN
-        IF NEW.id LIKE 'oc:situation:nl-ndw:retry-second-%' THEN
+        IF NEW.id LIKE 'oc:situation:nl-ndw-events:retry-second-%' THEN
           RAISE EXCEPTION 'temporary local failure' USING ERRCODE = TG_ARGV[0];
         END IF;
         RETURN NEW;

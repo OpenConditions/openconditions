@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { feedSecretValues, redactSecrets, redactUrl } from "../redact.js";
+import { catalogFeed } from "./helpers/catalog-feed.js";
 
 describe("redactUrl", () => {
   it("blanks query-string values but keeps param names and the path", () => {
@@ -77,20 +78,48 @@ describe("redactSecrets", () => {
 });
 
 describe("feedSecretValues", () => {
-  it("collects resolved values of the feed's allowed template vars, filtered by length", () => {
-    const values = feedSecretValues(
-      { auth: { kind: "bearer", envVar: "TOKEN" }, requiredEnv: ["SUB_ID", "SHORT"] },
-      { TOKEN: "longenoughtoken", SUB_ID: "999999secretid", SHORT: "ab" },
-    );
+  const keyed = catalogFeed({
+    auth: { kind: "bearer", credential: "token" },
+    endpoints: {
+      main: { url: "https://m/${sub_id}?region=${short}", cadenceSec: 60 },
+    },
+  });
+
+  it("collects resolved values of the feed's credentials, filtered by length", () => {
+    const values = feedSecretValues(keyed, {
+      XX_TEST_EVENTS_TOKEN: "longenoughtoken",
+      XX_TEST_EVENTS_SUB_ID: "999999secretid",
+      XX_TEST_EVENTS_SHORT: "ab",
+    });
     expect(values.sort()).toEqual(["999999secretid", "longenoughtoken"].sort());
   });
 
-  it("skips vars that are unset", () => {
-    const values = feedSecretValues({ requiredEnv: ["MISSING"] }, {});
-    expect(values).toEqual([]);
+  it("collects each item of an expanded list, as the URLs carry them", () => {
+    const fanned = catalogFeed({
+      credentials: { subscription_id: { title: "Subscription ids" } },
+      endpoints: {
+        main: {
+          url: "https://m/subscription/${subscription_id}/pull?id=${subscription_id}",
+          expand: "subscription_id",
+          cadenceSec: 60,
+        },
+      },
+    });
+    const env = { XX_TEST_EVENTS_SUBSCRIPTION_ID: "648508602333433856, 648512079906336768" };
+    expect(feedSecretValues(fanned, env).sort()).toEqual(
+      ["648508602333433856, 648512079906336768", "648508602333433856", "648512079906336768"].sort(),
+    );
+    const message = "HTTP 403 fetching https://m/subscription/648512079906336768/pull";
+    expect(redactSecrets(message, feedSecretValues(fanned, env))).toBe(
+      "HTTP 403 fetching https://m/subscription/***/pull",
+    );
   });
 
-  it("is empty for a feed with no auth and no requiredEnv", () => {
-    expect(feedSecretValues({}, { RANDOM: "somevalue" })).toEqual([]);
+  it("skips credentials that are unset", () => {
+    expect(feedSecretValues(keyed, {})).toEqual([]);
+  });
+
+  it("is empty for a feed that names no credential", () => {
+    expect(feedSecretValues(catalogFeed(), { RANDOM: "somevalue" })).toEqual([]);
   });
 });

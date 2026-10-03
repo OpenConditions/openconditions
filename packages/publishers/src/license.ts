@@ -1,26 +1,22 @@
 import { licenseInfo } from "@openconditions/ingest-framework";
 
-/** Fallback SPDX/short ids of share-alike (copyleft) licenses not (yet) in the
- *  registry. Matched case-insensitively. */
-const SHARE_ALIKE_FALLBACK = ["cc-by-sa", "odbl", "gpl", "agpl", "cc-sa"];
-
-/** Share-alike per the license registry; falls back to substrings for unregistered ids. */
+/** Share-alike per the license registry. */
 export function isShareAlikeLicense(license: string | undefined): boolean {
   if (!license) return false;
-  const info = licenseInfo(license);
-  if (info) return info.shareAlike;
-  const l = license.toLowerCase();
-  return SHARE_ALIKE_FALLBACK.some((s) => l.includes(s));
+  return licenseInfo(license)?.shareAlike ?? false;
 }
 
 /**
  * The permissive-export predicate as a plain license check, for emitters that
  * work off raw SQL rows rather than whole records. An absent license is
  * permissive: an undeclared license means the feed's own terms apply, not
- * copyleft.
+ * copyleft. An id the registry does not know is not: lookup is exact, so a
+ * misspelt or unregistered share-alike id must never pass as permissive.
  */
 export function isPermissiveLicense(license: string | null | undefined): boolean {
-  return !isShareAlikeLicense(license ?? undefined);
+  if (!license) return true;
+  const info = licenseInfo(license);
+  return info !== undefined && !info.shareAlike;
 }
 
 /** The parts of a model record licence egress reads. */

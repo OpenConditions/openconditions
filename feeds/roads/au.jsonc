@@ -1,0 +1,264 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "subdivision": "nsw",
+      "operator": "livetraffic",
+      "product": "events",
+      "name": "Live Traffic NSW (New South Wales)",
+      "tier": "authoritative",
+      "format": "geojson",
+      "credentials": {
+        "api_key": {
+          "title": "Live Traffic NSW API key (Australia)",
+          "setup": {
+            "url": "https://opendata.transport.nsw.gov.au/data/user/register",
+            "urlLabel": "Register at Transport NSW Open Data",
+            "steps": [
+              "Register at opendata.transport.nsw.gov.au/data/user/register.",
+              "Create an API token under your account (Account → API tokens) and copy it. No need to create a separate application — the token alone authorises the live-hazard endpoints.",
+            ],
+            "cost": "Free",
+            "notes": "CC-BY-4.0; attribution \"Transport for NSW\".",
+          },
+        },
+      },
+      "auth": {
+        "kind": "header-key",
+        "header": "Authorization",
+        "credential": "api_key",
+        "valuePrefix": "apikey ",
+      },
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://api.transport.nsw.gov.au/v1/live/hazards/incident/open",
+            "https://api.transport.nsw.gov.au/v1/live/hazards/roadwork/open",
+            "https://api.transport.nsw.gov.au/v1/live/hazards/flood/open",
+            "https://api.transport.nsw.gov.au/v1/live/hazards/fire/open",
+            "https://api.transport.nsw.gov.au/v1/live/hazards/majorevent/open",
+            "https://api.transport.nsw.gov.au/v1/live/hazards/alpine/open",
+          ],
+          "cadenceSec": 180,
+        },
+      },
+      "geojson": {
+        "typeField": "mainCategory",
+        "typeMap": {
+          "Incident": "accident",
+          "Road Work": "roadworks",
+          "Flooding": "road_hazard.hazard.flooding",
+          "Fire": "hazard",
+          "Major Event": "public_event",
+          "Alpine": "weather",
+        },
+        "defaultType": "other",
+        "headlineField": "headline",
+        "descriptionField": "otherAdvice",
+      },
+      "freshnessWindowSec": 600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://opendata.transport.nsw.gov.au/dataset/live-traffic-hazards",
+      "attribution": "Transport for NSW",
+      "privacyUrl": "https://www.transport.nsw.gov.au/privacy-statement",
+    },
+    {
+      "subdivision": "sa",
+      "operator": "trafficsa",
+      "product": "events",
+      "name": "Traffic SA (South Australia)",
+      "tier": "authoritative",
+      "format": "geojson",
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",
+            "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/1/query?where=1%3D1&outFields=*&f=geojson",
+          ],
+          "cadenceSec": 300,
+        },
+      },
+      "geojson": {
+        "idField": "ROADWORKS_AND_INCIDENTS_ID",
+        "typeField": "REC_TYPE",
+        "typeMap": {
+          "ROADWORKS": "roadworks",
+          "24HR ROADWORKS": "roadworks",
+          "EMERGENCY WATERWORKS": "roadworks",
+          "SIGNAL FAULT": "equipment_fault.fault.traffic_signal",
+          "INCIDENT": "obstruction",
+          "COLLISION": "accident",
+          "CRASH": "accident",
+          "FLOODING": "road_hazard.hazard.flooding",
+          "EVENT": "public_event",
+          "ROAD CLOSURE": "road_closure",
+          "HAZARD": "hazard",
+        },
+        "defaultType": "other",
+        "headlineField": "DESCRIPTION",
+        "roadField": "ROAD_NO",
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+      "attribution": "Department for Infrastructure and Transport (South Australia)",
+      "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
+    },
+    {
+      // The /v1/events endpoint is used deliberately: each feature's geometry is a
+      // GeometryCollection of road segments, while /v2 appends an area-alert geometry
+      // the generic reader cannot separate. Ships the published public API key as the
+      // default (shared + globally rate-limited to 100 req/min); set
+      // AU_QLD_TRAFFIC_EVENTS_API_KEY to override with a registered key and avoid the quota.
+      "subdivision": "qld",
+      "operator": "traffic",
+      "product": "events",
+      "name": "QLDTraffic (Queensland)",
+      "tier": "authoritative",
+      "format": "geojson",
+      "credentials": {
+        "api_key": {
+          "title": "QLDTraffic API key (Australia) — optional",
+          "description": "Optional. A public key is bundled by default; set this only to use your own quota.",
+          "setup": {
+            "url": "https://www.qldtraffic.qld.gov.au/",
+            "urlLabel": "QLDTraffic",
+            "email": {
+              "to": "QLDTraffic@tmr.qld.gov.au",
+              "subject": "QLDTraffic API key request",
+              "body": "Organisation name, contact person, email, and application name.",
+            },
+            "notes": "Optional — the bundled public key is shared + rate-limited (100 req/min). Set your own to avoid 429s.",
+          },
+          "default": "3e83add325cbb69ac4d8e5bf433d770b",
+        },
+      },
+      "auth": { "kind": "query-key", "param": "apikey", "credential": "api_key" },
+      "endpoints": {
+        "main": { "url": "https://api.qldtraffic.qld.gov.au/v1/events", "cadenceSec": 300 },
+      },
+      "geojson": {
+        "idField": "id",
+        "typeField": "event_type",
+        "typeMap": {
+          "Hazard": "hazard",
+          "Crash": "accident",
+          "Congestion": "congestion",
+          "Roadworks": "roadworks",
+          "Special event": "public_event",
+          "Flooding": "road_hazard.hazard.flooding",
+        },
+        "defaultType": "other",
+        "headlineField": "description",
+        "descriptionField": "information",
+        "roadField": "road_summary.road_name",
+        "severityField": "event_priority",
+        "severityMap": {
+          "Red Alert": "critical",
+          "High": "high",
+          "Medium": "medium",
+          "Low": "low",
+        },
+        "updatedField": "last_updated",
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://www.qldtraffic.qld.gov.au/",
+      "attribution": "State of Queensland (Department of Transport and Main Roads)",
+      "privacyUrl": "https://www.qld.gov.au/legal/privacy",
+    },
+    {
+      "subdivision": "vic",
+      "operator": "vicroads",
+      "product": "flow",
+      "name": "Freeway Travel Time (Victoria)",
+      "tier": "authoritative",
+      "format": "geojson-flow",
+      // GeoJSON FeatureCollection: one LineString feature per freeway segment with
+      // a measured averageSpeed (km/h) and a categorical `condition`. Source
+      // refreshes every 30s; the portal caps callers at 5 req/min, so poll ~60s.
+      // NOTE: this is the CC-BY-4.0 Freeway feed, NOT the CC-BY-NC Bluetooth one.
+      "auth": {
+        "kind": "header-key",
+        "header": "Ocp-Apim-Subscription-Key",
+        "credential": "@au-vic-transportvic.api_key",
+      },
+      "endpoints": {
+        "main": {
+          "url": "https://api.opendata.transport.vic.gov.au/opendata/roads/traffic/freeway-travel-time/v1/traffic",
+          "cadenceSec": 60,
+        },
+      },
+      "flowMap": {
+        "idField": "id",
+        "speedField": "averageSpeed",
+        "statusField": "condition",
+        "statusMap": {
+          "Light": "freeFlow",
+          "Medium": "heavy",
+          "Heavy": "congested",
+        },
+        "updatedField": "publishedTime",
+      },
+      "freshnessWindowSec": 300,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Department of Transport and Planning (Victoria)",
+      "privacyUrl": "https://www.vic.gov.au/privacy",
+    },
+    {
+      "subdivision": "vic",
+      "operator": "transportvic",
+      "qualifier": "planned",
+      "product": "events",
+      "name": "Planned road disruptions (Victoria)",
+      "tier": "authoritative",
+      "format": "vic-disruptions",
+      // Planned v1 and unplanned v2 share this server and the
+      // Ocp-Apim-Subscription-Key scheme, so both reuse the Freeway feed's key.
+      // Unplanned v3 sits on another base path behind KeyId-header auth and adds
+      // only endTime/nextUpdateDue — a later upgrade, not worth a second key.
+      "auth": {
+        "kind": "header-key",
+        "header": "Ocp-Apim-Subscription-Key",
+        "credential": "@au-vic-transportvic.api_key",
+      },
+      "endpoints": {
+        "main": {
+          "url": "https://api.opendata.transport.vic.gov.au/opendata/roads/disruptions/planned/v1/disruptions",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Department of Transport and Planning (Victoria)",
+      "privacyUrl": "https://www.vic.gov.au/privacy",
+    },
+    {
+      "subdivision": "vic",
+      "operator": "transportvic",
+      "qualifier": "unplanned",
+      "product": "events",
+      "name": "Unplanned road disruptions (Victoria)",
+      "tier": "authoritative",
+      "format": "vic-disruptions",
+      "auth": {
+        "kind": "header-key",
+        "header": "Ocp-Apim-Subscription-Key",
+        "credential": "@au-vic-transportvic.api_key",
+      },
+      "endpoints": {
+        "main": {
+          "url": "https://api.opendata.transport.vic.gov.au/opendata/roads/disruptions/unplanned/v2",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Department of Transport and Planning (Victoria)",
+      "privacyUrl": "https://www.vic.gov.au/privacy",
+    },
+  ],
+}

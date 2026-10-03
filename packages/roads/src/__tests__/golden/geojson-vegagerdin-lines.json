@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:is-vegagerdin-lines:913080036",
+    "id": "oc:situation:is-vegagerdin-lines-conditions:913080036",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -35,7 +35,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "is-vegagerdin-lines",
+      "sourceId": "is-vegagerdin-lines-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "913080036",
@@ -95,14 +95,14 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "2fb8d402dd52384c263c4f1bf46cf6c1051dea7d0cb5538e573ebe6800e490d2",
+    "canonicalId": "23956232082112277dea20cad1ccea5732f949cfd5a3cd0703b763c8f04c4abd",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "011daf44c5a5c8283719966a8c4e93ac7be738b4233c60fed317e45c05350e25"
+    "contentHash": "fe03364d8ad5349d9796d46343c90fd426da0168be40d919070cbaec91144ca6"
   },
   {
-    "id": "oc:situation:is-vegagerdin-lines:911310036",
+    "id": "oc:situation:is-vegagerdin-lines-conditions:911310036",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -137,7 +137,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "is-vegagerdin-lines",
+      "sourceId": "is-vegagerdin-lines-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "911310036",
@@ -191,14 +191,14 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "56cb8e92a36ace5de398b3513956369306e65b6ba620daf855fdce83e546c069",
+    "canonicalId": "f2215b618b0ffffe17fba4f9c3c080b93987c73467e32c9346837433c1046a5c",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "9fa86c0e2cf8880cbbd4db20b632c6fe400eb708564f42570322783c1410457e"
+    "contentHash": "eb877b5b387f96e531bb61358992b4e642f4a98da15d9ee724834c61986d950e"
   },
   {
-    "id": "oc:situation:is-vegagerdin-lines:905020036",
+    "id": "oc:situation:is-vegagerdin-lines-conditions:905020036",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -233,7 +233,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "is-vegagerdin-lines",
+      "sourceId": "is-vegagerdin-lines-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "905020036",
@@ -274,14 +274,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "7bdc4eff67a37522f8183c149b98f3f76ed513a13cfa41e968c3f50bc68ea55c",
+    "canonicalId": "7b1e40b20dd35739a9ccbc27ed65e33fcf1ba7ee1de0cc727d75631b1ee3da2c",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "bd25cb4680a4bada822772e47257b893c210229ac0e1fa6a2229a2b862a9c0fa"
+    "contentHash": "4a32e1b49a0e586bd4315e8ab69d25f79eaac6be0573cdd19ec59cbf35312d99"
   },
   {
-    "id": "oc:situation:is-vegagerdin-lines:911220036",
+    "id": "oc:situation:is-vegagerdin-lines-conditions:911220036",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -316,7 +316,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "is-vegagerdin-lines",
+      "sourceId": "is-vegagerdin-lines-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "911220036",
@@ -361,14 +361,14 @@
         "ice"
       ]
     },
-    "canonicalId": "a5c739de0c8a2fc2226a1785c2e345ad8b18ecc45766fbd09b49fe9f50727e14",
+    "canonicalId": "a708bf0af415311672beb02ea14995dfeb862745c5c5ff408b172eb34cb5e88e",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f23bb6d69500820462dfa397a07e8d40d858be9278f526d30ff766784fb67569"
+    "contentHash": "ceaf123e9bcd6fde7f9c410534806974318dc51fde941da7de6620af6c0a91ac"
   },
   {
-    "id": "oc:situation:is-vegagerdin-lines:904470036",
+    "id": "oc:situation:is-vegagerdin-lines-conditions:904470036",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -403,7 +403,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "is-vegagerdin-lines",
+      "sourceId": "is-vegagerdin-lines-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "904470036",
@@ -451,10 +451,10 @@
       "v": 1,
       "basis": "temporary"
     },
-    "canonicalId": "7e1c94ffdd34ea0a4168b62a6979d0fbeea05cddee16f970a644cf0689a49979",
+    "canonicalId": "3ae3dbbc1cbb410ab43a8bb39c2ae782c447876754e3d1c61e7b6fd4078c03a9",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "df96255104bad533121404439c9f4da2415f2ba9cdc996a95a620c80cfc1e085"
+    "contentHash": "b931bebb20fe656c6686ebdaf6c04235543459865052cc291e396ceca9e69876"
   }
 ]

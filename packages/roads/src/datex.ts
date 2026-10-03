@@ -1043,7 +1043,7 @@ function valueContexts(node: unknown, localName: string, out: XmlObject[] = []):
  * here only with its own reviewed records, units and comparator semantics —
  * never because the generic parser happens to recognize a similarly named leaf.
  */
-const RESTRICTION_CONTRACT_SOURCES = new Set(["nl-ndw"]);
+const RESTRICTION_CONTRACT_SOURCES = new Set(["nl-ndw-events"]);
 
 function restrictionDetailsFor(
   rec: XmlObject,

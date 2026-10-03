@@ -1,7 +1,5 @@
-import type { Env } from "./auth.js";
-import { resolvedEnv } from "./auth.js";
-import type { FeedSourceBase } from "./feed-source.js";
-import { allowedTemplateVars } from "./template.js";
+import { type Env, feedCredentialNames, resolveCredential } from "./catalog/credentials.js";
+import type { CatalogFeed } from "./catalog/types.js";
 
 /**
  * Secret values shorter than this are never redacted — blanking a 2-3
@@ -64,23 +62,28 @@ export function redactSecrets(text: string, secretValues: Iterable<string>): str
 }
 
 /**
- * A feed's own secret values: the resolved values of every env var it is
- * declared to use ({@link allowedTemplateVars} — its auth vars plus any extra
- * `requiredEnv`), filtered to non-empty values at least
+ * A feed's own secret values: the resolved values of every credential it
+ * reads ({@link feedCredentialNames} — its auth and the `${field}`s and
+ * `expand` of its endpoints), filtered to non-empty values at least
  * {@link MIN_SECRET_LENGTH} long. Feed this to {@link redactSecrets} to scrub
  * a feed's credentials out of any string (URL, error message, log line) at
  * the source, before it ever reaches a log or the public feed-status route.
+ * An `expand` list is also collected item by item, since each request URL
+ * carries one item of it, not the whole list.
  */
-export function feedSecretValues(
-  src: Pick<FeedSourceBase, "auth" | "requiredEnv">,
-  env: Env = resolvedEnv(),
-): string[] {
+export function feedSecretValues(feed: CatalogFeed, env: Env = process.env): string[] {
+  const expanded = new Set(Object.values(feed.endpoints).map((e) => e.expand));
   const values: string[] = [];
-  for (const name of allowedTemplateVars(src)) {
-    const value = env[name];
+  const add = (value: string) => {
+    if (value.trim().length >= MIN_SECRET_LENGTH) values.push(value);
+  };
+  for (const name of feedCredentialNames(feed)) {
+    const value = resolveCredential(env, name.env);
     if (value == null) continue;
-    if (value.trim().length < MIN_SECRET_LENGTH) continue;
-    values.push(value);
+    add(value);
+    if (expanded.has(name.ref) && value.includes(",")) {
+      for (const item of value.split(",")) add(item.trim());
+    }
   }
   return values;
 }

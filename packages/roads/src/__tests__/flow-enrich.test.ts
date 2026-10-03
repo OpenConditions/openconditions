@@ -68,23 +68,25 @@ describe("enrichReadings", () => {
   });
 
   it("leaves a reading whose level the source states untouched", () => {
-    const bonn = flowFeed("de-nw-bonn");
+    const bonn = flowFeed("de-nw-bonn-flow");
     const out = flows(bonn, fixture("flow/bonn.json"));
     const enriched = enrichReadings(
       bonn,
       out,
-      new Map([["feature:oc:feature:de-nw-bonn:143", { freeFlowKph: 200, method: "derived" }]]),
+      new Map([
+        ["feature:oc:feature:de-nw-bonn-flow:143", { freeFlowKph: 200, method: "derived" }],
+      ]),
     );
     expect(enriched).toEqual(out);
   });
 
   it("leaves a reading that carries the feed's own free-flow speed untouched", () => {
-    const ohgo = flowFeed("us-oh-ohgo");
+    const ohgo = flowFeed("us-oh-ohgo-flow");
     const out = flows(ohgo, fixture("flow/ohgo.json"));
     const enriched = enrichReadings(
       ohgo,
       out,
-      new Map([["feature:oc:feature:us-oh-ohgo:d2", { freeFlowKph: 500, method: "derived" }]]),
+      new Map([["feature:oc:feature:us-oh-ohgo-flow:d2", { freeFlowKph: 500, method: "derived" }]]),
     );
     expect(enriched).toEqual(out);
   });

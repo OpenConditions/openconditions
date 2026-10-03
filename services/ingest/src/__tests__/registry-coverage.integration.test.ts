@@ -40,7 +40,7 @@ afterAll(async () => {
 
 async function insertSource(id: string, format: string) {
   await sql`
-    INSERT INTO conditions.source (id, domain, format, produces, access_mode, tier, country,
+    INSERT INTO conditions.source (id, domain, format, product, access_mode, tier, country,
       operator, license, attribution, cadence_sec, freshness_window_sec)
     VALUES (${id}, 'roads', ${format}, 'events', 'bulk', 'authoritative', 'NL', 'ndw',
       'CC0-1.0', 'NDW', 60, 300)`;
@@ -64,8 +64,8 @@ describe("kernel-closed CHECK constraints", () => {
 
 describe("boot coverage check", () => {
   it("passes when every loaded source's format is registered", async () => {
-    await insertSource("nl-ndw", "datex2");
-    await insertSource("be-miv", "miv");
+    await insertSource("nl-ndw-events", "datex2");
+    await insertSource("be-miv-flow", "miv");
     expect(await storedRegistryCodes(sql)).toEqual({
       sourceFormats: ["datex2", "miv"],
       kinds: [],
@@ -83,7 +83,7 @@ describe("boot coverage check", () => {
   }, 30_000);
 
   it("ignores the format of a source no longer loaded", async () => {
-    await insertSource("nl-ndw", "datex2");
+    await insertSource("nl-ndw-events", "datex2");
     await insertSource("xx-retired", "retired-format");
     await sql`UPDATE conditions.source SET active = false WHERE id = 'xx-retired'`;
     expect((await storedRegistryCodes(sql)).sourceFormats).toEqual(["datex2"]);
@@ -96,7 +96,7 @@ describe("boot coverage check", () => {
     await expect(
       assertStoredCodesRegistered(sql, productionRegistry(), { sourceFormats: false }),
     ).resolves.toBeUndefined();
-    await insertRecord("situation", "oc:situation:nl-ndw:s3", "volcano");
+    await insertRecord("situation", "oc:situation:nl-ndw-events:s3", "volcano");
     const error = await assertStoredCodesRegistered(sql, productionRegistry(), {
       sourceFormats: false,
     }).catch((e) => e);
@@ -106,9 +106,9 @@ describe("boot coverage check", () => {
   }, 30_000);
 
   it("reads the kinds of the class tables and the formats of the loaded sources", async () => {
-    await insertRecord("situation", "oc:situation:nl-ndw:s1", "incident");
+    await insertRecord("situation", "oc:situation:nl-ndw-events:s1", "incident");
     await insertRecord("feature", "oc:feature:nl-ndw-flow:f1", "measurement_site");
-    await insertSource("nl-ndw", "datex2");
+    await insertSource("nl-ndw-events", "datex2");
     expect(await storedRegistryCodes(sql)).toEqual({
       sourceFormats: ["datex2"],
       kinds: [
@@ -121,7 +121,7 @@ describe("boot coverage check", () => {
   }, 30_000);
 
   it("fails when a class table holds a kind the registry does not register", async () => {
-    await insertRecord("situation", "oc:situation:nl-ndw:s2", "volcano");
+    await insertRecord("situation", "oc:situation:nl-ndw-events:s2", "volcano");
     const error = await assertStoredCodesRegistered(sql, productionRegistry()).catch((e) => e);
     expect((error as RegistryCoverageError).gaps).toEqual(['situation kind "volcano"']);
     await sql`DELETE FROM conditions.situation`;
@@ -159,7 +159,7 @@ async function insertRecord(
     `INSERT INTO conditions.${table} (id, record, canonical_id, kind, domain, temporality,
        source_id, source_record_id, origin, access_mode, privacy_class, instance_id, revision,
        recorded_at, content_hash, fetched_at${extra.cols})
-     VALUES ('${id}', '{}'::jsonb, 'c', '${kind}', 'roads', 'live', 'nl-ndw', 'x', 'feed',
+     VALUES ('${id}', '{}'::jsonb, 'c', '${kind}', 'roads', 'live', 'nl-ndw-events', 'x', 'feed',
        'bulk', '${over.privacyClass ?? "authoritative"}', 'local', 1, now(), 'h', now()${extra.vals})`,
   );
 }

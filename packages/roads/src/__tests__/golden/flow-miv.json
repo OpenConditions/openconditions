@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:be-miv:4970",
+      "id": "oc:feature:be-miv-flow:4970",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -17,7 +17,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "be-miv",
+        "sourceId": "be-miv-flow",
         "sourceFormat": "miv",
         "accessMode": "bulk",
         "recordId": "4970",
@@ -54,16 +54,16 @@
           "traffic.vehicle_class_speed"
         ]
       },
-      "canonicalId": "16d61927ee6bff3a52f10569ff9c42493f30c8ed184429057dca90f8cb65c617",
+      "canonicalId": "4dcbdfe9f7d43f386b57381d3657db237055702d901066e70dd5146847210ad3",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "9061e55683fc728f4e6d1e2af74d0241ffc255e9d84c481104a7ec7e6505426a"
+      "contentHash": "dc71c13a272350fcf805a2f2c955270d9044c0c1e463d6601c216ff840bdb30c"
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:be-miv:2ff066a38d7130cfacd736b4dff213015eed1fdb7352d26f975db49cd2dbaa78",
+      "id": "oc:observation:be-miv-flow:830bbb87a29cfbe48d23e80d17231b76e19af114ab2720f040bfbb0da3c2ee5e",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -79,7 +79,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "be-miv",
+        "sourceId": "be-miv-flow",
         "sourceFormat": "miv",
         "accessMode": "bulk",
         "recordId": "4970",
@@ -101,7 +101,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:be-miv:4970"
+        "featureId": "oc:feature:be-miv-flow:4970"
       },
       "result": {
         "type": "quantity",
@@ -113,14 +113,14 @@
         "end": "2026-07-10T15:21:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "e72a5405177caac75ce7f8a2d9adbb7f4c23391eeb2c4a770f0aa8667c7d3379",
+      "canonicalId": "8cb976e271abba1b735860d6b15a3509f88d90b7789b3a14bedac45d99f20eae",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "17d38b3e4c5e759f21c06852d758b9d7c44a8c1e69085fb3fa17fae1c82127dd"
+      "contentHash": "4f8086d0c1a8a95c10d93e57f4e5a899f6a8c2c659a032d90a6ffc5828b2d914"
     },
     {
-      "id": "oc:observation:be-miv:930379dfc4c221b416749f6ea0d1a30e1cf9e71750011e40a84dc04d3b9e7dcd",
+      "id": "oc:observation:be-miv-flow:5504d60c60139433824fd5228ea8e04fbd5b9a00c4f214ddfed96b0010eb7ab1",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -136,7 +136,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "be-miv",
+        "sourceId": "be-miv-flow",
         "sourceFormat": "miv",
         "accessMode": "bulk",
         "recordId": "4970",
@@ -158,7 +158,7 @@
       "property": "traffic.volume",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:be-miv:4970"
+        "featureId": "oc:feature:be-miv-flow:4970"
       },
       "result": {
         "type": "quantity",
@@ -170,14 +170,14 @@
         "end": "2026-07-10T15:21:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "29f47245182329b629d8408e38251f43f6c44764dba2ec325c9dfcf51ef62790",
+      "canonicalId": "0be18695c93cce7964685e1e8bd942c8a90adc6fa7ccd1f4f3a39392dd95e369",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "9fa9f447c3120b34a566409e07209fa6074e02208900fee331fb01f3fb540fb0"
+      "contentHash": "5e9e7862964539c7dab2515a763f676b215f53c7bfabed0f1f3db37fea8f749d"
     },
     {
-      "id": "oc:observation:be-miv:b91c5ff4b7681de719933a8e5dc3ed47b40d4705e90d3b6a9286cc1ed1e7bc9b",
+      "id": "oc:observation:be-miv-flow:bcb2f4d160ab6433fd831be6d4446d90344f384641a7b953425bc4f41f6d1588",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -193,7 +193,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "be-miv",
+        "sourceId": "be-miv-flow",
         "sourceFormat": "miv",
         "accessMode": "bulk",
         "recordId": "4970",
@@ -215,7 +215,7 @@
       "property": "traffic.occupancy",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:be-miv:4970"
+        "featureId": "oc:feature:be-miv-flow:4970"
       },
       "result": {
         "type": "quantity",
@@ -227,14 +227,14 @@
         "end": "2026-07-10T15:21:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "6245802b439c7597dbd46430203c8b91039429b8e6b026260e78a1d177217589",
+      "canonicalId": "4e3aaa9b6ae513ebb81bfec3801608f3af7ca5a0c9bcd2f597e62d3cb973f354",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "a89ca13de64bfe6cadf167739214958bad2fc2d5702363e594db1ffa2c80d8c8"
+      "contentHash": "23c22acdfeb0ba38136ec9508aeabab46270d7693952da2d3813af46129702af"
     },
     {
-      "id": "oc:observation:be-miv:41364ed4e820c945e7b7b8e3e47cbd744305ab8bc88e593aa3f0c2495223b444",
+      "id": "oc:observation:be-miv-flow:715f4b3113df7c7c6524435c849440fcea4873ec7631e1f2d01cfd2696c94f45",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -250,7 +250,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "be-miv",
+        "sourceId": "be-miv-flow",
         "sourceFormat": "miv",
         "accessMode": "bulk",
         "recordId": "4970",
@@ -272,7 +272,7 @@
       "property": "traffic.vehicle_class_speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:be-miv:4970"
+        "featureId": "oc:feature:be-miv-flow:4970"
       },
       "result": {
         "type": "vector",
@@ -287,11 +287,11 @@
         "end": "2026-07-10T15:21:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "57e20dbd00caa10aae22d33fedbb7a5f0bbd73e6233d84a110464a3494cea122",
+      "canonicalId": "6f6073982d9161ecb3d101f7d3a6821f54414ae6105b574ce75de3847c4d6a6e",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "1c2bcb1fa64f6b671df2ec33db65b73ad31e16cb793833c786d75507793fa191"
+      "contentHash": "f31f45232332622e9d57fa3a5bebb303817e98f667e8b9d28c32d9ba1008a532"
     }
   ],
   "situations": []

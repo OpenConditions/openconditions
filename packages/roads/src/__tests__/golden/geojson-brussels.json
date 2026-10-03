@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:be-brussels:1",
+    "id": "oc:situation:be-brussels-events:1",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -29,7 +29,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "be-brussels",
+      "sourceId": "be-brussels-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "1",
@@ -71,14 +71,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "33a67c35ab72a14da3425545ae689b8c698d44f3984cad25efad84bea1235ca9",
+    "canonicalId": "6776d073fe9da9688780840ea37ed57d2d745b1d6724ddc1fe0dd339244db0b5",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "9fd4182c9a364b2a8a0e8c87cad4855d516dfacd048eb1f1525cd8c3e1886996"
+    "contentHash": "e4dcdef6b1aac667f12c134985baee0bb848a8415bfcd4d5f00fd6ad2ad70a12"
   },
   {
-    "id": "oc:situation:be-brussels:2",
+    "id": "oc:situation:be-brussels-events:2",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -107,7 +107,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "be-brussels",
+      "sourceId": "be-brussels-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "2",
@@ -149,14 +149,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "60e2d0448628b6d26c8b15122885860304b61bda69e4f744817139764da7c938",
+    "canonicalId": "44067467b0e80733e32621a085ef4d3c7d2bf82d311f895d5a3ad2514f2bb7d2",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "e2241f2290b26619747ae85dcbf291e93544284b53eb3c2e29e73bad466fa644"
+    "contentHash": "20eb786e793884480389c209f95a9de52c60956a139943775f66911224875d86"
   },
   {
-    "id": "oc:situation:be-brussels:3",
+    "id": "oc:situation:be-brussels-events:3",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -185,7 +185,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "be-brussels",
+      "sourceId": "be-brussels-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "3",
@@ -227,14 +227,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "6a33b74826c984b7a30a5b5a5ae853b1f8bbc880db4995365d0b1657390ee085",
+    "canonicalId": "07c8256ee0bc703b1064b4e6f12f967a669bf59fb26e526532e407bd9aefe776",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "0d24a03652c6ad2431120465bbc0957c2c05e750ea9c7687d32dc97f5affa0d1"
+    "contentHash": "c348919ad1e3fc686d6556dce49da6b44ec27087f6a8fb01abe70d208aa2d1b5"
   },
   {
-    "id": "oc:situation:be-brussels:4",
+    "id": "oc:situation:be-brussels-events:4",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -263,7 +263,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "be-brussels",
+      "sourceId": "be-brussels-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "4",
@@ -305,14 +305,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "0b73550241f8bb796cc3a27ac6c82c9f3b50e6e9359cbfacf3a530255b663f63",
+    "canonicalId": "8857623cfa1a1e0eaad77da05401c0b5ff9797dde30fc76a543c4473ee3bcd51",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f68d40689ac3ff37b6b93d5869a1e77777abd52bd9726fd31f4528a462dd86ce"
+    "contentHash": "65ece109647a270b541e2910a546fda710d8bd9d8b12125c0484e1c442a49e1d"
   },
   {
-    "id": "oc:situation:be-brussels:5",
+    "id": "oc:situation:be-brussels-events:5",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -341,7 +341,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "be-brussels",
+      "sourceId": "be-brussels-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "5",
@@ -383,10 +383,10 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "cf18434effc9999dde21b7b49d61e2d25499ce9a0909dedfa308464f67710cf1",
+    "canonicalId": "44d00d915f65868327f81fa3d7c2f11abdf96aae343e2ac4df91490b7f7a46ed",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "06eb5cbe1058cf944df97a2e7d3fb12afd6552eb7bfa8dca1f54d8cec170a1d6"
+    "contentHash": "df1954344ed4a7d67566e06a084d0fc2f2da173d2b1479b2abe3b3e3c2b6e9b4"
   }
 ]

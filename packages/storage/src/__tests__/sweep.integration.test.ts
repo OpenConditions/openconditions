@@ -49,10 +49,10 @@ async function state(id: string) {
 
 describe("sweepRecords", () => {
   it("tombstones a record once its own expiry passes, and leaves an ended one its source still publishes", async () => {
-    await polled("nl-ndw", LATER);
+    await polled("nl-ndw-events", LATER);
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       {
         situations: [
           situationDraft("exp", {
@@ -70,24 +70,24 @@ describe("sweepRecords", () => {
       { ...write, complete: true },
     );
     expect(await sweep(LATER)).toMatchObject({ expired: 1, orphaned: 0 });
-    expect(await state("oc:situation:nl-ndw:exp")).toEqual({
+    expect(await state("oc:situation:nl-ndw-events:exp")).toEqual({
       tombstone_reason: "expired",
       revision: 2,
     });
-    expect(await state("oc:situation:nl-ndw:ended")).toEqual({
+    expect(await state("oc:situation:nl-ndw-events:ended")).toEqual({
       tombstone_reason: null,
       revision: 1,
     });
     const [revision] = await sql`SELECT change_kinds FROM conditions.situation_revision
-      WHERE situation_id = 'oc:situation:nl-ndw:exp' AND revision = 2`;
+      WHERE situation_id = 'oc:situation:nl-ndw-events:exp' AND revision = 2`;
     expect(revision).toEqual({ change_kinds: ["tombstoned"] });
   });
 
   it("tombstones the feed records of a source that stopped polling, not crowd or peer records", async () => {
-    await polled("nl-ndw", "2026-10-01T09:00:00Z");
+    await polled("nl-ndw-events", "2026-10-01T09:00:00Z");
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("old")] },
       { ...write, complete: true },
     );
@@ -105,15 +105,17 @@ describe("sweepRecords", () => {
     });
     await writeRecord(sql, { draft: crowd }, write);
     expect(await sweep(LATER)).toMatchObject({ orphaned: 1 });
-    expect(await state("oc:situation:nl-ndw:old")).toMatchObject({ tombstone_reason: "expired" });
+    expect(await state("oc:situation:nl-ndw-events:old")).toMatchObject({
+      tombstone_reason: "expired",
+    });
     expect(await state("oc:situation:test.local:c1")).toMatchObject({ tombstone_reason: null });
   });
 
   it("keeps the records of a source that is still polling", async () => {
-    await polled("nl-ndw", "2026-10-01T11:30:00Z");
+    await polled("nl-ndw-events", "2026-10-01T11:30:00Z");
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("live")] },
       { ...write, complete: true },
     );
@@ -132,11 +134,11 @@ describe("sweepRecords", () => {
       provenance: { ...(draft["provenance"] as object), accessMode: "on_demand" },
       freshness: { fetchedAt: FETCHED_AT, expiresAt: "2026-10-01T10:15:00Z" },
     });
-    await polled("nl-ndw", LATER);
+    await polled("nl-ndw-events", LATER);
     await polled("nl-ndw-flow", LATER);
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [onDemand(situationDraft("od"))] },
       { ...write, complete: true },
     );
@@ -160,16 +162,16 @@ describe("sweepRecords", () => {
   });
 
   it("purges a record tombstoned longer ago than the history window, with its revisions", async () => {
-    await polled("nl-ndw", LATER);
+    await polled("nl-ndw-events", LATER);
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("gone")] },
       { ...write, complete: true },
     );
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [] },
       { ...write, now: LATER, complete: true },
     );
@@ -181,19 +183,19 @@ describe("sweepRecords", () => {
   });
 
   it("purges a record's graph bindings with it", async () => {
-    await polled("nl-ndw", LATER);
+    await polled("nl-ndw-events", LATER);
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("gone")] },
       { ...write, complete: true },
     );
     await sql`INSERT INTO conditions.record_binding (record_class, record_id, effect_id, status,
         direction_mode, resolver_version, geom_hash, record_revision, bound_at)
-      VALUES ('situation', 'oc:situation:nl-ndw:gone', '', 'exact', 'single', 'v', 'h', 1, now())`;
+      VALUES ('situation', 'oc:situation:nl-ndw-events:gone', '', 'exact', 'single', 'v', 'h', 1, now())`;
     await sql`INSERT INTO conditions.record_segment (record_class, record_id, effect_id, seq,
         segment_id, way_id, dir, start_fraction, end_fraction)
-      VALUES ('situation', 'oc:situation:nl-ndw:gone', '', 0, '1:f', 1, 'f', 0, 1)`;
+      VALUES ('situation', 'oc:situation:nl-ndw-events:gone', '', 0, '1:f', 1, 'f', 0, 1)`;
     await sql`UPDATE conditions.situation SET tombstoned_at = '2026-06-01T00:00:00Z',
       tombstone_reason = 'withdrawn'`;
     expect(await sweep(LATER)).toMatchObject({ purged: 1 });
@@ -202,14 +204,14 @@ describe("sweepRecords", () => {
   });
 
   it("purges a record's crowd evidence and votes with it", async () => {
-    await polled("nl-ndw", LATER);
+    await polled("nl-ndw-events", LATER);
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("voted")] },
       { ...write, complete: true },
     );
-    const id = "oc:situation:nl-ndw:voted";
+    const id = "oc:situation:nl-ndw-events:voted";
     await sql`INSERT INTO conditions.report_evidence
         (record_class, record_id, evidence_kind, actor_key_id, occurred_at)
       VALUES ('situation', ${id}, 'confirm', 'k', now())`;
@@ -224,10 +226,10 @@ describe("sweepRecords", () => {
   });
 
   it("waits for a poll of the source before purging or dropping its rows", async () => {
-    await polled("nl-ndw", LATER);
+    await polled("nl-ndw-events", LATER);
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       {
         situations: [
           situationDraft("gone"),
@@ -244,14 +246,14 @@ describe("sweepRecords", () => {
       { ...write, complete: true },
     );
     await sql`UPDATE conditions.situation SET tombstoned_at = '2026-06-01T00:00:00Z',
-      tombstone_reason = 'withdrawn' WHERE id = 'oc:situation:nl-ndw:gone'`;
+      tombstone_reason = 'withdrawn' WHERE id = 'oc:situation:nl-ndw-events:gone'`;
     const poll = await sql.reserve();
-    await poll`SELECT pg_advisory_lock(hashtext('nl-ndw'))`;
+    await poll`SELECT pg_advisory_lock(hashtext('nl-ndw-events'))`;
     const swept = sweep(LATER);
     await new Promise((resolve) => setTimeout(resolve, 300));
     const [{ held }] = await sql`SELECT count(*)::int AS held FROM conditions.situation`;
     expect(held).toBe(2);
-    await poll`SELECT pg_advisory_unlock(hashtext('nl-ndw'))`;
+    await poll`SELECT pg_advisory_unlock(hashtext('nl-ndw-events'))`;
     poll.release();
     expect(await swept).toMatchObject({ purged: 1, dropped: 1 });
   });

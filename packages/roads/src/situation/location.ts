@@ -163,7 +163,7 @@ export function locationOf(
       : {}),
     ...(refs?.openlr ? { openlr: refs.openlr } : {}),
     ...(refs?.external ? { external: [refs.external] } : {}),
-    admin: { country: source.country },
+    ...(source.country !== undefined ? { admin: { country: source.country } } : {}),
     ...(event.regions && event.regions.length > 0
       ? { areaDescription: text(event.regions.join(", ")) }
       : {}),

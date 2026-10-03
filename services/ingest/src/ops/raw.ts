@@ -1,6 +1,6 @@
 import postgres from "postgres";
-import { buildDomainRegistry } from "../domains.js";
-import { createOpenlrClient, type DomainFeedSource } from "../pipeline/run.js";
+import { loadIngestCatalog } from "../domains.js";
+import { createOpenlrClient } from "../pipeline/run.js";
 import { rawArchiveOptionsFromEnv } from "../raw/archive.js";
 import { evictionPolicyFromEnv, evictRawPayloads } from "../raw/evict.js";
 import { historyDaysFromEnv } from "../record-jobs.js";
@@ -97,10 +97,7 @@ export async function runRawCommand(
       out(USAGE);
       return 2;
     }
-    const registry = await buildDomainRegistry();
-    const feed = Object.entries(registry)
-      .flatMap(([domain, plugin]) => plugin.feeds.map((f) => ({ ...f, domain })))
-      .find((f) => f.id === hash) as DomainFeedSource | undefined;
+    const feed = (await loadIngestCatalog(env)).feeds.find((f) => f.id === hash);
     if (feed === undefined) {
       out(`no scheduled feed ${hash}`);
       return 1;

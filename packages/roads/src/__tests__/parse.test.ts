@@ -1,26 +1,35 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { parseEvents, parseFlows, type RoadFeed } from "../parse.js";
+import { parseEvents, parseFlows } from "../parse.js";
+import { roadFeed } from "./helpers/road-feed.js";
 
 const ndw = readFileSync(new URL("./fixtures/ndw/restrictions-v3.xml", import.meta.url), "utf8");
 const drivebc = readFileSync(new URL("./fixtures/drivebc/events.json", import.meta.url));
 
-const ndwFeed: RoadFeed = {
-  id: "nl-ndw",
+const ndwFeed = roadFeed({
+  id: "nl-ndw-events",
+  region: "nl",
   format: "datex2",
-  country: "NL",
   attribution: "NDW",
   license: "CC0-1.0",
   snapshot: { completeness: "complete" },
-};
+});
+
+const drivebcFeed = roadFeed({
+  id: "ca-bc-drivebc-events",
+  region: "ca",
+  format: "open511",
+  attribution: "DriveBC",
+  license: "LicenseRef-OGL-BC",
+});
 
 describe("parseEvents", () => {
   it("drafts the situations of a complete snapshot and accounts for every record", () => {
     const out = parseEvents(ndwFeed, [Buffer.from(ndw)]);
     expect(out.situations.length).toBeGreaterThan(0);
-    expect(out.situations.every((s) => String(s["id"]).startsWith("oc:situation:nl-ndw:"))).toBe(
-      true,
-    );
+    expect(
+      out.situations.every((s) => String(s["id"]).startsWith("oc:situation:nl-ndw-events:")),
+    ).toBe(true);
     expect(out.records).toMatchObject({ unlocatable: 0, unlocatableSituations: [], duplicates: 0 });
     expect(out.records!.accepted).toBe(out.records!.uniqueCount);
   });
@@ -30,7 +39,7 @@ describe("parseEvents", () => {
     const folded = out.records!.situationRecords;
     expect(Object.keys(folded).sort()).toEqual(out.situations.map((s) => String(s["id"])).sort());
     expect(Object.values(folded).reduce((a, b) => a + b, 0)).toBe(out.records!.accepted);
-    expect(folded["oc:situation:nl-ndw:RWS01_SM1080891_D2_WWA"]).toBe(3);
+    expect(folded["oc:situation:nl-ndw-events:RWS01_SM1080891_D2_WWA"]).toBe(3);
   });
 
   it("names the situation of a record it could not place, so the poll cannot end it", () => {
@@ -44,7 +53,7 @@ describe("parseEvents", () => {
     const out = parseEvents(ndwFeed, [Buffer.from(ndw.replace(record, unplaced))]);
     expect(out.records?.unlocatable).toBe(1);
     expect(out.records?.unlocatableSituations).toContain(
-      "oc:situation:nl-ndw:RWS01_SM1080891_D2_WWA",
+      "oc:situation:nl-ndw-events:RWS01_SM1080891_D2_WWA",
     );
     const id = record.match(/\bid="([^"]+)"/)![1]!;
     expect(out.records?.unlocatableRecords).toEqual([id]);
@@ -70,13 +79,6 @@ describe("parseEvents", () => {
       out.situations.map(() => at),
     );
     // DriveBC's planned works all start after 2020, so as of then each is still to come.
-    const drivebcFeed: RoadFeed = {
-      id: "ca-bc-drivebc",
-      format: "open511",
-      country: "CA",
-      attribution: "DriveBC",
-      license: "OGL-BC-2.0",
-    };
     const planned = parseEvents(drivebcFeed, [drivebc], { fetchedAt: at }).situations.filter(
       (s) => s["planned"] === true && (s["validity"] as { start?: string }).start !== undefined,
     );
@@ -93,16 +95,7 @@ describe("parseEvents", () => {
   });
 
   it("drafts a feed without a snapshot contract with no record accounting", () => {
-    const out = parseEvents(
-      {
-        id: "ca-bc-drivebc",
-        format: "open511",
-        country: "CA",
-        attribution: "DriveBC",
-        license: "OGL-BC-2.0",
-      },
-      [drivebc],
-    );
+    const out = parseEvents(drivebcFeed, [drivebc]);
     expect(out.situations.length).toBeGreaterThan(0);
     expect(out.records).toBeUndefined();
   });
@@ -110,13 +103,14 @@ describe("parseEvents", () => {
 
 describe("parseFlows", () => {
   it("refuses a payload the flow parser cannot read at all", () => {
-    const feed: RoadFeed = {
+    const feed = roadFeed({
       id: "nl-ndw-flow",
-      format: "datex2",
-      country: "NL",
+      region: "nl",
+      product: "flow",
+      format: "datex2-measured",
       attribution: "NDW",
       license: "CC0-1.0",
-    };
+    });
     expect(() =>
       parseFlows(feed, "not xml", undefined, { now: "2026-09-18T10:00:00Z", cadenceSec: 60 }),
     ).toThrow("hard parse failure");

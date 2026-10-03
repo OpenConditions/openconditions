@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:us-oh-ohgo:d1",
+      "id": "oc:feature:us-oh-ohgo-flow:d1",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -23,13 +23,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "us-oh-ohgo",
+        "sourceId": "us-oh-ohgo-flow",
         "sourceFormat": "ohgo",
         "accessMode": "bulk",
         "recordId": "d1",
         "attribution": {
           "provider": "Ohio Department of Transportation (OHGO)",
-          "license": "US-Gov-Public-Domain",
+          "license": "LicenseRef-US-Gov-Public-Domain",
           "licenseUrl": "https://www.usa.gov/government-works"
         },
         "privacy": {
@@ -51,14 +51,14 @@
           "traffic.speed"
         ]
       },
-      "canonicalId": "36fe341497718ee3c20cff49906aed89805383612dfdd9609fcb452d515575b8",
+      "canonicalId": "bd1635f9b48b67e1b0979c4e957abe86e4c0ae008bcfd742842c13daa8d97790",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "5ce010d34f7baa52db795b5e40a275dae62f3e9f08bb9ee233a0875ba2b4daa4"
+      "contentHash": "e3a67623d395deea9c8b9da298f62de8adebc65815cc26d95bd2d122a3983911"
     },
     {
-      "id": "oc:feature:us-oh-ohgo:d2",
+      "id": "oc:feature:us-oh-ohgo-flow:d2",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -80,13 +80,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "us-oh-ohgo",
+        "sourceId": "us-oh-ohgo-flow",
         "sourceFormat": "ohgo",
         "accessMode": "bulk",
         "recordId": "d2",
         "attribution": {
           "provider": "Ohio Department of Transportation (OHGO)",
-          "license": "US-Gov-Public-Domain",
+          "license": "LicenseRef-US-Gov-Public-Domain",
           "licenseUrl": "https://www.usa.gov/government-works"
         },
         "privacy": {
@@ -108,16 +108,16 @@
           "traffic.speed"
         ]
       },
-      "canonicalId": "897bbf5bc2d211f9d9ce7c3697b9d0b738e095d332edefd9704d5c507fb75493",
+      "canonicalId": "e32d805093a839220f9c6c23b44d0ae58519c9f19a6afde9dcc6ba627d246ed9",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "4dc2ebc27f610b8324af6597b1964341a500b1390184c552f1f81f79fa4c0e5a"
+      "contentHash": "9318f48569b9873868ecc155899e3a47a3e87b31c34267bb246a65734e0eb3e1"
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:us-oh-ohgo:9eea2b5cd7b2b3b9c823eaea1b80c251f9adb848e6d05ad63d17e6c42a11b00e",
+      "id": "oc:observation:us-oh-ohgo-flow:aea04d440b3c49161c8f37f192c39bb4c6779b29705c4cfa3f6c374f044de456",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -139,13 +139,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "us-oh-ohgo",
+        "sourceId": "us-oh-ohgo-flow",
         "sourceFormat": "ohgo",
         "accessMode": "bulk",
         "recordId": "d1",
         "attribution": {
           "provider": "Ohio Department of Transportation (OHGO)",
-          "license": "US-Gov-Public-Domain",
+          "license": "LicenseRef-US-Gov-Public-Domain",
           "licenseUrl": "https://www.usa.gov/government-works"
         },
         "privacy": {
@@ -161,7 +161,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:us-oh-ohgo:d1"
+        "featureId": "oc:feature:us-oh-ohgo-flow:d1"
       },
       "result": {
         "type": "quantity",
@@ -181,14 +181,14 @@
         "ratio": 0.3076923076923077,
         "los": "queuing"
       },
-      "canonicalId": "d8b126fde510a108088170e4ffd7a7c903967196641ed05db87fecb1e6cae56e",
+      "canonicalId": "b5343c6783d19197513320934c7c492822531aad10ef843c92c5565b6327bac8",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "09e36b85e47a04de1d6d77bb1d98361deb89b0097c030b0b7d1a4769579fb653"
+      "contentHash": "84a8f8c7ce11e226cb43c21007dbd966b73692cf013e616f424f09c3711dfe08"
     },
     {
-      "id": "oc:observation:us-oh-ohgo:200c22d9013ae9904ebf344ae5d39c3f5a771d7891d39697c26a94b74c7f8710",
+      "id": "oc:observation:us-oh-ohgo-flow:cc5540106bf44f0aa892e2cda214ba3ecf23255a57c563f9231c53b82e647476",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -210,13 +210,13 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "us-oh-ohgo",
+        "sourceId": "us-oh-ohgo-flow",
         "sourceFormat": "ohgo",
         "accessMode": "bulk",
         "recordId": "d2",
         "attribution": {
           "provider": "Ohio Department of Transportation (OHGO)",
-          "license": "US-Gov-Public-Domain",
+          "license": "LicenseRef-US-Gov-Public-Domain",
           "licenseUrl": "https://www.usa.gov/government-works"
         },
         "privacy": {
@@ -232,7 +232,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:us-oh-ohgo:d2"
+        "featureId": "oc:feature:us-oh-ohgo-flow:d2"
       },
       "result": {
         "type": "quantity",
@@ -252,16 +252,16 @@
         "ratio": 0.9538461538461539,
         "los": "free_flow"
       },
-      "canonicalId": "e79de0b9eb56497d9fc4dd1895c712793bdd4e765a60cbe414c7c0b04a6b9363",
+      "canonicalId": "d66a4ee30d346e10c13359347241e7039ea5d5c37a75ae01599dff8f6b1e93ab",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "e177def13e9edd791b9dece769ef5ac29b2467bfaea667fffb618cf48957d0da"
+      "contentHash": "782b86f3f7c3ffe639536e313f93fca8ced52cdc6d1a7ad7bc88c4c03a169021"
     }
   ],
   "situations": [
     {
-      "id": "oc:situation:us-oh-ohgo:d1:congestion",
+      "id": "oc:situation:us-oh-ohgo-flow:d1:congestion",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -286,20 +286,20 @@
       },
       "provenance": {
         "origin": "derived",
-        "sourceId": "us-oh-ohgo",
+        "sourceId": "us-oh-ohgo-flow",
         "sourceFormat": "ohgo",
         "accessMode": "bulk",
         "recordId": "d1:congestion",
         "attribution": {
           "provider": "Ohio Department of Transportation (OHGO)",
-          "license": "US-Gov-Public-Domain",
+          "license": "LicenseRef-US-Gov-Public-Domain",
           "licenseUrl": "https://www.usa.gov/government-works"
         },
         "derivedFrom": {
           "records": [
             {
               "class": "feature",
-              "id": "oc:feature:us-oh-ohgo:d1"
+              "id": "oc:feature:us-oh-ohgo-flow:d1"
             }
           ],
           "method": "los_threshold",
@@ -334,15 +334,15 @@
         "los": "unknown",
         "derivedFrom": {
           "class": "feature",
-          "id": "oc:feature:us-oh-ohgo:d1"
+          "id": "oc:feature:us-oh-ohgo-flow:d1"
         },
         "freeFlowSource": "native"
       },
-      "canonicalId": "3fba68b17ee283d6c07899ae2195a1d18d19cb033dd7a092d45d10eca3adb643",
+      "canonicalId": "ab2b031695302275c53ecdfc52923bfb981f8579c0e89e94bb80288da93b3839",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "e4a371b55ec720a968a8a80a1263b4310678a969a261c8b6f80d9ecf0f89df22"
+      "contentHash": "86cc8328de158e67897a3c9d6fef933a1cac136f207b314402c5046cc2817b1a"
     }
   ]
 }

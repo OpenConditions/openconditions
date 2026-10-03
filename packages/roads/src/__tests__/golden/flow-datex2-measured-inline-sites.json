@@ -28,7 +28,7 @@
       "provenance": {
         "origin": "feed",
         "sourceId": "fr-dir-flow",
-        "sourceFormat": "datex2",
+        "sourceFormat": "datex2-measured",
         "accessMode": "bulk",
         "recordId": "NL-MS-001",
         "attribution": {
@@ -62,7 +62,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "aa810f084a63ea1649a821651632615c299bf7fa6103c4e3ab0d6b8729226872"
+      "contentHash": "646483e2af1b60392d2cdeef4f40db46ab9faac7d700bf52e150fa9fa6f8e4ee"
     },
     {
       "id": "oc:feature:fr-dir-flow:NL-MS-002",
@@ -88,7 +88,7 @@
       "provenance": {
         "origin": "feed",
         "sourceId": "fr-dir-flow",
-        "sourceFormat": "datex2",
+        "sourceFormat": "datex2-measured",
         "accessMode": "bulk",
         "recordId": "NL-MS-002",
         "attribution": {
@@ -122,7 +122,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "72027ea4548105e8fad7779900d9e1b1e54cbe59c847a7723f3274b286b1f582"
+      "contentHash": "583079723b363977020fbfe363f880d3108f95e1a5b21cc931298b0ad6a4367d"
     },
     {
       "id": "oc:feature:fr-dir-flow:NL-MS-003",
@@ -152,7 +152,7 @@
       "provenance": {
         "origin": "feed",
         "sourceId": "fr-dir-flow",
-        "sourceFormat": "datex2",
+        "sourceFormat": "datex2-measured",
         "accessMode": "bulk",
         "recordId": "NL-MS-003",
         "attribution": {
@@ -186,7 +186,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "d8b71e9a0c5e96773dab3024050410874802501e7d00ca433ea0c9fa49911733"
+      "contentHash": "9ed501378a51fc4ce5e45fc15eefcc33d89e5f9eaec8d0aae68356390ed07819"
     }
   ],
   "observations": [
@@ -218,7 +218,7 @@
       "provenance": {
         "origin": "feed",
         "sourceId": "fr-dir-flow",
-        "sourceFormat": "datex2",
+        "sourceFormat": "datex2-measured",
         "accessMode": "bulk",
         "recordId": "NL-MS-001",
         "attribution": {
@@ -263,7 +263,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "da0cc5a15b5254d1cf2cc682651313f6429244d30d1ade535a394093b8d8f783"
+      "contentHash": "c5ca65b90197f1c95c612b23defcb0e2d836c027ebf3a7ae9c2252290a2c3421"
     },
     {
       "id": "oc:observation:fr-dir-flow:ae181b84c89a830f6f6733961b2d356248007464cf57988d098b9d096c2014c9",
@@ -289,7 +289,7 @@
       "provenance": {
         "origin": "feed",
         "sourceId": "fr-dir-flow",
-        "sourceFormat": "datex2",
+        "sourceFormat": "datex2-measured",
         "accessMode": "bulk",
         "recordId": "NL-MS-002",
         "attribution": {
@@ -325,7 +325,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "dfdc19853b3fc1248020ca0e83b9dcc0c90f62fe0b615cb81503da8199bcc5a4"
+      "contentHash": "870f89327514785077206186512edfe20bdefe3003e170c7df7a74fe92268a21"
     },
     {
       "id": "oc:observation:fr-dir-flow:068dcfd73790cbe962885bde7838eece8937e616e99d55ab1f000e91b05aa2ba",
@@ -351,7 +351,7 @@
       "provenance": {
         "origin": "feed",
         "sourceId": "fr-dir-flow",
-        "sourceFormat": "datex2",
+        "sourceFormat": "datex2-measured",
         "accessMode": "bulk",
         "recordId": "NL-MS-002",
         "attribution": {
@@ -387,7 +387,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "949667f203fa0d88f65c0b54a8e0d192aec5528d80af7a0be883a28e2587b3c5"
+      "contentHash": "01cce0a60b5333b975e95e5b8cf103d5a830c4aad30e61fd5dad509bc0c426a5"
     },
     {
       "id": "oc:observation:fr-dir-flow:d086b2bae63c25c083c9acd77fe82780657b086cefc16266c3cdaa0ca4f2e627",
@@ -417,7 +417,7 @@
       "provenance": {
         "origin": "feed",
         "sourceId": "fr-dir-flow",
-        "sourceFormat": "datex2",
+        "sourceFormat": "datex2-measured",
         "accessMode": "bulk",
         "recordId": "NL-MS-003",
         "attribution": {
@@ -461,7 +461,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "1d43591fdd677e8b4f227f6926fbb8feac1e996876ecfc00d5918854706ec44e"
+      "contentHash": "3727c6e83eef9ff09cf1bc3b8629910eff663243a0be2cff10cf0777134fa2c3"
     },
     {
       "id": "oc:observation:fr-dir-flow:93e3c8f3620e62b6a8b29476b20ba3fa22c6aee4293c3949b2b5feeddf0bcafe",
@@ -491,7 +491,7 @@
       "provenance": {
         "origin": "feed",
         "sourceId": "fr-dir-flow",
-        "sourceFormat": "datex2",
+        "sourceFormat": "datex2-measured",
         "accessMode": "bulk",
         "recordId": "NL-MS-003",
         "attribution": {
@@ -527,7 +527,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "57aac3199e40bd371dc63c2ca132d9507c77b9af1f6c31cbcff4cda9851dead0"
+      "contentHash": "882dec2646619556a17d695041d4de4200306b0bf87f1a5c01cde61a5896d19d"
     }
   ],
   "situations": [
@@ -568,7 +568,7 @@
       "provenance": {
         "origin": "derived",
         "sourceId": "fr-dir-flow",
-        "sourceFormat": "datex2",
+        "sourceFormat": "datex2-measured",
         "accessMode": "bulk",
         "recordId": "NL-MS-003:congestion",
         "attribution": {
@@ -623,7 +623,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "a9d45e7af3957099d24316ef14ae68ab34a993793ac986ab6fca235e899c5059"
+      "contentHash": "cbdb059b4b7a4def2799f1851fac7ac62a68aba5fad78f9451cbbbf6584ced19"
     }
   ]
 }

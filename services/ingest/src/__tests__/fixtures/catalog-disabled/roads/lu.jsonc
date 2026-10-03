@@ -1,0 +1,18 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "fixture",
+      "product": "events",
+      "name": "Disabled fixture feed",
+      "format": "datex2",
+      "tier": "authoritative",
+      "endpoints": { "main": { "url": "https://example.test/fixture.xml", "cadenceSec": 300 } },
+      "freshnessWindowSec": 900,
+      "license": "CC0-1.0",
+      "attribution": "Fixture",
+      "privacyUrl": "https://example.test/privacy",
+      "disabled": { "reason": "fixture: upstream retired the endpoint", "since": "2026-01-01" }
+    }
+  ]
+}

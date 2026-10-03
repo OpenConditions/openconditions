@@ -1,0 +1,31 @@
+{
+  "$schema": "../schema/roads.schema.json",
+  "feeds": [
+    {
+      "operator": "keyed",
+      "product": "events",
+      "name": "Declares a key it never sends",
+      "format": "datex2",
+      "tier": "authoritative",
+      "endpoints": { "main": { "url": "https://example.test/keyed", "cadenceSec": 300 } },
+      "credentials": { "api_key": { "title": "API key" } },
+      "freshnessWindowSec": 900,
+      "license": "CC0-1.0",
+      "attribution": "Keyed",
+      "privacyUrl": "https://example.test/privacy",
+    },
+    {
+      "operator": "shared",
+      "product": "events",
+      "name": "The only user of a shared group",
+      "format": "datex2",
+      "tier": "authoritative",
+      "endpoints": { "main": { "url": "https://example.test/shared", "cadenceSec": 300 } },
+      "auth": { "kind": "bearer", "credential": "@lone.token" },
+      "freshnessWindowSec": 900,
+      "license": "CC0-1.0",
+      "attribution": "Shared",
+      "privacyUrl": "https://example.test/privacy",
+    },
+  ],
+}

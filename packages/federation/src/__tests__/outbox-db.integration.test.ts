@@ -258,7 +258,7 @@ describe("capture in the writing transaction", () => {
     const poll = (expiresAt: string) =>
       writeSnapshot(
         sql,
-        "nl-ndw",
+        "nl-ndw-events",
         {
           situations: [
             incidentDraft("steady", {
@@ -417,7 +417,7 @@ describe("readOutbox maps journal rows to record entries", () => {
       class: "situation",
       revision: 1,
       location: { geometry: { type: "Point", coordinates: [5.3, 52.37] } },
-      provenance: { instanceId: "test.local", sourceId: "nl-ndw" },
+      provenance: { instanceId: "test.local", sourceId: "nl-ndw-events" },
     });
     expect(Date.parse(change!.createdAt)).not.toBeNaN();
     expect(del).toMatchObject({
@@ -475,8 +475,9 @@ describe("readOutbox maps journal rows to record entries", () => {
   it("carries a record's extras only from a source that federates them", async () => {
     const source = (id: string, extrasFederate: boolean) => ({
       id,
-      domain: "road",
+      domain: "roads",
       format: "datex2",
+      product: "events",
       tier: "authoritative",
       country: "NL",
       operator: "Test",
@@ -487,7 +488,7 @@ describe("readOutbox maps journal rows to record entries", () => {
       extrasAllow: ["situationRecordExtension"],
       extrasFederate,
     });
-    await syncSources(sql, [source("nl-ndw", false), source("nl-rws", true)]);
+    await syncSources(sql, [source("nl-ndw-events", false), source("nl-rws", true)]);
     const base = await frontier();
     const extras = { extras: { situationRecordExtension: "x" } };
     await writeOwn(sql, incidentDraft("kept-home", extras));

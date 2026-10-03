@@ -48,11 +48,11 @@ async function spans(recordId: string, effectId = "") {
   return rows.map((r) => r.segment_id);
 }
 
-const id = (local: string) => `oc:situation:de-autobahn:${local}`;
+const id = (local: string) => `oc:situation:de-autobahn-events:${local}`;
 
 describe("bindRecords", () => {
   it("binds a situation's line, and marks one outside every region and an area kind", async () => {
-    await writeSituations(sql, "de-autobahn", [
+    await writeSituations(sql, "de-autobahn-events", [
       situationDraft("line"),
       situationDraft("far", {
         location: {
@@ -84,7 +84,7 @@ describe("bindRecords", () => {
   it("binds an effect that names its own location separately", async () => {
     const draft = situationDraft("works");
     const closure = (draft["effects"] as Record<string, unknown>[])[0]!;
-    await writeSituations(sql, "de-autobahn", [
+    await writeSituations(sql, "de-autobahn-events", [
       {
         ...draft,
         effects: [
@@ -109,12 +109,12 @@ describe("bindRecords", () => {
   });
 
   it("skips an unchanged situation and rebinds a new revision", async () => {
-    await writeSituations(sql, "de-autobahn", [situationDraft("line")]);
+    await writeSituations(sql, "de-autobahn-events", [situationDraft("line")]);
     await bindRecords(sql, [id("line")], { now });
     expect((await bindRecords(sql, [id("line")], { now })).skippedUnchanged).toBe(1);
     await writeSituations(
       sql,
-      "de-autobahn",
+      "de-autobahn-events",
       [
         situationDraft("line", {
           location: {
@@ -137,9 +137,9 @@ describe("bindRecords", () => {
   });
 
   it("drops the binding of a situation its source withdrew", async () => {
-    await writeSituations(sql, "de-autobahn", [situationDraft("line")]);
+    await writeSituations(sql, "de-autobahn-events", [situationDraft("line")]);
     await bindRecords(sql, [id("line")], { now });
-    await writeSituations(sql, "de-autobahn", [], "2026-09-06T10:05:00.000Z");
+    await writeSituations(sql, "de-autobahn-events", [], "2026-09-06T10:05:00.000Z");
     const r = await bindRecords(sql, [id("line")], { now });
     expect(r.cleared).toBe(1);
     expect(await bindings()).toEqual([]);
@@ -147,7 +147,7 @@ describe("bindRecords", () => {
   });
 
   it("does not bind before the graph is ready", async () => {
-    await writeSituations(sql, "de-autobahn", [situationDraft("line")]);
+    await writeSituations(sql, "de-autobahn-events", [situationDraft("line")]);
     await sql`UPDATE conditions.road_graph_state SET status = 'rebuilding'`;
     try {
       expect((await bindRecords(sql, [id("line")], { now })).attempted).toBe(0);

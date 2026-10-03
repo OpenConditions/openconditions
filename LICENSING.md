@@ -32,8 +32,8 @@ and the service that ties them together into a hosted commons is copyleft.
 ## Source-data licensing
 
 OpenConditions aggregates road-condition data from public feeds, each under its
-own license — for example NDW (CC0-1.0), Die Autobahn GmbH (dl-de/by-2.0),
-Fintraffic / Digitraffic (CC-BY-4.0), DriveBC (OGL-BC), and the WZDx feeds
+own license — for example NDW (CC0-1.0), Die Autobahn GmbH (DL-DE-BY-2.0),
+Fintraffic / Digitraffic (CC-BY-4.0), DriveBC (LicenseRef-OGL-BC), and the WZDx feeds
 (mixed, per publishing agency). **This data is not ours and is not relicensed**:
 every observation carries its `source` and `source_license`, and consumers must
 honour the originating license and attribution.

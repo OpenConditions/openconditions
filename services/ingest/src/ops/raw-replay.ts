@@ -1,11 +1,11 @@
-import { readRawPayload } from "@openconditions/ingest-framework";
+import { type CatalogFeed, readRawPayload } from "@openconditions/ingest-framework";
 import { contentHash } from "@openconditions/model";
 import type { MapMatchClient } from "@openconditions/openlr";
 import type postgres from "postgres";
-import { parseEventFeed } from "../pipeline/parse.js";
+import { formatOf } from "../domains.js";
+import { parseMainPayloads } from "../pipeline/parse.js";
 import { stampAttribution } from "../pipeline/publish.js";
 import { resolveOpenLr } from "../pipeline/resolve.js";
-import type { DomainFeedSource } from "../pipeline/run.js";
 
 type Rec = Record<string, unknown>;
 
@@ -41,7 +41,7 @@ export interface ReplayReport {
 export async function replayRaw(
   sql: postgres.Sql,
   opts: {
-    feed: DomainFeedSource;
+    feed: CatalogFeed;
     from: Date;
     to?: Date;
     dir: string;
@@ -49,8 +49,8 @@ export async function replayRaw(
   },
 ): Promise<ReplayReport> {
   const { feed } = opts;
-  if (feed.produces === "flow") {
-    throw new Error(`${feed.id} is a flow feed; replay covers event feeds`);
+  if (formatOf(feed).kind !== "situations") {
+    throw new Error(`${feed.id} is a measurements feed; replay covers situation feeds`);
   }
   // A revision is stamped with the writer's clock, as an attempt's start is;
   // `finished_at` is the database's. So the state a poll left is bounded by the
@@ -88,7 +88,7 @@ export async function replayRaw(
       attempt.payload_hashes.map((h) => readRawPayload(opts.dir, byHash.get(h)!)),
     );
 
-    const parsed = parseEventFeed(feed, buffers, { fetchedAt: poll.attemptedAt });
+    const parsed = parseMainPayloads(feed, buffers, poll.attemptedAt);
     const { resolved, unlocatable } = await resolveOpenLr(
       parsed.situations,
       opts.openlrClient ?? null,

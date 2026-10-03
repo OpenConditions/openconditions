@@ -1,3 +1,4 @@
+import type { EffectiveRights } from "@openconditions/ingest-framework";
 import type postgres from "postgres";
 
 /** The catalogue fields of one loaded source that SQL joins read. */
@@ -5,16 +6,19 @@ export interface SourceEntry {
   id: string;
   domain: string;
   format: string;
-  produces?: "events" | "flow";
+  /** What the source publishes, from its domain's product list (`flow`, `events`, …). */
+  product: string;
   accessMode?: "bulk" | "on_demand";
   tier: string;
-  country: string;
+  /** Upper-case ISO 3166-1 alpha-2; absent for a source of no single country. */
+  country?: string;
   subdivision?: string;
   operator: string;
   license: string;
   licenseUrl?: string;
   attribution: string;
-  rights?: object;
+  rights?: EffectiveRights;
+  /** How often the source is polled: its smallest data-endpoint cadence. */
   cadenceSec: number;
   freshnessWindowSec: number;
   rawRetention?: string;
@@ -37,10 +41,10 @@ export async function syncSources(sql: postgres.Sql, sources: readonly SourceEnt
     id: s.id,
     domain: s.domain,
     format: s.format,
-    produces: s.produces ?? "events",
+    product: s.product,
     access_mode: s.accessMode ?? "bulk",
     tier: s.tier,
-    country: s.country,
+    country: s.country ?? null,
     subdivision: s.subdivision ?? null,
     operator: s.operator,
     license: s.license,
@@ -61,12 +65,12 @@ export async function syncSources(sql: postgres.Sql, sources: readonly SourceEnt
     if (rows.length > 0) {
       await tx`
         INSERT INTO conditions.source (
-          id, domain, format, produces, access_mode, tier, country, subdivision, operator,
+          id, domain, format, product, access_mode, tier, country, subdivision, operator,
           license, license_url, attribution, rights, cadence_sec, freshness_window_sec,
           raw_retention, extras_allow, extras_federate, lane_numbering, parent_source_id,
           policy_ids, selection_state, active, updated_at
         )
-        SELECT r.id, r.domain, r.format, r.produces, r.access_mode, r.tier, r.country,
+        SELECT r.id, r.domain, r.format, r.product, r.access_mode, r.tier, r.country,
           r.subdivision, r.operator, r.license, r.license_url, r.attribution, r.rights,
           r.cadence_sec, r.freshness_window_sec, r.raw_retention,
           ARRAY(SELECT jsonb_array_elements_text(r.extras_allow)), r.extras_federate,
@@ -75,14 +79,14 @@ export async function syncSources(sql: postgres.Sql, sources: readonly SourceEnt
                ELSE ARRAY(SELECT jsonb_array_elements_text(r.policy_ids)) END,
           r.selection_state, true, now()
         FROM jsonb_to_recordset(${tx.json(rows as never)}) AS r(
-          id text, domain text, format text, produces text, access_mode text, tier text,
+          id text, domain text, format text, product text, access_mode text, tier text,
           country text, subdivision text, operator text, license text, license_url text,
           attribution text, rights jsonb, cadence_sec int, freshness_window_sec int,
           raw_retention text, extras_allow jsonb, extras_federate boolean, lane_numbering text,
           parent_source_id text, policy_ids jsonb, selection_state text
         )
         ON CONFLICT (id) DO UPDATE SET
-          domain = excluded.domain, format = excluded.format, produces = excluded.produces,
+          domain = excluded.domain, format = excluded.format, product = excluded.product,
           access_mode = excluded.access_mode, tier = excluded.tier, country = excluded.country,
           subdivision = excluded.subdivision, operator = excluded.operator,
           license = excluded.license, license_url = excluded.license_url,

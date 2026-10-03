@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
+    "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
     "postgres": "^3.4.9"
   },

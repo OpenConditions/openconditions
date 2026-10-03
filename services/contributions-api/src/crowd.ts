@@ -1,3 +1,4 @@
+import { licenseInfo } from "@openconditions/ingest-framework";
 import type { AgreeingSituation, EvidenceState, Validity } from "@openconditions/model";
 import type postgres from "postgres";
 
@@ -5,6 +6,22 @@ type Db = postgres.Sql | postgres.TransactionSql;
 
 /** The source id every crowd record carries, local or a peer's. */
 export const CROWD_SOURCE_ID = "crowd";
+
+/**
+ * The licence this instance's crowd reports are published under:
+ * `OPENCONDITIONS_CROWD_LICENSE`, ODbL by default. Throws on an id the licence
+ * registry does not know (lookup is exact, case included), so a misspelt
+ * licence fails the boot instead of reaching egress as an unknown one.
+ */
+export function resolveCrowdLicense(env: Record<string, string | undefined>): string {
+  const license = env["OPENCONDITIONS_CROWD_LICENSE"] || "ODbL-1.0";
+  if (!licenseInfo(license)) {
+    throw new Error(
+      `OPENCONDITIONS_CROWD_LICENSE "${license}" is not a known licence id: use an SPDX id or LicenseRef-<name> from the licence registry, matching case exactly (e.g. ODbL-1.0)`,
+    );
+  }
+  return license;
+}
 
 /**
  * Takes the crowd source's advisory lock, as every write to a source's

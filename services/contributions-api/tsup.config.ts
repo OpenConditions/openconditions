@@ -11,13 +11,6 @@ import { defineConfig } from "tsup";
 const coreDrizzle = fileURLToPath(new URL("../../packages/core/drizzle", import.meta.url));
 const bundledDrizzle = fileURLToPath(new URL("./dist/drizzle", import.meta.url));
 
-// The federation inbox inlines @openconditions/federation, whose egress filter
-// inlines @openconditions/publishers and with it @openconditions/roads, whose
-// package entry still loads feed data. Keep its runtime data beside the
-// bundle so resolveFeedsDir() finds ./feeds/roads.
-const roadsFeeds = fileURLToPath(new URL("../../packages/roads/feeds/roads", import.meta.url));
-const bundledFeeds = fileURLToPath(new URL("./dist/feeds/roads", import.meta.url));
-
 export default defineConfig({
   // federation/inbox is a public subpath entry: the federation service's
   // POST /peer/inbox route lands peer records through the SAME crowd paths
@@ -39,7 +32,5 @@ export default defineConfig({
   async onSuccess() {
     await rm(bundledDrizzle, { recursive: true, force: true });
     await cp(coreDrizzle, bundledDrizzle, { recursive: true });
-    await rm(bundledFeeds, { recursive: true, force: true });
-    await cp(roadsFeeds, bundledFeeds, { recursive: true });
   },
 });

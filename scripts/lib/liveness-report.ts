@@ -1,9 +1,9 @@
-import type { FeedSourceBase } from "@openconditions/ingest-framework";
+import type { CatalogFeed } from "@openconditions/ingest-framework";
 
 export interface FeedFailure {
-  feed: Pick<FeedSourceBase, "id" | "name" | "country" | "maintainers">;
-  domain: string;
-  failureKind?: "upstream" | "parse";
+  feed: Pick<CatalogFeed, "id" | "name" | "domain" | "region" | "maintainers">;
+  /** `error`: the feed's payload did not parse; `warning`: it could not be fetched. */
+  level: "error" | "warning";
   message?: string;
 }
 
@@ -32,30 +32,30 @@ function sanitizeUntrusted(value: string): string {
  * feed with its redacted error and its maintainers as @-mentions (or a nudge to
  * add a maintainer when none are listed). Deterministic — same input, same bytes.
  *
- * `feed.name`, `feed.country`, and `message` originate from untrusted feed
- * data/upstream responses and are sanitized before interpolation; maintainer
- * handles come from trusted `maintainers[]` config and are left as real
- * @-mentions.
+ * `feed.name` and `message` may carry text from a catalogue edit or an
+ * upstream response and are sanitized before interpolation; the id, domain and
+ * region are derived tokens, and maintainer handles come from the region
+ * file's trusted `maintainers` and are left as real @-mentions.
  */
 export function renderReport(failures: FeedFailure[]): string {
   const lines: string[] = [
-    `Automated feed-liveness check found ${failures.length} failing keyless feed(s).`,
+    `Automated feed-liveness check found ${failures.length} failing feed(s).`,
     "",
-    "Each feed below fetched or parsed with no usable data. Errors are redacted",
-    "(query-string secrets stripped). Keyed feeds are not checked in CI.",
+    "Each feed below could not be fetched or did not parse. Errors are redacted",
+    "(query-string secrets stripped). Feeds whose credentials are not set are not checked.",
     "",
   ];
   for (const f of failures) {
-    const mentions = (f.feed.maintainers ?? []).map((m) => `@${m.github}`).join(" ");
-    const maintainersLine = mentions || "_none listed — add a `maintainers` entry to this feed_";
+    const mentions = f.feed.maintainers.map((m) => `@${m.github}`).join(" ");
+    const maintainersLine =
+      mentions || "_none listed — add a `maintainers` entry to its region file_";
     const name = sanitizeUntrusted(f.feed.name);
-    const country = sanitizeUntrusted(f.feed.country);
     const message = sanitizeUntrusted(f.message ?? "unknown error");
     lines.push(
       `## ${name} (\`${f.feed.id}\`)`,
       "",
-      `- Domain: ${f.domain}`,
-      `- Country: ${country}`,
+      `- Region file: \`feeds/${f.feed.domain}/${f.feed.region}.jsonc\``,
+      `- Failure: ${f.level === "error" ? "parse" : "fetch (network or HTTP)"}`,
       `- Error: ${message}`,
       `- Maintainers: ${maintainersLine}`,
       "",

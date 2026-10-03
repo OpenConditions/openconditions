@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:fi-fintraffic:23001-1",
+      "id": "oc:feature:fi-fintraffic-flow:23001-1",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -21,7 +21,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "fi-fintraffic",
+        "sourceId": "fi-fintraffic-flow",
         "sourceFormat": "fintraffic-tms",
         "accessMode": "bulk",
         "recordId": "23001-1",
@@ -56,14 +56,14 @@
           "traffic.volume"
         ]
       },
-      "canonicalId": "45dabb3bc7534ff0b20fb716dde2c61201f377d6b81cb4e57a2fe6c36addc790",
+      "canonicalId": "16687d49640fba8a05f8e9e401e183a431a745a1b955e1509d7e364f4e0a8055",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "3b6fe06d108895585c72fcb13405282b84131714a6b4fc3ea941f59512043a86"
+      "contentHash": "7a4d744f064524c50485f395dcf428e4788a530445866ef0795ce676a3c7e144"
     },
     {
-      "id": "oc:feature:fi-fintraffic:23001-2",
+      "id": "oc:feature:fi-fintraffic-flow:23001-2",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -83,7 +83,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "fi-fintraffic",
+        "sourceId": "fi-fintraffic-flow",
         "sourceFormat": "fintraffic-tms",
         "accessMode": "bulk",
         "recordId": "23001-2",
@@ -118,16 +118,16 @@
           "traffic.volume"
         ]
       },
-      "canonicalId": "40dae3344e891a8b32b1470845c168a9050e3bd9f67679808faeec27d3747f67",
+      "canonicalId": "4332239730caab7be970c4207c69f16e35d0b98bfc8fc7f7a5192c0b4ec3bd79",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "501bc26a837e10db51f9e16bbcd54cf625f18b8f039958a3dd5fb3f9001858fe"
+      "contentHash": "9e066635d7f4353a13d543bd8ed132d987f1a849effa3bd03aa56da35835884e"
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:fi-fintraffic:825ec7577c4eae43aef54070f55b9f8f4fbdae0082d569e1489a002cff53d949",
+      "id": "oc:observation:fi-fintraffic-flow:4abd58211d91f0e3e5ffb8736a3a7ba82f0269be95b41224cc28dc4573b384f2",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -147,7 +147,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "fi-fintraffic",
+        "sourceId": "fi-fintraffic-flow",
         "sourceFormat": "fintraffic-tms",
         "accessMode": "bulk",
         "recordId": "23001-1",
@@ -169,7 +169,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:fi-fintraffic:23001-1"
+        "featureId": "oc:feature:fi-fintraffic-flow:23001-1"
       },
       "result": {
         "type": "quantity",
@@ -181,14 +181,14 @@
         "end": "2026-03-04T14:30:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "43f87c98775a85ccf9213b6539f8539acf77a025c15bd231f388ad0bdd109d51",
+      "canonicalId": "4c6d9f043c9067289c0e024d3de3e61170c93276e7002b192bcbf559bf3b9046",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "44d6b37d4c77830bdc9621fbbd81b47c8acb1e4c7141792827439b8031eac5b3"
+      "contentHash": "907b40fa9a511cb3c34bb35a4cdc55aaecdc88a3bd33a88833cd481a2583bd84"
     },
     {
-      "id": "oc:observation:fi-fintraffic:361f7cc944e087dabb35870f4fd6b1d4f3d77048d510f2ac639fdd22ee40f426",
+      "id": "oc:observation:fi-fintraffic-flow:c03e23cc54ed1b0ffe1d474d92f767b088cc5aefb1f1dabc6fbec3505934910b",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -208,7 +208,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "fi-fintraffic",
+        "sourceId": "fi-fintraffic-flow",
         "sourceFormat": "fintraffic-tms",
         "accessMode": "bulk",
         "recordId": "23001-1",
@@ -230,7 +230,7 @@
       "property": "traffic.volume",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:fi-fintraffic:23001-1"
+        "featureId": "oc:feature:fi-fintraffic-flow:23001-1"
       },
       "result": {
         "type": "quantity",
@@ -242,14 +242,14 @@
         "end": "2026-03-04T14:30:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "2513fdc1a1dcbfece04f356cd84cf04ad4dea5816f9efa44b4d11992868e27f2",
+      "canonicalId": "6f0e5f22ffae88f4325f8c74d0ec5ca9c98d56a6fdf91a642f8ecba72dc53cdc",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "54d54c5d81024600bea04a4e258686c3f7f932857118f8bb4cb2c121dd30269f"
+      "contentHash": "edf2b9e9b8937f1322b93109f21a155449ab25cf55094a72e45acd45fbacd2c2"
     },
     {
-      "id": "oc:observation:fi-fintraffic:4dc96d497512d02f8e4c18c78f8c6dbd238f29e34adf5d339ab398ff82b69eac",
+      "id": "oc:observation:fi-fintraffic-flow:d8446ef30d9eadfe64b68c2d4b37cf8457a3816ac6f926c9f625c9603d1f4ea0",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -269,7 +269,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "fi-fintraffic",
+        "sourceId": "fi-fintraffic-flow",
         "sourceFormat": "fintraffic-tms",
         "accessMode": "bulk",
         "recordId": "23001-2",
@@ -291,7 +291,7 @@
       "property": "traffic.speed",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:fi-fintraffic:23001-2"
+        "featureId": "oc:feature:fi-fintraffic-flow:23001-2"
       },
       "result": {
         "type": "quantity",
@@ -303,11 +303,11 @@
         "end": "2026-03-04T14:30:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "c25f20563574d0a4c5d2f19b6894ef16c0221c43c5007e4ceedbf5f09c49f94c",
+      "canonicalId": "06155bdc20d770ec4199befce96f981b552ce11597f8878d442ef6b1a5525ea6",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "0664ffd01fbc2dbec5ebcecd9d1a57b44e603a247ad19ff184213b3e362da93c"
+      "contentHash": "a8fed82e05756642b67ae579b68f653ce0e8362f2803e7ba49ff01fa16e0c24c"
     }
   ],
   "situations": []

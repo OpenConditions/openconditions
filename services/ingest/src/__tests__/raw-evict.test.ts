@@ -42,7 +42,7 @@ const ages = (rows: HeldPayload[]) => rows.map((r) => (NOW - r.lastSeenAt) / HOU
 
 describe("planEviction without a cap", () => {
   it("keeps every payload of the hot window, then one per hour until the tier's thinned window ends", () => {
-    const rows = series("nl-ndw", "situation", 20 * 24);
+    const rows = series("nl-ndw-events", "situation", 20 * 24);
     const { evict, rung } = planEviction(rows, policy());
     expect(rung).toBe(0);
     const kept = rows.filter((r) => !evict.includes(r));
@@ -58,7 +58,7 @@ describe("planEviction without a cap", () => {
   });
 
   it("keeps only the hot window of a hot-only source, and the newest three of a reference table", () => {
-    const hot = series("ca-bc-drivebc", "hot", 72, 60);
+    const hot = series("ca-bc-drivebc-events", "hot", 72, 60);
     const reference = [100, 200, 300, 400, 500].map((h) => payload("nl-ndw-flow", "reference", h));
     const { evict } = planEviction([...hot, ...reference], policy());
     expect(ages(evict.filter((r) => r.tier === "hot"))).toEqual(
@@ -76,7 +76,7 @@ describe("planEviction without a cap", () => {
 });
 
 describe("planEviction over the cap", () => {
-  const situation = series("nl-ndw", "situation", 14 * 24, 60);
+  const situation = series("nl-ndw-events", "situation", 14 * 24, 60);
   const observation = series("nl-ndw-flow", "observation", 7 * 24, 60);
   const all = [...situation, ...observation];
   const keptBytes = (cap: number) => {
@@ -106,7 +106,7 @@ describe("planEviction over the cap", () => {
   });
 
   it("drops what is left of the thinned windows before it cuts into any hot window", () => {
-    const situationFeed = [0, 1, 2, 60].map((h) => payload("nl-ndw", "situation", h));
+    const situationFeed = [0, 1, 2, 60].map((h) => payload("nl-ndw-events", "situation", h));
     const observationFeed = [0, 1, 2, 10, 20].map((h) => payload("nl-ndw-flow", "observation", h));
     const rows = [...situationFeed, ...observationFeed];
     const { evict, rung, hotEvicted } = planEviction(rows, policy({ maxBytes: 800 }));
@@ -116,7 +116,7 @@ describe("planEviction over the cap", () => {
   });
 
   it("names only the sources that lost a hot-window payload", () => {
-    const situationFeed = [0, 1, 2, 60].map((h) => payload("nl-ndw", "situation", h));
+    const situationFeed = [0, 1, 2, 60].map((h) => payload("nl-ndw-events", "situation", h));
     const observationFeed = [0, 1, 2, 10, 20].map((h) => payload("nl-ndw-flow", "observation", h));
     const { evict, rung, hotEvicted } = planEviction(
       [...situationFeed, ...observationFeed],
@@ -136,7 +136,7 @@ describe("planEviction over the cap", () => {
   });
 
   it("keeps a pinned payload even when nothing else fits under the cap", () => {
-    const pinned = payload("nl-ndw", "situation", 10, { protected: true });
+    const pinned = payload("nl-ndw-events", "situation", 10, { protected: true });
     const { evict, rung } = planEviction([...all, pinned], policy({ maxBytes: 1 }));
     expect(rung).toBe(3);
     expect(evict).not.toContain(pinned);

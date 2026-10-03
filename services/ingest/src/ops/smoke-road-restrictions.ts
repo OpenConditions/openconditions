@@ -2,7 +2,8 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import {
   createFetchState,
-  fetchAll,
+  type FeedEndpoint,
+  fetchEndpoint,
   guardedFetch,
   guardOptionsFromEnv,
   type LookupFn,
@@ -10,13 +11,13 @@ import {
   type RecordDraft,
 } from "@openconditions/ingest-framework";
 import { isVehicleSpecific, situationEffects } from "@openconditions/model";
-import { FEED_SOURCES } from "@openconditions/roads";
 import { fetch as undiciFetch } from "undici";
-import { parseEventFeed } from "../pipeline/parse.js";
+import { domainOf, loadIngestCatalog } from "../domains.js";
+import { parseMainPayloads } from "../pipeline/parse.js";
 import { stampAttribution, writeModel } from "../pipeline/publish.js";
 import { resolveOpenLr } from "../pipeline/resolve.js";
 import { type RestrictionTally, tallyRestrictions } from "../pipeline/restriction-tally.js";
-import { type DomainFeedSource, inspectSnapshotCompleteness } from "../pipeline/run.js";
+import { inspectSnapshotCompleteness } from "../pipeline/run.js";
 
 /**
  * A finite, operator-run smoke check for the restriction path.
@@ -31,7 +32,8 @@ import { type DomainFeedSource, inspectSnapshotCompleteness } from "../pipeline/
  * schema or validation failure IS a failure and exits nonzero.
  */
 
-export type SmokeSourceId = "fi-digitraffic" | "nl-ndw";
+export const SMOKE_SOURCE_IDS = ["fi-digitraffic-events", "nl-ndw-events"] as const;
+export type SmokeSourceId = (typeof SMOKE_SOURCE_IDS)[number];
 
 export interface RunRestrictionSmokeOptions {
   sourceId: SmokeSourceId;
@@ -120,6 +122,12 @@ function displayOf(situations: readonly RecordDraft[]) {
   };
 }
 
+/** The URL templates of an endpoint as written (credentials stay `${field}`). */
+function feedUrlsOf(endpoint: FeedEndpoint | undefined): string[] {
+  if (!endpoint) return [];
+  return endpoint.urls ? [...endpoint.urls] : endpoint.url ? [endpoint.url] : [];
+}
+
 /** Record each response's validators without buffering its body twice. */
 function recordingFetch(inner: typeof fetch, into: RequestRecord[]): typeof fetch {
   return (async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
@@ -155,16 +163,16 @@ export async function runRestrictionSmoke(
   // Sources whose restriction normalization has been verified against a
   // reviewed capture. Anything else would produce a report whose numbers nobody
   // has checked, so it is refused rather than run.
-  const allowed = new Set(["fi-digitraffic", "nl-ndw"]);
-  if (!allowed.has(options.sourceId)) {
+  if (!(SMOKE_SOURCE_IDS as readonly string[]).includes(options.sourceId)) {
     throw new Error(`smoke: unsupported restriction smoke source ${options.sourceId}`);
   }
   if (!options.outputDir || options.outputDir.trim() === "") {
     throw new Error("smoke: an output directory is required");
   }
-  const descriptor = FEED_SOURCES.find((candidate) => candidate.id === options.sourceId);
-  if (!descriptor) throw new Error(`smoke: restriction smoke source not configured`);
-  const feed: DomainFeedSource = { ...descriptor, domain: "roads" };
+  const feed = (await loadIngestCatalog()).feeds.find(
+    (candidate) => candidate.id === options.sourceId,
+  );
+  if (!feed) throw new Error(`smoke: restriction smoke source not configured`);
   const checkedAt = (deps.now ?? (() => new Date().toISOString()))();
   if (!Number.isFinite(Date.parse(checkedAt))) throw new Error("smoke: invalid checked time");
 
@@ -178,9 +186,9 @@ export async function runRestrictionSmoke(
     {},
     deps.lookup,
   );
-  const acquired = await fetchAll(feed, makeAuthorizedFetch(feed, guarded), {
+  const acquired = await fetchEndpoint(feed, "main", makeAuthorizedFetch(feed, guarded), {
     state: createFetchState(),
-    now: () => Date.parse(checkedAt),
+    resolvers: domainOf(feed).resolvers,
   });
   if (acquired.status !== "fetched") {
     throw new Error(`smoke acquisition: ${acquired.status}`);
@@ -191,7 +199,7 @@ export async function runRestrictionSmoke(
   const completeness = inspectSnapshotCompleteness(feed, acquired.buffers);
   if (!completeness.complete) throw new Error("smoke: source declares no complete snapshot");
 
-  const parsed = parseEventFeed(feed, acquired.buffers);
+  const parsed = parseMainPayloads(feed, acquired.buffers, checkedAt);
   const accounting = parsed.records;
   if (!accounting) throw new Error("source lacks complete road snapshot reporting");
 
@@ -232,8 +240,8 @@ export async function runRestrictionSmoke(
     sourceFormat: feed.format,
     mode: "validation-only",
     checkedAt,
-    freshnessWindowSec: feed.freshnessWindowSec ?? null,
-    feedUrls: Array.isArray(feed.url) ? feed.url : feed.url ? [feed.url] : [],
+    freshnessWindowSec: feed.freshnessWindowSec,
+    feedUrls: feedUrlsOf(feed.endpoints["main"]),
     requests,
     snapshot: {
       inputCount: accounting.inputCount,
@@ -249,11 +257,11 @@ export async function runRestrictionSmoke(
       sourceUpdatedAt: (provenance?.["sourceUpdatedAt"] as string | undefined) ?? null,
       recordId: (provenance?.["recordId"] as string | undefined) ?? null,
       recordVersion: (provenance?.["recordVersion"] as string | undefined) ?? null,
-      publisher: feed.attribution ?? null,
-      license: feed.license ?? null,
+      publisher: feed.attribution,
+      license: feed.license,
       licenseUrl: feed.licenseUrl ?? null,
-      termsUrl: feed.rights?.termsUrl ?? null,
-      rightsReviewedAt: feed.rights?.reviewedAt ?? null,
+      termsUrl: feed.terms?.url ?? null,
+      rightsReviewedAt: feed.terms?.reviewedAt ?? null,
     },
     notes,
   };
@@ -278,9 +286,9 @@ function parseArgs(args: string[]): RunRestrictionSmokeOptions {
   };
   const sourceId = read("--source");
   const outputDir = read("--output");
-  if (sourceId !== "fi-digitraffic" && sourceId !== "nl-ndw") {
+  if (!(SMOKE_SOURCE_IDS as readonly (string | undefined)[]).includes(sourceId)) {
     throw new Error(
-      "usage: --source <fi-digitraffic|nl-ndw> --output <dir> [--database disposable]",
+      `usage: --source <${SMOKE_SOURCE_IDS.join("|")}> --output <dir> [--database disposable]`,
     );
   }
   if (!outputDir) throw new Error("usage: --source <id> --output <dir>");
@@ -293,7 +301,7 @@ function parseArgs(args: string[]): RunRestrictionSmokeOptions {
     throw new Error("--database disposable requires --spine <reviewed spine JSON>");
   }
   return {
-    sourceId,
+    sourceId: sourceId as SmokeSourceId,
     outputDir,
     ...(database === "disposable" ? { database } : {}),
     ...(spineFile !== undefined ? { spineFile } : {}),

@@ -1,8 +1,8 @@
 import { resolveInstanceId } from "@openconditions/core/server";
-import type { RecordDraft } from "@openconditions/ingest-framework";
-import type { Registry } from "@openconditions/model";
+import type { CatalogFeed, RecordDraft } from "@openconditions/ingest-framework";
+import type { GrantState, Registry, RoutingRights } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
-import type { FeedSource, FlowOutput } from "@openconditions/roads";
+import type { FlowOutput } from "@openconditions/roads";
 import { type WriteContext, type WriteSummary, writeSnapshotIn } from "@openconditions/storage";
 import type postgres from "postgres";
 import { upsertSourceStatus } from "./source-status.js";
@@ -26,16 +26,46 @@ export function writeModel(over: Partial<WriteModel> = {}): WriteModel {
   };
 }
 
-const grantState = (value: boolean | null | undefined): "yes" | "no" | "unknown" =>
-  value == null ? "unknown" : value ? "yes" : "no";
+const grantState = (value: boolean | null): GrantState =>
+  value === null ? "unknown" : value ? "yes" : "no";
+
+/**
+ * A review date or instant as the full UTC instant routing evidence requires
+ * (a date alone is its midnight UTC); null when absent or unreadable.
+ */
+function reviewInstant(value: string | undefined): string | null {
+  if (value === undefined) return null;
+  const ms = Date.parse(/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00Z` : value);
+  return Number.isFinite(ms) ? new Date(ms).toISOString() : null;
+}
+
+/**
+ * A feed's rights as records carry them: each grant of its licence and terms,
+ * the evidence they rest on (the terms page, else the licence's; the licence
+ * id) and when the terms were reviewed.
+ */
+export function routingRightsOf(
+  src: Pick<CatalogFeed, "rights" | "terms" | "license" | "licenseUrl">,
+): RoutingRights {
+  return {
+    source_redistribution: grantState(src.rights.redistribution),
+    derived_redistribution: grantState(src.rights.derivedRedistribution),
+    commercial_use: grantState(src.rights.commercialUse),
+    attribution_required: grantState(src.rights.attributionRequired),
+    retention: grantState(src.rights.retention),
+    evidence_origin: src.terms?.url ?? src.licenseUrl ?? null,
+    evidence_version: src.license,
+    reviewed_at: reviewInstant(src.terms?.reviewedAt),
+  };
+}
 
 /**
  * Stamps the reviewed catalogue onto a draft's attribution at the ingestion
  * boundary: provider, licence, the catalogue child and parent policy it was
- * selected under, and the grants of its rights review. A payload never states
- * its own rights; they come from the configuration.
+ * selected under, and the grants of its rights. A payload never states its
+ * own rights; they come from the configuration.
  */
-export function stampAttribution(draft: RecordDraft, src: FeedSource): RecordDraft {
+export function stampAttribution(draft: RecordDraft, src: CatalogFeed): RecordDraft {
   const provenance = draft["provenance"] as Record<string, unknown> | undefined;
   if (provenance === undefined) return draft;
   const policyIds =
@@ -52,16 +82,7 @@ export function stampAttribution(draft: RecordDraft, src: FeedSource): RecordDra
           ? { parentSourceId: src.parentSourceId, childSourceId: src.id }
           : {}),
         ...(policyIds && policyIds.length > 0 ? { policyIds } : {}),
-        rights: {
-          source_redistribution: grantState(src.rights?.sourceRedistribution),
-          derived_redistribution: grantState(src.rights?.derivedRedistribution),
-          commercial_use: grantState(src.rights?.commercialUse),
-          attribution_required: grantState(src.rights?.attributionRequired),
-          retention: grantState(src.rights?.retention),
-          evidence_origin: src.rights?.evidenceOrigin ?? null,
-          evidence_version: src.rights?.evidenceVersion ?? null,
-          reviewed_at: src.rights?.reviewedAt ?? null,
-        },
+        rights: routingRightsOf(src),
       },
     },
   };
@@ -92,7 +113,7 @@ export class UnlocatableRetainedError extends Error {}
  */
 export async function publishSituations(
   sql: Sql,
-  src: FeedSource,
+  src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     situations: readonly RecordDraft[];
     unlocatable?: readonly string[];
@@ -171,7 +192,7 @@ export async function publishSituations(
  */
 export async function publishFlows(
   sql: Sql,
-  src: FeedSource,
+  src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
     output: FlowOutput;
     /** Whether the poll could derive congestion at all; default true. */

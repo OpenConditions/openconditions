@@ -73,6 +73,7 @@ const LOS: Record<string, string> = {
 
 const EXTERNAL_ID_SCHEME: Record<string, string> = {
   datex2: "datex:record",
+  "datex2-measured": "datex:record",
   wzdx: "wzdx:road_event",
   open511: "open511",
 };

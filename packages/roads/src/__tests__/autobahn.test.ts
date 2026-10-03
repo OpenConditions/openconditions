@@ -6,10 +6,10 @@ import { parseAutobahn } from "../autobahn.js";
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/autobahn/warning.json");
 
 const AUTOBAHN_SOURCE = {
-  id: "de-autobahn",
+  id: "de-autobahn-events",
   attribution: "Autobahn GmbH des Bundes",
   country: "DE",
-  license: "dl-de/by-2-0",
+  license: "DL-DE-BY-2.0",
   licenseUrl: "https://www.govdata.de/dl-de/by-2-0",
 } as const;
 
@@ -150,7 +150,7 @@ describe("parseAutobahn — warning fixture", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseAutobahn(json, AUTOBAHN_SOURCE, "warning");
 
-    expect(events.every((ev) => ev.id.startsWith("de-autobahn:"))).toBe(true);
+    expect(events.every((ev) => ev.id.startsWith("de-autobahn-events:"))).toBe(true);
   });
 
   it("carries license from the source descriptor via origin", () => {
@@ -160,7 +160,7 @@ describe("parseAutobahn — warning fixture", () => {
     for (const ev of events) {
       expect(ev.origin.kind).toBe("feed");
       if (ev.origin.kind === "feed") {
-        expect(ev.origin.attribution.license).toBe("dl-de/by-2-0");
+        expect(ev.origin.attribution.license).toBe("DL-DE-BY-2.0");
       }
     }
   });

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parsePredefinedLocations } from "../predefined-locations.js";
 import { fixture, flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const FEED = "de-nw-autobahn-loslane";
+const FEED = "de-nw-autobahn-los-flow";
 const feed = flowFeed(FEED);
 const sites = parsePredefinedLocations(fixture("autobahn-bab/verortung.xml"));
 const xml = fixture("autobahn-bab/elaborated.xml");

@@ -60,7 +60,7 @@ describe("durable source operational status", () => {
     expect(rows.map((r) => r.payload_hashes)).toEqual([hashes, null]);
   });
 
-  it("does not renew network freshness for a cadence skip", async () => {
+  it("does not renew network freshness for an overlap skip", async () => {
     await upsertSourceStatus(sql, "status-cadence", {
       attemptAt: "2026-09-11T10:00:00.000Z",
       freshnessWindowSec: 900,
@@ -71,14 +71,14 @@ describe("durable source operational status", () => {
     await upsertSourceStatus(sql, "status-cadence", {
       attemptAt: "2026-09-11T10:05:00.000Z",
       freshnessWindowSec: 900,
-      outcome: "skipped_cadence",
+      outcome: "skipped_overlap",
       networkValidated: false,
       durationMs: 0,
     });
 
     const status = (await readSourceOperationalStatus(sql)).get("status-cadence");
     expect(status).toMatchObject({
-      lastOutcome: "skipped_cadence",
+      lastOutcome: "skipped_overlap",
       lastAttemptAt: "2026-09-11T10:05:00.000Z",
       lastNetworkSuccessAt: "2026-09-11T10:00:00.000Z",
       freshnessDeadline: "2026-09-11T10:15:00.000Z",
@@ -233,9 +233,9 @@ describe("durable source operational status", () => {
   });
 
   it("closes, at boot, the attempts a stopped service left running", async () => {
-    const abandoned = await openPollAttempt(sql, "nl-ndw", "2026-10-01T10:00:00.000Z");
-    const finished = await openPollAttempt(sql, "nl-ndw", "2026-10-01T10:05:00.000Z");
-    await upsertSourceStatus(sql, "nl-ndw", {
+    const abandoned = await openPollAttempt(sql, "nl-ndw-events", "2026-10-01T10:00:00.000Z");
+    const finished = await openPollAttempt(sql, "nl-ndw-events", "2026-10-01T10:05:00.000Z");
+    await upsertSourceStatus(sql, "nl-ndw-events", {
       freshnessWindowSec: 900,
       outcome: "changed",
       attemptAt: "2026-10-01T10:05:00.000Z",

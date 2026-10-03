@@ -55,7 +55,7 @@ async function readIds(file: string): Promise<string[]> {
 
 const shareAlike = {
   origin: "feed",
-  sourceId: "de-autobahn",
+  sourceId: "de-autobahn-events",
   sourceFormat: "autobahn",
   accessMode: "bulk",
   recordId: "sa",
@@ -65,7 +65,7 @@ const shareAlike = {
 
 describe("nightly static archive", () => {
   it("writes one GeoParquet file per record class of the published view, and names each latest", async () => {
-    await writeSituations(sql, "de-autobahn", [
+    await writeSituations(sql, "de-autobahn-events", [
       situationDraft("open"),
       situationDraft("sa", { provenance: shareAlike }),
     ]);
@@ -85,7 +85,9 @@ describe("nightly static archive", () => {
         expect((await stat(latest)).ino).toBe((await stat(result![cls].path)).ino);
       }
       // Share-alike and withdrawn records stay out of a permissive mirror.
-      expect(await readIds(result!.situation.path)).toEqual(["oc:situation:de-autobahn:open"]);
+      expect(await readIds(result!.situation.path)).toEqual([
+        "oc:situation:de-autobahn-events:open",
+      ]);
       expect(await readIds(result!.feature.path)).toEqual([]);
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -93,17 +95,22 @@ describe("nightly static archive", () => {
   }, 60_000);
 
   it("moves each latest name to the newest build", async () => {
-    await writeSituations(sql, "de-autobahn", [situationDraft("first")]);
+    await writeSituations(sql, "de-autobahn-events", [situationDraft("first")]);
     const dir = await mkdtemp(path.join(tmpdir(), "oc-archive-"));
     try {
       await buildDailyArchive(sql, { now: () => new Date("2026-09-07T03:30:00Z"), outputDir: dir });
-      await writeSituations(sql, "de-autobahn", [situationDraft("second")], "2026-09-07T10:00:00Z");
+      await writeSituations(
+        sql,
+        "de-autobahn-events",
+        [situationDraft("second")],
+        "2026-09-07T10:00:00Z",
+      );
       await buildDailyArchive(sql, { now: () => new Date("2026-09-08T03:30:00Z"), outputDir: dir });
       expect(await readIds(path.join(dir, "archive-situation.parquet"))).toEqual([
-        "oc:situation:de-autobahn:second",
+        "oc:situation:de-autobahn-events:second",
       ]);
       expect(await readIds(path.join(dir, "archive-situation-2026-09-07.parquet"))).toEqual([
-        "oc:situation:de-autobahn:first",
+        "oc:situation:de-autobahn-events:first",
       ]);
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -111,15 +118,18 @@ describe("nightly static archive", () => {
   }, 60_000);
 
   it("removes an erased record from every earlier night's file", async () => {
-    await writeSituations(sql, "de-autobahn", [situationDraft("kept"), situationDraft("erased")]);
+    await writeSituations(sql, "de-autobahn-events", [
+      situationDraft("kept"),
+      situationDraft("erased"),
+    ]);
     const dir = await mkdtemp(path.join(tmpdir(), "oc-archive-"));
-    const erased = "oc:situation:de-autobahn:erased";
+    const erased = "oc:situation:de-autobahn-events:erased";
     try {
       await buildDailyArchive(sql, { now: () => new Date("2026-09-07T03:30:00Z"), outputDir: dir });
       const firstNight = path.join(dir, "archive-situation-2026-09-07.parquet");
       expect(await readIds(firstNight)).toEqual([
-        "oc:situation:de-autobahn:erased",
-        "oc:situation:de-autobahn:kept",
+        "oc:situation:de-autobahn-events:erased",
+        "oc:situation:de-autobahn-events:kept",
       ]);
       const before = (await parquetReadObjects({ file: await bufferOf(firstNight) })) as Rec[];
 
@@ -131,9 +141,9 @@ describe("nightly static archive", () => {
          WHERE id = ${erased}`;
       await buildDailyArchive(sql, { now: () => new Date("2026-09-08T03:30:00Z"), outputDir: dir });
 
-      expect(await readIds(firstNight)).toEqual(["oc:situation:de-autobahn:kept"]);
+      expect(await readIds(firstNight)).toEqual(["oc:situation:de-autobahn-events:kept"]);
       expect(await readIds(path.join(dir, "archive-situation-2026-09-08.parquet"))).toEqual([
-        "oc:situation:de-autobahn:kept",
+        "oc:situation:de-autobahn-events:kept",
       ]);
       // The rows that stay are as they were, geometry and metadata included.
       const after = (await parquetReadObjects({ file: await bufferOf(firstNight) })) as Rec[];
@@ -146,7 +156,10 @@ describe("nightly static archive", () => {
   }, 60_000);
 
   it("moves the latest name along with the rewritten file it points at", async () => {
-    await writeSituations(sql, "de-autobahn", [situationDraft("kept"), situationDraft("erased")]);
+    await writeSituations(sql, "de-autobahn-events", [
+      situationDraft("kept"),
+      situationDraft("erased"),
+    ]);
     const dir = await mkdtemp(path.join(tmpdir(), "oc-archive-"));
     try {
       await buildDailyArchive(sql, { now: () => new Date("2026-09-07T03:30:00Z"), outputDir: dir });
@@ -154,11 +167,11 @@ describe("nightly static archive", () => {
         INSERT INTO conditions.federation_tombstone
           (canonical_id, peer_instance_id, reason, tombstoned_at, expires_at)
         SELECT canonical_id, '', 'rights_revoked', '2026-09-07T09:00:00Z', '2026-10-07T09:00:00Z'
-          FROM conditions.situation WHERE id = 'oc:situation:de-autobahn:erased'`;
+          FROM conditions.situation WHERE id = 'oc:situation:de-autobahn-events:erased'`;
       expect(await pruneErasedArchives(sql, dir, "2026-09-07T10:00:00Z")).toBe(1);
       const latest = path.join(dir, "archive-situation.parquet");
       const dated = path.join(dir, "archive-situation-2026-09-07.parquet");
-      expect(await readIds(latest)).toEqual(["oc:situation:de-autobahn:kept"]);
+      expect(await readIds(latest)).toEqual(["oc:situation:de-autobahn-events:kept"]);
       expect((await stat(latest)).ino).toBe((await stat(dated)).ino);
       expect(await pruneErasedArchives(sql, dir, "2026-09-07T10:00:00Z")).toBe(0);
     } finally {
@@ -168,7 +181,7 @@ describe("nightly static archive", () => {
   }, 60_000);
 
   it("applies each erasure to the kept files once, not every night it stays in force", async () => {
-    await writeSituations(sql, "de-autobahn", [
+    await writeSituations(sql, "de-autobahn-events", [
       situationDraft("kept"),
       situationDraft("erased"),
       situationDraft("later"),
@@ -178,7 +191,7 @@ describe("nightly static archive", () => {
       INSERT INTO conditions.federation_tombstone
         (canonical_id, peer_instance_id, reason, tombstoned_at, expires_at)
       SELECT canonical_id, '', 'rights_revoked', ${at}, '2026-10-07T09:00:00Z'
-        FROM conditions.situation WHERE id = ${`oc:situation:de-autobahn:${local}`}`;
+        FROM conditions.situation WHERE id = ${`oc:situation:de-autobahn-events:${local}`}`;
     try {
       await buildDailyArchive(sql, { now: () => new Date("2026-09-07T03:30:00Z"), outputDir: dir });
       const dated = path.join(dir, "archive-situation-2026-09-07.parquet");
@@ -199,7 +212,7 @@ describe("nightly static archive", () => {
       failed.mockRestore();
       await writeFile(dated, good);
       expect(await pruneErasedArchives(sql, dir, "2026-09-09T10:00:00Z")).toBe(1);
-      expect(await readIds(dated)).toEqual(["oc:situation:de-autobahn:kept"]);
+      expect(await readIds(dated)).toEqual(["oc:situation:de-autobahn-events:kept"]);
     } finally {
       await sql`TRUNCATE conditions.federation_tombstone`;
       await rm(dir, { recursive: true, force: true });
@@ -207,7 +220,7 @@ describe("nightly static archive", () => {
   }, 60_000);
 
   it("keeps the newest nights only, and the latest names", async () => {
-    await writeSituations(sql, "de-autobahn", [situationDraft("kept")]);
+    await writeSituations(sql, "de-autobahn-events", [situationDraft("kept")]);
     const dir = await mkdtemp(path.join(tmpdir(), "oc-archive-"));
     try {
       for (const day of ["2026-09-06", "2026-09-07", "2026-09-08"]) {
@@ -265,16 +278,21 @@ describe("nightly static archive", () => {
   }, 30_000);
 
   it("reads one snapshot across keyset pages while another transaction changes later records", async () => {
-    await writeSituations(sql, "de-autobahn", [situationDraft("a"), situationDraft("b")]);
+    await writeSituations(sql, "de-autobahn-events", [situationDraft("a"), situationDraft("b")]);
     await sql.begin("isolation level repeatable read read only", async (tx) => {
       const pages = scanRecords(tx, "situation", { pageSize: 1 });
       const idsOf = (page: Record<string, unknown>[] | undefined) => page?.map((r) => r["id"]);
       expect(idsOf((await pages.next()).value ?? undefined)).toEqual([
-        "oc:situation:de-autobahn:a",
+        "oc:situation:de-autobahn-events:a",
       ]);
-      await writeSituations(sql, "de-autobahn", [situationDraft("a")], "2026-09-06T12:00:00Z");
+      await writeSituations(
+        sql,
+        "de-autobahn-events",
+        [situationDraft("a")],
+        "2026-09-06T12:00:00Z",
+      );
       expect(idsOf((await pages.next()).value ?? undefined)).toEqual([
-        "oc:situation:de-autobahn:b",
+        "oc:situation:de-autobahn-events:b",
       ]);
       expect((await pages.next()).done).toBe(true);
     });

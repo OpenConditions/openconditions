@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { flowFeed, flows, readings, site, siteIds, value } from "./flow-fixtures.js";
 
-const FEED = "sg-lta-speedbands";
+const FEED = "sg-lta-flow";
 const feed = flowFeed(FEED);
 
 // Shape mirrors the DataMall Traffic Speed Bands `value` array.

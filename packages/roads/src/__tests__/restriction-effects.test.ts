@@ -22,14 +22,14 @@ import { restrictionDetails } from "./fixtures/restriction-event.js";
 const kernel = buildRegistry([kernelModule]).kernel;
 
 const ndw: SourceDescriptor = {
-  id: "nl-ndw",
+  id: "nl-ndw-events",
   attribution: "NDW / Rijkswaterstaat",
   country: "NL",
   license: "CC0-1.0",
   licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
 };
 const fintraffic: SourceDescriptor = {
-  id: "fi-digitraffic",
+  id: "fi-digitraffic-events",
   attribution: "Fintraffic / Digitraffic",
   country: "FI",
   license: "CC-BY-4.0",
@@ -64,7 +64,7 @@ describe("restrictionEffects", () => {
 
   it("finds restriction envelopes in both source fixtures", () => {
     const sources = new Set(all.map((d) => d.source.sourceId));
-    expect(sources).toEqual(new Set(["nl-ndw", "fi-digitraffic"]));
+    expect(sources).toEqual(new Set(["nl-ndw-events", "fi-digitraffic-events"]));
   });
 
   it("maps every envelope onto kernel effects that pass hard validation", () => {

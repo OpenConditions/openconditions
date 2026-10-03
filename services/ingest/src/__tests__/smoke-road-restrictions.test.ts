@@ -63,7 +63,7 @@ afterEach(async () => {
 describe("runRestrictionSmoke", () => {
   it("accounts for a four-partition run and reports the verified restrictions", async () => {
     const report = await runRestrictionSmoke(
-      { sourceId: "fi-digitraffic", outputDir },
+      { sourceId: "fi-digitraffic-events", outputDir },
       { fetch: serve(roadworks()), lookup: fakeLookup, now: () => CHECKED_AT },
     );
     expect(report.mode).toBe("validation-only");
@@ -86,6 +86,7 @@ describe("runRestrictionSmoke", () => {
     expect(report.provenance).toMatchObject({
       license: "CC-BY-4.0",
       licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+      // The reviewed terms page the grant rests on.
       termsUrl: "https://www.digitraffic.fi/en/terms-of-service/",
       publisher: "Fintraffic / Digitraffic",
     });
@@ -94,11 +95,11 @@ describe("runRestrictionSmoke", () => {
 
   it("writes a report and a display artifact without the raw national payload", async () => {
     await runRestrictionSmoke(
-      { sourceId: "fi-digitraffic", outputDir },
+      { sourceId: "fi-digitraffic-events", outputDir },
       { fetch: serve(roadworks()), lookup: fakeLookup, now: () => CHECKED_AT },
     );
     const report = JSON.parse(await readFile(join(outputDir, "report.json"), "utf8"));
-    expect(report.sourceId).toBe("fi-digitraffic");
+    expect(report.sourceId).toBe("fi-digitraffic-events");
     const display = await readFile(join(outputDir, "display.geojson"), "utf8");
     expect(display).not.toContain("sourceRaw");
     expect(display).not.toContain("Fintraffic Tieliikennekeskus");
@@ -112,7 +113,7 @@ describe("runRestrictionSmoke", () => {
         (feature["properties"] as Record<string, unknown>)["situationId"] === "GUID50468844",
     );
     const report = await runRestrictionSmoke(
-      { sourceId: "fi-digitraffic", outputDir },
+      { sourceId: "fi-digitraffic-events", outputDir },
       { fetch: serve(withoutWeights), lookup: fakeLookup, now: () => CHECKED_AT },
     );
     expect(report.restrictions.kinds["height:m"]).toBe(1);
@@ -123,7 +124,7 @@ describe("runRestrictionSmoke", () => {
   it("fails a partial acquisition rather than reporting a small feed", async () => {
     await expect(
       runRestrictionSmoke(
-        { sourceId: "fi-digitraffic", outputDir },
+        { sourceId: "fi-digitraffic-events", outputDir },
         {
           fetch: serve(roadworks(), { failWeights: true }),
           lookup: fakeLookup,
@@ -144,7 +145,7 @@ describe("runRestrictionSmoke", () => {
     }) as unknown as typeof fetch;
     await expect(
       runRestrictionSmoke(
-        { sourceId: "fi-digitraffic", outputDir },
+        { sourceId: "fi-digitraffic-events", outputDir },
         { fetch: broken, lookup: fakeLookup, now: () => CHECKED_AT },
       ),
     ).rejects.toThrow();
@@ -159,7 +160,7 @@ describe("runRestrictionSmoke", () => {
     );
     await expect(
       runRestrictionSmoke(
-        { sourceId: "fi-digitraffic", outputDir },
+        { sourceId: "fi-digitraffic-events", outputDir },
         { fetch: serve(malformed), lookup: fakeLookup, now: () => CHECKED_AT },
       ),
     ).rejects.toThrow(/missing_identity/);
@@ -169,11 +170,14 @@ describe("runRestrictionSmoke", () => {
     await expect(
       // Cast deliberately: the runtime guard must hold even when a caller
       // bypasses the compile-time source union.
-      runRestrictionSmoke({ sourceId: "de-autobahn" as never, outputDir }, { lookup: fakeLookup }),
+      runRestrictionSmoke(
+        { sourceId: "de-autobahn-events" as never, outputDir },
+        { lookup: fakeLookup },
+      ),
     ).rejects.toThrow(/unsupported restriction smoke source/);
     await expect(
       runRestrictionSmoke(
-        { sourceId: "fi-digitraffic", outputDir: "  " },
+        { sourceId: "fi-digitraffic-events", outputDir: "  " },
         { fetch: serve(roadworks()), lookup: fakeLookup },
       ),
     ).rejects.toThrow(/output directory/);
@@ -181,7 +185,7 @@ describe("runRestrictionSmoke", () => {
 
   it("accepts a valid complete empty snapshot as an honest empty observation", async () => {
     const report = await runRestrictionSmoke(
-      { sourceId: "fi-digitraffic", outputDir },
+      { sourceId: "fi-digitraffic-events", outputDir },
       { fetch: serve(EMPTY), lookup: fakeLookup, now: () => CHECKED_AT },
     );
     expect(report.snapshot).toMatchObject({ inputCount: 0, accepted: 0 });
@@ -197,7 +201,7 @@ describe("runRestrictionSmoke", () => {
  * reviewed reduced capture is served gzip-compressed exactly as the real
  * endpoint serves it.
  */
-describe("runRestrictionSmoke — nl-ndw", () => {
+describe("runRestrictionSmoke — nl-ndw-events", () => {
   const ndwXml = readFileSync(
     new URL(
       "../../../../packages/roads/src/__tests__/fixtures/ndw/restrictions-v3.xml",
@@ -220,10 +224,10 @@ describe("runRestrictionSmoke — nl-ndw", () => {
 
   it("accounts for every record and reports the verified conditions", async () => {
     const report = await runRestrictionSmoke(
-      { sourceId: "nl-ndw", outputDir },
+      { sourceId: "nl-ndw-events", outputDir },
       { fetch: serveXml(ndwXml), lookup: fakeLookup, now: () => CHECKED_AT },
     );
-    expect(report.sourceId).toBe("nl-ndw");
+    expect(report.sourceId).toBe("nl-ndw-events");
     expect(report.sourceFormat).toBe("datex2");
     expect(report.snapshot).toMatchObject({
       inputCount: 6,
@@ -248,7 +252,7 @@ describe("runRestrictionSmoke — nl-ndw", () => {
 
   it("reports the source rights, version and freshness the descriptor declares", async () => {
     await runRestrictionSmoke(
-      { sourceId: "nl-ndw", outputDir },
+      { sourceId: "nl-ndw-events", outputDir },
       { fetch: serveXml(ndwXml), lookup: fakeLookup, now: () => CHECKED_AT },
     );
     const report = JSON.parse(await readFile(join(outputDir, "report.json"), "utf8"));
@@ -257,9 +261,10 @@ describe("runRestrictionSmoke — nl-ndw", () => {
     expect(report.provenance).toMatchObject({
       license: "CC0-1.0",
       licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+      // The reviewed terms page the grant rests on.
       termsUrl: "https://www.ndw.nu/service/copyright",
       publisher: "NDW / Rijkswaterstaat",
-      rightsReviewedAt: "2026-09-12T16:50:00.000Z",
+      rightsReviewedAt: "2026-09-12",
     });
     expect(report.provenance.recordVersion).not.toBeNull();
     expect(report.provenance.sourceUpdatedAt).not.toBeNull();
@@ -273,7 +278,7 @@ describe("runRestrictionSmoke — nl-ndw", () => {
 
   it("reports a valid empty publication as empty rather than as a failure", async () => {
     const report = await runRestrictionSmoke(
-      { sourceId: "nl-ndw", outputDir },
+      { sourceId: "nl-ndw-events", outputDir },
       {
         fetch: serveXml(ndwXml.replace(/<sit:situation\b[\s\S]*<\/sit:situation>/, "")),
         lookup: fakeLookup,
@@ -301,7 +306,7 @@ describe("runRestrictionSmoke — nl-ndw", () => {
         : serveXml("<mc:messageContainer>");
     await expect(
       runRestrictionSmoke(
-        { sourceId: "nl-ndw", outputDir },
+        { sourceId: "nl-ndw-events", outputDir },
         { fetch: fetchImpl, lookup: fakeLookup, now: () => CHECKED_AT },
       ),
     ).rejects.toThrow();

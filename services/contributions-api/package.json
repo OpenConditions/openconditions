@@ -27,6 +27,7 @@
     "@openconditions/contrib-core": "workspace:*",
     "@openconditions/core": "workspace:*",
     "@openconditions/federation": "workspace:*",
+    "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
     "@openconditions/model-registry": "workspace:*",
     "@openconditions/storage": "workspace:*",

@@ -8,7 +8,7 @@ import { syncSources } from "@openconditions/storage";
 import Fastify from "fastify";
 import { registerApiRoutes } from "./api/routes.js";
 import { DATABASE_URL, sql } from "./db.js";
-import { buildDomainRegistry } from "./domains.js";
+import { loadIngestCatalog } from "./domains.js";
 import { FeedStatusStore } from "./feed-status.js";
 import { startMemTelemetry } from "./mem.js";
 import { closeAbandonedPollAttempts } from "./pipeline/source-status.js";
@@ -38,10 +38,10 @@ async function boot() {
   await runMigrations(DATABASE_URL);
   console.info("[ingest] migrations applied");
   const model = productionRegistry();
-  const registry = await buildDomainRegistry();
+  const catalog = await loadIngestCatalog();
   // The catalogue is synced first: a source this release dropped, with its
   // format, is marked inactive before the check reads the loaded formats.
-  await syncSources(sql, catalogueSources(registry));
+  await syncSources(sql, catalogueSources(catalog));
   await assertStoredCodesRegistered(sql, model);
 
   const app = Fastify({ logger: true, trustProxy: createTrustProxy(TRUST_PROXY_CIDRS) });
@@ -64,10 +64,10 @@ async function boot() {
   await maintainPartitions(sql, model, new Date());
   const abandoned = await closeAbandonedPollAttempts(sql);
   if (abandoned > 0) console.warn(`[ingest] closed ${abandoned} poll attempt(s) left running`);
-  registerPublishRoutes(app, sql, statusStore, registry);
+  registerPublishRoutes(app, sql, statusStore, catalog);
   registerApiRoutes(app, sql, { registry: model });
 
-  const stopScheduler = startScheduler(sql, statusStore, registry);
+  const stopScheduler = startScheduler(sql, statusStore, catalog);
   const stopRecordJobs = startRecordJobs(sql, {
     registry: model,
     instanceId: resolveInstanceId(),

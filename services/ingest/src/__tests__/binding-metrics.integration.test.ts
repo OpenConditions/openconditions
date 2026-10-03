@@ -2,10 +2,10 @@ import { RESOLVER_VERSION } from "@openconditions/roads";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { buildDomainRegistry } from "../domains.js";
 import { FeedStatusStore } from "../feed-status.js";
 import { createBindingMetricsReader } from "../pipeline/binding-metrics.js";
 import { registerPublishRoutes } from "../publish-routes.js";
+import { REPO_CATALOG } from "./helpers/catalog.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { bindSituation, situationDraft, writeSituations } from "./helpers/situations.js";
 
@@ -41,12 +41,12 @@ beforeAll(async () => {
       (singleton, generation, regions, highway_classes, pbf_provenance, imported_at, activated_at)
     VALUES (true, 'graph-current', '[]'::jsonb, '[]'::jsonb, '{}'::jsonb, now(), now())`;
 
-  await insertSituation("1", "de-autobahn");
-  await insertBinding("de-autobahn", "1", "exact");
-  await insertSituation("2", "de-autobahn");
-  await insertBinding("de-autobahn", "2", "unresolved");
+  await insertSituation("1", "de-autobahn-events");
+  await insertBinding("de-autobahn-events", "1", "exact");
+  await insertSituation("2", "de-autobahn-events");
+  await insertBinding("de-autobahn-events", "2", "unresolved");
   // An unbound situation of another feed: it must not create a `binding` key.
-  await insertSituation("1", "nl-ndw");
+  await insertSituation("1", "nl-ndw-events");
 }, 120_000);
 
 afterAll(async () => {
@@ -55,8 +55,7 @@ afterAll(async () => {
 
 async function withApp<T>(fn: (app: ReturnType<typeof Fastify>) => Promise<T>): Promise<T> {
   const app = Fastify();
-  const registry = await buildDomainRegistry();
-  registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
+  registerPublishRoutes(app, sql, new FeedStatusStore(), REPO_CATALOG);
   await app.ready();
   try {
     return await fn(app);
@@ -79,7 +78,7 @@ describe("binding metrics on GET /feeds/status", () => {
   it("reports attempted and unattempted situations over the same live cohort", async () => {
     await withApp(async (app) => {
       const body = await feedsStatus(app);
-      const autobahn = body.feeds.find((f) => f.id === "de-autobahn");
+      const autobahn = body.feeds.find((f) => f.id === "de-autobahn-events");
       expect(autobahn?.binding).toEqual({
         activeEvents: 2,
         attempted: 2,
@@ -95,7 +94,7 @@ describe("binding metrics on GET /feeds/status", () => {
         noCoverage: 0,
         notApplicable: 0,
       });
-      const ndw = body.feeds.find((f) => f.id === "nl-ndw");
+      const ndw = body.feeds.find((f) => f.id === "nl-ndw-events");
       expect(ndw).toBeTruthy();
       expect(ndw?.binding).toMatchObject({
         activeEvents: 1,
@@ -108,13 +107,13 @@ describe("binding metrics on GET /feeds/status", () => {
   it("serves the cached counts within the TTL and refreshes once it lapses", async () => {
     await withApp(async (app) => {
       const first = await feedsStatus(app);
-      expect(first.feeds.find((f) => f.id === "de-autobahn")?.binding?.attempted).toBe(2);
+      expect(first.feeds.find((f) => f.id === "de-autobahn-events")?.binding?.attempted).toBe(2);
 
-      await insertSituation("3", "de-autobahn");
-      await insertBinding("de-autobahn", "3", "likely");
+      await insertSituation("3", "de-autobahn-events");
+      await insertBinding("de-autobahn-events", "3", "likely");
 
       const second = await feedsStatus(app);
-      expect(second.feeds.find((f) => f.id === "de-autobahn")?.binding).toEqual({
+      expect(second.feeds.find((f) => f.id === "de-autobahn-events")?.binding).toEqual({
         activeEvents: 2,
         attempted: 2,
         attemptedCurrent: 2,
@@ -133,7 +132,7 @@ describe("binding metrics on GET /feeds/status", () => {
 
     // A reader whose TTL has already lapsed re-queries and sees the third situation.
     const fresh = createBindingMetricsReader(sql, 0);
-    expect((await fresh()).get("de-autobahn")).toEqual({
+    expect((await fresh()).get("de-autobahn-events")).toEqual({
       activeEvents: 3,
       attempted: 3,
       attemptedCurrent: 3,
@@ -151,11 +150,11 @@ describe("binding metrics on GET /feeds/status", () => {
   });
 
   it("counts an unknown status toward attempted without inventing a key", async () => {
-    await insertSituation("weird", "de-autobahn");
-    await insertBinding("de-autobahn", "weird", "something_new");
+    await insertSituation("weird", "de-autobahn-events");
+    await insertBinding("de-autobahn-events", "weird", "something_new");
     const reader = createBindingMetricsReader(sql, 0);
     const metrics = await reader();
-    expect(metrics.get("de-autobahn")).toEqual({
+    expect(metrics.get("de-autobahn-events")).toEqual({
       activeEvents: 4,
       attempted: 4,
       attemptedCurrent: 4,
@@ -171,13 +170,13 @@ describe("binding metrics on GET /feeds/status", () => {
       notApplicable: 0,
     });
     await sql`UPDATE conditions.situation SET tombstoned_at = now(), tombstone_reason = 'withdrawn'
-      WHERE id = ${id("de-autobahn", "weird")}`;
+      WHERE id = ${id("de-autobahn-events", "weird")}`;
   });
 
   it("counts obsolete bindings outside attemptedCurrent", async () => {
     await sql`UPDATE conditions.record_binding SET status = 'obsolete'
-      WHERE record_id = ${id("de-autobahn", "2")}`;
-    const metrics = (await createBindingMetricsReader(sql, 0)()).get("de-autobahn");
+      WHERE record_id = ${id("de-autobahn-events", "2")}`;
+    const metrics = (await createBindingMetricsReader(sql, 0)()).get("de-autobahn-events");
     expect(metrics).toMatchObject({
       activeEvents: 3,
       attemptedCurrent: 2,
@@ -188,13 +187,13 @@ describe("binding metrics on GET /feeds/status", () => {
   });
 
   it("treats a binding of an older revision or graph generation as obsolete", async () => {
-    await insertSituation("stale-graph", "de-autobahn");
-    await insertBinding("de-autobahn", "stale-graph", "exact", false);
-    await insertSituation("stale-revision", "de-autobahn");
-    await insertBinding("de-autobahn", "stale-revision", "exact");
+    await insertSituation("stale-graph", "de-autobahn-events");
+    await insertBinding("de-autobahn-events", "stale-graph", "exact", false);
+    await insertSituation("stale-revision", "de-autobahn-events");
+    await insertBinding("de-autobahn-events", "stale-revision", "exact");
     await sql`UPDATE conditions.record_binding SET record_revision = 0
-      WHERE record_id = ${id("de-autobahn", "stale-revision")}`;
-    const metrics = (await createBindingMetricsReader(sql, 0)()).get("de-autobahn");
+      WHERE record_id = ${id("de-autobahn-events", "stale-revision")}`;
+    const metrics = (await createBindingMetricsReader(sql, 0)()).get("de-autobahn-events");
     expect(metrics).toMatchObject({
       activeEvents: 5,
       attemptedCurrent: 2,
@@ -206,8 +205,8 @@ describe("binding metrics on GET /feeds/status", () => {
   });
 
   it("leaves a withdrawn situation out of the cohort", async () => {
-    await writeSituations(sql, "nl-ndw", [], "2026-09-06T10:05:00.000Z");
+    await writeSituations(sql, "nl-ndw-events", [], "2026-09-06T10:05:00.000Z");
     const metrics = await createBindingMetricsReader(sql, 0)();
-    expect(metrics.get("nl-ndw")).toBeUndefined();
+    expect(metrics.get("nl-ndw-events")).toBeUndefined();
   });
 });

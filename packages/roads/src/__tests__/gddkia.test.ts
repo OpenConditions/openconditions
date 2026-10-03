@@ -5,7 +5,7 @@ import { parseGddkia } from "../gddkia.js";
 import type { SourceDescriptor } from "../types.js";
 
 const SRC: SourceDescriptor = {
-  id: "pl-gddkia",
+  id: "pl-gddkia-events",
   attribution: "GDDKiA",
   country: "PL",
   license: "CC0-1.0",

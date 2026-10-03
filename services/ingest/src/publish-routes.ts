@@ -1,9 +1,8 @@
 import { readSegmentConditionRows, type SegmentConditionRow } from "@openconditions/core";
 import {
-  type DatasetRights,
-  type DomainRegistry,
-  hasCredentials,
-  requiredEnvVars,
+  type Catalog,
+  type EffectiveRights,
+  missingCredentials,
 } from "@openconditions/ingest-framework";
 import type { RoutingRights } from "@openconditions/model";
 import {
@@ -25,6 +24,7 @@ import {
   type BindingMetricsReader,
   createBindingMetricsReader,
 } from "./pipeline/binding-metrics.js";
+import { routingRightsOf } from "./pipeline/publish.js";
 import {
   readSourceOperationalStatus,
   type SourceOperationalStatus,
@@ -65,54 +65,25 @@ export async function readFeedGraphStatus(sql: Sql): Promise<FeedGraphStatus> {
   };
 }
 
-function grant(value: boolean | null | undefined): "yes" | "no" | "unknown" {
-  return value === true ? "yes" : value === false ? "no" : "unknown";
-}
-
 function fullIso(value: string | null | undefined): string | null {
   if (!value) return null;
   const parsed = Date.parse(value);
   return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
 }
 
-function routingRights(rights: DatasetRights | RoutingRights | null | undefined) {
+/** Routing rights with the review instant as a full ISO timestamp. */
+function routingRights(rights: RoutingRights | null | undefined): RoutingRights | null {
   if (!rights) return null;
-  if ("source_redistribution" in rights) {
-    return {
-      ...rights,
-      reviewed_at: fullIso(rights.reviewed_at),
-    };
-  }
-  return {
-    source_redistribution: grant(rights.sourceRedistribution),
-    derived_redistribution: grant(rights.derivedRedistribution),
-    commercial_use: grant(rights.commercialUse),
-    attribution_required: grant(rights.attributionRequired),
-    retention: grant(rights.retention),
-    evidence_origin: rights.evidenceOrigin ?? null,
-    evidence_version: rights.evidenceVersion ?? null,
-    reviewed_at: fullIso(rights.reviewedAt),
-  } as const;
+  return { ...rights, reviewed_at: fullIso(rights.reviewed_at) };
 }
 
-function hydrateSegmentRows(
-  rows: SegmentConditionRow[],
-  registry: DomainRegistry,
-): SegmentConditionRow[] {
-  const feedById = new Map(
-    Object.values(registry).flatMap((domain) =>
-      domain.feeds.map((feed) => [feed.id, feed] as const),
-    ),
-  );
+function hydrateSegmentRows(rows: SegmentConditionRow[], catalog: Catalog): SegmentConditionRow[] {
+  const feedById = new Map(catalog.feeds.map((feed) => [feed.id, feed] as const));
   // A discovered catalogue child is explicitly outside the scheduled selection.
   // Its retained observations must not regain an old grant through the fallback
   // for remote sources, which legitimately have no local feed descriptor.
   const unscheduledSourceIds = new Set(
-    Object.values(registry).flatMap((domain) =>
-      (domain.discoveredFeeds ?? [])
-        .filter((feed) => !feedById.has(feed.id))
-        .map((feed) => feed.id),
-    ),
+    catalog.discovered.filter((feed) => !feedById.has(feed.id)).map((feed) => feed.id),
   );
   return rows
     .filter((row) => {
@@ -133,7 +104,7 @@ function hydrateSegmentRows(
         child_source_id: parentSourceId ? row.source_id : null,
         license_url: feed?.licenseUrl ?? attribution?.licenseUrl ?? attribution?.url ?? null,
         attribution: attribution?.provider ?? feed?.attribution ?? null,
-        rights: routingRights(feed ? feed.rights : attribution?.rights),
+        rights: routingRights(feed ? routingRightsOf(feed) : attribution?.rights),
       };
     });
 }
@@ -186,7 +157,10 @@ export type FeedStatusRow = {
   parentSourceId?: string;
   cadenceSec: number;
   freshnessWindowSec: number;
-  rights?: import("@openconditions/ingest-framework").DatasetRights;
+  rights: EffectiveRights;
+  /** Set on a feed the catalogue keeps but never polls, with the catalogue's reason. */
+  state?: "disabled";
+  disabledReason?: string;
   /** Binding outcomes of this feed's events; absent while it has no bindings. */
   binding?: BindingMetrics;
 } & FeedRunStatus;
@@ -203,11 +177,12 @@ function legacyStatus(status: SourceOperationalStatus): FeedRunStatus {
 }
 
 /**
- * Registers `GET /feeds/status`: every feed registered across all domains,
+ * Registers `GET /feeds/status`: every scheduled feed of the catalogue,
  * joined with its runtime status (last run/success/error, row count) and with
- * how well its events bind to the segment spine. Mirrors the scheduler's own
- * credential check (a feed runs iff it has credentials) so the two never
- * disagree.
+ * how well its events bind to the segment spine, then the discovered catalogue
+ * children and the disabled feeds with their reason. Mirrors the scheduler's
+ * own credential check (a feed runs iff no credential it needs is missing) so
+ * the two never disagree.
  *
  * The binding metrics are a read-only extra, so a failing metrics query is
  * logged and the listing is still served — just without `binding` keys.
@@ -215,7 +190,7 @@ function legacyStatus(status: SourceOperationalStatus): FeedRunStatus {
 export function registerFeedStatusRoute(
   app: FastifyInstance,
   statusStore: FeedStatusStore,
-  registry: DomainRegistry,
+  catalog: Catalog,
   bindingMetrics: BindingMetricsReader,
   sourceStatus?: SourceStatusReader,
   graphStatus?: FeedGraphStatusReader,
@@ -245,48 +220,56 @@ export function registerFeedStatusRoute(
       app.log.error({ err }, "binding metrics unavailable for /feeds/status");
     }
     const feeds: FeedStatusRow[] = [];
-    for (const [domain, plugin] of Object.entries(registry)) {
-      for (const feed of plugin.feeds) {
-        // Check each candidate key independently (auth: undefined) so a
-        // multi-var auth (basic/oauth2/mtls) with only one var unset reports
-        // just that key, not every key hasCredentials would re-derive from
-        // feed.auth as a whole.
-        const missingEnv = [...requiredEnvVars(feed.auth), ...(feed.requiredEnv ?? [])].filter(
-          (k) => !hasCredentials({ auth: undefined, requiredEnv: [k] }),
-        );
-        const binding = metrics.get(feed.id);
-        const persisted = durable.get(feed.id);
-        feeds.push({
-          id: feed.id,
-          name: feed.name,
-          domain,
-          hasCredentials: hasCredentials(feed),
-          missingEnv,
-          selectionState: feed.selectionState ?? "configured",
-          parentSourceId: feed.parentSourceId,
-          cadenceSec: feed.cadenceSec,
-          freshnessWindowSec: feed.freshnessWindowSec,
-          rights: feed.rights,
-          ...(persisted
-            ? { ...legacyStatus(persisted), ...persisted }
-            : (statusStore.get(feed.id) ?? {})),
-          ...(binding ? { binding } : {}),
-        });
-      }
-      for (const feed of plugin.discoveredFeeds ?? []) {
-        feeds.push({
-          id: feed.id,
-          name: feed.name,
-          domain,
-          hasCredentials: false,
-          missingEnv: [],
-          selectionState: "discovered",
-          parentSourceId: feed.parentSourceId,
-          cadenceSec: feed.cadenceSec,
-          freshnessWindowSec: feed.freshnessWindowSec,
-          rights: feed.rights,
-        });
-      }
+    for (const feed of catalog.feeds) {
+      const missingEnv = missingCredentials(feed);
+      const binding = metrics.get(feed.id);
+      const persisted = durable.get(feed.id);
+      feeds.push({
+        id: feed.id,
+        name: feed.name,
+        domain: feed.domain,
+        hasCredentials: missingEnv.length === 0,
+        missingEnv,
+        selectionState: feed.selectionState ?? "configured",
+        parentSourceId: feed.parentSourceId,
+        cadenceSec: feed.cadenceSec,
+        freshnessWindowSec: feed.freshnessWindowSec,
+        rights: feed.rights,
+        ...(persisted
+          ? { ...legacyStatus(persisted), ...persisted }
+          : (statusStore.get(feed.id) ?? {})),
+        ...(binding ? { binding } : {}),
+      });
+    }
+    for (const feed of catalog.discovered) {
+      feeds.push({
+        id: feed.id,
+        name: feed.name,
+        domain: feed.domain,
+        hasCredentials: false,
+        missingEnv: [],
+        selectionState: "discovered",
+        parentSourceId: feed.parentSourceId,
+        cadenceSec: feed.cadenceSec,
+        freshnessWindowSec: feed.freshnessWindowSec,
+        rights: feed.rights,
+      });
+    }
+    for (const feed of catalog.disabled) {
+      const missingEnv = missingCredentials(feed);
+      feeds.push({
+        id: feed.id,
+        name: feed.name,
+        domain: feed.domain,
+        hasCredentials: missingEnv.length === 0,
+        missingEnv,
+        selectionState: feed.selectionState ?? "configured",
+        cadenceSec: feed.cadenceSec,
+        freshnessWindowSec: feed.freshnessWindowSec,
+        rights: feed.rights,
+        state: "disabled",
+        disabledReason: feed.disabled!.reason,
+      });
     }
     return { schemaVersion: "2.0", instanceId: "openconditions", collectedAt, graph, feeds };
   });
@@ -316,7 +299,7 @@ export function registerPublishRoutes(
   app: FastifyInstance,
   sql: Sql,
   statusStore: FeedStatusStore,
-  registry: DomainRegistry,
+  catalog: Catalog,
 ): void {
   const db = runner(sql);
 
@@ -334,7 +317,7 @@ export function registerPublishRoutes(
       resolverVersion: RESOLVER_VERSION,
     });
     const evaluatedAt = new Date();
-    const rows = hydrateSegmentRows(raw, registry);
+    const rows = hydrateSegmentRows(raw, catalog);
     const projected = segmentConditionsToJson(rows, at, {
       resolverVersion: RESOLVER_VERSION,
       evaluatedAt,
@@ -503,7 +486,7 @@ export function registerPublishRoutes(
       ...(bbox ? { bbox } : {}),
       resolverVersion: RESOLVER_VERSION,
     });
-    const permissive = hydrateSegmentRows(rows, registry);
+    const permissive = hydrateSegmentRows(rows, catalog);
     reply.header("Content-Type", "application/json");
     reply.header("Cache-Control", "public, max-age=60");
     const licenses = new Set(permissive.map((r) => r.provenance_attribution?.license ?? "unknown"));
@@ -519,7 +502,7 @@ export function registerPublishRoutes(
   registerFeedStatusRoute(
     app,
     statusStore,
-    registry,
+    catalog,
     createBindingMetricsReader(sql),
     () => readSourceOperationalStatus(sql),
     () => readFeedGraphStatus(sql),

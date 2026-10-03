@@ -2,13 +2,14 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { scheduleTimezoneForGeometry } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
-import { FEED_SOURCES, type OsmWay, type SpineSegment } from "@openconditions/roads";
+import type { OsmWay, SpineSegment } from "@openconditions/roads";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
+import { loadIngestCatalog } from "../domains.js";
 import { activateRoadGraph } from "../pipeline/graph-state.js";
 import { importOsmRoads } from "../pipeline/osm-import.js";
 import { type RestrictionTally, tallyRestrictions } from "../pipeline/restriction-tally.js";
-import { type DomainFeedSource, runSource } from "../pipeline/run.js";
+import { runSource } from "../pipeline/run.js";
 import { buildSegments } from "../pipeline/segment-build.js";
 import type { RunRestrictionSmokeOptions } from "./smoke-road-restrictions.js";
 
@@ -82,9 +83,10 @@ export async function runRestrictionSmokeWithDatabase(
   options: RunRestrictionSmokeOptions,
 ): Promise<RestrictionSmokeDatabaseReport> {
   if (!options.spineFile) throw new Error("smoke: --spine is required in disposable mode");
-  const descriptor = FEED_SOURCES.find((candidate) => candidate.id === options.sourceId);
-  if (!descriptor) throw new Error(`smoke: restriction smoke source not configured`);
-  const feed: DomainFeedSource = { ...descriptor, domain: "roads" };
+  const feed = (await loadIngestCatalog()).feeds.find(
+    (candidate) => candidate.id === options.sourceId,
+  );
+  if (!feed) throw new Error(`smoke: restriction smoke source not configured`);
 
   const spine = JSON.parse(await readFile(options.spineFile, "utf8")) as {
     segments?: SpineSegment[];

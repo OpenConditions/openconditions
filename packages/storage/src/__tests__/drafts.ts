@@ -22,7 +22,7 @@ const provenance = (sourceId: string, format: string, recordId: string) => ({
 /** An accident on the A2 near Amsterdam, from the NDW situation feed. */
 export function situationDraft(local: string, over: Rec = {}): Rec {
   return {
-    id: `oc:situation:nl-ndw:${local}`,
+    id: `oc:situation:nl-ndw-events:${local}`,
     class: "situation",
     kind: "incident",
     type: "accident",
@@ -51,7 +51,7 @@ export function situationDraft(local: string, over: Rec = {}): Rec {
       fuzziness: "exact",
       admin: { country: "NL" },
     },
-    provenance: provenance("nl-ndw", "datex2", local),
+    provenance: provenance("nl-ndw-events", "datex2", local),
     freshness: { fetchedAt: FETCHED_AT },
     ...over,
   };
@@ -117,7 +117,7 @@ export function featureDraft(local: string, lanes = 2, over: Rec = {}): Rec {
       fuzziness: "exact",
     },
     relations: [
-      { ref: { class: "situation", id: "oc:situation:nl-ndw:works" }, relation: "related" },
+      { ref: { class: "situation", id: "oc:situation:nl-ndw-events:works" }, relation: "related" },
     ],
     provenance: provenance("nl-ndw-flow", "datex2", local),
     freshness: { fetchedAt: FETCHED_AT },

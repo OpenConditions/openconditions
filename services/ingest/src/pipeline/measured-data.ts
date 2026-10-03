@@ -1,127 +1,89 @@
 import type { Readable } from "node:stream";
 import { createGunzip } from "node:zlib";
 import {
-  DEFAULT_MAX_FEED_BYTES,
+  type CatalogFeed,
+  type Env,
+  feedEndpoint,
   feedSecretValues,
+  type ParseContext,
+  type ParseOutput,
   type PayloadDigest,
   redactSecrets,
   redactUrl,
-  resolvedEnv,
-  resolveFeedUrls,
+  resolveEndpointUrls,
+  resolveFeedTemplate,
+  type StreamingParse,
 } from "@openconditions/ingest-framework";
-import {
-  type FlowContext,
-  type FlowOutput,
-  type FlowSites,
-  measuredDataReader,
-} from "@openconditions/roads";
 import { digestOnlyTee, type StreamTeeFactory } from "../raw/stream-tee.js";
-import type { DomainFeedSource } from "./run.js";
-import type { SiteTableStreamFactory } from "./site-table.js";
+import type { BodyStreamFactory } from "./body-stream.js";
 import { withStreamRetry } from "./stream-retry.js";
 
-/**
- * True for DATEX II flow feeds that must be streamed rather than buffered. The
- * NDW trafficspeed feed is ~50 MB and recurs every ~60 s; a full-DOM parse
- * balloons to several hundred MB and OOMs the memory-capped ingest. Digitraffic
- * flow is small JSON and stays on the buffered path.
- */
-export function isStreamingFlowFeed(src: DomainFeedSource): boolean {
-  return src.produces === "flow" && src.format === "datex2";
-}
-
-/** Ceiling on a single flow feed's decompressed bytes; matches the guard's byte cap. */
-const MAX_DECOMPRESSED_BYTES = Number(
-  process.env["OPENCONDITIONS_MAX_FEED_BYTES"] || DEFAULT_MAX_FEED_BYTES,
-);
-
-/** Resolves the single feed URL for a streaming flow source from its template(s). */
-function resolveUrl(src: DomainFeedSource): string {
-  // Streaming flow feeds are single-URL by contract; the multi-URL expandEnv
-  // form (e.g. Mobilithek multi-subscription) is only used by buffered event
-  // feeds, never here.
-  const urls = resolveFeedUrls(src, resolvedEnv());
+/** The single URL a streamed feed reads: its main endpoint, resolved. */
+function streamUrl(feed: CatalogFeed, env: Env): string {
+  const urls = resolveEndpointUrls(feed, "main", env);
   if (urls.length === 1) return urls[0]!;
-  if (urls.length === 0) throw new Error(`flow feed ${src.id} has no streamable url`);
-  throw new Error(`flow feed ${src.id} resolved to ${urls.length} urls; expected one`);
+  if (urls.length === 0) throw new Error(`feed ${feed.id} has no streamable url`);
+  throw new Error(`feed ${feed.id} resolved to ${urls.length} urls; expected one`);
+}
+
+/** The main endpoint's request: its method, body and headers, their `${field}`s filled. */
+function requestInit(feed: CatalogFeed, env: Env): RequestInit | undefined {
+  const endpoint = feedEndpoint(feed, "main");
+  const fill = (template: string) => resolveFeedTemplate(feed, template, env);
+  const headers = endpoint.headers
+    ? Object.fromEntries(Object.entries(endpoint.headers).map(([k, v]) => [k, fill(v)]))
+    : undefined;
+  if (endpoint.method !== "POST") return headers ? { headers } : undefined;
+  return {
+    method: "POST",
+    ...(endpoint.body !== undefined ? { body: fill(endpoint.body) } : {}),
+    ...(headers ? { headers } : {}),
+  };
 }
 
 /**
- * Streams a DATEX II MeasuredData (traffic-speed/flow) feed through the SAX flow
- * parser: fetch → optional gunzip → {@link measuredDataReader}. The large
- * document is never buffered whole nor materialised as a DOM — peak memory is the
- * drafts plus a small per-site accumulator. Returns the measurement sites, their
- * readings, the congestion situations derived from them, and the digest of the
- * decoded document — hashed on the way through, the same identity a buffered
- * fetch would give it.
+ * Reads a feed whose format streams its payload (NDW's ~50 MB DATEX
+ * MeasuredData document recurs every minute): the main endpoint's body is
+ * opened as a stream, gunzipped when the endpoint is `gzip`, and handed to the
+ * format's streaming reader, so the document is never buffered whole. A
+ * transient mid-stream socket drop (NDW drops ~10% of these downloads) is
+ * re-fetched and re-parsed from scratch, with a fresh connection and a fresh
+ * tee each attempt; anything else throws, so the last good publication stands.
  */
-export async function streamMeasuredData(
-  src: DomainFeedSource,
-  streamFactory: SiteTableStreamFactory,
-  sites: FlowSites | undefined,
-  ctx: FlowContext,
+export async function streamFeed(
+  feed: CatalogFeed,
+  stream: StreamingParse,
+  open: BodyStreamFactory,
+  ctx: ParseContext,
   teeFor: StreamTeeFactory = digestOnlyTee,
-): Promise<FlowOutput & { payload: PayloadDigest }> {
-  const url = resolveUrl(src);
-
-  // Re-fetch + re-parse from scratch on a transient mid-stream socket drop (NDW
-  // drops ~10% of these large downloads) — a fresh parser and a fresh connection
-  // each attempt, so a dropped cycle self-heals instead of skipping to the next
-  // 60 s tick. A decompression-bomb abort is a plain Error, not transient, so it
-  // is not retried.
-  return withStreamRetry(async () => {
-    const parser = measuredDataReader(src, sites, ctx);
-    // The tee opens before the download starts: a stream that errors while the
-    // tee is still being opened would have no listener yet.
-    const { tee, finish } = await teeFor(redactSecrets(redactUrl(url), feedSecretValues(src)));
-    let source: Readable;
-    try {
-      source = await streamFactory(url);
-    } catch (err) {
-      await finish(false);
-      throw err;
-    }
-    // `.pipe()` does not forward the source's errors to the gunzip stream, so a
-    // mid-stream socket drop (the upstream closing a large download) would surface
-    // as an unhandled 'error' event and crash the process. Forward it so the loop
-    // below rejects and withStreamRetry/the caller handle it; destroy `source` on
-    // the way out so a half-read connection never lingers.
-    const decoded: Readable = src.gzip ? source.pipe(createGunzip()) : source;
-    if (decoded !== source) source.on("error", (err) => decoded.destroy(err));
-    decoded.on("error", (err) => tee.destroy(err));
-    decoded.pipe(tee);
-    // The whole document reached the tee: archive it, even when the parser then
-    // rejects it — a document a parser chokes on is what raw payloads are for.
-    let complete = false;
-    try {
-      let decompressed = 0;
-      tee.setEncoding("utf8");
-      for await (const chunk of tee) {
-        decompressed += Buffer.byteLength(chunk as string);
-        if (decompressed > MAX_DECOMPRESSED_BYTES) {
-          if (decoded !== source) source.destroy();
-          decoded.destroy();
-          tee.destroy();
-          throw new Error(`decompressed stream exceeded ${MAX_DECOMPRESSED_BYTES} bytes`);
-        }
-        parser.write(chunk as string);
-      }
-      complete = true;
-    } finally {
-      if (decoded !== source) source.destroy();
-      await finish(complete);
-    }
-
-    const { failed, ...output } = parser.close();
-    // A SAX error (mid-document glitch, malformed chunk) stopped accumulation
-    // partway through the ~50 MB document: the readings are only whatever
-    // resolved before the break, which `runSource` must not treat as a
-    // legitimate (possibly empty) fresh set — throwing routes this through the
-    // same fetch/parse-failure handling `runSource` already has around this
-    // call, skipping the write and preserving the last good publication.
-    if (failed) {
-      throw new Error(`streaming parse failed for source ${src.id} (partial/truncated document)`);
-    }
-    return { ...output, payload: tee.digest() };
-  }, src.id);
+  env: Env = process.env,
+): Promise<{ output: ParseOutput; payload: PayloadDigest }> {
+  const url = streamUrl(feed, env);
+  const label = redactSecrets(redactUrl(url), feedSecretValues(feed, env));
+  const init = requestInit(feed, env);
+  const gzip = feedEndpoint(feed, "main").gzip ?? false;
+  return withStreamRetry(
+    () =>
+      stream.read(
+        feed,
+        {
+          url: label,
+          open: async () => {
+            const source = await open(url, init);
+            if (!gzip) return source;
+            // `.pipe()` does not forward the source's errors to the gunzip
+            // stream, so a mid-stream socket drop would surface as an unhandled
+            // 'error' event and crash the process. Forward it so the reader
+            // rejects, and release the connection when the gunzip ends early.
+            const decoded: Readable = source.pipe(createGunzip());
+            source.on("error", (err) => decoded.destroy(err));
+            decoded.on("close", () => source.destroy());
+            return decoded;
+          },
+          tee: () => teeFor(label),
+        },
+        ctx,
+      ),
+    feed.id,
+  );
 }

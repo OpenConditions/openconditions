@@ -181,7 +181,7 @@ describe("sub-claims", () => {
   it("names a component only of a feature", () => {
     const situationPart = validateSubClaim({
       ...body,
-      subject: { class: "situation", id: "oc:situation:nl-ndw:SIT-1", componentKey: "1" },
+      subject: { class: "situation", id: "oc:situation:nl-ndw-events:SIT-1", componentKey: "1" },
     });
     expect(situationPart.ok).toBe(false);
     expect(!situationPart.ok && situationPart.issues[0]!.message).toBe(

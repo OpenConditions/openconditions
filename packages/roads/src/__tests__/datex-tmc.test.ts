@@ -13,7 +13,7 @@ const SOURCE: SourceDescriptor = {
   id: "de-test-mobilithek",
   attribution: "Test",
   country: "DE",
-  license: "dl-de/zero-2-0",
+  license: "DL-DE-ZERO-2.0",
 };
 
 /**

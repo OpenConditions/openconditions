@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:fi-digitraffic:GUID50470575",
+    "id": "oc:situation:fi-digitraffic-events:GUID50470575",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -143,7 +143,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "fi-digitraffic",
+      "sourceId": "fi-digitraffic-events",
       "sourceFormat": "digitraffic",
       "accessMode": "bulk",
       "recordId": "GUID50470575",
@@ -306,14 +306,14 @@
         }
       ]
     },
-    "canonicalId": "b7369443c1f8a6e2f45dda775cf6422d002e580a6442720e9765efa0d5894417",
+    "canonicalId": "3bd77e889a1599d0903b6de5048ac4b193b9da38478e68ce9073ad2b787719bf",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "d3545e00645e23e03ea9f3a91e6ebe589e93420b4e35ecef5437b5fc81d4d102"
+    "contentHash": "c68d0c4d34a14fb0afa518ffda24237a74c4bab4e06012720c6a4a515e43f792"
   },
   {
-    "id": "oc:situation:fi-digitraffic:GUID50468844",
+    "id": "oc:situation:fi-digitraffic-events:GUID50468844",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -358,7 +358,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "fi-digitraffic",
+      "sourceId": "fi-digitraffic-events",
       "sourceFormat": "digitraffic",
       "accessMode": "bulk",
       "recordId": "GUID50468844",
@@ -503,14 +503,14 @@
         }
       ]
     },
-    "canonicalId": "707fe80b8b6a66d7edbef2aa93ac7ffa5ccec205014432baad44f9a81e438620",
+    "canonicalId": "601f12b97cc2893ae5cade392eea1c9f77d985bce940eab5374b6b03b52e40fc",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "1b90e79253b036da4021fc9af90365d310c72301bcd3dff0bcfb289251027b74"
+    "contentHash": "b8ca6a013306684658ad6b512e5c079c83e5893374f367333e3f12981dd04b9b"
   },
   {
-    "id": "oc:situation:fi-digitraffic:GUID50466626",
+    "id": "oc:situation:fi-digitraffic-events:GUID50466626",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -555,7 +555,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "fi-digitraffic",
+      "sourceId": "fi-digitraffic-events",
       "sourceFormat": "digitraffic",
       "accessMode": "bulk",
       "recordId": "GUID50466626",
@@ -821,14 +821,14 @@
         }
       ]
     },
-    "canonicalId": "ee663c488a8b8f330f21a60457cfda11861f8c095f2d441a7bcc2011964c8640",
+    "canonicalId": "55a2a79610ce1f76b88f12b7a366be1672ae3833e9444e7c58f6f5b5adf3938d",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "683c563c70709a605aa656fa5143ef2e1f95b6c3ac9182f09ca3a74b9ff1eea1"
+    "contentHash": "e4d8b61af5517da3bff47e9d81e451bb717a40f3e35b40c713959b2dd827b4a7"
   },
   {
-    "id": "oc:situation:fi-digitraffic:GUID50465935",
+    "id": "oc:situation:fi-digitraffic-events:GUID50465935",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -873,7 +873,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "fi-digitraffic",
+      "sourceId": "fi-digitraffic-events",
       "sourceFormat": "digitraffic",
       "accessMode": "bulk",
       "recordId": "GUID50465935",
@@ -1032,14 +1032,14 @@
         }
       ]
     },
-    "canonicalId": "9d7b56b86c147cd903b4f25cdff9335b67753565d2593a51ff54fa649c22a13f",
+    "canonicalId": "33394ec3a22451399e5fbc09dc0119857f5b6bc1cc02a3d879a3bf5efbaf9cac",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "fe0b3e517ff4dd5b0b99f8f591ad9e939eeb4615de4aa6aedccbe5114480b29c"
+    "contentHash": "8194218bc326c2ca1489c77176ee6268664a076c4d4eea4b40c070f5e311a0fc"
   },
   {
-    "id": "oc:situation:fi-digitraffic:GUID50461965",
+    "id": "oc:situation:fi-digitraffic-events:GUID50461965",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -1132,7 +1132,7 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "fi-digitraffic",
+      "sourceId": "fi-digitraffic-events",
       "sourceFormat": "digitraffic",
       "accessMode": "bulk",
       "recordId": "GUID50461965",
@@ -1352,10 +1352,10 @@
         }
       ]
     },
-    "canonicalId": "860c372aa0577f1d342b637b0b0e5d6dfb4cac797a106d62e9d225b6e5d8e465",
+    "canonicalId": "31b3746038bbccbff8896f84710c115a72e08233404f28553e12792994eca9f5",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "22ff79a03fc9f45dfed4121e5035b26f24e59ddb199c720cc202597eff68ae18"
+    "contentHash": "44c56d8e3ee67d7b8dbed08f73cc123463313fa3811d9c88c5e750046701bd97"
   }
 ]

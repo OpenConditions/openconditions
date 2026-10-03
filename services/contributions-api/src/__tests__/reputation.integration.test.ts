@@ -114,14 +114,14 @@ describe("applyExternalResolution — confirmed outcomes", () => {
       {
         source: "official",
         outcome: "confirmed",
-        matchedRecord: { class: "situation", id: feed, sourceId: "de-autobahn" },
+        matchedRecord: { class: "situation", id: feed, sourceId: "de-autobahn-events" },
       },
       T_RESOLVE,
     );
 
     const evidence = await readExternalEvidence(id);
     expect(evidence).toHaveLength(1);
-    expect(evidence[0]!.source_id).toBe("de-autobahn");
+    expect(evidence[0]!.source_id).toBe("de-autobahn-events");
     expect(evidence[0]!.details).toEqual({
       source: "official",
       outcome: "confirmed",

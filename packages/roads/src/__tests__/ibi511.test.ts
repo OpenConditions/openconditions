@@ -3,10 +3,10 @@ import { parseIbi511, parseIbi511Conditions } from "../ibi511.js";
 import type { SourceDescriptor } from "../types.js";
 
 const SRC: SourceDescriptor = {
-  id: "ca-on-511",
+  id: "ca-on-511-events",
   attribution: "Ontario 511",
   country: "CA",
-  license: "OGL-ON",
+  license: "LicenseRef-OGL-ON",
 };
 
 describe("parseIbi511", () => {
@@ -29,7 +29,7 @@ describe("parseIbi511", () => {
     );
     expect(out).toHaveLength(1);
     expect(out[0]).toMatchObject({
-      id: "ca-on-511:101",
+      id: "ca-on-511-events:101",
       sourceFormat: "ibi511",
       type: "roadworks",
       severity: "high",
@@ -105,7 +105,7 @@ describe("parseIbi511", () => {
 });
 
 describe("parseIbi511 — Ontario construction projects", () => {
-  const CONSTRUCTION_SRC: SourceDescriptor = { ...SRC, id: "ca-on-511-construction" };
+  const CONSTRUCTION_SRC: SourceDescriptor = { ...SRC, id: "ca-on-511-construction-events" };
 
   // Verbatim from one live /constructionprojects record; the endpoint returns a
   // bare array whose field set is a subset of /event's plus the recurrence and
@@ -138,7 +138,7 @@ describe("parseIbi511 — Ontario construction projects", () => {
   it("maps a construction project to planned roadworks with a decoded LineString", () => {
     const [ev] = parseIbi511([RECORD], CONSTRUCTION_SRC);
     expect(ev).toBeDefined();
-    expect(ev!.id).toBe("ca-on-511-construction:395");
+    expect(ev!.id).toBe("ca-on-511-construction-events:395");
     expect(ev!.type).toBe("roadworks");
     expect(ev!.category).toBe("planned");
     expect(ev!.isPlanned).toBe(true);

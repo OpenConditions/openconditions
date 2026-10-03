@@ -1,7 +1,7 @@
 {
   "features": [
     {
-      "id": "oc:feature:es-madrid:9841",
+      "id": "oc:feature:es-madrid-flow:9841",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -17,7 +17,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "es-madrid",
+        "sourceId": "es-madrid-flow",
         "sourceFormat": "informo",
         "accessMode": "bulk",
         "recordId": "9841",
@@ -47,14 +47,14 @@
           "traffic.los"
         ]
       },
-      "canonicalId": "696125ecee85fb6aa4184e34d3e78de55cebf680489ab9a663f281df5a7918da",
+      "canonicalId": "3c563c4e3c88d1d7801c0ab6d7bcb66980b6c1ef36ae511671bf6e6831af371d",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "68e07d8cdcfcaa620676e9e7a32ffc8c8d392d3dc6972e40a1387a4eea89ac78"
+      "contentHash": "2aea8d1c33e029fdd7a73148b6e4cfd9c949b2cc3cf9e3e35b68633007340250"
     },
     {
-      "id": "oc:feature:es-madrid:9842",
+      "id": "oc:feature:es-madrid-flow:9842",
       "temporality": "static",
       "location": {
         "geometry": {
@@ -70,7 +70,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "es-madrid",
+        "sourceId": "es-madrid-flow",
         "sourceFormat": "informo",
         "accessMode": "bulk",
         "recordId": "9842",
@@ -100,16 +100,16 @@
           "traffic.los"
         ]
       },
-      "canonicalId": "627186ccf46f6e46d7876f9d370f1d2abf01ed24e47f01224b77dc0c0319ca0a",
+      "canonicalId": "17ffa21596bbea01d3eb271e0a23a10b4813caf16a8d703790282220757b9122",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "149bdde08f2362133a24c80cee402b71ab5d46cf652126e16e35dd8f3678c031"
+      "contentHash": "378b77b01ec9f2243071eda581c3f52ad6476b5e283b06e6346627a0a640af18"
     }
   ],
   "observations": [
     {
-      "id": "oc:observation:es-madrid:35fc8451d8d58511c730da86cdc0f2eafe692db13831cd5df06460b8a50a8f9e",
+      "id": "oc:observation:es-madrid-flow:91b3625e5426489f22ee91c6a0c750e17f280f28db46186f906a5e50cf9a6ddd",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -125,7 +125,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "es-madrid",
+        "sourceId": "es-madrid-flow",
         "sourceFormat": "informo",
         "accessMode": "bulk",
         "recordId": "9841",
@@ -147,7 +147,7 @@
       "property": "traffic.volume",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:es-madrid:9841"
+        "featureId": "oc:feature:es-madrid-flow:9841"
       },
       "result": {
         "type": "quantity",
@@ -158,14 +158,14 @@
         "instant": "2026-09-18T10:00:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "e4b7523de129e793d8ade7aca51ed9a6982a19654dda776ff850e34754ac32c6",
+      "canonicalId": "73f40d9c6c715fd7336e59cc9f3089ca8f300bdfd5db9a7354e6bb6b60197db2",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "a7334f26aa730275c44018105e8b57ce9a061c18d7bf705a850e6c33f979724f"
+      "contentHash": "281dd4d7542a599cef0b1f6ac4f063d29dfe113d885fbf490671f074eb9d15b5"
     },
     {
-      "id": "oc:observation:es-madrid:cc252ce2cdd4cd56f6f6c37a144fb058e5c4c7100f7ffb6a63d344df2967a382",
+      "id": "oc:observation:es-madrid-flow:be7fe1b2c0214fd7d1a5d9bc6b828062260e5be178a85b29dc652d97c0eaa24f",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -181,7 +181,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "es-madrid",
+        "sourceId": "es-madrid-flow",
         "sourceFormat": "informo",
         "accessMode": "bulk",
         "recordId": "9841",
@@ -203,7 +203,7 @@
       "property": "traffic.occupancy",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:es-madrid:9841"
+        "featureId": "oc:feature:es-madrid-flow:9841"
       },
       "result": {
         "type": "quantity",
@@ -214,14 +214,14 @@
         "instant": "2026-09-18T10:00:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "bd43d833d87775e703c5230949da910ca5029b07f1a3324941ca4558ddfdc2ed",
+      "canonicalId": "c9d30f62e38029366a61c62d5e75fb8b1936c0737a2aa002f114521bc2a344c3",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "91b4d2dcfdefd1b88f8cc2664e2f0d134577aa2877f69fddcf93106087dec6a9"
+      "contentHash": "40e93fbe9c7a8a5bf8936880439c758aee4c7a90d1c0433608e4b50b8847eb22"
     },
     {
-      "id": "oc:observation:es-madrid:6fdb4e8dea41c3c165ccf917295e30f4183869e37431f9af797ef5b770ba321a",
+      "id": "oc:observation:es-madrid-flow:d1e3d54de6c61c131d11461be49dc42f7ae3acbff1bae04869855640911d24ba",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -237,7 +237,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "es-madrid",
+        "sourceId": "es-madrid-flow",
         "sourceFormat": "informo",
         "accessMode": "bulk",
         "recordId": "9841",
@@ -259,7 +259,7 @@
       "property": "traffic.los",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:es-madrid:9841"
+        "featureId": "oc:feature:es-madrid-flow:9841"
       },
       "result": {
         "type": "category",
@@ -270,14 +270,14 @@
         "instant": "2026-09-18T10:00:00.000Z"
       },
       "aggregation": "instantaneous",
-      "canonicalId": "f00e0770ebc527bdbf41033897a5c91cb5ecfc60a8ff44b7d590f3dfd6426002",
+      "canonicalId": "2ff1bba8a8580846202d1fd25ce1689e4051637a2f0196654e43833078195840",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "7f3979b63dd3160c5785aa18336e707ea52b8c12ba7e83c8061d7ff5f0d11e33"
+      "contentHash": "9f857b939708d604356053a1dd3feb01500259650286b4589151e9e00e7bacf6"
     },
     {
-      "id": "oc:observation:es-madrid:65fd28fa65103bb9a65cf61909e9a6726bddb5231014a1717e1e7e96d44529c0",
+      "id": "oc:observation:es-madrid-flow:d9b91162c0be78298b2ca6986546ac8ec46c5dd2d78edea1d5151e5081da2990",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -293,7 +293,7 @@
       },
       "provenance": {
         "origin": "feed",
-        "sourceId": "es-madrid",
+        "sourceId": "es-madrid-flow",
         "sourceFormat": "informo",
         "accessMode": "bulk",
         "recordId": "9842",
@@ -315,7 +315,7 @@
       "property": "traffic.los",
       "subject": {
         "kind": "feature",
-        "featureId": "oc:feature:es-madrid:9842"
+        "featureId": "oc:feature:es-madrid-flow:9842"
       },
       "result": {
         "type": "category",
@@ -326,16 +326,16 @@
         "instant": "2026-09-18T10:00:00.000Z"
       },
       "aggregation": "instantaneous",
-      "canonicalId": "a3cce09a0aa41f9575ebed22b191334368acc2c286883e64338f3c2495190872",
+      "canonicalId": "894eaaa8c83bc236c62e5a03c4376d64263826ca7858b57f268d104349a14dbe",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "5d8fea5a83965a04d457a79cc035b2f67a19036a22b04e1379ea6d2c8fbc4c13"
+      "contentHash": "57b0001b84ed478a8f3148cd59b1b31ee3b8301fe0b66219e7961f6ad02b73b7"
     }
   ],
   "situations": [
     {
-      "id": "oc:situation:es-madrid:9841:congestion",
+      "id": "oc:situation:es-madrid-flow:9841:congestion",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -354,7 +354,7 @@
       },
       "provenance": {
         "origin": "derived",
-        "sourceId": "es-madrid",
+        "sourceId": "es-madrid-flow",
         "sourceFormat": "informo",
         "accessMode": "bulk",
         "recordId": "9841:congestion",
@@ -367,7 +367,7 @@
           "records": [
             {
               "class": "feature",
-              "id": "oc:feature:es-madrid:9841"
+              "id": "oc:feature:es-madrid-flow:9841"
             }
           ],
           "method": "los_threshold",
@@ -402,14 +402,14 @@
         "los": "unknown",
         "derivedFrom": {
           "class": "feature",
-          "id": "oc:feature:es-madrid:9841"
+          "id": "oc:feature:es-madrid-flow:9841"
         }
       },
-      "canonicalId": "3c59732c7636735039ce6c187180cbb9631e0eb260789a7ed9856cfcf2efc277",
+      "canonicalId": "05da7316c9a7c6ba5448a84defb5afddc6d6bc05ea7f58bef59225b1537bd117",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "fdd56099f74d0af40d5ed56ff3e8d5149f6bf522d743f6d786e6ff6bc1659fd7"
+      "contentHash": "8cba6492d7e1866122e3a46257e6d73d1f2305e82d0daee5cafad78be013ef33"
     }
   ]
 }

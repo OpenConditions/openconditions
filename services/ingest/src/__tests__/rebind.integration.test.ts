@@ -9,7 +9,7 @@ let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
 let sql: postgres.Sql;
 const NOW = "2026-09-06T10:00:00.000Z";
 const now = () => NOW;
-const id = (local: string) => `oc:situation:de-autobahn:${local}`;
+const id = (local: string) => `oc:situation:de-autobahn-events:${local}`;
 
 beforeAll(async () => {
   db = await createRestrictionDatabase();
@@ -32,7 +32,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await sql`TRUNCATE conditions.situation, conditions.record_binding, conditions.record_segment,
     conditions.binding_queue CASCADE`;
-  await writeSituations(sql, "de-autobahn", [situationDraft("a1")]);
+  await writeSituations(sql, "de-autobahn-events", [situationDraft("a1")]);
 });
 
 const bindings = (recordId: string) =>

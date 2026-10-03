@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import type { LookupFn } from "@openconditions/ingest-framework";
-import { FEED_SOURCES } from "@openconditions/roads";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { type DomainFeedSource, runSource } from "../pipeline/run.js";
+import { runSource } from "../pipeline/run.js";
+import { repoFeed, testFeed } from "./helpers/catalog.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 /**
@@ -29,22 +29,25 @@ const EXEMPTED = `${V2_BASE}/exempted-transports`;
  * A local Finland descriptor, so this suite proves the acceptance behaviour
  * without depending on the shipped feed being activated yet.
  */
-const feed: DomainFeedSource = {
-  id: "fi-digitraffic",
-  domain: "roads",
+const feed = testFeed({
+  id: "fi-digitraffic-events",
   operator: "digitraffic",
   name: "Digitraffic (Finland)",
   format: "digitraffic",
-  url: [ANNOUNCEMENTS, ROADWORKS, WEIGHTS, EXEMPTED],
-  requestHeaders: { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
+  endpoints: {
+    main: {
+      urls: [ANNOUNCEMENTS, ROADWORKS, WEIGHTS, EXEMPTED],
+      headers: { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
+      cadenceSec: 120,
+    },
+  },
   snapshot: { completeness: "complete", recordsPath: "features" },
-  cadenceSec: 120,
   freshnessWindowSec: 600,
   license: "CC-BY-4.0",
   licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
   attribution: "Fintraffic / Digitraffic",
   country: "FI",
-} as unknown as DomainFeedSource;
+});
 
 const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 
@@ -84,10 +87,10 @@ afterAll(async () => {
 beforeEach(async () => {
   await sql`TRUNCATE conditions.situation, conditions.record_binding, conditions.record_segment,
     conditions.binding_queue CASCADE`;
-  await sql`DELETE FROM conditions.source_status WHERE source = 'fi-digitraffic'`;
+  await sql`DELETE FROM conditions.source_status WHERE source = 'fi-digitraffic-events'`;
 });
 
-const fiId = (local: string) => `oc:situation:fi-digitraffic:${local}`;
+const fiId = (local: string) => `oc:situation:fi-digitraffic-events:${local}`;
 
 /** The live situations of `source`, with their content hashes. */
 async function liveRows(source: string): Promise<Array<{ id: string; content_hash: string }>> {
@@ -105,7 +108,7 @@ async function tombstoned(source: string, reason: string): Promise<string[]> {
 }
 
 async function idsAndHashes(): Promise<Array<{ id: string; content_hash: string }>> {
-  return liveRows("fi-digitraffic");
+  return liveRows("fi-digitraffic-events");
 }
 
 async function queued(): Promise<Array<{ record_id: string; record_revision: number }>> {
@@ -161,7 +164,7 @@ describe("complete road snapshot acceptance", () => {
     const before = await idsAndHashes();
     expect(before).toHaveLength(5);
     const status = await sql<Array<{ last_success_at: Date | null }>>`
-      SELECT last_success_at FROM conditions.source_status WHERE source = 'fi-digitraffic'`;
+      SELECT last_success_at FROM conditions.source_status WHERE source = 'fi-digitraffic-events'`;
 
     const lostGeometry = roadworks();
     // Keep the id, remove only its geometry: the publisher still serves it.
@@ -179,7 +182,7 @@ describe("complete road snapshot acceptance", () => {
     expect(failed.error).toMatch(/unlocatable/);
     expect(await idsAndHashes()).toEqual(before);
     const after = await sql<Array<{ last_success_at: Date | null }>>`
-      SELECT last_success_at FROM conditions.source_status WHERE source = 'fi-digitraffic'`;
+      SELECT last_success_at FROM conditions.source_status WHERE source = 'fi-digitraffic-events'`;
     expect(after[0]!.last_success_at?.toISOString()).toBe(
       status[0]!.last_success_at?.toISOString(),
     );
@@ -201,7 +204,7 @@ describe("complete road snapshot acceptance", () => {
     expect(result.error).toBeUndefined();
     expect(result.deleted).toBe(1);
     expect((await idsAndHashes()).map((r) => r.id)).not.toContain(fiId("GUID50465935"));
-    expect(await tombstoned("fi-digitraffic", "withdrawn")).toEqual([fiId("GUID50465935")]);
+    expect(await tombstoned("fi-digitraffic-events", "withdrawn")).toEqual([fiId("GUID50465935")]);
   }, 120_000);
 
   it("clears the source for a valid complete empty snapshot", async () => {
@@ -214,7 +217,7 @@ describe("complete road snapshot acceptance", () => {
     });
     expect(empty.error).toBeUndefined();
     expect(await idsAndHashes()).toHaveLength(0);
-    expect(await tombstoned("fi-digitraffic", "withdrawn")).toHaveLength(5);
+    expect(await tombstoned("fi-digitraffic-events", "withdrawn")).toHaveLength(5);
   }, 120_000);
 
   it("clears the source for an all-terminal snapshot without a zero-result failure", async () => {
@@ -369,7 +372,7 @@ describe("complete road snapshot acceptance", () => {
     expect(await idsAndHashes()).toEqual(before);
     expect(await queued()).toEqual(beforeQueue);
     const status = await sql<Array<{ last_success_at: Date | null }>>`
-      SELECT last_success_at FROM conditions.source_status WHERE source = 'fi-digitraffic'`;
+      SELECT last_success_at FROM conditions.source_status WHERE source = 'fi-digitraffic-events'`;
     expect(status[0]!.last_success_at).not.toBeNull();
   }, 120_000);
 
@@ -423,6 +426,7 @@ describe("complete road snapshot acceptance", () => {
  * reduced capture, gzip-compressed exactly as the publisher serves it.
  */
 describe("complete road snapshot acceptance — NDW", () => {
+  const NDW = "nl-ndw-events";
   const ndwXml = readFileSync(
     new URL(
       "../../../../packages/roads/src/__tests__/fixtures/ndw/restrictions-v3.xml",
@@ -430,10 +434,9 @@ describe("complete road snapshot acceptance — NDW", () => {
     ),
     "utf8",
   );
-  const ndwFeed = {
-    ...FEED_SOURCES.find((f) => f.id === "nl-ndw"),
-    domain: "roads",
-  } as unknown as DomainFeedSource;
+  // The catalogue's NDW descriptor: its id is what the DATEX restriction
+  // contract is verified for.
+  const ndwFeed = repoFeed(NDW);
 
   /** Serve one gzip XML body, as the real endpoint does. */
   function serveXml(body: string, status = 200): typeof fetch {
@@ -445,10 +448,10 @@ describe("complete road snapshot acceptance — NDW", () => {
   }
 
   async function ndwRows(): Promise<Array<{ id: string; content_hash: string }>> {
-    return liveRows("nl-ndw");
+    return liveRows(NDW);
   }
 
-  const ndwId = (local: string) => `oc:situation:nl-ndw:${local}`;
+  const ndwId = (local: string) => `oc:situation:${NDW}:${local}`;
 
   async function seedNdw(now: string): Promise<void> {
     const result = await runSource(ndwFeed, {
@@ -461,7 +464,7 @@ describe("complete road snapshot acceptance — NDW", () => {
   }
 
   beforeEach(async () => {
-    await sql`DELETE FROM conditions.source_status WHERE source = 'nl-ndw'`;
+    await sql`DELETE FROM conditions.source_status WHERE source = ${NDW}`;
   });
 
   it("accepts every record of the reviewed capture and keeps the height condition", async () => {
@@ -584,7 +587,7 @@ describe("complete road snapshot acceptance — NDW", () => {
     const ids = (await ndwRows()).map((r) => r.id);
     expect(ids).not.toContain(ndwId("NLRWS_0005382945"));
     expect(ids).toContain(ndwId("RWS01_SM1080891_D2_WWA"));
-    expect(await tombstoned("nl-ndw", "withdrawn")).toEqual([ndwId("NLRWS_0005382945")]);
+    expect(await tombstoned(NDW, "withdrawn")).toEqual([ndwId("NLRWS_0005382945")]);
   }, 120_000);
 
   it.each([
@@ -596,7 +599,7 @@ describe("complete road snapshot acceptance — NDW", () => {
       await seedNdw("2026-09-12T07:14:00.000Z");
       const before = await ndwRows();
       const status = await sql<Array<{ last_success_at: Date | null }>>`
-      SELECT last_success_at FROM conditions.source_status WHERE source = 'nl-ndw'`;
+      SELECT last_success_at FROM conditions.source_status WHERE source = ${NDW}`;
 
       const failed = await runSource(ndwFeed, {
         sql,
@@ -607,7 +610,7 @@ describe("complete road snapshot acceptance — NDW", () => {
       expect(failed.error).toBeDefined();
       expect(await ndwRows()).toEqual(before);
       const after = await sql<Array<{ last_success_at: Date | null }>>`
-      SELECT last_success_at FROM conditions.source_status WHERE source = 'nl-ndw'`;
+      SELECT last_success_at FROM conditions.source_status WHERE source = ${NDW}`;
       expect(after[0]!.last_success_at?.toISOString()).toBe(
         status[0]!.last_success_at?.toISOString(),
       );

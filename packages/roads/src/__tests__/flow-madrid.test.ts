@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { flowFeed, flows, site, siteIds, value } from "./flow-fixtures.js";
 
-const FEED = "es-madrid";
+const FEED = "es-madrid-flow";
 const feed = flowFeed(FEED);
 
 // Coordinates are ETRS89 / UTM 30N (EPSG:25830) with comma decimals, as the

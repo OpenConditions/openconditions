@@ -21,7 +21,7 @@ const effect = (id: string, kind: string, fields: Rec = {}): Rec => ({
 
 function situation(over: Rec = {}): Rec {
   return {
-    id: "oc:situation:de-autobahn:a46",
+    id: "oc:situation:de-autobahn-events:a46",
     class: "situation",
     kind: "roadworks",
     type: "works",
@@ -119,8 +119,8 @@ describe("situationsToTraff — effects with their own place", () => {
     const xml = situationsToTraff(registry, [situation({ effects: [elsewhere] })], AT);
     const messages = parser.parse(xml).feed.message as Rec[];
     expect(messages.map((m) => [m["@_id"], (m["location"] as Rec)["at"]])).toEqual([
-      ["oc:situation:de-autobahn:a46", undefined],
-      ["oc:situation:de-autobahn:a46#a46/ramp", "+51.3 +6.9"],
+      ["oc:situation:de-autobahn-events:a46", undefined],
+      ["oc:situation:de-autobahn-events:a46#a46/ramp", "+51.3 +6.9"],
     ]);
     const types = (m: Rec) =>
       [(m["events"] as Rec)["event"] as Rec | Rec[]].flat().map((e) => e["@_type"]);
@@ -136,7 +136,7 @@ describe("situationsToTraff", () => {
       [
         situation(),
         situation({
-          id: "oc:situation:de-autobahn:hgv",
+          id: "oc:situation:de-autobahn-events:hgv",
           effects: [effect("h", "closure", { scope: "road", applicability: { kind: "unknown" } })],
         }),
       ],
@@ -144,7 +144,7 @@ describe("situationsToTraff", () => {
     );
     const message = parser.parse(xml).feed.message;
     expect(message).toMatchObject({
-      "@_id": "oc:situation:de-autobahn:a46",
+      "@_id": "oc:situation:de-autobahn-events:a46",
       "@_receive_time": "2026-09-06T09:30:00Z",
       "@_update_time": "2026-09-06T09:00:00Z",
       "@_urgency": "URGENT",

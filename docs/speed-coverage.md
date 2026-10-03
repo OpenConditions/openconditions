@@ -6,28 +6,28 @@ traffic. A road with no nearby sensor carries no speed observation.
 
 ## Feed roster
 
-Every feed below is a `produces: "flow"` source in `packages/roads/feeds/roads`;
-each emits a per-sensor speed reading where the upstream carries one. The feed
-files hold 24 flow feeds in all; this table lists a part of them — the
-authoritative definition (URLs, cadence, credential fields) lives in those feed
-files, and the credential-bearing subset is
-regenerated into [`road-feed-credentials.md`](./road-feed-credentials.md).
+Every feed below is a `product: "flow"` feed in `feeds/roads/`; each emits a
+per-sensor speed reading where the upstream carries one. The region files hold
+24 flow feeds in all; this table lists a part of them — the authoritative
+definition (URLs, cadence, credential fields) lives in those files, and the
+credential-bearing subset is regenerated into
+[`feed-credentials.md`](./feed-credentials.md).
 
-| feed id                | region               | format              | keyed                           | license              |
-| ---------------------- | -------------------- | ------------------- | ------------------------------- | -------------------- |
-| `be-miv`               | Flanders, Belgium    | `miv`               | no                              | CC-BY-4.0            |
-| `es-madrid`            | Madrid, Spain        | `informo`           | no                              | CC-BY-4.0            |
-| `fr-dir-flow`          | France (DIR/QTV-DIR) | `datex2`            | no                              | etalab-2.0           |
-| `hk-td`                | Hong Kong            | `hk-td`             | no                              | HK-Gov-Open-Data     |
-| `de-nw-bonn`           | Bonn, Germany        | `bonn`              | no                              | dl-de/zero-2-0       |
-| `it-turin`             | Turin, Italy         | `fdt`               | no                              | CC-BY-4.0            |
-| `fi-fintraffic`        | Finland              | `fintraffic-tms`    | no                              | CC-BY-4.0            |
-| `nl-ndw-flow`          | Netherlands          | `datex2`            | no                              | CC0-1.0              |
-| `us-nyc-dot`           | New York City, US    | `nyc-dot`           | no (optional token)             | NYC-Open-Data        |
-| `us-oh-ohgo`           | Ohio, US             | `ohgo`              | yes (`US_OH_OHGO_API_KEY`)      | US-Gov-Public-Domain |
-| `se-trafikverket-flow` | Sweden               | `trafikverket-flow` | yes (`SE_TRAFIKVERKET_API_KEY`) | CC0-1.0              |
-| `no-vegvesen-flow`     | Norway               | `datex2`            | yes (`NO_VEGVESEN_*`)           | NLOD-2.0             |
-| `sg-lta-speedbands`    | Singapore            | `lta-speedbands`    | yes (`SG_LTA_ACCOUNT_KEY`)      | Singapore-ODL-1.0    |
+| feed id                | region               | format              | keyed                           | license                         |
+| ---------------------- | -------------------- | ------------------- | ------------------------------- | ------------------------------- |
+| `be-miv-flow`          | Flanders, Belgium    | `miv`               | no                              | CC-BY-4.0                       |
+| `es-madrid-flow`       | Madrid, Spain        | `informo`           | no                              | CC-BY-4.0                       |
+| `fr-dir-flow`          | France (DIR/QTV-DIR) | `datex2-measured`   | no                              | etalab-2.0                      |
+| `hk-td-flow`           | Hong Kong            | `hk-td`             | no                              | LicenseRef-HK-Gov-Open-Data     |
+| `de-nw-bonn-flow`      | Bonn, Germany        | `bonn`              | no                              | DL-DE-ZERO-2.0                  |
+| `it-turin-flow`        | Turin, Italy         | `fdt`               | no                              | CC-BY-4.0                       |
+| `fi-fintraffic-flow`   | Finland              | `fintraffic-tms`    | no                              | CC-BY-4.0                       |
+| `nl-ndw-flow`          | Netherlands          | `datex2-measured`   | no                              | CC0-1.0                         |
+| `us-nyc-dot-flow`      | New York City, US    | `nyc-dot`           | no                              | LicenseRef-NYC-Open-Data        |
+| `us-oh-ohgo-flow`      | Ohio, US             | `ohgo`              | yes (`US_OH_OHGO_API_KEY`)      | LicenseRef-US-Gov-Public-Domain |
+| `se-trafikverket-flow` | Sweden               | `trafikverket-flow` | yes (`SE_TRAFIKVERKET_API_KEY`) | CC0-1.0                         |
+| `no-vegvesen-flow`     | Norway               | `datex2-measured`   | yes (`NO_VEGVESEN_*`)           | NLOD-2.0                        |
+| `sg-lta-flow`          | Singapore            | `lta-speedbands`    | yes (`SG_LTA_API_KEY`)          | LicenseRef-Singapore-ODL-1.0    |
 
 There is no per-feed enable switch: a feed runs as soon as its credentials are
 set (a keyless feed always runs). The keyed speed feeds above therefore stay
@@ -58,14 +58,14 @@ spine like any other road situation.
 
 Some speed feeds need a free credential and stay dormant until it is set; the
 full list with registration links is in
-[`road-feed-credentials.md`](./road-feed-credentials.md). The speed-layer ones:
+[`feed-credentials.md`](./feed-credentials.md). The speed-layer ones:
 
 - **OHGO (Ohio)** — `US_OH_OHGO_API_KEY` (ohgo.com/developer).
 - **Trafikverket (Sweden)** — `SE_TRAFIKVERKET_API_KEY`
   (api.trafikinfo.trafikverket.se).
-- **LTA DataMall Speed Bands (Singapore)** — `SG_LTA_ACCOUNT_KEY`; dormant
+- **LTA DataMall Speed Bands (Singapore)** — `SG_LTA_API_KEY`; dormant
   until the key is set.
-- **Statens vegvesen (Norway)** — `NO_VEGVESEN_USERNAME` /
+- **Statens vegvesen (Norway)** — `NO_VEGVESEN_USER` /
   `NO_VEGVESEN_PASSWORD`; dormant until credentials are set.
 
 ## Known export limitation

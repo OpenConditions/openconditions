@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:ca-on-511:395",
+    "id": "oc:situation:ca-on-511-events:395",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -84,14 +84,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "ca-on-511",
+      "sourceId": "ca-on-511-events",
       "sourceFormat": "ibi511",
       "accessMode": "bulk",
       "recordId": "395",
       "sourceUpdatedAt": "2026-07-23T22:34:19.000Z",
       "attribution": {
         "provider": "Contains information licensed under the Open Government Licence – Ontario",
-        "license": "OGL-ON",
+        "license": "LicenseRef-OGL-ON",
         "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario"
       },
       "privacy": {
@@ -133,14 +133,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "8521a36a8990d5b3785481de9897e17635da43863b777133457e6a3244d324a9",
+    "canonicalId": "4bd72731e107fdd7318e4e2dc7dd0ff7a2bd65501031f0eb448c62610a458851",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "7ce74754b3946ff9e4ba9ac578b54391fcd920bfc9e7fdc96937ed6b75b49cd2"
+    "contentHash": "36f7d2a757d33103cb95f9d893e2874d791dc862d6c78aa9f12345a3571c57ff"
   },
   {
-    "id": "oc:situation:ca-on-511:101",
+    "id": "oc:situation:ca-on-511-events:101",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -179,14 +179,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "ca-on-511",
+      "sourceId": "ca-on-511-events",
       "sourceFormat": "ibi511",
       "accessMode": "bulk",
       "recordId": "101",
       "sourceUpdatedAt": "2026-06-25T10:00:00.000Z",
       "attribution": {
         "provider": "Contains information licensed under the Open Government Licence – Ontario",
-        "license": "OGL-ON",
+        "license": "LicenseRef-OGL-ON",
         "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario"
       },
       "privacy": {
@@ -227,14 +227,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "2383705905bd4410986991c16553b719704f28873af5eb8ec0ebf3a980225b47",
+    "canonicalId": "993a360b2415aee360fe2694f272cc9a83d647f406682f3b40cd0d0c0f67f0ab",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "bd789673751167b24c3dd399ed0023d3d092d3918aaab05e262dde0c871c3524"
+    "contentHash": "32a21a2543e3181a2b33b9dfb38d66d1285f23f8a464bbe704a197896628ee10"
   },
   {
-    "id": "oc:situation:ca-on-511:2",
+    "id": "oc:situation:ca-on-511-events:2",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -253,13 +253,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "ca-on-511",
+      "sourceId": "ca-on-511-events",
       "sourceFormat": "ibi511",
       "accessMode": "bulk",
       "recordId": "2",
       "attribution": {
         "provider": "Contains information licensed under the Open Government Licence – Ontario",
-        "license": "OGL-ON",
+        "license": "LicenseRef-OGL-ON",
         "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario"
       },
       "privacy": {
@@ -300,10 +300,10 @@
       "kind": "closure",
       "v": 1
     },
-    "canonicalId": "7876fcf4da0c08c764258b9dc1eb98df07fe68c11944d16f57b9a5b01a23975f",
+    "canonicalId": "17fb5abd34529f36d1ddc28e08d5b995b60100c4f4051229f786dcee54ebda33",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "53f8af2aa2b4bac2c47a876a850151513ed176b742994081dc7f9a91b1a7f20f"
+    "contentHash": "8077ebc2b37f288a60782c2627166c2ea469a06d9ff5c33095070f4a33a5aa15"
   }
 ]

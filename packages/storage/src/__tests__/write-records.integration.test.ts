@@ -51,10 +51,15 @@ describe("writeSnapshot", () => {
       situationDraft("a", {
         freshness: { fetchedAt: "2026-10-01T10:00:00.000Z", ...(expiresAt ? { expiresAt } : {}) },
       });
-    await writeSnapshot(sql, "nl-ndw", { situations: [until("2026-10-01T10:15:00Z")] }, ctx(T1));
+    await writeSnapshot(
+      sql,
+      "nl-ndw-events",
+      { situations: [until("2026-10-01T10:15:00Z")] },
+      ctx(T1),
+    );
     const again = await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [until("2026-10-01T10:30:00Z")] },
       ctx(T2),
     );
@@ -62,7 +67,7 @@ describe("writeSnapshot", () => {
     const expiry = async () => {
       const [row] = await sql`
         SELECT expires_at, record #>> '{freshness,expiresAt}' AS stated, revision
-          FROM conditions.situation WHERE id = 'oc:situation:nl-ndw:a'`;
+          FROM conditions.situation WHERE id = 'oc:situation:nl-ndw-events:a'`;
       return row;
     };
     expect(await expiry()).toEqual({
@@ -70,15 +75,15 @@ describe("writeSnapshot", () => {
       stated: "2026-10-01T10:30:00Z",
       revision: 1,
     });
-    await writeSnapshot(sql, "nl-ndw", { situations: [until()] }, ctx(T3));
+    await writeSnapshot(sql, "nl-ndw-events", { situations: [until()] }, ctx(T3));
     expect(await expiry()).toEqual({ expires_at: null, stated: null, revision: 1 });
-    expect(await revisions("situation", "oc:situation:nl-ndw:a")).toHaveLength(1);
+    expect(await revisions("situation", "oc:situation:nl-ndw-events:a")).toHaveLength(1);
   });
 
   it("stores new records with their first revision, effects, components and relations", async () => {
     const summary = await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("a"), roadworksDraft("w")] },
       ctx(T1),
     );
@@ -88,7 +93,7 @@ describe("writeSnapshot", () => {
     const [row] = await sql`
       SELECT revision, recorded_at, kind, type, severity, certainty, planned, source_id,
         instance_id, ST_AsText(geom) AS geom, country
-      FROM conditions.situation WHERE id = 'oc:situation:nl-ndw:a'`;
+      FROM conditions.situation WHERE id = 'oc:situation:nl-ndw-events:a'`;
     expect(row).toMatchObject({
       revision: 1,
       kind: "incident",
@@ -96,12 +101,12 @@ describe("writeSnapshot", () => {
       severity: "major",
       certainty: "observed",
       planned: false,
-      source_id: "nl-ndw",
+      source_id: "nl-ndw-events",
       instance_id: "test.local",
       geom: "POINT(4.9 52.37)",
       country: "NL",
     });
-    expect(await revisions("situation", "oc:situation:nl-ndw:a")).toEqual([
+    expect(await revisions("situation", "oc:situation:nl-ndw-events:a")).toEqual([
       { revision: 1, change_kinds: ["created"] },
     ]);
 
@@ -110,7 +115,7 @@ describe("writeSnapshot", () => {
       FROM conditions.situation_effect ORDER BY situation_id`;
     expect(effects).toEqual([
       {
-        situation_id: "oc:situation:nl-ndw:a",
+        situation_id: "oc:situation:nl-ndw-events:a",
         effect_id: "a/closure",
         phase_id: "",
         kind: "closure",
@@ -118,7 +123,7 @@ describe("writeSnapshot", () => {
         valid_to: null,
       },
       {
-        situation_id: "oc:situation:nl-ndw:w",
+        situation_id: "oc:situation:nl-ndw-events:w",
         effect_id: "w/lane_restriction",
         phase_id: "p1",
         kind: "lane_restriction",
@@ -145,16 +150,16 @@ describe("writeSnapshot", () => {
         from_class: "feature",
         relation: "related",
         to_class: "situation",
-        to_id: "oc:situation:nl-ndw:works",
+        to_id: "oc:situation:nl-ndw-events:works",
         component_key: "",
       },
     ]);
   });
 
   it("writes nothing for unchanged content and keeps the first fetch time", async () => {
-    await writeSnapshot(sql, "nl-ndw", { situations: [situationDraft("a")] }, ctx(T1));
+    await writeSnapshot(sql, "nl-ndw-events", { situations: [situationDraft("a")] }, ctx(T1));
     const again = situationDraft("a", { freshness: { fetchedAt: "2026-10-01T10:01:00.000Z" } });
-    const summary = await writeSnapshot(sql, "nl-ndw", { situations: [again] }, ctx(T2));
+    const summary = await writeSnapshot(sql, "nl-ndw-events", { situations: [again] }, ctx(T2));
     expect(summary.counts.situation).toMatchObject({ unchanged: 1, updated: 0 });
     expect(summary.changed).toEqual([]);
     const [row] = await sql`SELECT revision, record->'freshness'->>'fetchedAt' AS fetched
@@ -163,13 +168,13 @@ describe("writeSnapshot", () => {
   });
 
   it("revises changed content, naming what changed", async () => {
-    await writeSnapshot(sql, "nl-ndw", { situations: [situationDraft("a")] }, ctx(T1));
+    await writeSnapshot(sql, "nl-ndw-events", { situations: [situationDraft("a")] }, ctx(T1));
     const worse = situationDraft("a", {
       severity: { label: "critical", source: "declared", declaredRaw: "highest" },
     });
-    const summary = await writeSnapshot(sql, "nl-ndw", { situations: [worse] }, ctx(T2));
+    const summary = await writeSnapshot(sql, "nl-ndw-events", { situations: [worse] }, ctx(T2));
     expect(summary.counts.situation).toMatchObject({ updated: 1 });
-    expect(await revisions("situation", "oc:situation:nl-ndw:a")).toEqual([
+    expect(await revisions("situation", "oc:situation:nl-ndw-events:a")).toEqual([
       { revision: 1, change_kinds: ["created"] },
       { revision: 2, change_kinds: ["severity_change"] },
     ]);
@@ -180,15 +185,20 @@ describe("writeSnapshot", () => {
   it("tombstones what a complete snapshot no longer holds, and restores it when it returns", async () => {
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("a"), situationDraft("b")] },
       ctx(T1),
     );
-    const gone = await writeSnapshot(sql, "nl-ndw", { situations: [situationDraft("a")] }, ctx(T2));
+    const gone = await writeSnapshot(
+      sql,
+      "nl-ndw-events",
+      { situations: [situationDraft("a")] },
+      ctx(T2),
+    );
     expect(gone.counts.situation).toMatchObject({ unchanged: 1, withdrawn: 1 });
     const [b] = await sql`
       SELECT tombstone_reason, tombstoned_at, revision, record->'tombstone' AS tombstone
-      FROM conditions.situation WHERE id = 'oc:situation:nl-ndw:b'`;
+      FROM conditions.situation WHERE id = 'oc:situation:nl-ndw-events:b'`;
     expect(b).toEqual({
       tombstone_reason: "withdrawn",
       tombstoned_at: new Date(T2),
@@ -196,50 +206,55 @@ describe("writeSnapshot", () => {
       tombstone: { reason: "withdrawn", at: T2 },
     });
     const [{ effects }] = await sql`SELECT count(*)::int AS effects FROM conditions.situation_effect
-      WHERE situation_id = 'oc:situation:nl-ndw:b'`;
+      WHERE situation_id = 'oc:situation:nl-ndw-events:b'`;
     expect(effects).toBe(0);
 
     const back = await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("a"), situationDraft("b")] },
       ctx(T3),
     );
     expect(back.counts.situation).toMatchObject({ restored: 1, unchanged: 1 });
-    expect(await revisions("situation", "oc:situation:nl-ndw:b")).toEqual([
+    expect(await revisions("situation", "oc:situation:nl-ndw-events:b")).toEqual([
       { revision: 1, change_kinds: ["created"] },
       { revision: 2, change_kinds: ["tombstoned"] },
       { revision: 3, change_kinds: ["created"] },
     ]);
     const [restored] = await sql`SELECT tombstone_reason, record ? 'tombstone' AS has_tombstone
-      FROM conditions.situation WHERE id = 'oc:situation:nl-ndw:b'`;
+      FROM conditions.situation WHERE id = 'oc:situation:nl-ndw-events:b'`;
     expect(restored).toEqual({ tombstone_reason: null, has_tombstone: false });
   });
 
   it("leaves a peer's copy for the peer to withdraw", async () => {
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("a"), situationDraft("b")] },
       { ...ctx(T1), instanceId: "peer.example" },
     );
-    const own = await writeSnapshot(sql, "nl-ndw", { situations: [situationDraft("a")] }, ctx(T2));
+    const own = await writeSnapshot(
+      sql,
+      "nl-ndw-events",
+      { situations: [situationDraft("a")] },
+      ctx(T2),
+    );
     expect(own.counts.situation.withdrawn).toBe(0);
     const [b] = await sql`SELECT tombstoned_at, instance_id FROM conditions.situation
-      WHERE id = 'oc:situation:nl-ndw:b'`;
+      WHERE id = 'oc:situation:nl-ndw-events:b'`;
     expect(b).toEqual({ tombstoned_at: null, instance_id: "peer.example" });
   });
 
   it("withdraws nothing from a partial snapshot", async () => {
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("a"), situationDraft("b")] },
       ctx(T1),
     );
     const partial = await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("a")] },
       ctx(T2, false),
     );
@@ -295,7 +310,7 @@ describe("writeSnapshot", () => {
     await expect(
       writeSnapshot(
         sql,
-        "nl-ndw",
+        "nl-ndw-events",
         { situations: [situationDraft("a"), situationDraft("b"), situationDraft("c")] },
         { ...ctx(T1), maxRowsPerClass: 2 },
       ),
@@ -315,45 +330,58 @@ describe("writeSnapshot", () => {
   it("rejects an invalid draft without losing the rest of the poll or its stored version", async () => {
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("a"), situationDraft("b")] },
       ctx(T1),
     );
     const broken = situationDraft("b", { kind: "volcano" });
     const summary = await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("a"), broken, situationDraft("c")] },
       ctx(T2),
     );
     expect(summary.counts.situation).toMatchObject({ created: 1, unchanged: 1, withdrawn: 0 });
-    expect(summary.rejected.map((r) => r.id)).toEqual(["oc:situation:nl-ndw:b"]);
+    expect(summary.rejected.map((r) => r.id)).toEqual(["oc:situation:nl-ndw-events:b"]);
     const [b] = await sql`SELECT kind, tombstone_reason FROM conditions.situation
-      WHERE id = 'oc:situation:nl-ndw:b'`;
+      WHERE id = 'oc:situation:nl-ndw-events:b'`;
     expect(b).toEqual({ kind: "incident", tombstone_reason: null });
   });
 
   it("stores a record a poll repeats once, as its last copy says", async () => {
     const first = situationDraft("dup", { certainty: "possible" });
     const last = situationDraft("dup", { certainty: "observed" });
-    const summary = await writeSnapshot(sql, "nl-ndw", { situations: [first, last] }, ctx(T1));
+    const summary = await writeSnapshot(
+      sql,
+      "nl-ndw-events",
+      { situations: [first, last] },
+      ctx(T1),
+    );
     expect(summary.counts.situation).toMatchObject({ created: 1 });
     const rows = await sql`SELECT certainty FROM conditions.situation`;
     expect(rows).toEqual([{ certainty: "observed" }]);
-    expect(await revisions("situation", "oc:situation:nl-ndw:dup")).toEqual([
+    expect(await revisions("situation", "oc:situation:nl-ndw-events:dup")).toEqual([
       { revision: 1, change_kinds: ["created"] },
     ]);
   });
 
   it("rejects a draft of another source, or one with a field no schema has", async () => {
     const foreign = situationDraft("x", {
-      provenance: { ...(situationDraft("x")["provenance"] as object), sourceId: "be-flanders" },
+      provenance: {
+        ...(situationDraft("x")["provenance"] as object),
+        sourceId: "be-flanders-events",
+      },
     });
     const stray = situationDraft("y", { colour: "red" });
-    const summary = await writeSnapshot(sql, "nl-ndw", { situations: [foreign, stray] }, ctx(T1));
+    const summary = await writeSnapshot(
+      sql,
+      "nl-ndw-events",
+      { situations: [foreign, stray] },
+      ctx(T1),
+    );
     expect(summary.rejected.map((r) => r.id)).toEqual([
-      "oc:situation:nl-ndw:x",
-      "oc:situation:nl-ndw:y",
+      "oc:situation:nl-ndw-events:x",
+      "oc:situation:nl-ndw-events:y",
     ]);
     const [{ count }] = await sql`SELECT count(*)::int AS count FROM conditions.situation`;
     expect(count).toBe(0);
@@ -379,7 +407,7 @@ describe("promoted columns", () => {
   it("hold exactly what each stored record says", async () => {
     await writeSnapshot(
       sql,
-      "nl-ndw",
+      "nl-ndw-events",
       { situations: [situationDraft("a"), roadworksDraft("w")] },
       ctx(T1),
     );

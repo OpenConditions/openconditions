@@ -22,12 +22,16 @@ const registry = productionRegistry();
 /** The subject key of a site's series, as the baselines and snaps key it. */
 export const siteKey = (source: string, site: string) => `feature:oc:feature:${source}:${site}`;
 
-/** Registers a flow source in the catalogue table, as boot does. */
-export async function seedFlowSource(sql: postgres.Sql, id: string): Promise<void> {
+/** Registers a flow source of `domain` (roads unless given) in the catalogue table, as boot does. */
+export async function seedFlowSource(
+  sql: postgres.Sql,
+  id: string,
+  domain = "roads",
+): Promise<void> {
   await sql`
-    INSERT INTO conditions.source (id, domain, format, produces, access_mode, tier, country,
+    INSERT INTO conditions.source (id, domain, format, product, access_mode, tier, country,
       operator, license, attribution, cadence_sec, freshness_window_sec)
-    VALUES (${id}, 'roads', 'datex2', 'flow', 'bulk', 'authoritative', 'NL', 'test',
+    VALUES (${id}, ${domain}, 'datex2-measured', 'flow', 'bulk', 'authoritative', 'NL', 'test',
       'CC0-1.0', 'Test', 60, 300)
     ON CONFLICT (id) DO NOTHING`;
 }
@@ -94,16 +98,17 @@ function draft(source: string, r: SiteReading, property: string, result: Rec): R
 /**
  * Writes one poll's site readings of `source` (speed and stated level of
  * service) as of `now`, with the history partitions that time needs. The
- * source is registered as a flow feed unless `catalogued` is false.
+ * source is registered as a flow feed of `domain` (roads unless given) unless
+ * `catalogued` is false.
  */
 export async function writeSiteReadings(
   sql: postgres.Sql,
   source: string,
   readings: readonly SiteReading[],
   now: string,
-  { catalogued = true }: { catalogued?: boolean } = {},
+  { catalogued = true, domain }: { catalogued?: boolean; domain?: string } = {},
 ): Promise<void> {
-  if (catalogued) await seedFlowSource(sql, source);
+  if (catalogued) await seedFlowSource(sql, source, domain);
   await ensureObservationPartitions(sql, {
     classes: retentionClasses(registry),
     now: new Date(now),

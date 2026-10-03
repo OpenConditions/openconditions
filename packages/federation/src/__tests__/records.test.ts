@@ -42,7 +42,7 @@ const location = { geometry: point, extent: "point", geometryOrigin: "source", f
 
 function feedClosure(license = "CC0-1.0") {
   return sealed({
-    id: "oc:situation:nl-ndw:SIT-1",
+    id: "oc:situation:nl-ndw-events:SIT-1",
     class: "situation",
     kind: "closure",
     type: "closure",
@@ -50,7 +50,7 @@ function feedClosure(license = "CC0-1.0") {
     location,
     provenance: {
       origin: "feed",
-      sourceId: "nl-ndw",
+      sourceId: "nl-ndw-events",
       sourceFormat: "datex2",
       accessMode: "bulk",
       recordId: "SIT-1",
@@ -315,7 +315,7 @@ describe("reading a peer's outbox entry", () => {
     seq: 7,
     txid: "812",
     recordClass: "situation",
-    recordId: "oc:situation:nl-ndw:x",
+    recordId: "oc:situation:nl-ndw-events:x",
     canonicalId: "c".repeat(64),
   };
 

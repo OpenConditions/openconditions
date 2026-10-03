@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:sg-lta:1id3hlp",
+    "id": "oc:situation:sg-lta-events:1id3hlp",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -19,13 +19,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "sg-lta",
+      "sourceId": "sg-lta-events",
       "sourceFormat": "lta",
       "accessMode": "bulk",
       "recordId": "1id3hlp",
       "attribution": {
         "provider": "Land Transport Authority (Singapore)",
-        "license": "Singapore-ODL-1.0",
+        "license": "LicenseRef-Singapore-ODL-1.0",
         "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
       },
       "privacy": {
@@ -65,14 +65,14 @@
       "kind": "incident",
       "v": 1
     },
-    "canonicalId": "0d4a43af021aa5b43d37ff6a407e6f679b74f28adeed5e81035e9ebed9eb22cf",
+    "canonicalId": "fca6256c161942250f6facf7691e62946487263eb429e3f617228e6a059dedb8",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "9640e6bb642cfe502d044be4a995cf9524b8f2f1e3be8b0ea06ec43ac2c9adf9"
+    "contentHash": "c33cd2d7b810626bd038f3614462dc0ce874b37a04f7f9ddda9b0b83590d3c86"
   },
   {
-    "id": "oc:situation:sg-lta:1f4enbp",
+    "id": "oc:situation:sg-lta-events:1f4enbp",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -91,13 +91,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "sg-lta",
+      "sourceId": "sg-lta-events",
       "sourceFormat": "lta",
       "accessMode": "bulk",
       "recordId": "1f4enbp",
       "attribution": {
         "provider": "Land Transport Authority (Singapore)",
-        "license": "Singapore-ODL-1.0",
+        "license": "LicenseRef-Singapore-ODL-1.0",
         "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
       },
       "privacy": {
@@ -137,14 +137,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "63e5e56b1a0daf56b9557f2ba64a7944b4218bc563176e1c4f519ca755837419",
+    "canonicalId": "a724683f18a631b1abc7d74fcc02f3f0d8c49bc26c8acd51f31b21c0bf32d4e0",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "52f81c3521aba35cb8c6c632a85490fad408dabcbcbbcb085f1a7d687471dbf4"
+    "contentHash": "829e84fba385bc1c87c0d741c489c08718dc9bfc13c2399b0004cd5c26e652af"
   },
   {
-    "id": "oc:situation:sg-lta:1nxh11v",
+    "id": "oc:situation:sg-lta-events:1nxh11v",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -163,13 +163,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "sg-lta",
+      "sourceId": "sg-lta-events",
       "sourceFormat": "lta",
       "accessMode": "bulk",
       "recordId": "1nxh11v",
       "attribution": {
         "provider": "Land Transport Authority (Singapore)",
-        "license": "Singapore-ODL-1.0",
+        "license": "LicenseRef-Singapore-ODL-1.0",
         "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html"
       },
       "privacy": {
@@ -209,10 +209,10 @@
       "kind": "incident",
       "v": 1
     },
-    "canonicalId": "f48a5d2834c7d14ae62cf69b49d476985bbe1c74d9338ef4a2d55d02066ee7cf",
+    "canonicalId": "26fe098728d14aabe9355315f8a248e9bf29912e72a7eafe2b6f37f4f91c532b",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "fce60db1e33aff323c2caa85991a636fe318a36b3424310be2d8a961caea5f9d"
+    "contentHash": "c42ad2ed31cd058cc88dcef48e71d4bf97b4cccb3ec8219d0d6947a32bda73b2"
   }
 ]

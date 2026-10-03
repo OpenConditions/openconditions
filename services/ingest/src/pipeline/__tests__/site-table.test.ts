@@ -1,18 +1,58 @@
-import type { FeedSource } from "@openconditions/roads";
-import { describe, expect, it } from "vitest";
-import { clearSiteTableCache, loadSiteTable } from "../site-table.js";
+import { readFileSync } from "node:fs";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { testFeed } from "../../__tests__/helpers/catalog.js";
+import { clearReferenceCaches, loadReference } from "../reference.js";
 
-describe("loadSiteTable — URL template expansion", () => {
-  it("returns undefined (dormant) when the site-table URL has an unset ${VAR}", async () => {
-    const src = {
-      id: "de-he-autobahn-vzd",
-      requiredEnv: ["DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID"],
-      siteTable: {
-        url: "https://x/subscription/${DE_HE_AUTOBAHN_VERORTUNG_SUBSCRIPTION_ID}/verortung",
-      },
-    } as unknown as FeedSource;
-    clearSiteTableCache();
-    const map = await loadSiteTable(src);
-    expect(map).toBeUndefined();
+const SITES = readFileSync(
+  new URL(
+    "../../../../../packages/roads/src/__tests__/fixtures/ndw-flow/measurement_site_table.xml",
+    import.meta.url,
+  ),
+);
+
+function flowFeed(sites: Record<string, unknown>) {
+  return testFeed({
+    id: "lu-test-flow",
+    product: "flow",
+    format: "datex2-measured",
+    endpoints: {
+      main: { url: "https://example.test/measured.xml", cadenceSec: 60 },
+      sites: { decoder: "datex2-sites", cadenceSec: 60, ...sites },
+    },
+  });
+}
+
+function countingFetch() {
+  return vi.fn(async () => new Response(new Uint8Array(SITES), { status: 200 }));
+}
+
+describe("loadReference — DATEX site tables", () => {
+  beforeEach(() => clearReferenceCaches());
+
+  it("the site table refreshes on its endpoint cadence", async () => {
+    const feed = flowFeed({ url: "https://example.test/sites.xml" });
+    const fetchFn = countingFetch();
+    const t0 = Date.parse("2026-10-03T00:00:00Z");
+
+    const first = await loadReference(feed, "sites", fetchFn as never, () => t0);
+    expect((first as Map<string, unknown>).size).toBeGreaterThan(0);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+
+    await loadReference(feed, "sites", fetchFn as never, () => t0 + 30_000);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+
+    await loadReference(feed, "sites", fetchFn as never, () => t0 + 61_000);
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+  });
+
+  it("returns undefined (dormant) when the URL names an unset credential", async () => {
+    const feed = flowFeed({ url: "https://example.test/${verortung_id}/sites.xml" });
+    const fetchFn = countingFetch();
+    const dormant = testFeed({
+      ...feed,
+      credentials: { verortung_id: { title: "Verortung subscription id" } },
+    });
+    expect(await loadReference(dormant, "sites", fetchFn as never, Date.now)).toBeUndefined();
+    expect(fetchFn).not.toHaveBeenCalled();
   });
 });

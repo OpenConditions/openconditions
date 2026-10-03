@@ -157,7 +157,7 @@ export function parseElaboratedFlow(
       isArray: (n) => n === "elaboratedData" || n === "basicData",
     });
   } catch (err) {
-    console.warn("[datex-elaborated] failed to parse XML:", err);
+    console.warn("[datex2-elaborated] failed to parse XML:", err);
     return { readings: [], failed: true };
   }
 

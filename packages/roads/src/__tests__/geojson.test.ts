@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { FEED_SOURCES, feedToSourceDescriptor } from "../feeds.js";
+import { feedToSourceDescriptor } from "../feeds.js";
 import { parseGeoJson } from "../geojson.js";
 import type { SourceDescriptor } from "../types.js";
+import { testFeed } from "./helpers/test-feeds.js";
 
 const SRC: SourceDescriptor = {
   id: "test-gj",
@@ -212,7 +213,7 @@ describe("parseGeoJson", () => {
 
 describe("parseGeoJson — NZTA Road Events fixture (real wired mapping)", () => {
   it("parses the live ArcGIS GeoJSON via the registered nzta-nz mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "nz-nzta")!;
+    const feed = testFeed("nz-nzta-events");
     const xml = readFileSync(join(import.meta.dirname, "fixtures/nzta-nz/road-events.geojson"));
     const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
     expect(events.length).toBeGreaterThan(0);
@@ -231,7 +232,7 @@ describe("parseGeoJson — NZTA Road Events fixture (real wired mapping)", () =>
 
 describe("parseGeoJson — Berlin VIZ fixture (GeometryCollection + German vocab)", () => {
   it("parses mixed GeometryCollection/Point features via the registered berlin-de mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "de-be-berlin")!;
+    const feed = testFeed("de-be-berlin-events");
     const xml = readFileSync(join(import.meta.dirname, "fixtures/berlin-de/baustellen.geojson"));
     const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
     expect(events.length).toBeGreaterThan(0);
@@ -245,7 +246,7 @@ describe("parseGeoJson — Berlin VIZ fixture (GeometryCollection + German vocab
 
 describe("parseGeoJson — MTQ Québec fixture (EPSG:3857 reprojection)", () => {
   it("reprojects the WFS Web-Mercator output to WGS84 via the registered mtq-qc mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "ca-qc-mtq")!;
+    const feed = testFeed("ca-qc-mtq-events");
     const xml = readFileSync(join(import.meta.dirname, "fixtures/mtq-qc/chantiers.geojson"));
     const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
     expect(events.length).toBeGreaterThan(0);
@@ -262,10 +263,10 @@ describe("parseGeoJson — MTQ Québec fixture (EPSG:3857 reprojection)", () => 
   });
 
   it("carries the chantier's debut/fin into the validity window", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "ca-qc-mtq")!;
+    const feed = testFeed("ca-qc-mtq-events");
     const xml = readFileSync(join(import.meta.dirname, "fixtures/mtq-qc/chantiers.geojson"));
     const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
-    const ev = events.find((e) => e.id === "ca-qc-mtq:164507");
+    const ev = events.find((e) => e.id === "ca-qc-mtq-events:164507");
     expect(ev).toBeDefined();
     // MTQ publishes zone-less local times, read here in the server's zone, so
     // assert the calendar day rather than an exact instant.
@@ -276,7 +277,7 @@ describe("parseGeoJson — MTQ Québec fixture (EPSG:3857 reprojection)", () => 
 
 describe("parseGeoJson — Brussels fixture (per-geometry EPSG:3812 reprojection)", () => {
   it("reprojects Lambert-2008 per-geometry coords to WGS84 via the registered mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "be-brussels")!;
+    const feed = testFeed("be-brussels-events");
     const xml = readFileSync(
       join(import.meta.dirname, "fixtures/brussels-be/traffic_events.geojson"),
     );
@@ -295,7 +296,7 @@ describe("parseGeoJson — Brussels fixture (per-geometry EPSG:3812 reprojection
 
 describe("parseGeoJson — Vegagerðin Iceland fixture (lon/lat from properties)", () => {
   it("uses the WGS84 X/Y fields, not the EPSG:3057 geometry, via the registered mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "is-vegagerdin")!;
+    const feed = testFeed("is-vegagerdin-conditions");
     const xml = readFileSync(
       join(import.meta.dirname, "fixtures/vegagerdin-is/pointincident.geojson"),
     );
@@ -313,7 +314,7 @@ describe("parseGeoJson — Vegagerðin Iceland fixture (lon/lat from properties)
 
 describe("parseGeoJson — Traffic SA fixture (ArcGIS f=geojson, real mapping)", () => {
   it("parses South Australia incidents/roadworks via the registered trafficsa-au mapping", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "au-sa-trafficsa")!;
+    const feed = testFeed("au-sa-trafficsa-events");
     const xml = readFileSync(join(import.meta.dirname, "fixtures/trafficsa-au/events.geojson"));
     const events = parseGeoJson(xml, feedToSourceDescriptor(feed));
     expect(events.length).toBeGreaterThan(0);
@@ -328,8 +329,8 @@ describe("parseGeoJson — Traffic SA fixture (ArcGIS f=geojson, real mapping)",
 });
 
 describe("parseGeoJson — Polizei Hamburg fixture (api.hamburg.de OGC API, real mapping)", () => {
-  it("maps the `art` DATEX classes through the registered de-hh-polizei typeMap", () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "de-hh-polizei")!;
+  it("maps the `art` DATEX classes through the registered de-hh-polizei-events typeMap", () => {
+    const feed = testFeed("de-hh-polizei-events");
     const json = readFileSync(
       join(import.meta.dirname, "fixtures/polizei-hamburg-de/hauptmeldungen.geojson"),
     );
@@ -346,12 +347,12 @@ describe("parseGeoJson — Polizei Hamburg fixture (api.hamburg.de OGC API, real
     );
 
     const congestion = byType("congestion")[0]!;
-    expect(congestion.id).toBe("de-hh-polizei:LMS/r_LMS/699889_LMS-TH/58.0");
+    expect(congestion.id).toBe("de-hh-polizei-events:LMS/r_LMS/699889_LMS-TH/58.0");
     expect(congestion.subtype).toBe("AbnormalTraffic");
     expect(congestion.description).toContain("Steilshooper Allee");
     expect(congestion.origin.attribution).toMatchObject({
       provider: "Freie und Hansestadt Hamburg, Polizei Hamburg",
-      license: "dl-de/by-2-0",
+      license: "DL-DE-BY-2.0",
     });
 
     // Geometry is taken verbatim as WGS84 (OGC API default CRS84) — Hamburg bbox.
@@ -526,19 +527,19 @@ describe("parseGeoJson — start/end coordinate LineString synthesis", () => {
 
 describe("parseGeoJson — MTQ Québec warnings fixture", () => {
   const events = () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "ca-qc-mtq-warnings")!;
+    const feed = testFeed("ca-qc-mtq-warnings-events");
     const gj = readFileSync(join(import.meta.dirname, "fixtures/mtq-qc/evenements.geojson"));
     return parseGeoJson(gj, feedToSourceDescriptor(feed));
   };
 
   it("maps each French obstruction phrase to its canonical type", () => {
     const byId = new Map(events().map((e) => [e.id, e.type]));
-    expect(byId.get("ca-qc-mtq-warnings:124315")).toBe("road_closure");
-    expect(byId.get("ca-qc-mtq-warnings:81387")).toBe("lane_closure");
-    expect(byId.get("ca-qc-mtq-warnings:115026")).toBe("contraflow");
-    expect(byId.get("ca-qc-mtq-warnings:125259")).toBe("dimension_restriction");
+    expect(byId.get("ca-qc-mtq-warnings-events:124315")).toBe("road_closure");
+    expect(byId.get("ca-qc-mtq-warnings-events:81387")).toBe("lane_closure");
+    expect(byId.get("ca-qc-mtq-warnings-events:115026")).toBe("contraflow");
+    expect(byId.get("ca-qc-mtq-warnings-events:125259")).toBe("dimension_restriction");
     // An empty `entrave` (ferry-service notices) falls back to the default.
-    expect(byId.get("ca-qc-mtq-warnings:111875")).toBe("other");
+    expect(byId.get("ca-qc-mtq-warnings-events:111875")).toBe("other");
   });
 
   it("reprojects the Web-Mercator geometry to Québec WGS84", () => {
@@ -552,7 +553,7 @@ describe("parseGeoJson — MTQ Québec warnings fixture", () => {
   });
 
   it("carries enVigueurDepuis, the road ref and the headline", () => {
-    const ev = events().find((e) => e.id === "ca-qc-mtq-warnings:125259")!;
+    const ev = events().find((e) => e.id === "ca-qc-mtq-warnings-events:125259")!;
     expect(ev.validFrom).toMatch(/^2026-07-15T/);
     expect(ev.roads?.map((r) => r.name)).toEqual(["138"]);
     expect(ev.headline).toContain("pont Honoré-Mercier");
@@ -562,7 +563,7 @@ describe("parseGeoJson — MTQ Québec warnings fixture", () => {
 
 describe("parseGeoJson — Vegagerðin Iceland line-incident fixture", () => {
   const events = () => {
-    const feed = FEED_SOURCES.find((f) => f.id === "is-vegagerdin-lines")!;
+    const feed = testFeed("is-vegagerdin-lines-conditions");
     const gj = readFileSync(
       join(import.meta.dirname, "fixtures/vegagerdin-is/line-incidents.json"),
     );
@@ -570,7 +571,7 @@ describe("parseGeoJson — Vegagerðin Iceland line-incident fixture", () => {
   };
 
   it("synthesises a WGS84 LineString from the START/END columns", () => {
-    const closed = events().find((e) => e.id === "is-vegagerdin-lines:913080036")!;
+    const closed = events().find((e) => e.id === "is-vegagerdin-lines-conditions:913080036")!;
     expect(closed.geometry).toEqual({
       type: "LineString",
       coordinates: [
@@ -582,21 +583,21 @@ describe("parseGeoJson — Vegagerðin Iceland line-incident fixture", () => {
 
   it("maps the English condition labels to canonical types", () => {
     const byId = new Map(events().map((e) => [e.id, e.type]));
-    expect(byId.get("is-vegagerdin-lines:913080036")).toBe("road_closure"); // Closed
-    expect(byId.get("is-vegagerdin-lines:911310036")).toBe("road_closure"); // Impassable
-    expect(byId.get("is-vegagerdin-lines:905020036")).toBe("roadworks"); // Road repairs
-    expect(byId.get("is-vegagerdin-lines:911220036")).toBe("road_condition"); // Spots of ice
-    expect(byId.get("is-vegagerdin-lines:904470036")).toBe("dimension_restriction");
+    expect(byId.get("is-vegagerdin-lines-conditions:913080036")).toBe("road_closure"); // Closed
+    expect(byId.get("is-vegagerdin-lines-conditions:911310036")).toBe("road_closure"); // Impassable
+    expect(byId.get("is-vegagerdin-lines-conditions:905020036")).toBe("roadworks"); // Road repairs
+    expect(byId.get("is-vegagerdin-lines-conditions:911220036")).toBe("road_condition"); // Spots of ice
+    expect(byId.get("is-vegagerdin-lines-conditions:904470036")).toBe("dimension_restriction");
   });
 
   it("classifies the labels whose meaning is a registered situation", () => {
-    const ice = events().find((e) => e.id === "is-vegagerdin-lines:911220036")!;
+    const ice = events().find((e) => e.id === "is-vegagerdin-lines-conditions:911220036")!;
     expect(ice.situation?.classification).toEqual({
       kind: "road_condition",
       type: "surface",
       subtype: "icy",
     });
-    const closed = events().find((e) => e.id === "is-vegagerdin-lines:913080036")!;
+    const closed = events().find((e) => e.id === "is-vegagerdin-lines-conditions:913080036")!;
     expect(closed.situation?.classification).toBeUndefined();
   });
 
@@ -610,7 +611,7 @@ describe("parseGeoJson — Vegagerðin Iceland line-incident fixture", () => {
   });
 
   it("carries the road number and update time", () => {
-    const ev = events().find((e) => e.id === "is-vegagerdin-lines:913080036")!;
+    const ev = events().find((e) => e.id === "is-vegagerdin-lines-conditions:913080036")!;
     expect(ev.roads?.map((r) => r.name)).toEqual(["F210"]);
     expect(ev.dataUpdatedAt).toBe("2026-06-02T13:34:27Z");
     expect(ev.description).toBe("Driving prohibited");

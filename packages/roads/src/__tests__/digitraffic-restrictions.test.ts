@@ -17,7 +17,7 @@ const raw = JSON.parse(
 ) as { features: Array<{ properties: Record<string, unknown> }> };
 
 const src: SourceDescriptor = {
-  id: "fi-digitraffic",
+  id: "fi-digitraffic-events",
   attribution: "Fintraffic / Digitraffic",
   country: "FI",
   license: "CC-BY-4.0",
@@ -39,7 +39,7 @@ function propsOf(situationId: string): Record<string, unknown> {
 describe("digitraffic v2 restriction extraction", () => {
   it("keeps the weight phase start and detour scope", () => {
     const out = snapshot();
-    const weight = out.observations.find((e) => e.id === "fi-digitraffic:GUID50465935")!;
+    const weight = out.observations.find((e) => e.id === "fi-digitraffic-events:GUID50465935")!;
     expect(weight.type).toBe("roadworks");
     expect(weight.restrictionDetails?.facts[0]).toMatchObject({
       dimension: "gross_weight",
@@ -50,7 +50,7 @@ describe("digitraffic v2 restriction extraction", () => {
       validFrom: "2026-07-19T21:00:00.000Z",
       scope: { phaseId: "GUID50469933", restrictionBinding: "not_established" },
     });
-    const pair = out.observations.find((e) => e.id === "fi-digitraffic:GUID50461965")!
+    const pair = out.observations.find((e) => e.id === "fi-digitraffic-events:GUID50461965")!
       .restrictionDetails!.facts;
     expect(pair.map((f) => f.scope.kind).sort()).toEqual(["detour", "roadwork_phase"]);
     expect(weight.schedule).toBeUndefined();
@@ -159,7 +159,7 @@ describe("digitraffic v2 restriction extraction", () => {
   it("carries source rights and record provenance on every envelope", () => {
     const details = digitrafficRestrictionDetails(propsOf("GUID50465935"), src)!;
     expect(details.source).toMatchObject({
-      sourceId: "fi-digitraffic",
+      sourceId: "fi-digitraffic-events",
       recordId: "GUID50465935",
       recordVersion: "31",
       sourceUpdatedAt: "2026-08-28T04:18:02.629Z",
@@ -386,7 +386,7 @@ describe("digitraffic v2 event fields", () => {
     const events = parseDigitraffic(raw, src);
     expect(events).toHaveLength(5);
     expect(events.every((e) => e.type === "roadworks")).toBe(true);
-    const width = events.find((e) => e.id === "fi-digitraffic:GUID50470575")!;
+    const width = events.find((e) => e.id === "fi-digitraffic-events:GUID50470575")!;
     expect(width.severity).toBe("critical");
     expect(width.severitySource).toBe("declared");
     expect(width.roadState).toBe("some_lanes_closed");
@@ -395,14 +395,14 @@ describe("digitraffic v2 event fields", () => {
     expect(width.roads).toEqual([{ name: "Turun kehätie", ref: "40", to: "Turun kehätie" }]);
     expect(width.subtype).toBe("road construction");
 
-    const alternating = events.find((e) => e.id === "fi-digitraffic:GUID50468844")!;
+    const alternating = events.find((e) => e.id === "fi-digitraffic-events:GUID50468844")!;
     expect(alternating.roadState).toBe("single_lane_alternating");
     expect(alternating.speedLimitKph).toBe(50);
   });
 
   it("uses versionTime as the source update timestamp", () => {
     const events = parseDigitraffic(raw, src);
-    expect(events.find((e) => e.id === "fi-digitraffic:GUID50465935")!.dataUpdatedAt).toBe(
+    expect(events.find((e) => e.id === "fi-digitraffic-events:GUID50465935")!.dataUpdatedAt).toBe(
       "2026-08-28T04:18:02.629Z",
     );
   });

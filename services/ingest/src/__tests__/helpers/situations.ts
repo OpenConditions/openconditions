@@ -13,7 +13,7 @@ export const registry = productionRegistry();
 export const FETCHED_AT = "2026-09-06T10:00:00.000Z";
 
 /** A situation draft of `source` with local id `local`; `over` replaces top-level fields. */
-export function situationDraft(local: string, over: Rec = {}, source = "de-autobahn"): Rec {
+export function situationDraft(local: string, over: Rec = {}, source = "de-autobahn-events"): Rec {
   return {
     id: `oc:situation:${source}:${local}`,
     class: "situation",

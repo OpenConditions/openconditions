@@ -579,7 +579,7 @@ describe("observation writes", () => {
     const foreign = observationDraft(
       "traffic.speed",
       { type: "quantity", value: 1, unit: "km/h" },
-      { sourceId: "be-miv" },
+      { sourceId: "be-miv-flow" },
     );
     const summary = await writeSnapshot(
       sql,

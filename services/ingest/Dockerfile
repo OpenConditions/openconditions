@@ -55,6 +55,8 @@ COPY packages/roads/ packages/roads/
 COPY packages/publishers/ packages/publishers/
 COPY packages/openlr/ packages/openlr/
 COPY services/ingest/ services/ingest/
+# The feed catalogue, which the ingest build copies into dist/feeds.
+COPY feeds/ feeds/
 # `...` builds the ingest's workspace dependencies first (topological), so tsup
 # can inline their freshly built dist into the bundle.
 RUN pnpm --filter @openconditions/ingest... build

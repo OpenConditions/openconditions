@@ -8,7 +8,7 @@ import type { SourceDescriptor } from "../types.js";
 const NDW_FIXTURE_PATH = join(import.meta.dirname, "fixtures/ndw/actueel_beeld.xml");
 
 const NDW_SOURCE = {
-  id: "nl-ndw",
+  id: "nl-ndw-events",
   attribution: "NDW / Rijkswaterstaat",
   country: "NL",
   license: "CC0-1.0",
@@ -630,7 +630,7 @@ ${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
 const DGT_FIXTURE_PATH = join(import.meta.dirname, "fixtures/dgt-es/situations.xml");
 
 const DGT_SOURCE = {
-  id: "es-dgt",
+  id: "es-dgt-events",
   attribution: "Dirección General de Tráfico (DGT)",
   country: "ES",
   license: "CC-BY-4.0",
@@ -647,7 +647,7 @@ describe("parseDatexSituations — DGT (Spain) DATEX II v3 fixture", () => {
   it("carries source attribution + datex2 format through from the v3 feed", () => {
     const [ev] = parseDatexSituations(readFileSync(DGT_FIXTURE_PATH), DGT_SOURCE);
     expect(ev!.sourceFormat).toBe("datex2");
-    expect(ev!.source).toBe("es-dgt");
+    expect(ev!.source).toBe("es-dgt-events");
     expect(ev!.origin.attribution.license).toBe("CC-BY-4.0");
   });
 
@@ -662,7 +662,7 @@ describe("parseDatexSituations — DGT (Spain) DATEX II v3 fixture", () => {
 const DIR_FR_FIXTURE_PATH = join(import.meta.dirname, "fixtures/dir-fr/situations.xml");
 
 const DIR_FR_SOURCE = {
-  id: "fr-dir",
+  id: "fr-dir-events",
   attribution: "DIR / Bison Futé",
   country: "FR",
   license: "etalab-2.0",
@@ -690,7 +690,7 @@ const CITA_LU_FIXTURE_PATH = join(import.meta.dirname, "fixtures/cita-lu/situati
 describe("parseDatexSituations — CITA (Luxembourg) DATEX II v3.6 fixture", () => {
   it("parses the v3.6 SituationPublication into RoadEvents with WGS84 geometry", () => {
     const events = parseDatexSituations(readFileSync(CITA_LU_FIXTURE_PATH), {
-      id: "lu-cita",
+      id: "lu-cita-events",
       attribution: "CITA (Luxembourg)",
       country: "LU",
       license: "CC0-1.0",
@@ -706,7 +706,7 @@ const FLANDERS_FIXTURE_PATH = join(import.meta.dirname, "fixtures/flanders-be/si
 describe("parseDatexSituations — Flanders DATEX II v3 (EPSG:31370 reprojection)", () => {
   it("reprojects Belgian Lambert-72 GML geometry to WGS84 Belgium", () => {
     const events = parseDatexSituations(readFileSync(FLANDERS_FIXTURE_PATH), {
-      id: "be-flanders",
+      id: "be-flanders-events",
       attribution: "Verkeerscentrum Vlaanderen",
       country: "BE",
       license: "CC-BY-4.0",
@@ -730,7 +730,7 @@ describe("parseDatexSituations — Flanders DATEX II v3 (EPSG:31370 reprojection
 
 describe("parseDatexSituations — Trafikverket DATEX (coordinatesForDisplay + lon-lat posList)", () => {
   const SE_SOURCE = {
-    id: "se-trafikverket",
+    id: "se-trafikverket-events",
     attribution: "Trafikverket",
     country: "SE",
     license: "CC0-1.0",
@@ -823,10 +823,10 @@ describe("parseDatexSituations — Straßen.NRW typed comments (commentType2) + 
 
   it("picks headline/description/detour from the typed comment array and road from groupOfLocations", () => {
     const [ev] = parseDatexSituations(xml, {
-      id: "de-nw-verkehr",
+      id: "de-nw-verkehr-events",
       attribution: "LVZ.NRW",
       country: "DE",
-      license: "dl-de/zero-2-0",
+      license: "DL-DE-ZERO-2.0",
     });
     expect(ev!.headline).toBe("K19 zur Erneuerung des Geh-/Radwegs");
     expect(ev!.description).toBe("Arbeiten an Geh-/Radwegen");
@@ -841,7 +841,7 @@ describe("parseDatexSituations — Hrvatske ceste events publication (DATEX II v
     id: "hr-hc-events",
     attribution: "Hrvatske ceste",
     country: "HR",
-    license: "OD-HR",
+    license: "LicenseRef-OD-HR",
   };
 
   // Shaped after the record classes the operator's official sample carries;
@@ -883,24 +883,24 @@ describe("parseDatexSituations — per-source skip metrics", () => {
     parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
     // Every TMC-only record in the NDW capture, including an active
     // carriageway closure, is dropped for want of coordinates.
-    expect(drainSkippedNoGeometry("nl-ndw")).toBe(11);
+    expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(11);
   });
 
   it("drains the counter, so a later clean run reports zero", () => {
     parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
-    expect(drainSkippedNoGeometry("nl-ndw")).toBeGreaterThan(0);
-    expect(drainSkippedNoGeometry("nl-ndw")).toBe(0);
+    expect(drainSkippedNoGeometry("nl-ndw-events")).toBeGreaterThan(0);
+    expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(0);
   });
 
   it("accumulates across the buffers of one multi-URL run", () => {
     parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
     parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
-    expect(drainSkippedNoGeometry("nl-ndw")).toBe(22);
+    expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(22);
   });
 
   it("keeps counts separate per source", () => {
     parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
     expect(drainSkippedNoGeometry("some-other-feed")).toBe(0);
-    expect(drainSkippedNoGeometry("nl-ndw")).toBe(11);
+    expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(11);
   });
 });

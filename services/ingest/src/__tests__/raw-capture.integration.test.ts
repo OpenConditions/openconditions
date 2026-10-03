@@ -2,14 +2,13 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { gzipSync, zstdDecompressSync } from "node:zlib";
-import type { LookupFn } from "@openconditions/ingest-framework";
-import { FEED_SOURCES } from "@openconditions/roads";
+import type { CatalogFeed, LookupFn } from "@openconditions/ingest-framework";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import type { DomainFeedSource } from "../pipeline/run.js";
+import { clearReferenceCaches } from "../pipeline/reference.js";
 import { runSource } from "../pipeline/run.js";
-import { clearSiteTableCache } from "../pipeline/site-table.js";
 import { createRawArchive, type RawArchive } from "../raw/archive.js";
+import { repoFeed } from "./helpers/catalog.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 const FIXTURES = path.resolve(
@@ -22,17 +21,17 @@ const FLOW = readFileSync(path.join(FIXTURES, "ndw-flow/trafficspeed.xml"));
 const SITES = readFileSync(path.join(FIXTURES, "ndw-flow/measurement_site_table.xml"));
 const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 
-const feed = (id: string, over: Partial<DomainFeedSource> = {}): DomainFeedSource => ({
-  ...FEED_SOURCES.find((f) => f.id === id)!,
-  domain: "roads",
+const feed = (id: string, over: Partial<CatalogFeed> = {}): CatalogFeed => ({
+  ...repoFeed(id),
   ...over,
 });
 const affirmed = {
-  sourceRedistribution: true,
+  redistribution: true,
   derivedRedistribution: true,
   commercialUse: true,
   attributionRequired: false,
   retention: true,
+  shareAlike: false,
 };
 
 let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
@@ -52,12 +51,12 @@ afterAll(async () => {
 beforeEach(async () => {
   dir = mkdtempSync(path.join(tmpdir(), "oc-raw-"));
   raw = createRawArchive(sql, { dir });
-  clearSiteTableCache();
+  clearReferenceCaches();
   await sql`TRUNCATE conditions.raw_payload, conditions.source_poll_attempt`;
   return () => rmSync(dir, { recursive: true, force: true });
 });
 
-const poll = (src: DomainFeedSource, serve: (url: string) => Buffer, archive = raw) =>
+const poll = (src: CatalogFeed, serve: (url: string) => Buffer, archive = raw) =>
   runSource(src, {
     sql,
     fetch: (async (url: string | URL | Request) => {
@@ -79,7 +78,7 @@ async function payloads() {
 
 describe("raw payload capture", () => {
   it("archives each distinct response once, under the poll that first fetched it", async () => {
-    const ndw = feed("nl-ndw");
+    const ndw = feed("nl-ndw-events");
     expect((await poll(ndw, () => NDW)).error).toBeUndefined();
     expect((await poll(ndw, () => NDW)).error).toBeUndefined();
     const attempts = await sql<{ id: string; finished_at: Date | null; outcome: string }[]>`
@@ -97,12 +96,13 @@ describe("raw payload capture", () => {
   }, 60_000);
 
   it("keeps only the hot window of a source whose terms do not affirm retention", async () => {
-    await poll(feed("ca-bc-drivebc"), () => DRIVEBC);
+    const unsaid = feed("ca-bc-drivebc-events", { rights: { ...affirmed, retention: null } });
+    await poll(unsaid, () => DRIVEBC);
     expect((await payloads()).map((p) => p.tier)).toEqual(["hot"]);
   });
 
   it("keeps nothing of a source whose terms forbid retention", async () => {
-    const forbidden = feed("nl-ndw", { rights: { ...affirmed, retention: false } });
+    const forbidden = feed("nl-ndw-events", { rights: { ...affirmed, retention: false } });
     expect((await poll(forbidden, () => NDW)).error).toBeUndefined();
     expect(await payloads()).toEqual([]);
   });
@@ -165,7 +165,7 @@ describe("raw payload capture", () => {
       },
     });
     await expect(
-      runSource(feed("ca-bc-drivebc"), {
+      runSource(feed("ca-bc-drivebc-events"), {
         sql: failing,
         fetch: (async () => new Response(new Uint8Array(DRIVEBC))) as typeof fetch,
         now: () => new Date().toISOString(),
@@ -189,7 +189,7 @@ describe("raw payload capture", () => {
         },
       },
     });
-    expect((await poll(feed("nl-ndw"), () => NDW, broken)).error).toBeUndefined();
+    expect((await poll(feed("nl-ndw-events"), () => NDW, broken)).error).toBeUndefined();
     expect(await payloads()).toEqual([]);
   });
 });

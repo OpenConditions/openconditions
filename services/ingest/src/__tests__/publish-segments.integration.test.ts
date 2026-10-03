@@ -3,9 +3,9 @@ import Fastify from "fastify";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { buildDomainRegistry } from "../domains.js";
 import { FeedStatusStore } from "../feed-status.js";
 import { registerPublishRoutes } from "../publish-routes.js";
+import { REPO_CATALOG } from "./helpers/catalog.js";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -115,8 +115,7 @@ afterAll(async () => {
 describe("GET /segments.geojson", () => {
   it("returns a FeatureCollection with the bbox segment's speed properties, excluding the far segment", async () => {
     const app = Fastify();
-    const registry = await buildDomainRegistry();
-    registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
+    registerPublishRoutes(app, sql, new FeedStatusStore(), REPO_CATALOG);
     await app.ready();
     try {
       const res = await app.inject({ method: "GET", url: `/segments.geojson?bbox=${BBOX}` });
@@ -160,8 +159,7 @@ describe("GET /segments.geojson", () => {
 
   it("emits a base segment with no segment_speed row (LEFT JOIN) without leaking driver nulls as JSON null props", async () => {
     const app = Fastify();
-    const registry = await buildDomainRegistry();
-    registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
+    registerPublishRoutes(app, sql, new FeedStatusStore(), REPO_CATALOG);
     await app.ready();
     try {
       const res = await app.inject({ method: "GET", url: `/segments.geojson?bbox=${BBOX}` });
@@ -193,8 +191,7 @@ describe("GET /segments.geojson", () => {
 
   it("rejects a request with no bbox", async () => {
     const app = Fastify();
-    const registry = await buildDomainRegistry();
-    registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
+    registerPublishRoutes(app, sql, new FeedStatusStore(), REPO_CATALOG);
     await app.ready();
     try {
       const res = await app.inject({ method: "GET", url: "/segments.geojson" });
@@ -208,8 +205,7 @@ describe("GET /segments.geojson", () => {
 describe("GET /segments/speed.csv", () => {
   it("returns the header and a row for the measured segment, omitting speed-less segments", async () => {
     const app = Fastify();
-    const registry = await buildDomainRegistry();
-    registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
+    registerPublishRoutes(app, sql, new FeedStatusStore(), REPO_CATALOG);
     await app.ready();
     try {
       const res = await app.inject({ method: "GET", url: "/segments/speed.csv" });
@@ -231,8 +227,7 @@ describe("GET /segments/speed.csv", () => {
 describe("GET /segments/profiles.json", () => {
   it("assembles a 168-length hourly array and a daytime-median constrained_kph", async () => {
     const app = Fastify();
-    const registry = await buildDomainRegistry();
-    registerPublishRoutes(app, sql, new FeedStatusStore(), registry);
+    registerPublishRoutes(app, sql, new FeedStatusStore(), REPO_CATALOG);
     await app.ready();
     try {
       const res = await app.inject({ method: "GET", url: "/segments/profiles.json" });

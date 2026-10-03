@@ -3,9 +3,9 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
 import { runMigrations } from "@openconditions/core/server";
-import type { LookupFn } from "@openconditions/ingest-framework";
+import type { CatalogFeed, FeedEndpoint, LookupFn } from "@openconditions/ingest-framework";
 import { encodeOpenlrLine } from "@openconditions/openlr";
-import { FEED_SOURCES, recordSkippedNoGeometry } from "@openconditions/roads";
+import { recordSkippedNoGeometry } from "@openconditions/roads";
 import {
   ensureObservationPartitions,
   retentionClasses,
@@ -13,11 +13,12 @@ import {
 } from "@openconditions/storage";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { formatOf } from "../domains.js";
+import { clearReferenceCaches } from "../pipeline/reference.js";
 import { clearResolveCache } from "../pipeline/resolve.js";
-import type { DomainFeedSource } from "../pipeline/run.js";
-import { runSource } from "../pipeline/run.js";
-import { clearSiteTableCache } from "../pipeline/site-table.js";
+import { createRoleState, runSource } from "../pipeline/run.js";
+import { repoFeed } from "./helpers/catalog.js";
 import { bindSituation, registry, situationDraft, writeSituations } from "./helpers/situations.js";
 
 const NDW_FIXTURE_PATH = path.resolve(
@@ -40,20 +41,14 @@ const NDW_FLOW_SITE_TABLE_FIXTURE_PATH = path.resolve(
   "../../../../packages/roads/src/__tests__/fixtures/ndw-flow/measurement_site_table.xml",
 );
 
-const ndwFeed: DomainFeedSource = {
-  ...FEED_SOURCES.find((f) => f.id === "nl-ndw")!,
-  domain: "roads",
-};
+const ndwFeed: CatalogFeed = repoFeed("nl-ndw-events");
+const drivebcFeed: CatalogFeed = repoFeed("ca-bc-drivebc-events");
+const ndwFlowFeed: CatalogFeed = repoFeed("nl-ndw-flow");
 
-const drivebcFeed: DomainFeedSource = {
-  ...FEED_SOURCES.find((f) => f.id === "ca-bc-drivebc")!,
-  domain: "roads",
-};
-
-const ndwFlowFeed: DomainFeedSource = {
-  ...FEED_SOURCES.find((f) => f.id === "nl-ndw-flow")!,
-  domain: "roads",
-};
+/** `feed` with its main endpoint replaced, polled on that endpoint's cadence as the loader derives it. */
+function withMain(feed: CatalogFeed, main: FeedEndpoint): CatalogFeed {
+  return { ...feed, endpoints: { ...feed.endpoints, main }, cadenceSec: main.cadenceSec };
+}
 
 // These e2e tests inject a fake `fetch` to serve local fixtures instead of the
 // real feed hosts, but `runSource` still resolves the feed host via DNS to pin
@@ -116,11 +111,11 @@ describe("pipeline — happy path", () => {
     expect(result.count).toBeGreaterThan(0);
     console.info(`[test] inserted ${result.count} rows`);
 
-    expect(await liveSituations("nl-ndw")).toBe(result.count);
+    expect(await liveSituations("nl-ndw-events")).toBe(result.count);
     const wrongRows = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
       FROM conditions.situation
-      WHERE domain <> 'roads' OR source_id <> 'nl-ndw'
+      WHERE domain <> 'roads' OR source_id <> 'nl-ndw-events'
     `;
     expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
   }, 60_000);
@@ -179,7 +174,7 @@ describe("pipeline — feed downtime", () => {
       lookup: fakeLookup,
     });
     expect(seeded.error).toBeUndefined();
-    const countBefore = await liveSituations("nl-ndw");
+    const countBefore = await liveSituations("nl-ndw-events");
     expect(countBefore).toBeGreaterThan(0);
 
     const throwingFetch = async (_url: string | URL | Request): Promise<Response> => {
@@ -194,12 +189,12 @@ describe("pipeline — feed downtime", () => {
     });
 
     expect(result.count).toBe(0);
-    expect(await liveSituations("nl-ndw")).toBe(countBefore);
+    expect(await liveSituations("nl-ndw-events")).toBe(countBefore);
   }, 30_000);
 });
 
 describe("pipeline — open511 (DriveBC)", () => {
-  it("inserts rows from the DriveBC fixture with source='ca-bc-drivebc' and domain='roads'", async () => {
+  it("inserts rows from the DriveBC fixture with source='ca-bc-drivebc-events' and domain='roads'", async () => {
     const jsonPayload = readFileSync(DRIVEBC_FIXTURE_PATH);
 
     const fakeFetch = async (_url: string | URL | Request): Promise<Response> => {
@@ -216,11 +211,11 @@ describe("pipeline — open511 (DriveBC)", () => {
     expect(result.count).toBeGreaterThan(0);
     console.info(`[test] drivebc: inserted ${result.count} rows`);
 
-    expect(await liveSituations("ca-bc-drivebc")).toBe(result.count);
+    expect(await liveSituations("ca-bc-drivebc-events")).toBe(result.count);
     const wrongRows = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
       FROM conditions.situation
-      WHERE source_id = 'ca-bc-drivebc' AND (domain <> 'roads')
+      WHERE source_id = 'ca-bc-drivebc-events' AND (domain <> 'roads')
     `;
     expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
   }, 60_000);
@@ -230,7 +225,7 @@ describe("pipeline — open511 (DriveBC)", () => {
     // that parsed and then failed leaves its count behind. Stand in for that
     // leftover directly — the reset at the top of the run must discard it, or the
     // next healthy cycle reports a loss that already happened.
-    recordSkippedNoGeometry("ca-bc-drivebc", 999);
+    recordSkippedNoGeometry("ca-bc-drivebc-events", 999);
 
     const jsonPayload = readFileSync(DRIVEBC_FIXTURE_PATH);
     const result = await runSource(drivebcFeed, {
@@ -246,11 +241,11 @@ describe("pipeline — open511 (DriveBC)", () => {
   }, 60_000);
 
   it("all DriveBC geometries are valid PostGIS geometries", async () => {
-    expect(await liveSituations("ca-bc-drivebc")).toBeGreaterThan(0);
+    expect(await liveSituations("ca-bc-drivebc-events")).toBeGreaterThan(0);
     const invalid = await sql<{ count: string }[]>`
       SELECT COUNT(*)::text AS count
       FROM conditions.situation
-      WHERE source_id = 'ca-bc-drivebc' AND NOT ST_IsValid(geom)
+      WHERE source_id = 'ca-bc-drivebc-events' AND NOT ST_IsValid(geom)
     `;
     expect(parseInt(invalid[0]!.count, 10)).toBe(0);
   }, 30_000);
@@ -341,7 +336,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     runSource(ndwFlowFeed, { sql, fetch: fetchFn as typeof fetch, now, lookup: fakeLookup });
 
   it("runSource joins the site table and writes measurement sites and their readings", async () => {
-    clearSiteTableCache();
+    clearReferenceCaches();
     const result = await poll(fakeFetch);
     expect(result.error).toBeUndefined();
     expect(result.count).toBeGreaterThan(0);
@@ -418,7 +413,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
   }, 30_000);
 
   it("keeps a site one poll does not report, as a live feature with its last reading", async () => {
-    clearSiteTableCache();
+    clearReferenceCaches();
     const without0029 = Buffer.from(
       speedPayload
         .toString("utf8")
@@ -439,7 +434,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
         (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
       VALUES ('feature:oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00', 'nl-ndw-flow', -1, -1,
         100, 'derived', 50, now())`;
-    clearSiteTableCache();
+    clearReferenceCaches();
     const congested = await poll(fakeFetch);
     expect(congested.error).toBeUndefined();
     expect(congested.activeEvents).toBe(1);
@@ -464,7 +459,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
         (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
       VALUES ('feature:oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00', 'nl-ndw-flow', -1, -1,
         100, 'derived', 50, now())`;
-    clearSiteTableCache();
+    clearReferenceCaches();
     expect((await poll(fakeFetch)).activeEvents).toBe(1);
     await sql`ALTER TABLE conditions.sensor_baseline RENAME TO sensor_baseline_away`;
     try {
@@ -495,7 +490,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
       sql`DELETE FROM conditions.observation_latest WHERE source_id = 'nl-ndw-flow'`;
     try {
       await forget();
-      clearSiteTableCache();
+      clearReferenceCaches();
       const onTime = await poll(fakeFetch, () => at);
       expect(onTime.error).toBeUndefined();
       expect(onTime.pastRollup).toBeUndefined();
@@ -511,7 +506,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
 
       await sql`UPDATE conditions.observation_rollup_progress SET finalized_before = '2026-06-24T11:00:00Z'`;
       await forget();
-      clearSiteTableCache();
+      clearReferenceCaches();
       const late = await poll(fakeFetch, () => "2026-06-24T10:11:00.000Z");
       expect(late.error).toBeUndefined();
       expect(late.pastRollup).toBe(4);
@@ -524,7 +519,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     const before = await seriesOf("nl-ndw-flow");
     expect(before.length).toBeGreaterThan(0);
     // Clear the cache so there is NO cached site map — the failure is cold.
-    clearSiteTableCache();
+    clearReferenceCaches();
     const partialFetch = async (url: string | URL | Request): Promise<Response> => {
       const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
       if (href.includes("measurement.xml.gz")) {
@@ -534,28 +529,33 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     };
     const result = await poll(partialFetch);
     expect(result.count).toBe(0);
-    expect(result.error).toMatch(/site-table cold failure/);
+    // The format lets a DATEX document carry its own geometry, but this feed
+    // declares a site table: with none ever loaded the write is skipped, and
+    // the status names the endpoint and its decoder.
+    expect(result.error).toBe("sites (datex2-sites) cold failure — no geometry map built");
+    const [status] = await sql<{ last_error: string | null }[]>`
+      SELECT last_error FROM conditions.source_status WHERE source = 'nl-ndw-flow'`;
+    expect(status!.last_error).toBe(result.error);
     expect(await seriesOf("nl-ndw-flow")).toEqual(before);
     expect(await liveFeatures("nl-ndw-flow")).toBe(3);
   }, 60_000);
 });
 
 describe("pipeline — parse failure", () => {
-  it("swallows a parser-dispatch throw, writes source_status error, and does not advance last_success_at", async () => {
-    // A feed whose format has no registered parser: `parserFor` (called from
-    // inside the `buffers.flatMap(...)` dispatch, unguarded before this fix)
-    // throws synchronously, before any content is actually parsed.
-    // No snapshot contract here: NDW declares one, and its structural check
-    // would reject this body before parser dispatch is ever reached.
-    const { snapshot: _snapshot, ...base } = ndwFeed as unknown as Record<string, unknown>;
-    const throwingFeed: DomainFeedSource = {
-      ...base,
-      id: "parse-throw-src",
-      format: "bogus-format",
-    } as unknown as DomainFeedSource;
+  it("swallows a parser throw, writes source_status error, and does not advance last_success_at", async () => {
+    // A DATEX body declaring an entity: the XML reader refuses it before any
+    // content is read. No snapshot contract here: NDW declares one, and its
+    // structural check would reject this body before the parser ran.
+    const { snapshot: _snapshot, ...base } = ndwFeed;
+    const throwingFeed = withMain(
+      { ...base, id: "parse-throw-src" },
+      { url: "https://parse-throw.test/situations.xml", cadenceSec: 60 },
+    );
 
     const fakeFetch = async (_url: string | URL | Request): Promise<Response> => {
-      return new Response("irrelevant body", { status: 200 });
+      return new Response('<?xml version="1.0"?><!DOCTYPE d [<!ENTITY e "x">]><d>&e;</d>', {
+        status: 200,
+      });
     };
 
     const result = await runSource(throwingFeed, {
@@ -566,15 +566,14 @@ describe("pipeline — parse failure", () => {
     });
 
     expect(result.count).toBe(0);
-    expect(result.error).toBeDefined();
-    expect(result.error).toMatch(/no parser registered for format/i);
+    expect(result.error).toMatch(/not allowed/);
 
     const status = await sql<{ last_error: string | null; last_success_at: Date | null }[]>`
       SELECT last_error, last_success_at FROM conditions.source_status
       WHERE source = 'parse-throw-src'
     `;
     expect(status.length).toBe(1);
-    expect(status[0]!.last_error).toMatch(/no parser registered for format/i);
+    expect(status[0]!.last_error).toBe(result.error);
     expect(status[0]!.last_success_at).toBeNull();
   }, 30_000);
 });
@@ -586,7 +585,7 @@ describe("pipeline — streaming SAX parse failure preserves last-good rows", ()
   it("parse-failure-preserves-last-good: a truncated document sets failed:true, skips the write, and does not advance last_success_at", async () => {
     // Establish a known-good baseline for this source first, independent of
     // whatever earlier describe blocks in this file left behind.
-    clearSiteTableCache();
+    clearReferenceCaches();
     const goodFetch = async (url: string | URL | Request): Promise<Response> => {
       const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
       const body = href.includes("measurement.xml.gz") ? sitePayload : speedPayload;
@@ -615,7 +614,7 @@ describe("pipeline — streaming SAX parse failure preserves last-good rows", ()
     // Site table still resolves fine; the measurement document itself is
     // truncated mid-element — the same kind of mid-document glitch a ~50 MB
     // feed can suffer, which the SAX parser's internal `failed` flag catches.
-    clearSiteTableCache();
+    clearReferenceCaches();
     const truncatedSpeedXml = speedPayload
       .toString("utf8")
       .slice(0, Math.floor(speedPayload.length * 0.6));
@@ -649,6 +648,43 @@ describe("pipeline — streaming SAX parse failure preserves last-good rows", ()
   }, 60_000);
 });
 
+describe("pipeline — streamed fetch errors are redacted", () => {
+  it("records an HTTP error of a streamed feed without its path-embedded subscription id", async () => {
+    const subscription = "648508602333433856";
+    const feed = withMain(
+      {
+        ...ndwFlowFeed,
+        id: "de-test-mobilithek-flow",
+        credentials: { subscription_id: { title: "id" } },
+      },
+      {
+        url: "https://mobilithek.info:8443/mobilithek/api/v1.0/subscription/${subscription_id}/clientPullService?subscriptionID=${subscription_id}",
+        cadenceSec: 60,
+      },
+    );
+    const sitePayload = readFileSync(NDW_FLOW_SITE_TABLE_FIXTURE_PATH);
+    clearReferenceCaches();
+    const fetchFn = async (url: string | URL | Request): Promise<Response> => {
+      const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+      return href.includes("measurement.xml.gz")
+        ? new Response(gzipSync(sitePayload), { status: 200 })
+        : new Response("forbidden", { status: 403 });
+    };
+    const result = await runSource(feed, {
+      sql,
+      fetch: fetchFn as typeof fetch,
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+      env: { DE_TEST_MOBILITHEK_FLOW_SUBSCRIPTION_ID: subscription },
+    });
+    expect(result.error).toMatch(/HTTP 403 fetching .*subscription\/\*\*\*\/clientPullService/);
+    expect(result.error).not.toContain(subscription);
+    const [status] = await sql<{ last_error: string | null }[]>`
+      SELECT last_error FROM conditions.source_status WHERE source = 'de-test-mobilithek-flow'`;
+    expect(status!.last_error).toBe(result.error);
+  }, 60_000);
+});
+
 describe("pipeline — flow feed 200-with-garbage (well-formed empty publication)", () => {
   const sitePayload = readFileSync(NDW_FLOW_SITE_TABLE_FIXTURE_PATH);
   const speedPayload = readFileSync(NDW_FLOW_SPEED_FIXTURE_PATH);
@@ -657,7 +693,7 @@ describe("pipeline — flow feed 200-with-garbage (well-formed empty publication
     // Establish a known-good baseline for this source first, independent of
     // whatever earlier describe blocks in this file left behind (mirrors the
     // SAX-failure test above).
-    clearSiteTableCache();
+    clearReferenceCaches();
     const goodFetch = async (url: string | URL | Request): Promise<Response> => {
       const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
       const body = href.includes("measurement.xml.gz") ? sitePayload : speedPayload;
@@ -674,7 +710,7 @@ describe("pipeline — flow feed 200-with-garbage (well-formed empty publication
     const seriesBefore = await seriesOf("nl-ndw-flow");
     expect(seriesBefore.length).toBeGreaterThan(0);
 
-    clearSiteTableCache();
+    clearReferenceCaches();
     // A 200 response whose body is well-formed XML and DOES contain a
     // `siteMeasurements` element (so the streaming parser's `failed` flag is
     // NOT set — the parser saw the expected publication), but the site carries
@@ -711,12 +747,10 @@ describe("pipeline — flow feed 200-with-garbage (well-formed empty publication
 describe("pipeline — shrink tripwire (event feed)", () => {
   // Derived from the DriveBC descriptor for its format/licence; the tripwire
   // scenario is about an empty body, not the descriptor's offset pagination.
-  const shrinkFeed: DomainFeedSource = {
-    ...drivebcFeed,
-    id: "shrink-test-src",
-    pagination: undefined,
-    snapshot: undefined,
-  };
+  const shrinkFeed = withMain(
+    { ...drivebcFeed, id: "shrink-test-src", snapshot: undefined },
+    { url: "https://shrink-test.test/events", cadenceSec: 120 },
+  );
   const emptyEventsFetch = async (_url: string | URL | Request): Promise<Response> => {
     return new Response(JSON.stringify({ events: [] }), { status: 200 });
   };
@@ -763,7 +797,7 @@ describe("pipeline — shrink tripwire (event feed)", () => {
 
     // A structural complete-snapshot contract proves this is a real empty
     // source response, so the same response now legitimately clears the rows.
-    const massClearFeed: DomainFeedSource = {
+    const massClearFeed: CatalogFeed = {
       ...shrinkFeed,
       snapshot: { completeness: "complete", recordsPath: "events" },
     };
@@ -800,6 +834,14 @@ describe("pipeline — partition-complete fan-out reconciliation", () => {
     });
   }
 
+  /** The DriveBC descriptor fanned out tolerantly over `urls` (no offset pagination). */
+  function fanoutFeed(id: string, urls: string[]): CatalogFeed {
+    return withMain(
+      { ...drivebcFeed, id },
+      { urls: urls as [string, ...string[]], fanout: "tolerant", cadenceSec: 120 },
+    );
+  }
+
   function fanoutFetchFor(failUrls: Set<string>): typeof fetch {
     return (async (input: string | URL | Request): Promise<Response> => {
       const url = String(input);
@@ -810,14 +852,7 @@ describe("pipeline — partition-complete fan-out reconciliation", () => {
 
   it("skips the swap when the fan-out failure ratio is at/above the default threshold (0.5), preserving last-good rows", async () => {
     const urls = Array.from({ length: 4 }, (_, i) => `https://fanout-skip.test/${i}`);
-    const feed: DomainFeedSource = {
-      ...drivebcFeed,
-      id: "fanout-skip-test-src",
-      url: urls,
-      fanoutTolerant: true,
-      // Fan-out semantics, not the descriptor's offset pagination.
-      pagination: undefined,
-    };
+    const feed = fanoutFeed("fanout-skip-test-src", urls);
 
     const seeded = await runSource(feed, {
       sql,
@@ -847,14 +882,7 @@ describe("pipeline — partition-complete fan-out reconciliation", () => {
 
   it("skips the swap at the EXACT threshold boundary (2 of 4 fail = ratio 0.5, >= semantics)", async () => {
     const urls = Array.from({ length: 4 }, (_, i) => `https://fanout-boundary.test/${i}`);
-    const feed: DomainFeedSource = {
-      ...drivebcFeed,
-      id: "fanout-boundary-test-src",
-      url: urls,
-      fanoutTolerant: true,
-      // Fan-out semantics, not the descriptor's offset pagination.
-      pagination: undefined,
-    };
+    const feed = fanoutFeed("fanout-boundary-test-src", urls);
 
     const seeded = await runSource(feed, {
       sql,
@@ -882,14 +910,7 @@ describe("pipeline — partition-complete fan-out reconciliation", () => {
 
   it("preserves every partition when even one fan-out partition fails", async () => {
     const urls = Array.from({ length: 4 }, (_, i) => `https://fanout-proceed.test/${i}`);
-    const feed: DomainFeedSource = {
-      ...drivebcFeed,
-      id: "fanout-proceed-test-src",
-      url: urls,
-      fanoutTolerant: true,
-      // Fan-out semantics, not the descriptor's offset pagination.
-      pagination: undefined,
-    };
+    const feed = fanoutFeed("fanout-proceed-test-src", urls);
 
     const seeded = await runSource(feed, {
       sql,
@@ -916,15 +937,11 @@ describe("pipeline — partition-complete fan-out reconciliation", () => {
 });
 
 describe("pipeline publication acceptance", () => {
-  function source(id: string): DomainFeedSource {
-    return {
-      ...drivebcFeed,
-      id,
-      url: `https://${id}.test/events`,
-      pagination: undefined,
-      fetchIntervalSec: undefined,
-      snapshot: { completeness: "complete", recordsPath: "events" },
-    };
+  function source(id: string): CatalogFeed {
+    return withMain(
+      { ...drivebcFeed, id, snapshot: { completeness: "complete", recordsPath: "events" } },
+      { url: `https://${id}.test/events`, cadenceSec: 120 },
+    );
   }
   const body = (description: string) =>
     JSON.stringify({
@@ -994,10 +1011,10 @@ describe("pipeline publication acceptance", () => {
               ? body("partial new")
               : JSON.stringify({ error: "not available" }),
           ),
-        {
-          ...feed,
+        withMain(feed, {
+          ...feed.endpoints["main"]!,
           pagination: { recordsPath: "events", pageSize: 1, skipParam: "offset", maxPages: 2 },
-        },
+        }),
       );
       expect(result.error).toMatch(/pagination/);
       expect(await facts(feed.id)).toEqual(before);
@@ -1008,23 +1025,24 @@ describe("pipeline publication acceptance", () => {
 
 describe("stable provenance refresh", () => {
   it("refreshes changed rights and lineage without rewriting an unchanged poll", async () => {
-    let feed: DomainFeedSource = {
-      ...drivebcFeed,
-      id: "provenance-refresh",
-      url: "https://provenance-refresh.test/events",
-      pagination: undefined,
-      fetchIntervalSec: undefined,
-      parentSourceId: "parent-a",
-      rights: {
-        sourceRedistribution: true,
-        derivedRedistribution: true,
-        commercialUse: true,
-        attributionRequired: true,
-        retention: true,
-        evidenceVersion: "grant1",
+    let feed: CatalogFeed = withMain(
+      {
+        ...drivebcFeed,
+        id: "provenance-refresh",
+        parentSourceId: "parent-a",
+        license: "CC-BY-4.0",
+        rights: {
+          redistribution: true,
+          derivedRedistribution: true,
+          commercialUse: true,
+          attributionRequired: true,
+          retention: true,
+          shareAlike: false,
+        },
+        snapshot: { completeness: "complete", recordsPath: "events" },
       },
-      snapshot: { completeness: "complete", recordsPath: "events" },
-    };
+      { url: "https://provenance-refresh.test/events", cadenceSec: 120 },
+    );
     const headers: (string | null)[] = [];
     const fetch = (async (_url, init) => {
       const prior = new Headers(init?.headers).get("if-none-match");
@@ -1059,7 +1077,8 @@ describe("stable provenance refresh", () => {
       ...feed,
       parentSourceId: "parent-b",
       policyIds: ["parent-b", feed.id],
-      rights: { ...feed.rights!, commercialUse: false, evidenceVersion: "grant2" },
+      license: "CC-BY-SA-4.0",
+      rights: { ...feed.rights, commercialUse: false },
     };
     expect((await run()).updated).toBe(1);
     const revoked = await row();
@@ -1069,11 +1088,16 @@ describe("stable provenance refresh", () => {
     expect(revoked.origin.attribution).toMatchObject({
       parentSourceId: "parent-b",
       policyIds: ["parent-b", feed.id],
-      rights: { commercial_use: "no", evidence_version: "grant2" },
+      rights: { commercial_use: "no", evidence_version: "CC-BY-SA-4.0" },
     });
     expect((await run()).outcome).toBe("validated_unchanged");
     expect(await row()).toEqual(revoked);
-    feed = { ...feed, parentSourceId: undefined, policyIds: undefined, rights: undefined };
+    feed = {
+      ...feed,
+      parentSourceId: undefined,
+      policyIds: undefined,
+      rights: { ...feed.rights, commercialUse: null },
+    };
     expect((await run()).updated).toBe(1);
     const unknown = await row();
     expect(unknown.origin.attribution.rights.commercial_use).toBe("unknown");
@@ -1084,13 +1108,10 @@ describe("stable provenance refresh", () => {
 
 describe("OpenLR publication failure", () => {
   it("retains all last-good rows and retries the unaccepted snapshot after partial resolution fails", async () => {
-    const feed: DomainFeedSource = {
-      ...ndwFeed,
-      id: "openlr-transport-test",
-      url: "https://openlr-feed.test/events",
-      snapshot: undefined,
-      fetchIntervalSec: undefined,
-    };
+    const feed = withMain(
+      { ...ndwFeed, id: "openlr-transport-test", snapshot: undefined },
+      { url: "https://openlr-feed.test/events", cadenceSec: 60 },
+    );
     const refs = [8, 8.1].map((lon) =>
       encodeOpenlrLine({
         coords: [
@@ -1165,4 +1186,136 @@ describe("OpenLR publication failure", () => {
       clearResolveCache();
     }
   });
+});
+
+describe("scheduled polls — due endpoints and their latest payloads", () => {
+  const T0 = Date.parse("2026-10-03T08:00:00.000Z");
+  const at = (offsetMs: number) => new Date(T0 + offsetMs).toISOString();
+  const eventsBody = (description: string) =>
+    JSON.stringify({
+      events: [
+        {
+          id: "event",
+          event_type: "CONSTRUCTION",
+          description,
+          geography: { type: "Point", coordinates: [0, 0] },
+        },
+      ],
+    });
+  /** The poll attempts a source has opened. */
+  const attempts = async (id: string) =>
+    (
+      await sql<{ n: number }[]>`
+        SELECT count(*)::int AS n FROM conditions.source_poll_attempt WHERE source = ${id}`
+    )[0]!.n;
+
+  /** A DriveBC-shaped feed polled every minute from one URL. */
+  function minuteFeed(id: string): CatalogFeed {
+    return withMain(
+      { ...drivebcFeed, id, snapshot: { completeness: "complete", recordsPath: "events" } },
+      { url: `https://${id}.test/events`, cadenceSec: 60 },
+    );
+  }
+
+  it("fetches the feed's own endpoint on every tick of its cadence, even a late one", async () => {
+    const feed = minuteFeed("roles-every-tick");
+    const roles = createRoleState();
+    const fetched: string[] = [];
+    let revision = 0;
+    const fetch = (async (url: string | URL | Request) => {
+      fetched.push(String(url));
+      return new Response(eventsBody(`r${++revision}`));
+    }) as typeof globalThis.fetch;
+    const tick = (offsetMs: number) =>
+      runSource(feed, { sql, fetch, now: () => at(offsetMs), lookup: fakeLookup, roles });
+
+    expect((await tick(2_000)).error).toBeUndefined();
+    // The next slot, reached 2 s sooner after the previous tick than a full cadence.
+    expect((await tick(60_000)).error).toBeUndefined();
+    expect(await tick(120_000)).toMatchObject({ outcome: "changed" });
+    expect(fetched).toHaveLength(3);
+    expect(roles.lastFetchedAt["main"]).toBe(T0 + 120_000);
+    expect(await attempts(feed.id)).toBe(3);
+  }, 30_000);
+
+  it("does nothing, and opens no poll attempt, on a tick before the endpoint is due", async () => {
+    const feed = minuteFeed("roles-not-due");
+    const roles = createRoleState();
+    const fetch = vi.fn(async () => new Response(eventsBody("only")));
+    const tick = (offsetMs: number) =>
+      runSource(feed, {
+        sql,
+        fetch: fetch as unknown as typeof globalThis.fetch,
+        now: () => at(offsetMs),
+        lookup: fakeLookup,
+        roles,
+      });
+
+    expect((await tick(0)).error).toBeUndefined();
+    expect(await attempts(feed.id)).toBe(1);
+    // 20 s on, short of the half-cadence slack (30 s before the next slot).
+    expect(await tick(20_000)).toEqual({ count: 0, durationMs: 0, notDue: true });
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(await attempts(feed.id)).toBe(1);
+    expect(roles.lastFetchedAt["main"]).toBe(T0);
+  }, 30_000);
+
+  it("parses a slower endpoint's latest payload when it is not due and when it answers 304", async () => {
+    const id = "roles-two-endpoints";
+    const MAIN = `https://${id}.test/events`;
+    const SLOW = `https://${id}.test/closures`;
+    const feed: CatalogFeed = {
+      ...minuteFeed(id),
+      endpoints: {
+        main: { url: MAIN, cadenceSec: 60 },
+        closures: { url: SLOW, cadenceSec: 300 },
+      },
+      cadenceSec: 60,
+    };
+    const roles = createRoleState();
+    const fetched: string[] = [];
+    /** The `If-None-Match` each request of the slow endpoint carried. */
+    const slowValidators: (string | null)[] = [];
+    const slowBody = Buffer.from(eventsBody("slow v1"));
+    let mainRevision = 0;
+    const fetch = (async (url: string | URL | Request, init?: RequestInit) => {
+      const href = String(url);
+      fetched.push(href);
+      if (href === SLOW) {
+        slowValidators.push(new Headers(init?.headers).get("if-none-match"));
+        return new Headers(init?.headers).get("if-none-match") === "slow-1"
+          ? new Response(null, { status: 304 })
+          : new Response(new Uint8Array(slowBody), { headers: { etag: "slow-1" } });
+      }
+      return new Response(eventsBody(`main v${++mainRevision}`));
+    }) as typeof globalThis.fetch;
+    const parse = vi.spyOn(formatOf(feed), "parse");
+    const tick = (offsetMs: number) =>
+      runSource(feed, { sql, fetch, now: () => at(offsetMs), lookup: fakeLookup, roles });
+    const parsedClosures = () =>
+      parse.mock.calls.at(-1)![1]["closures"]!.map((b) => b.toString("utf8"));
+
+    try {
+      // First poll: every data endpoint is due.
+      expect((await tick(0)).error).toBeUndefined();
+      expect(fetched).toEqual([MAIN, SLOW]);
+      expect(parsedClosures()).toEqual([slowBody.toString("utf8")]);
+
+      // A minute on, only the minute endpoint is due; the slow one's last payload is parsed.
+      fetched.length = 0;
+      expect((await tick(60_000)).error).toBeUndefined();
+      expect(fetched).toEqual([MAIN]);
+      expect(parsedClosures()).toEqual([slowBody.toString("utf8")]);
+
+      // Five minutes on, the slow endpoint is due again and answers 304.
+      fetched.length = 0;
+      expect((await tick(300_000)).error).toBeUndefined();
+      expect(fetched).toEqual([MAIN, SLOW]);
+      expect(slowValidators).toEqual([null, "slow-1"]);
+      expect(parsedClosures()).toEqual([slowBody.toString("utf8")]);
+      expect(roles.lastFetchedAt).toEqual({ main: T0 + 300_000, closures: T0 + 300_000 });
+    } finally {
+      parse.mockRestore();
+    }
+  }, 30_000);
 });
